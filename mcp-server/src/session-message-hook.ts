@@ -206,11 +206,18 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   let messages: SessionMessage[] = [];
   if (observation.kind === "user-input") {
     if (observation.wakeOnly && observation.wakeCandidates?.length && supportsInjection(profile.capabilities, "peer-wake")) {
-      const result = await sessionMessageRequest<{ recognized: boolean; messages: SessionMessage[] }>("claim-host-wake", {
+      const result = await sessionMessageRequest<{ recognized: boolean; messages: SessionMessage[]; managed: boolean; retired?: boolean }>("claim-host-wake", {
         ...limits,
         observation,
         sourceReceiptId: recordWakeHookObservation(observation),
       }, undefined, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
+      // Only a verified managed or retired wake may block an empty Claude prompt.
+      if (profile.blocksEmptyWakePrompt && result.messages.length === 0
+        && ((result.recognized && result.managed === true) || (!result.recognized && result.retired === true))) {
+        return { decision: "block", reason: result.retired
+          ? "This wake notification was already retired; no peer message is attached."
+          : "No peer message is available for this verified wake notification." };
+      }
       if (result.recognized) messages = result.messages;
       else await sessionMessageRequest("observe-native-input", { target }, undefined, { totalTimeoutMs: HOST_MESSAGE_REQUEST_TIMEOUT_MS });
     } else if (!observation.wakeOnly) {

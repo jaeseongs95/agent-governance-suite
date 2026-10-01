@@ -1564,3 +1564,12 @@ export interface RoleSlotV1 {
   requirements: ModelSelectionRequestV2["requirements"];
   executionAuthorized: false;
 }
+
+export interface SessionAutoWakeOutlookV1 {
+  state: "available" | "latched" | "no-live-relay" | "unsupported";
+  reason: "relay-live" | "wake-in-flight" | "retry-backoff" | "wake-unobserved"
+    | "presence-unknown" | "presence-not-online" | "relay-lease-missing" | "no-idle-wake";
+  basisAt: string | null;
+  checkedAt: string;
+  authorityEffect: "none";
+}

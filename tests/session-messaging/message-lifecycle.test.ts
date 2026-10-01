@@ -105,7 +105,8 @@ it("keeps the first immutable receipt and does not enqueue or wake after ACK/pru
   const store = fixture(); const draft = prepare(store);
   const first = store.submitPrepared(sender, draft.messageId, 2000);
   expect(first.expiresAt).toBe(new Date(32_000).toISOString());
-  expect(store.submitPrepared(sender, draft.messageId, 3000)).toEqual({ ...first, duplicate: true });
+  expect(store.submitPrepared(sender, draft.messageId, 3000)).toEqual({ ...first, duplicate: true,
+    autoWake: expect.objectContaining({ authorityEffect: "none", checkedAt: new Date(3000).toISOString() }) });
   expect(count(store)).toBe(1);
   const firstClaim = store.claim(target, 3001)[0]!;
   expect(firstClaim).toMatchObject({ messageId: draft.messageId, body: "Immutable synthetic message" });
@@ -114,7 +115,8 @@ it("keeps the first immutable receipt and does not enqueue or wake after ACK/pru
   expect(store.status(sender, draft.messageId, 3003)?.acknowledgedAt).toBe(new Date(3002).toISOString());
   store.prune(32_000);
   expect(count(store)).toBe(0);
-  expect(store.submitPrepared(sender, draft.messageId, 33_000)).toEqual({ ...first, duplicate: true });
+  expect(store.submitPrepared(sender, draft.messageId, 33_000)).toEqual({ ...first, duplicate: true,
+    autoWake: expect.objectContaining({ authorityEffect: "none", checkedAt: new Date(33_000).toISOString() }) });
   expect(count(store)).toBe(0);
   expect(store.status(sender, draft.messageId, 33_000)).toMatchObject({ state: "submitted", deliveryState: "unknown" });
   store.prune(3_632_000);
@@ -256,7 +258,8 @@ it("packaged CLI discovers prepare/send and rejects old or unknown send with zer
   const cli = (operation: string, payload: unknown) => spawnSync(process.execPath, [path.join(root, "mcp-server/dist/session-message-cli.mjs")], { input: JSON.stringify({ operation, payload }), encoding: "utf8", windowsHide: true, timeout: 5000, env: { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: state } });
   const draft = JSON.parse(cli("prepare", { sender, target, body: "CLI synthetic" }).stdout).data;
   const sent = JSON.parse(cli("send", { sender, messageId: draft.messageId }).stdout).data;
-  expect(JSON.parse(cli("send", { sender, messageId: draft.messageId }).stdout).data).toEqual({ ...sent, duplicate: true });
+  expect(JSON.parse(cli("send", { sender, messageId: draft.messageId }).stdout).data).toEqual({ ...sent, duplicate: true,
+    autoWake: expect.objectContaining({ authorityEffect: "none", checkedAt: expect.any(String) }) });
   const legacy = cli("send", { sender, target, body: "old shape", messageId: "caller-legacy-id" });
   expect(legacy.status).toBe(1); expect(JSON.parse(legacy.stdout).error).toMatch(/prepare/u);
   const unknown = cli("send", { sender, messageId: "unknown-issued-id" });

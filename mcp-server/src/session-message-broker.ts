@@ -7,10 +7,10 @@ import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 import { SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL,
-  SESSION_PRESENCE_BATCH_LIMIT } from "./session-message-protocol.js";
-import { SessionMessageStore, type CurrentActivityReporterReader, type CurrentTaskBindingReader,
+  SESSION_PRESENCE_BATCH_LIMIT, sessionMessageLineReader } from "./session-message-protocol.js";
+import { MessageCapacityError, SessionMessageStore, type CurrentActivityReporterReader, type CurrentTaskBindingReader,
   type SessionIdentity, type WakeAttempt } from "./session-message-store.js";
-import { createWakeHookObservationReader, type WakeHookObservationReader } from "./session-message-wake-port.js";
+import { createWakeHookObservationReader, verifyHistoricalWakeObservation, type WakeHookObservationReader } from "./session-message-wake-port.js";
 import type { InputObservation, InputObservationKind } from "./input-observation.js";
 import { PeerWaitPolicy, normalizePeerWaitTargets } from "./peer-wait-policy.js";
 import { createSelfSignedCertificate } from "./self-signed-certificate.js";
@@ -200,7 +200,7 @@ function observePeerRelay(store: SessionMessageStore, payload: Record<string, un
 }
 
 export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>, modelCapabilities?: SessionModelCapabilityStore,
-  taskBindingReader?: CurrentTaskBindingReader, activityReporterReader?: CurrentActivityReporterReader, wakeObserver?: WakeHookObservationReader): unknown {
+  taskBindingReader?: CurrentTaskBindingReader, activityReporterReader?: CurrentActivityReporterReader, wakeObserver?: WakeHookObservationReader, historicalWakeVerifier = verifyHistoricalWakeObservation): unknown {
   switch (operation) {
     case "ping": return { protocolVersion: SESSION_MESSAGE_PROTOCOL, capabilities: [...SESSION_MESSAGE_BROKER_CAPABILITIES, ...(modelCapabilities ? [MODEL_CAPABILITY_FEATURE] : [])] };
     case "resource-admission": throw new Error("Resource admission is unavailable.");
@@ -346,7 +346,7 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
         }) && presence.state === "online" && presence.instanceId === binding.instanceId) binding.wakeObservedAt = Date.now();
         for (const key of keys) runtime.wakes.delete(key);
       }
-      return { recognized: result.recognized, messages: result.messages };
+      return { recognized: result.recognized, messages: result.messages, managed: result.binding !== null, ...(result.retired ? { retired: true } : {}) };
     }
     case "observe-native-input": {
       peerWaitRuntime(store).policy.reset(identity(payload.target));
@@ -485,6 +485,15 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       if (outcome !== "submitted" && outcome !== "definite-failure" && outcome !== "accepted-or-unknown") throw new Error("Invalid wake dispatch outcome.");
       return { recorded: store.recordManagedWakeOutcome(wakeAttempt(payload.attempt), outcome) };
     }
+    case "reconcile-wake-observation": {
+      if (Object.keys(payload).some((key) => !["target", "attemptId", "sourceReceiptId"].includes(key))
+        || !payload.target || typeof payload.target !== "object" || Array.isArray(payload.target)
+        || Object.keys(payload.target).some((key) => !["host", "sessionId"].includes(key))) {
+        throw new Error("Historical wake reconciliation contains unsupported fields.");
+      }
+      return store.reconcileHistoricalWake(identity(payload.target), string(payload.attemptId, "attemptId"),
+        string(payload.sourceReceiptId, "sourceReceiptId"), Date.now(), historicalWakeVerifier);
+    }
     case "wake-status": return { wake: store.managedWakeStatus(identity(payload.target)) };
     case "release-wake": return { released: store.releaseWake(identity(payload.target), string(payload.nonce, "nonce")) };
     case "consume-wake": return { consumed: store.consumeWake(identity(payload.target), string(payload.nonce, "nonce")) };
@@ -550,37 +559,42 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
     let modelCapabilities: SessionModelCapabilityStore | undefined;
     try { modelCapabilities = new SessionModelCapabilityStore(activeStore, capabilitySigner(token)); }
     catch { /* Optional exchange failures must not disable legacy messaging. */ }
-    const wakeHookObservationReader = createWakeHookObservationReader(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim()
-      ? path.resolve(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH.trim()) : path.join(stateDirectory, "trust.sqlite3"));
+    const trustDatabasePath = process.env.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim()
+      ? path.resolve(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH.trim()) : path.join(stateDirectory, "trust.sqlite3");
+    const wakeHookObservationReader = createWakeHookObservationReader(trustDatabasePath);
+    const historicalWakeVerifier: typeof verifyHistoricalWakeObservation = (target, nonce, receiptId, started, late, now) =>
+      verifyHistoricalWakeObservation(target, nonce, receiptId, started, late, now, trustDatabasePath);
     let lastActivity = Date.now();
     const activeServer = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
       lastActivity = Date.now();
       // A peer can reset after reading a response. Isolate that socket failure from the broker.
       socket.on("error", () => socket.destroy());
-      let buffer = "";
+      const readLine = sessionMessageLineReader(SESSION_MESSAGE_MAX_REQUEST_BYTES);
+      let answered = false;
       socket.setTimeout(5000, () => socket.destroy());
       socket.on("data", (chunk: Buffer) => {
-        buffer += chunk.toString("utf8");
-        if (Buffer.byteLength(buffer, "utf8") > SESSION_MESSAGE_MAX_REQUEST_BYTES) {
+        if (answered) return;
+        let line: string | null;
+        try { line = readLine(chunk); } catch {
+          answered = true;
           socket.end(`${JSON.stringify({ ok: false, error: "Request exceeds the broker limit." })}\n`);
           return;
         }
-        const newline = buffer.indexOf("\n");
-        if (newline < 0) return;
-        const line = buffer.slice(0, newline);
-        buffer = "";
+        if (line === null) return;
+        answered = true;
         try {
           const request = JSON.parse(line) as BrokerRequest;
           if (request.protocolVersion !== SESSION_MESSAGE_PROTOCOL || !tokenMatches(request.token ?? "", token)) throw new Error("Broker authentication failed.");
           const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload) ? request.payload : {};
-          const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, modelCapabilities, undefined, undefined, wakeHookObservationReader);
+          const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, modelCapabilities, undefined, undefined, wakeHookObservationReader, historicalWakeVerifier);
           const response = `${JSON.stringify({ ok: true, data })}\n`;
           if (Buffer.byteLength(response, "utf8") > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
             throw new Error("The broker response exceeded its limit.");
           }
           socket.end(response);
         } catch (error) {
-          socket.end(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Broker request failed." })}\n`);
+          socket.end(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Broker request failed.",
+            ...(error instanceof MessageCapacityError ? { details: error.details } : {}) })}\n`);
         }
       });
     });

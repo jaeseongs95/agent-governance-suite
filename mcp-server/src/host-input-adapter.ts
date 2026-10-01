@@ -119,11 +119,12 @@ export function hostDeliveryProfile(host: SupportedHookHost, environment: NodeJS
   diagnose: (reason: string) => void = (reason) => { console.error(`[agent-governance-suite] Codex queue settings: ${reason}; using codex-deferred.`); }): {
   transport: SessionMessageTransport;
   capabilities: DeliveryCapabilities;
+  blocksEmptyWakePrompt: boolean;
 } {
   const transport: SessionMessageTransport = host === "claude-code"
     ? "claude-inbox"
     : codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred";
-  return { transport, capabilities: transportDeliveryCapabilities(transport) };
+  return { transport, capabilities: transportDeliveryCapabilities(transport), blocksEmptyWakePrompt: host === "claude-code" };
 }
 
 /** Only the observed, local Codex app wait surface is recognized here. */

@@ -436,7 +436,7 @@ describe("session board MCP tools", () => {
     }
   });
 
-  it.each(["invalid", "oversize", "stored-oversize"])("reports %s presence responses as lookup failures while preserving board work", async fault => {
+  it.each(["invalid", "oversize", "stored-oversize"])("reports %s presence responses as unanswered without accepting malformed data or losing board work", async fault => {
     const databasePath = boardPath();
     const state = path.join(path.dirname(databasePath), "broker");
     const store = new SessionMessageStore(path.join(state, "session-messages.sqlite3"));
@@ -456,8 +456,8 @@ describe("session board MCP tools", () => {
       setSummary(board, session(new Date().toISOString(), "fault-target"), "장애 중 작업 유지");
       client = await connect(databasePath, new SessionMessageService(state));
       expect(payload(await client.callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0" } })))
-        .toMatchObject({ ok: true, data: { sessions: [{ summary: "장애 중 작업 유지", presence: null }],
-          presenceLookup: { ok: false, error: { code: "MCP_UNAVAILABLE", message: expect.stringMatching(/invalid presence|exceeded its limit/u) } } } });
+        .toMatchObject({ ok: true, data: { sessions: [{ summary: "장애 중 작업 유지", presence: { state: "unknown" } }],
+          presenceLookup: { ok: true, error: null, unanswered: [{ host: "claude-code", sessionId: "fault-target" }] } } });
       if (fault === "stored-oversize") {
         const packets = JSON.parse(readFileSync(observations, "utf8")) as Array<{ responseBytes: number }>;
         expect(packets.every(packet => packet.responseBytes <= SESSION_MESSAGE_MAX_RESPONSE_BYTES)).toBe(true);

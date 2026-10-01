@@ -390,7 +390,7 @@ async function sessionBoardResult(
       board = null;
       const presence = await sessionMessages.listPresence(sessions);
       return apiOk({ sessions: withPresence(sessions, presence),
-        presenceLookup: { ok: presence.ok, error: presence.error } });
+        presenceLookup: { ok: presence.ok, error: presence.error, unanswered: presence.data?.unanswered ?? [] } });
     }
     const row = readSession(board, binding!.host, binding!.sessionId);
     return row && row.summary === summary
@@ -658,13 +658,13 @@ export function createMcpServer(
       },
       {
         name: "prepare_session_message",
-        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft.",
+        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft. When this sender (250) or all senders (1000) already hold the maximum retained receipts, no draft is created and error.details gives scope and earliestReleaseAt.",
         inputSchema: prepareSessionMessageInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "send_session_message",
-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent.",
+        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until the expiresAt returned by prepare; if earliestReleaseAt is before that expiresAt, retry that same ID after earliestReleaseAt, otherwise prepare again. Never do both.",
         inputSchema: contractSchemas.sendSessionMessageRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
@@ -676,7 +676,7 @@ export function createMcpServer(
       },
       {
         name: "get_session_message_status",
-        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend.",
+        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend. Unacknowledged queue rows include the advisory autoWake recipient wake outlook with its basis time; it is not delivery, completion or permission evidence. Reading may prune expired message-broker records and retire unobserved wakes (idempotent housekeeping).",
         inputSchema: contractSchemas.getSessionMessageStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },

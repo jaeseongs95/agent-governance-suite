@@ -246,7 +246,9 @@ test('W05-r2 forged nonce, caller approved and normalized observation cannot obs
   assert.equal(hostClaim(f, observed, f.now + 5).recognized, false);
 });
 
-test('W05-r2 expired/old-generation hook records only late observation and preserves the current fence', () => {
+// W05-r3 AC008 extends only verified obsolete arrivals to terminal observation.
+// The W05-r2 no-arrival expiry/grace regression above retains its unknown expectation.
+test('W05-r2 verified expired/old-generation hook records terminal observation and preserves the current fence (W05-r3 AC008)', () => {
   for (const variant of ['expired', 'new-instance', 'same-instance-new-birth']) {
     const f = fixture(); body(f.store, 'old-body', f.now);
     const attempt = begin(f.store, f.now);
@@ -262,9 +264,9 @@ test('W05-r2 expired/old-generation hook records only late observation and prese
     assert.equal(hostClaim(f, observed, at + 4).recognized, false);
     assert.equal(f.store.pendingCount(target, at + 4), 1);
     const state = f.store.managedWakeStatus(target, at + 4);
-    assert.equal(state.state, 'unknown'); assert.ok(state.lateObservedAt); assert.equal(state.observedAt, null);
+    assert.equal(state.state, 'observed'); assert.ok(state.lateObservedAt); assert.ok(state.observedAt);
     assert.equal(f.store.recordManagedWakeOutcome(attempt, 'definite-failure', at + 5), false);
-    assert.equal(f.store.managedWakeStatus(target, at + 5).state, 'unknown');
+    assert.equal(f.store.managedWakeStatus(target, at + 5).state, 'observed');
   }
 });
 

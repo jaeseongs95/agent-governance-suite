@@ -25,7 +25,7 @@ prepare 응답이 유실되어 다시 준비하면 사용하지 않는 draft가 
 | 저장 대상 | 경계 |
 | --- | --- |
 | 미전송 draft | prepare부터 10분; sender별 100개, 전역 1000개 |
-| 제출 영수증 | 최대 1000개; 최초 메시지 expiry 이후 1시간까지 보존 |
+| 제출 영수증 | sender별 250개·전역 1000개; 미ACK는 메시지 expiry+1시간, 최초 ACK 후에는 `min(기존 expiry, ACK+1시간)` |
 | draft·영수증 전체 | record JSON의 UTF-8 byte 합 최대 4 MiB; 전송 뒤 본문 중복 저장 제거 |
 | 실제 수신 큐 | 기존 미ACK 메시지 최대 1000개·본문 합 4 MiB |
 | 메시지 TTL | 첫 send부터 30~86400초, 기본 3600초 |
@@ -59,7 +59,7 @@ ACK 전 lease 재전달은 정상이며 같은 ID·본문을 유지한다. 중�
 
 ## wake 알림 수명과 누적 억제
 
-새 relay는 메시지 본문과 별도로 기존 `wake_nonces`에 managed 알림을 저장한다. 대상당 미관측 알림은 하나이며 뒤따르는 본문은 기존 `messages`에 남는다. 본문 claim, ACK, tool-boundary, turn-end는 managed 알림을 관측하거나 해제하지 않는다. board의 `consume-wake`는 nonce 소유 여부만 확인한다.
+새 relay는 메시지 본문과 별도로 기존 `wake_nonces`에 managed 알림을 저장한다. 대상당 미관측 알림은 하나이며 뒤따르는 본문은 기존 `messages`에 남는다. 본문 claim, ACK, tool-boundary, turn-end는 managed 알림을 관측하거나 직접 해제하지 않는다. 주입 만료 뒤 활동은 10분 유예가 지난 퇴역의 근거로만 사용한다. board의 `consume-wake`는 nonce 소유 여부만 확인한다.
 
 ```mermaid
 stateDiagram-v2
@@ -71,6 +71,10 @@ stateDiagram-v2
     started --> reserved: 확실한 무제출 / 영속 backoff
     submitted --> observed: 유효한 실제 hook 관측과 원자 claim
     unknown --> observed: 유효한 실제 hook 관측과 원자 claim
+    started --> expired_unobserved: expiry+10분 / 이후 활동 또는 옛 birth 소멸
+    submitted --> expired_unobserved: expiry+10분 / 이후 활동 또는 옛 birth 소멸
+    unknown --> expired_unobserved: expiry+10분 / 이후 활동 또는 옛 birth 소멸
+    expired_unobserved --> expired_unobserved: 유효한 late marker / lateObservedAt만
     observed --> observed: 늦은 결과·재소비 거절
 ```
 
@@ -86,7 +90,7 @@ receipt는 `authorityEffect: none`이다. 이 검사는 협력하는 로컬 hook
 
 관측과 본문 claim은 하나의 transaction이며 batch/response budget 오류가 나면 둘 다 rollback한다. nonce는 한 번만 관측되고, 한 알림이 해당 시점의 claimable batch를 전달한다. batch 밖 본문과 ACK가 유실된 본문은 기존 claim lease 규칙에 따라 안전한 boundary에서 전달할 수 있다. 메시지 전달 자체를 exactly-once 업무 실행으로 확대하지 않는다.
 
-만료 또는 옛 generation marker는 해당 행의 `lateObservedAt`만 기록하며 새 본문 claim이나 현재 fence 해제를 허용하지 않는다. 불확실한 fence는 그대로 unknown이다. 관측 기한이 지난 상태는 `observation-overdue`로 표시한다. `wake-status`와 메시지 status의 `wake` diagnostic에 상태·generation·attempt·주입 만료·재시도 시각·관측 시각을 표시하며 본문이나 nonce는 포함하지 않는다.
+유효한 서명·trust DB·대상·관측 시각이 확인된 만료 또는 옛 generation marker는 해당 옛 attempt를 terminal `observed`로 정리한다. 새 본문 claim·현재 fence의 승인이나 peer-wait resume 증거는 만들지 않는다. 이미 `expired-unobserved`로 퇴역한 marker는 상태를 유지하고 `lateObservedAt`만 기록한다. 검증된 현재 marker와 retired marker가 함께 오면 retired marker를 제외한 정상 claim을 보존한다. 관측 기한이 지난 상태는 `observation-overdue`로 표시한다. `wake-status`와 메시지 status의 `wake` diagnostic에 상태·generation·attempt·주입 만료·재시도 시각·관측 시각을 표시하며 본문이나 nonce는 포함하지 않는다.
 
 ### capability와 이관
 
@@ -98,10 +102,22 @@ receipt는 `authorityEffect: none`이다. 이 검사는 협력하는 로컬 hook
 
 공통 relay는 outcome/capability/dispatch port만 사용한다. transport 등록과 vendor SDK·protocol은 adapter 모듈에 둔다. 다른 vendor도 같은 port를 주입할 수 있으며 공통 알림 상태에 vendor 분기를 추가하지 않는다. 이 경로는 host queue 목록·취소·삭제를 호출하지 않는다.
 
-이관은 기존 DB에 컬럼과 active target UNIQUE를 transaction으로 추가한다. 기존 nonce는 `legacy`이며 옛 consumed_at을 observed로 가져오지 않는다. 기존 queued marker는 자연 소진한다. legacy 종료에는 새 누적 억제 보장을 소급하지 않는다. 활성 managed target 한도는 기존 1000개 budget을 재사용하고 초과는 명시적으로 거절한다. 미확정 행은 TTL prune에서 제외하며 종료 기록은 최대 1000개, 종료 후 1시간까지 보관한다. 이관 실패는 추가 컬럼과 index를 rollback하며 기존 본문·nonce를 보존한다. 운영 DB 삭제·덮어쓰기나 구버전과 혼용한 자동 rollback은 제공하지 않는다.
+이관은 기존 DB에 컬럼과 active target UNIQUE를 transaction으로 추가한다. 기존 nonce는 `legacy`이며 옛 consumed_at을 observed로 가져오지 않는다. 기존 queued marker는 자연 소진한다. legacy 종료에는 새 누적 억제 보장을 소급하지 않는다. 활성 managed target 한도는 기존 1000개 budget을 재사용하고 초과는 명시적으로 거절한다. 미확정 행은 주입 expiry+10분과 아래 생존성 조건으로만 퇴역한다. 종료 기록은 최대 1000개, 종료 후 1시간까지 보관하며 아직 유효한 retry backoff를 제거하지 않는다. 이관 실패는 추가 컬럼과 index를 rollback하며 기존 본문·nonce를 보존한다. 운영 DB 삭제·덮어쓰기나 구버전과 혼용한 자동 rollback은 제공하지 않는다.
 
 ### 보장과 남은 조건
 
-start 이후 본문 claim과 외부 enqueue 사이 경합에서는 잔여 알림 최대 1개가 남을 수 있다. host가 submitted 또는 unknown marker를 끝내 처리하지 않으면 queue 관측·멱등 지원 없이 추가 누적 억제와 idle 자동 재깨움을 동시에 보장할 수 없다. 이 기능은 누적 억제를 택한다. nonce TTL은 주입 유효기간이고 메시지 TTL은 본문 전송 제외 기준이며 어느 TTL도 host queued marker 제거 증거가 아니다. idle liveness는 현재 generation의 유효한 hook 도착에 조건부다. 옛/만료 관측 뒤에도 남은 unknown은 이 한계로 드러낸다.
+start 이후 본문 claim과 외부 enqueue 사이 경합에서는 잔여 알림 최대 1개가 남을 수 있다. host가 submitted 또는 unknown marker를 끝내 처리하지 않으면 queue 관측·멱등 지원 없이 추가 누적 억제와 idle 자동 재깨움을 동시에 보장할 수 없다. 이 기능은 누적 억제를 택한다. nonce TTL은 주입 유효기간이고 메시지 TTL은 본문 전송 제외 기준이며 어느 TTL도 host queued marker 제거 증거가 아니다. idle liveness는 현재 generation의 유효한 hook 도착에 조건부다. 유효한 terminal 정리 또는 유예 뒤 퇴역 전까지 unknown을 보존한다. 퇴역도 전달 여부를 증명하지 않는다.
 
 독립 process fixture와 번들 검사는 실제 host 설치·wake 관측을 대신하지 않는다. 실제 설치·양 host 실측은 별도 W07/출하 검증이며 로컬 PASS로 승격하지 않는다.
+
+## W05-r3 통신 경계
+
+영수증 admission은 prepare와 send의 transaction에서 sender 상한을 먼저, 전역 상한을 다음에 확인한다. 이미 제출된 ID의 duplicate를 용량 검사보다 먼저 반환한다. 용량 거절은 큐·영수증 효과가 없었음을 나타내며 `error.details`에 `scope`와 `earliestReleaseAt`을 담는다. prepare 거절에는 draft도 없다. send 거절의 draft는 준비 expiry까지 남으며 earliestReleaseAt이 그보다 이르면 같은 ID만 재시도한다. draft가 먼저 만료하면 저장한 확정 거절과 대조 후 새 prepare를 사용한다. 불명확한 send를 새 ID로 대체하지 않는다. 최초 ACK만 영수증 만료를 줄이며 중복·다른 대상·unknown ACK는 만료를 바꾸지 않는다. task callback ACK 기록도 같은 transaction에서 보존한다.
+
+미관측 wake는 주입 expiry+10분 뒤에만 `expired-unobserved`로 퇴역한다. 대상의 만료 뒤 hook/tool 활동 또는 최신 presence가 옛 wake의 live instance/birth가 아님을 확인해야 한다. 살아 있지만 조용한 동일 birth는 latch를 유지한다. 퇴역은 nonce·generation·epoch·원래 시각·본문과 현재 fence를 보존하고 delivery unknown을 유지한다. 이 활동 근거는 `wake_activity`에 기록하며 3.x task/contact의 trusted `session_activity`와 권한 판단을 대체하지 않는다. 시작 전 또는 exact definite-failure로 무효과가 확인된 옛 reserved 행만 `not-submitted`로 정리하고 기존 backoff를 보존한다.
+
+`autoWake`는 available·latched·no-live-relay·unsupported 상태, reason·basisAt·checkedAt과 `authorityEffect:none`을 제공하는 advisory다. send/status/presence의 이 값은 전달·업무 완료·승인 증거가 아니다. presence는 lease 종료 뒤 24시간 보존하며 살아 있는 identity의 최신 birth를 prune으로 바꾸지 않는다. board는 지정 대상만 최대 3개씩 조회하고 실패·미지원 식별자는 unanswered에 표시한다. 전체 조회에 monotonic 20초 deadline을 하나만 쓰고 각 중첩 client에는 잔여 예산을 전달한다. 기존 3.x presence 응답과 optional autoWake 계약을 검증한다.
+
+broker와 client는 같은 raw-byte newline framing을 사용한다. 요청·응답은 각각 개행을 포함해 32KiB 이하이며 완성된 frame만 UTF-8로 한 번 디코드한다. 조각 경계의 한글·emoji bytes를 보존하고 limit+1은 처리 전에 거절한다. 일반·task/contact·semantic·checkpoint receiver와 host별 주입 경로는 그대로 유지한다. Claude만 검증된 managed 또는 retired wake의 빈 UserPromptSubmit을 차단하며 broker 실패나 검증되지 않은 marker는 기존 fail-open 계약을 따른다.
+
+W05-r2의 검증된 arrival 없는 expiry+1~4ms unknown 회귀는 유지한다. 검증된 expired/old-generation arrival의 terminal 정리는 W05-r3의 명시적 확장이며 독립 회귀로 구별한다. 원 명세와 과거 증거는 보존하고 이 source/fixture 검증을 실제 양 host W07·설치·출시 증거로 확대하지 않는다.
