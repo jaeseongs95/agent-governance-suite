@@ -1,0 +1,21 @@
+{
+  "rawContentReviewed": true,
+  "reviewScope": "All source, command receipts, stdout/stderr and source-boundary excerpts selected for publication were read before publication. Empty streams were explicitly inventoried.",
+  "included": "Synthetic diagnostic source, runner, normalized command receipts and stdout/stderr, candidate/source references and limitations.",
+  "excluded": "Original archive and its manifest, execution environment ID, credentials, native/private messages, user information, operating databases/WALs and authentication files.",
+  "normalizations": {
+    "home": "<HOME>",
+    "nodeRuntime": "<NODE_RUNTIME>",
+    "randomTemporaryFixtureDirectory": "/tmp/ags-a7c-public-<FIXTURE>",
+    "trailingWhitespace": "Nonempty stdout/stderr ends with a single newline; empty streams remain empty."
+  },
+  "changesByFile": {
+    "01-install.stdout": "Path normalization and/or summary metadata correction; result values retained.",
+    "06-public-installed-probe.stdout": "Path normalization and/or summary metadata correction; result values retained.",
+    "summary.json": "Path normalization and/or summary metadata correction; result values retained."
+  },
+  "correction": "Dispatch call source reference corrected from line 577 to line 576; source excerpt already had the correct line number.",
+  "notRerunDuringPublication": true,
+  "executionCwd": "/workspace/ags-a7c-w06w07",
+  "executionEndedAtUtc": "2026-10-01T22:58:08.071783+00:00"
+}

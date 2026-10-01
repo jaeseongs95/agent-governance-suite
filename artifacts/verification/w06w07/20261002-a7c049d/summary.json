@@ -1,0 +1,101 @@
+{
+  "scope": "Independent executor bounded synthetic W06/W07-related shard; not final AGS 3.0 qualification",
+  "observedAt": "2026-10-01T22:58:08.071783+00:00",
+  "candidateCommit": "a7c049d5de392651b102840cb7e75243e1afe317",
+  "candidateTree": "7028d31985a497dfbb4f8e74c9a219b3400bffa2",
+  "sourceRef": "refs/heads/codex/v260-semantic-decision-layer",
+  "environment": {
+    "node": "v24.19.0",
+    "pnpm": "11.19.0"
+  },
+  "guidance": [
+    "AGENTS.md read at candidate; no applicable nested AGENTS.md beyond test fixtures",
+    ".agents/skills absent; no product implementation or test files added"
+  ],
+  "freshness": {
+    "bundle": "PASS; check rebuilt into temporary directory only",
+    "claudeDrift": "PASS: claude-plugin: fresh",
+    "productBuildRun": false
+  },
+  "existingTests": {
+    "passedExecutions": 5,
+    "failed": 0,
+    "skippedExecutions": 27,
+    "uniquePassedCases": 4,
+    "details": "3 W03/W04 selected reader-boundary cases; 1 packaged CLI/broker lifecycle case executed against each host distribution"
+  },
+  "diagnosticProbe": {
+    "result": "PASS",
+    "repositoryTestAdded": false,
+    "hosts": [
+      "codex distribution bytes",
+      "claude-code distribution bytes"
+    ],
+    "installedCopiedFileCounts": [
+      525,
+      494
+    ],
+    "installedNodeModulesPresent": false,
+    "allCopiedFileHashesMatchSource": true,
+    "installedBytesUnchanged": true,
+    "spoolCountsEach": {
+      "messages": 0,
+      "task_outcomes": 0,
+      "task_requests": 0,
+      "wake_nonces": 0
+    },
+    "fixtureDirectoriesRemoved": true
+  },
+  "observations": [
+    "startSessionMessageBroker passes undefined for CurrentTaskBindingReader and CurrentActivityReporterReader at mcp-server/src/session-message-broker.ts:576; not an undefined-variable exception.",
+    "TLS session-activity and public MCP get_session_contact_state return unknown even while synthetic presence is online.",
+    "TLS record-session-activity rejects: Current activity reporter is unavailable.",
+    "TLS record-task-outcome rejects: Current task binding is unavailable.",
+    "Public MCP contact_session returns ok:true with held/activity-unknown/messageId:null.",
+    "Public MCP record_session_task_outcome returns MCP_UNAVAILABLE with binding error; unbound invocation returns BINDING_REQUIRED.",
+    "Public session-message CLI rejects record-task-outcome as unsupported with exit 1: expected boundary, not a failing test.",
+    "Root and Claude server/broker/CLI hashes are identical on a7c; loaded runtime files match source and remain unchanged."
+  ],
+  "setupFailure": {
+    "commandReceipt": "01-install.json",
+    "exit": 254,
+    "reason": "default pnpm store mkdir <HOME>/.local/share/pnpm ENOENT",
+    "resolvedBy": "02-install-local-store.json; --store-dir /tmp/ags-a7c-pnpm-store; exit 0; frozen lockfile and ignore scripts"
+  },
+  "notClaimed": [
+    "W06 trusted-reader product wiring or positive authenticated end-to-end path",
+    "W07 live native-host hook or installed marketplace qualification",
+    "W05 frozen fa68c3a testing",
+    "247cfe3 source or generated-byte testing",
+    "Release readiness or final 3.0 candidate qualification"
+  ],
+  "separateParentReportedEvidence": "247cfe3 stale server.mjs/Claude drift and 112PASS 1FAIL W05-r1 are separate parent-reported results, not reproduced or superseded by this a7c shard.",
+  "proposalsOnly": [
+    "Promote this isolated real TLS + public MCP no-reader regression into dedicated W06/W07 tests for both distributions, checking held/no enqueue and no outcome callback.",
+    "After W06 reader wiring exists, add positive authenticated current-task/activity cases plus stale instance, forged proof, replaced turn and source-versus-installed-byte parity. Do not infer these from injected-reader unit passes.",
+    "Keep dedicated W07 host hook/manifest invocation and native-host installation acceptance separate from portable byte-copy checks."
+  ],
+  "finalCheckouts": [
+    {
+      "cwd": "/workspace/ags-a7c-w06w07",
+      "head": "a7c049d5de392651b102840cb7e75243e1afe317",
+      "tree": "7028d31985a497dfbb4f8e74c9a219b3400bffa2",
+      "branch": "",
+      "statusPorcelain": ""
+    },
+    {
+      "cwd": "/workspace/agent-governance-suite",
+      "head": "ba85fdcf245b9910674d88fffdd125f6f0454027",
+      "tree": "e36595c3b9caaaeed89f3bf30b94d4fa0573e36c",
+      "branch": "work",
+      "statusPorcelain": ""
+    }
+  ],
+  "safety": "Verification used synthetic disposable DBs only, with no provider/model calls, native authority effects, source edits, or release. This separate publication adds evidence artifacts only. No secrets, native transcripts, operating DBs, WALs or auth files are included.",
+  "publication": {
+    "branch": "dot/ags-w06w07-evidence-20261002",
+    "baseCommit": "a7c049d5de392651b102840cb7e75243e1afe317",
+    "repository": "jaeseongs95/agent-governance-suite",
+    "kind": "artifacts-only; independent of dot/ags-3x-results-20261002"
+  }
+}

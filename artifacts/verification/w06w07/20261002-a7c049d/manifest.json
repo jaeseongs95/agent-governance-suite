@@ -1,0 +1,171 @@
+{
+  "schemaVersion": "1.0.0",
+  "baseCommit": "a7c049d5de392651b102840cb7e75243e1afe317",
+  "files": [
+    {
+      "file": "01-install.json",
+      "bytes": 233,
+      "sha256": "fb76f95e3133306adf89a5770767d4de19d74f3c01ee45fa27613424ceed720b"
+    },
+    {
+      "file": "01-install.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "01-install.stdout",
+      "bytes": 825,
+      "sha256": "22fc537a5ab52b480a3368343e2e7fb5ee8dd3c5e6224dc5ee948ef4e042dc45"
+    },
+    {
+      "file": "02-install-local-store.json",
+      "bytes": 283,
+      "sha256": "4af2ac491a60ce885865b2eda4885e8a3bb779c18aaa8ac1854674533133d6db"
+    },
+    {
+      "file": "02-install-local-store.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "02-install-local-store.stdout",
+      "bytes": 1912,
+      "sha256": "fff99664b642a85e609c29dedab064d0c822652b652d0af85fcc94732e758dcf"
+    },
+    {
+      "file": "03-bundle-freshness.json",
+      "bytes": 200,
+      "sha256": "f83118182e9153d2e4ba819f4c04a0622513c4e4434236a2c47483cca984d24e"
+    },
+    {
+      "file": "03-bundle-freshness.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "03-bundle-freshness.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "04-claude-drift.json",
+      "bytes": 222,
+      "sha256": "584ceda24c639d5f2d9abf595bf052b4b802c08509a69233dffe285b9af81065"
+    },
+    {
+      "file": "04-claude-drift.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "04-claude-drift.stdout",
+      "bytes": 21,
+      "sha256": "dff9d1b607460f4768e85a6896b180de127ba1a9cce9336e9445b558aec42992"
+    },
+    {
+      "file": "05-reader-boundaries.json",
+      "bytes": 479,
+      "sha256": "e0d61a0e5a8771642b23aa6d9b2f7462aaadf18365d8120a804f712373e163fc"
+    },
+    {
+      "file": "05-reader-boundaries.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "05-reader-boundaries.stdout",
+      "bytes": 3404,
+      "sha256": "c8ab67d8d5dcbce25b994bd91dfa86a6cb8bd858fdf49f5ea6e7f71f66813724"
+    },
+    {
+      "file": "06-public-installed-probe.json",
+      "bytes": 285,
+      "sha256": "a9940e26f360329f5900692ad2f184bcaf0f3251083832092103828879241b9a"
+    },
+    {
+      "file": "06-public-installed-probe.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "06-public-installed-probe.stdout",
+      "bytes": 6551,
+      "sha256": "46faefd71ef2816264b13a96442bc79e3faf7cc793255b3e4e32c7301f16eaac"
+    },
+    {
+      "file": "07-final-tree.json",
+      "bytes": 788,
+      "sha256": "24a41896adc1668d49e2b7dbe0b3116c09f8a57659bf6b3aa595e06e04031af2"
+    },
+    {
+      "file": "07-final-tree.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "07-final-tree.stdout",
+      "bytes": 597,
+      "sha256": "ff3ce63fd68966cc57d7347dce38d80d3d4d7e3de341603b12485399219f60bb"
+    },
+    {
+      "file": "08-existing-public-cli-codex.json",
+      "bytes": 411,
+      "sha256": "6c8d8e858a7c21938c14fdbaca5e668239ebbf6b6d407e95f88116c2ac1efe03"
+    },
+    {
+      "file": "08-existing-public-cli-codex.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "08-existing-public-cli-codex.stdout",
+      "bytes": 966,
+      "sha256": "4ef63293bfe072e061cf04aa805b43fed59235a17b398ede320cc3d0b05df2ae"
+    },
+    {
+      "file": "09-existing-public-cli-claude.json",
+      "bytes": 495,
+      "sha256": "7ec5e06f531a5993df616ae3fd3ac23b36ce6ab07f23a55ae66f598573bf0ba2"
+    },
+    {
+      "file": "09-existing-public-cli-claude.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "09-existing-public-cli-claude.stdout",
+      "bytes": 966,
+      "sha256": "3905cde688c0ccd04ba1cb170054d88c52aea158f1d58865aaa426f84c8bee38"
+    },
+    {
+      "file": "REPORT.md",
+      "bytes": 7470,
+      "sha256": "9d8b28459017370e1dab7c8aaae1117dd55ad8fd9864a5d8f0522cab7b3e0291"
+    },
+    {
+      "file": "public-probe.mjs",
+      "bytes": 9256,
+      "sha256": "7eb7aa25b15bec4db5f0025308bbcc906c78ff6c83871124d4fa98da1f1166b9"
+    },
+    {
+      "file": "run.py",
+      "bytes": 695,
+      "sha256": "db803b29b27dfe5cdf64e4499025baf0478c579904af84c36e32b8f7af35fffd"
+    },
+    {
+      "file": "sanitization.json",
+      "bytes": 1460,
+      "sha256": "70548829c8ed60d54a196f615ebb4ab5f71977416c78755824a8c2b979308a01"
+    },
+    {
+      "file": "source-boundaries.json",
+      "bytes": 7636,
+      "sha256": "fb2fe1f907fcd895e069b193f2de4a119604d046ba8815a487b579e5d6635f06"
+    },
+    {
+      "file": "summary.json",
+      "bytes": 4956,
+      "sha256": "a0b79670896dd54de2fe42d7166573e349b34f23fc92151423285f40fd70184a"
+    }
+  ]
+}

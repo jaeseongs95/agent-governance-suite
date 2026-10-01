@@ -1,0 +1,10 @@
+{
+  "command": [
+    "node",
+    "scripts/check-bundle.mjs"
+  ],
+  "cwd": "/workspace/ags-a7c-w06w07",
+  "startedAt": "2026-10-01T22:52:25.450022+00:00",
+  "durationSeconds": 0.574,
+  "exitCode": 0
+}

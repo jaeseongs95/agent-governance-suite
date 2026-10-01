@@ -1,0 +1,11 @@
+{
+  "command": [
+    "python",
+    "-c",
+    "import subprocess,json,hashlib,pathlib; paths=[\"/workspace/ags-a7c-w06w07\",\"/workspace/agent-governance-suite\"]; out=[]\nfor path in paths:\n def git(*args): return subprocess.check_output([\"git\",\"--no-optional-locks\",\"-C\",path,*args],text=True).strip()\n out.append({\"cwd\":path,\"branch\":git(\"branch\",\"--show-current\"),\"head\":git(\"rev-parse\",\"HEAD\"),\"tree\":git(\"rev-parse\",\"HEAD^{tree}\"),\"statusPorcelain\":git(\"status\",\"--porcelain=v1\"),\"lockSha256\":hashlib.sha256(pathlib.Path(path,\"pnpm-lock.yaml\").read_bytes()).hexdigest()})\nprint(json.dumps(out,indent=2))"
+  ],
+  "cwd": "/workspace/ags-a7c-w06w07",
+  "startedAt": "2026-10-01T22:56:17.988252+00:00",
+  "durationSeconds": 0.22,
+  "exitCode": 0
+}

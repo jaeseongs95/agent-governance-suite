@@ -1,0 +1,18 @@
+[
+  {
+    "cwd": "/workspace/ags-a7c-w06w07",
+    "branch": "",
+    "head": "a7c049d5de392651b102840cb7e75243e1afe317",
+    "tree": "7028d31985a497dfbb4f8e74c9a219b3400bffa2",
+    "statusPorcelain": "",
+    "lockSha256": "00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e"
+  },
+  {
+    "cwd": "/workspace/agent-governance-suite",
+    "branch": "work",
+    "head": "ba85fdcf245b9910674d88fffdd125f6f0454027",
+    "tree": "e36595c3b9caaaeed89f3bf30b94d4fa0573e36c",
+    "statusPorcelain": "",
+    "lockSha256": "00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e"
+  }
+]

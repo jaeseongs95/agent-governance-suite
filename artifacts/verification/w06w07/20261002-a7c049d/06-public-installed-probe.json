@@ -1,0 +1,12 @@
+{
+  "command": [
+    "node",
+    "--import",
+    "./node_modules/tsx/dist/loader.mjs",
+    "/workspace/ags-a7c-w06w07-evidence/public-probe.mjs"
+  ],
+  "cwd": "/workspace/ags-a7c-w06w07",
+  "startedAt": "2026-10-01T22:55:27.698830+00:00",
+  "durationSeconds": 3.722,
+  "exitCode": 0
+}

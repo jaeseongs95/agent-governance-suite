@@ -1,0 +1,18 @@
+{
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "tests/coordinate-subagents/v3x/W03.test.mjs",
+    "tests/coordinate-subagents/v3x/W04.test.mjs",
+    "--testNamePattern",
+    "public broker has no trusted reader|product broker has no activity provider|broker without a host provider",
+    "--reporter",
+    "verbose"
+  ],
+  "cwd": "/workspace/ags-a7c-w06w07",
+  "startedAt": "2026-10-01T22:52:38.124916+00:00",
+  "durationSeconds": 2.323,
+  "exitCode": 0
+}

@@ -1,0 +1,250 @@
+[
+  {
+    "path": "mcp-server/src/session-message-broker.ts",
+    "lines": [
+      {
+        "line": 263,
+        "text": "        reconcileToken: string(payload.reconcileToken, \"reconcileToken\") });"
+      },
+      {
+        "line": 264,
+        "text": "    }"
+      },
+      {
+        "line": 265,
+        "text": "    case \"record-task-outcome\": {"
+      },
+      {
+        "line": 266,
+        "text": "      if (!taskBindingReader) throw new Error(\"Current task binding is unavailable.\");"
+      },
+      {
+        "line": 267,
+        "text": "      if (Object.keys(payload).sort().join() !== \"outcome,reporterProof\") throw new Error(\"A terminal outcome and reporter proof are required.\");"
+      },
+      {
+        "line": 268,
+        "text": "      return store.recordTaskOutcome(payload.outcome as SessionTaskTerminalOutcomeV1,"
+      },
+      {
+        "line": 269,
+        "text": "        string(payload.reporterProof, \"reporterProof\"), taskBindingReader);"
+      },
+      {
+        "line": 270,
+        "text": "    }"
+      },
+      {
+        "line": 271,
+        "text": "    case \"reconcile-task-request\": return store.reconcileTaskRequest("
+      },
+      {
+        "line": 272,
+        "text": "      identity(payload.sender), string(payload.requestId, \"requestId\"),"
+      },
+      {
+        "line": 273,
+        "text": "      string(payload.reconcileToken, \"reconcileToken\"));"
+      },
+      {
+        "line": 274,
+        "text": "    case \"record-session-activity\": {"
+      },
+      {
+        "line": 275,
+        "text": "      if (!activityReporterReader) throw new Error(\"Current activity reporter is unavailable.\");"
+      },
+      {
+        "line": 276,
+        "text": "      if (Object.keys(payload).sort().join() !== \"event,reporterProof,turnId\") {"
+      },
+      {
+        "line": 277,
+        "text": "        throw new Error(\"An activity event, turnId and reporter proof are required.\");"
+      },
+      {
+        "line": 278,
+        "text": "      }"
+      },
+      {
+        "line": 279,
+        "text": "      return store.recordActivity(payload.event as SessionTaskActivityObservationV1,"
+      },
+      {
+        "line": 280,
+        "text": "        string(payload.turnId, \"turnId\"), string(payload.reporterProof, \"reporterProof\"), activityReporterReader);"
+      },
+      {
+        "line": 281,
+        "text": "    }"
+      },
+      {
+        "line": 282,
+        "text": "    case \"session-activity\": {"
+      },
+      {
+        "line": 283,
+        "text": "      const target = identity(payload.target);"
+      },
+      {
+        "line": 284,
+        "text": "      return { activity: activityReporterReader ? store.activityStatus(target) : {"
+      },
+      {
+        "line": 285,
+        "text": "        actor: null, activity: \"unknown\", turnId: null, revision: 0, observedAt: null, source: null,"
+      },
+      {
+        "line": 286,
+        "text": "      } };"
+      },
+      {
+        "line": 287,
+        "text": "    }"
+      },
+      {
+        "line": 288,
+        "text": "    case \"send\": {"
+      }
+    ]
+  },
+  {
+    "path": "mcp-server/src/session-message-broker.ts",
+    "lines": [
+      {
+        "line": 574,
+        "text": "          if (request.protocolVersion !== SESSION_MESSAGE_PROTOCOL || !tokenMatches(request.token ?? \"\", token)) throw new Error(\"Broker authentication failed.\");"
+      },
+      {
+        "line": 575,
+        "text": "          const payload = request.payload && typeof request.payload === \"object\" && !Array.isArray(request.payload) ? request.payload : {};"
+      },
+      {
+        "line": 576,
+        "text": "          const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, modelCapabilities, undefined, undefined, wakeHookObservationReader);"
+      },
+      {
+        "line": 577,
+        "text": "          const response = `${JSON.stringify({ ok: true, data })}\\n`;"
+      },
+      {
+        "line": 578,
+        "text": "          if (Buffer.byteLength(response, \"utf8\") > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {"
+      },
+      {
+        "line": 579,
+        "text": "            throw new Error(\"The broker response exceeded its limit.\");"
+      },
+      {
+        "line": 580,
+        "text": "          }"
+      }
+    ]
+  },
+  {
+    "path": "mcp-server/src/session-message-service.ts",
+    "lines": [
+      {
+        "line": 74,
+        "text": "    if (!sender) return failure(\"BINDING_REQUIRED\", \"The session message hook did not bind the sending session.\");"
+      },
+      {
+        "line": 75,
+        "text": "    if (!target || typeof args.body !== \"string\" || !args.body.trim() || args.body.includes(\"\\0\")"
+      },
+      {
+        "line": 76,
+        "text": "      || Buffer.byteLength(args.body, \"utf8\") > SESSION_MESSAGE_BODY_MAX_BYTES) {"
+      },
+      {
+        "line": 77,
+        "text": "      return failure(\"INVALID_INPUT\", \"Target and bounded nonempty body are required.\");"
+      },
+      {
+        "line": 78,
+        "text": "    }"
+      },
+      {
+        "line": 79,
+        "text": "    try {"
+      },
+      {
+        "line": 80,
+        "text": "      const { activity } = await sessionMessageRequest<{ activity: SessionActivityState }>("
+      },
+      {
+        "line": 81,
+        "text": "        \"session-activity\", { target }, this.stateDirectory);"
+      },
+      {
+        "line": 82,
+        "text": "      if (!activity.actor || activity.activity === \"unknown\" || !activity.turnId) {"
+      },
+      {
+        "line": 83,
+        "text": "        return ok({ state: \"held\", reason: \"activity-unknown\", messageId: null });"
+      },
+      {
+        "line": 84,
+        "text": "      }"
+      },
+      {
+        "line": 85,
+        "text": "      const data = await sessionMessageRequest(\"contact-session\", {"
+      },
+      {
+        "line": 86,
+        "text": "        sender, target, body: args.body, messageId: args.messageId ?? randomUUID(),"
+      },
+      {
+        "line": 87,
+        "text": "        ...(args.ttlSeconds === undefined ? {} : { ttlSeconds: args.ttlSeconds }),"
+      },
+      {
+        "line": 88,
+        "text": "        expectedActor: activity.actor, expectedTurnId: activity.turnId, expectedRevision: activity.revision,"
+      },
+      {
+        "line": 89,
+        "text": "      }, this.stateDirectory);"
+      }
+    ]
+  },
+  {
+    "path": "mcp-server/src/session-message-cli.ts",
+    "lines": [
+      {
+        "line": 10,
+        "text": ""
+      },
+      {
+        "line": 11,
+        "text": "/** Vendor-neutral stdin/stdout adapter. Secrets and message bodies never appear in process arguments. */"
+      },
+      {
+        "line": 12,
+        "text": "export async function runSessionMessageCli(raw: string, stateDirectory?: string): Promise<Record<string, unknown>> {"
+      },
+      {
+        "line": 13,
+        "text": "  const request = JSON.parse(raw) as { operation?: unknown; payload?: unknown };"
+      },
+      {
+        "line": 14,
+        "text": "  if (typeof request.operation !== \"string\" || !OPERATIONS.has(request.operation)) throw new Error(\"Unsupported session message operation.\");"
+      },
+      {
+        "line": 15,
+        "text": "  if (!request.payload || typeof request.payload !== \"object\" || Array.isArray(request.payload)) throw new Error(\"payload must be an object.\");"
+      },
+      {
+        "line": 16,
+        "text": "  const payload = request.payload as Record<string, unknown>;"
+      },
+      {
+        "line": 17,
+        "text": "  if (request.operation === \"wait\") {"
+      }
+    ]
+  }
+]

@@ -1,0 +1,39 @@
+Already up to date
+Done in 424ms using pnpm v11.19.0
+
+   ╭─────────────────────────────────────────╮
+   │                                         │
+   │   Update available! 11.19.0 → 12.8.1.   │
+   │   Changelog: https://pnpm.io/v/12.8.1   │
+   │    To update, run: pnpm add -g pnpm     │
+   │                                         │
+   ╰─────────────────────────────────────────╯
+
+
+ RUN  v5.0.0 /workspace/ags-a7c-w06w07
+
+ ↓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 delegated outcome and callback commit together; ACK remains separate from acceptance
+ ↓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 exact retry has one callback, conflicting outcome is rejected
+ ↓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 issued messages coexist with task callbacks and retain independent retry receipts after restart
+ ↓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 different request IDs cannot create two terminal outcomes for one owned task
+ ↓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 untrusted first request cannot choose the callback target or delegation ID
+ ↓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 requires registered request plus separate live owning-runtime binding
+ ↓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 standalone terminal outcome has no callback and also requires current binding
+ ✓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 callback enqueue failure rolls back outcome; public broker has no trusted reader 14ms
+ ↓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 outcome insert failure rolls back callback and a trusted broker port can submit
+ ↓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 old instance and malformed evidence cannot displace the current terminal report
+ ↓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 online alone is unknown; only start then observed end of the same turn becomes idle
+ ↓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 mismatched turn, self-report and missing end remain unknown
+ ↓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 exact retry is idempotent; same revision conflict is unknown and stale revision cannot overwrite
+ ↓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 new instance and reused ended instance start unknown; late old event cannot overwrite
+ ✓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 proof, source, turn and lease are verified; product broker has no activity provider 11ms
+ ✓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 broker without a host provider does not expose persisted idle as current 5ms
+ ↓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 SQLite lock race leaves activity unchanged
+ ↓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 expired same-instance restart and regressed observation time cannot claim idle
+ ↓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 future observation is unknown until its verified timestamp
+ ↓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 expired heartbeat cannot resurrect prior idle across a lease gap
+
+ Test Files  2 passed (2)
+      Tests  3 passed | 17 skipped (20)
+   Start at  22:52:39
+   Duration  729ms (transform 58%, import 39%, tests 3%, worker 1%)

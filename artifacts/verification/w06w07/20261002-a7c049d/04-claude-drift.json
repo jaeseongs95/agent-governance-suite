@@ -1,0 +1,11 @@
+{
+  "command": [
+    "node",
+    "scripts/build-claude-plugin.mjs",
+    "--drift"
+  ],
+  "cwd": "/workspace/ags-a7c-w06w07",
+  "startedAt": "2026-10-01T22:52:25.444397+00:00",
+  "durationSeconds": 0.666,
+  "exitCode": 0
+}

@@ -1,0 +1,14 @@
+
+ RUN  v5.0.0 /workspace/ags-a7c-w06w07
+
+ ↓ tests/session-messaging/broker-lifecycle.test.ts > retries transient endpoint publication failures and serves the published endpoint
+ ↓ tests/session-messaging/broker-lifecycle.test.ts > releases startup resources after permanent failure and allows recovery
+ ↓ tests/session-messaging/broker-lifecycle.test.ts > releases startup resources after ENOSPC failure and allows recovery
+ ↓ tests/session-messaging/broker-lifecycle.test.ts > releases startup resources after credentials failure and allows recovery
+ ↓ tests/session-messaging/broker-lifecycle.test.ts > releases startup resources after database failure and allows recovery
+ ✓ tests/session-messaging/broker-lifecycle.test.ts > delivers and acknowledges a message using only the packaged CLI and broker 1305ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 5 skipped (6)
+   Start at  22:56:42
+   Duration  1.60s (tests 90%, transform 7%, import 2%)

@@ -1,0 +1,14 @@
+{
+  "command": [
+    "pnpm",
+    "install",
+    "--frozen-lockfile",
+    "--ignore-scripts",
+    "--store-dir",
+    "/tmp/ags-a7c-pnpm-store"
+  ],
+  "cwd": "/workspace/ags-a7c-w06w07",
+  "startedAt": "2026-10-01T22:51:48.035031+00:00",
+  "durationSeconds": 18.746,
+  "exitCode": 0
+}

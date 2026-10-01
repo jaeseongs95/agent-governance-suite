@@ -1,0 +1,16 @@
+{
+  "command": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/session-messaging/broker-lifecycle.test.ts",
+    "--testNamePattern",
+    "delivers and acknowledges a message using only the packaged CLI and broker",
+    "--reporter",
+    "verbose"
+  ],
+  "cwd": "/workspace/ags-a7c-w06w07",
+  "startedAt": "2026-10-01T22:56:42.324368+00:00",
+  "durationSeconds": 2.0,
+  "exitCode": 0
+}
