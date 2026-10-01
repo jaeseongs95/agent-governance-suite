@@ -7,7 +7,7 @@
 - `pnpm lint`, `pnpm build`, `pnpm test`가 대상 Node.js 버전에서 통과한다.
 - `pnpm bundle:check`가 설치물의 파일과 manifest 참조를 확인한다.
 - `pnpm validate:all`이 저장소 내 스킬과 플러그인 검증기를 통과한다.
-- Codex 개발 환경에서 `pnpm validate:official`이 시스템 skill·plugin validator를 통과한다.
+- Codex 개발 환경에서 `pnpm validate:official`이 실행에 지정한 `CODEX_HOME`의 공식 skill·plugin validator를 통과한다. 각 실행의 공식 원본 revision·파일별 digest와 검증 대상 후보·플러그인 루트·전체 스킬 범위를 기록한다. 결과는 기록한 입력과 대상에 적용하며, 최신 bundled validator나 출하 tag의 검증 결과로 확대하지 않는다.
 - `pnpm release:check`가 `release/version.json`과 모든 현재 버전 표면의 일치를 확인한다.
 - `pnpm source:check`가 registry·descriptor·metadata·통합 checksum을, `pnpm source:verify`가 고정된 원격 ref·peeled commit·원본 checksum을 확인한다.
 - `git diff --check`에 공백 오류가 없다.
