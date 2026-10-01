@@ -1,0 +1,128 @@
+{
+  "schemaVersion": "1.0.0",
+  "review": "independent-ags-contract-public-path",
+  "reviewedAtDateUtc": "2026-10-01",
+  "integrationCommit": "a7c049d5de392651b102840cb7e75243e1afe317",
+  "remoteW05SnapshotCommit": "247cfe3a6b6ba0ee4b38b2168930caf2000b3540",
+  "requestedFrozenW05Commit": "fa68c3acd7a7bdcf7a517ab998e2be364268f76a",
+  "requestedFrozenW05Acquired": false,
+  "trackedSourcesChanged": false,
+  "buildPerformed": false,
+  "releaseApproval": false,
+  "toolchain": {
+    "node": "v24.19.0",
+    "pnpm": "11.19.0"
+  },
+  "results": {
+    "a7c049d": {
+      "bundleCheck": "PASS",
+      "claudeDrift": "fresh",
+      "focusedTests": {
+        "passed": 93,
+        "failed": 0
+      }
+    },
+    "247cfe3": {
+      "bundleCheck": "FAIL_stale_server_bundle",
+      "claudeDrift": "WARN_missing_schema_stale_types",
+      "wTestsInitial": {
+        "passed": 112,
+        "failed": 1
+      },
+      "w05r1IsolatedRerun": {
+        "passed": 9,
+        "failed": 0
+      },
+      "sourceAndPublicTests": {
+        "passed": 77,
+        "failed": 3
+      }
+    },
+    "clockProbe": "same held-before-observation queued-after on both commits",
+    "vmProtectedFalseSchemaAccepted": true
+  },
+  "files": [
+    {
+      "path": "247cfe3-bundle-check.log",
+      "bytes": 333,
+      "sha256": "dc3fbe79e188cd71fd879b0b2e9266f6630f0647e1c4faafaba6df88500adeb3"
+    },
+    {
+      "path": "247cfe3-claude-drift.log",
+      "bytes": 296,
+      "sha256": "a0e8a59005f9101cf1a0a4f58134cc4e7102664d73349a333e3ee3b67707036a"
+    },
+    {
+      "path": "247cfe3-focused-public-tests.log",
+      "bytes": 3054,
+      "sha256": "e0adf7f7df9527e73ac1d30f6de41a58172961e757e2237f1e2d4a0cb7961232"
+    },
+    {
+      "path": "247cfe3-targeted-tests.log",
+      "bytes": 1409,
+      "sha256": "600c5a0999a31e9027c0398ffbbd38795c14579745af1ea1e9061e9cdfacc900"
+    },
+    {
+      "path": "247cfe3-w05r1-rerun.log",
+      "bytes": 176,
+      "sha256": "f58f9d2692539f3ed4d13aa09419a5635ec9a0250f5154271b89dbfdad01c7cd"
+    },
+    {
+      "path": "README.md",
+      "bytes": 14098,
+      "sha256": "2d8304dd2ad546a7b3cd74f849a02e71ca770aff83c48089c6868c23972f58f3"
+    },
+    {
+      "path": "a7c049d-bundle-check.log",
+      "bytes": 610,
+      "sha256": "b4cbcb88a4279ebcd7abf67a15b5efb24072580580edae6df2e5b8a7eb9d0a6c"
+    },
+    {
+      "path": "a7c049d-claude-drift.log",
+      "bytes": 646,
+      "sha256": "2c09a2e1d0ffcf07fe7cc7a4c9b9b75b86cd6434a752b89cdcc76ae7f3733ade"
+    },
+    {
+      "path": "a7c049d-targeted-tests.log",
+      "bytes": 432,
+      "sha256": "ac595578ea1d4eaf3cf20b26f2c0a69c3d528830c2484c082cae1c5dc8cffe99"
+    },
+    {
+      "path": "clock-boundary-probe.log",
+      "bytes": 268,
+      "sha256": "9d109d489eacde9eafebb7048aea2bfc0b4eb89175adf436d41f5736e893d83c"
+    },
+    {
+      "path": "clock-boundary-probe.mts",
+      "bytes": 2534,
+      "sha256": "e51d241f4b02ff59a4a346f87243a53d0681879a2b12788ca568ba7affa19706"
+    },
+    {
+      "path": "commands.txt",
+      "bytes": 3006,
+      "sha256": "29a445105ac97e90d18a20ddd6eadb1bb5ce01c374e26f3a5bb394f87aafe020"
+    },
+    {
+      "path": "execution-metadata.json",
+      "bytes": 11926,
+      "sha256": "26bb3b7601e5eaa0d2358c4a066882ae7829f36a35889991643925a572c71613"
+    },
+    {
+      "path": "protected-profile-probe.log",
+      "bytes": 117,
+      "sha256": "8331e503c10734b9dbaea7e6e1af5c2f038497e5c92a2d19e02b5b79df3f6721"
+    },
+    {
+      "path": "protected-profile-probe.mjs",
+      "bytes": 785,
+      "sha256": "d0434b2773f06748af62eefc1637f0b46113889b13883760c3f5fb2e893fdb5c"
+    }
+  ],
+  "normalization": {
+    "checkoutPaths": "$REVIEW_ROOT",
+    "clockProbeOutput": "retains candidate and before/after results; removes generated message IDs and timestamps",
+    "originalRawLogs": "retained privately in original evidence folder; not included in public package",
+    "executionMetadataEditorial": "Clock description uses coordination timestamps; technical command/exit/timing fields unchanged."
+  },
+  "executionMetadata": "execution-metadata.json"
+}

@@ -1,0 +1,8 @@
+file://$REVIEW_ROOT/ags-review-r3/scripts/check-bundle.mjs:18
+      throw new Error(`${output} is stale. Run pnpm build and commit the result.`);
+            ^
+
+Error: mcp-server/dist/server.mjs is stale. Run pnpm build and commit the result.
+    at file://$REVIEW_ROOT/ags-review-r3/scripts/check-bundle.mjs:18:13
+
+Node.js v24.19.0

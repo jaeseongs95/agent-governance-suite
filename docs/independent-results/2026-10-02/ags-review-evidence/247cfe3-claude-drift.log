@@ -1,0 +1,3 @@
+warning: claude-plugin/ differs from the current sources (2 item(s)). This does not block shared-source changes; run pnpm claude:build for a release or Claude-side work.
+- missing file claude-plugin/contracts/session-auto-wake-outlook.v1.schema.json
+- stale file claude-plugin/contracts/types.ts

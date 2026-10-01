@@ -1,0 +1,32 @@
+# Set REVIEW_ROOT to the isolated parent directory of ags-review, ags-review-r3 and ags-review-evidence.
+# Absolute machine-specific paths are normalized; command operations and flags are unchanged.
+# Acquisition / identity (read-only remote)
+git clone --no-checkout --filter=blob:none https://github.com/jaeseongs95/agent-governance-suite.git ags-review
+git -C ags-review checkout --detach origin/codex/v260-semantic-decision-layer
+git -C ags-review worktree add --detach ../ags-review-r3 247cfe3a6b6ba0ee4b38b2168930caf2000b3540
+git -C ags-review diff --name-only a7c049d5de392651b102840cb7e75243e1afe317 247cfe3a6b6ba0ee4b38b2168930caf2000b3540
+# fa68c3a NOT ACQUIRED: GitHub commit GET422 and git upload-pack not our ref
+
+# Working directory: ags-review (integration a7c049d)
+pnpm install --frozen-lockfile --ignore-scripts --store-dir $REVIEW_ROOT/ags-review-pnpm-store
+pnpm bundle:check
+pnpm claude:drift
+node_modules/.bin/vitest run tests/coordinate-subagents/v3x/R15.test.mjs tests/coordinate-subagents/v3x/R16.test.mjs tests/coordinate-subagents/v3x/R16-e.test.mjs tests/coordinate-subagents/v3x/R17.test.mjs tests/coordinate-subagents/v3x/R18-ch.test.mjs tests/coordinate-subagents/v3x/W01.test.mjs tests/coordinate-subagents/v3x/W02.test.mjs tests/coordinate-subagents/v3x/W03.test.mjs tests/coordinate-subagents/v3x/W05.test.mjs tests/coordinate-subagents/v3x/W05-r1.test.mjs tests/coordinate-subagents/v3x/W05-r2.test.mjs
+
+# Working directory: ags-review-r3 (247cfe3); identical dependency manifest/lockfile
+# Dependencies exposed via reviewer-created node_modules symlink to ../ags-review/node_modules
+node scripts/check-bundle.mjs
+node scripts/build-claude-plugin.mjs --drift
+node_modules/.bin/vitest run tests/coordinate-subagents/v3x/W01.test.mjs tests/coordinate-subagents/v3x/W02.test.mjs tests/coordinate-subagents/v3x/W03.test.mjs tests/coordinate-subagents/v3x/W05.test.mjs tests/coordinate-subagents/v3x/W05-r1.test.mjs tests/coordinate-subagents/v3x/W05-r2.test.mjs tests/coordinate-subagents/v3x/W05-r3.test.mjs
+node_modules/.bin/vitest run tests/coordinate-subagents/v3x/W05-r1.test.mjs
+node_modules/.bin/vitest run tests/coordinate-subagents/v3x/W05-r3.test.mjs tests/session-messaging/w05-r3-framing.test.mjs tests/session-messaging/w05-r3-hook.test.mjs tests/session-messaging/w05-r3-presence.test.ts tests/session-messaging/message-lifecycle.test.ts
+
+# Working directory: ags-review; evidence-only probes, no source changes
+node --import tsx ../ags-review-evidence/clock-boundary-probe.mts $REVIEW_ROOT/ags-review
+node --import tsx ../ags-review-evidence/clock-boundary-probe.mts $REVIEW_ROOT/ags-review-r3
+node ../ags-review-evidence/protected-profile-probe.mjs
+
+# Future repeat: first replace target with authoritatively supplied actual frozen candidate.
+# Do not use pnpm test before recording bundle freshness; package's test script builds.
+# Direct vitest above avoids rewriting generated output.
+# Full validation and live W07 are NOT_RUN, not implied by these results.

@@ -1,0 +1,2 @@
+{"candidate": "a7c049d", "before": {"state": "held", "reason": "activity-unknown"}, "after": {"state": "queued", "duplicate": false}}
+{"candidate": "247cfe3", "before": {"state": "held", "reason": "activity-unknown"}, "after": {"state": "queued", "duplicate": false}}
