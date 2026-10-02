@@ -1,0 +1,20 @@
+{
+  "kind": "append-only-canonicalization-erratum-manifest",
+  "preservedEvidenceCommit": "9dc2ebd8b75aff2413240f42238d59e871a5eec8",
+  "scope": "two metadata erratum files only; all earlier82 files unchanged",
+  "frozenSealTransportSha256": "e7caf127f6274917249ba78560ad89fa8156d18b7c74a96c3bd2bc3ad7648d3f",
+  "payloadCanonicalSha256": "2f153df7ffeb580ceccc23f4c07030c1d72370efd3dc0677e037e106fca054e7",
+  "envelopeComparisonSha256": "e966b726499763061ced90f802dc3924dcffd8a11e1e3e98d946d8672ce9d0dd",
+  "entries": [
+    {
+      "path": "canonicalization-erratum.json",
+      "bytes": 1828,
+      "sha256": "fc3a348a024767af13a1d235634566a4214a33ca6606e140e4be65174a7ecabc"
+    },
+    {
+      "path": "canonicalization-erratum.md",
+      "bytes": 2587,
+      "sha256": "45fd381bfb6026223c34e1e82f427e2c6d0d765558bd0d99e230867fdab4922e"
+    }
+  ]
+}

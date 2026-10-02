@@ -1,0 +1,39 @@
+{
+  "kind": "append-only-generated15-canonicalization-metadata-erratum",
+  "frozenEvidenceCommit": "9dc2ebd8b75aff2413240f42238d59e871a5eec8",
+  "frozenSealPath": "generated15-subset-seal.json",
+  "frozenSealFileBytes": 18458,
+  "frozenSealTransportSha256": "e7caf127f6274917249ba78560ad89fa8156d18b7c74a96c3bd2bc3ad7648d3f",
+  "originalDeclaredEncoding": "JSON sorted keys, compact separators, ensure_ascii=true; sealCanonicalSha256 field excluded",
+  "finding": "Declared metadata names only digest exclusion, but the actual producer hashes sealPayload before adding BOTH envelope fields. Original digest is the payload digest; declaration omitted the encoding-field exclusion.",
+  "canonicalSerialization": {
+    "objectKeyOrder": "sorted recursively",
+    "separators": [
+      ",",
+      ":"
+    ],
+    "ensure_ascii": true,
+    "byteEncoding": "UTF-8",
+    "trailingNewline": false
+  },
+  "actualProducerPayloadDefinition": {
+    "excludedTopLevelFields": [
+      "canonicalPayloadEncoding",
+      "sealCanonicalSha256"
+    ],
+    "canonicalBytes": 14707,
+    "sha256": "2f153df7ffeb580ceccc23f4c07030c1d72370efd3dc0677e037e106fca054e7"
+  },
+  "envelopeIncludingEncodingDefinitionForComparison": {
+    "excludedTopLevelFields": [
+      "sealCanonicalSha256"
+    ],
+    "canonicalBytes": 14828,
+    "sha256": "e966b726499763061ced90f802dc3924dcffd8a11e1e3e98d946d8672ce9d0dd"
+  },
+  "comparisonDigestIsNotReplacementSeal": true,
+  "producerExpression": "canonical=lambda obj:json.dumps(obj,sort_keys=True,separators=(comma,colon),ensure_ascii=True).encode(); envelope={canonicalPayloadEncoding:description,sealCanonicalSha256:sha(canonical(sealPayload)),**sealPayload}",
+  "source25Root15Claude507AndOriginal82Modified": false,
+  "newProductTestsBuildsClockDiagnosticsOrSourceChanges": false,
+  "authorityEffect": "none"
+}
