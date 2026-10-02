@@ -1,0 +1,38 @@
+title: "[Show & Tell] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share systems, experiments, workflows, integrations, or results built with Agent Governance Suite.
+  - type: textarea
+    id: built
+    attributes:
+      label: What did you build?
+      description: Give a concise description of the system, experiment, or workflow.
+      placeholder: "What it does and who or what it is for."
+    validations:
+      required: true
+  - type: textarea
+    id: usage
+    attributes:
+      label: How did you use AGS?
+      description: Describe the topology, agents/sessions, governance flow, integrations, or relevant AGS features.
+      placeholder: "Peer/session layout, callbacks, audit flow, evidence handling, integrations, etc."
+    validations:
+      required: true
+  - type: textarea
+    id: results
+    attributes:
+      label: Results
+      description: Share outcomes, measurements, lessons learned, limitations, or unexpected behavior.
+      placeholder: "What happened?"
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Links and artifacts
+      description: Add repositories, demos, screenshots, logs, write-ups, or other public material.
+      placeholder: "Optional"
+    validations:
+      required: false

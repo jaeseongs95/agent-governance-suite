@@ -1,0 +1,46 @@
+title: "[Idea] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use Ideas for proposals that may change or extend Agent Governance Suite. If the work is already concrete and scoped, consider opening an Issue instead.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or limitation
+      description: What problem, limitation, or missing capability are you trying to address?
+      placeholder: "Describe the current situation and why it matters."
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the behavior or capability you would like to see.
+      placeholder: "What should AGS do differently?"
+    validations:
+      required: true
+  - type: textarea
+    id: governance
+    attributes:
+      label: Governance / safety implications
+      description: Note effects on auditability, permissions, evidence, session isolation, rollback, or other governance boundaries.
+      placeholder: "Optional, but especially useful for architecture-level proposals."
+    validations:
+      required: false
+  - type: textarea
+    id: tradeoffs
+    attributes:
+      label: Alternatives and trade-offs
+      description: Other approaches considered, compatibility concerns, or costs.
+      placeholder: "Optional"
+    validations:
+      required: false
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Link related issues, discussions, branches, docs, experiments, or external material.
+      placeholder: "Optional"
+    validations:
+      required: false
