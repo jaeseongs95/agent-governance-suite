@@ -1,0 +1,38 @@
+title: "[Announcement] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this category for official Agent Governance Suite project updates, releases, and important notices.
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: One-line summary of the announcement.
+      placeholder: "AGS vX.Y.Z is now available."
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: Explain what changed and why it matters.
+      placeholder: "Key changes, scope, compatibility notes, and context."
+    validations:
+      required: true
+  - type: textarea
+    id: action
+    attributes:
+      label: Action required
+      description: Note any upgrade, migration, or follow-up steps. Leave blank if none.
+      placeholder: "Upgrade steps, migration notes, or 'None'."
+    validations:
+      required: false
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Link release notes, pull requests, commits, documentation, or evidence.
+      placeholder: "Relevant links"
+    validations:
+      required: false
