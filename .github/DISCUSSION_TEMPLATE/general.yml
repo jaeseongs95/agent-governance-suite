@@ -1,0 +1,30 @@
+title: "[General] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use General for AGS-related conversation that is not a bug report, support question, or concrete feature proposal.
+  - type: input
+    id: topic
+    attributes:
+      label: Topic
+      description: What would you like to discuss?
+      placeholder: "Short topic"
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Provide enough context for others to understand the discussion.
+      placeholder: "Background, constraints, observations, or relevant links."
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional notes
+      description: Anything else that may be useful.
+      placeholder: "Optional"
+    validations:
+      required: false
