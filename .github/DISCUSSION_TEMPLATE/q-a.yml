@@ -1,0 +1,53 @@
+title: "[Q&A] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ask usage, installation, integration, or troubleshooting questions here. For confirmed reproducible defects that need tracked work, open an Issue.
+  - type: input
+    id: version
+    attributes:
+      label: AGS version
+      description: Release, branch, or commit you are using.
+      placeholder: "e.g. v2.7.7, main, or a commit SHA"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Relevant clients, operating system, runtime, or integration.
+      placeholder: "e.g. Claude Code + Codex CLI, Windows 11, Node 24"
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: What are you trying to do?
+      description: State the intended workflow or expected behavior.
+      placeholder: "Describe the goal."
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior, including the smallest useful reproduction if available.
+      placeholder: "Steps, result, and any relevant timing or sequence."
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs or evidence
+      description: Paste relevant logs, error text, screenshots, message IDs, commit SHAs, or other evidence. Redact credentials and private data.
+      placeholder: "Optional supporting evidence"
+    validations:
+      required: false
+  - type: checkboxes
+    id: redaction
+    attributes:
+      label: Sensitive data check
+      options:
+        - label: I removed credentials, tokens, secrets, and private data from the material above.
+          required: true
