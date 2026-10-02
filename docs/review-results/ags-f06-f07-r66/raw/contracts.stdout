@@ -1,0 +1,18 @@
+{"id":"manifest","entryPoints":["mcp-server","scope-baseline","scope-compare","acceptance-cli"],"artifacts":182,"manifestSha256":"sha256:eb37b81e490564e1774e9f1ee8fea825c541102e2cc77705aabf2110f450952e"}
+{"id":"missing-artifacts","checked":182,"operatingProfileRead":false}
+{"id":"binding-matrix","negativeCases":20,"preservedTicket":true,"oneUse":true}
+{"id":"precision-mismatch","terminalObservedAt":"2026-10-01T00:00:00.000123Z","dispatch":"REJECTED","receiptPureVerifier":"ACCEPTED","productBypass":false,"actualProducerFormat":"UNVERIFIED"}
+{"id":"wire-schema-inventory","matchingSchemas":["host-integration.v1.schema.json"],"publicDefinitions":["trustProfile","serverProfileSelection","profileBinding"],"typedA2DispatchOrReceiptDefinition":false,"consumerValidation":"HAND_CODED","releaseContractSatisfaction":"UNVERIFIED"}
+✔ as-committed package manifest binds every current execution artifact (80.725175ms)
+✔ each advertised artifact is required and omission is detected before profile/state access (365.183308ms)
+✔ all registration and receipt identity components are bound, and invalid receipts preserve the ticket (440.001556ms)
+✔ reproduce dispatch/receipt terminal timestamp precision mismatch without a producer or provider (8.226634ms)
+✔ public schema inventory exposes profile selection but does not publish A2 signed-body schemas (1.858367ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1110.464304

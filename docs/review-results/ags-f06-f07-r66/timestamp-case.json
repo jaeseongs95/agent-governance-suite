@@ -1,0 +1,56 @@
+{
+  "candidate": "a7c049d5de392651b102840cb7e75243e1afe317",
+  "classification": "source compatibility observation; normative correctness unresolved",
+  "identicalSharedInput": {
+    "eventId": "synthetic-event",
+    "callId": "synthetic-provider-call",
+    "threadId": "synthetic-thread",
+    "turnId": "synthetic-turn",
+    "status": "succeeded",
+    "observedAt": "2026-10-01T00:00:00.000123Z",
+    "model": "synthetic-model",
+    "effort": "high",
+    "provenance": "provider_raw_response",
+    "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "canonicalTerminalSha256": "46f9ae527531d561fb9c5647823278c325da75b1667bb464581301fdb30f7b72",
+  "issuedAt": "2026-10-01T00:00:01.000Z",
+  "expiresAt": "2026-10-01T00:01:01.000Z",
+  "verificationNow": "2026-10-01T00:00:01.001Z",
+  "wrappersAreDistinct": "dispatch registration version 1 vs receipt version 2; same terminal object and shared identity fields",
+  "dispatch": {
+    "publicFunction": "FlowmarshalCurrentInvocation.reserve",
+    "path": "mcp-server/src/host-integration/flowmarshal-current-invocation.ts",
+    "parserLine": 25,
+    "consumerLine": 154,
+    "refusalLine": 178,
+    "result": "REJECTED",
+    "error": "FlowMarshal A2 dispatch unavailable: registration binding is invalid",
+    "roundTripIso": "2026-10-01T00:00:00.000Z",
+    "exactRoundTrip": false
+  },
+  "receipt": {
+    "publicFunction": "verifyFlowmarshalReceipt",
+    "path": "mcp-server/src/host-integration/observation-challenge.ts",
+    "parserLine": 74,
+    "publicFunctionLine": 417,
+    "consumerLine": 479,
+    "result": "ACCEPTED",
+    "retainedTerminalObservedAt": "2026-10-01T00:00:00.000123Z"
+  },
+  "productBypass": false,
+  "actualProducerFormat": "UNVERIFIED",
+  "normativeRequirement": "Fractional precision is not specified in the parent-supplied current r66 view; correctness decision remains pending.",
+  "schemas": {
+    "profileDefinitions": "contracts/host-integration.v1.schema.json#/$defs",
+    "contextProjectionTimestamp": "contracts/execution-context.v1.schema.json#/properties/observedAt",
+    "typedDispatchReceiptBodyRequirement": "UNVERIFIED; schema inventory observation is not classified as a defect"
+  },
+  "preservedEvidence": {
+    "diagnosticCommandExit": 0,
+    "diagnosticStdoutSha256": "9f3375ee2fe807e3203892ba86688d77b36c8b3bcdcdfe1220f0aa8e175092bf",
+    "proposedParityCommandExit": 1,
+    "proposedParityStdoutSha256": "a0c3cc6ac8ca4a2de9d2d5a7403515187a901d5f286b71c4d3d1f4c83ea4171b",
+    "testOnlyProposalSha256": "598fe94b47e07068527ba53e7895c49a4d8e4e55dfb3fe63ec9de6107c50f023"
+  }
+}

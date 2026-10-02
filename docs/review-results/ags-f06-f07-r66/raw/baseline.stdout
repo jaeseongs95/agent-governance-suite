@@ -1,0 +1,12 @@
+
+ RUN  v5.0.0 <review-tree>
+
+ ✓ tests/coordinate-subagents/v3x/F02.test.mjs (4 tests) 14ms
+ ✓ tests/coordinate-subagents/v3x/F05.test.mjs (5 tests) 910ms
+   ✓ staged package probe binds A2 temporary state and reports only local derived evidence 333ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  23:27:12
+   Duration  1.57s (tests 67%, import 20%, transform 12%, worker 1%)
+

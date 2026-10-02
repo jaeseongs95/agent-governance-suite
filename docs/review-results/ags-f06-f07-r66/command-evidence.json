@@ -1,0 +1,185 @@
+{
+  "candidate": "a7c049d5de392651b102840cb7e75243e1afe317",
+  "publicationPolicy": "No local execution identity/environment paths or canonical ledger exports are included. Raw text is sanitized where indicated; original and published hashes are distinct.",
+  "runtime": {
+    "node": "v24.19.0",
+    "pnpm": "11.19.0"
+  },
+  "requestedModel": {
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "fallbackAllowed": false
+  },
+  "actualModel": {
+    "status": "Unobservable from exposed runtime metadata; requested values are not asserted as actual."
+  },
+  "commands": [
+    {
+      "id": "runtime",
+      "command": [
+        "node",
+        "--version"
+      ],
+      "cwd": "<review-tree>",
+      "exit": 0,
+      "testFlag": {},
+      "raw": {
+        "stdout": {
+          "artifact": "raw/runtime.stdout",
+          "originalSha256": "b7677d3ec37ee1897ba07dc2cfe8292fe421c9ac93396cca5bbece486d1a2a41",
+          "publishedSha256": "b7677d3ec37ee1897ba07dc2cfe8292fe421c9ac93396cca5bbece486d1a2a41",
+          "sanitized": false
+        },
+        "stderr": {
+          "artifact": "raw/runtime.stderr",
+          "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "publishedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "sanitized": false
+        }
+      },
+      "classification": "Existing isolated synthetic evidence; not formal F07 execution."
+    },
+    {
+      "id": "inventory",
+      "command": [
+        "python3",
+        "../inspect-source.py"
+      ],
+      "cwd": "<review-tree>",
+      "exit": 0,
+      "testFlag": {},
+      "raw": {
+        "stdout": {
+          "artifact": "raw/inventory.stdout",
+          "originalSha256": "2263ce78ade239ea85384180426086e0007cb8a69397fdf5c9268bdb49e506b8",
+          "publishedSha256": "1ca5bbdf0c4a9dd9c0699c03cc45d410ba1f8b8c6878d51ee2cf0b4cc2806126",
+          "sanitized": true
+        },
+        "stderr": {
+          "artifact": "raw/inventory.stderr",
+          "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "publishedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "sanitized": false
+        }
+      },
+      "classification": "Existing isolated synthetic evidence; not formal F07 execution."
+    },
+    {
+      "id": "baseline",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--maxWorkers=1",
+        "tests/coordinate-subagents/v3x/F02.test.mjs",
+        "tests/coordinate-subagents/v3x/F05.test.mjs"
+      ],
+      "cwd": "<review-tree>",
+      "exit": 0,
+      "testFlag": {},
+      "raw": {
+        "stdout": {
+          "artifact": "raw/baseline.stdout",
+          "originalSha256": "f451806b753e7f0ca2d5bf6edc9f56a4243b058b6498de2e994d3a82b15a0874",
+          "publishedSha256": "97cde810d91bbec288f3f403dfef1a938eff196d295f79cfa9ed76a4c58f4402",
+          "sanitized": true
+        },
+        "stderr": {
+          "artifact": "raw/baseline.stderr",
+          "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "publishedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "sanitized": false
+        }
+      },
+      "classification": "Existing isolated synthetic evidence; not formal F07 execution."
+    },
+    {
+      "id": "contracts",
+      "command": [
+        "node",
+        "--import",
+        "./node_modules/tsx/dist/loader.mjs",
+        "--test",
+        "tests/coordinate-subagents/v3x/AGS-F06-F07-contract-proposal.node.mjs"
+      ],
+      "cwd": "<review-tree>",
+      "exit": 0,
+      "testFlag": {},
+      "raw": {
+        "stdout": {
+          "artifact": "raw/contracts.stdout",
+          "originalSha256": "9f3375ee2fe807e3203892ba86688d77b36c8b3bcdcdfe1220f0aa8e175092bf",
+          "publishedSha256": "9f3375ee2fe807e3203892ba86688d77b36c8b3bcdcdfe1220f0aa8e175092bf",
+          "sanitized": false
+        },
+        "stderr": {
+          "artifact": "raw/contracts.stderr",
+          "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "publishedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "sanitized": false
+        }
+      },
+      "classification": "Existing isolated synthetic evidence; not formal F07 execution."
+    },
+    {
+      "id": "precision-parity",
+      "command": [
+        "node",
+        "--import",
+        "./node_modules/tsx/dist/loader.mjs",
+        "--test",
+        "--test-name-pattern=terminal timestamp precision",
+        "tests/coordinate-subagents/v3x/AGS-F06-F07-contract-proposal.node.mjs"
+      ],
+      "cwd": "<review-tree>",
+      "exit": 1,
+      "testFlag": {
+        "AGS_REVIEW_REQUIRE_PRECISION_PARITY": "1"
+      },
+      "raw": {
+        "stdout": {
+          "artifact": "raw/precision-parity.stdout",
+          "originalSha256": "a0c3cc6ac8ca4a2de9d2d5a7403515187a901d5f286b71c4d3d1f4c83ea4171b",
+          "publishedSha256": "adbe0af39a0a7d4b6e5be29f364df1a5364e8508004451bd66a7dd690290898e",
+          "sanitized": true
+        },
+        "stderr": {
+          "artifact": "raw/precision-parity.stderr",
+          "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "publishedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "sanitized": false
+        }
+      },
+      "classification": "Existing isolated synthetic evidence; not formal F07 execution."
+    },
+    {
+      "id": "patch-check",
+      "command": [
+        "git",
+        "-C",
+        "<candidate-tree>",
+        "apply",
+        "--check",
+        "<review-root>/test-only-proposal.patch"
+      ],
+      "cwd": "<review-tree>",
+      "exit": 0,
+      "testFlag": {},
+      "raw": {
+        "stdout": {
+          "artifact": "raw/patch-check.stdout",
+          "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "publishedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "sanitized": false
+        },
+        "stderr": {
+          "artifact": "raw/patch-check.stderr",
+          "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "publishedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "sanitized": false
+        }
+      },
+      "classification": "Existing isolated synthetic evidence; not formal F07 execution."
+    }
+  ]
+}

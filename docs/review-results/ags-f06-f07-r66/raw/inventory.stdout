@@ -1,0 +1,115 @@
+{
+  "candidate": "a7c049d5de392651b102840cb7e75243e1afe317",
+  "tree": "7028d31985a497dfbb4f8e74c9a219b3400bffa2",
+  "candidateWorktreeClean": true,
+  "trackedCanonicalPaths": [],
+  "trackedF06F07NamedPaths": [],
+  "scopeSnapshot": {
+    "planningRevision": "r37",
+    "scopeIsReleaseFreeze": false,
+    "interpretation": "Candidate r37 source snapshot; not current canonical r66 status."
+  },
+  "importedProductionFilesEqualCandidate": 663,
+  "lockSha256": "00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e",
+  "installedLockMatchesCandidate": true,
+  "directPackages": [
+    {
+      "name": "@modelcontextprotocol/sdk",
+      "lockVersion": "1.30.0",
+      "actualVersion": "1.30.0",
+      "metadataSha256": "0690cbe02511a95d1ff199acf20b5a12ac4dfde1bbe30c82a0de73afa92dffc9"
+    },
+    {
+      "name": "ajv",
+      "lockVersion": "8.20.0",
+      "actualVersion": "8.20.0",
+      "metadataSha256": "1f9033ee5a6515e7d76938b7072941862d1ed228a6879cc7fe10cdeb75107989"
+    },
+    {
+      "name": "ajv-formats",
+      "lockVersion": "3.0.1",
+      "actualVersion": "3.0.1",
+      "metadataSha256": "402fb4bcfa457f0226813f3976ac42839dd619907c075c108efba8600d7edb69"
+    },
+    {
+      "name": "zod",
+      "lockVersion": "4.5.4",
+      "actualVersion": "4.5.4",
+      "metadataSha256": "5a1983857f982cc7d69336f32053ac7e38780de313d9e18ca3f7b9b7f2f94298"
+    },
+    {
+      "name": "@eslint/js",
+      "lockVersion": "10.0.1",
+      "actualVersion": "10.0.1",
+      "metadataSha256": "866d0fa98ddf79c7d2c0a9865a330f9ba1a415877407b1859223a84fea84bf68"
+    },
+    {
+      "name": "@types/node",
+      "lockVersion": "26.5.0",
+      "actualVersion": "26.5.0",
+      "metadataSha256": "4584b766e56e05662e14e71a7eb14fe5a5be032d77bde37d1121b7b73d073f6c"
+    },
+    {
+      "name": "esbuild",
+      "lockVersion": "0.28.2",
+      "actualVersion": "0.28.2",
+      "metadataSha256": "9d0bc453f4e791553c4cc2298ba023b409241fd9801e494741666eb0f6051490"
+    },
+    {
+      "name": "eslint",
+      "lockVersion": "10.10.0",
+      "actualVersion": "10.10.0",
+      "metadataSha256": "37880b431c2063b49429dd8ff916f81f15a1a8a5287931ff8ff24b040123d5c2"
+    },
+    {
+      "name": "tsx",
+      "lockVersion": "4.23.13",
+      "actualVersion": "4.23.13",
+      "metadataSha256": "3ace2493a0acd26fc72a8433a38113ee04d5a1976910a3f40815f9e779d5c426"
+    },
+    {
+      "name": "typescript",
+      "lockVersion": "6.0.2",
+      "actualVersion": "6.0.2",
+      "metadataSha256": "bb6ee7e709ae60426e30b8d393df4d939ee61407794b4f053ce6338d6eaa8c63"
+    },
+    {
+      "name": "typescript-eslint",
+      "lockVersion": "8.70.0",
+      "actualVersion": "8.70.0",
+      "metadataSha256": "8754d33ae38bf8716b15509582e49fb8c85fda82f5ce91b5bef2a633810d7386"
+    },
+    {
+      "name": "vitest",
+      "lockVersion": "5.0.0",
+      "actualVersion": "5.0.0",
+      "metadataSha256": "a4f269c689b346c33446feaa8adea6bc1c1bd35a21e12c9ffac74198687b0fbc"
+    }
+  ],
+  "host": {
+    "os": "Linux",
+    "architecture": "x86_64"
+  },
+  "sourceSha256": {
+    "AGENTS.md": "53bf2ec7f300aaa1413dd7f4fd5b8123f20fc7767adfa22b81971947969f099b",
+    "docs/implementation-3x/development-scope.json": "abb70e757340ce300f5636c371471c08002421f0a2973042a98081162f14a33d",
+    "docs/implementation-3x/flowmarshal-same-user-profile.ko.md": "f8be6b89dd9d89180642ba3c33ce654173de3db98e23ba0f09bcaa3994303e72",
+    "host-integration.json": "eb37b81e490564e1774e9f1ee8fea825c541102e2cc77705aabf2110f450952e",
+    "pnpm-lock.yaml": "00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e",
+    "contracts/host-integration.v1.schema.json": "f3685ca745a79e749aac29eab647095ac411d4185b008cf0e3207f82aca407de",
+    "contracts/types.ts": "ab064882eeb7a16cf0ce8d76926c6f56a8ffb0b9ef2dbb304cf5b4d5d54f4109",
+    "contracts/execution-context.v1.schema.json": "92ecf50d3e97e85f32c5b58fa0e4b43dea761a7cc25fc521789a60a3e1690002",
+    "contracts/workflow-receipt.v1.schema.json": "d505d98b3b7307318bc05025cfcf36c189fc2a06db65c7ac61c89ce646027c85",
+    "mcp-server/src/host-integration/flowmarshal-profile.ts": "a9c32c194ae7acc78cc93cb3bd652ca241598916c7491dfe0627be9a251f2b89",
+    "mcp-server/src/host-integration/flowmarshal-current-invocation.ts": "9dea24b7a22905b59a43cfab00299b15e707a302ad9f991775397596a06cd3a6",
+    "mcp-server/src/host-integration/flowmarshal-profile-probe.ts": "3f73d95181d7f29578b4365f5efd2021f2c398d222b32df9c59b6b975a450913",
+    "mcp-server/src/host-integration/observation-challenge.ts": "b07668a32055ce753363531dcd9a936719c799114e00a435bfd84da9b4da59ab",
+    "mcp-server/src/host-integration/manifest.ts": "8124e3f0c0f6a2e194555704c73731df1ee6151ff1e3021085f098932cb05a43",
+    "mcp-server/src/server.ts": "655b6108b3e6bc01eb8bfc53e72c91f156e73c335cbefaeb6ea38693bf992608",
+    "mcp-server/src/workflow-service.ts": "d51faf4922f246ab8a083d91cefff7eb277496229c92b22cca846f332072b271",
+    "mcp-server/dist/flowmarshal-profile-probe.mjs": "ff888e31d858bd5a5e3e3bb1220d517b6b0643a72bcc1fdd8178239034f34d9f",
+    "mcp-server/dist/server.mjs": "518c3b2eb26be3feb089a98a81f8e68fc8cff5fdc740d3006e136d1c290f33de",
+    "tests/coordinate-subagents/v3x/F02.test.mjs": "14ab895d0ae14b312f13a080bf66cba19e81efbca07174e530f2925a29864c16",
+    "tests/coordinate-subagents/v3x/F05.test.mjs": "570d1bf904c73a597e0c2821a2ec2af532841a68a7f216b69fc3b321d3d1c3eb"
+  }
+}

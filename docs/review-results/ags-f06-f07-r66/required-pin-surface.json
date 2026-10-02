@@ -1,0 +1,41 @@
+{
+  "requiredSurfacePin": "0e88cb6039e143e79dd8c68c7aecc3e45da41d43",
+  "inspection": "git show of exact local pinned object; read-only static source, no runtime calls",
+  "serverSourceBlob": "5b15395a974fed97469c4669dba2212331abf747",
+  "serverSourceSha256": "6becf4b8061a312989b9c26db58be9a9409c674defd0b8778c27f5f649f933c3",
+  "possibleControlMethodRegistrations": [
+    {
+      "method": "vm/hello",
+      "line": 467
+    },
+    {
+      "method": "vm/reserve_dispatch",
+      "line": 469
+    },
+    {
+      "method": "vm/register_approved_slot",
+      "line": 473
+    },
+    {
+      "method": "fm/hello",
+      "line": 483
+    },
+    {
+      "method": "fm/reserve_dispatch",
+      "line": 485
+    }
+  ],
+  "guards": {
+    "vm/hello": "vmInvocation",
+    "vm/reserve_dispatch": "vmInvocation",
+    "vm/register_approved_slot": "vmInvocation && approvedSlotSource && approvedSlotReader",
+    "fm/hello": "flowmarshalInvocation",
+    "fm/reserve_dispatch": "flowmarshalInvocation"
+  },
+  "runtimeRegisteredMethodSetObserved": false,
+  "CONSUMED_SURFACE_DIGEST": "NOT_GENERATED",
+  "F07_CONSUMED_SURFACE_BOUND": "NOT_CLAIMED",
+  "integrationReviewCandidate": "a7c049d5de392651b102840cb7e75243e1afe317",
+  "integrationServerSourceSha256": "655b6108b3e6bc01eb8bfc53e72c91f156e73c335cbefaeb6ea38693bf992608",
+  "integrationCandidateMayReplaceRequiredSurfacePin": false
+}
