@@ -1,0 +1,50 @@
+{
+  "result": "PASS",
+  "review": "Content/scope review of additive evidence supplement only; not Task acceptance.",
+  "earlierEvidenceRewritten": false,
+  "checksRepeated": false,
+  "productSourceEdits": false,
+  "timestampOrGoldenNormalization": false,
+  "newSchemaMandate": false,
+  "formalAdmissionClaim": false,
+  "currentA2ProducerFailureEstablished": false,
+  "parityTestClassification": "diagnostic, not normative release gate",
+  "pendingInput": "Approved current A2 producer/golden identity; no repeated probing without new authoritative input.",
+  "artifacts": [
+    {
+      "path": "README.md",
+      "sha256": "bae86081a7a0d29243499fb1caa210b92e8b473dae69191cf9446617bb0514e3",
+      "bytes": 8070
+    },
+    {
+      "path": "freshness-comparisons.json",
+      "sha256": "26dedc64557bb727bdfee5c1b74da1c0388a8084dbf49e6ef9765342fd91463f",
+      "bytes": 3048
+    },
+    {
+      "path": "probe-receipt.json",
+      "sha256": "8dc5ea69c7b0d47583648134c02389611e709eeb7b8c64965471d8bff77d2a6f",
+      "bytes": 669
+    },
+    {
+      "path": "probe.mjs",
+      "sha256": "0a7ab43e1acc96e5ef34c77a2c2fb7e90d32955a9f2e42a51ba86ac27f0302b9",
+      "bytes": 7910
+    },
+    {
+      "path": "probe.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "probe.stdout",
+      "sha256": "7269b7c854d37d89b990d1120acb1bd65efa96d0e08b66719942e7eba1300b46",
+      "bytes": 2328
+    },
+    {
+      "path": "source-evidence.json",
+      "sha256": "12d32538165b5e06fd990f1dae85d74fc9f1df94ead40825e9a395c18af1f67f",
+      "bytes": 6694
+    }
+  ]
+}

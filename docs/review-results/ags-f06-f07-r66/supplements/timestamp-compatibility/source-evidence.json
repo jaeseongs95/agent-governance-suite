@@ -1,0 +1,191 @@
+{
+  "scope": "Bounded, read-only producer-format and parser compatibility investigation. No historical fixture replay.",
+  "sources": [
+    {
+      "path": "mcp-server/src/host-integration/flowmarshal-current-invocation.ts",
+      "versions": [
+        {
+          "ref": "0e88cb6039e143e79dd8c68c7aecc3e45da41d43",
+          "sha256": "9dea24b7a22905b59a43cfab00299b15e707a302ad9f991775397596a06cd3a6"
+        },
+        {
+          "ref": "a7c049d5de392651b102840cb7e75243e1afe317",
+          "sha256": "9dea24b7a22905b59a43cfab00299b15e707a302ad9f991775397596a06cd3a6"
+        }
+      ]
+    },
+    {
+      "path": "mcp-server/src/host-integration/observation-challenge.ts",
+      "versions": [
+        {
+          "ref": "0e88cb6039e143e79dd8c68c7aecc3e45da41d43",
+          "sha256": "b07668a32055ce753363531dcd9a936719c799114e00a435bfd84da9b4da59ab"
+        },
+        {
+          "ref": "a7c049d5de392651b102840cb7e75243e1afe317",
+          "sha256": "b07668a32055ce753363531dcd9a936719c799114e00a435bfd84da9b4da59ab"
+        }
+      ]
+    },
+    {
+      "path": "mcp-server/src/host-integration/vm-current-invocation.ts",
+      "versions": [
+        {
+          "ref": "0e88cb6039e143e79dd8c68c7aecc3e45da41d43",
+          "sha256": "7f915ac79ad986a7287b560cc47723755c98c5da9dc7740dd726fe7358ce4567"
+        },
+        {
+          "ref": "a7c049d5de392651b102840cb7e75243e1afe317",
+          "sha256": "7f915ac79ad986a7287b560cc47723755c98c5da9dc7740dd726fe7358ce4567"
+        }
+      ]
+    },
+    {
+      "path": "mcp-server/src/workflow-service.ts",
+      "versions": [
+        {
+          "ref": "0e88cb6039e143e79dd8c68c7aecc3e45da41d43",
+          "sha256": "2e49976f0d31ac0b33eb2101be92fb8441bc37c45e8992027318532ffa876afc"
+        },
+        {
+          "ref": "a7c049d5de392651b102840cb7e75243e1afe317",
+          "sha256": "d51faf4922f246ab8a083d91cefff7eb277496229c92b22cca846f332072b271"
+        }
+      ]
+    },
+    {
+      "path": "mcp-server/src/host-integration/observation-signer.ts",
+      "versions": [
+        {
+          "ref": "0e88cb6039e143e79dd8c68c7aecc3e45da41d43",
+          "sha256": "bd5a5f28376647ab1b6f2315c1e7ccf6b0a0fe8c7f3eb8059484ca8837727099"
+        },
+        {
+          "ref": "a7c049d5de392651b102840cb7e75243e1afe317",
+          "sha256": "bd5a5f28376647ab1b6f2315c1e7ccf6b0a0fe8c7f3eb8059484ca8837727099"
+        }
+      ]
+    },
+    {
+      "path": "tests/coordinate-subagents/v3x/fixtures/generate-V03-vm-receipt.py",
+      "versions": [
+        {
+          "ref": "0e88cb6039e143e79dd8c68c7aecc3e45da41d43",
+          "sha256": "85bed0a6bdb27eab19fb83847470e95d744480c732884e60af6056be396be392"
+        },
+        {
+          "ref": "a7c049d5de392651b102840cb7e75243e1afe317",
+          "sha256": "85bed0a6bdb27eab19fb83847470e95d744480c732884e60af6056be396be392"
+        }
+      ]
+    },
+    {
+      "path": "tests/coordinate-subagents/v3x/fixtures/V03-vm-producer-receipt.json",
+      "versions": [
+        {
+          "ref": "0e88cb6039e143e79dd8c68c7aecc3e45da41d43",
+          "sha256": "25aad5521bf0c72468af3f125a179ba54dc17be8e0ffb414afc9dc26134dfb0e"
+        },
+        {
+          "ref": "a7c049d5de392651b102840cb7e75243e1afe317",
+          "sha256": "25aad5521bf0c72468af3f125a179ba54dc17be8e0ffb414afc9dc26134dfb0e"
+        }
+      ]
+    },
+    {
+      "path": "docs/implementation-3x/fixtures/vm-observation-producer-contract.json",
+      "versions": [
+        {
+          "ref": "0e88cb6039e143e79dd8c68c7aecc3e45da41d43",
+          "sha256": "6345f05bdd3f6600b03c8b775d9f60f4a6c0551509c606b9b793ac76cf6aef77"
+        },
+        {
+          "ref": "a7c049d5de392651b102840cb7e75243e1afe317",
+          "sha256": "6345f05bdd3f6600b03c8b775d9f60f4a6c0551509c606b9b793ac76cf6aef77"
+        }
+      ]
+    },
+    {
+      "path": "tests/coordinate-subagents/v3x/F03-a.test.mjs",
+      "versions": [
+        {
+          "ref": "0e88cb6039e143e79dd8c68c7aecc3e45da41d43",
+          "sha256": "cd48c4245972aab224438516f2e48938194bda2e0af497ff4c507ec32ff4f7bc"
+        },
+        {
+          "ref": "a7c049d5de392651b102840cb7e75243e1afe317",
+          "sha256": "cd48c4245972aab224438516f2e48938194bda2e0af497ff4c507ec32ff4f7bc"
+        }
+      ]
+    },
+    {
+      "path": "tests/coordinate-subagents/v3x/F03-b.test.mjs",
+      "versions": [
+        {
+          "ref": "0e88cb6039e143e79dd8c68c7aecc3e45da41d43",
+          "sha256": "dc2b2f6243c41e0cb0587fc62dab1768f65cd603513f0279669e7138911bd394"
+        },
+        {
+          "ref": "a7c049d5de392651b102840cb7e75243e1afe317",
+          "sha256": "dc2b2f6243c41e0cb0587fc62dab1768f65cd603513f0279669e7138911bd394"
+        }
+      ]
+    },
+    {
+      "path": "tests/coordinate-subagents/v3x/F04.test.mjs",
+      "versions": [
+        {
+          "ref": "0e88cb6039e143e79dd8c68c7aecc3e45da41d43",
+          "sha256": "272e35e632b7b3a3c0a1cfeab09e4cc0788e9b71621425731fb9fbde6f434727"
+        },
+        {
+          "ref": "a7c049d5de392651b102840cb7e75243e1afe317",
+          "sha256": "272e35e632b7b3a3c0a1cfeab09e4cc0788e9b71621425731fb9fbde6f434727"
+        }
+      ]
+    },
+    {
+      "path": "tests/coordinate-subagents/v3x/V03.test.mjs",
+      "versions": [
+        {
+          "ref": "0e88cb6039e143e79dd8c68c7aecc3e45da41d43",
+          "sha256": "abaee3dc6722e0ffc82a54b1b3ad807c54476e85fdcdc7d2b972b3397f00edd4"
+        },
+        {
+          "ref": "a7c049d5de392651b102840cb7e75243e1afe317",
+          "sha256": "abaee3dc6722e0ffc82a54b1b3ad807c54476e85fdcdc7d2b972b3397f00edd4"
+        }
+      ]
+    }
+  ],
+  "strictFreshnessHelper": {
+    "requiredPinLine": 1410,
+    "candidateLine": 1414,
+    "sha256": "57200eb0c68b980490e95f89bf340fb476fd0a977fe2ef01f2610df9c49af63f",
+    "identicalAcrossPins": true
+  },
+  "authoritativeCurrentA2ArtifactsUnavailable": [
+    "src/flowmarshal/engine/ags_observation_producer.py",
+    "tests/fixtures/engine/ags_a2_producer_golden.json"
+  ],
+  "neededBinding": "Exact current producer commit and immutable profileId/freezeIdentity plus golden byte digest/verification provenance.",
+  "fixtureInspection": {
+    "signedVMFixtureDeclaredProducer": "2deb96e",
+    "terminalObservedAt": "2026-09-23T00:00:05.000500+00:00",
+    "issuedAt": "2026-09-23T00:00:05.000Z",
+    "expiresAt": "2026-09-23T00:01:05.000Z",
+    "signedBodySha256": "f3bc3ac988d09547255f75729287b3284932a58f56536a640606c173a535ed89",
+    "inspectionOnly": true,
+    "cryptographicReplay": false,
+    "currentA2Evidence": false
+  },
+  "fixturesUseCanonicalMsZ": [
+    "F03-a",
+    "F03-b",
+    "F04",
+    "VM contract bodyGolden (unsigned examples)"
+  ],
+  "productsOrCanonicalRecordsWritten": false,
+  "actualAdmissionAttempted": false,
+  "publication": false
+}

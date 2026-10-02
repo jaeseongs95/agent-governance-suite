@@ -1,0 +1,90 @@
+{
+  "provenance": "Expanded from the nine input combinations and successful equality assertions in the already executed probe; not a new test execution.",
+  "sourceProbeSha256": "0a7ab43e1acc96e5ef34c77a2c2fb7e90d32955a9f2e42a51ba86ac27f0302b9",
+  "sourceRawStdoutSha256": "7269b7c854d37d89b990d1120acb1bd65efa96d0e08b66719942e7eba1300b46",
+  "wholeMillisecondVerificationClock": true,
+  "thresholdMicroseconds": 300000000,
+  "rows": [
+    {
+      "terminalMicrosecondRemainder": 0,
+      "verificationTickAfterParsedTerminalMs": 299999,
+      "DateParsedAgeMs": 299999,
+      "exactAgeMicroseconds": 299999000,
+      "DateParsedOverFiveMinutes": false,
+      "exactOverFiveMinutes": false,
+      "decisionSame": true
+    },
+    {
+      "terminalMicrosecondRemainder": 0,
+      "verificationTickAfterParsedTerminalMs": 300000,
+      "DateParsedAgeMs": 300000,
+      "exactAgeMicroseconds": 300000000,
+      "DateParsedOverFiveMinutes": false,
+      "exactOverFiveMinutes": false,
+      "decisionSame": true
+    },
+    {
+      "terminalMicrosecondRemainder": 0,
+      "verificationTickAfterParsedTerminalMs": 300001,
+      "DateParsedAgeMs": 300001,
+      "exactAgeMicroseconds": 300001000,
+      "DateParsedOverFiveMinutes": true,
+      "exactOverFiveMinutes": true,
+      "decisionSame": true
+    },
+    {
+      "terminalMicrosecondRemainder": 500,
+      "verificationTickAfterParsedTerminalMs": 299999,
+      "DateParsedAgeMs": 299999,
+      "exactAgeMicroseconds": 299998500,
+      "DateParsedOverFiveMinutes": false,
+      "exactOverFiveMinutes": false,
+      "decisionSame": true
+    },
+    {
+      "terminalMicrosecondRemainder": 500,
+      "verificationTickAfterParsedTerminalMs": 300000,
+      "DateParsedAgeMs": 300000,
+      "exactAgeMicroseconds": 299999500,
+      "DateParsedOverFiveMinutes": false,
+      "exactOverFiveMinutes": false,
+      "decisionSame": true
+    },
+    {
+      "terminalMicrosecondRemainder": 500,
+      "verificationTickAfterParsedTerminalMs": 300001,
+      "DateParsedAgeMs": 300001,
+      "exactAgeMicroseconds": 300000500,
+      "DateParsedOverFiveMinutes": true,
+      "exactOverFiveMinutes": true,
+      "decisionSame": true
+    },
+    {
+      "terminalMicrosecondRemainder": 999,
+      "verificationTickAfterParsedTerminalMs": 299999,
+      "DateParsedAgeMs": 299999,
+      "exactAgeMicroseconds": 299998001,
+      "DateParsedOverFiveMinutes": false,
+      "exactOverFiveMinutes": false,
+      "decisionSame": true
+    },
+    {
+      "terminalMicrosecondRemainder": 999,
+      "verificationTickAfterParsedTerminalMs": 300000,
+      "DateParsedAgeMs": 300000,
+      "exactAgeMicroseconds": 299999001,
+      "DateParsedOverFiveMinutes": false,
+      "exactOverFiveMinutes": false,
+      "decisionSame": true
+    },
+    {
+      "terminalMicrosecondRemainder": 999,
+      "verificationTickAfterParsedTerminalMs": 300001,
+      "DateParsedAgeMs": 300001,
+      "exactAgeMicroseconds": 300000001,
+      "DateParsedOverFiveMinutes": true,
+      "exactOverFiveMinutes": true,
+      "decisionSame": true
+    }
+  ]
+}

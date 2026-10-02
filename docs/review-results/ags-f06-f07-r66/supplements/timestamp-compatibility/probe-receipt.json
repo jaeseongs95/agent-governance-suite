@@ -1,0 +1,17 @@
+{
+  "command": [
+    "node",
+    "--import",
+    "<review-root>/test-tree/node_modules/tsx/dist/loader.mjs",
+    "<review-root>/compatibility-investigation/probe.mjs"
+  ],
+  "exit": 0,
+  "classification": "Bounded synthetic compatibility/clock helpers only; no historical replay or actual admission.",
+  "stdoutSha256": "7269b7c854d37d89b990d1120acb1bd65efa96d0e08b66719942e7eba1300b46",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "publicationDerivation": {
+    "originalReceiptSha256": "4240ad6d250535770db9429992b8f1cec91230d85d741935485d6b6ec3a8af8b",
+    "executionPathsRedacted": true,
+    "testsRepeated": false
+  }
+}
