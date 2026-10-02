@@ -1,0 +1,2542 @@
+{
+  "host": "claude-code",
+  "shipmentTree": "56aaea2a1b0509b6d9f9b428228619ded640dc1a",
+  "nodeModules": false,
+  "files": [
+    {
+      "path": ".claude-plugin/plugin.json",
+      "sha256": "08d19bb42a159c8d7daf21c101242f7688b2a16bfee811f4c9b758644f7ca796",
+      "matchesSource": true
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+      "matchesSource": true
+    },
+    {
+      "path": "README.md",
+      "sha256": "4b5dd3bb6df5e5825cc62aea1132eb2d76d2e689ddb4a97c62d8aacd7cf4516c",
+      "matchesSource": true
+    },
+    {
+      "path": "agents/deliberation-reviewer.md",
+      "sha256": "cc588b56a018ae65a2fcadceaa4439908775ff3890503d85b7ea4aa7c4df854f",
+      "matchesSource": true
+    },
+    {
+      "path": "agents/independent-auditor.md",
+      "sha256": "c16561d9678bdf55f0ac549a2d4f591d4629803b5aa0c698a6de8b2c91d6bacf",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/acknowledge-session-messages-request.v1.schema.json",
+      "sha256": "7da63d13eccfc731e6ba75ea717c806b3ab542a486d3357795bac0aa20f0fcfd",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/api-result.v1.schema.json",
+      "sha256": "18aadedaaa4c465771316a1889c0affea108344ce96ccbc615d35830869585c4",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/approved-role-source.v1.schema.json",
+      "sha256": "36052c37f6000a3a1fe8db9cb011b1287b01d046736a0f3a62618f162d534822",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/artifact-ref.v1.schema.json",
+      "sha256": "4ce69d3eee792fc5575f715c177794a38b20f8176b8951b532938c578578228b",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/attempt-lease.v1.schema.json",
+      "sha256": "d3f9c2ab46cdaf028c38933ab8ef1d894fefadb22b9d9f1a57ff40b59dd5792c",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/attempt-outcome.v1.schema.json",
+      "sha256": "ea7ed1ba82d56885dd0395cac21d5db9645b2ac92587596e126b510236120d7e",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/attempt-proposal.v1.schema.json",
+      "sha256": "8b0390cc58e2a302db18542b30764f4fc6d69db86649c9ab25f79fef01878b97",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/checkpoint-context-request.v1.schema.json",
+      "sha256": "67ed949d981463c3ade41aaa9e1865af3c14251e201072549032d1ccda07c12f",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/checkpoint-delta.v1.schema.json",
+      "sha256": "8f47718fd5df307a660f105dc88686f8fead42a6c459ad9b309d8ceb49ae911c",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/context-transition.v1.schema.json",
+      "sha256": "6fa9884feff1967a1aade648adb845d3f4564a7152524a483df19decd42412fe",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/convergence-frame.v1.schema.json",
+      "sha256": "5e08011cb89fed1776a7b7d78af904ec5ddeb05c93aa3f1d4ea3c03ecfbfb7f4",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/convergence-review.v1.schema.json",
+      "sha256": "6eb3657e24798f315c64a8cc974c7d9a4637eed1bfe122f3011cb76f1e59099f",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/convergence-root-handle.v1.schema.json",
+      "sha256": "2e66ad7bac64f470c1c880cb059d7c71aad470cc9f70fb0aa2975182f779970a",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/convergence-root.v1.schema.json",
+      "sha256": "bb570350115827a10cdef4f6962a071712d4befe45633c29e2a6e703e1f6ee50",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/convergence-status-summary.v1.schema.json",
+      "sha256": "1059d88b4738ed4190465b707572c77ffb3d5fe253b9698e3b060268a0794382",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/convergence-status.v1.schema.json",
+      "sha256": "9915044c6b07fc2dcac0e494c2e2b6a9b7a5275aced35c11294c175e1852aa61",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/execute-state-cleanup-request.v1.schema.json",
+      "sha256": "0d283e4601ac4703ef5d47b6cdb4e1dd2152c6ceb4bb4738c889302da010f3ac",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/execution-context.v1.schema.json",
+      "sha256": "92ecf50d3e97e85f32c5b58fa0e4b43dea761a7cc25fc521789a60a3e1690002",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/execution-requirement.v1.schema.json",
+      "sha256": "ddcf28709bbfccb5c16e38130053729c7c3b0c03f5c2e2070e1bb7f0acde14c8",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/freeform-output.v1.schema.json",
+      "sha256": "623de96ffedcfd5fd0084b524832e7d5072645f82264be3e706e0977201f1386",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/get-session-message-status-request.v1.schema.json",
+      "sha256": "852320fdd556ac8cd00f8b496fd7d6d0835f7a613eaf457d4cb710aa6d56a8c7",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/guarded-workflow-start-request.v1.schema.json",
+      "sha256": "e589a4136a096f2cf2aa02d5a8f210ad1d38c97e5de05af8e33480cdad262a1b",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/host-integration.v1.schema.json",
+      "sha256": "f3685ca745a79e749aac29eab647095ac411d4185b008cf0e3207f82aca407de",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/host-model-capabilities.v1.schema.json",
+      "sha256": "acd9b60ca6d2149768b3efaeadc9d015beb046607649d9e29b2b3c225d0282a4",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/input-source-receipt.v1.schema.json",
+      "sha256": "d19a6c7ad885300930929b4593a2ea785fc9e74812785f240fed99835567ecdd",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/inspect-context-request.v1.schema.json",
+      "sha256": "145117225e0ee8af7ddfe00f37abbacc9daac0c1cf4dbecbf50e328552153d09",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/korean-prose-evaluation-final.v1.schema.json",
+      "sha256": "7948f04b977ce5d7ea92290ccdee082cfcd811663245179d9396741156969922",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/korean-prose-evaluation-frame.v1.schema.json",
+      "sha256": "906a6d03c30efd7582817f76857a0e94fe4d51cdaad46861293b2fa780715ddb",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/korean-prose-evaluation-input.v1.schema.json",
+      "sha256": "710aec9da229d77e7160b9d6dffee77d00b9352c91b0f009f87da779020f3097",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/korean-prose-evaluation-validity-report.v1.schema.json",
+      "sha256": "6a101da370b3a33547d169fdc18e41d2fa18aa89c7c83f34145d74ff4809f0a3",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/korean-prose-glossary-lookup-request.v1.schema.json",
+      "sha256": "643237e077c348962b4d27aa669745b419d1334014a20b3b3c6f407ffe2a81f2",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/korean-prose-glossary-lookup-result.v1.schema.json",
+      "sha256": "527652124eb450bb67376d5daf0f4934f362f1f55f304aaa2cdf0eaf16711b31",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/korean-prose-quality-adjudication-input.v1.schema.json",
+      "sha256": "5381ae88a5afd7b654bb667d536e443d420e8b12009c835d3d22500ff54cfd2f",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/korean-prose-quality-adjudication-meta.v1.schema.json",
+      "sha256": "059a7cf7d3536b31fed73e3fc196222b4727effbdcb0338efff53bd9a643e5fc",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/korean-prose-quality-adjudication.v1.schema.json",
+      "sha256": "2040210a4b5c2a52d522cd6cb749ccfb9967a5a94be415f8709a40b694eb68a2",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/korean-prose-quality-report.v1.schema.json",
+      "sha256": "94395f9e6dc0040fc6b74569fc112687b00489199e6e92503e38cd0fcee8e8c3",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/korean-prose-receipt-binding.v1.schema.json",
+      "sha256": "1825d1e6a2a446e37aa6e656c8cc4ae26f6a48b6121d9ab705c7c252bae59401",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/list-session-status-request.v1.schema.json",
+      "sha256": "b06939c80a8d92d5f2a5a858d5a02b5c47d04530b825beebea6fa6a2e20c5164",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/load-context-request.v1.schema.json",
+      "sha256": "f2662bd1036517483b676d03fa4bb360debe866f045960a347181a0c1848a23b",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/model-application-record.v2.schema.json",
+      "sha256": "17c1c2a499aa1bbe8211e8296719bc9dbad1ed1bfb9aba7c75c209d58d9d1014",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/model-application-record.v3.schema.json",
+      "sha256": "e19aa03d35604fca49cbc754694968029b67a28459f4515359d5f469e43df5de",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/model-application-request.v2.schema.json",
+      "sha256": "5040a147c1eb165b657be56dfd687effe5b363df1af912019d35af0a414b05d0",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/model-application-request.v3.schema.json",
+      "sha256": "648a741ca90d654ae914aeb6b8dc50e27b14d66674fb3a0b14d3f1859c7e9d52",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/model-catalog.v1.schema.json",
+      "sha256": "d5455153e0890851da0fdb76b8a17627788c53bf4c36b83e891fce0423a8b3a4",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/model-evaluation-record.v1.schema.json",
+      "sha256": "f334dff3ee2010561f7a8a69a85cfdf1f0323d972a6433c1c8d9de6a01cd77f6",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/model-routing-decision.v2.schema.json",
+      "sha256": "e4d808b7c8a49f4a6981ac2fb3dde322ed633f2ebe8d08d97fa194e99f0dba49",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/model-routing-decision.v3.schema.json",
+      "sha256": "6737c7e3cabd86c331dd81e4593b1f84b8b83331d4c9d4d27fcb6ef39437b88b",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/model-routing-policy.v1.schema.json",
+      "sha256": "c3bd8d83551297b89e10340135fc2959c357ea4ee7510c895a90440f5dcf9021",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/model-routing-types.ts",
+      "sha256": "2a06a2b96c190863ec6343231935e8bc36260da89d2fec2967fbc5120fef58b3",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/model-selection-request.v2.schema.json",
+      "sha256": "de3619aa8702d3ee736abf00380cd057e09caef28725f457a1cb66c7887f08b1",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/open-convergence-root-request.v1.schema.json",
+      "sha256": "16ddc5ca695028c27c5d811ea89f46efd360e2c6c253929b6502c8cd6a5a8253",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/plan-workflow-request.v1.schema.json",
+      "sha256": "eab50be7cc2995cdb1d9227f479349fc62fd95250253e713ed68736ea592827c",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/plugin-update-notice.v1.schema.json",
+      "sha256": "273bc4b5c5a8a8f4cf51975ce5001a037996acb281408dce074d36eafcd80b8b",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/plugin-update-status.v1.schema.json",
+      "sha256": "98c2dfd30510e5bcc0468c7ef1a75263f50488e2e8d7a18a5f6587de95927ddf",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/prepare-session-message-request.v1.schema.json",
+      "sha256": "e720ebca68c55924ac46deb86f7f21a039f20e7a95dc88700bc50e7f6ee7e91d",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/prepare-state-cleanup-request.v1.schema.json",
+      "sha256": "170cc0dc8314a30afb7e33844c836b077f514df16a5d03ac3d108e5f0aa50d38",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/provider-result.v1.schema.json",
+      "sha256": "e3f643676d09d81b13436e4cac7cfdcbe9517a78b77b2f3bd96c4fa14335b010",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/purge-direct-context-request.v1.schema.json",
+      "sha256": "dd16e934f7d05e6bb2d4000a6698d8524639cd242f7d91d74907cf00f66a6cc6",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/resolve-convergence-gate-request.v1.schema.json",
+      "sha256": "85ecd73a04932dd62b4b0deb14798fc2ba6308505b3f04803f8833115f125abf",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/resource-policy.v1.schema.json",
+      "sha256": "a197f2f0fcbaae4e840371ad9da0d2802a1555d63589620f1a60075c616f4bf6",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/resource-state-snapshot.v1.schema.json",
+      "sha256": "49053faa84ac4c944110b4cb9e6455cc8039a9d8532b31d105926d3ba82b928b",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/response-mode.v1.schema.json",
+      "sha256": "69e52c1587adc8094aaf0bc7f611ab95de6446d2a28216d9eb9c53bbeae468ff",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/role-slot.v1.schema.json",
+      "sha256": "d7a1b03566fb47530f48d33f0bae7cf1be788bfdfbcaf65ba7e4943e49448ee4",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/semantic-decision-advice.v1.schema.json",
+      "sha256": "58bb4b4cc9aac6ccc782aaef3765c972bb2c3a416cca67607ffdedbd0528ddeb",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/semantic-decision-policy.v1.schema.json",
+      "sha256": "e9e765d0103706efffda76695bb68beba435454f88bea15c1c249042803b7601",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/semantic-decision-question.v1.schema.json",
+      "sha256": "7b84d516c53d16e4d330e55ea64255148a2dfc18e5f42c17122ead5de10ebb68",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/semantic-decision-request.v1.schema.json",
+      "sha256": "3dfbf014b47f3910efa1f55c90a3ce45811a2464c87de850f8d17394c5b95b87",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/semantic-egress-config.v1.schema.json",
+      "sha256": "ab154503d2fb128876718a3863c5fe59e45edc01ca5372531d42adc37c889b25",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/semantic-model-assignment-request.v1.schema.json",
+      "sha256": "4ea77a320875716531d7160f341734d0f9ab3c970a365a8405edca0975b1d175",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/send-session-message-request.v1.schema.json",
+      "sha256": "f8c866e7185869a1361686a121bcd4c05ad7ae71cc99f655cacceafb22d5bcbd",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/session-auto-wake-outlook.v1.schema.json",
+      "sha256": "dff6c334cf6aaf10d6ddb6787bc6a35d6f40d2d195b13cb3dc90b79b80e6b565",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/session-task.v1.schema.json",
+      "sha256": "65f12519a58538d1bf24321f30b4cab796312cb0ef18de9b9eecaf9df69db458",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/skill-descriptor.v1.schema.json",
+      "sha256": "e47753988cce5125329a23bfc100c42ab2d0e3762178f4739acef4cead7f7be1",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/skill-descriptor.v2.schema.json",
+      "sha256": "8051e264327b7b22bf07f1a7d2223c426c729d806d8c544209d7c42d075e0872",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/source-lock.v3.schema.json",
+      "sha256": "293b52dc89f12f1ab86bba32bfb75bf9aa9e3354fda8f565b08814c6663f27a0",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/stage-result.v1.schema.json",
+      "sha256": "68718c4119f1a0b59595e3f1c1155e6e1ad4e549a18c5159b551e3427ddb15f0",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/state-cleanup-plan.v1.schema.json",
+      "sha256": "d181fe179da60f543bb7a4b86b2c5675414eb005c744f168448768682c802be7",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/state-cleanup-receipt.v1.schema.json",
+      "sha256": "f26bf486752ccfad99d26fee67519c9a431ca297fe40be87d040a2e53d6d7fc1",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/suppress-context-restore-request.v1.schema.json",
+      "sha256": "5207f0699b49801b78f655919fdd46cc6c3f1c63239cb4da368f4a13429299f6",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/task-envelope.v1.schema.json",
+      "sha256": "b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/types.ts",
+      "sha256": "3b71a88326beef712e9ae381b852b61486e10e439ac014e7ffc964d50994d5b0",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/update-session-status-request.v1.schema.json",
+      "sha256": "7ed17df0d22963ab2817d5e88164d37eec1ff448638d9fba8a5d7c28bfd0ac13",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/user-approval-channel.v1.schema.json",
+      "sha256": "39e1cd036ce9f2ada2877fbd849c37cfbc897e18816890fe629de9624557785d",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/validate-collaboration-decision-request.v1.schema.json",
+      "sha256": "ff8eb9fa40b32746a7e284bf2e5593f3999c9dfa5a541efccea408e742e4f510",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/workflow-plan.v1.schema.json",
+      "sha256": "66ab13d22cc26fc4140a3d36a568fb317391f04cd69860737cfc21b932763aae",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/workflow-receipt.v1.schema.json",
+      "sha256": "d505d98b3b7307318bc05025cfcf36c189fc2a06db65c7ac61c89ce646027c85",
+      "matchesSource": true
+    },
+    {
+      "path": "contracts/workflow-status-summary.v1.schema.json",
+      "sha256": "0e88f2023ed6f5377cbeadba4f6b98cef4667873eefedd1537b42bafb1b2d79b",
+      "matchesSource": true
+    },
+    {
+      "path": "hooks/continuity-hook.mjs",
+      "sha256": "66cdba408b0555349589f7356a67f32833fa318e8565bc0fb576db96e1d2335b",
+      "matchesSource": true
+    },
+    {
+      "path": "hooks/hooks.json",
+      "sha256": "54e8484e527191cbed2806f61e022c7bca27d78f1cd1da7904a3ea74ab8cfb8f",
+      "matchesSource": true
+    },
+    {
+      "path": "hooks/host-attestation-hook.mjs",
+      "sha256": "a60ca41e0430c1568b928f18d8177cfd37e517826db6afb1d4bd29de3a6976ee",
+      "matchesSource": true
+    },
+    {
+      "path": "hooks/model-routing-host-hook.mjs",
+      "sha256": "74414b94b674ea259d91bd039a4891c3360aac86ae676a28718c08c9e91e905a",
+      "matchesSource": true
+    },
+    {
+      "path": "hooks/session-board-hook.mjs",
+      "sha256": "dc8516fb287dbd17436af8d53d9d4703809aaf64d9d6624ab0b3ed7193694697",
+      "matchesSource": true
+    },
+    {
+      "path": "hooks/session-message-hook.mjs",
+      "sha256": "7c9fe1a241a1c9413d1ecc4de0c4a6be03bff33266559630857f41ce770b59b0",
+      "matchesSource": true
+    },
+    {
+      "path": "hooks/skill-trigger-hook.mjs",
+      "sha256": "5bad59e4809be0e3241a0a48767f8bda5f67e85a9dd23d19bfebedbb71f4f5ad",
+      "matchesSource": true
+    },
+    {
+      "path": "mcp-server/dist/continuity-hook.mjs",
+      "sha256": "8fe57668c618b8e2fe805e8ec7ab48f3a67057200f309a18346c1dffb8e3c437",
+      "matchesSource": true
+    },
+    {
+      "path": "mcp-server/dist/host-attestation-api.mjs",
+      "sha256": "12fefa5cc52c4cc8ebf1f221eea3eb9c983c317bf36777e6ff7b71f37d221e46",
+      "matchesSource": true
+    },
+    {
+      "path": "mcp-server/dist/host-attestation-hook.mjs",
+      "sha256": "1ea781f9d63d6106c12bceb2a9198571731d69cf717fab4f4d75cfa50850fa5a",
+      "matchesSource": true
+    },
+    {
+      "path": "mcp-server/dist/model-routing-host-hook.mjs",
+      "sha256": "aa4166b45ed20c147eb45d7ab02e5b644e5963ee003a4911d0be37c47a160fcf",
+      "matchesSource": true
+    },
+    {
+      "path": "mcp-server/dist/model-routing-peer-cli.mjs",
+      "sha256": "8617ec0856b75af2327895bece4f1d162147c0fbff7a11396d1ff5b1653bebe9",
+      "matchesSource": true
+    },
+    {
+      "path": "mcp-server/dist/server.mjs",
+      "sha256": "efc1c5627750649f299ea560812d307bab398895cae2d04000e38dc467b45606",
+      "matchesSource": true
+    },
+    {
+      "path": "mcp-server/dist/session-board-hook.mjs",
+      "sha256": "4a585084d3436f944a3e1c466730286442b303821e1dc6b4f7e4524758300bff",
+      "matchesSource": true
+    },
+    {
+      "path": "mcp-server/dist/session-message-broker.mjs",
+      "sha256": "96b18e7adc6a264e04e580e3f9fda9b27546655d249ca738558623659d498faa",
+      "matchesSource": true
+    },
+    {
+      "path": "mcp-server/dist/session-message-cli.mjs",
+      "sha256": "4d3023be81623fa5acdfc21f3491f32d5ce43bde24a76f97a8b03c6211aa545b",
+      "matchesSource": true
+    },
+    {
+      "path": "mcp-server/dist/session-message-hook.mjs",
+      "sha256": "aa02c66fdf0c738e1015bcfaf676a6311b36f0159b8badc157eb4db4bf4e62d6",
+      "matchesSource": true
+    },
+    {
+      "path": "mcp-server/dist/session-message-relay.mjs",
+      "sha256": "721a40cb342dc76fda3d8d2d2aba2a3442a08e8755b38e3ae37bf455a7ecdae8",
+      "matchesSource": true
+    },
+    {
+      "path": "runtime/THIRD_PARTY_NOTICES.md",
+      "sha256": "eb52bd20401bc1f8c9e36d191eaf74040d3e5630e047f8b6e6dd2ca6f5e0ea79",
+      "matchesSource": true
+    },
+    {
+      "path": "runtime/issuer/windows/build/csc-build.mjs",
+      "sha256": "de6dca3ef735b5762afff631c8b761aa62d9c1e3ff0f444156020a73f7220cde",
+      "matchesSource": true
+    },
+    {
+      "path": "runtime/issuer/windows/build/fetch-roslyn.mjs",
+      "sha256": "30030c064e6c6c2fbb7b468f501b12c0421dee2376fc9a7f7cb124a3a90b623f",
+      "matchesSource": true
+    },
+    {
+      "path": "runtime/issuer/windows/build/roslyn.lock.json",
+      "sha256": "b848280314a39e82404d39d05aff57cff9d4fc1ddfde997462f243f99c003531",
+      "matchesSource": true
+    },
+    {
+      "path": "runtime/issuer/windows/contract/install-record.schema.json",
+      "sha256": "2c92144a77d6a5b459edd74bac2fea027b5840936647e1703978b38e51a9be13",
+      "matchesSource": true
+    },
+    {
+      "path": "runtime/issuer/windows/contract/ipc-frame.schema.json",
+      "sha256": "487eba9ffc5c88ab2b329c379b98882f114d9ebc77395ac134c21d64f1ee236f",
+      "matchesSource": true
+    },
+    {
+      "path": "runtime/issuer/windows/server/core/Harness.cs",
+      "sha256": "f6216115340c0323efd0de900113e241dec1e94c4edafc068d315fccadb9de4a",
+      "matchesSource": true
+    },
+    {
+      "path": "runtime/issuer/windows/server/core/IssuerCore.cs",
+      "sha256": "0347bddc8f755352a06c6797e4b2acd1421ae396c61ad9d6afd89c6935392c03",
+      "matchesSource": true
+    },
+    {
+      "path": "runtime/issuer/windows/server/host/FrameAdapter.cs",
+      "sha256": "fb2f30f0ccbcf0a8bddbb88c461718e02b854a602cd4333dedf2d828d9755aae",
+      "matchesSource": true
+    },
+    {
+      "path": "runtime/issuer/windows/server/host/FrameHarness.cs",
+      "sha256": "8301327be0f2afee32cdd6f8a641fde735bc2491c9b9429e7497815697184ed7",
+      "matchesSource": true
+    },
+    {
+      "path": "runtime/issuer/windows/server/host/IssuerPipe.cs",
+      "sha256": "88e5dcc12d6d01f4b5bade96a490fb53de64787be1b0784c5f750ce69435d288",
+      "matchesSource": true
+    },
+    {
+      "path": "runtime/issuer/windows/server/host/IssuerServer.cs",
+      "sha256": "6a007921500e1ad2afcb0486ffb64e4233dfa04d58c67ab8a6b20ce838de3bbe",
+      "matchesSource": true
+    },
+    {
+      "path": "runtime/issuer/windows/server/host/PipeListener.cs",
+      "sha256": "0b35b4bcff5b5aabfc7ac650cc15b33f7b2a9b2cfd7b0066bcbcbd84da7d9ab7",
+      "matchesSource": true
+    },
+    {
+      "path": "runtime/issuer/windows/service/service-plan.mjs",
+      "sha256": "16172fb865d28c7c6542f82b5ca8a98145c4826ea62a197469523f5447807aca",
+      "matchesSource": true
+    },
+    {
+      "path": "runtime/schema-validation.mjs",
+      "sha256": "03996e2281db3e79a86d467e492ca4aaeaf38f89e802313102ffddf738f81e5c",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/LICENSE",
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/README.md",
+      "sha256": "278bb4e1190abfab15d2206eddd0dc8699ed0437ed619be8f1545568f07f371a",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/SKILL.md",
+      "sha256": "c665b447fd7b1d191434027b2becdfc189aa096ccbbca5f129c7078add57d86e",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/contracts/acceptance-evidence-input.v1.schema.json",
+      "sha256": "d41effd0fd54209b295f75d233d19fb6fab5864a052de70b1272f6dd203e092c",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/contracts/acceptance-evidence-report.v1.schema.json",
+      "sha256": "cf22e268b09e823e25b74f2ee3da74de103f3a00b8a672409b2bec6580fe6507",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/contracts/acceptance-report-validation.v1.schema.json",
+      "sha256": "3062feb742fc20f846dccf7002a2edae74e2bd9b10dba4f2d8937d0775880f32",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/contracts/upstream/lock.json",
+      "sha256": "faec991bfaf7725a5ab6d9494840e6d4d152c5eeaa3cc5ea260b6398c0534901",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/contracts/upstream/task-envelope.v1.schema.json",
+      "sha256": "b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/integration/provider-result.v1.schema.json",
+      "sha256": "708c3cf8b44b05bc1a81ea3290982bd81053a442f8a07eeb1eee2f656b860800",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/integration/skill-descriptor.json",
+      "sha256": "03c363f12563acb2dc76a4dc340652b671bf166408fea6b156f2be717dd360c5",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/references/entry-details.md",
+      "sha256": "2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/references/evidence-protocol.md",
+      "sha256": "229d6f16a1b560b8482d3283f5a46f74f86a405d47c0bdf592d18f3f3e3897d0",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/scripts/check-repository.mjs",
+      "sha256": "eb88d4a8e383b3c93ee456901eb479937548dde1c7737a948d81d0d3144770bd",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/scripts/cli.mjs",
+      "sha256": "296b2a8d0eb3690f69538e2cc1693e0129af3b2a95d6c9792d88ae2821fa6e9c",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/scripts/core.mjs",
+      "sha256": "0a340ef81cafbc1d08edfdd042480d14ede06fbce407417be6d4def4ca7a4216",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/scripts/io.mjs",
+      "sha256": "f04aacb1603b18aa3b431cbcc96eb7f815ee7af9ece586d3e7c1221149f78dc0",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/scripts/schema-validation.mjs",
+      "sha256": "f6870594c5c16bac20adaa2c6e9dcbdf2e4804c5922fd591c6ef030ee6495c44",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/scripts/validate-report.mjs",
+      "sha256": "ab569b96c807b62ece0ff404f8b732c12f6a7c054b33dfda300bc7839ff07794",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/blocker-diagnostician/LICENSE",
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/blocker-diagnostician/README.md",
+      "sha256": "51ad3ab0e4942811b1d1a7224b68eafb831acd1f3245b6a89ea9488cb8cb6830",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/blocker-diagnostician/SKILL.md",
+      "sha256": "3bde7e855868b36748669baf89c5d7eb8172720899fa95886a7073998d3ddc42",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/blocker-diagnostician/contracts/diagnosis-report.v1.schema.json",
+      "sha256": "ce04ec2821fb07ebc66373b3783165c461758ac30437d401171fc43c0a07fba0",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/blocker-diagnostician/contracts/failure-episode-set.v1.schema.json",
+      "sha256": "646601a2450a99b3748f56e152a81257c3fcd9d928f0c4cc6f27482c503a0fd4",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/blocker-diagnostician/integration/provider-result.v1.schema.json",
+      "sha256": "00d317e9b1a0ede9f27927d49663c7179189722e6545e76d4e43b828fdacb181",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/blocker-diagnostician/integration/skill-descriptor.json",
+      "sha256": "ba5636a13f1b98dbab34c8e46e37ea3b34f2ddb10afb4ea0d7d0be2a08069e0e",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/blocker-diagnostician/references/diagnosis-protocol.md",
+      "sha256": "ee079daee6f2d17b0660fdcf1e49da51fdcfaaf98f14fce6ade8db5932061c80",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/blocker-diagnostician/references/entry-details.md",
+      "sha256": "5d3068c1151d10ff89304f2c3a5e18be6dc235d75cff179e3ff68a28d76aaebf",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/blocker-diagnostician/scripts/check-repository.mjs",
+      "sha256": "8e50291ed41d4adff92b5f85c499aec045651ec9d7aff83a7b8e8ecc3e7c8356",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/blocker-diagnostician/scripts/cli.mjs",
+      "sha256": "321dd6be1cc02731dd4d9d1a26bc67a1dbe2595cb3fed00250c56e56d0d7d76c",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/blocker-diagnostician/scripts/cluster-failures.mjs",
+      "sha256": "23c4410936ad785ca40d9ef36fc2a4086113829e2be953f04ad875a11df71c27",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/blocker-diagnostician/scripts/core.mjs",
+      "sha256": "a0aa3c9b75e62fbfa0db398043787e91b9efa78eb0374af42baff01f864bb01f",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/blocker-diagnostician/scripts/digest-request.mjs",
+      "sha256": "ccbcf4eb50947808bd820af3205cd0b043b753894cac5e7d06b24e73d0775b58",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/blocker-diagnostician/scripts/io.mjs",
+      "sha256": "f04aacb1603b18aa3b431cbcc96eb7f815ee7af9ece586d3e7c1221149f78dc0",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/blocker-diagnostician/scripts/schema-validation.mjs",
+      "sha256": "cc240a10b7e02ab42d515c93a883568484dbd1580a1046ae321918409055b088",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/blocker-diagnostician/scripts/validate-report.mjs",
+      "sha256": "b96161ec93e69c4cd4518e99069423fe784c415cea97971f607bc94c80317fa3",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/LICENSE",
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/README.md",
+      "sha256": "b6c00b38e32d0ed8b2f3344e9884672f1f55c619c3449f22e766c2bb35830fad",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/SKILL.md",
+      "sha256": "05afc12d62688396698afbefad4bb9ef7e27869e960996eeb39c858606e5513a",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/VERSION",
+      "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/contracts/change-scope-report.v1.schema.json",
+      "sha256": "5495ea406196ea120bd6a237fa5db22c152c26beac84d276cf09080404a6039c",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/contracts/change-scope-request.v1.schema.json",
+      "sha256": "42e658217660fa7e21e102d8fca570461edc3ab5bf83a8588f871f5c3c9d4571",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/contracts/upstream/lock.json",
+      "sha256": "175a485d0dde0a4339282622ecfc495b85bb388db3c7b942d0023849f1908c09",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/contracts/upstream/task-envelope.v1.schema.json",
+      "sha256": "b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/contracts/workspace-baseline.v1.schema.json",
+      "sha256": "e45fa635212cc86c49f62818181f90f06f014c3533d7e74f2929f66608b36452",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/integration/provider-result.v1.schema.json",
+      "sha256": "7142aa17f93e7b50d2149dc002bb8c6a1ce9dd66a40ea181763f5158b1f9c6d1",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/integration/skill-descriptor.json",
+      "sha256": "bebe755fae0dc2350ddf773472b6725ea236c01764e344eb99c59fe69807d194",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/references/entry-details.md",
+      "sha256": "d164e59584763265a4bd8ccfd6a4ee75560f1df4ef30cd44dee68d814baf185b",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/references/path-policy.md",
+      "sha256": "8165defb0cb02f683718f8c6c927b0455f30d2120f3d4d6e0a971247c912a56d",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/references/verdict-rules.md",
+      "sha256": "71d8e964c03874b8bdcaef4e21487a56d672d59553da0c01276e4896a8fc1c28",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/scripts/capture-workspace-baseline.mjs",
+      "sha256": "c7f6b887fa94697434568ed987b66d81525841949bf64ebfdadcc6f5dcecfe69",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/scripts/compare-change-scope.mjs",
+      "sha256": "017e03abb617f5fa9d582e1b812b78f1dfa570e411970ae9aa6afb4a67b9e1ba",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/scripts/compile-schemas.mjs",
+      "sha256": "c2bcd5f917c09c2e1adec7694b4939372f3352e1eb911a09c62acdfc32f826dd",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/scripts/lib.mjs",
+      "sha256": "0fa25746036db845760c61a41a53dcbb012c40ec310640a1ef5a3a993c500562",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/scripts/schema-validator.mjs",
+      "sha256": "53165cecfb1dc4e1d78317d88e04f0c9e938ded84bd4ba96bda57178923e6238",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/scripts/validate-package.mjs",
+      "sha256": "64434769172c15b9ee835f17ec0239f013f859ec58116db49c711b0e6c18707f",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/change-scope-guardian/scripts/validate-report.mjs",
+      "sha256": "226996920248045fbfe5f3fef921a095c831702de4a00766bb1b5f4866a40ae3",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/context-continuity/SKILL.md",
+      "sha256": "f51f1d91692400cbfb48e70055e682fa6b272a61bbbf901dc177e71596eaab44",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/context-continuity/references/entry-details.md",
+      "sha256": "acc4c681f6987c9ab944978fe02d8bf49a9cf1d4d8a515ac77286b346dc563b4",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/LICENSE",
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/SKILL.md",
+      "sha256": "57c420d31d0d1a17eae710433c05ab08ff230e81bb61fa9b1e76b4e43fcf2be6",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/delegation-playbook.md",
+      "sha256": "a69a4935d3782ce55663e097c670632599249cc5d261a6f323c03df62e86716f",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/entry-details.md",
+      "sha256": "41799d0e47b084e6056bfa1ef06c016f673dd10947d6a41167df93091269216f",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/live-dispatch-check.md",
+      "sha256": "873ee07aa7176464bb88e8bb402ce29e704308378d01c0fd36f68880dd5e74e4",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/hosts.json",
+      "sha256": "f7672087d49d75a36aa43d2a2539c30cc6a1bad402067edbf6ba2db6abf09f6d",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/index.json",
+      "sha256": "7da89c508cc89c9244c7fac5ddd64310f4b9e87f3f1a9a06a1ca65ed12a2381d",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/amazon.json",
+      "sha256": "0ab4fde00c7b519e1c23a538adaab3e664d756277bd878ae3635d402e949a01b",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/anthropic.json",
+      "sha256": "1349d71277f6a3261f51794dab7b87b215e1d2030a27c0870926d43c2959edd6",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/cohere.json",
+      "sha256": "2f13f7a11cbc1db8f565367607989fa4a08160d99cf2ecff5d472505e6aae02c",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/google.json",
+      "sha256": "dc676ed6bb75c6515b9415d417d8618717b1a6f0b9e9b2d151fcc10940d8854c",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/meta.json",
+      "sha256": "e5cf34c46293264cc65ca96a36378011a707662e678d22dfb7400c572fa2d25e",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/mistral.json",
+      "sha256": "11d060a1a8e298a80e98322bc0c99844ace8d5579d1145bcb37d6013c250108b",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/openai.json",
+      "sha256": "0321e043f644221deeda41a06a28afa0b87bf844415c08052dcf0fc47f55fa46",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/xai.json",
+      "sha256": "338ec89740b1b146d2a6c30d809596b0bd13ccb32b52343b2994a3885051f3f2",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/policy.json",
+      "sha256": "4d7a24a1bf36e1e618df6e33b8f74e3fb4915332ef77f83b99d86450bc755e9a",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/pricing/anthropic-2026-09-23.json",
+      "sha256": "1b510b1c5f3166fa48eb6c0aecc0419cf91a3901dedfb5d6a54a8b5584e145ea",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/role-presets/opus55-balanced.v1.json",
+      "sha256": "8d17ff31847452ffce4fb389d766491b99c4ecec425cdeef7362b65996ca4b1e",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/sources.json",
+      "sha256": "688978a175889003c7e8e1fc4bb6efc775172d0e670a2c51a8c39e3eee8b57e1",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-routing-presets.json",
+      "sha256": "3f53fa46a6868e76bf790794a8b2b7abf30714cc22a42b280991711df770bca9",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-routing-v2.md",
+      "sha256": "b25a67d35620a5555b9c4c1239111b0d120b28746d5fe177a7e76c83ba549014",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-routing.md",
+      "sha256": "beafe51d71aad6d9d5ceaf79f9f8939d9118b266896953f55b3558c4363d2f2b",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/semantic-decision/decision-policy.v1.json",
+      "sha256": "ff34da09b06fcc866259e3f895dd22d94da8cb538584d8409fec7d177f643326",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/references/semantic-decision/questions/model-ranking.v1.json",
+      "sha256": "9749a5d4c37f95518e1c37c5ca966df130ddd4871eb033f9795d5372c0d96a15",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/adapters/gemini-cli.mjs",
+      "sha256": "372fe16ede9f61d9805794fd92161acfbfeb9508aa3763fafe67713cc44fb26d",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/adapters/grok-build.mjs",
+      "sha256": "268c4bd0601f4baf1cac6fb43f4e595f669eaa9148c9a46b9c22f46817dbc977",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/adapters/headless-worker.mjs",
+      "sha256": "912b4ed2873aec67a958f31d4c998ce99ac64af687277826e7263fbf1e69003b",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/adapters/native-subagents.mjs",
+      "sha256": "6bf5af6295b2e8bd5e2e76311ca62d7ac7425290458ffa349d7259dadf40b4c9",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/adapters/spark.mjs",
+      "sha256": "8257e8a2f66c05f327c9301e359ca3a620312296a0e538af633e4d0ce5836eed",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-catalog.d.mts",
+      "sha256": "11667842071ba3be51feae6d9ca1cbc1e89c79dc1ddf7ddfbbfad5282510b6f9",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-catalog.mjs",
+      "sha256": "610ba3ac1d5c2999545a807f86b3d83bb5ae14ee0a38eada0a424ba9f69a0425",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-evaluation.mjs",
+      "sha256": "afa0cc70fa0f7e4faff9c82a2c27eff60efcaf3ec0f413d5ebb71da955b3fc32",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-routing-core.d.mts",
+      "sha256": "3fbf435fcb0c7bd5025674ae1532423c017ccbaebb5b94103799eb7f082e0ad5",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-routing-core.mjs",
+      "sha256": "ea4630eebccb1e77a1cc65517ab5e68d722d3c5c8392a66a6308694b73cfc6f6",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-routing-peer.d.mts",
+      "sha256": "aef23dea98b2ff712f1ddc13af532f2f1cc0cc2ace631bfeda4e38e152094f42",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-routing-peer.mjs",
+      "sha256": "72132f533435dfe31c949e7342ba231586638e55ab0b2e9a2dfcf276c85d4cb0",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-routing-service-core.d.mts",
+      "sha256": "243ccc4307291653ff19de99873ef5c18a1ea0dec992b1ad55451959a0e507f6",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-routing-service-core.mjs",
+      "sha256": "6563c69c99f71fa89ce060ebdf136e697da88767591d4b33e0f89b17a4fbe330",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-routing-store.d.mts",
+      "sha256": "4b161c0e89ec3cbf38ad0d42edb1a6af0802f9d1aaf68810a173571acbd8b3d4",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-routing-store.mjs",
+      "sha256": "6b195aa56279955af3470038bebc63fbbd92158b6facb2bc9e981b48fc393206",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-routing.mjs",
+      "sha256": "cce007d872b4c94eab4f178f6c54fe59a31f6295604edb4747433421ec768a98",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/opus55-role-preset.mjs",
+      "sha256": "e2b585d6924962f0ac7d220d80aae92f7db2207b6fd72a4a3967ffb8ca4b8eee",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/orchestration/approved-slot-projection.d.mts",
+      "sha256": "810250c3507d6b5d0291037a8de8d43e71bd3e2748cbc0090e9ff612246f2def",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/orchestration/approved-slot-projection.mjs",
+      "sha256": "43780074c7f0a12f75d9cdcafdd3eb774f5652475a24923c8fd6048c709f1ff8",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/metric-units.mjs",
+      "sha256": "bdd6c1d834b5ba87f8f9e75c219ca55937b60793f32ad8f2d506d32954a7a93c",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/model-cost-estimate.mjs",
+      "sha256": "cd9f96aa63e99a99639bc2dc057ececccd50d4b0c7fee422e259c8a02df33bee",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/observation-trust.mjs",
+      "sha256": "88666350e5a72cfcaebb581dfb9a7842e4a49a22081762e22030ab8e610ae009",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/policy-evaluator.mjs",
+      "sha256": "c9e7fb90a1b9cdc13805184df65c0c18796763daa4db7ab56de690fb09782725",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/policy-stability.mjs",
+      "sha256": "3e2dab84e8f75c6cad579c05da8936b034a312e72245e91cd4ba93a9c06eb6d4",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/pool-binding.mjs",
+      "sha256": "87dff5715825a8e7e7c71a7cb6b8ea41dd27984819a5cb2acd01b67f17a800fd",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/preference-policy.mjs",
+      "sha256": "77db4acc152f386179ce5c0ea19ebe4473eb87d211f9d2b2d0d51d86b3389398",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/role-priority.mjs",
+      "sha256": "209f2937be1f795ffda04681983c208332e31f8f513db9460866b7f1b2641084",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/unknown-policy.mjs",
+      "sha256": "15ba1d8e6d40b4515ef311ece49500d031fe105032a011bde30c4c77a96048a5",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/work-estimate.mjs",
+      "sha256": "a31504722661ff49ea8b867eb778bd80ed00c13e50774749fe34a75d05bbb360",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/adoption-guard.d.mts",
+      "sha256": "ff79476107a9c29c399b2388816970069f0e71e4021f217b9d8e294d03cd2262",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/adoption-guard.mjs",
+      "sha256": "0ba2be4f653d3d0c823744b4a588e2b29989e8d08f3ab49f5fb6474c6e8e3beb",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/application-record.d.mts",
+      "sha256": "665650dedf9f7c8b463fb26e6ce60f7e22d1d9b6bdff889cd582227c4c8bf7ad",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/application-record.mjs",
+      "sha256": "6f37349505b3c67a99a2ab1cab65b3745705417f81e1c00a497abfeeab86257e",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/candidate-projection.d.mts",
+      "sha256": "752db2a27f8dd98873fe3ede017ff5909affd820b7bcbb166f79332e2969f15e",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/candidate-projection.mjs",
+      "sha256": "f0eef3b19c383a64e3216f70afe628e2f25d03f88008afb54f4a5540fbbf37b2",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/prepared-input-check.d.mts",
+      "sha256": "6c560e84d3158d2252a7f5025cb0058421377df3c1601aab304e240ce5a52e8d",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/prepared-input-check.mjs",
+      "sha256": "1f3cc3e265bfb86890ed6454e87c363f69810aae1c339ee91c950b84032a344c",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/reducer.d.mts",
+      "sha256": "846d3148d568b91015327378f74ccb0b58f523aa8fa13c044a5af612c386c7fc",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/reducer.mjs",
+      "sha256": "30c94d27244578db51faba56610ae1eaa33da6dc48741bc61f4b4c540dbc0a36",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/replay.d.mts",
+      "sha256": "c88951bb9833fb806145f839a855058d551355c0b885e3db86e8047bb3621d55",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/replay.mjs",
+      "sha256": "85503a10b29a1472bfbcc768add9972555da808fa3739bf94cd792b6e98c8a63",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/LICENSE",
+      "sha256": "1126322e2cc8d165adc4c792eeb195717de2bcc7b39be1ce77959d78e87ef685",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/README.md",
+      "sha256": "ab89282af193071b96259a5b1c38e8045dfcb3d4cd7cf9839c5487c00e45bd3f",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/SKILL.md",
+      "sha256": "ee959a781664de9e016eaa520c1512a48fd08677b2f778b70f85350a5587f579",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/contracts/evaluation-aggregate-claim.v1.schema.json",
+      "sha256": "996dfacc6fcfab1c850120e33c2977403338f24c494fd83860ae6d6f01d627d0",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/contracts/evaluation-case-record.v1.schema.json",
+      "sha256": "166e0c016b953dc1df0ea930afea3781d27cd03c23eb90cbafc0b9c5251fbb86",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/contracts/evaluation-result-record.v1.schema.json",
+      "sha256": "71228eda30ffb78e6fc9a9583a1934e3cdf5bee531dfedf455fc30c60a57f581",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/contracts/evaluation-validity-report.v1.schema.json",
+      "sha256": "fc67b9e7fccbe99c4d0c0f2895a654ab5669122043336debc4837b807ba10f0a",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/contracts/evaluation-validity-request.v1.schema.json",
+      "sha256": "e6976558c876e8b6a299036ea8411bb6b5c9bd7d2c58198fdb312e0babacb767",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/contracts/evaluation-validity-validation.v1.schema.json",
+      "sha256": "eeb42567f3602158c15aff5b19e8793fac37e482f974a2cd015ad676f80386e0",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/integration/provider-result.v1.schema.json",
+      "sha256": "e4b97706a426aba4aa594e04d74c4bad2f2fd46e3f91f83738d06e7756402ea0",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/integration/skill-descriptor.json",
+      "sha256": "c832e9f4ad623a4087426c13bb70bd5c08faa3814652af7f3a41d82ded20c867",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/references/audit-protocol.md",
+      "sha256": "e9e49b113e088cb9055bae6f5f1f93f3be83cfaf18bafb1f6854e67853ea62a9",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/references/entry-details.md",
+      "sha256": "7d31114e9200454d084dd7df04db34f1afc4c3ac23f3feb09c5eef6a85be8950",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/scripts/check-repository.mjs",
+      "sha256": "f8c6783c3c9fd921912d862dd772ea5f6e0a6bbed83ca7034388fe8b7ae4fd6d",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/scripts/cli.mjs",
+      "sha256": "0b6282eef0b25ffdc3b8f41ffee4faa0fe3f0b178edc35fca73413f4b28adbc6",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/scripts/core.mjs",
+      "sha256": "ef16baf8366bfbaa2deec09ec8c9986a0a2611caa389f3d30685495ae4285190",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/scripts/digest-request.mjs",
+      "sha256": "ed67da3854f1b0dcd43b5275705394a1fb818ff7d37cb9ebeb33f49d6067edbc",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/scripts/io.mjs",
+      "sha256": "085c8e483e8d15609a55d1cf728c9d1ccbddcb89a0cd68b4c544b8de93c8a3d5",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/scripts/runtime-smoke.mjs",
+      "sha256": "9bc75ff121fc1be7db270dd19d0ab8168b2cb196164cbc1fbd75c2f240af9086",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/scripts/schema-validation.mjs",
+      "sha256": "425ea52a1bd24ea010ee8959d9ae6e8d5ad15ff5345bb1f6e42473afc53c921e",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/scripts/validate-report.mjs",
+      "sha256": "b9f139590014f8b3476e8e0007511cee0376643e9bda48d6643cd41d2738b122",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-audit-gate/LICENSE",
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-audit-gate/README.md",
+      "sha256": "bdec1f18c48e33e7399daff1a4fb7f5260d57c4fdbfae7e1a80bbac2f8e89427",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-audit-gate/SKILL.md",
+      "sha256": "cf43ece2c32c39f863a50905da4070b73f7475f20adcffa402b6abad75c24b66",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-audit-gate/references/audit-protocol.md",
+      "sha256": "9fdd74f1a7fbaa3dd7655524d69a1e0d948149f115717957912b7dcbaf93021f",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-audit-gate/references/entry-details.md",
+      "sha256": "0b0ce13b70e284eee5878206f6f01d3c29daafe9a73576d7f60adb67167bc14f",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-audit-gate/references/orchestrator-integration.md",
+      "sha256": "a00ff7210d4fdc1664a6dbdd9e3ea71c5cd693b34d0daf00ae811efa7eed23ab",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-audit-gate/scripts/test_plugin_component.py",
+      "sha256": "8c46aa71bdb49a23f6d4437dd701af5004a74069679d672f1bd9805aba609c5b",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-audit-gate/scripts/validate_skill.py",
+      "sha256": "385e0d11616ce4de2c4758852ba59ad328baef92d9332c702cbd87f7291c2a77",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/LICENSE",
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/README.md",
+      "sha256": "6790a265f9bcb37d8b7b88ce1261af017dde5753299b71deb6afc309d790bfd0",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/SKILL.md",
+      "sha256": "f21dc8910f3220cdc11439fcc7e2d1bbfe9ee48155027809bdd7a9d1ea3f8986",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/contracts/decision-record.v1.schema.json",
+      "sha256": "af181dcd574356dff20136b08af527eb9e1f0a0d47a371a087791f87179735a3",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/contracts/requirements.json",
+      "sha256": "13b2163ed2588ad9bd068df7a13efae39dcc8da094d31349c1adc370149904b4",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/corpus/01-low-routing.json",
+      "sha256": "1e3f20da8526ad496b006a070dbe28650dda6f6161633e1828c0cebef85abda3",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/corpus/02-medium-contract-conflict.json",
+      "sha256": "7842da871839543b8d01e2125366f6aa7b243aed8d7f43029f5fafb6cfdaa915",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/corpus/03-high-cross-exam-skip.json",
+      "sha256": "e59f4e65eb3c18a4392dd1c28044b41e6a46e67a0b82cb8bc3f18f4491eccc40",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/corpus/04-high-adaptive.json",
+      "sha256": "59d315a916a4be8fffc9e8ce7f2e945661afbc86e0fd4a083210def8df87d723",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/corpus/05-injection-unverified.json",
+      "sha256": "d7e87710bef984450b0de47bae3736cfd1204e3d7178ed7491ce0f713f551839",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/corpus/06-critical-no-consensus.json",
+      "sha256": "965450c1db7a3ba23dc9e2cb1af38f00568df39344684b8db2688e1700dbe491",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/ad01_specialist_cap.json",
+      "sha256": "a34dbe3160e136709a0803ddc4badcdc81ee1803997e5d9ac749f2a6eb82bb2f",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/ad02_redeliberation_cap.json",
+      "sha256": "e29dd71e0d91d087829d5347adc3ec9475a2ed3f4c02bc262429dc49065663e8",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/ad03_impacted_scope.json",
+      "sha256": "6d01cd9d3ee3b7c7ec73c98a627a8ca52d165dd7ac5449e73f966a4ec39aa97a",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/ad04_worker_cap.json",
+      "sha256": "69ce979be60b94172580b6608829894951d0e4cf10e424336e2959a013e34871",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/co01_verified_links.json",
+      "sha256": "fe3b60abba103284594deae025a28f32f3b4737e2d9417bfdbf12aa73d4ce625",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/co02_constraints.json",
+      "sha256": "82bcea5fb5140b6a2135bd11a0e7107d5fa17ce093961321baf457468d617b2c",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/co03_axes.json",
+      "sha256": "4188774b1f8b03c1617f1c2e5d09a6fc349d76194ac5589ef1f3f28a54aa6b22",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/co04_unresolved_dissent.json",
+      "sha256": "2ede2e4684fe56c0e02510e1bd31922ca2876bbf2b501fb9453c895a712b2805",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/co05_no_consensus_shape.json",
+      "sha256": "23db11add99df3714a8985394dbb0fec01db43b6def338b8ea7e0d472fd6ea6b",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/cx01_reason.json",
+      "sha256": "db427e0a2d948e46e653eb321bf5a427305213edb5284ff91cf90c33a6ebe943",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/cx02_all_triggers_selected.json",
+      "sha256": "36c3a9c2166efb0fa1f610769ed1ff8f1962385bf0e2def43d71bec970eba07b",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/cx03_nonorigin_coverage.json",
+      "sha256": "d44455e0ad603e5ab064431b86ea0b9ea19e6b25d34651949e2a17269741f307",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/cx04_followup_cap.json",
+      "sha256": "77b43c80c942080beaf2c33d479aedc1fbdef6c8d336dbf161c68b6a72ff6d45",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/es01_status.json",
+      "sha256": "2d56737f2b5eaa8e2cbef40ecc37dd528b31623b7e5c0f24c5a163ed5c24ac9b",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/es02_verified_locator_note.json",
+      "sha256": "b924898b0af04281fb336536c7b5e4d85b86d18f79834bdd419543dcce2857d8",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/es03_only_verified_consensus_links.json",
+      "sha256": "1ad5f87d5de91936d0a4cde746bf0c3b16d3f7d9a2d44bffae65aa434b952c92",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/es04_no_raw_reasoning.json",
+      "sha256": "4fb43c6337e3239c190637b0f3ff20048bbd20b77ab524797c2decb38af15604",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/es05_no_execution_directive.json",
+      "sha256": "7753437dae1763caec2dfbb1dcb625fdcaf9d5f73ed87134f7f2dca7cabf045c",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/lf01_completed_reused_distinct.json",
+      "sha256": "e6d598cfcd2ef5a08483078767d5e16d9cf9c5047f3db6a812b423a13d2345ee",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/lf02_judge_fallback.json",
+      "sha256": "d60461e8a176c009f0d50c21ff98145e6b2b235df53cc440c7afaf89ed6c0960",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/rc01_low_no_workers.json",
+      "sha256": "02fa46c56accc14dae5115d468ccdabba6a09fd78483865861f8d295144461c8",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/rc02_medium_two_reviewers.json",
+      "sha256": "4d60143f5c518ea16ebe90d52c69060d09936cf646cf829e85183919bebc0e1d",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/rc03_high_fresh_judge.json",
+      "sha256": "7f0248ccf2f21f9d4f5b6af99e2d9cdb5f95d4580c9e85d6a4efde8dc58541a2",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/rc04_critical_red_team.json",
+      "sha256": "fe029660a8b8a2fa5129020d385dd3e6b49767fadbf19dd63efc6885c7378f56",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/ad01_specialist_cap.json",
+      "sha256": "d1ef4857cc5fdc94163c9f97fde6274f34a2621fa633f6a65384a46fab7d4a27",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/ad02_redeliberation_cap.json",
+      "sha256": "8240d45e162ed94c20f7c8a43d2c9b3e13dfaa09777934e1ffb04148e1dc0807",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/ad03_impacted_scope.json",
+      "sha256": "8240d45e162ed94c20f7c8a43d2c9b3e13dfaa09777934e1ffb04148e1dc0807",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/ad04_worker_cap.json",
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/co01_verified_links.json",
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/co02_constraints.json",
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/co03_axes.json",
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/co04_unresolved_dissent.json",
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/co05_no_consensus_shape.json",
+      "sha256": "3d95502500037cbb7819943653e0ec73b36d8bc577e5ea37fa659e1a1450f2c4",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/cx01_reason.json",
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/cx02_all_triggers_selected.json",
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/cx03_nonorigin_coverage.json",
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/cx04_followup_cap.json",
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/es01_status.json",
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/es02_verified_locator_note.json",
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/es03_only_verified_consensus_links.json",
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/es04_no_raw_reasoning.json",
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/es05_no_execution_directive.json",
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/lf01_completed_reused_distinct.json",
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/lf02_judge_fallback.json",
+      "sha256": "1e700f51495ae573d7637912e49b944580bd5b650d9cffc4275b6f7dcf33ce8b",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/rc01_low_no_workers.json",
+      "sha256": "f24477c6e8cc00dbbebab4ad7fa1406ef7dc4836af583090e6dff0be8f944876",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/rc02_medium_two_reviewers.json",
+      "sha256": "cd613b02886ab513a3b28b7f1fe4e8e94e954bea0dc5f92d5648fa1fca480b9a",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/rc03_high_fresh_judge.json",
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/rc04_critical_red_team.json",
+      "sha256": "82ca6210fbb8530dfc48e3ad7b1121c6b2783e375377e24960843ec3d3297658",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/references/entry-details.md",
+      "sha256": "72ba08758dd3fe1ca0b1a7c962cef21692cb5bdcec49eb63a6d9f5bf8f6f3c7a",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/references/evidence-and-verdict-schema.md",
+      "sha256": "6320b5f81a3e314d143959b77c0b0db531eec45ca86aa150d5c2c340efd49eca",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/references/integration-contract.md",
+      "sha256": "e242d7745b1689da3cc5558803eb1b4aa8d4b8d8b8fec129b142fd7e8df8e991",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/references/orchestration-policy.md",
+      "sha256": "49833eeaf4d2f7ad6802d699fe7983cbcd24cb55cfa629cfe4901d00be66aa82",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/references/role-catalog.md",
+      "sha256": "18d8d9b6c65bc6925c1dfe3cbce86055bbf44f274a1c406ab4be5cf7c7a6ada5",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/scripts/run_evals.py",
+      "sha256": "5c7666d6b15147bffaaa24f8f564fd62e3f8348736a42aeb220b1edcf846a6e9",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/scripts/summarize_evals.py",
+      "sha256": "38be053cb6b7dee6aa4bb5c1923d98c7e8e5586959f11a126957470d838e3bcd",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/scripts/validate_decision_record.py",
+      "sha256": "c381670411a8fee8ceb657df3f1887298839bc875d9dfac9eb6c7ad61a8e7d34",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/independent-deliberation-panel/scripts/validate_package.py",
+      "sha256": "f2047446d7a1d1a439f951b24257c3dbdaa769e282cf8c6e02bb74d3ef9d1548",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/instruction-scope-resolver/LICENSE",
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/instruction-scope-resolver/README.md",
+      "sha256": "50c64615850cb097e0a23a751801c7086bcf73f4be4499f92fa8a8781c9b83f6",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/instruction-scope-resolver/SKILL.md",
+      "sha256": "712aae20bb33e746358b663fae588be09fc17aa255a3b32d2ebbcc1712fe836b",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/instruction-scope-resolver/contracts/instruction-scope-request.v1.schema.json",
+      "sha256": "e53189bb093e631abe8a162ac8c61a807b6b962d9d2f5cd3c4b1d9d83703b1b8",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/instruction-scope-resolver/contracts/instruction-scope-resolution.v1.schema.json",
+      "sha256": "fa7e89a1aa9b4874d0d6d98d51fd3366e3871a2d8daf66c958bd36073815dee2",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/instruction-scope-resolver/integration/provider-result.v1.schema.json",
+      "sha256": "17517fb4a61fa6eda8322d566b48b3d2cd1d6be8c7cc1a27ac2024e9c6b93771",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/instruction-scope-resolver/integration/skill-descriptor.json",
+      "sha256": "c2cb3fb401f1255034979001b3112987bb0909c2f1e7d7e09117a0b7972b0f0c",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/instruction-scope-resolver/references/claude-code-instructions.md",
+      "sha256": "481246c9a46175b3bfcecd22d30ce53a7a5ad775f74171cd2f93b09626481bd8",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/instruction-scope-resolver/references/conflict-classification.md",
+      "sha256": "8ede2ce0c1a8c0c6665c87fb4f5ee5695064eaa8b6e13c435900e52a2109d79d",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/instruction-scope-resolver/references/entry-details.md",
+      "sha256": "309a4dfc616428b9ef99f94094ec48495c52d4f5c47bf6fc28ac2fa04890dab8",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/instruction-scope-resolver/references/resolution-model.md",
+      "sha256": "7bbac014604998b1d89248c09140a1a5fe7be4c7215e9258942d8234bdd9dc9c",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs",
+      "sha256": "d95f342597a78ae056baa66d46fc85ef5adf8d0c4b12258c1f215011926a62d4",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/instruction-scope-resolver/scripts/validate-repository.mjs",
+      "sha256": "b515baba6e195c5187363f0ffe424301d8734e42bb1aa6bd07c758443f3f6352",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/iteration-frame-auditor/SKILL.md",
+      "sha256": "5da6ca2f7c9cc39bcc171d481bcfbf1a21b6edd462d6c56a71a6d532e28b678d",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/iteration-frame-auditor/contracts/iteration-frame-audit-request.v1.schema.json",
+      "sha256": "5a13e78ed8c170a5e25d42564df1aa4bb40464c5851c8c8edd0b8206dd88d08f",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/iteration-frame-auditor/contracts/iteration-frame-comparison.v1.schema.json",
+      "sha256": "9c114f04bed89dbeab7245e4e13661b903df0f273f3e153bda3494a6809e71d2",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/iteration-frame-auditor/integration/skill-descriptor.json",
+      "sha256": "e5ef324675190cac44c89fe72d924a4b3ccc1a4c1afbb16231b792875a25c35e",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/iteration-frame-auditor/references/entry-details.md",
+      "sha256": "e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/iteration-frame-auditor/references/review-protocol.md",
+      "sha256": "1abfd6a06a67d11277e24db17ee2e9fe8c2597e37304202378f782b959472793",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/iteration-frame-auditor/scripts/core.mjs",
+      "sha256": "be484cd917b6e21f426712c45019d413803d21b86e07daa2d94f8d3441e0bb71",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/iteration-frame-auditor/scripts/digest-request.mjs",
+      "sha256": "3aa667511afd0e2a82f01ef8c619c0ae0aed233d5cbf1254431dd654a934a1da",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/iteration-frame-auditor/scripts/io.mjs",
+      "sha256": "149cee7dff10cd69e03c8dcbe85fce842bddac0db6f6d89d779cf4a0b2cc6768",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/iteration-frame-auditor/scripts/schema-validation.mjs",
+      "sha256": "368b47454f6c444eab80f187c1ab9f66228dc9f9c254768e2ccb4327aa6b76e1",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/iteration-frame-auditor/scripts/validate-review.mjs",
+      "sha256": "222f6a202e6848faf4446a9edd20a15753e4c0e3aff59d9809c625a82d24bb32",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/LICENSE",
+      "sha256": "a9cd9629f1976b407579466b4ae9d6b84c40d91d587827f3180c009701bc7472",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "sha256": "d99e32e021f821612fd88ff52512aa3e9d67207b95fd2af58ec61e8595fceec1",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/edit-candidate.v1.schema.json",
+      "sha256": "8026fae9d2597f3cc127e80f9d04b7fade42d1c66d03a23ca8656a4c27708db0",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/edit-decision-set.v1.schema.json",
+      "sha256": "db9a283e623df89093c2dcc93f74461e309ef8d952956a5baacd88ff141147ee",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/edit-verification-report.v1.schema.json",
+      "sha256": "3cee16cadb97f532d1a6416c623510b5d338465fbc0c742c8fe2e3992dc7ef95",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/editing-draft.v1.schema.json",
+      "sha256": "5819c6be58cde00623b18f82bf4b2389d9340369ecf70510e937fedcbac7acd8",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/editing-work-product.v1.schema.json",
+      "sha256": "fd2cd013431c46e54324c43e5012635ac12731dc9d8b3716d2f43f125f9ad2e3",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
+      "sha256": "19c95d9ece81e110b286460253929ed60382786decdf139261baa357b1da89e9",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/finalization-request.schema.json",
+      "sha256": "79f4dc6d10d037288a698814400514a710692e432905a6d2ca56cea707c03f79",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/glossary-binding.v1.schema.json",
+      "sha256": "ac67afeff4d6844a64514bab3c17a5dffdba3172d1d4db79f726f1422e4a5ec3",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/glossary-match-set.v1.schema.json",
+      "sha256": "44fb2ad4b377cc48594daa9d89d82a8dc677b7ef04f8dd28335454b1d10da04e",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/protected-manifest.schema.json",
+      "sha256": "cad9ae7bb477bfa2fc4bfc71adef5749f9d7be9eb89aaa1c147d388374fef395",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/provider-plan.schema.json",
+      "sha256": "b52bd05b1682add3736122b079af6be0e29db1686a0715d6decb72febe589269",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/receipt.schema.json",
+      "sha256": "3b6605f74e6bf88e2930f0e8eb99f2e5678f66b03ff459d083b178bbcbe8f6bd",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/selection-work-product.v1.schema.json",
+      "sha256": "a3c48d8e260170034b86b5abe7719a00989bedada184112626e5eee6a162f970",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/source-unit-manifest.v1.schema.json",
+      "sha256": "a51b3dfd6cf54bcac1f31f2848aecfd5dfc1816156efb7bf65a5441817243241",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/verification-work-product.v1.schema.json",
+      "sha256": "3e771ac4ce0e9da64303afea9665b977b3069daf66adebbfc533488ddf930073",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+      "sha256": "788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/integration/skill-descriptor.json",
+      "sha256": "ae35d2f59c286315e9b6615dffeb19f6e09ace1542f4dd802c8159c92b101bb8",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/integration/skill-descriptor.v2.schema.json",
+      "sha256": "ff6c893da551709fead4ce14ad16c37b86c27443d1b7d98ed01359ca3fff36a4",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/references/contracts.md",
+      "sha256": "fb60315862766c57abcc6e14fad9ba8921876aa6c9b4f7630d94905c108209b6",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/references/editing-policy.md",
+      "sha256": "80bd41d27715577fbb0e4fe25596308587e1ddac80bc226080adbf09118e0891",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/references/entry-details.md",
+      "sha256": "26ce188795767864370bbd07ae06ba5e164ff802b301656daa3759626996a9a1",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/references/finalization.md",
+      "sha256": "19577be3ad79676361a95df560f6c48510aaac9764829cdc1aa8201bfb72cf37",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/references/integration.md",
+      "sha256": "b521561d3fff7c1bc375a82a81e46fb63869fbd71c67904d283bc59c7537cb27",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/references/selection-policy.md",
+      "sha256": "a3cb288adef204d6aed59ef339f62a979b57bd411c9d3be794731ef19b963d64",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/references/verification-rubric.md",
+      "sha256": "313627ddfc4978097d4b28aa87b93fcbeb066d823e1f18b6ee3939e7d1413e5a",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/resources/glossary.seed.jsonl",
+      "sha256": "6015c95f05ce9923b53bb3c53404b9feb364971b296f820fedc9c4e530b73eda",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3",
+      "sha256": "6aee8db6e08136cf8d4399c90232484e13a9e287d843f1638b65ffb2ef8d283d",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/scripts/check-result.mjs",
+      "sha256": "081aa5271d45a1c80ae1631b02f16214df5270f7b27f08a69cecbac269aeddaa",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/scripts/extract-protected-spans.mjs",
+      "sha256": "474670fcb5a206fcf8f4e195fae7014de7431c461922f0f445028ff4e146d8b5",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/scripts/finalize.mjs",
+      "sha256": "310f74bd37e41d37abb5f652592a2287cb6fe951a72317b080675eb8ae66223c",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/scripts/finalizer-core.mjs",
+      "sha256": "68bfe12f54d9dd321d3b174d7ea04ed5fbbfc219d2a0f2b78829ca17168b9b14",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/scripts/lib.mjs",
+      "sha256": "0c4f336c557823db6d5d05a73721fd29bee1301ce0a80d2a691c15cd43a9509c",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/scripts/protected-spans.mjs",
+      "sha256": "ff27d0065fdcf9b08b4f76161b9b08fa295464c57a3235e3dd2d4a61c854320a",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/scripts/provider-plan.mjs",
+      "sha256": "b087dee0727ab552441413e5ce9218f5116caad2c0508aa8549c0adc95bd60fe",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/scripts/result-checker.mjs",
+      "sha256": "9de25749efd1839fcdc9e05050c2ced4f6ea01097ca6c4dda2a6de6a3dfaf5d8",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/korean-prose-editor/scripts/source-units.mjs",
+      "sha256": "23842dc723e303e58b521be7414013a2cfabe19607306d2a602ff6de0bf2e637",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/model-effort-advisor/SKILL.md",
+      "sha256": "5dd35f092de2f2e978cbe98a0a3dac34063bcfbcf1655b4575950eae075c02ed",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/model-effort-advisor/contracts/model-effort-advice.v1.schema.json",
+      "sha256": "7150d4f934f9a9422c31fc9f94b7bd7d6b1ac1e6bd029233293c40c658c693fe",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/model-effort-advisor/references/entry-details.md",
+      "sha256": "0d50cce6def3f621f0318005848dd37797d30d0cc768bf79f7bd7fa81000c82f",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/mutation-risk-preflight/LICENSE",
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/mutation-risk-preflight/README.md",
+      "sha256": "c7bc39a506ff4aeed3726cea2c92ef4558e62d0d28d03ccde09d083a33ada213",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "sha256": "e6ef2c33bf2f11d637fef427562d3f4982d00fa69a3e928eb8948384f706e49e",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/mutation-risk-preflight/contracts/mutation-intent.v1.schema.json",
+      "sha256": "b66cf7e41d10d5808dafecea3f8df147e029952d5a0b46a2013841ca1a45452c",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json",
+      "sha256": "4e6f86d0baf672ef0bd83a4a9c592bd8ec5dcab1f342071372908f52e5217fde",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/mutation-risk-preflight/contracts/upstream/lock.json",
+      "sha256": "a89a52a20bf14ce1ac8a7e9583fca0a38f9ade0d64d5866b2a7b8624cb52fb9c",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/mutation-risk-preflight/contracts/upstream/task-envelope.v1.schema.json",
+      "sha256": "b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/mutation-risk-preflight/integration/provider-result.v1.schema.json",
+      "sha256": "0fa638d22b6a37ac9e585597b1ddd985de4562756e1a14b9076875dee154e311",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/mutation-risk-preflight/integration/skill-descriptor.json",
+      "sha256": "c0340eaf53126034cb3ba13b2c9adbd03fdbecb23942687fca771487dc393264",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/approval-and-authority.md",
+      "sha256": "471afb623db2b67f45465f924eec5426d470dafa0c92bcad14b7bd16d0c16334",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/entry-details.md",
+      "sha256": "13dc04ff9d74e17f2d0bb6d69583a2c502dc5c69766d9a4ed91a59c0c5741154",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/recovery-requirements.md",
+      "sha256": "60a0bded3a1453092e2d02469393e39f3709f0810e0e4c076628854c4d7d54af",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/risk-matrix.md",
+      "sha256": "0377275e0487f9823bed76cd3541e0caa5f3bf030ea407fee5ad17b0f761c801",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
+      "sha256": "39ad62d3f1bde2194d3efd116ee81b52e1d59cbeb6a30d5a2a8beb3db4d4b1a5",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/mutation-risk-preflight/scripts/schema-validation.mjs",
+      "sha256": "8402dd38105e29e0599cb6fbdf520206a677ca896d6dfcbc32408f07db19eb84",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/mutation-risk-preflight/scripts/validate-skill.mjs",
+      "sha256": "84ebdd1d94a93db8010a5c569a17dbd1fe127f94d3ea4fb0e446d7ec489801a6",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+      "sha256": "0c738b534c3fb15bd9919873df6cd9e05314647de9cefdba541748f8ee3e612f",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "sha256": "525f0f1e6e9d8d672eb0f62aa13301bc156519177260dda6e501233025d64a50",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/orchestrator/contracts/collaboration-decision.v1.schema.json",
+      "sha256": "f27d20be8d5269b99534bcde02846d13a586137c362840fdc5ad1856b502cd5f",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/orchestrator/references/collaboration.md",
+      "sha256": "e590f6cd87e5a352c27740f60329dae51a6ba95505747d9edaae59e3557f2f0d",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/orchestrator/references/convergence-guard.md",
+      "sha256": "8a73f99a45c2cde18e5c821991af516b4a1d47cd845ac650b8d63a8b6f5a9489",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/orchestrator/references/entry-details.md",
+      "sha256": "cedacf116c1c5e937221978e34621d9d054050a83dd24776f74591719704952b",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/orchestrator/references/input-origin.md",
+      "sha256": "d5375c58b657dfb35e07c465ab7220056c59af51330b24239448851463248927",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/orchestrator/references/mcp-execution.md",
+      "sha256": "1d0772c4a63f2c37e8b695c8a7ed54dff3a000c42bc856f74827f87943c3bf16",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/orchestrator/references/specialist-handoffs.md",
+      "sha256": "127e02cf38a6a80d73a2e2b103aed48eece1544edbc6f2d8ed2a2ce4f7064238",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/orchestrator/scripts/collaboration-decision.d.mts",
+      "sha256": "2d7bac5952b67b52e4aaa23934cd396eda1ad9aa864f30bcd2eae455f4c50650",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/orchestrator/scripts/collaboration-decision.mjs",
+      "sha256": "21b8d7f51370d59e16fb6ece4dea4e30ca7583a5f2cac6974f419dcb78a1f643",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/orchestrator/scripts/query-registry.mjs",
+      "sha256": "493e26245b359d187da2496d075bb8a44ded5a66fe2b1600b3151193c3a50c3b",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/orchestrator/scripts/validate-collaboration-decision.mjs",
+      "sha256": "e4a618be45eb86828d030a08521517af07e20caa46f3e826c771cfa789ff3a08",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/ponytail/LICENSE",
+      "sha256": "fb1bc6909ac3ef82d5c22106e32ef682b0cff66788fa915fb9b53b15c9d2f3ab",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "sha256": "bb401bf9abb8a6ca2517a7f473d8ec2503603f3d550fb81e2dd2d52010d62663",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/ponytail/VERSION",
+      "sha256": "f52b4f81a0c60cd988f8ccc9a0333e206b5f7e41dd0f5286c6ab5f7bf2d5335f",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/recovery-strategy-selector/SKILL.md",
+      "sha256": "df0fe38e661d69a285fbe628b07fff3c47067bff068ed52e43484b6e438c29f7",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/recovery-strategy-selector/contracts/recovery-handoff.v1.schema.json",
+      "sha256": "c8a063c6e34c303c343c067d3f453b72739952fe34eb2e6f8e5eb125630e318e",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/recovery-strategy-selector/contracts/recovery-strategy-selection-request.v1.schema.json",
+      "sha256": "062e5210736afa8c96f99e9015879f38860ef29a7f2e739a62a59d0a750a4a4d",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/recovery-strategy-selector/contracts/recovery-task-binding-report.v1.schema.json",
+      "sha256": "77425da5b6e8d7ea78e99a4c8081797d52c1f01969d63f8ab8bc4c079e881829",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/recovery-strategy-selector/integration/provider-result.v1.schema.json",
+      "sha256": "88a0e4bef0087af655f548408fdc92917e91d2d79185c9daf5325e578a41cac9",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/recovery-strategy-selector/integration/skill-descriptor.json",
+      "sha256": "d1038d1d026fd7cda0280a5de733dd81624170801848205e633e0c7f283812ca",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/recovery-strategy-selector/references/entry-details.md",
+      "sha256": "08b489c4ace78471ae6737fcea06e1885294d8d0b5f2207c74c6f740ac05375e",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/recovery-strategy-selector/references/selection-protocol.md",
+      "sha256": "845d333cbe95855d6d1968a13645c2eecb37ad9909a9947c0d5c8a9e9e0846eb",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/recovery-strategy-selector/scripts/core.mjs",
+      "sha256": "ecf03e657a72c7a8d9270c7fa3c9aa61e0fa8800f9ec679b58a26533426d67fb",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/recovery-strategy-selector/scripts/digest-request.mjs",
+      "sha256": "ae5bfe09b7dbee17fab33626abe515a6557bbcf1bad28f64af2602b9490be20b",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/recovery-strategy-selector/scripts/io.mjs",
+      "sha256": "be18888f7299ff481c7017098f0de057fefc247b841294c03bf6b79477e53775",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/recovery-strategy-selector/scripts/schema-validation.mjs",
+      "sha256": "15e55eaba8b8cfde79e134004e77c2e415b04c589b73f74d6da757966d2c32e0",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/recovery-strategy-selector/scripts/validate-handoff.mjs",
+      "sha256": "4020d7f19b81b19d795bde414d345d809aa3e5373a23e1c9a5f48134a9f024e1",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/recovery-strategy-selector/scripts/validate-task-binding.mjs",
+      "sha256": "ae94d30153f617566ad2c2b2856addd2f45a72c21a8ec598809383a298e35f7f",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/registry.json",
+      "sha256": "992c75c8d2fd60d390f1550acdc74d2a755f6c2fdfd291b5e43a5cee948b0015",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/session-board/SKILL.md",
+      "sha256": "9a590ee10af8860359509bf6bcb408f46f1ddc8f4974c4a486d60505c1627854",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/session-board/references/entry-details.md",
+      "sha256": "e8ea65d5d3d372fe70ba0fe7cdba18d965704450f2a7084b27ce885695e68660",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/session-board/scripts/board-store.d.mts",
+      "sha256": "a7c1a39f84e33dcbbbbb1265c5d93145230561a831d35f8d0c49c6a0ae09d281",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/session-board/scripts/board-store.mjs",
+      "sha256": "ccf19b067caddb6f4a7e0e5164e015615a759ef0e54ae9e56673b915b7dd5876",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "sha256": "54c2364b7032117597f435eec5e894e45f5f098c5e1dce9435ed6d309a1fe502",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/software-security-auditor/contracts/security-audit-report.v1.schema.json",
+      "sha256": "12ed15bc510ceae9411db7e0101722b862965aa495c6233a5a29390e29e500fb",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/software-security-auditor/contracts/security-audit-request.v1.schema.json",
+      "sha256": "a78412985ff35634acba9242be09673ac08f61753d9b1c7b55264ec66995e103",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/software-security-auditor/integration/provider-result.v1.schema.json",
+      "sha256": "9067e06f1b36f22a3f10c99777f3a35d1dc10cd128537053982826e2248105a5",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/software-security-auditor/integration/skill-descriptor.json",
+      "sha256": "ffe3a15db77dbc96ba0968554e4c7975308ffd31d1e4f1247f587312783efae7",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/software-security-auditor/references/cli-mcp.md",
+      "sha256": "08a551a35198d84e4449f03e35fcf29251d73688ad84461f0a93e832f9e3035a",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/software-security-auditor/references/entry-details.md",
+      "sha256": "8f03bb00300befa9eaa2b350330a695b42ac3d9f8d336d6d84020c467a95b6a0",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/software-security-auditor/references/web-api.md",
+      "sha256": "00adebf91994623838cac5ff90a28bb7ac9455f24515c85fd80d721d8b17abe0",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/software-security-auditor/scripts/cli.mjs",
+      "sha256": "7b12f9568776c1678aa6cab151694b4c02a215f8b1c3f64a73dbd378d8a96360",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/software-security-auditor/scripts/core.d.mts",
+      "sha256": "9ffc696aa773d947ecac176381d78e524ce4770301e09f4177c51969353a6323",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/software-security-auditor/scripts/core.mjs",
+      "sha256": "84fe73357254b9f98062d03eca83126bf72ac582cc63526cd5d97fa730d2ba13",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/software-security-auditor/scripts/validation.mjs",
+      "sha256": "af11086a2cf3ea1737e272d4ac59bd99f05c1555934fe5c34e7396572be415ec",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/source-lock.json",
+      "sha256": "8b8b97063825d975db4b7733ccdbda3bf1af1ea69e9716804faf0208da189f60",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/task-contract/LICENSE",
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/task-contract/README.md",
+      "sha256": "e5c63fa3447d1e9a4bae033465843f2b1d9c6eba86f7326729015398b3ac8ff1",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/task-contract/SKILL.md",
+      "sha256": "b6fee81517ba23185fca992a5291b9b057b0a2de77d625d19ccbf202bcd55c5d",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/task-contract/contracts/acceptance-evidence-plan.v1.schema.json",
+      "sha256": "77fe7a7280904046d2b372a75db5ac38a76e148f878dd8f853f69e49bcb1d8b4",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/task-contract/contracts/task-contract-report.v1.schema.json",
+      "sha256": "ce5263ec3d1edc13f0461b4ac012989623808cc0bd6dd759456d107a34104dbd",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/task-contract/contracts/task-contract-request.v1.schema.json",
+      "sha256": "e6393d9b242730f9bc1dec0fd1a8ab16028f894f342e84e0799462d0bdc279e6",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/task-contract/contracts/task-contract-validation.v1.schema.json",
+      "sha256": "54b7b67a4439b5a8c6f8079d44d1ecc91efea89fa0e5b4b80596d846852a38b3",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/task-contract/contracts/upstream/lock.json",
+      "sha256": "7d986629a673ce2877d5ebfc4616cbfb81f61ece3b5bc03ad483ea3ba305027d",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/task-contract/contracts/upstream/task-envelope.v1.schema.json",
+      "sha256": "b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/task-contract/integration/provider-result.v1.schema.json",
+      "sha256": "619451cd870832d1a223958dc31bc1dd5bacee2039b61fd4ca1ff63932829958",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/task-contract/integration/skill-descriptor.json",
+      "sha256": "1bb1645cce768b1c287601908dad3ea1e2deb5e0cd5b1cfb5720b927eb5243dc",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/task-contract/references/acceptance-criteria.md",
+      "sha256": "ae6977721dee30fa64b3c8f467b2c81f9e7a3b0f3de3f3d062e7391fe88ae6b1",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/task-contract/references/entry-details.md",
+      "sha256": "e587fd4a1b94415ec30ad943bb1cc9d81f1cb988b07ecab3df3cedd4f6c7efc9",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/task-contract/references/field-guide.md",
+      "sha256": "24df5e053d36887290972c9469194891618bfcd247e6b04f4a74acaf089fc059",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/task-contract/references/risk-and-authorization-rubric.md",
+      "sha256": "7c5c7bf57f9f57989ed7b22352e9742e6cbf0962bac1ff099c5fea56509f4827",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/task-contract/scripts/validate-repository.mjs",
+      "sha256": "64ba1aaf5da1f153e38e9a0584db2758bb886941f48e39af4705e76852685389",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/task-contract/scripts/validate-task-contract.mjs",
+      "sha256": "cb79d6a233a8e79ac6bf65a1b6bf3f256917461dbda1a102fd053863e6180ec4",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/workspace-convention-profiler/LICENSE",
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/workspace-convention-profiler/README.md",
+      "sha256": "0b853c43642022e7756db1c893bb9ef31626979044f0aea7ce4eb7dab15b48d1",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/workspace-convention-profiler/SKILL.md",
+      "sha256": "2cf65f3abe46f637879a9a9544069a1162ca3e04a152212669c4054fdf2abe69",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/workspace-convention-profiler/contracts/workspace-convention-profile.v1.schema.json",
+      "sha256": "abffbd137671292de90000a62e4d3425eece203a6914a87defada2cf71a9e7bf",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/workspace-convention-profiler/contracts/workspace-profile-request.v1.schema.json",
+      "sha256": "775c90d3367a75d7ac96a7884486e3fe657a6c1a18b129f81d284f008467464d",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/workspace-convention-profiler/integration/provider-result.v1.schema.json",
+      "sha256": "515e04e309f2c8f17ee249cd5ce2b3489b78c5edeb811d77596df6138e9adaf1",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/workspace-convention-profiler/integration/skill-descriptor.json",
+      "sha256": "b7b233767ccc927e577322bd1fe09832ebdc6932ab2ebe56f60ed34cea7055a4",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/workspace-convention-profiler/references/discovery-rules.md",
+      "sha256": "b521bdf226255257bc6077dd3ea376d75a3dd75cacdd38ee20cec44a95bda7d7",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/workspace-convention-profiler/references/entry-details.md",
+      "sha256": "9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/workspace-convention-profiler/references/evidence-confidence.md",
+      "sha256": "0cbb160bc1c316787b7a17e4598b9983bbbb688f57f90fcc3ec2d96f4fa368f5",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/workspace-convention-profiler/references/profile-contract.md",
+      "sha256": "95d10a1e0ad29e24a6530abf84d0b1c9c27664568279bc1a2967198aa2e4fd7b",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/workspace-convention-profiler/scripts/profile-workspace.mjs",
+      "sha256": "acee97c401612c70fefabd7ec2a183af652956b674fbfd491f121a3a71004cc1",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/workspace-convention-profiler/scripts/schema-validation.mjs",
+      "sha256": "967c4e72461f05428693e51a9651cd6c015b4486ab4e9566d70151d6891c6615",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/workspace-convention-profiler/scripts/validate-profile.mjs",
+      "sha256": "a43243a8a8d01c05f78cac113d809e6282145e97e91304091408f43d0306751d",
+      "matchesSource": true
+    },
+    {
+      "path": "skills/workspace-convention-profiler/scripts/validate-skill.mjs",
+      "sha256": "7a8e4d07d1cd3bb7a38491abfc8a33ad2156d5da4c83599926bc2c4bddd4779b",
+      "matchesSource": true
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "command": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/coordinate-subagents/v3x/W03.test.mjs",
+    "tests/coordinate-subagents/v3x/W04.test.mjs",
+    "tests/coordinate-subagents/v3x/W05.test.mjs",
+    "tests/coordinate-subagents/v3x/W05-r1.test.mjs",
+    "tests/coordinate-subagents/v3x/W05-r2.test.mjs",
+    "tests/coordinate-subagents/v3x/W05-r3.test.mjs",
+    "tests/session-board/session-board.test.ts",
+    "tests/session-messaging/message-lifecycle.test.ts",
+    "tests/session-messaging/w05-r3-framing.test.mjs",
+    "tests/session-messaging/w05-r3-hook.test.mjs",
+    "tests/session-messaging/w05-r3-presence.test.ts",
+    "--reporter",
+    "verbose"
+  ],
+  "cwd": "<candidate>",
+  "startedAt": "2026-10-02T01:08:57.353328+00:00",
+  "durationSeconds": 15.849,
+  "exitCode": 1
+}

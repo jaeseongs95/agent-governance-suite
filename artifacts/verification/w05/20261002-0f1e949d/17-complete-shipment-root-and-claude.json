@@ -1,0 +1,12 @@
+{
+  "command": [
+    "node",
+    "--import",
+    "./node_modules/tsx/dist/loader.mjs",
+    "<evidence>/complete-shipment-installation-probe.mjs"
+  ],
+  "cwd": "<candidate>",
+  "startedAt": "2026-10-02T01:13:52.657775+00:00",
+  "durationSeconds": 6.202,
+  "exitCode": 0
+}

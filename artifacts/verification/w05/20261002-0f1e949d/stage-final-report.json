@@ -1,0 +1,411 @@
+{
+  "observedAt": "2026-10-02T01:16:08.509670+00:00",
+  "status": "HOLD: scoped suite has one preserved intermittent failure; actual22 generation differs from reported15 closure",
+  "candidate": {
+    "candidateCommit": "0f1e949d4ca57fe3cc9aac98767d5c0dade79c61",
+    "candidateTree": "78c4eddb528d851cff295cba2891c2148221a3f1",
+    "rawCommitParents": [
+      "247cfe3a6b6ba0ee4b38b2168930caf2000b3540"
+    ],
+    "publicRef": "refs/heads/codex/dot-w05-source-20261002",
+    "fetchScope": "depth=1, no private ref/ancestry requested",
+    "node": "v24.19.0",
+    "lockSha256": "00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e",
+    "requestedModel": "gpt-6.1-sol",
+    "requestedEffort": "high",
+    "observedRouting": "unexposed; no model/provider invocation"
+  },
+  "sameExecutorResumed": true,
+  "packageManager": "pnpm@11.19.0",
+  "packageVersion": "2.7.0",
+  "source25": {
+    "result": "25/25 bytes and SHA pins match; unchanged through all checks",
+    "totalBytes": 562803,
+    "expectedModes": "UNAVAILABLE; authorized observed Git modes are100644",
+    "evidence": "source25-comparison.json",
+    "originalDesktopManifestTransferred": false,
+    "reportedOriginalManifestSha256": "41b22f0bac314bef3d437c1bd23dcfca4a83376ec7c84db6d7ec572329bc8133"
+  },
+  "untouchedBaseline": {
+    "bundleCheck": "FAIL exit1; server.mjs stale",
+    "claudeDrift": "DRIFT warning exit0; missing auto-wake outlook schema and stale types.ts",
+    "receiptsPreserved": true
+  },
+  "generation": {
+    "frozenInstall": "PASS",
+    "documentedSharedBuild": "PASS",
+    "officialClaudeBuild": "PASS wrote507 files",
+    "officialClaudeCheck": "PASS fresh",
+    "generatedBundleCheck": "PASS",
+    "expectedReportedCount": 15,
+    "actualChangedCount": 22,
+    "generatedTotalBytes": 11001114,
+    "gitModes": [
+      "100644"
+    ],
+    "closureManifest": "generated-closure.json",
+    "sourceEdits": false
+  },
+  "shipment": {
+    "tree": "56aaea2a1b0509b6d9f9b428228619ded640dc1a",
+    "trackedFileCount": 1847,
+    "patch": {
+      "path": "generated-actual22.patch",
+      "bytes": 272060,
+      "sha256": "b0d4ece00cb8598679ee91287165d191970b8b94ed723f3a8425ad3704532d57"
+    },
+    "archive": {
+      "path": "generated-actual22.tar",
+      "bytes": 11018240,
+      "sha256": "b587d43ec718115a5fcdc1b6504156769f02f8a85aaef0870dd1cb2a506a0dd4"
+    },
+    "patchReconstructsExactTree": true,
+    "archiveMatchesAll22BytesHashesModes": true,
+    "commitCreated": false
+  },
+  "scopedTests": {
+    "status": "FAIL exit1",
+    "files": 11,
+    "passed": 161,
+    "failed": 1,
+    "newW05r3Passed": 65,
+    "W05r2Passed": 24,
+    "failure": {
+      "test": "W05-r1 lost registration response returns original receipt despite changed target activity",
+      "path": "tests/coordinate-subagents/v3x/W05-r1.test.mjs",
+      "line": 111,
+      "expected": "queued",
+      "observed": "held",
+      "failedBeforeRetryAssertions": true,
+      "isolatedRepeats": [
+        {
+          "receipt": "13-isolated-failure-repeat1.json",
+          "passed": 1,
+          "skipped": 8,
+          "exit": 0
+        },
+        {
+          "receipt": "14-isolated-failure-repeat2.json",
+          "passed": 1,
+          "skipped": 8,
+          "exit": 0
+        },
+        {
+          "receipt": "15-isolated-failure-repeat3.json",
+          "passed": 1,
+          "skipped": 8,
+          "exit": 0
+        }
+      ],
+      "causeStatus": "UNCONFIRMED; source inspection suggests timing dependence: fixture uses observedAt=now+1ms while activityStatus rejects future observation; no clock instrumentation or source patch",
+      "originalFailurePreserved": true
+    }
+  },
+  "claudeGenerationContractTests": {
+    "status": "PASS",
+    "passed": 18,
+    "fixtureOnly": true
+  },
+  "runtime": {
+    "status": "PASS",
+    "documentedSkillClis": 31,
+    "node": "24.19.0",
+    "cleanRoomWithoutNodeModules": true,
+    "syntheticAttestationFixturesOnly": true
+  },
+  "copiedInstallations": {
+    "status": "PASS",
+    "completeRootSnapshotFiles": 1847,
+    "completeClaudePluginFiles": 507,
+    "earlierRuntimeSubsetRootFiles": 526,
+    "earlierRuntimeSubsetClaudeFiles": 495,
+    "allBytesMatchShipmentTree": true,
+    "allCopiedBytesUnchangedAfter": true,
+    "nodeModules": false,
+    "nativeInstallation": false,
+    "portableUnicodePerHost": {
+      "messages": 5,
+      "bodyBytes": 4060,
+      "duplicateReceipt": true,
+      "acknowledged": 5,
+      "pending": 0
+    },
+    "publicBoundariesPerHost": {
+      "onlineActivity": "unknown",
+      "recordActivity": "Current activity reporter is unavailable.",
+      "recordOutcome": "Current task binding is unavailable.",
+      "contact": "held/activity-unknown",
+      "unboundOutcome": "BINDING_REQUIRED",
+      "privilegedCli": "Unsupported session message operation."
+    },
+    "syntheticStateRemoved": true
+  },
+  "independentAcceptance": "NOT_RUN; local regression/runtime/portable checks are not native two-host acceptance",
+  "release": "NOT_AUTHORIZED / NOT_RUN",
+  "fullProductAcceptance": "NOT_RUN",
+  "lintAndValidateAllAndOfficialValidator": "NOT_RUN; bounded campaign only",
+  "authority": "User authorized manifest-matched build and scoped validation only; parent projection receipts were not treated as Task/source GO or release authority",
+  "publication": "NOT_REQUESTED / NOT_RUN; sanitized transport staged locally",
+  "remainingBlockers": [
+    "Resolve or classify the intermittent W05-r1 line111 failure through the existing source writer; suite remains failed",
+    "Expected generated15 exact path/byte/hash manifest unavailable; observed closure is22, including 11 root and11 Claude paths",
+    "No native installation/two-host acceptance or independent release qualification"
+  ],
+  "preservation": {
+    "mainAndPriorW06W07AndG18Worktrees": "unchanged and clean",
+    "candidateHead": "unchanged; only22 generated paths differ",
+    "personalCredentialAccess": "no credential value inspected, printed, persisted or committed; no auth/security config edit",
+    "privateAncestry": "no private ref/ancestry requested; depth1 public source only",
+    "legacyCloudOperations": "none"
+  },
+  "receipts": [
+    {
+      "label": "01-frozen-dependencies",
+      "command": [
+        "pnpm",
+        "install",
+        "--frozen-lockfile",
+        "--ignore-scripts",
+        "--store-dir",
+        "<pnpm-store>"
+      ],
+      "cwd": "<candidate>",
+      "startedAt": "2026-10-02T00:52:11.913790+00:00",
+      "durationSeconds": 4.991,
+      "exitCode": 0
+    },
+    {
+      "label": "02-untouched-bundle-freshness",
+      "command": [
+        "node",
+        "scripts/check-bundle.mjs"
+      ],
+      "cwd": "<candidate>",
+      "startedAt": "2026-10-02T00:52:56.250125+00:00",
+      "durationSeconds": 0.523,
+      "exitCode": 1
+    },
+    {
+      "label": "03-untouched-claude-drift",
+      "command": [
+        "node",
+        "scripts/build-claude-plugin.mjs",
+        "--drift"
+      ],
+      "cwd": "<candidate>",
+      "startedAt": "2026-10-02T00:52:56.254342+00:00",
+      "durationSeconds": 0.58,
+      "exitCode": 0
+    },
+    {
+      "label": "04-documented-frozen-install",
+      "command": [
+        "pnpm",
+        "install",
+        "--frozen-lockfile",
+        "--store-dir",
+        "<pnpm-store>"
+      ],
+      "cwd": "<candidate>",
+      "startedAt": "2026-10-02T01:04:48.379448+00:00",
+      "durationSeconds": 0.765,
+      "exitCode": 0
+    },
+    {
+      "label": "05-shared-build",
+      "command": [
+        "pnpm",
+        "build"
+      ],
+      "cwd": "<candidate>",
+      "startedAt": "2026-10-02T01:05:09.871056+00:00",
+      "durationSeconds": 7.683,
+      "exitCode": 0
+    },
+    {
+      "label": "06-official-claude-generation",
+      "command": [
+        "pnpm",
+        "claude:build"
+      ],
+      "cwd": "<candidate>",
+      "startedAt": "2026-10-02T01:05:47.910243+00:00",
+      "durationSeconds": 1.471,
+      "exitCode": 0
+    },
+    {
+      "label": "07-generated-bundle-check",
+      "command": [
+        "node",
+        "scripts/check-bundle.mjs"
+      ],
+      "cwd": "<candidate>",
+      "startedAt": "2026-10-02T01:08:57.340313+00:00",
+      "durationSeconds": 0.97,
+      "exitCode": 0
+    },
+    {
+      "label": "08-official-claude-check",
+      "command": [
+        "pnpm",
+        "claude:check"
+      ],
+      "cwd": "<candidate>",
+      "startedAt": "2026-10-02T01:08:57.346516+00:00",
+      "durationSeconds": 1.951,
+      "exitCode": 0
+    },
+    {
+      "label": "09-scoped-tests",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/coordinate-subagents/v3x/W03.test.mjs",
+        "tests/coordinate-subagents/v3x/W04.test.mjs",
+        "tests/coordinate-subagents/v3x/W05.test.mjs",
+        "tests/coordinate-subagents/v3x/W05-r1.test.mjs",
+        "tests/coordinate-subagents/v3x/W05-r2.test.mjs",
+        "tests/coordinate-subagents/v3x/W05-r3.test.mjs",
+        "tests/session-board/session-board.test.ts",
+        "tests/session-messaging/message-lifecycle.test.ts",
+        "tests/session-messaging/w05-r3-framing.test.mjs",
+        "tests/session-messaging/w05-r3-hook.test.mjs",
+        "tests/session-messaging/w05-r3-presence.test.ts",
+        "--reporter",
+        "verbose"
+      ],
+      "cwd": "<candidate>",
+      "startedAt": "2026-10-02T01:08:57.353328+00:00",
+      "durationSeconds": 15.849,
+      "exitCode": 1
+    },
+    {
+      "label": "10-runtime-cleanroom",
+      "command": [
+        "pnpm",
+        "runtime:check"
+      ],
+      "cwd": "<candidate>",
+      "startedAt": "2026-10-02T01:09:05.520934+00:00",
+      "durationSeconds": 8.946,
+      "exitCode": 0
+    },
+    {
+      "label": "11-claude-generation-contract-tests",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/tooling/claude-plugin.test.mjs",
+        "--reporter",
+        "verbose"
+      ],
+      "cwd": "<candidate>",
+      "startedAt": "2026-10-02T01:10:38.486699+00:00",
+      "durationSeconds": 1.339,
+      "exitCode": 0
+    },
+    {
+      "label": "12-portable-installed-root-and-claude",
+      "command": [
+        "node",
+        "--import",
+        "./node_modules/tsx/dist/loader.mjs",
+        "<evidence>/portable-installation-probe.mjs"
+      ],
+      "cwd": "<candidate>",
+      "startedAt": "2026-10-02T01:11:28.814956+00:00",
+      "durationSeconds": 5.936,
+      "exitCode": 0
+    },
+    {
+      "label": "13-isolated-failure-repeat1",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/coordinate-subagents/v3x/W05-r1.test.mjs",
+        "--testNamePattern",
+        "lost registration response returns original receipt despite changed target activity",
+        "--reporter",
+        "verbose"
+      ],
+      "cwd": "<candidate>",
+      "startedAt": "2026-10-02T01:12:14.292532+00:00",
+      "durationSeconds": 1.377,
+      "exitCode": 0
+    },
+    {
+      "label": "14-isolated-failure-repeat2",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/coordinate-subagents/v3x/W05-r1.test.mjs",
+        "--testNamePattern",
+        "lost registration response returns original receipt despite changed target activity",
+        "--reporter",
+        "verbose"
+      ],
+      "cwd": "<candidate>",
+      "startedAt": "2026-10-02T01:12:26.616159+00:00",
+      "durationSeconds": 1.4,
+      "exitCode": 0
+    },
+    {
+      "label": "15-isolated-failure-repeat3",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/coordinate-subagents/v3x/W05-r1.test.mjs",
+        "--testNamePattern",
+        "lost registration response returns original receipt despite changed target activity",
+        "--reporter",
+        "verbose"
+      ],
+      "cwd": "<candidate>",
+      "startedAt": "2026-10-02T01:12:54.892171+00:00",
+      "durationSeconds": 1.373,
+      "exitCode": 0
+    },
+    {
+      "label": "16-generated-recovery-proof",
+      "command": [
+        "python",
+        "<evidence>/verify-recovery.py"
+      ],
+      "cwd": "<candidate>",
+      "startedAt": "2026-10-02T01:12:58.075308+00:00",
+      "durationSeconds": 0.201,
+      "exitCode": 0
+    },
+    {
+      "label": "17-complete-shipment-root-and-claude",
+      "command": [
+        "node",
+        "--import",
+        "./node_modules/tsx/dist/loader.mjs",
+        "<evidence>/complete-shipment-installation-probe.mjs"
+      ],
+      "cwd": "<candidate>",
+      "startedAt": "2026-10-02T01:13:52.657775+00:00",
+      "durationSeconds": 6.202,
+      "exitCode": 0
+    },
+    {
+      "label": "18-diff-check",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "cwd": "<candidate>",
+      "startedAt": "2026-10-02T01:14:18.722318+00:00",
+      "durationSeconds": 0.112,
+      "exitCode": 0
+    }
+  ],
+  "diagnosticNote": "Initial external closure capture failed on Git quoted Unicode path; collector changed to NUL-delimited ls-tree, succeeded. Product files unaffected."
+}

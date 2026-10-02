@@ -1,0 +1,18 @@
+
+ RUN  v5.0.0 <candidate>
+
+ ↓ tests/coordinate-subagents/v3x/W05-r1.test.mjs > W05-r1 lost preparation response can rotate only before registration; registration requires issued token
+ ↓ tests/coordinate-subagents/v3x/W05-r1.test.mjs > W05-r1 service rejects omitted token and forged bound sender before persistence
+ ↓ tests/coordinate-subagents/v3x/W05-r1.test.mjs > W05-r1 store rejects tokenless direct registration before persisting either record
+ ✓ tests/coordinate-subagents/v3x/W05-r1.test.mjs > W05-r1 lost registration response returns original receipt despite changed target activity 18ms
+ ↓ tests/coordinate-subagents/v3x/W05-r1.test.mjs > W05-r1 mismatched token, content, sender and target never reveal a receipt or enqueue
+ ↓ tests/coordinate-subagents/v3x/W05-r1.test.mjs > W05-r1 expired preparation cannot authorize registration and can be reissued before registration
+ ↓ tests/coordinate-subagents/v3x/W05-r1.test.mjs > W05-r1 preparation prunes expiry and bounds active rows
+ ↓ tests/coordinate-subagents/v3x/W05-r1.test.mjs > W05-r1 SQLite lock and rollback preserve preparation and single enqueue
+ ↓ tests/coordinate-subagents/v3x/W05-r1.test.mjs > W05-r1 MCP and both hook matchers expose protected preparation tool
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 8 skipped (9)
+   Start at  01:12:55
+   Duration  1.04s (transform 62%, import 36%, tests 2%)
+

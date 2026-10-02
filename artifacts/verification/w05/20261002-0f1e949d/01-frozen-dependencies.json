@@ -1,0 +1,14 @@
+{
+  "command": [
+    "pnpm",
+    "install",
+    "--frozen-lockfile",
+    "--ignore-scripts",
+    "--store-dir",
+    "<pnpm-store>"
+  ],
+  "cwd": "<candidate>",
+  "startedAt": "2026-10-02T00:52:11.913790+00:00",
+  "durationSeconds": 4.991,
+  "exitCode": 0
+}

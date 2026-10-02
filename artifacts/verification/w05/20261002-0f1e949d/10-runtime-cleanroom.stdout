@@ -1,0 +1,12 @@
+Already up to date
+Done in 525ms using pnpm v11.19.0
+
+   ╭─────────────────────────────────────────╮
+   │                                         │
+   │   Update available! 11.19.0 → 12.8.1.   │
+   │   Changelog: https://pnpm.io/v/12.8.1   │
+   │    To update, run: pnpm add -g pnpm     │
+   │                                         │
+   ╰─────────────────────────────────────────╯
+
+runtime: ready (31 skill CLIs, Node.js 24.19.0)

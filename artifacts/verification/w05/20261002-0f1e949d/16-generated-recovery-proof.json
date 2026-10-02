@@ -1,0 +1,10 @@
+{
+  "command": [
+    "python",
+    "<evidence>/verify-recovery.py"
+  ],
+  "cwd": "<candidate>",
+  "startedAt": "2026-10-02T01:12:58.075308+00:00",
+  "durationSeconds": 0.201,
+  "exitCode": 0
+}

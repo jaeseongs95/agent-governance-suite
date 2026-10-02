@@ -1,0 +1,16 @@
+{
+  "command": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/coordinate-subagents/v3x/W05-r1.test.mjs",
+    "--testNamePattern",
+    "lost registration response returns original receipt despite changed target activity",
+    "--reporter",
+    "verbose"
+  ],
+  "cwd": "<candidate>",
+  "startedAt": "2026-10-02T01:12:14.292532+00:00",
+  "durationSeconds": 1.377,
+  "exitCode": 0
+}

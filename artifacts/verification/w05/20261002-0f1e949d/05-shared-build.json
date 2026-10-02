@@ -1,0 +1,10 @@
+{
+  "command": [
+    "pnpm",
+    "build"
+  ],
+  "cwd": "<candidate>",
+  "startedAt": "2026-10-02T01:05:09.871056+00:00",
+  "durationSeconds": 7.683,
+  "exitCode": 0
+}

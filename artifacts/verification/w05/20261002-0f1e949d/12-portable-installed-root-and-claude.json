@@ -1,0 +1,12 @@
+{
+  "command": [
+    "node",
+    "--import",
+    "./node_modules/tsx/dist/loader.mjs",
+    "<evidence>/portable-installation-probe.mjs"
+  ],
+  "cwd": "<candidate>",
+  "startedAt": "2026-10-02T01:11:28.814956+00:00",
+  "durationSeconds": 5.936,
+  "exitCode": 0
+}

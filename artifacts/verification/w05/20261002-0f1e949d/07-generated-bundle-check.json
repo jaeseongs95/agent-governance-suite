@@ -1,0 +1,10 @@
+{
+  "command": [
+    "node",
+    "scripts/check-bundle.mjs"
+  ],
+  "cwd": "<candidate>",
+  "startedAt": "2026-10-02T01:08:57.340313+00:00",
+  "durationSeconds": 0.97,
+  "exitCode": 0
+}

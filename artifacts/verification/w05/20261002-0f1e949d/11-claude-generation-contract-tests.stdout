@@ -1,0 +1,27 @@
+
+ RUN  v5.0.0 <candidate>
+
+ ✓ tests/tooling/claude-plugin.test.mjs > generated Claude plugin > uses a released version and plugin-scoped runtime paths 5ms
+ ✓ tests/tooling/claude-plugin.test.mjs > generated Claude plugin > publishes a separate marketplace that points only at the generated tree 3ms
+ ✓ tests/tooling/claude-plugin.test.mjs > generated Claude plugin > puts the Claude selection decision at the top of the generated orchestrator skill 1ms
+ ✓ tests/tooling/claude-plugin.test.mjs > generated Claude plugin > omits Codex-only skills from files, registry, and source lock 2ms
+ ✓ tests/tooling/claude-plugin.test.mjs > generated Claude plugin > registers exec-form continuity and messaging hooks plus the Claude-only adapters 10ms
+ ✓ tests/tooling/claude-plugin.test.mjs > generated Claude plugin > exits quietly without touching shared state when plugin data is unavailable 36ms
+ ✓ tests/tooling/claude-plugin.test.mjs > generated Claude plugin > emits no attestation and creates no state without plugin data 32ms
+ ✓ tests/tooling/claude-plugin.test.mjs > generated Claude plugin > removes a caller-supplied token when it cannot attest 423ms
+ ✓ tests/tooling/claude-plugin.test.mjs > generated Claude plugin > signs host attestation with a key in the plugin data directory 79ms
+ ✓ tests/tooling/claude-plugin.test.mjs > generated Claude plugin > stores continuity state under the plugin data directory 82ms
+ ✓ tests/tooling/claude-plugin.test.mjs > Claude overlay safeguards > does not render Codex-only OpenAI agent metadata 127ms
+ ✓ tests/tooling/claude-plugin.test.mjs > Claude overlay safeguards > reports Codex-only wording in model-visible files except dual-host documents 0ms
+ ✓ tests/tooling/claude-plugin.test.mjs > Claude overlay safeguards > applies each replacement exactly once and rejects missing or ambiguous text 1ms
+ ✓ tests/tooling/claude-plugin.test.mjs > Claude overlay safeguards > replaces the whole frontmatter description regardless of the shared wording 1ms
+ ✓ tests/tooling/claude-plugin.test.mjs > Claude overlay safeguards > applies a skill adaptation with skill-relative paths and names the adaptation file on failure 1ms
+ ✓ tests/tooling/claude-plugin.test.mjs > Claude overlay safeguards > maps Codex invocations of shipped skills to the Claude Code form only 0ms
+ ✓ tests/tooling/claude-plugin.test.mjs > Claude overlay safeguards > reports drift instead of throwing when the Claude plugin cannot be rendered 4ms
+ ✓ tests/tooling/claude-plugin.test.mjs > Claude overlay safeguards > still reports missing hook events when the Claude plugin cannot be rendered 6ms
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  01:10:38
+   Duration  1.01s (tests 91%, transform 6%, import 3%)
+

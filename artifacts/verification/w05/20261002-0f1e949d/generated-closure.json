@@ -1,0 +1,504 @@
+{
+  "observedAt": "2026-10-02T01:10:40.879951+00:00",
+  "candidateCommit": "0f1e949d4ca57fe3cc9aac98767d5c0dade79c61",
+  "candidateTree": "78c4eddb528d851cff295cba2891c2148221a3f1",
+  "shipmentTree": "56aaea2a1b0509b6d9f9b428228619ded640dc1a",
+  "expectedGeneratedCountReported": 15,
+  "actualGeneratedChangedCount": 22,
+  "discrepancy": "22 observed; expected exact15 path/byte/hash manifest unavailable",
+  "source25Unchanged": [
+    {
+      "path": "contracts/session-auto-wake-outlook.v1.schema.json",
+      "bytes": 1594,
+      "sha256": "dff6c334cf6aaf10d6ddb6787bc6a35d6f40d2d195b13cb3dc90b79b80e6b565",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "contracts/types.ts",
+      "bytes": 48293,
+      "sha256": "3b71a88326beef712e9ae381b852b61486e10e439ac014e7ffc964d50994d5b0",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "docs/session-message-lifecycle.md",
+      "bytes": 17452,
+      "sha256": "e1cf186fa4c8ea12a685a773e2a2fd34e30605afb9f8b8019a92a87986638875",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "mcp-server/src/host-input-adapter.ts",
+      "bytes": 7646,
+      "sha256": "f090ce3d2743cac7faf81c8ce3154cb89329252d43f1a93684efb66974e6699d",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "mcp-server/src/schema-validator.ts",
+      "bytes": 40433,
+      "sha256": "702832f888ff75504ec5ea3d6d37a7fe3f8107916e039b54a44bfa05fb105d5b",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "mcp-server/src/server.ts",
+      "bytes": 52195,
+      "sha256": "d5715c66e03424e557f0513fda34de7cd86baac56e736198ad7f40beda2df13c",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "mcp-server/src/session-message-broker.ts",
+      "bytes": 37054,
+      "sha256": "372445a44f0978cfcae68d4b915852df4d33fefee60f793dcb8dc1887388314d",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "mcp-server/src/session-message-client.ts",
+      "bytes": 14985,
+      "sha256": "5f4fe49cac6c84a271f7213e4f329539a809e5e07d4047f4248b1e471e37bca1",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "mcp-server/src/session-message-hook.ts",
+      "bytes": 13914,
+      "sha256": "728af54b15d039b6826c0153b4bb55dd2476e7c48e5ed27f0fd0c7633bf8d8bd",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "mcp-server/src/session-message-protocol.ts",
+      "bytes": 1705,
+      "sha256": "5cd2354b7cea9e2d79d15bc74cfc4150004e50f917897d6d66575c61c53c3401",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "mcp-server/src/session-message-service.ts",
+      "bytes": 16351,
+      "sha256": "5407d0fde5c33568de80f885cdff3b4eceb477217549a84d29dea6be277e2de5",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "mcp-server/src/session-message-store.ts",
+      "bytes": 116233,
+      "sha256": "13ea0307e475dbc82c602356e264358f0a030a4524ac7338593be96c9646e0a9",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "mcp-server/src/session-message-wake-port.ts",
+      "bytes": 9705,
+      "sha256": "98d66c1b4114fdfa821c25784c3481d4eed1627ab1488922271198d3d21dfd99",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "mcp-server/src/trust-store.ts",
+      "bytes": 11847,
+      "sha256": "6418cebcd8c0b76696a596c301cc810cd4786061886386b886937f9e6151dd07",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "tests/coordinate-subagents/v3x/W05-r2.test.mjs",
+      "bytes": 28493,
+      "sha256": "24a467e2f63ea874c634de9509f545cbc72dc29066e07c2288eb7ea762cae68a",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "tests/coordinate-subagents/v3x/W05-r3.test.mjs",
+      "bytes": 42110,
+      "sha256": "8a356eedaae44da1eaa1d70d0db3451608269c1f92ddcd892ad1f5f7b38b1124",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "tests/helpers/w05-r3-worker.mjs",
+      "bytes": 1019,
+      "sha256": "bec811f5794580b9e35a50afc7a98e14e3d69f217771dde852f0d95d984cf5da",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "tests/session-board/session-board.test.ts",
+      "bytes": 31618,
+      "sha256": "79fc8884fdcf15ee775afd64b1359f8787361d8486f8cf6e1e557422ebae5dc2",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "tests/session-messaging/fixtures/w05-r3-wire.mjs",
+      "bytes": 1789,
+      "sha256": "992eeaf7e947015e4604890fa98e4584c8161571a302127a1871601d303908e3",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "tests/session-messaging/message-lifecycle.test.ts",
+      "bytes": 20800,
+      "sha256": "99aa072f9a6eb2f334aeccbf49d167dab27b5ff22227fa0c4ee3447c026f3168",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "tests/session-messaging/w05-r3-framing.test.mjs",
+      "bytes": 8686,
+      "sha256": "cb270dfacf2ffa68c00cc18cd8ffe4a9b232ec06cc0389d01506255dd5ce7d2a",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "tests/session-messaging/w05-r3-hook.test.mjs",
+      "bytes": 4552,
+      "sha256": "6de71909e6e46e43fa6a77f667b7aa29b3fde4f6d88ce0dde4d1bba9e7f47751",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "tests/session-messaging/w05-r3-presence.test.ts",
+      "bytes": 4038,
+      "sha256": "d225570001eb8d8c5cff4be458144f405b510c13da385607073e5248a4512984",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "tests/coordinate-subagents/v3x/W03.test.mjs",
+      "bytes": 13446,
+      "sha256": "858bc39576e7ec33a9d15783ee45061baa8b43cb9cb8d41bb83be62547d37d2e",
+      "gitMode": "100644",
+      "unchanged": true
+    },
+    {
+      "path": "tests/session-messaging/fixtures/w05-r3-tag-wake-schemas.json",
+      "bytes": 16845,
+      "sha256": "392678c028115cfd857061b9c3b04d6166ece461896e71da8c8675967e2d18f2",
+      "gitMode": "100644",
+      "unchanged": true
+    }
+  ],
+  "generatedFiles": [
+    {
+      "path": "claude-plugin/contracts/session-auto-wake-outlook.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "5a549b574596b4b25a4c8152e00147c2f60fa9e6",
+      "before": null,
+      "after": {
+        "bytes": 1594,
+        "sha256": "dff6c334cf6aaf10d6ddb6787bc6a35d6f40d2d195b13cb3dc90b79b80e6b565"
+      }
+    },
+    {
+      "path": "claude-plugin/contracts/types.ts",
+      "gitMode": "100644",
+      "blob": "1e6062c85214a437604d4d18c8c2cd5584cacbea",
+      "before": {
+        "path": "claude-plugin/contracts/types.ts",
+        "bytes": 47933,
+        "sha256": "ab064882eeb7a16cf0ce8d76926c6f56a8ffb0b9ef2dbb304cf5b4d5d54f4109"
+      },
+      "after": {
+        "bytes": 48293,
+        "sha256": "3b71a88326beef712e9ae381b852b61486e10e439ac014e7ffc964d50994d5b0"
+      }
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/host-attestation-api.mjs",
+      "gitMode": "100644",
+      "blob": "c3ab86181ad01a9acfda7e2669b910a353227d61",
+      "before": {
+        "path": "claude-plugin/mcp-server/dist/host-attestation-api.mjs",
+        "bytes": 40713,
+        "sha256": "4d27787aecdfd6a2520de23d2c9c5c65b9183333d2c8e9436a78f2ab2f1151a9"
+      },
+      "after": {
+        "bytes": 40713,
+        "sha256": "12fefa5cc52c4cc8ebf1f221eea3eb9c983c317bf36777e6ff7b71f37d221e46"
+      }
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/model-routing-host-hook.mjs",
+      "gitMode": "100644",
+      "blob": "6c27135619d8afb731b1f6fea2bfa2f0d1b98e75",
+      "before": {
+        "path": "claude-plugin/mcp-server/dist/model-routing-host-hook.mjs",
+        "bytes": 712590,
+        "sha256": "44569f984025ef9e2fa3f6aa18383c214e4c1fb352fda48bbf78ab100bf892c5"
+      },
+      "after": {
+        "bytes": 713671,
+        "sha256": "aa4166b45ed20c147eb45d7ab02e5b644e5963ee003a4911d0be37c47a160fcf"
+      }
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/model-routing-peer-cli.mjs",
+      "gitMode": "100644",
+      "blob": "d95491ee5e0628db6a873bf5fe4a82b300def922",
+      "before": {
+        "path": "claude-plugin/mcp-server/dist/model-routing-peer-cli.mjs",
+        "bytes": 781881,
+        "sha256": "a8fe0d8b439111a05ea010ec1a1a35a50c06a62bf652ce9cfb5d9082c6b4d53f"
+      },
+      "after": {
+        "bytes": 782962,
+        "sha256": "8617ec0856b75af2327895bece4f1d162147c0fbff7a11396d1ff5b1653bebe9"
+      }
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/server.mjs",
+      "gitMode": "100644",
+      "blob": "f6406fd6294eebbb1a8c1028cbb1326631db80cf",
+      "before": {
+        "path": "claude-plugin/mcp-server/dist/server.mjs",
+        "bytes": 2068831,
+        "sha256": "518c3b2eb26be3feb089a98a81f8e68fc8cff5fdc740d3006e136d1c290f33de"
+      },
+      "after": {
+        "bytes": 2074121,
+        "sha256": "efc1c5627750649f299ea560812d307bab398895cae2d04000e38dc467b45606"
+      }
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/session-board-hook.mjs",
+      "gitMode": "100644",
+      "blob": "d22472e787f8f15add63fda8518958ff2c5da9bf",
+      "before": {
+        "path": "claude-plugin/mcp-server/dist/session-board-hook.mjs",
+        "bytes": 25506,
+        "sha256": "597da92a6e9db853dcdf7cd0ef149561f6a36d5d6ed98be6c8f935204878b549"
+      },
+      "after": {
+        "bytes": 26410,
+        "sha256": "4a585084d3436f944a3e1c466730286442b303821e1dc6b4f7e4524758300bff"
+      }
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/session-message-broker.mjs",
+      "gitMode": "100644",
+      "blob": "b371ef00ca0412e3a7afd489b67b81d94a497ce7",
+      "before": {
+        "path": "claude-plugin/mcp-server/dist/session-message-broker.mjs",
+        "bytes": 717106,
+        "sha256": "1683888d556d11d0372cf645a85b6487fb3c70b37ae7b71322d6463c2ead85a9"
+      },
+      "after": {
+        "bytes": 739212,
+        "sha256": "96b18e7adc6a264e04e580e3f9fda9b27546655d249ca738558623659d498faa"
+      }
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/session-message-cli.mjs",
+      "gitMode": "100644",
+      "blob": "abcf8a7131e701138e79495576a31a8ece178012",
+      "before": {
+        "path": "claude-plugin/mcp-server/dist/session-message-cli.mjs",
+        "bytes": 15296,
+        "sha256": "c6ca220572f3cac882f32f343d4b552c6b5279ada07f89966cce0e36dbd31905"
+      },
+      "after": {
+        "bytes": 16192,
+        "sha256": "4d3023be81623fa5acdfc21f3491f32d5ce43bde24a76f97a8b03c6211aa545b"
+      }
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/session-message-hook.mjs",
+      "gitMode": "100644",
+      "blob": "561333a8563dbcc40cd95983d3ff59b1127bcc82",
+      "before": {
+        "path": "claude-plugin/mcp-server/dist/session-message-hook.mjs",
+        "bytes": 819485,
+        "sha256": "7696023a876173d3d9803cdf85de48f78ba5e3933be2e33fa76b4da4862e569a"
+      },
+      "after": {
+        "bytes": 822233,
+        "sha256": "aa02c66fdf0c738e1015bcfaf676a6311b36f0159b8badc157eb4db4bf4e62d6"
+      }
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/session-message-relay.mjs",
+      "gitMode": "100644",
+      "blob": "49d89e0a422dcddcf58d34a3aaf1458ad5b21ba8",
+      "before": {
+        "path": "claude-plugin/mcp-server/dist/session-message-relay.mjs",
+        "bytes": 23154,
+        "sha256": "c3c03c2772d4b6c02d693103816c16c3f456daed92039ebb2f62edf706c0afe0"
+      },
+      "after": {
+        "bytes": 24050,
+        "sha256": "721a40cb342dc76fda3d8d2d2aba2a3442a08e8755b38e3ae37bf455a7ecdae8"
+      }
+    },
+    {
+      "path": "host-integration.json",
+      "gitMode": "100644",
+      "blob": "a4de27f27ef54ce25fa9d41c1608e375483d89b9",
+      "before": {
+        "path": "host-integration.json",
+        "bytes": 48356,
+        "sha256": "eb37b81e490564e1774e9f1ee8fea825c541102e2cc77705aabf2110f450952e"
+      },
+      "after": {
+        "bytes": 48589,
+        "sha256": "64fc1c65d8b29190612ae7a127258081cd746b19469f98076c28a9b43501f4a2"
+      }
+    },
+    {
+      "path": "mcp-server/dist/flowmarshal-profile-probe.mjs",
+      "gitMode": "100644",
+      "blob": "06bd4794d828fd265ceb622c49dcad8f820ef666",
+      "before": {
+        "path": "mcp-server/dist/flowmarshal-profile-probe.mjs",
+        "bytes": 423333,
+        "sha256": "ff888e31d858bd5a5e3e3bb1220d517b6b0643a72bcc1fdd8178239034f34d9f"
+      },
+      "after": {
+        "bytes": 423510,
+        "sha256": "3e5984e94ddfb401102e5ab4be1b30756dbff1f198b15ac7c06656f994937509"
+      }
+    },
+    {
+      "path": "mcp-server/dist/host-attestation-api.mjs",
+      "gitMode": "100644",
+      "blob": "c3ab86181ad01a9acfda7e2669b910a353227d61",
+      "before": {
+        "path": "mcp-server/dist/host-attestation-api.mjs",
+        "bytes": 40713,
+        "sha256": "4d27787aecdfd6a2520de23d2c9c5c65b9183333d2c8e9436a78f2ab2f1151a9"
+      },
+      "after": {
+        "bytes": 40713,
+        "sha256": "12fefa5cc52c4cc8ebf1f221eea3eb9c983c317bf36777e6ff7b71f37d221e46"
+      }
+    },
+    {
+      "path": "mcp-server/dist/model-routing-host-hook.mjs",
+      "gitMode": "100644",
+      "blob": "6c27135619d8afb731b1f6fea2bfa2f0d1b98e75",
+      "before": {
+        "path": "mcp-server/dist/model-routing-host-hook.mjs",
+        "bytes": 712590,
+        "sha256": "44569f984025ef9e2fa3f6aa18383c214e4c1fb352fda48bbf78ab100bf892c5"
+      },
+      "after": {
+        "bytes": 713671,
+        "sha256": "aa4166b45ed20c147eb45d7ab02e5b644e5963ee003a4911d0be37c47a160fcf"
+      }
+    },
+    {
+      "path": "mcp-server/dist/model-routing-peer-cli.mjs",
+      "gitMode": "100644",
+      "blob": "d95491ee5e0628db6a873bf5fe4a82b300def922",
+      "before": {
+        "path": "mcp-server/dist/model-routing-peer-cli.mjs",
+        "bytes": 781881,
+        "sha256": "a8fe0d8b439111a05ea010ec1a1a35a50c06a62bf652ce9cfb5d9082c6b4d53f"
+      },
+      "after": {
+        "bytes": 782962,
+        "sha256": "8617ec0856b75af2327895bece4f1d162147c0fbff7a11396d1ff5b1653bebe9"
+      }
+    },
+    {
+      "path": "mcp-server/dist/server.mjs",
+      "gitMode": "100644",
+      "blob": "f6406fd6294eebbb1a8c1028cbb1326631db80cf",
+      "before": {
+        "path": "mcp-server/dist/server.mjs",
+        "bytes": 2068831,
+        "sha256": "518c3b2eb26be3feb089a98a81f8e68fc8cff5fdc740d3006e136d1c290f33de"
+      },
+      "after": {
+        "bytes": 2074121,
+        "sha256": "efc1c5627750649f299ea560812d307bab398895cae2d04000e38dc467b45606"
+      }
+    },
+    {
+      "path": "mcp-server/dist/session-board-hook.mjs",
+      "gitMode": "100644",
+      "blob": "d22472e787f8f15add63fda8518958ff2c5da9bf",
+      "before": {
+        "path": "mcp-server/dist/session-board-hook.mjs",
+        "bytes": 25506,
+        "sha256": "597da92a6e9db853dcdf7cd0ef149561f6a36d5d6ed98be6c8f935204878b549"
+      },
+      "after": {
+        "bytes": 26410,
+        "sha256": "4a585084d3436f944a3e1c466730286442b303821e1dc6b4f7e4524758300bff"
+      }
+    },
+    {
+      "path": "mcp-server/dist/session-message-broker.mjs",
+      "gitMode": "100644",
+      "blob": "b371ef00ca0412e3a7afd489b67b81d94a497ce7",
+      "before": {
+        "path": "mcp-server/dist/session-message-broker.mjs",
+        "bytes": 717106,
+        "sha256": "1683888d556d11d0372cf645a85b6487fb3c70b37ae7b71322d6463c2ead85a9"
+      },
+      "after": {
+        "bytes": 739212,
+        "sha256": "96b18e7adc6a264e04e580e3f9fda9b27546655d249ca738558623659d498faa"
+      }
+    },
+    {
+      "path": "mcp-server/dist/session-message-cli.mjs",
+      "gitMode": "100644",
+      "blob": "abcf8a7131e701138e79495576a31a8ece178012",
+      "before": {
+        "path": "mcp-server/dist/session-message-cli.mjs",
+        "bytes": 15296,
+        "sha256": "c6ca220572f3cac882f32f343d4b552c6b5279ada07f89966cce0e36dbd31905"
+      },
+      "after": {
+        "bytes": 16192,
+        "sha256": "4d3023be81623fa5acdfc21f3491f32d5ce43bde24a76f97a8b03c6211aa545b"
+      }
+    },
+    {
+      "path": "mcp-server/dist/session-message-hook.mjs",
+      "gitMode": "100644",
+      "blob": "561333a8563dbcc40cd95983d3ff59b1127bcc82",
+      "before": {
+        "path": "mcp-server/dist/session-message-hook.mjs",
+        "bytes": 819485,
+        "sha256": "7696023a876173d3d9803cdf85de48f78ba5e3933be2e33fa76b4da4862e569a"
+      },
+      "after": {
+        "bytes": 822233,
+        "sha256": "aa02c66fdf0c738e1015bcfaf676a6311b36f0159b8badc157eb4db4bf4e62d6"
+      }
+    },
+    {
+      "path": "mcp-server/dist/session-message-relay.mjs",
+      "gitMode": "100644",
+      "blob": "49d89e0a422dcddcf58d34a3aaf1458ad5b21ba8",
+      "before": {
+        "path": "mcp-server/dist/session-message-relay.mjs",
+        "bytes": 23154,
+        "sha256": "c3c03c2772d4b6c02d693103816c16c3f456daed92039ebb2f62edf706c0afe0"
+      },
+      "after": {
+        "bytes": 24050,
+        "sha256": "721a40cb342dc76fda3d8d2d2aba2a3442a08e8755b38e3ae37bf455a7ecdae8"
+      }
+    }
+  ],
+  "patch": {
+    "path": "generated-actual22.patch",
+    "bytes": 272060,
+    "sha256": "b0d4ece00cb8598679ee91287165d191970b8b94ed723f3a8425ad3704532d57"
+  },
+  "archive": {
+    "path": "generated-actual22.tar",
+    "bytes": 11018240,
+    "sha256": "b587d43ec718115a5fcdc1b6504156769f02f8a85aaef0870dd1cb2a506a0dd4"
+  },
+  "commitCreated": false,
+  "refsChanged": false
+}

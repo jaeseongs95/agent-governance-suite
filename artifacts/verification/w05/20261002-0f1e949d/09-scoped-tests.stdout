@@ -1,0 +1,178 @@
+
+ RUN  v5.0.0 <candidate>
+
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 body claim and ACK cannot authorize another unobserved managed wake 15ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 board ownership check has no nonce state effect 8ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 claimDeferred and ACK leave the managed notification fenced 10ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 claimTurnEnd and ACK leave the managed notification fenced 8ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 start rechecks claim/ACK and persists no-effect retirement 9ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 claim after start keeps one fence until the actual hook, including an empty batch 14ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 reserved crash recovery keeps the nonce/attempt and rejects replaced lease CAS 9ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 transport remains part of the exact stored attempt binding 8ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 definite failure uses durable backoff and exact dispatch epoch for late results 10ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 unknown survives restart, both TTLs, ordinary claim, ACK and generation replacement 11ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 ordinary peer provenance, expired hook receipts and changed observation digests cannot release a fence 10ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 observation holds the SQLite generation lock and notices a generation change during verification 11ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 lost committed outcome response never dispatches again 8ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 forged nonce, caller approved and normalized observation cannot observe without the hook receipt 11ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 verified expired/old-generation hook records terminal observation and preserves the current fence (W05-r3 AC008) 31ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 batch/ACK-loss redelivery and hook rollback preserve exact nonce consumption 11ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 hook-before-outcome, adapter exception and new vendor use the same core 11ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 both host capabilities preserve submission/observation distinction and deferred idle wake zero 0ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 additive legacy migration never imports old consumed_at as observed 5ms
+ ✓ tests/session-board/session-board.test.ts > session board store > denies the first gated call of each request once until the line is written for that request 7ms
+ ✓ tests/session-board/session-board.test.ts > session board store > uses the session start as the request marker when the host has no request event 2ms
+ ✓ tests/session-board/session-board.test.ts > session board store > accepts only one bounded line 3ms
+ ✓ tests/session-board/session-board.test.ts > session board store > lists recent sessions newest first with stale and current flags and prunes day-old rows 2ms
+ ✓ tests/session-board/session-board.test.ts > session board store > keeps rows intact and denies once when two connections race on the same request 5ms
+ ✓ tests/session-board/session-board.test.ts > session board store > recognizes only single read-only commands 1ms
+ ✓ tests/session-board/session-board.test.ts > session board hook > gates edits once per request, lets read-only commands and subagents through, and records the line 4ms
+ ✓ tests/session-board/session-board.test.ts > session board hook > does not create a new request boundary for a broker-verified wake bell 1ms
+ ✓ tests/session-board/session-board.test.ts > session board hook > does not consume a parent wake from an observed subagent prompt 10ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC001 component migration preserves global version 17, rowids, callbacks and capability bytes (legacy=false) 649ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC001 component migration preserves global version 17, rowids, callbacks and capability bytes (legacy=true) 21ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC001 v2.6.0 original wake SQL preserves every old column, binding and rowid across migration and reopen 22ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC001 v2.7.0 original wake SQL preserves every old column, binding and rowid across migration and reopen 19ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC001 v2.7.1 original wake SQL preserves every old column, binding and rowid across migration and reopen 20ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC001 v2.7.2 original wake SQL preserves every old column, binding and rowid across migration and reopen 25ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC001 future component schema is rejected with zero schema/data effect 12ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC001 unknown-wake component schema is rejected with zero schema/data effect 11ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC001 unknown-metadata component schema is rejected with zero schema/data effect 11ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC001 unknown-dependency component schema is rejected with zero schema/data effect 12ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC001 migration DDL, row copy and component marker roll back together 17ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC001 two independent processes recheck the component marker under the migration lock and rebuild once 194ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC001/003 wake activity never creates trusted task/contact activity 8ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC003 no arrival preserves submitted inside grace; retirement preserves bytes and unknown 9ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC003 no arrival preserves accepted-or-unknown inside grace; retirement preserves bytes and unknown 18ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC003 live quiet birth stays latched; expiry activity retires only after ten minutes 8ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC008 verified unexpired ended without a replaced birth keeps the unknown fence 14ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC008 verified unexpired unreachable without a replaced birth keeps the unknown fence 11ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC008 verified unexpired missing without a replaced birth keeps the unknown fence 10ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC008 verified unexpired transport without a replaced birth keeps the unknown fence 12ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC008 verified unexpired capability without a replaced birth keeps the unknown fence 14ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC008 verified unexpired ended-during-verification without a replaced birth keeps the unknown fence 14ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC008 one signed receipt claims exactly once after the same birth recovers transport eligibility 26ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC008 one signed receipt claims exactly once after the same birth recovers capability eligibility 12ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC008 verified expired-same-birth is terminal-only with no body claim 9ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC008 verified new-instance is terminal-only with no body claim 9ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC008 verified same-instance-new-birth is terminal-only with no body claim 9ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC008 independent process birth mutation is fenced during verification, then allowed after the claim commits 130ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC002/008 verified expired arrival is terminal-only; retired + valid current still claims 20ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC002 history rejects signature without body/effect mutation 13ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC002 history rejects other-db without body/effect mutation 10ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC002 history rejects schema without body/effect mutation 10ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC002 history rejects digest without body/effect mutation 11ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC002 history rejects adapter without body/effect mutation 9ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC002 history rejects capability without body/effect mutation 11ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC002 history rejects receipt-target without body/effect mutation 12ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 active budget overflow is an explicit rejection and does not remove unknowns 23ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 terminal observation retention is bounded while unresolved rows are retained 23ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC002 history rejects future-observed without body/effect mutation 12ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC002 history rejects target without body/effect mutation 8ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC002 history rejects current without body/effect mutation 9ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC002 history rejects time without body/effect mutation 9ms
+ ✓ tests/session-board/session-board.test.ts > session board hook > denies exactly once when several hook processes race on the same request 130ms
+ ✓ tests/session-board/session-board.test.ts > session board hook > points every Codex hook command at a bundle that exists 2ms
+ ✓ tests/session-board/session-board.test.ts > session board hook > fails open on unreadable input or an unusable board 1ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 independent senders and relay processes perform exactly one external call 1261ms
+ ✓ tests/session-board/session-board.test.ts > session board MCP tools > shares one board between the Claude launcher and the Codex hook and lists both hosts 943ms
+ ✓ tests/session-board/session-board.test.ts > session board MCP tools > reads back the hook-written line, lists the host board and refuses unbound updates 16ms
+ ✓ tests/session-board/session-board.test.ts > session board MCP tools > overlays matching broker presence and leaves missing sessions unknown 4ms
+ ✓ tests/session-board/session-board.test.ts > session board MCP tools > retains board work and exposes a presence lookup failure without inventing unknown presence 2ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC002 history has one terminal CAS across independent processes, with no body claim 163ms
+ ✓ tests/session-board/session-board.test.ts > session board MCP tools > looks up only board identities through bounded real broker packets despite 248 historical presences 840ms
+ ✓ tests/session-board/session-board.test.ts > session board MCP tools > reports invalid presence responses as unanswered without accepting malformed data or losing board work 851ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 independent process crash before start recovers the same attempt; after effect never resends 2141ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC004 quota admission, duplicate priority and first ACK retention do not block another sender 396ms
+ ✓ tests/coordinate-subagents/v3x/W05-r2.test.mjs > W05-r2 independent migration failure rolls back every added nonce column and preserves legacy bytes 296ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC004 global pool rejects atomically and reports its earliest release 1810ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC004 receipt ACK and send updates roll back atomically 10ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC001 callback ACK remains in the same receipt/message transaction 8ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC004 independent send race and committed lost return reuse exactly the same ID 284ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC005 advisory is non-authorizing, and presence retention does not surface an older birth 12ms
+ ✓ tests/coordinate-subagents/v3x/W05-r3.test.mjs > AC002 broker rejects added historical authority, time and observation payloads 16ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > one tick renews both leases and optionally counts pending messages 13ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > stale generation, ended presence, transport, relay and expired leases have zero renewal effect 35ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > tick validation and a pending-query failure cannot partially update leases 8ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > a heartbeat cannot revive an expired generation before a relay tick 5ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > issues opaque IDs without queue, peer relationship, claim or wake effect 8ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > rejects unknown, another sender and mutated public payload without enqueue 6ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > keeps the first immutable receipt and does not enqueue or wake after ACK/prune 9ms
+ ✓ tests/session-board/session-board.test.ts > session board MCP tools > reports oversize presence responses as unanswered without accepting malformed data or losing board work 756ms
+ ✓ tests/session-board/session-board.test.ts > session board MCP tools > reports stored-oversize presence responses as unanswered without accepting malformed data or losing board work 744ms
+ ✓ tests/coordinate-subagents/v3x/W05.test.mjs > W05 busy contact queues for boundary without wake; observed idle permits one wake 14ms
+ ✓ tests/coordinate-subagents/v3x/W05.test.mjs > W05 stale instance, turn or revision cannot enqueue; unknown and unsupported hold 7ms
+ ✓ tests/coordinate-subagents/v3x/W05.test.mjs > W05 broker rejects forged activity and preserves unknown without provider 6ms
+ ✓ tests/coordinate-subagents/v3x/W05.test.mjs > W05 task request registration holds without trusted state and commits contact atomically 9ms
+ ✓ tests/coordinate-subagents/v3x/W05.test.mjs > W05 contact rolls back when enqueue fails and duplicate wake survives reconnect 9ms
+ ✓ tests/coordinate-subagents/v3x/W05.test.mjs > W05 existing spool survives contact table migration and SQLite lock contention 10ms
+ ✓ tests/coordinate-subagents/v3x/W05.test.mjs > W05 deadline reconciliation cannot replace callback or expose another request outcome 9ms
+ ✓ tests/coordinate-subagents/v3x/W05.test.mjs > W05 MCP exposes bound portable contact and callback tools 539ms
+ ✓ tests/coordinate-subagents/v3x/W05.test.mjs > W05 host hook matchers bind every new tool and deny observed subagents 3ms
+ ✓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 delegated outcome and callback commit together; ACK remains separate from acceptance 21ms
+ ✓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 exact retry has one callback, conflicting outcome is rejected 8ms
+ ✓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 issued messages coexist with task callbacks and retain independent retry receipts after restart 11ms
+ ✓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 different request IDs cannot create two terminal outcomes for one owned task 8ms
+ ✓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 untrusted first request cannot choose the callback target or delegation ID 8ms
+ ✓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 requires registered request plus separate live owning-runtime binding 7ms
+ ✓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 standalone terminal outcome has no callback and also requires current binding 5ms
+ ✓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 callback enqueue failure rolls back outcome; public broker has no trusted reader 8ms
+ ✓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 outcome insert failure rolls back callback and a trusted broker port can submit 7ms
+ ✓ tests/coordinate-subagents/v3x/W03.test.mjs > W03 old instance and malformed evidence cannot displace the current terminal report 6ms
+ ✓ tests/coordinate-subagents/v3x/W05-r1.test.mjs > W05-r1 lost preparation response can rotate only before registration; registration requires issued token 15ms
+ ✓ tests/coordinate-subagents/v3x/W05-r1.test.mjs > W05-r1 service rejects omitted token and forged bound sender before persistence 5ms
+ ✓ tests/coordinate-subagents/v3x/W05-r1.test.mjs > W05-r1 store rejects tokenless direct registration before persisting either record 5ms
+ × tests/coordinate-subagents/v3x/W05-r1.test.mjs > W05-r1 lost registration response returns original receipt despite changed target activity 13ms
+   → Expected values to be strictly equal:
+
+'held' !== 'queued'
+
+ ✓ tests/coordinate-subagents/v3x/W05-r1.test.mjs > W05-r1 mismatched token, content, sender and target never reveal a receipt or enqueue 7ms
+ ✓ tests/coordinate-subagents/v3x/W05-r1.test.mjs > W05-r1 expired preparation cannot authorize registration and can be reissued before registration 5ms
+ ✓ tests/coordinate-subagents/v3x/W05-r1.test.mjs > W05-r1 preparation prunes expiry and bounds active rows 15ms
+ ✓ tests/coordinate-subagents/v3x/W05-r1.test.mjs > W05-r1 SQLite lock and rollback preserve preparation and single enqueue 10ms
+ ✓ tests/coordinate-subagents/v3x/W05-r1.test.mjs > W05-r1 MCP and both hook matchers expose protected preparation tool 501ms
+ ✓ tests/session-messaging/w05-r3-framing.test.mjs > AC006 raw framing decodes every Unicode split, exact limit and newline-inclusive limit+1 2ms
+ ✓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 online alone is unknown; only start then observed end of the same turn becomes idle 12ms
+ ✓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 mismatched turn, self-report and missing end remain unknown 8ms
+ ✓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 exact retry is idempotent; same revision conflict is unknown and stale revision cannot overwrite 6ms
+ ✓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 new instance and reused ended instance start unknown; late old event cannot overwrite 13ms
+ ✓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 proof, source, turn and lease are verified; product broker has no activity provider 7ms
+ ✓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 broker without a host provider does not expose persisted idle as current 6ms
+ ✓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 SQLite lock race leaves activity unchanged 8ms
+ ✓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 expired same-instance restart and regressed observation time cannot claim idle 6ms
+ ✓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 future observation is unknown until its verified timestamp 5ms
+ ✓ tests/coordinate-subagents/v3x/W04.test.mjs > W04 expired heartbeat cannot resurrect prior idle across a lease gap 6ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > rejects exact draft expiry and validates Unicode, TTL and sender draft capacity 40ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > applies global draft, receipt and byte backpressure without evicting valid records 2054ms
+ ✓ tests/session-messaging/w05-r3-hook.test.mjs > AC001 verified codex hook keeps the peer warning, no implicit processing ACK or authority 21ms
+ ✓ tests/session-messaging/w05-r3-hook.test.mjs > AC001 verified claude-code hook keeps the peer warning, no implicit processing ACK or authority 10ms
+ ✓ tests/session-messaging/w05-r3-hook.test.mjs > AC005 Claude blocks only a verified empty managed wake 9ms
+ ✓ tests/session-messaging/w05-r3-hook.test.mjs > AC005 Claude blocks only a verified empty retired wake 9ms
+ ✓ tests/session-messaging/w05-r3-hook.test.mjs > AC005 Codex empty wake and unverified Claude marker remain nonblocking; broker failure fails open 11ms
+ ✓ tests/session-messaging/w05-r3-framing.test.mjs > AC006 actual TLS source/bundle=false crosses UTF8 record boundary and rejects request+1 before effects 1000ms
+ ✓ tests/session-messaging/w05-r3-presence.test.ts > AC005 batches three and retains successes around a definite refusal 4ms
+ ✓ tests/session-messaging/w05-r3-presence.test.ts > AC005 preserves validated successes then stops at transport failure 1ms
+ ✓ tests/session-messaging/w05-r3-presence.test.ts > AC005 preserves validated successes then stops at identity failure 0ms
+ ✓ tests/session-messaging/w05-r3-presence.test.ts > AC005 preserves validated successes then stops at capabilities failure 0ms
+ ✓ tests/session-messaging/w05-r3-presence.test.ts > AC005 preserves validated successes then stops at outlook failure 596ms
+ ✓ tests/session-messaging/w05-r3-presence.test.ts > AC005 uses one monotonic 20s budget and passes only the remainder despite wall-clock steps 2ms
+ ✓ tests/session-messaging/w05-r3-presence.test.ts > AC005 excludes invalid bounded identities without weakening the target count contract 1ms
+stdout | tests/session-messaging/message-lifecycle.test.ts > packaged TLS cycles use one request instead of three or two without changing pending state
+relay tick measured TLS request counts [{"transport":"test-inbox","cycles":10,"baselineRequests":30,"tickRequests":10},{"transport":"codex-deferred","cycles":10,"baselineRequests":20,"tickRequests":10}]
+
+ ✓ tests/session-messaging/message-lifecycle.test.ts > packaged TLS cycles use one request instead of three or two without changing pending state 1165ms
+ ✓ tests/session-messaging/w05-r3-framing.test.mjs > AC006 actual TLS source/bundle=true crosses UTF8 record boundary and rejects request+1 before effects 868ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > a real post-commit prepare reply loss leaves only orphan drafts 1043ms
+ ✓ tests/session-messaging/w05-r3-framing.test.mjs > AC006 a second frame in the same TLS write never causes a second preparation 933ms
+ ✓ tests/session-messaging/w05-r3-framing.test.mjs > AC006 bundled CLI cleanroom preserves Unicode body bytes over a multi-record claim and duplicate send 1885ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > a real send reply loss retries the known ID once and survives broker restart 4111ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > two independent processes submit one ID atomically and enforce sender preparation capacity 474ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > preserves old messages across additive schema initialization but refuses old IDs as new sends 10ms
+ ✓ tests/session-messaging/message-lifecycle.test.ts > packaged CLI discovers prepare/send and rejects old or unknown send with zero queue effect 1143ms
+
+ Test Files  1 failed | 10 passed (11)
+      Tests  1 failed | 161 passed (162)
+   Start at  01:08:57
+   Duration  15.39s (tests 86%, import 8%, transform 5%)
+

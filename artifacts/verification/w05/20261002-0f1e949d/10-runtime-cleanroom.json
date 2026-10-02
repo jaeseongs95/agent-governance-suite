@@ -1,0 +1,10 @@
+{
+  "command": [
+    "pnpm",
+    "runtime:check"
+  ],
+  "cwd": "<candidate>",
+  "startedAt": "2026-10-02T01:09:05.520934+00:00",
+  "durationSeconds": 8.946,
+  "exitCode": 0
+}

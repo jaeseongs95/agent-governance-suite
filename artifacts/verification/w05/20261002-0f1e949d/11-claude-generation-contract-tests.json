@@ -1,0 +1,14 @@
+{
+  "command": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/tooling/claude-plugin.test.mjs",
+    "--reporter",
+    "verbose"
+  ],
+  "cwd": "<candidate>",
+  "startedAt": "2026-10-02T01:10:38.486699+00:00",
+  "durationSeconds": 1.339,
+  "exitCode": 0
+}

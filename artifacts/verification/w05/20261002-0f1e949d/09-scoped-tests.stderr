@@ -1,0 +1,22 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/coordinate-subagents/v3x/W05-r1.test.mjs > W05-r1 lost registration response returns original receipt despite changed target activity
+AssertionError: Expected values to be strictly equal:
+
+'held' !== 'queued'
+
+
+Expected: "queued"
+Received: "held"
+
+ ❯ tests/coordinate-subagents/v3x/W05-r1.test.mjs:111:10
+    109|   const first = dispatchSessionMessageBrokerOperation(store, 'register…
+    110|     payload, undefined, undefined, reader);
+    111|   assert.equal(first.state, 'queued');
+       |          ^
+    112|   const peer = new SessionMessageStore(database);
+    113|   resources[0].stores.push(peer);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
