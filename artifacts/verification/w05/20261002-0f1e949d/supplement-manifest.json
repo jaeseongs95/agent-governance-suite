@@ -1,0 +1,45 @@
+{
+  "kind": "append-only-W05-membership-supplement",
+  "frozenEvidenceCommit": "4d6c2a9693aad4c8686ef8e7031658d5382d9ec9",
+  "frozenManifestSha256": "5340143a8fc4aeff639926fb384597cf2ffdc050c715636f75a8859afe546691",
+  "sourceCommit": "0f1e949d4ca57fe3cc9aac98767d5c0dade79c61",
+  "sourceTree": "78c4eddb528d851cff295cba2891c2148221a3f1",
+  "shipmentTree": "56aaea2a1b0509b6d9f9b428228619ded640dc1a",
+  "newProductTestsBuildsOrSourceEdits": false,
+  "expected15CurrentSubsetCanonicalSeal": "2f153df7ffeb580ceccc23f4c07030c1d72370efd3dc0677e037e106fca054e7",
+  "original22Preserved": true,
+  "initialFailurePreserved": true,
+  "changedExtraCountOutsideExpected15": 11,
+  "entries": [
+    {
+      "path": "SUPPLEMENT.md",
+      "bytes": 7963,
+      "sha256": "808d9e1b54fe3f843e061c0f887114fd4f9138a7104454bb44a951598715e456"
+    },
+    {
+      "path": "generated-membership-classification.json",
+      "bytes": 20702,
+      "sha256": "ee9a836b89ec12d50fb8296c59d2d56eeb2623d21d8c5e6f51fb963f1a89e833"
+    },
+    {
+      "path": "generated15-subset-seal.json",
+      "bytes": 18458,
+      "sha256": "e7caf127f6274917249ba78560ad89fa8156d18b7c74a96c3bd2bc3ad7648d3f"
+    },
+    {
+      "path": "official-claude-shipment-manifest.json",
+      "bytes": 193718,
+      "sha256": "23ab9cc5cc9d45497ef44962b52c650ed20ad3eed3387a4991375c818a13962c"
+    },
+    {
+      "path": "publication-readback.json",
+      "bytes": 14373,
+      "sha256": "a14f5dd13a499a20f8e615a069637cbf7ab3c9f4b2254d63a0f13d2877de8284"
+    },
+    {
+      "path": "source-inventory-complete-supplement.json",
+      "bytes": 513304,
+      "sha256": "08b35c9495d0ed4db4fc1240b023424fa7636066260f387959310a6d416e377e"
+    }
+  ]
+}

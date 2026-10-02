@@ -1,0 +1,439 @@
+{
+  "canonicalPayloadEncoding": "JSON sorted keys, compact separators, ensure_ascii=true; sealCanonicalSha256 field excluded",
+  "sealCanonicalSha256": "2f153df7ffeb580ceccc23f4c07030c1d72370efd3dc0677e037e106fca054e7",
+  "schemaVersion": "1.0.0",
+  "kind": "generated15-current-shipment-subset-seal",
+  "membership": {
+    "reportedOriginalManifestBytes": 28067,
+    "reportedOriginalManifestSha256": "b93721e91c23cd0006ced7b655d6470f033e72b0b98c902da39c262d65afba04",
+    "provenance": "Exact15 membership supplied by existing AGS lead through parent; historical original manifest was not transferred",
+    "oldHashEqualityRequired": false,
+    "oldHashesLocallyRecomputed": false,
+    "purpose": "Membership and historical preservation; current-byte seal only"
+  },
+  "bindings": {
+    "sourceCommit": "0f1e949d4ca57fe3cc9aac98767d5c0dade79c61",
+    "sourceTree": "78c4eddb528d851cff295cba2891c2148221a3f1",
+    "shipmentTree": "56aaea2a1b0509b6d9f9b428228619ded640dc1a",
+    "source25Comparison": {
+      "path": "source25-comparison.json",
+      "bytes": 15999,
+      "sha256": "c8056138f0ae95d955ac3c8e95a4f50abbd9be2c6709ae6916474df57b1fabf8"
+    },
+    "source25PinsMatched": 25,
+    "source25Bytes": 562803,
+    "source25Unchanged": true,
+    "recordedNodeVersion": "24.19.0",
+    "recordedPnpmVersion": "11.19.0",
+    "lockSha256": "00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e",
+    "buildInputFiles": [
+      {
+        "path": "package.json",
+        "gitMode": "100644",
+        "blob": "f4a38deb730ace38a8b6db02f8993af30a5c0b2c",
+        "bytes": 2751,
+        "sha256": "c0e06ede3ba20c21d56500ec7cd8678f85e9a2682f2c65928e47754984051750"
+      },
+      {
+        "path": "pnpm-lock.yaml",
+        "gitMode": "100644",
+        "blob": "8e1bb65fdf8eacc4fc0c7e453f7dd91f8732a6e2",
+        "bytes": 79392,
+        "sha256": "00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e"
+      },
+      {
+        "path": "tsconfig.json",
+        "gitMode": "100644",
+        "blob": "9d8bdb9696b59f0ea2ac412208ba21cff641b21c",
+        "bytes": 399,
+        "sha256": "4de202d862f0c986683acbfcdbcd956452221dff425ac7f49a131800115c0585"
+      },
+      {
+        "path": "scripts/build.mjs",
+        "gitMode": "100644",
+        "blob": "dc3ccf2e016b0e218ad721d6c056db37afeee0ef",
+        "bytes": 546,
+        "sha256": "059d9f75af1e6a49f4ddeb29b235022892e5a35c68d0e5e6886617b93d2c725d"
+      },
+      {
+        "path": "scripts/runtime-bundles.mjs",
+        "gitMode": "100644",
+        "blob": "8ba4979fc7ccfbc1a96d66f369d432a6e544dffc",
+        "bytes": 5985,
+        "sha256": "4634f4c0a4c25d75c95cae1d34f6da4348afd244fbcf66c480f4ae62df5c57fb"
+      },
+      {
+        "path": "scripts/build-claude-plugin.mjs",
+        "gitMode": "100644",
+        "blob": "456ec7116c11fa30a7de03013f38dd0ace7288f5",
+        "bytes": 15756,
+        "sha256": "6eb3f75762db367d2e7cff92c3ac6cf41047412a051968c7638299d3c244642b"
+      },
+      {
+        "path": "scripts/lib.mjs",
+        "gitMode": "100644",
+        "blob": "e750b5565b436ff8a57c86b44f835e818c78d3eb",
+        "bytes": 4060,
+        "sha256": "123084942a04e31b6cebdad81c4918aa4d2ce31ef654492729ae0a684db916c4"
+      },
+      {
+        "path": "mcp-server/src/host-integration/manifest.ts",
+        "gitMode": "100644",
+        "blob": "5215403e62344f08ba65ef17ba9b285ea618772a",
+        "bytes": 11853,
+        "sha256": "8124e3f0c0f6a2e194555704c73731df1ee6151ff1e3021085f098932cb05a43"
+      }
+    ],
+    "recordedBuildReceipts": [
+      {
+        "path": "04-documented-frozen-install.json",
+        "bytes": 233,
+        "sha256": "77246dbff4ebfc9a5fd00b0a48d90e6dfade58e5348cd15b61bffe4aea1ee3fd"
+      },
+      {
+        "path": "05-shared-build.json",
+        "bytes": 167,
+        "sha256": "39e9e348e752e9097a7c6dbbb8645c9a1260b0c22d60b074fda74a9049cd0d27"
+      },
+      {
+        "path": "06-official-claude-generation.json",
+        "bytes": 174,
+        "sha256": "0e8dc119eb1cbf101f45a5fad4ad6598d99c536f75c8cc8503b686a3d47b8466"
+      },
+      {
+        "path": "07-generated-bundle-check.json",
+        "bytes": 185,
+        "sha256": "63f7ef580322ee441f82288e2d98ff66f20dcbb324ff40da553d2985d0d99613"
+      },
+      {
+        "path": "08-official-claude-check.json",
+        "bytes": 174,
+        "sha256": "11bca9330f57a603ef5c2dc07b1335d9ae5c9654a949570d92cc72e1b5974ad3"
+      }
+    ],
+    "hostIntegrationManifest": {
+      "path": "host-integration.json",
+      "gitMode": "100644",
+      "blob": "a4de27f27ef54ce25fa9d41c1608e375483d89b9",
+      "bytes": 48589,
+      "sha256": "64fc1c65d8b29190612ae7a127258081cd746b19469f98076c28a9b43501f4a2"
+    },
+    "hostShipmentMetadata": [
+      {
+        "path": ".codex-plugin/plugin.json",
+        "gitMode": "100644",
+        "blob": "95b69fb27b98148727ecc102c772f55425766c37",
+        "bytes": 1605,
+        "sha256": "4080e3ca2bdc3a3a0503b6307fddda9ec626da4585a212465a2fab835bc6acf1"
+      },
+      {
+        "path": ".mcp.json",
+        "gitMode": "100644",
+        "blob": "e61e3d45b0665ef5a40865b1ce880d0fadef4693",
+        "bytes": 245,
+        "sha256": "ff4a7b62ae53faec9260e5aaee08aa125b18b77b893337ca388e389df9d8f703"
+      },
+      {
+        "path": "hooks/hooks.json",
+        "gitMode": "100644",
+        "blob": "8811735b05083374d89649abd1ef8eac7e17be4a",
+        "bytes": 7218,
+        "sha256": "ed968eed68928f91c7edb3ddeab73a0a446abea64dc32f4041e16d249ad08849"
+      },
+      {
+        "path": "claude-plugin/.claude-plugin/plugin.json",
+        "gitMode": "100644",
+        "blob": "e1fab778188fe64298aed1720edb78c89cad7d66",
+        "bytes": 1073,
+        "sha256": "08d19bb42a159c8d7daf21c101242f7688b2a16bfee811f4c9b758644f7ca796"
+      },
+      {
+        "path": "claude-plugin/hooks/hooks.json",
+        "gitMode": "100644",
+        "blob": "f8a18fbdd9a313eb5d841913bb41413bb75d9aea",
+        "bytes": 7152,
+        "sha256": "54e8484e527191cbed2806f61e022c7bca27d78f1cd1da7904a3ea74ab8cfb8f"
+      }
+    ],
+    "claudeMcpConfigLocation": ".claude-plugin/plugin.json#mcpServers.agent-governance-suite",
+    "newTestsBuildsProviderCalls": "NONE; seal derived from preserved shipment/tree/receipts"
+  },
+  "expectedMemberCount": 15,
+  "changedExpectedMemberCount": 11,
+  "byteIdenticalExpectedMemberCount": 4,
+  "totalCurrentBytes": 6062070,
+  "files": [
+    {
+      "path": "mcp-server/dist/server.mjs",
+      "gitMode": "100644",
+      "blob": "f6406fd6294eebbb1a8c1028cbb1326631db80cf",
+      "bytes": 2074121,
+      "sha256": "efc1c5627750649f299ea560812d307bab398895cae2d04000e38dc467b45606",
+      "role": "Packaged STDIO MCP server and shared tool implementations",
+      "generator": "scripts/build.mjs -> scripts/runtime-bundles.mjs/buildRuntimeBundles",
+      "entry": "mcp-server/src/index.ts",
+      "sourceCandidateBeforeBuild": {
+        "path": "mcp-server/dist/server.mjs",
+        "gitMode": "100644",
+        "blob": "56cf3030f58f828e2e556617bc1713f55d6d7594",
+        "bytes": 2068831,
+        "sha256": "518c3b2eb26be3feb089a98a81f8e68fc8cff5fdc740d3006e136d1c290f33de"
+      },
+      "changedFromSourceCandidate": true
+    },
+    {
+      "path": "mcp-server/dist/flowmarshal-profile-probe.mjs",
+      "gitMode": "100644",
+      "blob": "06bd4794d828fd265ceb622c49dcad8f820ef666",
+      "bytes": 423510,
+      "sha256": "3e5984e94ddfb401102e5ab4be1b30756dbff1f198b15ac7c06656f994937509",
+      "role": "FlowMarshal host-integration profile probe",
+      "generator": "scripts/build.mjs -> scripts/runtime-bundles.mjs/buildRuntimeBundles",
+      "entry": "mcp-server/src/host-integration/flowmarshal-profile-probe.ts",
+      "sourceCandidateBeforeBuild": {
+        "path": "mcp-server/dist/flowmarshal-profile-probe.mjs",
+        "gitMode": "100644",
+        "blob": "3ef9a5a7cc6a4f3be338901969bbec60eb6d23ab",
+        "bytes": 423333,
+        "sha256": "ff888e31d858bd5a5e3e3bb1220d517b6b0643a72bcc1fdd8178239034f34d9f"
+      },
+      "changedFromSourceCandidate": true
+    },
+    {
+      "path": "runtime/schema-validation.mjs",
+      "gitMode": "100644",
+      "blob": "195aa81f965c68bf1a1c1112d636e70b5b50b979",
+      "bytes": 148397,
+      "sha256": "03996e2281db3e79a86d467e492ca4aaeaf38f89e802313102ffddf738f81e5c",
+      "role": "Dependency-free JSON Schema validation runtime",
+      "generator": "scripts/build.mjs -> scripts/runtime-bundles.mjs/buildRuntimeBundles",
+      "entry": "scripts/schema-runtime-entry.mjs",
+      "sourceCandidateBeforeBuild": {
+        "path": "runtime/schema-validation.mjs",
+        "gitMode": "100644",
+        "blob": "195aa81f965c68bf1a1c1112d636e70b5b50b979",
+        "bytes": 148397,
+        "sha256": "03996e2281db3e79a86d467e492ca4aaeaf38f89e802313102ffddf738f81e5c"
+      },
+      "changedFromSourceCandidate": false
+    },
+    {
+      "path": "mcp-server/dist/continuity-hook.mjs",
+      "gitMode": "100644",
+      "blob": "fb77ba099a35b666be4768f3d998f9468b6e4c12",
+      "bytes": 116643,
+      "sha256": "8fe57668c618b8e2fe805e8ec7ab48f3a67057200f309a18346c1dffb8e3c437",
+      "role": "Continuity host-hook runtime",
+      "generator": "scripts/build.mjs -> scripts/runtime-bundles.mjs/buildRuntimeBundles",
+      "entry": "mcp-server/src/continuity-hook.ts",
+      "sourceCandidateBeforeBuild": {
+        "path": "mcp-server/dist/continuity-hook.mjs",
+        "gitMode": "100644",
+        "blob": "fb77ba099a35b666be4768f3d998f9468b6e4c12",
+        "bytes": 116643,
+        "sha256": "8fe57668c618b8e2fe805e8ec7ab48f3a67057200f309a18346c1dffb8e3c437"
+      },
+      "changedFromSourceCandidate": false
+    },
+    {
+      "path": "mcp-server/dist/host-attestation-hook.mjs",
+      "gitMode": "100644",
+      "blob": "718f23481908d7529adb867b8babd78921acdb89",
+      "bytes": 78835,
+      "sha256": "1ea781f9d63d6106c12bceb2a9198571731d69cf717fab4f4d75cfa50850fa5a",
+      "role": "Host-observation attestation hook runtime",
+      "generator": "scripts/build.mjs -> scripts/runtime-bundles.mjs/buildRuntimeBundles",
+      "entry": "mcp-server/src/host-attestation-hook.ts",
+      "sourceCandidateBeforeBuild": {
+        "path": "mcp-server/dist/host-attestation-hook.mjs",
+        "gitMode": "100644",
+        "blob": "718f23481908d7529adb867b8babd78921acdb89",
+        "bytes": 78835,
+        "sha256": "1ea781f9d63d6106c12bceb2a9198571731d69cf717fab4f4d75cfa50850fa5a"
+      },
+      "changedFromSourceCandidate": false
+    },
+    {
+      "path": "mcp-server/dist/model-routing-peer-cli.mjs",
+      "gitMode": "100644",
+      "blob": "d95491ee5e0628db6a873bf5fe4a82b300def922",
+      "bytes": 782962,
+      "sha256": "8617ec0856b75af2327895bece4f1d162147c0fbff7a11396d1ff5b1653bebe9",
+      "role": "Peer model-routing handoff CLI",
+      "generator": "scripts/build.mjs -> scripts/runtime-bundles.mjs/buildRuntimeBundles",
+      "entry": "mcp-server/src/model-routing-peer-cli.ts",
+      "sourceCandidateBeforeBuild": {
+        "path": "mcp-server/dist/model-routing-peer-cli.mjs",
+        "gitMode": "100644",
+        "blob": "085710d0a7f84f500cf26f5239ddc9252f222863",
+        "bytes": 781881,
+        "sha256": "a8fe0d8b439111a05ea010ec1a1a35a50c06a62bf652ce9cfb5d9082c6b4d53f"
+      },
+      "changedFromSourceCandidate": true
+    },
+    {
+      "path": "mcp-server/dist/model-routing-host-hook.mjs",
+      "gitMode": "100644",
+      "blob": "6c27135619d8afb731b1f6fea2bfa2f0d1b98e75",
+      "bytes": 713671,
+      "sha256": "aa4166b45ed20c147eb45d7ab02e5b644e5963ee003a4911d0be37c47a160fcf",
+      "role": "Host model-routing observation hook",
+      "generator": "scripts/build.mjs -> scripts/runtime-bundles.mjs/buildRuntimeBundles",
+      "entry": "mcp-server/src/model-routing-host-hook.ts",
+      "sourceCandidateBeforeBuild": {
+        "path": "mcp-server/dist/model-routing-host-hook.mjs",
+        "gitMode": "100644",
+        "blob": "09ce34b66c34e977d14a94a35816b65031e3300e",
+        "bytes": 712590,
+        "sha256": "44569f984025ef9e2fa3f6aa18383c214e4c1fb352fda48bbf78ab100bf892c5"
+      },
+      "changedFromSourceCandidate": true
+    },
+    {
+      "path": "mcp-server/dist/host-attestation-api.mjs",
+      "gitMode": "100644",
+      "blob": "c3ab86181ad01a9acfda7e2669b910a353227d61",
+      "bytes": 40713,
+      "sha256": "12fefa5cc52c4cc8ebf1f221eea3eb9c983c317bf36777e6ff7b71f37d221e46",
+      "role": "Host-owned attestation wrapper API",
+      "generator": "scripts/build.mjs -> scripts/runtime-bundles.mjs/buildRuntimeBundles",
+      "entry": "mcp-server/src/host-attestation-api.ts",
+      "sourceCandidateBeforeBuild": {
+        "path": "mcp-server/dist/host-attestation-api.mjs",
+        "gitMode": "100644",
+        "blob": "9490a52d6121816ad75446a324efbc498eff2ad0",
+        "bytes": 40713,
+        "sha256": "4d27787aecdfd6a2520de23d2c9c5c65b9183333d2c8e9436a78f2ab2f1151a9"
+      },
+      "changedFromSourceCandidate": true
+    },
+    {
+      "path": "mcp-server/dist/session-board-hook.mjs",
+      "gitMode": "100644",
+      "blob": "d22472e787f8f15add63fda8518958ff2c5da9bf",
+      "bytes": 26410,
+      "sha256": "4a585084d3436f944a3e1c466730286442b303821e1dc6b4f7e4524758300bff",
+      "role": "Session-board tool-boundary hook",
+      "generator": "scripts/build.mjs -> scripts/runtime-bundles.mjs/buildRuntimeBundles",
+      "entry": "mcp-server/src/session-board-hook.ts",
+      "sourceCandidateBeforeBuild": {
+        "path": "mcp-server/dist/session-board-hook.mjs",
+        "gitMode": "100644",
+        "blob": "6e29f9cbe930b3d3b7627e596e11f0d5b253f442",
+        "bytes": 25506,
+        "sha256": "597da92a6e9db853dcdf7cd0ef149561f6a36d5d6ed98be6c8f935204878b549"
+      },
+      "changedFromSourceCandidate": true
+    },
+    {
+      "path": "mcp-server/dist/session-message-broker.mjs",
+      "gitMode": "100644",
+      "blob": "b371ef00ca0412e3a7afd489b67b81d94a497ce7",
+      "bytes": 739212,
+      "sha256": "96b18e7adc6a264e04e580e3f9fda9b27546655d249ca738558623659d498faa",
+      "role": "Packaged local TLS message broker",
+      "generator": "scripts/build.mjs -> scripts/runtime-bundles.mjs/buildRuntimeBundles",
+      "entry": "mcp-server/src/session-message-broker.ts",
+      "sourceCandidateBeforeBuild": {
+        "path": "mcp-server/dist/session-message-broker.mjs",
+        "gitMode": "100644",
+        "blob": "f78f91015ff9b8507da07429cfe58ffaf5dc0dde",
+        "bytes": 717106,
+        "sha256": "1683888d556d11d0372cf645a85b6487fb3c70b37ae7b71322d6463c2ead85a9"
+      },
+      "changedFromSourceCandidate": true
+    },
+    {
+      "path": "mcp-server/dist/session-message-relay.mjs",
+      "gitMode": "100644",
+      "blob": "49d89e0a422dcddcf58d34a3aaf1458ad5b21ba8",
+      "bytes": 24050,
+      "sha256": "721a40cb342dc76fda3d8d2d2aba2a3442a08e8755b38e3ae37bf455a7ecdae8",
+      "role": "Session-message relay CLI and delivery boundary runtime",
+      "generator": "scripts/build.mjs -> scripts/runtime-bundles.mjs/buildRuntimeBundles",
+      "entry": "mcp-server/src/session-message-relay-cli.ts",
+      "sourceCandidateBeforeBuild": {
+        "path": "mcp-server/dist/session-message-relay.mjs",
+        "gitMode": "100644",
+        "blob": "54f44751b2dde346b068ff523a7203f34dac0e6a",
+        "bytes": 23154,
+        "sha256": "c3c03c2772d4b6c02d693103816c16c3f456daed92039ebb2f62edf706c0afe0"
+      },
+      "changedFromSourceCandidate": true
+    },
+    {
+      "path": "mcp-server/dist/session-message-hook.mjs",
+      "gitMode": "100644",
+      "blob": "561333a8563dbcc40cd95983d3ff59b1127bcc82",
+      "bytes": 822233,
+      "sha256": "aa02c66fdf0c738e1015bcfaf676a6311b36f0159b8badc157eb4db4bf4e62d6",
+      "role": "Session binding/message host-hook runtime",
+      "generator": "scripts/build.mjs -> scripts/runtime-bundles.mjs/buildRuntimeBundles",
+      "entry": "mcp-server/src/session-message-hook.ts",
+      "sourceCandidateBeforeBuild": {
+        "path": "mcp-server/dist/session-message-hook.mjs",
+        "gitMode": "100644",
+        "blob": "99509d30963435516d9552069cd866e3b6f306f3",
+        "bytes": 819485,
+        "sha256": "7696023a876173d3d9803cdf85de48f78ba5e3933be2e33fa76b4da4862e569a"
+      },
+      "changedFromSourceCandidate": true
+    },
+    {
+      "path": "mcp-server/dist/session-message-cli.mjs",
+      "gitMode": "100644",
+      "blob": "abcf8a7131e701138e79495576a31a8ece178012",
+      "bytes": 16192,
+      "sha256": "4d3023be81623fa5acdfc21f3491f32d5ce43bde24a76f97a8b03c6211aa545b",
+      "role": "Public portable messaging CLI",
+      "generator": "scripts/build.mjs -> scripts/runtime-bundles.mjs/buildRuntimeBundles",
+      "entry": "mcp-server/src/session-message-cli.ts",
+      "sourceCandidateBeforeBuild": {
+        "path": "mcp-server/dist/session-message-cli.mjs",
+        "gitMode": "100644",
+        "blob": "49cc591c2945a09831d943da1903889bc9e0a10a",
+        "bytes": 15296,
+        "sha256": "c6ca220572f3cac882f32f343d4b552c6b5279ada07f89966cce0e36dbd31905"
+      },
+      "changedFromSourceCandidate": true
+    },
+    {
+      "path": "runtime/THIRD_PARTY_NOTICES.md",
+      "gitMode": "100644",
+      "blob": "473ad1a3ac8f895ec9a0186814510c2cf64c8217",
+      "bytes": 6532,
+      "sha256": "eb52bd20401bc1f8c9e36d191eaf74040d3e5630e047f8b6e6dd2ca6f5e0ea79",
+      "role": "Licenses/notices for bundled schema-validation dependencies",
+      "generator": "scripts/build.mjs -> scripts/runtime-bundles.mjs/buildRuntimeBundles",
+      "entry": null,
+      "sourceCandidateBeforeBuild": {
+        "path": "runtime/THIRD_PARTY_NOTICES.md",
+        "gitMode": "100644",
+        "blob": "473ad1a3ac8f895ec9a0186814510c2cf64c8217",
+        "bytes": 6532,
+        "sha256": "eb52bd20401bc1f8c9e36d191eaf74040d3e5630e047f8b6e6dd2ca6f5e0ea79"
+      },
+      "changedFromSourceCandidate": false
+    },
+    {
+      "path": "host-integration.json",
+      "gitMode": "100644",
+      "blob": "a4de27f27ef54ce25fa9d41c1608e375483d89b9",
+      "bytes": 48589,
+      "sha256": "64fc1c65d8b29190612ae7a127258081cd746b19469f98076c28a9b43501f4a2",
+      "role": "Generated shared host-integration manifest",
+      "generator": "scripts/build.mjs -> buildCurrentHostIntegrationManifest",
+      "entry": null,
+      "sourceCandidateBeforeBuild": {
+        "path": "host-integration.json",
+        "gitMode": "100644",
+        "blob": "a63fb455a03edc48ddb545bb67ac89ef4e489f49",
+        "bytes": 48356,
+        "sha256": "eb37b81e490564e1774e9f1ee8fea825c541102e2cc77705aabf2110f450952e"
+      },
+      "changedFromSourceCandidate": true
+    }
+  ],
+  "authorityEffect": "none",
+  "notReleaseOrAcceptanceGO": true
+}

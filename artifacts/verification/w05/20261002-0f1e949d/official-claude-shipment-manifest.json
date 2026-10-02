@@ -1,0 +1,4120 @@
+{
+  "kind": "complete-official-Claude-shipment-manifest",
+  "sourceCommit": "0f1e949d4ca57fe3cc9aac98767d5c0dade79c61",
+  "sourceTree": "78c4eddb528d851cff295cba2891c2148221a3f1",
+  "shipmentTree": "56aaea2a1b0509b6d9f9b428228619ded640dc1a",
+  "subtree": "claude-plugin/",
+  "generator": "pnpm claude:build / scripts/build-claude-plugin.mjs",
+  "generatorSourcePin": {
+    "path": "scripts/build-claude-plugin.mjs",
+    "gitMode": "100644",
+    "blob": "456ec7116c11fa30a7de03013f38dd0ace7288f5",
+    "bytes": 15756,
+    "sha256": "6eb3f75762db367d2e7cff92c3ac6cf41047412a051968c7638299d3c244642b"
+  },
+  "recordedGeneration": {
+    "path": "06-official-claude-generation.json",
+    "bytes": 174,
+    "sha256": "0e8dc119eb1cbf101f45a5fad4ad6598d99c536f75c8cc8503b686a3d47b8466"
+  },
+  "recordedFreshness": {
+    "path": "08-official-claude-check.json",
+    "bytes": 174,
+    "sha256": "11bca9330f57a603ef5c2dc07b1335d9ae5c9654a949570d92cc72e1b5974ad3"
+  },
+  "recordedCompleteCopiedInstallation": {
+    "path": "17-complete-shipment-root-and-claude.json",
+    "bytes": 271,
+    "sha256": "e876b85dcb18ac50b1cde8d53bf0e744027bc8a7d88b7bca9ea8f65c9623dce8"
+  },
+  "copiedInstallationHashManifest": {
+    "path": "claude-code-complete-copied-installation.json",
+    "bytes": 102408,
+    "sha256": "ae8ab0e7c4370cc7d0d54235989468cbe3e1be70270730a508a8e495ae0de6b6"
+  },
+  "fileCount": 507,
+  "totalBytes": 8040339,
+  "allMatchRecordedCompleteCopy": true,
+  "nodeModulesInCopiedInstallation": false,
+  "nativeHostInstallationObserved": false,
+  "separateFromRootGenerated15Seal": true,
+  "changedSinceSourceCandidate": 11,
+  "hostMetadata": [
+    {
+      "path": ".claude-plugin/plugin.json",
+      "shipmentPath": "claude-plugin/.claude-plugin/plugin.json",
+      "gitMode": "100644",
+      "blob": "e1fab778188fe64298aed1720edb78c89cad7d66",
+      "bytes": 1073,
+      "sha256": "08d19bb42a159c8d7daf21c101242f7688b2a16bfee811f4c9b758644f7ca796"
+    },
+    {
+      "path": "hooks/hooks.json",
+      "shipmentPath": "claude-plugin/hooks/hooks.json",
+      "gitMode": "100644",
+      "blob": "f8a18fbdd9a313eb5d841913bb41413bb75d9aea",
+      "bytes": 7152,
+      "sha256": "54e8484e527191cbed2806f61e022c7bca27d78f1cd1da7904a3ea74ab8cfb8f"
+    }
+  ],
+  "mcpConfigLocation": ".claude-plugin/plugin.json#mcpServers.agent-governance-suite",
+  "files": [
+    {
+      "path": ".claude-plugin/plugin.json",
+      "shipmentPath": "claude-plugin/.claude-plugin/plugin.json",
+      "gitMode": "100644",
+      "blob": "e1fab778188fe64298aed1720edb78c89cad7d66",
+      "bytes": 1073,
+      "sha256": "08d19bb42a159c8d7daf21c101242f7688b2a16bfee811f4c9b758644f7ca796"
+    },
+    {
+      "path": "LICENSE",
+      "shipmentPath": "claude-plugin/LICENSE",
+      "gitMode": "100644",
+      "blob": "fce99f684ffb085d094f8352fedfa20552046d41",
+      "bytes": 1068,
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02"
+    },
+    {
+      "path": "README.md",
+      "shipmentPath": "claude-plugin/README.md",
+      "gitMode": "100644",
+      "blob": "837147ed4cd9258ed1c324989674af7704b4365f",
+      "bytes": 17059,
+      "sha256": "4b5dd3bb6df5e5825cc62aea1132eb2d76d2e689ddb4a97c62d8aacd7cf4516c"
+    },
+    {
+      "path": "agents/deliberation-reviewer.md",
+      "shipmentPath": "claude-plugin/agents/deliberation-reviewer.md",
+      "gitMode": "100644",
+      "blob": "ccb7ca3a307578bbe992ece3aa7bf4f582147108",
+      "bytes": 774,
+      "sha256": "cc588b56a018ae65a2fcadceaa4439908775ff3890503d85b7ea4aa7c4df854f"
+    },
+    {
+      "path": "agents/independent-auditor.md",
+      "shipmentPath": "claude-plugin/agents/independent-auditor.md",
+      "gitMode": "100644",
+      "blob": "7eee3ec76d2b55231f716c3a02a4e5c097c8c448",
+      "bytes": 974,
+      "sha256": "c16561d9678bdf55f0ac549a2d4f591d4629803b5aa0c698a6de8b2c91d6bacf"
+    },
+    {
+      "path": "contracts/acknowledge-session-messages-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/acknowledge-session-messages-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "ff25d24dbdf131425df819bb73437a9ee74118a9",
+      "bytes": 881,
+      "sha256": "7da63d13eccfc731e6ba75ea717c806b3ab542a486d3357795bac0aa20f0fcfd"
+    },
+    {
+      "path": "contracts/api-result.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/api-result.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "422afcd9671c5ce821cf1c9f9e2f733fb7a75126",
+      "bytes": 1219,
+      "sha256": "18aadedaaa4c465771316a1889c0affea108344ce96ccbc615d35830869585c4"
+    },
+    {
+      "path": "contracts/approved-role-source.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/approved-role-source.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "ba5919136f40b897c428258769113642d224c32d",
+      "bytes": 16537,
+      "sha256": "36052c37f6000a3a1fe8db9cb011b1287b01d046736a0f3a62618f162d534822"
+    },
+    {
+      "path": "contracts/artifact-ref.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/artifact-ref.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "b312abb1e2986eb521712a9eee83178ec5882dc9",
+      "bytes": 976,
+      "sha256": "4ce69d3eee792fc5575f715c177794a38b20f8176b8951b532938c578578228b"
+    },
+    {
+      "path": "contracts/attempt-lease.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/attempt-lease.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "056227bf5846e30cdb31b97704a37cc08342a7fe",
+      "bytes": 1827,
+      "sha256": "d3f9c2ab46cdaf028c38933ab8ef1d894fefadb22b9d9f1a57ff40b59dd5792c"
+    },
+    {
+      "path": "contracts/attempt-outcome.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/attempt-outcome.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "ca02621c793fc3f27c07949ababef4939d6d668f",
+      "bytes": 1410,
+      "sha256": "ea7ed1ba82d56885dd0395cac21d5db9645b2ac92587596e126b510236120d7e"
+    },
+    {
+      "path": "contracts/attempt-proposal.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/attempt-proposal.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "67f2f6c85dd7d9333986d0f4bd0e8cc34162fe43",
+      "bytes": 1750,
+      "sha256": "8b0390cc58e2a302db18542b30764f4fc6d69db86649c9ab25f79fef01878b97"
+    },
+    {
+      "path": "contracts/checkpoint-context-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/checkpoint-context-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "8d2c7e44bf3f0907b9feecc4d0ca8c8a706eda91",
+      "bytes": 2114,
+      "sha256": "67ed949d981463c3ade41aaa9e1865af3c14251e201072549032d1ccda07c12f"
+    },
+    {
+      "path": "contracts/checkpoint-delta.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/checkpoint-delta.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "4a1217dcddda9071d65f8ddb45bc265c2056d8ea",
+      "bytes": 5802,
+      "sha256": "8f47718fd5df307a660f105dc88686f8fead42a6c459ad9b309d8ceb49ae911c"
+    },
+    {
+      "path": "contracts/context-transition.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/context-transition.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "677fcdfe93f284abb7430229ac308aee1e8fd9c5",
+      "bytes": 9317,
+      "sha256": "6fa9884feff1967a1aade648adb845d3f4564a7152524a483df19decd42412fe"
+    },
+    {
+      "path": "contracts/convergence-frame.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/convergence-frame.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "6ae173b162df3bca7fab7e35e315065a22ad867c",
+      "bytes": 2441,
+      "sha256": "5e08011cb89fed1776a7b7d78af904ec5ddeb05c93aa3f1d4ea3c03ecfbfb7f4"
+    },
+    {
+      "path": "contracts/convergence-review.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/convergence-review.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "49e29d3b8cea5b1da9f20246e6d1f8ac6c7469cb",
+      "bytes": 2291,
+      "sha256": "6eb3657e24798f315c64a8cc974c7d9a4637eed1bfe122f3011cb76f1e59099f"
+    },
+    {
+      "path": "contracts/convergence-root-handle.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/convergence-root-handle.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "3df8c4cc96fdf83dfd7c4457e2a6406f7eb451c5",
+      "bytes": 1152,
+      "sha256": "2e66ad7bac64f470c1c880cb059d7c71aad470cc9f70fb0aa2975182f779970a"
+    },
+    {
+      "path": "contracts/convergence-root.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/convergence-root.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "f0ca5ea9bbbb48092854f4c49e40265ace810bae",
+      "bytes": 2500,
+      "sha256": "bb570350115827a10cdef4f6962a071712d4befe45633c29e2a6e703e1f6ee50"
+    },
+    {
+      "path": "contracts/convergence-status-summary.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/convergence-status-summary.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "686fbc273136d5a268e549e94b5b078566b5eebc",
+      "bytes": 2229,
+      "sha256": "1059d88b4738ed4190465b707572c77ffb3d5fe253b9698e3b060268a0794382"
+    },
+    {
+      "path": "contracts/convergence-status.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/convergence-status.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "97e60d97230da5529d1f6c8837ba080ce0deba17",
+      "bytes": 2465,
+      "sha256": "9915044c6b07fc2dcac0e494c2e2b6a9b7a5275aced35c11294c175e1852aa61"
+    },
+    {
+      "path": "contracts/execute-state-cleanup-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/execute-state-cleanup-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "f550b101bd3294cfe4dda25b2e3e7c448b73290b",
+      "bytes": 377,
+      "sha256": "0d283e4601ac4703ef5d47b6cdb4e1dd2152c6ceb4bb4738c889302da010f3ac"
+    },
+    {
+      "path": "contracts/execution-context.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/execution-context.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "29cf89004802614ac00b3df8dd914c1b6caf1778",
+      "bytes": 1886,
+      "sha256": "92ecf50d3e97e85f32c5b58fa0e4b43dea761a7cc25fc521789a60a3e1690002"
+    },
+    {
+      "path": "contracts/execution-requirement.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/execution-requirement.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "66a5290f1d5ab9b8e7560a3422235101a9600128",
+      "bytes": 2161,
+      "sha256": "ddcf28709bbfccb5c16e38130053729c7c3b0c03f5c2e2070e1bb7f0acde14c8"
+    },
+    {
+      "path": "contracts/freeform-output.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/freeform-output.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "ad3242ab0ac2d4aa7721cfcc9c753a7214b277b7",
+      "bytes": 235,
+      "sha256": "623de96ffedcfd5fd0084b524832e7d5072645f82264be3e706e0977201f1386"
+    },
+    {
+      "path": "contracts/get-session-message-status-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/get-session-message-status-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "ab03182b5578c097c391df532bf7c518c1d970a3",
+      "bytes": 758,
+      "sha256": "852320fdd556ac8cd00f8b496fd7d6d0835f7a613eaf457d4cb710aa6d56a8c7"
+    },
+    {
+      "path": "contracts/guarded-workflow-start-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/guarded-workflow-start-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "45e9e78ec764e1a3f9852fdae6bff68906684560",
+      "bytes": 607,
+      "sha256": "e589a4136a096f2cf2aa02d5a8f210ad1d38c97e5de05af8e33480cdad262a1b"
+    },
+    {
+      "path": "contracts/host-integration.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/host-integration.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "1b9d3865d31c00a5662c58776d5b2777c6afd5fd",
+      "bytes": 4806,
+      "sha256": "f3685ca745a79e749aac29eab647095ac411d4185b008cf0e3207f82aca407de"
+    },
+    {
+      "path": "contracts/host-model-capabilities.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/host-model-capabilities.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "b50f50cc5578b9d1d6ae8a8e3a94e09ed8b41c14",
+      "bytes": 8829,
+      "sha256": "acd9b60ca6d2149768b3efaeadc9d015beb046607649d9e29b2b3c225d0282a4"
+    },
+    {
+      "path": "contracts/input-source-receipt.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/input-source-receipt.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "254a5a93c9423e1653c7b32c454b0779dc20b945",
+      "bytes": 2022,
+      "sha256": "d19a6c7ad885300930929b4593a2ea785fc9e74812785f240fed99835567ecdd"
+    },
+    {
+      "path": "contracts/inspect-context-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/inspect-context-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "33de79801f0742611bdc59281c4e68d68533b2c5",
+      "bytes": 428,
+      "sha256": "145117225e0ee8af7ddfe00f37abbacc9daac0c1cf4dbecbf50e328552153d09"
+    },
+    {
+      "path": "contracts/korean-prose-evaluation-final.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/korean-prose-evaluation-final.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "1b11cbf8b40cfc0ea3c41a4431b683c380420f5e",
+      "bytes": 644,
+      "sha256": "7948f04b977ce5d7ea92290ccdee082cfcd811663245179d9396741156969922"
+    },
+    {
+      "path": "contracts/korean-prose-evaluation-frame.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/korean-prose-evaluation-frame.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "3b364c69e88d4a821e2beeac3b8f2658e5ce3a8d",
+      "bytes": 5142,
+      "sha256": "906a6d03c30efd7582817f76857a0e94fe4d51cdaad46861293b2fa780715ddb"
+    },
+    {
+      "path": "contracts/korean-prose-evaluation-input.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/korean-prose-evaluation-input.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "2abbded3961b9aac4c0d6ef2f1f7d026856b8efa",
+      "bytes": 551,
+      "sha256": "710aec9da229d77e7160b9d6dffee77d00b9352c91b0f009f87da779020f3097"
+    },
+    {
+      "path": "contracts/korean-prose-evaluation-validity-report.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/korean-prose-evaluation-validity-report.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "415884056ca1983c5e73b543e6c1d679a06d34f5",
+      "bytes": 2628,
+      "sha256": "6a101da370b3a33547d169fdc18e41d2fa18aa89c7c83f34145d74ff4809f0a3"
+    },
+    {
+      "path": "contracts/korean-prose-glossary-lookup-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/korean-prose-glossary-lookup-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "25eb3efbccb8d7e05e8189ddf765667199323f77",
+      "bytes": 507,
+      "sha256": "643237e077c348962b4d27aa669745b419d1334014a20b3b3c6f407ffe2a81f2"
+    },
+    {
+      "path": "contracts/korean-prose-glossary-lookup-result.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/korean-prose-glossary-lookup-result.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "57860c290899072f615d4a26ccacc4f2d25f4d23",
+      "bytes": 2132,
+      "sha256": "527652124eb450bb67376d5daf0f4934f362f1f55f304aaa2cdf0eaf16711b31"
+    },
+    {
+      "path": "contracts/korean-prose-quality-adjudication-input.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/korean-prose-quality-adjudication-input.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "d1e18b04e6e4e50f74bb7367d3d65efdd5aff987",
+      "bytes": 626,
+      "sha256": "5381ae88a5afd7b654bb667d536e443d420e8b12009c835d3d22500ff54cfd2f"
+    },
+    {
+      "path": "contracts/korean-prose-quality-adjudication-meta.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/korean-prose-quality-adjudication-meta.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "1f8ab68d7f6cf3a8ada0791eee78b44b5f08bec1",
+      "bytes": 1968,
+      "sha256": "059a7cf7d3536b31fed73e3fc196222b4727effbdcb0338efff53bd9a643e5fc"
+    },
+    {
+      "path": "contracts/korean-prose-quality-adjudication.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/korean-prose-quality-adjudication.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "86ed97c506e773a0e1e475152d40caad46d0ed55",
+      "bytes": 1528,
+      "sha256": "2040210a4b5c2a52d522cd6cb749ccfb9967a5a94be415f8709a40b694eb68a2"
+    },
+    {
+      "path": "contracts/korean-prose-quality-report.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/korean-prose-quality-report.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "32d35597adea838ad88a5c8efb3a4f16c4246806",
+      "bytes": 2302,
+      "sha256": "94395f9e6dc0040fc6b74569fc112687b00489199e6e92503e38cd0fcee8e8c3"
+    },
+    {
+      "path": "contracts/korean-prose-receipt-binding.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/korean-prose-receipt-binding.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "f32c64af99f63ce7028b2f29e32c31dacb594edd",
+      "bytes": 1150,
+      "sha256": "1825d1e6a2a446e37aa6e656c8cc4ae26f6a48b6121d9ab705c7c252bae59401"
+    },
+    {
+      "path": "contracts/list-session-status-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/list-session-status-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "f45426730e9b6959bfa24914070b710dd82fd184",
+      "bytes": 624,
+      "sha256": "b06939c80a8d92d5f2a5a858d5a02b5c47d04530b825beebea6fa6a2e20c5164"
+    },
+    {
+      "path": "contracts/load-context-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/load-context-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "c567337a9446fe2dc1180004eeee8c6443501cdd",
+      "bytes": 707,
+      "sha256": "f2662bd1036517483b676d03fa4bb360debe866f045960a347181a0c1848a23b"
+    },
+    {
+      "path": "contracts/model-application-record.v2.schema.json",
+      "shipmentPath": "claude-plugin/contracts/model-application-record.v2.schema.json",
+      "gitMode": "100644",
+      "blob": "664590e4622cf152f4c9c0ca6a4d699d1a17eb89",
+      "bytes": 10861,
+      "sha256": "17c1c2a499aa1bbe8211e8296719bc9dbad1ed1bfb9aba7c75c209d58d9d1014"
+    },
+    {
+      "path": "contracts/model-application-record.v3.schema.json",
+      "shipmentPath": "claude-plugin/contracts/model-application-record.v3.schema.json",
+      "gitMode": "100644",
+      "blob": "8b86a04c852ab41df93afc77cd56ae1cf85d768a",
+      "bytes": 4260,
+      "sha256": "e19aa03d35604fca49cbc754694968029b67a28459f4515359d5f469e43df5de"
+    },
+    {
+      "path": "contracts/model-application-request.v2.schema.json",
+      "shipmentPath": "claude-plugin/contracts/model-application-request.v2.schema.json",
+      "gitMode": "100644",
+      "blob": "1cc05a5c71d24bef187e258b33d1e0ea90b8fc26",
+      "bytes": 8205,
+      "sha256": "5040a147c1eb165b657be56dfd687effe5b363df1af912019d35af0a414b05d0"
+    },
+    {
+      "path": "contracts/model-application-request.v3.schema.json",
+      "shipmentPath": "claude-plugin/contracts/model-application-request.v3.schema.json",
+      "gitMode": "100644",
+      "blob": "13efdc81e6ef95eacd9c02cd6d23ea5d9a90d8c7",
+      "bytes": 1442,
+      "sha256": "648a741ca90d654ae914aeb6b8dc50e27b14d66674fb3a0b14d3f1859c7e9d52"
+    },
+    {
+      "path": "contracts/model-catalog.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/model-catalog.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "d497321cf8657f9f63e077e887f28c2af9a050da",
+      "bytes": 7697,
+      "sha256": "d5455153e0890851da0fdb76b8a17627788c53bf4c36b83e891fce0423a8b3a4"
+    },
+    {
+      "path": "contracts/model-evaluation-record.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/model-evaluation-record.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "e7200b79f970d6e37c511152179641b970206e96",
+      "bytes": 9560,
+      "sha256": "f334dff3ee2010561f7a8a69a85cfdf1f0323d972a6433c1c8d9de6a01cd77f6"
+    },
+    {
+      "path": "contracts/model-routing-decision.v2.schema.json",
+      "shipmentPath": "claude-plugin/contracts/model-routing-decision.v2.schema.json",
+      "gitMode": "100644",
+      "blob": "2c1d1bbaf6d520cbde23452467a2824dafd623c3",
+      "bytes": 9097,
+      "sha256": "e4d808b7c8a49f4a6981ac2fb3dde322ed633f2ebe8d08d97fa194e99f0dba49"
+    },
+    {
+      "path": "contracts/model-routing-decision.v3.schema.json",
+      "shipmentPath": "claude-plugin/contracts/model-routing-decision.v3.schema.json",
+      "gitMode": "100644",
+      "blob": "c0c537941bf05a0b6fd1746c072da30322993a05",
+      "bytes": 4407,
+      "sha256": "6737c7e3cabd86c331dd81e4593b1f84b8b83331d4c9d4d27fcb6ef39437b88b"
+    },
+    {
+      "path": "contracts/model-routing-policy.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/model-routing-policy.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "9c3a9f37577e2b2027f539e71e9145634ddb710f",
+      "bytes": 13428,
+      "sha256": "c3bd8d83551297b89e10340135fc2959c357ea4ee7510c895a90440f5dcf9021"
+    },
+    {
+      "path": "contracts/model-routing-types.ts",
+      "shipmentPath": "claude-plugin/contracts/model-routing-types.ts",
+      "gitMode": "100644",
+      "blob": "62aad426f49cd3eef04d8bc76c5c7114e1a4f530",
+      "bytes": 13491,
+      "sha256": "2a06a2b96c190863ec6343231935e8bc36260da89d2fec2967fbc5120fef58b3"
+    },
+    {
+      "path": "contracts/model-selection-request.v2.schema.json",
+      "shipmentPath": "claude-plugin/contracts/model-selection-request.v2.schema.json",
+      "gitMode": "100644",
+      "blob": "b1053f45ed7f237f7e6f703bfa89232ca33c60f5",
+      "bytes": 7849,
+      "sha256": "de3619aa8702d3ee736abf00380cd057e09caef28725f457a1cb66c7887f08b1"
+    },
+    {
+      "path": "contracts/open-convergence-root-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/open-convergence-root-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "81c3710a45cff0f13052609b656224bf8110baa3",
+      "bytes": 791,
+      "sha256": "16ddc5ca695028c27c5d811ea89f46efd360e2c6c253929b6502c8cd6a5a8253"
+    },
+    {
+      "path": "contracts/plan-workflow-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/plan-workflow-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "f7feb41b0992e3a2068c12c39a5361ec9e112d9c",
+      "bytes": 1637,
+      "sha256": "eab50be7cc2995cdb1d9227f479349fc62fd95250253e713ed68736ea592827c"
+    },
+    {
+      "path": "contracts/plugin-update-notice.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/plugin-update-notice.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "8fe814255aaab11d59ba8c2602a967d3ce7f0946",
+      "bytes": 1249,
+      "sha256": "273bc4b5c5a8a8f4cf51975ce5001a037996acb281408dce074d36eafcd80b8b"
+    },
+    {
+      "path": "contracts/plugin-update-status.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/plugin-update-status.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "1f2c22a89c54c0b09997a101d4e38b2367aa37aa",
+      "bytes": 1835,
+      "sha256": "98c2dfd30510e5bcc0468c7ef1a75263f50488e2e8d7a18a5f6587de95927ddf"
+    },
+    {
+      "path": "contracts/prepare-session-message-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/prepare-session-message-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "2c9a8cc9166969ace65b56c9d1b4c6b4c016cc43",
+      "bytes": 1020,
+      "sha256": "e720ebca68c55924ac46deb86f7f21a039f20e7a95dc88700bc50e7f6ee7e91d"
+    },
+    {
+      "path": "contracts/prepare-state-cleanup-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/prepare-state-cleanup-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "12705070071a1a42e4e8cb72d4ff3c93686fe948",
+      "bytes": 302,
+      "sha256": "170cc0dc8314a30afb7e33844c836b077f514df16a5d03ac3d108e5f0aa50d38"
+    },
+    {
+      "path": "contracts/provider-result.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/provider-result.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "da0fa4cd8d97c57e042388873997dd12a8576032",
+      "bytes": 1976,
+      "sha256": "e3f643676d09d81b13436e4cac7cfdcbe9517a78b77b2f3bd96c4fa14335b010"
+    },
+    {
+      "path": "contracts/purge-direct-context-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/purge-direct-context-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "4372675963c14ef7d3b4f8049fe145139915e0ef",
+      "bytes": 679,
+      "sha256": "dd16e934f7d05e6bb2d4000a6698d8524639cd242f7d91d74907cf00f66a6cc6"
+    },
+    {
+      "path": "contracts/resolve-convergence-gate-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/resolve-convergence-gate-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "8f292b36b27a99a5ada46556ff74502ef2443bda",
+      "bytes": 610,
+      "sha256": "85ecd73a04932dd62b4b0deb14798fc2ba6308505b3f04803f8833115f125abf"
+    },
+    {
+      "path": "contracts/resource-policy.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/resource-policy.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "d0e4b017648d3cc5ada74a2514b58cf50dab63f9",
+      "bytes": 4279,
+      "sha256": "a197f2f0fcbaae4e840371ad9da0d2802a1555d63589620f1a60075c616f4bf6"
+    },
+    {
+      "path": "contracts/resource-state-snapshot.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/resource-state-snapshot.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "c65c911e5fc946f1c1b172a098a42cbebae94466",
+      "bytes": 3855,
+      "sha256": "49053faa84ac4c944110b4cb9e6455cc8039a9d8532b31d105926d3ba82b928b"
+    },
+    {
+      "path": "contracts/response-mode.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/response-mode.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "bd3426a659d9d30c40e8e6dbd41795f42b25d179",
+      "bytes": 202,
+      "sha256": "69e52c1587adc8094aaf0bc7f611ab95de6446d2a28216d9eb9c53bbeae468ff"
+    },
+    {
+      "path": "contracts/role-slot.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/role-slot.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "319aee15e0bf5ce8f58db51fcececc94c4e39102",
+      "bytes": 3000,
+      "sha256": "d7a1b03566fb47530f48d33f0bae7cf1be788bfdfbcaf65ba7e4943e49448ee4"
+    },
+    {
+      "path": "contracts/semantic-decision-advice.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/semantic-decision-advice.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "aa88603d75304a65002d63988b6bad134f848e74",
+      "bytes": 4804,
+      "sha256": "58bb4b4cc9aac6ccc782aaef3765c972bb2c3a416cca67607ffdedbd0528ddeb"
+    },
+    {
+      "path": "contracts/semantic-decision-policy.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/semantic-decision-policy.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "baefa2e7df2bef4b025fcd450a842f566a908269",
+      "bytes": 8374,
+      "sha256": "e9e765d0103706efffda76695bb68beba435454f88bea15c1c249042803b7601"
+    },
+    {
+      "path": "contracts/semantic-decision-question.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/semantic-decision-question.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "166e98ac2127bb9d4b7f7e334c2dfd43ba93e44d",
+      "bytes": 980,
+      "sha256": "7b84d516c53d16e4d330e55ea64255148a2dfc18e5f42c17122ead5de10ebb68"
+    },
+    {
+      "path": "contracts/semantic-decision-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/semantic-decision-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "d08bee98a3a84dd833d0599a7dd3a71c9f99688b",
+      "bytes": 8369,
+      "sha256": "3dfbf014b47f3910efa1f55c90a3ce45811a2464c87de850f8d17394c5b95b87"
+    },
+    {
+      "path": "contracts/semantic-egress-config.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/semantic-egress-config.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "a55fb82cc3f1ced10e2ccf9486cdefd9cbab236a",
+      "bytes": 3186,
+      "sha256": "ab154503d2fb128876718a3863c5fe59e45edc01ca5372531d42adc37c889b25"
+    },
+    {
+      "path": "contracts/semantic-model-assignment-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/semantic-model-assignment-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "e0b6bcec9d038e56c7f6b0b27af581d597fdc626",
+      "bytes": 1461,
+      "sha256": "4ea77a320875716531d7160f341734d0f9ab3c970a365a8405edca0975b1d175"
+    },
+    {
+      "path": "contracts/send-session-message-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/send-session-message-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "0ffba297382322dfe476b9363fe77a692381b050",
+      "bytes": 763,
+      "sha256": "f8c866e7185869a1361686a121bcd4c05ad7ae71cc99f655cacceafb22d5bcbd"
+    },
+    {
+      "path": "contracts/session-auto-wake-outlook.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/session-auto-wake-outlook.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "5a549b574596b4b25a4c8152e00147c2f60fa9e6",
+      "bytes": 1594,
+      "sha256": "dff6c334cf6aaf10d6ddb6787bc6a35d6f40d2d195b13cb3dc90b79b80e6b565"
+    },
+    {
+      "path": "contracts/session-task.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/session-task.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "036abb5863fa992ad964d0ae9da214384374a137",
+      "bytes": 4294,
+      "sha256": "65f12519a58538d1bf24321f30b4cab796312cb0ef18de9b9eecaf9df69db458"
+    },
+    {
+      "path": "contracts/skill-descriptor.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/skill-descriptor.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "7233056670cd0c5fd6c99671ee8cc341b733fa0b",
+      "bytes": 1423,
+      "sha256": "e47753988cce5125329a23bfc100c42ab2d0e3762178f4739acef4cead7f7be1"
+    },
+    {
+      "path": "contracts/skill-descriptor.v2.schema.json",
+      "shipmentPath": "claude-plugin/contracts/skill-descriptor.v2.schema.json",
+      "gitMode": "100644",
+      "blob": "acbb8c118471ff27643c973e146e374ce71718ef",
+      "bytes": 6023,
+      "sha256": "8051e264327b7b22bf07f1a7d2223c426c729d806d8c544209d7c42d075e0872"
+    },
+    {
+      "path": "contracts/source-lock.v3.schema.json",
+      "shipmentPath": "claude-plugin/contracts/source-lock.v3.schema.json",
+      "gitMode": "100644",
+      "blob": "df9aa40f6307540e9fbdcdd59b7a9e768164da23",
+      "bytes": 2902,
+      "sha256": "293b52dc89f12f1ab86bba32bfb75bf9aa9e3354fda8f565b08814c6663f27a0"
+    },
+    {
+      "path": "contracts/stage-result.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/stage-result.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "a1803bfa7e2f4bc4c6bec2371244efe06305d4a4",
+      "bytes": 7820,
+      "sha256": "68718c4119f1a0b59595e3f1c1155e6e1ad4e549a18c5159b551e3427ddb15f0"
+    },
+    {
+      "path": "contracts/state-cleanup-plan.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/state-cleanup-plan.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "8dfa0316b7455449f7d10ebd431b23282f92cc22",
+      "bytes": 4707,
+      "sha256": "d181fe179da60f543bb7a4b86b2c5675414eb005c744f168448768682c802be7"
+    },
+    {
+      "path": "contracts/state-cleanup-receipt.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/state-cleanup-receipt.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "e1795f95c59c3435da243f0b780bcb580ec6a8ee",
+      "bytes": 2036,
+      "sha256": "f26bf486752ccfad99d26fee67519c9a431ca297fe40be87d040a2e53d6d7fc1"
+    },
+    {
+      "path": "contracts/suppress-context-restore-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/suppress-context-restore-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "820460c8fe790d7ee37b6cdca765b0745dec8cfb",
+      "bytes": 520,
+      "sha256": "5207f0699b49801b78f655919fdd46cc6c3f1c63239cb4da368f4a13429299f6"
+    },
+    {
+      "path": "contracts/task-envelope.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/task-envelope.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "a95f74c14089ce8c79ada753e787cc8d72facb17",
+      "bytes": 3037,
+      "sha256": "b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21"
+    },
+    {
+      "path": "contracts/types.ts",
+      "shipmentPath": "claude-plugin/contracts/types.ts",
+      "gitMode": "100644",
+      "blob": "1e6062c85214a437604d4d18c8c2cd5584cacbea",
+      "bytes": 48293,
+      "sha256": "3b71a88326beef712e9ae381b852b61486e10e439ac014e7ffc964d50994d5b0"
+    },
+    {
+      "path": "contracts/update-session-status-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/update-session-status-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "3f23f8960959728d24a09aeb710858c5bbc6271c",
+      "bytes": 737,
+      "sha256": "7ed17df0d22963ab2817d5e88164d37eec1ff448638d9fba8a5d7c28bfd0ac13"
+    },
+    {
+      "path": "contracts/user-approval-channel.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/user-approval-channel.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "4b4508b945437c8c758cc70baed3eb4b74058a58",
+      "bytes": 7015,
+      "sha256": "39e1cd036ce9f2ada2877fbd849c37cfbc897e18816890fe629de9624557785d"
+    },
+    {
+      "path": "contracts/validate-collaboration-decision-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/validate-collaboration-decision-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "dbf0f4a0621a8b3f09911438813a2b43c1e95b81",
+      "bytes": 894,
+      "sha256": "ff8eb9fa40b32746a7e284bf2e5593f3999c9dfa5a541efccea408e742e4f510"
+    },
+    {
+      "path": "contracts/workflow-plan.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/workflow-plan.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "a3abd8b26ea6054c54d61153deab0fe153ceed76",
+      "bytes": 16414,
+      "sha256": "66ab13d22cc26fc4140a3d36a568fb317391f04cd69860737cfc21b932763aae"
+    },
+    {
+      "path": "contracts/workflow-receipt.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/workflow-receipt.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "eb6d580692c387320828b3c8d758bd778adb4e74",
+      "bytes": 2252,
+      "sha256": "d505d98b3b7307318bc05025cfcf36c189fc2a06db65c7ac61c89ce646027c85"
+    },
+    {
+      "path": "contracts/workflow-status-summary.v1.schema.json",
+      "shipmentPath": "claude-plugin/contracts/workflow-status-summary.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "23a19dfff281b50538720c50e28b3c0de7ba072f",
+      "bytes": 1758,
+      "sha256": "0e88f2023ed6f5377cbeadba4f6b98cef4667873eefedd1537b42bafb1b2d79b"
+    },
+    {
+      "path": "hooks/continuity-hook.mjs",
+      "shipmentPath": "claude-plugin/hooks/continuity-hook.mjs",
+      "gitMode": "100644",
+      "blob": "f19136517f16bc65ef628aebff3de4128c089f9d",
+      "bytes": 1057,
+      "sha256": "66cdba408b0555349589f7356a67f32833fa318e8565bc0fb576db96e1d2335b"
+    },
+    {
+      "path": "hooks/hooks.json",
+      "shipmentPath": "claude-plugin/hooks/hooks.json",
+      "gitMode": "100644",
+      "blob": "f8a18fbdd9a313eb5d841913bb41413bb75d9aea",
+      "bytes": 7152,
+      "sha256": "54e8484e527191cbed2806f61e022c7bca27d78f1cd1da7904a3ea74ab8cfb8f"
+    },
+    {
+      "path": "hooks/host-attestation-hook.mjs",
+      "shipmentPath": "claude-plugin/hooks/host-attestation-hook.mjs",
+      "gitMode": "100644",
+      "blob": "d7742c215ebfbcd0593c22ab92e6d1a677e75d12",
+      "bytes": 2104,
+      "sha256": "a60ca41e0430c1568b928f18d8177cfd37e517826db6afb1d4bd29de3a6976ee"
+    },
+    {
+      "path": "hooks/model-routing-host-hook.mjs",
+      "shipmentPath": "claude-plugin/hooks/model-routing-host-hook.mjs",
+      "gitMode": "100644",
+      "blob": "5152a21ee749a03434a74afc870ddf7610936f9b",
+      "bytes": 1553,
+      "sha256": "74414b94b674ea259d91bd039a4891c3360aac86ae676a28718c08c9e91e905a"
+    },
+    {
+      "path": "hooks/session-board-hook.mjs",
+      "shipmentPath": "claude-plugin/hooks/session-board-hook.mjs",
+      "gitMode": "100644",
+      "blob": "41427c0180cf68d1a4870faa12c9ea1a8a083c9c",
+      "bytes": 627,
+      "sha256": "dc8516fb287dbd17436af8d53d9d4703809aaf64d9d6624ab0b3ed7193694697"
+    },
+    {
+      "path": "hooks/session-message-hook.mjs",
+      "shipmentPath": "claude-plugin/hooks/session-message-hook.mjs",
+      "gitMode": "100644",
+      "blob": "3e4113cca30d28d827bb1f4f46b21805681fa677",
+      "bytes": 436,
+      "sha256": "7c9fe1a241a1c9413d1ecc4de0c4a6be03bff33266559630857f41ce770b59b0"
+    },
+    {
+      "path": "hooks/skill-trigger-hook.mjs",
+      "shipmentPath": "claude-plugin/hooks/skill-trigger-hook.mjs",
+      "gitMode": "100644",
+      "blob": "b9ae83fe955be3528477846138bbcd37238b9649",
+      "bytes": 5470,
+      "sha256": "5bad59e4809be0e3241a0a48767f8bda5f67e85a9dd23d19bfebedbb71f4f5ad"
+    },
+    {
+      "path": "mcp-server/dist/continuity-hook.mjs",
+      "shipmentPath": "claude-plugin/mcp-server/dist/continuity-hook.mjs",
+      "gitMode": "100644",
+      "blob": "fb77ba099a35b666be4768f3d998f9468b6e4c12",
+      "bytes": 116643,
+      "sha256": "8fe57668c618b8e2fe805e8ec7ab48f3a67057200f309a18346c1dffb8e3c437"
+    },
+    {
+      "path": "mcp-server/dist/host-attestation-api.mjs",
+      "shipmentPath": "claude-plugin/mcp-server/dist/host-attestation-api.mjs",
+      "gitMode": "100644",
+      "blob": "c3ab86181ad01a9acfda7e2669b910a353227d61",
+      "bytes": 40713,
+      "sha256": "12fefa5cc52c4cc8ebf1f221eea3eb9c983c317bf36777e6ff7b71f37d221e46"
+    },
+    {
+      "path": "mcp-server/dist/host-attestation-hook.mjs",
+      "shipmentPath": "claude-plugin/mcp-server/dist/host-attestation-hook.mjs",
+      "gitMode": "100644",
+      "blob": "718f23481908d7529adb867b8babd78921acdb89",
+      "bytes": 78835,
+      "sha256": "1ea781f9d63d6106c12bceb2a9198571731d69cf717fab4f4d75cfa50850fa5a"
+    },
+    {
+      "path": "mcp-server/dist/model-routing-host-hook.mjs",
+      "shipmentPath": "claude-plugin/mcp-server/dist/model-routing-host-hook.mjs",
+      "gitMode": "100644",
+      "blob": "6c27135619d8afb731b1f6fea2bfa2f0d1b98e75",
+      "bytes": 713671,
+      "sha256": "aa4166b45ed20c147eb45d7ab02e5b644e5963ee003a4911d0be37c47a160fcf"
+    },
+    {
+      "path": "mcp-server/dist/model-routing-peer-cli.mjs",
+      "shipmentPath": "claude-plugin/mcp-server/dist/model-routing-peer-cli.mjs",
+      "gitMode": "100644",
+      "blob": "d95491ee5e0628db6a873bf5fe4a82b300def922",
+      "bytes": 782962,
+      "sha256": "8617ec0856b75af2327895bece4f1d162147c0fbff7a11396d1ff5b1653bebe9"
+    },
+    {
+      "path": "mcp-server/dist/server.mjs",
+      "shipmentPath": "claude-plugin/mcp-server/dist/server.mjs",
+      "gitMode": "100644",
+      "blob": "f6406fd6294eebbb1a8c1028cbb1326631db80cf",
+      "bytes": 2074121,
+      "sha256": "efc1c5627750649f299ea560812d307bab398895cae2d04000e38dc467b45606"
+    },
+    {
+      "path": "mcp-server/dist/session-board-hook.mjs",
+      "shipmentPath": "claude-plugin/mcp-server/dist/session-board-hook.mjs",
+      "gitMode": "100644",
+      "blob": "d22472e787f8f15add63fda8518958ff2c5da9bf",
+      "bytes": 26410,
+      "sha256": "4a585084d3436f944a3e1c466730286442b303821e1dc6b4f7e4524758300bff"
+    },
+    {
+      "path": "mcp-server/dist/session-message-broker.mjs",
+      "shipmentPath": "claude-plugin/mcp-server/dist/session-message-broker.mjs",
+      "gitMode": "100644",
+      "blob": "b371ef00ca0412e3a7afd489b67b81d94a497ce7",
+      "bytes": 739212,
+      "sha256": "96b18e7adc6a264e04e580e3f9fda9b27546655d249ca738558623659d498faa"
+    },
+    {
+      "path": "mcp-server/dist/session-message-cli.mjs",
+      "shipmentPath": "claude-plugin/mcp-server/dist/session-message-cli.mjs",
+      "gitMode": "100644",
+      "blob": "abcf8a7131e701138e79495576a31a8ece178012",
+      "bytes": 16192,
+      "sha256": "4d3023be81623fa5acdfc21f3491f32d5ce43bde24a76f97a8b03c6211aa545b"
+    },
+    {
+      "path": "mcp-server/dist/session-message-hook.mjs",
+      "shipmentPath": "claude-plugin/mcp-server/dist/session-message-hook.mjs",
+      "gitMode": "100644",
+      "blob": "561333a8563dbcc40cd95983d3ff59b1127bcc82",
+      "bytes": 822233,
+      "sha256": "aa02c66fdf0c738e1015bcfaf676a6311b36f0159b8badc157eb4db4bf4e62d6"
+    },
+    {
+      "path": "mcp-server/dist/session-message-relay.mjs",
+      "shipmentPath": "claude-plugin/mcp-server/dist/session-message-relay.mjs",
+      "gitMode": "100644",
+      "blob": "49d89e0a422dcddcf58d34a3aaf1458ad5b21ba8",
+      "bytes": 24050,
+      "sha256": "721a40cb342dc76fda3d8d2d2aba2a3442a08e8755b38e3ae37bf455a7ecdae8"
+    },
+    {
+      "path": "runtime/THIRD_PARTY_NOTICES.md",
+      "shipmentPath": "claude-plugin/runtime/THIRD_PARTY_NOTICES.md",
+      "gitMode": "100644",
+      "blob": "473ad1a3ac8f895ec9a0186814510c2cf64c8217",
+      "bytes": 6532,
+      "sha256": "eb52bd20401bc1f8c9e36d191eaf74040d3e5630e047f8b6e6dd2ca6f5e0ea79"
+    },
+    {
+      "path": "runtime/issuer/windows/build/csc-build.mjs",
+      "shipmentPath": "claude-plugin/runtime/issuer/windows/build/csc-build.mjs",
+      "gitMode": "100644",
+      "blob": "6299e3463c183c18e5d84f23d42f068b192dcb2f",
+      "bytes": 7251,
+      "sha256": "de6dca3ef735b5762afff631c8b761aa62d9c1e3ff0f444156020a73f7220cde"
+    },
+    {
+      "path": "runtime/issuer/windows/build/fetch-roslyn.mjs",
+      "shipmentPath": "claude-plugin/runtime/issuer/windows/build/fetch-roslyn.mjs",
+      "gitMode": "100644",
+      "blob": "0f69e7c65427316816e9d7fcf2c722c0d06db7c7",
+      "bytes": 6649,
+      "sha256": "30030c064e6c6c2fbb7b468f501b12c0421dee2376fc9a7f7cb124a3a90b623f"
+    },
+    {
+      "path": "runtime/issuer/windows/build/roslyn.lock.json",
+      "shipmentPath": "claude-plugin/runtime/issuer/windows/build/roslyn.lock.json",
+      "gitMode": "100644",
+      "blob": "9703fd575641aa6f7288637356e36ce3060ba2c5",
+      "bytes": 61061,
+      "sha256": "b848280314a39e82404d39d05aff57cff9d4fc1ddfde997462f243f99c003531"
+    },
+    {
+      "path": "runtime/issuer/windows/contract/install-record.schema.json",
+      "shipmentPath": "claude-plugin/runtime/issuer/windows/contract/install-record.schema.json",
+      "gitMode": "100644",
+      "blob": "4796b6314637dcd468e9c492b32c5edae3b964f9",
+      "bytes": 6854,
+      "sha256": "2c92144a77d6a5b459edd74bac2fea027b5840936647e1703978b38e51a9be13"
+    },
+    {
+      "path": "runtime/issuer/windows/contract/ipc-frame.schema.json",
+      "shipmentPath": "claude-plugin/runtime/issuer/windows/contract/ipc-frame.schema.json",
+      "gitMode": "100644",
+      "blob": "1d5ce1affc8fbb7593c45f225a7771fe91a9b975",
+      "bytes": 3793,
+      "sha256": "487eba9ffc5c88ab2b329c379b98882f114d9ebc77395ac134c21d64f1ee236f"
+    },
+    {
+      "path": "runtime/issuer/windows/server/core/Harness.cs",
+      "shipmentPath": "claude-plugin/runtime/issuer/windows/server/core/Harness.cs",
+      "gitMode": "100644",
+      "blob": "a89efc9db5e3f5bd149725792497356bff67e082",
+      "bytes": 2080,
+      "sha256": "f6216115340c0323efd0de900113e241dec1e94c4edafc068d315fccadb9de4a"
+    },
+    {
+      "path": "runtime/issuer/windows/server/core/IssuerCore.cs",
+      "shipmentPath": "claude-plugin/runtime/issuer/windows/server/core/IssuerCore.cs",
+      "gitMode": "100644",
+      "blob": "f591f44cc01ab978219092cfc749f83f9a01d8d7",
+      "bytes": 5986,
+      "sha256": "0347bddc8f755352a06c6797e4b2acd1421ae396c61ad9d6afd89c6935392c03"
+    },
+    {
+      "path": "runtime/issuer/windows/server/host/FrameAdapter.cs",
+      "shipmentPath": "claude-plugin/runtime/issuer/windows/server/host/FrameAdapter.cs",
+      "gitMode": "100644",
+      "blob": "ae5f2b938a6361af09dcd94e13abf894874c8ae0",
+      "bytes": 8678,
+      "sha256": "fb2f30f0ccbcf0a8bddbb88c461718e02b854a602cd4333dedf2d828d9755aae"
+    },
+    {
+      "path": "runtime/issuer/windows/server/host/FrameHarness.cs",
+      "shipmentPath": "claude-plugin/runtime/issuer/windows/server/host/FrameHarness.cs",
+      "gitMode": "100644",
+      "blob": "1d614d5dc72dc6c15c595355015b0b2971e0ee24",
+      "bytes": 2666,
+      "sha256": "8301327be0f2afee32cdd6f8a641fde735bc2491c9b9429e7497815697184ed7"
+    },
+    {
+      "path": "runtime/issuer/windows/server/host/IssuerPipe.cs",
+      "shipmentPath": "claude-plugin/runtime/issuer/windows/server/host/IssuerPipe.cs",
+      "gitMode": "100644",
+      "blob": "f8d63f05d0901f8caa8143f837bf4af42d2d2e0c",
+      "bytes": 3757,
+      "sha256": "88e5dcc12d6d01f4b5bade96a490fb53de64787be1b0784c5f750ce69435d288"
+    },
+    {
+      "path": "runtime/issuer/windows/server/host/IssuerServer.cs",
+      "shipmentPath": "claude-plugin/runtime/issuer/windows/server/host/IssuerServer.cs",
+      "gitMode": "100644",
+      "blob": "2a5a3e6b4f3424e9d271392c2a8b6510f23cd7c0",
+      "bytes": 13479,
+      "sha256": "6a007921500e1ad2afcb0486ffb64e4233dfa04d58c67ab8a6b20ce838de3bbe"
+    },
+    {
+      "path": "runtime/issuer/windows/server/host/PipeListener.cs",
+      "shipmentPath": "claude-plugin/runtime/issuer/windows/server/host/PipeListener.cs",
+      "gitMode": "100644",
+      "blob": "bcda778383a34014f6581acba347309473fcd606",
+      "bytes": 2715,
+      "sha256": "0b35b4bcff5b5aabfc7ac650cc15b33f7b2a9b2cfd7b0066bcbcbd84da7d9ab7"
+    },
+    {
+      "path": "runtime/issuer/windows/service/service-plan.mjs",
+      "shipmentPath": "claude-plugin/runtime/issuer/windows/service/service-plan.mjs",
+      "gitMode": "100644",
+      "blob": "fbe5105c31e28c3f153f37ebbe23e374bec45e44",
+      "bytes": 9154,
+      "sha256": "16172fb865d28c7c6542f82b5ca8a98145c4826ea62a197469523f5447807aca"
+    },
+    {
+      "path": "runtime/schema-validation.mjs",
+      "shipmentPath": "claude-plugin/runtime/schema-validation.mjs",
+      "gitMode": "100644",
+      "blob": "195aa81f965c68bf1a1c1112d636e70b5b50b979",
+      "bytes": 148397,
+      "sha256": "03996e2281db3e79a86d467e492ca4aaeaf38f89e802313102ffddf738f81e5c"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/LICENSE",
+      "shipmentPath": "claude-plugin/skills/acceptance-evidence-validator/LICENSE",
+      "gitMode": "100644",
+      "blob": "fce99f684ffb085d094f8352fedfa20552046d41",
+      "bytes": 1068,
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/README.md",
+      "shipmentPath": "claude-plugin/skills/acceptance-evidence-validator/README.md",
+      "gitMode": "100644",
+      "blob": "3dd490f6876215323610ad178ea727540860e244",
+      "bytes": 2545,
+      "sha256": "278bb4e1190abfab15d2206eddd0dc8699ed0437ed619be8f1545568f07f371a"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/acceptance-evidence-validator/SKILL.md",
+      "gitMode": "100644",
+      "blob": "2f39bb8052987c77456fb6c9658b5aeaba7d49f4",
+      "bytes": 1915,
+      "sha256": "c665b447fd7b1d191434027b2becdfc189aa096ccbbca5f129c7078add57d86e"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/contracts/acceptance-evidence-input.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/acceptance-evidence-validator/contracts/acceptance-evidence-input.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "6c45d3400acb0c75da5219270e3627256170b09e",
+      "bytes": 3357,
+      "sha256": "d41effd0fd54209b295f75d233d19fb6fab5864a052de70b1272f6dd203e092c"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/contracts/acceptance-evidence-report.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/acceptance-evidence-validator/contracts/acceptance-evidence-report.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "b1fda1b2c1a74102664863bfe249905fc5256a21",
+      "bytes": 2837,
+      "sha256": "cf22e268b09e823e25b74f2ee3da74de103f3a00b8a672409b2bec6580fe6507"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/contracts/acceptance-report-validation.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/acceptance-evidence-validator/contracts/acceptance-report-validation.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "cbb59079c1473ed90d69d1ebcaaba4cc5d6fc58d",
+      "bytes": 1112,
+      "sha256": "3062feb742fc20f846dccf7002a2edae74e2bd9b10dba4f2d8937d0775880f32"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/contracts/upstream/lock.json",
+      "shipmentPath": "claude-plugin/skills/acceptance-evidence-validator/contracts/upstream/lock.json",
+      "gitMode": "100644",
+      "blob": "7b441c3e2ce40c6dfa5d6fff81ffeaabd7b0cf1a",
+      "bytes": 522,
+      "sha256": "faec991bfaf7725a5ab6d9494840e6d4d152c5eeaa3cc5ea260b6398c0534901"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/contracts/upstream/task-envelope.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/acceptance-evidence-validator/contracts/upstream/task-envelope.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "a95f74c14089ce8c79ada753e787cc8d72facb17",
+      "bytes": 3037,
+      "sha256": "b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/integration/provider-result.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/acceptance-evidence-validator/integration/provider-result.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "c6399b28e1492d536eecb4781c44721c0c2c708b",
+      "bytes": 2031,
+      "sha256": "708c3cf8b44b05bc1a81ea3290982bd81053a442f8a07eeb1eee2f656b860800"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/integration/skill-descriptor.json",
+      "shipmentPath": "claude-plugin/skills/acceptance-evidence-validator/integration/skill-descriptor.json",
+      "gitMode": "100644",
+      "blob": "7a2e1e3ab92c3263ffa353f58908a1c9f478912b",
+      "bytes": 2484,
+      "sha256": "03c363f12563acb2dc76a4dc340652b671bf166408fea6b156f2be717dd360c5"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/references/entry-details.md",
+      "shipmentPath": "claude-plugin/skills/acceptance-evidence-validator/references/entry-details.md",
+      "gitMode": "100644",
+      "blob": "ffd969ed2c49379915acfbdcae1cfaafc211e288",
+      "bytes": 2528,
+      "sha256": "2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/references/evidence-protocol.md",
+      "shipmentPath": "claude-plugin/skills/acceptance-evidence-validator/references/evidence-protocol.md",
+      "gitMode": "100644",
+      "blob": "e74dca6358d8320f9f1e733623db6633ffb22c68",
+      "bytes": 2756,
+      "sha256": "229d6f16a1b560b8482d3283f5a46f74f86a405d47c0bdf592d18f3f3e3897d0"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/scripts/check-repository.mjs",
+      "shipmentPath": "claude-plugin/skills/acceptance-evidence-validator/scripts/check-repository.mjs",
+      "gitMode": "100644",
+      "blob": "1915407d4286752fd1d748e18a726c69677a7e49",
+      "bytes": 2300,
+      "sha256": "eb88d4a8e383b3c93ee456901eb479937548dde1c7737a948d81d0d3144770bd"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/scripts/cli.mjs",
+      "shipmentPath": "claude-plugin/skills/acceptance-evidence-validator/scripts/cli.mjs",
+      "gitMode": "100644",
+      "blob": "8499a7a97db782c89734e1757e01310dca43cfab",
+      "bytes": 557,
+      "sha256": "296b2a8d0eb3690f69538e2cc1693e0129af3b2a95d6c9792d88ae2821fa6e9c"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/scripts/core.mjs",
+      "shipmentPath": "claude-plugin/skills/acceptance-evidence-validator/scripts/core.mjs",
+      "gitMode": "100644",
+      "blob": "103f161b3f9f084d24a4cc44fe054924651976c5",
+      "bytes": 22291,
+      "sha256": "0a340ef81cafbc1d08edfdd042480d14ede06fbce407417be6d4def4ca7a4216"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/scripts/io.mjs",
+      "shipmentPath": "claude-plugin/skills/acceptance-evidence-validator/scripts/io.mjs",
+      "gitMode": "100644",
+      "blob": "e7e644674ad23882f37430f9b84a84f6c59d31d0",
+      "bytes": 631,
+      "sha256": "f04aacb1603b18aa3b431cbcc96eb7f815ee7af9ece586d3e7c1221149f78dc0"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/scripts/schema-validation.mjs",
+      "shipmentPath": "claude-plugin/skills/acceptance-evidence-validator/scripts/schema-validation.mjs",
+      "gitMode": "100644",
+      "blob": "6e3a64e2773f88a6a90e2cccd855daf99a3cc7c4",
+      "bytes": 1651,
+      "sha256": "f6870594c5c16bac20adaa2c6e9dcbdf2e4804c5922fd591c6ef030ee6495c44"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/scripts/validate-report.mjs",
+      "shipmentPath": "claude-plugin/skills/acceptance-evidence-validator/scripts/validate-report.mjs",
+      "gitMode": "100644",
+      "blob": "208b423f9acc1c08aba8f513ebf07ac17f0a94ad",
+      "bytes": 1415,
+      "sha256": "ab569b96c807b62ece0ff404f8b732c12f6a7c054b33dfda300bc7839ff07794"
+    },
+    {
+      "path": "skills/blocker-diagnostician/LICENSE",
+      "shipmentPath": "claude-plugin/skills/blocker-diagnostician/LICENSE",
+      "gitMode": "100644",
+      "blob": "fce99f684ffb085d094f8352fedfa20552046d41",
+      "bytes": 1068,
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02"
+    },
+    {
+      "path": "skills/blocker-diagnostician/README.md",
+      "shipmentPath": "claude-plugin/skills/blocker-diagnostician/README.md",
+      "gitMode": "100644",
+      "blob": "9799a3f43c45d4fb84f62f4779c76698052f85a0",
+      "bytes": 2973,
+      "sha256": "51ad3ab0e4942811b1d1a7224b68eafb831acd1f3245b6a89ea9488cb8cb6830"
+    },
+    {
+      "path": "skills/blocker-diagnostician/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/blocker-diagnostician/SKILL.md",
+      "gitMode": "100644",
+      "blob": "d1339ce9e236c86050f7f76c5c87f9924f61f4cd",
+      "bytes": 2188,
+      "sha256": "3bde7e855868b36748669baf89c5d7eb8172720899fa95886a7073998d3ddc42"
+    },
+    {
+      "path": "skills/blocker-diagnostician/contracts/diagnosis-report.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/blocker-diagnostician/contracts/diagnosis-report.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "60f6bf46f8dffabb44d34ca24a8f8ace98f6ca22",
+      "bytes": 3527,
+      "sha256": "ce04ec2821fb07ebc66373b3783165c461758ac30437d401171fc43c0a07fba0"
+    },
+    {
+      "path": "skills/blocker-diagnostician/contracts/failure-episode-set.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/blocker-diagnostician/contracts/failure-episode-set.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "372a0141b331bf5f1c89bddf1a436ef912aac78a",
+      "bytes": 8098,
+      "sha256": "646601a2450a99b3748f56e152a81257c3fcd9d928f0c4cc6f27482c503a0fd4"
+    },
+    {
+      "path": "skills/blocker-diagnostician/integration/provider-result.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/blocker-diagnostician/integration/provider-result.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "900db7f25a247487d832966b7acfbade6aff39b5",
+      "bytes": 2023,
+      "sha256": "00d317e9b1a0ede9f27927d49663c7179189722e6545e76d4e43b828fdacb181"
+    },
+    {
+      "path": "skills/blocker-diagnostician/integration/skill-descriptor.json",
+      "shipmentPath": "claude-plugin/skills/blocker-diagnostician/integration/skill-descriptor.json",
+      "gitMode": "100644",
+      "blob": "3c5705a69f0e3a65a30dd3761f3836b267c2ba77",
+      "bytes": 2404,
+      "sha256": "ba5636a13f1b98dbab34c8e46e37ea3b34f2ddb10afb4ea0d7d0be2a08069e0e"
+    },
+    {
+      "path": "skills/blocker-diagnostician/references/diagnosis-protocol.md",
+      "shipmentPath": "claude-plugin/skills/blocker-diagnostician/references/diagnosis-protocol.md",
+      "gitMode": "100644",
+      "blob": "ad5c75e0d9435826a6ddef57cbbbc705d53f4bbc",
+      "bytes": 4062,
+      "sha256": "ee079daee6f2d17b0660fdcf1e49da51fdcfaaf98f14fce6ade8db5932061c80"
+    },
+    {
+      "path": "skills/blocker-diagnostician/references/entry-details.md",
+      "shipmentPath": "claude-plugin/skills/blocker-diagnostician/references/entry-details.md",
+      "gitMode": "100644",
+      "blob": "9d2db6ccbb0c93bd04b4e49919a3aaeefd5f123d",
+      "bytes": 3465,
+      "sha256": "5d3068c1151d10ff89304f2c3a5e18be6dc235d75cff179e3ff68a28d76aaebf"
+    },
+    {
+      "path": "skills/blocker-diagnostician/scripts/check-repository.mjs",
+      "shipmentPath": "claude-plugin/skills/blocker-diagnostician/scripts/check-repository.mjs",
+      "gitMode": "100644",
+      "blob": "ca7ee301f6f1b29ec5cdb008243714dda3f4eb75",
+      "bytes": 1815,
+      "sha256": "8e50291ed41d4adff92b5f85c499aec045651ec9d7aff83a7b8e8ecc3e7c8356"
+    },
+    {
+      "path": "skills/blocker-diagnostician/scripts/cli.mjs",
+      "shipmentPath": "claude-plugin/skills/blocker-diagnostician/scripts/cli.mjs",
+      "gitMode": "100644",
+      "blob": "084838d243f77e6d04031ab93a389d78e47d983e",
+      "bytes": 452,
+      "sha256": "321dd6be1cc02731dd4d9d1a26bc67a1dbe2595cb3fed00250c56e56d0d7d76c"
+    },
+    {
+      "path": "skills/blocker-diagnostician/scripts/cluster-failures.mjs",
+      "shipmentPath": "claude-plugin/skills/blocker-diagnostician/scripts/cluster-failures.mjs",
+      "gitMode": "100644",
+      "blob": "560d1f79ba382b078f8773c5b255cf202b29216c",
+      "bytes": 524,
+      "sha256": "23c4410936ad785ca40d9ef36fc2a4086113829e2be953f04ad875a11df71c27"
+    },
+    {
+      "path": "skills/blocker-diagnostician/scripts/core.mjs",
+      "shipmentPath": "claude-plugin/skills/blocker-diagnostician/scripts/core.mjs",
+      "gitMode": "100644",
+      "blob": "8496e836cabd5a3d23e36a7c413f70cb7a9d1a30",
+      "bytes": 26169,
+      "sha256": "a0aa3c9b75e62fbfa0db398043787e91b9efa78eb0374af42baff01f864bb01f"
+    },
+    {
+      "path": "skills/blocker-diagnostician/scripts/digest-request.mjs",
+      "shipmentPath": "claude-plugin/skills/blocker-diagnostician/scripts/digest-request.mjs",
+      "gitMode": "100644",
+      "blob": "46e1a99dc27347d01a5ec51ed4b31a77d7d10b23",
+      "bytes": 484,
+      "sha256": "ccbcf4eb50947808bd820af3205cd0b043b753894cac5e7d06b24e73d0775b58"
+    },
+    {
+      "path": "skills/blocker-diagnostician/scripts/io.mjs",
+      "shipmentPath": "claude-plugin/skills/blocker-diagnostician/scripts/io.mjs",
+      "gitMode": "100644",
+      "blob": "e7e644674ad23882f37430f9b84a84f6c59d31d0",
+      "bytes": 631,
+      "sha256": "f04aacb1603b18aa3b431cbcc96eb7f815ee7af9ece586d3e7c1221149f78dc0"
+    },
+    {
+      "path": "skills/blocker-diagnostician/scripts/schema-validation.mjs",
+      "shipmentPath": "claude-plugin/skills/blocker-diagnostician/scripts/schema-validation.mjs",
+      "gitMode": "100644",
+      "blob": "4ee361dea1c1b28704b97cf5278b1bbb1321d810",
+      "bytes": 1051,
+      "sha256": "cc240a10b7e02ab42d515c93a883568484dbd1580a1046ae321918409055b088"
+    },
+    {
+      "path": "skills/blocker-diagnostician/scripts/validate-report.mjs",
+      "shipmentPath": "claude-plugin/skills/blocker-diagnostician/scripts/validate-report.mjs",
+      "gitMode": "100644",
+      "blob": "571344c4bc2c46d0acd60ae05e7ab59b82c25be5",
+      "bytes": 1546,
+      "sha256": "b96161ec93e69c4cd4518e99069423fe784c415cea97971f607bc94c80317fa3"
+    },
+    {
+      "path": "skills/change-scope-guardian/LICENSE",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/LICENSE",
+      "gitMode": "100644",
+      "blob": "fce99f684ffb085d094f8352fedfa20552046d41",
+      "bytes": 1068,
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02"
+    },
+    {
+      "path": "skills/change-scope-guardian/README.md",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/README.md",
+      "gitMode": "100644",
+      "blob": "be37f6b962a11a2cff253e0f8e687e64ef46406b",
+      "bytes": 1609,
+      "sha256": "b6c00b38e32d0ed8b2f3344e9884672f1f55c619c3449f22e766c2bb35830fad"
+    },
+    {
+      "path": "skills/change-scope-guardian/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/SKILL.md",
+      "gitMode": "100644",
+      "blob": "2eb7ed0511a952ef57592dad2ad0470c91830e81",
+      "bytes": 2395,
+      "sha256": "05afc12d62688396698afbefad4bb9ef7e27869e960996eeb39c858606e5513a"
+    },
+    {
+      "path": "skills/change-scope-guardian/VERSION",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/VERSION",
+      "gitMode": "100644",
+      "blob": "3eefcb9dd5b38e2c1dc061052455dd97bcd51e6c",
+      "bytes": 6,
+      "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
+    },
+    {
+      "path": "skills/change-scope-guardian/contracts/change-scope-report.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/contracts/change-scope-report.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "58f802e3374fe7c84bb0999c714de68068cab942",
+      "bytes": 2566,
+      "sha256": "5495ea406196ea120bd6a237fa5db22c152c26beac84d276cf09080404a6039c"
+    },
+    {
+      "path": "skills/change-scope-guardian/contracts/change-scope-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/contracts/change-scope-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "c0ede8f03455d8f18495173a3e2c3dd1177612b9",
+      "bytes": 1295,
+      "sha256": "42e658217660fa7e21e102d8fca570461edc3ab5bf83a8588f871f5c3c9d4571"
+    },
+    {
+      "path": "skills/change-scope-guardian/contracts/upstream/lock.json",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/contracts/upstream/lock.json",
+      "gitMode": "100644",
+      "blob": "b228ba88f6fb398d2d6eac23c7e5ccea4afc1edb",
+      "bytes": 521,
+      "sha256": "175a485d0dde0a4339282622ecfc495b85bb388db3c7b942d0023849f1908c09"
+    },
+    {
+      "path": "skills/change-scope-guardian/contracts/upstream/task-envelope.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/contracts/upstream/task-envelope.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "a95f74c14089ce8c79ada753e787cc8d72facb17",
+      "bytes": 3037,
+      "sha256": "b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21"
+    },
+    {
+      "path": "skills/change-scope-guardian/contracts/workspace-baseline.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/contracts/workspace-baseline.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "7328e9e144e29108b352d1ca34c28529be311d7b",
+      "bytes": 1757,
+      "sha256": "e45fa635212cc86c49f62818181f90f06f014c3533d7e74f2929f66608b36452"
+    },
+    {
+      "path": "skills/change-scope-guardian/integration/provider-result.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/integration/provider-result.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "1bce5aea425e60c1a5fe2a0ed3c80448f43c2175",
+      "bytes": 1852,
+      "sha256": "7142aa17f93e7b50d2149dc002bb8c6a1ce9dd66a40ea181763f5158b1f9c6d1"
+    },
+    {
+      "path": "skills/change-scope-guardian/integration/skill-descriptor.json",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/integration/skill-descriptor.json",
+      "gitMode": "100644",
+      "blob": "a93c3def1d7ba64a0f36ad06a8e0c6fdcd9bae47",
+      "bytes": 3517,
+      "sha256": "bebe755fae0dc2350ddf773472b6725ea236c01764e344eb99c59fe69807d194"
+    },
+    {
+      "path": "skills/change-scope-guardian/references/entry-details.md",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/references/entry-details.md",
+      "gitMode": "100644",
+      "blob": "775fad2b6c19be522874db3d4e065fe89fb44f79",
+      "bytes": 723,
+      "sha256": "d164e59584763265a4bd8ccfd6a4ee75560f1df4ef30cd44dee68d814baf185b"
+    },
+    {
+      "path": "skills/change-scope-guardian/references/path-policy.md",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/references/path-policy.md",
+      "gitMode": "100644",
+      "blob": "815b8e4e49b132c2a733ebeed8f02f0eb80564b1",
+      "bytes": 1163,
+      "sha256": "8165defb0cb02f683718f8c6c927b0455f30d2120f3d4d6e0a971247c912a56d"
+    },
+    {
+      "path": "skills/change-scope-guardian/references/verdict-rules.md",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/references/verdict-rules.md",
+      "gitMode": "100644",
+      "blob": "0d0c0777245ae62ddd84ea3d77eb39b5c2936e8d",
+      "bytes": 1184,
+      "sha256": "71d8e964c03874b8bdcaef4e21487a56d672d59553da0c01276e4896a8fc1c28"
+    },
+    {
+      "path": "skills/change-scope-guardian/scripts/capture-workspace-baseline.mjs",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/scripts/capture-workspace-baseline.mjs",
+      "gitMode": "100644",
+      "blob": "3feb812f66f8e1f94a6f062af2a6206d28d632a3",
+      "bytes": 339,
+      "sha256": "c7f6b887fa94697434568ed987b66d81525841949bf64ebfdadcc6f5dcecfe69"
+    },
+    {
+      "path": "skills/change-scope-guardian/scripts/compare-change-scope.mjs",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/scripts/compare-change-scope.mjs",
+      "gitMode": "100644",
+      "blob": "e7c03855c30ec437b49b59bfdf04d231463a5be7",
+      "bytes": 332,
+      "sha256": "017e03abb617f5fa9d582e1b812b78f1dfa570e411970ae9aa6afb4a67b9e1ba"
+    },
+    {
+      "path": "skills/change-scope-guardian/scripts/compile-schemas.mjs",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/scripts/compile-schemas.mjs",
+      "gitMode": "100644",
+      "blob": "d96ec82785abfe46f163e037f75fe5ed9ae0a26f",
+      "bytes": 1071,
+      "sha256": "c2bcd5f917c09c2e1adec7694b4939372f3352e1eb911a09c62acdfc32f826dd"
+    },
+    {
+      "path": "skills/change-scope-guardian/scripts/lib.mjs",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/scripts/lib.mjs",
+      "gitMode": "100644",
+      "blob": "7c441a6e96fcaf9d49f20e84c7ac3d27124b4815",
+      "bytes": 21823,
+      "sha256": "0fa25746036db845760c61a41a53dcbb012c40ec310640a1ef5a3a993c500562"
+    },
+    {
+      "path": "skills/change-scope-guardian/scripts/schema-validator.mjs",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/scripts/schema-validator.mjs",
+      "gitMode": "100644",
+      "blob": "4bc3edd81c74a6fe28f195a5d86a91762eb462c0",
+      "bytes": 1289,
+      "sha256": "53165cecfb1dc4e1d78317d88e04f0c9e938ded84bd4ba96bda57178923e6238"
+    },
+    {
+      "path": "skills/change-scope-guardian/scripts/validate-package.mjs",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/scripts/validate-package.mjs",
+      "gitMode": "100644",
+      "blob": "598e8d8fcc90565dceff78f7b80f65c62cb3016e",
+      "bytes": 4568,
+      "sha256": "64434769172c15b9ee835f17ec0239f013f859ec58116db49c711b0e6c18707f"
+    },
+    {
+      "path": "skills/change-scope-guardian/scripts/validate-report.mjs",
+      "shipmentPath": "claude-plugin/skills/change-scope-guardian/scripts/validate-report.mjs",
+      "gitMode": "100644",
+      "blob": "f0c1dd49899475bd5c2e22453c0d9f4d6f8e836c",
+      "bytes": 970,
+      "sha256": "226996920248045fbfe5f3fef921a095c831702de4a00766bb1b5f4866a40ae3"
+    },
+    {
+      "path": "skills/context-continuity/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/context-continuity/SKILL.md",
+      "gitMode": "100644",
+      "blob": "b054ec68f2470bd4c4e5deb917f19e26bf4676dc",
+      "bytes": 2066,
+      "sha256": "f51f1d91692400cbfb48e70055e682fa6b272a61bbbf901dc177e71596eaab44"
+    },
+    {
+      "path": "skills/context-continuity/references/entry-details.md",
+      "shipmentPath": "claude-plugin/skills/context-continuity/references/entry-details.md",
+      "gitMode": "100644",
+      "blob": "cb2f1bd547ca2568f46a20dc20fda2ff38c55885",
+      "bytes": 2028,
+      "sha256": "acc4c681f6987c9ab944978fe02d8bf49a9cf1d4d8a515ac77286b346dc563b4"
+    },
+    {
+      "path": "skills/coordinate-subagents/LICENSE",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/LICENSE",
+      "gitMode": "100644",
+      "blob": "fce99f684ffb085d094f8352fedfa20552046d41",
+      "bytes": 1068,
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02"
+    },
+    {
+      "path": "skills/coordinate-subagents/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/SKILL.md",
+      "gitMode": "100644",
+      "blob": "d4357794a76ffc2fad906824c7214ec13ed068b2",
+      "bytes": 2231,
+      "sha256": "57c420d31d0d1a17eae710433c05ab08ff230e81bb61fa9b1e76b4e43fcf2be6"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/delegation-playbook.md",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/delegation-playbook.md",
+      "gitMode": "100644",
+      "blob": "30f1928333169a2e12cff6ef6c7dcd040e5f3fd1",
+      "bytes": 5570,
+      "sha256": "a69a4935d3782ce55663e097c670632599249cc5d261a6f323c03df62e86716f"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/entry-details.md",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/entry-details.md",
+      "gitMode": "100644",
+      "blob": "276f620c7b210d8f85f0998a8bb3a44767f4ce5c",
+      "bytes": 8764,
+      "sha256": "41799d0e47b084e6056bfa1ef06c016f673dd10947d6a41167df93091269216f"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/live-dispatch-check.md",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/live-dispatch-check.md",
+      "gitMode": "100644",
+      "blob": "dda63ced8bb0ca7da2c9b693c7d68e2b1d087563",
+      "bytes": 2225,
+      "sha256": "873ee07aa7176464bb88e8bb402ce29e704308378d01c0fd36f68880dd5e74e4"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/hosts.json",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/model-catalog/hosts.json",
+      "gitMode": "100644",
+      "blob": "a6724449fe8bd73b2c7a666299058ac0db96b0bb",
+      "bytes": 2096,
+      "sha256": "f7672087d49d75a36aa43d2a2539c30cc6a1bad402067edbf6ba2db6abf09f6d"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/index.json",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/model-catalog/index.json",
+      "gitMode": "100644",
+      "blob": "4d614247f9da82b382f73f7808bbef6b94a5de80",
+      "bytes": 2714,
+      "sha256": "7da89c508cc89c9244c7fac5ddd64310f4b9e87f3f1a9a06a1ca65ed12a2381d"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/amazon.json",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/model-catalog/models/amazon.json",
+      "gitMode": "100644",
+      "blob": "71161bfe20e295a506cf87abe261616a5422a165",
+      "bytes": 1028,
+      "sha256": "0ab4fde00c7b519e1c23a538adaab3e664d756277bd878ae3635d402e949a01b"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/anthropic.json",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/model-catalog/models/anthropic.json",
+      "gitMode": "100644",
+      "blob": "675429d191b54aff5c105599b60d7d4a536743f5",
+      "bytes": 6318,
+      "sha256": "1349d71277f6a3261f51794dab7b87b215e1d2030a27c0870926d43c2959edd6"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/cohere.json",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/model-catalog/models/cohere.json",
+      "gitMode": "100644",
+      "blob": "f521d60598391d1296521d8281bce70f94bf6885",
+      "bytes": 1089,
+      "sha256": "2f13f7a11cbc1db8f565367607989fa4a08160d99cf2ecff5d472505e6aae02c"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/google.json",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/model-catalog/models/google.json",
+      "gitMode": "100644",
+      "blob": "8a0487c5efcc34975ad05616ad5554ffb3e0f756",
+      "bytes": 2947,
+      "sha256": "dc676ed6bb75c6515b9415d417d8618717b1a6f0b9e9b2d151fcc10940d8854c"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/meta.json",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/model-catalog/models/meta.json",
+      "gitMode": "100644",
+      "blob": "b2f551099e2f99d4ba0ff37d184fdbcc2f9b371b",
+      "bytes": 1960,
+      "sha256": "e5cf34c46293264cc65ca96a36378011a707662e678d22dfb7400c572fa2d25e"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/mistral.json",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/model-catalog/models/mistral.json",
+      "gitMode": "100644",
+      "blob": "d80a5152402b770197b3a3003766223bfdf74b9b",
+      "bytes": 2033,
+      "sha256": "11d060a1a8e298a80e98322bc0c99844ace8d5579d1145bcb37d6013c250108b"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/openai.json",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/model-catalog/models/openai.json",
+      "gitMode": "100644",
+      "blob": "c5e55d3111b974c280c01bd80534203351eba0b9",
+      "bytes": 4046,
+      "sha256": "0321e043f644221deeda41a06a28afa0b87bf844415c08052dcf0fc47f55fa46"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/models/xai.json",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/model-catalog/models/xai.json",
+      "gitMode": "100644",
+      "blob": "f2902eed9125bb9c60763a043cc1c663f0b7f0c1",
+      "bytes": 1024,
+      "sha256": "338ec89740b1b146d2a6c30d809596b0bd13ccb32b52343b2994a3885051f3f2"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/policy.json",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/model-catalog/policy.json",
+      "gitMode": "100644",
+      "blob": "d3f914576669a081c1f6e5a1df741f187a44ca01",
+      "bytes": 16673,
+      "sha256": "4d7a24a1bf36e1e618df6e33b8f74e3fb4915332ef77f83b99d86450bc755e9a"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/pricing/anthropic-2026-09-23.json",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/model-catalog/pricing/anthropic-2026-09-23.json",
+      "gitMode": "100644",
+      "blob": "edd40041275e6906d4dc88ec7076b0e6e70c5ce4",
+      "bytes": 964,
+      "sha256": "1b510b1c5f3166fa48eb6c0aecc0419cf91a3901dedfb5d6a54a8b5584e145ea"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/role-presets/opus55-balanced.v1.json",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/model-catalog/role-presets/opus55-balanced.v1.json",
+      "gitMode": "100644",
+      "blob": "f67d81f270dd68ed9856b986e3d06503afb833e6",
+      "bytes": 599,
+      "sha256": "8d17ff31847452ffce4fb389d766491b99c4ecec425cdeef7362b65996ca4b1e"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-catalog/sources.json",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/model-catalog/sources.json",
+      "gitMode": "100644",
+      "blob": "952755e0b0d13c7cc6340d80cf2beaafe665f48d",
+      "bytes": 4117,
+      "sha256": "688978a175889003c7e8e1fc4bb6efc775172d0e670a2c51a8c39e3eee8b57e1"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-routing-presets.json",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/model-routing-presets.json",
+      "gitMode": "100644",
+      "blob": "3845bc33547fba255dae732cec30472890780f4e",
+      "bytes": 4109,
+      "sha256": "3f53fa46a6868e76bf790794a8b2b7abf30714cc22a42b280991711df770bca9"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-routing-v2.md",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/model-routing-v2.md",
+      "gitMode": "100644",
+      "blob": "785157be6bfcef8f9a957ae5d3e022e91d1f39d2",
+      "bytes": 7211,
+      "sha256": "b25a67d35620a5555b9c4c1239111b0d120b28746d5fe177a7e76c83ba549014"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/model-routing.md",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/model-routing.md",
+      "gitMode": "100644",
+      "blob": "a12dd32ae07fc6d6f274a4307abdf0235d2dc6f5",
+      "bytes": 10017,
+      "sha256": "beafe51d71aad6d9d5ceaf79f9f8939d9118b266896953f55b3558c4363d2f2b"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/semantic-decision/decision-policy.v1.json",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/semantic-decision/decision-policy.v1.json",
+      "gitMode": "100644",
+      "blob": "c02d83039e6eacd0346584fa6ff4c3f9c5a2f3bb",
+      "bytes": 512,
+      "sha256": "ff34da09b06fcc866259e3f895dd22d94da8cb538584d8409fec7d177f643326"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/semantic-decision/questions/model-ranking.v1.json",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/references/semantic-decision/questions/model-ranking.v1.json",
+      "gitMode": "100644",
+      "blob": "0ffc1805fa7d6d07391a772773d46d291a910c90",
+      "bytes": 841,
+      "sha256": "9749a5d4c37f95518e1c37c5ca966df130ddd4871eb033f9795d5372c0d96a15"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/adapters/gemini-cli.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/adapters/gemini-cli.mjs",
+      "gitMode": "100644",
+      "blob": "e8901b7bbcd37381618de392adc7a4abf4fb57e2",
+      "bytes": 3399,
+      "sha256": "372fe16ede9f61d9805794fd92161acfbfeb9508aa3763fafe67713cc44fb26d"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/adapters/grok-build.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/adapters/grok-build.mjs",
+      "gitMode": "100644",
+      "blob": "74b96a7eb79271d0f5b1da828b1d04f91e858e17",
+      "bytes": 3854,
+      "sha256": "268c4bd0601f4baf1cac6fb43f4e595f669eaa9148c9a46b9c22f46817dbc977"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/adapters/headless-worker.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/adapters/headless-worker.mjs",
+      "gitMode": "100644",
+      "blob": "b8ed6b1ac1704b6f484a72ad494ee1e909cb8f13",
+      "bytes": 9943,
+      "sha256": "912b4ed2873aec67a958f31d4c998ce99ac64af687277826e7263fbf1e69003b"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/adapters/native-subagents.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/adapters/native-subagents.mjs",
+      "gitMode": "100644",
+      "blob": "538ba88dc6df9ec9bab8ed544fcf16daa5c669b1",
+      "bytes": 2919,
+      "sha256": "6bf5af6295b2e8bd5e2e76311ca62d7ac7425290458ffa349d7259dadf40b4c9"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/adapters/spark.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/adapters/spark.mjs",
+      "gitMode": "100644",
+      "blob": "6bb9a588655bc8ce7e748a46f587c1d3289fca37",
+      "bytes": 1063,
+      "sha256": "8257e8a2f66c05f327c9301e359ca3a620312296a0e538af633e4d0ce5836eed"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-catalog.d.mts",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/model-catalog.d.mts",
+      "gitMode": "100644",
+      "blob": "6acee9aa68aea4f6a4615320a96b945cc39f2569",
+      "bytes": 320,
+      "sha256": "11667842071ba3be51feae6d9ca1cbc1e89c79dc1ddf7ddfbbfad5282510b6f9"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-catalog.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/model-catalog.mjs",
+      "gitMode": "100644",
+      "blob": "f6e1efce10552e7658a702446621b3d133dab586",
+      "bytes": 4782,
+      "sha256": "610ba3ac1d5c2999545a807f86b3d83bb5ae14ee0a38eada0a424ba9f69a0425"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-evaluation.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/model-evaluation.mjs",
+      "gitMode": "100644",
+      "blob": "63d20bdab8a6103cded9bccf9b1c6201166e3afb",
+      "bytes": 5726,
+      "sha256": "afa0cc70fa0f7e4faff9c82a2c27eff60efcaf3ec0f413d5ebb71da955b3fc32"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-routing-core.d.mts",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/model-routing-core.d.mts",
+      "gitMode": "100644",
+      "blob": "7740c7243ad1ca9e1a3648f03c96c7ce1d0d4ee3",
+      "bytes": 4742,
+      "sha256": "3fbf435fcb0c7bd5025674ae1532423c017ccbaebb5b94103799eb7f082e0ad5"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-routing-core.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/model-routing-core.mjs",
+      "gitMode": "100644",
+      "blob": "419f345fdb0d1ec1cc9dffdf5b82bb9b1695b560",
+      "bytes": 36438,
+      "sha256": "ea4630eebccb1e77a1cc65517ab5e68d722d3c5c8392a66a6308694b73cfc6f6"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-routing-peer.d.mts",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/model-routing-peer.d.mts",
+      "gitMode": "100644",
+      "blob": "6fd4a09e1e3ed1f6631595c718fbd3e7ee3bb642",
+      "bytes": 1384,
+      "sha256": "aef23dea98b2ff712f1ddc13af532f2f1cc0cc2ace631bfeda4e38e152094f42"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-routing-peer.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/model-routing-peer.mjs",
+      "gitMode": "100644",
+      "blob": "2e36317545335b6f457705e121ba9c7090a59c1b",
+      "bytes": 4709,
+      "sha256": "72132f533435dfe31c949e7342ba231586638e55ab0b2e9a2dfcf276c85d4cb0"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-routing-service-core.d.mts",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/model-routing-service-core.d.mts",
+      "gitMode": "100644",
+      "blob": "6bc41d90d13e8d0eebee2682c4bdba1b8e64cdc7",
+      "bytes": 1010,
+      "sha256": "243ccc4307291653ff19de99873ef5c18a1ea0dec992b1ad55451959a0e507f6"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-routing-service-core.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/model-routing-service-core.mjs",
+      "gitMode": "100644",
+      "blob": "ebc90bba2d7856afaaa6ff9f6d4374bdf21beede",
+      "bytes": 5771,
+      "sha256": "6563c69c99f71fa89ce060ebdf136e697da88767591d4b33e0f89b17a4fbe330"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-routing-store.d.mts",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/model-routing-store.d.mts",
+      "gitMode": "100644",
+      "blob": "2f38c2edbbb5ee7346824442ed10fefa7dfd4d26",
+      "bytes": 2718,
+      "sha256": "4b161c0e89ec3cbf38ad0d42edb1a6af0802f9d1aaf68810a173571acbd8b3d4"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-routing-store.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/model-routing-store.mjs",
+      "gitMode": "100644",
+      "blob": "f73bc84225a48df65bbb796f5f23ed9a86451550",
+      "bytes": 18847,
+      "sha256": "6b195aa56279955af3470038bebc63fbbd92158b6facb2bc9e981b48fc393206"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/model-routing.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/model-routing.mjs",
+      "gitMode": "100644",
+      "blob": "43508eaa0febc446c22d92ac3a3f3e74654c8c84",
+      "bytes": 9970,
+      "sha256": "cce007d872b4c94eab4f178f6c54fe59a31f6295604edb4747433421ec768a98"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/opus55-role-preset.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/opus55-role-preset.mjs",
+      "gitMode": "100644",
+      "blob": "7dd5a2e1e3cd9a06ba3136a06ddbb9daeb00c773",
+      "bytes": 4086,
+      "sha256": "e2b585d6924962f0ac7d220d80aae92f7db2207b6fd72a4a3967ffb8ca4b8eee"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/orchestration/approved-slot-projection.d.mts",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/orchestration/approved-slot-projection.d.mts",
+      "gitMode": "100644",
+      "blob": "419b272706412c7dbe377a2b9ae55c208a5ef286",
+      "bytes": 188,
+      "sha256": "810250c3507d6b5d0291037a8de8d43e71bd3e2748cbc0090e9ff612246f2def"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/orchestration/approved-slot-projection.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/orchestration/approved-slot-projection.mjs",
+      "gitMode": "100644",
+      "blob": "4f591ab49f4f6df46ae292e2fd86de3b4196ae22",
+      "bytes": 6734,
+      "sha256": "43780074c7f0a12f75d9cdcafdd3eb774f5652475a24923c8fd6048c709f1ff8"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/metric-units.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/resource/metric-units.mjs",
+      "gitMode": "100644",
+      "blob": "5d00a7dcac8c873d67ab44fa1a133f6ac1b51d3f",
+      "bytes": 4709,
+      "sha256": "bdd6c1d834b5ba87f8f9e75c219ca55937b60793f32ad8f2d506d32954a7a93c"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/model-cost-estimate.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/resource/model-cost-estimate.mjs",
+      "gitMode": "100644",
+      "blob": "6ec5eaf4a28bedc613d05e5e5857ea0e00963571",
+      "bytes": 5018,
+      "sha256": "cd9f96aa63e99a99639bc2dc057ececccd50d4b0c7fee422e259c8a02df33bee"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/observation-trust.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/resource/observation-trust.mjs",
+      "gitMode": "100644",
+      "blob": "fafad96f2ed4b03a8d14d632274472b95ad0f799",
+      "bytes": 1347,
+      "sha256": "88666350e5a72cfcaebb581dfb9a7842e4a49a22081762e22030ab8e610ae009"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/policy-evaluator.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/resource/policy-evaluator.mjs",
+      "gitMode": "100644",
+      "blob": "2e677453463c4c3cbe792728ea23faa0dc4bdb4e",
+      "bytes": 4133,
+      "sha256": "c9e7fb90a1b9cdc13805184df65c0c18796763daa4db7ab56de690fb09782725"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/policy-stability.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/resource/policy-stability.mjs",
+      "gitMode": "100644",
+      "blob": "b14c5e63dd3512dd994aa9e9e2f37bc9142de349",
+      "bytes": 2725,
+      "sha256": "3e2dab84e8f75c6cad579c05da8936b034a312e72245e91cd4ba93a9c06eb6d4"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/pool-binding.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/resource/pool-binding.mjs",
+      "gitMode": "100644",
+      "blob": "801c04acee187fba06cad13ad50ffacb3f89d7d6",
+      "bytes": 4477,
+      "sha256": "87dff5715825a8e7e7c71a7cb6b8ea41dd27984819a5cb2acd01b67f17a800fd"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/preference-policy.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/resource/preference-policy.mjs",
+      "gitMode": "100644",
+      "blob": "5591a63cf8923772c498b9cb2a23940fafab0a8b",
+      "bytes": 2469,
+      "sha256": "77db4acc152f386179ce5c0ea19ebe4473eb87d211f9d2b2d0d51d86b3389398"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/role-priority.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/resource/role-priority.mjs",
+      "gitMode": "100644",
+      "blob": "19bc72abb711aa30ab3beea1e50588fdc70bd000",
+      "bytes": 7897,
+      "sha256": "209f2937be1f795ffda04681983c208332e31f8f513db9460866b7f1b2641084"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/unknown-policy.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/resource/unknown-policy.mjs",
+      "gitMode": "100644",
+      "blob": "de5fb510f8cee997b02923d5096f083c057a67b4",
+      "bytes": 3244,
+      "sha256": "15ba1d8e6d40b4515ef311ece49500d031fe105032a011bde30c4c77a96048a5"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/resource/work-estimate.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/resource/work-estimate.mjs",
+      "gitMode": "100644",
+      "blob": "fdf44030dc53b38e04ceb03a115829719797f734",
+      "bytes": 7132,
+      "sha256": "a31504722661ff49ea8b867eb778bd80ed00c13e50774749fe34a75d05bbb360"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/adoption-guard.d.mts",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/semantic/adoption-guard.d.mts",
+      "gitMode": "100644",
+      "blob": "eced13d94345d83ace334480cf1c705363188cb7",
+      "bytes": 888,
+      "sha256": "ff79476107a9c29c399b2388816970069f0e71e4021f217b9d8e294d03cd2262"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/adoption-guard.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/semantic/adoption-guard.mjs",
+      "gitMode": "100644",
+      "blob": "317dee62f830e7ed9fe7b0098c4ea9be82d68bee",
+      "bytes": 2897,
+      "sha256": "0ba2be4f653d3d0c823744b4a588e2b29989e8d08f3ab49f5fb6474c6e8e3beb"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/application-record.d.mts",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/semantic/application-record.d.mts",
+      "gitMode": "100644",
+      "blob": "1d3ca6fcc006a01089a85d59e0465eb4c576a751",
+      "bytes": 719,
+      "sha256": "665650dedf9f7c8b463fb26e6ce60f7e22d1d9b6bdff889cd582227c4c8bf7ad"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/application-record.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/semantic/application-record.mjs",
+      "gitMode": "100644",
+      "blob": "d22c846a6c4ec0b93fd7e50a965bcf4b8cfd1882",
+      "bytes": 5766,
+      "sha256": "6f37349505b3c67a99a2ab1cab65b3745705417f81e1c00a497abfeeab86257e"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/candidate-projection.d.mts",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/semantic/candidate-projection.d.mts",
+      "gitMode": "100644",
+      "blob": "179ff91d6669b0de9c487b1ec794777fbb9fb3f6",
+      "bytes": 537,
+      "sha256": "752db2a27f8dd98873fe3ede017ff5909affd820b7bcbb166f79332e2969f15e"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/candidate-projection.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/semantic/candidate-projection.mjs",
+      "gitMode": "100644",
+      "blob": "c5817f49c050b69089e2573bf80ababe303b5ffb",
+      "bytes": 2896,
+      "sha256": "f0eef3b19c383a64e3216f70afe628e2f25d03f88008afb54f4a5540fbbf37b2"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/prepared-input-check.d.mts",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/semantic/prepared-input-check.d.mts",
+      "gitMode": "100644",
+      "blob": "0bee4a0e2ba42d6120869613ab950fc344f4e4bf",
+      "bytes": 465,
+      "sha256": "6c560e84d3158d2252a7f5025cb0058421377df3c1601aab304e240ce5a52e8d"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/prepared-input-check.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/semantic/prepared-input-check.mjs",
+      "gitMode": "100644",
+      "blob": "4b01ba2c2c7d0124f90f395661d776931d4ba0fc",
+      "bytes": 2585,
+      "sha256": "1f3cc3e265bfb86890ed6454e87c363f69810aae1c339ee91c950b84032a344c"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/reducer.d.mts",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/semantic/reducer.d.mts",
+      "gitMode": "100644",
+      "blob": "8f46d646944ed60e4cab1145181c206cf0b0de5b",
+      "bytes": 1854,
+      "sha256": "846d3148d568b91015327378f74ccb0b58f523aa8fa13c044a5af612c386c7fc"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/reducer.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/semantic/reducer.mjs",
+      "gitMode": "100644",
+      "blob": "bd6cc2cd4921fb1b5feb8c8b358c7cf96e384fc0",
+      "bytes": 9163,
+      "sha256": "30c94d27244578db51faba56610ae1eaa33da6dc48741bc61f4b4c540dbc0a36"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/replay.d.mts",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/semantic/replay.d.mts",
+      "gitMode": "100644",
+      "blob": "cb524a78eb2250ba80e815c4c57ace98bd0b6ceb",
+      "bytes": 876,
+      "sha256": "c88951bb9833fb806145f839a855058d551355c0b885e3db86e8047bb3621d55"
+    },
+    {
+      "path": "skills/coordinate-subagents/scripts/semantic/replay.mjs",
+      "shipmentPath": "claude-plugin/skills/coordinate-subagents/scripts/semantic/replay.mjs",
+      "gitMode": "100644",
+      "blob": "584ed753a8cd83e229c8842bd369482e61e21db8",
+      "bytes": 1838,
+      "sha256": "85503a10b29a1472bfbcc768add9972555da808fa3739bf94cd792b6e98c8a63"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/LICENSE",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/LICENSE",
+      "gitMode": "100644",
+      "blob": "14fac913ccf80234b1848540089a3bbcb6e5283d",
+      "bytes": 1056,
+      "sha256": "1126322e2cc8d165adc4c792eeb195717de2bcc7b39be1ce77959d78e87ef685"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/README.md",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/README.md",
+      "gitMode": "100644",
+      "blob": "ad0f94815b34c9657efc92d619ff4fcf4fdb4022",
+      "bytes": 1798,
+      "sha256": "ab89282af193071b96259a5b1c38e8045dfcb3d4cd7cf9839c5487c00e45bd3f"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/SKILL.md",
+      "gitMode": "100644",
+      "blob": "9a2d97a5bfd8425e9e4910c9c3f6b5b5a3a09af6",
+      "bytes": 1706,
+      "sha256": "ee959a781664de9e016eaa520c1512a48fd08677b2f778b70f85350a5587f579"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/contracts/evaluation-aggregate-claim.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/contracts/evaluation-aggregate-claim.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "2952a0d8fcb0b479010014c32290f60662f4a7a9",
+      "bytes": 1340,
+      "sha256": "996dfacc6fcfab1c850120e33c2977403338f24c494fd83860ae6d6f01d627d0"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/contracts/evaluation-case-record.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/contracts/evaluation-case-record.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "81f5aa1f94cebb7ede8daeec06656d0e85b091b2",
+      "bytes": 556,
+      "sha256": "166e0c016b953dc1df0ea930afea3781d27cd03c23eb90cbafc0b9c5251fbb86"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/contracts/evaluation-result-record.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/contracts/evaluation-result-record.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "738dd052e0fe493d3a4adee6b8413bfd5c45d24a",
+      "bytes": 1096,
+      "sha256": "71228eda30ffb78e6fc9a9583a1934e3cdf5bee531dfedf455fc30c60a57f581"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/contracts/evaluation-validity-report.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/contracts/evaluation-validity-report.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "87f0891381c7bef0b1b14831638bca824487085d",
+      "bytes": 5524,
+      "sha256": "fc67b9e7fccbe99c4d0c0f2895a654ab5669122043336debc4837b807ba10f0a"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/contracts/evaluation-validity-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/contracts/evaluation-validity-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "7c85b5c8e3254da900a95a592deb5c649316661c",
+      "bytes": 7703,
+      "sha256": "e6976558c876e8b6a299036ea8411bb6b5c9bd7d2c58198fdb312e0babacb767"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/contracts/evaluation-validity-validation.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/contracts/evaluation-validity-validation.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "26b7542f6cddb18723e625324f3e7eec523d99a8",
+      "bytes": 935,
+      "sha256": "eeb42567f3602158c15aff5b19e8793fac37e482f974a2cd015ad676f80386e0"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/integration/provider-result.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/integration/provider-result.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "395cadf18fc6ad93b5e626ee67eec270424371b3",
+      "bytes": 1754,
+      "sha256": "e4b97706a426aba4aa594e04d74c4bad2f2fd46e3f91f83738d06e7756402ea0"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/integration/skill-descriptor.json",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/integration/skill-descriptor.json",
+      "gitMode": "100644",
+      "blob": "e60cf4ad96284df5abb56ea68e1bc12c6b63fd34",
+      "bytes": 2247,
+      "sha256": "c832e9f4ad623a4087426c13bb70bd5c08faa3814652af7f3a41d82ded20c867"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/references/audit-protocol.md",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/references/audit-protocol.md",
+      "gitMode": "100644",
+      "blob": "9c7ec0e5e3678f7d385799b86c81ece4250bfb24",
+      "bytes": 2535,
+      "sha256": "e9e49b113e088cb9055bae6f5f1f93f3be83cfaf18bafb1f6854e67853ea62a9"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/references/entry-details.md",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/references/entry-details.md",
+      "gitMode": "100644",
+      "blob": "73ece2839b77ec07bb53416c0e8e20c2a8bcea67",
+      "bytes": 1952,
+      "sha256": "7d31114e9200454d084dd7df04db34f1afc4c3ac23f3feb09c5eef6a85be8950"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/scripts/check-repository.mjs",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/scripts/check-repository.mjs",
+      "gitMode": "100644",
+      "blob": "4b9f2a613cceec83a9ddb86e3195c0d595298a7d",
+      "bytes": 3495,
+      "sha256": "f8c6783c3c9fd921912d862dd772ea5f6e0a6bbed83ca7034388fe8b7ae4fd6d"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/scripts/cli.mjs",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/scripts/cli.mjs",
+      "gitMode": "100644",
+      "blob": "8820c28fc1ed3b384bc1a11b8c64cca0f573ff44",
+      "bytes": 731,
+      "sha256": "0b6282eef0b25ffdc3b8f41ffee4faa0fe3f0b178edc35fca73413f4b28adbc6"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/scripts/core.mjs",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/scripts/core.mjs",
+      "gitMode": "100644",
+      "blob": "a510c63b95c7998a8fe2016938852fc2b660f50a",
+      "bytes": 27380,
+      "sha256": "ef16baf8366bfbaa2deec09ec8c9986a0a2611caa389f3d30685495ae4285190"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/scripts/digest-request.mjs",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/scripts/digest-request.mjs",
+      "gitMode": "100644",
+      "blob": "313d1cdc4ea5ce3bd423230d230561fe8fe4941d",
+      "bytes": 502,
+      "sha256": "ed67da3854f1b0dcd43b5275705394a1fb818ff7d37cb9ebeb33f49d6067edbc"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/scripts/io.mjs",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/scripts/io.mjs",
+      "gitMode": "100644",
+      "blob": "4f02448edb9896ec8f2b93462be24631256d5604",
+      "bytes": 925,
+      "sha256": "085c8e483e8d15609a55d1cf728c9d1ccbddcb89a0cd68b4c544b8de93c8a3d5"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/scripts/runtime-smoke.mjs",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/scripts/runtime-smoke.mjs",
+      "gitMode": "100644",
+      "blob": "c24d694f4177f404931c7b8d4feaa4a43b48cb2d",
+      "bytes": 1972,
+      "sha256": "9bc75ff121fc1be7db270dd19d0ab8168b2cb196164cbc1fbd75c2f240af9086"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/scripts/schema-validation.mjs",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/scripts/schema-validation.mjs",
+      "gitMode": "100644",
+      "blob": "3409c5cd9bb1df719d3e3075c79d43b50484cc61",
+      "bytes": 2599,
+      "sha256": "425ea52a1bd24ea010ee8959d9ae6e8d5ad15ff5345bb1f6e42473afc53c921e"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/scripts/validate-report.mjs",
+      "shipmentPath": "claude-plugin/skills/evaluation-validity-auditor/scripts/validate-report.mjs",
+      "gitMode": "100644",
+      "blob": "d17e19c1d7987f560c8aad316ddbccac883af78e",
+      "bytes": 1069,
+      "sha256": "b9f139590014f8b3476e8e0007511cee0376643e9bda48d6643cd41d2738b122"
+    },
+    {
+      "path": "skills/independent-audit-gate/LICENSE",
+      "shipmentPath": "claude-plugin/skills/independent-audit-gate/LICENSE",
+      "gitMode": "100644",
+      "blob": "fce99f684ffb085d094f8352fedfa20552046d41",
+      "bytes": 1068,
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02"
+    },
+    {
+      "path": "skills/independent-audit-gate/README.md",
+      "shipmentPath": "claude-plugin/skills/independent-audit-gate/README.md",
+      "gitMode": "100644",
+      "blob": "499e2d8acc03138db8b1ef245f01c392797d8a1e",
+      "bytes": 3902,
+      "sha256": "bdec1f18c48e33e7399daff1a4fb7f5260d57c4fdbfae7e1a80bbac2f8e89427"
+    },
+    {
+      "path": "skills/independent-audit-gate/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/independent-audit-gate/SKILL.md",
+      "gitMode": "100644",
+      "blob": "3f1e45d710b999178479986f2c399d97995a3d1b",
+      "bytes": 3428,
+      "sha256": "cf43ece2c32c39f863a50905da4070b73f7475f20adcffa402b6abad75c24b66"
+    },
+    {
+      "path": "skills/independent-audit-gate/references/audit-protocol.md",
+      "shipmentPath": "claude-plugin/skills/independent-audit-gate/references/audit-protocol.md",
+      "gitMode": "100644",
+      "blob": "38f618971418e3d082eeca881ec653fb56e18d4e",
+      "bytes": 9617,
+      "sha256": "9fdd74f1a7fbaa3dd7655524d69a1e0d948149f115717957912b7dcbaf93021f"
+    },
+    {
+      "path": "skills/independent-audit-gate/references/entry-details.md",
+      "shipmentPath": "claude-plugin/skills/independent-audit-gate/references/entry-details.md",
+      "gitMode": "100644",
+      "blob": "9924ae3a8a73302c651f02a1149f620c8e235acd",
+      "bytes": 6911,
+      "sha256": "0b0ce13b70e284eee5878206f6f01d3c29daafe9a73576d7f60adb67167bc14f"
+    },
+    {
+      "path": "skills/independent-audit-gate/references/orchestrator-integration.md",
+      "shipmentPath": "claude-plugin/skills/independent-audit-gate/references/orchestrator-integration.md",
+      "gitMode": "100644",
+      "blob": "2e818dc35210905ac8c2ebe191d4f484d2be0d80",
+      "bytes": 4619,
+      "sha256": "a00ff7210d4fdc1664a6dbdd9e3ea71c5cd693b34d0daf00ae811efa7eed23ab"
+    },
+    {
+      "path": "skills/independent-audit-gate/scripts/test_plugin_component.py",
+      "shipmentPath": "claude-plugin/skills/independent-audit-gate/scripts/test_plugin_component.py",
+      "gitMode": "100644",
+      "blob": "bca819db6f1ad24d8e2f3de3718721f4eac83c02",
+      "bytes": 2207,
+      "sha256": "8c46aa71bdb49a23f6d4437dd701af5004a74069679d672f1bd9805aba609c5b"
+    },
+    {
+      "path": "skills/independent-audit-gate/scripts/validate_skill.py",
+      "shipmentPath": "claude-plugin/skills/independent-audit-gate/scripts/validate_skill.py",
+      "gitMode": "100644",
+      "blob": "e0fa7b5ace6d4f5cbe694880b68d4cd87f6b6233",
+      "bytes": 7468,
+      "sha256": "385e0d11616ce4de2c4758852ba59ad328baef92d9332c702cbd87f7291c2a77"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/LICENSE",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/LICENSE",
+      "gitMode": "100644",
+      "blob": "fce99f684ffb085d094f8352fedfa20552046d41",
+      "bytes": 1068,
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/README.md",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/README.md",
+      "gitMode": "100644",
+      "blob": "cf3f125bd753ff8ca67e6a549bfbcdf48320cd03",
+      "bytes": 12225,
+      "sha256": "6790a265f9bcb37d8b7b88ce1261af017dde5753299b71deb6afc309d790bfd0"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/SKILL.md",
+      "gitMode": "100644",
+      "blob": "18839be5025e860cc2807d8d2bf58b46c8e1aeb5",
+      "bytes": 5446,
+      "sha256": "f21dc8910f3220cdc11439fcc7e2d1bbfe9ee48155027809bdd7a9d1ea3f8986"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/contracts/decision-record.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/contracts/decision-record.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "14c55fdf951295544fe951f6bae0055a86b7675b",
+      "bytes": 22836,
+      "sha256": "af181dcd574356dff20136b08af527eb9e1f0a0d47a371a087791f87179735a3"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/contracts/requirements.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/contracts/requirements.json",
+      "gitMode": "100644",
+      "blob": "9cd2e1463873cdb8071eb5eee630cc72266345dd",
+      "bytes": 2927,
+      "sha256": "13b2163ed2588ad9bd068df7a13efae39dcc8da094d31349c1adc370149904b4"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/corpus/01-low-routing.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/corpus/01-low-routing.json",
+      "gitMode": "100644",
+      "blob": "c2d7fd5e616b3d04c0e6fff5b7d3ea0de9831841",
+      "bytes": 270,
+      "sha256": "1e3f20da8526ad496b006a070dbe28650dda6f6161633e1828c0cebef85abda3"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/corpus/02-medium-contract-conflict.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/corpus/02-medium-contract-conflict.json",
+      "gitMode": "100644",
+      "blob": "e3644bf4a1b8d5b7eb1a29141b1a9667658739ab",
+      "bytes": 422,
+      "sha256": "7842da871839543b8d01e2125366f6aa7b243aed8d7f43029f5fafb6cfdaa915"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/corpus/03-high-cross-exam-skip.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/corpus/03-high-cross-exam-skip.json",
+      "gitMode": "100644",
+      "blob": "a6b11668d4135e5bbe226fa3e135b422c5a5e5bd",
+      "bytes": 468,
+      "sha256": "e59f4e65eb3c18a4392dd1c28044b41e6a46e67a0b82cb8bc3f18f4491eccc40"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/corpus/04-high-adaptive.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/corpus/04-high-adaptive.json",
+      "gitMode": "100644",
+      "blob": "ba9916699b9ad20f7d3ed06a0b5219211190f63e",
+      "bytes": 468,
+      "sha256": "59d315a916a4be8fffc9e8ce7f2e945661afbc86e0fd4a083210def8df87d723"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/corpus/05-injection-unverified.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/corpus/05-injection-unverified.json",
+      "gitMode": "100644",
+      "blob": "719a046ab62f0d25f4e146b5ccc0e9a26b96ce78",
+      "bytes": 517,
+      "sha256": "d7e87710bef984450b0de47bae3736cfd1204e3d7178ed7491ce0f713f551839"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/corpus/06-critical-no-consensus.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/corpus/06-critical-no-consensus.json",
+      "gitMode": "100644",
+      "blob": "f419f49102980e6779981cdb2fcfb999dfe60bca",
+      "bytes": 556,
+      "sha256": "965450c1db7a3ba23dc9e2cb1af38f00568df39344684b8db2688e1700dbe491"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/ad01_specialist_cap.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/ad01_specialist_cap.json",
+      "gitMode": "100644",
+      "blob": "3505810c6f73c554b741a588cf155be91f08bb2a",
+      "bytes": 9020,
+      "sha256": "a34dbe3160e136709a0803ddc4badcdc81ee1803997e5d9ac749f2a6eb82bb2f"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/ad02_redeliberation_cap.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/ad02_redeliberation_cap.json",
+      "gitMode": "100644",
+      "blob": "d8e85acd32e4a3f82a4d2a20796647b3f1427706",
+      "bytes": 8610,
+      "sha256": "e29dd71e0d91d087829d5347adc3ec9475a2ed3f4c02bc262429dc49065663e8"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/ad03_impacted_scope.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/ad03_impacted_scope.json",
+      "gitMode": "100644",
+      "blob": "613419af67d2864e05dd7921e0eb9cfc1a30091d",
+      "bytes": 8373,
+      "sha256": "6d01cd9d3ee3b7c7ec73c98a627a8ca52d165dd7ac5449e73f966a4ec39aa97a"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/ad04_worker_cap.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/ad04_worker_cap.json",
+      "gitMode": "100644",
+      "blob": "8d24ac830452e2ea7fe650a160a0c06fb9f16e80",
+      "bytes": 8164,
+      "sha256": "69ce979be60b94172580b6608829894951d0e4cf10e424336e2959a013e34871"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/co01_verified_links.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/co01_verified_links.json",
+      "gitMode": "100644",
+      "blob": "7ffc5eb465ab45e9611c4943bd323fc438d2dd9b",
+      "bytes": 8164,
+      "sha256": "fe3b60abba103284594deae025a28f32f3b4737e2d9417bfdbf12aa73d4ce625"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/co02_constraints.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/co02_constraints.json",
+      "gitMode": "100644",
+      "blob": "a794eb9a1fea889ed86a1797618830ecf9f41d47",
+      "bytes": 8138,
+      "sha256": "82bcea5fb5140b6a2135bd11a0e7107d5fa17ce093961321baf457468d617b2c"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/co03_axes.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/co03_axes.json",
+      "gitMode": "100644",
+      "blob": "dcda293030079e641fa0c24061246265e70767cf",
+      "bytes": 8084,
+      "sha256": "4188774b1f8b03c1617f1c2e5d09a6fc349d76194ac5589ef1f3f28a54aa6b22"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/co04_unresolved_dissent.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/co04_unresolved_dissent.json",
+      "gitMode": "100644",
+      "blob": "a350078a54465f2426da36109c338982c6d77fc0",
+      "bytes": 8261,
+      "sha256": "2ede2e4684fe56c0e02510e1bd31922ca2876bbf2b501fb9453c895a712b2805"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/co05_no_consensus_shape.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/co05_no_consensus_shape.json",
+      "gitMode": "100644",
+      "blob": "b564e54ed5af411d4e080b5699c1f9e9f3f226ff",
+      "bytes": 8177,
+      "sha256": "23db11add99df3714a8985394dbb0fec01db43b6def338b8ea7e0d472fd6ea6b"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/cx01_reason.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/cx01_reason.json",
+      "gitMode": "100644",
+      "blob": "59dfd217e756b65b85da23bc07398b9c538c08bf",
+      "bytes": 8119,
+      "sha256": "db427e0a2d948e46e653eb321bf5a427305213edb5284ff91cf90c33a6ebe943"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/cx02_all_triggers_selected.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/cx02_all_triggers_selected.json",
+      "gitMode": "100644",
+      "blob": "07753e0ec949b08471af9585a52696e8ec223af4",
+      "bytes": 8148,
+      "sha256": "36c3a9c2166efb0fa1f610769ed1ff8f1962385bf0e2def43d71bec970eba07b"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/cx03_nonorigin_coverage.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/cx03_nonorigin_coverage.json",
+      "gitMode": "100644",
+      "blob": "78f4be834644431b1857840e0b62feea454fa3dc",
+      "bytes": 8164,
+      "sha256": "d44455e0ad603e5ab064431b86ea0b9ea19e6b25d34651949e2a17269741f307"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/cx04_followup_cap.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/cx04_followup_cap.json",
+      "gitMode": "100644",
+      "blob": "3817535d3b1f2f9c984b312c4bbd5ffa105ba37b",
+      "bytes": 8257,
+      "sha256": "77b43c80c942080beaf2c33d479aedc1fbdef6c8d336dbf161c68b6a72ff6d45"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/es01_status.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/es01_status.json",
+      "gitMode": "100644",
+      "blob": "60fc70e7e85fcd292fdb4c7e0420e0284265fbc9",
+      "bytes": 8163,
+      "sha256": "2d56737f2b5eaa8e2cbef40ecc37dd528b31623b7e5c0f24c5a163ed5c24ac9b"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/es02_verified_locator_note.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/es02_verified_locator_note.json",
+      "gitMode": "100644",
+      "blob": "b7922f1a7f70db436e0c2545764b2311b7d09ff9",
+      "bytes": 8123,
+      "sha256": "b924898b0af04281fb336536c7b5e4d85b86d18f79834bdd419543dcce2857d8"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/es03_only_verified_consensus_links.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/es03_only_verified_consensus_links.json",
+      "gitMode": "100644",
+      "blob": "9ec01cac4679e969aecbbf7a27bf5e0988c89609",
+      "bytes": 8166,
+      "sha256": "1ad5f87d5de91936d0a4cde746bf0c3b16d3f7d9a2d44bffae65aa434b952c92"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/es04_no_raw_reasoning.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/es04_no_raw_reasoning.json",
+      "gitMode": "100644",
+      "blob": "845177dd6d61fa4a46c1fbe5d1c5c28798bd300b",
+      "bytes": 8200,
+      "sha256": "4fb43c6337e3239c190637b0f3ff20048bbd20b77ab524797c2decb38af15604"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/es05_no_execution_directive.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/es05_no_execution_directive.json",
+      "gitMode": "100644",
+      "blob": "9a2a0aab0e1417ce357c71d11f8b56fb8db32032",
+      "bytes": 8221,
+      "sha256": "7753437dae1763caec2dfbb1dcb625fdcaf9d5f73ed87134f7f2dca7cabf045c"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/lf01_completed_reused_distinct.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/lf01_completed_reused_distinct.json",
+      "gitMode": "100644",
+      "blob": "328e1d5ab1b87dd2bb60dcf6c24774d6b0ec6d6c",
+      "bytes": 8180,
+      "sha256": "e6d598cfcd2ef5a08483078767d5e16d9cf9c5047f3db6a812b423a13d2345ee"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/lf02_judge_fallback.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/lf02_judge_fallback.json",
+      "gitMode": "100644",
+      "blob": "cc1e89ae5108e8b403c31950c86cb9f090ed5a35",
+      "bytes": 2739,
+      "sha256": "d60461e8a176c009f0d50c21ff98145e6b2b235df53cc440c7afaf89ed6c0960"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/rc01_low_no_workers.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/rc01_low_no_workers.json",
+      "gitMode": "100644",
+      "blob": "16713b4e3080c3ae125003583c87e5f5bee953d4",
+      "bytes": 3830,
+      "sha256": "02fa46c56accc14dae5115d468ccdabba6a09fd78483865861f8d295144461c8"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/rc02_medium_two_reviewers.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/rc02_medium_two_reviewers.json",
+      "gitMode": "100644",
+      "blob": "74ee812801c300efe33fe74e188361e7f09cf9b3",
+      "bytes": 4149,
+      "sha256": "4d60143f5c518ea16ebe90d52c69060d09936cf646cf829e85183919bebc0e1d"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/rc03_high_fresh_judge.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/rc03_high_fresh_judge.json",
+      "gitMode": "100644",
+      "blob": "983ea1bc2c09d4cbd9929397563fbe52f914fc24",
+      "bytes": 7160,
+      "sha256": "7f0248ccf2f21f9d4f5b6af99e2d9cdb5f95d4580c9e85d6a4efde8dc58541a2"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/rc04_critical_red_team.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/invalid/rc04_critical_red_team.json",
+      "gitMode": "100644",
+      "blob": "ecc06aaa75314b01db4aee2de3b4f1a90f6a8185",
+      "bytes": 8168,
+      "sha256": "fe029660a8b8a2fa5129020d385dd3e6b49767fadbf19dd63efc6885c7378f56"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/ad01_specialist_cap.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/ad01_specialist_cap.json",
+      "gitMode": "100644",
+      "blob": "217ac4106b693ce7f26e769dac53eb51d335283d",
+      "bytes": 8669,
+      "sha256": "d1ef4857cc5fdc94163c9f97fde6274f34a2621fa633f6a65384a46fab7d4a27"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/ad02_redeliberation_cap.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/ad02_redeliberation_cap.json",
+      "gitMode": "100644",
+      "blob": "dd51c30dcf869c76bd9dacc77456302efd41e362",
+      "bytes": 8407,
+      "sha256": "8240d45e162ed94c20f7c8a43d2c9b3e13dfaa09777934e1ffb04148e1dc0807"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/ad03_impacted_scope.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/ad03_impacted_scope.json",
+      "gitMode": "100644",
+      "blob": "dd51c30dcf869c76bd9dacc77456302efd41e362",
+      "bytes": 8407,
+      "sha256": "8240d45e162ed94c20f7c8a43d2c9b3e13dfaa09777934e1ffb04148e1dc0807"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/ad04_worker_cap.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/ad04_worker_cap.json",
+      "gitMode": "100644",
+      "blob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2",
+      "bytes": 8164,
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/co01_verified_links.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/co01_verified_links.json",
+      "gitMode": "100644",
+      "blob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2",
+      "bytes": 8164,
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/co02_constraints.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/co02_constraints.json",
+      "gitMode": "100644",
+      "blob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2",
+      "bytes": 8164,
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/co03_axes.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/co03_axes.json",
+      "gitMode": "100644",
+      "blob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2",
+      "bytes": 8164,
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/co04_unresolved_dissent.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/co04_unresolved_dissent.json",
+      "gitMode": "100644",
+      "blob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2",
+      "bytes": 8164,
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/co05_no_consensus_shape.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/co05_no_consensus_shape.json",
+      "gitMode": "100644",
+      "blob": "f9e07302fa487a2bb83fa413295f4c2f5de0e383",
+      "bytes": 8171,
+      "sha256": "3d95502500037cbb7819943653e0ec73b36d8bc577e5ea37fa659e1a1450f2c4"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/cx01_reason.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/cx01_reason.json",
+      "gitMode": "100644",
+      "blob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2",
+      "bytes": 8164,
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/cx02_all_triggers_selected.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/cx02_all_triggers_selected.json",
+      "gitMode": "100644",
+      "blob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2",
+      "bytes": 8164,
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/cx03_nonorigin_coverage.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/cx03_nonorigin_coverage.json",
+      "gitMode": "100644",
+      "blob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2",
+      "bytes": 8164,
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/cx04_followup_cap.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/cx04_followup_cap.json",
+      "gitMode": "100644",
+      "blob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2",
+      "bytes": 8164,
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/es01_status.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/es01_status.json",
+      "gitMode": "100644",
+      "blob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2",
+      "bytes": 8164,
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/es02_verified_locator_note.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/es02_verified_locator_note.json",
+      "gitMode": "100644",
+      "blob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2",
+      "bytes": 8164,
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/es03_only_verified_consensus_links.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/es03_only_verified_consensus_links.json",
+      "gitMode": "100644",
+      "blob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2",
+      "bytes": 8164,
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/es04_no_raw_reasoning.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/es04_no_raw_reasoning.json",
+      "gitMode": "100644",
+      "blob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2",
+      "bytes": 8164,
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/es05_no_execution_directive.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/es05_no_execution_directive.json",
+      "gitMode": "100644",
+      "blob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2",
+      "bytes": 8164,
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/lf01_completed_reused_distinct.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/lf01_completed_reused_distinct.json",
+      "gitMode": "100644",
+      "blob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2",
+      "bytes": 8164,
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/lf02_judge_fallback.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/lf02_judge_fallback.json",
+      "gitMode": "100644",
+      "blob": "d9c2d0d362c6c0831b3e08dc8615bcb7f5e85dfa",
+      "bytes": 1709,
+      "sha256": "1e700f51495ae573d7637912e49b944580bd5b650d9cffc4275b6f7dcf33ce8b"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/rc01_low_no_workers.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/rc01_low_no_workers.json",
+      "gitMode": "100644",
+      "blob": "246b1be7cb2061951c4d0f2a8c55a5b309e686a9",
+      "bytes": 2814,
+      "sha256": "f24477c6e8cc00dbbebab4ad7fa1406ef7dc4836af583090e6dff0be8f944876"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/rc02_medium_two_reviewers.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/rc02_medium_two_reviewers.json",
+      "gitMode": "100644",
+      "blob": "b1622d9ee288b21f752b452ed781653714b56722",
+      "bytes": 5155,
+      "sha256": "cd613b02886ab513a3b28b7f1fe4e8e94e954bea0dc5f92d5648fa1fca480b9a"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/rc03_high_fresh_judge.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/rc03_high_fresh_judge.json",
+      "gitMode": "100644",
+      "blob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2",
+      "bytes": 8164,
+      "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/evals/fixtures/valid/rc04_critical_red_team.json",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/evals/fixtures/valid/rc04_critical_red_team.json",
+      "gitMode": "100644",
+      "blob": "ebd7d765e4e09f031b6decfcbf458e58294484df",
+      "bytes": 9176,
+      "sha256": "82ca6210fbb8530dfc48e3ad7b1121c6b2783e375377e24960843ec3d3297658"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/references/entry-details.md",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/references/entry-details.md",
+      "gitMode": "100644",
+      "blob": "ccb5786cb1ebf780ded5d9bdac789a1d7c477751",
+      "bytes": 11288,
+      "sha256": "72ba08758dd3fe1ca0b1a7c962cef21692cb5bdcec49eb63a6d9f5bf8f6f3c7a"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/references/evidence-and-verdict-schema.md",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/references/evidence-and-verdict-schema.md",
+      "gitMode": "100644",
+      "blob": "bd7e052fc08a761360ca8bfaf818f8789bc5b49e",
+      "bytes": 13597,
+      "sha256": "6320b5f81a3e314d143959b77c0b0db531eec45ca86aa150d5c2c340efd49eca"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/references/integration-contract.md",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/references/integration-contract.md",
+      "gitMode": "100644",
+      "blob": "73d36915215ed67bff5358f7a88f73807bbe9537",
+      "bytes": 2589,
+      "sha256": "e242d7745b1689da3cc5558803eb1b4aa8d4b8d8b8fec129b142fd7e8df8e991"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/references/orchestration-policy.md",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/references/orchestration-policy.md",
+      "gitMode": "100644",
+      "blob": "1bc1af6fff6b704f00ca54a5fbbe6e072e1f80a7",
+      "bytes": 14871,
+      "sha256": "49833eeaf4d2f7ad6802d699fe7983cbcd24cb55cfa629cfe4901d00be66aa82"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/references/role-catalog.md",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/references/role-catalog.md",
+      "gitMode": "100644",
+      "blob": "872d7dc124aed1b8c1f0220629d64c149f1c70d8",
+      "bytes": 6276,
+      "sha256": "18d8d9b6c65bc6925c1dfe3cbce86055bbf44f274a1c406ab4be5cf7c7a6ada5"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/scripts/run_evals.py",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/scripts/run_evals.py",
+      "gitMode": "100644",
+      "blob": "5924bbf42a89a222cc1d2f5caecd01a4aba80522",
+      "bytes": 41964,
+      "sha256": "5c7666d6b15147bffaaa24f8f564fd62e3f8348736a42aeb220b1edcf846a6e9"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/scripts/summarize_evals.py",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/scripts/summarize_evals.py",
+      "gitMode": "100644",
+      "blob": "ec8db5c1f8b2fb22e624feaa1e198e5c27b1a7ff",
+      "bytes": 12316,
+      "sha256": "38be053cb6b7dee6aa4bb5c1923d98c7e8e5586959f11a126957470d838e3bcd"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/scripts/validate_decision_record.py",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/scripts/validate_decision_record.py",
+      "gitMode": "100644",
+      "blob": "be95c4e64d94ad1b37133f82534087a8717f3e74",
+      "bytes": 38528,
+      "sha256": "c381670411a8fee8ceb657df3f1887298839bc875d9dfac9eb6c7ad61a8e7d34"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/scripts/validate_package.py",
+      "shipmentPath": "claude-plugin/skills/independent-deliberation-panel/scripts/validate_package.py",
+      "gitMode": "100644",
+      "blob": "b2b92a0152137e69acf6c5b0102862aa03aa03b4",
+      "bytes": 23353,
+      "sha256": "f2047446d7a1d1a439f951b24257c3dbdaa769e282cf8c6e02bb74d3ef9d1548"
+    },
+    {
+      "path": "skills/instruction-scope-resolver/LICENSE",
+      "shipmentPath": "claude-plugin/skills/instruction-scope-resolver/LICENSE",
+      "gitMode": "100644",
+      "blob": "fce99f684ffb085d094f8352fedfa20552046d41",
+      "bytes": 1068,
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02"
+    },
+    {
+      "path": "skills/instruction-scope-resolver/README.md",
+      "shipmentPath": "claude-plugin/skills/instruction-scope-resolver/README.md",
+      "gitMode": "100644",
+      "blob": "87315de993ccd4a0f103d061d37ffdc230497f0f",
+      "bytes": 2027,
+      "sha256": "50c64615850cb097e0a23a751801c7086bcf73f4be4499f92fa8a8781c9b83f6"
+    },
+    {
+      "path": "skills/instruction-scope-resolver/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/instruction-scope-resolver/SKILL.md",
+      "gitMode": "100644",
+      "blob": "08037504a961753af908eee828ae19dbeb05f2f3",
+      "bytes": 2679,
+      "sha256": "712aae20bb33e746358b663fae588be09fc17aa255a3b32d2ebbcc1712fe836b"
+    },
+    {
+      "path": "skills/instruction-scope-resolver/contracts/instruction-scope-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/instruction-scope-resolver/contracts/instruction-scope-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "f0845ae2052f8062a417f94cac11f4c2a122b138",
+      "bytes": 1664,
+      "sha256": "e53189bb093e631abe8a162ac8c61a807b6b962d9d2f5cd3c4b1d9d83703b1b8"
+    },
+    {
+      "path": "skills/instruction-scope-resolver/contracts/instruction-scope-resolution.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/instruction-scope-resolver/contracts/instruction-scope-resolution.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "ba1013a7be2489be9d60f0cc17f2343f9ecfe9a4",
+      "bytes": 3527,
+      "sha256": "fa7e89a1aa9b4874d0d6d98d51fd3366e3871a2d8daf66c958bd36073815dee2"
+    },
+    {
+      "path": "skills/instruction-scope-resolver/integration/provider-result.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/instruction-scope-resolver/integration/provider-result.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "e1e58a47b5eae250050f9c53ab4ce2531afb898a",
+      "bytes": 2532,
+      "sha256": "17517fb4a61fa6eda8322d566b48b3d2cd1d6be8c7cc1a27ac2024e9c6b93771"
+    },
+    {
+      "path": "skills/instruction-scope-resolver/integration/skill-descriptor.json",
+      "shipmentPath": "claude-plugin/skills/instruction-scope-resolver/integration/skill-descriptor.json",
+      "gitMode": "100644",
+      "blob": "9e07da514da17598f8b80a806e517cd7e5ba9d3e",
+      "bytes": 1838,
+      "sha256": "c2cb3fb401f1255034979001b3112987bb0909c2f1e7d7e09117a0b7972b0f0c"
+    },
+    {
+      "path": "skills/instruction-scope-resolver/references/claude-code-instructions.md",
+      "shipmentPath": "claude-plugin/skills/instruction-scope-resolver/references/claude-code-instructions.md",
+      "gitMode": "100644",
+      "blob": "9ce7cdbcdaf127e852710a02c554fc04c5396a83",
+      "bytes": 2631,
+      "sha256": "481246c9a46175b3bfcecd22d30ce53a7a5ad775f74171cd2f93b09626481bd8"
+    },
+    {
+      "path": "skills/instruction-scope-resolver/references/conflict-classification.md",
+      "shipmentPath": "claude-plugin/skills/instruction-scope-resolver/references/conflict-classification.md",
+      "gitMode": "100644",
+      "blob": "cbac13bf8c40d5538dd4b613eebed073ee91550f",
+      "bytes": 1022,
+      "sha256": "8ede2ce0c1a8c0c6665c87fb4f5ee5695064eaa8b6e13c435900e52a2109d79d"
+    },
+    {
+      "path": "skills/instruction-scope-resolver/references/entry-details.md",
+      "shipmentPath": "claude-plugin/skills/instruction-scope-resolver/references/entry-details.md",
+      "gitMode": "100644",
+      "blob": "becb3972ca89be184bfde0730704dcd10e50f573",
+      "bytes": 947,
+      "sha256": "309a4dfc616428b9ef99f94094ec48495c52d4f5c47bf6fc28ac2fa04890dab8"
+    },
+    {
+      "path": "skills/instruction-scope-resolver/references/resolution-model.md",
+      "shipmentPath": "claude-plugin/skills/instruction-scope-resolver/references/resolution-model.md",
+      "gitMode": "100644",
+      "blob": "9bffb87bdc4bfdc4c8afa6f5be5b01cff7fbc863",
+      "bytes": 1682,
+      "sha256": "7bbac014604998b1d89248c09140a1a5fe7be4c7215e9258942d8234bdd9dc9c"
+    },
+    {
+      "path": "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs",
+      "shipmentPath": "claude-plugin/skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs",
+      "gitMode": "100644",
+      "blob": "6e30579614c97e65701799fdaaacc567f8d285cf",
+      "bytes": 9483,
+      "sha256": "d95f342597a78ae056baa66d46fc85ef5adf8d0c4b12258c1f215011926a62d4"
+    },
+    {
+      "path": "skills/instruction-scope-resolver/scripts/validate-repository.mjs",
+      "shipmentPath": "claude-plugin/skills/instruction-scope-resolver/scripts/validate-repository.mjs",
+      "gitMode": "100644",
+      "blob": "64ba8929ec0086e70771fe722d19f983433a6770",
+      "bytes": 3367,
+      "sha256": "b515baba6e195c5187363f0ffe424301d8734e42bb1aa6bd07c758443f3f6352"
+    },
+    {
+      "path": "skills/iteration-frame-auditor/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/iteration-frame-auditor/SKILL.md",
+      "gitMode": "100644",
+      "blob": "ead7ae9f3d16bb5074832217474f4e42f3910947",
+      "bytes": 2104,
+      "sha256": "5da6ca2f7c9cc39bcc171d481bcfbf1a21b6edd462d6c56a71a6d532e28b678d"
+    },
+    {
+      "path": "skills/iteration-frame-auditor/contracts/iteration-frame-audit-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/iteration-frame-auditor/contracts/iteration-frame-audit-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "c2c92cbef5958b6b306086e4306484578ab3c20e",
+      "bytes": 5699,
+      "sha256": "5a13e78ed8c170a5e25d42564df1aa4bb40464c5851c8c8edd0b8206dd88d08f"
+    },
+    {
+      "path": "skills/iteration-frame-auditor/contracts/iteration-frame-comparison.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/iteration-frame-auditor/contracts/iteration-frame-comparison.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "95911bc0e6f42fb15076b8a29636b86a13a2d2e2",
+      "bytes": 3281,
+      "sha256": "9c114f04bed89dbeab7245e4e13661b903df0f273f3e153bda3494a6809e71d2"
+    },
+    {
+      "path": "skills/iteration-frame-auditor/integration/skill-descriptor.json",
+      "shipmentPath": "claude-plugin/skills/iteration-frame-auditor/integration/skill-descriptor.json",
+      "gitMode": "100644",
+      "blob": "ac509baada3f0657e1cad28890d14523f7dafe60",
+      "bytes": 2934,
+      "sha256": "e5ef324675190cac44c89fe72d924a4b3ccc1a4c1afbb16231b792875a25c35e"
+    },
+    {
+      "path": "skills/iteration-frame-auditor/references/entry-details.md",
+      "shipmentPath": "claude-plugin/skills/iteration-frame-auditor/references/entry-details.md",
+      "gitMode": "100644",
+      "blob": "eef2f59c2bd42126ff6a2bc40b9ac5952ce7c471",
+      "bytes": 3181,
+      "sha256": "e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432"
+    },
+    {
+      "path": "skills/iteration-frame-auditor/references/review-protocol.md",
+      "shipmentPath": "claude-plugin/skills/iteration-frame-auditor/references/review-protocol.md",
+      "gitMode": "100644",
+      "blob": "28b5f2deb51edd604c8668565672d14a4ae71362",
+      "bytes": 3836,
+      "sha256": "1abfd6a06a67d11277e24db17ee2e9fe8c2597e37304202378f782b959472793"
+    },
+    {
+      "path": "skills/iteration-frame-auditor/scripts/core.mjs",
+      "shipmentPath": "claude-plugin/skills/iteration-frame-auditor/scripts/core.mjs",
+      "gitMode": "100644",
+      "blob": "697423bedb925fa55a4eeea42ac0b4ac49b0dc32",
+      "bytes": 14612,
+      "sha256": "be484cd917b6e21f426712c45019d413803d21b86e07daa2d94f8d3441e0bb71"
+    },
+    {
+      "path": "skills/iteration-frame-auditor/scripts/digest-request.mjs",
+      "shipmentPath": "claude-plugin/skills/iteration-frame-auditor/scripts/digest-request.mjs",
+      "gitMode": "100644",
+      "blob": "56fae765c068b44695c1e3183d61cef6b8cea88c",
+      "bytes": 558,
+      "sha256": "3aa667511afd0e2a82f01ef8c619c0ae0aed233d5cbf1254431dd654a934a1da"
+    },
+    {
+      "path": "skills/iteration-frame-auditor/scripts/io.mjs",
+      "shipmentPath": "claude-plugin/skills/iteration-frame-auditor/scripts/io.mjs",
+      "gitMode": "100644",
+      "blob": "77f530b93a889130b979bc82cfb00b669173fc3d",
+      "bytes": 625,
+      "sha256": "149cee7dff10cd69e03c8dcbe85fce842bddac0db6f6d89d779cf4a0b2cc6768"
+    },
+    {
+      "path": "skills/iteration-frame-auditor/scripts/schema-validation.mjs",
+      "shipmentPath": "claude-plugin/skills/iteration-frame-auditor/scripts/schema-validation.mjs",
+      "gitMode": "100644",
+      "blob": "41543c3ed4dd40dffa5f4d6894005b68096267f3",
+      "bytes": 1425,
+      "sha256": "368b47454f6c444eab80f187c1ab9f66228dc9f9c254768e2ccb4327aa6b76e1"
+    },
+    {
+      "path": "skills/iteration-frame-auditor/scripts/validate-review.mjs",
+      "shipmentPath": "claude-plugin/skills/iteration-frame-auditor/scripts/validate-review.mjs",
+      "gitMode": "100644",
+      "blob": "75d19adc6b1ca688c1dc069fbe273ff63772f35f",
+      "bytes": 1715,
+      "sha256": "222f6a202e6848faf4446a9edd20a15753e4c0e3aff59d9809c625a82d24bb32"
+    },
+    {
+      "path": "skills/korean-prose-editor/LICENSE",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/LICENSE",
+      "gitMode": "100644",
+      "blob": "b45731fb916f750c99bc740de5768ad4c092c3db",
+      "bytes": 1118,
+      "sha256": "a9cd9629f1976b407579466b4ae9d6b84c40d91d587827f3180c009701bc7472"
+    },
+    {
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/SKILL.md",
+      "gitMode": "100644",
+      "blob": "6cad8b6d6bf5389583f891135af7c6bfd6570814",
+      "bytes": 2115,
+      "sha256": "d99e32e021f821612fd88ff52512aa3e9d67207b95fd2af58ec61e8595fceec1"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/edit-candidate.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/contracts/edit-candidate.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "d96c4cae56a4bb129e80d6c7c57ef90cb0c398a6",
+      "bytes": 2502,
+      "sha256": "8026fae9d2597f3cc127e80f9d04b7fade42d1c66d03a23ca8656a4c27708db0"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/edit-decision-set.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/contracts/edit-decision-set.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "c308d18bec8436ea8cc40ae6eebfc0234b389b65",
+      "bytes": 2582,
+      "sha256": "db9a283e623df89093c2dcc93f74461e309ef8d952956a5baacd88ff141147ee"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/edit-verification-report.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/contracts/edit-verification-report.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "6850b59e8efced0cd8b7f992ea5861e86ee047c7",
+      "bytes": 2771,
+      "sha256": "3cee16cadb97f532d1a6416c623510b5d338465fbc0c742c8fe2e3992dc7ef95"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/editing-draft.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/contracts/editing-draft.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "db140dd49f5c498bda2dcc0f9675f63712453203",
+      "bytes": 1337,
+      "sha256": "5819c6be58cde00623b18f82bf4b2389d9340369ecf70510e937fedcbac7acd8"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/editing-work-product.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/contracts/editing-work-product.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "56daf844244eb9292ce06c0af24b98e8f42f5d98",
+      "bytes": 1578,
+      "sha256": "fd2cd013431c46e54324c43e5012635ac12731dc9d8b3716d2f43f125f9ad2e3"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "e8153ed00a71415315e2f3ebd781a1ccb0a70afd",
+      "bytes": 3801,
+      "sha256": "19c95d9ece81e110b286460253929ed60382786decdf139261baa357b1da89e9"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/finalization-request.schema.json",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/contracts/finalization-request.schema.json",
+      "gitMode": "100644",
+      "blob": "1a2e47350517fd1a18d63526f57d856b25dd9c99",
+      "bytes": 1204,
+      "sha256": "79f4dc6d10d037288a698814400514a710692e432905a6d2ca56cea707c03f79"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/glossary-binding.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/contracts/glossary-binding.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "35ce861120d031bd17e9f4d1fc868c6d5fb12063",
+      "bytes": 1651,
+      "sha256": "ac67afeff4d6844a64514bab3c17a5dffdba3172d1d4db79f726f1422e4a5ec3"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/glossary-match-set.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/contracts/glossary-match-set.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "aad9b0c6bac8a536d3490fc7005a3e0a92457045",
+      "bytes": 1930,
+      "sha256": "44fb2ad4b377cc48594daa9d89d82a8dc677b7ef04f8dd28335454b1d10da04e"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/protected-manifest.schema.json",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/contracts/protected-manifest.schema.json",
+      "gitMode": "100644",
+      "blob": "92aa185abc9cd685c9d9f0117627997b37e1fb54",
+      "bytes": 1267,
+      "sha256": "cad9ae7bb477bfa2fc4bfc71adef5749f9d7be9eb89aaa1c147d388374fef395"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/provider-plan.schema.json",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/contracts/provider-plan.schema.json",
+      "gitMode": "100644",
+      "blob": "d222df5fe6c9d7885fd6e7e024db8becda84c9d7",
+      "bytes": 1606,
+      "sha256": "b52bd05b1682add3736122b079af6be0e29db1686a0715d6decb72febe589269"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/receipt.schema.json",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/contracts/receipt.schema.json",
+      "gitMode": "100644",
+      "blob": "9a9d2418a48af3b9d435efd90f6c827abbe0bcc3",
+      "bytes": 2776,
+      "sha256": "3b6605f74e6bf88e2930f0e8eb99f2e5678f66b03ff459d083b178bbcbe8f6bd"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/selection-work-product.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/contracts/selection-work-product.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "22744667314fb2ffdbbbba4c8c13a3d8e9b4a977",
+      "bytes": 2665,
+      "sha256": "a3c48d8e260170034b86b5abe7719a00989bedada184112626e5eee6a162f970"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/source-unit-manifest.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/contracts/source-unit-manifest.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "44908ec30a4bc90a9718da4bae298792515c70c0",
+      "bytes": 1271,
+      "sha256": "a51b3dfd6cf54bcac1f31f2848aecfd5dfc1816156efb7bf65a5441817243241"
+    },
+    {
+      "path": "skills/korean-prose-editor/contracts/verification-work-product.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/contracts/verification-work-product.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "36ed7d77d260b69e80fb18c7c816b0be4ebaea77",
+      "bytes": 3235,
+      "sha256": "3e771ac4ce0e9da64303afea9665b977b3069daf66adebbfc533488ddf930073"
+    },
+    {
+      "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "6baebb27de92073479bb0451fe69cf00c8741290",
+      "bytes": 1697,
+      "sha256": "788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08"
+    },
+    {
+      "path": "skills/korean-prose-editor/integration/skill-descriptor.json",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/integration/skill-descriptor.json",
+      "gitMode": "100644",
+      "blob": "27ceddace09d5067e3d2cab79d1f8d4ab759fe09",
+      "bytes": 8696,
+      "sha256": "ae35d2f59c286315e9b6615dffeb19f6e09ace1542f4dd802c8159c92b101bb8"
+    },
+    {
+      "path": "skills/korean-prose-editor/integration/skill-descriptor.v2.schema.json",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/integration/skill-descriptor.v2.schema.json",
+      "gitMode": "100644",
+      "blob": "b57a00fc385256393763872aad84dc58434c1b25",
+      "bytes": 8125,
+      "sha256": "ff6c893da551709fead4ce14ad16c37b86c27443d1b7d98ed01359ca3fff36a4"
+    },
+    {
+      "path": "skills/korean-prose-editor/references/contracts.md",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/references/contracts.md",
+      "gitMode": "100644",
+      "blob": "ed081da955dc6f10cc6d4bf97c6d474ecd002826",
+      "bytes": 6517,
+      "sha256": "fb60315862766c57abcc6e14fad9ba8921876aa6c9b4f7630d94905c108209b6"
+    },
+    {
+      "path": "skills/korean-prose-editor/references/editing-policy.md",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/references/editing-policy.md",
+      "gitMode": "100644",
+      "blob": "a57d9a56fc3958fb7f52f6b706be6d77e592970b",
+      "bytes": 8643,
+      "sha256": "80bd41d27715577fbb0e4fe25596308587e1ddac80bc226080adbf09118e0891"
+    },
+    {
+      "path": "skills/korean-prose-editor/references/entry-details.md",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/references/entry-details.md",
+      "gitMode": "100644",
+      "blob": "c5d1c7eb3d1f4bd50d19d7524fca68775c9a155c",
+      "bytes": 4219,
+      "sha256": "26ce188795767864370bbd07ae06ba5e164ff802b301656daa3759626996a9a1"
+    },
+    {
+      "path": "skills/korean-prose-editor/references/finalization.md",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/references/finalization.md",
+      "gitMode": "100644",
+      "blob": "3ed48b5366582f691b7323fe87723f951433d078",
+      "bytes": 1689,
+      "sha256": "19577be3ad79676361a95df560f6c48510aaac9764829cdc1aa8201bfb72cf37"
+    },
+    {
+      "path": "skills/korean-prose-editor/references/integration.md",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/references/integration.md",
+      "gitMode": "100644",
+      "blob": "e0f4dd2bfa75c91e2977b86fecb3984e7292582f",
+      "bytes": 3018,
+      "sha256": "b521561d3fff7c1bc375a82a81e46fb63869fbd71c67904d283bc59c7537cb27"
+    },
+    {
+      "path": "skills/korean-prose-editor/references/selection-policy.md",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/references/selection-policy.md",
+      "gitMode": "100644",
+      "blob": "667dadeeb694081af0cd06bbbc493b694cbdf8b1",
+      "bytes": 8863,
+      "sha256": "a3cb288adef204d6aed59ef339f62a979b57bd411c9d3be794731ef19b963d64"
+    },
+    {
+      "path": "skills/korean-prose-editor/references/verification-rubric.md",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/references/verification-rubric.md",
+      "gitMode": "100644",
+      "blob": "10855cc843d722ac439358e6d865b291ded4ad61",
+      "bytes": 6331,
+      "sha256": "313627ddfc4978097d4b28aa87b93fcbeb066d823e1f18b6ee3939e7d1413e5a"
+    },
+    {
+      "path": "skills/korean-prose-editor/resources/glossary.seed.jsonl",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/resources/glossary.seed.jsonl",
+      "gitMode": "100644",
+      "blob": "d9cc5d3f0dc2609f068d5040fa27518a02062ac5",
+      "bytes": 61658,
+      "sha256": "6015c95f05ce9923b53bb3c53404b9feb364971b296f820fedc9c4e530b73eda"
+    },
+    {
+      "path": "skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3",
+      "gitMode": "100644",
+      "blob": "0544edaa149f8a5274b3a466bd78393bc144a7df",
+      "bytes": 114688,
+      "sha256": "6aee8db6e08136cf8d4399c90232484e13a9e287d843f1638b65ffb2ef8d283d"
+    },
+    {
+      "path": "skills/korean-prose-editor/scripts/check-result.mjs",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/scripts/check-result.mjs",
+      "gitMode": "100644",
+      "blob": "81df9501d6cdcbce7ce15d63d2c25141717a5efa",
+      "bytes": 438,
+      "sha256": "081aa5271d45a1c80ae1631b02f16214df5270f7b27f08a69cecbac269aeddaa"
+    },
+    {
+      "path": "skills/korean-prose-editor/scripts/extract-protected-spans.mjs",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/scripts/extract-protected-spans.mjs",
+      "gitMode": "100644",
+      "blob": "599dd1e78defb0a6f0a44cf648b821d3b29c4f40",
+      "bytes": 461,
+      "sha256": "474670fcb5a206fcf8f4e195fae7014de7431c461922f0f445028ff4e146d8b5"
+    },
+    {
+      "path": "skills/korean-prose-editor/scripts/finalize.mjs",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/scripts/finalize.mjs",
+      "gitMode": "100644",
+      "blob": "869ed00cfb7e074f3b85b2c11d6ca066e405fd99",
+      "bytes": 558,
+      "sha256": "310f74bd37e41d37abb5f652592a2287cb6fe951a72317b080675eb8ae66223c"
+    },
+    {
+      "path": "skills/korean-prose-editor/scripts/finalizer-core.mjs",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/scripts/finalizer-core.mjs",
+      "gitMode": "100644",
+      "blob": "e4f9210651d4d8cbba0c90295ac32c6277ea993b",
+      "bytes": 29656,
+      "sha256": "68bfe12f54d9dd321d3b174d7ea04ed5fbbfc219d2a0f2b78829ca17168b9b14"
+    },
+    {
+      "path": "skills/korean-prose-editor/scripts/lib.mjs",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/scripts/lib.mjs",
+      "gitMode": "100644",
+      "blob": "af38509105abd3d0bcb4094c44f1c5519eca3f62",
+      "bytes": 1876,
+      "sha256": "0c4f336c557823db6d5d05a73721fd29bee1301ce0a80d2a691c15cd43a9509c"
+    },
+    {
+      "path": "skills/korean-prose-editor/scripts/protected-spans.mjs",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/scripts/protected-spans.mjs",
+      "gitMode": "100644",
+      "blob": "b14d53193dbd3fe489e1937188670a12d7732102",
+      "bytes": 4850,
+      "sha256": "ff27d0065fdcf9b08b4f76161b9b08fa295464c57a3235e3dd2d4a61c854320a"
+    },
+    {
+      "path": "skills/korean-prose-editor/scripts/provider-plan.mjs",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/scripts/provider-plan.mjs",
+      "gitMode": "100644",
+      "blob": "b5492bd014412db562166417c201a513f80c23a2",
+      "bytes": 2106,
+      "sha256": "b087dee0727ab552441413e5ce9218f5116caad2c0508aa8549c0adc95bd60fe"
+    },
+    {
+      "path": "skills/korean-prose-editor/scripts/result-checker.mjs",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/scripts/result-checker.mjs",
+      "gitMode": "100644",
+      "blob": "6d06dad787265b43647d18a05789fdf8ada8aa52",
+      "bytes": 2165,
+      "sha256": "9de25749efd1839fcdc9e05050c2ced4f6ea01097ca6c4dda2a6de6a3dfaf5d8"
+    },
+    {
+      "path": "skills/korean-prose-editor/scripts/source-units.mjs",
+      "shipmentPath": "claude-plugin/skills/korean-prose-editor/scripts/source-units.mjs",
+      "gitMode": "100644",
+      "blob": "578e85ac22d0cdad50c303329469be8e5c1fcf61",
+      "bytes": 3518,
+      "sha256": "23842dc723e303e58b521be7414013a2cfabe19607306d2a602ff6de0bf2e637"
+    },
+    {
+      "path": "skills/model-effort-advisor/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/model-effort-advisor/SKILL.md",
+      "gitMode": "100644",
+      "blob": "86289975d077890fec396562d6a5686a30b49d38",
+      "bytes": 2112,
+      "sha256": "5dd35f092de2f2e978cbe98a0a3dac34063bcfbcf1655b4575950eae075c02ed"
+    },
+    {
+      "path": "skills/model-effort-advisor/contracts/model-effort-advice.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/model-effort-advisor/contracts/model-effort-advice.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "6d534c585ae28c00c36296b43e31bc4a6e92f5f2",
+      "bytes": 9106,
+      "sha256": "7150d4f934f9a9422c31fc9f94b7bd7d6b1ac1e6bd029233293c40c658c693fe"
+    },
+    {
+      "path": "skills/model-effort-advisor/references/entry-details.md",
+      "shipmentPath": "claude-plugin/skills/model-effort-advisor/references/entry-details.md",
+      "gitMode": "100644",
+      "blob": "29a590a2fcd2b35a8fa4056d52c60b33d5965e5b",
+      "bytes": 4122,
+      "sha256": "0d50cce6def3f621f0318005848dd37797d30d0cc768bf79f7bd7fa81000c82f"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/LICENSE",
+      "shipmentPath": "claude-plugin/skills/mutation-risk-preflight/LICENSE",
+      "gitMode": "100644",
+      "blob": "fce99f684ffb085d094f8352fedfa20552046d41",
+      "bytes": 1068,
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/README.md",
+      "shipmentPath": "claude-plugin/skills/mutation-risk-preflight/README.md",
+      "gitMode": "100644",
+      "blob": "2abc778d8f9c53f51df9a05b9d5cd1390c92fe3d",
+      "bytes": 2276,
+      "sha256": "c7bc39a506ff4aeed3726cea2c92ef4558e62d0d28d03ccde09d083a33ada213"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/mutation-risk-preflight/SKILL.md",
+      "gitMode": "100644",
+      "blob": "588258f1c8ff26dfede83b733612e2ab1d662e3d",
+      "bytes": 2203,
+      "sha256": "e6ef2c33bf2f11d637fef427562d3f4982d00fa69a3e928eb8948384f706e49e"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/contracts/mutation-intent.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/mutation-risk-preflight/contracts/mutation-intent.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "2bcd349241d4cf00e7f3de7c8390ece4b642e09d",
+      "bytes": 4557,
+      "sha256": "b66cf7e41d10d5808dafecea3f8df147e029952d5a0b46a2013841ca1a45452c"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "9442fd5a88563c77b63dc6d10d666f9866a1336b",
+      "bytes": 3504,
+      "sha256": "4e6f86d0baf672ef0bd83a4a9c592bd8ec5dcab1f342071372908f52e5217fde"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/contracts/upstream/lock.json",
+      "shipmentPath": "claude-plugin/skills/mutation-risk-preflight/contracts/upstream/lock.json",
+      "gitMode": "100644",
+      "blob": "ee147a1059cef73d8c576e2189dc1dd1bf57be11",
+      "bytes": 662,
+      "sha256": "a89a52a20bf14ce1ac8a7e9583fca0a38f9ade0d64d5866b2a7b8624cb52fb9c"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/contracts/upstream/task-envelope.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/mutation-risk-preflight/contracts/upstream/task-envelope.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "a95f74c14089ce8c79ada753e787cc8d72facb17",
+      "bytes": 3037,
+      "sha256": "b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/integration/provider-result.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/mutation-risk-preflight/integration/provider-result.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "f84955eedb8a7f5670b87a6325ddbcdab938bb7e",
+      "bytes": 1528,
+      "sha256": "0fa638d22b6a37ac9e585597b1ddd985de4562756e1a14b9076875dee154e311"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/integration/skill-descriptor.json",
+      "shipmentPath": "claude-plugin/skills/mutation-risk-preflight/integration/skill-descriptor.json",
+      "gitMode": "100644",
+      "blob": "83a1a4a43057a89e1cf7d225bc615135461765f5",
+      "bytes": 3182,
+      "sha256": "c0340eaf53126034cb3ba13b2c9adbd03fdbecb23942687fca771487dc393264"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/approval-and-authority.md",
+      "shipmentPath": "claude-plugin/skills/mutation-risk-preflight/references/approval-and-authority.md",
+      "gitMode": "100644",
+      "blob": "df1aee0222d468cdcce179bac59fbfa5a07817e7",
+      "bytes": 617,
+      "sha256": "471afb623db2b67f45465f924eec5426d470dafa0c92bcad14b7bd16d0c16334"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/entry-details.md",
+      "shipmentPath": "claude-plugin/skills/mutation-risk-preflight/references/entry-details.md",
+      "gitMode": "100644",
+      "blob": "65f9b4fab90bf55de1d5f51dccbbfe54a26c5384",
+      "bytes": 1516,
+      "sha256": "13dc04ff9d74e17f2d0bb6d69583a2c502dc5c69766d9a4ed91a59c0c5741154"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/recovery-requirements.md",
+      "shipmentPath": "claude-plugin/skills/mutation-risk-preflight/references/recovery-requirements.md",
+      "gitMode": "100644",
+      "blob": "0b304febfd4b98d09d81a0c1e86c06c122a71624",
+      "bytes": 604,
+      "sha256": "60a0bded3a1453092e2d02469393e39f3709f0810e0e4c076628854c4d7d54af"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/risk-matrix.md",
+      "shipmentPath": "claude-plugin/skills/mutation-risk-preflight/references/risk-matrix.md",
+      "gitMode": "100644",
+      "blob": "0b75607bd941de834859a2d96b270bf5819d9054",
+      "bytes": 832,
+      "sha256": "0377275e0487f9823bed76cd3541e0caa5f3bf030ea407fee5ad17b0f761c801"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
+      "shipmentPath": "claude-plugin/skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
+      "gitMode": "100644",
+      "blob": "6946cb918e0b8c39ab11718dd420368fde9848ce",
+      "bytes": 15576,
+      "sha256": "39ad62d3f1bde2194d3efd116ee81b52e1d59cbeb6a30d5a2a8beb3db4d4b1a5"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/scripts/schema-validation.mjs",
+      "shipmentPath": "claude-plugin/skills/mutation-risk-preflight/scripts/schema-validation.mjs",
+      "gitMode": "100644",
+      "blob": "1b573d104fb80cb705f0e57c4d9c5cb62423ed44",
+      "bytes": 756,
+      "sha256": "8402dd38105e29e0599cb6fbdf520206a677ca896d6dfcbc32408f07db19eb84"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/scripts/validate-skill.mjs",
+      "shipmentPath": "claude-plugin/skills/mutation-risk-preflight/scripts/validate-skill.mjs",
+      "gitMode": "100644",
+      "blob": "bb073020fb8ecf8379ab4eb021f16ad9cae261ec",
+      "bytes": 1954,
+      "sha256": "84ebdd1d94a93db8010a5c569a17dbd1fe127f94d3ea4fb0e446d7ec489801a6"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+      "shipmentPath": "claude-plugin/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+      "gitMode": "100644",
+      "blob": "15004d7c064c92949aa84e47a0ce835ed177d6c6",
+      "bytes": 3470,
+      "sha256": "0c738b534c3fb15bd9919873df6cd9e05314647de9cefdba541748f8ee3e612f"
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/orchestrator/SKILL.md",
+      "gitMode": "100644",
+      "blob": "2902ab8e58894b7b0acd6cab32ae540e9b77a9cc",
+      "bytes": 11176,
+      "sha256": "525f0f1e6e9d8d672eb0f62aa13301bc156519177260dda6e501233025d64a50"
+    },
+    {
+      "path": "skills/orchestrator/contracts/collaboration-decision.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/orchestrator/contracts/collaboration-decision.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "704123980c02a0a2c55053bf2b85adf17d17c2bc",
+      "bytes": 3655,
+      "sha256": "f27d20be8d5269b99534bcde02846d13a586137c362840fdc5ad1856b502cd5f"
+    },
+    {
+      "path": "skills/orchestrator/references/collaboration.md",
+      "shipmentPath": "claude-plugin/skills/orchestrator/references/collaboration.md",
+      "gitMode": "100644",
+      "blob": "e81b5f1f6a560f23df9ea0d8b79f208689234f0e",
+      "bytes": 2589,
+      "sha256": "e590f6cd87e5a352c27740f60329dae51a6ba95505747d9edaae59e3557f2f0d"
+    },
+    {
+      "path": "skills/orchestrator/references/convergence-guard.md",
+      "shipmentPath": "claude-plugin/skills/orchestrator/references/convergence-guard.md",
+      "gitMode": "100644",
+      "blob": "74b899384e866b329be7276e44203d8317eefe9b",
+      "bytes": 3986,
+      "sha256": "8a73f99a45c2cde18e5c821991af516b4a1d47cd845ac650b8d63a8b6f5a9489"
+    },
+    {
+      "path": "skills/orchestrator/references/entry-details.md",
+      "shipmentPath": "claude-plugin/skills/orchestrator/references/entry-details.md",
+      "gitMode": "100644",
+      "blob": "c70684c8f612eff73a63474463417ff1ee47adb8",
+      "bytes": 12599,
+      "sha256": "cedacf116c1c5e937221978e34621d9d054050a83dd24776f74591719704952b"
+    },
+    {
+      "path": "skills/orchestrator/references/input-origin.md",
+      "shipmentPath": "claude-plugin/skills/orchestrator/references/input-origin.md",
+      "gitMode": "100644",
+      "blob": "b07585e37506283e64a3335847ca54d00c78f90f",
+      "bytes": 2335,
+      "sha256": "d5375c58b657dfb35e07c465ab7220056c59af51330b24239448851463248927"
+    },
+    {
+      "path": "skills/orchestrator/references/mcp-execution.md",
+      "shipmentPath": "claude-plugin/skills/orchestrator/references/mcp-execution.md",
+      "gitMode": "100644",
+      "blob": "470364c80725681ae92041f822012abbf58a720c",
+      "bytes": 4214,
+      "sha256": "1d0772c4a63f2c37e8b695c8a7ed54dff3a000c42bc856f74827f87943c3bf16"
+    },
+    {
+      "path": "skills/orchestrator/references/specialist-handoffs.md",
+      "shipmentPath": "claude-plugin/skills/orchestrator/references/specialist-handoffs.md",
+      "gitMode": "100644",
+      "blob": "52b8bcb79f7f6fc2c97eca5351b79b51697a8e50",
+      "bytes": 2720,
+      "sha256": "127e02cf38a6a80d73a2e2b103aed48eece1544edbc6f2d8ed2a2ce4f7064238"
+    },
+    {
+      "path": "skills/orchestrator/scripts/collaboration-decision.d.mts",
+      "shipmentPath": "claude-plugin/skills/orchestrator/scripts/collaboration-decision.d.mts",
+      "gitMode": "100644",
+      "blob": "1affc3d69f7db06ca7fcaf2a2d5b26692f63c904",
+      "bytes": 435,
+      "sha256": "2d7bac5952b67b52e4aaa23934cd396eda1ad9aa864f30bcd2eae455f4c50650"
+    },
+    {
+      "path": "skills/orchestrator/scripts/collaboration-decision.mjs",
+      "shipmentPath": "claude-plugin/skills/orchestrator/scripts/collaboration-decision.mjs",
+      "gitMode": "100644",
+      "blob": "041289eb7af2cae68cb5158cb2182dfcdc5b59b2",
+      "bytes": 2444,
+      "sha256": "21b8d7f51370d59e16fb6ece4dea4e30ca7583a5f2cac6974f419dcb78a1f643"
+    },
+    {
+      "path": "skills/orchestrator/scripts/query-registry.mjs",
+      "shipmentPath": "claude-plugin/skills/orchestrator/scripts/query-registry.mjs",
+      "gitMode": "100644",
+      "blob": "96ed517ddf42db0f9ea4da54e47024ff58105c2d",
+      "bytes": 3301,
+      "sha256": "493e26245b359d187da2496d075bb8a44ded5a66fe2b1600b3151193c3a50c3b"
+    },
+    {
+      "path": "skills/orchestrator/scripts/validate-collaboration-decision.mjs",
+      "shipmentPath": "claude-plugin/skills/orchestrator/scripts/validate-collaboration-decision.mjs",
+      "gitMode": "100644",
+      "blob": "bd4035155cf9ffb361b73ac7f499f7326c23bccf",
+      "bytes": 1055,
+      "sha256": "e4a618be45eb86828d030a08521517af07e20caa46f3e826c771cfa789ff3a08"
+    },
+    {
+      "path": "skills/ponytail/LICENSE",
+      "shipmentPath": "claude-plugin/skills/ponytail/LICENSE",
+      "gitMode": "100644",
+      "blob": "715d483338cea4365f0d91a27799cf61226d6bcf",
+      "bytes": 1071,
+      "sha256": "fb1bc6909ac3ef82d5c22106e32ef682b0cff66788fa915fb9b53b15c9d2f3ab"
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/ponytail/SKILL.md",
+      "gitMode": "100644",
+      "blob": "513530b3aaa9e9343ddc09fa2a2055097bbd3c4f",
+      "bytes": 6807,
+      "sha256": "bb401bf9abb8a6ca2517a7f473d8ec2503603f3d550fb81e2dd2d52010d62663"
+    },
+    {
+      "path": "skills/ponytail/VERSION",
+      "shipmentPath": "claude-plugin/skills/ponytail/VERSION",
+      "gitMode": "100644",
+      "blob": "2da4316236a12b429b6903fb663fe4fec257756c",
+      "bytes": 7,
+      "sha256": "f52b4f81a0c60cd988f8ccc9a0333e206b5f7e41dd0f5286c6ab5f7bf2d5335f"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/recovery-strategy-selector/SKILL.md",
+      "gitMode": "100644",
+      "blob": "04136b5ff2d3a459b6a0395f823c421dda60e050",
+      "bytes": 1268,
+      "sha256": "df0fe38e661d69a285fbe628b07fff3c47067bff068ed52e43484b6e438c29f7"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/contracts/recovery-handoff.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/recovery-strategy-selector/contracts/recovery-handoff.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "c8318a5a3b237f415d443a44bef38ad428076d44",
+      "bytes": 9851,
+      "sha256": "c8a063c6e34c303c343c067d3f453b72739952fe34eb2e6f8e5eb125630e318e"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/contracts/recovery-strategy-selection-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/recovery-strategy-selector/contracts/recovery-strategy-selection-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "7fcbe3c9edc5bd0a830174e1f6b469551c4ce2a5",
+      "bytes": 5640,
+      "sha256": "062e5210736afa8c96f99e9015879f38860ef29a7f2e739a62a59d0a750a4a4d"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/contracts/recovery-task-binding-report.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/recovery-strategy-selector/contracts/recovery-task-binding-report.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "e7c859aa3f1fd8d65b937b9e2eaf79279edeb62b",
+      "bytes": 738,
+      "sha256": "77425da5b6e8d7ea78e99a4c8081797d52c1f01969d63f8ab8bc4c079e881829"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/integration/provider-result.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/recovery-strategy-selector/integration/provider-result.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "7f1f19792f7c2109eb4165e4610ad47bc7b7c8c7",
+      "bytes": 1579,
+      "sha256": "88a0e4bef0087af655f548408fdc92917e91d2d79185c9daf5325e578a41cac9"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/integration/skill-descriptor.json",
+      "shipmentPath": "claude-plugin/skills/recovery-strategy-selector/integration/skill-descriptor.json",
+      "gitMode": "100644",
+      "blob": "0982269b7d6d63e84646bf26a3b5955bb643f60f",
+      "bytes": 2743,
+      "sha256": "d1038d1d026fd7cda0280a5de733dd81624170801848205e633e0c7f283812ca"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/references/entry-details.md",
+      "shipmentPath": "claude-plugin/skills/recovery-strategy-selector/references/entry-details.md",
+      "gitMode": "100644",
+      "blob": "08a2ccb4d61c0b626f1499afdac59ccb6b41d923",
+      "bytes": 3202,
+      "sha256": "08b489c4ace78471ae6737fcea06e1885294d8d0b5f2207c74c6f740ac05375e"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/references/selection-protocol.md",
+      "shipmentPath": "claude-plugin/skills/recovery-strategy-selector/references/selection-protocol.md",
+      "gitMode": "100644",
+      "blob": "1b594a1493487b2b6bb720d2609c55248408ffe8",
+      "bytes": 3543,
+      "sha256": "845d333cbe95855d6d1968a13645c2eecb37ad9909a9947c0d5c8a9e9e0846eb"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/scripts/core.mjs",
+      "shipmentPath": "claude-plugin/skills/recovery-strategy-selector/scripts/core.mjs",
+      "gitMode": "100644",
+      "blob": "7bf4f23925618ac3c75380290b18b88833416125",
+      "bytes": 24353,
+      "sha256": "ecf03e657a72c7a8d9270c7fa3c9aa61e0fa8800f9ec679b58a26533426d67fb"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/scripts/digest-request.mjs",
+      "shipmentPath": "claude-plugin/skills/recovery-strategy-selector/scripts/digest-request.mjs",
+      "gitMode": "100644",
+      "blob": "4d585b7beb3cf44cb3389fa6381b67b304558f57",
+      "bytes": 588,
+      "sha256": "ae5bfe09b7dbee17fab33626abe515a6557bbcf1bad28f64af2602b9490be20b"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/scripts/io.mjs",
+      "shipmentPath": "claude-plugin/skills/recovery-strategy-selector/scripts/io.mjs",
+      "gitMode": "100644",
+      "blob": "6f55b84e0e4ad1fe853f886eb9935327386043b3",
+      "bytes": 524,
+      "sha256": "be18888f7299ff481c7017098f0de057fefc247b841294c03bf6b79477e53775"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/scripts/schema-validation.mjs",
+      "shipmentPath": "claude-plugin/skills/recovery-strategy-selector/scripts/schema-validation.mjs",
+      "gitMode": "100644",
+      "blob": "bd925bc8757ea6e5aaf785c2ade0c77dfb3a6630",
+      "bytes": 2705,
+      "sha256": "15e55eaba8b8cfde79e134004e77c2e415b04c589b73f74d6da757966d2c32e0"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/scripts/validate-handoff.mjs",
+      "shipmentPath": "claude-plugin/skills/recovery-strategy-selector/scripts/validate-handoff.mjs",
+      "gitMode": "100644",
+      "blob": "bc795531f984684de782c350ef83b6effc176e1c",
+      "bytes": 661,
+      "sha256": "4020d7f19b81b19d795bde414d345d809aa3e5373a23e1c9a5f48134a9f024e1"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/scripts/validate-task-binding.mjs",
+      "shipmentPath": "claude-plugin/skills/recovery-strategy-selector/scripts/validate-task-binding.mjs",
+      "gitMode": "100644",
+      "blob": "fac9c105b03d338c8b56b7b028f39f6e5c2eb1bc",
+      "bytes": 667,
+      "sha256": "ae94d30153f617566ad2c2b2856addd2f45a72c21a8ec598809383a298e35f7f"
+    },
+    {
+      "path": "skills/registry.json",
+      "shipmentPath": "claude-plugin/skills/registry.json",
+      "gitMode": "100644",
+      "blob": "b949a4ef9987af0834ac59d7e2628b7e14e63ae7",
+      "bytes": 65659,
+      "sha256": "992c75c8d2fd60d390f1550acdc74d2a755f6c2fdfd291b5e43a5cee948b0015"
+    },
+    {
+      "path": "skills/session-board/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/session-board/SKILL.md",
+      "gitMode": "100644",
+      "blob": "b5e37e34eab1b70d4ab5705840e0bc2b6844ddb6",
+      "bytes": 2979,
+      "sha256": "9a590ee10af8860359509bf6bcb408f46f1ddc8f4974c4a486d60505c1627854"
+    },
+    {
+      "path": "skills/session-board/references/entry-details.md",
+      "shipmentPath": "claude-plugin/skills/session-board/references/entry-details.md",
+      "gitMode": "100644",
+      "blob": "db2b84519d50775be118ca81d291528a02c16281",
+      "bytes": 2342,
+      "sha256": "e8ea65d5d3d372fe70ba0fe7cdba18d965704450f2a7084b27ce885695e68660"
+    },
+    {
+      "path": "skills/session-board/scripts/board-store.d.mts",
+      "shipmentPath": "claude-plugin/skills/session-board/scripts/board-store.d.mts",
+      "gitMode": "100644",
+      "blob": "d2dade56550dd08336ede7731546897142beaf91",
+      "bytes": 1308,
+      "sha256": "a7c1a39f84e33dcbbbbb1265c5d93145230561a831d35f8d0c49c6a0ae09d281"
+    },
+    {
+      "path": "skills/session-board/scripts/board-store.mjs",
+      "shipmentPath": "claude-plugin/skills/session-board/scripts/board-store.mjs",
+      "gitMode": "100644",
+      "blob": "51476b434531ad22f1c01bfb9392e7d124f3de68",
+      "bytes": 5734,
+      "sha256": "ccf19b067caddb6f4a7e0e5164e015615a759ef0e54ae9e56673b915b7dd5876"
+    },
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/software-security-auditor/SKILL.md",
+      "gitMode": "100644",
+      "blob": "b040211f6b9d86ddca913699cde5b45ef994929b",
+      "bytes": 1922,
+      "sha256": "54c2364b7032117597f435eec5e894e45f5f098c5e1dce9435ed6d309a1fe502"
+    },
+    {
+      "path": "skills/software-security-auditor/contracts/security-audit-report.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/software-security-auditor/contracts/security-audit-report.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "82eec1e3e6b71900aa006c9f3697db29e93fa8eb",
+      "bytes": 7487,
+      "sha256": "12ed15bc510ceae9411db7e0101722b862965aa495c6233a5a29390e29e500fb"
+    },
+    {
+      "path": "skills/software-security-auditor/contracts/security-audit-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/software-security-auditor/contracts/security-audit-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "cc2b4bd9c7b8087b6d6f56ad7b8c2ed883674c41",
+      "bytes": 3375,
+      "sha256": "a78412985ff35634acba9242be09673ac08f61753d9b1c7b55264ec66995e103"
+    },
+    {
+      "path": "skills/software-security-auditor/integration/provider-result.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/software-security-auditor/integration/provider-result.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "60716073fa18f5346e0cfa8d37124fe826f6eeca",
+      "bytes": 2937,
+      "sha256": "9067e06f1b36f22a3f10c99777f3a35d1dc10cd128537053982826e2248105a5"
+    },
+    {
+      "path": "skills/software-security-auditor/integration/skill-descriptor.json",
+      "shipmentPath": "claude-plugin/skills/software-security-auditor/integration/skill-descriptor.json",
+      "gitMode": "100644",
+      "blob": "e75bc826cfcd25038d9d59c493d1859540682411",
+      "bytes": 1975,
+      "sha256": "ffe3a15db77dbc96ba0968554e4c7975308ffd31d1e4f1247f587312783efae7"
+    },
+    {
+      "path": "skills/software-security-auditor/references/cli-mcp.md",
+      "shipmentPath": "claude-plugin/skills/software-security-auditor/references/cli-mcp.md",
+      "gitMode": "100644",
+      "blob": "d82723b889af4372068b1a6ee7617a9551ab9a35",
+      "bytes": 1917,
+      "sha256": "08a551a35198d84e4449f03e35fcf29251d73688ad84461f0a93e832f9e3035a"
+    },
+    {
+      "path": "skills/software-security-auditor/references/entry-details.md",
+      "shipmentPath": "claude-plugin/skills/software-security-auditor/references/entry-details.md",
+      "gitMode": "100644",
+      "blob": "2a150d3831ac6b44a20bc6ade8251ca2b2833b02",
+      "bytes": 3885,
+      "sha256": "8f03bb00300befa9eaa2b350330a695b42ac3d9f8d336d6d84020c467a95b6a0"
+    },
+    {
+      "path": "skills/software-security-auditor/references/web-api.md",
+      "shipmentPath": "claude-plugin/skills/software-security-auditor/references/web-api.md",
+      "gitMode": "100644",
+      "blob": "4cfb7727b0b6b73eed9a75cf406cff4f2fcba3e3",
+      "bytes": 1981,
+      "sha256": "00adebf91994623838cac5ff90a28bb7ac9455f24515c85fd80d721d8b17abe0"
+    },
+    {
+      "path": "skills/software-security-auditor/scripts/cli.mjs",
+      "shipmentPath": "claude-plugin/skills/software-security-auditor/scripts/cli.mjs",
+      "gitMode": "100644",
+      "blob": "e7793c9d4680074b40b80d8457e7fd1db2b0b600",
+      "bytes": 1493,
+      "sha256": "7b12f9568776c1678aa6cab151694b4c02a215f8b1c3f64a73dbd378d8a96360"
+    },
+    {
+      "path": "skills/software-security-auditor/scripts/core.d.mts",
+      "shipmentPath": "claude-plugin/skills/software-security-auditor/scripts/core.d.mts",
+      "gitMode": "100644",
+      "blob": "fa546e10e5ac9a7d1d75be23e6acea16623f1b82",
+      "bytes": 62,
+      "sha256": "9ffc696aa773d947ecac176381d78e524ce4770301e09f4177c51969353a6323"
+    },
+    {
+      "path": "skills/software-security-auditor/scripts/core.mjs",
+      "shipmentPath": "claude-plugin/skills/software-security-auditor/scripts/core.mjs",
+      "gitMode": "100644",
+      "blob": "cde3a6f716217b2f7a2d2ee0d9f94c73845c700d",
+      "bytes": 3951,
+      "sha256": "84fe73357254b9f98062d03eca83126bf72ac582cc63526cd5d97fa730d2ba13"
+    },
+    {
+      "path": "skills/software-security-auditor/scripts/validation.mjs",
+      "shipmentPath": "claude-plugin/skills/software-security-auditor/scripts/validation.mjs",
+      "gitMode": "100644",
+      "blob": "8452aadf21930d84df041fd1bc171031eb4d8014",
+      "bytes": 2731,
+      "sha256": "af11086a2cf3ea1737e272d4ac59bd99f05c1555934fe5c34e7396572be415ec"
+    },
+    {
+      "path": "skills/source-lock.json",
+      "shipmentPath": "claude-plugin/skills/source-lock.json",
+      "gitMode": "100644",
+      "blob": "add7c68258e535fdd1e7a90a63af9af69d913075",
+      "bytes": 8413,
+      "sha256": "8b8b97063825d975db4b7733ccdbda3bf1af1ea69e9716804faf0208da189f60"
+    },
+    {
+      "path": "skills/task-contract/LICENSE",
+      "shipmentPath": "claude-plugin/skills/task-contract/LICENSE",
+      "gitMode": "100644",
+      "blob": "fce99f684ffb085d094f8352fedfa20552046d41",
+      "bytes": 1068,
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02"
+    },
+    {
+      "path": "skills/task-contract/README.md",
+      "shipmentPath": "claude-plugin/skills/task-contract/README.md",
+      "gitMode": "100644",
+      "blob": "7ed78a23d99157499a97346620a9d9987a25cf16",
+      "bytes": 2729,
+      "sha256": "e5c63fa3447d1e9a4bae033465843f2b1d9c6eba86f7326729015398b3ac8ff1"
+    },
+    {
+      "path": "skills/task-contract/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/task-contract/SKILL.md",
+      "gitMode": "100644",
+      "blob": "fc89685c0f293aac7d19a8b5ee979ac0a5d37d61",
+      "bytes": 1783,
+      "sha256": "b6fee81517ba23185fca992a5291b9b057b0a2de77d625d19ccbf202bcd55c5d"
+    },
+    {
+      "path": "skills/task-contract/contracts/acceptance-evidence-plan.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/task-contract/contracts/acceptance-evidence-plan.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "0b953a1de6909d31cd7e3d6830a07c181459de20",
+      "bytes": 1182,
+      "sha256": "77fe7a7280904046d2b372a75db5ac38a76e148f878dd8f853f69e49bcb1d8b4"
+    },
+    {
+      "path": "skills/task-contract/contracts/task-contract-report.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/task-contract/contracts/task-contract-report.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "71975e9d5ed9b921b899bf44df5e2bd585e98045",
+      "bytes": 3501,
+      "sha256": "ce5263ec3d1edc13f0461b4ac012989623808cc0bd6dd759456d107a34104dbd"
+    },
+    {
+      "path": "skills/task-contract/contracts/task-contract-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/task-contract/contracts/task-contract-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "6f7a45ba0231751737e47c81ad11667fc23e939a",
+      "bytes": 1944,
+      "sha256": "e6393d9b242730f9bc1dec0fd1a8ab16028f894f342e84e0799462d0bdc279e6"
+    },
+    {
+      "path": "skills/task-contract/contracts/task-contract-validation.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/task-contract/contracts/task-contract-validation.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "3373ba704372fd36208e165dabab1dc94ad7ca52",
+      "bytes": 646,
+      "sha256": "54b7b67a4439b5a8c6f8079d44d1ecc91efea89fa0e5b4b80596d846852a38b3"
+    },
+    {
+      "path": "skills/task-contract/contracts/upstream/lock.json",
+      "shipmentPath": "claude-plugin/skills/task-contract/contracts/upstream/lock.json",
+      "gitMode": "100644",
+      "blob": "22d60bff341dc356dbf245b99a6c954ecb066dad",
+      "bytes": 578,
+      "sha256": "7d986629a673ce2877d5ebfc4616cbfb81f61ece3b5bc03ad483ea3ba305027d"
+    },
+    {
+      "path": "skills/task-contract/contracts/upstream/task-envelope.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/task-contract/contracts/upstream/task-envelope.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "a95f74c14089ce8c79ada753e787cc8d72facb17",
+      "bytes": 3037,
+      "sha256": "b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21"
+    },
+    {
+      "path": "skills/task-contract/integration/provider-result.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/task-contract/integration/provider-result.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "08a2fd18e2bd56732f0d99f6dbf2b6ccdb820e73",
+      "bytes": 2498,
+      "sha256": "619451cd870832d1a223958dc31bc1dd5bacee2039b61fd4ca1ff63932829958"
+    },
+    {
+      "path": "skills/task-contract/integration/skill-descriptor.json",
+      "shipmentPath": "claude-plugin/skills/task-contract/integration/skill-descriptor.json",
+      "gitMode": "100644",
+      "blob": "badb55a69a962b5cf4aaf56cd0a399319efc1f56",
+      "bytes": 1817,
+      "sha256": "1bb1645cce768b1c287601908dad3ea1e2deb5e0cd5b1cfb5720b927eb5243dc"
+    },
+    {
+      "path": "skills/task-contract/references/acceptance-criteria.md",
+      "shipmentPath": "claude-plugin/skills/task-contract/references/acceptance-criteria.md",
+      "gitMode": "100644",
+      "blob": "c9c8b8875de23dc33068c7f634c550abb0c8c1f4",
+      "bytes": 978,
+      "sha256": "ae6977721dee30fa64b3c8f467b2c81f9e7a3b0f3de3f3d062e7391fe88ae6b1"
+    },
+    {
+      "path": "skills/task-contract/references/entry-details.md",
+      "shipmentPath": "claude-plugin/skills/task-contract/references/entry-details.md",
+      "gitMode": "100644",
+      "blob": "77f545c02aafca957c55205f592ff7f12051232a",
+      "bytes": 2325,
+      "sha256": "e587fd4a1b94415ec30ad943bb1cc9d81f1cb988b07ecab3df3cedd4f6c7efc9"
+    },
+    {
+      "path": "skills/task-contract/references/field-guide.md",
+      "shipmentPath": "claude-plugin/skills/task-contract/references/field-guide.md",
+      "gitMode": "100644",
+      "blob": "3a645c368ebcf68a0df2ceca3abcf4f406c32663",
+      "bytes": 1932,
+      "sha256": "24df5e053d36887290972c9469194891618bfcd247e6b04f4a74acaf089fc059"
+    },
+    {
+      "path": "skills/task-contract/references/risk-and-authorization-rubric.md",
+      "shipmentPath": "claude-plugin/skills/task-contract/references/risk-and-authorization-rubric.md",
+      "gitMode": "100644",
+      "blob": "e9d13aead4c3042039e7a650140f5cf7f18d8b93",
+      "bytes": 2334,
+      "sha256": "7c5c7bf57f9f57989ed7b22352e9742e6cbf0962bac1ff099c5fea56509f4827"
+    },
+    {
+      "path": "skills/task-contract/scripts/validate-repository.mjs",
+      "shipmentPath": "claude-plugin/skills/task-contract/scripts/validate-repository.mjs",
+      "gitMode": "100644",
+      "blob": "dea247752a2ef752fd0751944b5770ee630df7bd",
+      "bytes": 4551,
+      "sha256": "64ba1aaf5da1f153e38e9a0584db2758bb886941f48e39af4705e76852685389"
+    },
+    {
+      "path": "skills/task-contract/scripts/validate-task-contract.mjs",
+      "shipmentPath": "claude-plugin/skills/task-contract/scripts/validate-task-contract.mjs",
+      "gitMode": "100644",
+      "blob": "be492539c64f8d9f5e1f62c72aa8b6ed573f4611",
+      "bytes": 12886,
+      "sha256": "cb79d6a233a8e79ac6bf65a1b6bf3f256917461dbda1a102fd053863e6180ec4"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/LICENSE",
+      "shipmentPath": "claude-plugin/skills/workspace-convention-profiler/LICENSE",
+      "gitMode": "100644",
+      "blob": "fce99f684ffb085d094f8352fedfa20552046d41",
+      "bytes": 1068,
+      "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/README.md",
+      "shipmentPath": "claude-plugin/skills/workspace-convention-profiler/README.md",
+      "gitMode": "100644",
+      "blob": "d8959dcfb121b6c370738f6107471e1271434175",
+      "bytes": 1685,
+      "sha256": "0b853c43642022e7756db1c893bb9ef31626979044f0aea7ce4eb7dab15b48d1"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/SKILL.md",
+      "shipmentPath": "claude-plugin/skills/workspace-convention-profiler/SKILL.md",
+      "gitMode": "100644",
+      "blob": "0212f3725a2648c1d04d9044e9a5797432f896ce",
+      "bytes": 2047,
+      "sha256": "2cf65f3abe46f637879a9a9544069a1162ca3e04a152212669c4054fdf2abe69"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/contracts/workspace-convention-profile.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/workspace-convention-profiler/contracts/workspace-convention-profile.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "4902f61cd734f8f2fa9bbe68987bba146b39c664",
+      "bytes": 4958,
+      "sha256": "abffbd137671292de90000a62e4d3425eece203a6914a87defada2cf71a9e7bf"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/contracts/workspace-profile-request.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/workspace-convention-profiler/contracts/workspace-profile-request.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "673f1e88d5ba8ffc3a0e86a8d0333a812f085e64",
+      "bytes": 1425,
+      "sha256": "775c90d3367a75d7ac96a7884486e3fe657a6c1a18b129f81d284f008467464d"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/integration/provider-result.v1.schema.json",
+      "shipmentPath": "claude-plugin/skills/workspace-convention-profiler/integration/provider-result.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "781462680771b4a79841286a5b36f3436f088596",
+      "bytes": 1534,
+      "sha256": "515e04e309f2c8f17ee249cd5ce2b3489b78c5edeb811d77596df6138e9adaf1"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/integration/skill-descriptor.json",
+      "shipmentPath": "claude-plugin/skills/workspace-convention-profiler/integration/skill-descriptor.json",
+      "gitMode": "100644",
+      "blob": "42836be2a259d1989a5a8e975b0f55597af4635a",
+      "bytes": 1860,
+      "sha256": "b7b233767ccc927e577322bd1fe09832ebdc6932ab2ebe56f60ed34cea7055a4"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/references/discovery-rules.md",
+      "shipmentPath": "claude-plugin/skills/workspace-convention-profiler/references/discovery-rules.md",
+      "gitMode": "100644",
+      "blob": "8424de77434444a6535487ddfc246ea548da239b",
+      "bytes": 1480,
+      "sha256": "b521bdf226255257bc6077dd3ea376d75a3dd75cacdd38ee20cec44a95bda7d7"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/references/entry-details.md",
+      "shipmentPath": "claude-plugin/skills/workspace-convention-profiler/references/entry-details.md",
+      "gitMode": "100644",
+      "blob": "d6b301e1f6d051284ee0c4a547053d8949cbf861",
+      "bytes": 1400,
+      "sha256": "9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/references/evidence-confidence.md",
+      "shipmentPath": "claude-plugin/skills/workspace-convention-profiler/references/evidence-confidence.md",
+      "gitMode": "100644",
+      "blob": "0270cae33464f9f756c454599a364d5b12a52b5b",
+      "bytes": 617,
+      "sha256": "0cbb160bc1c316787b7a17e4598b9983bbbb688f57f90fcc3ec2d96f4fa368f5"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/references/profile-contract.md",
+      "shipmentPath": "claude-plugin/skills/workspace-convention-profiler/references/profile-contract.md",
+      "gitMode": "100644",
+      "blob": "0f6be8e70d5ff60f5a7cf66ba90904777b2bac89",
+      "bytes": 798,
+      "sha256": "95d10a1e0ad29e24a6530abf84d0b1c9c27664568279bc1a2967198aa2e4fd7b"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/scripts/profile-workspace.mjs",
+      "shipmentPath": "claude-plugin/skills/workspace-convention-profiler/scripts/profile-workspace.mjs",
+      "gitMode": "100644",
+      "blob": "950741b27e5c1fb1efa665d3555b997a115350b9",
+      "bytes": 15885,
+      "sha256": "acee97c401612c70fefabd7ec2a183af652956b674fbfd491f121a3a71004cc1"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/scripts/schema-validation.mjs",
+      "shipmentPath": "claude-plugin/skills/workspace-convention-profiler/scripts/schema-validation.mjs",
+      "gitMode": "100644",
+      "blob": "91281aa787d088946e78463b450d9351c58e9e02",
+      "bytes": 773,
+      "sha256": "967c4e72461f05428693e51a9651cd6c015b4486ab4e9566d70151d6891c6615"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/scripts/validate-profile.mjs",
+      "shipmentPath": "claude-plugin/skills/workspace-convention-profiler/scripts/validate-profile.mjs",
+      "gitMode": "100644",
+      "blob": "1363e96375bf7381a6a0b5698aea21f1a6aa56f5",
+      "bytes": 2489,
+      "sha256": "a43243a8a8d01c05f78cac113d809e6282145e97e91304091408f43d0306751d"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/scripts/validate-skill.mjs",
+      "shipmentPath": "claude-plugin/skills/workspace-convention-profiler/scripts/validate-skill.mjs",
+      "gitMode": "100644",
+      "blob": "55ef01b57f7b2331449beeacd5b6e3ac738fdaad",
+      "bytes": 2186,
+      "sha256": "7a8e4d07d1cd3bb7a38491abfc8a33ad2156d5da4c83599926bc2c4bddd4779b"
+    }
+  ],
+  "authorityEffect": "none"
+}

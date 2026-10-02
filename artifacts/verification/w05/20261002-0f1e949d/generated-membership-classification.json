@@ -1,0 +1,439 @@
+{
+  "membership": {
+    "reportedOriginalManifestBytes": 28067,
+    "reportedOriginalManifestSha256": "b93721e91c23cd0006ced7b655d6470f033e72b0b98c902da39c262d65afba04",
+    "provenance": "Exact15 membership supplied by existing AGS lead through parent; historical original manifest was not transferred",
+    "oldHashEqualityRequired": false,
+    "oldHashesLocallyRecomputed": false,
+    "purpose": "Membership and historical preservation; current-byte seal only"
+  },
+  "sourceCommit": "0f1e949d4ca57fe3cc9aac98767d5c0dade79c61",
+  "sourceTree": "78c4eddb528d851cff295cba2891c2148221a3f1",
+  "shipmentTree": "56aaea2a1b0509b6d9f9b428228619ded640dc1a",
+  "expected15SealSha256": "e7caf127f6274917249ba78560ad89fa8156d18b7c74a96c3bd2bc3ad7648d3f",
+  "expectedMembers": [
+    "mcp-server/dist/server.mjs",
+    "mcp-server/dist/flowmarshal-profile-probe.mjs",
+    "runtime/schema-validation.mjs",
+    "mcp-server/dist/continuity-hook.mjs",
+    "mcp-server/dist/host-attestation-hook.mjs",
+    "mcp-server/dist/model-routing-peer-cli.mjs",
+    "mcp-server/dist/model-routing-host-hook.mjs",
+    "mcp-server/dist/host-attestation-api.mjs",
+    "mcp-server/dist/session-board-hook.mjs",
+    "mcp-server/dist/session-message-broker.mjs",
+    "mcp-server/dist/session-message-relay.mjs",
+    "mcp-server/dist/session-message-hook.mjs",
+    "mcp-server/dist/session-message-cli.mjs",
+    "runtime/THIRD_PARTY_NOTICES.md",
+    "host-integration.json"
+  ],
+  "observedChangedPaths": [
+    {
+      "path": "claude-plugin/contracts/session-auto-wake-outlook.v1.schema.json",
+      "bytes": 1594,
+      "sha256": "dff6c334cf6aaf10d6ddb6787bc6a35d6f40d2d195b13cb3dc90b79b80e6b565",
+      "gitMode": "100644",
+      "inExpected15": false
+    },
+    {
+      "path": "claude-plugin/contracts/types.ts",
+      "bytes": 48293,
+      "sha256": "3b71a88326beef712e9ae381b852b61486e10e439ac014e7ffc964d50994d5b0",
+      "gitMode": "100644",
+      "inExpected15": false
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/host-attestation-api.mjs",
+      "bytes": 40713,
+      "sha256": "12fefa5cc52c4cc8ebf1f221eea3eb9c983c317bf36777e6ff7b71f37d221e46",
+      "gitMode": "100644",
+      "inExpected15": false
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/model-routing-host-hook.mjs",
+      "bytes": 713671,
+      "sha256": "aa4166b45ed20c147eb45d7ab02e5b644e5963ee003a4911d0be37c47a160fcf",
+      "gitMode": "100644",
+      "inExpected15": false
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/model-routing-peer-cli.mjs",
+      "bytes": 782962,
+      "sha256": "8617ec0856b75af2327895bece4f1d162147c0fbff7a11396d1ff5b1653bebe9",
+      "gitMode": "100644",
+      "inExpected15": false
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/server.mjs",
+      "bytes": 2074121,
+      "sha256": "efc1c5627750649f299ea560812d307bab398895cae2d04000e38dc467b45606",
+      "gitMode": "100644",
+      "inExpected15": false
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/session-board-hook.mjs",
+      "bytes": 26410,
+      "sha256": "4a585084d3436f944a3e1c466730286442b303821e1dc6b4f7e4524758300bff",
+      "gitMode": "100644",
+      "inExpected15": false
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/session-message-broker.mjs",
+      "bytes": 739212,
+      "sha256": "96b18e7adc6a264e04e580e3f9fda9b27546655d249ca738558623659d498faa",
+      "gitMode": "100644",
+      "inExpected15": false
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/session-message-cli.mjs",
+      "bytes": 16192,
+      "sha256": "4d3023be81623fa5acdfc21f3491f32d5ce43bde24a76f97a8b03c6211aa545b",
+      "gitMode": "100644",
+      "inExpected15": false
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/session-message-hook.mjs",
+      "bytes": 822233,
+      "sha256": "aa02c66fdf0c738e1015bcfaf676a6311b36f0159b8badc157eb4db4bf4e62d6",
+      "gitMode": "100644",
+      "inExpected15": false
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/session-message-relay.mjs",
+      "bytes": 24050,
+      "sha256": "721a40cb342dc76fda3d8d2d2aba2a3442a08e8755b38e3ae37bf455a7ecdae8",
+      "gitMode": "100644",
+      "inExpected15": false
+    },
+    {
+      "path": "host-integration.json",
+      "bytes": 48589,
+      "sha256": "64fc1c65d8b29190612ae7a127258081cd746b19469f98076c28a9b43501f4a2",
+      "gitMode": "100644",
+      "inExpected15": true
+    },
+    {
+      "path": "mcp-server/dist/flowmarshal-profile-probe.mjs",
+      "bytes": 423510,
+      "sha256": "3e5984e94ddfb401102e5ab4be1b30756dbff1f198b15ac7c06656f994937509",
+      "gitMode": "100644",
+      "inExpected15": true
+    },
+    {
+      "path": "mcp-server/dist/host-attestation-api.mjs",
+      "bytes": 40713,
+      "sha256": "12fefa5cc52c4cc8ebf1f221eea3eb9c983c317bf36777e6ff7b71f37d221e46",
+      "gitMode": "100644",
+      "inExpected15": true
+    },
+    {
+      "path": "mcp-server/dist/model-routing-host-hook.mjs",
+      "bytes": 713671,
+      "sha256": "aa4166b45ed20c147eb45d7ab02e5b644e5963ee003a4911d0be37c47a160fcf",
+      "gitMode": "100644",
+      "inExpected15": true
+    },
+    {
+      "path": "mcp-server/dist/model-routing-peer-cli.mjs",
+      "bytes": 782962,
+      "sha256": "8617ec0856b75af2327895bece4f1d162147c0fbff7a11396d1ff5b1653bebe9",
+      "gitMode": "100644",
+      "inExpected15": true
+    },
+    {
+      "path": "mcp-server/dist/server.mjs",
+      "bytes": 2074121,
+      "sha256": "efc1c5627750649f299ea560812d307bab398895cae2d04000e38dc467b45606",
+      "gitMode": "100644",
+      "inExpected15": true
+    },
+    {
+      "path": "mcp-server/dist/session-board-hook.mjs",
+      "bytes": 26410,
+      "sha256": "4a585084d3436f944a3e1c466730286442b303821e1dc6b4f7e4524758300bff",
+      "gitMode": "100644",
+      "inExpected15": true
+    },
+    {
+      "path": "mcp-server/dist/session-message-broker.mjs",
+      "bytes": 739212,
+      "sha256": "96b18e7adc6a264e04e580e3f9fda9b27546655d249ca738558623659d498faa",
+      "gitMode": "100644",
+      "inExpected15": true
+    },
+    {
+      "path": "mcp-server/dist/session-message-cli.mjs",
+      "bytes": 16192,
+      "sha256": "4d3023be81623fa5acdfc21f3491f32d5ce43bde24a76f97a8b03c6211aa545b",
+      "gitMode": "100644",
+      "inExpected15": true
+    },
+    {
+      "path": "mcp-server/dist/session-message-hook.mjs",
+      "bytes": 822233,
+      "sha256": "aa02c66fdf0c738e1015bcfaf676a6311b36f0159b8badc157eb4db4bf4e62d6",
+      "gitMode": "100644",
+      "inExpected15": true
+    },
+    {
+      "path": "mcp-server/dist/session-message-relay.mjs",
+      "bytes": 24050,
+      "sha256": "721a40cb342dc76fda3d8d2d2aba2a3442a08e8755b38e3ae37bf455a7ecdae8",
+      "gitMode": "100644",
+      "inExpected15": true
+    }
+  ],
+  "setCounts": {
+    "expectedMembership": 15,
+    "observedChanges": 22,
+    "changedExpectedMembers": 11,
+    "unchangedExpectedMembers": 4,
+    "changedOutsideExpectedMembership": 11,
+    "unionExpectedAndChanged": 26
+  },
+  "requestedRemaining7Explanation": "22 minus15 equals7 only if all15 expected members changed; four expected members are byte-identical, so actual changed extras are11. No seven-member set is invented and no files are deleted.",
+  "unchangedExpectedMembers": [
+    {
+      "path": "mcp-server/dist/continuity-hook.mjs",
+      "bytes": 116643,
+      "sha256": "8fe57668c618b8e2fe805e8ec7ab48f3a67057200f309a18346c1dffb8e3c437",
+      "generator": "pnpm build -> scripts/runtime-bundles.mjs",
+      "status": "Regenerated bytes equal source-candidate bytes; absent from changed22 patch"
+    },
+    {
+      "path": "mcp-server/dist/host-attestation-hook.mjs",
+      "bytes": 78835,
+      "sha256": "1ea781f9d63d6106c12bceb2a9198571731d69cf717fab4f4d75cfa50850fa5a",
+      "generator": "pnpm build -> scripts/runtime-bundles.mjs",
+      "status": "Regenerated bytes equal source-candidate bytes; absent from changed22 patch"
+    },
+    {
+      "path": "runtime/THIRD_PARTY_NOTICES.md",
+      "bytes": 6532,
+      "sha256": "eb52bd20401bc1f8c9e36d191eaf74040d3e5630e047f8b6e6dd2ca6f5e0ea79",
+      "generator": "pnpm build -> scripts/runtime-bundles.mjs",
+      "status": "Regenerated bytes equal source-candidate bytes; absent from changed22 patch"
+    },
+    {
+      "path": "runtime/schema-validation.mjs",
+      "bytes": 148397,
+      "sha256": "03996e2281db3e79a86d467e492ca4aaeaf38f89e802313102ffddf738f81e5c",
+      "generator": "pnpm build -> scripts/runtime-bundles.mjs",
+      "status": "Regenerated bytes equal source-candidate bytes; absent from changed22 patch"
+    }
+  ],
+  "extraPaths": [
+    {
+      "path": "claude-plugin/contracts/session-auto-wake-outlook.v1.schema.json",
+      "gitMode": "100644",
+      "blob": "5a549b574596b4b25a4c8152e00147c2f60fa9e6",
+      "bytes": 1594,
+      "sha256": "dff6c334cf6aaf10d6ddb6787bc6a35d6f40d2d195b13cb3dc90b79b80e6b565",
+      "rootCounterpart": "contracts/session-auto-wake-outlook.v1.schema.json",
+      "counterpartSha256": "dff6c334cf6aaf10d6ddb6787bc6a35d6f40d2d195b13cb3dc90b79b80e6b565",
+      "bitIdenticalToCounterpart": true,
+      "generator": "pnpm claude:build -> scripts/build-claude-plugin.mjs/renderClaudePlugin",
+      "generatorMethod": "SHARED_ROOTS contracts/ copy",
+      "upstreamOrigin": "source25 contract; unchanged during shared build",
+      "role": "Shared non-authorizing auto-wake outlook JSON Schema",
+      "existingReceipt": "06-official-claude-generation.json",
+      "classification": "Official Claude shipment generated copy, outside root expected15 membership",
+      "qualificationEffect": "none; does not resolve failed regression or create GO"
+    },
+    {
+      "path": "claude-plugin/contracts/types.ts",
+      "gitMode": "100644",
+      "blob": "1e6062c85214a437604d4d18c8c2cd5584cacbea",
+      "bytes": 48293,
+      "sha256": "3b71a88326beef712e9ae381b852b61486e10e439ac014e7ffc964d50994d5b0",
+      "rootCounterpart": "contracts/types.ts",
+      "counterpartSha256": "3b71a88326beef712e9ae381b852b61486e10e439ac014e7ffc964d50994d5b0",
+      "bitIdenticalToCounterpart": true,
+      "generator": "pnpm claude:build -> scripts/build-claude-plugin.mjs/renderClaudePlugin",
+      "generatorMethod": "SHARED_ROOTS contracts/ copy",
+      "upstreamOrigin": "source25 contract; unchanged during shared build",
+      "role": "Shared TypeScript contracts, including auto-wake outlook types",
+      "existingReceipt": "06-official-claude-generation.json",
+      "classification": "Official Claude shipment generated copy, outside root expected15 membership",
+      "qualificationEffect": "none; does not resolve failed regression or create GO"
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/host-attestation-api.mjs",
+      "gitMode": "100644",
+      "blob": "c3ab86181ad01a9acfda7e2669b910a353227d61",
+      "bytes": 40713,
+      "sha256": "12fefa5cc52c4cc8ebf1f221eea3eb9c983c317bf36777e6ff7b71f37d221e46",
+      "rootCounterpart": "mcp-server/dist/host-attestation-api.mjs",
+      "counterpartSha256": "12fefa5cc52c4cc8ebf1f221eea3eb9c983c317bf36777e6ff7b71f37d221e46",
+      "bitIdenticalToCounterpart": true,
+      "generator": "pnpm claude:build -> scripts/build-claude-plugin.mjs/renderClaudePlugin",
+      "generatorMethod": "SHARED_FILES runtime bundle copy",
+      "upstreamOrigin": "pnpm build esbuild runtime bundle; expected15 root member",
+      "role": "Host-owned attestation wrapper API",
+      "existingReceipt": "06-official-claude-generation.json",
+      "classification": "Official Claude shipment generated copy, outside root expected15 membership",
+      "qualificationEffect": "none; does not resolve failed regression or create GO"
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/model-routing-host-hook.mjs",
+      "gitMode": "100644",
+      "blob": "6c27135619d8afb731b1f6fea2bfa2f0d1b98e75",
+      "bytes": 713671,
+      "sha256": "aa4166b45ed20c147eb45d7ab02e5b644e5963ee003a4911d0be37c47a160fcf",
+      "rootCounterpart": "mcp-server/dist/model-routing-host-hook.mjs",
+      "counterpartSha256": "aa4166b45ed20c147eb45d7ab02e5b644e5963ee003a4911d0be37c47a160fcf",
+      "bitIdenticalToCounterpart": true,
+      "generator": "pnpm claude:build -> scripts/build-claude-plugin.mjs/renderClaudePlugin",
+      "generatorMethod": "SHARED_FILES runtime bundle copy",
+      "upstreamOrigin": "pnpm build esbuild runtime bundle; expected15 root member",
+      "role": "Host model-routing observation hook",
+      "existingReceipt": "06-official-claude-generation.json",
+      "classification": "Official Claude shipment generated copy, outside root expected15 membership",
+      "qualificationEffect": "none; does not resolve failed regression or create GO"
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/model-routing-peer-cli.mjs",
+      "gitMode": "100644",
+      "blob": "d95491ee5e0628db6a873bf5fe4a82b300def922",
+      "bytes": 782962,
+      "sha256": "8617ec0856b75af2327895bece4f1d162147c0fbff7a11396d1ff5b1653bebe9",
+      "rootCounterpart": "mcp-server/dist/model-routing-peer-cli.mjs",
+      "counterpartSha256": "8617ec0856b75af2327895bece4f1d162147c0fbff7a11396d1ff5b1653bebe9",
+      "bitIdenticalToCounterpart": true,
+      "generator": "pnpm claude:build -> scripts/build-claude-plugin.mjs/renderClaudePlugin",
+      "generatorMethod": "SHARED_FILES runtime bundle copy",
+      "upstreamOrigin": "pnpm build esbuild runtime bundle; expected15 root member",
+      "role": "Peer model-routing handoff CLI",
+      "existingReceipt": "06-official-claude-generation.json",
+      "classification": "Official Claude shipment generated copy, outside root expected15 membership",
+      "qualificationEffect": "none; does not resolve failed regression or create GO"
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/server.mjs",
+      "gitMode": "100644",
+      "blob": "f6406fd6294eebbb1a8c1028cbb1326631db80cf",
+      "bytes": 2074121,
+      "sha256": "efc1c5627750649f299ea560812d307bab398895cae2d04000e38dc467b45606",
+      "rootCounterpart": "mcp-server/dist/server.mjs",
+      "counterpartSha256": "efc1c5627750649f299ea560812d307bab398895cae2d04000e38dc467b45606",
+      "bitIdenticalToCounterpart": true,
+      "generator": "pnpm claude:build -> scripts/build-claude-plugin.mjs/renderClaudePlugin",
+      "generatorMethod": "SHARED_FILES runtime bundle copy",
+      "upstreamOrigin": "pnpm build esbuild runtime bundle; expected15 root member",
+      "role": "Packaged STDIO MCP server and shared tool implementations",
+      "existingReceipt": "06-official-claude-generation.json",
+      "classification": "Official Claude shipment generated copy, outside root expected15 membership",
+      "qualificationEffect": "none; does not resolve failed regression or create GO"
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/session-board-hook.mjs",
+      "gitMode": "100644",
+      "blob": "d22472e787f8f15add63fda8518958ff2c5da9bf",
+      "bytes": 26410,
+      "sha256": "4a585084d3436f944a3e1c466730286442b303821e1dc6b4f7e4524758300bff",
+      "rootCounterpart": "mcp-server/dist/session-board-hook.mjs",
+      "counterpartSha256": "4a585084d3436f944a3e1c466730286442b303821e1dc6b4f7e4524758300bff",
+      "bitIdenticalToCounterpart": true,
+      "generator": "pnpm claude:build -> scripts/build-claude-plugin.mjs/renderClaudePlugin",
+      "generatorMethod": "SHARED_FILES runtime bundle copy",
+      "upstreamOrigin": "pnpm build esbuild runtime bundle; expected15 root member",
+      "role": "Session-board tool-boundary hook",
+      "existingReceipt": "06-official-claude-generation.json",
+      "classification": "Official Claude shipment generated copy, outside root expected15 membership",
+      "qualificationEffect": "none; does not resolve failed regression or create GO"
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/session-message-broker.mjs",
+      "gitMode": "100644",
+      "blob": "b371ef00ca0412e3a7afd489b67b81d94a497ce7",
+      "bytes": 739212,
+      "sha256": "96b18e7adc6a264e04e580e3f9fda9b27546655d249ca738558623659d498faa",
+      "rootCounterpart": "mcp-server/dist/session-message-broker.mjs",
+      "counterpartSha256": "96b18e7adc6a264e04e580e3f9fda9b27546655d249ca738558623659d498faa",
+      "bitIdenticalToCounterpart": true,
+      "generator": "pnpm claude:build -> scripts/build-claude-plugin.mjs/renderClaudePlugin",
+      "generatorMethod": "SHARED_FILES runtime bundle copy",
+      "upstreamOrigin": "pnpm build esbuild runtime bundle; expected15 root member",
+      "role": "Packaged local TLS message broker",
+      "existingReceipt": "06-official-claude-generation.json",
+      "classification": "Official Claude shipment generated copy, outside root expected15 membership",
+      "qualificationEffect": "none; does not resolve failed regression or create GO"
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/session-message-cli.mjs",
+      "gitMode": "100644",
+      "blob": "abcf8a7131e701138e79495576a31a8ece178012",
+      "bytes": 16192,
+      "sha256": "4d3023be81623fa5acdfc21f3491f32d5ce43bde24a76f97a8b03c6211aa545b",
+      "rootCounterpart": "mcp-server/dist/session-message-cli.mjs",
+      "counterpartSha256": "4d3023be81623fa5acdfc21f3491f32d5ce43bde24a76f97a8b03c6211aa545b",
+      "bitIdenticalToCounterpart": true,
+      "generator": "pnpm claude:build -> scripts/build-claude-plugin.mjs/renderClaudePlugin",
+      "generatorMethod": "SHARED_FILES runtime bundle copy",
+      "upstreamOrigin": "pnpm build esbuild runtime bundle; expected15 root member",
+      "role": "Public portable messaging CLI",
+      "existingReceipt": "06-official-claude-generation.json",
+      "classification": "Official Claude shipment generated copy, outside root expected15 membership",
+      "qualificationEffect": "none; does not resolve failed regression or create GO"
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/session-message-hook.mjs",
+      "gitMode": "100644",
+      "blob": "561333a8563dbcc40cd95983d3ff59b1127bcc82",
+      "bytes": 822233,
+      "sha256": "aa02c66fdf0c738e1015bcfaf676a6311b36f0159b8badc157eb4db4bf4e62d6",
+      "rootCounterpart": "mcp-server/dist/session-message-hook.mjs",
+      "counterpartSha256": "aa02c66fdf0c738e1015bcfaf676a6311b36f0159b8badc157eb4db4bf4e62d6",
+      "bitIdenticalToCounterpart": true,
+      "generator": "pnpm claude:build -> scripts/build-claude-plugin.mjs/renderClaudePlugin",
+      "generatorMethod": "SHARED_FILES runtime bundle copy",
+      "upstreamOrigin": "pnpm build esbuild runtime bundle; expected15 root member",
+      "role": "Session binding/message host-hook runtime",
+      "existingReceipt": "06-official-claude-generation.json",
+      "classification": "Official Claude shipment generated copy, outside root expected15 membership",
+      "qualificationEffect": "none; does not resolve failed regression or create GO"
+    },
+    {
+      "path": "claude-plugin/mcp-server/dist/session-message-relay.mjs",
+      "gitMode": "100644",
+      "blob": "49d89e0a422dcddcf58d34a3aaf1458ad5b21ba8",
+      "bytes": 24050,
+      "sha256": "721a40cb342dc76fda3d8d2d2aba2a3442a08e8755b38e3ae37bf455a7ecdae8",
+      "rootCounterpart": "mcp-server/dist/session-message-relay.mjs",
+      "counterpartSha256": "721a40cb342dc76fda3d8d2d2aba2a3442a08e8755b38e3ae37bf455a7ecdae8",
+      "bitIdenticalToCounterpart": true,
+      "generator": "pnpm claude:build -> scripts/build-claude-plugin.mjs/renderClaudePlugin",
+      "generatorMethod": "SHARED_FILES runtime bundle copy",
+      "upstreamOrigin": "pnpm build esbuild runtime bundle; expected15 root member",
+      "role": "Session-message relay CLI and delivery boundary runtime",
+      "existingReceipt": "06-official-claude-generation.json",
+      "classification": "Official Claude shipment generated copy, outside root expected15 membership",
+      "qualificationEffect": "none; does not resolve failed regression or create GO"
+    }
+  ],
+  "generatorSourcePins": [
+    {
+      "path": "scripts/build.mjs",
+      "gitMode": "100644",
+      "blob": "dc3ccf2e016b0e218ad721d6c056db37afeee0ef",
+      "bytes": 546,
+      "sha256": "059d9f75af1e6a49f4ddeb29b235022892e5a35c68d0e5e6886617b93d2c725d"
+    },
+    {
+      "path": "scripts/runtime-bundles.mjs",
+      "gitMode": "100644",
+      "blob": "8ba4979fc7ccfbc1a96d66f369d432a6e544dffc",
+      "bytes": 5985,
+      "sha256": "4634f4c0a4c25d75c95cae1d34f6da4348afd244fbcf66c480f4ae62df5c57fb"
+    },
+    {
+      "path": "scripts/build-claude-plugin.mjs",
+      "gitMode": "100644",
+      "blob": "456ec7116c11fa30a7de03013f38dd0ace7288f5",
+      "bytes": 15756,
+      "sha256": "6eb3f75762db367d2e7cff92c3ac6cf41047412a051968c7638299d3c244642b"
+    }
+  ],
+  "scope": "Static membership, artifact integrity and generator-role classification only; no product tests or source fixes"
+}
