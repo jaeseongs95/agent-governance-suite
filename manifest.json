@@ -1,0 +1,334 @@
+{
+  "format": "ags-public-source-overlay-packet",
+  "version": 1,
+  "remote": "https://github.com/jaeseongs95/agent-governance-suite.git",
+  "base": {
+    "commit": "0f1e949d4ca57fe3cc9aac98767d5c0dade79c61",
+    "tree": "78c4eddb528d851cff295cba2891c2148221a3f1",
+    "ref": "refs/heads/codex/dot-w05-source-20261002"
+  },
+  "overlay": [
+    {
+      "path": "overlay/claude-plugin/contracts/session-auto-wake-outlook.v1.schema.json",
+      "targetPath": "claude-plugin/contracts/session-auto-wake-outlook.v1.schema.json",
+      "mode": "100644",
+      "bytes": 1594,
+      "sha256": "dff6c334cf6aaf10d6ddb6787bc6a35d6f40d2d195b13cb3dc90b79b80e6b565",
+      "blob": "5a549b574596b4b25a4c8152e00147c2f60fa9e6"
+    },
+    {
+      "path": "overlay/claude-plugin/contracts/types.ts",
+      "targetPath": "claude-plugin/contracts/types.ts",
+      "mode": "100644",
+      "bytes": 48293,
+      "sha256": "3b71a88326beef712e9ae381b852b61486e10e439ac014e7ffc964d50994d5b0",
+      "blob": "1e6062c85214a437604d4d18c8c2cd5584cacbea"
+    },
+    {
+      "path": "overlay/claude-plugin/mcp-server/dist/host-attestation-api.mjs",
+      "targetPath": "claude-plugin/mcp-server/dist/host-attestation-api.mjs",
+      "mode": "100644",
+      "bytes": 40713,
+      "sha256": "12fefa5cc52c4cc8ebf1f221eea3eb9c983c317bf36777e6ff7b71f37d221e46",
+      "blob": "c3ab86181ad01a9acfda7e2669b910a353227d61"
+    },
+    {
+      "path": "overlay/claude-plugin/mcp-server/dist/model-routing-host-hook.mjs",
+      "targetPath": "claude-plugin/mcp-server/dist/model-routing-host-hook.mjs",
+      "mode": "100644",
+      "bytes": 713671,
+      "sha256": "aa4166b45ed20c147eb45d7ab02e5b644e5963ee003a4911d0be37c47a160fcf",
+      "blob": "6c27135619d8afb731b1f6fea2bfa2f0d1b98e75"
+    },
+    {
+      "path": "overlay/claude-plugin/mcp-server/dist/model-routing-peer-cli.mjs",
+      "targetPath": "claude-plugin/mcp-server/dist/model-routing-peer-cli.mjs",
+      "mode": "100644",
+      "bytes": 782962,
+      "sha256": "8617ec0856b75af2327895bece4f1d162147c0fbff7a11396d1ff5b1653bebe9",
+      "blob": "d95491ee5e0628db6a873bf5fe4a82b300def922"
+    },
+    {
+      "path": "overlay/claude-plugin/mcp-server/dist/server.mjs",
+      "targetPath": "claude-plugin/mcp-server/dist/server.mjs",
+      "mode": "100644",
+      "bytes": 2074121,
+      "sha256": "efc1c5627750649f299ea560812d307bab398895cae2d04000e38dc467b45606",
+      "blob": "f6406fd6294eebbb1a8c1028cbb1326631db80cf"
+    },
+    {
+      "path": "overlay/claude-plugin/mcp-server/dist/session-board-hook.mjs",
+      "targetPath": "claude-plugin/mcp-server/dist/session-board-hook.mjs",
+      "mode": "100644",
+      "bytes": 26410,
+      "sha256": "4a585084d3436f944a3e1c466730286442b303821e1dc6b4f7e4524758300bff",
+      "blob": "d22472e787f8f15add63fda8518958ff2c5da9bf"
+    },
+    {
+      "path": "overlay/claude-plugin/mcp-server/dist/session-message-broker.mjs",
+      "targetPath": "claude-plugin/mcp-server/dist/session-message-broker.mjs",
+      "mode": "100644",
+      "bytes": 739212,
+      "sha256": "96b18e7adc6a264e04e580e3f9fda9b27546655d249ca738558623659d498faa",
+      "blob": "b371ef00ca0412e3a7afd489b67b81d94a497ce7"
+    },
+    {
+      "path": "overlay/claude-plugin/mcp-server/dist/session-message-cli.mjs",
+      "targetPath": "claude-plugin/mcp-server/dist/session-message-cli.mjs",
+      "mode": "100644",
+      "bytes": 16192,
+      "sha256": "4d3023be81623fa5acdfc21f3491f32d5ce43bde24a76f97a8b03c6211aa545b",
+      "blob": "abcf8a7131e701138e79495576a31a8ece178012"
+    },
+    {
+      "path": "overlay/claude-plugin/mcp-server/dist/session-message-hook.mjs",
+      "targetPath": "claude-plugin/mcp-server/dist/session-message-hook.mjs",
+      "mode": "100644",
+      "bytes": 822233,
+      "sha256": "aa02c66fdf0c738e1015bcfaf676a6311b36f0159b8badc157eb4db4bf4e62d6",
+      "blob": "561333a8563dbcc40cd95983d3ff59b1127bcc82"
+    },
+    {
+      "path": "overlay/claude-plugin/mcp-server/dist/session-message-relay.mjs",
+      "targetPath": "claude-plugin/mcp-server/dist/session-message-relay.mjs",
+      "mode": "100644",
+      "bytes": 24050,
+      "sha256": "721a40cb342dc76fda3d8d2d2aba2a3442a08e8755b38e3ae37bf455a7ecdae8",
+      "blob": "49d89e0a422dcddcf58d34a3aaf1458ad5b21ba8"
+    },
+    {
+      "path": "overlay/host-integration.json",
+      "targetPath": "host-integration.json",
+      "mode": "100644",
+      "bytes": 48589,
+      "sha256": "64fc1c65d8b29190612ae7a127258081cd746b19469f98076c28a9b43501f4a2",
+      "blob": "a4de27f27ef54ce25fa9d41c1608e375483d89b9"
+    },
+    {
+      "path": "overlay/mcp-server/dist/flowmarshal-profile-probe.mjs",
+      "targetPath": "mcp-server/dist/flowmarshal-profile-probe.mjs",
+      "mode": "100644",
+      "bytes": 423510,
+      "sha256": "3e5984e94ddfb401102e5ab4be1b30756dbff1f198b15ac7c06656f994937509",
+      "blob": "06bd4794d828fd265ceb622c49dcad8f820ef666"
+    },
+    {
+      "path": "overlay/mcp-server/dist/host-attestation-api.mjs",
+      "targetPath": "mcp-server/dist/host-attestation-api.mjs",
+      "mode": "100644",
+      "bytes": 40713,
+      "sha256": "12fefa5cc52c4cc8ebf1f221eea3eb9c983c317bf36777e6ff7b71f37d221e46",
+      "blob": "c3ab86181ad01a9acfda7e2669b910a353227d61"
+    },
+    {
+      "path": "overlay/mcp-server/dist/model-routing-host-hook.mjs",
+      "targetPath": "mcp-server/dist/model-routing-host-hook.mjs",
+      "mode": "100644",
+      "bytes": 713671,
+      "sha256": "aa4166b45ed20c147eb45d7ab02e5b644e5963ee003a4911d0be37c47a160fcf",
+      "blob": "6c27135619d8afb731b1f6fea2bfa2f0d1b98e75"
+    },
+    {
+      "path": "overlay/mcp-server/dist/model-routing-peer-cli.mjs",
+      "targetPath": "mcp-server/dist/model-routing-peer-cli.mjs",
+      "mode": "100644",
+      "bytes": 782962,
+      "sha256": "8617ec0856b75af2327895bece4f1d162147c0fbff7a11396d1ff5b1653bebe9",
+      "blob": "d95491ee5e0628db6a873bf5fe4a82b300def922"
+    },
+    {
+      "path": "overlay/mcp-server/dist/server.mjs",
+      "targetPath": "mcp-server/dist/server.mjs",
+      "mode": "100644",
+      "bytes": 2074121,
+      "sha256": "efc1c5627750649f299ea560812d307bab398895cae2d04000e38dc467b45606",
+      "blob": "f6406fd6294eebbb1a8c1028cbb1326631db80cf"
+    },
+    {
+      "path": "overlay/mcp-server/dist/session-board-hook.mjs",
+      "targetPath": "mcp-server/dist/session-board-hook.mjs",
+      "mode": "100644",
+      "bytes": 26410,
+      "sha256": "4a585084d3436f944a3e1c466730286442b303821e1dc6b4f7e4524758300bff",
+      "blob": "d22472e787f8f15add63fda8518958ff2c5da9bf"
+    },
+    {
+      "path": "overlay/mcp-server/dist/session-message-broker.mjs",
+      "targetPath": "mcp-server/dist/session-message-broker.mjs",
+      "mode": "100644",
+      "bytes": 739212,
+      "sha256": "96b18e7adc6a264e04e580e3f9fda9b27546655d249ca738558623659d498faa",
+      "blob": "b371ef00ca0412e3a7afd489b67b81d94a497ce7"
+    },
+    {
+      "path": "overlay/mcp-server/dist/session-message-cli.mjs",
+      "targetPath": "mcp-server/dist/session-message-cli.mjs",
+      "mode": "100644",
+      "bytes": 16192,
+      "sha256": "4d3023be81623fa5acdfc21f3491f32d5ce43bde24a76f97a8b03c6211aa545b",
+      "blob": "abcf8a7131e701138e79495576a31a8ece178012"
+    },
+    {
+      "path": "overlay/mcp-server/dist/session-message-hook.mjs",
+      "targetPath": "mcp-server/dist/session-message-hook.mjs",
+      "mode": "100644",
+      "bytes": 822233,
+      "sha256": "aa02c66fdf0c738e1015bcfaf676a6311b36f0159b8badc157eb4db4bf4e62d6",
+      "blob": "561333a8563dbcc40cd95983d3ff59b1127bcc82"
+    },
+    {
+      "path": "overlay/mcp-server/dist/session-message-relay.mjs",
+      "targetPath": "mcp-server/dist/session-message-relay.mjs",
+      "mode": "100644",
+      "bytes": 24050,
+      "sha256": "721a40cb342dc76fda3d8d2d2aba2a3442a08e8755b38e3ae37bf455a7ecdae8",
+      "blob": "49d89e0a422dcddcf58d34a3aaf1458ad5b21ba8"
+    },
+    {
+      "path": "overlay/mcp-server/src/session-message-broker.ts",
+      "targetPath": "mcp-server/src/session-message-broker.ts",
+      "mode": "100644",
+      "bytes": 37073,
+      "sha256": "4d357386561396aaa25e7de3708c3311449067542e56fc2967a8fa1059369111",
+      "blob": "d7171893b9f6431ece4cdc3b916ae49231d11320"
+    },
+    {
+      "path": "overlay/mcp-server/src/session-message-protocol.ts",
+      "targetPath": "mcp-server/src/session-message-protocol.ts",
+      "mode": "100644",
+      "bytes": 1926,
+      "sha256": "ef83108beee856647ed1ed5c410510fab6225889e29ce7e94f804c364cab5383",
+      "blob": "63522b76216aa23b864ffd2cc3d59bb3a9347405"
+    },
+    {
+      "path": "overlay/mcp-server/src/session-message-store.ts",
+      "targetPath": "mcp-server/src/session-message-store.ts",
+      "mode": "100644",
+      "bytes": 116523,
+      "sha256": "28abdf0b5d37482f35582177d01cc9af191314a8da0c7e4ffacd2346c7ebd8e5",
+      "blob": "1386bfbde6e5b3fb1b5526bdaf88e519c26d0615"
+    },
+    {
+      "path": "overlay/tests/coordinate-subagents/v3x/W05-r1.test.mjs",
+      "targetPath": "tests/coordinate-subagents/v3x/W05-r1.test.mjs",
+      "mode": "100644",
+      "bytes": 13870,
+      "sha256": "5876a1bd37fd5c9f2e1029301ce1e7bb8529a6a43a86e168cd751eb1ec49240c",
+      "blob": "d1b167e58dacda4e5a7395f611014be84769499f"
+    },
+    {
+      "path": "overlay/tests/coordinate-subagents/v3x/W05-r3.test.mjs",
+      "targetPath": "tests/coordinate-subagents/v3x/W05-r3.test.mjs",
+      "mode": "100644",
+      "bytes": 50240,
+      "sha256": "4d823a15a6c41479cd1f0bf7acf0dd4166ae21345a35da6d880591a145a19fdf",
+      "blob": "cd50acf788d1015412095438231e9b31aeef04a0"
+    },
+    {
+      "path": "overlay/tests/session-messaging/session-message.test.ts",
+      "targetPath": "tests/session-messaging/session-message.test.ts",
+      "mode": "100644",
+      "bytes": 89068,
+      "sha256": "927bbe07b60a67d61ee9d5ef228297b1e629f0adc13041779244d38e223eb69d",
+      "blob": "26ce47ba45dedad0dfa93af3342cea42c4539300"
+    },
+    {
+      "path": "overlay/tests/session-messaging/w05-r3-framing.test.mjs",
+      "targetPath": "tests/session-messaging/w05-r3-framing.test.mjs",
+      "mode": "100644",
+      "bytes": 16317,
+      "sha256": "60acd6ef3736b50fcfedc0ba331e2572e37c4a6b16bac9d52019b3b2da43cb5f",
+      "blob": "b0aae5f79954ae99369431e1137e1bef4ecf634f"
+    }
+  ],
+  "officialValidator": {
+    "sourceRepository": "https://github.com/openai/codex",
+    "sourceRevision": "985cf47a4eb6084b2ff6b30ebdb1216acda85bb4",
+    "historical": true,
+    "latestBundled": false,
+    "files": [
+      {
+        "path": "official-validator/skills/.system/plugin-creator/scripts/validate_plugin.py",
+        "bytes": 21739,
+        "sha256": "f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944",
+        "sourcePath": "codex-rs/skills/src/assets/samples/plugin-creator/scripts/validate_plugin.py",
+        "sourceRevision": "985cf47a4eb6084b2ff6b30ebdb1216acda85bb4",
+        "sourceUrl": "https://raw.githubusercontent.com/openai/codex/985cf47a4eb6084b2ff6b30ebdb1216acda85bb4/codex-rs/skills/src/assets/samples/plugin-creator/scripts/validate_plugin.py",
+        "mode": "100644",
+        "blob": "b5be462c3b4fe3ea6083cca948ccf52e05301546"
+      },
+      {
+        "path": "official-validator/skills/.system/plugin-creator/scripts/identifier_validation.py",
+        "bytes": 784,
+        "sha256": "a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223",
+        "sourcePath": "codex-rs/skills/src/assets/samples/plugin-creator/scripts/identifier_validation.py",
+        "sourceRevision": "985cf47a4eb6084b2ff6b30ebdb1216acda85bb4",
+        "sourceUrl": "https://raw.githubusercontent.com/openai/codex/985cf47a4eb6084b2ff6b30ebdb1216acda85bb4/codex-rs/skills/src/assets/samples/plugin-creator/scripts/identifier_validation.py",
+        "mode": "100644",
+        "blob": "41a1a2f1b503c165f5d4b93f7f0e99eb0b3add6e"
+      },
+      {
+        "path": "official-validator/skills/.system/skill-creator/scripts/quick_validate.py",
+        "bytes": 4249,
+        "sha256": "ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c",
+        "sourcePath": "codex-rs/skills/src/assets/samples/skill-creator/scripts/quick_validate.py",
+        "sourceRevision": "985cf47a4eb6084b2ff6b30ebdb1216acda85bb4",
+        "sourceUrl": "https://raw.githubusercontent.com/openai/codex/985cf47a4eb6084b2ff6b30ebdb1216acda85bb4/codex-rs/skills/src/assets/samples/skill-creator/scripts/quick_validate.py",
+        "mode": "100644",
+        "blob": "e27023ece4bd259ef36560e19995eec7b6a345bf"
+      },
+      {
+        "path": "official-validator/LICENSE",
+        "bytes": 10926,
+        "sha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc",
+        "sourcePath": "LICENSE",
+        "sourceRevision": "985cf47a4eb6084b2ff6b30ebdb1216acda85bb4",
+        "sourceUrl": "https://raw.githubusercontent.com/openai/codex/985cf47a4eb6084b2ff6b30ebdb1216acda85bb4/LICENSE",
+        "mode": "100644",
+        "blob": "4606e72e042564097e8780d66c1d4dcb611869bd"
+      },
+      {
+        "path": "official-validator/NOTICE",
+        "bytes": 242,
+        "sha256": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915",
+        "sourcePath": "NOTICE",
+        "sourceRevision": "985cf47a4eb6084b2ff6b30ebdb1216acda85bb4",
+        "sourceUrl": "https://raw.githubusercontent.com/openai/codex/985cf47a4eb6084b2ff6b30ebdb1216acda85bb4/NOTICE",
+        "mode": "100644",
+        "blob": "2805899d56d0332d175cfc613c67d45d6f006db7"
+      }
+    ],
+    "externalDependencies": [
+      "PyYAML: executor binding and import verification pending"
+    ]
+  },
+  "materializedSource": {
+    "expectedTree": "304505d3ac58487addb1e0c23e751fb6dde0992a",
+    "files": 1847,
+    "sumBytes": 27735229,
+    "inventorySha256": "6ae33287f1a020cd5c305827ace49a29d21845e38e65e0afc650c7a9d541a0c0",
+    "inventoryAlgorithm": "UTF8 canonical JSON sorted object keys; path-sorted array of {path,mode,bytes,sha256}; no trailing LF",
+    "fullInventoryIncluded": false
+  },
+  "application": {
+    "method": "Fetch exact existing public base into an owned disposable source tree; verify base commit/tree; replace only listed target paths with exact overlay bytes and Git modes; do not reapply F1 patch; verify full expected tree and canonical inventory digest",
+    "deletions": [],
+    "productValidation": "NOT_RUN",
+    "freshnessBeforeBuild": true,
+    "generatedBundles": "Existing stale source/generated bytes intentionally preserved; no runtime PASS"
+  },
+  "excludedCategories": [
+    "private audit/seal/PLAN/approval/transcript originals",
+    "personal path bearing existing source/evidence files",
+    "operational DB/WAL/authentication/profiles/keys/pins/install cache",
+    "private Git history/.git/node_modules",
+    "private validation ZIP17",
+    "failed partial source tar",
+    "original private source manifest and validator provenance/README"
+  ],
+  "limits": [
+    "Packet is not a standalone product checkout and cannot build without exact public base",
+    "Materialized source inherits existing public-base personal-path/historical evidence bytes; these are not copied into this packet",
+    "Source transport only; no product/Windows/install/official gate acceptance or execution authority"
+  ]
+}
