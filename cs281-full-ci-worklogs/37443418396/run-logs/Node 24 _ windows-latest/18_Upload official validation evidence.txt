@@ -1,0 +1,19 @@
+﻿2026-10-06T09:31:13.1944714Z ##[group]Run actions/upload-artifact@v4
+2026-10-06T09:31:13.1945247Z with:
+2026-10-06T09:31:13.1945790Z   name: official-codex-37443418396-1-Windows
+2026-10-06T09:31:13.1946235Z   path: <runner-temp>/official-validation-Windows/
+2026-10-06T09:31:13.1946648Z   include-hidden-files: true
+2026-10-06T09:31:13.1946959Z   if-no-files-found: error
+2026-10-06T09:31:13.1947260Z   retention-days: 14
+2026-10-06T09:31:13.1947522Z   compression-level: 6
+2026-10-06T09:31:13.1947785Z   overwrite: false
+2026-10-06T09:31:13.1948035Z env:
+2026-10-06T09:31:13.1948369Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:31:13.1948987Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T09:31:13.1949600Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:31:13.1950428Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:31:13.1950998Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:31:13.1951517Z ##[endgroup]
+2026-10-06T09:31:13.3980277Z (node:9352) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-06T09:31:13.3981132Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-06T09:31:13.4045710Z ##[error]No files were found with the provided path: <runner-temp>/official-validation-Windows/. No artifacts will be uploaded.

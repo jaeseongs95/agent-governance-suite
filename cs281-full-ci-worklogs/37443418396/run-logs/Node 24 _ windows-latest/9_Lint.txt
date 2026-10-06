@@ -1,0 +1,25 @@
+﻿2026-10-06T09:31:01.4367148Z ##[group]Run pnpm lint
+2026-10-06T09:31:01.4367478Z [36;1mpnpm lint[0m
+2026-10-06T09:31:01.4384940Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:31:01.4385334Z env:
+2026-10-06T09:31:01.4385598Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:31:01.4386049Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T09:31:01.4386485Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:31:01.4386905Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:31:01.4387291Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:31:01.4387598Z ##[endgroup]
+2026-10-06T09:31:02.7172218Z Already up to date
+2026-10-06T09:31:02.7181233Z Done in 510ms using pnpm v11.19.0
+2026-10-06T09:31:02.7362069Z $ eslint . && node scripts/validate-repository.mjs
+2026-10-06T09:31:10.5201269Z 
+2026-10-06T09:31:10.5202529Z <repo>\tests\engineering-practices\core.node.mjs
+2026-10-06T09:31:10.5238357Z ##[error]  3:25  error  'readFileSync' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+2026-10-06T09:31:10.5249367Z ##[error]  5:10  error  'captureSnapshot' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2026-10-06T09:31:10.5250897Z 
+2026-10-06T09:31:10.5251636Z <repo>\tests\engineering-practices\paths-runner-cli.node.mjs
+2026-10-06T09:31:10.5254093Z ##[error]  3:23  error  'writeFileSync' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2026-10-06T09:31:10.5255080Z 
+2026-10-06T09:31:10.5255472Z ✖ 3 problems (3 errors, 0 warnings)
+2026-10-06T09:31:10.5255693Z 
+2026-10-06T09:31:13.0831996Z [ELIFECYCLE] Command failed with exit code 1.
+2026-10-06T09:31:13.1208858Z ##[error]Process completed with exit code 1.

@@ -1,0 +1,14 @@
+﻿2026-10-06T09:30:36.2190713Z ##[group]Run pnpm bundle:check
+2026-10-06T09:30:36.2190982Z [36;1mpnpm bundle:check[0m
+2026-10-06T09:30:36.2252779Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:30:36.2253062Z env:
+2026-10-06T09:30:36.2253281Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:30:36.2253621Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:30:36.2253955Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:30:36.2254257Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:30:36.2254549Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:30:36.2255028Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:30:36.2255288Z ##[endgroup]
+2026-10-06T09:30:36.9345232Z Already up to date
+2026-10-06T09:30:36.9351335Z Done in 317ms using pnpm v11.19.0
+2026-10-06T09:30:36.9469779Z $ node scripts/check-bundle.mjs

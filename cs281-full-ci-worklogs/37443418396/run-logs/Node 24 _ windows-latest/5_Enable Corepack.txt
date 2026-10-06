@@ -1,0 +1,10 @@
+﻿2026-10-06T09:30:42.8551345Z ##[group]Run corepack enable
+2026-10-06T09:30:42.8551694Z [36;1mcorepack enable[0m
+2026-10-06T09:30:42.8575328Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:30:42.8575732Z env:
+2026-10-06T09:30:42.8575989Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:30:42.8576451Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T09:30:42.8576883Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:30:42.8577269Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:30:42.8578506Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:30:42.8602136Z ##[endgroup]

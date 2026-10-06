@@ -1,0 +1,26 @@
+﻿2026-10-06T09:30:38.1135921Z ##[group]Run pnpm lint
+2026-10-06T09:30:38.1136178Z [36;1mpnpm lint[0m
+2026-10-06T09:30:38.1192934Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:30:38.1193214Z env:
+2026-10-06T09:30:38.1193436Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:30:38.1193796Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:30:38.1194141Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:30:38.1194436Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:30:38.1194731Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:30:38.1195042Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:30:38.1195294Z ##[endgroup]
+2026-10-06T09:30:38.8154887Z Already up to date
+2026-10-06T09:30:38.8159945Z Done in 313ms using pnpm v11.19.0
+2026-10-06T09:30:38.8280584Z $ eslint . && node scripts/validate-repository.mjs
+2026-10-06T09:30:44.2008053Z 
+2026-10-06T09:30:44.2009286Z <repo>/tests/engineering-practices/core.node.mjs
+2026-10-06T09:30:44.2094292Z ##[error]  3:25  error  'readFileSync' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+2026-10-06T09:30:44.2105190Z ##[error]  5:10  error  'captureSnapshot' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2026-10-06T09:30:44.2106427Z 
+2026-10-06T09:30:44.2107129Z <repo>/tests/engineering-practices/paths-runner-cli.node.mjs
+2026-10-06T09:30:44.2108825Z ##[error]  3:23  error  'writeFileSync' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+2026-10-06T09:30:44.2109934Z 
+2026-10-06T09:30:44.2110418Z ✖ 3 problems (3 errors, 0 warnings)
+2026-10-06T09:30:44.2110644Z 
+2026-10-06T09:30:44.3772649Z [ELIFECYCLE] Command failed with exit code 1.
+2026-10-06T09:30:44.4616671Z ##[error]Process completed with exit code 1.
