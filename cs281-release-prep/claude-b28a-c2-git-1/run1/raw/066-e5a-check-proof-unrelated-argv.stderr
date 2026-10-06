@@ -1,0 +1,5 @@
+{
+  "status": "ERROR",
+  "code": "INVALID_INPUT",
+  "message": "Red and green commands differ."
+}

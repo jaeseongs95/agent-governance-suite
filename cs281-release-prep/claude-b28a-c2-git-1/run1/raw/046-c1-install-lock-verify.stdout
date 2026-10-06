@@ -1,0 +1,12 @@
+{
+  "lock": "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/claude-config/plugins/cache/agent-governance-claude/agent-governance-suite/2.8.1/runtime/engineering-practices/CONTENT_LOCK.json",
+  "base": "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/claude-config/plugins/cache/agent-governance-claude/agent-governance-suite/2.8.1",
+  "declared": 42,
+  "match": 42,
+  "mismatch": 0,
+  "missing": 0,
+  "topKeys": [
+    "files",
+    "schemaVersion"
+  ]
+}

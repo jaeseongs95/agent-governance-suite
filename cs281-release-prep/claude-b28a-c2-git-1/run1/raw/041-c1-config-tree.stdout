@@ -1,0 +1,40 @@
+claude-config
+claude-config/.claude.json
+claude-config/backups
+claude-config/backups/.claude.json.backup.1791284711515
+claude-config/plugins
+claude-config/plugins/cache
+claude-config/plugins/cache/agent-governance-claude
+claude-config/plugins/cache/agent-governance-claude/agent-governance-suite
+claude-config/plugins/cache/agent-governance-claude/agent-governance-suite/2.8.1
+claude-config/plugins/installed_plugins.json
+claude-config/plugins/known_marketplaces.json
+claude-config/plugins/marketplaces
+claude-config/policy-limits.json
+claude-config/policy-limits.json.stamp.json
+claude-config/remote-settings.json
+claude-config/settings.json
+{"_excludedLine": 17, "rawLineSha256": "021fb596db81e6d02bf3d2586ee3981fe519f275c0ac9ca76bbcf2ebb4097d96", "rawLineBytes": 1, "reason": "JSON parse failure; raw withheld"}
+  "version": 2,
+  "plugins": {
+    "agent-governance-suite@agent-governance-claude": [
+{"_excludedLine": 21, "rawLineSha256": "9e898918242eb01221d613efdd13c90de0174828e41475383ca5d89239ddfe00", "rawLineBytes": 7, "reason": "JSON parse failure; raw withheld"}
+        "scope": "user",
+        "installPath": "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/claude-config/plugins/cache/agent-governance-claude/agent-governance-suite/2.8.1",
+        "version": "2.8.1",
+        "installedAt": "2026-10-06T11:06:35.928Z",
+        "lastUpdated": "2026-10-06T11:06:35.928Z",
+        "gitCommitSha": "b28a442ad424b255283fe32fe3c0e661b195fa4e"
+      }
+    ]
+  }
+}{
+  "agent-governance-claude": {
+    "source": {
+      "source": "directory",
+      "path": "<REDACTED_HOME>/agent-governance-suite"
+    },
+    "installLocation": "<REDACTED_HOME>/agent-governance-suite",
+    "lastUpdated": "2026-10-06T11:06:35.287Z"
+  }
+}

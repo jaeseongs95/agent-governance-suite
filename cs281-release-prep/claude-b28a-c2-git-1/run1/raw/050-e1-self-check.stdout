@@ -1,0 +1,17 @@
+{
+  "status": "CONTENT_CONSISTENT",
+  "rules": 48,
+  "modules": [
+    "test-design",
+    "test-proof",
+    "code-review",
+    "debugging",
+    "implementation",
+    "dependency",
+    "verification",
+    "agent-instructions"
+  ],
+  "schemaEngine": "ags-ajv2020",
+  "lockedFiles": 42,
+  "hostBehaviorEvaluation": "NOT_RUN"
+}

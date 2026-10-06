@@ -1,0 +1,108 @@
+{
+  "schema": "cs281-b28a-environment/1",
+  "runId": "claude-b28a-1",
+  "stateRoot": "<REDACTED_HOME>/cs281-b28a-20261006T110419Z",
+  "items": {
+    "session": {
+      "value": {
+        "ccrSession": "<SESSION_ID>",
+        "remoteSessionId": "<SESSION_ID>",
+        "claudeCodeSessionId": "<SESSION_ID>"
+      },
+      "judgement": "new",
+      "evidence": "get_session created_at 2026-10-06T11:03:53Z (raw/manual-get_session.json); environment-manager --session-mode new (raw/014-env-psef.stdout)"
+    },
+    "containerId": {
+      "value": "<SESSION_ID>",
+      "judgement": "new",
+      "evidence": "CLAUDE_CODE_CONTAINER_ID (raw/018-env-vars.stdout); differs from CS280 <SESSION_ID> by ID; boot btime 1791284554 (2026-10-06T11:02:34Z), uptime 2 min at first observation (raw/013, raw/019). Whether the underlying host/VM image differs from CS280 is unknown."
+    },
+    "hostname": {
+      "value": "vm",
+      "judgement": "unknown",
+      "evidence": "raw/011-env-hostname.stdout; generic name gives no reuse signal"
+    },
+    "remoteEnvironmentType": {
+      "value": "cloud_default",
+      "judgement": "unknown",
+      "evidence": "CLAUDE_CODE_REMOTE_ENVIRONMENT_TYPE (raw/018); type value alone says nothing about reuse"
+    },
+    "environmentId": {
+      "value": "<SESSION_ID>",
+      "judgement": "unknown",
+      "evidence": "get_session environment_id (raw/manual-get_session.json); not compared with CS280 environment ID (no CS280 env ID observed here)"
+    },
+    "pid1": {
+      "value": "/process_api --firecracker-init --addr <IP>:2024 ...",
+      "judgement": "new",
+      "evidence": "raw/012-env-ps1.stdout; firecracker VM booted 2026-10-06T11:02:34Z"
+    },
+    "processesAtStart": {
+      "value": "kernel threads, sbx-telemetry-collector (pid 80), preloaded claude (pid 85), environment-manager task-run (pid 98/102), root .mcp.json server 'node mcp-server/dist/server.mjs' (pid 282, child of main claude)",
+      "judgement": "new",
+      "evidence": "raw/014-env-psef.stdout; no other user job observed before or alongside this session",
+      "previousOrConcurrentJobs": "none observed in ps; <REDACTED_HOME>/.agent-governance-suite/session-messaging created 11:04:15 by the root .mcp.json server of this Cloud main session (raw/020)"
+    },
+    "homeDirsAtStart": {
+      "value": "<REDACTED_HOME>: image files dated 2026-10-03 (.bashrc, .profile, .cargo, .rustup, .gradle, .ssh, .config, .nix-*) plus session-time files dated 2026-10-06 11:03-11:04 (.claude, .claude.json, .ccr, .codex, .agent-governance-suite, .npm, .cache, .local, .aws, .boto, .gitconfig, .pki); <REDACTED_HOME>: only agent-governance-suite (11:03:55)",
+      "judgement": "reused",
+      "evidence": "raw/016-env-root-ls.stdout: base image content predates session (2026-10-03) => shared base image reused; session-specific dirs created at 11:03-11:04"
+    },
+    "setupSnapshotReuse": {
+      "value": null,
+      "judgement": "unknown",
+      "evidence": "No observation source states whether a setup snapshot was restored. /opt/node24/bin/{pnpm,codex} symlinks were created 11:04:02-11:04:13 (raw/026), i.e. some setup step ran at session start; that does not prove absence of a snapshot."
+    },
+    "backendCache": {
+      "value": null,
+      "judgement": "unknown",
+      "evidence": "no observation source"
+    },
+    "sameAsCS280Container": {
+      "value": false,
+      "judgement": "new",
+      "evidence": "container ID differs (<SESSION_ID> vs <SESSION_ID>). Host-level identity unknown."
+    },
+    "workspaceAcquisition": {
+      "value": "git clone https://github.com/jaeseongs95/agent-governance-suite revision codex/engineering-practices-2.8.1, depth 50 (shallow), then checkout -b claude/cs281-b28a-validation-9a4e6o at same commit",
+      "judgement": "new",
+      "evidence": "raw/001,007,008,009 (remote, config, reflog 11:03:56, .git/shallow); get_session sources revision; not a bundle/archive fallback"
+    },
+    "versions": {
+      "value": {
+        "nodeDefaultPath": "v22.22.0 (/opt/node22/bin/node)",
+        "nodeUsedForProductCommands": "v24.21.0 (/opt/node24/bin/node, prepended to PATH by wrapper)",
+        "git": "2.43.0",
+        "python": "3.13.16",
+        "claude": "2.1.291 (Claude Code)",
+        "pnpm": "10.28.0 (repo pins pnpm@11.19.0; pnpm not used)"
+      },
+      "judgement": "reused",
+      "evidence": "raw/017-env-versions.stdout, raw/026-env-node24.stdout; toolchains are part of the base image (2026-10-03/2026-09-07 mtimes)"
+    },
+    "modelEffortProvider": {
+      "cloudMain": {
+        "configuredModel": "claude-opus-5-5",
+        "lastServedModel": "claude-opus-5-5",
+        "source": "get_session (raw/manual-get_session.json) and environment-manager --model arg (raw/022)",
+        "effort": "unknown",
+        "provider": "unknown"
+      },
+      "childRun1": {
+        "model": "claude-sonnet-5-5 (stream-json system/init and modelUsage); auxiliary claude-haiku-4-5-20251001 in modelUsage",
+        "effort": "medium (MCP server runtime observation in BINDING_INVALID details; no --effort flag)",
+        "provider": "firstParty (modelUsage.provider; claude auth status apiProvider)"
+      },
+      "childRun2": {
+        "model": "claude-sonnet-5-5 (init, modelUsage); auxiliary claude-haiku-4-5-20251001",
+        "effort": "high (requested via --effort high; server bootstrapExecution.context.reasoningEffort=high, source=runtime)",
+        "provider": "firstParty"
+      }
+    },
+    "childIdentityNote": {
+      "value": "Both child runs reported session_id <SESSION_ID>, identical to the Cloud main CLAUDE_CODE_SESSION_ID; both runs appended to the same transcript file under the isolated config.",
+      "judgement": "reused",
+      "evidence": "child stream-json init/result session_id; claude-config/projects/.../84e46cc0-....jsonl. Inherited env var is the probable cause (inference, not verified). The MCP server derived actorId claude-code:session-<SESSION_ID>."
+    }
+  }
+}

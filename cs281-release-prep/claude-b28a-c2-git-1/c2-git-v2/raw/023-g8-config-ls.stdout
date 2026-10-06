@@ -1,0 +1,22 @@
+.:
+total 36
+drwxr-xr-x 4 root root 4096 Oct  6 12:30 .
+drwxr-xr-x 6 root root 4096 Oct  6 12:29 ..
+-rw------- 1 root root  611 Oct  6 12:29 .claude.json
+drwxr-xr-x 2 root root 4096 Oct  6 12:29 backups
+drwxr-xr-x 5 root root 4096 Oct  6 12:30 plugins
+-rw------- 1 root root  276 Oct  6 12:30 policy-limits.json
+-rw------- 1 root root  223 Oct  6 12:30 policy-limits.json.stamp.json
+-rw------- 1 root root    2 Oct  6 12:30 remote-settings.json
+-rw-r--r-- 1 root root  322 Oct  6 12:30 settings.json
+
+plugins:
+total 32
+drwxr-xr-x 5 root root 4096 Oct  6 12:30 .
+drwxr-xr-x 4 root root 4096 Oct  6 12:30 ..
+-rw-r--r-- 1 root root   24 Oct  6 12:30 .last_inuse_sweep
+drwxr-xr-x 3 root root 4096 Oct  6 12:30 cache
+drwxr-xr-x 3 root root 4096 Oct  6 12:30 data
+-rw-r--r-- 1 root root  489 Oct  6 12:30 installed_plugins.json
+-rw-r--r-- 1 root root  363 Oct  6 12:30 known_marketplaces.json
+drwxr-xr-x 3 root root 4096 Oct  6 12:30 marketplaces

@@ -1,0 +1,5 @@
+{
+  "status": "ERROR",
+  "code": "INTEGRITY_FAILED",
+  "message": "Artifact digest mismatch."
+}

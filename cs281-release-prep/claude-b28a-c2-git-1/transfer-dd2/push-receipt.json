@@ -1,0 +1,36 @@
+{
+  "schema": "cs281-b28a-push-receipt/2",
+  "recordedUtc": "2026-10-06T11:44:44Z",
+  "note": "Preparation evidence only; not publication success.",
+  "commit": "dd2b6770b4331b7c051a65d04a2922ab98b1936c",
+  "tree": "9c9b42c5494c682c478aeff36176b35d449b9d91",
+  "parent": "023097dfe99e0c99b89dcaab30a7418eb51c59f0",
+  "addedFiles": 224,
+  "sha256sumsSelf": "113d64791a3a94f51f86833928624ca6b04a65c68f3b974553626d689c0fb279",
+  "checks": {
+    "1_mutation_risk_preflight": {
+      "method": "installed <I>/skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs (SKILL.md + references read)",
+      "verdict": "READY",
+      "observedAt": "2026-10-06T11:43:37.340Z",
+      "validUntil": "2026-10-06T11:58:37.340Z",
+      "restoreTested": false,
+      "irreversibilityAccepted": true,
+      "evidence": "raw-transfer seq 5"
+    },
+    "2_scope": "224 A, 0 outside cs281-release-prep/claude-b28a-1/, 0 M/D/R (seq 6)",
+    "3_integrity": "sha256sum -c OK; residual.tsv all 0; parent 023097df (seq 7,8)",
+    "4_authority": "user in-session approval (quoted in preflight/authorization.md); relayed standing principle and lead <PEER_ID> window 11:35-12:00Z (relayed, not original approval text)",
+    "5_recovery": "on push failure/rejection: no retry, STOP; on unclear result: one git ls-remote",
+    "7_prepush": "executed in the push command: UTC window check, ls-remote == 023097df, verify-preflight-receipt READY; push only if all pass"
+  },
+  "previousStop": "push-receipt-stop-113915Z.json (auto-mode classifier denial; resolved by explicit user approval)",
+  "pushResult": {
+    "executedUtc": "2026-10-06T11:46:12Z",
+    "command": "git push origin prep/claude-b28a-2:refs/heads/evidence",
+    "exit": 0,
+    "stderr": "023097d..dd2b677  prep/claude-b28a-2 -> evidence",
+    "remoteRefAfter": "dd2b6770b4331b7c051a65d04a2922ab98b1936c refs/heads/evidence",
+    "attempts": 1,
+    "gateNote": "first gated run (raw-transfer seq 10) stopped before push due to a gate-script string check bug (expected verdict READY, verifier emits valid:true); no push executed; fixed and rerun as seq 11"
+  }
+}

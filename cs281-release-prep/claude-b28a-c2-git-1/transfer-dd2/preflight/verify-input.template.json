@@ -1,0 +1,181 @@
+{
+  "report": {
+    "schemaVersion": "1.0.0",
+    "operationId": "cs281-b28a-evidence-push-1",
+    "actionDigest": "sha256:584f42f0371acab08ceb6989be925d8a3766ce8527f6e6839298497d0140e101",
+    "targetDigest": "sha256:7241d915e16ef1de73d9eb105736bc46ef0c617fce96d388fcb1e5c9c911c679",
+    "classification": {
+      "actionClass": "publish",
+      "reversibility": "irreversible",
+      "externalImpact": true,
+      "dataLossPotential": false,
+      "permissionImpact": false
+    },
+    "checks": [
+      {
+        "checkId": "target-specificity",
+        "state": "passed",
+        "evidenceRefs": [],
+        "message": "모든 대상이 구체적으로 식별됐습니다."
+      },
+      {
+        "checkId": "scope-match",
+        "state": "passed",
+        "evidenceRefs": [
+          "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/preflight/authorization.md"
+        ],
+        "message": "대상이 작업 범위 안에 있습니다."
+      },
+      {
+        "checkId": "authorization-match",
+        "state": "passed",
+        "evidenceRefs": [
+          "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/preflight/authorization.md"
+        ],
+        "message": "행동, 대상과 환경이 허용 범위에 있습니다."
+      },
+      {
+        "checkId": "current-state",
+        "state": "passed",
+        "evidenceRefs": [
+          "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/preflight/remote-state.txt"
+        ],
+        "message": "현재 fingerprint가 예상값과 일치합니다."
+      },
+      {
+        "checkId": "approval",
+        "state": "passed",
+        "evidenceRefs": [
+          "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/preflight/authorization.md"
+        ],
+        "message": "승인 상태: observed"
+      },
+      {
+        "checkId": "recovery",
+        "state": "passed",
+        "evidenceRefs": [
+          "refs/heads/evidence@023097dfe99e0c99b89dcaab30a7418eb51c59f0",
+          "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/preflight/restore-procedure.md"
+        ],
+        "message": "복구 또는 명시적 비가역성 수용 근거가 있습니다."
+      },
+      {
+        "checkId": "blast-radius",
+        "state": "passed",
+        "evidenceRefs": [],
+        "message": "예상 영향 범위가 모든 대상을 포함합니다."
+      }
+    ],
+    "approval": {
+      "required": true,
+      "status": "observed",
+      "evidenceRefs": [
+        "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/preflight/authorization.md"
+      ]
+    },
+    "recovery": {
+      "available": true,
+      "restoreTested": false,
+      "irreversibilityAccepted": true,
+      "evidenceRefs": [
+        "refs/heads/evidence@023097dfe99e0c99b89dcaab30a7418eb51c59f0",
+        "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/preflight/restore-procedure.md"
+      ]
+    },
+    "blastRadius": {
+      "affectedTargets": 1,
+      "affectedUsers": 1,
+      "external": true,
+      "description": "One ref (evidence) gains one commit adding 224 files under cs281-release-prep/claude-b28a-1/; published content stays in history."
+    },
+    "unresolved": [],
+    "invalidationTriggers": [
+      "action 또는 planned tool 변경",
+      "target 또는 environment 변경",
+      "current-state evidence 또는 fingerprint 변경",
+      "scope 또는 authorization 변경",
+      "승인 evidence의 만료 또는 범위 변경",
+      "복구 계획 변경",
+      "예상 blast radius 변경"
+    ],
+    "validUntil": "2026-10-06T11:58:37.340Z",
+    "observedAt": "2026-10-06T11:43:37.340Z",
+    "verdict": "READY"
+  },
+  "intent": {
+    "schemaVersion": "1.0.0",
+    "operationId": "cs281-b28a-evidence-push-1",
+    "actionClass": "publish",
+    "targets": [
+      {
+        "locator": "https://github.com/jaeseongs95/agent-governance-suite.git#refs/heads/evidence",
+        "targetType": "git-ref",
+        "environment": "github-origin-evidence",
+        "expectedFingerprint": "sha256:8cb941c244c144def64db7f2ffa1f5ee5ce20cb4e370708c534acaff63ad9a64"
+      }
+    ],
+    "plannedCommandOrTool": {
+      "tool": "git push",
+      "action": "git push origin prep/claude-b28a-2:refs/heads/evidence (fast-forward dd2b6770 onto 023097df)"
+    },
+    "scopeRef": {
+      "locator": "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/preflight/authorization.md",
+      "digest": "sha256:8c6754fc1e1aefe4458ba74f963fb83acf94ff6395923d99a4d35a7a3d24013b",
+      "includedTargets": [
+        "https://github.com/jaeseongs95/agent-governance-suite.git#refs/heads/evidence"
+      ],
+      "excludedTargets": []
+    },
+    "authorizationRef": {
+      "locator": "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/preflight/authorization.md",
+      "digest": "sha256:8c6754fc1e1aefe4458ba74f963fb83acf94ff6395923d99a4d35a7a3d24013b",
+      "allowedActions": [
+        "publish"
+      ],
+      "allowedTargets": [
+        "https://github.com/jaeseongs95/agent-governance-suite.git#refs/heads/evidence"
+      ],
+      "environments": [
+        "github-origin-evidence"
+      ]
+    },
+    "approvalEvidenceRefs": [
+      {
+        "locator": "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/preflight/authorization.md",
+        "digest": "sha256:8c6754fc1e1aefe4458ba74f963fb83acf94ff6395923d99a4d35a7a3d24013b",
+        "operationId": "cs281-b28a-evidence-push-1",
+        "actionClass": "publish",
+        "targetLocators": [
+          "https://github.com/jaeseongs95/agent-governance-suite.git#refs/heads/evidence"
+        ],
+        "environments": [
+          "github-origin-evidence"
+        ],
+        "expiresAt": "2026-10-06T12:00:00Z"
+      }
+    ],
+    "currentStateEvidenceRefs": [
+      {
+        "locator": "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/preflight/remote-state.txt",
+        "digest": "sha256:8cb941c244c144def64db7f2ffa1f5ee5ce20cb4e370708c534acaff63ad9a64",
+        "targetLocator": "https://github.com/jaeseongs95/agent-governance-suite.git#refs/heads/evidence",
+        "fingerprint": "sha256:8cb941c244c144def64db7f2ffa1f5ee5ce20cb4e370708c534acaff63ad9a64"
+      }
+    ],
+    "recoveryPlan": {
+      "available": true,
+      "method": "follow-up fast-forward commit removing the folder (no force)",
+      "backupRef": "refs/heads/evidence@023097dfe99e0c99b89dcaab30a7418eb51c59f0",
+      "restoreProcedureRef": "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/preflight/restore-procedure.md",
+      "restoreTestEvidenceRef": null,
+      "irreversibilityAccepted": true
+    },
+    "expectedBlastRadius": {
+      "affectedTargets": 1,
+      "affectedUsers": 1,
+      "external": true,
+      "description": "One ref (evidence) gains one commit adding 224 files under cs281-release-prep/claude-b28a-1/; published content stays in history."
+    }
+  },
+  "verificationTime": "__NOW__"
+}

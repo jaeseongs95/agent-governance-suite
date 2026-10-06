@@ -1,0 +1,14 @@
+{
+  "extraKnownMarketplaces": {
+    "agent-governance-claude": {
+      "source": {
+        "source": "github",
+        "repo": "jaeseongs95/agent-governance-suite",
+        "ref": "codex/engineering-practices-2.8.1"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "agent-governance-suite@agent-governance-claude": true
+  }
+}

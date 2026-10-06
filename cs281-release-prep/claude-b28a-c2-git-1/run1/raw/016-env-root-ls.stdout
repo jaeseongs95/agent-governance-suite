@@ -1,0 +1,35 @@
+<REDACTED_HOME>:
+total 12
+drwxr-xr-x  3 root root 4096 2026-10-06 11:03:55.286983115 +0000 .
+drwxr-xr-x  5 root root 4096 2026-10-06 11:03:54.558983071 +0000 ..
+drwxr-xr-x 18 root root 4096 2026-10-06 11:03:56.726916840 +0000 agent-governance-suite
+
+<REDACTED_HOME>:
+total 156
+drwx------ 19 root root  4096 2026-10-06 11:04:24.618984858 +0000 .
+drwxr-xr-x 22 root root  4096 2026-10-06 11:02:36.834978451 +0000 ..
+drwx------  3 root root  4096 2026-10-06 11:04:15.482984315 +0000 .agent-governance-suite
+drwx------  2 root root  4096 2026-10-06 11:04:14.550984260 +0000 .aws
+-rw-r--r--  1 root root  3309 2026-10-03 05:42:20.000000000 +0000 .bashrc
+-rw-r--r--  1 root root    55 2026-10-06 11:04:14.590984262 +0000 .boto
+drwxr-xr-x  3 root root  4096 2026-10-03 05:42:18.000000000 +0000 .bun
+drwxr-xr-x  7 root root  4096 2026-10-06 11:04:16.238984360 +0000 .cache
+drwxr-xr-x  3 root root  4096 2026-10-03 05:37:49.000000000 +0000 .cargo
+drwxr-xr-x  2 root root  4096 2026-10-06 11:04:16.438984372 +0000 .ccr
+drwxr-xr-x 10 root root  4096 2026-10-06 11:04:21.610984679 +0000 .claude
+-rw-------  1 root root 53725 2026-10-06 11:04:16.644536716 +0000 .claude.json
+drwxr-xr-x  3 root root  4096 2026-10-06 11:04:14.378984249 +0000 .codex
+drwxr-xr-x  6 root root  4096 2026-10-03 05:42:46.000000000 +0000 .config
+-rw-r--r--  1 root root    34 2026-10-06 11:04:24.621464904 +0000 .cs281-st-path
+-rw-r--r--  1 root root   398 2026-10-06 11:04:14.403090766 +0000 .gitconfig
+drwxr-xr-x  4 root root  4096 2026-10-03 05:38:13.000000000 +0000 .gradle
+drwxr-xr-x  6 root root  4096 2026-10-06 11:04:15.450984313 +0000 .local
+drwxr-xr-x  2 root root  4096 2026-10-03 05:42:29.000000000 +0000 .nix-defexpr
+lrwxrwxrwx  1 root root    43 2026-10-03 05:42:30.000000000 +0000 .nix-profile -> /nix/var/nix/profiles/per-user/root/profile
+drwxr-xr-x  4 root root  4096 2026-10-06 11:04:01.202983466 +0000 .npm
+drwxr-xr-x  3 root root  4096 2026-10-06 11:04:14.590984262 +0000 .pki
+-rw-r--r--  1 root root   187 2026-10-03 05:41:44.000000000 +0000 .profile
+drwxr-xr-x  6 root root  4096 2026-10-03 05:37:50.000000000 +0000 .rustup
+drwx------  2 root root  4096 2026-10-03 05:36:13.000000000 +0000 .ssh
+-rw-r--r--  1 root root    26 2026-10-03 05:41:44.000000000 +0000 .zshrc
+drwxr-xr-x 12 root root  4096 2026-10-06 11:04:41.874985884 +0000 cs281-b28a-20261006T110419Z

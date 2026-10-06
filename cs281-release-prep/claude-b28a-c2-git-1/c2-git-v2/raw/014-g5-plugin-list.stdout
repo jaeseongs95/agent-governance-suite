@@ -1,0 +1,26 @@
+[
+  {
+    "id": "agent-governance-suite@agent-governance-claude",
+    "version": "2.8.1",
+    "scope": "user",
+    "enabled": true,
+    "installPath": "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/c2-git-v2/claude-config/plugins/cache/agent-governance-claude/agent-governance-suite/2.8.1",
+    "installedAt": "2026-10-06T12:30:11.650Z",
+    "lastUpdated": "2026-10-06T12:30:11.650Z",
+    "mcpServers": {
+      "agent-governance-suite": {
+        "command": "node",
+        "args": [
+          "${CLAUDE_PLUGIN_ROOT}/mcp-server/dist/server.mjs"
+        ],
+        "env": {
+          "AGENT_GOVERNANCE_DB_PATH": "${CLAUDE_PLUGIN_DATA}/workflows.sqlite3",
+          "AGENT_GOVERNANCE_CONTINUITY_DB_PATH": "${CLAUDE_PLUGIN_DATA}/continuity.sqlite3",
+          "AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE": "anthropic",
+          "AGENT_GOVERNANCE_HOST_ATTESTATION": "claude-code"
+        }
+      }
+    },
+    "projectEnabled": false
+  }
+]

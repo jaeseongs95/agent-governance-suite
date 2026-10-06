@@ -1,0 +1,12 @@
+{
+  "lock": "claude-plugin/runtime/engineering-practices/CONTENT_LOCK.json",
+  "base": "claude-plugin",
+  "declared": 42,
+  "match": 42,
+  "mismatch": 0,
+  "missing": 0,
+  "topKeys": [
+    "files",
+    "schemaVersion"
+  ]
+}

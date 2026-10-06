@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "output",
+  "output": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-review-result",
+    "verdict": "NO_BLOCKING_FINDINGS",
+    "targetDigest": "sha256:c448bb3bfa5e86e589f2578663674e6c6741bc87e69e1409fca054d314b491be",
+    "reportDigest": "sha256:8b70213d7e5e3be020b5b7c8513e1867b057f588c34602ccaf134928fe19e4e2",
+    "issues": [],
+    "limitations": [
+      "This is an unsigned local consistency check, not host attestation or an independent audit.",
+      "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+      "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities.",
+      "Reviewer independence is declared, not verified by this package. NO_BLOCKING_FINDINGS is not release approval."
+    ]
+  },
+  "artifacts": [
+    {
+      "artifactId": "engineering-review-result",
+      "schemaId": "https://skill-suite.local/contracts/engineering-review-result.v1.schema.json",
+      "locator": "review-result.json",
+      "digest": "sha256:745cb1a21a3b39037516223cdb5fa8e973b4698c841548c69f4585e90b5ecf85",
+      "targetDigest": "sha256:c448bb3bfa5e86e589f2578663674e6c6741bc87e69e1409fca054d314b491be",
+      "verified": false
+    }
+  ],
+  "error": null
+}

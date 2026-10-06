@@ -1,0 +1,7 @@
+now=2026-10-06T11:46:12Z
+remote_before=023097dfe99e0c99b89dcaab30a7418eb51c59f0
+verify_exit=0
+{"schemaVersion":"1.0.0","valid":true,"errorCode":null,"reason":"receipt와 현재 mutation intent가 일치합니다. 이 결과는 실행 권한을 새로 부여하지 않습니다.","actionDigest":"sha256:584f42f0371acab08ceb6989be925d8a3766ce8527f6e6839298497d0140e101","targetDigest":"sha256:7241d915e16ef1de73d9eb105736bc46ef0c617fce96d388fcb1e5c9c911c679"}
+
+push_exit=0
+remote_after=dd2b6770b4331b7c051a65d04a2922ab98b1936c	refs/heads/evidence

@@ -1,0 +1,28 @@
+# REDACTION (claude-b28a-c2-git-1)
+
+- JSON은 파일 단위 또는 줄 단위로 먼저 파싱한다. 문자열 leaf와 key에만 치환을 적용한 뒤 다시 직렬화한다.
+  - 직렬화된 텍스트에는 정규식을 적용하지 않는다.
+  - 직렬화한 결과는 모두 다시 파싱해 확인했다.
+- 제거 대상:
+  - type이 thinking, redacted_thinking, reasoning인 블록
+  - `signature`, `reasoning`, `analysis` 키
+  - 제거한 내용은 해석하거나 공개하지 않는다.
+- 치환 대상:
+  - 이메일
+  - 토큰: GitHub, sk, Slack, AWS, JWT, Bearer
+  - 이름이 `_TOKEN`, `_SECRET`, `_KEY`로 끝나는 변수에 대입된 값
+  - 민감 header, URL query, IPv4, 200자를 넘는 base64
+  - 홈 경로, 계정 이름
+  - 세션·container·환경 식별자, 운영 peer 식별자
+- 비밀 리터럴은 메모리에서만 대조했다.
+- 유지하는 값: Git commit·tree·file SHA, 공개 저장소 식별자 `jaeseongs95/agent-governance-suite`.
+- JSON이 아닌 줄(help 출력, TSV, 스크립트)은 줄 단위 텍스트로 치환했다.
+- 파싱에 실패한 줄(`{`나 `[`로 시작하지만 JSON이 아닌 줄)은 원문을 공개하지 않는다.
+  - 원 행의 SHA, size, 사유만 담은 placeholder로 바꿨다.
+  - 목록은 `EXCLUDED.tsv`에 있다.
+- 정책 파일(incident-023)은 파일 전체를 공개하지 않는다.
+- 원본의 LF/CRLF와 BOM은 줄 단위로 유지했다. 새 메타 문서는 UTF-8(BOM 없음), LF로 썼다.
+- 결과 파일:
+  - 제거 횟수 합계: `removal-totals.json`
+  - 파일별 제거 횟수: `MAPPING.tsv`
+  - 잔여 검사: `residual.tsv`(모든 항목 0)

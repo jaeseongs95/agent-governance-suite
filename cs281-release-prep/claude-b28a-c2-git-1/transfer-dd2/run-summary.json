@@ -1,0 +1,62 @@
+{
+  "schema": "cs281-b28a-run-summary/1",
+  "runId": "claude-b28a-1",
+  "cutoffUtc": "2026-10-06T11:34:29Z",
+  "candidate": {
+    "repo": "https://github.com/jaeseongs95/agent-governance-suite",
+    "branchObserved": "claude/cs281-b28a-validation-9a4e6o (same commit as codex/engineering-practices-2.8.1)",
+    "head": "b28a442ad424b255283fe32fe3c0e661b195fa4e",
+    "tree": "e1ffc736bc999781e7ea0670e43d7eca3bd80a82",
+    "parent": "1b36ec771d641137e821f27c2066e05205c1e8f8",
+    "dirty": 0,
+    "bundleFallback": false
+  },
+  "environment": "see environment.json (new: session, container ID, workspace, PID1, state under ST; reused: base image/toolchain, child session_id; unknown: setup snapshot, backend cache, host identity vs CS280, Cloud main effort/provider)",
+  "childModelProvider": {
+    "run1": {
+      "model": "claude-sonnet-5-5",
+      "auxiliary": "claude-haiku-4-5-20251001",
+      "effort": "medium (server observation)",
+      "provider": "firstParty"
+    },
+    "run2": {
+      "model": "claude-sonnet-5-5",
+      "auxiliary": "claude-haiku-4-5-20251001",
+      "effort": "high (--effort high; server observation)",
+      "provider": "firstParty"
+    },
+    "source": "c2-child-run{1,2}.stream.jsonl init/result modelUsage"
+  },
+  "fail": [
+    "E4 as instructed: --snapshot absolute path outside root -> exit 2 INVALID_INPUT (instruction/CLI contract mismatch)",
+    "E5c malformed 1-byte truncation -> exit 0 READY (last byte LF; case design)",
+    "C2 base directory != <I> (loaded from repo claude-plugin/ via readFromFolder)"
+  ],
+  "blocked": [
+    "C2 run1 plan_workflow BINDING_INVALID (effort medium < high)"
+  ],
+  "unknown": [
+    "runtime phaseOrder 35 for test-plan-validation",
+    "in-memory loaded bytes",
+    "setup snapshot/backend cache reuse",
+    "Cloud main effort/provider",
+    "child credential source"
+  ],
+  "skipped": [
+    "generated-actual.tsv vs private expectation (local lead's job, NOT_RUN)"
+  ],
+  "notSupported": [
+    "Cloud main general plugin auto-loading (documented NOT_SUPPORTED, retained)"
+  ],
+  "deviations": [
+    "E4b in-root snapshot",
+    "E5a2 same-argv variant",
+    "E5c2 2-byte truncation variant",
+    "C2 run2 --effort high",
+    "seq 23 incident: empty CLAUDE_CONFIG_DIR wrote 3 files into repo cwd; moved to raw/incident-023 (withheld)"
+  ],
+  "superseded": [
+    "local commit a7a63c2 on prep/claude-b28a-1 (parent e352b53d) is NOT pushed; superseded by prep/claude-b28a-2 on 023097df"
+  ],
+  "stop": []
+}

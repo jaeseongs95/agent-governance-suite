@@ -1,0 +1,8 @@
+{
+  "status": "EXAMPLE_EXECUTED",
+  "red": "FAIL",
+  "green": "PASS",
+  "testResult": "CONSISTENT",
+  "reviewResult": "NO_BLOCKING_FINDINGS",
+  "limitations": "Single-case local example; not an independent audit or actual AGS host test."
+}

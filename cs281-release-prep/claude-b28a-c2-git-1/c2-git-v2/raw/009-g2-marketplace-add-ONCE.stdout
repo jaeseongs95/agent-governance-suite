@@ -1,0 +1,6 @@
+{
+  "command": "marketplace-add",
+  "outcome": "ok",
+  "marketplace": "agent-governance-claude",
+  "message": "Cloning via HTTPS: https://github.com/jaeseongs95/agent-governance-suite.git\nRefreshing marketplace cache (timeout: 120s)…\nCloning repository (timeout: 120s): https://github.com/jaeseongs95/agent-governance-suite.git (ref: codex/engineering-practices-2.8.1)\nClone complete, validating marketplace…\nCleaning up old marketplace cache…\nSuccessfully added marketplace: agent-governance-claude (declared in user settings)"
+}

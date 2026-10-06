@@ -1,0 +1,6 @@
+<REDACTED_HOME>/cs281-b28a-20261006T110419Z/claude-config/plugins/cache/agent-governance-claude/agent-governance-suite/2.8.1/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs
+47:async function readInput(argv) {
+48:  const index = argv.indexOf("--input");
+49:  if (index >= 0) return JSON.parse(await readFile(argv[index + 1], "utf8"));
+56:  const output = verifyReceipt(await readInput(process.argv.slice(2)));
+61:if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) await main();

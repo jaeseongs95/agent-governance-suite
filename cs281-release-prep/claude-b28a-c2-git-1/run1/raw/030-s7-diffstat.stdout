@@ -1,0 +1,6 @@
+ README.en.md                      | 4 ++--
+ README.md                         | 4 ++--
+ docs/release-notes-2.8.1-rc.ko.md | 4 ++--
+ docs/roadmap.md                   | 8 ++++----
+ release/version.json              | 4 +---
+ 5 files changed, 11 insertions(+), 13 deletions(-)

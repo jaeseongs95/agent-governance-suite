@@ -1,0 +1,5 @@
+{
+  "status": "ERROR",
+  "code": "INVALID_INPUT",
+  "message": "Unknown command. Use self-check, catalog, snapshot, run, check-plan, check-proof, check-review or provider-result."
+}

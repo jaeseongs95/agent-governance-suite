@@ -1,0 +1,5 @@
+{
+  "status": "ERROR",
+  "code": "INTEGRITY_FAILED",
+  "message": "Current files differ from the declared snapshot."
+}

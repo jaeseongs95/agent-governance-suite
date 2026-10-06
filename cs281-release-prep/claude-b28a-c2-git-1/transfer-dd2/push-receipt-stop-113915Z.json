@@ -1,0 +1,36 @@
+{
+  "schema": "cs281-b28a-push-receipt/1",
+  "status": "STOP",
+  "recordedUtc": "2026-10-06T11:39:15Z",
+  "stopReason": "Local git add+commit in <REDACTED_HOME>/evidence-wt2 (branch prep/claude-b28a-2, base 023097df) was denied by the Claude Code auto mode permission classifier: 'Sensitive-Source Provenance'. Per policy the denied outcome is not pursued by another route. No commit was created; push not attempted.",
+  "stateAfterDenial": {
+    "worktree": "<REDACTED_HOME>/evidence-wt2",
+    "branch": "prep/claude-b28a-2",
+    "head": "023097dfe99e0c99b89dcaab30a7418eb51c59f0 (no new commit)",
+    "workingTree": "cs281-release-prep/claude-b28a-1/ untracked (copied public set), nothing staged"
+  },
+  "checks": {
+    "1_mutation_risk_preflight": "NOT_RUN (stopped before preflight)",
+    "2_scope_name_status": "NOT_RUN (no commit)",
+    "3_integrity": {
+      "sha256sum_c": "OK on public set before copy",
+      "residual": "all 22 categories 0 (public-b28a-2/claude-b28a-1/residual.tsv)",
+      "parent": "NOT_RUN (no commit)"
+    },
+    "4_authority_basis": "recorded only, not original approval text: user standing principle (push redacted full logs of every Cloud test to evidence); lead <PEER_ID> write window (peer <PEER_ID>, 11:35-12:00Z)",
+    "5_recovery": "not applicable",
+    "7_window_and_remote_ref": "NOT_RUN"
+  },
+  "publicSet": {
+    "path": "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/public-b28a-2/claude-b28a-1",
+    "files": 224,
+    "sha256sumsSelf": "113d64791a3a94f51f86833928624ca6b04a65c68f3b974553626d689c0fb279"
+  },
+  "privateSet": {
+    "path": "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/private-b28a-2",
+    "cutoffUtc": "2026-10-06T11:34:29Z",
+    "sha256List": "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/private-b28a-2.sha256"
+  },
+  "pushed": false,
+  "note": "This receipt is a preparation/stop record, not publication success."
+}

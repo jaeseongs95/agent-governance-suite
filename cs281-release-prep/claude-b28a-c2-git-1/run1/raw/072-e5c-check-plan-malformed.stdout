@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:1e15f9fd7e3d08aa53e2a926f1641c925a1cae0e23f52bd8d8fe4fde9a082315",
+  "caseIds": [
+    "PAGE-1"
+  ]
+}

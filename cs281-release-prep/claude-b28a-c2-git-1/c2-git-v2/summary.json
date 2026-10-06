@@ -1,0 +1,134 @@
+{
+  "schema": "cs281-b28a-c2-git-v2-summary/1",
+  "instruction": "d4 relay of lead <PEER_ID> / peer <PEER_ID>; HANDOFF.ko.md sha256 5cdf64ab... (as stated in the relayed message; not independently fetched). Instruction text is delegated, not original human approval.",
+  "cutoffUtc": "2026-10-06T13:00:00Z",
+  "startedUtc": "2026-10-06T12:28:48Z",
+  "environment": {
+    "container": {
+      "judgement": "reused",
+      "value": "<SESSION_ID> (same ID as original run)",
+      "note": "uptime 0 min and new boot_id at 12:29:16Z (raw/001): the VM was rebooted/resumed with persistent disk; not a new environment"
+    },
+    "config": {
+      "judgement": "new",
+      "value": "<ST>/c2-git-v2/claude-config (created empty at 12:29, 0 entries before first command)"
+    },
+    "marketplaceClone": {
+      "judgement": "new",
+      "value": "<ST>/c2-git-v2/claude-config/plugins/marketplaces/agent-governance-claude (cloned 12:30 via HTTPS, shallow)"
+    },
+    "state": {
+      "judgement": "new",
+      "value": "<ST>/c2-git-v2/state/* (tmp, xdg, shared-state, plugin-data, codex-home)"
+    },
+    "auth": {
+      "value": "loggedIn true, oauth_token, firstParty (raw/005); no credential read/copy"
+    }
+  },
+  "source": {
+    "head": "b28a442ad424b255283fe32fe3c0e661b195fa4e",
+    "tree": "e1ffc736bc999781e7ea0670e43d7eca3bd80a82",
+    "dirtyBefore": 0,
+    "dirtyAfter": 0,
+    "remoteRef": "refs/heads/codex/engineering-practices-2.8.1 = b28a442a (raw/002)"
+  },
+  "counts": {
+    "marketplaceAdd": 1,
+    "pluginInstall": 1,
+    "child": 0
+  },
+  "results": {
+    "refSyntaxSupport": {
+      "result": "PASS",
+      "evidence": "--help lists <source> 'URL, path, or GitHub repo' without #ref detail (raw/003); official cli-reference table: owner/repo#ref -> github (raw/008)"
+    },
+    "marketplaceAdd": {
+      "result": "PASS",
+      "exit": 0,
+      "source": "github",
+      "repo": "jaeseongs95/agent-governance-suite",
+      "ref": "codex/engineering-practices-2.8.1",
+      "raw": [
+        "raw/009",
+        "raw/010"
+      ]
+    },
+    "cloneHeadTree": {
+      "result": "PASS",
+      "pre": "b28a442a/e1ffc736, branch codex/engineering-practices-2.8.1, dirty 0",
+      "post": "same",
+      "raw": [
+        "raw/011",
+        "raw/013"
+      ]
+    },
+    "pluginInstall": {
+      "result": "PASS",
+      "exit": 0,
+      "installPath": "<ST>/c2-git-v2/claude-config/plugins/cache/agent-governance-claude/agent-governance-suite/2.8.1",
+      "readFromFolder": "absent",
+      "gitCommitSha": "b28a442a",
+      "raw": [
+        "raw/012",
+        "raw/014",
+        "raw/016"
+      ]
+    },
+    "I_files_506": {
+      "result": "PASS",
+      "detail": "realpath = installPath, 0 symlinks, 0 node_modules, 506 files, 506 match / 0 mismatch / 0 missing / 0 extra vs b28a claude-plugin; TSV sha 133e99a7... equals original installed-actual.tsv",
+      "raw": [
+        "raw/017",
+        "raw/018",
+        "raw/019"
+      ]
+    },
+    "I_lock_42": {
+      "result": "PASS",
+      "detail": "sha 39abb05f..., 42/42 digests match",
+      "raw": [
+        "raw/020",
+        "raw/021"
+      ]
+    },
+    "mcpExecutable": {
+      "result": "PASS",
+      "detail": "claude mcp list (child cwd): node <I>/mcp-server/dist/server.mjs - Connected",
+      "raw": [
+        "raw/022"
+      ]
+    },
+    "childInitPluginRoot": {
+      "result": "NOT_RUN",
+      "reason": "child STOP"
+    },
+    "skillBaseDirectories": {
+      "result": "NOT_RUN",
+      "reason": "child STOP"
+    },
+    "injectedBodyUnderI": {
+      "result": "NOT_RUN",
+      "reason": "child STOP"
+    }
+  },
+  "stop": [
+    {
+      "step": "child",
+      "reason": "Condition requires the existing finite turn limit (--max-turns etc.) and STOP if unsupported or unclear. `claude --help` (2.1.291) lists no --max-turns (raw/006); the original child runs (seq 87/88) used no turn-limit flag, so no existing limit can be reused. Child not started (0 runs)."
+    }
+  ],
+  "incidents": [
+    {
+      "step": "config snapshot",
+      "detail": "One Bash call using `sh -c` (config ls/sha, source state) was blocked by the built-in Claude Code removal safety check (it could not parse the sh -c script; the script contained no rm). Not run; re-issued as direct argv commands (raw/023-026)."
+    }
+  ],
+  "carriedUnresolvedFrom_dd2b6770": [
+    "home-path residual (/home/user, /root) 45 occurrences reported by d4",
+    "transcripts/cloud-main-session.jsonl line 13 does not parse in public copy (text_redact on serialized JSON)",
+    "original private bytes NOT_VERIFIABLE for d4/root",
+    "preflight and push UTC for the push command itself not separately observed (only wrapper start/end and gate 'now')"
+  ],
+  "prior12_14Question": "The 'record read' question was answered in-session before this instruction; no receipt was created or modified for it.",
+  "push": 0
+}

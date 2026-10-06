@@ -1,0 +1,365 @@
+{
+  "schema": "cs281-b28a-status/1",
+  "runId": "claude-b28a-1",
+  "legend": "requested=asked by instruction; executed=actually run (seq in commands.jsonl); result in PASS|FAIL|BLOCKED|NOT_SUPPORTED|NOT_RUN|unknown",
+  "steps": [
+    {
+      "id": "0-binding",
+      "requested": "remote/HEAD/tree/parent/branch/dirty/shallow",
+      "executed": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "result": "PASS",
+      "observed": "origin https://github.com/jaeseongs95/agent-governance-suite (no .git suffix), HEAD b28a442a, tree e1ffc736, parent 1b36ec77, dirty 0, shallow depth 50 (not squash; parent object present). Current branch is claude/cs281-b28a-validation-9a4e6o at the same commit (local codex/engineering-practices-2.8.1 also at b28a442a). Not bundle fallback."
+    },
+    {
+      "id": "0-root-mcp-isolation",
+      "requested": "record root .mcp.json load via claude mcp list (repo cwd); never call it",
+      "executed": [
+        23,
+        25
+      ],
+      "result": "PASS",
+      "observed": "agent-governance-suite: node mcp-server/dist/server.mjs - Pending approval. Cloud main also started this server (ps pid 282) and lists its tools; this session made 0 calls to it. Seq 23 incident: run with empty CLAUDE_CONFIG_DIR wrote 3 config files into repo cwd (dirty 0->3); moved to raw/incident-023 (seq 24), dirty back to 0; rerun with isolated config (seq 25). Global ~/.claude.json mtime unchanged."
+    },
+    {
+      "id": "1-environment",
+      "requested": "environment.json new/reused/unknown",
+      "executed": [
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        26
+      ],
+      "result": "PASS",
+      "observed": "see environment.json"
+    },
+    {
+      "id": "S1-claude-lock",
+      "requested": "sha256 == 39abb05f...",
+      "executed": [
+        27
+      ],
+      "result": "PASS"
+    },
+    {
+      "id": "S2-source-lock",
+      "requested": "sha256 == 615fafed...",
+      "executed": [
+        28
+      ],
+      "result": "PASS"
+    },
+    {
+      "id": "S3-lock-digests",
+      "requested": "per-file digest match",
+      "executed": [
+        33,
+        34
+      ],
+      "result": "PASS",
+      "observed": "source 46/46 match, 0 mismatch, 0 missing; claude 42/42 match, 0 mismatch, 0 missing"
+    },
+    {
+      "id": "S4-generated-tsv",
+      "requested": "517 rows (506+11)",
+      "executed": [
+        35
+      ],
+      "result": "PASS",
+      "observed": "506 ls-files + 11 common = 517 rows; comparison to private expectation is the local lead's job (NOT_RUN here)"
+    },
+    {
+      "id": "S5-plugin-json",
+      "requested": "record mcpServers",
+      "executed": [
+        31
+      ],
+      "result": "PASS",
+      "observed": "command node, args ${CLAUDE_PLUGIN_ROOT}/mcp-server/dist/server.mjs, env HOST_ATTESTATION=claude-code, TOOL_SCHEMA_PROFILE=anthropic, DB paths under ${CLAUDE_PLUGIN_DATA}"
+    },
+    {
+      "id": "S6-root-mcp-sha",
+      "requested": "ff4a7b62...",
+      "executed": [
+        29,
+        32
+      ],
+      "result": "PASS"
+    },
+    {
+      "id": "S7-diffstat",
+      "requested": "5 files",
+      "executed": [
+        30
+      ],
+      "result": "PASS",
+      "observed": "README.en.md, README.md, docs/release-notes-2.8.1-rc.ko.md, docs/roadmap.md, release/version.json"
+    },
+    {
+      "id": "C1-node_modules",
+      "requested": "0 in repo and ancestors",
+      "executed": [
+        36
+      ],
+      "result": "PASS"
+    },
+    {
+      "id": "C1-1-marketplace-add",
+      "executed": [
+        37
+      ],
+      "result": "PASS"
+    },
+    {
+      "id": "C1-2-install",
+      "executed": [
+        38
+      ],
+      "result": "PASS"
+    },
+    {
+      "id": "C1-3-list-details",
+      "executed": [
+        39,
+        40
+      ],
+      "result": "PASS",
+      "observed": "version 2.8.1; skills include test-engineering and code-review (23 skills). Note: details Description comes from marketplace.json and omits 'MCP-assisted Korean prose workflow' that plugin.json has."
+    },
+    {
+      "id": "C1-4-install-root",
+      "executed": [
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        48
+      ],
+      "result": "PASS",
+      "observed": "declared installPath = <ST>/claude-config/plugins/cache/agent-governance-claude/agent-governance-suite/2.8.1 (real path same, 0 symlinks, 0 node_modules); readFromFolder = <REDACTED_HOME>/agent-governance-suite/claude-plugin. 506 files: 506 match, 0 mismatch, 0 missing, 0 extra vs repo claude-plugin/. Installed lock sha 39abb05f..., 42/42 digests match."
+    },
+    {
+      "id": "C1-5-mcp-health",
+      "executed": [
+        49
+      ],
+      "result": "PASS",
+      "observed": "plugin:agent-governance-suite:agent-governance-suite: node <REDACTED_HOME>/agent-governance-suite/claude-plugin/mcp-server/dist/server.mjs - Connected. Runtime root is the repo folder (directory-source marketplace), not the cache installPath."
+    },
+    {
+      "id": "E1-self-check",
+      "executed": [
+        50
+      ],
+      "result": "PASS",
+      "observed": "CONTENT_CONSISTENT, rules 48, lockedFiles 42, exit 0"
+    },
+    {
+      "id": "E2-build-example",
+      "executed": [
+        51
+      ],
+      "result": "PASS",
+      "observed": "EXAMPLE_EXECUTED, red FAIL, green PASS, CONSISTENT, NO_BLOCKING_FINDINGS (repo test script; preparation only)"
+    },
+    {
+      "id": "E3-positive",
+      "executed": [
+        52,
+        53,
+        54
+      ],
+      "result": "PASS",
+      "observed": "READY/0, CONSISTENT/0, NO_BLOCKING_FINDINGS/0"
+    },
+    {
+      "id": "E4-red-green-as-instructed",
+      "requested": "snapshot file outside root, --snapshot <abs path>",
+      "executed": [
+        55,
+        56,
+        57,
+        58
+      ],
+      "result": "FAIL",
+      "observed": "run exit 2 INVALID_INPUT 'Absolute, drive, backslash, control and stream paths are forbidden.' CLI reads every JSON input relative to --root (runtime/engineering-practices/cli.mjs readBoundedFile(o.root, p)). Instruction/contract mismatch, not executed as specified."
+    },
+    {
+      "id": "E4b-red-green-in-root-snapshot",
+      "requested": "deviation: snapshot stored at <root>/snap-*.json (outside files.json scope)",
+      "executed": [
+        59,
+        60,
+        61,
+        62
+      ],
+      "result": "PASS",
+      "observed": "RED: FAIL receipt, exit 1, ERR_ASSERTION in stdout; GREEN: PASS receipt, exit 0; nodeVersion 24.21.0"
+    },
+    {
+      "id": "E5a-unrelated-argv (instruction example: exit(1)/exit(0))",
+      "executed": [
+        63,
+        64,
+        65,
+        66
+      ],
+      "result": "PASS",
+      "observed": "check-proof exit 2 INVALID_INPUT 'Red and green commands differ.'"
+    },
+    {
+      "id": "E5a2-unrelated-argv same argv (additional variant)",
+      "executed": [
+        67,
+        68,
+        69,
+        70
+      ],
+      "result": "PASS",
+      "observed": "check-proof exit 2 INVALID_INPUT 'Red and green commands must match frozen case argv.'"
+    },
+    {
+      "id": "E5b-missing",
+      "executed": [
+        71
+      ],
+      "result": "PASS",
+      "observed": "exit 2 IO_ERROR 'Could not read or execute the explicitly requested local input.'"
+    },
+    {
+      "id": "E5c-malformed (truncate 1 byte)",
+      "executed": [
+        72,
+        77
+      ],
+      "result": "FAIL",
+      "observed": "exit 0 READY. Last byte of plan.json is LF, so 1-byte truncation leaves valid JSON; expectation (exit 2) not met by the case design, not a product defect."
+    },
+    {
+      "id": "E5c2-malformed (truncate 2 bytes, additional variant)",
+      "executed": [
+        78
+      ],
+      "result": "PASS",
+      "observed": "exit 2 INVALID_INPUT 'Invalid UTF-8 JSON.'"
+    },
+    {
+      "id": "E5d-stale",
+      "executed": [
+        73,
+        74
+      ],
+      "result": "PASS",
+      "observed": "check-proof and check-review exit 2 INTEGRITY_FAILED 'Current files differ from the declared snapshot.'"
+    },
+    {
+      "id": "E5e-bad-argv",
+      "executed": [
+        75,
+        76
+      ],
+      "result": "PASS",
+      "observed": "not-a-command exit 2 INVALID_INPUT; duplicate --root exit 2 INVALID_INPUT 'Duplicate or missing option value.'"
+    },
+    {
+      "id": "E6-tamper",
+      "executed": [
+        79,
+        80,
+        81,
+        82,
+        83
+      ],
+      "result": "PASS",
+      "observed": "tamper copy core.mjs +1 byte: self-check exit 2 INTEGRITY_FAILED 'Artifact digest mismatch.'; original install tree aggregate hash 3a821036... before and after (unchanged)"
+    },
+    {
+      "id": "E7-provider-result",
+      "executed": [
+        84,
+        85
+      ],
+      "result": "PASS",
+      "observed": "test-sensitivity-review and change-code-review artifacts verified:false"
+    },
+    {
+      "id": "C2-1-auth",
+      "executed": [
+        86
+      ],
+      "result": "PASS",
+      "observed": "loggedIn true, authMethod oauth_token, apiProvider firstParty (credential source pre-existing in environment; nothing injected/copied)"
+    },
+    {
+      "id": "C2-run1 (no --effort)",
+      "executed": [
+        87
+      ],
+      "result": "BLOCKED",
+      "observed": "discovery PASS (init plugins path <REDACTED_HOME>/agent-governance-suite/claude-plugin; mcp_servers plugin connected; skills include test-engineering, code-review). loading PASS (Skill tool_use + 'Launching skill' tool_result + synthetic message 'Base directory for this skill: <REDACTED_HOME>/agent-governance-suite/claude-plugin/skills/{test-engineering,code-review}'). plan_workflow: BINDING_INVALID 'bootstrap orchestration execution profile is below the planned semantic assurance floor.' model claude-sonnet-5-5, effort medium < high. Not retried within run."
+    },
+    {
+      "id": "C2-run2 (--effort high, additional observation, model unchanged)",
+      "executed": [
+        88
+      ],
+      "result": "PASS(partial)",
+      "observed": "plan_workflow ok:true, state blocked. test-sensitivity-review: executionClass workflow, phaseOrder 66, gate none. change-code-review: workflow, 68, gate none. test-plan-validation: not a stage; errors[] GATE_FAILED 'Capability test-plan-validation is a bootstrap provider and must run before plan_workflow.' (providerKey test-engineering:test-plan-validation:1). phaseOrder 35 is NOT present in the response (unknown at runtime); static descriptor declares bootstrap/35/gate none (seq 91)."
+    },
+    {
+      "id": "C2-base-directory-vs-I",
+      "result": "FAIL",
+      "observed": "child base directory = <REDACTED_HOME>/agent-governance-suite/claude-plugin/skills/... (repo readFromFolder), not the cache installPath <I>. Bytes are identical (C1-4), but the loaded path is not <I>."
+    },
+    {
+      "id": "C2-loaded-bytes",
+      "executed": [
+        92,
+        93
+      ],
+      "result": "PASS(transcript-level)",
+      "observed": "skill text injected into the child transcript equals SKILL.md body (frontmatter removed, outer whitespace trimmed) of both repo and install copies. In-process memory bytes not observed: UNKNOWN."
+    },
+    {
+      "id": "C2-d-forbidden-tools",
+      "result": "PASS",
+      "observed": "start_guarded_workflow / record_stage_result / finalize_workflow called 0 times; subagents spawned 0; Fable 0; --model not passed"
+    },
+    {
+      "id": "C2-root-mcp-contamination",
+      "result": "PASS",
+      "observed": "child cwd <ST>/flow; init mcp_servers lists only plugin server; <REDACTED_HOME>/.agent-governance-suite unchanged after 11:04:15 (seq 90)"
+    },
+    {
+      "id": "CloudMain-plugin-autoload",
+      "result": "NOT_SUPPORTED",
+      "observed": "Documented NOT_SUPPORTED retained; the isolated child success does not replace it."
+    },
+    {
+      "id": "7-evidence-prep",
+      "result": "see final report",
+      "observed": "local commit only, push 0"
+    }
+  ]
+}

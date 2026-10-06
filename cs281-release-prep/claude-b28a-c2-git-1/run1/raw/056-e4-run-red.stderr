@@ -1,0 +1,5 @@
+{
+  "status": "ERROR",
+  "code": "INVALID_INPUT",
+  "message": "Absolute, drive, backslash, control and stream paths are forbidden."
+}

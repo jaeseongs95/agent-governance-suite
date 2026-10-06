@@ -1,0 +1,8 @@
+  --allowedTools, --allowed-tools <tools...>
+  --disallowedTools, --disallowed-tools <tools...>
+  --effort <level>                      Effort level for the current session
+                                        --print and --output-format=stream-json)
+                                        --output-format=stream-json)
+                                        --output-format=stream-json)
+  --output-format <format>              Output format (only works with --print):
+                                        --output-format=stream-json)

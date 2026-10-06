@@ -1,0 +1,15 @@
+<REDACTED_HOME>/cs281-b28a-20261006T110419Z/claude-config/plugins/cache/agent-governance-claude/agent-governance-suite/2.8.1
+total 56
+drwxr-xr-x  9 root root  4096 Oct  6 11:06 .
+drwxr-xr-x  3 root root  4096 Oct  6 11:06 ..
+drwxr-xr-x  2 root root  4096 Oct  6 11:06 .claude-plugin
+-rw-r--r--  1 root root  1068 Oct  6 11:06 LICENSE
+-rw-r--r--  1 root root 15796 Oct  6 11:06 README.md
+drwxr-xr-x  2 root root  4096 Oct  6 11:06 agents
+drwxr-xr-x  2 root root  4096 Oct  6 11:06 contracts
+drwxr-xr-x  2 root root  4096 Oct  6 11:06 hooks
+drwxr-xr-x  3 root root  4096 Oct  6 11:06 mcp-server
+drwxr-xr-x  3 root root  4096 Oct  6 11:06 runtime
+drwxr-xr-x 25 root root  4096 Oct  6 11:06 skills
+0
+0
