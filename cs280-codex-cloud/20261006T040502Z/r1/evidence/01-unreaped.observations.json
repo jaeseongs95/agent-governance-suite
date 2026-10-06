@@ -1,0 +1,1302 @@
+{
+  "label": "01-unreaped",
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "tests/session-messaging/historical-wake.test.mjs",
+    "tests/session-messaging/session-message.test.ts",
+    "-t",
+    "packaged CLI binds history|uses one plugin queue profile|keeps packaged hook and relay entrypoints",
+    "--maxWorkers=1"
+  ],
+  "cwd": "/workspace/ags-cs-2x/repo",
+  "sourceCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+  "started": "2026-10-06T03:02:17.971543+00:00",
+  "finished": "2026-10-06T03:02:52.969369+00:00",
+  "exitCode": 1,
+  "subreaper": false,
+  "log": "01-unreaped.log",
+  "events": [
+    {
+      "t": 0.0084,
+      "kind": "process-state",
+      "pid": 28007,
+      "state": "R",
+      "ppid": 28004,
+      "start": "436689"
+    },
+    {
+      "t": 0.0387,
+      "kind": "fixture-directory",
+      "path": "node-compile-cache"
+    },
+    {
+      "t": 0.6734,
+      "kind": "process-state",
+      "pid": 28022,
+      "state": "R",
+      "ppid": 28007,
+      "start": "436755"
+    },
+    {
+      "t": 0.6734,
+      "kind": "process-state",
+      "pid": 28007,
+      "state": "S",
+      "ppid": 28004,
+      "start": "436689"
+    },
+    {
+      "t": 0.7146,
+      "kind": "process-state",
+      "pid": 28022,
+      "state": "D",
+      "ppid": 28007,
+      "start": "436755"
+    },
+    {
+      "t": 0.7285,
+      "kind": "process-state",
+      "pid": 28022,
+      "state": "R",
+      "ppid": 28007,
+      "start": "436755"
+    },
+    {
+      "t": 1.063,
+      "kind": "process-state",
+      "pid": 28022,
+      "state": "S",
+      "ppid": 28007,
+      "start": "436755"
+    },
+    {
+      "t": 1.0767,
+      "kind": "process-state",
+      "pid": 28022,
+      "state": "R",
+      "ppid": 28007,
+      "start": "436755"
+    },
+    {
+      "t": 1.4369,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "R",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 1.6798,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "S",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 1.6952,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "R",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 1.7658,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "R",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 1.7658,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "S",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 1.893,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "S",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 1.893,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "R",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 1.9957,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "R",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 1.9957,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "S",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 1.9957,
+      "kind": "fixture-directory",
+      "path": "MDAEfaCwaV-Ye9Fi896HI"
+    },
+    {
+      "t": 2.0671,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "S",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 2.0807,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "R",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 2.2029,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "S",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 2.2029,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "R",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 2.294,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "S",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 2.3086,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "R",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 2.3228,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "S",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 2.3366,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "R",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 2.3507,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "S",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 2.365,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "R",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 2.394,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "S",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 2.4077,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "R",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 2.4349,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "S",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 2.4486,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "R",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 2.4892,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "R",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 2.4892,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "S",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 2.5179,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "S",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 2.5179,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "R",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 2.5317,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "R",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 2.5317,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "S",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 2.5459,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "S",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 2.5459,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "R",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 2.6365,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "S",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 2.6508,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "R",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 2.6654,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "S",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 2.6814,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "R",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 2.6814,
+      "kind": "fixture-directory",
+      "path": "session-messaging-5Q2IOu"
+    },
+    {
+      "t": 2.6996,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "S",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 2.6996,
+      "kind": "process-state",
+      "pid": 28075,
+      "state": "R",
+      "ppid": 28063,
+      "start": "436958",
+      "role": "broker"
+    },
+    {
+      "t": 2.8425,
+      "kind": "process-state",
+      "pid": 28075,
+      "state": "S",
+      "ppid": 28063,
+      "start": "436958",
+      "role": "broker"
+    },
+    {
+      "t": 2.9149,
+      "kind": "process-state",
+      "pid": 28083,
+      "state": "R",
+      "ppid": 28075,
+      "start": "436980"
+    },
+    {
+      "t": 2.9284,
+      "kind": "process-state",
+      "pid": 28083,
+      "state": "S",
+      "ppid": 28075,
+      "start": "436980"
+    },
+    {
+      "t": 2.9581,
+      "kind": "process-state",
+      "pid": 28075,
+      "state": "R",
+      "ppid": 28063,
+      "start": "436958",
+      "role": "broker"
+    },
+    {
+      "t": 2.9581,
+      "kind": "fixture-directory",
+      "path": "tsx-1000"
+    },
+    {
+      "t": 2.9729,
+      "kind": "process-state",
+      "pid": 28075,
+      "state": "S",
+      "ppid": 28063,
+      "start": "436958",
+      "role": "broker"
+    },
+    {
+      "t": 3.0045,
+      "kind": "process-state",
+      "pid": 28075,
+      "state": "R",
+      "ppid": 28063,
+      "start": "436958",
+      "role": "broker"
+    },
+    {
+      "t": 3.0622,
+      "kind": "process-state",
+      "pid": 28075,
+      "state": "S",
+      "ppid": 28063,
+      "start": "436958",
+      "role": "broker"
+    },
+    {
+      "t": 3.0623,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-5Q2IOu",
+      "pid": 28075,
+      "role": "broker"
+    },
+    {
+      "t": 3.1063,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "R",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 3.1211,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "S",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 3.1364,
+      "kind": "process-state",
+      "pid": 28096,
+      "state": "R",
+      "ppid": 28063,
+      "start": "437001"
+    },
+    {
+      "t": 3.2308,
+      "kind": "process-state",
+      "pid": 28096,
+      "state": "S",
+      "ppid": 28063,
+      "start": "437001"
+    },
+    {
+      "t": 3.2309,
+      "kind": "process-state",
+      "pid": 28108,
+      "state": "R",
+      "ppid": 28096,
+      "start": "437011"
+    },
+    {
+      "t": 3.248,
+      "kind": "process-state",
+      "pid": 28108,
+      "state": "R",
+      "ppid": 1,
+      "start": "437011"
+    },
+    {
+      "t": 3.3071,
+      "kind": "process-state",
+      "pid": 28075,
+      "state": "R",
+      "ppid": 28063,
+      "start": "436958",
+      "role": "broker"
+    },
+    {
+      "t": 3.3071,
+      "kind": "process-state",
+      "pid": 28108,
+      "state": "S",
+      "ppid": 1,
+      "start": "437011"
+    },
+    {
+      "t": 3.3212,
+      "kind": "process-state",
+      "pid": 28075,
+      "state": "S",
+      "ppid": 28063,
+      "start": "436958",
+      "role": "broker"
+    },
+    {
+      "t": 3.351,
+      "kind": "process-state",
+      "pid": 28120,
+      "state": "R",
+      "ppid": 28063,
+      "start": "437023"
+    },
+    {
+      "t": 7.4137,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "R",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 7.4292,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "S",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 7.5644,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "R",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 7.5795,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "S",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 7.7154,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "R",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 7.7323,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "S",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 8.3187,
+      "kind": "process-state",
+      "pid": 28075,
+      "state": "R",
+      "ppid": 28063,
+      "start": "436958",
+      "role": "broker"
+    },
+    {
+      "t": 8.3187,
+      "kind": "process-state",
+      "pid": 28108,
+      "state": "R",
+      "ppid": 1,
+      "start": "437011"
+    },
+    {
+      "t": 8.3344,
+      "kind": "process-state",
+      "pid": 28075,
+      "state": "S",
+      "ppid": 28063,
+      "start": "436958",
+      "role": "broker"
+    },
+    {
+      "t": 8.3344,
+      "kind": "process-state",
+      "pid": 28108,
+      "state": "Z",
+      "ppid": 1,
+      "start": "437011"
+    },
+    {
+      "t": 10.2958,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "R",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 10.311,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "S",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 10.535,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "R",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 10.5486,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "S",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 10.9041,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "R",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 10.9183,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "S",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 10.9323,
+      "kind": "process-state",
+      "pid": 28083,
+      "state": "R",
+      "ppid": 28075,
+      "start": "436980"
+    },
+    {
+      "t": 10.9459,
+      "kind": "process-state",
+      "pid": 28083,
+      "state": "S",
+      "ppid": 28075,
+      "start": "436980"
+    },
+    {
+      "t": 13.7485,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "R",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 13.762,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "S",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 18.4773,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "R",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 18.4919,
+      "kind": "process-state",
+      "pid": 28083,
+      "state": "Z",
+      "ppid": 1,
+      "start": "436980"
+    },
+    {
+      "t": 18.4919,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "S",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 18.492,
+      "kind": "broker-endpoint-removed",
+      "path": "session-messaging-5Q2IOu",
+      "pid": 28075,
+      "role": "broker"
+    },
+    {
+      "t": 18.5465,
+      "kind": "process-state",
+      "pid": 28132,
+      "state": "R",
+      "ppid": 28063,
+      "start": "438543"
+    },
+    {
+      "t": 18.5465,
+      "kind": "fixture-directory",
+      "path": "session-messaging-raqu0b"
+    },
+    {
+      "t": 18.5466,
+      "kind": "fixture-directory",
+      "path": "session-messaging-TI2xa7"
+    },
+    {
+      "t": 18.588,
+      "kind": "process-state",
+      "pid": 28132,
+      "state": "S",
+      "ppid": 28063,
+      "start": "438543"
+    },
+    {
+      "t": 18.6018,
+      "kind": "process-state",
+      "pid": 28144,
+      "state": "R",
+      "ppid": 28132,
+      "start": "438548",
+      "role": "broker"
+    },
+    {
+      "t": 18.6431,
+      "kind": "process-state",
+      "pid": 28144,
+      "state": "S",
+      "ppid": 28132,
+      "start": "438548",
+      "role": "broker"
+    },
+    {
+      "t": 18.6432,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-TI2xa7",
+      "pid": 28144,
+      "role": "broker"
+    },
+    {
+      "t": 18.6978,
+      "kind": "process-state",
+      "pid": 28132,
+      "state": "R",
+      "ppid": 28063,
+      "start": "438543"
+    },
+    {
+      "t": 18.7261,
+      "kind": "process-state",
+      "pid": 28144,
+      "state": "S",
+      "ppid": 1,
+      "start": "438548",
+      "role": "broker"
+    },
+    {
+      "t": 18.7261,
+      "kind": "process-state",
+      "pid": 28156,
+      "state": "R",
+      "ppid": 28063,
+      "start": "438560"
+    },
+    {
+      "t": 18.7727,
+      "kind": "process-state",
+      "pid": 28144,
+      "state": "Z",
+      "ppid": 1,
+      "start": "438548",
+      "role": "broker"
+    },
+    {
+      "t": 18.7728,
+      "kind": "broker-endpoint-removed",
+      "path": "session-messaging-TI2xa7",
+      "pid": 28144,
+      "role": "broker"
+    },
+    {
+      "t": 25.8002,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "R",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 25.8136,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "S",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 28.8131,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "R",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 28.828,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "R",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 28.8281,
+      "kind": "process-state",
+      "pid": 28164,
+      "state": "R",
+      "ppid": 28034,
+      "start": "439571"
+    },
+    {
+      "t": 28.8281,
+      "kind": "process-state",
+      "pid": 28063,
+      "state": "Z",
+      "ppid": 28034,
+      "start": "436864"
+    },
+    {
+      "t": 28.8418,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "S",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 28.9165,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "R",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 28.9165,
+      "kind": "process-state",
+      "pid": 28164,
+      "state": "S",
+      "ppid": 28034,
+      "start": "439571"
+    },
+    {
+      "t": 28.9446,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "S",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 28.9446,
+      "kind": "process-state",
+      "pid": 28164,
+      "state": "R",
+      "ppid": 28034,
+      "start": "439571"
+    },
+    {
+      "t": 28.9735,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-7KICkC"
+    },
+    {
+      "t": 28.9892,
+      "kind": "process-state",
+      "pid": 28164,
+      "state": "S",
+      "ppid": 28034,
+      "start": "439571"
+    },
+    {
+      "t": 29.0051,
+      "kind": "process-state",
+      "pid": 28172,
+      "state": "R",
+      "ppid": 28164,
+      "start": "439587",
+      "role": "broker"
+    },
+    {
+      "t": 29.0211,
+      "kind": "process-state",
+      "pid": 28172,
+      "state": "S",
+      "ppid": 28164,
+      "start": "439587",
+      "role": "broker"
+    },
+    {
+      "t": 29.037,
+      "kind": "process-state",
+      "pid": 28172,
+      "state": "R",
+      "ppid": 28164,
+      "start": "439587",
+      "role": "broker"
+    },
+    {
+      "t": 29.0518,
+      "kind": "process-state",
+      "pid": 28172,
+      "state": "S",
+      "ppid": 28164,
+      "start": "439587",
+      "role": "broker"
+    },
+    {
+      "t": 29.0519,
+      "kind": "broker-endpoint",
+      "path": "ags-wake-history-7KICkC",
+      "pid": 28172,
+      "role": "broker"
+    },
+    {
+      "t": 29.0938,
+      "kind": "process-state",
+      "pid": 28164,
+      "state": "R",
+      "ppid": 28034,
+      "start": "439571"
+    },
+    {
+      "t": 29.1085,
+      "kind": "process-state",
+      "pid": 28164,
+      "state": "S",
+      "ppid": 28034,
+      "start": "439571"
+    },
+    {
+      "t": 29.1085,
+      "kind": "process-state",
+      "pid": 28188,
+      "state": "R",
+      "ppid": 28164,
+      "start": "439599"
+    },
+    {
+      "t": 29.1676,
+      "kind": "process-state",
+      "pid": 28200,
+      "state": "R",
+      "ppid": 28164,
+      "start": "439604"
+    },
+    {
+      "t": 29.2268,
+      "kind": "process-state",
+      "pid": 28212,
+      "state": "R",
+      "ppid": 28164,
+      "start": "439610"
+    },
+    {
+      "t": 29.2565,
+      "kind": "process-state",
+      "pid": 28172,
+      "state": "R",
+      "ppid": 28164,
+      "start": "439587",
+      "role": "broker"
+    },
+    {
+      "t": 29.2715,
+      "kind": "process-state",
+      "pid": 28224,
+      "state": "R",
+      "ppid": 28164,
+      "start": "439615"
+    },
+    {
+      "t": 29.2715,
+      "kind": "process-state",
+      "pid": 28172,
+      "state": "S",
+      "ppid": 28164,
+      "start": "439587",
+      "role": "broker"
+    },
+    {
+      "t": 29.3303,
+      "kind": "process-state",
+      "pid": 28236,
+      "state": "R",
+      "ppid": 28164,
+      "start": "439621"
+    },
+    {
+      "t": 29.3759,
+      "kind": "process-state",
+      "pid": 28164,
+      "state": "R",
+      "ppid": 28034,
+      "start": "439571"
+    },
+    {
+      "t": 29.3911,
+      "kind": "process-state",
+      "pid": 28164,
+      "state": "S",
+      "ppid": 28034,
+      "start": "439571"
+    },
+    {
+      "t": 29.3911,
+      "kind": "process-state",
+      "pid": 28248,
+      "state": "R",
+      "ppid": 28164,
+      "start": "439626"
+    },
+    {
+      "t": 29.4384,
+      "kind": "process-state",
+      "pid": 28164,
+      "state": "R",
+      "ppid": 28034,
+      "start": "439571"
+    },
+    {
+      "t": 29.4384,
+      "kind": "broker-endpoint-removed",
+      "path": "ags-wake-history-7KICkC",
+      "pid": 28172,
+      "role": "broker"
+    },
+    {
+      "t": 29.454,
+      "kind": "process-state",
+      "pid": 28164,
+      "state": "S",
+      "ppid": 28034,
+      "start": "439571"
+    },
+    {
+      "t": 29.454,
+      "kind": "process-state",
+      "pid": 28260,
+      "state": "R",
+      "ppid": 28164,
+      "start": "439634"
+    },
+    {
+      "t": 29.4541,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-sjXn5g"
+    },
+    {
+      "t": 29.5032,
+      "kind": "process-state",
+      "pid": 28260,
+      "state": "S",
+      "ppid": 28164,
+      "start": "439634"
+    },
+    {
+      "t": 29.5032,
+      "kind": "process-state",
+      "pid": 28272,
+      "state": "R",
+      "ppid": 28260,
+      "start": "439637",
+      "role": "broker"
+    },
+    {
+      "t": 29.548,
+      "kind": "process-state",
+      "pid": 28272,
+      "state": "S",
+      "ppid": 28260,
+      "start": "439637",
+      "role": "broker"
+    },
+    {
+      "t": 29.548,
+      "kind": "broker-endpoint",
+      "path": "ags-wake-history-sjXn5g",
+      "pid": 28272,
+      "role": "broker"
+    },
+    {
+      "t": 29.5914,
+      "kind": "process-state",
+      "pid": 28260,
+      "state": "R",
+      "ppid": 28164,
+      "start": "439634"
+    },
+    {
+      "t": 29.6199,
+      "kind": "process-state",
+      "pid": 28272,
+      "state": "S",
+      "ppid": 1,
+      "start": "439637",
+      "role": "broker"
+    },
+    {
+      "t": 29.6199,
+      "kind": "process-state",
+      "pid": 28284,
+      "state": "R",
+      "ppid": 28164,
+      "start": "439650"
+    },
+    {
+      "t": 29.6482,
+      "kind": "process-state",
+      "pid": 28284,
+      "state": "S",
+      "ppid": 28164,
+      "start": "439650"
+    },
+    {
+      "t": 29.6631,
+      "kind": "process-state",
+      "pid": 28284,
+      "state": "R",
+      "ppid": 28164,
+      "start": "439650"
+    },
+    {
+      "t": 29.6773,
+      "kind": "process-state",
+      "pid": 28296,
+      "state": "R",
+      "ppid": 28164,
+      "start": "439656"
+    },
+    {
+      "t": 29.7395,
+      "kind": "process-state",
+      "pid": 28308,
+      "state": "R",
+      "ppid": 28164,
+      "start": "439661"
+    },
+    {
+      "t": 29.7968,
+      "kind": "process-state",
+      "pid": 28320,
+      "state": "R",
+      "ppid": 28164,
+      "start": "439667"
+    },
+    {
+      "t": 29.841,
+      "kind": "process-state",
+      "pid": 28332,
+      "state": "R",
+      "ppid": 28164,
+      "start": "439672"
+    },
+    {
+      "t": 29.8872,
+      "kind": "process-state",
+      "pid": 28272,
+      "state": "Z",
+      "ppid": 1,
+      "start": "439637",
+      "role": "broker"
+    },
+    {
+      "t": 29.8873,
+      "kind": "broker-endpoint-removed",
+      "path": "ags-wake-history-sjXn5g",
+      "pid": 28272,
+      "role": "broker"
+    },
+    {
+      "t": 32.8133,
+      "kind": "process-state",
+      "pid": 28164,
+      "state": "R",
+      "ppid": 28034,
+      "start": "439571"
+    },
+    {
+      "t": 32.8279,
+      "kind": "process-state",
+      "pid": 28164,
+      "state": "S",
+      "ppid": 28034,
+      "start": "439571"
+    },
+    {
+      "t": 33.1569,
+      "kind": "process-state",
+      "pid": 28164,
+      "state": "R",
+      "ppid": 28034,
+      "start": "439571"
+    },
+    {
+      "t": 33.1706,
+      "kind": "process-state",
+      "pid": 28164,
+      "state": "S",
+      "ppid": 28034,
+      "start": "439571"
+    },
+    {
+      "t": 34.8955,
+      "kind": "process-state",
+      "pid": 28164,
+      "state": "R",
+      "ppid": 28034,
+      "start": "439571"
+    },
+    {
+      "t": 34.9121,
+      "kind": "process-state",
+      "pid": 28034,
+      "state": "R",
+      "ppid": 28007,
+      "start": "436831"
+    },
+    {
+      "t": 34.9121,
+      "kind": "process-state",
+      "pid": 28164,
+      "state": "S",
+      "ppid": 28034,
+      "start": "439571"
+    },
+    {
+      "t": 34.9896,
+      "kind": "process-state",
+      "pid": 28007,
+      "state": "R",
+      "ppid": 28004,
+      "start": "436689"
+    }
+  ],
+  "knownFixtureRoles": {
+    "28075": "broker",
+    "28144": "broker",
+    "28172": "broker",
+    "28272": "broker"
+  },
+  "scope": "Only this invocation descendants and synthetic fixture directories; no credentials/body/nonce values logged."
+}

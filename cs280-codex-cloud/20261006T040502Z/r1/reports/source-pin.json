@@ -1,0 +1,33 @@
+{
+  "requestId": "c1a7252a-c8ed-4fd4-8d49-c744043e91d3",
+  "messageId": "d68a83e4-f4df-4ad9-951d-42b60684b27c",
+  "leadThread": "01a1023f-b277-7ef1-bb48-4b90770caf13",
+  "baseCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+  "sourceCommit": "3b9c34b0dc0ca65d74db1631cc5fdd4898b7f2d7",
+  "sourceTree": "393e4d8a5a058afe2265fc6322f5b3c835a0b3cb",
+  "branch": "codex/cs-engineering-2x",
+  "worktree": "/workspace/ags-cs-2x/repo",
+  "candidateVersion": "2.8.0",
+  "revision": "Linux-lifecycle-r1",
+  "changedFiles": [
+    {
+      "status": "A",
+      "path": "tests/helpers/linux-child-reaper.md"
+    },
+    {
+      "status": "A",
+      "path": "tests/helpers/linux-child-reaper.py"
+    }
+  ],
+  "sourceFiles": 1346,
+  "originalSourceFilesCompared": 1344,
+  "originalSourceByteDifferences": [],
+  "originalZipBytes": 3956830,
+  "originalZipSha256": "2f4067919ec83cccef39650cdac61d4dca61d47e9c8ccdf4558fe0f011f06fc4",
+  "originalZipUnmodified": true,
+  "productionChanges": false,
+  "assertionsTimeoutsSkipsChanged": false,
+  "worktreeClean": true,
+  "remoteWrites": false,
+  "testsExecutedBeforeCommit": "Recorded working-file-pins.json matches committed harness bytes; all 1344 original source files are byte-identical."
+}

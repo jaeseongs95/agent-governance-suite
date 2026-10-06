@@ -1,0 +1,69 @@
+{
+  "state": "QUALIFIED_LINUX_REGRESSION_PASS",
+  "environment": {
+    "node": "24.19.0",
+    "pnpm": "11.19.0",
+    "python": "3.12.14",
+    "platform": "Linux",
+    "pid1": "tail"
+  },
+  "supervisedFull": {
+    "passed": 914,
+    "failed": 0,
+    "skipped": 5,
+    "total": 919,
+    "exitCode": 0,
+    "adoptedChildrenReaped": 51,
+    "childExitCodesAllZero": true,
+    "log": "evidence/07-full-process-only.log"
+  },
+  "supervisedAffectedFiles": {
+    "passed": 136,
+    "failed": 0,
+    "skipped": 0,
+    "exitCode": 0,
+    "adoptedChildrenReaped": 7,
+    "log": "evidence/04-harness-fixtures.log"
+  },
+  "unchangedUnsupervisedDiagnostic": {
+    "passed": 1,
+    "failed": 3,
+    "notSelected": 132,
+    "exitCode": 1,
+    "log": "evidence/01-unreaped.log"
+  },
+  "supervisorDiagnostic": {
+    "passed": 4,
+    "failed": 0,
+    "notSelected": 132,
+    "exitCode": 0,
+    "log": "evidence/02-reaped.log"
+  },
+  "failureExitPreserved": {
+    "expected": 7,
+    "observed": 7,
+    "log": "evidence/05-exit-propagation.log"
+  },
+  "otherPass": [
+    "source:check",
+    "lint",
+    "bundle:check",
+    "claude:check",
+    "git diff --check",
+    "git bundle verify"
+  ],
+  "rawCorrectionLogs": [
+    "03-harness-fixtures.log: absent optional proc children file; corrected supervisor",
+    "06-full-node24.log: diagnostic SQLite read collided with migration DDL; removed DB reader in final whole suite"
+  ],
+  "unsupervisedContainerStatus": "Original three failures remain when this non-reaping PID1 environment has no supervisor; not relabeled PASS.",
+  "productionLifecycleFixClaimed": false,
+  "windows": "Separate lead verifier; no result claimed here",
+  "officialValidator": "Original missing-script BLOCKED persists; not changed in this follow-up",
+  "independentSourceAudit": "NOT_RUN",
+  "remainingNotImplemented": [
+    "signed1.1 all-lifecycle CS binding",
+    "global acceptance/applicability gate"
+  ],
+  "releasePublished": false
+}

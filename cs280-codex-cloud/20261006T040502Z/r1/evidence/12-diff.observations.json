@@ -1,0 +1,18 @@
+{
+  "label": "12-diff",
+  "command": [
+    "git",
+    "diff",
+    "--check"
+  ],
+  "cwd": "/workspace/ags-cs-2x/repo",
+  "sourceCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+  "started": "2026-10-06T03:13:42.032542+00:00",
+  "finished": "2026-10-06T03:13:42.039469+00:00",
+  "exitCode": 0,
+  "subreaper": false,
+  "log": "12-diff.log",
+  "events": [],
+  "knownFixtureRoles": {},
+  "scope": "Only this invocation descendants and synthetic fixture directories; no credentials/body/nonce values logged."
+}

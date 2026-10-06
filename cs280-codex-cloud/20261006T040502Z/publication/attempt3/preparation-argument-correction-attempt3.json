@@ -1,0 +1,7 @@
+{
+  "origin": "generated_control",
+  "error": "IndexError: list index out of range at scan-public.py line3: omitted public directory argv. Outer checked subprocess stopped before final scope/commit/push.",
+  "nativeOutputCapture": "Full returned native tool stdout is not exported to a local immutable file: NOT_VERIFIABLE. This control is an explicitly generated account, not a raw transcript substitute.",
+  "correction": "Pass the actual public directory as second scanner argument; continue from captured baseline without rerunning product tests or replacing private input snapshots.",
+  "remoteEffects": false
+}

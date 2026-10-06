@@ -1,0 +1,12 @@
+[
+  {
+    "path": "tests/session-messaging/historical-wake.test.mjs",
+    "originalCandidateBaselineBytesEqual": true,
+    "originalSha256": "d5e6be057a25a8f4ff5f187a3831245bd09347734c4309d26d75c42fefefda55"
+  },
+  {
+    "path": "tests/session-messaging/session-message.test.ts",
+    "originalCandidateBaselineBytesEqual": true,
+    "originalSha256": "0931a536605b22fe7b6f74633e38fc39cb5e53f13391de180adf4fee0ddb70b1"
+  }
+]

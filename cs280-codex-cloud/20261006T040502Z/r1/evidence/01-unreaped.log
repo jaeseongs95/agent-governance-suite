@@ -1,0 +1,70 @@
+{"command": ["pnpm", "exec", "vitest", "run", "tests/session-messaging/historical-wake.test.mjs", "tests/session-messaging/session-message.test.ts", "-t", "packaged CLI binds history|uses one plugin queue profile|keeps packaged hook and relay entrypoints", "--maxWorkers=1"], "cwd": "/workspace/ags-cs-2x/repo", "started": "2026-10-06T03:02:17.971543+00:00", "subreaper": false, "pid1": "tail", "isolation": {"TMPDIR": "/dev/shm/ags-cs-lifecycle-r1/01-unreaped", "sharedState": "/workspace/ags-cs-2x/linux-lifecycle-r1/tool-state/state"}}
+Already up to date
+Done in 681ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /workspace/ags-cs-2x/repo
+
+ ❯ tests/session-messaging/session-message.test.ts (71 tests | 2 failed | 69 skipped) 26138ms
+   ❯ TLS 1.3 broker and vendor-neutral adapter (52)
+     × uses one plugin queue profile for packaged presence and relay until the next SessionStart 15858ms
+     × keeps packaged hook and relay entrypoints isolated 10278ms
+ ❯ tests/session-messaging/historical-wake.test.mjs (65 tests | 1 failed | 63 skipped) 5936ms
+   × packaged CLI binds history to explicit broker state directory: client-ensure 5464ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/historical-wake.test.mjs > packaged CLI binds history to explicit broker state directory: client-ensure
+AssertionError: Expected values to be strictly equal:
+
+true !== false
+
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/session-messaging/historical-wake.test.mjs:421:14
+    419|         if (alive) await delay(20);
+    420|       }
+    421|       assert.equal(alive, false);
+       |              ^
+    422|     }
+    423|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > uses one plugin queue profile for packaged presence and relay until the next SessionStart
+Error: Timed out waiting for test state.
+ ❯ waitUntil tests/session-messaging/session-message.test.ts:60:9
+     58|     await new Promise((resolve) => setTimeout(resolve, 50));
+     59|   }
+     60|   throw new Error("Timed out waiting for test state.");
+       |         ^
+     61| }
+     62|
+ ❯ tests/session-messaging/session-message.test.ts:897:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > keeps packaged hook and relay entrypoints isolated
+Error: Timed out waiting for test state.
+ ❯ waitUntil tests/session-messaging/session-message.test.ts:60:9
+     58|     await new Promise((resolve) => setTimeout(resolve, 50));
+     59|   }
+     60|   throw new Error("Timed out waiting for test state.");
+       |         ^
+     61| }
+     62|
+ ❯ terminateBroker tests/session-messaging/session-message.test.ts:87:3
+ ❯ tests/session-messaging/session-message.test.ts:107:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 1 passed | 132 skipped (136)
+   Start at  03:02:19
+   Duration  33.16s (tests 97%, transform 2%, import 1%)
+

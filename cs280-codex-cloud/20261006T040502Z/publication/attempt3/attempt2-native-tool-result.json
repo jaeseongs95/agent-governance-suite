@@ -1,0 +1,7 @@
+{
+  "chunk_id": "d97020",
+  "wall_time_seconds": 0.223820038,
+  "exit_code": 1,
+  "original_token_count": 45,
+  "output": "Traceback (most recent call last):\n  File \"<stdin>\", line 4, in <module>\nAssertionError: ('22ad719ac0ea376659b3182ce0692c6a90fd8583', '32f81188e60867e37c0e69a416e20fab450f80c1')\n"
+}

@@ -1,0 +1,65 @@
+[
+  {
+    "stage": "original",
+    "path": "original/excluded/AGS-2.8.0-CS-RC-review.zip",
+    "bytes": 3956830,
+    "originalSha256": "2f4067919ec83cccef39650cdac61d4dca61d47e9c8ccdf4558fe0f011f06fc4",
+    "reason": "Private archive/bundle or source patch; excluded from evidence-only publication"
+  },
+  {
+    "stage": "r1",
+    "path": "r1/excluded/AGS-2.8.0-CS-Linux-lifecycle-r1-review.zip",
+    "bytes": 3537167,
+    "originalSha256": "06305d4faa2ac07f14170c2742185c4e2564f50b48bee66cd0ed070341867317",
+    "reason": "Private archive/bundle or source patch; excluded from evidence-only publication"
+  },
+  {
+    "stage": "r1",
+    "path": "r1/excluded/AGS-2.8.0-CS-Linux-lifecycle-r1.bundle",
+    "bytes": 2658,
+    "originalSha256": "81e7193113ad7adb14db29b335ddb17b231e4384939cdd0e75a1c0ed6e38478d",
+    "reason": "Private archive/bundle or source patch; excluded from evidence-only publication"
+  },
+  {
+    "stage": "r1",
+    "path": "r1/excluded/AGS-2.8.0-CS-Linux-lifecycle-r1.patch",
+    "bytes": 5244,
+    "originalSha256": "a8fef169bb046d2837ab860d75cf71662d949caf3281dcabf68e32bfb3234a76",
+    "reason": "Private archive/bundle or source patch; excluded from evidence-only publication"
+  },
+  {
+    "stage": "r2",
+    "path": "r2/excluded/AGS-2.8.0-CS-Linux-lifecycle-combined.patch",
+    "bytes": 14959,
+    "originalSha256": "c164026b666d3a470d3c59cc2ba2ebf2d4cf3fdfb5d0caec5da8afa08eeb5300",
+    "reason": "Private archive/bundle or source patch; excluded from evidence-only publication"
+  },
+  {
+    "stage": "r2",
+    "path": "r2/excluded/AGS-2.8.0-CS-Linux-lifecycle-r2-review.zip",
+    "bytes": 3492904,
+    "originalSha256": "ae59a27bfa99364e0ec8e0a295a8702b2773c83ac2385eb0a5ed4c74c45fef4f",
+    "reason": "Private archive/bundle or source patch; excluded from evidence-only publication"
+  },
+  {
+    "stage": "r2",
+    "path": "r2/excluded/AGS-2.8.0-CS-Linux-lifecycle-r2.bundle",
+    "bytes": 5505,
+    "originalSha256": "9ddc677b3d51e8a89d0db23c5f68b54a63ef3c421c8eb38317a229e517d3f3ec",
+    "reason": "Private archive/bundle or source patch; excluded from evidence-only publication"
+  },
+  {
+    "stage": "r2",
+    "path": "r2/excluded/AGS-2.8.0-CS-Linux-lifecycle-r2.patch",
+    "bytes": 9706,
+    "originalSha256": "4d910d4378d136c7fb1a152d05eb14c6a45d3771d58c48b1c2292883e396cc30",
+    "reason": "Private archive/bundle or source patch; excluded from evidence-only publication"
+  },
+  {
+    "stage": "original",
+    "path": "original/excluded/AGS-2.8.0-CS-RC.bundle",
+    "bytes": 129577,
+    "originalSha256": "64d44554b9a40909e67a6cefafc155ae6e9c62b614ce57ab35f2cd5b0b75771a",
+    "reason": "Private Git bundle"
+  }
+]

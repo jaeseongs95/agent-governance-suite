@@ -1,0 +1,10 @@
+{
+  "operationId": "cs280-codex-cloud-publish-20261006T040502Z",
+  "actionClass": "publish",
+  "target": "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-codex-cloud/20261006T040502Z",
+  "environment": "external",
+  "userAuthorizationMessageId": "83b9158e-65f8-41a9-9034-517a82850bcf",
+  "additionalVerificationMessageId": "f6f41595-e6ca-4c93-b7c6-73f7b04177c6",
+  "basis": "Current explicit user delegation supersedes no-push for sanitized CS evidence copies only, under cs280-codex-cloud/UTC on existing evidence branch. No force push, main/source or existing folder modifications.",
+  "approvalAdapterExpiry": "Locally limits this receipt evidence to the next 15 minutes; it is not an invented user approval or expanded scope."
+}

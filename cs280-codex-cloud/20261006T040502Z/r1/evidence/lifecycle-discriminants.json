@@ -1,0 +1,114 @@
+{
+  "fixturePassWithHarness": 136,
+  "fixtureSourceChanged": false,
+  "timeoutsOrAssertionsChanged": false,
+  "queueProfileTransitions": [
+    {
+      "t": 5.0732,
+      "kind": "fixture-state",
+      "path": "session-messaging-iY5HRU",
+      "presence": [
+        [
+          "plugin-profile-generation",
+          "codex-queue",
+          "864260a7-a9c8-479d-92ea-171d5a9a275a",
+          null
+        ]
+      ],
+      "relays": []
+    },
+    {
+      "t": 5.1331,
+      "kind": "fixture-state",
+      "path": "session-messaging-iY5HRU",
+      "presence": [
+        [
+          "plugin-profile-generation",
+          "codex-queue",
+          "864260a7-a9c8-479d-92ea-171d5a9a275a",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30699,
+          30118,
+          "codex-queue"
+        ]
+      ]
+    },
+    {
+      "t": 5.2217,
+      "kind": "fixture-state",
+      "path": "session-messaging-iY5HRU",
+      "presence": [
+        [
+          "plugin-profile-generation",
+          "codex-queue",
+          "864260a7-a9c8-479d-92ea-171d5a9a275a",
+          null
+        ],
+        [
+          "plugin-profile-generation",
+          "codex-deferred",
+          "39e5448c-58f3-4654-a00c-21d15656f4a1",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30699,
+          30118,
+          "codex-queue"
+        ]
+      ]
+    },
+    {
+      "t": 10.1591,
+      "kind": "fixture-state",
+      "path": "session-messaging-iY5HRU",
+      "presence": [
+        [
+          "plugin-profile-generation",
+          "codex-queue",
+          "864260a7-a9c8-479d-92ea-171d5a9a275a",
+          "2026-10-06T03:07:32.084Z"
+        ],
+        [
+          "plugin-profile-generation",
+          "codex-deferred",
+          "39e5448c-58f3-4654-a00c-21d15656f4a1",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30699,
+          30118,
+          "codex-queue"
+        ]
+      ]
+    }
+  ],
+  "relayZombieInFailedHarness": [
+    {
+      "t": 10.49,
+      "kind": "process-state",
+      "pid": 29257,
+      "state": "Z",
+      "ppid": 28773,
+      "start": "458020",
+      "role": "relay"
+    },
+    {
+      "t": 35.008,
+      "kind": "process-state",
+      "pid": 29257,
+      "state": "Z",
+      "ppid": 1,
+      "start": "458020",
+      "role": "relay"
+    }
+  ],
+  "note": "First source harness could adopt but not reap because optional proc children file was absent; corrected PPID-based harness performs waitpid. Database-reading diagnostics removed from final whole-suite command."
+}

@@ -1,0 +1,12 @@
+{
+  "originalSourceCopies": 138,
+  "originalFilesUnmodified": true,
+  "candidateHead": "f7912c452483ddc67ba874a185c08fa0038a38e7",
+  "productSourceNewTestsForPublication": false,
+  "nativeFullTranscript": "NOT_VERIFIABLE",
+  "evidenceTip": "7a6bb5f97e2128b51223672fd68b36cf3ef3083c",
+  "evidenceTree": "c6410b1d449e27e82186a2c294451f78aae73a15",
+  "remoteRefs": "7a6bb5f97e2128b51223672fd68b36cf3ef3083c\trefs/heads/evidence\nf39501efe5dfe51d83af9afddf39dec7b7e26b01\trefs/heads/main\n",
+  "newPrefixAbsent": true,
+  "scopeBaselineRefreshRequired": false
+}

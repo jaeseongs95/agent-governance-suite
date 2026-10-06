@@ -1,0 +1,324 @@
+{
+  "status": "CHECKED_NO_WRITES",
+  "base": "f39501efe5dfe51d83af9afddf39dec7b7e26b01",
+  "branch": "codex/cs-engineering-2x",
+  "baseWasDefault": true,
+  "changes": [
+    {
+      "path": "skills/registry.json",
+      "beforeDigest": "sha256:71824bf0152a3fe2c27ab21d927321f5131e1afaa2270019940a9332752ea9a0",
+      "afterDigest": "sha256:280a1fe49febd47bb45b5afa6ea436200d2f2cc575ef879c2088acdee785990d"
+    },
+    {
+      "path": "skills/source-lock.json",
+      "beforeDigest": "sha256:0382eeeb8be9ee221a271ec3f3d895eeabdf11e26f97e88a7538dd70e378e818",
+      "afterDigest": "sha256:7ef49bad4d34fabf08f6f24797ae736ac7941b09b7f32ae2dbf9b8b5d9216296"
+    },
+    {
+      "path": "README.md",
+      "beforeDigest": "sha256:dbdfc8aac32b744c6114805008fb4e09d9071541fe597c30d0129228f4f605c6",
+      "afterDigest": "sha256:6469e8b4fe087364b8b6b5eaf1b2ab64469e78bbce4c83c911afb36195fb69b5"
+    },
+    {
+      "path": "README.en.md",
+      "beforeDigest": "sha256:21db07f91617d8910d5693147428ec4d582f268aecf38f764620bd53073cdfb5",
+      "afterDigest": "sha256:4b8022b47d665114a4586f5107f5bf5fa240199f43867aa480e99828e786a081"
+    },
+    {
+      "path": "skills/orchestrator/references/entry-details.md",
+      "beforeDigest": "sha256:4492ee3d712a9ea05df58b6dc6f881123fe5cf1cbb9b21f391a85e6ba3c999e7",
+      "afterDigest": "sha256:e2ea3d7e3ce42aa3d50551bdd495ab8616a496bc3c2adb0705a36877faf4bde3"
+    },
+    {
+      "path": "skills/cs-engineering/LICENSE",
+      "beforeDigest": null,
+      "afterDigest": "sha256:75f3ee170babffa9aac464afff60ad521d9731220ae4f67e0c40cb457b18a0a2"
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "beforeDigest": null,
+      "afterDigest": "sha256:d2f6f6723811154bbdde8b9241e038cd84454e68f71c32310de76204a4256ec5"
+    },
+    {
+      "path": "skills/cs-engineering/VERSION",
+      "beforeDigest": null,
+      "afterDigest": "sha256:e9dd8507f4bf0c6f42458e41aea833ad0bd3f6127272335eee9bf4d58541ed67"
+    },
+    {
+      "path": "skills/cs-engineering/agents/openai.yaml",
+      "beforeDigest": null,
+      "afterDigest": "sha256:6255ba0de822be779f21d9cc486b1244de616c90c45b5a9276639a20a74e5ea0"
+    },
+    {
+      "path": "skills/cs-engineering/assets/examples/sqlite-queue/binding.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:a92a2ff155e020b5a8eaf54ac05c802ba89a1abb39138d19cbe706814e063b25"
+    },
+    {
+      "path": "skills/cs-engineering/assets/examples/sqlite-queue/candidate.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:420efbcde3bfae38adc317a795528af681c95649d73c739c5065af0f6446baa5"
+    },
+    {
+      "path": "skills/cs-engineering/assets/examples/sqlite-queue/candidate/queue.py",
+      "beforeDigest": null,
+      "afterDigest": "sha256:4bd3ed50da73659ebe233c32c9243193eaf66634bb71307354ce2e0385bb66ee"
+    },
+    {
+      "path": "skills/cs-engineering/assets/examples/sqlite-queue/constraints.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:3c4b86b78c6b9c230fda615afa0d6e7a953e4a0c5a8f68e18ab1120822480a1e"
+    },
+    {
+      "path": "skills/cs-engineering/assets/examples/sqlite-queue/evidence/queue-tests.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:6ae3172d1ad4e6e5ff80e2c8100d48b346f8fc56a7464d64975c9ed775fc32eb"
+    },
+    {
+      "path": "skills/cs-engineering/assets/examples/sqlite-queue/policy.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:84e0ca731600b904f372c7754a3052a3fcc0345710cedf4bde2239de268ceb31"
+    },
+    {
+      "path": "skills/cs-engineering/assets/examples/sqlite-queue/request.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:ca1b37620739e7516a37a86ec242d9cf7762ed381be66a57a05409d97d8c0378"
+    },
+    {
+      "path": "skills/cs-engineering/assets/examples/sqlite-queue/review.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:51980b33e88751281be8c7e46ebe6d57b8fbcefc7dab23494549c916f244cff3"
+    },
+    {
+      "path": "skills/cs-engineering/assets/examples/sqlite-queue/source/baseline.txt",
+      "beforeDigest": null,
+      "afterDigest": "sha256:3d9e8a12a76e329d44b203d698bc00e0374e536c5093fcbdd1120d8bb7474b7a"
+    },
+    {
+      "path": "skills/cs-engineering/assets/examples/sqlite-queue/source/request.txt",
+      "beforeDigest": null,
+      "afterDigest": "sha256:5101489f5fdd3767892028b1327ef0f3970fb5c9fbccd495fb3d665302b6a37a"
+    },
+    {
+      "path": "skills/cs-engineering/assets/examples/sqlite-queue/task.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:645002f282e77f89128c14cbbfdea8dfb2e1f81782ef53d84bac785c8bf5948d"
+    },
+    {
+      "path": "skills/cs-engineering/assets/knowledge-lock.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:af72203315c251c981925ecf54e9d97bfbfdb57d00b362a9d80d020d8545ddc0"
+    },
+    {
+      "path": "skills/cs-engineering/assets/rule-catalog.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:d528175ca269566160445637b60f14ebc3820df6ffe85449c5339cecc3b12164"
+    },
+    {
+      "path": "skills/cs-engineering/assets/rules/algorithms-data-structures.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:4d2d6a572ae5bc19959ebb9dc853c2dac2b5c575a437866e0bc1da3746171589"
+    },
+    {
+      "path": "skills/cs-engineering/assets/rules/concurrency.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:2b2df7f6f0384c921196bc94f8bb707cc656e9886b8992c52c90031e0fa62893"
+    },
+    {
+      "path": "skills/cs-engineering/assets/rules/databases.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:7edfffa6a53dfdc538f1f9714828ba1aa2007d4781344fcc35bd30d841d611db"
+    },
+    {
+      "path": "skills/cs-engineering/assets/rules/distributed-systems.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:275a37de1fedb4152bbd907e4dcc5dd2de8db86a35551c1caab8e0966d1b5d52"
+    },
+    {
+      "path": "skills/cs-engineering/assets/rules/language-semantics.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:98f25fa5f99b7207ff71b7a3793f2145a0ee88a6b1fc6b5454c725d1f90c9989"
+    },
+    {
+      "path": "skills/cs-engineering/assets/rules/networking.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:c261ccb573b4e28c4e39e5ce82e5e18a99260dc74e4b0fc7d3590152bad8732a"
+    },
+    {
+      "path": "skills/cs-engineering/assets/rules/operating-systems.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:c5259c4e67a2a46b997711cd841aab0c64484c7a5a765b491a8b64b9eed88027"
+    },
+    {
+      "path": "skills/cs-engineering/assets/rules/performance.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:a73f2c9c81fc13f897933966da2819acbf5280c2126c3738fb636f83f2ab7179"
+    },
+    {
+      "path": "skills/cs-engineering/assets/rules/security-boundaries.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:c743a9be8981b4c8913a08721e13fe623936d64192a2e86313e9b94df227a57a"
+    },
+    {
+      "path": "skills/cs-engineering/assets/rules/software-design.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:20a9f86cad94bf428021ae3dd204877e2e3c42f1d7e48f03cdf54d9d2acf6fc9"
+    },
+    {
+      "path": "skills/cs-engineering/assets/sources.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:56e7eedee105dbc966909b1977ac1220a930e1d26dbbf762f9118d79e4f17da7"
+    },
+    {
+      "path": "skills/cs-engineering/contracts/cs-candidate.v1.schema.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:85914866d6ac38dd21a19e40b998410061bb492b16b527f08648158da23bebb0"
+    },
+    {
+      "path": "skills/cs-engineering/contracts/cs-constraint-report.v1.schema.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:febfb7477c922c50945e62efeacee78fefcc223b34080c8e8d9478cf6f5c5e5e"
+    },
+    {
+      "path": "skills/cs-engineering/contracts/cs-engineering-binding.v1.schema.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:91d03b77feff657951707d73a4620adeb63015a5ffecacbf82aa1770ce2bc2d9"
+    },
+    {
+      "path": "skills/cs-engineering/contracts/cs-policy.v1.schema.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:78284b42eb3b2a6e1b2a60fb9072ac66d57ef070ce38d3a8dff0661262acef2b"
+    },
+    {
+      "path": "skills/cs-engineering/contracts/cs-request.v1.schema.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:0a7961351f071f3b5b26f2efcc5aeb2b1c00aa3d45edae35914404b8242e8a7a"
+    },
+    {
+      "path": "skills/cs-engineering/contracts/cs-review-report.v1.schema.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:41f9ed9dad383a5c99cc143b6089e6f8753739f6f38ea4cb747b7ff8461f0a37"
+    },
+    {
+      "path": "skills/cs-engineering/evals/host-cases.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:6ca16bd57956fdc062eef28e2dcf96b80826cfccece564e4e854594718d903ff"
+    },
+    {
+      "path": "skills/cs-engineering/integration/skill-descriptor.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:f07b050ba6e4309d61ee84e9239c487dc52257bbdeb4f315433cafd4855face6"
+    },
+    {
+      "path": "skills/cs-engineering/references/algorithms-data-structures.md",
+      "beforeDigest": null,
+      "afterDigest": "sha256:25f23e5932b6785a790e5b855a4f20b59a68569dfedda4c587ed5a935689ea84"
+    },
+    {
+      "path": "skills/cs-engineering/references/concurrency.md",
+      "beforeDigest": null,
+      "afterDigest": "sha256:9b64864e2c1d2088f0a48a2d382f13c903891cca61c9d62b08beec3fb6badcdb"
+    },
+    {
+      "path": "skills/cs-engineering/references/contracts-and-cli.md",
+      "beforeDigest": null,
+      "afterDigest": "sha256:debc046e444e6198b9151e3f3fcab577a81fd8e6488bc0b9280715b0c08aa9a4"
+    },
+    {
+      "path": "skills/cs-engineering/references/databases.md",
+      "beforeDigest": null,
+      "afterDigest": "sha256:ad83c7d47da20bd75f18148639412a80c86c9ff14b6a0f9f92570e5e631a1725"
+    },
+    {
+      "path": "skills/cs-engineering/references/design-basis.ko.md",
+      "beforeDigest": null,
+      "afterDigest": "sha256:01081d243ad0fa04cf3993a3ed1e4017a43708fb54677063e72573438cfc7034"
+    },
+    {
+      "path": "skills/cs-engineering/references/distributed-systems.md",
+      "beforeDigest": null,
+      "afterDigest": "sha256:35150f3bc3979d7a18733d0b298d8d90e5d6f1ed859d43fd3aab0b3596d23545"
+    },
+    {
+      "path": "skills/cs-engineering/references/index.md",
+      "beforeDigest": null,
+      "afterDigest": "sha256:0852a5c9b4b592649fa050864bd95dcbd2fdf7fbc453c531c5349d9546c30fbb"
+    },
+    {
+      "path": "skills/cs-engineering/references/language-semantics.md",
+      "beforeDigest": null,
+      "afterDigest": "sha256:93d62a15ca4911215018994ba32e50eab1f7306e0b8c96432e14828ac24d57b5"
+    },
+    {
+      "path": "skills/cs-engineering/references/networking.md",
+      "beforeDigest": null,
+      "afterDigest": "sha256:e084c6b06f42e43bbdf86ca1658a16069a5952729b12d02c89eb1d5bb8f3e46f"
+    },
+    {
+      "path": "skills/cs-engineering/references/operating-systems.md",
+      "beforeDigest": null,
+      "afterDigest": "sha256:21411cb00332b0943749608bb6bd390759921941f0401ca9eaa9c008ff9fe9c9"
+    },
+    {
+      "path": "skills/cs-engineering/references/performance.md",
+      "beforeDigest": null,
+      "afterDigest": "sha256:15ef21b6783be2fadbb179144c4a604dcb40a62131c1aea910204291da6e9c85"
+    },
+    {
+      "path": "skills/cs-engineering/references/security-boundaries.md",
+      "beforeDigest": null,
+      "afterDigest": "sha256:8726e1874b9e62eefaa8cf1ce90c4ac3e31c26e5dfe9e398b3581fc333fdeb66"
+    },
+    {
+      "path": "skills/cs-engineering/references/software-design.md",
+      "beforeDigest": null,
+      "afterDigest": "sha256:6840195e3569b53fac4553500694a82241b47abc471f6b5e8f31a04ba6d3321c"
+    },
+    {
+      "path": "skills/cs-engineering/references/worked-example.md",
+      "beforeDigest": null,
+      "afterDigest": "sha256:9bc64625ca47ca87c720b122e3198393f26f8629fe1764793a9d822606e52bc5"
+    },
+    {
+      "path": "skills/cs-engineering/scripts/ags-adapter.mjs",
+      "beforeDigest": null,
+      "afterDigest": "sha256:33ec351fde3f5ba18eea921140c273436f2527bfcf9088101d947f9d9deb0fd0"
+    },
+    {
+      "path": "skills/cs-engineering/scripts/core.mjs",
+      "beforeDigest": null,
+      "afterDigest": "sha256:ca2cd74b7d51c51f5fc4c0205a2a2ccd235fca497aaf21d28d3040a9d57de6c4"
+    },
+    {
+      "path": "skills/cs-engineering/scripts/primitives.mjs",
+      "beforeDigest": null,
+      "afterDigest": "sha256:1dd541946da80cd3cba1b1c4070217e030a94b3a5cb5b91ef7569eda77a3416d"
+    },
+    {
+      "path": "skills/cs-engineering/scripts/schema-validation.mjs",
+      "beforeDigest": null,
+      "afterDigest": "sha256:5c6567bb8946b8b7cafdf48e8269753d4dbfc6efe796e340ec2aff3c96a6ed31"
+    },
+    {
+      "path": "skills/cs-engineering/scripts/validate.mjs",
+      "beforeDigest": null,
+      "afterDigest": "sha256:d76537ea4477f59c4a77a866c0dd53b2f7116d75cbe1d701f488045c91811e1a"
+    },
+    {
+      "path": "contracts/cs-engineering-binding.v1.schema.json",
+      "beforeDigest": null,
+      "afterDigest": "sha256:91d03b77feff657951707d73a4620adeb63015a5ffecacbf82aa1770ce2bc2d9"
+    },
+    {
+      "path": "docs/cs-engineering.md",
+      "beforeDigest": null,
+      "afterDigest": "sha256:f7d01eff4501a6692c20c46228e4918d09ec3dbc4d0a82f308907f5c68bd52c5"
+    },
+    {
+      "path": "docs/cs-engineering-design.ko.md",
+      "beforeDigest": null,
+      "afterDigest": "sha256:01081d243ad0fa04cf3993a3ed1e4017a43708fb54677063e72573438cfc7034"
+    }
+  ],
+  "warning": "No signed WorkflowService, lease, resume or completion migration is performed. Run AGS validation and Claude build separately."
+}

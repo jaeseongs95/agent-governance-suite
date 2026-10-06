@@ -1,0 +1,125 @@
+{
+  "leadThread": "01a1023f-b277-7ef1-bb48-4b90770caf13",
+  "requestId": "c1a7252a-c8ed-4fd4-8d49-c744043e91d3",
+  "messageId": "22dbddf1-56a8-4711-8356-3870c12de69e",
+  "library": {
+    "libraryFileId": "[REDACTED:PRIVATE_RESOURCE]",
+    "fileId": "[REDACTED:PRIVATE_RESOURCE]",
+    "version": 0,
+    "status": "succeeded",
+    "xattrsApplied": true
+  },
+  "drive": {
+    "fileId": "[REDACTED:PRIVATE_RESOURCE]",
+    "folderId": "[REDACTED:PRIVATE_RESOURCE]",
+    "parentFolderId": "[REDACTED:PRIVATE_RESOURCE]",
+    "url": "https://drive.google.com/file/d/REDACTED_RESOURCE/view",
+    "ownerOnly": true,
+    "shared": false,
+    "sameOwnerAsOriginalDelivery": true,
+    "downloadedPath": "[REDACTED:PRIVATE_ATTACHMENT]/AGS-2.8.0-CS-Linux-lifecycle-r2-review.zip",
+    "sizeBytes": 3492904
+  },
+  "originalSourcesPreserved": true,
+  "peerRelayToolAvailable": false,
+  "replyChannel": "native delegation callback",
+  "sourceCommit": "f7912c452483ddc67ba874a185c08fa0038a38e7",
+  "sourcePin": {
+    "revision": "Linux-lifecycle-r2",
+    "requestId": "c1a7252a-c8ed-4fd4-8d49-c744043e91d3",
+    "messageId": "22dbddf1-56a8-4711-8356-3870c12de69e",
+    "leadThread": "01a1023f-b277-7ef1-bb48-4b90770caf13",
+    "sourceCommit": "f7912c452483ddc67ba874a185c08fa0038a38e7",
+    "sourceTree": "e3246e9e7d631753434d0e43f70feaadd8444a19",
+    "parentCommit": "3b9c34b0dc0ca65d74db1631cc5fdd4898b7f2d7",
+    "productReference": "4ba47558020bd5e501fa9718f09d562dcf573713",
+    "baselineReference": "f39501efe5dfe51d83af9afddf39dec7b7e26b01",
+    "worktree": "/workspace/ags-cs-2x/repo",
+    "branch": "codex/cs-engineering-2x",
+    "worktreeClean": true,
+    "changedFiles": [
+      {
+        "status": "A",
+        "path": "tests/helpers/fixture-process-observer.md"
+      },
+      {
+        "status": "A",
+        "path": "tests/helpers/fixture-process-observer.ts"
+      },
+      {
+        "status": "M",
+        "path": "tests/session-messaging/historical-wake.test.mjs"
+      },
+      {
+        "status": "M",
+        "path": "tests/session-messaging/session-message.test.ts"
+      }
+    ],
+    "allChangesSinceOriginal": [
+      {
+        "status": "A",
+        "path": "tests/helpers/fixture-process-observer.md"
+      },
+      {
+        "status": "A",
+        "path": "tests/helpers/fixture-process-observer.ts"
+      },
+      {
+        "status": "A",
+        "path": "tests/helpers/linux-child-reaper.md"
+      },
+      {
+        "status": "A",
+        "path": "tests/helpers/linux-child-reaper.py"
+      },
+      {
+        "status": "M",
+        "path": "tests/session-messaging/historical-wake.test.mjs"
+      },
+      {
+        "status": "M",
+        "path": "tests/session-messaging/session-message.test.ts"
+      }
+    ],
+    "sourceFiles": 1348,
+    "originalSourceFilesCompared": 1344,
+    "originalSourceByteDifferences": [
+      "tests/session-messaging/historical-wake.test.mjs",
+      "tests/session-messaging/session-message.test.ts"
+    ],
+    "productionSourceDifferences": [],
+    "productionChanges": false,
+    "baselineOverlay": "Same four observer/fixture files as candidate; recorded f395 worktree has declared fixture modifications.",
+    "baselineSourceManifest": "evidence/baseline-source-manifest.json",
+    "originalZipUnmodified": true,
+    "originalZipSha256": "2f4067919ec83cccef39650cdac61d4dca61d47e9c8ccdf4558fe0f011f06fc4",
+    "r1ZipUnmodified": true,
+    "r1ZipSha256": "06305d4faa2ac07f14170c2742185c4e2564f50b48bee66cd0ed070341867317",
+    "remoteWrites": false,
+    "assertionsTimeoutsSkipsChanged": false,
+    "fullRegressionOnThisPin": "NOT_RUN",
+    "priorFullRegressionPin": "3b9c34b0dc0ca65d74db1631cc5fdd4898b7f2d7"
+  },
+  "zip": {
+    "path": "/workspace/ags-cs-2x/linux-lifecycle-r2/output/AGS-2.8.0-CS-Linux-lifecycle-r2-review.zip",
+    "bytes": 3492904,
+    "sha256": "ae59a27bfa99364e0ec8e0a295a8702b2773c83ac2385eb0a5ed4c74c45fef4f",
+    "entries": 1391,
+    "sourceCommit": "f7912c452483ddc67ba874a185c08fa0038a38e7",
+    "sourceFiles": 1348,
+    "original1344SourceByteDifferences": [
+      "tests/session-messaging/historical-wake.test.mjs",
+      "tests/session-messaging/session-message.test.ts"
+    ],
+    "manifestVerified": true,
+    "secretPatternMatches": 0
+  },
+  "driveRedownloadSha256": "ae59a27bfa99364e0ec8e0a295a8702b2773c83ac2385eb0a5ed4c74c45fef4f",
+  "driveRedownloadMatched": true,
+  "activeTestCommands": [],
+  "fullRegressionOnNewPin": "NOT_RUN",
+  "originalUnsupervisedFailuresPreserved": true,
+  "originalCandidateZipUnmodified": true,
+  "r1ZipUnmodified": true,
+  "remoteWrites": false
+}

@@ -1,0 +1,15 @@
+{
+  "source": "/workspace/ags-cs-2x/repo/node_modules",
+  "target": "/workspace/ags-cs-2x/linux-lifecycle-r2/base-repo/node_modules",
+  "mode": "local copy symlinks=True; no pnpm execution/install in recovery",
+  "sameFrozenLockfile": true,
+  "lockSha256": "00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e",
+  "preloadPresent": true,
+  "preloadSha256": "a5012da3d2027007781baecda154d343d8c7ad2327b79bec65b1b60a41f42dd1",
+  "seconds": 0.434,
+  "previousAttempt": "04-baseline-observation",
+  "previousAttemptPartialCases": 2,
+  "historicalCasesExecutedInPreviousAttempt": 0,
+  "cause": "Concurrent pnpm source/bundle checks recreated shared node_modules during baseline worker startup.",
+  "nextScope": "Only baseline historical-wake packaged CLI pair; existing baseline session-message cases will not run again."
+}

@@ -1,0 +1,19 @@
+Already up to date
+Done in 348ms using pnpm v11.19.0
+
+   ╭─────────────────────────────────────────╮
+   │                                         │
+   │   Update available! 11.19.0 → 12.9.1.   │
+   │   Changelog: https://pnpm.io/v/12.9.1   │
+   │    To update, run: pnpm add -g pnpm     │
+   │                                         │
+   ╰─────────────────────────────────────────╯
+
+$ eslint . && node scripts/validate-repository.mjs
+
+/workspace/ags-cs-2x/repo/skills/cs-engineering/scripts/primitives.mjs
+  81:32  error  'TextDecoder' is not defined  no-undef
+
+✖ 1 problem (1 error, 0 warnings)
+
+[ELIFECYCLE] Command failed with exit code 1.

@@ -1,0 +1,319 @@
+{
+  "label": "09-lint",
+  "command": [
+    "pnpm",
+    "lint"
+  ],
+  "cwd": "/workspace/ags-cs-2x/repo",
+  "sourceCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+  "started": "2026-10-06T03:13:32.167071+00:00",
+  "finished": "2026-10-06T03:13:39.441340+00:00",
+  "exitCode": 0,
+  "subreaper": false,
+  "log": "09-lint.log",
+  "events": [
+    {
+      "t": 0.0064,
+      "kind": "process-state",
+      "pid": 42787,
+      "state": "R",
+      "ppid": 42786,
+      "start": "504108"
+    },
+    {
+      "t": 0.0373,
+      "kind": "fixture-directory",
+      "path": "node-compile-cache"
+    },
+    {
+      "t": 0.5694,
+      "kind": "process-state",
+      "pid": 42787,
+      "state": "S",
+      "ppid": 42786,
+      "start": "504108"
+    },
+    {
+      "t": 0.5826,
+      "kind": "process-state",
+      "pid": 42802,
+      "state": "R",
+      "ppid": 42787,
+      "start": "504165"
+    },
+    {
+      "t": 1.1026,
+      "kind": "process-state",
+      "pid": 42814,
+      "state": "S",
+      "ppid": 42787,
+      "start": "504218"
+    },
+    {
+      "t": 1.1026,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "S",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 1.1161,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "R",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 2.1444,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "S",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 2.1724,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "R",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 2.9395,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "S",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 2.953,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "R",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 3.3468,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "S",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 3.3614,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "R",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 3.5199,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "S",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 3.5334,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "R",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 4.3806,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "S",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 4.3939,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "R",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 4.6912,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "S",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 4.7065,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "R",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 4.7678,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "S",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 4.7816,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "R",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 5.3512,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "S",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 5.367,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "R",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 5.5804,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "S",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 5.5942,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "R",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 6.079,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "S",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 6.0935,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "R",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 6.5026,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "S",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 6.5167,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "R",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 6.8127,
+      "kind": "process-state",
+      "pid": 42815,
+      "state": "Z",
+      "ppid": 42814,
+      "start": "504218"
+    },
+    {
+      "t": 6.8271,
+      "kind": "process-state",
+      "pid": 42831,
+      "state": "R",
+      "ppid": 42814,
+      "start": "504790"
+    },
+    {
+      "t": 7.0129,
+      "kind": "process-state",
+      "pid": 42831,
+      "state": "S",
+      "ppid": 42814,
+      "start": "504790"
+    },
+    {
+      "t": 7.0563,
+      "kind": "process-state",
+      "pid": 42831,
+      "state": "R",
+      "ppid": 42814,
+      "start": "504790"
+    },
+    {
+      "t": 7.1004,
+      "kind": "process-state",
+      "pid": 42831,
+      "state": "S",
+      "ppid": 42814,
+      "start": "504790"
+    },
+    {
+      "t": 7.1149,
+      "kind": "process-state",
+      "pid": 42831,
+      "state": "R",
+      "ppid": 42814,
+      "start": "504790"
+    },
+    {
+      "t": 7.1284,
+      "kind": "process-state",
+      "pid": 42831,
+      "state": "S",
+      "ppid": 42814,
+      "start": "504790"
+    },
+    {
+      "t": 7.1424,
+      "kind": "process-state",
+      "pid": 42831,
+      "state": "R",
+      "ppid": 42814,
+      "start": "504790"
+    },
+    {
+      "t": 7.2675,
+      "kind": "process-state",
+      "pid": 42787,
+      "state": "R",
+      "ppid": 42786,
+      "start": "504108"
+    }
+  ],
+  "knownFixtureRoles": {},
+  "scope": "Only this invocation descendants and synthetic fixture directories; no credentials/body/nonce values logged."
+}

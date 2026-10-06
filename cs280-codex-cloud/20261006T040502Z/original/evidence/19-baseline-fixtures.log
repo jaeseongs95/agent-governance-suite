@@ -1,0 +1,90 @@
+{"command": ["pnpm", "exec", "vitest", "run", "tests/session-messaging/session-message.test.ts", "tests/session-messaging/historical-wake.test.mjs", "--maxWorkers=2"], "cwd": "/workspace/ags-cs-2x/baseline", "started": "2026-10-06T02:14:33.538361+00:00", "isolation": {"TMPDIR": "/dev/shm/ags-cs-2x-tests", "XDG_DATA_HOME": "/workspace/ags-cs-2x/tool-state/data", "XDG_CACHE_HOME": "/workspace/ags-cs-2x/tool-state/cache"}}
+Recreating /workspace/ags-cs-2x/repo/node_modules
+✓ Lockfile passes supply-chain policies (verified 21m ago)
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+dependencies:
++ @modelcontextprotocol/sdk 1.30.0
++ ajv 8.20.0
++ ajv-formats 3.0.1
++ zod 4.5.4
+
+devDependencies:
++ @eslint/js 10.0.1
++ @types/node 26.5.0
++ esbuild 0.28.2
++ eslint 10.10.0
++ tsx 4.23.13
++ typescript 6.0.2
++ typescript-eslint 8.70.0
++ vitest 5.0.0
+
+Done in 1.1s using pnpm v11.19.0
+
+ RUN  v5.0.0 /workspace/ags-cs-2x/baseline
+
+ ❯ tests/session-messaging/historical-wake.test.mjs (65 tests | 1 failed) 9800ms
+   × packaged CLI binds history to explicit broker state directory: client-ensure 5461ms
+ ❯ tests/session-messaging/session-message.test.ts (71 tests | 2 failed) 32504ms
+   ❯ TLS 1.3 broker and vendor-neutral adapter (52)
+     × uses one plugin queue profile for packaged presence and relay until the next SessionStart 15362ms
+     × keeps packaged hook and relay entrypoints isolated 10265ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/historical-wake.test.mjs > packaged CLI binds history to explicit broker state directory: client-ensure
+AssertionError: Expected values to be strictly equal:
+
+true !== false
+
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/session-messaging/historical-wake.test.mjs:421:14
+    419|         if (alive) await delay(20);
+    420|       }
+    421|       assert.equal(alive, false);
+       |              ^
+    422|     }
+    423|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > uses one plugin queue profile for packaged presence and relay until the next SessionStart
+Error: Timed out waiting for test state.
+ ❯ waitUntil tests/session-messaging/session-message.test.ts:60:9
+     58|     await new Promise((resolve) => setTimeout(resolve, 50));
+     59|   }
+     60|   throw new Error("Timed out waiting for test state.");
+       |         ^
+     61| }
+     62|
+ ❯ tests/session-messaging/session-message.test.ts:897:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > keeps packaged hook and relay entrypoints isolated
+Error: Timed out waiting for test state.
+ ❯ waitUntil tests/session-messaging/session-message.test.ts:60:9
+     58|     await new Promise((resolve) => setTimeout(resolve, 50));
+     59|   }
+     60|   throw new Error("Timed out waiting for test state.");
+       |         ^
+     61| }
+     62|
+ ❯ terminateBroker tests/session-messaging/session-message.test.ts:87:3
+ ❯ tests/session-messaging/session-message.test.ts:107:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 133 passed (136)
+   Start at  02:14:35
+   Duration  33.16s (tests 98%, transform 1%, import 1%)
+

@@ -1,0 +1,12 @@
+{
+  "path": "/workspace/ags-cs-2x/linux-lifecycle-r1/output/AGS-2.8.0-CS-Linux-lifecycle-r1-review.zip",
+  "bytes": 3537167,
+  "sha256": "06305d4faa2ac07f14170c2742185c4e2564f50b48bee66cd0ed070341867317",
+  "entries": 1393,
+  "sourceCommit": "3b9c34b0dc0ca65d74db1631cc5fdd4898b7f2d7",
+  "sourceFiles": 1346,
+  "changedFiles": 2,
+  "original1344SourceByteDifferences": [],
+  "manifestVerified": true,
+  "modePreserved": true
+}

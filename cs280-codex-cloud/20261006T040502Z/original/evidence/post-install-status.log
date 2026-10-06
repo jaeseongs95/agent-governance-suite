@@ -1,0 +1,9 @@
+ M README.en.md
+ M README.md
+ M skills/orchestrator/references/entry-details.md
+ M skills/registry.json
+ M skills/source-lock.json
+?? contracts/cs-engineering-binding.v1.schema.json
+?? docs/cs-engineering-design.ko.md
+?? docs/cs-engineering.md
+?? skills/cs-engineering/

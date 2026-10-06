@@ -1,0 +1,339 @@
+{
+  "schema": "AGSFixtureLifecycleEvidence.v1",
+  "scope": "Only these comparative Codex Cloud diagnostic runs; not an update or validation of the unavailable RO DiagnosisReport.v1.",
+  "confirmedCause": "Unreaped fixture orphans under this non-reaping Linux PID1",
+  "cases": [
+    {
+      "run": "03-candidate-observation",
+      "case": "session-message profile relay",
+      "fixture": "session-messaging-Ml0cph",
+      "pid": 43686,
+      "classification": "UNREAPED_ORPHAN_ZOMBIE",
+      "initialStat": {
+        "state": "S",
+        "ppid": 1,
+        "starttime": "612614"
+      },
+      "lastKillZero": {
+        "schema": "LINUX-PROC-LIFECYCLE-OBSERVATION-V1",
+        "fixture": "session-messaging-Ml0cph",
+        "phase": "relay:kill-zero",
+        "pid": 43686,
+        "observerPid": 43641,
+        "observedAt": "2026-10-06T03:31:52.330Z",
+        "monotonicNs": "6141252358337",
+        "before": {
+          "state": "Z",
+          "ppid": 1,
+          "starttime": "612614"
+        },
+        "after": {
+          "state": "Z",
+          "ppid": 1,
+          "starttime": "612614"
+        },
+        "operation": {
+          "outcome": "return",
+          "errorCode": null
+        }
+      },
+      "distinctStarttimes": [
+        "612614"
+      ],
+      "records": 300,
+      "evidencePath": "03-candidate-observation.process.jsonl",
+      "firstLine": 1,
+      "lastKillZeroLine": 299
+    },
+    {
+      "run": "03-candidate-observation",
+      "case": "session-message broker teardown",
+      "fixture": "session-messaging-Ml0cph",
+      "pid": 43653,
+      "classification": "ESRCH_THIS_RUN_CAUSE_UNCONFIRMED",
+      "initialStat": {
+        "state": "S",
+        "ppid": 43641,
+        "starttime": "612587"
+      },
+      "lastKillZero": {
+        "schema": "LINUX-PROC-LIFECYCLE-OBSERVATION-V1",
+        "fixture": "session-messaging-Ml0cph",
+        "phase": "broker:kill-zero",
+        "pid": 43653,
+        "observerPid": 43641,
+        "observedAt": "2026-10-06T03:31:52.441Z",
+        "monotonicNs": "6141362999415",
+        "before": {
+          "unavailable": "ENOENT"
+        },
+        "after": {
+          "unavailable": "ENOENT"
+        },
+        "operation": {
+          "outcome": "throw",
+          "errorCode": "ESRCH"
+        }
+      },
+      "distinctStarttimes": [
+        "612587"
+      ],
+      "records": 3,
+      "evidencePath": "03-candidate-observation.process.jsonl",
+      "firstLine": 301,
+      "lastKillZeroLine": 303
+    },
+    {
+      "run": "03-candidate-observation",
+      "case": "session-message broker teardown",
+      "fixture": "session-messaging-fhtOWl",
+      "pid": 43722,
+      "classification": "UNREAPED_ORPHAN_ZOMBIE",
+      "initialStat": {
+        "state": "S",
+        "ppid": 1,
+        "starttime": "614140"
+      },
+      "lastKillZero": {
+        "schema": "LINUX-PROC-LIFECYCLE-OBSERVATION-V1",
+        "fixture": "session-messaging-fhtOWl",
+        "phase": "broker:kill-zero",
+        "pid": 43722,
+        "observerPid": 43641,
+        "observedAt": "2026-10-06T03:32:02.642Z",
+        "monotonicNs": "6151563867450",
+        "before": {
+          "state": "Z",
+          "ppid": 1,
+          "starttime": "614140"
+        },
+        "after": {
+          "state": "Z",
+          "ppid": 1,
+          "starttime": "614140"
+        },
+        "operation": {
+          "outcome": "return",
+          "errorCode": null
+        }
+      },
+      "distinctStarttimes": [
+        "614140"
+      ],
+      "records": 200,
+      "evidencePath": "03-candidate-observation.process.jsonl",
+      "firstLine": 304,
+      "lastKillZeroLine": 503
+    },
+    {
+      "run": "03-candidate-observation",
+      "case": "historical-wake client-ensure",
+      "fixture": "historical-wake:client-ensure",
+      "pid": 43850,
+      "classification": "UNREAPED_ORPHAN_ZOMBIE",
+      "initialStat": {
+        "state": "S",
+        "ppid": 1,
+        "starttime": "615224"
+      },
+      "lastKillZero": {
+        "schema": "LINUX-PROC-LIFECYCLE-OBSERVATION-V1",
+        "fixture": "historical-wake:client-ensure",
+        "phase": "broker:kill-zero",
+        "pid": 43850,
+        "observerPid": 43742,
+        "observedAt": "2026-10-06T03:32:08.682Z",
+        "monotonicNs": "6157604374231",
+        "before": {
+          "state": "Z",
+          "ppid": 1,
+          "starttime": "615224"
+        },
+        "after": {
+          "state": "Z",
+          "ppid": 1,
+          "starttime": "615224"
+        },
+        "operation": {
+          "outcome": "return",
+          "errorCode": null
+        }
+      },
+      "distinctStarttimes": [
+        "615224"
+      ],
+      "records": 247,
+      "evidencePath": "03-candidate-observation.process.jsonl",
+      "firstLine": 504,
+      "lastKillZeroLine": 750
+    },
+    {
+      "run": "04-baseline-observation",
+      "case": "session-message profile relay",
+      "fixture": "session-messaging-JEcMQK",
+      "pid": 44048,
+      "classification": "UNREAPED_ORPHAN_ZOMBIE",
+      "initialStat": {
+        "state": "S",
+        "ppid": 1,
+        "starttime": "617488"
+      },
+      "lastKillZero": {
+        "schema": "LINUX-PROC-LIFECYCLE-OBSERVATION-V1",
+        "fixture": "session-messaging-JEcMQK",
+        "phase": "relay:kill-zero",
+        "pid": 44048,
+        "observerPid": 44003,
+        "observedAt": "2026-10-06T03:32:41.067Z",
+        "monotonicNs": "6189989568871",
+        "before": {
+          "state": "Z",
+          "ppid": 1,
+          "starttime": "617488"
+        },
+        "after": {
+          "state": "Z",
+          "ppid": 1,
+          "starttime": "617488"
+        },
+        "operation": {
+          "outcome": "return",
+          "errorCode": null
+        }
+      },
+      "distinctStarttimes": [
+        "617488"
+      ],
+      "records": 300,
+      "evidencePath": "04-baseline-observation.process.jsonl",
+      "firstLine": 1,
+      "lastKillZeroLine": 299
+    },
+    {
+      "run": "04-baseline-observation",
+      "case": "session-message broker teardown",
+      "fixture": "session-messaging-JEcMQK",
+      "pid": 44015,
+      "classification": "ESRCH_THIS_RUN_CAUSE_UNCONFIRMED",
+      "initialStat": {
+        "state": "S",
+        "ppid": 44003,
+        "starttime": "617462"
+      },
+      "lastKillZero": {
+        "schema": "LINUX-PROC-LIFECYCLE-OBSERVATION-V1",
+        "fixture": "session-messaging-JEcMQK",
+        "phase": "broker:kill-zero",
+        "pid": 44015,
+        "observerPid": 44003,
+        "observedAt": "2026-10-06T03:32:41.179Z",
+        "monotonicNs": "6190101167066",
+        "before": {
+          "unavailable": "ENOENT"
+        },
+        "after": {
+          "unavailable": "ENOENT"
+        },
+        "operation": {
+          "outcome": "throw",
+          "errorCode": "ESRCH"
+        }
+      },
+      "distinctStarttimes": [
+        "617462"
+      ],
+      "records": 3,
+      "evidencePath": "04-baseline-observation.process.jsonl",
+      "firstLine": 301,
+      "lastKillZeroLine": 303
+    },
+    {
+      "run": "04-baseline-observation",
+      "case": "session-message broker teardown",
+      "fixture": "session-messaging-VgVWLx",
+      "pid": 44084,
+      "classification": "UNREAPED_ORPHAN_ZOMBIE",
+      "initialStat": {
+        "state": "S",
+        "ppid": 1,
+        "starttime": "619015"
+      },
+      "lastKillZero": {
+        "schema": "LINUX-PROC-LIFECYCLE-OBSERVATION-V1",
+        "fixture": "session-messaging-VgVWLx",
+        "phase": "broker:kill-zero",
+        "pid": 44084,
+        "observerPid": 44003,
+        "observedAt": "2026-10-06T03:32:51.368Z",
+        "monotonicNs": "6200289888482",
+        "before": {
+          "state": "Z",
+          "ppid": 1,
+          "starttime": "619015"
+        },
+        "after": {
+          "state": "Z",
+          "ppid": 1,
+          "starttime": "619015"
+        },
+        "operation": {
+          "outcome": "return",
+          "errorCode": null
+        }
+      },
+      "distinctStarttimes": [
+        "619015"
+      ],
+      "records": 199,
+      "evidencePath": "04-baseline-observation.process.jsonl",
+      "firstLine": 304,
+      "lastKillZeroLine": 502
+    },
+    {
+      "run": "07-baseline-history-observation",
+      "case": "historical-wake client-ensure",
+      "fixture": "historical-wake:client-ensure",
+      "pid": 44465,
+      "classification": "UNREAPED_ORPHAN_ZOMBIE",
+      "initialStat": {
+        "state": "S",
+        "ppid": 1,
+        "starttime": "630962"
+      },
+      "lastKillZero": {
+        "schema": "LINUX-PROC-LIFECYCLE-OBSERVATION-V1",
+        "fixture": "historical-wake:client-ensure",
+        "phase": "broker:kill-zero",
+        "pid": 44465,
+        "observerPid": 44357,
+        "observedAt": "2026-10-06T03:34:46.089Z",
+        "monotonicNs": "6315011516671",
+        "before": {
+          "state": "Z",
+          "ppid": 1,
+          "starttime": "630962"
+        },
+        "after": {
+          "state": "Z",
+          "ppid": 1,
+          "starttime": "630962"
+        },
+        "operation": {
+          "outcome": "return",
+          "errorCode": null
+        }
+      },
+      "distinctStarttimes": [
+        "630962"
+      ],
+      "records": 246,
+      "evidencePath": "07-baseline-history-observation.process.jsonl",
+      "firstLine": 1,
+      "lastKillZeroLine": 246
+    }
+  ],
+  "repeatedExecutedCases": 0,
+  "baselineInterruptedWorker": "04 history worker failed before test start; only its two cases were completed in 07.",
+  "fullRegressionOnNewPin": "NOT_RUN",
+  "releasePermission": false
+}

@@ -1,0 +1,15 @@
+{
+  "oldTip": "7a6bb5f97e2128b51223672fd68b36cf3ef3083c",
+  "newTip": "32f81188e60867e37c0e69a416e20fab450f80c1",
+  "localUnpublishedCommit": "a926906170cd9a2d0f3587c01f60158d39444f6d",
+  "pushExit": 1,
+  "pushEffect": "No remote update; rejected fetch first",
+  "policyFailure": "External-tip assertion failed, but an unguarded shell sequence continued to local commit/push using the old intent. This is not relabeled PASS.",
+  "preservedRawLogs": [
+    "08-verify-receipt.log",
+    "09-commit.log",
+    "10-push-nonforce.log"
+  ],
+  "correction": "Fresh evidence-only checkout and baseline; update current-state fingerprint; new preflight; checked subprocess sequence stops on any failure.",
+  "nativeExceptionExport": "NOT_VERIFIABLE: the previous direct tool stdout exception was not exported as a native transcript"
+}

@@ -1,0 +1,12 @@
+{
+  "origin": "generated_control",
+  "currentCSOnly": true,
+  "otherSessionTranscriptsIncluded": false,
+  "sourceCollectionCutoff": "2026-10-06T04:18:22.195155+00:00",
+  "publicationCaptureCutoff": "2026-10-06T04:19:49.880599+00:00",
+  "nativeFullTranscript": "NOT_VERIFIABLE/not supplied",
+  "scratchpadExport": "NOT_VERIFIABLE/not supplied",
+  "rawToPublicSHA": "REDACTION.json; no raw transcript source is assigned a fake new SHA",
+  "postSealOperations": "Final commit/push/fetch stdout/stderr are captured separately in the delivery receipt; not retroactively claimed to exist in this sealed payload.",
+  "encodedPolicy": "REDACTED_ENCODED_ARTIFACT metadata-only markers; no base64/compressed/Gitbundle raw payload"
+}

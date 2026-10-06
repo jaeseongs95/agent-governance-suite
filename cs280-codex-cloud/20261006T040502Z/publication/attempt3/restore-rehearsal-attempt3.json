@@ -1,0 +1,7 @@
+{
+  "baseTree": "fdf3a9eb8302d73cdefd2c0ec43adb480d86fa09",
+  "restoredTree": "fdf3a9eb8302d73cdefd2c0ec43adb480d86fa09",
+  "exactNewBaseRestored": true,
+  "existingPaths": 9779,
+  "method": "Temporary index removes only new CS prefix; existing tree exactly restored"
+}

@@ -1,0 +1,22 @@
+{"command": ["pnpm", "validate:official"], "cwd": "/workspace/ags-cs-2x/repo", "started": "2026-10-06T02:06:55.836545+00:00", "isolation": {"TMPDIR": "/workspace/ags-cs-2x/tmp", "XDG_DATA_HOME": "/workspace/ags-cs-2x/tool-state/data", "XDG_CACHE_HOME": "/workspace/ags-cs-2x/tool-state/cache"}}
+Already up to date
+Done in 370ms using pnpm v11.19.0
+$ node scripts/validate-official.mjs
+node:fs:245
+  binding.access(getValidatedPath(path), mode);
+          ^
+
+Error: ENOENT: no such file or directory, access '[REDACTED:PRIVATE_HOME]/skills/.system/plugin-creator/scripts/validate_plugin.py'
+    at accessSync (node:fs:245:11)
+    at file:///workspace/ags-cs-2x/repo/scripts/validate-official.mjs:10:1
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:643:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'access',
+  path: '[REDACTED:PRIVATE_HOME]/skills/.system/plugin-creator/scripts/validate_plugin.py'
+}
+
+Node.js v24.19.0
+[ELIFECYCLE] Command failed with exit code 1.

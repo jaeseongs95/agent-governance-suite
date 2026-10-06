@@ -1,0 +1,50 @@
+{
+  "state": "SCOPED_LINUX_FIXTURE_CAUSE_CONFIRMED",
+  "confirmedCause": "Unreaped fixture orphans under this non-reaping Linux PID1",
+  "candidate": {
+    "passed": 1,
+    "failed": 3,
+    "notSelected": 132,
+    "exitCode": 1,
+    "sourcePin": "f7912c452483ddc67ba874a185c08fa0038a38e7"
+  },
+  "baselineSessionAttempt": {
+    "passed": 0,
+    "failed": 2,
+    "notSelected": 69,
+    "workerErrors": 1,
+    "exitCode": 1
+  },
+  "baselineHistoryCompletion": {
+    "passed": 1,
+    "failed": 1,
+    "notSelected": 63,
+    "exitCode": 1
+  },
+  "distinctBaselineExecutedCases": {
+    "passed": 1,
+    "failed": 3,
+    "repeatedExecutedCases": 0
+  },
+  "targetsConfirmed": 6,
+  "databaseObserver": false,
+  "supervisorEnabled": false,
+  "staticChecks": {
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "sourceLock": "PASS",
+    "bundle": "PASS",
+    "gitDiff": "PASS",
+    "gitBundle": "PASS"
+  },
+  "fullRegression": "NOT_RUN on f791; prior r1 whole-suite result is pinned separately to 3b9c",
+  "windows": "NOT_RUN here; separate original failure cluster unresolved by this result",
+  "claudeCloudRuntime": "NOT_RUN here",
+  "independentSourceAudit": "NOT_RUN on new pin",
+  "officialValidator": "BLOCKED: original official script absent",
+  "remainingNotImplemented": [
+    "signed1.1 full-lifecycle CS binding",
+    "global acceptance/applicability"
+  ],
+  "releasePublished": false
+}

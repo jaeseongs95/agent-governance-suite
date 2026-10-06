@@ -1,0 +1,5 @@
+{
+  "originalStageExit": 128,
+  "cause": "Public payload was prepared outside checkout and had not yet been copied into the new subtree",
+  "correction": "Copied only the new prefix into the clean evidence checkout; no existing files touched"
+}

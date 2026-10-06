@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "package": "ags-cs-engineering",
+  "version": "0.1.0",
+  "verifiedFiles": 100,
+  "contentBytes": 472415,
+  "notice": "Byte integrity only. The manifest is not a cryptographic publisher signature."
+}

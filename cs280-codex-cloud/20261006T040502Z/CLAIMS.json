@@ -1,0 +1,62 @@
+{
+  "original": {
+    "sourcePin": "4ba47558020bd5e501fa9718f09d562dcf573713",
+    "wholeSuite": {
+      "passed": 911,
+      "failed": 3,
+      "skipped": 5,
+      "total": 919
+    },
+    "baselineMessaging": {
+      "passed": 133,
+      "failed": 3,
+      "total": 136
+    },
+    "officialValidator": "BLOCKED missing script",
+    "R042": "Lead-supplied selected-csstage STATIC PASS metadata; no runtime/release approval; verdict contents not supplied here"
+  },
+  "r1": {
+    "sourcePin": "3b9c34b0dc0ca65d74db1631cc5fdd4898b7f2d7",
+    "supervisedWholeSuite": {
+      "passed": 914,
+      "failed": 0,
+      "skipped": 5,
+      "total": 919
+    },
+    "affectedFiles": {
+      "passed": 136,
+      "failed": 0
+    },
+    "unsupervisedFailures": "Original FAIL3 remains; never relabeled PASS",
+    "sourceAudit": "Stored implementation report says NOT_RUN. Lead references a separate static SOURCE result, but its verdict file is NOT_VERIFIABLE here."
+  },
+  "r2": {
+    "sourcePin": "f7912c452483ddc67ba874a185c08fa0038a38e7",
+    "result": "Six target PIDs retain starttime and Z/PPID1 with successful original kill-zero: scoped fixture orphan reaping cause confirmed",
+    "candidateSelectedCases": {
+      "passed": 1,
+      "failed": 3,
+      "notSelected": 132
+    },
+    "baselineSessionAttempt": {
+      "failed": 2,
+      "workerError": 1
+    },
+    "baselineHistoryCompletion": {
+      "passed": 1,
+      "failed": 1,
+      "notSelected": 63
+    },
+    "fullRegression": "NOT_RUN on this source pin; r1 PASS not reused",
+    "sourceAudit": "NOT_RUN on this source pin"
+  },
+  "common": {
+    "signed1.1FullLifecycle": "NOT_IMPLEMENTED",
+    "globalAcceptance": "NOT_IMPLEMENTED",
+    "windows": "Different failure cluster; not resolved by Linux result",
+    "claudeCloudRuntime": "No actual execution observed by this Codex Cloud owner",
+    "productChangesForPublication": false,
+    "newProductTestsForPublication": false,
+    "releasePermission": false
+  }
+}

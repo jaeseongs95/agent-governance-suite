@@ -1,0 +1,27 @@
+{"command": ["pnpm", "exec", "vitest", "run", "tests/mcp/workspace-identity.test.ts", "tests/mcp/convergence-guard.test.ts", "tests/mcp/tool-schema-profile.test.ts", "--maxWorkers=2"], "cwd": "/workspace/ags-cs-2x/repo", "started": "2026-10-06T02:13:18.343247+00:00", "isolation": {"TMPDIR": "/dev/shm/ags-cs-2x-tests", "XDG_DATA_HOME": "/workspace/ags-cs-2x/tool-state/data", "XDG_CACHE_HOME": "/workspace/ags-cs-2x/tool-state/cache"}}
+Already up to date
+Done in 499ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /workspace/ags-cs-2x/repo
+
+ ❯ tests/mcp/tool-schema-profile.test.ts (7 tests | 1 failed) 1903ms
+   ❯ MCP tool schema profiles (7)
+     × applies the environment profile in the bundled server 156ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/mcp/tool-schema-profile.test.ts > MCP tool schema profiles > applies the environment profile in the bundled server
+McpError: MCP error -32000: Connection closed
+ ❯ McpError.fromError node_modules/.pnpm/@modelcontextprotocol+sdk@1.30.0_zod@4.5.4/node_modules/@modelcontextprotocol/sdk/src/types.ts:2330:16
+ ❯ Client._onclose node_modules/.pnpm/@modelcontextprotocol+sdk@1.30.0_zod@4.5.4/node_modules/@modelcontextprotocol/sdk/src/shared/protocol.ts:662:32
+ ❯ StdioClientTransport._transport.onclose node_modules/.pnpm/@modelcontextprotocol+sdk@1.30.0_zod@4.5.4/node_modules/@modelcontextprotocol/sdk/src/shared/protocol.ts:618:18
+ ❯ ChildProcess.<anonymous> node_modules/.pnpm/@modelcontextprotocol+sdk@1.30.0_zod@4.5.4/node_modules/@modelcontextprotocol/sdk/src/client/stdio.ts:152:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 96 passed (97)
+   Start at  02:13:19
+   Duration  10.45s (tests 94%, transform 4%, import 2%)
+

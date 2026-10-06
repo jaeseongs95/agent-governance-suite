@@ -1,0 +1,110 @@
+{"label": "04-baseline-observation", "command": ["pnpm", "exec", "vitest", "run", "tests/session-messaging/historical-wake.test.mjs", "tests/session-messaging/session-message.test.ts", "-t", "packaged CLI binds history|uses one plugin queue profile|keeps packaged hook and relay entrypoints", "--maxWorkers=1"], "cwd": "/workspace/ags-cs-2x/linux-lifecycle-r2/base-repo", "sourceCommit": "f39501efe5dfe51d83af9afddf39dec7b7e26b01", "started": "2026-10-06T03:32:20.037799+00:00", "environment": {"hostname": "d19a608d7837", "platform": "Linux-6.18.44-x86_64-with-glibc2.41", "pid1": "tail", "TMPDIR": "/dev/shm/ags-cs-lifecycle-r2/04-baseline-observation", "sharedState": "/workspace/ags-cs-2x/linux-lifecycle-r2/tool-state/04-baseline-observation/shared-state", "observations": "/workspace/ags-cs-2x/linux-lifecycle-r2/evidence/04-baseline-observation.process.jsonl", "subreaper": false, "databaseObserver": false}, "filePins": {"tests/helpers/fixture-process-observer.ts": "d36e0576492c4c3ea9f6eca08c7a8c3fb49af9324d9b494cfec31768ab5d7ca2", "tests/session-messaging/historical-wake.test.mjs": "22d5f9aecab6f69face1c28477b9133141a7184354dde702bae3f742bd54a1ab", "tests/session-messaging/session-message.test.ts": "565cf4fca9dbbea8a5fdba2ca473fb4082403e7f85398d5b2d992724969d30f6"}}
+Recreating /workspace/ags-cs-2x/repo/node_modules
+? Verifying lockfile against supply-chain policies (267 entries)...
+Lockfile is up to date, resolution step is skipped
+Already up to date
+✓ Lockfile passes supply-chain policies (267 entries in 3.4s)
+
+dependencies:
++ @modelcontextprotocol/sdk 1.30.0
++ ajv 8.20.0
++ ajv-formats 3.0.1
++ zod 4.5.4
+
+devDependencies:
++ @eslint/js 10.0.1
++ @types/node 26.5.0
++ esbuild 0.28.2
++ eslint 10.10.0
++ tsx 4.23.13
++ typescript 6.0.2
++ typescript-eslint 8.70.0
++ vitest 5.0.0
+
+Done in 4.2s using pnpm v11.19.0
+
+ RUN  v5.0.0 /workspace/ags-cs-2x/linux-lifecycle-r2/base-repo
+
+ ❯ tests/session-messaging/session-message.test.ts (71 tests | 2 failed | 69 skipped) 25726ms
+   ❯ TLS 1.3 broker and vendor-neutral adapter (52)
+     × uses one plugin queue profile for packaged presence and relay until the next SessionStart 15485ms
+     × keeps packaged hook and relay entrypoints isolated 10238ms
+node:internal/modules/cjs/loader:1520
+  throw err;
+  ^
+
+Error: Cannot find module '/workspace/ags-cs-2x/repo/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/suppress-warnings.cjs'
+Require stack:
+- internal/preload
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1517:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1122:12)
+    at Module._load (node:internal/modules/cjs/loader:1294:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.require (node:internal/modules/cjs/loader:1617:12)
+    at node:internal/modules/cjs/loader:2164:12
+    at loadPreloadModules (node:internal/process/pre_execution:710:5)
+    at initializeModuleLoaders (node:internal/process/pre_execution:243:5) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ 'internal/preload' ]
+}
+
+Node.js v24.19.0
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > uses one plugin queue profile for packaged presence and relay until the next SessionStart
+Error: Timed out waiting for test state.
+ ❯ waitUntil tests/session-messaging/session-message.test.ts:61:9
+     59|     await new Promise((resolve) => setTimeout(resolve, 50));
+     60|   }
+     61|   throw new Error("Timed out waiting for test state.");
+       |         ^
+     62| }
+     63|
+ ❯ tests/session-messaging/session-message.test.ts:898:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > keeps packaged hook and relay entrypoints isolated
+Error: Timed out waiting for test state.
+ ❯ waitUntil tests/session-messaging/session-message.test.ts:61:9
+     59|     await new Promise((resolve) => setTimeout(resolve, 50));
+     60|   }
+     61|   throw new Error("Timed out waiting for test state.");
+       |         ^
+     62| }
+     63|
+ ❯ terminateBroker tests/session-messaging/session-message.test.ts:88:3
+ ❯ tests/session-messaging/session-message.test.ts:108:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Worker forks emitted error.
+ ❯ EventEmitter.onTaskError ../../repo/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/index.B89dZ0-N.js:11463:21
+ ❯ EventEmitter.emit node:events:521:24
+ ❯ ChildProcess.emitUnexpectedExit ../../repo/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/index.B89dZ0-N.js:10940:22
+ ❯ ChildProcess.emit node:events:509:28
+ ❯ Process.ChildProcess._handle.onexit node:internal/child_process:295:12
+
+Caused by: Error: Worker exited unexpectedly with exit code 1 during starting state
+ ❯ ChildProcess.emitUnexpectedExit ../../repo/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/index.B89dZ0-N.js:10938:33
+ ❯ ChildProcess.emit node:events:509:28
+ ❯ Process.ChildProcess._handle.onexit node:internal/child_process:295:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 69 skipped (71)
+     Errors  1 error
+   Start at  03:32:25
+   Duration  26.36s (tests 98%, transform 1%, import 1%)
+

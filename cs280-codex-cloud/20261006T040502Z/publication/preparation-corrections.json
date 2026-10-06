@@ -1,0 +1,7 @@
+[
+  {
+    "action": "scope baseline postprocessing assertion",
+    "result": "AssertionError: expected no entries, but capture correctly includes 9710 clean tracked entries",
+    "correction": "Kept original successful baseline; verified all entry statuses clean and froze its digest. No product action."
+  }
+]

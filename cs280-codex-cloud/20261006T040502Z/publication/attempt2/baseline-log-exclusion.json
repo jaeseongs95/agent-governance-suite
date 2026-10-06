@@ -1,0 +1,8 @@
+{
+  "kind": "OTHER_JOB_BASELINE_DUMP",
+  "bytes": 2801118,
+  "sha256": "b278400733d840174c3998496945357e8459bc8907cad3086e317ade74a93a35",
+  "captureExit": 0,
+  "privateRawPreserved": true,
+  "publicExcluded": "Contains ledger paths/hashes for other evidence jobs; only current CS evidence is republished"
+}

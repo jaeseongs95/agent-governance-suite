@@ -1,0 +1,10 @@
+{
+  "path": "/workspace/ags-cs-2x/output/AGS-2.8.0-CS-RC-review.zip",
+  "bytes": 3956830,
+  "sha256": "2f4067919ec83cccef39650cdac61d4dca61d47e9c8ccdf4558fe0f011f06fc4",
+  "entries": 1524,
+  "sourceCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+  "sourceFiles": 1344,
+  "changedFiles": 154,
+  "manifestVerified": true
+}

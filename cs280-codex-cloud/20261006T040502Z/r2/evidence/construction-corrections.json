@@ -1,0 +1,14 @@
+[
+  {
+    "action": "First analysis of comparative observations",
+    "result": "AssertionError while requiring three baseline zombie groups in the incomplete 04 run",
+    "correction": "Read the preserved worker error; keep the two observed session cases, collect only the history worker cases that never started, then classify each actual run separately.",
+    "productOrTestSourceChanged": false
+  },
+  {
+    "action": "First baseline source manifest construction",
+    "result": "FileNotFoundError for Git-quoted Unicode AGENTS.md path",
+    "correction": "Use git ls-files -z and split NUL records; all 1213 original tracked bytes were compared with exact f395 except the two declared fixture overlays.",
+    "productOrTestSourceChanged": false
+  }
+]

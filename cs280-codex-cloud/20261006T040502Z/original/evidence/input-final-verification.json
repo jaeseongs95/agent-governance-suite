@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "manifestSha256": "6348400d65f62759f12e3bfc58fbcdf40c63292ba6e1977d59b8c26f8a514475",
+  "manifestBytes": 18543,
+  "actualFiles": 101,
+  "missing": [],
+  "extra": [],
+  "hashErrors": [],
+  "extraInputs": [
+    {
+      "path": "verification-report.ko.md",
+      "bytes": 3741,
+      "sha256": "104996a15ddc93ea8f0c02f17afd793c54bdb2c4b50e713e3db38dc92a9428ad"
+    },
+    {
+      "path": "root-README.ko.md",
+      "bytes": 5621,
+      "sha256": "4d5728c4a15ef3d6fa312e8e1f1f721b6494f3a185352496977577727043b175"
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "requestId": "c1a7252a-c8ed-4fd4-8d49-c744043e91d3",
+  "leadThread": "01a1023f-b277-7ef1-bb48-4b90770caf13",
+  "messageIds": [
+    "d68a83e4-f4df-4ad9-951d-42b60684b27c",
+    "768c2b75-d85f-4cc7-8ef4-734732f5cbae"
+  ],
+  "library": {
+    "libraryFileId": "[REDACTED:PRIVATE_RESOURCE]",
+    "fileId": "[REDACTED:PRIVATE_RESOURCE]",
+    "version": 0,
+    "status": "succeeded"
+  },
+  "drive": {
+    "folderId": "[REDACTED:PRIVATE_RESOURCE]",
+    "fileId": "[REDACTED:PRIVATE_RESOURCE]",
+    "parentFolderId": "[REDACTED:PRIVATE_RESOURCE]",
+    "fileParentId": "[REDACTED:PRIVATE_RESOURCE]",
+    "shared": false,
+    "ownerOnly": true,
+    "sameOwnerAsOriginalDelivery": true,
+    "downloadedPath": "[REDACTED:PRIVATE_ATTACHMENT]/AGS-2.8.0-CS-Linux-lifecycle-r1-review.zip",
+    "size": 3537167,
+    "url": "https://drive.google.com/file/d/REDACTED_RESOURCE/view"
+  },
+  "latestSteering": {
+    "codexActualEnvironment": "Codex Cloud Linux selected execution environment",
+    "claudeActualExecutionClaimed": false,
+    "newWindowsExecution": false,
+    "windowsOriginalMetadataOnly": {
+      "commit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+      "passed": 911,
+      "failed": 3,
+      "skipped": 5,
+      "total": 919,
+      "failures": [
+        "CS file symlink EPERM before assertion",
+        "packaged hook session-message 1209/1264 expected decision:block but {}"
+      ],
+      "reportSha256": "7b2a8d1d62247ab132b1ea3cb5c97e165214da92250ab29aa1110f65342289c3",
+      "fileContentsRead": false
+    },
+    "R042MetadataOnly": {
+      "scope": "original 4ba selected csstage static source review",
+      "sha256": "81f719647f2418c9ec176c9a0dc8836b84f67be0a7f361d6dafdd2acf250cacd",
+      "fileContentsRead": false,
+      "reusedForNewRevision": false
+    },
+    "linuxPassDoesNotResolveWindows": true,
+    "peerRelayToolAvailable": false,
+    "replyChannel": "Native delegation final callback"
+  }
+}

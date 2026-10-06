@@ -1,0 +1,22 @@
+{"label": "05-source-lock", "command": ["pnpm", "source:check"], "cwd": "/workspace/ags-cs-2x/repo", "sourceCommit": "f7912c452483ddc67ba874a185c08fa0038a38e7", "started": "2026-10-06T03:32:49.051539+00:00", "environment": {"hostname": "d19a608d7837", "platform": "Linux-6.18.44-x86_64-with-glibc2.41", "pid1": "tail", "TMPDIR": "/dev/shm/ags-cs-lifecycle-r2/05-source-lock", "sharedState": "/workspace/ags-cs-2x/linux-lifecycle-r2/tool-state/05-source-lock/shared-state", "observations": null, "subreaper": false, "databaseObserver": false}, "filePins": {"tests/helpers/fixture-process-observer.ts": "d36e0576492c4c3ea9f6eca08c7a8c3fb49af9324d9b494cfec31768ab5d7ca2", "tests/session-messaging/historical-wake.test.mjs": "22d5f9aecab6f69face1c28477b9133141a7184354dde702bae3f742bd54a1ab", "tests/session-messaging/session-message.test.ts": "565cf4fca9dbbea8a5fdba2ca473fb4082403e7f85398d5b2d992724969d30f6"}}
+? Verifying lockfile against supply-chain policies (267 entries)...
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +217
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 217, reused 0, downloaded 0, added 0
+Packages are hard linked from the content-addressable store to the virtual store.
+  Content-addressable store is at: /workspace/ags-cs-2x/linux-lifecycle-r2/tool-state/05-source-lock/data/pnpm/store/v11
+  Virtual store is at:             node_modules/.pnpm
+Progress: resolved 217, reused 0, downloaded 35, added 34
+Progress: resolved 217, reused 0, downloaded 66, added 66
+Progress: resolved 217, reused 0, downloaded 128, added 128
+Progress: resolved 217, reused 0, downloaded 191, added 191
+Progress: resolved 217, reused 0, downloaded 217, added 217, done
+✓ Lockfile passes supply-chain policies (267 entries in 6.5s)
+.../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+.../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+
+Done in 7.4s using pnpm v11.19.0
+$ node scripts/check-source-lock.mjs
+source lock is consistent

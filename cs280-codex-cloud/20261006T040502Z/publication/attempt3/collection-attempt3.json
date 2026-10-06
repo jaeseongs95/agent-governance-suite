@@ -1,0 +1,13 @@
+{
+  "origin": "generated_control",
+  "cutoff": "2026-10-06T04:29:23.497944+00:00",
+  "baseTip": "22ad719ac0ea376659b3182ce0692c6a90fd8583",
+  "nativeResult": "Actual returned tool result from attempt2; exit1 prevented commit/push. Full native transcript remains NOT_VERIFIABLE.",
+  "excludedBaselineLog": {
+    "kind": "OTHER_JOB_BASELINE_DUMP",
+    "bytes": 2808276,
+    "sha256": "a1342474d1b1a024daea93091152aeca4406f29209a4d2e3a864522c146efaf0",
+    "reason": "Other job paths/metadata excluded from current-CS public copies; private baseline retained"
+  },
+  "postSeal": "Final scope/receipt/ref check/commit/push/re-download stdout and stderr will be captured and returned separately after sealing; not claimed inside this self-referential payload."
+}

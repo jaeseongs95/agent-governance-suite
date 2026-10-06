@@ -1,0 +1,89 @@
+{"command": ["pnpm", "exec", "vitest", "run", "tests/cs-engineering"], "cwd": "/workspace/ags-cs-2x/repo", "started": "2026-10-06T02:00:57.100635+00:00", "isolation": {"TMPDIR": "/workspace/ags-cs-2x/tmp", "XDG_DATA_HOME": "/workspace/ags-cs-2x/tool-state/data", "XDG_CACHE_HOME": "/workspace/ags-cs-2x/tool-state/cache"}}
+Already up to date
+Done in 329ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /workspace/ags-cs-2x/repo
+
+ ❯ tests/cs-engineering/workflow-integration.test.ts (12 tests | 3 failed) 3466ms
+   × selected review runs actual packaged CLI and finalizes with matching files 415ms
+   × proper unexecuted evidence records BLOCKED even with supplied observe policy 290ms
+   × guarded lease/start and SQLite restart retain recorded bundle pins; finalize rereads evidence 288ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/cs-engineering/workflow-integration.test.ts > selected review runs actual packaged CLI and finalizes with matching files
+AssertionError: expected { code: 'INVALID_INPUT', …(2) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "code": "INVALID_INPUT",
+  "details": {
+    "cause": "validator.taskEnvelope is not a function",
+  },
+  "message": "Workflow request could not be processed.",
+}
+
+ ❯ tests/cs-engineering/workflow-integration.test.ts:78:26
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/cs-engineering/workflow-integration.test.ts > proper unexecuted evidence records BLOCKED even with supplied observe policy
+AssertionError: expected { code: 'INVALID_INPUT', …(2) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "code": "INVALID_INPUT",
+  "details": {
+    "cause": "validator.taskEnvelope is not a function",
+  },
+  "message": "Workflow request could not be processed.",
+}
+
+ ❯ tests/cs-engineering/workflow-integration.test.ts:107:80
+    105|   const policy=read(f.root,"policy.json");policy.mode="observe";f.bind…
+    106|   write(f.root,"policy.json",policy);write(f.root,"binding.json",f.bin…
+    107|   const recorded=f.service.recordStageResult(result(f));expect(recorde…
+       |                                                                                ^
+    108| });
+    109|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/cs-engineering/workflow-integration.test.ts > guarded lease/start and SQLite restart retain recorded bundle pins; finalize rereads evidence
+AssertionError: expected { code: 'INVALID_INPUT', …(2) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "code": "INVALID_INPUT",
+  "details": {
+    "cause": "validator.taskEnvelope is not a function",
+  },
+  "message": "Workflow request could not be processed.",
+}
+
+ ❯ tests/cs-engineering/workflow-integration.test.ts:123:92
+    121|   const started=service.startGuardedWorkflow({schemaVersion:"1.0.0",le…
+    122|   expect(started.error).toBeNull();
+    123|   const recorded=service.recordStageResult(result(f,started.data!));ex…
+       |                                                                                            ^
+    124|   store.close();stores.splice(stores.indexOf(store),1);
+    125|   const reopened=new SqliteWorkflowStore(db);stores.push(reopened);con…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  3 failed | 10 passed (13)
+   Start at  02:00:58
+   Duration  3.86s (tests 94%, transform 4%, import 2%)
+

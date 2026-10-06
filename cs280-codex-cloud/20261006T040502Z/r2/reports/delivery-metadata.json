@@ -1,0 +1,26 @@
+{
+  "leadThread": "01a1023f-b277-7ef1-bb48-4b90770caf13",
+  "requestId": "c1a7252a-c8ed-4fd4-8d49-c744043e91d3",
+  "messageId": "22dbddf1-56a8-4711-8356-3870c12de69e",
+  "library": {
+    "libraryFileId": "[REDACTED:PRIVATE_RESOURCE]",
+    "fileId": "[REDACTED:PRIVATE_RESOURCE]",
+    "version": 0,
+    "status": "succeeded",
+    "xattrsApplied": true
+  },
+  "drive": {
+    "fileId": "[REDACTED:PRIVATE_RESOURCE]",
+    "folderId": "[REDACTED:PRIVATE_RESOURCE]",
+    "parentFolderId": "[REDACTED:PRIVATE_RESOURCE]",
+    "url": "https://drive.google.com/file/d/REDACTED_RESOURCE/view",
+    "ownerOnly": true,
+    "shared": false,
+    "sameOwnerAsOriginalDelivery": true,
+    "downloadedPath": "[REDACTED:PRIVATE_ATTACHMENT]/AGS-2.8.0-CS-Linux-lifecycle-r2-review.zip",
+    "sizeBytes": 3492904
+  },
+  "originalSourcesPreserved": true,
+  "peerRelayToolAvailable": false,
+  "replyChannel": "native delegation callback"
+}

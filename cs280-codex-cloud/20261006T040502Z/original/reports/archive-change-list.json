@@ -1,0 +1,772 @@
+[
+  {
+    "status": "M",
+    "path": ".agents/plugins/marketplace.json",
+    "generated": false
+  },
+  {
+    "status": "M",
+    "path": ".codex-plugin/plugin.json",
+    "generated": false
+  },
+  {
+    "status": "M",
+    "path": "README.en.md",
+    "generated": false
+  },
+  {
+    "status": "M",
+    "path": "README.md",
+    "generated": false
+  },
+  {
+    "status": "M",
+    "path": "claude-plugin/.claude-plugin/plugin.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/contracts/cs-engineering-binding.v1.schema.json",
+    "generated": true
+  },
+  {
+    "status": "M",
+    "path": "claude-plugin/mcp-server/dist/server.mjs",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/LICENSE",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/SKILL.md",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/VERSION",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/examples/sqlite-queue/binding.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/examples/sqlite-queue/candidate.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/examples/sqlite-queue/candidate/queue.py",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/examples/sqlite-queue/constraints.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/examples/sqlite-queue/evidence/queue-tests.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/examples/sqlite-queue/policy.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/examples/sqlite-queue/request.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/examples/sqlite-queue/review.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/examples/sqlite-queue/source/baseline.txt",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/examples/sqlite-queue/source/request.txt",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/examples/sqlite-queue/stage-bundle.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/examples/sqlite-queue/task.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/knowledge-lock.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/rule-catalog.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/rules/algorithms-data-structures.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/rules/concurrency.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/rules/databases.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/rules/distributed-systems.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/rules/language-semantics.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/rules/networking.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/rules/operating-systems.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/rules/performance.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/rules/security-boundaries.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/rules/software-design.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/assets/sources.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/contracts/cs-candidate.v1.schema.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/contracts/cs-constraint-report.v1.schema.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/contracts/cs-engineering-binding.v1.schema.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/contracts/cs-policy.v1.schema.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/contracts/cs-request.v1.schema.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/contracts/cs-review-report.v1.schema.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/contracts/cs-stage-bundle.v1.schema.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/evals/host-cases.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/integration/skill-descriptor.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/references/ags-2x-integration.md",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/references/algorithms-data-structures.md",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/references/concurrency.md",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/references/contracts-and-cli.md",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/references/databases.md",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/references/design-basis.ko.md",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/references/distributed-systems.md",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/references/index.md",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/references/language-semantics.md",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/references/networking.md",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/references/operating-systems.md",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/references/performance.md",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/references/security-boundaries.md",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/references/software-design.md",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/references/worked-example.md",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/scripts/ags-adapter.mjs",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/scripts/core.mjs",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/scripts/primitives.mjs",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/scripts/schema-validation.mjs",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "claude-plugin/skills/cs-engineering/scripts/validate.mjs",
+    "generated": true
+  },
+  {
+    "status": "M",
+    "path": "claude-plugin/skills/orchestrator/references/entry-details.md",
+    "generated": true
+  },
+  {
+    "status": "M",
+    "path": "claude-plugin/skills/registry.json",
+    "generated": true
+  },
+  {
+    "status": "M",
+    "path": "claude-plugin/skills/source-lock.json",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "contracts/cs-engineering-binding.v1.schema.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "docs/cs-engineering-design.ko.md",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "docs/cs-engineering.md",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "docs/release-notes-2.8.0-rc.ko.md",
+    "generated": false
+  },
+  {
+    "status": "M",
+    "path": "docs/roadmap.md",
+    "generated": false
+  },
+  {
+    "status": "M",
+    "path": "mcp-server/dist/server.mjs",
+    "generated": true
+  },
+  {
+    "status": "A",
+    "path": "mcp-server/src/cs-engineering-validator.ts",
+    "generated": false
+  },
+  {
+    "status": "M",
+    "path": "mcp-server/src/plugin-info.ts",
+    "generated": false
+  },
+  {
+    "status": "M",
+    "path": "mcp-server/src/workflow-service.ts",
+    "generated": false
+  },
+  {
+    "status": "M",
+    "path": "package.json",
+    "generated": false
+  },
+  {
+    "status": "M",
+    "path": "release/version.json",
+    "generated": false
+  },
+  {
+    "status": "M",
+    "path": "scripts/build-claude-plugin.mjs",
+    "generated": false
+  },
+  {
+    "status": "M",
+    "path": "scripts/check-skill-context-optimization.mjs",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "scripts/fixtures/cs-engineering-handoff.2.8.0.md",
+    "generated": false
+  },
+  {
+    "status": "M",
+    "path": "scripts/release-metadata.mjs",
+    "generated": false
+  },
+  {
+    "status": "M",
+    "path": "scripts/runtime-entrypoints.mjs",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/LICENSE",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/SKILL.md",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/VERSION",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/agents/openai.yaml",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/examples/sqlite-queue/binding.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/examples/sqlite-queue/candidate.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/examples/sqlite-queue/candidate/queue.py",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/examples/sqlite-queue/constraints.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/examples/sqlite-queue/evidence/queue-tests.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/examples/sqlite-queue/policy.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/examples/sqlite-queue/request.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/examples/sqlite-queue/review.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/examples/sqlite-queue/source/baseline.txt",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/examples/sqlite-queue/source/request.txt",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/examples/sqlite-queue/stage-bundle.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/examples/sqlite-queue/task.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/knowledge-lock.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/rule-catalog.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/rules/algorithms-data-structures.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/rules/concurrency.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/rules/databases.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/rules/distributed-systems.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/rules/language-semantics.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/rules/networking.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/rules/operating-systems.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/rules/performance.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/rules/security-boundaries.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/rules/software-design.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/assets/sources.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/contracts/cs-candidate.v1.schema.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/contracts/cs-constraint-report.v1.schema.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/contracts/cs-engineering-binding.v1.schema.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/contracts/cs-policy.v1.schema.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/contracts/cs-request.v1.schema.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/contracts/cs-review-report.v1.schema.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/contracts/cs-stage-bundle.v1.schema.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/evals/host-cases.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/integration/skill-descriptor.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/references/ags-2x-integration.md",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/references/algorithms-data-structures.md",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/references/concurrency.md",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/references/contracts-and-cli.md",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/references/databases.md",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/references/design-basis.ko.md",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/references/distributed-systems.md",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/references/index.md",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/references/language-semantics.md",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/references/networking.md",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/references/operating-systems.md",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/references/performance.md",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/references/security-boundaries.md",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/references/software-design.md",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/references/worked-example.md",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/scripts/ags-adapter.mjs",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/scripts/core.mjs",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/scripts/primitives.mjs",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/scripts/schema-validation.mjs",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "skills/cs-engineering/scripts/validate.mjs",
+    "generated": false
+  },
+  {
+    "status": "M",
+    "path": "skills/orchestrator/references/entry-details.md",
+    "generated": false
+  },
+  {
+    "status": "M",
+    "path": "skills/registry.json",
+    "generated": false
+  },
+  {
+    "status": "M",
+    "path": "skills/source-lock.json",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "tests/cs-engineering/cli-cleanroom.node.mjs",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "tests/cs-engineering/core.node.mjs",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "tests/cs-engineering/files.node.mjs",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "tests/cs-engineering/helpers.mjs",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "tests/cs-engineering/reference-mechanisms.node.mjs",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "tests/cs-engineering/schema_reference_test.py",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "tests/cs-engineering/sqlite_reference_test.py",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "tests/cs-engineering/suite-integration.test.ts",
+    "generated": false
+  },
+  {
+    "status": "A",
+    "path": "tests/cs-engineering/workflow-integration.test.ts",
+    "generated": false
+  },
+  {
+    "status": "M",
+    "path": "tests/mcp/tool-schema-profile.test.ts",
+    "generated": false
+  }
+]

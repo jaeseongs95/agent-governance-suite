@@ -1,0 +1,25 @@
+{
+  "leadThread": "01a1023f-b277-7ef1-bb48-4b90770caf13",
+  "messageId": "22dbddf1-56a8-4711-8356-3870c12de69e",
+  "sameTaskMessageIds": [
+    "d68a83e4-f4df-4ad9-951d-42b60684b27c",
+    "768c2b75-d85f-4cc7-8ef4-734732f5cbae"
+  ],
+  "requestDigestSuppliedByLead": "sha256:dcb4cce76a1a2745243b35b6ae600a278c2e16b35454928ad3c48411f6d8bbe0",
+  "nextTest": "LINUX-PROC-LIFECYCLE-OBSERVATION-V1",
+  "inputDigestSuppliedByLead": "sha256:991b7d0d3d8428c10ac9b91ffbce1b48b54554e0abd0ae865361670743f4c584",
+  "roReportMetadataOnly": {
+    "specPath": "[REDACTED:PRIVATE_HOME]/ags-evidence/cs-2x-handoff-20261006-r1/diagnosis/DIAGNOSIS.linux-session-lifecycle.ko.md",
+    "specSha256": "014a7af81a04509146faf9ac267f320fff3f767fde640307912c1f40d281f88e",
+    "reportSha256": "024eb1a9bfcafa5d28a4f49aa908b47dea145fa03899dea6a8f6e9e6b2860813",
+    "leadReportedJudgment": "NEXT_TEST",
+    "leadReportedConfirmedCause": null,
+    "leadReportedCanonicalValidation": "valid=true/errors[]",
+    "contentsAvailableInThisCloud": false,
+    "independentlyValidatedHere": false
+  },
+  "scope": "Checked-in optional fixture observer; candidate product source 4ba and exact baseline product source f395 with identical diagnostic fixture overlay, once each. No assertions/deadlines/production lifecycle changes.",
+  "windowsClusterMerged": false,
+  "claudeCloudRuntimeClaimed": false,
+  "peerRelayToolAvailable": false
+}

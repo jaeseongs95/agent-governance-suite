@@ -1,0 +1,4 @@
+{"command": ["pnpm", "bundle:check"], "cwd": "/workspace/ags-cs-2x/repo", "started": "2026-10-06T03:13:39.471176+00:00", "subreaper": false, "databaseReads": false, "pid1": "tail", "isolation": {"TMPDIR": "/dev/shm/ags-cs-lifecycle-r1/10-bundle", "sharedState": "/workspace/ags-cs-2x/linux-lifecycle-r1/tool-state/state"}}
+Already up to date
+Done in 468ms using pnpm v11.19.0
+$ node scripts/check-bundle.mjs

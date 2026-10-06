@@ -1,0 +1,5 @@
+{"command": ["pnpm", "release:sync", "--write"], "cwd": "/workspace/ags-cs-2x/repo", "started": "2026-10-06T02:01:40.439625+00:00", "isolation": {"TMPDIR": "/workspace/ags-cs-2x/tmp", "XDG_DATA_HOME": "/workspace/ags-cs-2x/tool-state/data", "XDG_CACHE_HOME": "/workspace/ags-cs-2x/tool-state/cache"}}
+Already up to date
+Done in 323ms using pnpm v11.19.0
+$ node scripts/sync-release-metadata.mjs --write
+synchronized 3 release metadata file(s)

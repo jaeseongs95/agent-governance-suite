@@ -1,0 +1,30 @@
+{
+  "status": "DELIVERED_REVIEW_CANDIDATE_WITH_BLOCKERS",
+  "sourceCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+  "branch": "codex/cs-engineering-2x",
+  "worktree": "/workspace/ags-cs-2x/repo",
+  "libraryFileId": "[REDACTED:PRIVATE_RESOURCE]",
+  "libraryVersion": 0,
+  "libraryXattrsApplied": true,
+  "driveFolderId": "[REDACTED:PRIVATE_RESOURCE]",
+  "driveFileId": "1ln5qE7B9J-0YwgEz8wDeCCEO1ttnDDEa",
+  "driveFileUrl": "https://drive.google.com/file/d/REDACTED_RESOURCE/view?REDACTED_QUERY",
+  "driveFolderOwnerOnlyPrivate": true,
+  "driveFileOwnerOnlyPrivate": true,
+  "sameOwnerAsInputFolder": true,
+  "sharingPermissionChanges": false,
+  "bytes": 3956830,
+  "localSha256": "2f4067919ec83cccef39650cdac61d4dca61d47e9c8ccdf4558fe0f011f06fc4",
+  "redownloadedSha256": "2f4067919ec83cccef39650cdac61d4dca61d47e9c8ccdf4558fe0f011f06fc4",
+  "rawRedownloadHashMatches": true,
+  "remoteMutations": false,
+  "userInstallationMutations": false,
+  "releasePublished": false,
+  "independentSourceAudit": "NOT_RUN",
+  "fullTests": {
+    "PASS": 911,
+    "FAIL": 3,
+    "SKIP": 5
+  },
+  "officialValidator": "BLOCKED_missing_script"
+}

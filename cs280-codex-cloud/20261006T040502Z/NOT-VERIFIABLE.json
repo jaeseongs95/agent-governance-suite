@@ -1,0 +1,9 @@
+{
+  "nativeTranscript": "NOT_VERIFIABLE: full native transcript export is not supplied by this environment; no reconstructed transcript is represented as native.",
+  "standaloneToolStdoutStderr": "NOT_VERIFIABLE except the existing captured merged execution logs and newly recorded publication commands.",
+  "earlyCommandGaps": "Listed per log in COMMAND-COVERAGE.json; no cwd/exit/timestamp invented.",
+  "operationalHostLogs": "NOT_VERIFIABLE; user PC/MCP/Claude Cloud was not queried.",
+  "rawDatabaseKeyTrustFiles": "EXCLUDED; no mutable fixture/operational DB/WAL/key/trust file is published or enumerated for values.",
+  "privateArchivesBundles": "EXCLUDED with raw SHA256 only; no raw ZIP/Git bundle/source patch is published.",
+  "sourceAuditFiles": "External lead-referenced verdict contents NOT_VERIFIABLE here; preserve available local reports and metadata scope."
+}

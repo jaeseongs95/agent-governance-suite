@@ -1,0 +1,13 @@
+{"command": ["python", "tests/helpers/linux-child-reaper.py", "pnpm", "exec", "vitest", "run", "tests/session-messaging/historical-wake.test.mjs", "tests/session-messaging/session-message.test.ts", "--maxWorkers=2"], "cwd": "/workspace/ags-cs-2x/repo", "started": "2026-10-06T03:07:21.937996+00:00", "subreaper": false, "pid1": "tail", "isolation": {"TMPDIR": "/dev/shm/ags-cs-lifecycle-r1/04-harness-fixtures", "sharedState": "/workspace/ags-cs-2x/linux-lifecycle-r1/tool-state/state"}}
+Already up to date
+Done in 512ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /workspace/ags-cs-2x/repo
+
+
+ Test Files  2 passed (2)
+      Tests  136 passed (136)
+   Start at  03:07:23
+   Duration  12.86s (tests 95%, transform 4%, import 1%)
+
+{"kind": "test-fixture-reaper", "commandExitCode": 0, "adoptedChildrenReaped": 7, "childExitCodes": [0, 0, 0, 0, 0, 0, 0], "harnessErrors": []}

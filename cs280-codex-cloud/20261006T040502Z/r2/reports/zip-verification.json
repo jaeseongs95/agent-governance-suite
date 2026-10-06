@@ -1,0 +1,14 @@
+{
+  "path": "/workspace/ags-cs-2x/linux-lifecycle-r2/output/AGS-2.8.0-CS-Linux-lifecycle-r2-review.zip",
+  "bytes": 3492904,
+  "sha256": "ae59a27bfa99364e0ec8e0a295a8702b2773c83ac2385eb0a5ed4c74c45fef4f",
+  "entries": 1391,
+  "sourceCommit": "f7912c452483ddc67ba874a185c08fa0038a38e7",
+  "sourceFiles": 1348,
+  "original1344SourceByteDifferences": [
+    "tests/session-messaging/historical-wake.test.mjs",
+    "tests/session-messaging/session-message.test.ts"
+  ],
+  "manifestVerified": true,
+  "secretPatternMatches": 0
+}

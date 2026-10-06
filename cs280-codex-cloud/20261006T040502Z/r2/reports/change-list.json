@@ -1,0 +1,18 @@
+[
+  {
+    "status": "A",
+    "path": "tests/helpers/fixture-process-observer.md"
+  },
+  {
+    "status": "A",
+    "path": "tests/helpers/fixture-process-observer.ts"
+  },
+  {
+    "status": "M",
+    "path": "tests/session-messaging/historical-wake.test.mjs"
+  },
+  {
+    "status": "M",
+    "path": "tests/session-messaging/session-message.test.ts"
+  }
+]

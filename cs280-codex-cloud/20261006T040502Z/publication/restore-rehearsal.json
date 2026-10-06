@@ -1,0 +1,8 @@
+{
+  "method": "Temporary index removes only new prefix; no worktree/ref/remote rollback executed",
+  "baseTree": "c6410b1d449e27e82186a2c294451f78aae73a15",
+  "stagedTreeBeforeControlReports": "ab9479dab6564e6c8ebecec49ac9c2bfdd2ca5db",
+  "restoredTree": "c6410b1d449e27e82186a2c294451f78aae73a15",
+  "exactBaseTreeRestored": true,
+  "newFiles": 170
+}

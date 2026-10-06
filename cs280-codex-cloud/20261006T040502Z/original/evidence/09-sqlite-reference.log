@@ -1,0 +1,16 @@
+{"command": ["python3", "tests/cs-engineering/sqlite_reference_test.py"], "cwd": "/workspace/ags-cs-2x/repo", "started": "2026-10-06T02:02:14.362294+00:00", "isolation": {"TMPDIR": "/workspace/ags-cs-2x/tmp", "XDG_DATA_HOME": "/workspace/ags-cs-2x/tool-state/data", "XDG_CACHE_HOME": "/workspace/ags-cs-2x/tool-state/cache"}}
+test_CONC_CLAIM_001_negative_read_then_write_has_two_winners (__main__.SQLiteReferenceTests.test_CONC_CLAIM_001_negative_read_then_write_has_two_winners) ... ok
+test_CONC_CLAIM_001_six_independent_processes_one_winner (__main__.SQLiteReferenceTests.test_CONC_CLAIM_001_six_independent_processes_one_winner) ... ok
+test_CONC_FENCE_002_expired_unreassigned_lease_rejected (__main__.SQLiteReferenceTests.test_CONC_FENCE_002_expired_unreassigned_lease_rejected) ... ok
+test_CONC_FENCE_002_stale_owner_cannot_publish (__main__.SQLiteReferenceTests.test_CONC_FENCE_002_stale_owner_cannot_publish) ... ok
+test_DB_BOUNDARY_001_crash_rolls_back_uncommitted_state (__main__.SQLiteReferenceTests.test_DB_BOUNDARY_001_crash_rolls_back_uncommitted_state) ... ok
+test_DB_CONSTRAINT_003_primary_key_and_check_reject_invalid_state (__main__.SQLiteReferenceTests.test_DB_CONSTRAINT_003_primary_key_and_check_reject_invalid_state) ... ok
+test_DB_ISOLATION_002_two_connection_snapshot (__main__.SQLiteReferenceTests.test_DB_ISOLATION_002_two_connection_snapshot) ... ok
+test_DB_MIGRATION_004_rollback_retry_and_data_preservation (__main__.SQLiteReferenceTests.test_DB_MIGRATION_004_rollback_retry_and_data_preservation) ... ok
+test_OS_LIFETIME_invalid_claim_leaves_queue_usable (__main__.SQLiteReferenceTests.test_OS_LIFETIME_invalid_claim_leaves_queue_usable) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.513s
+
+OK
+{"scope": "local SQLite reference candidate; not AGS product integration", "python": "3.12.14", "sqlite": "3.53.1", "processStartMethod": "spawn", "testsRun": 9, "failures": 0, "errors": 0, "skipped": 0, "status": "PASS", "candidateRawDigest": "sha256:4bd3ed50da73659ebe233c32c9243193eaf66634bb71307354ce2e0385bb66ee", "candidateUnchangedDuringRun": true, "testScriptDigest": "sha256:06078f4582d49dba2f6d11d3be08689e27a2ea19dabed119f493663337c9718e", "caseIds": ["test_CONC_CLAIM_001_negative_read_then_write_has_two_winners", "test_CONC_CLAIM_001_six_independent_processes_one_winner", "test_CONC_FENCE_002_expired_unreassigned_lease_rejected", "test_CONC_FENCE_002_stale_owner_cannot_publish", "test_DB_BOUNDARY_001_crash_rolls_back_uncommitted_state", "test_DB_CONSTRAINT_003_primary_key_and_check_reject_invalid_state", "test_DB_ISOLATION_002_two_connection_snapshot", "test_DB_MIGRATION_004_rollback_retry_and_data_preservation", "test_OS_LIFETIME_invalid_claim_leaves_queue_usable"]}

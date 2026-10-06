@@ -1,0 +1,5961 @@
+{
+  "label": "04-harness-fixtures",
+  "command": [
+    "python",
+    "tests/helpers/linux-child-reaper.py",
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "tests/session-messaging/historical-wake.test.mjs",
+    "tests/session-messaging/session-message.test.ts",
+    "--maxWorkers=2"
+  ],
+  "cwd": "/workspace/ags-cs-2x/repo",
+  "sourceCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+  "started": "2026-10-06T03:07:21.937996+00:00",
+  "finished": "2026-10-06T03:07:36.231678+00:00",
+  "exitCode": 0,
+  "subreaper": false,
+  "log": "04-harness-fixtures.log",
+  "events": [
+    {
+      "t": 0.0049,
+      "kind": "process-state",
+      "pid": 30060,
+      "state": "R",
+      "ppid": 30057,
+      "start": "467085"
+    },
+    {
+      "t": 0.0315,
+      "kind": "process-state",
+      "pid": 30060,
+      "state": "S",
+      "ppid": 30057,
+      "start": "467085"
+    },
+    {
+      "t": 0.0315,
+      "kind": "process-state",
+      "pid": 30062,
+      "state": "R",
+      "ppid": 30060,
+      "start": "467088"
+    },
+    {
+      "t": 0.0576,
+      "kind": "fixture-directory",
+      "path": "node-compile-cache"
+    },
+    {
+      "t": 0.5436,
+      "kind": "process-state",
+      "pid": 30062,
+      "state": "S",
+      "ppid": 30060,
+      "start": "467088"
+    },
+    {
+      "t": 0.5566,
+      "kind": "process-state",
+      "pid": 30062,
+      "state": "R",
+      "ppid": 30060,
+      "start": "467088"
+    },
+    {
+      "t": 0.5829,
+      "kind": "process-state",
+      "pid": 30062,
+      "state": "S",
+      "ppid": 30060,
+      "start": "467088"
+    },
+    {
+      "t": 0.5961,
+      "kind": "process-state",
+      "pid": 30077,
+      "state": "R",
+      "ppid": 30062,
+      "start": "467143"
+    },
+    {
+      "t": 1.1364,
+      "kind": "process-state",
+      "pid": 30062,
+      "state": "R",
+      "ppid": 30060,
+      "start": "467088"
+    },
+    {
+      "t": 1.1498,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "R",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.1498,
+      "kind": "process-state",
+      "pid": 30062,
+      "state": "S",
+      "ppid": 30060,
+      "start": "467088"
+    },
+    {
+      "t": 1.1765,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "S",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.1897,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "R",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.393,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "S",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.393,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 1.4068,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 1.4813,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 1.4813,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 1.4813,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "R",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.5281,
+      "kind": "fixture-directory",
+      "path": "ICj50OsHnyXv08HYki08q"
+    },
+    {
+      "t": 1.5882,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 1.5882,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 1.5882,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "S",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.6037,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 1.6172,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 1.6172,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "R",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.6461,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 1.6462,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 1.6462,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "S",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.6626,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 1.7357,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "R",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.7537,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 1.7537,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "S",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.7677,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "R",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.7984,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 1.7984,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 1.7984,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "S",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.8122,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 1.8264,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 1.8264,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 1.8264,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "R",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.8265,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-IEH6hj"
+    },
+    {
+      "t": 1.8271,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-IEH6hj",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ]
+      ],
+      "relays": []
+    },
+    {
+      "t": 1.8412,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 1.8412,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "S",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.8413,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-le6E22"
+    },
+    {
+      "t": 1.8416,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-le6E22",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 1.8557,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-XheO4Z"
+    },
+    {
+      "t": 1.8561,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-XheO4Z",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 1.871,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 1.871,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "R",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.871,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-w8pYoN"
+    },
+    {
+      "t": 1.8714,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-w8pYoN",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 1.8854,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-ImSrmU"
+    },
+    {
+      "t": 1.8856,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-ImSrmU",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 1.9029,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "S",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.903,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-DpGdeF"
+    },
+    {
+      "t": 1.9034,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-DpGdeF",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 1.9167,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-imdN24"
+    },
+    {
+      "t": 1.9171,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-imdN24",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 1.9315,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "R",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.9315,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-H5sl5s"
+    },
+    {
+      "t": 1.9319,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-H5sl5s",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 1.9594,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 1.9595,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "S",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.9595,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-fgeTps"
+    },
+    {
+      "t": 1.9759,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 1.9759,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 1.9759,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "R",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.9759,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-5iW9uX"
+    },
+    {
+      "t": 1.9763,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-5iW9uX",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 1.995,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 1.995,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "S",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 1.9951,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-knYd1p"
+    },
+    {
+      "t": 1.9955,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-knYd1p",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 2.0087,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 2.0087,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 2.0087,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "R",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 2.0088,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-66ksBx"
+    },
+    {
+      "t": 2.0091,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-66ksBx",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 2.0227,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-Zm7NHd"
+    },
+    {
+      "t": 2.0231,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-Zm7NHd",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 2.0412,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "S",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 2.0412,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-BTcNKC"
+    },
+    {
+      "t": 2.0415,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-BTcNKC",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 2.0587,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-RYZsqS"
+    },
+    {
+      "t": 2.0771,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "R",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 2.0771,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-0GBjaa"
+    },
+    {
+      "t": 2.0774,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-0GBjaa",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 2.0909,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 2.0909,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "S",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 2.0909,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-e6REHr"
+    },
+    {
+      "t": 2.0912,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-e6REHr",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 2.1053,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-bIz8k6"
+    },
+    {
+      "t": 2.1056,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-bIz8k6",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 2.1056,
+      "kind": "fixture-directory",
+      "path": "session-messaging-7LWZPT"
+    },
+    {
+      "t": 2.1196,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 2.1196,
+      "kind": "process-state",
+      "pid": 30138,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467297"
+    },
+    {
+      "t": 2.1201,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-bIz8k6",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 2.1333,
+      "kind": "fixture-directory",
+      "path": "session-messaging-BfyNwN"
+    },
+    {
+      "t": 2.1492,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 2.1492,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-SFkSkq"
+    },
+    {
+      "t": 2.1495,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-SFkSkq",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 2.1648,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-Pn9aYn"
+    },
+    {
+      "t": 2.1651,
+      "kind": "fixture-directory",
+      "path": "session-messaging-8j5w8X"
+    },
+    {
+      "t": 2.1803,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-DFgCzI"
+    },
+    {
+      "t": 2.1809,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-DFgCzI",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 2.1958,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 2.2822,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 2.2822,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-P4Nc1R"
+    },
+    {
+      "t": 2.2825,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-P4Nc1R",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 2.3052,
+      "kind": "process-state",
+      "pid": 30149,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467314"
+    },
+    {
+      "t": 2.3052,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 2.3052,
+      "kind": "process-state",
+      "pid": 30150,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467314"
+    },
+    {
+      "t": 2.3056,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-P4Nc1R",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 2.3559,
+      "kind": "process-state",
+      "pid": 30149,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467314"
+    },
+    {
+      "t": 2.3866,
+      "kind": "process-state",
+      "pid": 30150,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467314"
+    },
+    {
+      "t": 2.4219,
+      "kind": "process-state",
+      "pid": 30149,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467314"
+    },
+    {
+      "t": 2.4219,
+      "kind": "process-state",
+      "pid": 30165,
+      "state": "S",
+      "ppid": 30149,
+      "start": "467326"
+    },
+    {
+      "t": 2.4377,
+      "kind": "process-state",
+      "pid": 30149,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467314"
+    },
+    {
+      "t": 2.4378,
+      "kind": "process-state",
+      "pid": 30165,
+      "state": "R",
+      "ppid": 30149,
+      "start": "467326"
+    },
+    {
+      "t": 2.4378,
+      "kind": "fixture-directory",
+      "path": "tsx-1000"
+    },
+    {
+      "t": 2.4527,
+      "kind": "process-state",
+      "pid": 30149,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467314"
+    },
+    {
+      "t": 2.4527,
+      "kind": "process-state",
+      "pid": 30165,
+      "state": "S",
+      "ppid": 30149,
+      "start": "467326"
+    },
+    {
+      "t": 2.4747,
+      "kind": "process-state",
+      "pid": 30177,
+      "state": "R",
+      "ppid": 30150,
+      "start": "467331"
+    },
+    {
+      "t": 2.4909,
+      "kind": "process-state",
+      "pid": 30177,
+      "state": "S",
+      "ppid": 30150,
+      "start": "467331"
+    },
+    {
+      "t": 2.5115,
+      "kind": "process-state",
+      "pid": 30149,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467314"
+    },
+    {
+      "t": 2.5115,
+      "kind": "process-state",
+      "pid": 30150,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467314"
+    },
+    {
+      "t": 2.5614,
+      "kind": "process-state",
+      "pid": 30177,
+      "state": "Z",
+      "ppid": 30060,
+      "start": "467331"
+    },
+    {
+      "t": 2.5614,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 2.5618,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-P4Nc1R",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": []
+    },
+    {
+      "t": 2.5752,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-llPnie"
+    },
+    {
+      "t": 2.5755,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-llPnie",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 2.5886,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 2.5887,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-judoeV"
+    },
+    {
+      "t": 2.589,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-judoeV",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 2.589,
+      "kind": "fixture-directory",
+      "path": "session-messaging-jM8XP7"
+    },
+    {
+      "t": 2.6042,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 2.6042,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 2.6042,
+      "kind": "process-state",
+      "pid": 30191,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467345"
+    },
+    {
+      "t": 2.6042,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-2VAhAA"
+    },
+    {
+      "t": 2.6047,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-2VAhAA",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 2.6048,
+      "kind": "fixture-directory",
+      "path": "session-messaging-kysyRq"
+    },
+    {
+      "t": 2.6204,
+      "kind": "process-state",
+      "pid": 30192,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467345"
+    },
+    {
+      "t": 2.6204,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 2.6204,
+      "kind": "process-state",
+      "pid": 30203,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467347"
+    },
+    {
+      "t": 2.6204,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-PEVgNr"
+    },
+    {
+      "t": 2.6209,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-PEVgNr",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 2.6368,
+      "kind": "process-state",
+      "pid": 30203,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467347"
+    },
+    {
+      "t": 2.6551,
+      "kind": "process-state",
+      "pid": 30203,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467347"
+    },
+    {
+      "t": 2.6743,
+      "kind": "process-state",
+      "pid": 30203,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467347"
+    },
+    {
+      "t": 2.6894,
+      "kind": "process-state",
+      "pid": 30191,
+      "state": "S",
+      "ppid": 30118,
+      "start": "467345"
+    },
+    {
+      "t": 2.6894,
+      "kind": "process-state",
+      "pid": 30192,
+      "state": "S",
+      "ppid": 30118,
+      "start": "467345"
+    },
+    {
+      "t": 2.7188,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 2.735,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 2.735,
+      "kind": "process-state",
+      "pid": 30214,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467358",
+      "role": "broker"
+    },
+    {
+      "t": 2.735,
+      "kind": "process-state",
+      "pid": 30215,
+      "state": "S",
+      "ppid": 30191,
+      "start": "467358"
+    },
+    {
+      "t": 2.7351,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-60pzmM"
+    },
+    {
+      "t": 2.7355,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-60pzmM",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 2.7514,
+      "kind": "process-state",
+      "pid": 30191,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467345"
+    },
+    {
+      "t": 2.7514,
+      "kind": "process-state",
+      "pid": 30192,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467345"
+    },
+    {
+      "t": 2.7514,
+      "kind": "process-state",
+      "pid": 30226,
+      "state": "S",
+      "ppid": 30192,
+      "start": "467359"
+    },
+    {
+      "t": 2.7939,
+      "kind": "process-state",
+      "pid": 30214,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467358",
+      "role": "broker"
+    },
+    {
+      "t": 2.7939,
+      "kind": "process-state",
+      "pid": 30215,
+      "state": "Z",
+      "ppid": 30191,
+      "start": "467358"
+    },
+    {
+      "t": 2.7939,
+      "kind": "process-state",
+      "pid": 30192,
+      "state": "Z",
+      "ppid": 30118,
+      "start": "467345"
+    },
+    {
+      "t": 2.7939,
+      "kind": "process-state",
+      "pid": 30226,
+      "state": "Z",
+      "ppid": 30192,
+      "start": "467359"
+    },
+    {
+      "t": 2.794,
+      "kind": "broker-endpoint",
+      "path": "ags-wake-history-60pzmM",
+      "pid": 30214,
+      "role": "broker"
+    },
+    {
+      "t": 2.8127,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 2.8265,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 2.8265,
+      "kind": "process-state",
+      "pid": 30246,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467368"
+    },
+    {
+      "t": 2.8265,
+      "kind": "fixture-directory",
+      "path": "session-messaging-aFCXd6"
+    },
+    {
+      "t": 2.8438,
+      "kind": "process-state",
+      "pid": 30214,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467358",
+      "role": "broker"
+    },
+    {
+      "t": 2.8595,
+      "kind": "process-state",
+      "pid": 30214,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467358",
+      "role": "broker"
+    },
+    {
+      "t": 2.8595,
+      "kind": "process-state",
+      "pid": 30253,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467371"
+    },
+    {
+      "t": 2.9057,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 2.9194,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 2.9194,
+      "kind": "process-state",
+      "pid": 30265,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467376"
+    },
+    {
+      "t": 2.9346,
+      "kind": "process-state",
+      "pid": 30272,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467378"
+    },
+    {
+      "t": 2.9346,
+      "kind": "fixture-directory",
+      "path": "session-messaging-VSviJx"
+    },
+    {
+      "t": 2.9781,
+      "kind": "process-state",
+      "pid": 30284,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467382"
+    },
+    {
+      "t": 3.0073,
+      "kind": "process-state",
+      "pid": 30284,
+      "state": "D",
+      "ppid": 30119,
+      "start": "467382"
+    },
+    {
+      "t": 3.0224,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 3.0224,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-ED4FJ6"
+    },
+    {
+      "t": 3.0227,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-ED4FJ6",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 3.0381,
+      "kind": "process-state",
+      "pid": 30297,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467389"
+    },
+    {
+      "t": 3.0381,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 3.0381,
+      "kind": "process-state",
+      "pid": 30296,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467388",
+      "role": "broker"
+    },
+    {
+      "t": 3.0382,
+      "kind": "fixture-directory",
+      "path": "session-messaging-HNif8Y"
+    },
+    {
+      "t": 3.0386,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-ED4FJ6",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 3.0536,
+      "kind": "process-state",
+      "pid": 30297,
+      "state": "S",
+      "ppid": 30118,
+      "start": "467389"
+    },
+    {
+      "t": 3.0864,
+      "kind": "process-state",
+      "pid": 30296,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467388",
+      "role": "broker"
+    },
+    {
+      "t": 3.0865,
+      "kind": "broker-endpoint",
+      "path": "ags-wake-history-ED4FJ6",
+      "pid": 30296,
+      "role": "broker"
+    },
+    {
+      "t": 3.1552,
+      "kind": "process-state",
+      "pid": 30315,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467399"
+    },
+    {
+      "t": 3.1985,
+      "kind": "process-state",
+      "pid": 30315,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467399"
+    },
+    {
+      "t": 3.1985,
+      "kind": "process-state",
+      "pid": 30328,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467405"
+    },
+    {
+      "t": 3.1985,
+      "kind": "process-state",
+      "pid": 30327,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467405",
+      "role": "broker"
+    },
+    {
+      "t": 3.1985,
+      "kind": "fixture-directory",
+      "path": "session-messaging-5DyHXj"
+    },
+    {
+      "t": 3.2191,
+      "kind": "process-state",
+      "pid": 30339,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467406"
+    },
+    {
+      "t": 3.2381,
+      "kind": "process-state",
+      "pid": 30328,
+      "state": "S",
+      "ppid": 30118,
+      "start": "467405"
+    },
+    {
+      "t": 3.2385,
+      "kind": "fixture-state",
+      "path": "session-messaging-5DyHXj",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 3.2526,
+      "kind": "process-state",
+      "pid": 30339,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467406"
+    },
+    {
+      "t": 3.2526,
+      "kind": "process-state",
+      "pid": 30327,
+      "state": "S",
+      "ppid": 30118,
+      "start": "467405",
+      "role": "broker"
+    },
+    {
+      "t": 3.2527,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-5DyHXj",
+      "pid": 30327,
+      "role": "broker"
+    },
+    {
+      "t": 3.2667,
+      "kind": "process-state",
+      "pid": 30296,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467388",
+      "role": "broker"
+    },
+    {
+      "t": 3.2807,
+      "kind": "process-state",
+      "pid": 30339,
+      "state": "Z",
+      "ppid": 30119,
+      "start": "467406"
+    },
+    {
+      "t": 3.2807,
+      "kind": "process-state",
+      "pid": 30296,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467388",
+      "role": "broker"
+    },
+    {
+      "t": 3.2945,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 3.2945,
+      "kind": "process-state",
+      "pid": 30363,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467414"
+    },
+    {
+      "t": 3.3092,
+      "kind": "process-state",
+      "pid": 30327,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467405",
+      "role": "broker"
+    },
+    {
+      "t": 3.3234,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 3.3234,
+      "kind": "broker-endpoint-removed",
+      "path": "session-messaging-5DyHXj",
+      "pid": 30327,
+      "role": "broker"
+    },
+    {
+      "t": 3.365,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 3.365,
+      "kind": "process-state",
+      "pid": 30363,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467414"
+    },
+    {
+      "t": 3.3651,
+      "kind": "fixture-directory",
+      "path": "session-messaging-R1kHip"
+    },
+    {
+      "t": 3.3807,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 3.3807,
+      "kind": "process-state",
+      "pid": 30375,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467422"
+    },
+    {
+      "t": 3.4431,
+      "kind": "process-state",
+      "pid": 30387,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467428"
+    },
+    {
+      "t": 3.457,
+      "kind": "process-state",
+      "pid": 30387,
+      "state": "D",
+      "ppid": 30119,
+      "start": "467428"
+    },
+    {
+      "t": 3.473,
+      "kind": "process-state",
+      "pid": 30387,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467428"
+    },
+    {
+      "t": 3.4883,
+      "kind": "process-state",
+      "pid": 30387,
+      "state": "Z",
+      "ppid": 30119,
+      "start": "467428"
+    },
+    {
+      "t": 3.5035,
+      "kind": "process-state",
+      "pid": 30399,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467434"
+    },
+    {
+      "t": 3.549,
+      "kind": "process-state",
+      "pid": 30399,
+      "state": "Z",
+      "ppid": 30119,
+      "start": "467434"
+    },
+    {
+      "t": 3.563,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-r4dxe7"
+    },
+    {
+      "t": 3.5633,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-r4dxe7",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 3.5765,
+      "kind": "process-state",
+      "pid": 30411,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467442"
+    },
+    {
+      "t": 3.6038,
+      "kind": "process-state",
+      "pid": 30423,
+      "state": "R",
+      "ppid": 30411,
+      "start": "467445",
+      "role": "broker"
+    },
+    {
+      "t": 3.6038,
+      "kind": "process-state",
+      "pid": 30411,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467442"
+    },
+    {
+      "t": 3.6464,
+      "kind": "process-state",
+      "pid": 30423,
+      "state": "S",
+      "ppid": 30411,
+      "start": "467445",
+      "role": "broker"
+    },
+    {
+      "t": 3.6465,
+      "kind": "broker-endpoint",
+      "path": "ags-wake-history-r4dxe7",
+      "pid": 30423,
+      "role": "broker"
+    },
+    {
+      "t": 3.7006,
+      "kind": "process-state",
+      "pid": 30411,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467442"
+    },
+    {
+      "t": 3.715,
+      "kind": "process-state",
+      "pid": 30411,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467442"
+    },
+    {
+      "t": 3.7151,
+      "kind": "process-state",
+      "pid": 30423,
+      "state": "R",
+      "ppid": 30411,
+      "start": "467445",
+      "role": "broker"
+    },
+    {
+      "t": 3.731,
+      "kind": "process-state",
+      "pid": 30423,
+      "state": "S",
+      "ppid": 30060,
+      "start": "467445",
+      "role": "broker"
+    },
+    {
+      "t": 3.7465,
+      "kind": "process-state",
+      "pid": 30435,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467458"
+    },
+    {
+      "t": 3.7943,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 3.8082,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 3.8082,
+      "kind": "process-state",
+      "pid": 30447,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467465"
+    },
+    {
+      "t": 3.8517,
+      "kind": "process-state",
+      "pid": 30459,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467470"
+    },
+    {
+      "t": 3.8977,
+      "kind": "process-state",
+      "pid": 30423,
+      "state": "R",
+      "ppid": 30060,
+      "start": "467445",
+      "role": "broker"
+    },
+    {
+      "t": 3.8977,
+      "kind": "process-state",
+      "pid": 30459,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467470"
+    },
+    {
+      "t": 3.9123,
+      "kind": "process-state",
+      "pid": 30471,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467476"
+    },
+    {
+      "t": 3.9123,
+      "kind": "process-state",
+      "pid": 30423,
+      "state": "S",
+      "ppid": 30060,
+      "start": "467445",
+      "role": "broker"
+    },
+    {
+      "t": 3.926,
+      "kind": "fixture-directory",
+      "path": "session-messaging-MKJyAk"
+    },
+    {
+      "t": 3.9674,
+      "kind": "process-state",
+      "pid": 30483,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467481"
+    },
+    {
+      "t": 4.0251,
+      "kind": "process-state",
+      "pid": 30423,
+      "state": "Z",
+      "ppid": 30060,
+      "start": "467445",
+      "role": "broker"
+    },
+    {
+      "t": 4.0252,
+      "kind": "broker-endpoint-removed",
+      "path": "ags-wake-history-r4dxe7",
+      "pid": 30423,
+      "role": "broker"
+    },
+    {
+      "t": 4.0407,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 4.0407,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-gEPxT5"
+    },
+    {
+      "t": 4.0411,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-gEPxT5",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 4.055,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 4.055,
+      "kind": "process-state",
+      "pid": 30495,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467490",
+      "role": "broker"
+    },
+    {
+      "t": 4.0554,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-gEPxT5",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 4.0849,
+      "kind": "fixture-directory",
+      "path": "session-messaging-Flv2AR"
+    },
+    {
+      "t": 4.0992,
+      "kind": "process-state",
+      "pid": 30495,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467490",
+      "role": "broker"
+    },
+    {
+      "t": 4.0993,
+      "kind": "broker-endpoint",
+      "path": "ags-wake-history-gEPxT5",
+      "pid": 30495,
+      "role": "broker"
+    },
+    {
+      "t": 4.1551,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 4.1551,
+      "kind": "process-state",
+      "pid": 30495,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467490",
+      "role": "broker"
+    },
+    {
+      "t": 4.169,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 4.1691,
+      "kind": "process-state",
+      "pid": 30507,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467501"
+    },
+    {
+      "t": 4.1691,
+      "kind": "process-state",
+      "pid": 30495,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467490",
+      "role": "broker"
+    },
+    {
+      "t": 4.2108,
+      "kind": "process-state",
+      "pid": 30519,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467506"
+    },
+    {
+      "t": 4.2246,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 4.2389,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 4.2389,
+      "kind": "process-state",
+      "pid": 30519,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467506"
+    },
+    {
+      "t": 4.2389,
+      "kind": "process-state",
+      "pid": 30526,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467508",
+      "role": "broker"
+    },
+    {
+      "t": 4.2389,
+      "kind": "fixture-directory",
+      "path": "session-messaging-Kf0ue5"
+    },
+    {
+      "t": 4.254,
+      "kind": "process-state",
+      "pid": 30519,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467506"
+    },
+    {
+      "t": 4.254,
+      "kind": "process-state",
+      "pid": 30495,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467490",
+      "role": "broker"
+    },
+    {
+      "t": 4.2733,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 4.2733,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-lD6c76"
+    },
+    {
+      "t": 4.2736,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-lD6c76",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 4.2738,
+      "kind": "fixture-state",
+      "path": "session-messaging-Kf0ue5",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 4.2913,
+      "kind": "process-state",
+      "pid": 30526,
+      "state": "S",
+      "ppid": 30118,
+      "start": "467508",
+      "role": "broker"
+    },
+    {
+      "t": 4.2913,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 4.2913,
+      "kind": "process-state",
+      "pid": 30543,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467513",
+      "role": "broker"
+    },
+    {
+      "t": 4.2917,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-lD6c76",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 4.2918,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-Kf0ue5",
+      "pid": 30526,
+      "role": "broker"
+    },
+    {
+      "t": 4.3072,
+      "kind": "process-state",
+      "pid": 30543,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467513",
+      "role": "broker"
+    },
+    {
+      "t": 4.3236,
+      "kind": "process-state",
+      "pid": 30543,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467513",
+      "role": "broker"
+    },
+    {
+      "t": 4.3409,
+      "kind": "process-state",
+      "pid": 30526,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467508",
+      "role": "broker"
+    },
+    {
+      "t": 4.3415,
+      "kind": "broker-endpoint-removed",
+      "path": "session-messaging-Kf0ue5",
+      "pid": 30526,
+      "role": "broker"
+    },
+    {
+      "t": 4.3722,
+      "kind": "process-state",
+      "pid": 30543,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467513",
+      "role": "broker"
+    },
+    {
+      "t": 4.3723,
+      "kind": "broker-endpoint",
+      "path": "ags-wake-history-lD6c76",
+      "pid": 30543,
+      "role": "broker"
+    },
+    {
+      "t": 4.3882,
+      "kind": "process-state",
+      "pid": 30543,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467513",
+      "role": "broker"
+    },
+    {
+      "t": 4.4029,
+      "kind": "process-state",
+      "pid": 30555,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467525"
+    },
+    {
+      "t": 4.4029,
+      "kind": "process-state",
+      "pid": 30543,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467513",
+      "role": "broker"
+    },
+    {
+      "t": 4.4033,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-Kf0ue5",
+      "pid": 30118,
+      "role": "broker"
+    },
+    {
+      "t": 4.4633,
+      "kind": "process-state",
+      "pid": 30567,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467530"
+    },
+    {
+      "t": 4.4779,
+      "kind": "process-state",
+      "pid": 30567,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467530"
+    },
+    {
+      "t": 4.4922,
+      "kind": "process-state",
+      "pid": 30543,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467513",
+      "role": "broker"
+    },
+    {
+      "t": 4.5067,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 4.5067,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-ADRwh6"
+    },
+    {
+      "t": 4.507,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-ADRwh6",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 4.5206,
+      "kind": "process-state",
+      "pid": 30579,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467537",
+      "role": "broker"
+    },
+    {
+      "t": 4.5207,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 4.5213,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-ADRwh6",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 4.553,
+      "kind": "fixture-directory",
+      "path": "session-messaging-2LkBVX"
+    },
+    {
+      "t": 4.5677,
+      "kind": "process-state",
+      "pid": 30579,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467537",
+      "role": "broker"
+    },
+    {
+      "t": 4.5677,
+      "kind": "process-state",
+      "pid": 30591,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467541",
+      "role": "broker"
+    },
+    {
+      "t": 4.5678,
+      "kind": "broker-endpoint",
+      "path": "ags-wake-history-ADRwh6",
+      "pid": 30579,
+      "role": "broker"
+    },
+    {
+      "t": 4.6088,
+      "kind": "process-state",
+      "pid": 30591,
+      "state": "S",
+      "ppid": 30118,
+      "start": "467541",
+      "role": "broker"
+    },
+    {
+      "t": 4.6089,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-2LkBVX",
+      "pid": 30591,
+      "role": "broker"
+    },
+    {
+      "t": 4.6091,
+      "kind": "fixture-state",
+      "path": "session-messaging-2LkBVX",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 4.637,
+      "kind": "process-state",
+      "pid": 30603,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467548"
+    },
+    {
+      "t": 4.6657,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 4.6803,
+      "kind": "process-state",
+      "pid": 30603,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467548"
+    },
+    {
+      "t": 4.6943,
+      "kind": "process-state",
+      "pid": 30615,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467554"
+    },
+    {
+      "t": 4.6943,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 4.6943,
+      "kind": "broker-endpoint-removed",
+      "path": "session-messaging-2LkBVX",
+      "pid": 30591,
+      "role": "broker"
+    },
+    {
+      "t": 4.7507,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 4.7507,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 4.7507,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-ICv1DB"
+    },
+    {
+      "t": 4.751,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-ICv1DB",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 4.7511,
+      "kind": "fixture-directory",
+      "path": "session-messaging-lVIPoK"
+    },
+    {
+      "t": 4.7677,
+      "kind": "process-state",
+      "pid": 30627,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467561",
+      "role": "broker"
+    },
+    {
+      "t": 4.7678,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 4.7678,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 4.7827,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 4.7827,
+      "kind": "fixture-directory",
+      "path": "session-messaging-MKt4fl"
+    },
+    {
+      "t": 4.7986,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 4.7986,
+      "kind": "process-state",
+      "pid": 30634,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467564",
+      "role": "broker"
+    },
+    {
+      "t": 4.7986,
+      "kind": "fixture-directory",
+      "path": "session-messaging-iY5HRU"
+    },
+    {
+      "t": 4.8317,
+      "kind": "process-state",
+      "pid": 30627,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467561",
+      "role": "broker"
+    },
+    {
+      "t": 4.8318,
+      "kind": "broker-endpoint",
+      "path": "ags-wake-history-ICv1DB",
+      "pid": 30627,
+      "role": "broker"
+    },
+    {
+      "t": 4.8616,
+      "kind": "process-state",
+      "pid": 30627,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467561",
+      "role": "broker"
+    },
+    {
+      "t": 4.8776,
+      "kind": "process-state",
+      "pid": 30627,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467561",
+      "role": "broker"
+    },
+    {
+      "t": 4.8776,
+      "kind": "process-state",
+      "pid": 30646,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467572"
+    },
+    {
+      "t": 4.8933,
+      "kind": "fixture-state",
+      "path": "session-messaging-iY5HRU",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 4.9077,
+      "kind": "process-state",
+      "pid": 30634,
+      "state": "S",
+      "ppid": 30118,
+      "start": "467564",
+      "role": "broker"
+    },
+    {
+      "t": 4.9078,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-iY5HRU",
+      "pid": 30634,
+      "role": "broker"
+    },
+    {
+      "t": 4.9384,
+      "kind": "process-state",
+      "pid": 30663,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467577"
+    },
+    {
+      "t": 4.984,
+      "kind": "broker-endpoint-removed",
+      "path": "ags-wake-history-ICv1DB",
+      "pid": 30627,
+      "role": "broker"
+    },
+    {
+      "t": 4.9978,
+      "kind": "process-state",
+      "pid": 30675,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467585",
+      "role": "broker"
+    },
+    {
+      "t": 4.9978,
+      "kind": "process-state",
+      "pid": 30634,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467564",
+      "role": "broker"
+    },
+    {
+      "t": 4.9979,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-VEycB0"
+    },
+    {
+      "t": 4.9982,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-VEycB0",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 5.012,
+      "kind": "process-state",
+      "pid": 30634,
+      "state": "S",
+      "ppid": 30118,
+      "start": "467564",
+      "role": "broker"
+    },
+    {
+      "t": 5.0273,
+      "kind": "process-state",
+      "pid": 30681,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467587"
+    },
+    {
+      "t": 5.0582,
+      "kind": "process-state",
+      "pid": 30675,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467585",
+      "role": "broker"
+    },
+    {
+      "t": 5.0583,
+      "kind": "broker-endpoint",
+      "path": "ags-wake-history-VEycB0",
+      "pid": 30675,
+      "role": "broker"
+    },
+    {
+      "t": 5.0727,
+      "kind": "process-state",
+      "pid": 30634,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467564",
+      "role": "broker"
+    },
+    {
+      "t": 5.0727,
+      "kind": "process-state",
+      "pid": 30681,
+      "state": "S",
+      "ppid": 30118,
+      "start": "467587"
+    },
+    {
+      "t": 5.0732,
+      "kind": "fixture-state",
+      "path": "session-messaging-iY5HRU",
+      "presence": [
+        [
+          "plugin-profile-generation",
+          "codex-queue",
+          "864260a7-a9c8-479d-92ea-171d5a9a275a",
+          null
+        ]
+      ],
+      "relays": []
+    },
+    {
+      "t": 5.0872,
+      "kind": "process-state",
+      "pid": 30634,
+      "state": "S",
+      "ppid": 30118,
+      "start": "467564",
+      "role": "broker"
+    },
+    {
+      "t": 5.0872,
+      "kind": "process-state",
+      "pid": 30699,
+      "state": "R",
+      "ppid": 30060,
+      "start": "467593",
+      "role": "relay"
+    },
+    {
+      "t": 5.1018,
+      "kind": "process-state",
+      "pid": 30675,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467585",
+      "role": "broker"
+    },
+    {
+      "t": 5.1177,
+      "kind": "process-state",
+      "pid": 30706,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467596"
+    },
+    {
+      "t": 5.1177,
+      "kind": "process-state",
+      "pid": 30675,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467585",
+      "role": "broker"
+    },
+    {
+      "t": 5.1324,
+      "kind": "process-state",
+      "pid": 30634,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467564",
+      "role": "broker"
+    },
+    {
+      "t": 5.1331,
+      "kind": "fixture-state",
+      "path": "session-messaging-iY5HRU",
+      "presence": [
+        [
+          "plugin-profile-generation",
+          "codex-queue",
+          "864260a7-a9c8-479d-92ea-171d5a9a275a",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30699,
+          30118,
+          "codex-queue"
+        ]
+      ]
+    },
+    {
+      "t": 5.1491,
+      "kind": "process-state",
+      "pid": 30634,
+      "state": "S",
+      "ppid": 30118,
+      "start": "467564",
+      "role": "broker"
+    },
+    {
+      "t": 5.1491,
+      "kind": "process-state",
+      "pid": 30699,
+      "state": "S",
+      "ppid": 30060,
+      "start": "467593",
+      "role": "relay"
+    },
+    {
+      "t": 5.1491,
+      "kind": "process-state",
+      "pid": 30719,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467599"
+    },
+    {
+      "t": 5.1821,
+      "kind": "process-state",
+      "pid": 30730,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467603"
+    },
+    {
+      "t": 5.2217,
+      "kind": "fixture-state",
+      "path": "session-messaging-iY5HRU",
+      "presence": [
+        [
+          "plugin-profile-generation",
+          "codex-queue",
+          "864260a7-a9c8-479d-92ea-171d5a9a275a",
+          null
+        ],
+        [
+          "plugin-profile-generation",
+          "codex-deferred",
+          "39e5448c-58f3-4654-a00c-21d15656f4a1",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30699,
+          30118,
+          "codex-queue"
+        ]
+      ]
+    },
+    {
+      "t": 5.2354,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 5.2354,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-svyrBK"
+    },
+    {
+      "t": 5.2358,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-svyrBK",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 5.2502,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 5.2502,
+      "kind": "process-state",
+      "pid": 30747,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467609",
+      "role": "broker"
+    },
+    {
+      "t": 5.2945,
+      "kind": "process-state",
+      "pid": 30747,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467609",
+      "role": "broker"
+    },
+    {
+      "t": 5.2946,
+      "kind": "broker-endpoint",
+      "path": "ags-wake-history-svyrBK",
+      "pid": 30747,
+      "role": "broker"
+    },
+    {
+      "t": 5.3386,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 5.353,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 5.353,
+      "kind": "process-state",
+      "pid": 30759,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467620"
+    },
+    {
+      "t": 5.4116,
+      "kind": "process-state",
+      "pid": 30771,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467626"
+    },
+    {
+      "t": 5.4828,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-suRu7t"
+    },
+    {
+      "t": 5.4831,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-suRu7t",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 5.497,
+      "kind": "process-state",
+      "pid": 30783,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467634",
+      "role": "broker"
+    },
+    {
+      "t": 5.5528,
+      "kind": "process-state",
+      "pid": 30783,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467634",
+      "role": "broker"
+    },
+    {
+      "t": 5.5529,
+      "kind": "broker-endpoint",
+      "path": "ags-wake-history-suRu7t",
+      "pid": 30783,
+      "role": "broker"
+    },
+    {
+      "t": 5.5962,
+      "kind": "process-state",
+      "pid": 30795,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467645"
+    },
+    {
+      "t": 5.6394,
+      "kind": "process-state",
+      "pid": 30795,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467645"
+    },
+    {
+      "t": 5.6394,
+      "kind": "process-state",
+      "pid": 30783,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467634",
+      "role": "broker"
+    },
+    {
+      "t": 5.6542,
+      "kind": "process-state",
+      "pid": 30807,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467650"
+    },
+    {
+      "t": 5.6542,
+      "kind": "process-state",
+      "pid": 30783,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467634",
+      "role": "broker"
+    },
+    {
+      "t": 5.6985,
+      "kind": "process-state",
+      "pid": 30783,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467634",
+      "role": "broker"
+    },
+    {
+      "t": 5.6986,
+      "kind": "broker-endpoint-removed",
+      "path": "ags-wake-history-suRu7t",
+      "pid": 30783,
+      "role": "broker"
+    },
+    {
+      "t": 5.7128,
+      "kind": "process-state",
+      "pid": 30819,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467656",
+      "role": "broker"
+    },
+    {
+      "t": 5.7128,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-8gl7oE"
+    },
+    {
+      "t": 5.7132,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-8gl7oE",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 5.7969,
+      "kind": "process-state",
+      "pid": 30819,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467656",
+      "role": "broker"
+    },
+    {
+      "t": 5.797,
+      "kind": "broker-endpoint",
+      "path": "ags-wake-history-8gl7oE",
+      "pid": 30819,
+      "role": "broker"
+    },
+    {
+      "t": 5.8119,
+      "kind": "process-state",
+      "pid": 30819,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467656",
+      "role": "broker"
+    },
+    {
+      "t": 5.8259,
+      "kind": "process-state",
+      "pid": 30819,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467656",
+      "role": "broker"
+    },
+    {
+      "t": 5.826,
+      "kind": "process-state",
+      "pid": 30831,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467667"
+    },
+    {
+      "t": 5.8559,
+      "kind": "process-state",
+      "pid": 30831,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467667"
+    },
+    {
+      "t": 5.8701,
+      "kind": "process-state",
+      "pid": 30819,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467656",
+      "role": "broker"
+    },
+    {
+      "t": 5.884,
+      "kind": "process-state",
+      "pid": 30819,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467656",
+      "role": "broker"
+    },
+    {
+      "t": 5.884,
+      "kind": "process-state",
+      "pid": 30843,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467673"
+    },
+    {
+      "t": 5.9414,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 5.9555,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 5.9555,
+      "kind": "process-state",
+      "pid": 30855,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467681",
+      "role": "broker"
+    },
+    {
+      "t": 5.9556,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-2fn8Iy"
+    },
+    {
+      "t": 5.9559,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-2fn8Iy",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 5.9987,
+      "kind": "process-state",
+      "pid": 30855,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467681",
+      "role": "broker"
+    },
+    {
+      "t": 5.9987,
+      "kind": "broker-endpoint",
+      "path": "ags-wake-history-2fn8Iy",
+      "pid": 30855,
+      "role": "broker"
+    },
+    {
+      "t": 6.0557,
+      "kind": "process-state",
+      "pid": 30855,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467681",
+      "role": "broker"
+    },
+    {
+      "t": 6.0708,
+      "kind": "process-state",
+      "pid": 30855,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467681",
+      "role": "broker"
+    },
+    {
+      "t": 6.0708,
+      "kind": "process-state",
+      "pid": 30867,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467691"
+    },
+    {
+      "t": 6.1144,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 6.1293,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 6.1293,
+      "kind": "process-state",
+      "pid": 30879,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467697"
+    },
+    {
+      "t": 6.1719,
+      "kind": "broker-endpoint-removed",
+      "path": "ags-wake-history-2fn8Iy",
+      "pid": 30855,
+      "role": "broker"
+    },
+    {
+      "t": 6.1858,
+      "kind": "process-state",
+      "pid": 30891,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467704",
+      "role": "broker"
+    },
+    {
+      "t": 6.1859,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-zyBxWf"
+    },
+    {
+      "t": 6.1862,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-zyBxWf",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 6.2433,
+      "kind": "process-state",
+      "pid": 30891,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467704",
+      "role": "broker"
+    },
+    {
+      "t": 6.2434,
+      "kind": "broker-endpoint",
+      "path": "ags-wake-history-zyBxWf",
+      "pid": 30891,
+      "role": "broker"
+    },
+    {
+      "t": 6.2846,
+      "kind": "process-state",
+      "pid": 30891,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467704",
+      "role": "broker"
+    },
+    {
+      "t": 6.2985,
+      "kind": "process-state",
+      "pid": 30891,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467704",
+      "role": "broker"
+    },
+    {
+      "t": 6.2985,
+      "kind": "process-state",
+      "pid": 30903,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467714"
+    },
+    {
+      "t": 6.3124,
+      "kind": "process-state",
+      "pid": 30903,
+      "state": "D",
+      "ppid": 30119,
+      "start": "467714"
+    },
+    {
+      "t": 6.3264,
+      "kind": "process-state",
+      "pid": 30903,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467714"
+    },
+    {
+      "t": 6.3543,
+      "kind": "process-state",
+      "pid": 30915,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467720"
+    },
+    {
+      "t": 6.3972,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 6.3973,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-lj4KOP"
+    },
+    {
+      "t": 6.3976,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-lj4KOP",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 6.4126,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 6.4127,
+      "kind": "process-state",
+      "pid": 30927,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467726",
+      "role": "broker"
+    },
+    {
+      "t": 6.4131,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-lj4KOP",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 6.46,
+      "kind": "process-state",
+      "pid": 30927,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467726",
+      "role": "broker"
+    },
+    {
+      "t": 6.46,
+      "kind": "broker-endpoint",
+      "path": "ags-wake-history-lj4KOP",
+      "pid": 30927,
+      "role": "broker"
+    },
+    {
+      "t": 6.5146,
+      "kind": "process-state",
+      "pid": 30939,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467737"
+    },
+    {
+      "t": 6.5697,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 6.5836,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 6.5836,
+      "kind": "process-state",
+      "pid": 30951,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467743"
+    },
+    {
+      "t": 6.633,
+      "kind": "process-state",
+      "pid": 30927,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467726",
+      "role": "broker"
+    },
+    {
+      "t": 6.633,
+      "kind": "broker-endpoint-removed",
+      "path": "ags-wake-history-lj4KOP",
+      "pid": 30927,
+      "role": "broker"
+    },
+    {
+      "t": 6.6487,
+      "kind": "fixture-directory",
+      "path": "ags-wake-history-yxgueu"
+    },
+    {
+      "t": 6.649,
+      "kind": "fixture-state",
+      "path": "ags-wake-history-yxgueu",
+      "presence": [
+        [
+          "wake-target",
+          "portable",
+          "instance-1",
+          null
+        ],
+        [
+          "wake-target",
+          "portable",
+          "instance-2",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30119,
+          30119,
+          "portable"
+        ]
+      ]
+    },
+    {
+      "t": 6.6629,
+      "kind": "process-state",
+      "pid": 30963,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467750",
+      "role": "broker"
+    },
+    {
+      "t": 6.7066,
+      "kind": "process-state",
+      "pid": 30963,
+      "state": "S",
+      "ppid": 30119,
+      "start": "467750",
+      "role": "broker"
+    },
+    {
+      "t": 6.7066,
+      "kind": "broker-endpoint",
+      "path": "ags-wake-history-yxgueu",
+      "pid": 30963,
+      "role": "broker"
+    },
+    {
+      "t": 6.7491,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 6.7634,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 6.7634,
+      "kind": "process-state",
+      "pid": 30975,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467761"
+    },
+    {
+      "t": 6.8059,
+      "kind": "process-state",
+      "pid": 30975,
+      "state": "Z",
+      "ppid": 30119,
+      "start": "467761"
+    },
+    {
+      "t": 6.8197,
+      "kind": "process-state",
+      "pid": 30987,
+      "state": "R",
+      "ppid": 30119,
+      "start": "467766"
+    },
+    {
+      "t": 6.867,
+      "kind": "process-state",
+      "pid": 30119,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467225"
+    },
+    {
+      "t": 9.9973,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 10.0112,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 10.1452,
+      "kind": "process-state",
+      "pid": 30634,
+      "state": "R",
+      "ppid": 30118,
+      "start": "467564",
+      "role": "broker"
+    },
+    {
+      "t": 10.1452,
+      "kind": "process-state",
+      "pid": 30699,
+      "state": "R",
+      "ppid": 30060,
+      "start": "467593",
+      "role": "relay"
+    },
+    {
+      "t": 10.1588,
+      "kind": "process-state",
+      "pid": 30634,
+      "state": "S",
+      "ppid": 30118,
+      "start": "467564",
+      "role": "broker"
+    },
+    {
+      "t": 10.1591,
+      "kind": "fixture-state",
+      "path": "session-messaging-iY5HRU",
+      "presence": [
+        [
+          "plugin-profile-generation",
+          "codex-queue",
+          "864260a7-a9c8-479d-92ea-171d5a9a275a",
+          "2026-10-06T03:07:32.084Z"
+        ],
+        [
+          "plugin-profile-generation",
+          "codex-deferred",
+          "39e5448c-58f3-4654-a00c-21d15656f4a1",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30699,
+          30118,
+          "codex-queue"
+        ]
+      ]
+    },
+    {
+      "t": 10.2007,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 10.2143,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 10.2143,
+      "kind": "broker-endpoint-removed",
+      "path": "session-messaging-iY5HRU",
+      "pid": 30634,
+      "role": "broker"
+    },
+    {
+      "t": 10.2545,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 10.2546,
+      "kind": "fixture-directory",
+      "path": "session-messaging-ECZyQN"
+    },
+    {
+      "t": 10.2682,
+      "kind": "fixture-directory",
+      "path": "session-messaging-B6xdet"
+    },
+    {
+      "t": 10.2819,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 10.2819,
+      "kind": "process-state",
+      "pid": 30999,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468112",
+      "role": "broker"
+    },
+    {
+      "t": 10.3237,
+      "kind": "fixture-state",
+      "path": "session-messaging-B6xdet",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 10.337,
+      "kind": "process-state",
+      "pid": 30999,
+      "state": "S",
+      "ppid": 30118,
+      "start": "468112",
+      "role": "broker"
+    },
+    {
+      "t": 10.3371,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-B6xdet",
+      "pid": 30999,
+      "role": "broker"
+    },
+    {
+      "t": 10.3788,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 10.3788,
+      "kind": "process-state",
+      "pid": 30999,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468112",
+      "role": "broker"
+    },
+    {
+      "t": 10.3933,
+      "kind": "process-state",
+      "pid": 30999,
+      "state": "S",
+      "ppid": 30118,
+      "start": "468112",
+      "role": "broker"
+    },
+    {
+      "t": 10.4089,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 10.4089,
+      "kind": "process-state",
+      "pid": 30999,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468112",
+      "role": "broker"
+    },
+    {
+      "t": 10.4089,
+      "kind": "broker-endpoint-removed",
+      "path": "session-messaging-B6xdet",
+      "pid": 30999,
+      "role": "broker"
+    },
+    {
+      "t": 10.4645,
+      "kind": "fixture-directory",
+      "path": "session-messaging-mAFlxW"
+    },
+    {
+      "t": 10.4779,
+      "kind": "process-state",
+      "pid": 31011,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468132",
+      "role": "broker"
+    },
+    {
+      "t": 10.5057,
+      "kind": "fixture-state",
+      "path": "session-messaging-mAFlxW",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 10.5189,
+      "kind": "process-state",
+      "pid": 31011,
+      "state": "S",
+      "ppid": 30118,
+      "start": "468132",
+      "role": "broker"
+    },
+    {
+      "t": 10.519,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-mAFlxW",
+      "pid": 31011,
+      "role": "broker"
+    },
+    {
+      "t": 10.5756,
+      "kind": "process-state",
+      "pid": 31011,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468132",
+      "role": "broker"
+    },
+    {
+      "t": 10.5756,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 10.6041,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 10.6179,
+      "kind": "process-state",
+      "pid": 31011,
+      "state": "S",
+      "ppid": 30118,
+      "start": "468132",
+      "role": "broker"
+    },
+    {
+      "t": 10.6179,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 10.6738,
+      "kind": "process-state",
+      "pid": 31011,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468132",
+      "role": "broker"
+    },
+    {
+      "t": 10.6738,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 10.6882,
+      "kind": "broker-endpoint-removed",
+      "path": "session-messaging-mAFlxW",
+      "pid": 31011,
+      "role": "broker"
+    },
+    {
+      "t": 10.7435,
+      "kind": "process-state",
+      "pid": 31023,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468159",
+      "role": "broker"
+    },
+    {
+      "t": 10.7717,
+      "kind": "process-state",
+      "pid": 31023,
+      "state": "S",
+      "ppid": 30118,
+      "start": "468159",
+      "role": "broker"
+    },
+    {
+      "t": 10.7866,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-mAFlxW",
+      "pid": 31023,
+      "role": "broker"
+    },
+    {
+      "t": 10.8407,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 10.8697,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 10.8698,
+      "kind": "broker-endpoint-removed",
+      "path": "session-messaging-mAFlxW",
+      "pid": 31023,
+      "role": "broker"
+    },
+    {
+      "t": 10.9103,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 10.9103,
+      "kind": "fixture-directory",
+      "path": "session-messaging-UQG6YL"
+    },
+    {
+      "t": 10.9239,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 10.9239,
+      "kind": "process-state",
+      "pid": 31035,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468176",
+      "role": "broker"
+    },
+    {
+      "t": 11.0092,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "R",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 11.0097,
+      "kind": "fixture-state",
+      "path": "session-messaging-UQG6YL",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 11.0232,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "S",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 11.0232,
+      "kind": "process-state",
+      "pid": 31035,
+      "state": "S",
+      "ppid": 30118,
+      "start": "468176",
+      "role": "broker"
+    },
+    {
+      "t": 11.0232,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-UQG6YL",
+      "pid": 31035,
+      "role": "broker"
+    },
+    {
+      "t": 11.1199,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 11.1199,
+      "kind": "process-state",
+      "pid": 31035,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468176",
+      "role": "broker"
+    },
+    {
+      "t": 11.1339,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 11.1339,
+      "kind": "process-state",
+      "pid": 31047,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468198"
+    },
+    {
+      "t": 11.1339,
+      "kind": "process-state",
+      "pid": 31035,
+      "state": "S",
+      "ppid": 30118,
+      "start": "468176",
+      "role": "broker"
+    },
+    {
+      "t": 11.1342,
+      "kind": "fixture-state",
+      "path": "session-messaging-UQG6YL",
+      "presence": [
+        [
+          "empty-hook-submitted",
+          "codex-queue",
+          "empty-instance",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ]
+      ]
+    },
+    {
+      "t": 11.2111,
+      "kind": "process-state",
+      "pid": 31059,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468206"
+    },
+    {
+      "t": 11.2116,
+      "kind": "fixture-state",
+      "path": "session-messaging-UQG6YL",
+      "presence": [
+        [
+          "empty-hook-submitted",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-unknown",
+          "codex-queue",
+          "empty-instance",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ]
+      ]
+    },
+    {
+      "t": 11.274,
+      "kind": "fixture-state",
+      "path": "session-messaging-UQG6YL",
+      "presence": [
+        [
+          "empty-hook-submitted",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-unknown",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-duplicate",
+          "codex-queue",
+          "empty-instance",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ]
+      ]
+    },
+    {
+      "t": 11.2884,
+      "kind": "process-state",
+      "pid": 31071,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468212"
+    },
+    {
+      "t": 11.3363,
+      "kind": "process-state",
+      "pid": 31083,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468218"
+    },
+    {
+      "t": 11.3994,
+      "kind": "process-state",
+      "pid": 31083,
+      "state": "Z",
+      "ppid": 30118,
+      "start": "468218"
+    },
+    {
+      "t": 11.4139,
+      "kind": "process-state",
+      "pid": 31095,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468226"
+    },
+    {
+      "t": 11.4144,
+      "kind": "fixture-state",
+      "path": "session-messaging-UQG6YL",
+      "presence": [
+        [
+          "empty-hook-submitted",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-unknown",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-duplicate",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-late",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-late",
+          "codex-queue",
+          "new-instance",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ]
+      ]
+    },
+    {
+      "t": 11.4739,
+      "kind": "fixture-state",
+      "path": "session-messaging-UQG6YL",
+      "presence": [
+        [
+          "empty-hook-submitted",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-unknown",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-duplicate",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-late",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-late",
+          "codex-queue",
+          "new-instance",
+          null
+        ],
+        [
+          "empty-hook-idle",
+          "codex-queue",
+          "empty-instance",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ]
+      ]
+    },
+    {
+      "t": 11.4891,
+      "kind": "process-state",
+      "pid": 31107,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468233"
+    },
+    {
+      "t": 11.5332,
+      "kind": "process-state",
+      "pid": 31107,
+      "state": "Z",
+      "ppid": 30118,
+      "start": "468233"
+    },
+    {
+      "t": 11.5478,
+      "kind": "process-state",
+      "pid": 31119,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468239"
+    },
+    {
+      "t": 11.5482,
+      "kind": "fixture-state",
+      "path": "session-messaging-UQG6YL",
+      "presence": [
+        [
+          "empty-hook-submitted",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-unknown",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-duplicate",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-late",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-late",
+          "codex-queue",
+          "new-instance",
+          null
+        ],
+        [
+          "empty-hook-idle",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-forged",
+          "codex-queue",
+          "empty-instance",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ]
+      ]
+    },
+    {
+      "t": 11.6061,
+      "kind": "fixture-state",
+      "path": "session-messaging-UQG6YL",
+      "presence": [
+        [
+          "empty-hook-submitted",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-unknown",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-duplicate",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-late",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-late",
+          "codex-queue",
+          "new-instance",
+          null
+        ],
+        [
+          "empty-hook-idle",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-forged",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-mixed",
+          "codex-queue",
+          "empty-instance",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ]
+      ]
+    },
+    {
+      "t": 11.6203,
+      "kind": "process-state",
+      "pid": 31131,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468246"
+    },
+    {
+      "t": 11.6532,
+      "kind": "process-state",
+      "pid": 31131,
+      "state": "Z",
+      "ppid": 30118,
+      "start": "468246"
+    },
+    {
+      "t": 11.6689,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 11.6693,
+      "kind": "fixture-state",
+      "path": "session-messaging-UQG6YL",
+      "presence": [
+        [
+          "empty-hook-submitted",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-unknown",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-duplicate",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-late",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-late",
+          "codex-queue",
+          "new-instance",
+          null
+        ],
+        [
+          "empty-hook-idle",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-forged",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-mixed",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-claude",
+          "codex-queue",
+          "empty-instance",
+          null
+        ],
+        [
+          "empty-hook-legacy",
+          "codex-queue",
+          "empty-instance",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ]
+      ]
+    },
+    {
+      "t": 11.6826,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 11.6826,
+      "kind": "process-state",
+      "pid": 31143,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468252"
+    },
+    {
+      "t": 11.7393,
+      "kind": "broker-endpoint-removed",
+      "path": "session-messaging-UQG6YL",
+      "pid": 31035,
+      "role": "broker"
+    },
+    {
+      "t": 11.7945,
+      "kind": "process-state",
+      "pid": 31155,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468264",
+      "role": "broker"
+    },
+    {
+      "t": 11.7945,
+      "kind": "fixture-directory",
+      "path": "session-messaging-axjKbz"
+    },
+    {
+      "t": 11.8772,
+      "kind": "fixture-state",
+      "path": "session-messaging-axjKbz",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 11.891,
+      "kind": "process-state",
+      "pid": 31155,
+      "state": "S",
+      "ppid": 30118,
+      "start": "468264",
+      "role": "broker"
+    },
+    {
+      "t": 11.8911,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-axjKbz",
+      "pid": 31155,
+      "role": "broker"
+    },
+    {
+      "t": 11.9872,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 12.0018,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 12.0022,
+      "kind": "fixture-state",
+      "path": "session-messaging-axjKbz",
+      "presence": [
+        [
+          "retired-hook-codex",
+          "codex-queue",
+          "old-instance",
+          null
+        ],
+        [
+          "retired-hook-codex",
+          "codex-queue",
+          "new-instance",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ]
+      ]
+    },
+    {
+      "t": 12.0173,
+      "kind": "process-state",
+      "pid": 31167,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468285"
+    },
+    {
+      "t": 12.0763,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 12.0768,
+      "kind": "fixture-state",
+      "path": "session-messaging-axjKbz",
+      "presence": [
+        [
+          "retired-hook-codex",
+          "codex-queue",
+          "old-instance",
+          null
+        ],
+        [
+          "retired-hook-codex",
+          "codex-queue",
+          "new-instance",
+          null
+        ],
+        [
+          "retired-hook-claude-code",
+          "codex-queue",
+          "old-instance",
+          null
+        ],
+        [
+          "retired-hook-claude-code",
+          "codex-queue",
+          "new-instance",
+          null
+        ]
+      ],
+      "relays": [
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ],
+        [
+          30118,
+          30118,
+          "codex-queue"
+        ]
+      ]
+    },
+    {
+      "t": 12.0903,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 12.0904,
+      "kind": "broker-endpoint-removed",
+      "path": "session-messaging-axjKbz",
+      "pid": 31155,
+      "role": "broker"
+    },
+    {
+      "t": 12.145,
+      "kind": "process-state",
+      "pid": 31179,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468299",
+      "role": "broker"
+    },
+    {
+      "t": 12.145,
+      "kind": "fixture-directory",
+      "path": "session-messaging-kiyqRR"
+    },
+    {
+      "t": 12.2391,
+      "kind": "fixture-state",
+      "path": "session-messaging-kiyqRR",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 12.2528,
+      "kind": "process-state",
+      "pid": 31179,
+      "state": "S",
+      "ppid": 30118,
+      "start": "468299",
+      "role": "broker"
+    },
+    {
+      "t": 12.2529,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-kiyqRR",
+      "pid": 31179,
+      "role": "broker"
+    },
+    {
+      "t": 12.3403,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 12.3403,
+      "kind": "process-state",
+      "pid": 31179,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468299",
+      "role": "broker"
+    },
+    {
+      "t": 12.3563,
+      "kind": "process-state",
+      "pid": 31179,
+      "state": "S",
+      "ppid": 30118,
+      "start": "468299",
+      "role": "broker"
+    },
+    {
+      "t": 12.3729,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 12.373,
+      "kind": "broker-endpoint-removed",
+      "path": "session-messaging-kiyqRR",
+      "pid": 31179,
+      "role": "broker"
+    },
+    {
+      "t": 12.4191,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 12.4347,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 12.4347,
+      "kind": "process-state",
+      "pid": 31191,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468328",
+      "role": "broker"
+    },
+    {
+      "t": 12.4347,
+      "kind": "fixture-directory",
+      "path": "session-messaging-wWHvba"
+    },
+    {
+      "t": 12.5195,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 12.5195,
+      "kind": "process-state",
+      "pid": 31191,
+      "state": "S",
+      "ppid": 30118,
+      "start": "468328",
+      "role": "broker"
+    },
+    {
+      "t": 12.5195,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "R",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 12.5196,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-wWHvba",
+      "pid": 31191,
+      "role": "broker"
+    },
+    {
+      "t": 12.52,
+      "kind": "fixture-state",
+      "path": "session-messaging-wWHvba",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 12.5346,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 12.5346,
+      "kind": "process-state",
+      "pid": 31191,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468328",
+      "role": "broker"
+    },
+    {
+      "t": 12.5346,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "S",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 12.5495,
+      "kind": "process-state",
+      "pid": 31191,
+      "state": "Z",
+      "ppid": 30118,
+      "start": "468328",
+      "role": "broker"
+    },
+    {
+      "t": 12.5495,
+      "kind": "broker-endpoint-removed",
+      "path": "session-messaging-wWHvba",
+      "pid": 31191,
+      "role": "broker"
+    },
+    {
+      "t": 12.6049,
+      "kind": "process-state",
+      "pid": 31203,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468346",
+      "role": "broker"
+    },
+    {
+      "t": 12.605,
+      "kind": "fixture-directory",
+      "path": "session-messaging-OBEB8n"
+    },
+    {
+      "t": 12.7074,
+      "kind": "fixture-state",
+      "path": "session-messaging-OBEB8n",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 12.7206,
+      "kind": "process-state",
+      "pid": 31203,
+      "state": "S",
+      "ppid": 30118,
+      "start": "468346",
+      "role": "broker"
+    },
+    {
+      "t": 12.7207,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-OBEB8n",
+      "pid": 31203,
+      "role": "broker"
+    },
+    {
+      "t": 12.8163,
+      "kind": "process-state",
+      "pid": 31203,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468346",
+      "role": "broker"
+    },
+    {
+      "t": 12.8312,
+      "kind": "fixture-state",
+      "path": "session-messaging-OBEB8n",
+      "presence": [
+        [
+          "session-start",
+          "codex-deferred",
+          "46afb9ef-071a-4250-8612-8af71034d355",
+          null
+        ]
+      ],
+      "relays": []
+    },
+    {
+      "t": 12.8449,
+      "kind": "broker-endpoint-removed",
+      "path": "session-messaging-OBEB8n",
+      "pid": 31203,
+      "role": "broker"
+    },
+    {
+      "t": 12.8784,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 12.8925,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 12.8925,
+      "kind": "fixture-directory",
+      "path": "session-messaging-2W3Lch"
+    },
+    {
+      "t": 12.9063,
+      "kind": "process-state",
+      "pid": 31215,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468375",
+      "role": "broker"
+    },
+    {
+      "t": 12.9904,
+      "kind": "fixture-state",
+      "path": "session-messaging-2W3Lch",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 13.0051,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 13.0052,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-2W3Lch",
+      "pid": 31215,
+      "role": "broker"
+    },
+    {
+      "t": 13.021,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 13.0358,
+      "kind": "broker-endpoint-removed",
+      "path": "session-messaging-2W3Lch",
+      "pid": 31215,
+      "role": "broker"
+    },
+    {
+      "t": 13.0774,
+      "kind": "fixture-directory",
+      "path": "session-messaging-4LNqvC"
+    },
+    {
+      "t": 13.0775,
+      "kind": "fixture-directory",
+      "path": "session-messaging-yl6jtz"
+    },
+    {
+      "t": 13.0912,
+      "kind": "process-state",
+      "pid": 31227,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468393"
+    },
+    {
+      "t": 13.1367,
+      "kind": "process-state",
+      "pid": 31239,
+      "state": "R",
+      "ppid": 31227,
+      "start": "468398",
+      "role": "broker"
+    },
+    {
+      "t": 13.1367,
+      "kind": "process-state",
+      "pid": 31227,
+      "state": "S",
+      "ppid": 30118,
+      "start": "468393"
+    },
+    {
+      "t": 13.1768,
+      "kind": "process-state",
+      "pid": 31239,
+      "state": "S",
+      "ppid": 31227,
+      "start": "468398",
+      "role": "broker"
+    },
+    {
+      "t": 13.1769,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-yl6jtz",
+      "pid": 31239,
+      "role": "broker"
+    },
+    {
+      "t": 13.1773,
+      "kind": "fixture-state",
+      "path": "session-messaging-yl6jtz",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 13.2308,
+      "kind": "process-state",
+      "pid": 31227,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468393"
+    },
+    {
+      "t": 13.2586,
+      "kind": "process-state",
+      "pid": 31251,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468411"
+    },
+    {
+      "t": 13.2586,
+      "kind": "process-state",
+      "pid": 31239,
+      "state": "S",
+      "ppid": 30060,
+      "start": "468398",
+      "role": "broker"
+    },
+    {
+      "t": 13.3015,
+      "kind": "broker-endpoint-removed",
+      "path": "session-messaging-yl6jtz",
+      "pid": 31239,
+      "role": "broker"
+    },
+    {
+      "t": 13.3573,
+      "kind": "process-state",
+      "pid": 31259,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468420",
+      "role": "broker"
+    },
+    {
+      "t": 13.3573,
+      "kind": "fixture-directory",
+      "path": "session-messaging-DF8L2n"
+    },
+    {
+      "t": 13.4596,
+      "kind": "fixture-state",
+      "path": "session-messaging-DF8L2n",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 13.4728,
+      "kind": "process-state",
+      "pid": 31259,
+      "state": "S",
+      "ppid": 30118,
+      "start": "468420",
+      "role": "broker"
+    },
+    {
+      "t": 13.4729,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-DF8L2n",
+      "pid": 31259,
+      "role": "broker"
+    },
+    {
+      "t": 13.4862,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 13.4999,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 13.5538,
+      "kind": "process-state",
+      "pid": 31259,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468420",
+      "role": "broker"
+    },
+    {
+      "t": 13.5819,
+      "kind": "broker-endpoint-removed",
+      "path": "session-messaging-DF8L2n",
+      "pid": 31259,
+      "role": "broker"
+    },
+    {
+      "t": 13.6223,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 13.6361,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 13.6361,
+      "kind": "process-state",
+      "pid": 31271,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468448",
+      "role": "broker"
+    },
+    {
+      "t": 13.6361,
+      "kind": "fixture-directory",
+      "path": "session-messaging-cyryOR"
+    },
+    {
+      "t": 13.6773,
+      "kind": "process-state",
+      "pid": 31271,
+      "state": "S",
+      "ppid": 30118,
+      "start": "468448",
+      "role": "broker"
+    },
+    {
+      "t": 13.6774,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-cyryOR",
+      "pid": 31271,
+      "role": "broker"
+    },
+    {
+      "t": 13.6777,
+      "kind": "fixture-state",
+      "path": "session-messaging-cyryOR",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 13.7332,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 13.7332,
+      "kind": "process-state",
+      "pid": 31271,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468448",
+      "role": "broker"
+    },
+    {
+      "t": 13.7469,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 13.747,
+      "kind": "broker-endpoint-removed",
+      "path": "session-messaging-cyryOR",
+      "pid": 31271,
+      "role": "broker"
+    },
+    {
+      "t": 13.7888,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 13.7888,
+      "kind": "fixture-directory",
+      "path": "session-messaging-BNUUe7"
+    },
+    {
+      "t": 14.0524,
+      "kind": "process-state",
+      "pid": 31283,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468490",
+      "role": "broker"
+    },
+    {
+      "t": 14.0524,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 14.0931,
+      "kind": "process-state",
+      "pid": 31283,
+      "state": "S",
+      "ppid": 30118,
+      "start": "468490",
+      "role": "broker"
+    },
+    {
+      "t": 14.0932,
+      "kind": "broker-endpoint",
+      "path": "session-messaging-BNUUe7",
+      "pid": 31283,
+      "role": "broker"
+    },
+    {
+      "t": 14.0938,
+      "kind": "fixture-state",
+      "path": "session-messaging-BNUUe7",
+      "presence": [],
+      "relays": []
+    },
+    {
+      "t": 14.1482,
+      "kind": "process-state",
+      "pid": 31283,
+      "state": "R",
+      "ppid": 30118,
+      "start": "468490",
+      "role": "broker"
+    },
+    {
+      "t": 14.1762,
+      "kind": "process-state",
+      "pid": 31283,
+      "state": "S",
+      "ppid": 30118,
+      "start": "468490",
+      "role": "broker"
+    },
+    {
+      "t": 14.1762,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "R",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 14.1916,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "S",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 14.1917,
+      "kind": "broker-endpoint-removed",
+      "path": "session-messaging-BNUUe7",
+      "pid": 31283,
+      "role": "broker"
+    },
+    {
+      "t": 14.2471,
+      "kind": "process-state",
+      "pid": 30118,
+      "state": "Z",
+      "ppid": 30089,
+      "start": "467224",
+      "role": "broker"
+    },
+    {
+      "t": 14.2605,
+      "kind": "process-state",
+      "pid": 30089,
+      "state": "R",
+      "ppid": 30062,
+      "start": "467199"
+    },
+    {
+      "t": 14.274,
+      "kind": "process-state",
+      "pid": 30062,
+      "state": "R",
+      "ppid": 30060,
+      "start": "467088"
+    },
+    {
+      "t": 14.2876,
+      "kind": "process-state",
+      "pid": 30060,
+      "state": "R",
+      "ppid": 30057,
+      "start": "467085"
+    }
+  ],
+  "knownFixtureRoles": {
+    "30214": "broker",
+    "30296": "broker",
+    "30327": "broker",
+    "30423": "broker",
+    "30495": "broker",
+    "30526": "broker",
+    "30543": "broker",
+    "30118": "broker",
+    "30579": "broker",
+    "30591": "broker",
+    "30627": "broker",
+    "30634": "broker",
+    "30675": "broker",
+    "30699": "relay",
+    "30747": "broker",
+    "30783": "broker",
+    "30819": "broker",
+    "30855": "broker",
+    "30891": "broker",
+    "30927": "broker",
+    "30963": "broker",
+    "30999": "broker",
+    "31011": "broker",
+    "31023": "broker",
+    "31035": "broker",
+    "31155": "broker",
+    "31179": "broker",
+    "31191": "broker",
+    "31203": "broker",
+    "31215": "broker",
+    "31239": "broker",
+    "31259": "broker",
+    "31271": "broker",
+    "31283": "broker"
+  },
+  "scope": "Only this invocation descendants and synthetic fixture directories; no credentials/body/nonce values logged."
+}

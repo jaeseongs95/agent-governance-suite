@@ -1,0 +1,12 @@
+{"command": ["pnpm", "build"], "cwd": "/workspace/ags-cs-2x/repo", "started": "2026-10-06T02:01:41.449583+00:00", "isolation": {"TMPDIR": "/workspace/ags-cs-2x/tmp", "XDG_DATA_HOME": "/workspace/ags-cs-2x/tool-state/data", "XDG_CACHE_HOME": "/workspace/ags-cs-2x/tool-state/cache"}}
+Already up to date
+Done in 366ms using pnpm v11.19.0
+$ tsc --noEmit && node scripts/build.mjs
+mcp-server/src/cs-engineering-validator.ts(33,13): error TS2339: Property 'taskEnvelope' does not exist on type 'ContractValidator'.
+mcp-server/src/workflow-service.ts(695,60): error TS2345: Argument of type '`sha256:${string}` | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+mcp-server/src/workflow-service.ts(761,60): error TS2345: Argument of type '`sha256:${string}` | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+tests/cs-engineering/workflow-integration.test.ts(114,113): error TS2322: Type 'string' is not assignable to type '`sha256:${string}`'.
+tests/cs-engineering/workflow-integration.test.ts(115,106): error TS2322: Type 'string' is not assignable to type '`sha256:${string}`'.
+[ELIFECYCLE] Command failed with exit code 2.

@@ -1,0 +1,318 @@
+{"command": ["pnpm", "test", "--", "--maxWorkers=2"], "cwd": "/workspace/ags-cs-2x/repo", "started": "2026-10-06T02:09:11.095867+00:00", "isolation": {"TMPDIR": "/tmp/ags-cs-2x-tests", "XDG_DATA_HOME": "/workspace/ags-cs-2x/tool-state/data", "XDG_CACHE_HOME": "/workspace/ags-cs-2x/tool-state/cache"}}
+Already up to date
+Done in 336ms using pnpm v11.19.0
+$ node scripts/build.mjs && vitest run -- --maxWorkers=2
+
+ RUN  v5.0.0 /workspace/ags-cs-2x/repo
+
+ ❯ tests/session-messaging/historical-wake.test.mjs (65 tests | 1 failed) 10084ms
+   × packaged CLI binds history to explicit broker state directory: client-ensure 5542ms
+ ❯ tests/mcp/convergence-guard.test.ts (66 tests | 5 failed) 10524ms
+   ❯ server-derived workspace identity (20)
+     × blocks a non-Git folder or glob that holds a sibling checkout of a gated root's repository 127ms
+   ❯ gated roots stored before identities existed (13)
+     × does not let a sibling worktree bypass a gated legacy root whose checkout is deleted 157ms
+     × does not let a sibling worktree bypass a gated legacy root whose checkout is damaged 131ms
+     × keeps a checkout observed for the current inputs after it is deleted, surface by surface 128ms
+     × takes a checkout that appears above an observed non-Git surface only once the target itself exists 124ms
+ ❯ tests/mcp/tool-schema-profile.test.ts (7 tests | 1 failed) 1660ms
+   ❯ MCP tool schema profiles (7)
+     × applies the environment profile in the bundled server 158ms
+ ❯ tests/mcp/workspace-identity.test.ts (24 tests | 2 failed) 47ms
+   ❯ resolveRootIdentity Git discovery (6)
+     × returns git null when no checkout contains the surface 8ms
+   ❯ resolveRootIdentity entry classes (3)
+     × widens a leading glob to the checkout of the workspace, or to the workspace outside a checkout 2ms
+ ❯ tests/session-messaging/session-message.test.ts (71 tests | 2 failed) 32324ms
+   ❯ TLS 1.3 broker and vendor-neutral adapter (52)
+     × uses one plugin queue profile for packaged presence and relay until the next SessionStart 15519ms
+     × keeps packaged hook and relay entrypoints isolated 10239ms
+ ❯ tests/software-security-auditor/integration.test.mjs (7 tests | 1 failed) 1179ms
+   ❯ security audit integration (7)
+     × loads schema and maps complete report with findings in claude-plugin/ 193ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/mcp/convergence-guard.test.ts > server-derived workspace identity > blocks a non-Git folder or glob that holds a sibling checkout of a gated root's repository
+AssertionError: expected { …(8) } to match object { …(2) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "conflictKind": "lineage",
++   "conflictKind": "physical",
+    "rootId": "root-9a951424-bb67-44c9-b2db-f2517f0ca7aa",
+  }
+
+ ❯ tests/mcp/convergence-guard.test.ts:1549:39
+    1547|       const covering = tryOpen(service, taskFor(`covering-${entry.leng…
+    1548|       expect(covering.error?.code).toBe("ROOT_CONFLICT");
+    1549|       expect(covering.error?.details).toMatchObject({ rootId: gated.ro…
+       |                                       ^
+    1550|     }
+    1551|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  tests/mcp/convergence-guard.test.ts > gated roots stored before identities existed > does not let a sibling worktree bypass a gated legacy root whose checkout is deleted
+AssertionError: expected { code: 'ROOT_CONFLICT', …(2) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "code": "ROOT_CONFLICT",
+  "details": {
+    "blockerState": "needs-user",
+    "conflictKind": "lineage-unresolved",
+    "conservativeExpansion": [],
+    "existingEntry": "src/candidate.ts",
+    "reason": "WORKSPACE_IDENTITY_UNRESOLVED",
+    "requestedEntry": "src/candidate.ts",
+    "rootId": "root-652b372f-b4cf-41e3-b8c9-8dec4c22c827",
+    "scope": [
+      "src/candidate.ts",
+    ],
+    "workspaceId": "workspace-w1",
+  },
+  "message": "An active convergence root already covers this workspace scope.",
+}
+
+ ❯ tests/mcp/convergence-guard.test.ts:1815:97
+    1813|     const plain = await mkdtemp(join(tmpdir(), "convergence-plain-"));
+    1814|     temporaryDirectories.push(plain);
+    1815|     expect(tryOpen(harness.service, taskFor("plain"), frameAt(plain, "…
+       |                                                                                                 ^
+    1816|     const plainFolder = tryOpen(harness.service, taskFor("plain-folder…
+    1817|     expect(plainFolder.error?.details).toMatchObject({ rootId: gated.r…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  tests/mcp/convergence-guard.test.ts > gated roots stored before identities existed > does not let a sibling worktree bypass a gated legacy root whose checkout is damaged
+AssertionError: expected { code: 'ROOT_CONFLICT', …(2) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "code": "ROOT_CONFLICT",
+  "details": {
+    "blockerState": "needs-user",
+    "conflictKind": "lineage-unresolved",
+    "conservativeExpansion": [],
+    "existingEntry": "src/candidate.ts",
+    "reason": "WORKSPACE_IDENTITY_UNRESOLVED",
+    "requestedEntry": "src/candidate.ts",
+    "rootId": "root-4f65effa-c695-46fa-b1f9-0144186d7f53",
+    "scope": [
+      "src/candidate.ts",
+    ],
+    "workspaceId": "workspace-w1",
+  },
+  "message": "An active convergence root already covers this workspace scope.",
+}
+
+ ❯ tests/mcp/convergence-guard.test.ts:1815:97
+    1813|     const plain = await mkdtemp(join(tmpdir(), "convergence-plain-"));
+    1814|     temporaryDirectories.push(plain);
+    1815|     expect(tryOpen(harness.service, taskFor("plain"), frameAt(plain, "…
+       |                                                                                                 ^
+    1816|     const plainFolder = tryOpen(harness.service, taskFor("plain-folder…
+    1817|     expect(plainFolder.error?.details).toMatchObject({ rootId: gated.r…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  tests/mcp/convergence-guard.test.ts > gated roots stored before identities existed > keeps a checkout observed for the current inputs after it is deleted, surface by surface
+AssertionError: expected { commonDir: '/tmp/.git', …(2) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "checkoutRoot": "/tmp",
+  "commonDir": "/tmp/.git",
+  "relative": "ags-cs-2x-tests/convergence-identity-8tJz6k/notes/plan.md",
+}
+
+ ❯ tests/mcp/convergence-guard.test.ts:1914:47
+    1912|     expect(observedIdentity.inferred).toEqual([false, true, false, fal…
+    1913|     expect(observedIdentity.surfaces[0]!.git).toMatchObject({ relative…
+    1914|     expect(observedIdentity.surfaces[1]!.git).toBeNull();
+       |                                               ^
+    1915|     await removeWorktree(git, checkout, "w1");
+    1916|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  tests/mcp/convergence-guard.test.ts > gated roots stored before identities existed > takes a checkout that appears above an observed non-Git surface only once the target itself exists
+AssertionError: expected undefined to match object { …(2) }
+
+- Expected:
+{
+  "conflictKind": "lineage-unresolved",
+  "rootId": "root-214f0ffc-4fdf-423b-9a54-4c88c841cbbb",
+}
+
++ Received:
+undefined
+
+ ❯ tests/mcp/convergence-guard.test.ts:1968:36
+    1966|     const other = await gitFixture();
+    1967|     const unknown = tryOpen(harness.service, taskFor("other-repository…
+    1968|     expect(unknown.error?.details).toMatchObject({ rootId: gated.rootI…
+       |                                    ^
+    1969|     expect(identityBlobs(harness.databasePath)).toEqual(before);
+    1970|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  tests/mcp/tool-schema-profile.test.ts > MCP tool schema profiles > applies the environment profile in the bundled server
+McpError: MCP error -32000: Connection closed
+ ❯ McpError.fromError node_modules/.pnpm/@modelcontextprotocol+sdk@1.30.0_zod@4.5.4/node_modules/@modelcontextprotocol/sdk/src/types.ts:2330:16
+ ❯ Client._onclose node_modules/.pnpm/@modelcontextprotocol+sdk@1.30.0_zod@4.5.4/node_modules/@modelcontextprotocol/sdk/src/shared/protocol.ts:662:32
+ ❯ StdioClientTransport._transport.onclose node_modules/.pnpm/@modelcontextprotocol+sdk@1.30.0_zod@4.5.4/node_modules/@modelcontextprotocol/sdk/src/shared/protocol.ts:618:18
+ ❯ ChildProcess.<anonymous> node_modules/.pnpm/@modelcontextprotocol+sdk@1.30.0_zod@4.5.4/node_modules/@modelcontextprotocol/sdk/src/client/stdio.ts:152:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  tests/mcp/workspace-identity.test.ts > resolveRootIdentity Git discovery > returns git null when no checkout contains the surface
+AssertionError: expected [ { entry: 'a.ts', …(3) } ] to deeply equal [ { entry: 'a.ts', …(3) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "conservative": null,
+      "entry": "a.ts",
+-     "git": null,
++     "git": {
++       "checkoutRoot": "/tmp",
++       "commonDir": "/tmp/.git",
++       "relative": "ags-cs-2x-tests/workspace-identity-Pm8SsR/plain/a.ts",
++     },
+      "physical": "/tmp/ags-cs-2x-tests/workspace-identity-Pm8SsR/plain/a.ts",
+    },
+  ]
+
+ ❯ tests/mcp/workspace-identity.test.ts:171:31
+    169|     const identity = resolveRootIdentity(join(root, "plain"), ["a.ts"]…
+    170|
+    171|     expect(identity.surfaces).toEqual([{ entry: "a.ts", physical: key(…
+       |                               ^
+    172|   });
+    173| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  tests/mcp/workspace-identity.test.ts > resolveRootIdentity entry classes > widens a leading glob to the checkout of the workspace, or to the workspace outside a checkout
+AssertionError: expected [ { entry: '*.ts', …(3) } ] to deeply equal [ { entry: '*.ts', …(3) } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "conservative": "leading-glob",
+      "entry": "*.ts",
+-     "git": null,
+-     "physical": "/tmp/ags-cs-2x-tests/workspace-identity-JysIWj/plain",
++     "git": {
++       "checkoutRoot": "/tmp",
++       "commonDir": "/tmp/.git",
++       "relative": "",
++     },
++     "physical": "/tmp",
+    },
+  ]
+
+ ❯ tests/mcp/workspace-identity.test.ts:311:30
+    309|       conservative: "leading-glob",
+    310|     }]);
+    311|     expect(outside.surfaces).toEqual([{ entry: "*.ts", physical: key(r…
+       |                              ^
+    312|   });
+    313|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  tests/session-messaging/historical-wake.test.mjs > packaged CLI binds history to explicit broker state directory: client-ensure
+AssertionError: Expected values to be strictly equal:
+
+true !== false
+
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/session-messaging/historical-wake.test.mjs:421:14
+    419|         if (alive) await delay(20);
+    420|       }
+    421|       assert.equal(alive, false);
+       |              ^
+    422|     }
+    423|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > uses one plugin queue profile for packaged presence and relay until the next SessionStart
+Error: Timed out waiting for test state.
+ ❯ waitUntil tests/session-messaging/session-message.test.ts:60:9
+     58|     await new Promise((resolve) => setTimeout(resolve, 50));
+     59|   }
+     60|   throw new Error("Timed out waiting for test state.");
+       |         ^
+     61| }
+     62|
+ ❯ tests/session-messaging/session-message.test.ts:897:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  tests/session-messaging/session-message.test.ts > TLS 1.3 broker and vendor-neutral adapter > keeps packaged hook and relay entrypoints isolated
+Error: Timed out waiting for test state.
+ ❯ waitUntil tests/session-messaging/session-message.test.ts:60:9
+     58|     await new Promise((resolve) => setTimeout(resolve, 50));
+     59|   }
+     60|   throw new Error("Timed out waiting for test state.");
+       |         ^
+     61| }
+     62|
+ ❯ terminateBroker tests/session-messaging/session-message.test.ts:87:3
+ ❯ tests/session-messaging/session-message.test.ts:107:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  tests/software-security-auditor/integration.test.mjs > security audit integration > loads schema and maps complete report with findings in claude-plugin/
+AssertionError: {"code":"INVALID_INPUT","message":"Cannot read a provider schema.","details":{"schemaPath":"skills/cs-engineering/contracts/cs-constraint-report.v1.schema.json","cause":"ENOENT: no such file or directory, open '/workspace/ags-cs-2x/repo/claude-plugin/skills/cs-engineering/contracts/cs-constraint-report.v1.schema.json'"}}: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/software-security-auditor/integration.test.mjs:25:115
+     23| describe("security audit integration", () => {
+     24|   it.each(["", "claude-plugin/"])("loads schema and maps complete repo…
+     25|     const svc = service(tree); const plan = svc.planWorkflow(task()); …
+       |                                                                                                                   ^
+     26|     expect(plan.data.stages[0]).toMatchObject({ phase: "security-audit…
+     27|     const receipt = svc.startWorkflow(plan.data).data; const { report …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  6 failed | 61 passed | 1 skipped (68)
+      Tests  12 failed | 901 passed | 5 skipped (918)
+   Start at  02:09:12
+   Duration  65.16s (tests 96%, import 3%, transform 1%)
+
+[ELIFECYCLE] Test failed. See above for more details.

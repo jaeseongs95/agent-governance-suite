@@ -1,0 +1,7 @@
+{
+  "baseTree": "3fdd5f67f35084ace6fd224eb53ba21addfea16d",
+  "stagedTree": "d8f4fc685a9c38d15c9d49f03649a931baf02378",
+  "restoredTree": "3fdd5f67f35084ace6fd224eb53ba21addfea16d",
+  "exactNewBaseRestored": true,
+  "method": "Temporary index removes only new CS prefix; all 9753 existing paths preserved"
+}

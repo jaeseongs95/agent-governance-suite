@@ -1,0 +1,111 @@
+{
+  "label": "08-source-lock",
+  "command": [
+    "pnpm",
+    "source:check"
+  ],
+  "cwd": "/workspace/ags-cs-2x/repo",
+  "sourceCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+  "started": "2026-10-06T03:13:30.952393+00:00",
+  "finished": "2026-10-06T03:13:32.134955+00:00",
+  "exitCode": 0,
+  "subreaper": false,
+  "log": "08-source-lock.log",
+  "events": [
+    {
+      "t": 0.0047,
+      "kind": "process-state",
+      "pid": 42746,
+      "state": "S",
+      "ppid": 42745,
+      "start": "503987"
+    },
+    {
+      "t": 0.0182,
+      "kind": "process-state",
+      "pid": 42746,
+      "state": "R",
+      "ppid": 42745,
+      "start": "503987"
+    },
+    {
+      "t": 0.0333,
+      "kind": "fixture-directory",
+      "path": "node-compile-cache"
+    },
+    {
+      "t": 0.5277,
+      "kind": "process-state",
+      "pid": 42761,
+      "state": "R",
+      "ppid": 42746,
+      "start": "504039"
+    },
+    {
+      "t": 0.5277,
+      "kind": "process-state",
+      "pid": 42746,
+      "state": "S",
+      "ppid": 42745,
+      "start": "503987"
+    },
+    {
+      "t": 1.0651,
+      "kind": "process-state",
+      "pid": 42773,
+      "state": "S",
+      "ppid": 42746,
+      "start": "504092"
+    },
+    {
+      "t": 1.0651,
+      "kind": "process-state",
+      "pid": 42774,
+      "state": "R",
+      "ppid": 42773,
+      "start": "504092"
+    },
+    {
+      "t": 1.0943,
+      "kind": "process-state",
+      "pid": 42774,
+      "state": "S",
+      "ppid": 42773,
+      "start": "504092"
+    },
+    {
+      "t": 1.1086,
+      "kind": "process-state",
+      "pid": 42774,
+      "state": "R",
+      "ppid": 42773,
+      "start": "504092"
+    },
+    {
+      "t": 1.1228,
+      "kind": "process-state",
+      "pid": 42774,
+      "state": "S",
+      "ppid": 42773,
+      "start": "504092"
+    },
+    {
+      "t": 1.1511,
+      "kind": "process-state",
+      "pid": 42774,
+      "state": "R",
+      "ppid": 42773,
+      "start": "504092"
+    },
+    {
+      "t": 1.18,
+      "kind": "process-state",
+      "pid": 42746,
+      "state": "Z",
+      "ppid": 42745,
+      "start": "503987"
+    }
+  ],
+  "knownFixtureRoles": {},
+  "scope": "Only this invocation descendants and synthetic fixture directories; no credentials/body/nonce values logged."
+}

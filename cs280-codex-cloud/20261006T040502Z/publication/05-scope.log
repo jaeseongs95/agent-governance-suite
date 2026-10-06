@@ -1,0 +1,1471 @@
+{"label": "05-scope", "command": ["node", "/workspace/ags-cs-2x/repo/skills/change-scope-guardian/scripts/compare-change-scope.mjs", "/workspace/ags-cs-2x/publication-20261006T040502Z/audit/scope-verify-input.json"], "cwd": "/workspace/ags-cs-2x/publication-20261006T040502Z/repo", "started": "2026-10-06T04:16:08.942493+00:00", "kind": "publication-only; no product test"}
+{
+  "schemaVersion": "1.0.0",
+  "repositoryIdentity": "de75ea29c3e62ea7cddab585d31710da4deb57f9f4056a725ba14c9bf6959e29",
+  "baselineDigest": "68d748fef110cae11c971e94570618de85a77be79d59b289bffae79a0d4c4cb3",
+  "currentDigest": "c5b374ecbbf90581d3ae3210e538214527cc3f695ab93d99436e319492030b80",
+  "taskEnvelopeDigest": "6d4d4e591a2937db5fd7e7c06a82832ac3b1d3ad8cf92ce9af0cdc7606fca7e3",
+  "changes": [
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/CLAIMS.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "37171750f53f68c583e0388ae66e0cf3520d7bd2f8a62e1d7d2f4ed529d85e93",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/COMMAND-COVERAGE.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "b1e3fbf3d1e2c48c2978800de38fe9f4998febcd3fe90845f5b7c25b19e15be1",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/EXCLUSIONS.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "b4287de3b889463b69f573f64e5ccecabe36940b3e4999ec12683a83df6377c2",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/MANIFEST.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "685bb04405c7dd934cf062a93a3e923489f88baaa1f423cc581e3a0b37fb7d23",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/NOT-VERIFIABLE.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "3487666f2910985a1764fbe293921b27f5ce427c80d75e2183555f6e37daddbd",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/01-install.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "ecbf4f8163df673cabb9ba4971c80308422dcbd1fcce05d9dd41b4b569dea231",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/01b-install-corrected.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "b660e56728d1de6fb6c3f64a27ed100855b984d57b573afd00f4e9887527140c",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/01c-install-pinned-store.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "fafa673fb54b5def505cd7104d5b316f94ef8c69efaaf0f8e890d22be4aabb02",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/02-bundle-before-build.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "54a610066b2e4a073a1dd815a76c552ffbaf5a3e5bae5addf35eaaf39e5fa4b9",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/03-claude-drift.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "ca8f986bda4d2dcd283e930599d1a4abd655937b728160c660b9e81b30137209",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/04a-lint-initial.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "c2435c03b7d77bb5755e504f1debd51996e00fc7f300ab2e0191c6fcb9c48c36",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/05-release-sync.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "0b98ffd65943dbd12b507715a5d0a8851beef3986a55282c67fa21693b9ae38c",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/05b-candidate-metadata.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "6f92969dbd42f91481a4fa8f37af1841a2e17e78216f9a32256e0dd8db3af64e",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/06a-build-initial.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "b62ad879d403f927965a24eb30cd3834b1386e2342b763bc243d5ff1ba7aa204",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/06b-build-corrected.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "2e3b774073c5e2f0f22a6d3a5a9bb3419cb3b1f7b0eb1a43247e4ff340302a50",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/06c-build.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "41c1e4895262950e034daa3226f0f3e53f235afd3818c506078134f22f5e6f0c",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/06d-build.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "439a170981a72954bb76655d19d4874b2f6a6e11d060f980a248f21926b46cbb",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/06f-build.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "5ecb8992df123531a52ba6e0ad94ef49c56605fb6b0d97156efef06e91d311c8",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/07a-cs-integration.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "3742e78a1314148f7e631900d829a08c14ae042fb5442178b23d63ef75d9f56e",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/07b-cs-integration.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "56f8928c197b69ea5178ce71d877a7216758ae5a39962ef690becdf954ddf57b",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/07c-cs-integration.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "08e5c3ed3817384b984e2b2ce14ec602561da0d54ea9dafbe881d7b81eed628a",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/07d-cs-mcp.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "ad4e5a1ebdd58f58c46f246efeaf8c8b6723f4dc12025556ef09a02dab8f415a",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/07e-cs-mcp.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "8481826840f8c5db1264d98de50ea336efe6611305504056ddf0904801a99c76",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/07f-cs-mcp-debug.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "04d84784c760ee28d67b539883af18cc25807c944fc1313fb1735007ad31d3d3",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/07g-cs-mcp.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "e8651937527559f11a1df38506419a0c0c68c676ec29012eddeb6f35d4e77bea",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/07h-cs-deployment.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "5deea3e5da83fb4f34ed459d22ee8e5e98bdbc57dbf8fb05bc0ff95829ffc405",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/08-lint.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "7295ca3587e8474232f44750f2a0b4fadd9f4c3b354df5a90f809a3816d7d70d",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/08b-lint.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "7c325ed73c2b1270414be5b9b125bdf651f2982ceeafa6f0bbec5666c32bca6b",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/08c-lint.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "33c329b74b04f0ac1d36aa9656d673a7e04c0cc7b25036f5449c8d4550055991",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/09-sqlite-reference.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "8c61927c99d9059cf119934e76375c80b7a10dc2cae66e876738f82c57e9e96c",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/10-schema-reference.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "3fea38ec5d922a2fc559297b56ceeafb5b39a8bcde204a478a5c352731772e43",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/10b-schema-reference.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "79c5b87787e7229702ee0e6fdfbb2327002dff1bae3f5e290f30125be2d1c394",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/11b-context.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "d7b5e41791af0a60f0f8fbe69cda70d730f659cbbc713bc23e332e2aa782d3f6",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/12-precheck.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "85a345ee7c1c46c65e9e6e40a608ce4281433c05c5f6ec61c454ee57cdc0186a",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/13-full-tests.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "0bee94826b1512fe646d1480630ab1f1efb638e11d64bca60793e4d797cd546c",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/13b-full-tests.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "ed886ae092f6e52d700c0a8d7d8650ec58f075a8289a020e0fd6444295b142cb",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/13c-targeted.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "9a368212e8cd98f25293c1639d2635fac019ad4cb43b45aaa70db42d1db05307",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/13d-full-tests.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "aa1f64bbef3a924114c1a7ae59cf427d20be3be574d40775ce577fb17e78049c",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/14-input-node24.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "b93835cebc83d2cd501e8bbda02636c17496c0c1a0318e05849ecb6531e0b1b5",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/15-official.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "09f5196258d52891a83920e46170c04982ad1267323d31bd73cc5832fa35ab23",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/16-claude-build.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "89a9e6d54f3137f6eccdac51a18f98690e9ba21d5e2a4872277b46e550abd958",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/16b-claude-build.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "54c0467e057396b8ed40cf68b192d2c4513a91daf068b6e6db6545c0f160a798",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/16c-claude-build.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "7acef80c7798bdc28f92c1d9f288bab300be98498af47fb17ee0a771a0054f64",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/17-claude-check.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "7b7e731fc456e002bfa8548eb990412790af1591ecb13277190467f1a4f66511",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/18-validator-all.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "e42e38bec8b0381421a3e01218789bb13c6aaa19f77fc4a0827e32ff71588ada",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/19-baseline-fixtures.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "43699c4084d9b5e00d670052d17f5568814775b1a7d1a17f17419375de7c9fdf",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/20-runtime.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "524d1d581e8120a703b93a37508e3aee8b42f2b165bcfbf12712d056b5875703",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/21-source-lock.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "cce91dd0e39969cadcc412d7137c880bfb1cee492b064d402f6dd053ef0cf357",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/22-lint.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "47bc1440d74011ba6a1555efb0c4a420ad7547d9bff8547b23ab7ce6f91635ef",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/23-build.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "1015b0645075f04258ef00cbd58e1636811bf4c09af9674f08c64cfd9bc302a7",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/24-claude-build.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "c5c9fad02e80192354a8e966b4855c9e34db0254f6fe3fb1465a686fba5a23c1",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/25-claude-fresh.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "dcc5f327d394ce82abfd032bc6ec08c830e75cde4f19214e56c34ff9e3d3da1f",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/26-bundle-fresh.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "4a621357cf6d7d242209afc3e4f47fd1d7e0f0132bba2e816ecf132909a327f4",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/27-release-metadata.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "07116bd5d1c23f82ac15f8fb0246c8433f1aeb0f26ac769b41e169cac67fcd6c",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/28-context.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "a4ce849420546a03a6a071cb8bcc2a406ef7714e587d0fa8c50fbe5377774c27",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/29-schema.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "c07dc9c8ab2afefc825c2ea4fc03dd66dd114d92eac759c6b5b69a19ba15b895",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/30-validation-final.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "ee93aff8fc96b18bb8695b50260f40a529c26bbc607106a3f7a2c8190b93ad33",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/31-commit-source.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "9717545bf3290fbb9190cdbd032fff0771b9d9ea6dc71ee012507462ef791f9b",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/32-commit-claude.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "4e2f3689a66a20fac9cbdcb2374f835869d141cc16986a44dcbdf5d822651928",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/33-commit-bundle.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "ff7c01c2632182588198bd48359952d399936664c52047ec8bccb31b22bd6800",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/commands.jsonl",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "0438c9bb1ae9b8af0541049eaa0be0a17cc41179999d93cdc082962be5b2e6a2",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/drive-inventory.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "1b0c340b9cd47333769753b97658ac86aae6ad671daadd84f2f35c1c96acc341",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/input-final-verification.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "f4e4a18d4d076140c9b3a6cbb66d8ec762249ea7cb9d2cbd6a0da6738a45cf50",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/input-sha256sums.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "f39d0ef400bb879d9e5528f30bfe5fb50fb01263f527488d1edc03a799c63668",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/input-verification.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "918b96b8cad6277714fdf09c63e5b02817a9d1c04deea0b578b7ad0520bda59c",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/input-verify-cli.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "70b55f8b7227c6440297840cda9ca6b3298937379e898bf405a37cd1d842356f",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/install-apply.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "29bcdd350e9dc37d86322002903ca725eb0bf861f63be9e3bafd2ad7b69b4042",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/install-check.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "def56fc21810ca614d695559a7391d2c060987f2d016014e13ad4d0830b0618c",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/evidence/post-install-status.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "30503917277233f76b507f5c5321ab9b6606c08c6ad7f97af7342d8a82805bc9",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/postprocessing/build-review.py",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "d5f099b52bb06044f917d530db5e64ebb30dbf84bc7e2f90c6f3289acce94c4d",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/postprocessing/run-baseline.py",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "d7773fd974f270b7d918bd9d46a3c2f4fbcbeea51b8892e3fca01dc4e801fbb9",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/postprocessing/run-check.py",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "832e3214ff3a2cf1a2f2c86f9033d29d1397145747f9728efde21efcbb068e12",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/reports/archive-change-list.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "4370d9919725b8d97f74650433f7e69162887aee2148e21be6c18208f1d8c543",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/reports/archive-source-manifest.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "f6f1edc3cceffc009ad58dbfae4959d2a3536f0654727e89e62db5f35f37fc8a",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/reports/archive-source-pin.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "4bcf3fc4eb02b5ab139e698162008d74242d9379597aaed99e99a262428c1dac",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/reports/archive-verification-status.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "62e7709b5a52670408373ea6add8751bde5615b5bc0c7c573ea9b80c25432743",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/reports/delivery-receipt.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "58376911a3ac652833a52dc798653b8bf5633a9d40634f16681e6c952271e25d",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/reports/verification-report.ko.md",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "0876cddd3788cebfb6e91945eff0326bb4ede78e8e7c652d492c7de4dac3d014",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/original/reports/zip-verification.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "3e0797379952bde6509660eadb4c2bf48ab8aec459ae85cbdcd9cebfedc9792b",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/publication/01-fetch-latest.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "6d4a499fbe9e60819a2611fef14d6ecc14ab00c94974361728d1dc108a5c3c32",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/publication/02-ff-tip.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "07f3b9fb66ea52751b1cf92fb88a4947d93d5db24d718c6b20e3508fefb39317",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/publication/current-state.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "51538225f4b1b3f9ffb86059f4b9ec4c45fee61d74e2ecb2e9ca3c47a61d2b51",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/publication/direct-review.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "3ab821bd1900b380e9e14fd95835e04775f7bd083ea88c7e9aec8a12ae2b0a0a",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/publication/preparation-corrections.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "bca7c6313b0daf95498ad3951210af219c4d02ea169896e9849fb284c966bf47",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/publication/publication-commands.jsonl",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "6c84cfff9e175360c8ddc997a3c3d996805556594f0d10fa6b62b3ee7da12646",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/publication/scope-baseline-frozen-digest.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "df7261605ae48fca7c2647b95a5a2810f12d412579b6733b6cfed2c7be19e324",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/publication/scope-capture-input.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "7eebed1d6c24d870ee49ff3576e24ac9c67d70c928445a5e2e2cac45e8b837ae",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/publication/scripts/add-artifact.py",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "cdecea42c0fd1470941a283a5d741577fad8e3da468ccab9e654b67735f9dff9",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/publication/scripts/publication-run.py",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "17b3e10c81a8e1e5583229d0782cf1498e3a89b0e3ba9b4bc118dbf941e705da",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/publication/scripts/publish-evidence.py",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "033742754a2ef7e1db6804567a5cd1d66ad3dc154d38d76e692318b95a17cc54",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/publication/scripts/redact.py",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "0dda75ab1c2b9b2b65d61f7a1d51f86e874001ed79528f0ca778f6996a6bf3b6",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/publication/scripts/scan-public.py",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "b9599e8d0970b9d1f7e64c1a7ee5277793904e41d830f145bf71704f15570ffe",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/publication/scripts/seal-public.py",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "c36c56040830f1a6be1d4e3ced4a0b79d02c55a623a4630919e8136fc057f782",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/01-unreaped.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "29f3442288863b630a4a292bb7cde00265a6b022f029e4a0339ffdd74ff46696",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/01-unreaped.observations.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "5c0d635a3f0bfe6e667ae5dc5da3925504aa9a9d1b706d0a82dd3130d5d98f9b",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/02-reaped.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "d47e68b7f3ef2be0cccef900c2c2f2989ecb3f615514be426d356fc56155aa1c",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/02-reaped.observations.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "180cfe2591d3c6c5b7491a2bad8c4d2db90a058b21996e67867124dbfc38a73b",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/03-harness-fixtures.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "cb0b3a96daf9ca73438a44b70173bd8025a05250d6cfeb969036d93a33c1348a",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/03-harness-fixtures.observations.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "38e3da4924e38004df3da82a2b3e7436d513dcf19eddbe32dae3bf0904a7244a",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/04-harness-fixtures.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "8a2395e89f1d707e5b862531dfeb14add82f5926182d9cb82df19b0bad9025f6",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/04-harness-fixtures.observations.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "08a151f85d9f8ca170587bea9c88777af663dd99948075c15b97e5689bef8903",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/05-exit-propagation.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "0c2f04e570786bd209c80b7382cd29f84de0b2c062b1abef2d8a2138966941fa",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/05-exit-propagation.observations.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "d9921f85157106567d77f6f50eab535e905235888505113e0eea90e3470174c1",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/06-full-node24.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "2d43364fd6a3a567108cc6be6e73e008c827138212a6713fed6c3622d0e74669",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/06-full-node24.observations.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "67dbed83f685b703f15e5903e2bdb8cdc9a1968fd165992ce46f173fca2af3b5",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/07-full-process-only.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "4d15c91edbca54c6e0c06fea8fda02208c1d67c6b7b944b1aec475673c0f20e2",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/07-full-process-only.observations.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "79da8cf3552e00dfd801059555c86a5fff5fec7863acade303ee90bb56abfbb9",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/08-source-lock.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "4596972cddab8aaa6b65f892ed7d157fc9013bab68398f9c48baea9b5e824e38",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/08-source-lock.observations.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "315ba4854c48330b5e6579e1b6540c629e60a4122b860556e8bda4a9b124f34d",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/09-lint.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "d596b9c8d14b3dbc119e1a4293f46c24e0837a362f7e1a67b65d7e319fe1eb15",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/09-lint.observations.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "a9be95d2be6ade804a8cb5983800ee8ff982b6e14bc3a88a81cf1cdbde220d6f",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/10-bundle.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "efb4bce8b4baad660c3189aaa6c58482f9b131a74442b1a20cb05188dcf6ff3f",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/10-bundle.observations.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "8283564e465e55bba64db46a1a50cbd9469f2ff6cc29e1c5079947b3988e5fc9",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/11-claude.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "084e944ec468fec6630d0663f11a5ce53f5fa3f78f273223ca4c0fb1cbcea99b",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/11-claude.observations.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "b76d0049fa3363f731c7a5e87ec15937d9061da27a97e3a341b19fd270c208e6",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/12-diff.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "a54e9e0ff07751e3ff8b37f431edacebfd835643f8c8b477edc5cc5c496a71f8",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/12-diff.observations.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "23b1d0bc2042eeab9b0d8ed95505137d5eaefed856714f0e88e58db887f4f430",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/13-bundle-verify.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "dc4647f0b910ef5eb7b8b8f0e8c8aced864a1dd4d56200fd7d27419fdccc7599",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/13-bundle-verify.observations.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "4dfc39841205d1d1d9aaf82f56f8ecd3ee934025e5d4db2c1bca550a06d37104",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/commands.jsonl",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "394c50326cf25167d1d0635dec9a5c47070e60c88cfa53c8d2b09689747b7c70",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/lifecycle-discriminants.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "9f3b2e5e3d7e24d990c5e03f29bf9ce2bd08b42e400c12bb3266fbb4e4ed77cb",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/evidence/working-file-pins.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "bf41f63e6c89231508eb06715965798d6281d17aa9e51d9ce9ef0c812aa5a7d7",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/postprocessing/build-review.py",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "26592017e3acb1e4d52a4e9c6815d22631fc6a676f31612899ec620ebfe69511",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/postprocessing/observe.py",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "b6a6e74e78f674e99a23667b289cc4b24fc1091585124f83224a91c01111f608",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/reports/delivery-metadata.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "d56ffc1ea896a8c3a0b1401809e8787ba1041a72274f7fc0bff639c500ef6b12",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/reports/delivery-receipt.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "137fb498217eae0da0a04aba8882f54ba01eb2ac3c6f469c78b185574e03af7b",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/reports/source-pin.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "3b59c57f9abde371fca7058102eaed6c652272855e718a1fbc983407ea69552e",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/reports/verification-report.ko.md",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "72b104683650d349993142e088574b911949c3dfc553e0c4336209bb25b045e1",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/reports/verification-status.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "b37b0707e36f7ddf459ba500c6018fa9f7ac36cb39211339325641e079766b06",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r1/reports/zip-verification.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "1dfc3d534069722b276ba7abfc0b392d7690e58a537f2f58140402ddd0955338",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/evidence/01-typecheck.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "e803ba02aaad4caeb4ff5b12eb2833f776f21d569e3f10d6b26f91fdf27d862d",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/evidence/02-lint.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "d780cb200f7a2fb5a2f88656588ccbe673a9ee0ef8bb42064d1c9ae54f271ec0",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/evidence/03-candidate-observation.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "2b27f52e3aa9b6dfa17d6abe6bbbc0e59e131ed1b3d7d525120e1d3adc8cc94f",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/evidence/03-candidate-observation.process.jsonl",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "f3cee577ee81d0998820e302e37004eadc1817c97ce8db9a769ee4e69b0d0f9d",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/evidence/04-baseline-observation.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "9a283a27d241ee68a8e8a0c1aa81bc7c9da9c076c38b5d9399b7db0de94167cc",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/evidence/04-baseline-observation.process.jsonl",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "47fa186e76da49adb81d97cc3594c6f07481ec00263088f34f106ed71c9bc889",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/evidence/05-source-lock.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "0dca7d8c1f91a7307955f5d7f3d3c3191296c7150e04b4c626753a3654b20049",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/evidence/06-bundle.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "7ba2cc62ca1d3210e2a55c2f855348aee7cf32c493fd6aa715ad526b7f5cd465",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/evidence/07-baseline-history-observation.log",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "64fb609c0473bff46698d74cde59d0ac54ca86ca2e21359a332f774795a34811",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/evidence/07-baseline-history-observation.process.jsonl",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "030c93051a3eff5c23bf1921efa25612c556cc5c7a8333a677706ff67b6e0fb9",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/evidence/baseline-source-manifest.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "0c5de7872760584fad420da310f543ed26d977c9aa2510aa3bde7df96ef8cd01",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/evidence/commands.jsonl",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "35959dd990a335a2de9cbec2bf1d970d99ae2b03de46c13cfc193ba04876c531",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/evidence/construction-corrections.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "64dfc161e5dc3c656a03bd27a015da443e3c773aed789a95005a2a7feb42c53b",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/evidence/dependency-isolation-correction.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "ecdd1af01452a71d167920a1f166954f65741fa9b8c1f0404d43750e82934d88",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/evidence/fixture-lifecycle-classification.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "977bb506ae84ee9930e3d8356a9e292f5956a01c0c7913eb2d1ea49bee455543",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/evidence/lead-delta.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "5c18ddf75f631571700b9c30c24e357b5c0fd8b9c9407f2bcbd9f9e0128b22b1",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/evidence/preinstrumentation-comparison.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "411928ccdc5ccec9ce732c0f47e36e11976ef5196a6108a24f79657cb112376b",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/postprocessing/analyze.py",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "caa214554ac0d990bfdf834e59c8fd7222f640f77f3ee24dfe7e48b95e55690e",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/postprocessing/build-review.py",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "ae1ca83c9644c94a4b01ad41c77447d3fe4fb6144c6a81b24b6a14d88a9a27da",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/postprocessing/run-recorded.py",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "3208037f302eba9b3a30083c00b7e052328aeb66588510f048c0c30b59f8d024",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/reports/change-list.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "ae9a241762edcadf62bbb663e2314783da75b9edf232be1fd7c40c6abda3a160",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/reports/delivery-metadata.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "d36e056c26247ada2e627b219189d0e46714cc069d3e67beac777712c356a8f0",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/reports/delivery-receipt.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "d1b980f88c9ae847f909f83a845799664ed1f5df47d12d0bcd66484c8cf0c921",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/reports/source-pin.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "9ee53110dacbbde12521af849d2a38246d15e9e1ab37406bbc3f09509f9e5a44",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/reports/verification-report.ko.md",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "862b46c0f64e6c1bb9b13f48d0e9caa5f79b32e72faaf5c4a0f4157a223d554f",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/reports/verification-status.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "1daab16c48b1da2d297fe4c84df3e10ae72db39643bf60a8b0827c19b6f960f9",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/r2/reports/zip-verification.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "4d04faf7b8e5cf77dc88cc8ac3e854b67bf27aa49e996720da41ea873b31793d",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/README.ko.md",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "d8826d51e80f6cb9999590fb8df1d7c849b42b7c292a44966315ae2f337e48dd",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/REDACTION.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "57346b07750fa46cd3ebb8eb8770ab3bf60a1a9f800be94a646e5d8e57593449",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/RESIDUAL-SCAN.json",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "5dc85f45ef4a8adb549e1c15d498d2bc13bb822a13105fff5ce2a5c0601db54a",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    },
+    {
+      "path": "cs280-codex-cloud/20261006T040502Z/SHA256SUMS",
+      "originalPath": null,
+      "status": "A",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "290f98a6f2271a225bca4c45b530639deb84f30269437cc98cddc0c679f0d85d",
+      "matchedRule": "cs280-codex-cloud/20261006T040502Z"
+    }
+  ],
+  "summary": {
+    "in-scope": 161,
+    "excluded": 0,
+    "unplanned": 0,
+    "preexisting-untouched": 0,
+    "preexisting-overlap": 0,
+    "ownership-unknown": 0
+  },
+  "findings": [],
+  "verdict": "PASS",
+  "observedAt": "2026-10-06T04:16:09.138Z",
+  "reportSha256": "72bd1a221694237ccbb322f3d6a32f89a78138d9a2c2e0e85f8c283b68ff9f80"
+}

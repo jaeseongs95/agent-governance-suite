@@ -1,0 +1,82 @@
+{
+  "status": "REVIEW_CANDIDATE_WITH_BLOCKERS",
+  "releaseReady": false,
+  "environment": {
+    "node": "24.19.0",
+    "pnpm": "11.19.0",
+    "python": "3.12.14",
+    "sqlite": "3.53.1",
+    "pythonJsonschema": "4.26.0",
+    "os": "Linux"
+  },
+  "fullVitest": {
+    "passed": 911,
+    "failed": 3,
+    "skipped": 5,
+    "total": 919,
+    "log": "evidence/13d-full-tests.log"
+  },
+  "baselineFailedFixtureReproduction": {
+    "passed": 133,
+    "failed": 3,
+    "total": 136,
+    "commit": "f39501efe5dfe51d83af9afddf39dec7b7e26b01",
+    "log": "evidence/19-baseline-fixtures.log"
+  },
+  "csVitest": {
+    "passed": 16,
+    "failed": 0,
+    "note": "15 integration cases and one wrapper for the selected Node regression subset",
+    "log": "evidence/07h-cs-deployment.log"
+  },
+  "frozenInputNode24": {
+    "passed": 151,
+    "failed": 0,
+    "log": "evidence/14-input-node24.log"
+  },
+  "sqliteReference": {
+    "passed": 9,
+    "failed": 0,
+    "log": "evidence/09-sqlite-reference.log"
+  },
+  "schemaCrossCheck": {
+    "schemas": 7,
+    "cases": 44,
+    "agreements": 44,
+    "nodeSchemaEngine": "ags-ajv2020",
+    "log": "evidence/29-schema.log"
+  },
+  "pipelinePass": [
+    "locked install with isolated store",
+    "source:check",
+    "lint",
+    "build",
+    "runtime:check (30 CLI entrypoints)",
+    "validate:all",
+    "skills:context-check",
+    "release:check",
+    "bundle:check",
+    "claude:build (463 files)",
+    "claude:check",
+    "git diff --check",
+    "git bundle verify"
+  ],
+  "officialValidator": {
+    "status": "BLOCKED",
+    "reason": "ENOENT [REDACTED:PRIVATE_HOME]/skills/.system/plugin-creator/scripts/validate_plugin.py",
+    "log": "evidence/15-official.log"
+  },
+  "notRun": [
+    "user-host installation/automatic invocation",
+    "Windows + Node24",
+    "A/B/C model quality and cost evaluation",
+    "independent SOURCE audit"
+  ],
+  "notImplemented": [
+    "signed plan/lease/start/resume full CS binding",
+    "conditional ponytail required input and semantic receipt",
+    "all-path CS applicability/acceptance gate",
+    "automatic CS binding-to-epoch recontract"
+  ],
+  "frozenInputEvidence": "Historical Node22/Python3.13/SQLite3.46 evidence under frozen-input is not current candidate PASS."
+}

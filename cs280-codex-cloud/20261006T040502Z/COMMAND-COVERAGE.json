@@ -1,0 +1,1535 @@
+[
+  {
+    "path": "original/evidence/01-install.log",
+    "commandMetadata": "NOT_VERIFIABLE",
+    "exit": "NOT_VERIFIABLE",
+    "commandRecord": null,
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/01b-install-corrected.log",
+    "commandMetadata": "NOT_VERIFIABLE",
+    "exit": "NOT_VERIFIABLE",
+    "commandRecord": null,
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/01c-install-pinned-store.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "01c-install-pinned-store",
+      "command": [
+        "pnpm",
+        "install",
+        "--frozen-lockfile"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:00:28.327249+00:00",
+      "finished": "2026-10-06T02:00:31.713344+00:00",
+      "exitCode": 0,
+      "log": "01c-install-pinned-store.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/02-bundle-before-build.log",
+    "commandMetadata": "NOT_VERIFIABLE",
+    "exit": "NOT_VERIFIABLE",
+    "commandRecord": null,
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/03-claude-drift.log",
+    "commandMetadata": "NOT_VERIFIABLE",
+    "exit": "NOT_VERIFIABLE",
+    "commandRecord": null,
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/04a-lint-initial.log",
+    "commandMetadata": "NOT_VERIFIABLE",
+    "exit": "NOT_VERIFIABLE",
+    "commandRecord": null,
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/05-release-sync.log",
+    "commandMetadata": "NOT_VERIFIABLE",
+    "exit": "NOT_VERIFIABLE",
+    "commandRecord": null,
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/05b-candidate-metadata.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "05b-candidate-metadata",
+      "command": [
+        "pnpm",
+        "release:sync",
+        "--write"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:01:40.439625+00:00",
+      "finished": "2026-10-06T02:01:41.258445+00:00",
+      "exitCode": 0,
+      "log": "05b-candidate-metadata.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/06a-build-initial.log",
+    "commandMetadata": "NOT_VERIFIABLE",
+    "exit": "NOT_VERIFIABLE",
+    "commandRecord": null,
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/06b-build-corrected.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "06b-build-corrected",
+      "command": [
+        "pnpm",
+        "build"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T01:58:11.879542+00:00",
+      "finished": "2026-10-06T01:58:13.279752+00:00",
+      "exitCode": 1,
+      "log": "06b-build-corrected.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/06c-build.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "06c-build",
+      "command": [
+        "pnpm",
+        "build"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:01:41.449583+00:00",
+      "finished": "2026-10-06T02:01:45.507981+00:00",
+      "exitCode": 2,
+      "log": "06c-build.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/06d-build.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "06d-build",
+      "command": [
+        "pnpm",
+        "build"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:02:14.363966+00:00",
+      "finished": "2026-10-06T02:02:19.581034+00:00",
+      "exitCode": 0,
+      "log": "06d-build.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/06f-build.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "06f-build",
+      "command": [
+        "pnpm",
+        "build"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:07:33.219984+00:00",
+      "finished": "2026-10-06T02:07:37.589668+00:00",
+      "exitCode": 0,
+      "log": "06f-build.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/07a-cs-integration.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "07a-cs-integration",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/cs-engineering"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T01:59:57.437242+00:00",
+      "finished": "2026-10-06T01:59:58.355745+00:00",
+      "exitCode": 1,
+      "log": "07a-cs-integration.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/07b-cs-integration.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "07b-cs-integration",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/cs-engineering"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:00:57.100635+00:00",
+      "finished": "2026-10-06T02:01:02.001950+00:00",
+      "exitCode": 1,
+      "log": "07b-cs-integration.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/07c-cs-integration.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "07c-cs-integration",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/cs-engineering"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:02:14.369766+00:00",
+      "finished": "2026-10-06T02:02:20.415509+00:00",
+      "exitCode": 0,
+      "log": "07c-cs-integration.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/07d-cs-mcp.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "07d-cs-mcp",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/cs-engineering"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:04:29.986779+00:00",
+      "finished": "2026-10-06T02:04:35.256547+00:00",
+      "exitCode": 1,
+      "log": "07d-cs-mcp.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/07e-cs-mcp.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "07e-cs-mcp",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/cs-engineering"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:04:49.891946+00:00",
+      "finished": "2026-10-06T02:04:55.453148+00:00",
+      "exitCode": 1,
+      "log": "07e-cs-mcp.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/07f-cs-mcp-debug.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "07f-cs-mcp-debug",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/cs-engineering/workflow-integration.test.ts"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:06:43.457673+00:00",
+      "finished": "2026-10-06T02:06:48.537969+00:00",
+      "exitCode": 1,
+      "log": "07f-cs-mcp-debug.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/07g-cs-mcp.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "07g-cs-mcp",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/cs-engineering"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:07:26.654357+00:00",
+      "finished": "2026-10-06T02:07:33.187652+00:00",
+      "exitCode": 0,
+      "log": "07g-cs-mcp.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/07h-cs-deployment.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "07h-cs-deployment",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/cs-engineering",
+        "--maxWorkers=2"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:15:12.803110+00:00",
+      "finished": "2026-10-06T02:15:22.800780+00:00",
+      "exitCode": 0,
+      "log": "07h-cs-deployment.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/08-lint.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "08-lint",
+      "command": [
+        "pnpm",
+        "lint"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:02:20.440525+00:00",
+      "finished": "2026-10-06T02:02:26.757429+00:00",
+      "exitCode": 1,
+      "log": "08-lint.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/08b-lint.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "08b-lint",
+      "command": [
+        "pnpm",
+        "lint"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:03:04.189464+00:00",
+      "finished": "2026-10-06T02:03:10.496369+00:00",
+      "exitCode": 1,
+      "log": "08b-lint.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/08c-lint.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "08c-lint",
+      "command": [
+        "pnpm",
+        "lint"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:03:56.559853+00:00",
+      "finished": "2026-10-06T02:04:02.891618+00:00",
+      "exitCode": 0,
+      "log": "08c-lint.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/09-sqlite-reference.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "09-sqlite-reference",
+      "command": [
+        "python3",
+        "tests/cs-engineering/sqlite_reference_test.py"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:02:14.362294+00:00",
+      "finished": "2026-10-06T02:02:14.978274+00:00",
+      "exitCode": 0,
+      "log": "09-sqlite-reference.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/10-schema-reference.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "10-schema-reference",
+      "command": [
+        "python3",
+        "tests/cs-engineering/schema_reference_test.py"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:02:15.007118+00:00",
+      "finished": "2026-10-06T02:02:15.334601+00:00",
+      "exitCode": 0,
+      "log": "10-schema-reference.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/10b-schema-reference.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "10b-schema-reference",
+      "command": [
+        "python3",
+        "tests/cs-engineering/schema_reference_test.py"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:09:22.526745+00:00",
+      "finished": "2026-10-06T02:09:22.818874+00:00",
+      "exitCode": 0,
+      "log": "10b-schema-reference.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/11b-context.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "11b-context",
+      "command": [
+        "pnpm",
+        "skills:context-check"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:04:02.918201+00:00",
+      "finished": "2026-10-06T02:04:03.891102+00:00",
+      "exitCode": 0,
+      "log": "11b-context.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/12-precheck.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "12-precheck",
+      "command": [
+        "pnpm",
+        "source:check"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:03:55.620025+00:00",
+      "finished": "2026-10-06T02:03:56.530912+00:00",
+      "exitCode": 0,
+      "log": "12-precheck.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/13-full-tests.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "13-full-tests",
+      "command": [
+        "pnpm",
+        "test"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:07:37.614760+00:00",
+      "finished": "2026-10-06T02:08:48.107476+00:00",
+      "exitCode": 1,
+      "log": "13-full-tests.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/13b-full-tests.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "13b-full-tests",
+      "command": [
+        "pnpm",
+        "test",
+        "--",
+        "--maxWorkers=2"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:09:11.095867+00:00",
+      "finished": "2026-10-06T02:10:17.619532+00:00",
+      "exitCode": 1,
+      "log": "13b-full-tests.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/13c-targeted.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "13c-targeted",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/mcp/workspace-identity.test.ts",
+        "tests/mcp/convergence-guard.test.ts",
+        "tests/mcp/tool-schema-profile.test.ts",
+        "--maxWorkers=2"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:13:18.343247+00:00",
+      "finished": "2026-10-06T02:13:30.253114+00:00",
+      "exitCode": 1,
+      "log": "13c-targeted.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/13d-full-tests.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "13d-full-tests",
+      "command": [
+        "pnpm",
+        "test",
+        "--maxWorkers=2"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:14:17.183670+00:00",
+      "finished": "2026-10-06T02:15:55.733376+00:00",
+      "exitCode": 1,
+      "log": "13d-full-tests.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/14-input-node24.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "14-input-node24",
+      "command": [
+        "node",
+        "/workspace/ags-cs-2x/input/package/integration/run-tests.mjs"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:06:54.748911+00:00",
+      "finished": "2026-10-06T02:06:55.653316+00:00",
+      "exitCode": 0,
+      "log": "14-input-node24.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/15-official.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "15-official",
+      "command": [
+        "pnpm",
+        "validate:official"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:06:55.836545+00:00",
+      "finished": "2026-10-06T02:06:56.763914+00:00",
+      "exitCode": 1,
+      "log": "15-official.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/16-claude-build.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "16-claude-build",
+      "command": [
+        "pnpm",
+        "claude:build"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:09:08.875375+00:00",
+      "finished": "2026-10-06T02:09:10.108265+00:00",
+      "exitCode": 0,
+      "log": "16-claude-build.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/16b-claude-build.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "16b-claude-build",
+      "command": [
+        "pnpm",
+        "claude:build"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:12:50.039593+00:00",
+      "finished": "2026-10-06T02:12:51.022041+00:00",
+      "exitCode": 1,
+      "log": "16b-claude-build.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/16c-claude-build.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "16c-claude-build",
+      "command": [
+        "pnpm",
+        "claude:build"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:13:38.044609+00:00",
+      "finished": "2026-10-06T02:13:39.412689+00:00",
+      "exitCode": 0,
+      "log": "16c-claude-build.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/17-claude-check.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "17-claude-check",
+      "command": [
+        "pnpm",
+        "claude:check"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:09:10.135629+00:00",
+      "finished": "2026-10-06T02:09:11.068423+00:00",
+      "exitCode": 0,
+      "log": "17-claude-check.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/18-validator-all.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "18-validator-all",
+      "command": [
+        "pnpm",
+        "validate:all"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:09:22.852711+00:00",
+      "finished": "2026-10-06T02:09:27.993991+00:00",
+      "exitCode": 0,
+      "log": "18-validator-all.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/19-baseline-fixtures.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "19-baseline-fixtures",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/session-messaging/session-message.test.ts",
+        "tests/session-messaging/historical-wake.test.mjs",
+        "--maxWorkers=2"
+      ],
+      "cwd": "/workspace/ags-cs-2x/baseline",
+      "started": "2026-10-06T02:14:33.538361+00:00",
+      "finished": "2026-10-06T02:15:08.726386+00:00",
+      "exitCode": 1,
+      "log": "19-baseline-fixtures.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/20-runtime.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "20-runtime",
+      "command": [
+        "pnpm",
+        "runtime:check"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:15:59.636271+00:00",
+      "finished": "2026-10-06T02:16:05.521813+00:00",
+      "exitCode": 0,
+      "log": "20-runtime.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/21-source-lock.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "21-source-lock",
+      "command": [
+        "pnpm",
+        "source:check"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:16:33.225968+00:00",
+      "finished": "2026-10-06T02:16:34.387350+00:00",
+      "exitCode": 0,
+      "log": "21-source-lock.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/22-lint.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "22-lint",
+      "command": [
+        "pnpm",
+        "lint"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:16:34.412283+00:00",
+      "finished": "2026-10-06T02:16:40.703644+00:00",
+      "exitCode": 0,
+      "log": "22-lint.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/23-build.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "23-build",
+      "command": [
+        "pnpm",
+        "build"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:16:40.732066+00:00",
+      "finished": "2026-10-06T02:16:44.980421+00:00",
+      "exitCode": 0,
+      "log": "23-build.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/24-claude-build.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "24-claude-build",
+      "command": [
+        "pnpm",
+        "claude:build"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:16:45.004622+00:00",
+      "finished": "2026-10-06T02:16:45.927406+00:00",
+      "exitCode": 0,
+      "log": "24-claude-build.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/25-claude-fresh.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "25-claude-fresh",
+      "command": [
+        "pnpm",
+        "claude:check"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:16:45.953776+00:00",
+      "finished": "2026-10-06T02:16:46.831577+00:00",
+      "exitCode": 0,
+      "log": "25-claude-fresh.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/26-bundle-fresh.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "26-bundle-fresh",
+      "command": [
+        "pnpm",
+        "bundle:check"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:16:46.855705+00:00",
+      "finished": "2026-10-06T02:16:47.804401+00:00",
+      "exitCode": 0,
+      "log": "26-bundle-fresh.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/27-release-metadata.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "27-release-metadata",
+      "command": [
+        "pnpm",
+        "release:check"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:16:47.830240+00:00",
+      "finished": "2026-10-06T02:16:48.644589+00:00",
+      "exitCode": 0,
+      "log": "27-release-metadata.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/28-context.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "28-context",
+      "command": [
+        "pnpm",
+        "skills:context-check"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:16:48.670199+00:00",
+      "finished": "2026-10-06T02:16:49.592532+00:00",
+      "exitCode": 0,
+      "log": "28-context.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/29-schema.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "29-schema",
+      "command": [
+        "python",
+        "tests/cs-engineering/schema_reference_test.py"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:16:49.616724+00:00",
+      "finished": "2026-10-06T02:16:49.845899+00:00",
+      "exitCode": 0,
+      "log": "29-schema.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/30-validation-final.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "30-validation-final",
+      "command": [
+        "pnpm",
+        "validate:all"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:17:15.362625+00:00",
+      "finished": "2026-10-06T02:17:19.942225+00:00",
+      "exitCode": 0,
+      "log": "30-validation-final.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/31-commit-source.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "31-commit-source",
+      "command": [
+        "pnpm",
+        "source:check"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:18:12.287657+00:00",
+      "finished": "2026-10-06T02:18:13.620564+00:00",
+      "exitCode": 0,
+      "log": "31-commit-source.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/32-commit-claude.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "32-commit-claude",
+      "command": [
+        "pnpm",
+        "claude:check"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:18:13.646620+00:00",
+      "finished": "2026-10-06T02:18:14.740208+00:00",
+      "exitCode": 0,
+      "log": "32-commit-claude.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/33-commit-bundle.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "33-commit-bundle",
+      "command": [
+        "pnpm",
+        "bundle:check"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "started": "2026-10-06T02:18:14.770088+00:00",
+      "finished": "2026-10-06T02:18:15.907290+00:00",
+      "exitCode": 0,
+      "log": "33-commit-bundle.log"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/input-sha256sums.log",
+    "commandMetadata": "NOT_VERIFIABLE",
+    "exit": "NOT_VERIFIABLE",
+    "commandRecord": null,
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "original/evidence/post-install-status.log",
+    "commandMetadata": "NOT_VERIFIABLE",
+    "exit": "NOT_VERIFIABLE",
+    "commandRecord": null,
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r1/evidence/01-unreaped.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "01-unreaped",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/session-messaging/historical-wake.test.mjs",
+        "tests/session-messaging/session-message.test.ts",
+        "-t",
+        "packaged CLI binds history|uses one plugin queue profile|keeps packaged hook and relay entrypoints",
+        "--maxWorkers=1"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "sourceCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+      "started": "2026-10-06T03:02:17.971543+00:00",
+      "finished": "2026-10-06T03:02:52.969369+00:00",
+      "exitCode": 1,
+      "subreaper": false,
+      "log": "01-unreaped.log",
+      "scope": "Only this invocation descendants and synthetic fixture directories; no credentials/body/nonce values logged."
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r1/evidence/02-reaped.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "02-reaped",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/session-messaging/historical-wake.test.mjs",
+        "tests/session-messaging/session-message.test.ts",
+        "-t",
+        "packaged CLI binds history|uses one plugin queue profile|keeps packaged hook and relay entrypoints",
+        "--maxWorkers=1"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "sourceCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+      "started": "2026-10-06T03:03:27.729981+00:00",
+      "finished": "2026-10-06T03:03:36.794986+00:00",
+      "exitCode": 0,
+      "subreaper": true,
+      "log": "02-reaped.log",
+      "scope": "Only this invocation descendants and synthetic fixture directories; no credentials/body/nonce values logged."
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r1/evidence/03-harness-fixtures.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "03-harness-fixtures",
+      "command": [
+        "python",
+        "tests/helpers/linux-child-reaper.py",
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/session-messaging/historical-wake.test.mjs",
+        "tests/session-messaging/session-message.test.ts",
+        "--maxWorkers=2"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "sourceCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+      "started": "2026-10-06T03:05:45.879700+00:00",
+      "finished": "2026-10-06T03:06:20.890236+00:00",
+      "exitCode": 1,
+      "subreaper": false,
+      "log": "03-harness-fixtures.log",
+      "scope": "Only this invocation descendants and synthetic fixture directories; no credentials/body/nonce values logged."
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r1/evidence/04-harness-fixtures.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "04-harness-fixtures",
+      "command": [
+        "python",
+        "tests/helpers/linux-child-reaper.py",
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/session-messaging/historical-wake.test.mjs",
+        "tests/session-messaging/session-message.test.ts",
+        "--maxWorkers=2"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "sourceCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+      "started": "2026-10-06T03:07:21.937996+00:00",
+      "finished": "2026-10-06T03:07:36.231678+00:00",
+      "exitCode": 0,
+      "subreaper": false,
+      "log": "04-harness-fixtures.log",
+      "scope": "Only this invocation descendants and synthetic fixture directories; no credentials/body/nonce values logged."
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r1/evidence/05-exit-propagation.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "05-exit-propagation",
+      "command": [
+        "python",
+        "tests/helpers/linux-child-reaper.py",
+        "node",
+        "-e",
+        "process.exit(7)"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "sourceCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+      "started": "2026-10-06T03:08:37.083638+00:00",
+      "finished": "2026-10-06T03:08:37.147525+00:00",
+      "exitCode": 7,
+      "subreaper": false,
+      "log": "05-exit-propagation.log",
+      "scope": "Only this invocation descendants and synthetic fixture directories; no credentials/body/nonce values logged."
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r1/evidence/06-full-node24.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "06-full-node24",
+      "command": [
+        "python",
+        "tests/helpers/linux-child-reaper.py",
+        "pnpm",
+        "test",
+        "--maxWorkers=2"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "sourceCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+      "started": "2026-10-06T03:08:42.464105+00:00",
+      "finished": "2026-10-06T03:10:13.722371+00:00",
+      "exitCode": 1,
+      "subreaper": false,
+      "log": "06-full-node24.log",
+      "scope": "Only this invocation descendants and synthetic fixture directories; no credentials/body/nonce values logged."
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r1/evidence/07-full-process-only.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "07-full-process-only",
+      "command": [
+        "python",
+        "tests/helpers/linux-child-reaper.py",
+        "pnpm",
+        "test",
+        "--maxWorkers=2"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "sourceCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+      "started": "2026-10-06T03:11:16.541006+00:00",
+      "finished": "2026-10-06T03:12:43.298744+00:00",
+      "exitCode": 0,
+      "subreaper": false,
+      "log": "07-full-process-only.log",
+      "scope": "Only this invocation descendants and synthetic fixture directories; no credentials/body/nonce values logged."
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r1/evidence/08-source-lock.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "08-source-lock",
+      "command": [
+        "pnpm",
+        "source:check"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "sourceCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+      "started": "2026-10-06T03:13:30.952393+00:00",
+      "finished": "2026-10-06T03:13:32.134955+00:00",
+      "exitCode": 0,
+      "subreaper": false,
+      "log": "08-source-lock.log",
+      "scope": "Only this invocation descendants and synthetic fixture directories; no credentials/body/nonce values logged."
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r1/evidence/09-lint.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "09-lint",
+      "command": [
+        "pnpm",
+        "lint"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "sourceCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+      "started": "2026-10-06T03:13:32.167071+00:00",
+      "finished": "2026-10-06T03:13:39.441340+00:00",
+      "exitCode": 0,
+      "subreaper": false,
+      "log": "09-lint.log",
+      "scope": "Only this invocation descendants and synthetic fixture directories; no credentials/body/nonce values logged."
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r1/evidence/10-bundle.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "10-bundle",
+      "command": [
+        "pnpm",
+        "bundle:check"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "sourceCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+      "started": "2026-10-06T03:13:39.471176+00:00",
+      "finished": "2026-10-06T03:13:40.737392+00:00",
+      "exitCode": 0,
+      "subreaper": false,
+      "log": "10-bundle.log",
+      "scope": "Only this invocation descendants and synthetic fixture directories; no credentials/body/nonce values logged."
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r1/evidence/11-claude.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "11-claude",
+      "command": [
+        "pnpm",
+        "claude:check"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "sourceCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+      "started": "2026-10-06T03:13:40.765623+00:00",
+      "finished": "2026-10-06T03:13:42.003762+00:00",
+      "exitCode": 0,
+      "subreaper": false,
+      "log": "11-claude.log",
+      "scope": "Only this invocation descendants and synthetic fixture directories; no credentials/body/nonce values logged."
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r1/evidence/12-diff.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "12-diff",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "sourceCommit": "4ba47558020bd5e501fa9718f09d562dcf573713",
+      "started": "2026-10-06T03:13:42.032542+00:00",
+      "finished": "2026-10-06T03:13:42.039469+00:00",
+      "exitCode": 0,
+      "subreaper": false,
+      "log": "12-diff.log",
+      "scope": "Only this invocation descendants and synthetic fixture directories; no credentials/body/nonce values logged."
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r1/evidence/13-bundle-verify.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "13-bundle-verify",
+      "command": [
+        "git",
+        "bundle",
+        "verify",
+        "/workspace/ags-cs-2x/linux-lifecycle-r1/output/AGS-2.8.0-CS-Linux-lifecycle-r1.bundle"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "sourceCommit": "3b9c34b0dc0ca65d74db1631cc5fdd4898b7f2d7",
+      "started": "2026-10-06T03:14:25.473532+00:00",
+      "finished": "2026-10-06T03:14:25.479955+00:00",
+      "exitCode": 0,
+      "subreaper": false,
+      "log": "13-bundle-verify.log",
+      "scope": "Only this invocation descendants and synthetic fixture directories; no credentials/body/nonce values logged."
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r2/evidence/01-typecheck.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "01-typecheck",
+      "command": [
+        "pnpm",
+        "exec",
+        "tsc",
+        "--noEmit"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "sourceCommit": "3b9c34b0dc0ca65d74db1631cc5fdd4898b7f2d7",
+      "started": "2026-10-06T03:30:58.106879+00:00",
+      "environment": {
+        "hostname": "d19a608d7837",
+        "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+        "pid1": "tail",
+        "TMPDIR": "/dev/shm/ags-cs-lifecycle-r2/01-typecheck",
+        "sharedState": "/workspace/ags-cs-2x/linux-lifecycle-r2/tool-state/01-typecheck/shared-state",
+        "observations": null,
+        "subreaper": false,
+        "databaseObserver": false
+      },
+      "filePins": {
+        "tests/helpers/fixture-process-observer.ts": "d36e0576492c4c3ea9f6eca08c7a8c3fb49af9324d9b494cfec31768ab5d7ca2",
+        "tests/session-messaging/historical-wake.test.mjs": "22d5f9aecab6f69face1c28477b9133141a7184354dde702bae3f742bd54a1ab",
+        "tests/session-messaging/session-message.test.ts": "565cf4fca9dbbea8a5fdba2ca473fb4082403e7f85398d5b2d992724969d30f6"
+      },
+      "exitCode": 0,
+      "finished": "2026-10-06T03:31:03.401390+00:00"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r2/evidence/02-lint.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "02-lint",
+      "command": [
+        "pnpm",
+        "lint"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "sourceCommit": "3b9c34b0dc0ca65d74db1631cc5fdd4898b7f2d7",
+      "started": "2026-10-06T03:30:59.632710+00:00",
+      "environment": {
+        "hostname": "d19a608d7837",
+        "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+        "pid1": "tail",
+        "TMPDIR": "/dev/shm/ags-cs-lifecycle-r2/02-lint",
+        "sharedState": "/workspace/ags-cs-2x/linux-lifecycle-r2/tool-state/02-lint/shared-state",
+        "observations": null,
+        "subreaper": false,
+        "databaseObserver": false
+      },
+      "filePins": {
+        "tests/helpers/fixture-process-observer.ts": "d36e0576492c4c3ea9f6eca08c7a8c3fb49af9324d9b494cfec31768ab5d7ca2",
+        "tests/session-messaging/historical-wake.test.mjs": "22d5f9aecab6f69face1c28477b9133141a7184354dde702bae3f742bd54a1ab",
+        "tests/session-messaging/session-message.test.ts": "565cf4fca9dbbea8a5fdba2ca473fb4082403e7f85398d5b2d992724969d30f6"
+      },
+      "exitCode": 0,
+      "finished": "2026-10-06T03:31:07.292640+00:00"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r2/evidence/03-candidate-observation.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "03-candidate-observation",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/session-messaging/historical-wake.test.mjs",
+        "tests/session-messaging/session-message.test.ts",
+        "-t",
+        "packaged CLI binds history|uses one plugin queue profile|keeps packaged hook and relay entrypoints",
+        "--maxWorkers=1"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "sourceCommit": "f7912c452483ddc67ba874a185c08fa0038a38e7",
+      "started": "2026-10-06T03:31:34.993762+00:00",
+      "environment": {
+        "hostname": "d19a608d7837",
+        "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+        "pid1": "tail",
+        "TMPDIR": "/dev/shm/ags-cs-lifecycle-r2/03-candidate-observation",
+        "sharedState": "/workspace/ags-cs-2x/linux-lifecycle-r2/tool-state/03-candidate-observation/shared-state",
+        "observations": "/workspace/ags-cs-2x/linux-lifecycle-r2/evidence/03-candidate-observation.process.jsonl",
+        "subreaper": false,
+        "databaseObserver": false
+      },
+      "filePins": {
+        "tests/helpers/fixture-process-observer.ts": "d36e0576492c4c3ea9f6eca08c7a8c3fb49af9324d9b494cfec31768ab5d7ca2",
+        "tests/session-messaging/historical-wake.test.mjs": "22d5f9aecab6f69face1c28477b9133141a7184354dde702bae3f742bd54a1ab",
+        "tests/session-messaging/session-message.test.ts": "565cf4fca9dbbea8a5fdba2ca473fb4082403e7f85398d5b2d992724969d30f6"
+      },
+      "exitCode": 1,
+      "finished": "2026-10-06T03:32:08.787896+00:00"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r2/evidence/04-baseline-observation.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "04-baseline-observation",
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/session-messaging/historical-wake.test.mjs",
+        "tests/session-messaging/session-message.test.ts",
+        "-t",
+        "packaged CLI binds history|uses one plugin queue profile|keeps packaged hook and relay entrypoints",
+        "--maxWorkers=1"
+      ],
+      "cwd": "/workspace/ags-cs-2x/linux-lifecycle-r2/base-repo",
+      "sourceCommit": "f39501efe5dfe51d83af9afddf39dec7b7e26b01",
+      "started": "2026-10-06T03:32:20.037799+00:00",
+      "environment": {
+        "hostname": "d19a608d7837",
+        "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+        "pid1": "tail",
+        "TMPDIR": "/dev/shm/ags-cs-lifecycle-r2/04-baseline-observation",
+        "sharedState": "/workspace/ags-cs-2x/linux-lifecycle-r2/tool-state/04-baseline-observation/shared-state",
+        "observations": "/workspace/ags-cs-2x/linux-lifecycle-r2/evidence/04-baseline-observation.process.jsonl",
+        "subreaper": false,
+        "databaseObserver": false
+      },
+      "filePins": {
+        "tests/helpers/fixture-process-observer.ts": "d36e0576492c4c3ea9f6eca08c7a8c3fb49af9324d9b494cfec31768ab5d7ca2",
+        "tests/session-messaging/historical-wake.test.mjs": "22d5f9aecab6f69face1c28477b9133141a7184354dde702bae3f742bd54a1ab",
+        "tests/session-messaging/session-message.test.ts": "565cf4fca9dbbea8a5fdba2ca473fb4082403e7f85398d5b2d992724969d30f6"
+      },
+      "exitCode": 1,
+      "finished": "2026-10-06T03:32:51.544071+00:00"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r2/evidence/05-source-lock.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "05-source-lock",
+      "command": [
+        "pnpm",
+        "source:check"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "sourceCommit": "f7912c452483ddc67ba874a185c08fa0038a38e7",
+      "started": "2026-10-06T03:32:49.051539+00:00",
+      "environment": {
+        "hostname": "d19a608d7837",
+        "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+        "pid1": "tail",
+        "TMPDIR": "/dev/shm/ags-cs-lifecycle-r2/05-source-lock",
+        "sharedState": "/workspace/ags-cs-2x/linux-lifecycle-r2/tool-state/05-source-lock/shared-state",
+        "observations": null,
+        "subreaper": false,
+        "databaseObserver": false
+      },
+      "filePins": {
+        "tests/helpers/fixture-process-observer.ts": "d36e0576492c4c3ea9f6eca08c7a8c3fb49af9324d9b494cfec31768ab5d7ca2",
+        "tests/session-messaging/historical-wake.test.mjs": "22d5f9aecab6f69face1c28477b9133141a7184354dde702bae3f742bd54a1ab",
+        "tests/session-messaging/session-message.test.ts": "565cf4fca9dbbea8a5fdba2ca473fb4082403e7f85398d5b2d992724969d30f6"
+      },
+      "exitCode": 0,
+      "finished": "2026-10-06T03:32:57.321779+00:00"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r2/evidence/06-bundle.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "06-bundle",
+      "command": [
+        "pnpm",
+        "bundle:check"
+      ],
+      "cwd": "/workspace/ags-cs-2x/repo",
+      "sourceCommit": "f7912c452483ddc67ba874a185c08fa0038a38e7",
+      "started": "2026-10-06T03:32:48.921654+00:00",
+      "environment": {
+        "hostname": "d19a608d7837",
+        "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+        "pid1": "tail",
+        "TMPDIR": "/dev/shm/ags-cs-lifecycle-r2/06-bundle",
+        "sharedState": "/workspace/ags-cs-2x/linux-lifecycle-r2/tool-state/06-bundle/shared-state",
+        "observations": null,
+        "subreaper": false,
+        "databaseObserver": false
+      },
+      "filePins": {
+        "tests/helpers/fixture-process-observer.ts": "d36e0576492c4c3ea9f6eca08c7a8c3fb49af9324d9b494cfec31768ab5d7ca2",
+        "tests/session-messaging/historical-wake.test.mjs": "22d5f9aecab6f69face1c28477b9133141a7184354dde702bae3f742bd54a1ab",
+        "tests/session-messaging/session-message.test.ts": "565cf4fca9dbbea8a5fdba2ca473fb4082403e7f85398d5b2d992724969d30f6"
+      },
+      "exitCode": 0,
+      "finished": "2026-10-06T03:32:57.331062+00:00"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  },
+  {
+    "path": "r2/evidence/07-baseline-history-observation.log",
+    "commandMetadata": "AVAILABLE",
+    "exit": "AVAILABLE",
+    "commandRecord": {
+      "label": "07-baseline-history-observation",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/session-messaging/historical-wake.test.mjs",
+        "-t",
+        "packaged CLI binds history",
+        "--maxWorkers=1"
+      ],
+      "cwd": "/workspace/ags-cs-2x/linux-lifecycle-r2/base-repo",
+      "sourceCommit": "f39501efe5dfe51d83af9afddf39dec7b7e26b01",
+      "started": "2026-10-06T03:34:39.603129+00:00",
+      "environment": {
+        "hostname": "d19a608d7837",
+        "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+        "pid1": "tail",
+        "TMPDIR": "/dev/shm/ags-cs-lifecycle-r2/07-baseline-history-observation",
+        "sharedState": "/workspace/ags-cs-2x/linux-lifecycle-r2/tool-state/07-baseline-history-observation/shared-state",
+        "observations": "/workspace/ags-cs-2x/linux-lifecycle-r2/evidence/07-baseline-history-observation.process.jsonl",
+        "subreaper": false,
+        "databaseObserver": false
+      },
+      "filePins": {
+        "tests/helpers/fixture-process-observer.ts": "d36e0576492c4c3ea9f6eca08c7a8c3fb49af9324d9b494cfec31768ab5d7ca2",
+        "tests/session-messaging/historical-wake.test.mjs": "22d5f9aecab6f69face1c28477b9133141a7184354dde702bae3f742bd54a1ab",
+        "tests/session-messaging/session-message.test.ts": "565cf4fca9dbbea8a5fdba2ca473fb4082403e7f85398d5b2d992724969d30f6"
+      },
+      "exitCode": 1,
+      "finished": "2026-10-06T03:34:46.165594+00:00"
+    },
+    "stdoutStderr": "MERGED_AS_CAPTURED; split originals NOT_VERIFIABLE"
+  }
+]

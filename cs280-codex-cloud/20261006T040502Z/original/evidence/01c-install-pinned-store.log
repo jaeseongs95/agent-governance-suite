@@ -1,0 +1,30 @@
+{"command": ["pnpm", "install", "--frozen-lockfile"], "cwd": "/workspace/ags-cs-2x/repo", "started": "2026-10-06T02:00:28.327249+00:00", "isolation": {"TMPDIR": "/workspace/ags-cs-2x/tmp", "XDG_DATA_HOME": "/workspace/ags-cs-2x/tool-state/data", "XDG_CACHE_HOME": "/workspace/ags-cs-2x/tool-state/cache"}}
+Recreating /workspace/ags-cs-2x/repo/node_modules
+✓ Lockfile passes supply-chain policies (verified 7m ago)
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +217
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 217, reused 0, downloaded 32, added 32
+Progress: resolved 217, reused 0, downloaded 166, added 166
+Progress: resolved 217, reused 0, downloaded 217, added 217, done
+.../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+.../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+
+dependencies:
++ @modelcontextprotocol/sdk 1.30.0
++ ajv 8.20.0
++ ajv-formats 3.0.1
++ zod 4.5.4
+
+devDependencies:
++ @eslint/js 10.0.1
++ @types/node 26.5.0
++ esbuild 0.28.2
++ eslint 10.10.0
++ tsx 4.23.13
++ typescript 6.0.2
++ typescript-eslint 8.70.0
++ vitest 5.0.0
+
+Done in 3.3s using pnpm v11.19.0

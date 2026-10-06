@@ -1,0 +1,6 @@
+{
+  "status": "APPLIED",
+  "changedFiles": 63,
+  "receipt": "/workspace/agent-governance-suite/.git/worktrees/repo/cs-engineering-backups/f80897de-cef8-49e1-b59f-28d118aada09/receipt.json",
+  "note": "No signed WorkflowService, lease, resume or completion migration is performed. Run AGS validation and Claude build separately."
+}

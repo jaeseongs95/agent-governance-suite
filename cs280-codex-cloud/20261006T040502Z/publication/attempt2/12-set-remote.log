@@ -1,0 +1,1 @@
+{"label": "12-set-remote", "command": ["git", "remote", "add", "origin", "https://github.com/jaeseongs95/agent-governance-suite.git"], "cwd": "/workspace/ags-cs-2x/publication-20261006T040502Z/repo-final", "started": "2026-10-06T04:22:48.421865+00:00", "kind": "publication-only; no product test"}

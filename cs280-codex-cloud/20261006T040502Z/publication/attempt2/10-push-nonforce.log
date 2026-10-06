@@ -1,0 +1,9 @@
+{"label": "10-push-nonforce", "command": ["git", "push", "origin", "HEAD:refs/heads/evidence"], "cwd": "/workspace/ags-cs-2x/publication-20261006T040502Z/repo", "started": "2026-10-06T04:21:36.468355+00:00", "kind": "publication-only; no product test"}
+To https://github.com/jaeseongs95/agent-governance-suite.git
+ ! [rejected]        HEAD -> evidence (fetch first)
+error: failed to push some refs to 'https://github.com/jaeseongs95/agent-governance-suite.git'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.

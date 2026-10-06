@@ -1,0 +1,11 @@
+{"command": ["python3", "tests/cs-engineering/schema_reference_test.py"], "cwd": "/workspace/ags-cs-2x/repo", "started": "2026-10-06T02:02:15.007118+00:00", "isolation": {"TMPDIR": "/workspace/ags-cs-2x/tmp", "XDG_DATA_HOME": "/workspace/ags-cs-2x/tool-state/data", "XDG_CACHE_HOME": "/workspace/ags-cs-2x/tool-state/cache"}}
+{
+  "status": "PASS",
+  "schemas": 6,
+  "cases": 39,
+  "agreements": 39,
+  "python": "3.12.14",
+  "pythonJsonschemaVersion": "4.26.0",
+  "nodeSchemaEngine": "ags-ajv2020",
+  "scope": "Structural examples and negative cases compared with Draft 2020-12. Not a complete general JSON Schema conformance suite or native AGS Ajv test."
+}
