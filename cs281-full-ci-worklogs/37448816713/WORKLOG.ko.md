@@ -8,6 +8,6 @@ run `37448816713`, attempt 1, source `1b36ec771d641137e821f27c2066e05205c1e8f8`�
 
 실제 Node는 양OS v24.21.0, pnpm v11.19.0, PyYAML 6.0.3이다. Python은 Linux 3.12.14, Windows 3.12.10이다. 요청값과 관측을 구별하며 개별 검사 fresh/reuse는 unknown이다. command/env/source identity 원파일과 전체 run 로그를 유지한다.
 
-원 JSON 3개·전체 ZIP 로그 50개·양OS artifact 각24개를 private에 보존하고 안전 추출했다. 공개 사본은 artifact text/source 46개를 포함하며 Python bytecode .pyc 2개는 private에만 보존한다. ARTIFACT-CONTENTS는 제외 항목을 포함한 원 archive index/hash/API digest를, MANIFEST는 원/공개 파일 SHA·size와 치환 기준/위치를 기록한다. runner 절대경로·hostname·임시 UUID·계정/opaque metadata와 credential 후보를 제거하면서 commands/stdout/stderr·CRLF/BOM을 보존했다. 이번 Windows drive fallback은 URL의 s:/를 잘못 경로로 잡지 않도록 앞 boundary를 추가했으며 supplier URL을 유지했다.
+원 JSON 3개·전체 ZIP 로그 50개·양OS artifact 각24개를 private에 보존하고 안전 추출했다. 공개 사본은 artifact text/source 46개를 포함하며 Python bytecode .pyc 2개는 private에만 보존한다. ARTIFACT-CONTENTS는 제외 항목을 포함한 원 archive index/hash/API digest를, MANIFEST는 원/공개 파일 SHA·size와 치환 기준/위치를 기록한다. runner 절대경로·hostname·임시 UUID·계정/opaque metadata와 credential 후보를 제거하면서 commands/stdout/stderr·CRLF/BOM을 보존했다. 이번 Windows drive fallback은 일반 HTTPS 주소를 Windows 경로로 오인하지 않도록 drive 앞 경계를 추가했으며 supplier URL을 유지했다.
 
 evidence base `e56f5e5799d5a46940870a081df4a83cce6b5003`에서 새 prefix만 추가했다. 원자료·기존 payload·제품 source 변경, 로컬 제품 실행과 원격 mutation은 0이다. CI 실행 및 official 결과와 제품 출시·설치 승인을 구별한다.
