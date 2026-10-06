@@ -77,6 +77,81 @@ jobs:
         env:
           PYTHONUTF8: "1"
         run: pnpm validate:all
+      - name: Validate official Codex metadata with pinned supplier
+        shell: bash
+        env:
+          PYTHONUTF8: "1"
+          CODEX_HOME: ${{ runner.temp }}/official-validation-${{ runner.os }}/codex-home
+          OFFICIAL_LOG_DIR: ${{ runner.temp }}/official-validation-${{ runner.os }}
+        run: |
+          set -euo pipefail
+          log="${OFFICIAL_LOG_DIR:?}"
+          mkdir -p "$log"
+          exec > >(tee "$log/step.stdout") 2> >(tee "$log/step.stderr" >&2)
+          phase=preparation
+          finish() {
+            local command_code=$? metadata_code=0 final_code
+            trap - EXIT
+            set +e
+            { git rev-parse HEAD 'HEAD^{tree}'; git status --porcelain=v1; } > "$log/environment-after.txt" || metadata_code=$?
+            printf '%s\n' "$command_code" > "$log/$phase-step-exit-code.txt"
+            printf '%s\n' "$metadata_code" > "$log/metadata-exit-code.txt"
+            printf '%s\n' "$phase" > "$log/last-phase.txt"
+            final_code=$command_code
+            if [ "$final_code" -eq 0 ]; then final_code=$metadata_code; fi
+            printf '%s\n' "$final_code" > "$log/step-exit-code.txt"
+            exit "$final_code"
+          }
+          trap finish EXIT
+          printf 'NOT_RUN\n' > "$log/official-status.txt"
+          {
+            git rev-parse HEAD 'HEAD^{tree}'
+            git status --porcelain=v1
+            node --version
+            pnpm --version
+            python --version
+            printf 'run=%s attempt=%s ref=%s\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$GITHUB_REF"
+          } > "$log/environment-before.txt"
+          python -m pip install --disable-pip-version-check --no-cache-dir PyYAML==6.0.3
+          python -c 'import sys,yaml; print(sys.version); print(yaml.__version__); print(yaml.__file__); assert sys.version_info[:2] == (3,12) and yaml.__version__ == "6.0.3"' > "$log/python-yaml.txt"
+          supplier=10382da79a2a2d6e8ae221fa63077215389c1ad2
+          printf '%s\n' "https://github.com/openai/codex" "$supplier" > "$log/supplier-pin.txt"
+          mkdir -p "$CODEX_HOME/skills/.system/plugin-creator/scripts" "$CODEX_HOME/skills/.system/skill-creator/scripts" "$CODEX_HOME/.supplier"
+          while read -r source destination digest; do
+            url="https://raw.githubusercontent.com/openai/codex/$supplier/$source"
+            printf 'FETCH %s\n' "$url"
+            curl --fail --show-error --silent --location --max-time 60 --proto '=https' "$url" --output "$CODEX_HOME/$destination"
+            printf '%s  %s\n' "$digest" "$destination" >> "$log/supplier.sha256"
+            (cd "$CODEX_HOME" && printf '%s  %s\n' "$digest" "$destination" | sha256sum --check --strict)
+          done <<'SUPPLIER'
+          codex-rs/skills/src/assets/samples/plugin-creator/scripts/validate_plugin.py skills/.system/plugin-creator/scripts/validate_plugin.py f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944
+          codex-rs/skills/src/assets/samples/plugin-creator/scripts/identifier_validation.py skills/.system/plugin-creator/scripts/identifier_validation.py a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223
+          codex-rs/skills/src/assets/samples/skill-creator/scripts/quick_validate.py skills/.system/skill-creator/scripts/quick_validate.py ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c
+          LICENSE .supplier/LICENSE d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc
+          NOTICE .supplier/NOTICE 9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915
+          SUPPLIER
+          printf '0\n' > "$log/preparation-exit-code.txt"
+          phase=official
+          git ls-tree -d --name-only HEAD:skills > "$log/skill-inventory.txt"
+          printf 'pnpm run validate:official\n' > "$log/official-command.txt"
+          set +e
+          pnpm run validate:official > "$log/official.stdout" 2> "$log/official.stderr"
+          code=$?
+          set -e
+          printf '%s\n' "$code" > "$log/official-exit-code.txt"
+          printf 'EXECUTED\n' > "$log/official-status.txt"
+          cat "$log/official.stdout"
+          cat "$log/official.stderr" >&2
+          exit "$code"
+      - name: Upload official validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-codex-${{ github.run_id }}-${{ github.run_attempt }}-${{ runner.os }}
+          path: ${{ runner.temp }}/official-validation-${{ runner.os }}/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
       - name: Check pull request whitespace
         if: github.event_name == 'pull_request'
         shell: bash
