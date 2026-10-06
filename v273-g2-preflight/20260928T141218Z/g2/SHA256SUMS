@@ -28,7 +28,7 @@ a7929b32eb5141d29ea377779518f35526bfb9f837a83e0e4d8ca279738223a1  ./probes/probe
 d914e844b0105277b7bc30942c4c0e22acafd4d85b1f20920efbf6ba9c65e7d1  ./probes/probe-frozen-base/prompt.txt
 0c4228e7a868f5d54416ee0f5e9b67ffcd123eb96f65efc658c9098ae511721a  ./probes/probe-frozen-base/repo-after.txt
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./probes/probe-frozen-base/stderr.log
-43cfd550d8f168569e46ec2de83f01567aaecc7a7b2f5296c84e6bd2f1de2d0b  ./probes/probe-frozen-base/stream.jsonl
+d8c5fe794e02adbf291fc14a0114e917d7a4fcd0b2c1dfa19135aa25396e4e10  ./probes/probe-frozen-base/stream.jsonl
 a24f5d94d981535c3a906f2bb571ff21b5c90b87b25de8503e162dc4797cd883  ./probes/probe-frozen-cand/analysis.json
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./probes/probe-frozen-cand/analyze.err
 4104aa904e36d06617c1ffa93eb328fbb61a5d202db402ec456377b956199acd  ./probes/probe-frozen-cand/cmd.txt
@@ -38,7 +38,7 @@ a7929b32eb5141d29ea377779518f35526bfb9f837a83e0e4d8ca279738223a1  ./probes/probe
 4d1d1d897e07ebb5ca082ecb7b2c0b686d3a486b12bea41dfcd58a813fe464cc  ./probes/probe-frozen-cand/prompt.txt
 0c4228e7a868f5d54416ee0f5e9b67ffcd123eb96f65efc658c9098ae511721a  ./probes/probe-frozen-cand/repo-after.txt
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./probes/probe-frozen-cand/stderr.log
-31445989f71992cd0d4a66fd627c858c76cfa782a08acc732070c012a4f185a8  ./probes/probe-frozen-cand/stream.jsonl
+08631db4d2ac71db34a6efeb2957762f1fc09f795f39042bdf63a8fec4d65344  ./probes/probe-frozen-cand/stream.jsonl
 67fabb47db178e648de178de8242f89ba356a72bf5cd6f6d5a05a2ffc6db1ec8  ./probes/probe-template.txt
 09eb40dce71593990c8be8941135d0240aa56f7f68d5001095abc2c9deb3b7bd  ./probes/probe-v2-base/analysis.json
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./probes/probe-v2-base/analyze.err
@@ -50,7 +50,7 @@ e4276c2836f80491d1796c82c931a89efd20eb67a8f0e120e8085b5e9b88aef2  ./probes/probe
 ab26049abaf38d4e193c27caa42b3a0988ff725f73ef6467ff269625f5625dcf  ./probes/probe-v2-base/repo-after.txt
 6a23c227e4bc4e6e7d93cbdf0a9cdecfad07f7ff2b9d2beab38aeac17a5a08dd  ./probes/probe-v2-base/state-roots.txt
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./probes/probe-v2-base/stderr.log
-e9bd41675750224eaf06e2b4bd6be79aa5369711cb160fa5300845c44204c476  ./probes/probe-v2-base/stream.jsonl
+05eb1a5ee07e618234056236f255351cc7d4aaa776f97d004a99b5c3279ca6ab  ./probes/probe-v2-base/stream.jsonl
 f5969f7c0d683a8b041281e139c5d697ca6f37fa02a333d2b65f20c152b01fe6  ./probes/probe-v2-cand/analysis.json
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./probes/probe-v2-cand/analyze.err
 276c27ac493b664a5c035d812de5621e0e76097d2f58196284b038bc4048f61e  ./probes/probe-v2-cand/cmd.txt
@@ -61,7 +61,7 @@ f2a706c8c0c29ffed42089fc2658cb61ad00688c1cdfb3585060ecfd9c9eaf7f  ./probes/probe
 ab26049abaf38d4e193c27caa42b3a0988ff725f73ef6467ff269625f5625dcf  ./probes/probe-v2-cand/repo-after.txt
 e5bc345c456d72de20dfca587b246fcc3ca7edda0daf855efd34f64224be75b3  ./probes/probe-v2-cand/state-roots.txt
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ./probes/probe-v2-cand/stderr.log
-bb51c70c873ec829646508b32d9930026d8fadc2ff31dc30ef2434aaa3eab09f  ./probes/probe-v2-cand/stream.jsonl
+235b79c5dd4e02727a58792a510e7f39a1f1746fa92bd3447bdbea1a7c697267  ./probes/probe-v2-cand/stream.jsonl
 7ed960ffb971154e55a0871fe8fa7af8e42074fe9f78016729f98b7250c99084  ./probes/probe2-base.txt
 38456e111e7ebe56cd667cdcd6ddfac7beb8f85d17558ded0ffe8d09d7f33c53  ./probes/probe2-cand.txt
 72d4e88590421d543bff3a0e3c8a3fae4ce332bac3223e9411ed8bf16483c26d  ./probes/probe2-template.txt
