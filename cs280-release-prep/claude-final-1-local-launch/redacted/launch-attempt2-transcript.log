@@ -1,0 +1,37 @@
+**********************
+Windows PowerShell 기록 시작
+시작 시간: 20261006143850
+사용자 이름: <PC>\<USER>
+RunAs 사용자: <PC>\<USER>
+구성 이름: 
+Machine: <PC> (Microsoft Windows NT 10.0.26300.0)
+호스트 응용 프로그램: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File <SCRATCH>\cs280final\launch-cloud.ps1
+프로세스 ID: 7792
+PSVersion: 5.1.26100.9444
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.9444
+BuildVersion: 10.0.26100.9444
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Accessing workspace:
+
+ <SCRATCH>\cs280final\
+ repo
+
+ Quick safety check: Is this a project you created or one you trust? (Like your own code, a well-known open source
+ project, or work from your team). If not, take a moment to review what's in this folder first.
+
+ Claude Code'll be able to read, edit, and execute files here.
+
+ Security guide
+
+ > No, exit
+**********************
+Windows PowerShell 기록 끝
+종료 시간: 20261006144054
+**********************
