@@ -23,6 +23,8 @@ run의 의도적인 red 테스트는 exit 1과 FAIL receipt를 반환한다. she
 
 ## 검증되는 것
 
+case.argv는 1~128개의 비어 있지 않은 문자열(각 최대 8192자)로 실행 명령을 정확히 고정한다. shell 문자열을 추측해 파싱하지 않는다. plan.runner와 plan.environment는 설명이며 환경 보장이 아니다. red와 green은 모두 frozen case.argv와 일치해야 하고 receipt.executable은 argv[0]과 같아야 한다. 지정 argv가 의도한 테스트를 실제 실행하는지와 unsigned receipt의 진본성·인과성은 검토자 책임이다.
+
 plan은 요구 ID↔case, testFiles↔scopeFiles, 중복/누락/형식과 oracle·예외 사유를 검사한다. 신뢰할 만한 oracle인지는 에이전트가 실제 요구와 대조한다.
 
 proof는 frozen plan digest, 현재 후보의 실제 바이트, case별 coverage, receipt의 실제 파일 hash, 동일한 명령·기재된 환경, red→green 시간 순서, FAIL/PASS 상태, 동일한 테스트 바이트, 명시한 제품 mutation 경로, red assertion witness를 확인한다. 요구 필수 항목의 NOT_RUN은 INCOMPLETE다. EXEMPT는 plan에서 미리 not-applicable로 정한 경우만 허용한다. manual-review는 기계적 red/green 검증을 대신하는 자동 통과 모드가 아니다. 필요한 수동 검증은 기존 acceptance-evidence-validator로 전달한다.

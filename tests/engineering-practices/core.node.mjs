@@ -53,3 +53,24 @@ test('duplicate finding ID rejected', t => { const f = fixture(t); f.report.find
 test('snapshot delta includes additions and removals', t => { const f = fixture(t); const b = structuredClone(f.request.base); b.files[0].path = 'sample/old.mjs'; b.files.sort((a,b)=>a.path.localeCompare(b.path)); assert.deepEqual(snapshotDelta(seal(b),f.request.head), ['sample/old.mjs','sample/page.mjs']); });
 test('provider adapter leaves artifact verification to AGS', t => { const f = fixture(t); const p = providerResult('test-sensitivity-review',f.testResult,'test-result.json'); assert.equal(p.artifacts[0].verified,false); assert.equal(p.error,null); assert.equal(p.artifacts[0].digest,hashBytes(JSON.stringify(f.testResult,null,2)+'\n')); });
 test('provider rejects unknown capability', t => { const f=fixture(t); fail(()=>providerResult('release-approval',f.testResult,'result.json')); });
+
+test('both resealed commands away from frozen plan rejected', t => {
+  const f = fixture(t);
+  for (const side of ['red', 'green']) {
+    const argv = [process.execPath, '--test', 'other.test.mjs'];
+    const receipt = seal({ ...f[side], argv, executable: argv[0] });
+    f.proof.proofs[0][side] = writeJson(f.root, `evidence/${side}-other.json`, receipt);
+  }
+  assert.throws(() => validateProof(f.root, f.plan, f.proof), /frozen case argv/);
+});
+test('resealed executable and argv contradiction rejected', t => {
+  const f = fixture(t);
+  assert.throws(() => assertReceipt(seal({ ...f.green, executable: 'different-executable' })), /executable differs/);
+});
+test('case argv bounds and NUL rejected', t => {
+  const f = fixture(t);
+  for (const argv of [[], Array(129).fill('node'), [''], ['x'.repeat(8193)], ['node\0']]) {
+    f.plan.cases[0].argv = argv;
+    fail(() => validatePlan(f.plan));
+  }
+});

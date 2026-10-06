@@ -54,12 +54,14 @@
     "runner": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 8192
+      "maxLength": 8192,
+      "description": "Descriptive label only; execution is bound by exact case argv."
     },
     "environment": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 8192
+      "maxLength": 8192,
+      "description": "Descriptive environment note only; no environment enforcement or attestation."
     },
     "cases": {
       "type": "array",
@@ -77,7 +79,8 @@
           "testFiles",
           "required",
           "sensitivity",
-          "sensitivityReason"
+          "sensitivityReason",
+          "argv"
         ],
         "properties": {
           "id": {
@@ -148,6 +151,16 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 8192
+          },
+          "argv": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 128,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 8192
+            }
           }
         }
       },

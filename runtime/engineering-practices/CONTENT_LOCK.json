@@ -35,7 +35,7 @@
     },
     {
       "path": "contracts/engineering-test-plan.v1.schema.json",
-      "digest": "sha256:7008da8b10b40032f97b4e4c3a3b8439d7454a1fb10e576ba93048376d7aca53"
+      "digest": "sha256:8b217c7bcc3489c0e771f97e7b0b7ba6447bcace85401858a6e8e00ebb9edf82"
     },
     {
       "path": "contracts/engineering-test-proof.v1.schema.json",
@@ -55,7 +55,7 @@
     },
     {
       "path": "runtime/engineering-practices/core.mjs",
-      "digest": "sha256:6751dad7727b06f32c69d56cf4faf409bd97be4ff1a6667de12343224f7cccbe"
+      "digest": "sha256:ead06d27cf70a03d84e2ba9510947ce22a5e39e751f241bbf4d137fe4292f52c"
     },
     {
       "path": "runtime/engineering-practices/io.mjs",
@@ -99,7 +99,7 @@
     },
     {
       "path": "skills/code-review/assets/shared-dependencies.json",
-      "digest": "sha256:f43c81f2ccf69a563f34f4136442fdefb979fd8bed58575dcd4a0c9c8396853b"
+      "digest": "sha256:cccdac06ae952f5e0e4fc24282a78004bbe5ca2db0e199076d4a9ef03b5fd570"
     },
     {
       "path": "skills/code-review/integration/skill-descriptor.json",
@@ -119,7 +119,7 @@
     },
     {
       "path": "skills/orchestrator/references/engineering-practices/cli.md",
-      "digest": "sha256:18289d852254314d9cae586a5e66b40852d21552df69314d499a068b27ba2198"
+      "digest": "sha256:be715633beccc35385f6b1ae3c0c822d1a3487afcae9398bda0d9cf74cfa9341"
     },
     {
       "path": "skills/orchestrator/references/engineering-practices/code-review.md",
@@ -175,7 +175,7 @@
     },
     {
       "path": "skills/test-engineering/assets/shared-dependencies.json",
-      "digest": "sha256:f43c81f2ccf69a563f34f4136442fdefb979fd8bed58575dcd4a0c9c8396853b"
+      "digest": "sha256:cccdac06ae952f5e0e4fc24282a78004bbe5ca2db0e199076d4a9ef03b5fd570"
     },
     {
       "path": "skills/test-engineering/integration/skill-descriptor.json",

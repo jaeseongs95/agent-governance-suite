@@ -63,6 +63,7 @@ export function validatePlan(plan) {
   const covered = new Set();
   for (const c of plan.cases) {
     uniqueStrings(c.requirementIds, 'requirementIds'); paths(c.testFiles, 'testFiles');
+    need(c.argv.every(a => !a.includes('\0')), 'INVALID_INPUT', 'NUL in frozen case argv.');
     for (const id of c.requirementIds) { need(plan.requirements.includes(id), 'INVALID_INPUT', `Unknown requirement in case ${c.id}.`); covered.add(id); }
     need(c.testFiles.every(p => plan.scopeFiles.includes(p)), 'INVALID_INPUT', `Case ${c.id} test file is outside the frozen scope.`);
     need(c.id.trim() && c.oracle.trim() && c.sensitivityReason.trim(), 'INVALID_INPUT', 'Case identity, oracle and sensitivity rationale must be meaningful.');
@@ -75,6 +76,7 @@ function exactIso(s) { const n = Date.parse(s); return Number.isFinite(n) && new
 export function assertReceipt(receipt) {
   validateSchema('engineering-run-receipt', receipt); assertSnapshot(receipt.snapshot);
   need(receipt.argv.every(a => !a.includes('\0')), 'INVALID_INPUT', 'NUL in argv.');
+  need(receipt.executable === receipt.argv[0], 'INVALID_INPUT', 'Receipt executable differs from argv[0].');
   need(exactIso(receipt.startedAt) && exactIso(receipt.finishedAt) && receipt.finishedAt >= receipt.startedAt, 'INVALID_INPUT', 'Invalid receipt timestamps.');
   need(Number.isSafeInteger(receipt.timeoutMs) && receipt.timeoutMs >= 1 && receipt.timeoutMs <= 300000, 'INVALID_INPUT', 'Invalid timeout bound.');
   need(receipt.exitCode === null || Number.isSafeInteger(receipt.exitCode), 'INVALID_INPUT', 'Unsafe exit code.');
@@ -113,6 +115,7 @@ export function validateProof(root, plan, proof) {
     need(green.snapshot.digest === proof.candidate.digest && green.afterDigest === proof.candidate.digest, 'INTEGRITY_FAILED', 'Green evidence is for a different candidate.');
     need(red.snapshot.digest !== green.snapshot.digest, 'INVALID_INPUT', 'No production mutation is represented.');
     need(canonicalJson(red.argv) === canonicalJson(green.argv), 'INVALID_INPUT', 'Red and green commands differ.');
+    need(canonicalJson(red.argv) === canonicalJson(c.argv) && canonicalJson(green.argv) === canonicalJson(c.argv), 'INVALID_INPUT', 'Red and green commands must match frozen case argv.');
     need(red.environmentNote === green.environmentNote && red.nodeVersion === green.nodeVersion && red.platform === green.platform && red.executable === green.executable, 'INVALID_INPUT', 'Declared execution environments differ.');
     need(red.finishedAt <= green.startedAt, 'INVALID_INPUT', 'Green must follow the recorded red run.');
     need(sameSet(red.snapshot.files.map(f => f.path), proof.candidate.files.map(f => f.path)), 'INVALID_INPUT', 'Red and green file sets differ.');
