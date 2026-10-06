@@ -1,0 +1,9 @@
+This is an automated validation run. Do exactly the steps below, nothing else. Do not spawn subagents. Do not call any tool other than those named here.
+
+(a) Do not print the init skill/plugin/MCP lists; they are captured separately.
+
+(b) Use the Skill tool to invoke `agent-governance-suite:test-engineering`, then use the Skill tool again to invoke `agent-governance-suite:code-review`. Do not perform the skills' workflows; only load them. For each, report the exact "Base directory" path shown when the skill loaded.
+
+(d) Do NOT call start_guarded_workflow, record_stage_result, finalize_workflow, or any other MCP tool.
+
+Final answer: the two base directories.

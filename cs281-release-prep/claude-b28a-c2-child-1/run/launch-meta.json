@@ -1,0 +1,39 @@
+{
+  "launchCount": 1,
+  "startUtc": "2026-10-06T15:05:22.785888Z",
+  "pid": 528,
+  "pgid": 528,
+  "cwd": "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/c2-git-v2/child-cwd",
+  "env_set": {
+    "CLAUDE_CONFIG_DIR": "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/c2-git-v2/claude-config"
+  },
+  "env_unset": [
+    "CLAUDE_CODE_MESSAGING_SOCKET",
+    "CLAUDE_CODE_MESSAGING_TOKEN"
+  ],
+  "argv_without_prompt": [
+    "claude",
+    "-p",
+    "--model",
+    "claude-sonnet-5-5",
+    "--effort",
+    "high",
+    "--max-turns",
+    "8",
+    "--max-budget-usd",
+    "1.00",
+    "--input-format",
+    "text",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--tools",
+    "Skill",
+    "--allowedTools",
+    "Skill",
+    "--disallowedTools",
+    "mcp__*",
+    "--"
+  ],
+  "promptSha256": "3eaca6bd5b906c7fc2eb2ff1322b2795fa9ac9b5f0b5e23e9673d8773b301af1"
+}

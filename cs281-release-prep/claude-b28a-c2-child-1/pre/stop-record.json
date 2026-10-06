@@ -1,0 +1,52 @@
+{
+  "schema": "cs281-c2-child-1-stop/1",
+  "receivedUtc": "2026-10-06T15:01:17Z (first command after receipt; message arrival time itself not separately observed)",
+  "launch": 0,
+  "checks": {
+    "1_source_and_clone": {
+      "result": "PASS",
+      "source": "b28a442a/e1ffc736 dirty 0",
+      "clone": "b28a442a/e1ffc736",
+      "raw": [
+        "raw/001",
+        "raw/002",
+        "raw/003"
+      ]
+    },
+    "2_I_506_lock42": {
+      "result": "PASS",
+      "detail": "506/506 match, lock sha 39abb05f..., 42/42",
+      "raw": [
+        "raw/004",
+        "raw/005",
+        "raw/006",
+        "raw/007"
+      ]
+    },
+    "3_config_cwd": {
+      "result": "PASS",
+      "config": "<ST>/c2-git-v2/claude-config (non-empty absolute path, exists)",
+      "cwd": "<ST>/c2-git-v2/child-cwd (outside repo and its parents)",
+      "raw": [
+        "raw/008"
+      ]
+    },
+    "4_no_running_child": {
+      "result": "PASS",
+      "detail": "ps shows no claude child using that config; only Cloud main processes",
+      "raw": [
+        "raw/009"
+      ]
+    },
+    "5_prompt_two_skill_only": {
+      "result": "FAIL",
+      "detail": "The only childrun2 prompt in this session's records (commands.jsonl seq 88 argv[-1], sha256 8fa11df8d5e44f8ce2de6463260ba805d426d5c937e69adcb50e251d7dc77f84, 1792 bytes; file c2-prompt-run2.txt sha256 2b8e218f802ea25de927111106b8af47a693feb94a57382a91a3dfc083205e88) contains step (c) instructing a plan_workflow MCP call. It is not a two-Skill-loading-only prompt; using it verbatim conflicts with that requirement and editing it is prohibited.",
+      "raw": [
+        "raw/010"
+      ]
+    }
+  },
+  "stopReason": "Pre-launch check 5 failed: no verbatim two-Skill-only childrun2 prompt exists; launch 0 per instruction.",
+  "observation": "VM rebooted again before this message (PID 1 elapsed ~33s at 15:01Z; environment-manager --session-mode resume). Same container disk; reused.",
+  "childStateNow": "no child launched; nothing to observe"
+}

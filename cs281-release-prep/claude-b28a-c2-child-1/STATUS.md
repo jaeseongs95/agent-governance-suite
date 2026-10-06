@@ -1,0 +1,27 @@
+# claude-b28a-c2-child-1 (준비본, push 0)
+
+- 착수 전 확인
+  - 1~4번: PASS. source/clone b28a442a/e1ffc736, `<I>` 506/506, lock 42/42, config와 cwd, 실행 중인 child 없음.
+  - 5번 첫 판정: FAIL. 기존 run2 prompt에 plan_workflow 단계가 있었다. 첫 판정은 `pre/stop-record.json`에 있다.
+  - 이후 사용자가 run2에서 (c)를 뺀 Skill 전용 prompt를 세션 안에서 직접 승인했다. prompt sha256 3eaca6bd5b906c7fc2eb2ff1322b2795fa9ac9b5f0b5e23e9673d8773b301af1, 665 bytes.
+- 실행: launch 1회. 시작 2026-10-06T15:05:22.785888Z, 기록된 PID 528. argv와 env는 `run/launch-meta.json`에 있다.
+- 60초 관찰: 15:05:31.080067Z에 이미 EXITED, exit 0.
+- 결과: subtype success, terminal completed, num_turns 5.
+  - cost는 total_cost_usd 0.080078이다. 이 값은 client 추정치다.
+- model과 effort
+  - 요청: claude-sonnet-5-5, high.
+  - 실제: init model claude-sonnet-5-5. 보조로 claude-haiku-4-5-20251001이 modelUsage에 있다. provider는 firstParty.
+  - 실제 effort: init에 effort 값이 없어 UNKNOWN(per_turn_effort_active=true만 있다).
+- init plugin root: `<ST>/c2-git-v2/claude-config/plugins/cache/agent-governance-claude/agent-governance-suite/2.8.1`. 이 경로가 `<I>`다.
+- 두 Skill
+  - 각각 native Skill tool_use와 "Launching skill"을 확인했다.
+  - baseDirectory는 `<I>/skills/test-engineering`과 `<I>/skills/code-review`다.
+  - 주입된 body를 `<I>`의 SKILL.md와 대조했다.
+    - frontmatter를 뺀 원 bytes: 일치하지 않음.
+    - 바깥쪽 공백을 정규화한 뒤: 일치.
+    - 대조 결과는 `pre/raw/011`에 있다.
+- MCP: init inventory에는 plugin server가 connected로 나온다. 다만 tools는 Skill만 있고 mcp__* 호출은 0이다.
+- workflow 효과: start, record, finalize, proof 모두 0. permission_denials 0. subagent 0.
+- 종료 후 관측: plugin의 session-message-broker 프로세스가 남아 실행 중이다. state 디렉터리는 사용자 홈 아래의 공용 경로이며, 이번 실행이 격리하지 않은 경로다. kill하지 않았다.
+- 정제: c2-git-1 packet과 같은 방식이다. JSON 문자열 leaf만 치환했고, thinking과 signature를 제거했다. 잔여 0.
+- 위 내용 중 지시는 위임으로 받은 지시문이다. 인간 승인 원문은 d4와 리드가 보관한다.
