@@ -1,0 +1,13 @@
+{
+  "label": "12-resume-discovery-driver",
+  "command": [
+    "python",
+    "/workspace/ags-cs-2x/official-final-3ff79982/tools/discover.py"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982",
+  "startedUtc": "2026-10-06T05:46:20.624359+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:46:20.758311+00:00",
+  "stdout": "12-resume-discovery-driver.stdout.log",
+  "stderr": "12-resume-discovery-driver.stderr.log"
+}

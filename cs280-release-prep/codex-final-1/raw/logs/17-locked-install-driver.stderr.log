@@ -1,0 +1,4 @@
+  File "/workspace/ags-cs-2x/official-final-3ff79982/tools/install_locked.py", line 40
+    changedInput='New final source b734; explicitly authorized frozen install with private --store-dir; no dependency gate relaxation')))
+                                                                                                                                        ^
+SyntaxError: unmatched ')'

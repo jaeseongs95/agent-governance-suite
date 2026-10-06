@@ -1,0 +1,14 @@
+{
+  "label": "02-candidate-init",
+  "command": [
+    "git",
+    "init",
+    "/workspace/ags-cs-2x/official-final-3ff79982/candidate"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982",
+  "startedUtc": "2026-10-06T05:45:19.119326+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:45:19.122552+00:00",
+  "stdout": "02-candidate-init.stdout.log",
+  "stderr": "02-candidate-init.stderr.log"
+}

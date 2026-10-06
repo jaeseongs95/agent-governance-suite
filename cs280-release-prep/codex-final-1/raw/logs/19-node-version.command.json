@@ -1,0 +1,13 @@
+{
+  "label": "19-node-version",
+  "command": [
+    "node",
+    "--version"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate",
+  "startedUtc": "2026-10-06T05:50:04.225602+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:50:04.231528+00:00",
+  "stdout": "19-node-version.stdout.log",
+  "stderr": "19-node-version.stderr.log"
+}

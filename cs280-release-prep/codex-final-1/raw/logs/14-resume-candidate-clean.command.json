@@ -1,0 +1,14 @@
+{
+  "label": "14-resume-candidate-clean",
+  "command": [
+    "git",
+    "status",
+    "--porcelain"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate",
+  "startedUtc": "2026-10-06T05:46:20.660338+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:46:20.714718+00:00",
+  "stdout": "14-resume-candidate-clean.stdout.log",
+  "stderr": "14-resume-candidate-clean.stderr.log"
+}

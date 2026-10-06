@@ -1,0 +1,165 @@
+diff --git a/README.en.md b/README.en.md
+index 9a1375a..545f0ad 100644
+--- a/README.en.md
++++ b/README.en.md
+@@ -35,11 +35,9 @@ AGS supports this workflow with task contracts, specialist skills, the session b
+ You need Node.js **24.0.0 or later** and plugin support in the host you use. Install AGS in each participating host. Using the plugin does not require cloning this repository or running `pnpm install`.
+ 
+ <!-- release-version:start -->
+-The current release candidate is `v2.8.0` and includes seventeen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
++The current public release is `v2.8.0` and includes seventeen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
+ <!-- release-version:end -->
+ 
+-This tree is the 2.8.0 review candidate; the public release remains v2.7.7. Remote installation examples retain the public version. Review the candidate from its ZIP/patch.
+-
+ ### Claude Code
+ 
+ Run inside Claude Code:
+@@ -57,7 +55,7 @@ Run in a terminal:
+ 
+ <!-- release-install:start -->
+ ```bash
+-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.7
++codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.8.0
+ codex plugin add agent-governance-suite@agent-governance
+ ```
+ <!-- release-install:end -->
+diff --git a/README.md b/README.md
+index c4fbd7c..67b2bd9 100644
+--- a/README.md
++++ b/README.md
+@@ -35,11 +35,9 @@ flowchart LR
+ Node.js **24.0.0 이상**과 사용할 호스트의 플러그인 기능이 필요합니다. 협업에 참여할 호스트마다 AGS를 설치합니다. 플러그인 사용을 위해 이 저장소를 clone하거나 `pnpm install`을 실행할 필요는 없습니다.
+ 
+ <!-- release-version:start -->
+-현재 릴리스 후보는 `v2.8.0`이며 거버넌스 전문 스킬 17개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
++현재 공개 릴리스는 `v2.8.0`이며 거버넌스 전문 스킬 17개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
+ <!-- release-version:end -->
+ 
+-이 작업 트리는 검토용 2.8.0 후보이며 공개 릴리스는 v2.7.7입니다. 아래 원격 설치 예시는 공개 버전을 유지합니다. 후보는 제공된 ZIP/patch로만 검토합니다.
+-
+ ### Claude Code
+ 
+ Claude Code 안에서 실행합니다.
+@@ -57,7 +55,7 @@ Claude Code 안에서 실행합니다.
+ 
+ <!-- release-install:start -->
+ ```bash
+-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.7
++codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.8.0
+ codex plugin add agent-governance-suite@agent-governance
+ ```
+ <!-- release-install:end -->
+diff --git a/docs/release-notes-2.8.0-rc.ko.md b/docs/release-notes-2.8.0-rc.ko.md
+index e4afdfa..c9d5d2c 100644
+--- a/docs/release-notes-2.8.0-rc.ko.md
++++ b/docs/release-notes-2.8.0-rc.ko.md
+@@ -1,9 +1,11 @@
+-# AGS 2.8.0 릴리스 노트 초안
++# AGS 2.8.0 릴리스 노트
+ 
+-현재 후보는 CS 조건 도출과 구현 검토를 기존 전문 스킬 흐름에 연결한다. cs-engineering0.2.0은 필요한 분야만 읽는 지식팩0.1.0, 기본5분야20규칙, 명시적 도입이 필요한 draft5분야20규칙을 제공한다.
++AGS 2.8.0은 CS 조건 도출과 구현 검토를 기존 전문 스킬 흐름에 연결한다. `cs-engineering` 0.2.0은 필요한 분야만 읽는 지식팩 0.1.0, 기본 5분야 20규칙과 명시적으로 도입하는 draft 5분야 20규칙을 제공한다. draft 규칙은 validated 규칙으로 취급하지 않는다.
+ 
+-선택된 CS 리뷰를 기록할 때 MCP는 실제 bundle 파일과 signed task digest, 후보, 동결 조건, 검증 환경과 원시 파일 digest를 대조한다. 최종 완료 시 같은 파일을 다시 읽어 기록 뒤 변경된 후보나 근거가 통과하지 않게 한다. 인계 CLI는 구현 전에 동결 입력과 의무 ID를 재검사한다. 기존 수용 근거·보안·독립 감사 책임과 실행 assurance는 유지한다.
++선택된 CS 리뷰를 기록할 때 MCP는 실제 bundle 파일, signed task digest, 후보, 동결 조건, 검증 환경과 원시 파일 digest를 대조한다. 완료 시 같은 파일을 다시 읽어 기록 뒤 달라진 후보나 근거를 거절한다. 인계 CLI는 구현 전에 동결 입력과 의무 ID를 재검사한다. `FAIL`과 `BLOCKED`는 non-passing이며 `NOT_RUN`을 `PASS`로 승격하지 않는다.
+ 
+-TaskEnvelope1.0과 기존 plan wrapper를 변경하지 않는다. CS binding의 signed plan·lease·start·resume 전체 전파, 전역 적용성 및 acceptance 강제 정책은 이번 후보에 포함되지 않는다. 실호스트 자동 선택과 Windows, 품질 개선 평가 및 독립 SOURCE 감사는 별도 검증이다.
++호환 기준은 Node.js 24 이상, pnpm 11.19.0, Registry 2.0, SourceLock 3.0과 TaskEnvelope 1.0이다. 기존 plan wrapper, 수용 근거·보안·독립 감사 책임과 실행 assurance 계약은 유지한다.
+ 
+-Node24 이상, pnpm11.19.0을 지원 기준으로 유지한다. 후보 ZIP/patch는 검토용이며, 공개 main·태그·Release·사용자 설치 캐시는 변경하지 않았다. 공개 릴리스는 v2.7.7이다. 최종 명령과 실제 결과는 함께 제공하는 검토 ZIP의 verification-report.ko.md를 따른다.
++CS binding의 signed plan·lease·start·resume 전체 전파, 전 작업 적용성 및 acceptance 강제, 후보 변경에 따른 epoch 재계약은 2.8.0 범위에 포함되지 않는다. 이 릴리스는 선택된 CS stage artifact를 고정하고 재검사하는 제한적 경로를 제공하며 전체 생명주기의 우회 불가 gate를 주장하지 않는다.
++
++CS 스킬의 모델 품질·비용 A/B/C 평가는 실행하지 않았다. 이는 품질 근거의 한계이며 registry의 enabled 상태나 현재 제한적 runtime 경로를 자동으로 비활성화하는 의미는 아니다. 최종 후보의 명령 결과, 다중 OS 검증, 공식 validator, 감사와 설치 결과는 별도 릴리스 검증 보고서에서 확인한다.
+diff --git a/docs/roadmap.md b/docs/roadmap.md
+index f300ab5..c349e9a 100644
+--- a/docs/roadmap.md
++++ b/docs/roadmap.md
+@@ -1,7 +1,7 @@
+ # Agent Governance Suite 향후 로드맵
+ 
+ <!-- release-version:start -->
+-문서 기준일은 2026년 9월 21일이다. 현재 릴리스 후보는 `v2.8.0`이다. v2.4.0은 20개 스킬의 상세 절차를 활성화 뒤에 읽는 reference로 분리하고 SourceLock v3에서 suite 소유 스킬과 외부 fork를 구분한다. v2.2 계열의 공용 상태 경로, TLS 1.3 loopback broker, 호스트 중립 메시지 계약과 중복 wake 억제는 유지한다. 한국어 산문 워크플로의 candidate-v2 정책은 2026년 9월 17일 동결 frame `0.3.0-gate-1`의 평가 대상이 아니므로 품질 미평가 상태로 유지한다.
++문서 기준일은 2026년 9월 21일이다. 현재 공개 릴리스는 `v2.8.0`이다. v2.4.0은 20개 스킬의 상세 절차를 활성화 뒤에 읽는 reference로 분리하고 SourceLock v3에서 suite 소유 스킬과 외부 fork를 구분한다. v2.2 계열의 공용 상태 경로, TLS 1.3 loopback broker, 호스트 중립 메시지 계약과 중복 wake 억제는 유지한다. 한국어 산문 워크플로의 candidate-v2 정책은 2026년 9월 17일 동결 frame `0.3.0-gate-1`의 평가 대상이 아니므로 품질 미평가 상태로 유지한다.
+ <!-- release-version:end -->
+ 
+ 이 문서는 프로젝트 코드와 설계 문서뿐 아니라 이 저장소에서 진행한 Codex 작업의 논의를 함께 반영한다. 일정은 특정 날짜보다 단계별 종료 조건을 기준으로 관리한다. 각 단계의 필수 검증을 마치기 전에는 다음 릴리스 범위로 넘기지 않는다.
+diff --git a/release/version.json b/release/version.json
+index 8746a9d..4d01ef8 100644
+--- a/release/version.json
++++ b/release/version.json
+@@ -1,5 +1,3 @@
+ {
+-  "version": "2.8.0",
+-  "status": "candidate",
+-  "publicVersion": "2.7.7"
++  "version": "2.8.0"
+ }
+diff --git a/tests/cs-engineering/files.node.mjs b/tests/cs-engineering/files.node.mjs
+index 642dd3b..aaa68a9 100644
+--- a/tests/cs-engineering/files.node.mjs
++++ b/tests/cs-engineering/files.node.mjs
+@@ -14,7 +14,8 @@ test('deep and cyclic objects fail boundedly',()=>{let v={};for(let i=0;i<100;i+
+ test('invalid UTF-8 is rejected rather than replaced',()=>reject(()=>parseJson(Buffer.from([0xff,0xfe]))));
+ test('raw hashes use file bytes, not parsed JSON',t=>{const root=scratch(t);writeFileSync(path.join(root,'a.json'),'{"a":1}\n');const d=hashBytes(Buffer.from('{"a":1}\n'));readArtifact(root,{path:'a.json',digest:d});writeFileSync(path.join(root,'a.json'),'{ "a": 1 }\n');assert.throws(()=>readArtifact(root,{path:'a.json',digest:d}),e=>e instanceof CsError&&e.code==='INTEGRITY_FAILED');});
+ test('bounded read rejects directories and oversize files',t=>{const root=scratch(t);mkdirSync(path.join(root,'dir'));reject(()=>readBoundedFile(root,'dir'));writeFileSync(path.join(root,'big'),Buffer.alloc(32));reject(()=>readBoundedFile(root,'big',16));});
+-test('symlink file and intermediate symlink are rejected',t=>{const root=scratch(t);mkdirSync(path.join(root,'actual'));writeFileSync(path.join(root,'actual/file'),'data');symlinkSync('actual/file',path.join(root,'link'));symlinkSync('actual',path.join(root,'dirlink'),'dir');reject(()=>readBoundedFile(root,'link'));reject(()=>readBoundedFile(root,'dirlink/file'));});
++test('file symlink is rejected',t=>{const root=scratch(t);mkdirSync(path.join(root,'actual'));writeFileSync(path.join(root,'actual/file'),'data');try{symlinkSync('actual/file',path.join(root,'link'));}catch(error){if(process.platform==='win32'&&['EPERM','EACCES'].includes(error?.code)){t.skip(`Windows file symlink creation unavailable: ${error.code}`);return;}throw error;}reject(()=>readBoundedFile(root,'link'));});
++test('intermediate directory symlink or junction is rejected',t=>{const root=scratch(t),actual=path.join(root,'actual'),windows=process.platform==='win32';mkdirSync(actual);writeFileSync(path.join(actual,'file'),'data');symlinkSync(windows?actual:'actual',path.join(root,'dirlink'),windows?'junction':'dir');reject(()=>readBoundedFile(root,'dirlink/file'));});
+ test('tampered knowledge content fails before use',t=>{const root=scratch(t);cpSync(SKILL,root,{recursive:true});writeFileSync(path.join(root,'references/concurrency.md'),'tampered');reject(()=>loadPack(root));});
+ for(const file of ['candidate/queue.py','evidence/queue-tests.json','source/request.txt','constraints.json'])test('bundle rejects modified raw '+file,t=>{const root=scratch(t,true),f=fixture();writeFileSync(path.join(root,file),'changed\n');reject(()=>checkBundle({...f,root}));});
+ test('bundle rejects missing raw evidence',t=>{const root=scratch(t,true),f=fixture();unlinkSync(path.join(root,'evidence/queue-tests.json'));reject(()=>checkBundle({...f,root}));});
+diff --git a/tests/session-messaging/session-message.test.ts b/tests/session-messaging/session-message.test.ts
+index d5cf7b9..89678f8 100644
+--- a/tests/session-messaging/session-message.test.ts
++++ b/tests/session-messaging/session-message.test.ts
+@@ -1154,12 +1154,13 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
+     expect(database.includes(Buffer.from("cc-msg-socket-probe"))).toBe(false);
+   }, 30_000);
+ 
+-  it("blocks only verified empty Codex wake prompts in the packaged hook", async () => {
++  it.each(["source", "packaged"] as const)("blocks only verified empty Codex wake prompts in the %s hook", async (entrypoint) => {
+     const directory = stateDirectory();
+-    await startSourceBroker(directory);
+     vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", directory);
+     vi.stubEnv("AGENT_GOVERNANCE_TRUST_DB_PATH", path.join(directory, "trust.sqlite3"));
+     vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "1");
++    // The broker captures its trust DB at startup; inherit the same fixture path as the hook.
++    await startSourceBroker(directory);
+     for (const scenario of ["submitted", "unknown", "duplicate", "late", "idle", "forged", "mixed", "claude", "legacy"]) {
+       const target = { host: scenario === "claude" ? "claude-code" : "codex", sessionId: `empty-hook-${scenario}` };
+       const nonce = `empty-hook-${scenario}-nonce-abcdefghijklmnop`;
+@@ -1198,7 +1199,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
+         : `[agent-governance-suite:wake:${nonce}]${scenario === "mixed" ? "\nactual user request" : ""}`;
+       const input = { hook_event_name: "UserPromptSubmit", session_id: target.sessionId, agent_id: "", prompt };
+       const invoke = () => {
+-        if (scenario === "claude") return handleSessionMessageHook(input, "claude-code");
++        if (scenario === "claude" || entrypoint === "source") return handleSessionMessageHook(input, scenario === "claude" ? "claude-code" : "codex");
+         const child = spawnSync(process.execPath, [bundledSessionMessageHook], { input: JSON.stringify(input), encoding: "utf8",
+           timeout: 10_000, windowsHide: true, env: { ...process.env } });
+         expect(child.status, child.stderr).toBe(0);
+@@ -1226,12 +1227,13 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
+     }
+   }, 30_000);
+ 
+-  it("blocks a verified retired Codex wake marker without claiming the current body", async () => {
++  it.each(["source", "packaged"] as const)("blocks a verified retired Codex wake marker without claiming the current body through the %s hook", async (entrypoint) => {
+     const directory = stateDirectory();
+-    await startSourceBroker(directory);
+     vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", directory);
+     vi.stubEnv("AGENT_GOVERNANCE_TRUST_DB_PATH", path.join(directory, "trust.sqlite3"));
+     vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "1");
++    // The broker captures its trust DB at startup; inherit the same fixture path as the hook.
++    await startSourceBroker(directory);
+     const capabilities: DeliveryCapabilities = { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" };
+     for (const host of ["codex", "claude-code"]) {
+       const target = { host, sessionId: `retired-hook-${host}` };
+@@ -1254,7 +1256,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
+       } finally { store.close(); }
+       const input = { hook_event_name: "UserPromptSubmit", session_id: target.sessionId, agent_id: "", prompt: `[agent-governance-suite:wake:${nonce}]` };
+       let output: Record<string, unknown>;
+-      if (host === "claude-code") output = await handleSessionMessageHook(input, "claude-code");
++      if (host === "claude-code" || entrypoint === "source") output = await handleSessionMessageHook(input, host === "claude-code" ? "claude-code" : "codex");
+       else {
+         const child = spawnSync(process.execPath, [bundledSessionMessageHook], { input: JSON.stringify(input), encoding: "utf8",
+           timeout: 10_000, windowsHide: true, env: { ...process.env } });

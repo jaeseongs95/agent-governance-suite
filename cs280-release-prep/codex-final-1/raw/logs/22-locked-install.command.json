@@ -1,0 +1,16 @@
+{
+  "label": "22-locked-install",
+  "command": [
+    "pnpm",
+    "--store-dir",
+    "/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private",
+    "install",
+    "--frozen-lockfile"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate",
+  "startedUtc": "2026-10-06T05:50:05.138122+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:50:10.739046+00:00",
+  "stdout": "22-locked-install.stdout.log",
+  "stderr": "22-locked-install.stderr.log"
+}

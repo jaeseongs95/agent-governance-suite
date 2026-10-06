@@ -1,0 +1,16 @@
+{
+  "label": "01-remote-ref",
+  "command": [
+    "git",
+    "ls-remote",
+    "--heads",
+    "https://github.com/jaeseongs95/agent-governance-suite.git",
+    "refs/heads/codex/release-candidate-2.8.0"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982",
+  "startedUtc": "2026-10-06T05:45:18.767629+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:45:19.118719+00:00",
+  "stdout": "01-remote-ref.stdout.log",
+  "stderr": "01-remote-ref.stderr.log"
+}

@@ -1,0 +1,13 @@
+{
+  "label": "27-final-official-driver",
+  "command": [
+    "python",
+    "/workspace/ags-cs-2x/official-final-3ff79982/tools/official_once.py"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982",
+  "startedUtc": "2026-10-06T05:51:08.347650+00:00",
+  "exitCode": 1,
+  "finishedUtc": "2026-10-06T05:51:09.200387+00:00",
+  "stdout": "27-final-official-driver.stdout.log",
+  "stderr": "27-final-official-driver.stderr.log"
+}

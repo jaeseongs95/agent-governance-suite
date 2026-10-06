@@ -1,0 +1,17 @@
+{
+  "label": "11-supplier-blob-2",
+  "command": [
+    "git",
+    "--git-dir",
+    "/workspace/ags-cs-2x/official-validator-26c6c9d9/upstream.git",
+    "cat-file",
+    "blob",
+    "e27023ece4bd259ef36560e19995eec7b6a345bf"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982",
+  "startedUtc": "2026-10-06T05:46:20.727088+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:46:20.728860+00:00",
+  "stdout": "11-supplier-blob-2.stdout.log",
+  "stderr": "11-supplier-blob-2.stderr.log"
+}

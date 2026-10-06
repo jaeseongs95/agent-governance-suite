@@ -1,0 +1,15 @@
+{
+  "label": "04-candidate-lf",
+  "command": [
+    "git",
+    "config",
+    "core.autocrlf",
+    "false"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate",
+  "startedUtc": "2026-10-06T05:45:19.125006+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:45:19.126366+00:00",
+  "stdout": "04-candidate-lf.stdout.log",
+  "stderr": "04-candidate-lf.stderr.log"
+}

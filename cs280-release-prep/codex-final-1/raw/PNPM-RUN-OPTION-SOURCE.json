@@ -1,0 +1,1035 @@
+{
+  "path": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/pnpm.mjs",
+  "sha256": "43695da62d5a62e0550977425ed39507f68d6f6c3390079ae8a33557f3dec989",
+  "version": "11.19.0",
+  "excerpts": [
+    {
+      "start": 148030,
+      "end": 148115,
+      "lines": [
+        {
+          "number": 148030,
+          "text": "    return opts3.env.PNPM_HOME;"
+        },
+        {
+          "number": 148031,
+          "text": "  }"
+        },
+        {
+          "number": 148032,
+          "text": "  if (opts3.env.XDG_DATA_HOME) {"
+        },
+        {
+          "number": 148033,
+          "text": "    return path55.join(opts3.env.XDG_DATA_HOME, \"pnpm\");"
+        },
+        {
+          "number": 148034,
+          "text": "  }"
+        },
+        {
+          "number": 148035,
+          "text": "  if (opts3.platform === \"darwin\") {"
+        },
+        {
+          "number": 148036,
+          "text": "    return path55.join(os8.homedir(), \"Library/pnpm\");"
+        },
+        {
+          "number": 148037,
+          "text": "  }"
+        },
+        {
+          "number": 148038,
+          "text": "  if (opts3.platform !== \"win32\") {"
+        },
+        {
+          "number": 148039,
+          "text": "    return path55.join(os8.homedir(), \".local/share/pnpm\");"
+        },
+        {
+          "number": 148040,
+          "text": "  }"
+        },
+        {
+          "number": 148041,
+          "text": "  if (opts3.env.LOCALAPPDATA) {"
+        },
+        {
+          "number": 148042,
+          "text": "    return path55.join(opts3.env.LOCALAPPDATA, \"pnpm\");"
+        },
+        {
+          "number": 148043,
+          "text": "  }"
+        },
+        {
+          "number": 148044,
+          "text": "  return path55.join(os8.homedir(), \".pnpm\");"
+        },
+        {
+          "number": 148045,
+          "text": "}"
+        },
+        {
+          "number": 148046,
+          "text": "function getConfigDir(opts3) {"
+        },
+        {
+          "number": 148047,
+          "text": "  if (opts3.env.XDG_CONFIG_HOME) {"
+        },
+        {
+          "number": 148048,
+          "text": "    return path55.join(opts3.env.XDG_CONFIG_HOME, \"pnpm\");"
+        },
+        {
+          "number": 148049,
+          "text": "  }"
+        },
+        {
+          "number": 148050,
+          "text": "  if (opts3.platform === \"darwin\") {"
+        },
+        {
+          "number": 148051,
+          "text": "    return path55.join(os8.homedir(), \"Library/Preferences/pnpm\");"
+        },
+        {
+          "number": 148052,
+          "text": "  }"
+        },
+        {
+          "number": 148053,
+          "text": "  if (opts3.platform !== \"win32\") {"
+        },
+        {
+          "number": 148054,
+          "text": "    return path55.join(os8.homedir(), \".config/pnpm\");"
+        },
+        {
+          "number": 148055,
+          "text": "  }"
+        },
+        {
+          "number": 148056,
+          "text": "  if (opts3.env.LOCALAPPDATA) {"
+        },
+        {
+          "number": 148057,
+          "text": "    return path55.join(opts3.env.LOCALAPPDATA, \"pnpm/config\");"
+        },
+        {
+          "number": 148058,
+          "text": "  }"
+        },
+        {
+          "number": 148059,
+          "text": "  return path55.join(os8.homedir(), \".config/pnpm\");"
+        },
+        {
+          "number": 148060,
+          "text": "}"
+        },
+        {
+          "number": 148061,
+          "text": "var init_dirs = __esm({"
+        },
+        {
+          "number": 148062,
+          "text": "  \"../config/reader/lib/dirs.js\"() {"
+        },
+        {
+          "number": 148063,
+          "text": "    \"use strict\";"
+        },
+        {
+          "number": 148064,
+          "text": "    init_lib();"
+        },
+        {
+          "number": 148065,
+          "text": "  }"
+        },
+        {
+          "number": 148066,
+          "text": "});"
+        },
+        {
+          "number": 148067,
+          "text": ""
+        },
+        {
+          "number": 148068,
+          "text": "// ../config/reader/lib/env.js"
+        },
+        {
+          "number": 148069,
+          "text": "import path56 from \"node:path\";"
+        },
+        {
+          "number": 148070,
+          "text": "import url3 from \"node:url\";"
+        },
+        {
+          "number": 148071,
+          "text": "function* parseEnvVars(getSchema, env4) {"
+        },
+        {
+          "number": 148072,
+          "text": "  for (const envKey in env4) {"
+        },
+        {
+          "number": 148073,
+          "text": "    const suffix = getEnvKeySuffix(envKey);"
+        },
+        {
+          "number": 148074,
+          "text": "    if (!suffix)"
+        },
+        {
+          "number": 148075,
+          "text": "      continue;"
+        },
+        {
+          "number": 148076,
+          "text": "    const envValue = env4[envKey];"
+        },
+        {
+          "number": 148077,
+          "text": "    if (envValue == null)"
+        },
+        {
+          "number": 148078,
+          "text": "      continue;"
+        },
+        {
+          "number": 148079,
+          "text": "    const schemaKey = (0, import_lodash2.default)(suffix);"
+        },
+        {
+          "number": 148080,
+          "text": "    const schema2 = getSchema(schemaKey);"
+        },
+        {
+          "number": 148081,
+          "text": "    if (schema2 == null)"
+        },
+        {
+          "number": 148082,
+          "text": "      continue;"
+        },
+        {
+          "number": 148083,
+          "text": "    const key = camelCase(suffix);"
+        },
+        {
+          "number": 148084,
+          "text": "    const value = parseValueBySchema(schema2, envValue, env4);"
+        },
+        {
+          "number": 148085,
+          "text": "    yield { key, value };"
+        },
+        {
+          "number": 148086,
+          "text": "  }"
+        },
+        {
+          "number": 148087,
+          "text": "}"
+        },
+        {
+          "number": 148088,
+          "text": "function parseValueBySchema(schema2, envVar, env4) {"
+        },
+        {
+          "number": 148089,
+          "text": "  if (Array.isArray(schema2)) {"
+        },
+        {
+          "number": 148090,
+          "text": "    return parseValueByTypeUnion(schema2, envVar, env4);"
+        },
+        {
+          "number": 148091,
+          "text": "  } else if (typeof schema2 === \"function\") {"
+        },
+        {
+          "number": 148092,
+          "text": "    return parseValueByConstructor(schema2, envVar);"
+        },
+        {
+          "number": 148093,
+          "text": "  } else if (schema2 && typeof schema2 === \"object\") {"
+        },
+        {
+          "number": 148094,
+          "text": "    return parseValueByModule(schema2, envVar, env4);"
+        },
+        {
+          "number": 148095,
+          "text": "  }"
+        },
+        {
+          "number": 148096,
+          "text": "  const _typeGuard = schema2;"
+        },
+        {
+          "number": 148097,
+          "text": "  throw new Error(`Invalid schema: ${JSON.stringify(_typeGuard)}`);"
+        },
+        {
+          "number": 148098,
+          "text": "}"
+        },
+        {
+          "number": 148099,
+          "text": "function parseValueByTypeUnion(schema2, envVar, env4) {"
+        },
+        {
+          "number": 148100,
+          "text": "  for (const variant of sortUnionVariant(schema2)) {"
+        },
+        {
+          "number": 148101,
+          "text": "    let value;"
+        },
+        {
+          "number": 148102,
+          "text": "    switch (typeof variant) {"
+        },
+        {
+          "number": 148103,
+          "text": "      case \"string\":"
+        },
+        {
+          "number": 148104,
+          "text": "        value = parseStringLiteral(variant, envVar);"
+        },
+        {
+          "number": 148105,
+          "text": "        break;"
+        },
+        {
+          "number": 148106,
+          "text": "      case \"boolean\":"
+        },
+        {
+          "number": 148107,
+          "text": "        value = parseBooleanLiteral(variant, envVar);"
+        },
+        {
+          "number": 148108,
+          "text": "        break;"
+        },
+        {
+          "number": 148109,
+          "text": "      case \"function\":"
+        },
+        {
+          "number": 148110,
+          "text": "        value = parseValueByConstructor(variant, envVar);"
+        },
+        {
+          "number": 148111,
+          "text": "        break;"
+        },
+        {
+          "number": 148112,
+          "text": "      case \"object\":"
+        },
+        {
+          "number": 148113,
+          "text": "        value = variant === null ? parseNullLiteral(envVar) : parseValueByModule(variant, envVar, env4);"
+        },
+        {
+          "number": 148114,
+          "text": "        break;"
+        },
+        {
+          "number": 148115,
+          "text": "      default: {"
+        }
+      ]
+    },
+    {
+      "start": 148160,
+      "end": 148205,
+      "lines": [
+        {
+          "number": 148160,
+          "text": "    const homePrefix = /^~[/\\\\]/;"
+        },
+        {
+          "number": 148161,
+          "text": "    if (env4.HOME && homePrefix.test(envVar)) {"
+        },
+        {
+          "number": 148162,
+          "text": "      return path56.join(env4.HOME, envVar.replace(homePrefix, \"\"));"
+        },
+        {
+          "number": 148163,
+          "text": "    }"
+        },
+        {
+          "number": 148164,
+          "text": "    return envVar;"
+        },
+        {
+          "number": 148165,
+          "text": "  }"
+        },
+        {
+          "number": 148166,
+          "text": "  if (schema2 === url3) {"
+        },
+        {
+          "number": 148167,
+          "text": "    return new url3.URL(envVar).toString();"
+        },
+        {
+          "number": 148168,
+          "text": "  }"
+        },
+        {
+          "number": 148169,
+          "text": "  return void 0;"
+        },
+        {
+          "number": 148170,
+          "text": "}"
+        },
+        {
+          "number": 148171,
+          "text": "function sortUnionVariant(variants) {"
+        },
+        {
+          "number": 148172,
+          "text": "  const sorted = variants.filter((variant) => variant !== String);"
+        },
+        {
+          "number": 148173,
+          "text": "  if (variants.includes(String)) {"
+        },
+        {
+          "number": 148174,
+          "text": "    sorted.push(String);"
+        },
+        {
+          "number": 148175,
+          "text": "  }"
+        },
+        {
+          "number": 148176,
+          "text": "  return sorted;"
+        },
+        {
+          "number": 148177,
+          "text": "}"
+        },
+        {
+          "number": 148178,
+          "text": "function tryParseObjectOrArray(envVar) {"
+        },
+        {
+          "number": 148179,
+          "text": "  let result2;"
+        },
+        {
+          "number": 148180,
+          "text": "  try {"
+        },
+        {
+          "number": 148181,
+          "text": "    result2 = JSON.parse(envVar);"
+        },
+        {
+          "number": 148182,
+          "text": "  } catch {"
+        },
+        {
+          "number": 148183,
+          "text": "    return void 0;"
+        },
+        {
+          "number": 148184,
+          "text": "  }"
+        },
+        {
+          "number": 148185,
+          "text": "  return result2 == null || typeof result2 !== \"object\" ? void 0 : result2;"
+        },
+        {
+          "number": 148186,
+          "text": "}"
+        },
+        {
+          "number": 148187,
+          "text": "function getEnvKeySuffix(envKey) {"
+        },
+        {
+          "number": 148188,
+          "text": "  if (envKey.startsWith(PREFIX)) {"
+        },
+        {
+          "number": 148189,
+          "text": "    const suffix = envKey.slice(PREFIX.length);"
+        },
+        {
+          "number": 148190,
+          "text": "    return isLowerSnakeCase(suffix) ? suffix : void 0;"
+        },
+        {
+          "number": 148191,
+          "text": "  }"
+        },
+        {
+          "number": 148192,
+          "text": "  if (envKey.startsWith(PREFIX_UPPER)) {"
+        },
+        {
+          "number": 148193,
+          "text": "    const suffix = envKey.slice(PREFIX_UPPER.length);"
+        },
+        {
+          "number": 148194,
+          "text": "    return isUpperSnakeCase(suffix) ? suffix.toLowerCase() : void 0;"
+        },
+        {
+          "number": 148195,
+          "text": "  }"
+        },
+        {
+          "number": 148196,
+          "text": "  return void 0;"
+        },
+        {
+          "number": 148197,
+          "text": "}"
+        },
+        {
+          "number": 148198,
+          "text": "function isLowerSnakeCase(s) {"
+        },
+        {
+          "number": 148199,
+          "text": "  return s.length > 0 && s.split(\"_\").every((segment) => /^[a-z0-9]+$/.test(segment));"
+        },
+        {
+          "number": 148200,
+          "text": "}"
+        },
+        {
+          "number": 148201,
+          "text": "function isUpperSnakeCase(s) {"
+        },
+        {
+          "number": 148202,
+          "text": "  return s.length > 0 && s.split(\"_\").every((segment) => /^[A-Z0-9]+$/.test(segment));"
+        },
+        {
+          "number": 148203,
+          "text": "}"
+        },
+        {
+          "number": 148204,
+          "text": "var import_lodash2, PREFIX, PREFIX_UPPER;"
+        },
+        {
+          "number": 148205,
+          "text": "var init_env = __esm({"
+        }
+      ]
+    },
+    {
+      "start": 149725,
+      "end": 149745,
+      "lines": [
+        {
+          "number": 149725,
+          "text": "      \"prefer-symlinked-executables\": Boolean,"
+        },
+        {
+          "number": 149726,
+          "text": "      \"prefer-workspace-packages\": Boolean,"
+        },
+        {
+          "number": 149727,
+          "text": "      \"preserve-absolute-paths\": Boolean,"
+        },
+        {
+          "number": 149728,
+          "text": "      production: [null, true],"
+        },
+        {
+          "number": 149729,
+          "text": "      \"public-hoist-pattern\": Array,"
+        },
+        {
+          "number": 149730,
+          "text": "      \"publish-branch\": String,"
+        },
+        {
+          "number": 149731,
+          "text": "      \"recursive-install\": Boolean,"
+        },
+        {
+          "number": 149732,
+          "text": "      \"block-exotic-subdeps\": Boolean,"
+        },
+        {
+          "number": 149733,
+          "text": "      reporter: String,"
+        },
+        {
+          "number": 149734,
+          "text": "      \"resolution-mode\": [\"highest\", \"time-based\", \"lowest-direct\"],"
+        },
+        {
+          "number": 149735,
+          "text": "      \"resolve-peers-from-workspace-root\": Boolean,"
+        },
+        {
+          "number": 149736,
+          "text": "      runtime: Boolean,"
+        },
+        {
+          "number": 149737,
+          "text": "      \"runtime-on-fail\": [\"ignore\", \"warn\", \"error\", \"download\"],"
+        },
+        {
+          "number": 149738,
+          "text": "      \"aggregate-output\": Boolean,"
+        },
+        {
+          "number": 149739,
+          "text": "      \"reporter-hide-prefix\": Boolean,"
+        },
+        {
+          "number": 149740,
+          "text": "      \"save-peer\": Boolean,"
+        },
+        {
+          "number": 149741,
+          "text": "      \"save-catalog-name\": String,"
+        },
+        {
+          "number": 149742,
+          "text": "      \"save-workspace-protocol\": Boolean,"
+        },
+        {
+          "number": 149743,
+          "text": "      \"script-shell\": String,"
+        },
+        {
+          "number": 149744,
+          "text": "      \"shamefully-hoist\": Boolean,"
+        },
+        {
+          "number": 149745,
+          "text": "      \"shared-workspace-lockfile\": Boolean,"
+        }
+      ]
+    },
+    {
+      "start": 150075,
+      "end": 150087,
+      "lines": [
+        {
+          "number": 150075,
+          "text": "    \"recursive-install\": true,"
+        },
+        {
+          "number": 150076,
+          "text": "    registry: npmDefaults.registry,"
+        },
+        {
+          "number": 150077,
+          "text": "    \"block-exotic-subdeps\": true,"
+        },
+        {
+          "number": 150078,
+          "text": "    \"resolution-mode\": \"highest\","
+        },
+        {
+          "number": 150079,
+          "text": "    \"resolve-peers-from-workspace-root\": true,"
+        },
+        {
+          "number": 150080,
+          "text": "    \"save-peer\": false,"
+        },
+        {
+          "number": 150081,
+          "text": "    \"save-catalog-name\": void 0,"
+        },
+        {
+          "number": 150082,
+          "text": "    \"save-workspace-protocol\": \"rolling\","
+        },
+        {
+          "number": 150083,
+          "text": "    \"scripts-prepend-node-path\": false,"
+        },
+        {
+          "number": 150084,
+          "text": "    \"strict-dep-builds\": true,"
+        },
+        {
+          "number": 150085,
+          "text": "    \"side-effects-cache\": true,"
+        },
+        {
+          "number": 150086,
+          "text": "    symlink: true,"
+        },
+        {
+          "number": 150087,
+          "text": "    \"shared-workspace-lockfile\": true,"
+        }
+      ]
+    },
+    {
+      "start": 253960,
+      "end": 254004,
+      "lines": [
+        {
+          "number": 253960,
+          "text": "  const visible = specifiedScripts.filter((s) => !s.startsWith(\".\"));"
+        },
+        {
+          "number": 253961,
+          "text": "  if (visible.length > 0)"
+        },
+        {
+          "number": 253962,
+          "text": "    return visible;"
+        },
+        {
+          "number": 253963,
+          "text": "  throw new PnpmError(\"HIDDEN_SCRIPT\", `All matched scripts are hidden and cannot be run directly: ${hidden2.join(\", \")}`, {"
+        },
+        {
+          "number": 253964,
+          "text": "    hint: 'Scripts starting with \".\" are hidden and can only be called from other scripts.'"
+        },
+        {
+          "number": 253965,
+          "text": "  });"
+        },
+        {
+          "number": 253966,
+          "text": "}"
+        },
+        {
+          "number": 253967,
+          "text": "var init_hiddenScripts = __esm({"
+        },
+        {
+          "number": 253968,
+          "text": "  \"../exec/commands/lib/hiddenScripts.js\"() {"
+        },
+        {
+          "number": 253969,
+          "text": "    \"use strict\";"
+        },
+        {
+          "number": 253970,
+          "text": "    init_lib2();"
+        },
+        {
+          "number": 253971,
+          "text": "  }"
+        },
+        {
+          "number": 253972,
+          "text": "});"
+        },
+        {
+          "number": 253973,
+          "text": ""
+        },
+        {
+          "number": 253974,
+          "text": "// ../exec/commands/lib/runDepsStatusCheck.js"
+        },
+        {
+          "number": 253975,
+          "text": "async function runDepsStatusCheck(opts3) {"
+        },
+        {
+          "number": 253976,
+          "text": "  const ignoredWorkspaceStateSettings = [\"dev\", \"optional\", \"production\"];"
+        },
+        {
+          "number": 253977,
+          "text": "  opts3.ignoredWorkspaceStateSettings = ignoredWorkspaceStateSettings;"
+        },
+        {
+          "number": 253978,
+          "text": "  const { upToDate, issue, workspaceState } = await checkDepsStatus(opts3);"
+        },
+        {
+          "number": 253979,
+          "text": "  if (upToDate === true)"
+        },
+        {
+          "number": 253980,
+          "text": "    return;"
+        },
+        {
+          "number": 253981,
+          "text": "  if (upToDate === void 0 && opts3.allProjects == null && opts3.rootProjectManifest == null)"
+        },
+        {
+          "number": 253982,
+          "text": "    return;"
+        },
+        {
+          "number": 253983,
+          "text": "  const command = [\"install\", ...createInstallArgs(workspaceState?.settings)];"
+        },
+        {
+          "number": 253984,
+          "text": "  const install2 = runPnpmCli.bind(null, command, { cwd: opts3.dir, reporter: opts3.reporter });"
+        },
+        {
+          "number": 253985,
+          "text": "  switch (opts3.verifyDepsBeforeRun) {"
+        },
+        {
+          "number": 253986,
+          "text": "    case \"install\":"
+        },
+        {
+          "number": 253987,
+          "text": "      install2();"
+        },
+        {
+          "number": 253988,
+          "text": "      break;"
+        },
+        {
+          "number": 253989,
+          "text": "    case \"prompt\": {"
+        },
+        {
+          "number": 253990,
+          "text": "      if (!process.stdin.isTTY) {"
+        },
+        {
+          "number": 253991,
+          "text": "        throw new PnpmError(\"VERIFY_DEPS_BEFORE_RUN\", issue ?? \"Your node_modules are out of sync with your lockfile\", {"
+        },
+        {
+          "number": 253992,
+          "text": "          hint: 'Run \"pnpm install\" before running scripts. The \"verifyDepsBeforeRun: prompt\" setting cannot prompt for confirmation in non-interactive environments.'"
+        },
+        {
+          "number": 253993,
+          "text": "        });"
+        },
+        {
+          "number": 253994,
+          "text": "      }"
+        },
+        {
+          "number": 253995,
+          "text": "      let confirmed;"
+        },
+        {
+          "number": 253996,
+          "text": "      try {"
+        },
+        {
+          "number": 253997,
+          "text": "        confirmed = await dist_default5({"
+        },
+        {
+          "number": 253998,
+          "text": "          message: `Your \"node_modules\" directory is out of sync with the \"pnpm-lock.yaml\" file. This can lead to issues during scripts execution."
+        },
+        {
+          "number": 253999,
+          "text": ""
+        },
+        {
+          "number": 254000,
+          "text": "Would you like to run \"pnpm ${command.join(\" \")}\" to update your \"node_modules\"?`,"
+        },
+        {
+          "number": 254001,
+          "text": "          default: true"
+        },
+        {
+          "number": 254002,
+          "text": "        });"
+        },
+        {
+          "number": 254003,
+          "text": "      } catch (err2) {"
+        },
+        {
+          "number": 254004,
+          "text": "        if (err2 instanceof Error && err2.name === \"ExitPromptError\") {"
+        }
+      ]
+    },
+    {
+      "start": 255470,
+      "end": 255505,
+      "lines": [
+        {
+          "number": 255470,
+          "text": "  }"
+        },
+        {
+          "number": 255471,
+          "text": "});"
+        },
+        {
+          "number": 255472,
+          "text": ""
+        },
+        {
+          "number": 255473,
+          "text": "// ../exec/commands/lib/restart.js"
+        },
+        {
+          "number": 255474,
+          "text": "var restart_exports = {};"
+        },
+        {
+          "number": 255475,
+          "text": "__export(restart_exports, {"
+        },
+        {
+          "number": 255476,
+          "text": "  cliOptionsTypes: () => cliOptionsTypes41,"
+        },
+        {
+          "number": 255477,
+          "text": "  commandNames: () => commandNames42,"
+        },
+        {
+          "number": 255478,
+          "text": "  handler: () => handler42,"
+        },
+        {
+          "number": 255479,
+          "text": "  help: () => help42,"
+        },
+        {
+          "number": 255480,
+          "text": "  rcOptionsTypes: () => rcOptionsTypes42"
+        },
+        {
+          "number": 255481,
+          "text": "});"
+        },
+        {
+          "number": 255482,
+          "text": "function rcOptionsTypes42() {"
+        },
+        {
+          "number": 255483,
+          "text": "  return {"
+        },
+        {
+          "number": 255484,
+          "text": "    ...pick_default(["
+        },
+        {
+          "number": 255485,
+          "text": "      \"npm-path\""
+        },
+        {
+          "number": 255486,
+          "text": "    ], types2)"
+        },
+        {
+          "number": 255487,
+          "text": "  };"
+        },
+        {
+          "number": 255488,
+          "text": "}"
+        },
+        {
+          "number": 255489,
+          "text": "function cliOptionsTypes41() {"
+        },
+        {
+          "number": 255490,
+          "text": "  return IF_PRESENT_OPTION;"
+        },
+        {
+          "number": 255491,
+          "text": "}"
+        },
+        {
+          "number": 255492,
+          "text": "function help42() {"
+        },
+        {
+          "number": 255493,
+          "text": "  return renderHelp({"
+        },
+        {
+          "number": 255494,
+          "text": "    description: `Restarts a package. Runs a package's \"stop\", \"restart\", and \"start\" scripts, and associated pre- and post- scripts.`,"
+        },
+        {
+          "number": 255495,
+          "text": "    descriptionLists: ["
+        },
+        {
+          "number": 255496,
+          "text": "      {"
+        },
+        {
+          "number": 255497,
+          "text": "        title: \"Options\","
+        },
+        {
+          "number": 255498,
+          "text": "        list: ["
+        },
+        {
+          "number": 255499,
+          "text": "          IF_PRESENT_OPTION_HELP"
+        },
+        {
+          "number": 255500,
+          "text": "        ]"
+        },
+        {
+          "number": 255501,
+          "text": "      }"
+        },
+        {
+          "number": 255502,
+          "text": "    ],"
+        },
+        {
+          "number": 255503,
+          "text": "    usages: [\"pnpm restart [-- <args>...]\"]"
+        },
+        {
+          "number": 255504,
+          "text": "  });"
+        },
+        {
+          "number": 255505,
+          "text": "}"
+        }
+      ]
+    }
+  ],
+  "observedFailure": "Unknown option store-dir from pnpm run parser, before scripts/validate-official.mjs",
+  "prospectiveBinding": "Child process only PNPM_CONFIG_STORE_DIR=/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private; command pnpm validate:official without unsupported run option",
+  "prospectiveExecution": "NOT_RUN: one authorized final wrapper attempt exhausted; no automatic corrected retry",
+  "dependencyGate": "verify-deps-before-run remains unchanged; no PNPM_CONFIG_VERIFY_DEPS_BEFORE_RUN override"
+}

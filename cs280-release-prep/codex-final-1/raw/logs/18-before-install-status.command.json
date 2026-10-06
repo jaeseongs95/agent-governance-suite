@@ -1,0 +1,14 @@
+{
+  "label": "18-before-install-status",
+  "command": [
+    "git",
+    "status",
+    "--porcelain"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate",
+  "startedUtc": "2026-10-06T05:50:04.168531+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:50:04.174807+00:00",
+  "stdout": "18-before-install-status.stdout.log",
+  "stderr": "18-before-install-status.stderr.log"
+}

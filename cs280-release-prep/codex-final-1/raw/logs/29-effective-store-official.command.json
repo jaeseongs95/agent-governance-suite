@@ -1,0 +1,16 @@
+{
+  "label": "29-effective-store-official",
+  "command": [
+    "pnpm",
+    "--store-dir",
+    "/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private",
+    "store",
+    "path"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate",
+  "startedUtc": "2026-10-06T05:51:08.435676+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:51:08.788007+00:00",
+  "stdout": "29-effective-store-official.stdout.log",
+  "stderr": "29-effective-store-official.stderr.log"
+}

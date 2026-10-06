@@ -1,0 +1,14 @@
+{
+  "label": "23-after-install-status",
+  "command": [
+    "git",
+    "status",
+    "--porcelain"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate",
+  "startedUtc": "2026-10-06T05:50:10.741979+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:50:10.747970+00:00",
+  "stdout": "23-after-install-status.stdout.log",
+  "stderr": "23-after-install-status.stderr.log"
+}

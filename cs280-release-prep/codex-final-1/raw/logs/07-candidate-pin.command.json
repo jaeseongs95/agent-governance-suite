@@ -1,0 +1,15 @@
+{
+  "label": "07-candidate-pin",
+  "command": [
+    "git",
+    "rev-parse",
+    "HEAD",
+    "HEAD^{tree}"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate",
+  "startedUtc": "2026-10-06T05:45:20.421283+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:45:20.423231+00:00",
+  "stdout": "07-candidate-pin.stdout.log",
+  "stderr": "07-candidate-pin.stderr.log"
+}

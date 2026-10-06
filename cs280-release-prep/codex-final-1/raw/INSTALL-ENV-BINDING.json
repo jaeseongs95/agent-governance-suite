@@ -1,0 +1,21 @@
+{
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate",
+  "command": [
+    "pnpm",
+    "--store-dir",
+    "/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private",
+    "install",
+    "--frozen-lockfile"
+  ],
+  "childOnlyEnvironment": {
+    "CODEX_HOME": "/workspace/ags-cs-2x/official-final-3ff79982/codex-home-disposable",
+    "PYTHON": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+    "PYTHONUTF8": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONNOUSERSITE": "1",
+    "TMPDIR": "/workspace/ags-cs-2x/official-final-3ff79982/tmp-private"
+  },
+  "defaultHomeChanged": false,
+  "userConfigChanged": false,
+  "verifyDepsBeforeRun": "Unchanged; no bypass flag/env"
+}

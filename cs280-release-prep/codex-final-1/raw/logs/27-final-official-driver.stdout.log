@@ -1,0 +1,74 @@
+{"label": "28-before-official-pin", "command": ["git", "rev-parse", "HEAD", "HEAD^{tree}"], "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate", "startedUtc": "2026-10-06T05:51:08.377627+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:51:08.379519+00:00", "stdout": "28-before-official-pin.stdout.log", "stderr": "28-before-official-pin.stderr.log"}
+{"label": "28-before-official-status", "command": ["git", "status", "--porcelain"], "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate", "startedUtc": "2026-10-06T05:51:08.379755+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:51:08.385554+00:00", "stdout": "28-before-official-status.stdout.log", "stderr": "28-before-official-status.stderr.log"}
+{"label": "28-before-official-paths", "command": ["git", "ls-files", "-z"], "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate", "startedUtc": "2026-10-06T05:51:08.385760+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:51:08.387325+00:00", "stdout": "28-before-official-paths.stdout.log", "stderr": "28-before-official-paths.stderr.log"}
+{"label": "29-effective-store-official", "command": ["pnpm", "--store-dir", "/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private", "store", "path"], "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate", "startedUtc": "2026-10-06T05:51:08.435676+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:51:08.788007+00:00", "stdout": "29-effective-store-official.stdout.log", "stderr": "29-effective-store-official.stderr.log"}
+{"label": "30-final-validate-official", "command": ["pnpm", "--store-dir", "/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private", "validate:official"], "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate", "startedUtc": "2026-10-06T05:51:08.788808+00:00", "exitCode": 1, "finishedUtc": "2026-10-06T05:51:09.135582+00:00", "stdout": "30-final-validate-official.stdout.log", "stderr": "30-final-validate-official.stderr.log"}
+{"label": "31-after-official-pin", "command": ["git", "rev-parse", "HEAD", "HEAD^{tree}"], "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate", "startedUtc": "2026-10-06T05:51:09.136369+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:51:09.138576+00:00", "stdout": "31-after-official-pin.stdout.log", "stderr": "31-after-official-pin.stderr.log"}
+{"label": "31-after-official-status", "command": ["git", "status", "--porcelain"], "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate", "startedUtc": "2026-10-06T05:51:09.138899+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:51:09.145015+00:00", "stdout": "31-after-official-status.stdout.log", "stderr": "31-after-official-status.stderr.log"}
+{"label": "31-after-official-paths", "command": ["git", "ls-files", "-z"], "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate", "startedUtc": "2026-10-06T05:51:09.145220+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:51:09.146945+00:00", "stdout": "31-after-official-paths.stdout.log", "stderr": "31-after-official-paths.stderr.log"}
+{
+  "schema": "AGSFinalOfficialValidation.v1",
+  "status": "FAIL",
+  "officialAttempts": 1,
+  "command": [
+    "pnpm",
+    "--store-dir",
+    "/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private",
+    "validate:official"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate",
+  "exitCode": 1,
+  "pluginPassed": false,
+  "skillsPassed": 0,
+  "skillsExpected": 22,
+  "sourceHead": "b7341d3e6636b79217b1f3d37d7a5014fcbf47be",
+  "sourceTree": "5648f76558e923244cedf78a8263892d00df8299",
+  "trackedFiles": 1344,
+  "sourcePrePostByteExact": true,
+  "sourceCleanPrePost": true,
+  "supplierCommit": "10382da79a2a2d6e8ae221fa63077215389c1ad2",
+  "suppliedFilesByteExactAfter": true,
+  "effectiveStore": "/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private/v11",
+  "lockSha256": "00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e",
+  "dependencyStateBefore": {
+    "node_modules/.pnpm-workspace-state-v1.json": "909a679e333e93c47129d193226bd75eb114c7235ba07e9dacd5fc7bb9b6c42b",
+    "node_modules/.modules.yaml": "7888d8906d0dc01d3e6799b2fd279c5f228afadec2150304ef33f90ea201bfaf"
+  },
+  "dependencyStateAfter": {
+    "node_modules/.pnpm-workspace-state-v1.json": "909a679e333e93c47129d193226bd75eb114c7235ba07e9dacd5fc7bb9b6c42b",
+    "node_modules/.modules.yaml": "7888d8906d0dc01d3e6799b2fd279c5f228afadec2150304ef33f90ea201bfaf"
+  },
+  "dependencyStateByteExact": true,
+  "installAttempts": 1,
+  "lockedInstallExitCode": 0,
+  "implicitInstallObserved": false,
+  "observationLimit": "No full process/syscall trace collected; stdout and unchanged workspace/module state recorded. No dependency gate override applied.",
+  "stdoutPath": "/workspace/ags-cs-2x/official-final-3ff79982/raw/logs/30-final-validate-official.stdout.log",
+  "stdoutBytes": 0,
+  "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrPath": "/workspace/ags-cs-2x/official-final-3ff79982/raw/logs/30-final-validate-official.stderr.log",
+  "stderrBytes": 145,
+  "stderrSha256": "f3929f01dea98065a4f5beb4fd3e3564d887981282255b919bbc23c4fb011cb3",
+  "sourceWrites": 0,
+  "fullTestsBuildRuntimeExecuted": 0,
+  "fixtureR1R2Integrated": false,
+  "mainTagReleaseHostInstallPush": 0,
+  "firstOfficial1": "Frozen4ba pnpm exit1 / official Python NOT_RUN preserved; final changed-input PASS does not relabel it",
+  "signedWholeLifecycleGlobalAcceptance": "NOT_IMPLEMENTED unchanged",
+  "independentAudit": "Not performed by implementer",
+  "scope": "Official plugin/22 skill metadata validators at exact final pin only; not full regression, actual host install, quality A/B/C, release or SOURCE approval",
+  "completedAtUtc": "2026-10-06T05:51:09.183683+00:00",
+  "concurrentAfter": {
+    "observedAtUtc": "2026-10-06T05:51:09.194669+00:00",
+    "pid1": {
+      "pid": 1,
+      "state": "S",
+      "ppid": 0,
+      "starttime": "27",
+      "comm": "tail"
+    },
+    "activeTestBuildInstallProcesses": [],
+    "zombiesObserved": 254,
+    "scope": "Current namespace /proc metadata only, no argv contents, signals/sockets/reaping. Outside namespace jobs UNKNOWN."
+  }
+}

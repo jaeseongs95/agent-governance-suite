@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/workspace/ags-cs-2x/official-final-3ff79982/tools/discover.py", line 28, in <module>
+    assert all(p.startswith(('tests/', 'skills/')) for p in paths), 'Unexpected non-test/skill metadata delta; review before execution'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Unexpected non-test/skill metadata delta; review before execution

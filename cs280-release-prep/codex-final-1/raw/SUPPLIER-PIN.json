@@ -1,0 +1,66 @@
+{
+  "origin": "https://github.com/openai/codex",
+  "tag": "rust-v0.158.0-alpha.2",
+  "annotatedTag": "3ccf947fb92b3bc936aada20f9b92ed5ebbba22d",
+  "commit": "10382da79a2a2d6e8ae221fa63077215389c1ad2",
+  "sourceLicense": "Apache-2.0",
+  "files": [
+    {
+      "path": "codex-rs/skills/src/assets/samples/plugin-creator/scripts/validate_plugin.py",
+      "gitBlob": "b5be462c3b4fe3ea6083cca948ccf52e05301546",
+      "bytes": 21739,
+      "rawSha256": "f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944",
+      "crlfCount": 0,
+      "url": "https://raw.githubusercontent.com/openai/codex/10382da79a2a2d6e8ae221fa63077215389c1ad2/codex-rs/skills/src/assets/samples/plugin-creator/scripts/validate_plugin.py",
+      "httpStatus": 200,
+      "httpRawSha256": "f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944",
+      "httpGitBlobExact": true
+    },
+    {
+      "path": "codex-rs/skills/src/assets/samples/plugin-creator/scripts/identifier_validation.py",
+      "gitBlob": "41a1a2f1b503c165f5d4b93f7f0e99eb0b3add6e",
+      "bytes": 784,
+      "rawSha256": "a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223",
+      "crlfCount": 0,
+      "url": "https://raw.githubusercontent.com/openai/codex/10382da79a2a2d6e8ae221fa63077215389c1ad2/codex-rs/skills/src/assets/samples/plugin-creator/scripts/identifier_validation.py",
+      "httpStatus": 200,
+      "httpRawSha256": "a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223",
+      "httpGitBlobExact": true
+    },
+    {
+      "path": "codex-rs/skills/src/assets/samples/skill-creator/scripts/quick_validate.py",
+      "gitBlob": "e27023ece4bd259ef36560e19995eec7b6a345bf",
+      "bytes": 4249,
+      "rawSha256": "ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c",
+      "crlfCount": 0,
+      "url": "https://raw.githubusercontent.com/openai/codex/10382da79a2a2d6e8ae221fa63077215389c1ad2/codex-rs/skills/src/assets/samples/skill-creator/scripts/quick_validate.py",
+      "httpStatus": 200,
+      "httpRawSha256": "ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c",
+      "httpGitBlobExact": true
+    },
+    {
+      "path": "LICENSE",
+      "gitBlob": "4606e72e042564097e8780d66c1d4dcb611869bd",
+      "bytes": 10926,
+      "rawSha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc",
+      "crlfCount": 0,
+      "url": "https://raw.githubusercontent.com/openai/codex/10382da79a2a2d6e8ae221fa63077215389c1ad2/LICENSE",
+      "httpStatus": 200,
+      "httpRawSha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc",
+      "httpGitBlobExact": true
+    },
+    {
+      "path": "NOTICE",
+      "gitBlob": "2805899d56d0332d175cfc613c67d45d6f006db7",
+      "bytes": 242,
+      "rawSha256": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915",
+      "crlfCount": 0,
+      "url": "https://raw.githubusercontent.com/openai/codex/10382da79a2a2d6e8ae221fa63077215389c1ad2/NOTICE",
+      "httpStatus": 200,
+      "httpRawSha256": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915",
+      "httpGitBlobExact": true
+    }
+  ],
+  "windowsCrLfShaProvided": "1e6cb914505b458856c2cfab7d18a224731c743ef47e0c9d78afe64f35b67f7c",
+  "windowsBytesVerification": "NOT_RUN: Windows raw bytes were not supplied here; the provided CRLF digest is not claimed as remote LF SHA"
+}

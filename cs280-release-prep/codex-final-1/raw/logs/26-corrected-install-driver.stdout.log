@@ -1,0 +1,39 @@
+{"label": "18-before-install-pin", "command": ["git", "rev-parse", "HEAD", "HEAD^{tree}"], "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate", "startedUtc": "2026-10-06T05:50:04.166254+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:50:04.168281+00:00", "stdout": "18-before-install-pin.stdout.log", "stderr": "18-before-install-pin.stderr.log"}
+{"label": "18-before-install-status", "command": ["git", "status", "--porcelain"], "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate", "startedUtc": "2026-10-06T05:50:04.168531+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:50:04.174807+00:00", "stdout": "18-before-install-status.stdout.log", "stderr": "18-before-install-status.stderr.log"}
+{"label": "18-before-install-paths", "command": ["git", "ls-files", "-z"], "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate", "startedUtc": "2026-10-06T05:50:04.175070+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:50:04.176665+00:00", "stdout": "18-before-install-paths.stdout.log", "stderr": "18-before-install-paths.stderr.log"}
+{"label": "19-node-version", "command": ["node", "--version"], "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate", "startedUtc": "2026-10-06T05:50:04.225602+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:50:04.231528+00:00", "stdout": "19-node-version.stdout.log", "stderr": "19-node-version.stderr.log"}
+{"label": "20-pnpm-version", "command": ["pnpm", "--version"], "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate", "startedUtc": "2026-10-06T05:50:04.231760+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:50:04.619019+00:00", "stdout": "20-pnpm-version.stdout.log", "stderr": "20-pnpm-version.stderr.log"}
+{"label": "21-effective-store-before", "command": ["pnpm", "--store-dir", "/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private", "store", "path"], "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate", "startedUtc": "2026-10-06T05:50:04.619539+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:50:05.136177+00:00", "stdout": "21-effective-store-before.stdout.log", "stderr": "21-effective-store-before.stderr.log"}
+{"label": "22-locked-install", "command": ["pnpm", "--store-dir", "/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private", "install", "--frozen-lockfile"], "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate", "startedUtc": "2026-10-06T05:50:05.138122+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:50:10.739046+00:00", "stdout": "22-locked-install.stdout.log", "stderr": "22-locked-install.stderr.log"}
+{"label": "23-after-install-pin", "command": ["git", "rev-parse", "HEAD", "HEAD^{tree}"], "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate", "startedUtc": "2026-10-06T05:50:10.739433+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:50:10.741696+00:00", "stdout": "23-after-install-pin.stdout.log", "stderr": "23-after-install-pin.stderr.log"}
+{"label": "23-after-install-status", "command": ["git", "status", "--porcelain"], "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate", "startedUtc": "2026-10-06T05:50:10.741979+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:50:10.747970+00:00", "stdout": "23-after-install-status.stdout.log", "stderr": "23-after-install-status.stderr.log"}
+{"label": "23-after-install-paths", "command": ["git", "ls-files", "-z"], "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate", "startedUtc": "2026-10-06T05:50:10.748261+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:50:10.750267+00:00", "stdout": "23-after-install-paths.stdout.log", "stderr": "23-after-install-paths.stderr.log"}
+{"label": "24-effective-store-after", "command": ["pnpm", "--store-dir", "/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private", "store", "path"], "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate", "startedUtc": "2026-10-06T05:50:10.803229+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:50:11.193773+00:00", "stdout": "24-effective-store-after.stdout.log", "stderr": "24-effective-store-after.stderr.log"}
+{
+  "status": "LOCKED_DEPS_READY",
+  "installAttempts": 1,
+  "exitCode": 0,
+  "frozenLockfile": true,
+  "sourceHead": "b7341d3e6636b79217b1f3d37d7a5014fcbf47be",
+  "sourceTree": "5648f76558e923244cedf78a8263892d00df8299",
+  "trackedFiles": 1344,
+  "sourcePrePostExact": true,
+  "lockSha256Before": "00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e",
+  "lockSha256After": "00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e",
+  "dirtyPre": "",
+  "dirtyPost": "",
+  "nodeModulesCreated": true,
+  "storeArgument": "/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private",
+  "effectiveStore": "/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private/v11",
+  "workspaceStatePresent": true,
+  "modulesStatePresent": true,
+  "lockedDependenciesReady": true,
+  "officialValidatorAttempts": 0,
+  "stdoutPath": "/workspace/ags-cs-2x/official-final-3ff79982/raw/logs/22-locked-install.stdout.log",
+  "stdoutSha256": "59df2cdf5fb9080cc2cc08a2a64a02ff81259bc1f307df52c37997ef84d28c36",
+  "stderrPath": "/workspace/ags-cs-2x/official-final-3ff79982/raw/logs/22-locked-install.stderr.log",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "noGlobalRepair": true,
+  "supplierBytesExactAfter": true,
+  "completedAtUtc": "2026-10-06T05:50:11.194411+00:00"
+}

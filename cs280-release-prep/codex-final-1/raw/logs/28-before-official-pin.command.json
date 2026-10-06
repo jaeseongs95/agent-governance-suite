@@ -1,0 +1,15 @@
+{
+  "label": "28-before-official-pin",
+  "command": [
+    "git",
+    "rev-parse",
+    "HEAD",
+    "HEAD^{tree}"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate",
+  "startedUtc": "2026-10-06T05:51:08.377627+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:51:08.379519+00:00",
+  "stdout": "28-before-official-pin.stdout.log",
+  "stderr": "28-before-official-pin.stderr.log"
+}

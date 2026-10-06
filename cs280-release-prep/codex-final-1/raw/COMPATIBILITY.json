@@ -1,0 +1,29 @@
+{
+  "state": "STATIC_KEY_COMPATIBLE",
+  "skillCount": 22,
+  "skills": [
+    "acceptance-evidence-validator",
+    "blocker-diagnostician",
+    "change-scope-guardian",
+    "codex-token-usage-analyzer",
+    "context-continuity",
+    "coordinate-subagents",
+    "cs-engineering",
+    "evaluation-validity-auditor",
+    "independent-audit-gate",
+    "independent-deliberation-panel",
+    "instruction-scope-resolver",
+    "iteration-frame-auditor",
+    "korean-prose-editor",
+    "model-effort-advisor",
+    "mutation-risk-preflight",
+    "orchestrator",
+    "ponytail",
+    "recovery-strategy-selector",
+    "session-board",
+    "software-security-auditor",
+    "task-contract",
+    "workspace-convention-profiler"
+  ],
+  "scope": "Supported key precheck only; official result pending"
+}

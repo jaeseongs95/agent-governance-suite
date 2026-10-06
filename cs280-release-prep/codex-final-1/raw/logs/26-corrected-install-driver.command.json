@@ -1,0 +1,13 @@
+{
+  "label": "26-corrected-install-driver",
+  "command": [
+    "python",
+    "/workspace/ags-cs-2x/official-final-3ff79982/tools/install_locked.py"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982",
+  "startedUtc": "2026-10-06T05:50:04.132793+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:50:11.201637+00:00",
+  "stdout": "26-corrected-install-driver.stdout.log",
+  "stderr": "26-corrected-install-driver.stderr.log"
+}

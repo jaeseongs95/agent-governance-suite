@@ -1,0 +1,15 @@
+{
+  "label": "18-before-install-pin",
+  "command": [
+    "git",
+    "rev-parse",
+    "HEAD",
+    "HEAD^{tree}"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate",
+  "startedUtc": "2026-10-06T05:50:04.166254+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:50:04.168281+00:00",
+  "stdout": "18-before-install-pin.stdout.log",
+  "stderr": "18-before-install-pin.stderr.log"
+}

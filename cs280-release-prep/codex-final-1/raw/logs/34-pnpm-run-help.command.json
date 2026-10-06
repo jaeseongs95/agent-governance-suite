@@ -1,0 +1,14 @@
+{
+  "label": "34-pnpm-run-help",
+  "command": [
+    "pnpm",
+    "help",
+    "run"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate",
+  "startedUtc": "2026-10-06T05:52:54.155332+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:52:54.533335+00:00",
+  "stdout": "34-pnpm-run-help.stdout.log",
+  "stderr": "34-pnpm-run-help.stderr.log"
+}

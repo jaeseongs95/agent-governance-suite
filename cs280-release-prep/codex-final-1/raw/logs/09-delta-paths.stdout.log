@@ -1,0 +1,7 @@
+M	README.en.md
+M	README.md
+M	docs/release-notes-2.8.0-rc.ko.md
+M	docs/roadmap.md
+M	release/version.json
+M	tests/cs-engineering/files.node.mjs
+M	tests/session-messaging/session-message.test.ts

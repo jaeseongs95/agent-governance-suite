@@ -1,0 +1,15 @@
+{
+  "label": "23-after-install-pin",
+  "command": [
+    "git",
+    "rev-parse",
+    "HEAD",
+    "HEAD^{tree}"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate",
+  "startedUtc": "2026-10-06T05:50:10.739433+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:50:10.741696+00:00",
+  "stdout": "23-after-install-pin.stdout.log",
+  "stderr": "23-after-install-pin.stderr.log"
+}

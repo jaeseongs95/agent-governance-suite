@@ -1,0 +1,16 @@
+{
+  "label": "16-reviewed-delta-patch",
+  "command": [
+    "git",
+    "diff",
+    "--no-ext-diff",
+    "4ba47558020bd5e501fa9718f09d562dcf573713",
+    "b7341d3e6636b79217b1f3d37d7a5014fcbf47be"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate",
+  "startedUtc": "2026-10-06T05:46:20.717629+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:46:20.721972+00:00",
+  "stdout": "16-reviewed-delta-patch.stdout.log",
+  "stderr": "16-reviewed-delta-patch.stderr.log"
+}
