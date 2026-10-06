@@ -93,7 +93,7 @@ jobs:
             local command_code=$? metadata_code=0 final_code
             trap - EXIT
             set +e
-            { git rev-parse HEAD 'HEAD^{tree}'; git status --porcelain=v1; } > "$log/environment-after.txt" || metadata_code=$?
+            { git rev-parse HEAD 'HEAD^{tree}' && git status --porcelain=v1; } > "$log/environment-after.txt" || metadata_code=$?
             printf '%s\n' "$command_code" > "$log/$phase-step-exit-code.txt"
             printf '%s\n' "$metadata_code" > "$log/metadata-exit-code.txt"
             printf '%s\n' "$phase" > "$log/last-phase.txt"
