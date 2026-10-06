@@ -1,0 +1,6 @@
+claude-plugin/.claude-plugin/plugin.json
+claude-plugin/mcp-server/dist/server.mjs
+claude-plugin/skills/orchestrator/references/entry-details.md
+claude-plugin/skills/registry.json
+claude-plugin/skills/source-lock.json
+mcp-server/dist/server.mjs

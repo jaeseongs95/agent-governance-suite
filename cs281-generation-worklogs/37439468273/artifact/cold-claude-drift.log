@@ -1,0 +1,25 @@
+Already up to date
+Done in 417ms using pnpm v11.19.0
+$ node scripts/build-claude-plugin.mjs --drift
+::warning title=Claude plugin drift::claude-plugin/ differs from the current sources (47 item(s)). This does not block shared-source changes; run pnpm claude:build for a release or Claude-side work.
+- missing file claude-plugin/contracts/engineering-plan-result.v1.schema.json
+- missing file claude-plugin/contracts/engineering-review-report.v1.schema.json
+- missing file claude-plugin/contracts/engineering-review-request.v1.schema.json
+- missing file claude-plugin/contracts/engineering-review-result.v1.schema.json
+- missing file claude-plugin/contracts/engineering-run-receipt.v1.schema.json
+- missing file claude-plugin/contracts/engineering-snapshot.v1.schema.json
+- missing file claude-plugin/contracts/engineering-test-plan.v1.schema.json
+- missing file claude-plugin/contracts/engineering-test-proof.v1.schema.json
+- missing file claude-plugin/contracts/engineering-test-result.v1.schema.json
+- missing file claude-plugin/runtime/engineering-practices/CONTENT_LOCK.json
+- missing file claude-plugin/runtime/engineering-practices/LICENSE
+- missing file claude-plugin/runtime/engineering-practices/cli.mjs
+- missing file claude-plugin/runtime/engineering-practices/core.mjs
+- missing file claude-plugin/runtime/engineering-practices/io.mjs
+- missing file claude-plugin/runtime/engineering-practices/licenses/awesome-agent-skills.txt
+- missing file claude-plugin/runtime/engineering-practices/licenses/mattpocock-skills.txt
+- missing file claude-plugin/runtime/engineering-practices/licenses/superpowers.txt
+- missing file claude-plugin/runtime/engineering-practices/runner.mjs
+- missing file claude-plugin/runtime/engineering-practices/schema.mjs
+- missing file claude-plugin/skills/code-review/LICENSE
+- ... 27 more

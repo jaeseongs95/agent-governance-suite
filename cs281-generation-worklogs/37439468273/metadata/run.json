@@ -1,0 +1,29 @@
+{
+  "id": 37439468273,
+  "name": "CI",
+  "head_branch": "codex/engineering-practices-2.8.1",
+  "head_sha": "1f70b95f34c2e48b239e3595328e449862e0fcef",
+  "path": ".github/workflows/ci.yml",
+  "display_title": "CI",
+  "run_number": 133,
+  "event": "workflow_dispatch",
+  "status": "completed",
+  "conclusion": "success",
+  "workflow_id": 353647941,
+  "run_attempt": 1,
+  "html_url": "https://github.com/jaeseongs95/agent-governance-suite/actions/runs/37439468273",
+  "created_at": "2026-10-06T08:56:08Z",
+  "updated_at": "2026-10-06T08:56:39Z",
+  "run_started_at": "2026-10-06T08:56:08Z",
+  "repository": {
+    "id": 1362118877,
+    "name": "agent-governance-suite",
+    "full_name": "jaeseongs95/agent-governance-suite",
+    "html_url": "https://github.com/jaeseongs95/agent-governance-suite"
+  },
+  "head_commit": {
+    "id": "1f70b95f34c2e48b239e3595328e449862e0fcef",
+    "message": "fix: synchronize final generation artifact exit records",
+    "timestamp": "2026-10-06T08:38:58Z"
+  }
+}

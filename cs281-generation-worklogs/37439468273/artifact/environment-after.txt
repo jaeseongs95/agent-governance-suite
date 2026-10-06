@@ -1,0 +1,28 @@
+1f70b95f34c2e48b239e3595328e449862e0fcef
+3e41fef3b2056d89fd9860b27f40b7d665a456d8
+ M claude-plugin/.claude-plugin/plugin.json
+ M claude-plugin/mcp-server/dist/server.mjs
+ M claude-plugin/skills/orchestrator/references/entry-details.md
+ M claude-plugin/skills/registry.json
+ M claude-plugin/skills/source-lock.json
+ M mcp-server/dist/server.mjs
+?? claude-plugin/contracts/engineering-plan-result.v1.schema.json
+?? claude-plugin/contracts/engineering-review-report.v1.schema.json
+?? claude-plugin/contracts/engineering-review-request.v1.schema.json
+?? claude-plugin/contracts/engineering-review-result.v1.schema.json
+?? claude-plugin/contracts/engineering-run-receipt.v1.schema.json
+?? claude-plugin/contracts/engineering-snapshot.v1.schema.json
+?? claude-plugin/contracts/engineering-test-plan.v1.schema.json
+?? claude-plugin/contracts/engineering-test-proof.v1.schema.json
+?? claude-plugin/contracts/engineering-test-result.v1.schema.json
+?? claude-plugin/runtime/engineering-practices/
+?? claude-plugin/skills/code-review/
+?? claude-plugin/skills/orchestrator/references/engineering-practices/
+?? claude-plugin/skills/test-engineering/
+ claude-plugin/.claude-plugin/plugin.json           |   2 +-
+ claude-plugin/mcp-server/dist/server.mjs           |   2 +-
+ .../orchestrator/references/entry-details.md       |   8 +
+ claude-plugin/skills/registry.json                 | 219 +++++++++++++++++++++
+ claude-plugin/skills/source-lock.json              |  18 ++
+ mcp-server/dist/server.mjs                         |   2 +-
+ 6 files changed, 248 insertions(+), 3 deletions(-)

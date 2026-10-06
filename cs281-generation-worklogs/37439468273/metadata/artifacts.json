@@ -1,0 +1,24 @@
+{
+  "total_count": 1,
+  "artifacts": [
+    {
+      "id": 11400008624,
+      "name": "cs281-linux-generation-1f70b95f34c2e48b239e3595328e449862e0fcef-37439468273-1",
+      "size_in_bytes": 1333532,
+      "url": "https://api.github.com/repos/jaeseongs95/agent-governance-suite/actions/artifacts/11400008624",
+      "archive_download_url": "https://api.github.com/repos/jaeseongs95/agent-governance-suite/actions/artifacts/11400008624/zip",
+      "expired": false,
+      "digest": "sha256:7ec13d96158aa1601240e9ba1ee75d94c642cdc081de8edcf4a73df08ea6dc0a",
+      "created_at": "2026-10-06T08:56:36Z",
+      "updated_at": "2026-10-06T08:56:36Z",
+      "expires_at": "2026-10-20T08:56:35Z",
+      "workflow_run": {
+        "id": 37439468273,
+        "repository_id": 1362118877,
+        "head_repository_id": 1362118877,
+        "head_branch": "codex/engineering-practices-2.8.1",
+        "head_sha": "1f70b95f34c2e48b239e3595328e449862e0fcef"
+      }
+    }
+  ]
+}

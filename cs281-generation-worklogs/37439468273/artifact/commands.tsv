@@ -1,0 +1,10 @@
+label	exit_code	command
+corepack-enable	0	corepack enable 
+pnpm-pin	0	corepack prepare pnpm@11.19.0 --activate 
+frozen-install	0	pnpm install --frozen-lockfile 
+cold-bundle	1	pnpm bundle:check 
+cold-claude-drift	0	pnpm claude:drift 
+cold-context	0	pnpm skills:context-check 
+generate-runtime	0	pnpm build 
+generate-claude	0	pnpm claude:build 
+generated-claude-check	0	pnpm claude:check 

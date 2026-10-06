@@ -1,0 +1,923 @@
+{
+  "schema": "GenerationWorklogManifest.v1",
+  "baseEvidenceCommit": "07fd8ab7477442f930957c2f76646d3d1a8bcd1d",
+  "run": {
+    "id": 37439468273,
+    "head_sha": "1f70b95f34c2e48b239e3595328e449862e0fcef",
+    "status": "completed",
+    "conclusion": "success",
+    "run_attempt": 1,
+    "created_at": "2026-10-06T08:56:08Z",
+    "updated_at": "2026-10-06T08:56:39Z",
+    "run_started_at": "2026-10-06T08:56:08Z",
+    "html_url": "https://github.com/jaeseongs95/agent-governance-suite/actions/runs/37439468273"
+  },
+  "generationOnly": true,
+  "fullQA": "NOT_RUN_BY_GENERATION_WORKFLOW",
+  "rawSourceDirectory": "private/release-publication/cs281-generation-37439468273",
+  "files": [
+    {
+      "source": "run.json",
+      "public": "metadata/run.json",
+      "sourceBytes": 13588,
+      "sourceSha256": "be62d914829e92b2527821b284ab9c201584e78e072f54131c81c4a7a10b86d6",
+      "publicBytes": 990,
+      "publicSha256": "82bec3c8f4fc04dd635b04690da685abe50aef3ce6928a56d7650b9b222f82f9",
+      "redactions": [],
+      "metadataProjection": true
+    },
+    {
+      "source": "jobs.json",
+      "public": "metadata/jobs.json",
+      "sourceBytes": 3286,
+      "sourceSha256": "40263a53d0e82f46b934f1b69a6df4db336b07adc30c556b002f03dff4e9d46c",
+      "publicBytes": 3178,
+      "publicSha256": "9179914a3d90fb51c985b3a9f553c8fbd405a9ded445e53e170818e91c270a0c",
+      "redactions": [],
+      "metadataProjection": true
+    },
+    {
+      "source": "artifacts.json",
+      "public": "metadata/artifacts.json",
+      "sourceBytes": 835,
+      "sourceSha256": "66114581f6f01b17b3268c169e5a4047761cb6ac7ebf201d9b17b45550da73c5",
+      "publicBytes": 958,
+      "publicSha256": "da8469703e63988c5b99fcb6ddfcc34020aea6323b831eb6ce23bcce3a63f16c",
+      "redactions": [],
+      "metadataProjection": true
+    },
+    {
+      "source": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+      "public": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+      "sourceBytes": 44865,
+      "sourceSha256": "8bfeb7cd5fc581522e8d1e66099ce30d4d811e6a9ebefffaa854809394ef997a",
+      "publicBytes": 43569,
+      "publicSha256": "d718d8f472083592b1fa732ca3ceda95ae154461362d1979ce711275efe0eb10",
+      "redactions": [
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "checkout_path",
+          "line": 53
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "checkout_path",
+          "line": 59
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "checkout_path",
+          "line": 60
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "checkout_path",
+          "line": 64
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "checkout_path",
+          "line": 78
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "checkout_path",
+          "line": 95
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "checkout_path",
+          "line": 96
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "checkout_path",
+          "line": 272
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "checkout_path",
+          "line": 277
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "checkout_path",
+          "line": 557
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "checkout_path",
+          "line": 566
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "checkout_path",
+          "line": 567
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "checkout_path",
+          "line": 570
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "checkout_path",
+          "line": 572
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "checkout_path",
+          "line": 573
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "checkout_path",
+          "line": 575
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "runner_temp_path",
+          "line": 57
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "runner_temp_path",
+          "line": 94
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "runner_temp_path",
+          "line": 95
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "runner_temp_path",
+          "line": 96
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "runner_temp_path",
+          "line": 528
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "runner_temp_path",
+          "line": 555
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "runner_temp_path",
+          "line": 571
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "runner_temp_path",
+          "line": 574
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "runner_temp_path",
+          "line": 583
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "runner_home_path",
+          "line": 243
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "toolcache_path",
+          "line": 216
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "uuid",
+          "line": 7
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "uuid",
+          "line": 57
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "uuid",
+          "line": 94
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "uuid",
+          "line": 95
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "uuid",
+          "line": 96
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "uuid",
+          "line": 97
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "uuid",
+          "line": 98
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "uuid",
+          "line": 555
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "uuid",
+          "line": 571
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "uuid",
+          "line": 574
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "uuid",
+          "line": 577
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "uuid",
+          "line": 580
+        },
+        {
+          "location": "run-logs/0_Temporary Linux generated-byte recovery _ NOT full QA.txt",
+          "criterion": "uuid",
+          "line": 583
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/10_Post Check out dispatched ref.txt",
+      "public": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/10_Post Check out dispatched ref.txt",
+      "sourceBytes": 4334,
+      "sourceSha256": "0a43d8da35308f64f0ffa682bb884196c78fbfe3bff98ef739d64f277c1abd0c",
+      "publicBytes": 3763,
+      "publicSha256": "0b208538ad42b1a1a3427427b46f82d02e7b6225110f00b7996d2e6da25dd0a3",
+      "redactions": [
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/10_Post Check out dispatched ref.txt",
+          "criterion": "checkout_path",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/10_Post Check out dispatched ref.txt",
+          "criterion": "checkout_path",
+          "line": 15
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/10_Post Check out dispatched ref.txt",
+          "criterion": "checkout_path",
+          "line": 16
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/10_Post Check out dispatched ref.txt",
+          "criterion": "checkout_path",
+          "line": 19
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/10_Post Check out dispatched ref.txt",
+          "criterion": "checkout_path",
+          "line": 21
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/10_Post Check out dispatched ref.txt",
+          "criterion": "checkout_path",
+          "line": 22
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/10_Post Check out dispatched ref.txt",
+          "criterion": "checkout_path",
+          "line": 24
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/10_Post Check out dispatched ref.txt",
+          "criterion": "runner_temp_path",
+          "line": 4
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/10_Post Check out dispatched ref.txt",
+          "criterion": "runner_temp_path",
+          "line": 20
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/10_Post Check out dispatched ref.txt",
+          "criterion": "runner_temp_path",
+          "line": 23
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/10_Post Check out dispatched ref.txt",
+          "criterion": "runner_temp_path",
+          "line": 32
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/10_Post Check out dispatched ref.txt",
+          "criterion": "uuid",
+          "line": 4
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/10_Post Check out dispatched ref.txt",
+          "criterion": "uuid",
+          "line": 20
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/10_Post Check out dispatched ref.txt",
+          "criterion": "uuid",
+          "line": 23
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/10_Post Check out dispatched ref.txt",
+          "criterion": "uuid",
+          "line": 26
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/10_Post Check out dispatched ref.txt",
+          "criterion": "uuid",
+          "line": 29
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/10_Post Check out dispatched ref.txt",
+          "criterion": "uuid",
+          "line": 32
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/11_Complete job.txt",
+      "public": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/11_Complete job.txt",
+      "sourceBytes": 378,
+      "sourceSha256": "7403c6cc633cd2a527163624eb8de93f2c3fd80e6b4c8c761290ea8822188d9e",
+      "publicBytes": 378,
+      "publicSha256": "7403c6cc633cd2a527163624eb8de93f2c3fd80e6b4c8c761290ea8822188d9e",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/1_Set up job.txt",
+      "public": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/1_Set up job.txt",
+      "sourceBytes": 2166,
+      "sourceSha256": "12f4e64db42d7e257788da2eeb09169b40b7f0c00692c77967ad0f82045bca7d",
+      "publicBytes": 2144,
+      "publicSha256": "81e0c5857d63823a5f0e4809358e850b7ac099bd307425e179728c2fa177e232",
+      "redactions": [
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/1_Set up job.txt",
+          "criterion": "uuid",
+          "line": 7
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/2_Check out dispatched ref.txt",
+      "public": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/2_Check out dispatched ref.txt",
+      "sourceBytes": 16369,
+      "sourceSha256": "87fc0485e2014d1335e796b8702f7658c0b8b18acf2cb90faecbf11e9ba61581",
+      "publicBytes": 15798,
+      "publicSha256": "305b36b1103ef75ac5c547f06aa207d02ba8cfd12c5a3531eb35add913e495d9",
+      "redactions": [
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/2_Check out dispatched ref.txt",
+          "criterion": "checkout_path",
+          "line": 20
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/2_Check out dispatched ref.txt",
+          "criterion": "checkout_path",
+          "line": 26
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/2_Check out dispatched ref.txt",
+          "criterion": "checkout_path",
+          "line": 27
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/2_Check out dispatched ref.txt",
+          "criterion": "checkout_path",
+          "line": 31
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/2_Check out dispatched ref.txt",
+          "criterion": "checkout_path",
+          "line": 45
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/2_Check out dispatched ref.txt",
+          "criterion": "checkout_path",
+          "line": 62
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/2_Check out dispatched ref.txt",
+          "criterion": "checkout_path",
+          "line": 63
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/2_Check out dispatched ref.txt",
+          "criterion": "runner_temp_path",
+          "line": 24
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/2_Check out dispatched ref.txt",
+          "criterion": "runner_temp_path",
+          "line": 61
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/2_Check out dispatched ref.txt",
+          "criterion": "runner_temp_path",
+          "line": 62
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/2_Check out dispatched ref.txt",
+          "criterion": "runner_temp_path",
+          "line": 63
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/2_Check out dispatched ref.txt",
+          "criterion": "uuid",
+          "line": 24
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/2_Check out dispatched ref.txt",
+          "criterion": "uuid",
+          "line": 61
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/2_Check out dispatched ref.txt",
+          "criterion": "uuid",
+          "line": 62
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/2_Check out dispatched ref.txt",
+          "criterion": "uuid",
+          "line": 63
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/2_Check out dispatched ref.txt",
+          "criterion": "uuid",
+          "line": 64
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/2_Check out dispatched ref.txt",
+          "criterion": "uuid",
+          "line": 65
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/3_Set up Node.js.txt",
+      "public": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/3_Set up Node.js.txt",
+      "sourceBytes": 903,
+      "sourceSha256": "74a41883ac5952170442ff430b91b8c38893cab37ae5e4911896e8df1d3a75b3",
+      "publicBytes": 894,
+      "publicSha256": "9fec25d0bfb76ba39354a38e7ee1c46a813b882b84dac1750037ee848ab7af3e",
+      "redactions": [
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/3_Set up Node.js.txt",
+          "criterion": "toolcache_path",
+          "line": 8
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/4_Record cold failures then generate.txt",
+      "public": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/4_Record cold failures then generate.txt",
+      "sourceBytes": 18183,
+      "sourceSha256": "e10a6c5370692ed758009f4aef6966eef2fbecd26a918a0190480cc01ed03f0e",
+      "publicBytes": 18070,
+      "publicSha256": "f04f6cd0bb08f9292e35b6b13d4dcb99c0d89883d7de4acd7ae296ba2fdf2e0c",
+      "redactions": [
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/4_Record cold failures then generate.txt",
+          "criterion": "checkout_path",
+          "line": 49
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/4_Record cold failures then generate.txt",
+          "criterion": "checkout_path",
+          "line": 54
+        },
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/4_Record cold failures then generate.txt",
+          "criterion": "runner_home_path",
+          "line": 20
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/5_Upload logs and generated bytes.txt",
+      "public": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/5_Upload logs and generated bytes.txt",
+      "sourceBytes": 2248,
+      "sourceSha256": "c639db2df4f3be2f4c36d2483737b26cea615729711d6d36b6a267b439f934ca",
+      "publicBytes": 2238,
+      "publicSha256": "c3fed854cf424783ca613fe28a9ac91a6a932994e0dc7c7d09a8274a340b5ba7",
+      "redactions": [
+        {
+          "location": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/5_Upload logs and generated bytes.txt",
+          "criterion": "runner_temp_path",
+          "line": 4
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/9_Post Set up Node.js.txt",
+      "public": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/9_Post Set up Node.js.txt",
+      "sourceBytes": 305,
+      "sourceSha256": "b96c232714fbb5820d1a0fbe7cac5b4a14b25b09de9abb68f9e519e59e0c5093",
+      "publicBytes": 305,
+      "publicSha256": "b96c232714fbb5820d1a0fbe7cac5b4a14b25b09de9abb68f9e519e59e0c5093",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/system.txt",
+      "public": "run-logs/Temporary Linux generated-byte recovery _ NOT full QA/system.txt",
+      "sourceBytes": 802,
+      "sourceSha256": "948a3425eb63400a2bc6dcb71435ccf181da60a74f57c8841654dcab3fcbdba1",
+      "publicBytes": 802,
+      "publicSha256": "948a3425eb63400a2bc6dcb71435ccf181da60a74f57c8841654dcab3fcbdba1",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/artifact-exit-code.txt",
+      "public": "artifact/artifact-exit-code.txt",
+      "sourceBytes": 2,
+      "sourceSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publicBytes": 2,
+      "publicSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/changed-paths.txt",
+      "public": "artifact/changed-paths.txt",
+      "sourceBytes": 244,
+      "sourceSha256": "e1cddd54e476a19ca0ac650802a5b9b6c4d2ac1cc68fb339bca6599d47fe298e",
+      "publicBytes": 244,
+      "publicSha256": "e1cddd54e476a19ca0ac650802a5b9b6c4d2ac1cc68fb339bca6599d47fe298e",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/cold-bundle.log",
+      "public": "artifact/cold-bundle.log",
+      "sourceBytes": 538,
+      "sourceSha256": "223d63233821726b21f37561e4a962688fee23efd66cc98ab0cd9cf5c2c42c4c",
+      "publicBytes": 424,
+      "publicSha256": "7aae4e71283ebd0a619e4ff7cf8394afd6a4833f243fbc7855c259ca54497f98",
+      "redactions": [
+        {
+          "location": "artifact/cold-bundle.log",
+          "criterion": "checkout_path",
+          "line": 4
+        },
+        {
+          "location": "artifact/cold-bundle.log",
+          "criterion": "checkout_path",
+          "line": 9
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/cold-claude-drift.log",
+      "public": "artifact/cold-claude-drift.log",
+      "sourceBytes": 1824,
+      "sourceSha256": "cda67cf515f4dbd1a3e7ee45ee21866fc343c0a28b7b05c2b5c32072cd9f41ac",
+      "publicBytes": 1824,
+      "publicSha256": "cda67cf515f4dbd1a3e7ee45ee21866fc343c0a28b7b05c2b5c32072cd9f41ac",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/cold-context.log",
+      "public": "artifact/cold-context.log",
+      "sourceBytes": 5035,
+      "sourceSha256": "5b8cffaaa0c703e0a8e18271d52496bea406b443993d33af8d31ea2d64b38450",
+      "publicBytes": 5035,
+      "publicSha256": "5b8cffaaa0c703e0a8e18271d52496bea406b443993d33af8d31ea2d64b38450",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/command-exit-code.txt",
+      "public": "artifact/command-exit-code.txt",
+      "sourceBytes": 2,
+      "sourceSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publicBytes": 2,
+      "publicSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/commands.tsv",
+      "public": "artifact/commands.tsv",
+      "sourceBytes": 387,
+      "sourceSha256": "899d03468fe27f9e2d63ed5eb2d901a24b52e395adb9a146ed59d6a8b0209bb5",
+      "publicBytes": 387,
+      "publicSha256": "899d03468fe27f9e2d63ed5eb2d901a24b52e395adb9a146ed59d6a8b0209bb5",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/corepack-enable.log",
+      "public": "artifact/corepack-enable.log",
+      "sourceBytes": 0,
+      "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publicBytes": 0,
+      "publicSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/environment-after.txt",
+      "public": "artifact/environment-after.txt",
+      "sourceBytes": 1573,
+      "sourceSha256": "40c0327762e622ddd6f600b052ce35cd7bfe1d7875feff41b0706862935fc2c7",
+      "publicBytes": 1573,
+      "publicSha256": "40c0327762e622ddd6f600b052ce35cd7bfe1d7875feff41b0706862935fc2c7",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/environment-before.txt",
+      "public": "artifact/environment-before.txt",
+      "sourceBytes": 307,
+      "sourceSha256": "3eb0993511dc7942def3ebf18cd7e883edff5ced062d87704055d55a68273d3e",
+      "publicBytes": 307,
+      "publicSha256": "144c6085c624cbe7c98ef31d592971aad0dce1f698c3d8447ee764096f09ed72",
+      "redactions": [
+        {
+          "location": "artifact/environment-before.txt",
+          "criterion": "runner_hostname",
+          "line": 2
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/frozen-install.log",
+      "public": "artifact/frozen-install.log",
+      "sourceBytes": 1087,
+      "sourceSha256": "75fe01691e40e4bfbfdbe05c07c7e9270b8ab08969228450fa467fbbf6fbc13a",
+      "publicBytes": 1088,
+      "publicSha256": "79e6e5879649a9ae1c53524199aaf546ee0394fb76549d45e0aeccfc8c8bc917",
+      "redactions": [
+        {
+          "location": "artifact/frozen-install.log",
+          "criterion": "runner_home_path",
+          "line": 8
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/full.log",
+      "public": "artifact/full.log",
+      "sourceBytes": 9307,
+      "sourceSha256": "3aae145f88aad92696a153b3644bfc826764cdff524617ceb2a6ffc5061f2b0a",
+      "publicBytes": 9194,
+      "publicSha256": "925928042a0318aa89749a110e4a67f64825f977765e5ae0d853c26d790d07f6",
+      "redactions": [
+        {
+          "location": "artifact/full.log",
+          "criterion": "checkout_path",
+          "line": 45
+        },
+        {
+          "location": "artifact/full.log",
+          "criterion": "checkout_path",
+          "line": 50
+        },
+        {
+          "location": "artifact/full.log",
+          "criterion": "runner_home_path",
+          "line": 16
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/generate-claude.log",
+      "public": "artifact/generate-claude.log",
+      "sourceBytes": 123,
+      "sourceSha256": "dda976fffef3cebec205f9edaa76b31c7d9ae6ad47d74673b28c998edbe9b954",
+      "publicBytes": 123,
+      "publicSha256": "dda976fffef3cebec205f9edaa76b31c7d9ae6ad47d74673b28c998edbe9b954",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/generate-runtime.log",
+      "public": "artifact/generate-runtime.log",
+      "sourceBytes": 94,
+      "sourceSha256": "84ca00f4c3a29c0f705345abe2c95ddb1f5ffa3e8d29c7469fb2169bc73b40e9",
+      "publicBytes": 94,
+      "publicSha256": "84ca00f4c3a29c0f705345abe2c95ddb1f5ffa3e8d29c7469fb2169bc73b40e9",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/generated-claude-check.log",
+      "public": "artifact/generated-claude-check.log",
+      "sourceBytes": 121,
+      "sourceSha256": "136577e167c84b8d100760376fb01f60db53d474aa4eeb309250dc28f35253f9",
+      "publicBytes": 121,
+      "publicSha256": "136577e167c84b8d100760376fb01f60db53d474aa4eeb309250dc28f35253f9",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/generated-files.sha256",
+      "public": "artifact/generated-files.sha256",
+      "sourceBytes": 72480,
+      "sourceSha256": "a39f9b322e64df553a1d128730f6ff84d857b4e52416e4cea727ba82db4a5ba9",
+      "publicBytes": 72480,
+      "publicSha256": "a39f9b322e64df553a1d128730f6ff84d857b4e52416e4cea727ba82db4a5ba9",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/pnpm-pin.log",
+      "public": "artifact/pnpm-pin.log",
+      "sourceBytes": 51,
+      "sourceSha256": "6eeef08f9633f9842d14abc935fcf1e8abd1b2c1b201e8ec997a35c2cda5cf77",
+      "publicBytes": 51,
+      "publicSha256": "6eeef08f9633f9842d14abc935fcf1e8abd1b2c1b201e8ec997a35c2cda5cf77",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/pnpm-version.txt",
+      "public": "artifact/pnpm-version.txt",
+      "sourceBytes": 8,
+      "sourceSha256": "005206ab803f8881d8227540b7980b37e723b69a8849edb31734a90b7e7964e2",
+      "publicBytes": 8,
+      "publicSha256": "005206ab803f8881d8227540b7980b37e723b69a8849edb31734a90b7e7964e2",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/script-exit-code.txt",
+      "public": "artifact/script-exit-code.txt",
+      "sourceBytes": 2,
+      "sourceSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publicBytes": 2,
+      "publicSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/SHA256SUMS",
+      "public": "artifact/SHA256SUMS.original.txt",
+      "sourceBytes": 1835,
+      "sourceSha256": "0943bde250b311491c1be3b121c1db3407f02f1c7a2b490aa48760389ea98c2f",
+      "publicBytes": 1835,
+      "publicSha256": "0943bde250b311491c1be3b121c1db3407f02f1c7a2b490aa48760389ea98c2f",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifact/STATUS.txt",
+      "public": "artifact/STATUS.txt",
+      "sourceBytes": 34,
+      "sourceSha256": "78a5f79e7ec164b95f9f59800a425dcfbc804aebe0267045f0a6ef7f14cafa53",
+      "publicBytes": 34,
+      "publicSha256": "78a5f79e7ec164b95f9f59800a425dcfbc804aebe0267045f0a6ef7f14cafa53",
+      "redactions": [],
+      "metadataProjection": false
+    }
+  ],
+  "redactionCounts": {
+    "checkout_path": 36,
+    "runner_temp_path": 18,
+    "runner_home_path": 4,
+    "toolcache_path": 2,
+    "runner_hostname": 1,
+    "uuid": 26
+  },
+  "metadataOmissions": {
+    "run.json": [
+      "node_id",
+      "check_suite_id",
+      "check_suite_node_id",
+      "url",
+      "pull_requests",
+      "actor",
+      "referenced_workflows",
+      "triggering_actor",
+      "jobs_url",
+      "logs_url",
+      "check_suite_url",
+      "artifacts_url",
+      "cancel_url",
+      "rerun_url",
+      "previous_attempt_url",
+      "workflow_url",
+      "head_repository"
+    ],
+    "jobs.json": "runner/account/token context omitted; command timing/status/steps retained",
+    "artifacts.json": "opaque node IDs and account context omitted; artifact identity/size/digest/timestamps retained"
+  },
+  "rawReceiptSha256": "165dd52aea5ef1a10582242fcb6c7b3d893b0dd0cfac1eb999bfcc508eb7b948",
+  "rawSafetySha256": "67a5cf50c6fde794a481b9878ddd7ba10cf71af1b03a8931987211729eecf1b1",
+  "sourceArtifactSumsCoverage": "21 targets exact match; original full.log was not included in producer SHA256SUMS",
+  "apiStatusAndJobSelection": "run completed/success; generation job success and normal verification job skipped; dispatch input generate=true not exposed in run API and remains an inference from job selection",
+  "baselineManifestSha256": "19fbcbd2d9cdfb9a2b1e32ecb6ce3bd4cc00024890370609bae467c7e1dc22f4",
+  "baselineFileSha256": "5414c16d3241d9d2353790fee1cc4bdd970036a13f15adac3ac2711693b1abf2",
+  "redactionRules": [
+    {
+      "criterion": "checkout_path",
+      "pattern": "/home/runner/work/agent-governance-suite/agent-governance-suite",
+      "replacement": "<repo>",
+      "flags": 0
+    },
+    {
+      "criterion": "runner_temp_path",
+      "pattern": "/home/runner/work/_temp",
+      "replacement": "<runner-temp>",
+      "flags": 0
+    },
+    {
+      "criterion": "runner_work_path",
+      "pattern": "/home/runner/work",
+      "replacement": "<runner-work>",
+      "flags": 0
+    },
+    {
+      "criterion": "runner_home_path",
+      "pattern": "/home/runner",
+      "replacement": "<runner-home>",
+      "flags": 0
+    },
+    {
+      "criterion": "toolcache_path",
+      "pattern": "/opt/hostedtoolcache",
+      "replacement": "<toolcache>",
+      "flags": 0
+    },
+    {
+      "criterion": "runner_hostname",
+      "pattern": "\\brunnervm[A-Za-z0-9_-]*\\b",
+      "replacement": "<runner-host>",
+      "flags": 0
+    },
+    {
+      "criterion": "uuid",
+      "pattern": "\\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\b",
+      "replacement": "<ephemeral-id>",
+      "flags": 2
+    },
+    {
+      "criterion": "email",
+      "pattern": "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}",
+      "replacement": "<redacted-email>",
+      "flags": 2
+    },
+    {
+      "criterion": "credential",
+      "pattern": "(?<![A-Za-z0-9_-])(?:gh[pousr]_|github_pat_|sk-(?:proj-)?)[A-Za-z0-9_-]{12,}",
+      "replacement": "<redacted-credential>",
+      "flags": 0
+    },
+    {
+      "criterion": "authorization",
+      "pattern": "(?i)(authorization:\\s*(?:basic|bearer)\\s+)(?!\\*{3})[A-Za-z0-9_./+=-]+",
+      "replacement": "\\1<redacted-credential>",
+      "flags": 0
+    },
+    {
+      "criterion": "encoded_payload",
+      "pattern": "(?<![A-Za-z0-9+/])(?=[A-Za-z0-9+/=]*[A-Za-z])[A-Za-z0-9+/]{80,}={0,2}(?![A-Za-z0-9+/=])",
+      "replacement": "<redacted-encoded-payload>",
+      "flags": 0
+    }
+  ],
+  "limitations": [
+    "Generation success does not establish full QA or official supplier conformance.",
+    "ZIP and all provided text logs were recovered; omitted raw filesystem or VM/actual model observations were not supplied.",
+    "Producer full.log is supplementary output, not covered by its original SUMS; this packet hashes it independently.",
+    "Original Cloud offline/cold failure packet remains a separate historical episode.",
+    "Metadata is an explicit projection; omitted account/opaque context is not represented as absence."
+  ],
+  "newDownloadCount": 0,
+  "newApiPollCount": 0,
+  "newProductExecutionCount": 0,
+  "remoteMutations": 0,
+  "createdAt": "2026-10-06T09:05:32.324Z"
+}

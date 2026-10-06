@@ -1,0 +1,161 @@
+{
+  "schema": "GenerationArtifactContents.v1",
+  "artifactZip": {
+    "id": 11400008624,
+    "bytes": 1333532,
+    "sha256": "7ec13d96158aa1601240e9ba1ee75d94c642cdc081de8edcf4a73df08ea6dc0a",
+    "files": [
+      {
+        "path": "artifact-exit-code.txt",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "copiedToPublic": true
+      },
+      {
+        "path": "changed-paths.txt",
+        "bytes": 244,
+        "sha256": "e1cddd54e476a19ca0ac650802a5b9b6c4d2ac1cc68fb339bca6599d47fe298e",
+        "copiedToPublic": true
+      },
+      {
+        "path": "cold-bundle.log",
+        "bytes": 538,
+        "sha256": "223d63233821726b21f37561e4a962688fee23efd66cc98ab0cd9cf5c2c42c4c",
+        "copiedToPublic": true
+      },
+      {
+        "path": "cold-claude-drift.log",
+        "bytes": 1824,
+        "sha256": "cda67cf515f4dbd1a3e7ee45ee21866fc343c0a28b7b05c2b5c32072cd9f41ac",
+        "copiedToPublic": true
+      },
+      {
+        "path": "cold-context.log",
+        "bytes": 5035,
+        "sha256": "5b8cffaaa0c703e0a8e18271d52496bea406b443993d33af8d31ea2d64b38450",
+        "copiedToPublic": true
+      },
+      {
+        "path": "command-exit-code.txt",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "copiedToPublic": true
+      },
+      {
+        "path": "commands.tsv",
+        "bytes": 387,
+        "sha256": "899d03468fe27f9e2d63ed5eb2d901a24b52e395adb9a146ed59d6a8b0209bb5",
+        "copiedToPublic": true
+      },
+      {
+        "path": "corepack-enable.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "copiedToPublic": true
+      },
+      {
+        "path": "environment-after.txt",
+        "bytes": 1573,
+        "sha256": "40c0327762e622ddd6f600b052ce35cd7bfe1d7875feff41b0706862935fc2c7",
+        "copiedToPublic": true
+      },
+      {
+        "path": "environment-before.txt",
+        "bytes": 307,
+        "sha256": "3eb0993511dc7942def3ebf18cd7e883edff5ced062d87704055d55a68273d3e",
+        "copiedToPublic": true
+      },
+      {
+        "path": "frozen-install.log",
+        "bytes": 1087,
+        "sha256": "75fe01691e40e4bfbfdbe05c07c7e9270b8ab08969228450fa467fbbf6fbc13a",
+        "copiedToPublic": true
+      },
+      {
+        "path": "full.log",
+        "bytes": 9307,
+        "sha256": "3aae145f88aad92696a153b3644bfc826764cdff524617ceb2a6ffc5061f2b0a",
+        "copiedToPublic": true
+      },
+      {
+        "path": "generate-claude.log",
+        "bytes": 123,
+        "sha256": "dda976fffef3cebec205f9edaa76b31c7d9ae6ad47d74673b28c998edbe9b954",
+        "copiedToPublic": true
+      },
+      {
+        "path": "generate-runtime.log",
+        "bytes": 94,
+        "sha256": "84ca00f4c3a29c0f705345abe2c95ddb1f5ffa3e8d29c7469fb2169bc73b40e9",
+        "copiedToPublic": true
+      },
+      {
+        "path": "generated-bytes.tar.gz",
+        "bytes": 1298713,
+        "sha256": "afc5080617b9235c5a2980e9f63a9c903be53453fcc49b346c2f4e6fcb7db0d5",
+        "copiedToPublic": false
+      },
+      {
+        "path": "generated-claude-check.log",
+        "bytes": 121,
+        "sha256": "136577e167c84b8d100760376fb01f60db53d474aa4eeb309250dc28f35253f9",
+        "copiedToPublic": true
+      },
+      {
+        "path": "generated-files.sha256",
+        "bytes": 72480,
+        "sha256": "a39f9b322e64df553a1d128730f6ff84d857b4e52416e4cea727ba82db4a5ba9",
+        "copiedToPublic": true
+      },
+      {
+        "path": "generated.patch",
+        "bytes": 12980,
+        "sha256": "f083c12b74ab41b3b737b0359926ea6056384bd890d7a10f032d61e05088ead2",
+        "copiedToPublic": false
+      },
+      {
+        "path": "pnpm-pin.log",
+        "bytes": 51,
+        "sha256": "6eeef08f9633f9842d14abc935fcf1e8abd1b2c1b201e8ec997a35c2cda5cf77",
+        "copiedToPublic": true
+      },
+      {
+        "path": "pnpm-version.txt",
+        "bytes": 8,
+        "sha256": "005206ab803f8881d8227540b7980b37e723b69a8849edb31734a90b7e7964e2",
+        "copiedToPublic": true
+      },
+      {
+        "path": "script-exit-code.txt",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "copiedToPublic": true
+      },
+      {
+        "path": "SHA256SUMS",
+        "bytes": 1835,
+        "sha256": "0943bde250b311491c1be3b121c1db3407f02f1c7a2b490aa48760389ea98c2f",
+        "copiedToPublic": true
+      },
+      {
+        "path": "STATUS.txt",
+        "bytes": 34,
+        "sha256": "78a5f79e7ec164b95f9f59800a425dcfbc804aebe0267045f0a6ef7f14cafa53",
+        "copiedToPublic": true
+      }
+    ]
+  },
+  "runLogZip": {
+    "bytes": 24461,
+    "sha256": "bb12caf87cf3dc8fee3378749e7b5011e9ffe9d6a6e876646d330bed48cb4916",
+    "files": 10
+  },
+  "generatedTar": {
+    "entries": 657,
+    "files": 527,
+    "expandedBytes": 5987077,
+    "sha256": "afc5080617b9235c5a2980e9f63a9c903be53453fcc49b346c2f4e6fcb7db0d5"
+  },
+  "generatedInventory": "artifact/generated-files.sha256",
+  "generatedSourceDuplicated": false
+}

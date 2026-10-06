@@ -1,0 +1,301 @@
+﻿2026-10-06T08:56:16.8464828Z ##[group]Run bash scripts/generate-cs281-linux.sh
+2026-10-06T08:56:16.8466337Z [36;1mbash scripts/generate-cs281-linux.sh[0m
+2026-10-06T08:56:16.8782075Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T08:56:16.8783135Z ##[endgroup]
+2026-10-06T08:56:17.0568292Z 
+2026-10-06T08:56:17.0577102Z COMMAND corepack-enable: corepack enable
+2026-10-06T08:56:17.1154567Z 
+2026-10-06T08:56:17.1156911Z COMMAND pnpm-pin: corepack prepare pnpm@11.19.0 --activate
+2026-10-06T08:56:17.1707720Z Preparing pnpm@11.19.0 for immediate activation...
+2026-10-06T08:56:18.9944066Z 11.19.0
+2026-10-06T08:56:19.4899801Z 
+2026-10-06T08:56:19.4901453Z COMMAND frozen-install: pnpm install --frozen-lockfile
+2026-10-06T08:56:20.0146380Z ? Verifying lockfile against supply-chain policies (267 entries)...
+2026-10-06T08:56:20.0263444Z Lockfile is up to date, resolution step is skipped
+2026-10-06T08:56:20.1307590Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-10-06T08:56:20.1716358Z Packages: +217
+2026-10-06T08:56:20.1717839Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-10-06T08:56:21.1668513Z Progress: resolved 217, reused 0, downloaded 58, added 0
+2026-10-06T08:56:21.2297713Z Packages are copied from the content-addressable store to the virtual store.
+2026-10-06T08:56:21.2310196Z   Content-addressable store is at: <runner-home>/.local/share/pnpm/store/v11
+2026-10-06T08:56:21.2336590Z   Virtual store is at:             node_modules/.pnpm
+2026-10-06T08:56:22.0161717Z Progress: resolved 217, reused 0, downloaded 217, added 217, done
+2026-10-06T08:56:22.7737848Z ✓ Lockfile passes supply-chain policies (267 entries in 2.7s)
+2026-10-06T08:56:22.7921810Z .../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+2026-10-06T08:56:22.8631129Z .../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+2026-10-06T08:56:23.0092211Z 
+2026-10-06T08:56:23.0092810Z dependencies:
+2026-10-06T08:56:23.0093501Z + @modelcontextprotocol/sdk 1.30.0
+2026-10-06T08:56:23.0093995Z + ajv 8.20.0
+2026-10-06T08:56:23.0094424Z + ajv-formats 3.0.1
+2026-10-06T08:56:23.0094818Z + zod 4.5.4
+2026-10-06T08:56:23.0095007Z 
+2026-10-06T08:56:23.0095171Z devDependencies:
+2026-10-06T08:56:23.0095559Z + @eslint/js 10.0.1
+2026-10-06T08:56:23.0096249Z + @types/node 26.5.0
+2026-10-06T08:56:23.0096540Z + esbuild 0.28.2
+2026-10-06T08:56:23.0096765Z + eslint 10.10.0
+2026-10-06T08:56:23.0096995Z + tsx 4.23.13
+2026-10-06T08:56:23.0097224Z + typescript 6.0.2
+2026-10-06T08:56:23.0097485Z + typescript-eslint 8.70.0
+2026-10-06T08:56:23.0097743Z + vitest 5.0.0
+2026-10-06T08:56:23.0097876Z 
+2026-10-06T08:56:23.1102926Z Done in 3.5s using pnpm v11.19.0
+2026-10-06T08:56:23.1721105Z 
+2026-10-06T08:56:23.1722163Z COMMAND cold-bundle: pnpm bundle:check
+2026-10-06T08:56:24.0733795Z Already up to date
+2026-10-06T08:56:24.0743119Z Done in 411ms using pnpm v11.19.0
+2026-10-06T08:56:24.0890670Z $ node scripts/check-bundle.mjs
+2026-10-06T08:56:24.3532878Z file://<repo>/scripts/check-bundle.mjs:18
+2026-10-06T08:56:24.3534434Z       throw new Error(`${output} is stale. Run pnpm build and commit the result.`);
+2026-10-06T08:56:24.3535166Z             ^
+2026-10-06T08:56:24.3535376Z 
+2026-10-06T08:56:24.3536314Z Error: mcp-server/dist/server.mjs is stale. Run pnpm build and commit the result.
+2026-10-06T08:56:24.3537630Z     at file://<repo>/scripts/check-bundle.mjs:18:13
+2026-10-06T08:56:24.3538393Z 
+2026-10-06T08:56:24.3538550Z Node.js v24.21.0
+2026-10-06T08:56:24.3767592Z [ELIFECYCLE] Command failed with exit code 1.
+2026-10-06T08:56:24.3994648Z 
+2026-10-06T08:56:24.3995705Z COMMAND cold-claude-drift: pnpm claude:drift
+2026-10-06T08:56:25.3021061Z Already up to date
+2026-10-06T08:56:25.3029818Z Done in 417ms using pnpm v11.19.0
+2026-10-06T08:56:25.3161615Z $ node scripts/build-claude-plugin.mjs --drift
+2026-10-06T08:56:25.5906271Z ##[warning]claude-plugin/ differs from the current sources (47 item(s)). This does not block shared-source changes; run pnpm claude:build for a release or Claude-side work.
+2026-10-06T08:56:25.5917258Z - missing file claude-plugin/contracts/engineering-plan-result.v1.schema.json
+2026-10-06T08:56:25.5918021Z - missing file claude-plugin/contracts/engineering-review-report.v1.schema.json
+2026-10-06T08:56:25.5918701Z - missing file claude-plugin/contracts/engineering-review-request.v1.schema.json
+2026-10-06T08:56:25.5919352Z - missing file claude-plugin/contracts/engineering-review-result.v1.schema.json
+2026-10-06T08:56:25.5919995Z - missing file claude-plugin/contracts/engineering-run-receipt.v1.schema.json
+2026-10-06T08:56:25.5920621Z - missing file claude-plugin/contracts/engineering-snapshot.v1.schema.json
+2026-10-06T08:56:25.5921226Z - missing file claude-plugin/contracts/engineering-test-plan.v1.schema.json
+2026-10-06T08:56:25.5921836Z - missing file claude-plugin/contracts/engineering-test-proof.v1.schema.json
+2026-10-06T08:56:25.5922467Z - missing file claude-plugin/contracts/engineering-test-result.v1.schema.json
+2026-10-06T08:56:25.5923529Z - missing file claude-plugin/runtime/engineering-practices/CONTENT_LOCK.json
+2026-10-06T08:56:25.5924478Z - missing file claude-plugin/runtime/engineering-practices/LICENSE
+2026-10-06T08:56:25.5925009Z - missing file claude-plugin/runtime/engineering-practices/cli.mjs
+2026-10-06T08:56:25.5925536Z - missing file claude-plugin/runtime/engineering-practices/core.mjs
+2026-10-06T08:56:25.5926390Z - missing file claude-plugin/runtime/engineering-practices/io.mjs
+2026-10-06T08:56:25.5927039Z - missing file claude-plugin/runtime/engineering-practices/licenses/awesome-agent-skills.txt
+2026-10-06T08:56:25.5927827Z - missing file claude-plugin/runtime/engineering-practices/licenses/mattpocock-skills.txt
+2026-10-06T08:56:25.5928514Z - missing file claude-plugin/runtime/engineering-practices/licenses/superpowers.txt
+2026-10-06T08:56:25.5929121Z - missing file claude-plugin/runtime/engineering-practices/runner.mjs
+2026-10-06T08:56:25.5929664Z - missing file claude-plugin/runtime/engineering-practices/schema.mjs
+2026-10-06T08:56:25.5930160Z - missing file claude-plugin/skills/code-review/LICENSE
+2026-10-06T08:56:25.5930470Z - ... 27 more
+2026-10-06T08:56:25.6072810Z 
+2026-10-06T08:56:25.6073410Z COMMAND cold-context: pnpm skills:context-check
+2026-10-06T08:56:26.5055688Z Already up to date
+2026-10-06T08:56:26.5063729Z Done in 415ms using pnpm v11.19.0
+2026-10-06T08:56:26.5199192Z $ node scripts/check-skill-context-optimization.mjs
+2026-10-06T08:56:26.7680634Z {
+2026-10-06T08:56:26.7681340Z   "baselineRevision": "7bc7753012227938be2a46f68bf3e29d29d5ef34",
+2026-10-06T08:56:26.7682036Z   "approvedAdditions": [
+2026-10-06T08:56:26.7682302Z     {
+2026-10-06T08:56:26.7682541Z       "skillId": "session-board",
+2026-10-06T08:56:26.7683052Z       "path": "scripts/fixtures/session-board-peer-message-guidance.2.6.0.md",
+2026-10-06T08:56:26.7683689Z       "sha256": "381be4018118086b3c4087be043c004d8d6de986d42a6c0c14f182c2d76ed76f"
+2026-10-06T08:56:26.7684118Z     }
+2026-10-06T08:56:26.7684334Z   ],
+2026-10-06T08:56:26.7684604Z   "policyBaselineUpdates": [
+2026-10-06T08:56:26.7684888Z     {
+2026-10-06T08:56:26.7685135Z       "skillId": "orchestrator",
+2026-10-06T08:56:26.7685491Z       "revision": "2.7.3-intake-selection-timing",
+2026-10-06T08:56:26.7686180Z       "initialMaxBytes": 4585,
+2026-10-06T08:56:26.7686529Z       "hashes": {
+2026-10-06T08:56:26.7686983Z         "reconstructed": "12744ae24122ce513b09152f3e4884b63883c7d15e808fa7b2b6c19c27be3af9",
+2026-10-06T08:56:26.7687685Z         "frontmatter": "9054478f3909908263ce9f26afaad3b51d2a0db8f1aceacb228b07c6e3dd7bae",
+2026-10-06T08:56:26.7688402Z         "mcpExecution": "be972eaa9b6d2ceab78f48f37fcc0eb4e1d4ce52cd8cfb5de356f019da46c546"
+2026-10-06T08:56:26.7688872Z       }
+2026-10-06T08:56:26.7689071Z     }
+2026-10-06T08:56:26.7689246Z   ],
+2026-10-06T08:56:26.7689469Z   "runtimeBaselineUpdates": [
+2026-10-06T08:56:26.7689733Z     {
+2026-10-06T08:56:26.7690008Z       "skillId": "acceptance-evidence-validator",
+2026-10-06T08:56:26.7690637Z       "before": "Node.js 22 이상",
+2026-10-06T08:56:26.7691309Z       "after": "Node.js 24.0.0 이상"
+2026-10-06T08:56:26.7691573Z     },
+2026-10-06T08:56:26.7691751Z     {
+2026-10-06T08:56:26.7692024Z       "skillId": "blocker-diagnostician",
+2026-10-06T08:56:26.7692427Z       "before": "Node.js 22 이상",
+2026-10-06T08:56:26.7692786Z       "after": "Node.js 24.0.0 이상"
+2026-10-06T08:56:26.7693256Z     },
+2026-10-06T08:56:26.7693482Z     {
+2026-10-06T08:56:26.7693745Z       "skillId": "change-scope-guardian",
+2026-10-06T08:56:26.7694122Z       "before": "Node.js 22 이상",
+2026-10-06T08:56:26.7694425Z       "after": "Node.js 24.0.0 이상"
+2026-10-06T08:56:26.7694679Z     },
+2026-10-06T08:56:26.7694863Z     {
+2026-10-06T08:56:26.7695118Z       "skillId": "evaluation-validity-auditor",
+2026-10-06T08:56:26.7695509Z       "before": "Node.js 22.13 이상",
+2026-10-06T08:56:26.7696177Z       "after": "Node.js 24.0.0 이상"
+2026-10-06T08:56:26.7696659Z     },
+2026-10-06T08:56:26.7696967Z     {
+2026-10-06T08:56:26.7697332Z       "skillId": "instruction-scope-resolver",
+2026-10-06T08:56:26.7698265Z       "before": "Node.js 22 이상",
+2026-10-06T08:56:26.7698830Z       "after": "Node.js 24.0.0 이상"
+2026-10-06T08:56:26.7699118Z     },
+2026-10-06T08:56:26.7699428Z     {
+2026-10-06T08:56:26.7699682Z       "skillId": "mutation-risk-preflight",
+2026-10-06T08:56:26.7700056Z       "before": "Node.js 22 이상",
+2026-10-06T08:56:26.7700380Z       "after": "Node.js 24.0.0 이상"
+2026-10-06T08:56:26.7700621Z     },
+2026-10-06T08:56:26.7700793Z     {
+2026-10-06T08:56:26.7701010Z       "skillId": "task-contract",
+2026-10-06T08:56:26.7701320Z       "before": "Node.js 22 이상",
+2026-10-06T08:56:26.7701622Z       "after": "Node.js 24.0.0 이상"
+2026-10-06T08:56:26.7701864Z     },
+2026-10-06T08:56:26.7702037Z     {
+2026-10-06T08:56:26.7702287Z       "skillId": "workspace-convention-profiler",
+2026-10-06T08:56:26.7702651Z       "before": "Node.js 22 이상",
+2026-10-06T08:56:26.7702950Z       "after": "Node.js 24.0.0 이상"
+2026-10-06T08:56:26.7703180Z     }
+2026-10-06T08:56:26.7703361Z   ],
+2026-10-06T08:56:26.7703561Z   "pass": true,
+2026-10-06T08:56:26.7703775Z   "errors": [],
+2026-10-06T08:56:26.7703968Z   "totals": {
+2026-10-06T08:56:26.7704165Z     "skillCount": 20,
+2026-10-06T08:56:26.7704393Z     "baselineBytes": 115679,
+2026-10-06T08:56:26.7704634Z     "candidateBytes": 45851,
+2026-10-06T08:56:26.7704872Z     "reducedBytes": 69828,
+2026-10-06T08:56:26.7705137Z     "reductionPercent": 60.363592
+2026-10-06T08:56:26.7705378Z   },
+2026-10-06T08:56:26.7705552Z   "skills": [
+2026-10-06T08:56:26.7705978Z     {
+2026-10-06T08:56:26.7706376Z       "skillId": "acceptance-evidence-validator",
+2026-10-06T08:56:26.7706833Z       "baselineBytes": 3968,
+2026-10-06T08:56:26.7707087Z       "candidateBytes": 1795,
+2026-10-06T08:56:26.7707332Z       "reducedBytes": 2173
+2026-10-06T08:56:26.7707547Z     },
+2026-10-06T08:56:26.7707722Z     {
+2026-10-06T08:56:26.7707952Z       "skillId": "blocker-diagnostician",
+2026-10-06T08:56:26.7708241Z       "baselineBytes": 5091,
+2026-10-06T08:56:26.7708481Z       "candidateBytes": 1981,
+2026-10-06T08:56:26.7708735Z       "reducedBytes": 3110
+2026-10-06T08:56:26.7708950Z     },
+2026-10-06T08:56:26.7709124Z     {
+2026-10-06T08:56:26.7709350Z       "skillId": "change-scope-guardian",
+2026-10-06T08:56:26.7709628Z       "baselineBytes": 2563,
+2026-10-06T08:56:26.7709866Z       "candidateBytes": 2184,
+2026-10-06T08:56:26.7710108Z       "reducedBytes": 379
+2026-10-06T08:56:26.7710325Z     },
+2026-10-06T08:56:26.7710497Z     {
+2026-10-06T08:56:26.7710738Z       "skillId": "codex-token-usage-analyzer",
+2026-10-06T08:56:26.7711031Z       "baselineBytes": 1809,
+2026-10-06T08:56:26.7711273Z       "candidateBytes": 1405,
+2026-10-06T08:56:26.7711513Z       "reducedBytes": 404
+2026-10-06T08:56:26.7711727Z     },
+2026-10-06T08:56:26.7711898Z     {
+2026-10-06T08:56:26.7712117Z       "skillId": "context-continuity",
+2026-10-06T08:56:26.7712385Z       "baselineBytes": 3599,
+2026-10-06T08:56:26.7712625Z       "candidateBytes": 1944,
+2026-10-06T08:56:26.7712858Z       "reducedBytes": 1655
+2026-10-06T08:56:26.7713254Z     },
+2026-10-06T08:56:26.7713434Z     {
+2026-10-06T08:56:26.7713657Z       "skillId": "coordinate-subagents",
+2026-10-06T08:56:26.7713932Z       "baselineBytes": 10366,
+2026-10-06T08:56:26.7714208Z       "candidateBytes": 2191,
+2026-10-06T08:56:26.7714450Z       "reducedBytes": 8175
+2026-10-06T08:56:26.7714663Z     },
+2026-10-06T08:56:26.7714832Z     {
+2026-10-06T08:56:26.7715071Z       "skillId": "evaluation-validity-auditor",
+2026-10-06T08:56:26.7715368Z       "baselineBytes": 3182,
+2026-10-06T08:56:26.7715609Z       "candidateBytes": 1585,
+2026-10-06T08:56:26.7716505Z       "reducedBytes": 1597
+2026-10-06T08:56:26.7716748Z     },
+2026-10-06T08:56:26.7716924Z     {
+2026-10-06T08:56:26.7717164Z       "skillId": "independent-audit-gate",
+2026-10-06T08:56:26.7717458Z       "baselineBytes": 9677,
+2026-10-06T08:56:26.7717702Z       "candidateBytes": 3301,
+2026-10-06T08:56:26.7717974Z       "reducedBytes": 6376
+2026-10-06T08:56:26.7718189Z     },
+2026-10-06T08:56:26.7718360Z     {
+2026-10-06T08:56:26.7718627Z       "skillId": "independent-deliberation-panel",
+2026-10-06T08:56:26.7719103Z       "baselineBytes": 16111,
+2026-10-06T08:56:26.7719343Z       "candidateBytes": 5256,
+2026-10-06T08:56:26.7719614Z       "reducedBytes": 10855
+2026-10-06T08:56:26.7719837Z     },
+2026-10-06T08:56:26.7720011Z     {
+2026-10-06T08:56:26.7720252Z       "skillId": "instruction-scope-resolver",
+2026-10-06T08:56:26.7720597Z       "baselineBytes": 2671,
+2026-10-06T08:56:26.7720942Z       "candidateBytes": 2068,
+2026-10-06T08:56:26.7721292Z       "reducedBytes": 603
+2026-10-06T08:56:26.7721534Z     },
+2026-10-06T08:56:26.7721706Z     {
+2026-10-06T08:56:26.7721945Z       "skillId": "iteration-frame-auditor",
+2026-10-06T08:56:26.7722238Z       "baselineBytes": 4773,
+2026-10-06T08:56:26.7722511Z       "candidateBytes": 1947,
+2026-10-06T08:56:26.7722751Z       "reducedBytes": 2826
+2026-10-06T08:56:26.7722966Z     },
+2026-10-06T08:56:26.7723136Z     {
+2026-10-06T08:56:26.7723365Z       "skillId": "korean-prose-editor",
+2026-10-06T08:56:26.7723650Z       "baselineBytes": 5972,
+2026-10-06T08:56:26.7723890Z       "candidateBytes": 2053,
+2026-10-06T08:56:26.7724124Z       "reducedBytes": 3919
+2026-10-06T08:56:26.7724355Z     },
+2026-10-06T08:56:26.7724526Z     {
+2026-10-06T08:56:26.7724756Z       "skillId": "model-effort-advisor",
+2026-10-06T08:56:26.7725031Z       "baselineBytes": 5780,
+2026-10-06T08:56:26.7725269Z       "candidateBytes": 2024,
+2026-10-06T08:56:26.7725506Z       "reducedBytes": 3756
+2026-10-06T08:56:26.7725718Z     },
+2026-10-06T08:56:26.7726241Z     {
+2026-10-06T08:56:26.7726484Z       "skillId": "mutation-risk-preflight",
+2026-10-06T08:56:26.7726782Z       "baselineBytes": 3323,
+2026-10-06T08:56:26.7727025Z       "candidateBytes": 2140,
+2026-10-06T08:56:26.7727262Z       "reducedBytes": 1183
+2026-10-06T08:56:26.7727475Z     },
+2026-10-06T08:56:26.7727645Z     {
+2026-10-06T08:56:26.7727858Z       "skillId": "orchestrator",
+2026-10-06T08:56:26.7728113Z       "baselineBytes": 16881,
+2026-10-06T08:56:26.7728351Z       "candidateBytes": 4583,
+2026-10-06T08:56:26.7728599Z       "reducedBytes": 12298
+2026-10-06T08:56:26.7728821Z     },
+2026-10-06T08:56:26.7728994Z     {
+2026-10-06T08:56:26.7729238Z       "skillId": "recovery-strategy-selector",
+2026-10-06T08:56:26.7729536Z       "baselineBytes": 4013,
+2026-10-06T08:56:26.7729769Z       "candidateBytes": 1166,
+2026-10-06T08:56:26.7730002Z       "reducedBytes": 2847
+2026-10-06T08:56:26.7730215Z     },
+2026-10-06T08:56:26.7730399Z     {
+2026-10-06T08:56:26.7730616Z       "skillId": "session-board",
+2026-10-06T08:56:26.7730877Z       "baselineBytes": 4001,
+2026-10-06T08:56:26.7731111Z       "candidateBytes": 2918,
+2026-10-06T08:56:26.7731348Z       "reducedBytes": 1083
+2026-10-06T08:56:26.7731563Z     },
+2026-10-06T08:56:26.7731734Z     {
+2026-10-06T08:56:26.7731968Z       "skillId": "software-security-auditor",
+2026-10-06T08:56:26.7732264Z       "baselineBytes": 5485,
+2026-10-06T08:56:26.7732497Z       "candidateBytes": 1944,
+2026-10-06T08:56:26.7732734Z       "reducedBytes": 3541
+2026-10-06T08:56:26.7733112Z     },
+2026-10-06T08:56:26.7733283Z     {
+2026-10-06T08:56:26.7733494Z       "skillId": "task-contract",
+2026-10-06T08:56:26.7733745Z       "baselineBytes": 3492,
+2026-10-06T08:56:26.7733981Z       "candidateBytes": 1500,
+2026-10-06T08:56:26.7734216Z       "reducedBytes": 1992
+2026-10-06T08:56:26.7734427Z     },
+2026-10-06T08:56:26.7734598Z     {
+2026-10-06T08:56:26.7734848Z       "skillId": "workspace-convention-profiler",
+2026-10-06T08:56:26.7735152Z       "baselineBytes": 2922,
+2026-10-06T08:56:26.7735393Z       "candidateBytes": 1866,
+2026-10-06T08:56:26.7735627Z       "reducedBytes": 1056
+2026-10-06T08:56:26.7736282Z     }
+2026-10-06T08:56:26.7736603Z   ]
+2026-10-06T08:56:26.7736878Z }
+2026-10-06T08:56:26.7847745Z 
+2026-10-06T08:56:26.7847997Z COMMAND generate-runtime: pnpm build
+2026-10-06T08:56:27.7029866Z Already up to date
+2026-10-06T08:56:27.7037308Z Done in 425ms using pnpm v11.19.0
+2026-10-06T08:56:27.7173255Z $ tsc --noEmit && node scripts/build.mjs
+2026-10-06T08:56:32.2708801Z 
+2026-10-06T08:56:32.2710283Z COMMAND generate-claude: pnpm claude:build
+2026-10-06T08:56:33.1842655Z Already up to date
+2026-10-06T08:56:33.1852790Z Done in 421ms using pnpm v11.19.0
+2026-10-06T08:56:33.1987414Z $ node scripts/build-claude-plugin.mjs
+2026-10-06T08:56:33.5283969Z claude-plugin: wrote 506 files
+2026-10-06T08:56:33.5470383Z 
+2026-10-06T08:56:33.5471141Z COMMAND generated-claude-check: pnpm claude:check
+2026-10-06T08:56:34.4481798Z Already up to date
+2026-10-06T08:56:34.4489567Z Done in 415ms using pnpm v11.19.0
+2026-10-06T08:56:34.4621108Z $ node scripts/build-claude-plugin.mjs --check
+2026-10-06T08:56:34.7366802Z claude-plugin: fresh

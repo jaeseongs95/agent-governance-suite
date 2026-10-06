@@ -1,0 +1,297 @@
+
+COMMAND corepack-enable: corepack enable
+
+COMMAND pnpm-pin: corepack prepare pnpm@11.19.0 --activate
+Preparing pnpm@11.19.0 for immediate activation...
+11.19.0
+
+COMMAND frozen-install: pnpm install --frozen-lockfile
+? Verifying lockfile against supply-chain policies (267 entries)...
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +217
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 217, reused 0, downloaded 58, added 0
+Packages are copied from the content-addressable store to the virtual store.
+  Content-addressable store is at: <runner-home>/.local/share/pnpm/store/v11
+  Virtual store is at:             node_modules/.pnpm
+Progress: resolved 217, reused 0, downloaded 217, added 217, done
+✓ Lockfile passes supply-chain policies (267 entries in 2.7s)
+.../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+.../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+
+dependencies:
++ @modelcontextprotocol/sdk 1.30.0
++ ajv 8.20.0
++ ajv-formats 3.0.1
++ zod 4.5.4
+
+devDependencies:
++ @eslint/js 10.0.1
++ @types/node 26.5.0
++ esbuild 0.28.2
++ eslint 10.10.0
++ tsx 4.23.13
++ typescript 6.0.2
++ typescript-eslint 8.70.0
++ vitest 5.0.0
+
+Done in 3.5s using pnpm v11.19.0
+
+COMMAND cold-bundle: pnpm bundle:check
+Already up to date
+Done in 411ms using pnpm v11.19.0
+$ node scripts/check-bundle.mjs
+file://<repo>/scripts/check-bundle.mjs:18
+      throw new Error(`${output} is stale. Run pnpm build and commit the result.`);
+            ^
+
+Error: mcp-server/dist/server.mjs is stale. Run pnpm build and commit the result.
+    at file://<repo>/scripts/check-bundle.mjs:18:13
+
+Node.js v24.21.0
+[ELIFECYCLE] Command failed with exit code 1.
+
+COMMAND cold-claude-drift: pnpm claude:drift
+Already up to date
+Done in 417ms using pnpm v11.19.0
+$ node scripts/build-claude-plugin.mjs --drift
+::warning title=Claude plugin drift::claude-plugin/ differs from the current sources (47 item(s)). This does not block shared-source changes; run pnpm claude:build for a release or Claude-side work.
+- missing file claude-plugin/contracts/engineering-plan-result.v1.schema.json
+- missing file claude-plugin/contracts/engineering-review-report.v1.schema.json
+- missing file claude-plugin/contracts/engineering-review-request.v1.schema.json
+- missing file claude-plugin/contracts/engineering-review-result.v1.schema.json
+- missing file claude-plugin/contracts/engineering-run-receipt.v1.schema.json
+- missing file claude-plugin/contracts/engineering-snapshot.v1.schema.json
+- missing file claude-plugin/contracts/engineering-test-plan.v1.schema.json
+- missing file claude-plugin/contracts/engineering-test-proof.v1.schema.json
+- missing file claude-plugin/contracts/engineering-test-result.v1.schema.json
+- missing file claude-plugin/runtime/engineering-practices/CONTENT_LOCK.json
+- missing file claude-plugin/runtime/engineering-practices/LICENSE
+- missing file claude-plugin/runtime/engineering-practices/cli.mjs
+- missing file claude-plugin/runtime/engineering-practices/core.mjs
+- missing file claude-plugin/runtime/engineering-practices/io.mjs
+- missing file claude-plugin/runtime/engineering-practices/licenses/awesome-agent-skills.txt
+- missing file claude-plugin/runtime/engineering-practices/licenses/mattpocock-skills.txt
+- missing file claude-plugin/runtime/engineering-practices/licenses/superpowers.txt
+- missing file claude-plugin/runtime/engineering-practices/runner.mjs
+- missing file claude-plugin/runtime/engineering-practices/schema.mjs
+- missing file claude-plugin/skills/code-review/LICENSE
+- ... 27 more
+
+COMMAND cold-context: pnpm skills:context-check
+Already up to date
+Done in 415ms using pnpm v11.19.0
+$ node scripts/check-skill-context-optimization.mjs
+{
+  "baselineRevision": "7bc7753012227938be2a46f68bf3e29d29d5ef34",
+  "approvedAdditions": [
+    {
+      "skillId": "session-board",
+      "path": "scripts/fixtures/session-board-peer-message-guidance.2.6.0.md",
+      "sha256": "381be4018118086b3c4087be043c004d8d6de986d42a6c0c14f182c2d76ed76f"
+    }
+  ],
+  "policyBaselineUpdates": [
+    {
+      "skillId": "orchestrator",
+      "revision": "2.7.3-intake-selection-timing",
+      "initialMaxBytes": 4585,
+      "hashes": {
+        "reconstructed": "12744ae24122ce513b09152f3e4884b63883c7d15e808fa7b2b6c19c27be3af9",
+        "frontmatter": "9054478f3909908263ce9f26afaad3b51d2a0db8f1aceacb228b07c6e3dd7bae",
+        "mcpExecution": "be972eaa9b6d2ceab78f48f37fcc0eb4e1d4ce52cd8cfb5de356f019da46c546"
+      }
+    }
+  ],
+  "runtimeBaselineUpdates": [
+    {
+      "skillId": "acceptance-evidence-validator",
+      "before": "Node.js 22 이상",
+      "after": "Node.js 24.0.0 이상"
+    },
+    {
+      "skillId": "blocker-diagnostician",
+      "before": "Node.js 22 이상",
+      "after": "Node.js 24.0.0 이상"
+    },
+    {
+      "skillId": "change-scope-guardian",
+      "before": "Node.js 22 이상",
+      "after": "Node.js 24.0.0 이상"
+    },
+    {
+      "skillId": "evaluation-validity-auditor",
+      "before": "Node.js 22.13 이상",
+      "after": "Node.js 24.0.0 이상"
+    },
+    {
+      "skillId": "instruction-scope-resolver",
+      "before": "Node.js 22 이상",
+      "after": "Node.js 24.0.0 이상"
+    },
+    {
+      "skillId": "mutation-risk-preflight",
+      "before": "Node.js 22 이상",
+      "after": "Node.js 24.0.0 이상"
+    },
+    {
+      "skillId": "task-contract",
+      "before": "Node.js 22 이상",
+      "after": "Node.js 24.0.0 이상"
+    },
+    {
+      "skillId": "workspace-convention-profiler",
+      "before": "Node.js 22 이상",
+      "after": "Node.js 24.0.0 이상"
+    }
+  ],
+  "pass": true,
+  "errors": [],
+  "totals": {
+    "skillCount": 20,
+    "baselineBytes": 115679,
+    "candidateBytes": 45851,
+    "reducedBytes": 69828,
+    "reductionPercent": 60.363592
+  },
+  "skills": [
+    {
+      "skillId": "acceptance-evidence-validator",
+      "baselineBytes": 3968,
+      "candidateBytes": 1795,
+      "reducedBytes": 2173
+    },
+    {
+      "skillId": "blocker-diagnostician",
+      "baselineBytes": 5091,
+      "candidateBytes": 1981,
+      "reducedBytes": 3110
+    },
+    {
+      "skillId": "change-scope-guardian",
+      "baselineBytes": 2563,
+      "candidateBytes": 2184,
+      "reducedBytes": 379
+    },
+    {
+      "skillId": "codex-token-usage-analyzer",
+      "baselineBytes": 1809,
+      "candidateBytes": 1405,
+      "reducedBytes": 404
+    },
+    {
+      "skillId": "context-continuity",
+      "baselineBytes": 3599,
+      "candidateBytes": 1944,
+      "reducedBytes": 1655
+    },
+    {
+      "skillId": "coordinate-subagents",
+      "baselineBytes": 10366,
+      "candidateBytes": 2191,
+      "reducedBytes": 8175
+    },
+    {
+      "skillId": "evaluation-validity-auditor",
+      "baselineBytes": 3182,
+      "candidateBytes": 1585,
+      "reducedBytes": 1597
+    },
+    {
+      "skillId": "independent-audit-gate",
+      "baselineBytes": 9677,
+      "candidateBytes": 3301,
+      "reducedBytes": 6376
+    },
+    {
+      "skillId": "independent-deliberation-panel",
+      "baselineBytes": 16111,
+      "candidateBytes": 5256,
+      "reducedBytes": 10855
+    },
+    {
+      "skillId": "instruction-scope-resolver",
+      "baselineBytes": 2671,
+      "candidateBytes": 2068,
+      "reducedBytes": 603
+    },
+    {
+      "skillId": "iteration-frame-auditor",
+      "baselineBytes": 4773,
+      "candidateBytes": 1947,
+      "reducedBytes": 2826
+    },
+    {
+      "skillId": "korean-prose-editor",
+      "baselineBytes": 5972,
+      "candidateBytes": 2053,
+      "reducedBytes": 3919
+    },
+    {
+      "skillId": "model-effort-advisor",
+      "baselineBytes": 5780,
+      "candidateBytes": 2024,
+      "reducedBytes": 3756
+    },
+    {
+      "skillId": "mutation-risk-preflight",
+      "baselineBytes": 3323,
+      "candidateBytes": 2140,
+      "reducedBytes": 1183
+    },
+    {
+      "skillId": "orchestrator",
+      "baselineBytes": 16881,
+      "candidateBytes": 4583,
+      "reducedBytes": 12298
+    },
+    {
+      "skillId": "recovery-strategy-selector",
+      "baselineBytes": 4013,
+      "candidateBytes": 1166,
+      "reducedBytes": 2847
+    },
+    {
+      "skillId": "session-board",
+      "baselineBytes": 4001,
+      "candidateBytes": 2918,
+      "reducedBytes": 1083
+    },
+    {
+      "skillId": "software-security-auditor",
+      "baselineBytes": 5485,
+      "candidateBytes": 1944,
+      "reducedBytes": 3541
+    },
+    {
+      "skillId": "task-contract",
+      "baselineBytes": 3492,
+      "candidateBytes": 1500,
+      "reducedBytes": 1992
+    },
+    {
+      "skillId": "workspace-convention-profiler",
+      "baselineBytes": 2922,
+      "candidateBytes": 1866,
+      "reducedBytes": 1056
+    }
+  ]
+}
+
+COMMAND generate-runtime: pnpm build
+Already up to date
+Done in 425ms using pnpm v11.19.0
+$ tsc --noEmit && node scripts/build.mjs
+
+COMMAND generate-claude: pnpm claude:build
+Already up to date
+Done in 421ms using pnpm v11.19.0
+$ node scripts/build-claude-plugin.mjs
+claude-plugin: wrote 506 files
+
+COMMAND generated-claude-check: pnpm claude:check
+Already up to date
+Done in 415ms using pnpm v11.19.0
+$ node scripts/build-claude-plugin.mjs --check
+claude-plugin: fresh

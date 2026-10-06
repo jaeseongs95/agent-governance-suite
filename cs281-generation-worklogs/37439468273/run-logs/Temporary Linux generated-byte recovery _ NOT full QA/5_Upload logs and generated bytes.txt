@@ -1,0 +1,24 @@
+﻿2026-10-06T08:56:35.0874708Z ##[group]Run actions/upload-artifact@v4
+2026-10-06T08:56:35.0875016Z with:
+2026-10-06T08:56:35.0875385Z   name: cs281-linux-generation-1f70b95f34c2e48b239e3595328e449862e0fcef-37439468273-1
+2026-10-06T08:56:35.0876162Z   path: <runner-temp>/cs281-generation/
+2026-10-06T08:56:35.0876494Z   if-no-files-found: error
+2026-10-06T08:56:35.0876744Z   retention-days: 14
+2026-10-06T08:56:35.0876959Z   compression-level: 6
+2026-10-06T08:56:35.0877172Z   overwrite: false
+2026-10-06T08:56:35.0877390Z   include-hidden-files: false
+2026-10-06T08:56:35.0877627Z ##[endgroup]
+2026-10-06T08:56:35.2502445Z (node:2864) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-06T08:56:35.2503327Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-06T08:56:35.2623818Z With the provided path, there will be 23 files uploaded
+2026-10-06T08:56:35.2624971Z Artifact name is valid!
+2026-10-06T08:56:35.2625621Z Root directory input is valid!
+2026-10-06T08:56:35.5316883Z Beginning upload of artifact content to blob storage
+2026-10-06T08:56:35.6242977Z (node:2864) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-06T08:56:35.9330871Z Uploaded bytes 1333532
+2026-10-06T08:56:35.9722768Z Finished uploading artifact content to blob storage!
+2026-10-06T08:56:35.9723742Z SHA256 digest of uploaded artifact zip is 7ec13d96158aa1601240e9ba1ee75d94c642cdc081de8edcf4a73df08ea6dc0a
+2026-10-06T08:56:35.9726733Z Finalizing artifact upload
+2026-10-06T08:56:36.2092501Z Artifact cs281-linux-generation-1f70b95f34c2e48b239e3595328e449862e0fcef-37439468273-1.zip successfully finalized. Artifact ID 11400008624
+2026-10-06T08:56:36.2094835Z Artifact cs281-linux-generation-1f70b95f34c2e48b239e3595328e449862e0fcef-37439468273-1 has been successfully uploaded! Final size is 1333532 bytes. Artifact ID is 11400008624
+2026-10-06T08:56:36.2099355Z Artifact download URL: https://github.com/jaeseongs95/agent-governance-suite/actions/runs/37439468273/artifacts/11400008624

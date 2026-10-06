@@ -1,0 +1,9 @@
+2026-10-06T08:56:10.3080000Z Requested labels: ubuntu-latest
+2026-10-06T08:56:10.3080000Z Job defined at: jaeseongs95/agent-governance-suite/.github/workflows/ci.yml@refs/heads/codex/engineering-practices-2.8.1
+2026-10-06T08:56:10.3080000Z Waiting for a runner to pick up this job...
+2026-10-06T08:56:10.3020000Z Evaluating generate-cs281.if
+2026-10-06T08:56:10.3020000Z Evaluating: (success() && (((github.event_name == 'workflow_dispatch') && inputs.generate_cs281)))
+2026-10-06T08:56:10.3020000Z Expanded: (true && (('workflow_dispatch' == 'workflow_dispatch') && true))
+2026-10-06T08:56:10.3020000Z Result: true
+2026-10-06T08:56:10.4900000Z Job is waiting for a hosted runner to come online.
+2026-10-06T08:56:10.4900000Z Job is about to start running on the hosted runner: GitHub Actions 1000001571
