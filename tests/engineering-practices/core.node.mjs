@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { writeFileSync, readFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { captureSnapshot, verifySnapshot, assertSnapshot, snapshotDelta, validatePlan, validateProof, validateReviewRequest, validateReview, assertReceipt, seal, providerResult } from '../../runtime/engineering-practices/core.mjs';
+import { verifySnapshot, assertSnapshot, snapshotDelta, validatePlan, validateProof, validateReviewRequest, validateReview, assertReceipt, seal, providerResult } from '../../runtime/engineering-practices/core.mjs';
 import { hashBytes } from '../../runtime/engineering-practices/io.mjs';
 import { fixture, writeJson, H } from './helpers.mjs';
 const fail = fn => assert.throws(fn);
