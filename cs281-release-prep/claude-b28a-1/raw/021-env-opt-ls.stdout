@@ -1,0 +1,27 @@
+total 76
+drwxr-xr-x 20 root root 4096 Oct  6 11:03 .
+drwxr-xr-x 22 root root 4096 Oct  6 11:02 ..
+drwxr-xr-x  6 root root 4096 Oct  3 05:38 apache-maven-3.9.11
+drwxr-xr-x  4 root root 4096 Jan  1  2000 claude-code
+drwxr-xr-x  3 root root 4096 Jan  1  2000 env-runner
+drwxr-xr-x  9 root root 4096 Oct  3 05:42 google-cloud-sdk
+lrwxrwxrwx  1 root root   18 Oct  3 05:38 gradle -> /opt/gradle-8.14.3
+drwxr-xr-x  5 root root 4096 Feb  1  1980 gradle-8.14.3
+lrwxrwxrwx  1 root root   24 Oct  3 05:38 maven -> /opt/apache-maven-3.9.11
+drwxr-xr-x  3 root root 4096 Oct  3 05:42 node-tools
+drwxr-xr-x  6 root root 4096 Oct  3 05:37 node20
+drwxr-xr-x  6 root root 4096 Oct  3 05:37 node21
+drwxr-xr-x  6 root root 4096 Oct  3 05:37 node22
+drwxr-xr-x  6 root root 4096 Oct  6 11:04 node24
+drwxr-xr-x  5 root root 4096 Oct  3 05:37 nvm
+drwxr-xr-x  6 root root 4096 Oct  3 05:42 pw-browsers
+drwxr-xr-x 15 root root 4096 Oct  3 05:38 rbenv
+drwx------  2 root root   39 Oct  6 07:21 rclone
+drwx------  2 root root 4096 Oct  6 11:02 rclone-attach
+drwxr-xr-x  6 root root 4096 Oct  3 05:39 ruby-3.1.6
+drwxr-xr-x  6 root root 4096 Oct  3 05:40 ruby-3.2.6
+drwxr-xr-x  6 root root 4096 Oct  3 05:41 ruby-3.3.6
+/opt/node20/bin/node
+/opt/node21/bin/node
+/opt/node22/bin/node
+/opt/node24/bin/node

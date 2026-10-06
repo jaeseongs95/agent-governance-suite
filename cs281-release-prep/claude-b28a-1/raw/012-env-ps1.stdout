@@ -1,0 +1,2 @@
+  PID COMMAND         COMMAND
+    1 process_api     /process_api --firecracker-init --addr <IP>:2024 --max-ws-buffer-size 32768 --block-local-connections --listen-vsock-port 2024 --log-vsock-port 5002

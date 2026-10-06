@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-run-receipt",
+  "argv": [
+    "node",
+    "--test",
+"sample/page.test.mjs"
+  ],
+  "snapshot": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-snapshot",
+    "files": [
+      {
+        "path": "sample/page.mjs",
+        "digest": "sha256:6dc5b03bca10abadf1e6ea047e7447e94af10ec92a9e0aabc876488c7d9fcc83",
+        "size": 69,
+        "lineCount": 1
+      },
+      {
+        "path": "sample/page.test.mjs",
+        "digest": "sha256:c806b4ecf440e90ba2d8dc86acc97ce503060cb68edecff380ef0ffc315bc90b",
+        "size": 219,
+        "lineCount": 6
+      }
+    ],
+    "digest": "sha256:c448bb3bfa5e86e589f2578663674e6c6741bc87e69e1409fca054d314b491be"
+  },
+  "afterDigest": "sha256:c448bb3bfa5e86e589f2578663674e6c6741bc87e69e1409fca054d314b491be",
+  "startedAt": "2026-10-06T11:07:44.004Z",
+  "finishedAt": "2026-10-06T11:07:44.138Z",
+  "status": "PASS",
+  "exitCode": 0,
+  "signal": null,
+  "stdout": "✔ PAGE-1: returns exactly the requested prefix (1.724572ms)\nℹ tests 1\nℹ suites 0\nℹ pass 1\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 79.518422\n",
+  "stderr": "",
+  "stdoutDigest": "sha256:4038eacf43a8364fdf2b845414c088e29d44e4970cade575bde62cb68f3d03ba",
+  "stderrDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "timeoutMs": 30000,
+  "executable": "node",
+  "nodeVersion": "24.21.0",
+  "platform": "linux",
+  "environmentNote": "Inherited process environment; undeclared environmental inputs are not captured. Child NODE_TEST_CONTEXT is cleared to avoid nested-runner suppression.",
+  "digest": "sha256:eadc18f350b1da513f818c0bb4c56787c4706120b7417a03035b96643749c48f"
+}

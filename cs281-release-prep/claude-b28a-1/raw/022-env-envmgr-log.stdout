@@ -1,0 +1,80 @@
+{"time":"2026-10-06T11:03:55.302848237Z","level":"INFO","msg":"Executing git command","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:03:55.307832456Z","level":"INFO","msg":"Git command succeeded","session_id":"cse_019NSmR91PwY9tYtusemwV92","duration_ms":4,"output_length":0}
+{"time":"2026-10-06T11:03:55.307888299Z","level":"INFO","msg":"Executing git command","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:03:55.311643129Z","level":"INFO","msg":"Git command succeeded","session_id":"cse_019NSmR91PwY9tYtusemwV92","duration_ms":3,"output_length":0}
+{"time":"2026-10-06T11:03:55.311750811Z","level":"INFO","msg":"Fetching specific ref","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:03:55.311781365Z","level":"INFO","msg":"Executing git command","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:03:56.511502084Z","level":"INFO","msg":"Git command succeeded","session_id":"cse_019NSmR91PwY9tYtusemwV92","duration_ms":1199,"output_length":0}
+{"time":"2026-10-06T11:03:56.511655913Z","level":"INFO","msg":"Executing git command","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:03:56.514525916Z","level":"INFO","msg":"Git command succeeded","session_id":"cse_019NSmR91PwY9tYtusemwV92","duration_ms":2,"output_length":0}
+{"time":"2026-10-06T11:03:56.514598784Z","level":"INFO","msg":"Executing git command","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:03:56.733566834Z","level":"INFO","msg":"Git command succeeded","session_id":"cse_019NSmR91PwY9tYtusemwV92","duration_ms":218,"output_length":80}
+{"time":"2026-10-06T11:03:56.741440734Z","level":"INFO","msg":"Executing git command","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:03:56.810031656Z","level":"INFO","msg":"Git command succeeded","session_id":"cse_019NSmR91PwY9tYtusemwV92","duration_ms":68,"output_length":103}
+{"time":"2026-10-06T11:03:56.81011772Z","level":"INFO","msg":"Checked out source branch","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:03:56.810572144Z","level":"INFO","msg":"Repository cloned successfully","session_id":"cse_019NSmR91PwY9tYtusemwV92","repo_size_bytes":2193041,"pack_size_duration_ms":0}
+{"time":"2026-10-06T11:03:56.81066109Z","level":"INFO","msg":"Executing git command","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:03:56.813239855Z","level":"INFO","msg":"Git command succeeded","session_id":"cse_019NSmR91PwY9tYtusemwV92","duration_ms":2,"output_length":0}
+{"time":"2026-10-06T11:03:56.813477484Z","level":"INFO","msg":"Processing branch from outcomes","session_id":"cse_019NSmR91PwY9tYtusemwV92","mode":"fresh"}
+{"time":"2026-10-06T11:03:56.985568535Z","level":"INFO","msg":"Branch doesn't exist on remote, creating new branch locally from current HEAD","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:03:56.995815595Z","level":"INFO","msg":"Updated remote tracking branch","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:03:56.995871911Z","level":"INFO","msg":"Successfully created new branch locally","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:03:56.995885409Z","level":"INFO","msg":"Successfully processed branch","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:03:56.996060074Z","level":"INFO","msg":"Git repository cloned successfully","session_id":"cse_019NSmR91PwY9tYtusemwV92","provider":"github","total_duration_ms":1711}
+{"time":"2026-10-06T11:03:56.996265695Z","level":"INFO","msg":"Source processed successfully","session_id":"cse_019NSmR91PwY9tYtusemwV92","type":"git_repository","duration_ms":1712,"index":1,"total":1}
+{"time":"2026-10-06T11:03:56.996286626Z","level":"INFO","msg":"Completed processing all sources","session_id":"cse_019NSmR91PwY9tYtusemwV92","total_duration_ms":1712,"source_count":1,"success_count":1}
+{"time":"2026-10-06T11:03:56.996505061Z","level":"INFO","msg":"Sources processed successfully","session_id":"cse_019NSmR91PwY9tYtusemwV92","count":1}
+{"time":"2026-10-06T11:03:56.996778691Z","level":"INFO","msg":"Git proxy sidecar skipped: boot-clone mount is on","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:03:57.004262527Z","level":"INFO","msg":"Setting working directory","session_id":"cse_019NSmR91PwY9tYtusemwV92","cwd":"<REDACTED_HOME>"}
+{"time":"2026-10-06T11:03:57.004332458Z","level":"INFO","msg":"Working directory set successfully","session_id":"cse_019NSmR91PwY9tYtusemwV92","cwd":"<REDACTED_HOME>"}
+{"time":"2026-10-06T11:03:57.005065304Z","level":"INFO","msg":"Wrote launcher settings file","session_id":"cse_019NSmR91PwY9tYtusemwV92","path":"<REDACTED_HOME>/.claude/launcher-settings.json"}
+{"time":"2026-10-06T11:03:57.005205137Z","level":"INFO","msg":"Wrote hook script","session_id":"cse_019NSmR91PwY9tYtusemwV92","path":"<REDACTED_HOME>/.claude/stop-hook-git-check.sh"}
+{"time":"2026-10-06T11:03:57.005570318Z","level":"INFO","msg":"Wrote hook script","session_id":"cse_019NSmR91PwY9tYtusemwV92","path":"<REDACTED_HOME>/.claude/stop-hook-reply-gate.py"}
+{"time":"2026-10-06T11:03:57.005629377Z","level":"INFO","msg":"Wrote hook script","session_id":"cse_019NSmR91PwY9tYtusemwV92","path":"<REDACTED_HOME>/.claude/user-prompt-submit-reply-reminder.py"}
+{"time":"2026-10-06T11:03:57.005661263Z","level":"INFO","msg":"Wrote launcher settings file","session_id":"cse_019NSmR91PwY9tYtusemwV92","path":"<REDACTED_HOME>/.claude/launcher-settings.json"}
+{"time":"2026-10-06T11:03:57.005680385Z","level":"INFO","msg":"Wrote hook script","session_id":"cse_019NSmR91PwY9tYtusemwV92","path":"<REDACTED_HOME>/.claude/stop-hook-git-check.sh"}
+{"time":"2026-10-06T11:03:57.005903437Z","level":"INFO","msg":"Wrote hook script","session_id":"cse_019NSmR91PwY9tYtusemwV92","path":"<REDACTED_HOME>/.claude/stop-hook-reply-gate.py"}
+{"time":"2026-10-06T11:03:57.005924544Z","level":"INFO","msg":"Wrote hook script","session_id":"cse_019NSmR91PwY9tYtusemwV92","path":"<REDACTED_HOME>/.claude/user-prompt-submit-reply-reminder.py"}
+{"time":"2026-10-06T11:03:57.006123322Z","level":"INFO","msg":"Successfully created session start hook skill","session_id":"cse_019NSmR91PwY9tYtusemwV92","path":"<REDACTED_HOME>/.claude/skills/session-start-hook/SKILL.md"}
+{"time":"2026-10-06T11:03:57.006177593Z","level":"INFO","msg":"Successfully created session start hook skill","session_id":"cse_019NSmR91PwY9tYtusemwV92","path":"<REDACTED_HOME>/.claude/skills/session-start-hook/SKILL.md"}
+{"time":"2026-10-06T11:03:57.006250977Z","level":"INFO","msg":"Running init script","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:03:57.006548317Z","level":"INFO","msg":"Running initialization script","session_id":"cse_019NSmR91PwY9tYtusemwV92","script_length":1375}
+{"time":"2026-10-06T11:04:14.395806491Z","level":"INFO","msg":"Successfully executed init script","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:04:14.405312143Z","level":"INFO","msg":"Applied git identity","session_id":"cse_019NSmR91PwY9tYtusemwV92","coauthor_hooks":false,"duration_ms":8}
+{"time":"2026-10-06T11:04:14.405430923Z","level":"INFO","msg":"Anthropic environment initialization completed","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:04:14.405459675Z","level":"INFO","msg":"Environment initialization completed (parallel)","session_id":"cse_019NSmR91PwY9tYtusemwV92","duration_ms":19273}
+{"time":"2026-10-06T11:04:14.405545969Z","level":"INFO","msg":"Set working directory from environment config","session_id":"cse_019NSmR91PwY9tYtusemwV92","working_dir":"<REDACTED_HOME>"}
+{"time":"2026-10-06T11:04:14.405929135Z","level":"INFO","msg":"Parallel initialization completed","session_id":"cse_019NSmR91PwY9tYtusemwV92","total_duration_ms":19278,"mcp_success":true,"env_success":true,"skill_success":true,"dream_success":true,"skill_skipped":false,"dream_skipped":false}
+{"time":"2026-10-06T11:04:14.406130854Z","level":"INFO","msg":"Creating Claude Code executor","session_id":"cse_019NSmR91PwY9tYtusemwV92","has_startup_context":true,"mcp_server_count":1}
+{"time":"2026-10-06T11:04:14.406363016Z","level":"INFO","msg":"Got outcomes for executor","session_id":"cse_019NSmR91PwY9tYtusemwV92","repo_count":1}
+{"time":"2026-10-06T11:04:14.406551593Z","level":"INFO","msg":"Using APIBaseURL from startup context","session_id":"cse_019NSmR91PwY9tYtusemwV92","url":"https://api.anthropic.com"}
+{"time":"2026-10-06T11:04:14.40666278Z","level":"INFO","msg":"ClaudeCodeExecutor initialized with repository outcomes","session_id":"cse_019NSmR91PwY9tYtusemwV92","repo_count":1}
+{"time":"2026-10-06T11:04:14.407056981Z","level":"INFO","msg":"Claude Code executor created","session_id":"cse_019NSmR91PwY9tYtusemwV92","duration_ms":0,"total_startup_duration_ms":19282}
+{"time":"2026-10-06T11:04:14.407129993Z","level":"INFO","msg":"Starting Claude Code execution","session_id":"cse_019NSmR91PwY9tYtusemwV92","total_time_to_start_ms":19282}
+{"time":"2026-10-06T11:04:14.407868448Z","level":"INFO","msg":"Tunnel not available in this build","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:04:14.408454927Z","level":"INFO","msg":"Starting ClaudeCodeExecutor","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:04:14.408545094Z","level":"INFO","msg":"Using sandbox-gateway config for Claude Code args","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:04:14.408875994Z","level":"INFO","msg":"Building command args from sandbox-gateway config","session_id":"cse_019NSmR91PwY9tYtusemwV92","gateway_args_count":6,"has_mcp_config_file":true}
+{"time":"2026-10-06T11:04:14.409002043Z","level":"INFO","msg":"Wrote MCP config file from gateway","session_id":"cse_019NSmR91PwY9tYtusemwV92","path":"/tmp/mcp-config-cse_019NSmR91PwY9tYtusemwV92.json","size_bytes":1959}
+{"time":"2026-10-06T11:04:14.40910786Z","level":"INFO","msg":"Added gateway arg to command","session_id":"cse_019NSmR91PwY9tYtusemwV92","flag":"--mcp-config","value_len":49}
+{"time":"2026-10-06T11:04:14.409119585Z","level":"INFO","msg":"Added gateway arg to command","session_id":"cse_019NSmR91PwY9tYtusemwV92","flag":"--model","value_len":15}
+{"time":"2026-10-06T11:04:14.409130923Z","level":"INFO","msg":"Added gateway arg to command","session_id":"cse_019NSmR91PwY9tYtusemwV92","flag":"--prompt-suggestions","value_len":4}
+{"time":"2026-10-06T11:04:14.409138303Z","level":"INFO","msg":"Added gateway arg to command","session_id":"cse_019NSmR91PwY9tYtusemwV92","flag":"--tools","value_len":199}
+{"time":"2026-10-06T11:04:14.409146361Z","level":"INFO","msg":"Added gateway arg to command","session_id":"cse_019NSmR91PwY9tYtusemwV92","flag":"--allowed-tools","value_len":1319}
+{"time":"2026-10-06T11:04:14.409567397Z","level":"INFO","msg":"Delivering prompt arg by file","session_id":"cse_019NSmR91PwY9tYtusemwV92","flag":"--append-system-prompt-file","path":"/tmp/claude-append-system-prompt.txt","size_bytes":32579,"outcome":"delivered_unverified","cc_version":""}
+{"time":"2026-10-06T11:04:14.409828905Z","level":"INFO","msg":"Adding repository directory to Claude multi-root","session_id":"cse_019NSmR91PwY9tYtusemwV92","directory":"<REDACTED_HOME>/agent-governance-suite","source_type":"git_repository"}
+{"time":"2026-10-06T11:04:14.409872633Z","level":"INFO","msg":"Added multiple repository directories to Claude","session_id":"cse_019NSmR91PwY9tYtusemwV92","count":1,"directories":["<REDACTED_HOME>/agent-governance-suite"]}
+{"time":"2026-10-06T11:04:14.410497131Z","level":"INFO","msg":"Using SDK URL","session_id":"cse_019NSmR91PwY9tYtusemwV92","sdk_url":"https://api.anthropic.com/v1/code/sessions/cse_019NSmR91PwY9tYtusemwV92","base_url":"https://api.anthropic.com"}
+{"time":"2026-10-06T11:04:14.410551688Z","level":"INFO","msg":"Using cloud session persistence with resume URL","session_id":"cse_019NSmR91PwY9tYtusemwV92","resume_url":"https://api.anthropic.com/v1/code/sessions/cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:04:14.410606342Z","level":"INFO","msg":"CLAUDE_CODE_DEBUG is set, adding --debug flag","session_id":"cse_019NSmR91PwY9tYtusemwV92","debug_value":"true"}
+{"time":"2026-10-06T11:04:14.410785709Z","level":"INFO","msg":"Claude Code will run in directory","session_id":"cse_019NSmR91PwY9tYtusemwV92","working_dir":"<REDACTED_HOME>/agent-governance-suite"}
+{"time":"2026-10-06T11:04:14.410890548Z","level":"INFO","msg":"Set ANTHROPIC_BASE_URL from startup context (fallback)","session_id":"cse_019NSmR91PwY9tYtusemwV92"}
+{"time":"2026-10-06T11:04:14.411245793Z","level":"INFO","msg":"Passed session ingress token via file descriptor","session_id":"cse_019NSmR91PwY9tYtusemwV92","fd":3}
+{"time":"2026-10-06T11:04:14.411309154Z","level":"INFO","msg":"Passed OAuth token via file descriptor","session_id":"cse_019NSmR91PwY9tYtusemwV92","fd":4}
+{"time":"2026-10-06T11:04:14.411494618Z","level":"INFO","msg":"startup_context_env_var_keys","session_id":"cse_019NSmR91PwY9tYtusemwV92","keys":["BUN_FEATURE_FLAG_DISABLE_STANDALONE_MADVISE","CCR_AGENT_PROXY_CA_WATCH_ENABLED","CCR_AGENT_PROXY_ENABLED","CCR_AUTO_MODE_USER_ENV_KEYS_FACT","CCR_EGRESS_GATEWAY_ENABLED","CCR_ENABLE_TRACING","CCR_OTLP_METRICS_INTERVAL_S","CCR_PRELOAD_CLAUDE","CCR_UPSTREAM_PROXY_ENABLED","CLAUDE_ADDITIONAL_DIRECTORIES","CLAUDE_AFTER_LAST_COMPACT","CLAUDE_AUTOCOMPACT_PCT_OVERRIDE","CLAUDE_AUTO_BACKGROUND_TASKS","CLAUDE_CODE_ARTIFACT_ASSETS","CLAUDE_CODE_ARTIFACT_DB","CLAUDE_CODE_ARTIFACT_MULTI_FILE","CLAUDE_CODE_ARTIFACT_TYPES","CLAUDE_CODE_ARTIFACT_TYPE_CATALOG","CLAUDE_CODE_ARTIFACT_TYPE_CLOUD_CREATE","CLAUDE_CODE_BG_TASKS_REPORT_RUNNING","CLAUDE_CODE_DISABLE_BUILTIN_ANTMCP","CLAUDE_CODE_GZIP_REQUEST_BODIES","CLAUDE_CODE_HOLD_UNANSWERED_PARKED_PERMISSION","CLAUDE_CODE_HOST_PROMPT_SUPERSEDES_RECORD","CLAUDE_CODE_MAX_MCP_DESCRIPTION_LENGTH","CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH","CLAUDE_CODE_POST_FOR_SESSION_INGRESS_V2","CLAUDE_CODE_REMOTE_SEND_KEEPALIVES","CLAUDE_CODE_REMOTE_TOOLS_FORWARD","CLAUDE_CODE_SUBSCRIPTION_TYPE","CLAUDE_CODE_SYNC_SESSION_REFS","CLAUDE_CODE_SYNC_SKILLS","CLAUDE_ENABLE_STREAM_WATCHDOG","DOCUMENTS_MCP_SCRATCH_ROOT","ENV_MANAGER_ENABLE_DIAG_LOGS","MAX_THINKING_TOKENS","MCP_CONNECTION_NONBLOCKING","MCP_TOOL_TIMEOUT","SKIP_PLUGIN_MARKETPLACE","USE_BUILTIN_RIPGREP","USE_SHTTP_MCP"],"count":41}
+{"time":"2026-10-06T11:04:14.411633416Z","level":"INFO","msg":"set session ingress URL from startup context","session_id":"cse_019NSmR91PwY9tYtusemwV92","key":"SESSION_INGRESS_URL"}
+{"time":"2026-10-06T11:04:14.412855282Z","level":"INFO","msg":"Executing claude code command","session_id":"cse_019NSmR91PwY9tYtusemwV92","command":"/opt/claude-code/bin/claude","args":["--output-format=stream-json","--verbose","--settings","<REDACTED_HOME>/.claude/launcher-settings.json","--replay-user-messages","--input-format=stream-json","--debug-to-stderr","--init","--mcp-config","/tmp/mcp-config-cse_019NSmR91PwY9tYtusemwV92.json","--model","claude-opus-5-5","--prompt-suggestions","true","--tools","<redacted len=199>","--allowed-tools","<redacted len=1319>","--append-system-prompt-file","/tmp/claude-append-system-prompt.txt","--add-dir","<REDACTED_HOME>/agent-governance-suite","--sdk-url","https://api.anthropic.com/v1/code/sessions/cse_019NSmR91PwY9tYtusemwV92","--resume=https://api.anthropic.com/v1/code/sessions/cse_019NSmR91PwY9tYtusemwV92","--debug"]}
+{"time":"2026-10-06T11:04:14.413000991Z","level":"INFO","msg":"Claude command written to file","session_id":"cse_019NSmR91PwY9tYtusemwV92","path":"/tmp/claude-command"}
+{"time":"2026-10-06T11:04:14.413093018Z","level":"INFO","msg":"Starting Claude Code execution","session_id":"cse_019NSmR91PwY9tYtusemwV92","has_mcp_servers":true,"mcp_server_count":1}
+{"time":"2026-10-06T11:04:14.414271484Z","level":"INFO","msg":"claude-preload claimed","session_id":"cse_019NSmR91PwY9tYtusemwV92","pid":85,"cwd":"<REDACTED_HOME>/agent-governance-suite"}
+{"time":"2026-10-06T11:04:14.414475101Z","level":"INFO","msg":"spare claim used inline prompt delivery","session_id":"cse_019NSmR91PwY9tYtusemwV92","flag":"--append-system-prompt","value_len":32579}

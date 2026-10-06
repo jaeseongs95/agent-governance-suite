@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-run-receipt",
+  "argv": [
+    "node",
+    "--test",
+"sample/page.test.mjs"
+  ],
+  "snapshot": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-snapshot",
+    "files": [
+      {
+        "path": "sample/page.mjs",
+        "digest": "sha256:5aae4e9837f24ab2662671b46755901af962587e41b551329be2ea9e450545c8",
+        "size": 73,
+        "lineCount": 1
+      },
+      {
+        "path": "sample/page.test.mjs",
+        "digest": "sha256:c806b4ecf440e90ba2d8dc86acc97ce503060cb68edecff380ef0ffc315bc90b",
+        "size": 219,
+        "lineCount": 6
+      }
+    ],
+    "digest": "sha256:b19594515e29324aa2451298d71ee5862c6f713e54681922f92b0a82d53c6bf8"
+  },
+  "afterDigest": "sha256:b19594515e29324aa2451298d71ee5862c6f713e54681922f92b0a82d53c6bf8",
+  "startedAt": "2026-10-06T11:07:43.552Z",
+  "finishedAt": "2026-10-06T11:07:43.672Z",
+  "status": "FAIL",
+  "exitCode": 1,
+  "signal": null,
+  "stdout": "✖ PAGE-1: returns exactly the requested prefix (2.708431ms)\nℹ tests 1\nℹ suites 0\nℹ pass 0\nℹ fail 1\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 73.068427\n\n✖ failing tests:\n\ntest at sample/page.test.mjs:4:1\n✖ PAGE-1: returns exactly the requested prefix (2.708431ms)\n  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n  + actual - expected\n  \n    [\n      1,\n      2,\n  +   3\n    ]\n  \n      at TestContext.<anonymous> (file://<REDACTED_HOME>/cs281-b28a-20261006T110419Z/rg/sample/page.test.mjs:5:10)\n      at Test.runInAsyncScope (node:async_hooks:227:14)\n      at Test.run (node:internal/test_runner/test:1402:25)\n      at Test.start (node:internal/test_runner/test:1262:17)\n      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {\n    generatedMessage: true,\n    code: 'ERR_ASSERTION',\n    actual: [ 1, 2, 3 ],\n    expected: [ 1, 2 ],\n    operator: 'deepStrictEqual',\n    diff: 'simple'\n  }\n",
+  "stderr": "",
+  "stdoutDigest": "sha256:2324599e87205ed0bff9bcc1e4734d02c6387da12733c713881c7c8839e2ef3e",
+  "stderrDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "timeoutMs": 30000,
+  "executable": "node",
+  "nodeVersion": "24.21.0",
+  "platform": "linux",
+  "environmentNote": "Inherited process environment; undeclared environmental inputs are not captured. Child NODE_TEST_CONTEXT is cleared to avoid nested-runner suppression.",
+  "digest": "sha256:5218f94471bb0e6b8c5990324f34d27f9b7fc29b885ed0119f8dce9c207b23aa"
+}

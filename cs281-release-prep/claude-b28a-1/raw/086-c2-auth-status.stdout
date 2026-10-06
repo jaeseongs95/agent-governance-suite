@@ -1,0 +1,8 @@
+{
+  "loggedIn": true,
+  "authMethod": "oauth_token",
+  "apiProvider": "firstParty",
+  "analyticsDisabled": false,
+  "projectsDirectory": "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/claude-config/projects",
+  "configDirectory": "<REDACTED_HOME>/cs281-b28a-20261006T110419Z/claude-config"
+}

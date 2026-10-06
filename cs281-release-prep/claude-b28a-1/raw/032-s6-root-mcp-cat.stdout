@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "agent-governance-suite": {
+      "command": "node",
+      "args": [
+"mcp-server/dist/server.mjs"
+      ],
+      "cwd": ".",
+      "env": {
+        "AGENT_GOVERNANCE_HOST_ATTESTATION": "codex"
+      }
+    }
+  }
+}

@@ -1,0 +1,4 @@
+remote.origin.url https://github.com/jaeseongs95/agent-governance-suite
+remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
+branch.codex/engineering-practices-2.8.1.remote origin
+branch.codex/engineering-practices-2.8.1.merge refs/heads/codex/engineering-practices-2.8.1

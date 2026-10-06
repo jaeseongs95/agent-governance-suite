@@ -1,0 +1,3 @@
+test-engineering {"capability": null, "providerKey": null, "executionClass": "bootstrap", "phaseOrder": 35, "priority": null, "gate": {"kind": "none", "policy": "none", "validator": null}, "riskGate": null}
+test-engineering {"capability": null, "providerKey": null, "executionClass": "workflow", "phaseOrder": 66, "priority": null, "gate": {"kind": "none", "policy": "none", "validator": null}, "riskGate": null}
+code-review {"capability": null, "providerKey": null, "executionClass": "workflow", "phaseOrder": 68, "priority": null, "gate": {"kind": "none", "policy": "none", "validator": null}, "riskGate": null}

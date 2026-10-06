@@ -1,0 +1,27 @@
+/opt/node24/bin/node
+v24.21.0
+/opt/node24:
+total 948
+drwxr-xr-x  6 root root   4096 2026-10-06 11:04:00.762983440 +0000 .
+drwxr-xr-x 20 root root   4096 2026-10-06 11:03:57.586983251 +0000 ..
+-rw-r--r--  1 1001 1001 741086 2026-09-07 23:56:48.000000000 +0000 CHANGELOG.md
+-rw-r--r--  1 1001 1001 157609 2026-09-07 23:56:48.000000000 +0000 LICENSE
+-rw-r--r--  1 1001 1001  41791 2026-09-07 23:56:48.000000000 +0000 README.md
+drwxr-xr-x  2 1001 1001   4096 2026-10-06 11:04:13.318984186 +0000 bin
+drwxr-xr-x  3 1001 1001   4096 2026-09-07 23:56:45.000000000 +0000 include
+drwxr-xr-x  3 1001 1001   4096 2026-09-07 23:56:43.000000000 +0000 lib
+drwxr-xr-x  4 1001 1001   4096 2026-09-07 23:56:43.000000000 +0000 share
+
+/opt/node24/bin:
+total 123644
+drwxr-xr-x 2 1001 1001      4096 2026-10-06 11:04:13.318984186 +0000 .
+drwxr-xr-x 6 root root      4096 2026-10-06 11:04:00.762983440 +0000 ..
+lrwxrwxrwx 1 root root        46 2026-10-06 11:04:13.318984186 +0000 codex -> ../lib/node_modules/@openai/codex/bin/codex.js
+lrwxrwxrwx 1 1001 1001        45 2026-09-07 23:56:45.000000000 +0000 corepack -> ../lib/node_modules/corepack/dist/corepack.js
+-rwxr-xr-x 1 1001 1001 126595440 2026-09-07 23:56:43.000000000 +0000 node
+lrwxrwxrwx 1 1001 1001        38 2026-09-07 23:56:45.000000000 +0000 npm -> ../lib/node_modules/npm/bin/npm-cli.js
+lrwxrwxrwx 1 1001 1001        38 2026-09-07 23:56:45.000000000 +0000 npx -> ../lib/node_modules/npm/bin/npx-cli.js
+lrwxrwxrwx 1 root root        37 2026-10-06 11:04:02.890983567 +0000 pn -> ../lib/node_modules/pnpm/bin/pnpm.mjs
+lrwxrwxrwx 1 root root        37 2026-10-06 11:04:02.890983567 +0000 pnpm -> ../lib/node_modules/pnpm/bin/pnpm.mjs
+lrwxrwxrwx 1 root root        37 2026-10-06 11:04:02.890983567 +0000 pnpx -> ../lib/node_modules/pnpm/bin/pnpx.mjs
+lrwxrwxrwx 1 root root        37 2026-10-06 11:04:02.890983567 +0000 pnx -> ../lib/node_modules/pnpm/bin/pnpx.mjs
