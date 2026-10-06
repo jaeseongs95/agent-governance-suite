@@ -1,0 +1,1 @@
+CS Codex Cloud 게시 후처리 증거 보충. 첫 게시본의 원본/r1/r2 자료와 MANIFEST는 그대로 보존했다. 실제 stdout/stderr 병합 로그, 종료 코드, 경로 보정 전 실패와 보정 후 PASS를 함께 기록했다. COLLECTION.json의 cutoff와 NOT_VERIFIABLE 범위를 따른다. 제품 실행 결과나 SOURCE 승인 범위를 확대하지 않는다.

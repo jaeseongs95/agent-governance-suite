@@ -1,0 +1,10 @@
+{
+  "operationId": "cs280-codex-cloud-post-seal-20261006T043311Z",
+  "actionClass": "publish",
+  "target": "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-codex-cloud/20261006T043311Z",
+  "environment": "external",
+  "userAuthorizationMessageId": "83b9158e-65f8-41a9-9034-517a82850bcf",
+  "additionalVerificationMessageId": "f6f41595-e6ca-4c93-b7c6-73f7b04177c6",
+  "basis": "Same explicit 83b9158e/f6f41595 user authorization to publish all current-CS sanitized logs under cs280-codex-cloud/UTC. This distinct UTC subtree appends actual post-seal logs; previous payload and all existing paths remain unchanged. No new user approval is claimed.",
+  "approvalAdapterExpiry": "Locally limits this receipt evidence to the next 15 minutes; it is not an invented user approval or expanded scope."
+}

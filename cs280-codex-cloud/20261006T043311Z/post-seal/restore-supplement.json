@@ -1,0 +1,7 @@
+{
+  "baseTree": "2a91b4d35a3343c03d2a1cef28052ef92bc15cc1",
+  "restoredTree": "2a91b4d35a3343c03d2a1cef28052ef92bc15cc1",
+  "exact": true,
+  "existingPaths": 9990,
+  "method": "Remove only supplemental subtree in a temporary index; existing files byte exact"
+}

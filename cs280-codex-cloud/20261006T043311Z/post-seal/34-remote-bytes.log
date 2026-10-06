@@ -1,0 +1,7 @@
+{"label": "34-remote-bytes", "command": ["python", "/workspace/ags-cs-2x/publication-20261006T040502Z/verify-delivery.py"], "cwd": "/workspace/ags-cs-2x/publication-20261006T040502Z", "started": "2026-10-06T04:31:21.547996+00:00", "kind": "publication-only; no product test"}
+{"label": "33-fetch-published", "command": ["git", "fetch", "--no-tags", "origin", "refs/heads/evidence"], "cwd": "/workspace/ags-cs-2x/publication-20261006T040502Z/repo-final3", "started": "2026-10-06T04:31:21.594610+00:00", "kind": "publication-only; no product test", "exitCode": 0, "finished": "2026-10-06T04:31:21.935681+00:00", "log": "33-fetch-published.log"}
+Traceback (most recent call last):
+  File "/workspace/ags-cs-2x/publication-20261006T040502Z/verify-delivery.py", line 28, in <module>
+    stage=p.parent;matches=[x for x in stage.glob('*.zip') if sha(x.read_bytes())==expected];assert len(matches)==1;p=matches[0]
+                                                                                                    ^^^^^^^^^^^^^^^
+AssertionError

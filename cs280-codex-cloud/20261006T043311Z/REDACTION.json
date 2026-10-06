@@ -1,0 +1,253 @@
+{
+  "files": [
+    {
+      "path": "post-seal/27a-residual-scan-corrected.log",
+      "originalSha256": "e15e96e3013cd1440256e02faaa1e15b33e77548576d6b3664f5f1ea5e0e4fda",
+      "publicSha256": "e15e96e3013cd1440256e02faaa1e15b33e77548576d6b3664f5f1ea5e0e4fda",
+      "originalBytes": 952,
+      "publicBytes": 952,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/27b-seal-corrected.log",
+      "originalSha256": "254724e502900bc27404d5702b137c13ee07af5cf22562aeb100e83f1e1fa05a",
+      "publicSha256": "254724e502900bc27404d5702b137c13ee07af5cf22562aeb100e83f1e1fa05a",
+      "originalBytes": 626,
+      "publicBytes": 626,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/27c-preservation-corrected.log",
+      "originalSha256": "1dc7bd9ac5aa33c5425ad4dcc54ebccf59691bda2e414ad096c4a34046f2bfa5",
+      "publicSha256": "1dc7bd9ac5aa33c5425ad4dcc54ebccf59691bda2e414ad096c4a34046f2bfa5",
+      "originalBytes": 587,
+      "publicBytes": 587,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/27d-sha256-check.log",
+      "originalSha256": "6d58731255bcfb469cfb7f5448bb4fbdef22bf6e3631b199381e26ca8631893a",
+      "publicSha256": "6d58731255bcfb469cfb7f5448bb4fbdef22bf6e3631b199381e26ca8631893a",
+      "originalBytes": 291,
+      "publicBytes": 291,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/27-stage-attempt3.log",
+      "originalSha256": "eae357b11319f3551f4709dafb7a2274325db1cef821e4988e25a7a8c04f3fc0",
+      "publicSha256": "eae357b11319f3551f4709dafb7a2274325db1cef821e4988e25a7a8c04f3fc0",
+      "originalBytes": 267,
+      "publicBytes": 267,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/27e-resume-native.log",
+      "originalSha256": "d64efd0fdec95e9753765288a0a14ceda53046249afe7b8e9bb80270fd615b2c",
+      "publicSha256": "d64efd0fdec95e9753765288a0a14ceda53046249afe7b8e9bb80270fd615b2c",
+      "originalBytes": 4978,
+      "publicBytes": 4978,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/28-scope-attempt3.log",
+      "originalSha256": "10914516bac063f659ae76413f4d029eeefd58eb220a25a5b8428b4e8c35f3b8",
+      "publicSha256": "10914516bac063f659ae76413f4d029eeefd58eb220a25a5b8428b4e8c35f3b8",
+      "originalBytes": 78553,
+      "publicBytes": 78553,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/29-receipt-attempt3.log",
+      "originalSha256": "c3585a0cd2d81805a11fabffe051073e6260502d0ece8abd0959358b5a90e895",
+      "publicSha256": "fb9d55ad14f5836c2c972586dea0d9915b68a4a510fa5d38bdd1dd5a4d6c6e8a",
+      "originalBytes": 786,
+      "publicBytes": 797,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/30-ref-check-attempt3.log",
+      "originalSha256": "910badd10e736bb8801821d00d53d25bf4b429a13bc3ada7f71625dcf3d3cbf3",
+      "publicSha256": "910badd10e736bb8801821d00d53d25bf4b429a13bc3ada7f71625dcf3d3cbf3",
+      "originalBytes": 326,
+      "publicBytes": 326,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/31-commit-attempt3.log",
+      "originalSha256": "f35960c42aa12eaf8386720207653e8ab9c75dfc9903894a6f430e7d3eb6c059",
+      "publicSha256": "f35960c42aa12eaf8386720207653e8ab9c75dfc9903894a6f430e7d3eb6c059",
+      "originalBytes": 20100,
+      "publicBytes": 20100,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/32-push-attempt3.log",
+      "originalSha256": "13f8a9abc0e45cfbac767ea3a4e6b95f45992cc0aea0c2bf5e317e48a90ba745",
+      "publicSha256": "13f8a9abc0e45cfbac767ea3a4e6b95f45992cc0aea0c2bf5e317e48a90ba745",
+      "originalBytes": 359,
+      "publicBytes": 359,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/33-fetch-published.log",
+      "originalSha256": "6c7e503f04d537f1f26ebd28342ef171dd0e75ab8df528ef45b19ffbf40def1a",
+      "publicSha256": "6c7e503f04d537f1f26ebd28342ef171dd0e75ab8df528ef45b19ffbf40def1a",
+      "originalBytes": 376,
+      "publicBytes": 376,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/34-remote-bytes.log",
+      "originalSha256": "74dca25800e966d5791f64d4bb902b3ec1c78308364efbf8199a131ddd42b92e",
+      "publicSha256": "74dca25800e966d5791f64d4bb902b3ec1c78308364efbf8199a131ddd42b92e",
+      "originalBytes": 1038,
+      "publicBytes": 1038,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/35-remote-bytes-corrected.log",
+      "originalSha256": "81f3f56a098be50e8383615cb7bae2f7f9f264dbddcf197aec3f18a7de403129",
+      "publicSha256": "81f3f56a098be50e8383615cb7bae2f7f9f264dbddcf197aec3f18a7de403129",
+      "originalBytes": 3384,
+      "publicBytes": 3384,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/DELIVERY-RECEIPT.json",
+      "originalSha256": "49eee521ddcffcbfc456bdc19f7ebe217ce0784a2199f87f7764daa086a2d733",
+      "publicSha256": "49eee521ddcffcbfc456bdc19f7ebe217ce0784a2199f87f7764daa086a2d733",
+      "originalBytes": 2731,
+      "publicBytes": 2731,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/push-success-attempt3.json",
+      "originalSha256": "d21e8237d64cb031ec4a10613c7d3a5f541de7bd0b4f82ed4ae2e27352fc4b79",
+      "publicSha256": "d21e8237d64cb031ec4a10613c7d3a5f541de7bd0b4f82ed4ae2e27352fc4b79",
+      "originalBytes": 592,
+      "publicBytes": 592,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/scope-baseline-digest-supplement.json",
+      "originalSha256": "213e5591741d9d8a633597b275b9be19f096ed93c9ed8f81450c057ce5adcf9a",
+      "publicSha256": "213e5591741d9d8a633597b275b9be19f096ed93c9ed8f81450c057ce5adcf9a",
+      "originalBytes": 137,
+      "publicBytes": 137,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/scope-capture-input-supplement.json",
+      "originalSha256": "3dbb00815402a9c8596ec9a58df1abc5f5e021b26911702c7169ddca49553bc3",
+      "publicSha256": "3dbb00815402a9c8596ec9a58df1abc5f5e021b26911702c7169ddca49553bc3",
+      "originalBytes": 1961,
+      "publicBytes": 1961,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/36-supplement-fetch.log",
+      "originalSha256": "5e12e6e73ac30332f982db7fd0b1346b35da4d0974e09023332cdc466d85817e",
+      "publicSha256": "5e12e6e73ac30332f982db7fd0b1346b35da4d0974e09023332cdc466d85817e",
+      "originalBytes": 377,
+      "publicBytes": 377,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/37-supplement-checkout.log",
+      "originalSha256": "e06363a140e3abac2f3fa42842d43a1005beb60703aad58e345ee66f80b46868",
+      "publicSha256": "e06363a140e3abac2f3fa42842d43a1005beb60703aad58e345ee66f80b46868",
+      "originalBytes": 335,
+      "publicBytes": 335,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/restore-supplement.json",
+      "originalSha256": "ccbe8243e1a54be447cdb67c0f368b932708a692b2b26e73092750903a70841d",
+      "publicSha256": "ccbe8243e1a54be447cdb67c0f368b932708a692b2b26e73092750903a70841d",
+      "originalBytes": 261,
+      "publicBytes": 261,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/current-state-supplement.json",
+      "originalSha256": "a717cf4040596879c021c642c0a3fcac1472569f67ea153425accd22917d6c32",
+      "publicSha256": "a717cf4040596879c021c642c0a3fcac1472569f67ea153425accd22917d6c32",
+      "originalBytes": 358,
+      "publicBytes": 358,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/authorization-supplement.json",
+      "originalSha256": "3a117741b81f7e46e6ef1fe9d08c123973dc31ad1c7393ba9e808e5186c43cee",
+      "publicSha256": "3a117741b81f7e46e6ef1fe9d08c123973dc31ad1c7393ba9e808e5186c43cee",
+      "originalBytes": 821,
+      "publicBytes": 821,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/mutation-intent-supplement.json",
+      "originalSha256": "d5baace7679a86de712666bb3c242636bc38ea0e2886ef0ee173250f7cf5d427",
+      "publicSha256": "d5baace7679a86de712666bb3c242636bc38ea0e2886ef0ee173250f7cf5d427",
+      "originalBytes": 3765,
+      "publicBytes": 3765,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/mutation-report-supplement.json",
+      "originalSha256": "ef6b75dc97c876ae7597647e90342c53f4a65cdb992ac529ccd635a71360819c",
+      "publicSha256": "ef6b75dc97c876ae7597647e90342c53f4a65cdb992ac529ccd635a71360819c",
+      "originalBytes": 3535,
+      "publicBytes": 3535,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/39-supplement-preflight.log",
+      "originalSha256": "4a37a57dbadb50b6419ccbc6abf3e889954912b2fea3898944823de5089ae1c1",
+      "publicSha256": "20736c05f4fa9235ff52e568fc86266684da2c348d6b2b37d29cb12aa838c3af",
+      "originalBytes": 3330,
+      "publicBytes": 3448,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "post-seal/publication-commands.jsonl",
+      "originalSha256": "1bdc828073f0c71e6627d2f65acf515a0083d0c6d4a7f59c8c6c07cb588e63a1",
+      "publicSha256": "1bdc828073f0c71e6627d2f65acf515a0083d0c6d4a7f59c8c6c07cb588e63a1",
+      "originalBytes": 17609,
+      "publicBytes": 17609,
+      "removalsByKind": {},
+      "removalCount": 0
+    }
+  ],
+  "totals": {
+    "originalFiles": 27,
+    "publicFiles": 27,
+    "removals": 0
+  },
+  "scope": "Actual captured post-seal files. Generated summaries/manifest controls do not claim raw transcript provenance."
+}

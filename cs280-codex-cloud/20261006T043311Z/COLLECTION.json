@@ -1,0 +1,16 @@
+{
+  "origin": "generated_control",
+  "cutoff": "2026-10-06T04:34:57.473017+00:00",
+  "previousPayload": "https://github.com/jaeseongs95/agent-governance-suite/tree/c030b4a71baf9a15dd0f5aea08a828b1507a7385/cs280-codex-cloud/20261006T040502Z",
+  "purpose": "Actual captured post-seal stdout/stderr and exit metadata; no product tests or source changes.",
+  "excludedBaselineDump": {
+    "bytes": 2867481,
+    "sha256": "0aade34d05a5c70729df66798f1e79ca50026e12629f8fc43043736ba6cd108e",
+    "kind": "OTHER_JOB_BASELINE_DUMP"
+  },
+  "gaps": [
+    "First 33-fetch-published individual log was overwritten by the corrected verification using the same label; both command metadata records and enclosing failed/passed logs remain. First individual stdout/stderr: NOT_VERIFIABLE.",
+    "Full native transcript and first missing-argv tool stdout export: NOT_VERIFIABLE; available actual tool-result snapshot and explicitly generated correction record are in the prior packet."
+  ],
+  "terminalLogs": "This supplement is frozen before its own final scope/receipt/push verification. Those actual captures will be returned in the final Library package; no third recursive Git publication is claimed."
+}
