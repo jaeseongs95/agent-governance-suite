@@ -1,0 +1,23 @@
+{
+  "state": "PASS",
+  "scannedFiles": 206,
+  "findings": [],
+  "checks": [
+    "PEM",
+    "API_CREDENTIAL",
+    "JWT",
+    "EMAIL",
+    "PRIVATE_HOME",
+    "PRIVATE_RESOURCE",
+    "SOCKET_PATH",
+    "ACCOUNT_NAME",
+    "BEARER",
+    "UNREDACTED_URL_QUERY",
+    "IP_ADDRESS",
+    "KNOWN_PRIVATE_RESOURCE_VALUE",
+    "DENIED_FILE_TYPES",
+    "JSON_VALIDITY"
+  ],
+  "scope": "Only the new public subtree; existing evidence contents are not modified or scanned for republishing.",
+  "caveat": "Pattern-and-value scan plus direct review; not an independent security or SOURCE audit."
+}

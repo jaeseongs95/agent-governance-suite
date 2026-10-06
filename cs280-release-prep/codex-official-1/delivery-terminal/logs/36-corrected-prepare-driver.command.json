@@ -1,0 +1,13 @@
+{
+  "label": "36-corrected-prepare-driver",
+  "command": [
+    "python",
+    "/workspace/ags-cs-2x/official-validator-26c6c9d9/tools/prepare_final.py"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9",
+  "startedUtc": "2026-10-06T05:33:06.903307+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:33:14.047346+00:00",
+  "stdout": "36-corrected-prepare-driver.stdout.log",
+  "stderr": "36-corrected-prepare-driver.stderr.log"
+}

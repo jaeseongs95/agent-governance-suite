@@ -1,0 +1,14 @@
+{
+  "label": "20-source-post-paths",
+  "command": [
+    "git",
+    "ls-files",
+    "-z"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9/candidate",
+  "startedUtc": "2026-10-06T05:21:20.767020+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:21:20.769543+00:00",
+  "stdout": "20-source-post-paths.stdout.log",
+  "stderr": "20-source-post-paths.stderr.log"
+}

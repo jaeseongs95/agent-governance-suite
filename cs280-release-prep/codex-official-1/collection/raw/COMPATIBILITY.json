@@ -1,0 +1,231 @@
+{
+  "state": "STATIC_KEY_COMPATIBLE",
+  "scope": "Source-derived supported manifest/frontmatter/agent key sets only; not an official validation result",
+  "conflicts": [],
+  "pluginVersion": "2.8.0",
+  "skillCount": 22,
+  "skills": [
+    {
+      "name": "acceptance-evidence-validator",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "metadata",
+        "name"
+      ]
+    },
+    {
+      "name": "blocker-diagnostician",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "metadata",
+        "name"
+      ]
+    },
+    {
+      "name": "change-scope-guardian",
+      "frontmatterKeys": [
+        "description",
+        "name"
+      ]
+    },
+    {
+      "name": "codex-token-usage-analyzer",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "metadata",
+        "name"
+      ]
+    },
+    {
+      "name": "context-continuity",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "metadata",
+        "name"
+      ]
+    },
+    {
+      "name": "coordinate-subagents",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "metadata",
+        "name"
+      ]
+    },
+    {
+      "name": "cs-engineering",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "metadata",
+        "name"
+      ]
+    },
+    {
+      "name": "evaluation-validity-auditor",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "metadata",
+        "name"
+      ]
+    },
+    {
+      "name": "independent-audit-gate",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "metadata",
+        "name"
+      ]
+    },
+    {
+      "name": "independent-deliberation-panel",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "metadata",
+        "name"
+      ]
+    },
+    {
+      "name": "instruction-scope-resolver",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "metadata",
+        "name"
+      ]
+    },
+    {
+      "name": "iteration-frame-auditor",
+      "frontmatterKeys": [
+        "description",
+        "metadata",
+        "name"
+      ]
+    },
+    {
+      "name": "korean-prose-editor",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "metadata",
+        "name"
+      ]
+    },
+    {
+      "name": "model-effort-advisor",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "metadata",
+        "name"
+      ]
+    },
+    {
+      "name": "mutation-risk-preflight",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "metadata",
+        "name"
+      ]
+    },
+    {
+      "name": "orchestrator",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "metadata",
+        "name"
+      ]
+    },
+    {
+      "name": "ponytail",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "name"
+      ]
+    },
+    {
+      "name": "recovery-strategy-selector",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "metadata",
+        "name"
+      ]
+    },
+    {
+      "name": "session-board",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "metadata",
+        "name"
+      ]
+    },
+    {
+      "name": "software-security-auditor",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "metadata",
+        "name"
+      ]
+    },
+    {
+      "name": "task-contract",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "metadata",
+        "name"
+      ]
+    },
+    {
+      "name": "workspace-convention-profiler",
+      "frontmatterKeys": [
+        "description",
+        "license",
+        "metadata",
+        "name"
+      ]
+    }
+  ],
+  "dependencies": {
+    "codex-rs/skills/src/assets/samples/plugin-creator/scripts/validate_plugin.py": [
+      "__future__",
+      "argparse",
+      "identifier_validation",
+      "json",
+      "pathlib",
+      "re",
+      "sys",
+      "typing",
+      "urllib.parse",
+      "yaml"
+    ],
+    "codex-rs/skills/src/assets/samples/plugin-creator/scripts/identifier_validation.py": [
+      "re"
+    ],
+    "codex-rs/skills/src/assets/samples/skill-creator/scripts/quick_validate.py": [
+      "pathlib",
+      "re",
+      "sys",
+      "yaml"
+    ]
+  },
+  "pythonYaml": {
+    "version": "6.0.3",
+    "distributionVersion": "6.0.3",
+    "modulePath": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/site-packages/yaml/__init__.py"
+  }
+}

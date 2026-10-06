@@ -1,0 +1,13 @@
+{
+  "label": "17-node-version",
+  "command": [
+    "node",
+    "--version"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9/candidate",
+  "startedUtc": "2026-10-06T05:21:19.076581+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:21:19.083853+00:00",
+  "stdout": "17-node-version.stdout.log",
+  "stderr": "17-node-version.stderr.log"
+}

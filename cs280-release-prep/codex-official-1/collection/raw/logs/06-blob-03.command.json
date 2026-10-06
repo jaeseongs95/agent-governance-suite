@@ -1,0 +1,16 @@
+{
+  "label": "06-blob-03",
+  "command": [
+    "git",
+    "--git-dir",
+    "/workspace/ags-cs-2x/official-validator-26c6c9d9/upstream.git",
+    "rev-parse",
+    "10382da79a2a2d6e8ae221fa63077215389c1ad2:codex-rs/skills/src/assets/samples/plugin-creator/scripts/read_marketplace_name.py"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9",
+  "startedUtc": "2026-10-06T05:14:56.248959+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:14:56.250702+00:00",
+  "stdout": "06-blob-03.stdout.log",
+  "stderr": "06-blob-03.stderr.log"
+}

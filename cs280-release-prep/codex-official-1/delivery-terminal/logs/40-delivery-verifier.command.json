@@ -1,0 +1,13 @@
+{
+  "label": "40-delivery-verifier",
+  "command": [
+    "python",
+    "/workspace/ags-cs-2x/official-validator-26c6c9d9/tools/verify_delivery.py"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9",
+  "startedUtc": "2026-10-06T05:33:56.609292+00:00",
+  "exitCode": 1,
+  "finishedUtc": "2026-10-06T05:33:56.658599+00:00",
+  "stdout": "40-delivery-verifier.stdout.log",
+  "stderr": "40-delivery-verifier.stderr.log"
+}

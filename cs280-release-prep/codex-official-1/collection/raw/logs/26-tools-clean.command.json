@@ -1,0 +1,14 @@
+{
+  "label": "26-tools-clean",
+  "command": [
+    "git",
+    "status",
+    "--porcelain"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9/tools",
+  "startedUtc": "2026-10-06T05:27:41.883675+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:27:41.885780+00:00",
+  "stdout": "26-tools-clean.stdout.log",
+  "stderr": "26-tools-clean.stderr.log"
+}

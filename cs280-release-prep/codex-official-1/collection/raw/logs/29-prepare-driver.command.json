@@ -1,0 +1,13 @@
+{
+  "label": "29-prepare-driver",
+  "command": [
+    "python",
+    "/workspace/ags-cs-2x/official-validator-26c6c9d9/tools/prepare.py"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9",
+  "startedUtc": "2026-10-06T05:27:41.851871+00:00",
+  "exitCode": 1,
+  "finishedUtc": "2026-10-06T05:27:48.092067+00:00",
+  "stdout": "29-prepare-driver.stdout.log",
+  "stderr": "29-prepare-driver.stderr.log"
+}

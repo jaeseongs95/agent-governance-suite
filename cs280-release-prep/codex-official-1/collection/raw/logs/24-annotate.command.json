@@ -1,0 +1,13 @@
+{
+  "label": "24-annotate",
+  "command": [
+    "python",
+    "/workspace/ags-cs-2x/official-validator-26c6c9d9/tools/annotate.py"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9",
+  "startedUtc": "2026-10-06T05:25:09.798922+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:25:09.910061+00:00",
+  "stdout": "24-annotate.stdout.log",
+  "stderr": "24-annotate.stderr.log"
+}

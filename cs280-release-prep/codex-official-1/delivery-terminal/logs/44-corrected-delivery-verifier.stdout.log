@@ -1,0 +1,44 @@
+{"label": "41-final-candidate-pin", "command": ["git", "rev-parse", "HEAD", "HEAD^{tree}"], "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9/candidate", "startedUtc": "2026-10-06T05:34:58.529620+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:34:58.532196+00:00", "stdout": "41-final-candidate-pin.stdout.log", "stderr": "41-final-candidate-pin.stderr.log"}
+{"label": "42-final-candidate-clean", "command": ["git", "status", "--porcelain"], "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9/candidate", "startedUtc": "2026-10-06T05:34:58.532441+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:34:58.538993+00:00", "stdout": "42-final-candidate-clean.stdout.log", "stderr": "42-final-candidate-clean.stderr.log"}
+{"label": "43-final-original-clean", "command": ["git", "status", "--porcelain"], "cwd": "/workspace/ags-cs-2x/repo", "startedUtc": "2026-10-06T05:34:58.539184+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:34:58.548923+00:00", "stdout": "43-final-original-clean.stdout.log", "stderr": "43-final-original-clean.stderr.log"}
+{
+  "status": "VERIFIED_BLOCKED_NO_PUSH",
+  "frozenCopiesVerified": 200,
+  "publicFiles": 209,
+  "zipBytes": 416728,
+  "zipSha256": "6ecd4152e5af6dc71c3884cbb81d5d61302433452059ebd611dbe6ece5b9d5a1",
+  "commandRecordConservation": [
+    {
+      "path": "raw/logs/commands.jsonl",
+      "records": 54,
+      "orderAndExitExact": true
+    },
+    {
+      "path": "prior-preparation/cutoff-captures/commands.jsonl",
+      "records": 46,
+      "orderAndExitExact": true
+    }
+  ],
+  "officialSupplierByteExactFiles": 5,
+  "nulPathOrderPreserved": 2688,
+  "preservedFailedCommands": 5,
+  "sourceHead": "4ba47558020bd5e501fa9718f09d562dcf573713",
+  "sourceTree": "5fcc66de8aa37e6a347511c2def0eae54a0ed1e5",
+  "sourceClean": true,
+  "officialAttempts": 1,
+  "officialPythonValidators": "NOT_RUN",
+  "productRetest": false,
+  "preparedArtifactToolsCommit": "e96f9b9c232a3785985f447e6e6a73da64bc503a",
+  "postCutoffCommandLabels": [
+    "38-corrected-residual-scan",
+    "39-corrected-payload-sums",
+    "36-corrected-prepare-driver",
+    "40-delivery-verifier",
+    "44-corrected-delivery-verifier",
+    "41-final-candidate-pin",
+    "42-final-candidate-clean",
+    "43-final-original-clean"
+  ],
+  "priorVerificationAttempt": "40 exit1 because verifier incorrectly expected NUL escaping without the recorded path redaction. Original failure preserved; changed verifier validates documented redaction plus delimiter order without changing product or sealed packet.",
+  "note": "This verifier and Library receipt are terminal delivery evidence outside the sealed collection cutoff."
+}

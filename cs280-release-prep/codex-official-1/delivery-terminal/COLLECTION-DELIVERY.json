@@ -1,0 +1,28 @@
+{
+  "status": "PREPARED_BLOCKED_NO_PUSH",
+  "publicPath": "/workspace/ags-cs-2x/official-validator-26c6c9d9/public-corrected/cs280-release-prep/codex-official-1",
+  "publicFiles": 209,
+  "rawSourceFiles": 200,
+  "cutoffUtc": "2026-10-06T05:33:06.944139+00:00",
+  "rawInventorySha256": "902cde5dcb3b6031567b69d3cb04c2ca07fcbcb1f85c6aece443eeb21b455400",
+  "manifestSha256": "cf645d331435230638de5fdb148ed5e520c21f9a46e4a132466f0eba81179840",
+  "sha256SumsSha256": "13a73295c3a5bab7fa2f8e1abc71c0f17d56866b53e52eefc73b5efc88f215fb",
+  "redactionMatches": 22,
+  "nulDelimitersEscaped": 2688,
+  "residualFindings": 0,
+  "reviewZip": {
+    "path": "/workspace/ags-cs-2x/official-validator-26c6c9d9/AGS-CS280-Codex-official-1-review.zip",
+    "bytes": 416728,
+    "sha256": "6ecd4152e5af6dc71c3884cbb81d5d61302433452059ebd611dbe6ece5b9d5a1"
+  },
+  "privateOriginalZip": {
+    "path": "/workspace/ags-cs-2x/official-validator-26c6c9d9/private-original-evidence.zip",
+    "bytes": 1060534,
+    "sha256": "6d6f80e4f3e0d4ab76691fd4a50c2fc510d35a1d103cc3fea6ab8bbef3ace421",
+    "uploaded": false
+  },
+  "supplierPin": "10382da79a2a2d6e8ae221fa63077215389c1ad2",
+  "candidatePin": "4ba47558020bd5e501fa9718f09d562dcf573713",
+  "toolsCommit": "e96f9b9c232a3785985f447e6e6a73da64bc503a",
+  "postCutoffLogs": "38,39 and completed36 driver are outside the sealed payload; no product retry"
+}

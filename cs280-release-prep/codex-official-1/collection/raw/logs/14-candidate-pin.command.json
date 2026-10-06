@@ -1,0 +1,15 @@
+{
+  "label": "14-candidate-pin",
+  "command": [
+    "git",
+    "rev-parse",
+    "HEAD",
+    "HEAD^{tree}"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9/candidate",
+  "startedUtc": "2026-10-06T05:19:00.149835+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:19:00.152002+00:00",
+  "stdout": "14-candidate-pin.stdout.log",
+  "stderr": "14-candidate-pin.stderr.log"
+}

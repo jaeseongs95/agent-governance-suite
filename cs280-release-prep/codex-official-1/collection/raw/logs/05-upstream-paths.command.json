@@ -1,0 +1,18 @@
+{
+  "label": "05-upstream-paths",
+  "command": [
+    "git",
+    "--git-dir",
+    "/workspace/ags-cs-2x/official-validator-26c6c9d9/upstream.git",
+    "ls-tree",
+    "-r",
+    "--name-only",
+    "10382da79a2a2d6e8ae221fa63077215389c1ad2"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9",
+  "startedUtc": "2026-10-06T05:14:53.805984+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:14:53.811661+00:00",
+  "stdout": "05-upstream-paths.stdout.log",
+  "stderr": "05-upstream-paths.stderr.log"
+}

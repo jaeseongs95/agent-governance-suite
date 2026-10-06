@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/workspace/ags-cs-2x/publication-20261006T040502Z/scan-public.py", line 28, in <module>
+    data = p.read_bytes(); assert b'\0' not in data
+                                  ^^^^^^^^^^^^^^^^^
+AssertionError

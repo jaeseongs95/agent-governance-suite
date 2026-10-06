@@ -1,0 +1,18 @@
+{
+  "label": "02-upstream-origin",
+  "command": [
+    "git",
+    "--git-dir",
+    "/workspace/ags-cs-2x/official-validator-26c6c9d9/upstream.git",
+    "remote",
+    "add",
+    "origin",
+    "https://github.com/openai/codex.git"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9",
+  "startedUtc": "2026-10-06T05:14:53.237609+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:14:53.239743+00:00",
+  "stdout": "02-upstream-origin.stdout.log",
+  "stderr": "02-upstream-origin.stderr.log"
+}

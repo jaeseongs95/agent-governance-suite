@@ -1,0 +1,46 @@
+{
+  "schema": "AGSOfficialValidatorRun.v1",
+  "status": "FAIL",
+  "command": [
+    "pnpm",
+    "validate:official"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9/candidate",
+  "exitCode": 1,
+  "officialExecutionAttempts": 1,
+  "supplierCommit": "10382da79a2a2d6e8ae221fa63077215389c1ad2",
+  "candidateHead": "4ba47558020bd5e501fa9718f09d562dcf573713",
+  "candidateTree": "5fcc66de8aa37e6a347511c2def0eae54a0ed1e5",
+  "trackedFiles": 1344,
+  "sourcePrePostByteExact": true,
+  "sourceDirtyPre": "",
+  "sourceDirtyPost": "",
+  "pluginPassed": false,
+  "skillsPassed": 0,
+  "skillsExpected": 22,
+  "stdoutPath": "/workspace/ags-cs-2x/official-validator-26c6c9d9/raw/logs/19-validate-official.stdout.log",
+  "stdoutBytes": 2875,
+  "stdoutSha256": "81ddddc703075eea80ec18879ef1559d799377b14e8fb0a5d9e3bcf53dc1a24b",
+  "stderrPath": "/workspace/ags-cs-2x/official-validator-26c6c9d9/raw/logs/19-validate-official.stderr.log",
+  "stderrBytes": 0,
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "suppliedFilesByteExactAfter": true,
+  "fullTestsBuildRuntimeReexecuted": false,
+  "fixtureR1R2Integrated": false,
+  "mainTagReleaseInstallPushPerformed": false,
+  "claimScope": "Official plugin/skill metadata validation only; not a full regression, runtime, release approval or independent audit",
+  "finishedUtc": "2026-10-06T05:21:20.812343+00:00",
+  "concurrentAfter": {
+    "observedAtUtc": "2026-10-06T05:21:20.823712+00:00",
+    "pid1": {
+      "pid": 1,
+      "state": "S",
+      "ppid": 0,
+      "starttime": "27",
+      "comm": "tail"
+    },
+    "activeTestBuildProcesses": [],
+    "zombieProcessesObserved": 241,
+    "heuristic": "Read /proc metadata and classify arguments; no signals, sockets or process teardown. Outside namespace jobs UNKNOWN; argument contents not recorded."
+  }
+}

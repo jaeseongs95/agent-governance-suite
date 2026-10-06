@@ -1,0 +1,14 @@
+{
+  "label": "20-source-post-status",
+  "command": [
+    "git",
+    "status",
+    "--porcelain"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9/candidate",
+  "startedUtc": "2026-10-06T05:21:20.760489+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:21:20.766783+00:00",
+  "stdout": "20-source-post-status.stdout.log",
+  "stderr": "20-source-post-status.stderr.log"
+}

@@ -1,0 +1,17 @@
+{
+  "label": "07-content-01",
+  "command": [
+    "git",
+    "--git-dir",
+    "/workspace/ags-cs-2x/official-validator-26c6c9d9/upstream.git",
+    "cat-file",
+    "blob",
+    "40edaa86005e71d0e199fbff94ae425afc099939"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9",
+  "startedUtc": "2026-10-06T05:14:54.147390+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:14:55.937328+00:00",
+  "stdout": "07-content-01.stdout.log",
+  "stderr": "07-content-01.stderr.log"
+}

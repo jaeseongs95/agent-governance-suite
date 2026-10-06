@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/workspace/ags-cs-2x/official-validator-26c6c9d9/tools/prepare.py", line 29, in <module>
+    run('27-public-residual-scan',['python',str(prior/'scan-public.py'),str(ROOT),str(public)],ROOT)
+  File "/workspace/ags-cs-2x/official-validator-26c6c9d9/tools/runner.py", line 18, in run
+    if check and result.returncode:raise RuntimeError(f'{label} failed with exit {result.returncode}; original stdout/stderr retained')
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: 27-public-residual-scan failed with exit 1; original stdout/stderr retained

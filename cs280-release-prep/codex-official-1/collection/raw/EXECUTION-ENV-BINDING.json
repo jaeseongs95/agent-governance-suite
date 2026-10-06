@@ -1,0 +1,16 @@
+{
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9/candidate",
+  "command": [
+    "pnpm",
+    "validate:official"
+  ],
+  "temporaryEnvironment": {
+    "CODEX_HOME": "/workspace/ags-cs-2x/official-validator-26c6c9d9/codex-home-disposable",
+    "PYTHON": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+    "PYTHONUTF8": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONNOUSERSITE": "1",
+    "TMPDIR": "/workspace/ags-cs-2x/official-validator-26c6c9d9/tmp-official"
+  },
+  "scope": "Child process only; no global environment/user configuration modified"
+}

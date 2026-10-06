@@ -1,0 +1,60 @@
+{
+  "environment": "Actual Codex Cloud Linux",
+  "observedAtUtc": "2026-10-06T05:21:19.512023+00:00",
+  "hostname": "d19a608d7837",
+  "kernel": "6.18.44",
+  "architecture": "x86_64",
+  "pidNamespace": "pid:[4026532200]",
+  "containerCgroupSha256": "e57fd7b21104f091de366ace1464596378a498b0a5e63f1b21147a8998c20107",
+  "node": "v24.19.0",
+  "pnpm": "11.19.0",
+  "python": "3.12.14",
+  "pythonExecutable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+  "yamlVersion": "6.0.3",
+  "yamlModule": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/site-packages/yaml/__init__.py",
+  "hostContainerReuse": "UNKNOWN: no persisted prior container identity comparison; current identity recorded without remote-host inference",
+  "workspaceReuse": {
+    "state": "REUSED",
+    "knownPriorPaths": [
+      "/workspace/ags-cs-2x/repo",
+      "/workspace/ags-cs-2x/linux-lifecycle-r1",
+      "/workspace/ags-cs-2x/linux-lifecycle-r2",
+      "/workspace/ags-cs-2x/publication-20261006T040502Z"
+    ],
+    "newCandidateCheckout": true
+  },
+  "depsStore": {
+    "runtime": "REUSED preinstalled Node/pnpm/Python/PyYAML",
+    "candidateNodeModulesPresent": false,
+    "pnpmStore": "UNKNOWN: effective user configuration/store was not queried; no dependency install"
+  },
+  "tmpStateDb": {
+    "tmp": "/workspace/ags-cs-2x/official-validator-26c6c9d9/tmp-official",
+    "tmpNewEmpty": true,
+    "state": "/workspace/ags-cs-2x/official-validator-26c6c9d9/state-official",
+    "stateNewEmpty": true,
+    "taskDatabase": "NONE used or opened",
+    "otherDatabases": "UNKNOWN/not queried"
+  },
+  "codexHome": {
+    "path": "/workspace/ags-cs-2x/official-validator-26c6c9d9/codex-home-disposable",
+    "createdNew": true,
+    "defaultHome": "Not read or modified",
+    "profilesKeysRegistryInstalled": false
+  },
+  "priorJobs": "Prior CS artifacts exist; previous results are not reused as this check result",
+  "concurrentJobs": {
+    "observedAtUtc": "2026-10-06T05:21:19.076546+00:00",
+    "pid1": {
+      "pid": 1,
+      "state": "S",
+      "ppid": 0,
+      "starttime": "27",
+      "comm": "tail"
+    },
+    "activeTestBuildProcesses": [],
+    "zombieProcessesObserved": 241,
+    "heuristic": "Read /proc metadata and classify arguments; no signals, sockets or process teardown. Outside namespace jobs UNKNOWN; argument contents not recorded."
+  },
+  "otherSessions": "UNKNOWN outside available /proc namespace; no other session transcript collected"
+}

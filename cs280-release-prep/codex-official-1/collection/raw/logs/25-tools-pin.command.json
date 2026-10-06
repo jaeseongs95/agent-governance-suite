@@ -1,0 +1,15 @@
+{
+  "label": "25-tools-pin",
+  "command": [
+    "git",
+    "rev-parse",
+    "HEAD",
+    "HEAD^{tree}"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9/tools",
+  "startedUtc": "2026-10-06T05:27:41.881108+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:27:41.883249+00:00",
+  "stdout": "25-tools-pin.stdout.log",
+  "stderr": "25-tools-pin.stderr.log"
+}

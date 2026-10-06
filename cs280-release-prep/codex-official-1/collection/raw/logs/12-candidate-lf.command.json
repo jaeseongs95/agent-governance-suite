@@ -1,0 +1,15 @@
+{
+  "label": "12-candidate-lf",
+  "command": [
+    "git",
+    "config",
+    "core.autocrlf",
+    "false"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9/candidate",
+  "startedUtc": "2026-10-06T05:19:00.038583+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:19:00.040396+00:00",
+  "stdout": "12-candidate-lf.stdout.log",
+  "stderr": "12-candidate-lf.stderr.log"
+}

@@ -1,0 +1,18 @@
+{
+  "cutoffUtc": "2026-10-06T05:33:06.944139+00:00",
+  "candidate": "4ba47558020bd5e501fa9718f09d562dcf573713",
+  "candidateTree": "5fcc66de8aa37e6a347511c2def0eae54a0ed1e5",
+  "officialCommandAttempts": 1,
+  "officialPythonValidators": "NOT_RUN",
+  "unexpectedInstallAttempt": true,
+  "originalCandidateFilesExact": 1344,
+  "sourceCleanPrePost": true,
+  "correctedPostprocessing": "First scanner exit1 on two Git ls-files -z logs containing NUL. Second scanner exit1 on an email-shaped public upstream snapshot filename. All 27/29/31/33 failure captures and inventory retained. Changed-input corrections escape 2688 delimiters and redact the email-shaped filename; no scanner check relaxed.",
+  "partialPriorCaptures": "prior-preparation/cutoff-captures/29 stdout/stderr were empty while that driver was still running at its first cutoff; not complete streams. Completed actual 29 stdout/stderr are separately retained in raw/logs.",
+  "activeDriver": "36-corrected-prepare-driver is excluded while active; completed stdout/stderr and command metadata remain outside this packet in raw/logs. No complete stream claimed for an active capture.",
+  "postCutoff": "38-corrected-residual-scan onward and final delivery/ZIP/Library receipts retained separately; not claimed inside the frozen packet. No recursive self-publication.",
+  "unavailable": "Full native transcript and initial read-only native exports/outer acquire-supply wrapper stdout NOT_VERIFIABLE. Actual nested supplier captures retained; no reconstructed reasoning.",
+  "publication": "LOCAL PREPARATION ONLY; no remote push/main/tag/release/install. Existing evidence442 untouched.",
+  "environment": "Workspace/runtime reused; container lifecycle and outside jobs UNKNOWN. Isolated new candidate/TMP/state/CODEX_HOME. No database/key/profile queries.",
+  "compatibility": "STATIC_KEY_COMPATIBLE only, no full official PASS. pnpm original FAIL/exit1 retained and classified as pre-script dependency blocker."
+}

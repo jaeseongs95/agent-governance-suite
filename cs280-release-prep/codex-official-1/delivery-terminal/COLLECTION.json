@@ -1,0 +1,10 @@
+{
+  "cutoffUtc": "2026-10-06T05:35:59.215793+00:00",
+  "toolsCommit": "766b812ce965ca1a507843a166fe49150bbb7347",
+  "toolsTree": "dfe442231a7af74d62ce47aca04dfadc47ee6ba9",
+  "clean": true,
+  "postprocessingFailures": "40 exit1 is preserved: verifier omitted the documented path redaction before NUL escape. Changed verifier44 exit0. Product validator19 remains exit1/official NOT_RUN.",
+  "commands": "All actual stdout/stderr and command metadata for listed10 post-cutoff commands; full cumulative command log retained with record order/exit.",
+  "excluded": "Active47 and later48/49/current driver/Library receipt are terminal delivery only, outside this cutoff. No recursive publication.",
+  "publication": "LOCAL ONLY, PUSH0. This is a review-transport supplement; it does not alter the sealed209-file collection. Parent controls any future designated-folder publication."
+}

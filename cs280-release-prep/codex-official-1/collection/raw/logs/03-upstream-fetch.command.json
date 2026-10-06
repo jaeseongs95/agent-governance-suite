@@ -1,0 +1,20 @@
+{
+  "label": "03-upstream-fetch",
+  "command": [
+    "git",
+    "--git-dir",
+    "/workspace/ags-cs-2x/official-validator-26c6c9d9/upstream.git",
+    "fetch",
+    "--depth=1",
+    "--filter=blob:none",
+    "--no-tags",
+    "origin",
+    "refs/tags/rust-v0.158.0-alpha.2"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9",
+  "startedUtc": "2026-10-06T05:14:53.239963+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:14:53.803240+00:00",
+  "stdout": "03-upstream-fetch.stdout.log",
+  "stderr": "03-upstream-fetch.stderr.log"
+}

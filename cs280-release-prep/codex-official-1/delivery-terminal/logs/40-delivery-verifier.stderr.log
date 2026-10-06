@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/workspace/ags-cs-2x/official-validator-26c6c9d9/tools/verify_delivery.py", line 22, in <module>
+    assert published.replace(b'\\u0000', b'\0') == original
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

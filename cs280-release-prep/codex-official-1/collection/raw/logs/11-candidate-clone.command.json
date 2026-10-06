@@ -1,0 +1,17 @@
+{
+  "label": "11-candidate-clone",
+  "command": [
+    "git",
+    "clone",
+    "--no-checkout",
+    "--no-hardlinks",
+    "/workspace/ags-cs-2x/repo",
+    "/workspace/ags-cs-2x/official-validator-26c6c9d9/candidate"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9",
+  "startedUtc": "2026-10-06T05:19:00.011135+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:19:00.038238+00:00",
+  "stdout": "11-candidate-clone.stdout.log",
+  "stderr": "11-candidate-clone.stderr.log"
+}

@@ -1,0 +1,14 @@
+{
+  "label": "15-candidate-clean",
+  "command": [
+    "git",
+    "status",
+    "--porcelain"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9/candidate",
+  "startedUtc": "2026-10-06T05:19:00.152247+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:19:00.211797+00:00",
+  "stdout": "15-candidate-clean.stdout.log",
+  "stderr": "15-candidate-clean.stderr.log"
+}

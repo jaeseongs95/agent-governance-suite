@@ -1,0 +1,75 @@
+{
+  "origin": "https://github.com/openai/codex",
+  "tag": "rust-v0.158.0-alpha.2",
+  "annotatedTag": "3ccf947fb92b3bc936aada20f9b92ed5ebbba22d",
+  "commit": "10382da79a2a2d6e8ae221fa63077215389c1ad2",
+  "pluginValidator": "codex-rs/skills/src/assets/samples/plugin-creator/scripts/validate_plugin.py",
+  "identifierDependency": "codex-rs/skills/src/assets/samples/plugin-creator/scripts/identifier_validation.py",
+  "quickValidator": "codex-rs/skills/src/assets/samples/skill-creator/scripts/quick_validate.py",
+  "files": [
+    {
+      "path": "LICENSE",
+      "gitBlob": "4606e72e042564097e8780d66c1d4dcb611869bd",
+      "bytes": 10926,
+      "rawSha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc",
+      "crlfCount": 0
+    },
+    {
+      "path": "codex-rs/skills/src/assets/samples/plugin-creator/scripts/create_basic_plugin.py",
+      "gitBlob": "40edaa86005e71d0e199fbff94ae425afc099939",
+      "bytes": 11731,
+      "rawSha256": "272cb14e02ad7c76ac40777443c49cfecfa333ee28ab7f6214210b72c8fd02ae",
+      "crlfCount": 0
+    },
+    {
+      "path": "codex-rs/skills/src/assets/samples/plugin-creator/scripts/identifier_validation.py",
+      "gitBlob": "41a1a2f1b503c165f5d4b93f7f0e99eb0b3add6e",
+      "bytes": 784,
+      "rawSha256": "a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223",
+      "crlfCount": 0
+    },
+    {
+      "path": "codex-rs/skills/src/assets/samples/plugin-creator/scripts/read_marketplace_name.py",
+      "gitBlob": "249b564e38b1ecb9af0ed75c441fceebc1faeed9",
+      "bytes": 1644,
+      "rawSha256": "ba24e6d91eed6f778bde022a967be335c6253983b5ecd1c5e30c8483385887fd",
+      "crlfCount": 0
+    },
+    {
+      "path": "codex-rs/skills/src/assets/samples/plugin-creator/scripts/update_plugin_cachebuster.py",
+      "gitBlob": "7818f15b5cc078aacb5cfd8aeb23b82f75e44b54",
+      "bytes": 3045,
+      "rawSha256": "6a630dfbdc2bca6952580da9c2c7ece08030926819ccd81d9deb518c24c1b0ed",
+      "crlfCount": 0
+    },
+    {
+      "path": "codex-rs/skills/src/assets/samples/plugin-creator/scripts/validate_plugin.py",
+      "gitBlob": "b5be462c3b4fe3ea6083cca948ccf52e05301546",
+      "bytes": 21739,
+      "rawSha256": "f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944",
+      "crlfCount": 0
+    },
+    {
+      "path": "codex-rs/skills/src/assets/samples/skill-creator/scripts/generate_openai_yaml.py",
+      "gitBlob": "870eefcea9bd0184806b8eb305526e883d2f7241",
+      "bytes": 6669,
+      "rawSha256": "816df12072d74faf924d802a6599a139997e1441e90bfe4869ec304f2e5e2851",
+      "crlfCount": 0
+    },
+    {
+      "path": "codex-rs/skills/src/assets/samples/skill-creator/scripts/init_skill.py",
+      "gitBlob": "2ed2fa3125c720fcce60a29f3dd82d04b14d9fa0",
+      "bytes": 10314,
+      "rawSha256": "bf0656a5f9d8d8cdecf0245eaf27e1df8e0e9b6d40ccdda814eb8e3d5f6992c8",
+      "crlfCount": 0
+    },
+    {
+      "path": "codex-rs/skills/src/assets/samples/skill-creator/scripts/quick_validate.py",
+      "gitBlob": "e27023ece4bd259ef36560e19995eec7b6a345bf",
+      "bytes": 4249,
+      "rawSha256": "ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c",
+      "crlfCount": 0
+    }
+  ],
+  "officialExecutionCount": 0
+}

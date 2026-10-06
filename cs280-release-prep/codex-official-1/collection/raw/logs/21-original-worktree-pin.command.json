@@ -1,0 +1,14 @@
+{
+  "label": "21-original-worktree-pin",
+  "command": [
+    "git",
+    "rev-parse",
+    "HEAD"
+  ],
+  "cwd": "/workspace/ags-cs-2x/repo",
+  "startedUtc": "2026-10-06T05:21:20.804108+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:21:20.805934+00:00",
+  "stdout": "21-original-worktree-pin.stdout.log",
+  "stderr": "21-original-worktree-pin.stderr.log"
+}
