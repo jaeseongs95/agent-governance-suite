@@ -1,0 +1,130 @@
+[
+  {
+    "id": "NET-FRAME-001",
+    "version": "0.1.0",
+    "domain": "networking",
+    "status": "draft",
+    "title": "메시지 framing과 부분 수신",
+    "appliesWhen": [
+      "바이트 스트림을 메시지로 해석한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "읽기 한 번과 메시지 한 개를 동일시하지 않는다.",
+    "invariant": "부분·병합 수신에서도 경계와 길이 제한이 유지된다.",
+    "failureModes": [
+      "JSON이 한 번의 read로 완전히 온다고 가정한다."
+    ],
+    "decisionQuestions": [
+      "구분자·길이·인코딩은 무엇인가?",
+      "상한 초과와 끊긴 프레임은 어떻게 종료하는가?"
+    ],
+    "verificationObligations": [
+      "모든 주요 경계에서 분할하고 여러 프레임을 합쳐 파싱 결과와 상한을 검사한다."
+    ],
+    "nonGoals": [
+      "패킷 경계를 애플리케이션 계약으로 쓰지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "authored guidance; no promotion to the default implicit-selection pool"
+  },
+  {
+    "id": "NET-DEADLINE-002",
+    "version": "0.1.0",
+    "domain": "networking",
+    "status": "draft",
+    "title": "종단 deadline",
+    "appliesWhen": [
+      "연결·읽기·재시도로 원격 응답을 기다린다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "단계별 timeout과 전체 시간 예산을 함께 추적한다.",
+    "invariant": "조금씩 오는 데이터와 재연결이 전체 deadline을 무한 연장하지 않는다.",
+    "failureModes": [
+      "각 read마다 timer를 리셋해 slow sender가 연결을 영구 점유한다."
+    ],
+    "decisionQuestions": [
+      "남은 시간을 하위 호출로 전달하는가?",
+      "종료 시 미완료 요청은 정리되는가?"
+    ],
+    "verificationObligations": [
+      "연결 지연·부분 응답·장기 trickle·재연결을 주입해 전체 예산을 확인한다."
+    ],
+    "nonGoals": [
+      "측정 없이 timeout 값을 임의로 짧게 고정하지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "authored guidance; no promotion to the default implicit-selection pool"
+  },
+  {
+    "id": "NET-SEMANTICS-003",
+    "version": "0.1.0",
+    "domain": "networking",
+    "status": "draft",
+    "title": "HTTP 재시도와 조건부 요청",
+    "appliesWhen": [
+      "HTTP 메서드·상태 코드로 성공·재시도를 결정한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "메서드 의미와 실제 서버 계약을 함께 확인한다.",
+    "invariant": "재시도·캐시·조건부 갱신이 정의된 업무 효과와 충돌하지 않는다.",
+    "failureModes": [
+      "POST timeout을 무조건 미실행으로 보고 다시 호출한다."
+    ],
+    "decisionQuestions": [
+      "조건부 갱신에 ETag·precondition이 필요한가?",
+      "응답 코드만으로 업무 완료를 알 수 있는가?"
+    ],
+    "verificationObligations": [
+      "응답 유실·412·429·503·중복 요청을 시험하고 서버의 효과를 조회한다."
+    ],
+    "nonGoals": [
+      "클라이언트가 임의로 서버의 멱등성을 선언하지 않는다."
+    ],
+    "sources": [
+      "HTTP-9110"
+    ],
+    "validationScope": "authored guidance; no promotion to the default implicit-selection pool"
+  },
+  {
+    "id": "NET-RECONNECT-004",
+    "version": "0.1.0",
+    "domain": "networking",
+    "status": "draft",
+    "title": "재연결과 세션 경계",
+    "appliesWhen": [
+      "연결 재생성 후 미완료 요청·응답을 이어간다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "연결 생존과 요청 소유권을 분리한다.",
+    "invariant": "이전 연결의 응답이 새 요청에 잘못 결속되지 않는다.",
+    "failureModes": [
+      "증가 카운터를 재시작 때 초기화해 지연 응답과 새 요청 ID가 충돌한다."
+    ],
+    "decisionQuestions": [
+      "correlation ID·epoch·취소 기록의 수명은 무엇인가?",
+      "중복 응답은 어떻게 처리하는가?"
+    ],
+    "verificationObligations": [
+      "끊김·지연 응답·ID 재사용·연속 재연결을 배치해 결속을 검사한다."
+    ],
+    "nonGoals": [
+      "연결을 다시 열었다는 이유만으로 작업이 복구됐다고 하지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "authored guidance; no promotion to the default implicit-selection pool"
+  }
+]

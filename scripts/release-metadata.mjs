@@ -4,8 +4,8 @@ import path from "node:path";
 import { ROOT, readJson } from "./lib.mjs";
 
 const SEMVER = /^\d+\.\d+\.\d+$/u;
-const RELEASE_VERSION_KO = /(<!-- release-version:start -->\r?\n[\s\S]*?현재 공개 릴리스는 `v)\d+\.\d+\.\d+(`[^\r\n]*\r?\n<!-- release-version:end -->)/u;
-const RELEASE_VERSION_EN = /(<!-- release-version:start -->\r?\n[\s\S]*?current public release is `v)\d+\.\d+\.\d+(`[^\r\n]*\r?\n<!-- release-version:end -->)/u;
+const RELEASE_VERSION_KO = /(<!-- release-version:start -->\r?\n[\s\S]*?현재 (?:공개 릴리스는|릴리스 후보는) `v)\d+\.\d+\.\d+(`[^\r\n]*\r?\n<!-- release-version:end -->)/u;
+const RELEASE_VERSION_EN = /(<!-- release-version:start -->\r?\n[\s\S]*?current (?:public release is|release candidate is) `v)\d+\.\d+\.\d+(`[^\r\n]*\r?\n<!-- release-version:end -->)/u;
 const RELEASE_INSTALL = /(<!-- release-install:start -->\r?\n[\s\S]*?--ref v)\d+\.\d+\.\d+([\s\S]*?\r?\n<!-- release-install:end -->)/u;
 
 export function replaceExactlyOnce(text, pattern, replacement, label) {
@@ -43,11 +43,17 @@ export async function expectedReleaseFiles() {
     throw new Error("release/version.json must contain a strict semantic version");
   }
   const version = release.version;
+  const candidate = release.status === "candidate";
+  if (candidate && !SEMVER.test(release.publicVersion ?? "")) throw new Error("candidate metadata requires publicVersion");
+  const installVersion = candidate ? release.publicVersion : version;
+  const statusText = (text) => text
+    .replace(candidate ? "현재 공개 릴리스는" : "현재 릴리스 후보는", candidate ? "현재 릴리스 후보는" : "현재 공개 릴리스는")
+    .replace(candidate ? "current public release is" : "current release candidate is", candidate ? "current release candidate is" : "current public release is");
   const updateReadme = (file, versionPattern) => updateText(file, (text) => {
     assertMarkerPair(text, "release-version", file);
     assertMarkerPair(text, "release-install", file);
     const versioned = replaceExactlyOnce(text, versionPattern, `$1${version}$2`, `${file} release-version`);
-    return replaceExactlyOnce(versioned, RELEASE_INSTALL, `$1${version}$2`, `${file} release-install`);
+    return statusText(replaceExactlyOnce(versioned, RELEASE_INSTALL, `$1${installVersion}$2`, `${file} release-install`));
   });
   return [
     await updateJson("package.json", (document) => { document.version = version; }),
@@ -67,7 +73,7 @@ export async function expectedReleaseFiles() {
     await updateReadme("README.en.md", RELEASE_VERSION_EN),
     await updateText("docs/roadmap.md", (text) => {
       assertMarkerPair(text, "release-version", "docs/roadmap.md");
-      return replaceExactlyOnce(text, RELEASE_VERSION_KO, `$1${version}$2`, "roadmap release-version");
+      return statusText(replaceExactlyOnce(text, RELEASE_VERSION_KO, `$1${version}$2`, "roadmap release-version"));
     }),
   ];
 }

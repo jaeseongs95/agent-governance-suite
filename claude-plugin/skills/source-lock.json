@@ -168,6 +168,15 @@
       "updatePolicy": "internal",
       "integratedChecksum": "sha256:b78446783411b0d09d7a96b3e324fe9f99ea8dfbedd74857b2a6841f431c447c",
       "checksumScope": "relative paths and normalized text bytes under skills/software-security-auditor"
+    },
+    {
+      "skillId": "cs-engineering",
+      "path": "skills/cs-engineering",
+      "version": "0.2.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:1c41f903d82b881bb4ea740aabb2fbabde89b1412faaa65b9cf0ea72de4fec6d",
+      "checksumScope": "relative paths and normalized text bytes under skills/cs-engineering"
     }
   ]
 }

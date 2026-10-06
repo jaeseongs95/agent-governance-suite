@@ -1,0 +1,6 @@
+interface:
+  display_name: "CS Engineering"
+  short_description: "CS 원리를 설계 제약과 검증 근거로 연결"
+  default_prompt: "Use $cs-engineering to derive relevant CS constraints and review the candidate against frozen verification obligations. Use the locally checked core by default; record explicit adoption when draft rules are required."
+policy:
+  allow_implicit_invocation: true

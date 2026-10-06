@@ -44,6 +44,7 @@ import { validateSemantics as validateSecurityAudit } from "../../skills/softwar
 import { ContractValidator } from "./schema-validator.js";
 import { assertReceiptPolicy, jsonPointer } from "./receipt-policy.js";
 import { loadStageOutputFile } from "./stage-output-file.js";
+import { assertCsStageBundle } from "./cs-engineering-validator.js";
 import {
   clone,
   createPlanSigningKey,
@@ -690,6 +691,9 @@ export class WorkflowService {
           : { ...result, output: { ...result.output, output: loadedOutput } };
         this.assertPlannedInputsAvailable(receipt, target);
         this.assertResultSemantics(target, checked);
+        if (target.requiredCapability === "cs-implementation-review") {
+          assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
+        }
         this.assertDeclaredReceiptPolicy(receipt, target, checked);
         if (result.state === "passed") {
           this.assertRequiredArtifacts(target, checked);
@@ -749,6 +753,13 @@ export class WorkflowService {
           });
         }
         this.assertRequiredArtifacts(stage, result);
+        if (stage.requiredCapability === "cs-implementation-review") {
+          const checked = result.outputFile
+            ? {...result, output:{...result.output, output:loadStageOutputFile(result.outputFile)}}
+            : result;
+          this.assertResultSemantics(stage, checked);
+          assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
+        }
         this.assertExecutionAssurance(stage, result);
         this.assertDeclaredReceiptPolicy(receipt, stage, result);
         this.assertEvaluationValidityGate(stage, result);

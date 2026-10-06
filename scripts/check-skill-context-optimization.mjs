@@ -10,6 +10,9 @@ const BASELINE = "7bc7753012227938be2a46f68bf3e29d29d5ef34";
 // historical bytes and compare the exact, separately frozen addition as well.
 const SESSION_BOARD_ADDITION = "scripts/fixtures/session-board-peer-message-guidance.2.6.0.md";
 const SESSION_BOARD_ADDITION_SHA256 = "381be4018118086b3c4087be043c004d8d6de986d42a6c0c14f182c2d76ed76f";
+const CS_HANDOFF_ADDITION = "scripts/fixtures/cs-engineering-handoff.2.8.0.md";
+const CS_HANDOFF_SHA256 = "c8937d58fd2d9193f191d86c629c9b54731d08d82ec12cb3249ff82e6362ed52";
+const CS_REGISTRY_SHA256 = "63fc38d9dff8570173af73092e320c4ff2467d26185fb6528ea33a8af59db6a9";
 // Intake changes policy after the original optimization. Pin only this revision;
 // all other skills keep their historical byte-for-byte checks.
 const ORCHESTRATOR_INTAKE = Object.freeze({
@@ -87,7 +90,15 @@ export function matchesOrchestratorIntakeUpdate(kind, bytes) {
 
 export function reconstructOptimizedSkill(skillId, root = ROOT) {
   const candidate = readFileSync(join(root, "skills", skillId, "SKILL.md"));
-  const detail = readFileSync(join(root, "skills", skillId, "references", "entry-details.md"));
+  let detail = readFileSync(join(root, "skills", skillId, "references", "entry-details.md"));
+  if (skillId === "orchestrator") {
+    const addition = readFileSync(join(root, CS_HANDOFF_ADDITION));
+    if (createHash("sha256").update(addition).digest("hex") !== CS_HANDOFF_SHA256
+      || !detail.subarray(-addition.length).equals(addition)) {
+      throw new Error("orchestrator: pinned 2.8.0 CS handoff addition differs");
+    }
+    detail = detail.subarray(0, detail.length - addition.length);
+  }
   const baselineRelativeDetail = Buffer.from(detail.toString("utf8").replace(/\]\((?![A-Za-z][A-Za-z0-9+.-]*:|#|\/)([^)\s]+)\)/gu, (_match, target) => `](${posix.normalize(posix.join("references", target))})`));
   const markerIndex = candidate.indexOf(NAVIGATION);
   if (markerIndex < 0) throw new Error(`${skillId}: navigation marker is missing`);
@@ -163,7 +174,7 @@ export function checkSkillContextOptimization() {
     skills.push({ skillId, baselineBytes: baseline.length, candidateBytes: candidate.length, reducedBytes: baseline.length - candidate.length });
   }
 
-  if (!readFileSync(join(ROOT, "skills", "registry.json")).equals(baselineFile("skills/registry.json"))) errors.push("skills/registry.json changed");
+  if (createHash("sha256").update(readFileSync(join(ROOT, "skills", "registry.json"))).digest("hex") !== CS_REGISTRY_SHA256) errors.push("skills/registry.json differs from pinned 2.8.0 candidate");
   if (git("diff", "--name-only", BASELINE, "--", "skills/ponytail").toString("utf8").trim()) errors.push("excluded skill ponytail changed");
   if (candidateBytes >= baselineBytes) errors.push("combined initial SKILL.md bytes did not shrink");
 

@@ -1,0 +1,130 @@
+[
+  {
+    "id": "LANG-ALIAS-001",
+    "version": "0.1.0",
+    "domain": "language-semantics",
+    "status": "draft",
+    "title": "공유 참조와 불변 스냅샷",
+    "appliesWhen": [
+      "가변 객체를 다른 단계·콜백·세션에 전달한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "얕은 복사와 깊은 불변성은 다르다.",
+    "invariant": "동결된 계약은 외부 별칭을 통한 변경으로 달라지지 않는다.",
+    "failureModes": [
+      "상위 객체만 복사하고 내부 배열을 공유해 검증 뒤 기준이 바뀐다."
+    ],
+    "decisionQuestions": [
+      "어느 객체를 누가 소유하는가?",
+      "직렬화 시점과 실행 시점이 같은가?"
+    ],
+    "verificationObligations": [
+      "중첩 객체를 원본에서 바꿔 스냅샷과 digest가 유지되는지 확인한다."
+    ],
+    "nonGoals": [
+      "모든 객체를 무조건 깊은 복사하지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "authored guidance; no promotion to the default implicit-selection pool"
+  },
+  {
+    "id": "LANG-NUMERIC-002",
+    "version": "0.1.0",
+    "domain": "language-semantics",
+    "status": "draft",
+    "title": "숫자 표현과 경계",
+    "appliesWhen": [
+      "크기·시간·ID·금액·카운터를 숫자로 처리한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "표현 가능한 범위와 연산 의미를 계약에 명시한다.",
+    "invariant": "경계값에서 조용한 반올림·오버플로가 식별자나 비교 결과를 바꾸지 않는다.",
+    "failureModes": [
+      "큰 정수 ID를 JavaScript Number로 읽어 다른 ID가 같아진다."
+    ],
+    "decisionQuestions": [
+      "정수 정확성 범위는 얼마인가?",
+      "직렬화가 BigInt·NaN을 어떻게 다루는가?"
+    ],
+    "verificationObligations": [
+      "최대 안전 정수·음수·0·범위 밖 값과 JSON 왕복을 검사한다."
+    ],
+    "nonGoals": [
+      "일률적으로 모든 숫자를 문자열로 바꾸지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "authored guidance; no promotion to the default implicit-selection pool"
+  },
+  {
+    "id": "LANG-ERROR-003",
+    "version": "0.1.0",
+    "domain": "language-semantics",
+    "status": "draft",
+    "title": "예외와 결과 상태",
+    "appliesWhen": [
+      "실패를 포착해 상위 단계로 전달한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "오류 복구와 오류 은폐를 구분한다.",
+    "invariant": "실패한 작업이 빈 값·기본값 때문에 성공으로 보고되지 않는다.",
+    "failureModes": [
+      "catch에서 빈 배열을 돌려 검사를 수행하지 않았는데 결과 없음으로 PASS한다."
+    ],
+    "decisionQuestions": [
+      "일부 성공을 어떤 상태로 보고하는가?",
+      "재시도 가능한 원인이 구분되는가?"
+    ],
+    "verificationObligations": [
+      "예외·취소·부분 성공을 주입하고 상위 상태·원인·정리 실행을 검사한다."
+    ],
+    "nonGoals": [
+      "예외 메시지에 비밀이나 전체 요청을 출력하지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "authored guidance; no promotion to the default implicit-selection pool"
+  },
+  {
+    "id": "LANG-VISIBILITY-004",
+    "version": "0.1.0",
+    "domain": "language-semantics",
+    "status": "draft",
+    "title": "동시 실행의 가시성",
+    "appliesWhen": [
+      "여러 스레드가 변경 가능한 상태를 공유한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "언어의 메모리 모델에 맞는 동기화 관계를 증명한다.",
+    "invariant": "소비자는 게시 완료된 상태를 지정된 동기화 경로로 관측한다.",
+    "failureModes": [
+      "한 플래그가 true이면 관련 필드가 반드시 보인다고 동기화 없이 가정한다."
+    ],
+    "decisionQuestions": [
+      "동기화 전후 관계는 어디인가?",
+      "원자성과 복합 연산 원자성을 혼동하는가?"
+    ],
+    "verificationObligations": [
+      "언어별 도구·동기화 원시 연산·코드 경로를 확인하고 경합 회귀를 수행한다."
+    ],
+    "nonGoals": [
+      "Java happens-before를 다른 언어에 그대로 이식하지 않는다."
+    ],
+    "sources": [
+      "JLS-17"
+    ],
+    "validationScope": "authored guidance; no promotion to the default implicit-selection pool"
+  }
+]

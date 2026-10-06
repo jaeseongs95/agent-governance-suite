@@ -35,8 +35,10 @@ flowchart LR
 Node.js **24.0.0 이상**과 사용할 호스트의 플러그인 기능이 필요합니다. 협업에 참여할 호스트마다 AGS를 설치합니다. 플러그인 사용을 위해 이 저장소를 clone하거나 `pnpm install`을 실행할 필요는 없습니다.
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v2.7.7`이며 거버넌스 전문 스킬 16개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
+현재 릴리스 후보는 `v2.8.0`이며 거버넌스 전문 스킬 17개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
 <!-- release-version:end -->
+
+이 작업 트리는 검토용 2.8.0 후보이며 공개 릴리스는 v2.7.7입니다. 아래 원격 설치 예시는 공개 버전을 유지합니다. 후보는 제공된 ZIP/patch로만 검토합니다.
 
 ### Claude Code
 
@@ -186,6 +188,7 @@ MCP workflow는 계획된 단계의 순서, 결과 형식, 필수 근거와 감�
 | [`codex-token-usage-analyzer`](skills/codex-token-usage-analyzer/) | 로컬 Codex 로그의 작업·프로젝트 토큰 사용량을 집계합니다. |
 | [`software-security-auditor`](skills/software-security-auditor/) | 웹·API와 CLI·MCP의 공격 경로, 방어 수단과 검사 공백을 감사합니다. |
 | [`evaluation-validity-auditor`](skills/evaluation-validity-auditor/) | 고정된 평가의 설계·입력·판정·집계를 독립 감사합니다. |
+| [`cs-engineering`](skills/cs-engineering/) | CS 원리를 설계 제약과 검증 의무로 연결하고 후보·근거의 일관성을 검사합니다. (v0.2.0) |
 
 스킬 버전과 출처는 [registry](skills/registry.json)와 [source lock](skills/source-lock.json)에 기록합니다. [`orchestrator`](skills/orchestrator/)는 현재 Git 이력으로 추적합니다. `ponytail`은 AGS에 내장되어 있으며 외부 원본의 고정 정보는 source lock에 출처 이력으로 남아 있습니다.
 

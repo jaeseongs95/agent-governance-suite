@@ -3262,8 +3262,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path13) {
-      let input = path13;
+    function removeDotSegments(path14) {
+      let input = path14;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3672,8 +3672,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path13 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path13 && path13 !== "/" ? path13 : void 0;
+        const path14 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path14 && path14 !== "/" ? path14 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -8205,10 +8205,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path13) {
-  if (!path13)
+function getElementAtPath(obj, path14) {
+  if (!path14)
     return obj;
-  return path13.reduce((acc, key) => acc?.[key], obj);
+  return path14.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -8620,11 +8620,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path13, issues) {
+function prefixIssues(path14, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path13);
+    iss.path.unshift(path14);
     return iss;
   });
 }
@@ -9053,16 +9053,16 @@ function flattenError(error2, mapper = (issue2) => issue2.message) {
 }
 function formatError(error2, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error3, path13 = []) => {
+  const processError = (error3, path14 = []) => {
     for (const issue2 of error3.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path13, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path14, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path13, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path14, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path13, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path14, ...issue2.path]);
       } else {
-        const fullpath = [...path13, ...issue2.path];
+        const fullpath = [...path14, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -17560,8 +17560,8 @@ import { readFileSync as readFileSync2, readdirSync } from "node:fs";
 import path6 from "node:path";
 var addFormats = import_ajv_formats.default;
 function loadSchema(fileName) {
-  const path13 = new URL(`../../contracts/${fileName}`, import.meta.url);
-  return JSON.parse(readFileSync2(path13, "utf8"));
+  const path14 = new URL(`../../contracts/${fileName}`, import.meta.url);
+  return JSON.parse(readFileSync2(path14, "utf8"));
 }
 var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
@@ -19733,7 +19733,7 @@ function inlineSchemaReferences(schema, documents) {
 // mcp-server/src/plugin-info.ts
 var PLUGIN_INFO = Object.freeze({
   id: "agent-governance-suite",
-  version: "2.7.7",
+  version: "2.8.0",
   repository: "https://github.com/jaeseongs95/agent-governance-suite",
   tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v"
 });
@@ -22929,6 +22929,51 @@ function loadStageOutputFile(reference, read = readLocalStageOutputFile) {
   return parsed;
 }
 
+// mcp-server/src/cs-engineering-validator.ts
+import { spawnSync } from "node:child_process";
+import path11 from "node:path";
+function assertCsStageBundle(rootDirectory, taskDigest, result, validator) {
+  if (result.output.kind !== "output") return;
+  if (!taskDigest) throw new WorkflowContractError("BINDING_REQUIRED", "CS review requires a signed task digest.");
+  const references = result.output.artifacts.filter((artifact) => artifact.artifactId === "cs-review-bundle");
+  const reference = references[0];
+  if (references.length !== 1 || !reference?.verified || !path11.isAbsolute(reference.locator) || /^(?:\\\\|\/\/)/u.test(reference.locator)) {
+    throw new WorkflowContractError("MISSING_EVIDENCE", "CS review requires one verified local cs-review-bundle artifact.");
+  }
+  const root = path11.dirname(reference.locator);
+  const checked = spawnSync(process.execPath, [
+    path11.join(rootDirectory, "skills/cs-engineering/scripts/validate.mjs"),
+    "check-stage-bundle",
+    "--root",
+    root,
+    "--input",
+    path11.basename(reference.locator),
+    "--bundle-digest",
+    reference.digest,
+    "--task-digest",
+    taskDigest
+  ], { encoding: "utf8", timeout: 1e4, maxBuffer: 4 * 1024 * 1024, windowsHide: true });
+  let assessment;
+  try {
+    assessment = JSON.parse(checked.stdout);
+  } catch {
+    throw new WorkflowContractError("INVALID_INPUT", "CS stage bundle validator did not return bounded JSON.");
+  }
+  if (checked.error || ![0, 3, 4].includes(checked.status ?? -1) || assessment.kind !== "cs-bundle-check") {
+    throw new WorkflowContractError("GATE_FAILED", "CS stage bundle could not be validated. Correct the supplied files and references.");
+  }
+  validator.planWorkflowRequest(assessment.task);
+  if (canonicalJson(assessment.review, "CS review") !== canonicalJson(result.output.output, "CS provider output")) {
+    throw new WorkflowContractError("INTEGRITY_FAILED", "CS stage output differs from its validated bundle review.");
+  }
+  const reviewRef = assessment.reviewRef;
+  const reports = result.output.artifacts.filter((artifact) => artifact.artifactId === "cs-review-report");
+  const report = reports[0];
+  if (reports.length !== 1 || !report?.verified || report.digest !== reviewRef.digest || path11.resolve(report.locator) !== path11.resolve(root, reviewRef.path) || report.targetDigest !== assessment.candidateDigest || reference.targetDigest !== assessment.candidateDigest) {
+    throw new WorkflowContractError("INTEGRITY_FAILED", "CS report artifact and bundle must name the same review bytes and candidate.");
+  }
+}
+
 // mcp-server/src/workflow-service.ts
 function asRecord2(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
@@ -23485,6 +23530,9 @@ var WorkflowService = class {
         const checked = loadedOutput === void 0 ? result : { ...result, output: { ...result.output, output: loadedOutput } };
         this.assertPlannedInputsAvailable(receipt, target);
         this.assertResultSemantics(target, checked);
+        if (target.requiredCapability === "cs-implementation-review") {
+          assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
+        }
         this.assertDeclaredReceiptPolicy(receipt, target, checked);
         if (result.state === "passed") {
           this.assertRequiredArtifacts(target, checked);
@@ -23541,6 +23589,11 @@ var WorkflowService = class {
           });
         }
         this.assertRequiredArtifacts(stage, result);
+        if (stage.requiredCapability === "cs-implementation-review") {
+          const checked = result.outputFile ? { ...result, output: { ...result.output, output: loadStageOutputFile(result.outputFile) } } : result;
+          this.assertResultSemantics(stage, checked);
+          assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
+        }
         this.assertExecutionAssurance(stage, result);
         this.assertDeclaredReceiptPolicy(receipt, stage, result);
         this.assertEvaluationValidityGate(stage, result);
@@ -24668,7 +24721,7 @@ var codexExecutionAdapter = {
 // mcp-server/src/state-cleanup-service.ts
 import { createHash as createHash8, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 import { chmodSync as chmodSync3, mkdirSync as mkdirSync4 } from "node:fs";
-import path11 from "node:path";
+import path12 from "node:path";
 var DAY_MS = 24 * 60 * 60 * 1e3;
 var TOKEN_TTL_MS2 = 15 * 60 * 1e3;
 var POLICY = {
@@ -24683,7 +24736,7 @@ function protection() {
   return process.platform === "win32" ? "os-managed-unverified" : "filesystem-mode-0600";
 }
 function databaseIdentity(databasePath) {
-  return databasePath === ":memory:" ? databasePath : path11.resolve(databasePath);
+  return databasePath === ":memory:" ? databasePath : path12.resolve(databasePath);
 }
 function apiError3(error2) {
   const normalized = error2 instanceof WorkflowContractError ? error2 : new WorkflowContractError("INVALID_INPUT", error2 instanceof Error ? error2.message : String(error2));
@@ -24918,9 +24971,9 @@ var StateCleanupService = class {
   }
   backupPath(databasePath, label, planId) {
     if (databasePath === ":memory:") throw new WorkflowContractError("INVALID_INPUT", "In-memory databases cannot be cleaned destructively.");
-    const directory = path11.join(path11.dirname(path11.resolve(databasePath)), "backups");
+    const directory = path12.join(path12.dirname(path12.resolve(databasePath)), "backups");
     mkdirSync4(directory, { recursive: true, mode: 448 });
-    return path11.join(directory, `${label}-before-cleanup-${planId}.sqlite3`);
+    return path12.join(directory, `${label}-before-cleanup-${planId}.sqlite3`);
   }
   protectBackup(targetPath) {
     if (process.platform !== "win32") chmodSync3(targetPath, 384);
@@ -24930,7 +24983,7 @@ var StateCleanupService = class {
 // mcp-server/src/trust-store.ts
 import { createHmac as createHmac5, randomBytes as randomBytes5, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
 import { chmodSync as chmodSync4, mkdirSync as mkdirSync5 } from "node:fs";
-import path12 from "node:path";
+import path13 from "node:path";
 import { DatabaseSync as DatabaseSync5 } from "node:sqlite";
 var TRUST_SIGNING_KEY = "trust-signing-key";
 var SCHEMA_VERSION3 = 1;
@@ -24966,7 +25019,7 @@ var TrustStore = class {
   constructor(databasePath) {
     this.databasePath = databasePath;
     if (!databasePath.trim()) throw new WorkflowContractError("INVALID_INPUT", "Trust database path must not be empty.");
-    if (databasePath !== ":memory:") mkdirSync5(path12.dirname(path12.resolve(databasePath)), { recursive: true, mode: 448 });
+    if (databasePath !== ":memory:") mkdirSync5(path13.dirname(path13.resolve(databasePath)), { recursive: true, mode: 448 });
     this.database = new DatabaseSync5(databasePath);
     try {
       this.database.exec("PRAGMA busy_timeout = 5000;");
@@ -24975,7 +25028,7 @@ var TrustStore = class {
       this.initializeSchema();
       this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
       if (this.signingKey.length !== 32) throw new Error("Stored trust signing key is invalid.");
-      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync4(path12.resolve(databasePath), 384);
+      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync4(path13.resolve(databasePath), 384);
     } catch (cause) {
       try {
         this.database.close();

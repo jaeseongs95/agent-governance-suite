@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "requestId": "CS-EXAMPLE-QUEUE",
+  "mode": "derive",
+  "objective": "원자 claim과 현재 소유권 세대의 DB 결과 확정을 검증한다.",
+  "sourceSnapshotDigest": "sha256:d197632aa32cf4d9c1b064b7c15915113e41bc4f2288b0ece127af28a6bf951d",
+  "sourceRefs": [
+    {
+      "id": "SRC-REQUEST",
+      "path": "source/request.txt",
+      "digest": "sha256:5101489f5fdd3767892028b1327ef0f3970fb5c9fbccd495fb3d665302b6a37a"
+    },
+    {
+      "id": "SRC-ENV",
+      "path": "source/baseline.txt",
+      "digest": "sha256:3d9e8a12a76e329d44b203d698bc00e0374e536c5093fcbdd1120d8bb7474b7a"
+    }
+  ],
+  "operationalFacts": [
+    {
+      "id": "FACT-CLAIM",
+      "statement": "예제 요구는 복수 프로세스의 작업 claim이다.",
+      "evidenceRefs": [
+        "SRC-REQUEST"
+      ]
+    },
+    {
+      "id": "FACT-LEASE",
+      "statement": "예제 요구는 만료/재할당된 owner의 DB 쓰기를 거부하는 것이다.",
+      "evidenceRefs": [
+        "SRC-REQUEST",
+        "SRC-ENV"
+      ]
+    }
+  ],
+  "existingContractRef": null
+}

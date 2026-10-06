@@ -35,8 +35,10 @@ AGS supports this workflow with task contracts, specialist skills, the session b
 You need Node.js **24.0.0 or later** and plugin support in the host you use. Install AGS in each participating host. Using the plugin does not require cloning this repository or running `pnpm install`.
 
 <!-- release-version:start -->
-The current public release is `v2.7.7` and includes sixteen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
+The current release candidate is `v2.8.0` and includes seventeen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
 <!-- release-version:end -->
+
+This tree is the 2.8.0 review candidate; the public release remains v2.7.7. Remote installation examples retain the public version. Review the candidate from its ZIP/patch.
 
 ### Claude Code
 
@@ -192,6 +194,7 @@ Security audits, independent deliberation, Korean prose editing, and Codex token
 | [`codex-token-usage-analyzer`](skills/codex-token-usage-analyzer/) | Aggregates task and project token usage from local Codex logs. |
 | [`software-security-auditor`](skills/software-security-auditor/) | Audits web/API and CLI/MCP attack paths, controls, and verification gaps. |
 | [`evaluation-validity-auditor`](skills/evaluation-validity-auditor/) | Independently audits a frozen evaluation's design, inputs, judgments, and aggregation. |
+| [`cs-engineering`](skills/cs-engineering/) | Derives CS constraints and verification obligations, then checks candidate/evidence consistency. (v0.2.0) |
 
 Skill versions and provenance are recorded in the [registry](skills/registry.json) and [source lock](skills/source-lock.json). The [`orchestrator`](skills/orchestrator/) is tracked in current Git history. `ponytail` is bundled with AGS; pinned external source information remains in the source lock as historical provenance.
 

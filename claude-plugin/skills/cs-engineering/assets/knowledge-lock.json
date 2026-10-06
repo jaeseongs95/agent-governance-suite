@@ -1,0 +1,134 @@
+{
+  "schemaVersion": "1.0.0",
+  "version": "0.1.0",
+  "files": [
+    {
+      "path": "assets/rule-catalog.json",
+      "digest": "sha256:d528175ca269566160445637b60f14ebc3820df6ffe85449c5339cecc3b12164"
+    },
+    {
+      "path": "assets/rules/algorithms-data-structures.json",
+      "digest": "sha256:4d2d6a572ae5bc19959ebb9dc853c2dac2b5c575a437866e0bc1da3746171589"
+    },
+    {
+      "path": "assets/rules/concurrency.json",
+      "digest": "sha256:2b2df7f6f0384c921196bc94f8bb707cc656e9886b8992c52c90031e0fa62893"
+    },
+    {
+      "path": "assets/rules/databases.json",
+      "digest": "sha256:7edfffa6a53dfdc538f1f9714828ba1aa2007d4781344fcc35bd30d841d611db"
+    },
+    {
+      "path": "assets/rules/distributed-systems.json",
+      "digest": "sha256:275a37de1fedb4152bbd907e4dcc5dd2de8db86a35551c1caab8e0966d1b5d52"
+    },
+    {
+      "path": "assets/rules/language-semantics.json",
+      "digest": "sha256:98f25fa5f99b7207ff71b7a3793f2145a0ee88a6b1fc6b5454c725d1f90c9989"
+    },
+    {
+      "path": "assets/rules/networking.json",
+      "digest": "sha256:c261ccb573b4e28c4e39e5ce82e5e18a99260dc74e4b0fc7d3590152bad8732a"
+    },
+    {
+      "path": "assets/rules/operating-systems.json",
+      "digest": "sha256:c5259c4e67a2a46b997711cd841aab0c64484c7a5a765b491a8b64b9eed88027"
+    },
+    {
+      "path": "assets/rules/performance.json",
+      "digest": "sha256:a73f2c9c81fc13f897933966da2819acbf5280c2126c3738fb636f83f2ab7179"
+    },
+    {
+      "path": "assets/rules/security-boundaries.json",
+      "digest": "sha256:c743a9be8981b4c8913a08721e13fe623936d64192a2e86313e9b94df227a57a"
+    },
+    {
+      "path": "assets/rules/software-design.json",
+      "digest": "sha256:20a9f86cad94bf428021ae3dd204877e2e3c42f1d7e48f03cdf54d9d2acf6fc9"
+    },
+    {
+      "path": "assets/sources.json",
+      "digest": "sha256:56e7eedee105dbc966909b1977ac1220a930e1d26dbbf762f9118d79e4f17da7"
+    },
+    {
+      "path": "contracts/cs-candidate.v1.schema.json",
+      "digest": "sha256:85914866d6ac38dd21a19e40b998410061bb492b16b527f08648158da23bebb0"
+    },
+    {
+      "path": "contracts/cs-constraint-report.v1.schema.json",
+      "digest": "sha256:febfb7477c922c50945e62efeacee78fefcc223b34080c8e8d9478cf6f5c5e5e"
+    },
+    {
+      "path": "contracts/cs-engineering-binding.v1.schema.json",
+      "digest": "sha256:91d03b77feff657951707d73a4620adeb63015a5ffecacbf82aa1770ce2bc2d9"
+    },
+    {
+      "path": "contracts/cs-policy.v1.schema.json",
+      "digest": "sha256:78284b42eb3b2a6e1b2a60fb9072ac66d57ef070ce38d3a8dff0661262acef2b"
+    },
+    {
+      "path": "contracts/cs-request.v1.schema.json",
+      "digest": "sha256:0a7961351f071f3b5b26f2efcc5aeb2b1c00aa3d45edae35914404b8242e8a7a"
+    },
+    {
+      "path": "contracts/cs-review-report.v1.schema.json",
+      "digest": "sha256:41f9ed9dad383a5c99cc143b6089e6f8753739f6f38ea4cb747b7ff8461f0a37"
+    },
+    {
+      "path": "references/algorithms-data-structures.md",
+      "digest": "sha256:25f23e5932b6785a790e5b855a4f20b59a68569dfedda4c587ed5a935689ea84"
+    },
+    {
+      "path": "references/concurrency.md",
+      "digest": "sha256:9b64864e2c1d2088f0a48a2d382f13c903891cca61c9d62b08beec3fb6badcdb"
+    },
+    {
+      "path": "references/contracts-and-cli.md",
+      "digest": "sha256:debc046e444e6198b9151e3f3fcab577a81fd8e6488bc0b9280715b0c08aa9a4"
+    },
+    {
+      "path": "references/databases.md",
+      "digest": "sha256:ad83c7d47da20bd75f18148639412a80c86c9ff14b6a0f9f92570e5e631a1725"
+    },
+    {
+      "path": "references/design-basis.ko.md",
+      "digest": "sha256:01081d243ad0fa04cf3993a3ed1e4017a43708fb54677063e72573438cfc7034"
+    },
+    {
+      "path": "references/distributed-systems.md",
+      "digest": "sha256:35150f3bc3979d7a18733d0b298d8d90e5d6f1ed859d43fd3aab0b3596d23545"
+    },
+    {
+      "path": "references/index.md",
+      "digest": "sha256:0852a5c9b4b592649fa050864bd95dcbd2fdf7fbc453c531c5349d9546c30fbb"
+    },
+    {
+      "path": "references/language-semantics.md",
+      "digest": "sha256:93d62a15ca4911215018994ba32e50eab1f7306e0b8c96432e14828ac24d57b5"
+    },
+    {
+      "path": "references/networking.md",
+      "digest": "sha256:e084c6b06f42e43bbdf86ca1658a16069a5952729b12d02c89eb1d5bb8f3e46f"
+    },
+    {
+      "path": "references/operating-systems.md",
+      "digest": "sha256:21411cb00332b0943749608bb6bd390759921941f0401ca9eaa9c008ff9fe9c9"
+    },
+    {
+      "path": "references/performance.md",
+      "digest": "sha256:15ef21b6783be2fadbb179144c4a604dcb40a62131c1aea910204291da6e9c85"
+    },
+    {
+      "path": "references/security-boundaries.md",
+      "digest": "sha256:8726e1874b9e62eefaa8cf1ce90c4ac3e31c26e5dfe9e398b3581fc333fdeb66"
+    },
+    {
+      "path": "references/software-design.md",
+      "digest": "sha256:6840195e3569b53fac4553500694a82241b47abc471f6b5e8f31a04ba6d3321c"
+    },
+    {
+      "path": "references/worked-example.md",
+      "digest": "sha256:9bc64625ca47ca87c720b122e3198393f26f8629fe1764793a9d822606e52bc5"
+    }
+  ]
+}

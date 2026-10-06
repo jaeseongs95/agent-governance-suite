@@ -230,6 +230,7 @@ describe("MCP tool schema profiles", () => {
   it("applies the environment profile in the bundled server", async () => {
     const stateDirectory = await mkdtemp(join(tmpdir(), "tool-schema-profile-"));
     const environment = getDefaultEnvironment();
+    environment.AGENT_GOVERNANCE_SHARED_STATE_DIR = stateDirectory;
     environment.AGENT_GOVERNANCE_DB_PATH = join(stateDirectory, "workflows.sqlite3");
     environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = join(stateDirectory, "continuity.sqlite3");
     environment.AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE = "anthropic";

@@ -1,0 +1,115 @@
+{
+  "schemaVersion": "1.0.0",
+  "verifiedAt": "2026-10-06",
+  "notice": "Rules are original paraphrases and engineering deductions. Links are references, not vendored source documents. External licenses are not relicensed by this package. A source supports only the stated scope, not every project-specific conclusion.",
+  "sources": [
+    {
+      "id": "SQLITE-TX",
+      "title": "SQLite Transactions",
+      "url": "https://www.sqlite.org/lang_transaction.html",
+      "scope": "Transaction scope and busy handling",
+      "versionScope": "SQLite; inspect deployed version",
+      "access": "reference-only",
+      "verification": "web-page-read"
+    },
+    {
+      "id": "SQLITE-ISO",
+      "title": "SQLite Isolation",
+      "url": "https://www.sqlite.org/isolation.html",
+      "scope": "Connection isolation and snapshot boundaries",
+      "versionScope": "SQLite; explicit journal mode",
+      "access": "reference-only",
+      "verification": "web-page-read"
+    },
+    {
+      "id": "SQLITE-WAL",
+      "title": "SQLite Write-Ahead Logging",
+      "url": "https://www.sqlite.org/wal.html",
+      "scope": "Single writer and local shared-memory boundary",
+      "versionScope": "SQLite; local filesystem",
+      "access": "reference-only",
+      "verification": "web-page-read"
+    },
+    {
+      "id": "AWS-IDEMPOTENCY",
+      "title": "AWS Builders’ Library: Making retries safe with idempotent APIs",
+      "url": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
+      "scope": "Request identity and retry ambiguity",
+      "versionScope": "Conceptual; inspect target API retention semantics",
+      "access": "reference-only",
+      "verification": "web-page-read"
+    },
+    {
+      "id": "PG-ISOLATION",
+      "title": "PostgreSQL Transaction Isolation",
+      "url": "https://www.postgresql.org/docs/18/transaction-iso.html",
+      "scope": "Isolation-specific anomalies and whole-transaction retry",
+      "versionScope": "PostgreSQL 18; not a claim about Oracle or SQLite",
+      "access": "reference-only",
+      "verification": "web-page-read"
+    },
+    {
+      "id": "NODE-STREAMS",
+      "title": "Node.js Streams",
+      "url": "https://nodejs.org/api/stream.html",
+      "scope": "Backpressure and stream lifecycle",
+      "versionScope": "Reference observed v26.7.0; confirm target Node 24 API",
+      "access": "reference-only",
+      "verification": "web-page-read"
+    },
+    {
+      "id": "JLS-17",
+      "title": "Java Language Specification, Java SE 21, Chapter 17",
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html",
+      "scope": "Memory visibility and happens-before",
+      "versionScope": "Java SE 21; not a JavaScript memory model",
+      "access": "reference-only",
+      "verification": "web-page-read"
+    },
+    {
+      "id": "HTTP-9110",
+      "title": "RFC 9110 HTTP Semantics",
+      "url": "https://www.rfc-editor.org/rfc/rfc9110.html",
+      "scope": "Request semantics, retry safety, conditional requests",
+      "versionScope": "RFC 9110",
+      "access": "reference-only",
+      "verification": "web-page-read"
+    },
+    {
+      "id": "MIT-ALGORITHMS",
+      "title": "MIT 6.006 Introduction to Algorithms lecture index",
+      "url": "https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-fall-2011/pages/lecture-notes/",
+      "scope": "Further study in graphs, hashing and complexity",
+      "versionScope": "2011 course index; no lecture PDF copied",
+      "access": "reference-only",
+      "verification": "web-page-read"
+    },
+    {
+      "id": "AGENT-SKILLS",
+      "title": "Agent Skills Specification",
+      "url": "https://agentskills.io/specification",
+      "scope": "SKILL.md structure and progressive disclosure",
+      "versionScope": "Verified 2026-10-06",
+      "access": "reference-only",
+      "verification": "web-page-read"
+    },
+    {
+      "id": "OPENAI-SKILLS",
+      "title": "OpenAI Build skills",
+      "url": "https://learn.chatgpt.com/docs/build-skills",
+      "scope": "Codex metadata and implicit invocation",
+      "versionScope": "Verified 2026-10-06",
+      "access": "reference-only",
+      "verification": "web-page-read"
+    },
+    {
+      "id": "AGS-DESIGN",
+      "title": "AGS CS Engineering Design v0.1.0",
+      "url": "../references/design-basis.ko.md",
+      "scope": "Project-specific synthesis, role boundaries and evidence model",
+      "versionScope": "User-supplied design 2026-10-06",
+      "access": "reference-only",
+      "verification": "user-file-read"
+    }
+  ]
+}

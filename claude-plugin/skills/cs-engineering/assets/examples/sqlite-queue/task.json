@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "taskId": "TASK-CS-QUEUE",
+  "objective": "원자 claim과 현재 소유권 세대의 DB 결과 확정을 검증한다.",
+  "scope": {
+    "included": [
+      "local SQLite reference queue claim and result publication"
+    ],
+    "excluded": [
+      "external exactly-once effects",
+      "AGS production integration",
+      "multi-host shared filesystems"
+    ]
+  },
+  "acceptanceCriteria": [
+    "동일 세대 claim 승자는 최대 하나다.",
+    "오래되거나 만료된 token의 완료는 거부된다."
+  ],
+  "riskLevel": "low",
+  "workUnits": [],
+  "requiredCapabilities": [
+    "cs-implementation-review"
+  ],
+  "constraints": [
+    "No host installation, remote changes or production DB use."
+  ],
+  "authorization": {
+    "allowedActions": [
+      "read reference files",
+      "run local reference tests"
+    ],
+    "prohibitedActions": [
+      "production mutation",
+      "remote release"
+    ],
+    "approvalRequired": []
+  },
+  "decision": {
+    "complexity": "simple",
+    "hasConflicts": false
+  },
+  "orchestration": {
+    "requested": true,
+    "mcpAvailable": true
+  }
+}

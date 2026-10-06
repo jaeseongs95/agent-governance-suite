@@ -1,0 +1,132 @@
+[
+  {
+    "id": "DB-BOUNDARY-001",
+    "version": "0.1.0",
+    "domain": "databases",
+    "status": "validated",
+    "title": "트랜잭션과 불변조건",
+    "appliesWhen": [
+      "여러 쓰기로 하나의 업무 상태를 바꾼다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "함께 성립해야 하는 조건을 실제 커밋 경계에 묶는다.",
+    "invariant": "성공 시 전체 조건이 성립하고 실패 시 정해진 복구 상태만 남는다.",
+    "failureModes": [
+      "원장 갱신 성공 뒤 상태 갱신 실패로 반쪽 성공이 남는다."
+    ],
+    "decisionQuestions": [
+      "같은 DB·연결·트랜잭션인가?",
+      "외부 효과는 outbox 등의 별도 계약이 필요한가?"
+    ],
+    "verificationObligations": [
+      "각 쓰기 사이 오류·rollback·프로세스 중단을 주입해 남은 상태를 확인한다."
+    ],
+    "nonGoals": [
+      "여러 DB·외부 API가 로컬 트랜잭션에 자동 포함된다고 하지 않는다."
+    ],
+    "sources": [
+      "SQLITE-TX"
+    ],
+    "validationScope": "bounded executable reference cases in tests/cs-engineering/reference-mechanisms.test.mjs and sqlite_reference_test.py; local checks, not AGS product/host certification"
+  },
+  {
+    "id": "DB-ISOLATION-002",
+    "version": "0.1.0",
+    "domain": "databases",
+    "status": "validated",
+    "title": "격리 수준별 이상 현상",
+    "appliesWhen": [
+      "조회 결과에 따라 동시 갱신한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "ACID라는 이름 대신 사용 DB·격리 수준·쿼리로 판단한다.",
+    "invariant": "업무 불변조건이 허용된 인터리빙에서도 유지된다.",
+    "failureModes": [
+      "서로 다른 행을 갱신하므로 충돌이 없다고 보고 합계 조건의 write skew를 놓친다."
+    ],
+    "decisionQuestions": [
+      "실제 격리 수준은 무엇인가?",
+      "serialization 실패 시 전체 트랜잭션을 재시도하는가?"
+    ],
+    "verificationObligations": [
+      "독립 연결의 읽기·쓰기를 장벽으로 배치해 예상 이상 현상과 복구를 확인한다."
+    ],
+    "nonGoals": [
+      "PostgreSQL 격리 특성을 SQLite·Oracle에 일반화하지 않는다."
+    ],
+    "sources": [
+      "PG-ISOLATION",
+      "SQLITE-ISO"
+    ],
+    "validationScope": "bounded executable reference cases in tests/cs-engineering/reference-mechanisms.test.mjs and sqlite_reference_test.py; local checks, not AGS product/host certification"
+  },
+  {
+    "id": "DB-CONSTRAINT-003",
+    "version": "0.1.0",
+    "domain": "databases",
+    "status": "validated",
+    "title": "DB 제약과 경쟁 입력",
+    "appliesWhen": [
+      "유일성·참조·범위 조건을 저장한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "애플리케이션 사전 확인만을 최종 보장으로 쓰지 않는다.",
+    "invariant": "동시 중복 삽입과 우회 경로에서도 저장 불변조건이 유지된다.",
+    "failureModes": [
+      "존재 여부 확인 후 INSERT하여 경쟁 시 중복이 생긴다."
+    ],
+    "decisionQuestions": [
+      "UNIQUE·CHECK·외래 키가 실제 활성화됐는가?",
+      "NULL 처리 의미는 맞는가?"
+    ],
+    "verificationObligations": [
+      "중복·NULL·경계·외래 키 위반을 직접 저장하고 예상 오류 및 rollback을 확인한다."
+    ],
+    "nonGoals": [
+      "모든 업무 규칙을 DB trigger에 몰아넣지 않는다."
+    ],
+    "sources": [
+      "SQLITE-TX",
+      "AGS-DESIGN"
+    ],
+    "validationScope": "bounded executable reference cases in tests/cs-engineering/reference-mechanisms.test.mjs and sqlite_reference_test.py; local checks, not AGS product/host certification"
+  },
+  {
+    "id": "DB-MIGRATION-004",
+    "version": "0.1.0",
+    "domain": "databases",
+    "status": "validated",
+    "title": "스키마 변화와 복구",
+    "appliesWhen": [
+      "운영 데이터·스키마·인덱스를 변경한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "구버전 데이터·신구 코드·중단 시점을 함께 평가한다.",
+    "invariant": "변경 과정과 재시도에서 보존해야 할 데이터 및 호환성이 유지된다.",
+    "failureModes": [
+      "열 추가만 시험하고 구버전 쓰기·재실행·중단 복구를 빠뜨린다."
+    ],
+    "decisionQuestions": [
+      "expand-contract가 필요한가?",
+      "rollback이 데이터 복원을 의미하는가?"
+    ],
+    "verificationObligations": [
+      "구버전 fixture를 변환하고 재실행·중단·복구·신구 코드 접근을 검사한다."
+    ],
+    "nonGoals": [
+      "테이블이 비었다는 가정으로 운영 마이그레이션을 통과시키지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "bounded executable reference cases in tests/cs-engineering/reference-mechanisms.test.mjs and sqlite_reference_test.py; local checks, not AGS product/host certification"
+  }
+]

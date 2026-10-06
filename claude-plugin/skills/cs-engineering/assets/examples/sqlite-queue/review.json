@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0.0",
+  "reviewId": "CS-EXAMPLE-REVIEW",
+  "constraintReportDigest": "sha256:7727c156f7c2c83261edb981a72071a38100b3fb9a9fb4e6e5c5195de7c28442",
+  "candidateDigest": "sha256:6a4b6fdaab6b84bfc9efbb358c68cc1550bf72059a2b53237f44aefe23443f8a",
+  "reviewerActorRef": "package-author-reference-review; not independent or host-attested",
+  "findings": [
+    {
+      "id": "F-CLAIM",
+      "invariantId": "INV-CLAIM",
+      "status": "SATISFIED",
+      "evidenceRefs": [
+        "E-QUEUE-TESTS"
+      ],
+      "reasoningSummary": "6개 독립 프로세스 claim 경합에서 한 소유자만 성공하고, 의도적으로 잘못된 읽기/쓰기 분리 예제에서는 중복 성공을 관측했다."
+    },
+    {
+      "id": "F-FENCE",
+      "invariantId": "INV-FENCE",
+      "status": "SATISFIED",
+      "evidenceRefs": [
+        "E-QUEUE-TESTS"
+      ],
+      "reasoningSummary": "재할당 후 이전 owner의 쓰기와 만료된 owner의 쓰기는 거부되고 현재 유효 owner만 완료한다."
+    }
+  ],
+  "verificationResults": [
+    {
+      "obligationId": "OB-CLAIM",
+      "executionStatus": "EXECUTED",
+      "result": "PASS",
+      "targetDigest": "sha256:6a4b6fdaab6b84bfc9efbb358c68cc1550bf72059a2b53237f44aefe23443f8a",
+      "environmentRef": "python-sqlite-local-spawn",
+      "method": "dynamic-test",
+      "evidenceRefs": [
+        "E-QUEUE-TESTS"
+      ]
+    },
+    {
+      "obligationId": "OB-FENCE",
+      "executionStatus": "EXECUTED",
+      "result": "PASS",
+      "targetDigest": "sha256:6a4b6fdaab6b84bfc9efbb358c68cc1550bf72059a2b53237f44aefe23443f8a",
+      "environmentRef": "python-sqlite-local-spawn",
+      "method": "dynamic-test",
+      "evidenceRefs": [
+        "E-QUEUE-TESTS"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E-QUEUE-TESTS",
+      "path": "evidence/queue-tests.json",
+      "digest": "sha256:6ae3172d1ad4e6e5ff80e2c8100d48b346f8fc56a7464d64975c9ed775fc32eb",
+      "targetDigest": "sha256:6a4b6fdaab6b84bfc9efbb358c68cc1550bf72059a2b53237f44aefe23443f8a",
+      "environmentRef": "python-sqlite-local-spawn",
+      "kind": "dynamic-test",
+      "statement": "실제 Python/SQLite 독립 프로세스 검사의 기록. Test script와 전체 로그는 ZIP의 tests/evidence에 있다."
+    }
+  ],
+  "blockingFindingIds": [],
+  "unverifiedRequiredObligationIds": [],
+  "verdict": "PASS"
+}

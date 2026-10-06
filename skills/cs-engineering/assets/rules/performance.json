@@ -1,0 +1,130 @@
+[
+  {
+    "id": "PERF-MEASURE-001",
+    "version": "0.1.0",
+    "domain": "performance",
+    "status": "validated",
+    "title": "비교 가능한 성능 계측",
+    "appliesWhen": [
+      "속도·비용·캐시 개선을 주장한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "기능 정확성을 유지한 동일 조건의 비교를 먼저 고정한다.",
+    "invariant": "측정 대상·부하·환경·따뜻한 캐시 여부가 추적 가능하다.",
+    "failureModes": [
+      "작은 입력·warm cache만 비교해 전체 성능 향상으로 광고한다."
+    ],
+    "decisionQuestions": [
+      "median과 tail은 어떻게 다른가?",
+      "처리량·오류율·메모리는 함께 측정하는가?"
+    ],
+    "verificationObligations": [
+      "baseline과 후보를 동일 부하에서 반복 측정하고 원시 결과·환경을 보존한다."
+    ],
+    "nonGoals": [
+      "출력 없는 microbenchmark를 제품 성능이라고 부르지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "bounded executable reference cases in tests/cs-engineering/reference-mechanisms.test.mjs and sqlite_reference_test.py; local checks, not AGS product/host certification"
+  },
+  {
+    "id": "PERF-BOUND-002",
+    "version": "0.1.0",
+    "domain": "performance",
+    "status": "validated",
+    "title": "백프레셔와 상한",
+    "appliesWhen": [
+      "입력이 처리 속도보다 빨라질 수 있다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "대기량·동시성·메모리·재시도를 유한하게 만든다.",
+    "invariant": "포화 시 정의된 거절·지연·드롭 동작으로 자원 상한을 유지한다.",
+    "failureModes": [
+      "모든 요청을 무제한 Promise·큐에 쌓는다."
+    ],
+    "decisionQuestions": [
+      "생산자를 느리게 할 수 있는가?",
+      "버퍼 상한의 단위는 개수인가 바이트인가?"
+    ],
+    "verificationObligations": [
+      "지속 과부하에서 queue depth·memory·오류 응답·부하 해제 후 회복을 측정한다."
+    ],
+    "nonGoals": [
+      "Node highWaterMark를 모든 메모리의 강한 전역 상한이라고 하지 않는다."
+    ],
+    "sources": [
+      "NODE-STREAMS"
+    ],
+    "validationScope": "bounded executable reference cases in tests/cs-engineering/reference-mechanisms.test.mjs and sqlite_reference_test.py; local checks, not AGS product/host certification"
+  },
+  {
+    "id": "PERF-CACHE-003",
+    "version": "0.1.0",
+    "domain": "performance",
+    "status": "validated",
+    "title": "캐시 정합성과 수명",
+    "appliesWhen": [
+      "계산·조회 결과를 캐시한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "캐시가 틀릴 수 있는 조건과 퇴거 조건을 명시한다.",
+    "invariant": "허용된 신선도 범위와 메모리 상한을 함께 지킨다.",
+    "failureModes": [
+      "TTL만 두고 고유 키가 계속 들어와 만료 전 메모리가 무한 증가한다."
+    ],
+    "decisionQuestions": [
+      "권한·버전·지역이 키에 포함되는가?",
+      "무효화 실패와 stampede는 어떻게 다루는가?"
+    ],
+    "verificationObligations": [
+      "변경·만료·충돌·동시 miss·많은 고유 키를 넣어 정합성과 상한을 검사한다."
+    ],
+    "nonGoals": [
+      "성능을 위해 사용자별 권한 경계를 섞지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "bounded executable reference cases in tests/cs-engineering/reference-mechanisms.test.mjs and sqlite_reference_test.py; local checks, not AGS product/host certification"
+  },
+  {
+    "id": "PERF-BATCH-004",
+    "version": "0.1.0",
+    "domain": "performance",
+    "status": "validated",
+    "title": "배치와 지연 절충",
+    "appliesWhen": [
+      "요청·메시지·DB I/O를 묶어 처리한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "처리량 개선과 대기 지연·실패 범위를 함께 평가한다.",
+    "invariant": "배치는 부하에 맞춰 제한되며 저부하에서도 최대 대기 시간을 넘기지 않는다.",
+    "failureModes": [
+      "항상 세 개가 모일 때까지 기다려 마지막 한 요청이 영구 대기한다."
+    ],
+    "decisionQuestions": [
+      "개수·바이트·시간 상한은 있는가?",
+      "일부 실패를 개별 결과로 돌려주는가?"
+    ],
+    "verificationObligations": [
+      "저부하·고부하·큰 항목·부분 실패·종료 flush를 측정한다."
+    ],
+    "nonGoals": [
+      "항목 수나 10KB 같은 임의 고정값을 근거 없이 표준화하지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "bounded executable reference cases in tests/cs-engineering/reference-mechanisms.test.mjs and sqlite_reference_test.py; local checks, not AGS product/host certification"
+  }
+]

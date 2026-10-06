@@ -2027,6 +2027,169 @@
           }
         }
       ]
+    },
+    {
+      "schemaVersion": "2.0.0",
+      "skillId": "cs-engineering",
+      "version": "0.2.0",
+      "path": "./cs-engineering",
+      "enabled": true,
+      "priority": 67,
+      "providers": [
+        {
+          "capabilities": [
+            "cs-constraint-derivation"
+          ],
+          "executionClass": "bootstrap",
+          "phase": "cs-constraint-derivation",
+          "phaseOrder": 25,
+          "requiredInputArtifacts": [
+            "cs-request"
+          ],
+          "inputBindings": [
+            {
+              "targetArtifact": "cs-request",
+              "sources": [
+                "task:cs-request"
+              ],
+              "operation": "require-external"
+            }
+          ],
+          "producedArtifacts": [
+            "cs-constraint-report"
+          ],
+          "outputSchema": "skills/cs-engineering/contracts/cs-constraint-report.v1.schema.json",
+          "resultSchema": "contracts/provider-result.v1.schema.json",
+          "stateMapping": {
+            "selector": "/output/verdict",
+            "values": {
+              "READY": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "NEEDS_INPUT": {
+                "state": "blocked",
+                "errorRequired": true
+              },
+              "NEEDS_REDESIGN": {
+                "state": "failed",
+                "errorRequired": true
+              },
+              "BLOCKED": {
+                "state": "blocked",
+                "errorRequired": true
+              }
+            },
+            "adapterErrors": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE",
+              "INTEGRITY_FAILED"
+            ],
+            "default": "reject"
+          },
+          "selectionCriteria": [
+            "explicit-cs-constraint-derivation",
+            "cs-relevant-behavior-change-or-review"
+          ],
+          "preconditions": [
+            "Applicable instructions and permitted evidence sources are known.",
+            "CS applicability is determined by the host/orchestrator; metadata is not a semantic runtime filter."
+          ],
+          "failureHandling": "Preserve unmet conditions and return a non-passing result. Do not convert NOT_RUN or stale evidence to PASS.",
+          "gate": {
+            "kind": "none",
+            "policy": "none",
+            "validator": null
+          }
+        },
+        {
+          "capabilities": [
+            "cs-implementation-review"
+          ],
+          "executionClass": "workflow",
+          "phase": "cs-implementation-review",
+          "phaseOrder": 67,
+          "requiredInputArtifacts": [
+            "cs-constraint-report",
+            "cs-candidate",
+            "cs-verification-evidence",
+            "cs-review-bundle"
+          ],
+          "inputBindings": [
+            {
+              "targetArtifact": "cs-constraint-report",
+              "sources": [
+                "bootstrap:cs-constraint-report"
+              ],
+              "operation": "select"
+            },
+            {
+              "targetArtifact": "cs-candidate",
+              "sources": [
+                "task:cs-candidate"
+              ],
+              "operation": "require-external"
+            },
+            {
+              "targetArtifact": "cs-verification-evidence",
+              "sources": [
+                "task:cs-verification-evidence"
+              ],
+              "operation": "require-external"
+            },
+            {
+              "targetArtifact": "cs-review-bundle",
+              "sources": [
+                "task:cs-review-bundle"
+              ],
+              "operation": "require-external"
+            }
+          ],
+          "producedArtifacts": [
+            "cs-review-report"
+          ],
+          "outputSchema": "skills/cs-engineering/contracts/cs-review-report.v1.schema.json",
+          "resultSchema": "contracts/provider-result.v1.schema.json",
+          "stateMapping": {
+            "selector": "/output/verdict",
+            "values": {
+              "PASS": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "FAIL": {
+                "state": "failed",
+                "errorRequired": true
+              },
+              "BLOCKED": {
+                "state": "blocked",
+                "errorRequired": true
+              }
+            },
+            "adapterErrors": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE",
+              "INTEGRITY_FAILED"
+            ],
+            "default": "reject"
+          },
+          "selectionCriteria": [
+            "explicit-cs-implementation-review",
+            "cs-relevant-behavior-change-or-review"
+          ],
+          "preconditions": [
+            "Applicable instructions and permitted evidence sources are known.",
+            "CS applicability is determined by the host/orchestrator; metadata is not a semantic runtime filter.",
+            "Supply a verified cs-review-bundle artifact with local relative references; selected stage validation checks it at recording and finalization."
+          ],
+          "failureHandling": "Preserve unmet conditions and return a non-passing result. Do not convert NOT_RUN or stale evidence to PASS.",
+          "gate": {
+            "kind": "none",
+            "policy": "none",
+            "validator": null
+          }
+        }
+      ]
     }
   ]
 }

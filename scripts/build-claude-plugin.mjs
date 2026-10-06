@@ -44,6 +44,7 @@ export const CODEX_ONLY_PATTERNS = Object.freeze([
 export const DUAL_HOST_FILES = Object.freeze([
   "skills/coordinate-subagents/SKILL.md",
   "skills/coordinate-subagents/references/model-routing.md",
+  "skills/cs-engineering/references/design-basis.ko.md",
 ]);
 
 function toPosix(value) {
