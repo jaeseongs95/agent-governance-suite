@@ -1,0 +1,133 @@
+{
+  "schemaVersion": "2.0.0",
+  "skillId": "test-engineering",
+  "version": "0.1.0",
+  "path": "./test-engineering",
+  "enabled": true,
+  "priority": 66,
+  "providers": [
+    {
+      "capabilities": [
+        "test-plan-validation"
+      ],
+      "executionClass": "bootstrap",
+      "phase": "test-plan-validation",
+      "phaseOrder": 35,
+      "requiredInputArtifacts": [
+        "engineering-test-plan"
+      ],
+      "inputBindings": [
+        {
+          "targetArtifact": "engineering-test-plan",
+          "sources": [
+            "task:engineering-test-plan"
+          ],
+          "operation": "require-external"
+        }
+      ],
+      "producedArtifacts": [
+        "engineering-plan-result"
+      ],
+      "outputSchema": "contracts/engineering-plan-result.v1.schema.json",
+      "resultSchema": "contracts/provider-result.v1.schema.json",
+      "stateMapping": {
+        "selector": "/output/verdict",
+        "values": {
+          "READY": {
+            "state": "passed",
+            "errorRequired": false
+          }
+        },
+        "default": "reject",
+        "adapterErrors": [
+          "INVALID_INPUT",
+          "MISSING_EVIDENCE",
+          "INTEGRITY_FAILED"
+        ]
+      },
+      "selectionCriteria": [
+        "explicit-test-plan-validation",
+        "semantically-matching-authorized-work"
+      ],
+      "preconditions": [
+        "The applicable AGS instructions and existing authorization are known.",
+        "Input artifacts are fixed by references. Selection metadata is not runtime semantic enforcement."
+      ],
+      "failureHandling": "Preserve missing evidence and failed checks; no release or independent-audit authority is granted.",
+      "gate": {
+        "kind": "none",
+        "policy": "none",
+        "validator": null
+      }
+    },
+    {
+      "capabilities": [
+        "test-sensitivity-review"
+      ],
+      "executionClass": "workflow",
+      "phase": "test-sensitivity-review",
+      "phaseOrder": 66,
+      "requiredInputArtifacts": [
+        "engineering-test-plan",
+        "engineering-test-proof"
+      ],
+      "inputBindings": [
+        {
+          "targetArtifact": "engineering-test-plan",
+          "sources": [
+            "task:engineering-test-plan"
+          ],
+          "operation": "require-external"
+        },
+        {
+          "targetArtifact": "engineering-test-proof",
+          "sources": [
+            "task:engineering-test-proof"
+          ],
+          "operation": "require-external"
+        }
+      ],
+      "producedArtifacts": [
+        "engineering-test-result"
+      ],
+      "outputSchema": "contracts/engineering-test-result.v1.schema.json",
+      "resultSchema": "contracts/provider-result.v1.schema.json",
+      "stateMapping": {
+        "selector": "/output/verdict",
+        "values": {
+          "CONSISTENT": {
+            "state": "passed",
+            "errorRequired": false
+          },
+          "INCOMPLETE": {
+            "state": "blocked",
+            "errorRequired": true,
+            "allowedErrorCodes": [
+              "MISSING_EVIDENCE"
+            ]
+          }
+        },
+        "default": "reject",
+        "adapterErrors": [
+          "INVALID_INPUT",
+          "MISSING_EVIDENCE",
+          "INTEGRITY_FAILED"
+        ]
+      },
+      "selectionCriteria": [
+        "explicit-test-sensitivity-review",
+        "semantically-matching-authorized-work"
+      ],
+      "preconditions": [
+        "The applicable AGS instructions and existing authorization are known.",
+        "Input artifacts are fixed by references. Selection metadata is not runtime semantic enforcement."
+      ],
+      "failureHandling": "Preserve missing evidence and failed checks; no release or independent-audit authority is granted.",
+      "gate": {
+        "kind": "none",
+        "policy": "none",
+        "validator": null
+      }
+    }
+  ]
+}

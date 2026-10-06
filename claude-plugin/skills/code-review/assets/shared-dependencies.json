@@ -1,0 +1,125 @@
+{
+  "schemaVersion": "1.0.0",
+  "files": [
+    {
+      "path": "contracts/engineering-plan-result.v1.schema.json",
+      "digest": "sha256:774a3d16f46bc4325e4dadf666db8c2aa68c67c33f65d803801f97a67da97daf"
+    },
+    {
+      "path": "contracts/engineering-review-report.v1.schema.json",
+      "digest": "sha256:4c730a6435e73311788353b30df1ca705cc4165e26202f4bd621b11d844e4682"
+    },
+    {
+      "path": "contracts/engineering-review-request.v1.schema.json",
+      "digest": "sha256:566dbd369bc01caacc147464414cedf39c51fff0b2457b76064d7755ae34cd62"
+    },
+    {
+      "path": "contracts/engineering-review-result.v1.schema.json",
+      "digest": "sha256:f0444f159326130bec235ca5b5da46406affea4a40aa07579add524585f7744a"
+    },
+    {
+      "path": "contracts/engineering-run-receipt.v1.schema.json",
+      "digest": "sha256:1c1805e177859f55dad8febcdd03fb6f0962199434b0c81bc9fcb28d13492aee"
+    },
+    {
+      "path": "contracts/engineering-snapshot.v1.schema.json",
+      "digest": "sha256:5dda31418ace74feb835eca3025eb29baae1f7187cd58192cc4e80bbd3ad6858"
+    },
+    {
+      "path": "contracts/engineering-test-plan.v1.schema.json",
+      "digest": "sha256:8b217c7bcc3489c0e771f97e7b0b7ba6447bcace85401858a6e8e00ebb9edf82"
+    },
+    {
+      "path": "contracts/engineering-test-proof.v1.schema.json",
+      "digest": "sha256:1202e5af59c6af727c34a15a388668724f396a9c44d6641e752c0187e55b2401"
+    },
+    {
+      "path": "contracts/engineering-test-result.v1.schema.json",
+      "digest": "sha256:d9bba51b5e266605def43a4a963dfb313a75edfc3b84bbfec17999c5d9c22bbf"
+    },
+    {
+      "path": "runtime/engineering-practices/LICENSE",
+      "digest": "sha256:75f3ee170babffa9aac464afff60ad521d9731220ae4f67e0c40cb457b18a0a2"
+    },
+    {
+      "path": "runtime/engineering-practices/cli.mjs",
+      "digest": "sha256:4ac5fe7f3475626758c8ea5e7c617e874f96cfe39ae3e205821f310fd2fa2a2d"
+    },
+    {
+      "path": "runtime/engineering-practices/core.mjs",
+      "digest": "sha256:ead06d27cf70a03d84e2ba9510947ce22a5e39e751f241bbf4d137fe4292f52c"
+    },
+    {
+      "path": "runtime/engineering-practices/io.mjs",
+      "digest": "sha256:835d31b3857075d6bb76aa0d28ce3d8659365f274f9205778e66ff4ca614a62c"
+    },
+    {
+      "path": "runtime/engineering-practices/licenses/awesome-agent-skills.txt",
+      "digest": "sha256:e9cf09486af0e8966d6ad3c1e886177cfbe69e735ade0c25021d70d40ac94e0b"
+    },
+    {
+      "path": "runtime/engineering-practices/licenses/mattpocock-skills.txt",
+      "digest": "sha256:0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5"
+    },
+    {
+      "path": "runtime/engineering-practices/licenses/superpowers.txt",
+      "digest": "sha256:a37e0e9697144819e1d965176ac4ae5bc3fa02d11e7812036bbcadf6dafe2400"
+    },
+    {
+      "path": "runtime/engineering-practices/runner.mjs",
+      "digest": "sha256:17003dc8ba6a12ae44593d8c949bc8625726639f79e00593a1d307f4d6b33f4f"
+    },
+    {
+      "path": "runtime/engineering-practices/schema.mjs",
+      "digest": "sha256:9c882762afee30611f4cd5b82edd904ff8c5ee699247d490cde9f059870d64d6"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/agent-instructions.md",
+      "digest": "sha256:a6df55ef522a75262b93381ad2f8b5fcaca4212a0afeab6cc0d1a90de2230424"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/catalog.json",
+      "digest": "sha256:936714985d22b8ea67b51c5d74cceef2d1321efac8dbfca58989ba124bff3d81"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/cli.md",
+      "digest": "sha256:be715633beccc35385f6b1ae3c0c822d1a3487afcae9398bda0d9cf74cfa9341"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/code-review.md",
+      "digest": "sha256:2f0e7f9a75293084a766aa997daf39fe3d2dbbd6e45f9c7455709e9766f8b492"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/debugging.md",
+      "digest": "sha256:86239a76c5553be28fe4fddc89fa55b355015e20361d528fcb4c4874bc7fab84"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/dependency.md",
+      "digest": "sha256:88c6db7f0e7f2feb90484c8519eacdb51a313f96f38d7e3f62858e3df1d3ceaa"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/implementation.md",
+      "digest": "sha256:4b338f1d4b7dd51726f8f007c927bcae575c120283142136f802e64590defbd1"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/index.md",
+      "digest": "sha256:75d831fd83588e02f8604fa827ceace01b88cee04c0af5e820d46edd50ffe081"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/sources.lock.json",
+      "digest": "sha256:2c3bff501633df40599cf6e631db0a885beec38e4690e51a9628097c8e719b9d"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/test-design.md",
+      "digest": "sha256:fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/test-proof.md",
+      "digest": "sha256:7ac0a9d5031d32e5d2b3770a080c1629451903184dac1e38e240812c6fc91e1d"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/verification.md",
+      "digest": "sha256:0eb46c1e34a3d53cd171b4e254c186aab11e062d7b2ebf456fa700df347c4f62"
+    }
+  ]
+}

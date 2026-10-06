@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0.0",
+  "sources": [
+    {
+      "id": "SP-DEBUG",
+      "repository": "obra/superpowers",
+      "commit": "8ca22dba9a94f28898bbce59f2537ff4d87c747d",
+      "path": "skills/systematic-debugging/SKILL.md",
+      "gitBlobSha": "095d194ac041502905f15b01d22d294fb94db8b2",
+      "url": "https://github.com/obra/superpowers/blob/8ca22dba9a94f28898bbce59f2537ff4d87c747d/skills/systematic-debugging/SKILL.md",
+      "license": "MIT",
+      "licenseFile": "runtime/engineering-practices/licenses/superpowers.txt",
+      "retrievedOn": "2026-10-06",
+      "usage": "Selected ideas adapted and rewritten for AGS; not an unmodified upstream skill."
+    },
+    {
+      "id": "SP-VERIFY",
+      "repository": "obra/superpowers",
+      "commit": "8ca22dba9a94f28898bbce59f2537ff4d87c747d",
+      "path": "skills/verification-before-completion/SKILL.md",
+      "gitBlobSha": "7d45333cc4a49c57a80df6c1fe2fa777a207afbc",
+      "url": "https://github.com/obra/superpowers/blob/8ca22dba9a94f28898bbce59f2537ff4d87c747d/skills/verification-before-completion/SKILL.md",
+      "license": "MIT",
+      "licenseFile": "runtime/engineering-practices/licenses/superpowers.txt",
+      "retrievedOn": "2026-10-06",
+      "usage": "Selected ideas adapted and rewritten for AGS; not an unmodified upstream skill."
+    },
+    {
+      "id": "AW-TEST",
+      "repository": "khasky/awesome-agent-skills",
+      "commit": "fd69948effbed922288630593a919f5c900513ba",
+      "path": "skills/awesome-test-writing/SKILL.md",
+      "gitBlobSha": "9c67c387334fe7efb2c011a0ce49182dcd6ed9fa",
+      "url": "https://github.com/khasky/awesome-agent-skills/blob/fd69948effbed922288630593a919f5c900513ba/skills/awesome-test-writing/SKILL.md",
+      "license": "MIT",
+      "licenseFile": "runtime/engineering-practices/licenses/awesome-agent-skills.txt",
+      "retrievedOn": "2026-10-06",
+      "usage": "Selected ideas adapted and rewritten for AGS; not an unmodified upstream skill."
+    },
+    {
+      "id": "AW-REVIEW",
+      "repository": "khasky/awesome-agent-skills",
+      "commit": "fd69948effbed922288630593a919f5c900513ba",
+      "path": "skills/awesome-code-review/SKILL.md",
+      "gitBlobSha": "da59db64f9ed997ebeea21d1f18b098264528ef5",
+      "url": "https://github.com/khasky/awesome-agent-skills/blob/fd69948effbed922288630593a919f5c900513ba/skills/awesome-code-review/SKILL.md",
+      "license": "MIT",
+      "licenseFile": "runtime/engineering-practices/licenses/awesome-agent-skills.txt",
+      "retrievedOn": "2026-10-06",
+      "usage": "Selected ideas adapted and rewritten for AGS; not an unmodified upstream skill."
+    },
+    {
+      "id": "AW-DEP",
+      "repository": "khasky/awesome-agent-skills",
+      "commit": "fd69948effbed922288630593a919f5c900513ba",
+      "path": "skills/awesome-dependency-audit/SKILL.md",
+      "gitBlobSha": "9925ffbc320b0bb38e898346ed83937dfd0d668e",
+      "url": "https://github.com/khasky/awesome-agent-skills/blob/fd69948effbed922288630593a919f5c900513ba/skills/awesome-dependency-audit/SKILL.md",
+      "license": "MIT",
+      "licenseFile": "runtime/engineering-practices/licenses/awesome-agent-skills.txt",
+      "retrievedOn": "2026-10-06",
+      "usage": "Selected ideas adapted and rewritten for AGS; not an unmodified upstream skill."
+    },
+    {
+      "id": "MP-WRITE",
+      "repository": "mattpocock/skills",
+      "commit": "4588b32ecab9ecc9fc8cc6b6c5e7d675b6004b0d",
+      "path": "skills/productivity/writing-for-agents/SKILL.md",
+      "gitBlobSha": "a37608daf6e835e767deecfb498facecaaba82ba",
+      "url": "https://github.com/mattpocock/skills/blob/4588b32ecab9ecc9fc8cc6b6c5e7d675b6004b0d/skills/productivity/writing-for-agents/SKILL.md",
+      "license": "MIT",
+      "licenseFile": "runtime/engineering-practices/licenses/mattpocock-skills.txt",
+      "retrievedOn": "2026-10-06",
+      "usage": "Selected ideas adapted and rewritten for AGS; not an unmodified upstream skill."
+    }
+  ],
+  "automaticUpdate": false
+}
