@@ -1,0 +1,18 @@
+ls: cannot access '/root/cs280-publish/worklog-append-2': No such file or directory
+ls: cannot access '/root/evidence-wt/cs280-claude-cloud/20261006T033701Z/worklog-append-2': No such file or directory
+drwxr-xr-x  2 root root 4096 Oct  6 04:45 /root/cs280-publish/postprocess-raw
+drwxr-xr-x 73 root root 4096 Oct  6 04:39 /root/evidence-wt
+490d23229460b8553406653cb012c5460930a84d
+From https://github.com/[REDACTED]/agent-governance-suite
+ * branch            evidence   -> FETCH_HEAD
+490d23229460b8553406653cb012c5460930a84d
+Already up to date.
+ff_exit=0
+490d23229460b8553406653cb012c5460930a84d
+cs280-claude-cloud/20261006T033701Z/postprocess-raw
+cs280-claude-cloud/20261006T033701Z/scratchpad
+cs280-claude-cloud/20261006T033701Z/worklog-append-1
+parent-69-ok
+append1-46-ok
+files_total=115
+0
