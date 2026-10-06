@@ -1,0 +1,371 @@
+{
+  "schema": "CloudNativeWorklogManifest.v1",
+  "sourceThreadId": "01a1100e-5d27-764d-aaec-c34fb7ddb0a1",
+  "backingChatGPTId": "6ac49f3d-d1a4-83ec-a9bd-501e584d932c",
+  "evidenceBase": "406bf4dcd61c6f08e3a38bb0cb25901ef8e9b950",
+  "captured": {
+    "turns": 4,
+    "commands": 31,
+    "mcpCalls": 2,
+    "finalReports": 4,
+    "apiOutputTruncatedFlags": 0,
+    "commandsWithNoOutput": 1
+  },
+  "api": {
+    "successfulReads": 1,
+    "validationRejectedRequests": 1,
+    "rejectedMaxOutputCharsPerItem": 60000,
+    "effectiveMaxOutputCharsPerItem": 20000,
+    "pageHasMore": false
+  },
+  "sourceAllowedSha256": "a95fa635014111d20f3287340e62e89f3f704ef2232ff09bc70ce6b1bdb86419",
+  "publicFile": "NATIVE-ALLOWED-CAPTURE.sanitized.json",
+  "publicSha256": "6cd109be67f2c9fc7554dea219187feb1682f385cc496bab1eb95ec3dd2d44c8",
+  "sourceRecoveryCapsule": {
+    "sha256": "ac3ad6a2927d806b71274d2d0d32c1c1b14deb59507d6be710e24f2d61f09c6e",
+    "commandCount": 7,
+    "reusedAsPriorEvidence": true
+  },
+  "redaction": {
+    "criteria": [
+      "peer_message_id",
+      "cloud_workspace_namespace",
+      "host_home_path",
+      "email"
+    ],
+    "occurrences": {
+      "peer_message_id": 2,
+      "cloud_workspace_namespace": 78,
+      "host_home_path": 4,
+      "email": 3
+    },
+    "mapping": [
+      {
+        "jsonPath": "$.turns[0].items[0].text",
+        "criterion": "peer_message_id",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[0].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[1].command",
+        "criterion": "cloud_workspace_namespace",
+        "count": 6
+      },
+      {
+        "jsonPath": "$.turns[1].items[1].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[1].output.text",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[2].command",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[2].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[3].command",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[3].command",
+        "criterion": "host_home_path",
+        "count": 2
+      },
+      {
+        "jsonPath": "$.turns[1].items[3].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[4].command",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[4].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[5].command",
+        "criterion": "cloud_workspace_namespace",
+        "count": 5
+      },
+      {
+        "jsonPath": "$.turns[1].items[5].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[5].output.text",
+        "criterion": "cloud_workspace_namespace",
+        "count": 6
+      },
+      {
+        "jsonPath": "$.turns[1].items[6].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[7].command",
+        "criterion": "cloud_workspace_namespace",
+        "count": 3
+      },
+      {
+        "jsonPath": "$.turns[1].items[7].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[7].output.text",
+        "criterion": "cloud_workspace_namespace",
+        "count": 2
+      },
+      {
+        "jsonPath": "$.turns[1].items[8].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[9].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[10].command",
+        "criterion": "cloud_workspace_namespace",
+        "count": 3
+      },
+      {
+        "jsonPath": "$.turns[1].items[10].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[10].output.text",
+        "criterion": "cloud_workspace_namespace",
+        "count": 2
+      },
+      {
+        "jsonPath": "$.turns[1].items[11].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[12].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[13].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[14].command",
+        "criterion": "cloud_workspace_namespace",
+        "count": 4
+      },
+      {
+        "jsonPath": "$.turns[1].items[14].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[14].output.text",
+        "criterion": "cloud_workspace_namespace",
+        "count": 2
+      },
+      {
+        "jsonPath": "$.turns[1].items[15].command",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[15].command",
+        "criterion": "email",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[15].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[15].output.text",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[16].command",
+        "criterion": "email",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[16].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[17].command",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[17].command",
+        "criterion": "email",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[17].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[1].items[18].text",
+        "criterion": "peer_message_id",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[2].items[0].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[2].items[1].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[3].items[0].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[3].items[0].output.text",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[3].items[1].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[3].items[2].command",
+        "criterion": "host_home_path",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[3].items[2].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[3].items[3].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[3].items[4].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[3].items[5].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[3].items[6].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[3].items[7].command",
+        "criterion": "host_home_path",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[3].items[7].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[3].items[7].output.text",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[3].items[9].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[3].items[10].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[3].items[11].arguments.file",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[3].items[12].command",
+        "criterion": "cloud_workspace_namespace",
+        "count": 2
+      },
+      {
+        "jsonPath": "$.turns[3].items[12].cwd",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[3].items[12].output.text",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      },
+      {
+        "jsonPath": "$.turns[3].items[13].text",
+        "criterion": "cloud_workspace_namespace",
+        "count": 1
+      }
+    ]
+  },
+  "limitations": [
+    "원 Cloud filesystem/full stdout-stderr 미회수: NOT_VERIFIABLE",
+    "API item output is bounded at 20000 characters; false truncation flags do not establish raw filesystem completeness",
+    "Some command text itself uses head/tail/slicing; retained exactly apart from redactions",
+    "Offline 409 is final-report-only; no commandExecution item is provided for that turn",
+    "Product tests/lint/build/runtime were not rerun; original 91 PASS is native reported evidence only",
+    "Original 55aea Git object was not recovered; reconstructed c9ead candidate tree equality does not grant full QA PASS"
+  ],
+  "priorFailedCapture": {
+    "status": "PROCESSING_FAILED_AFTER_SINGLE_API_READ",
+    "persistedAllowedItems": 0,
+    "preserved": true
+  },
+  "environment": {
+    "host": "durable",
+    "kind": "codex",
+    "reportedExecutor": "Work Cloud reused Linux executor",
+    "vmFreshness": "UNKNOWN",
+    "actualModelEffort": "UNKNOWN"
+  },
+  "remoteMutationByThisWriter": 0
+}
