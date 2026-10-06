@@ -35,7 +35,7 @@ AGS supports this workflow with task contracts, specialist skills, the session b
 You need Node.js **24.0.0 or later** and plugin support in the host you use. Install AGS in each participating host. Using the plugin does not require cloning this repository or running `pnpm install`.
 
 <!-- release-version:start -->
-The current release candidate is `v2.8.0` and includes seventeen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
+The current public release is `v2.8.0` and includes seventeen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
 <!-- release-version:end -->
 
 This tree is the 2.8.0 review candidate; the public release remains v2.7.7. Remote installation examples retain the public version. Review the candidate from its ZIP/patch.
@@ -57,7 +57,7 @@ Run in a terminal:
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.7
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.8.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->

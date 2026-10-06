@@ -35,7 +35,7 @@ flowchart LR
 Node.js **24.0.0 이상**과 사용할 호스트의 플러그인 기능이 필요합니다. 협업에 참여할 호스트마다 AGS를 설치합니다. 플러그인 사용을 위해 이 저장소를 clone하거나 `pnpm install`을 실행할 필요는 없습니다.
 
 <!-- release-version:start -->
-현재 릴리스 후보는 `v2.8.0`이며 거버넌스 전문 스킬 17개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
+현재 공개 릴리스는 `v2.8.0`이며 거버넌스 전문 스킬 17개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
 <!-- release-version:end -->
 
 이 작업 트리는 검토용 2.8.0 후보이며 공개 릴리스는 v2.7.7입니다. 아래 원격 설치 예시는 공개 버전을 유지합니다. 후보는 제공된 ZIP/patch로만 검토합니다.
@@ -57,7 +57,7 @@ Claude Code 안에서 실행합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.7.7
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.8.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
