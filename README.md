@@ -35,7 +35,7 @@ flowchart LR
 Node.js **24.0.0 이상**과 사용할 호스트의 플러그인 기능이 필요합니다. 협업에 참여할 호스트마다 AGS를 설치합니다. 플러그인 사용을 위해 이 저장소를 clone하거나 `pnpm install`을 실행할 필요는 없습니다.
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v2.8.0`이며 거버넌스 전문 스킬 17개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다.
+현재 릴리스 후보는 `v2.8.1`이며 거버넌스 전문 스킬 17개, 엔지니어링 전문 스킬 2개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개(task continuity, 세션 현황판)와 한국어 산문 워크플로 1개를 포함합니다. 후보의 `publicVersion`과 아래 설치 예시는 2.8.1보다 먼저 공개·설치 검증할 `v2.8.0`을 가리키며, 현재 원격에 2.8.0이 이미 게시됐다는 뜻은 아닙니다.
 <!-- release-version:end -->
 
 ### Claude Code
@@ -161,7 +161,7 @@ MCP workflow는 계획된 단계의 순서, 결과 형식, 필수 근거와 감�
 
 ### 필요한 전문 역량을 작업에 연결
 
-보안 감사, 독립적인 의사결정 검토, 한국어 문서 편집, Codex 토큰 사용량 분석도 같은 플러그인에서 사용할 수 있습니다. 각 전문 스킬은 담당하는 판단과 결과 형식이 있으며, `orchestrator`가 필요한 결과의 순서와 연결을 맡습니다.
+테스트 설계·근거 검토, 고정 변경분 코드 리뷰, 보안 감사, 독립적인 의사결정 검토, 한국어 문서 편집과 Codex 토큰 사용량 분석도 같은 플러그인에서 사용할 수 있습니다. 각 전문 스킬은 담당하는 판단과 결과 형식이 있으며, `orchestrator`가 필요한 결과의 순서와 연결을 맡습니다.
 
 <details>
 <summary>전문 스킬 전체 보기</summary>
@@ -187,10 +187,14 @@ MCP workflow는 계획된 단계의 순서, 결과 형식, 필수 근거와 감�
 | [`software-security-auditor`](skills/software-security-auditor/) | 웹·API와 CLI·MCP의 공격 경로, 방어 수단과 검사 공백을 감사합니다. |
 | [`evaluation-validity-auditor`](skills/evaluation-validity-auditor/) | 고정된 평가의 설계·입력·판정·집계를 독립 감사합니다. |
 | [`cs-engineering`](skills/cs-engineering/) | CS 원리를 설계 제약과 검증 의무로 연결하고 후보·근거의 일관성을 검사합니다. (v0.2.0) |
+| [`test-engineering`](skills/test-engineering/) | 테스트 계획과 실제 코드 경계에서 사례를 설계하고 red/green·표적 mutation 근거의 결함 탐지 능력을 점검합니다. (v0.1.0) |
+| [`code-review`](skills/code-review/) | 고정된 diff·patch·PR의 실제 실패 경로를 검토하고 결함·권고·질문을 구분합니다. (v0.1.0) |
 
 스킬 버전과 출처는 [registry](skills/registry.json)와 [source lock](skills/source-lock.json)에 기록합니다. [`orchestrator`](skills/orchestrator/)는 현재 Git 이력으로 추적합니다. `ponytail`은 AGS에 내장되어 있으며 외부 원본의 고정 정보는 source lock에 출처 이력으로 남아 있습니다.
 
 `codex-token-usage-analyzer`는 Codex 로그 전용이며 Claude Code 배포물에는 포함되지 않습니다. 한국어 산문 workflow는 활성화되어 있지만 현행 편집 정책의 품질 평가는 아직 완료되지 않았습니다. 이전 정책의 품질 통과 기록은 현행 정책에 적용하지 않습니다. [평가 상태와 계획](docs/roadmap.md)을 확인하세요.
+
+`test-engineering`과 `code-review`가 공유하는 8개 엔지니어링 모듈, 48개 규칙과 9개 계약의 책임 경계 및 현재 검증 상태는 [엔지니어링 실무 통합](docs/engineering-practices.ko.md)에 정리되어 있습니다.
 
 </details>
 

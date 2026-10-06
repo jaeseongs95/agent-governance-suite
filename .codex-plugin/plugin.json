@@ -1,8 +1,8 @@
 {
   "id": "agent-governance-suite",
   "name": "agent-governance-suite",
-  "version": "2.8.0",
-  "description": "Route governance specialists through declarative provider contracts, a local MCP convergence guard, opt-in task continuity, and an MCP-assisted Korean prose workflow.",
+  "version": "2.8.1",
+  "description": "Route governance and engineering specialists through declarative provider contracts, a local MCP convergence guard, opt-in task continuity, and an MCP-assisted Korean prose workflow.",
   "author": {
     "name": "jaeseongs95",
     "url": "https://github.com/jaeseongs95"
@@ -34,6 +34,8 @@
       "Audit gating",
       "Scope and evidence validation",
       "Mutation preflight",
+      "Test engineering",
+      "Code review",
       "MCP-assisted Korean prose workflow",
       "Semantic execution assurance"
     ],

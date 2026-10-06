@@ -35,7 +35,7 @@ AGS supports this workflow with task contracts, specialist skills, the session b
 You need Node.js **24.0.0 or later** and plugin support in the host you use. Install AGS in each participating host. Using the plugin does not require cloning this repository or running `pnpm install`.
 
 <!-- release-version:start -->
-The current public release is `v2.8.0` and includes seventeen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
+The current release candidate is `v2.8.1` and includes seventeen governance specialist skills, two engineering specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow. Its `publicVersion` and the installation example below point to `v2.8.0`, which must be published and installation-verified before 2.8.1; this does not claim that 2.8.0 is already available remotely.
 <!-- release-version:end -->
 
 ### Claude Code
@@ -167,7 +167,7 @@ Related skills: [Blocker diagnosis](skills/blocker-diagnostician/), [Recovery st
 
 ### Bring specialist capabilities into the workflow
 
-Security audits, independent deliberation, Korean prose editing, and Codex token-usage analysis are also available in the plugin. Each specialist owns its judgments and output format; the `orchestrator` connects the required results in the appropriate order.
+Test design and evidence review, fixed-change code review, security audits, independent deliberation, Korean prose editing, and Codex token-usage analysis are also available in the plugin. Each specialist owns its judgments and output format; the `orchestrator` connects the required results in the appropriate order.
 
 <details>
 <summary>Browse all specialist skills</summary>
@@ -193,10 +193,14 @@ Security audits, independent deliberation, Korean prose editing, and Codex token
 | [`software-security-auditor`](skills/software-security-auditor/) | Audits web/API and CLI/MCP attack paths, controls, and verification gaps. |
 | [`evaluation-validity-auditor`](skills/evaluation-validity-auditor/) | Independently audits a frozen evaluation's design, inputs, judgments, and aggregation. |
 | [`cs-engineering`](skills/cs-engineering/) | Derives CS constraints and verification obligations, then checks candidate/evidence consistency. (v0.2.0) |
+| [`test-engineering`](skills/test-engineering/) | Designs cases at requirement and code boundaries and checks whether red/green or targeted-mutation evidence can detect defects. (v0.1.0) |
+| [`code-review`](skills/code-review/) | Reviews concrete diffs, patches, or PRs for real failure paths and separates findings, recommendations, and questions. (v0.1.0) |
 
 Skill versions and provenance are recorded in the [registry](skills/registry.json) and [source lock](skills/source-lock.json). The [`orchestrator`](skills/orchestrator/) is tracked in current Git history. `ponytail` is bundled with AGS; pinned external source information remains in the source lock as historical provenance.
 
 `codex-token-usage-analyzer` reads Codex logs only and is omitted from the Claude Code distribution. The Korean prose workflow is enabled, but evaluation of the current editing policy's quality has not been completed. The previous policy's quality pass does not apply to the current policy. See [evaluation status and plans](docs/roadmap.md).
+
+See [engineering-practices integration](docs/engineering-practices.ko.md) for the responsibility boundaries and current verification status of the eight shared engineering modules, 48 rules, and nine contracts used by `test-engineering` and `code-review`.
 
 </details>
 

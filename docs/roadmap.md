@@ -1,7 +1,7 @@
 # Agent Governance Suite 향후 로드맵
 
 <!-- release-version:start -->
-문서 기준일은 2026년 9월 21일이다. 현재 공개 릴리스는 `v2.8.0`이다. v2.4.0은 20개 스킬의 상세 절차를 활성화 뒤에 읽는 reference로 분리하고 SourceLock v3에서 suite 소유 스킬과 외부 fork를 구분한다. v2.2 계열의 공용 상태 경로, TLS 1.3 loopback broker, 호스트 중립 메시지 계약과 중복 wake 억제는 유지한다. 한국어 산문 워크플로의 candidate-v2 정책은 2026년 9월 17일 동결 frame `0.3.0-gate-1`의 평가 대상이 아니므로 품질 미평가 상태로 유지한다.
+문서 기준일은 2026년 10월 6일이다. 현재 릴리스 후보는 `v2.8.1`이며 후보의 `publicVersion`과 선행 설치 대상은 `v2.8.0`이다. 원격 공개 `main`과 tag에는 2.8.0이 아직 게시되지 않았으므로 2.8.0 공개·설치 검증을 먼저 완료한 뒤 2.8.1 출시를 진행한다. 2.8.1 후보는 `test-engineering`·`code-review` 0.1.0과 필요한 엔지니어링 참조만 추가하며, 2.8.0의 CS 범위와 한계를 유지한다. v2.4.0은 20개 스킬의 상세 절차를 활성화 뒤에 읽는 reference로 분리하고 SourceLock v3에서 suite 소유 스킬과 외부 fork를 구분한다. v2.2 계열의 공용 상태 경로, TLS 1.3 loopback broker, 호스트 중립 메시지 계약과 중복 wake 억제는 유지한다. 한국어 산문 워크플로의 candidate-v2 정책은 2026년 9월 17일 동결 frame `0.3.0-gate-1`의 평가 대상이 아니므로 품질 미평가 상태로 유지한다.
 <!-- release-version:end -->
 
 이 문서는 프로젝트 코드와 설계 문서뿐 아니라 이 저장소에서 진행한 Codex 작업의 논의를 함께 반영한다. 일정은 특정 날짜보다 단계별 종료 조건을 기준으로 관리한다. 각 단계의 필수 검증을 마치기 전에는 다음 릴리스 범위로 넘기지 않는다.
@@ -33,6 +33,7 @@
 | 0. `v1.1.0` 안정화 | 품질 게이트 통과 (`0.3.0-gate-1`, candidate-v2 이전 정책) · candidate-v2 정책 미평가 · 용어집 짝 비교 완료 | 거버넌스 릴리스 운영과 한국어 산문 워크플로의 계약·품질·재현성 확보 | 활성 평가 후보, 검증된 receipt 경로, 품질 평가 결과, 고정된 원본 ref |
 | 0.5. 업데이트 알림 | 완료 | 안정 버전 존재 여부만 안내 | `check_for_updates`, SQLite v2 상태, 일회성 MCP notice |
 | 0.6. 모델·추론 수준 안내 | 완료 | 요청 난도와 관측 가능한 현재 설정을 비교해 과다·적정·부족 여부 안내 | `model-effort-advisor`, `ModelEffortAdvice.v1`, 정상·경계·실패 fixture |
+| 0.7. 엔지니어링 실무 | 2.8.1 후보 통합 중 | 테스트 설계·근거와 고정 변경분 리뷰를 기존 책임 경계에 연결 | `test-engineering`, `code-review`, 8개 참조 모듈, 9개 계약 |
 | 1. 실행 전 신뢰성 | 부분 구현 | 평가 오류와 동시 작업 충돌을 조기에 차단 | 구현된 `evaluation-validity-auditor`, 계획된 `active-workspace-guard` |
 | 2. 복구 워크플로 | 구현됨 | blocker 진단 뒤 선택 가능한 복구 전략 제공 | `recovery-strategy-selector`, `RecoveryHandoff.v1` |
 | 3. 실행 환경과 연속성 | 부분 구현 | 실행 가능 여부를 먼저 확인하고 세션 복원을 표준화 | 구현된 exact-instance session presence와 로컬 task continuity, 계획된 `runtime-capability-profiler` |
@@ -118,6 +119,23 @@
 - `v1.5.0` 릴리스 후보에서 `pnpm bundle:check`, `pnpm lint`, `pnpm build`, `pnpm test`, `pnpm runtime:check`, `pnpm validate:all`, `pnpm validate:official`, `git diff --check`가 통과했다.
 - 스킬 자체만으로는 매 요청에서 UI의 현재 선택을 읽을 수 없다. host가 runtime metadata를 제공하지 않는 환경에서는 사용자 설명이나 현재 요청의 화면 자료가 있어야 구체적인 판정이 가능하다.
 - host metadata 연동이 없는 환경에서도 관측 불가를 조용히 처리하고 기존 작업을 막지 않는다.
+
+## 0.7단계: 엔지니어링 실무 통합
+
+2.8.1 후보는 소스 패키지 `ags-engineering-practices` 0.1.0에서 `test-engineering`과 `code-review`를 편입한다. 두 스킬은 각각 테스트 계획·결함 탐지 근거와 고정된 변경분 리뷰를 담당한다. 디버깅, 최소 구현, 의존성 보안, 수용 근거와 오케스트레이션은 기존 담당 스킬을 유지하며 관련 참조 모듈만 선택적으로 읽는다.
+
+- 공통 지식은 8개 모듈·48개 규칙이며, 필요한 모듈만 로드한다.
+- 닫힌 `engineering-*.v1` 계약 9개는 계획·proof·review 입력과 로컬 일관성 결과를 표현한다.
+- 새 권한 source, hook, MCP handler, signed binding 또는 자동 승인 경로를 추가하지 않는다.
+- `CONSISTENT`와 `NO_BLOCKING_FINDINGS`는 제출된 고정 입력의 로컬 판정이며 수용·독립 감사·릴리스 승인을 대신하지 않는다.
+- `cs-engineering` 0.2.0의 CS 규칙, 선택된 stage binding과 알려진 한계는 바꾸지 않는다.
+
+### 후보 상태와 종료 기준
+
+- 소스 편입과 registry·source lock·오케스트레이터 연결은 후보 작업 트리에 반영됐으며 최종 pin과 검증을 기다린다.
+- 이 문서 작성 시점에는 AGS에서의 직접 스킬 선택, registry 실행, standalone validator, 전체 repository·bundle·runtime 검사와 실제 호스트 로딩을 실행하지 않았다.
+- 최종 후보에서 source pin과 생성물을 고정하고 관련 검사, 전체 회귀, 공식 validator와 독립 감사를 실제 결과로 확인해야 한다.
+- 사용자 지시로 승인된 2.8.1 출시 순서에서 2.8.0 선행 공개·설치 검증과 위 후보 검증을 완료한 뒤 공개 릴리스·태그·설치 대상을 2.8.1로 전환한다.
 
 ## 1단계: 평가와 작업 공간의 신뢰성 확보
 
