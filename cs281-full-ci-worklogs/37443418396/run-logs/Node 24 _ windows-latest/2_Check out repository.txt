@@ -30,7 +30,7 @@
 2026-10-06T09:30:30.3103158Z ##[group]Initializing the repository
 2026-10-06T09:30:30.3110509Z [command]"<git-install>\bin\git.exe" init <repo>
 2026-10-06T09:30:30.4217409Z Initialized empty Git repository in <repo>/.git/
-2026-10-06T09:30:30.4265519Z [command]"<git-install>\bin\git.exe" remote add origin http<runner-path>
+2026-10-06T09:30:30.4265519Z [command]"<git-install>\bin\git.exe" remote add origin https://github.com/jaeseongs95/agent-governance-suite
 2026-10-06T09:30:30.4905854Z ##[endgroup]
 2026-10-06T09:30:30.4906742Z ##[group]Disabling automatic garbage collection
 2026-10-06T09:30:30.4915113Z [command]"<git-install>\bin\git.exe" config --local gc.auto 0
@@ -41,19 +41,19 @@
 2026-10-06T09:30:30.5539262Z [command]"<git-install>\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
 2026-10-06T09:30:32.0624571Z Removing HTTP extra header
 2026-10-06T09:30:32.0635416Z [command]"<git-install>\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
-2026-10-06T09:30:32.0934501Z [command]"<git-install>\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.http<runner-path>' || :\""
+2026-10-06T09:30:32.0934501Z [command]"<git-install>\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
 2026-10-06T09:30:32.6354568Z Removing includeIf entries pointing to credentials config files
 2026-10-06T09:30:32.6364814Z [command]"<git-install>\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
 2026-10-06T09:30:32.6664581Z [command]"<git-install>\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
-2026-10-06T09:30:33.1945311Z [command]"<git-install>\bin\git.exe" config --file <runner-temp>\git-credentials-<ephemeral-id>.config http.http<runner-path> "AUTHORIZATION: basic ***"
+2026-10-06T09:30:33.1945311Z [command]"<git-install>\bin\git.exe" config --file <runner-temp>\git-credentials-<ephemeral-id>.config http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
 2026-10-06T09:30:33.2253284Z [command]"<git-install>\bin\git.exe" config --local includeIf.gitdir:<repo>/.git.path <runner-temp>\git-credentials-<ephemeral-id>.config
 2026-10-06T09:30:33.2554271Z [command]"<git-install>\bin\git.exe" config --local includeIf.gitdir:<repo>/.git/worktrees/*.path <runner-temp>\git-credentials-<ephemeral-id>.config
-2026-10-06T09:30:33.2917210Z [command]"<git-install>\bin\git.exe" config --local includeIf.gitdi<runner-path> /github/runner_temp/git-credentials-<ephemeral-id>.config
-2026-10-06T09:30:33.3225735Z [command]"<git-install>\bin\git.exe" config --local includeIf.gitdi<runner-path> /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:30:33.2917210Z [command]"<git-install>\bin\git.exe" config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:30:33.3225735Z [command]"<git-install>\bin\git.exe" config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-<ephemeral-id>.config
 2026-10-06T09:30:33.3546507Z ##[endgroup]
 2026-10-06T09:30:33.3547156Z ##[group]Fetching the repository
 2026-10-06T09:30:33.3559686Z [command]"<git-install>\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
-2026-10-06T09:30:36.2553540Z From http<runner-path>
+2026-10-06T09:30:36.2553540Z From https://github.com/jaeseongs95/agent-governance-suite
 2026-10-06T09:30:36.2555339Z  * [new branch]        chore/discussions-setup-20261002 -> origin/chore/discussions-setup-20261002
 2026-10-06T09:30:36.2556510Z  * [new branch]        claude/docs-host-attestation-drift -> origin/claude/docs-host-attestation-drift
 2026-10-06T09:30:36.2559016Z  * [new branch]        claude/skill-intake-common-vendor -> origin/claude/skill-intake-common-vendor

@@ -8,7 +8,7 @@
 2026-10-06T09:30:43.4219563Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
 2026-10-06T09:30:43.4219949Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
 2026-10-06T09:30:43.4220256Z ##[endgroup]
-2026-10-06T09:30:43.6853749Z ! Corepack is about to download http<runner-path>
+2026-10-06T09:30:43.6853749Z ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-11.19.0.tgz
 2026-10-06T09:30:53.3004162Z ? Verifying lockfile against supply-chain policies (267 entries)...
 2026-10-06T09:30:53.3096718Z Lockfile is up to date, resolution step is skipped
 2026-10-06T09:30:53.4314780Z Progress: resolved 1, reused 0, downloaded 0, added 0

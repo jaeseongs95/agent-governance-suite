@@ -11,7 +11,7 @@
   "conclusion": "success",
   "workflow_id": 353647941,
   "run_attempt": 1,
-  "html_url": "http<runner-path>",
+  "html_url": "https://github.com/jaeseongs95/agent-governance-suite/actions/runs/37443922727",
   "created_at": "2026-10-06T09:34:42Z",
   "updated_at": "2026-10-06T09:39:00Z",
   "run_started_at": "2026-10-06T09:34:42Z",
@@ -19,7 +19,7 @@
     "id": 1362118877,
     "name": "agent-governance-suite",
     "full_name": "jaeseongs95/agent-governance-suite",
-    "html_url": "http<runner-path>"
+    "html_url": "https://github.com/jaeseongs95/agent-governance-suite"
   },
   "head_commit": {
     "id": "b7341d3e6636b79217b1f3d37d7a5014fcbf47be",

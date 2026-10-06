@@ -1,35 +1,35 @@
-83e69c8209fdc33e6c318779db21129d25952deef10bdc877df55c15a5faa547  MANIFEST.json
-f7417e1fb877d3f5934f143cc38ad9e2905476e8f5ac6776507d09441efcd6f6  metadata/artifacts.json
-7f809241b76c0150673c95843f4288c95c09b220bf6eaeedad3f07d7d384464d  metadata/jobs.json
-7a59fa8a6367c6c7fb902bca078a20abf95003922e71807d6f38055c6c4e094e  metadata/run.json
+b57fcb9fe8094fb952e370d4ce2b009e70ae16cc6b819622af7a44b12d00b0ad  MANIFEST.json
 d133e9bb60db9086fba2604bdf4b828bb4f9d62487e421d41f7557c2810ad13f  OFFICIAL-ARTIFACT-STATUS.json
 4a745a8a378a1425f5d85229f36ce73bdfd3d27e01c3b2c2b3d8e125e2c2c4ea  RUN-LOG-CONTENTS.json
-6fe058e7f6d6fa9e131ab77da2f5894be3bda64faf5aad311e7540c10181d4a5  run-logs/0_Node 24 _ windows-latest.txt
-227104a3477c39c3e7dd539777fc7f36272ca0a4f937c0592bbc94126ffe7ff9  run-logs/1_Node 24 _ ubuntu-latest.txt
+64241b95b9dca24684cd6813747de22a427c8868f3551485ace1cea913f2b3f6  WORKLOG.ko.md
+f7417e1fb877d3f5934f143cc38ad9e2905476e8f5ac6776507d09441efcd6f6  metadata/artifacts.json
+df3060b0942345d9081866ec5239a25d0e2e3008250f1cdedc5d18c852083e59  metadata/jobs.json
+cd8421d886881cf19b9fe19c87997e0daa4fcde7d6aca6d2369abbd2bf7cd3af  metadata/run.json
+97a9a0ad901fd7e4ddadb0ed052bf7d6d5f1d82d54518150ad7b98fcf600a4ba  run-logs/0_Node 24 _ windows-latest.txt
+5890da254d7151d032022d3d994e57ab9f0155c07b53bd01fd6b8afa693c5891  run-logs/1_Node 24 _ ubuntu-latest.txt
 22bd63c2ec8407d797945d811c55d2f8341ec53e4844a091220bf8a927097db8  run-logs/Node 24 _ ubuntu-latest/18_Upload official validation evidence.txt
-b54b2fb590e316754c72a6bc8b125b06f4d693dff00c64563d1e0ac2aa73c0e4  run-logs/Node 24 _ ubuntu-latest/1_Set up job.txt
-eba55f96ef36b9ef21670e12888ab1bcf9364413ac2df94bffb710bbc5274e56  run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt
+169b071ffe5786be0b4dd2ee769fa5e45bbd33d8bbdf7e7945a87c38c7f56a1f  run-logs/Node 24 _ ubuntu-latest/1_Set up job.txt
+37463c5c5a0974dfaa9e2a01472c54de9ff98f66792c43dce8e22208f3031f15  run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt
 47d4f3ea48f9738ee262cf25be67bd6ea9ea7f120efc62be20a8b95e30a4b6e4  run-logs/Node 24 _ ubuntu-latest/3_Set up Node.js.txt
-d28a9f9a611380e0cb6f3bb57aa1f0f4625dfcd355d218ff85c03c9841ecbfdf  run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt
-5d059dbe326305b6aefdba14b4a8ede03a591bc279daac94cb072f6127072d06  run-logs/Node 24 _ ubuntu-latest/43_Complete job.txt
+f2366e21304c0d3d8cbf8b829c8d8d3cb91a4848697428944ba57d1b628019e2  run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt
+3525d31c1fc4adcbf961e38a7af9a382ddd0b1c5fd56077604d9d37135e29c58  run-logs/Node 24 _ ubuntu-latest/43_Complete job.txt
 b3aa7660af9e9b49ea4228a39bfa02c0d4eae8caa8338153c567627fe6101637  run-logs/Node 24 _ ubuntu-latest/4_Set up Python.txt
 0e1f8ecd92ac515c64c0fbdf3bad9b2def224808c9645540a36de5bc2ac916a0  run-logs/Node 24 _ ubuntu-latest/5_Enable Corepack.txt
-2951ba42cc502afe31ebe75508cbc9695161e575a18704f925a647fb09478b81  run-logs/Node 24 _ ubuntu-latest/6_Install locked dependencies.txt
+12d918392f60d749c499bc62c11cba093da431838fde11be5137414e44649a42  run-logs/Node 24 _ ubuntu-latest/6_Install locked dependencies.txt
 418d8a055fab41781b90ada874c8e40cbc1718b5fee6825843670e2b1179338f  run-logs/Node 24 _ ubuntu-latest/7_Verify committed runtime bundles.txt
 eb9c45a7bad1acfd3c8ffb1d52c434971785f05266b288822856e550bfbd8272  run-logs/Node 24 _ ubuntu-latest/8_Report Claude plugin drift.txt
 d1088ed890f9481f4b2fdbb091d2cae92b0d5dfbdb3254c7c83fe0055095d87c  run-logs/Node 24 _ ubuntu-latest/9_Lint.txt
 f3f4df1cafecea9638f489dd58fdc569b8233bc83939f1eb52b93c8dcf91bc1b  run-logs/Node 24 _ ubuntu-latest/system.txt
 cebe13e88bcc04467d25d3df6b04a13bd41bd7701f2354548e1a68caefc97735  run-logs/Node 24 _ windows-latest/18_Upload official validation evidence.txt
-bd7505edbd5390bc8fd038a1afbe700b2d939cece5c4699bbc41de6a0411ab1f  run-logs/Node 24 _ windows-latest/1_Set up job.txt
-15939587d498fba79a1853bcc8cbfaf28f8da6284f044eb1954b5181d9596d44  run-logs/Node 24 _ windows-latest/2_Check out repository.txt
+e8bbbd08f135b522b35ec1c8359cd6ddf72d19ddfeb495b58bc4590acb249504  run-logs/Node 24 _ windows-latest/1_Set up job.txt
+1316da840228a7937bc59b7cb68389e1be3206b149e0d13fb8397ebc40744170  run-logs/Node 24 _ windows-latest/2_Check out repository.txt
 45a139f6fb78defc8caa912d2a99ef3f04240c013b8c6ca2e2784adafc46bb61  run-logs/Node 24 _ windows-latest/3_Set up Node.js.txt
-9f9e724c7f18f1648c8942c634db422e546174e2cf80773321b4980f2d9389f3  run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt
-9ebec94a0fbd66b5124b2ebeec6a474e291a1c07962bce9c5cdec75cf55d3db7  run-logs/Node 24 _ windows-latest/43_Complete job.txt
+b5cfbfafb0d58b64a32f78db56da6e2f1fad3c363cfa29b679dee673a6da12b6  run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt
+52bc26162acb231ecc869618521b2c0ef2a6480977083443b02e4b36477b13e4  run-logs/Node 24 _ windows-latest/43_Complete job.txt
 e07f14d0c65a2ed76ae5e76f7b4b3deeb4ee450fb3802b9ecca79beaa5e1a9b3  run-logs/Node 24 _ windows-latest/4_Set up Python.txt
 76812517ad0053557121a17b5351d44409f6ed6655eae94e6211c8ef539fd4ab  run-logs/Node 24 _ windows-latest/5_Enable Corepack.txt
-bd12c21ebd9924a294dfd111b83d578dc4086fb961d3e595bbfc765722468068  run-logs/Node 24 _ windows-latest/6_Install locked dependencies.txt
+888e9489e2d528e980c345b2eaca84a2b5c54b9de701dafb6956c3e7f9322469  run-logs/Node 24 _ windows-latest/6_Install locked dependencies.txt
 4a896f962535c1a3c20b6903e6327cd14bb2ea32cb5a92335e53098d478fb961  run-logs/Node 24 _ windows-latest/7_Verify committed runtime bundles.txt
 e1f0610f4d3530b1251f4390871d722d9157e80fa13088fb2698c4ff4af0a473  run-logs/Node 24 _ windows-latest/8_Report Claude plugin drift.txt
 92a421c64a25b62748461b9b93c76ae07f5058e68e0724a748310938721500a2  run-logs/Node 24 _ windows-latest/9_Lint.txt
 c814873701b156b8943c21ea58968d350501de73f7300e55815a11b18aec02f4  run-logs/Node 24 _ windows-latest/system.txt
-64241b95b9dca24684cd6813747de22a427c8868f3551485ace1cea913f2b3f6  WORKLOG.ko.md

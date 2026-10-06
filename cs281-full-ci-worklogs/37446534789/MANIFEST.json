@@ -19,20 +19,9 @@
       "public": "metadata/run.json",
       "sourceBytes": 13585,
       "sourceSha256": "7a6db188dfe85bef529b6ad847852e6480728bd67745ee4c982121dda43031e6",
-      "publicBytes": 890,
-      "publicSha256": "be4c5445d565b99446d8d8cd7e82961592796fe55d82110653fe9e4003b1b430",
-      "redactions": [
-        {
-          "location": "run.20261006T100852Z.json",
-          "criterion": "windows_absolute",
-          "line": 14
-        },
-        {
-          "location": "run.20261006T100852Z.json",
-          "criterion": "windows_absolute",
-          "line": 22
-        }
-      ],
+      "publicBytes": 987,
+      "publicSha256": "8a45c25b8fe8502a64a2b50cf3c39e657c7dff9d8907da0a3ce0a1456437dd40",
+      "redactions": [],
       "metadataProjection": true
     },
     {
@@ -40,20 +29,9 @@
       "public": "metadata/jobs.json",
       "sourceBytes": 10178,
       "sourceSha256": "2fc31a70fd2c80e79febdacd46da5e96e32cbafb0ceae1addbdc86b7e4e60a63",
-      "publicBytes": 13691,
-      "publicSha256": "22f9b4880230e5a5f7d61eb14212c598d1842d19c7829b4f9d65e28298acaa95",
-      "redactions": [
-        {
-          "location": "jobs.20261006T100852Z.json",
-          "criterion": "windows_absolute",
-          "line": 215
-        },
-        {
-          "location": "jobs.20261006T100852Z.json",
-          "criterion": "windows_absolute",
-          "line": 432
-        }
-      ],
+      "publicBytes": 13847,
+      "publicSha256": "45ca28632a4fd8517a70b9f37243888d6248023371f1295647d593d24061f4f3",
+      "redactions": [],
       "metadataProjection": true
     },
     {
@@ -71,8 +49,8 @@
       "public": "run-logs/0_Node 24 _ windows-latest.txt",
       "sourceBytes": 140301,
       "sourceSha256": "89b12cfe52b36392b2f177c6872fe1de1e82fba8c79898cc5795d63799882d8e",
-      "publicBytes": 138095,
-      "publicSha256": "61633ef0de1b7ffb6a234a92a253482abc7b6e9066575b03044a06b9da4d06cb",
+      "publicBytes": 138653,
+      "publicSha256": "092e67766c2742db6edcc9839065be0cec7832083b5e6e60236a5ad87982059c",
       "redactions": [
         {
           "location": "run-logs/0_Node 24 _ windows-latest.txt",
@@ -727,51 +705,6 @@
         {
           "location": "run-logs/0_Node 24 _ windows-latest.txt",
           "criterion": "windows_absolute",
-          "line": 18
-        },
-        {
-          "location": "run-logs/0_Node 24 _ windows-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 19
-        },
-        {
-          "location": "run-logs/0_Node 24 _ windows-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 67
-        },
-        {
-          "location": "run-logs/0_Node 24 _ windows-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 78
-        },
-        {
-          "location": "run-logs/0_Node 24 _ windows-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 82
-        },
-        {
-          "location": "run-logs/0_Node 24 _ windows-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 85
-        },
-        {
-          "location": "run-logs/0_Node 24 _ windows-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 86
-        },
-        {
-          "location": "run-logs/0_Node 24 _ windows-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 90
-        },
-        {
-          "location": "run-logs/0_Node 24 _ windows-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 245
-        },
-        {
-          "location": "run-logs/0_Node 24 _ windows-latest.txt",
-          "criterion": "windows_absolute",
           "line": 253
         },
         {
@@ -783,46 +716,6 @@
           "location": "run-logs/0_Node 24 _ windows-latest.txt",
           "criterion": "windows_absolute",
           "line": 1171
-        },
-        {
-          "location": "run-logs/0_Node 24 _ windows-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1234
-        },
-        {
-          "location": "run-logs/0_Node 24 _ windows-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1239
-        },
-        {
-          "location": "run-logs/0_Node 24 _ windows-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1240
-        },
-        {
-          "location": "run-logs/0_Node 24 _ windows-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1247
-        },
-        {
-          "location": "run-logs/0_Node 24 _ windows-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1249
-        },
-        {
-          "location": "run-logs/0_Node 24 _ windows-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1250
-        },
-        {
-          "location": "run-logs/0_Node 24 _ windows-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1252
-        },
-        {
-          "location": "run-logs/0_Node 24 _ windows-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1256
         },
         {
           "location": "run-logs/0_Node 24 _ windows-latest.txt",
@@ -897,64 +790,9 @@
       "public": "run-logs/1_Node 24 _ ubuntu-latest.txt",
       "sourceBytes": 104478,
       "sourceSha256": "c696ef50ec694f882135b4c8e26b370d7d26376847ec2f0e452320b9ea41f783",
-      "publicBytes": 102014,
-      "publicSha256": "fa1932512b436a65f26f97023be061d916a97c73d3514aea35492909f018975d",
+      "publicBytes": 102643,
+      "publicSha256": "4261205ad319128586359e81de96fe7f4ac4a382c1f6c74e41f176321b7e6feb",
       "redactions": [
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 18
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 19
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 80
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 91
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 95
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 96
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 97
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 98
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 99
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 103
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 260
-        },
         {
           "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
           "criterion": "windows_absolute",
@@ -964,76 +802,6 @@
           "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
           "criterion": "windows_absolute",
           "line": 943
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1006
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1009
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1010
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1011
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1012
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1013
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1015
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1016
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1018
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1019
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1021
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1022
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1024
-        },
-        {
-          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
-          "criterion": "windows_absolute",
-          "line": 1028
         },
         {
           "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
@@ -1063,12 +831,52 @@
         {
           "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
           "criterion": "checkout_path",
+          "line": 96
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 97
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
           "line": 410
         },
         {
           "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
           "criterion": "checkout_path",
           "line": 1000
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 1009
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 1010
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 1013
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 1015
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 1016
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 1018
         },
         {
           "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
@@ -1804,19 +1612,9 @@
       "public": "run-logs/Node 24 _ ubuntu-latest/1_Set up job.txt",
       "sourceBytes": 2261,
       "sourceSha256": "ad444e03551437cbcffe90e989f02ddfddad78982cfb98cdd3fed57b6d0b7589",
-      "publicBytes": 2094,
-      "publicSha256": "8e1b02780192e2712420d8c33c248d960392671cf60cdcb85602b09c3c0810cf",
+      "publicBytes": 2239,
+      "publicSha256": "1b509c0fc1e8972270e5d841ccf6eef994195004904991b1ea52caf211d20d03",
       "redactions": [
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/1_Set up job.txt",
-          "criterion": "windows_absolute",
-          "line": 18
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/1_Set up job.txt",
-          "criterion": "windows_absolute",
-          "line": 19
-        },
         {
           "location": "run-logs/Node 24 _ ubuntu-latest/1_Set up job.txt",
           "criterion": "uuid",
@@ -1830,49 +1628,9 @@
       "public": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
       "sourceBytes": 16454,
       "sourceSha256": "03858498e99a497e3179279af2c753db2319b33c6588b421b86aec45bce8eb9a",
-      "publicBytes": 15717,
-      "publicSha256": "5548a10b41328dfff96d2962486810bac1ea4979268bfb3afe81118d9669a49f",
+      "publicBytes": 15883,
+      "publicSha256": "2bd48b62543604923e3ee4f4d179e088cd414b8ea116ceb9e62fd9a9d5d4d121",
       "redactions": [
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 46
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 57
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 61
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 62
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 63
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 64
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 65
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 69
-        },
         {
           "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
           "criterion": "checkout_path",
@@ -1897,6 +1655,16 @@
           "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
           "criterion": "checkout_path",
           "line": 45
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 62
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 63
         },
         {
           "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
@@ -1972,78 +1740,43 @@
       "public": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
       "sourceBytes": 4334,
       "sourceSha256": "dd4a716ce3cafcbac3e8ca91eecbf7ea1150e2e331b44eb99edc62b91b60e60b",
-      "publicBytes": 3551,
-      "publicSha256": "21d10b05d87830c005cb73aa60434a2bfaec5aced2d4ce37cc568e6e053e1009",
+      "publicBytes": 3763,
+      "publicSha256": "68d99bb9c91346f457abd7304458cbd2e65e591710e73d20efecc87fc39a8831",
       "redactions": [
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 12
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 15
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 16
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 17
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 18
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 19
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 21
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 22
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 24
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 25
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 27
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 28
-        },
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 30
-        },
         {
           "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
           "criterion": "checkout_path",
           "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 15
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 16
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 19
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 21
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 22
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 24
         },
         {
           "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
@@ -2103,15 +1836,9 @@
       "public": "run-logs/Node 24 _ ubuntu-latest/43_Complete job.txt",
       "sourceBytes": 378,
       "sourceSha256": "090dedcdba33dcdfda7384d2874e50dcb1dfcbf94ca211da8b1d156feea5f088",
-      "publicBytes": 305,
-      "publicSha256": "9ab2071906a11b6b41eddffd9556ca36f2b25a9d786d25c4a9d784ada1070935",
-      "redactions": [
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/43_Complete job.txt",
-          "criterion": "windows_absolute",
-          "line": 2
-        }
-      ],
+      "publicBytes": 378,
+      "publicSha256": "090dedcdba33dcdfda7384d2874e50dcb1dfcbf94ca211da8b1d156feea5f088",
+      "redactions": [],
       "metadataProjection": false
     },
     {
@@ -2170,14 +1897,9 @@
       "public": "run-logs/Node 24 _ ubuntu-latest/6_Install locked dependencies.txt",
       "sourceBytes": 2961,
       "sourceSha256": "c9cff41543d3b1fdb998e39f9c075f91a53dc42480dfe106e3733647326d0d6e",
-      "publicBytes": 2875,
-      "publicSha256": "2f0e7a608e9d8a3fd2471f73c004670ccdcff18d85270579775c026f78f70396",
+      "publicBytes": 2908,
+      "publicSha256": "7827b7af9a7aba1d8761eb8464825651b678706e65fe1b4039ffca5294632f95",
       "redactions": [
-        {
-          "location": "run-logs/Node 24 _ ubuntu-latest/6_Install locked dependencies.txt",
-          "criterion": "windows_absolute",
-          "line": 12
-        },
         {
           "location": "run-logs/Node 24 _ ubuntu-latest/6_Install locked dependencies.txt",
           "criterion": "runner_home_path",
@@ -2620,19 +2342,9 @@
       "public": "run-logs/Node 24 _ windows-latest/1_Set up job.txt",
       "sourceBytes": 2354,
       "sourceSha256": "8eb19f2c98d6564aba21fb0d42cdec2e178e08bd7ccaf174dd7ce1d1809023a9",
-      "publicBytes": 2170,
-      "publicSha256": "feae2b681fe5c6eff20acbd59212d0147386aee1d0f975d09be7ef3e6ba6a480",
+      "publicBytes": 2332,
+      "publicSha256": "a825e880bee5a86df00f1503e575f53569c1d12d20f2e315b009d778614f49e6",
       "redactions": [
-        {
-          "location": "run-logs/Node 24 _ windows-latest/1_Set up job.txt",
-          "criterion": "windows_absolute",
-          "line": 18
-        },
-        {
-          "location": "run-logs/Node 24 _ windows-latest/1_Set up job.txt",
-          "criterion": "windows_absolute",
-          "line": 19
-        },
         {
           "location": "run-logs/Node 24 _ windows-latest/1_Set up job.txt",
           "criterion": "uuid",
@@ -2646,8 +2358,8 @@
       "public": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
       "sourceBytes": 16039,
       "sourceSha256": "79b17ac49cc7e6e9bd5f6a5bb582e3aeefcbfba0b0a636669409cb857fc16200",
-      "publicBytes": 15306,
-      "publicSha256": "85efd648dee078e8cc4763b1f3619b7f328beb82bdd8c4e6832caa772cf449ad",
+      "publicBytes": 15450,
+      "publicSha256": "fedc6e1ff3397176abf14febc0a4a1f9cfe17ea8286a9054e4261846ac1ff619",
       "redactions": [
         {
           "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
@@ -2821,36 +2533,6 @@
         },
         {
           "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 33
-        },
-        {
-          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 44
-        },
-        {
-          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 48
-        },
-        {
-          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 51
-        },
-        {
-          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 52
-        },
-        {
-          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 56
-        },
-        {
-          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
           "criterion": "uuid",
           "line": 24
         },
@@ -2903,8 +2585,8 @@
       "public": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
       "sourceBytes": 4567,
       "sourceSha256": "8422b1ddf4fe1700e40673d8d2bd533fb25c543697e8bcb3ed7db3fd341fa3ff",
-      "publicBytes": 3881,
-      "publicSha256": "3438d0dca34410e6111d43991cdbf435474b36e4356c4f69ac0bb8371b83456f",
+      "publicBytes": 4027,
+      "publicSha256": "d63f41dda68776df0bd7ef39149e25eda538275fae125bd21ebf2d510132b6e3",
       "redactions": [
         {
           "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
@@ -3043,41 +2725,6 @@
         },
         {
           "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 12
-        },
-        {
-          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 17
-        },
-        {
-          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 18
-        },
-        {
-          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 25
-        },
-        {
-          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 27
-        },
-        {
-          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 28
-        },
-        {
-          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
-          "criterion": "windows_absolute",
-          "line": 30
-        },
-        {
-          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
           "criterion": "uuid",
           "line": 4
         },
@@ -3114,15 +2761,9 @@
       "public": "run-logs/Node 24 _ windows-latest/43_Complete job.txt",
       "sourceBytes": 380,
       "sourceSha256": "4c2b7477310470f407e3a98d8b56b60fec7343b076c3ef89b8951128b01f517a",
-      "publicBytes": 307,
-      "publicSha256": "cbd14c97a87110da96d11c978d6c9e04012b4dc5f9797c55ca52e5df0070a38b",
-      "redactions": [
-        {
-          "location": "run-logs/Node 24 _ windows-latest/43_Complete job.txt",
-          "criterion": "windows_absolute",
-          "line": 2
-        }
-      ],
+      "publicBytes": 380,
+      "publicSha256": "4c2b7477310470f407e3a98d8b56b60fec7343b076c3ef89b8951128b01f517a",
+      "redactions": [],
       "metadataProjection": false
     },
     {
@@ -3181,8 +2822,8 @@
       "public": "run-logs/Node 24 _ windows-latest/6_Install locked dependencies.txt",
       "sourceBytes": 3028,
       "sourceSha256": "4d2210bf5d76c2c5ca137891d972fff1c46a67f38158374b905b2f722c5f7630",
-      "publicBytes": 2948,
-      "publicSha256": "08589a44265278e6d9ca0509532705a14d368eb72bea93a4933755af5b59a2e3",
+      "publicBytes": 2981,
+      "publicSha256": "81f7d0d113e6f3621219ce49ed28c11e038d8200a356e2099b06ee103e308240",
       "redactions": [
         {
           "location": "run-logs/Node 24 _ windows-latest/6_Install locked dependencies.txt",
@@ -3213,11 +2854,6 @@
           "location": "run-logs/Node 24 _ windows-latest/6_Install locked dependencies.txt",
           "criterion": "windows_git",
           "line": 3
-        },
-        {
-          "location": "run-logs/Node 24 _ windows-latest/6_Install locked dependencies.txt",
-          "criterion": "windows_absolute",
-          "line": 11
         },
         {
           "location": "run-logs/Node 24 _ windows-latest/6_Install locked dependencies.txt",
@@ -3366,8 +3002,8 @@
     "windows_temp": 20,
     "windows_toolcache": 112,
     "windows_git": 98,
-    "windows_absolute": 98,
-    "checkout_path": 14,
+    "windows_absolute": 10,
+    "checkout_path": 30,
     "runner_temp_path": 20,
     "runner_home_path": 2,
     "toolcache_path": 134,
@@ -3441,7 +3077,7 @@
     },
     {
       "criterion": "windows_absolute",
-      "pattern": "[A-Z]:[\\\\/][^\\s\\\"\\'<>;]+",
+      "pattern": "(?<![A-Za-z0-9_])[A-Z]:[\\\\/][^\\s\\\"\\'<>;]+",
       "replacement": "<runner-path>",
       "flags": 2
     },
@@ -3542,5 +3178,11 @@
     "No local product execution/source change/remote mutation."
   ],
   "productExecutions": 0,
-  "remoteMutations": 0
+  "remoteMutations": 0,
+  "forwardSanitizerCorrection": {
+    "scope": "Safe public HTTP(S) URLs and separately classified includeIf.gitdir: command keys; all original private path/credential/email/UUID/signed-query removals retained.",
+    "originalManifestSha256": "2b8fed04c1a8d465b7b7dfb2e8e2feac2b0bc0727dc6cf8062c3ce85f678955b",
+    "strictWindowsDrivePattern": "(?<![A-Za-z0-9_])[A-Z]:[\\\\/][^\\s\\\"\\'<>;]+",
+    "existingEpisodeClaimsUnchanged": true
+  }
 }

@@ -15,8 +15,8 @@
 2026-10-06T09:41:49.7785076Z ##[group]Runner Image
 2026-10-06T09:41:49.7785418Z Image: ubuntu-24.04
 2026-10-06T09:41:49.7785804Z Version: 20260927.320.1
-2026-10-06T09:41:49.7786549Z Included Software: http<runner-path>
-2026-10-06T09:41:49.7787507Z Image Release: http<runner-path>
+2026-10-06T09:41:49.7786549Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260927.320/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-06T09:41:49.7787507Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260927.320
 2026-10-06T09:41:49.7788058Z ##[endgroup]
 2026-10-06T09:41:49.7788750Z ##[group]GITHUB_TOKEN Permissions
 2026-10-06T09:41:49.7790131Z Contents: read
@@ -77,7 +77,7 @@
 2026-10-06T09:41:50.7261186Z hint:
 2026-10-06T09:41:50.7261732Z hint: Disable this message with "git config set advice.defaultBranchName false"
 2026-10-06T09:41:50.7262790Z Initialized empty Git repository in <repo>/.git/
-2026-10-06T09:41:50.7264885Z [command]/usr/bin/git remote add origin http<runner-path>
+2026-10-06T09:41:50.7264885Z [command]/usr/bin/git remote add origin https://github.com/jaeseongs95/agent-governance-suite
 2026-10-06T09:41:50.7266370Z ##[endgroup]
 2026-10-06T09:41:50.7267042Z ##[group]Disabling automatic garbage collection
 2026-10-06T09:41:50.7267604Z [command]/usr/bin/git config --local gc.auto 0
@@ -88,19 +88,19 @@
 2026-10-06T09:41:50.7327804Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
 2026-10-06T09:41:50.7665155Z Removing HTTP extra header
 2026-10-06T09:41:50.7670095Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
-2026-10-06T09:41:50.7701772Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.http<runner-path>' || :"
+2026-10-06T09:41:50.7701772Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
 2026-10-06T09:41:50.7900132Z Removing includeIf entries pointing to credentials config files
 2026-10-06T09:41:50.7904438Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
 2026-10-06T09:41:50.7940469Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
-2026-10-06T09:41:50.8133705Z [command]/usr/bin/git config --file <runner-temp>/git-credentials-<ephemeral-id>.config http.http<runner-path> AUTHORIZATION: basic ***
-2026-10-06T09:41:50.8582626Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> <runner-temp>/git-credentials-<ephemeral-id>.config
-2026-10-06T09:41:50.8673592Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> <runner-temp>/git-credentials-<ephemeral-id>.config
-2026-10-06T09:41:50.8767747Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> /github/runner_temp/git-credentials-<ephemeral-id>.config
-2026-10-06T09:41:50.8867659Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:41:50.8133705Z [command]/usr/bin/git config --file <runner-temp>/git-credentials-<ephemeral-id>.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-06T09:41:50.8582626Z [command]/usr/bin/git config --local includeIf.gitdir:<repo>/.git.path <runner-temp>/git-credentials-<ephemeral-id>.config
+2026-10-06T09:41:50.8673592Z [command]/usr/bin/git config --local includeIf.gitdir:<repo>/.git/worktrees/*.path <runner-temp>/git-credentials-<ephemeral-id>.config
+2026-10-06T09:41:50.8767747Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:41:50.8867659Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-<ephemeral-id>.config
 2026-10-06T09:41:50.9062311Z ##[endgroup]
 2026-10-06T09:41:50.9063017Z ##[group]Fetching the repository
 2026-10-06T09:41:50.9069100Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
-2026-10-06T09:41:53.5865229Z From http<runner-path>
+2026-10-06T09:41:53.5865229Z From https://github.com/jaeseongs95/agent-governance-suite
 2026-10-06T09:41:53.5866555Z  * [new branch]        chore/discussions-setup-20261002 -> origin/chore/discussions-setup-20261002
 2026-10-06T09:41:53.5867756Z  * [new branch]        claude/docs-host-attestation-drift -> origin/claude/docs-host-attestation-drift
 2026-10-06T09:41:53.5868967Z  * [new branch]        claude/skill-intake-common-vendor -> origin/claude/skill-intake-common-vendor
@@ -257,7 +257,7 @@
 2026-10-06T09:41:54.8707980Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
 2026-10-06T09:41:54.8708200Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
 2026-10-06T09:41:54.8708385Z ##[endgroup]
-2026-10-06T09:41:54.9721287Z ! Corepack is about to download http<runner-path>
+2026-10-06T09:41:54.9721287Z ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-11.19.0.tgz
 2026-10-06T09:41:56.1975824Z ? Verifying lockfile against supply-chain policies (267 entries)...
 2026-10-06T09:41:56.2035932Z Lockfile is up to date, resolution step is skipped
 2026-10-06T09:41:56.2751937Z Progress: resolved 1, reused 0, downloaded 0, added 0
@@ -367,26 +367,26 @@
 2026-10-06T09:42:06.2826216Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
 2026-10-06T09:42:06.3041070Z Removing HTTP extra header
 2026-10-06T09:42:06.3046594Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
-2026-10-06T09:42:06.3086952Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.http<runner-path>' || :"
+2026-10-06T09:42:06.3086952Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
 2026-10-06T09:42:06.3324849Z Removing includeIf entries pointing to credentials config files
 2026-10-06T09:42:06.3325441Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
-2026-10-06T09:42:06.3359606Z includeif.gitdi<runner-path>
-2026-10-06T09:42:06.3360285Z includeif.gitdi<runner-path>
-2026-10-06T09:42:06.3360881Z includeif.gitdi<runner-path>
-2026-10-06T09:42:06.3361652Z includeif.gitdi<runner-path>
-2026-10-06T09:42:06.3367846Z [command]/usr/bin/git config --local --get-all includeif.gitdi<runner-path>
+2026-10-06T09:42:06.3359606Z includeif.gitdir:<repo>/.git.path
+2026-10-06T09:42:06.3360285Z includeif.gitdir:<repo>/.git/worktrees/*.path
+2026-10-06T09:42:06.3360881Z includeif.gitdir:/github/workspace/.git.path
+2026-10-06T09:42:06.3361652Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-10-06T09:42:06.3367846Z [command]/usr/bin/git config --local --get-all includeif.gitdir:<repo>/.git.path
 2026-10-06T09:42:06.3393521Z <runner-temp>/git-credentials-<ephemeral-id>.config
-2026-10-06T09:42:06.3402571Z [command]/usr/bin/git config --local --unset includeif.gitdi<runner-path> \/home\/runner\/work\/_temp\/git\-credentials\-f4b33698\-aefb\-4d36\-a91f\-f8eaa22eef7e\.config
-2026-10-06T09:42:06.3436650Z [command]/usr/bin/git config --local --get-all includeif.gitdi<runner-path>
+2026-10-06T09:42:06.3402571Z [command]/usr/bin/git config --local --unset includeif.gitdir:<repo>/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-f4b33698\-aefb\-4d36\-a91f\-f8eaa22eef7e\.config
+2026-10-06T09:42:06.3436650Z [command]/usr/bin/git config --local --get-all includeif.gitdir:<repo>/.git/worktrees/*.path
 2026-10-06T09:42:06.3460894Z <runner-temp>/git-credentials-<ephemeral-id>.config
-2026-10-06T09:42:06.3469237Z [command]/usr/bin/git config --local --unset includeif.gitdi<runner-path> \/home\/runner\/work\/_temp\/git\-credentials\-f4b33698\-aefb\-4d36\-a91f\-f8eaa22eef7e\.config
-2026-10-06T09:42:06.3509077Z [command]/usr/bin/git config --local --get-all includeif.gitdi<runner-path>
+2026-10-06T09:42:06.3469237Z [command]/usr/bin/git config --local --unset includeif.gitdir:<repo>/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-f4b33698\-aefb\-4d36\-a91f\-f8eaa22eef7e\.config
+2026-10-06T09:42:06.3509077Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
 2026-10-06T09:42:06.3533035Z /github/runner_temp/git-credentials-<ephemeral-id>.config
-2026-10-06T09:42:06.3539045Z [command]/usr/bin/git config --local --unset includeif.gitdi<runner-path> \/github\/runner_temp\/git\-credentials\-f4b33698\-aefb\-4d36\-a91f\-f8eaa22eef7e\.config
-2026-10-06T09:42:06.3572478Z [command]/usr/bin/git config --local --get-all includeif.gitdi<runner-path>
+2026-10-06T09:42:06.3539045Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-f4b33698\-aefb\-4d36\-a91f\-f8eaa22eef7e\.config
+2026-10-06T09:42:06.3572478Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
 2026-10-06T09:42:06.3595704Z /github/runner_temp/git-credentials-<ephemeral-id>.config
-2026-10-06T09:42:06.3601606Z [command]/usr/bin/git config --local --unset includeif.gitdi<runner-path> \/github\/runner_temp\/git\-credentials\-f4b33698\-aefb\-4d36\-a91f\-f8eaa22eef7e\.config
+2026-10-06T09:42:06.3601606Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-f4b33698\-aefb\-4d36\-a91f\-f8eaa22eef7e\.config
 2026-10-06T09:42:06.3637001Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
 2026-10-06T09:42:06.3834768Z Removing credentials config '<runner-temp>/git-credentials-<ephemeral-id>.config'
 2026-10-06T09:42:06.3965602Z Cleaning up orphan processes
-2026-10-06T09:42:06.4171586Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/setup-node@v4, actions/upload-artifact@v4. For more information see: http<runner-path>
+2026-10-06T09:42:06.4171586Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/setup-node@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

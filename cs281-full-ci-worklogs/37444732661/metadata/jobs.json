@@ -212,7 +212,7 @@
           "completed_at": "2026-10-06T09:42:06Z"
         }
       ],
-      "html_url": "http<runner-path>",
+      "html_url": "https://github.com/jaeseongs95/agent-governance-suite/actions/runs/37444732661/job/112206712010",
       "labels": [
         "ubuntu-latest"
       ],
@@ -429,7 +429,7 @@
           "completed_at": "2026-10-06T09:42:44Z"
         }
       ],
-      "html_url": "http<runner-path>",
+      "html_url": "https://github.com/jaeseongs95/agent-governance-suite/actions/runs/37444732661/job/112206712117",
       "labels": [
         "windows-latest"
       ],

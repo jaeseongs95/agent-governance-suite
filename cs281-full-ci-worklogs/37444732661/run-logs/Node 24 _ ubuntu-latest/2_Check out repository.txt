@@ -43,7 +43,7 @@
 2026-10-06T09:41:50.7261183Z hint:
 2026-10-06T09:41:50.7261722Z hint: Disable this message with "git config set advice.defaultBranchName false"
 2026-10-06T09:41:50.7262786Z Initialized empty Git repository in <repo>/.git/
-2026-10-06T09:41:50.7264880Z [command]/usr/bin/git remote add origin http<runner-path>
+2026-10-06T09:41:50.7264880Z [command]/usr/bin/git remote add origin https://github.com/jaeseongs95/agent-governance-suite
 2026-10-06T09:41:50.7266366Z ##[endgroup]
 2026-10-06T09:41:50.7267039Z ##[group]Disabling automatic garbage collection
 2026-10-06T09:41:50.7267601Z [command]/usr/bin/git config --local gc.auto 0
@@ -54,19 +54,19 @@
 2026-10-06T09:41:50.7327772Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
 2026-10-06T09:41:50.7665108Z Removing HTTP extra header
 2026-10-06T09:41:50.7669717Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
-2026-10-06T09:41:50.7701746Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.http<runner-path>' || :"
+2026-10-06T09:41:50.7701746Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
 2026-10-06T09:41:50.7900081Z Removing includeIf entries pointing to credentials config files
 2026-10-06T09:41:50.7904431Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
 2026-10-06T09:41:50.7940440Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
-2026-10-06T09:41:50.8133674Z [command]/usr/bin/git config --file <runner-temp>/git-credentials-<ephemeral-id>.config http.http<runner-path> AUTHORIZATION: basic ***
-2026-10-06T09:41:50.8582521Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> <runner-temp>/git-credentials-<ephemeral-id>.config
-2026-10-06T09:41:50.8673558Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> <runner-temp>/git-credentials-<ephemeral-id>.config
-2026-10-06T09:41:50.8767721Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> /github/runner_temp/git-credentials-<ephemeral-id>.config
-2026-10-06T09:41:50.8867628Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:41:50.8133674Z [command]/usr/bin/git config --file <runner-temp>/git-credentials-<ephemeral-id>.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-06T09:41:50.8582521Z [command]/usr/bin/git config --local includeIf.gitdir:<repo>/.git.path <runner-temp>/git-credentials-<ephemeral-id>.config
+2026-10-06T09:41:50.8673558Z [command]/usr/bin/git config --local includeIf.gitdir:<repo>/.git/worktrees/*.path <runner-temp>/git-credentials-<ephemeral-id>.config
+2026-10-06T09:41:50.8767721Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:41:50.8867628Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-<ephemeral-id>.config
 2026-10-06T09:41:50.9062285Z ##[endgroup]
 2026-10-06T09:41:50.9063014Z ##[group]Fetching the repository
 2026-10-06T09:41:50.9069082Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
-2026-10-06T09:41:53.5865106Z From http<runner-path>
+2026-10-06T09:41:53.5865106Z From https://github.com/jaeseongs95/agent-governance-suite
 2026-10-06T09:41:53.5866545Z  * [new branch]        chore/discussions-setup-20261002 -> origin/chore/discussions-setup-20261002
 2026-10-06T09:41:53.5867752Z  * [new branch]        claude/docs-host-attestation-drift -> origin/claude/docs-host-attestation-drift
 2026-10-06T09:41:53.5868962Z  * [new branch]        claude/skill-intake-common-vendor -> origin/claude/skill-intake-common-vendor
