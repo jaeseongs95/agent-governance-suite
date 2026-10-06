@@ -1,0 +1,458 @@
+{
+  "schemaVersion": "1.0.0",
+  "artifactKind": "CiRunObservedResult.v1",
+  "run": {
+    "databaseId": 37420130492,
+    "workflow": "CI",
+    "workflowRunNumber": 132,
+    "event": "workflow_dispatch",
+    "status": "completed",
+    "conclusion": "success",
+    "headBranch": "codex/release-candidate-2.8.0",
+    "headSha": "b7341d3e6636b79217b1f3d37d7a5014fcbf47be",
+    "headTree": "5648f76558e923244cedf78a8263892d00df8299",
+    "createdAt": "2026-10-06T05:45:31Z",
+    "updatedAt": "2026-10-06T05:49:53Z",
+    "url": "https://github.com/jaeseongs95/agent-governance-suite/actions/runs/37420130492"
+  },
+  "jobs": [
+    {
+      "databaseId": 112127409201,
+      "name": "Node 24 / windows-latest",
+      "platform": "windows",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-06T05:45:35Z",
+      "completedAt": "2026-10-06T05:49:52Z",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/actions/runs/37420130492/job/112127409201",
+      "log": "CI37420130492-windows.public.log",
+      "steps": [
+        {
+          "number": 1,
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:45:36Z",
+          "completedAt": "2026-10-06T05:45:37Z"
+        },
+        {
+          "number": 2,
+          "name": "Check out repository",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:45:37Z",
+          "completedAt": "2026-10-06T05:45:44Z"
+        },
+        {
+          "number": 3,
+          "name": "Set up Node.js",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:45:44Z",
+          "completedAt": "2026-10-06T05:45:49Z"
+        },
+        {
+          "number": 4,
+          "name": "Set up Python",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:45:49Z",
+          "completedAt": "2026-10-06T05:45:50Z"
+        },
+        {
+          "number": 5,
+          "name": "Enable Corepack",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:45:50Z",
+          "completedAt": "2026-10-06T05:45:50Z"
+        },
+        {
+          "number": 6,
+          "name": "Install locked dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:45:50Z",
+          "completedAt": "2026-10-06T05:46:04Z"
+        },
+        {
+          "number": 7,
+          "name": "Verify committed runtime bundles",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:46:04Z",
+          "completedAt": "2026-10-06T05:46:06Z"
+        },
+        {
+          "number": 8,
+          "name": "Report Claude plugin drift",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:46:06Z",
+          "completedAt": "2026-10-06T05:46:07Z"
+        },
+        {
+          "number": 9,
+          "name": "Lint",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:46:07Z",
+          "completedAt": "2026-10-06T05:46:20Z"
+        },
+        {
+          "number": 10,
+          "name": "Verify release metadata",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:46:20Z",
+          "completedAt": "2026-10-06T05:46:21Z"
+        },
+        {
+          "number": 11,
+          "name": "Verify source lock",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:46:21Z",
+          "completedAt": "2026-10-06T05:46:23Z"
+        },
+        {
+          "number": 12,
+          "name": "Build",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:46:23Z",
+          "completedAt": "2026-10-06T05:46:29Z"
+        },
+        {
+          "number": 13,
+          "name": "Verify process identity probe",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:46:29Z",
+          "completedAt": "2026-10-06T05:46:33Z"
+        },
+        {
+          "number": 14,
+          "name": "Test",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:46:33Z",
+          "completedAt": "2026-10-06T05:49:24Z"
+        },
+        {
+          "number": 15,
+          "name": "Verify installed runtime",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:49:24Z",
+          "completedAt": "2026-10-06T05:49:34Z"
+        },
+        {
+          "number": 16,
+          "name": "Validate plugin and skills",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:49:34Z",
+          "completedAt": "2026-10-06T05:49:44Z"
+        },
+        {
+          "number": 17,
+          "name": "Check pull request whitespace",
+          "status": "completed",
+          "conclusion": "skipped",
+          "startedAt": "2026-10-06T05:49:44Z",
+          "completedAt": "2026-10-06T05:49:44Z"
+        },
+        {
+          "number": 18,
+          "name": "Check pushed commit whitespace",
+          "status": "completed",
+          "conclusion": "skipped",
+          "startedAt": "2026-10-06T05:49:44Z",
+          "completedAt": "2026-10-06T05:49:44Z"
+        },
+        {
+          "number": 19,
+          "name": "Check manually dispatched commit whitespace",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:49:44Z",
+          "completedAt": "2026-10-06T05:49:44Z"
+        },
+        {
+          "number": 36,
+          "name": "Post Set up Python",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:49:44Z",
+          "completedAt": "2026-10-06T05:49:44Z"
+        },
+        {
+          "number": 37,
+          "name": "Post Set up Node.js",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:49:44Z",
+          "completedAt": "2026-10-06T05:49:44Z"
+        },
+        {
+          "number": 38,
+          "name": "Post Check out repository",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:49:44Z",
+          "completedAt": "2026-10-06T05:49:48Z"
+        },
+        {
+          "number": 39,
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:49:48Z",
+          "completedAt": "2026-10-06T05:49:48Z"
+        }
+      ]
+    },
+    {
+      "databaseId": 112127409391,
+      "name": "Node 24 / ubuntu-latest",
+      "platform": "ubuntu",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-06T05:45:35Z",
+      "completedAt": "2026-10-06T05:47:54Z",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/actions/runs/37420130492/job/112127409391",
+      "log": "CI37420130492-ubuntu.public.log",
+      "steps": [
+        {
+          "number": 1,
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:45:36Z",
+          "completedAt": "2026-10-06T05:45:37Z"
+        },
+        {
+          "number": 2,
+          "name": "Check out repository",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:45:37Z",
+          "completedAt": "2026-10-06T05:45:40Z"
+        },
+        {
+          "number": 3,
+          "name": "Set up Node.js",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:45:40Z",
+          "completedAt": "2026-10-06T05:45:41Z"
+        },
+        {
+          "number": 4,
+          "name": "Set up Python",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:45:41Z",
+          "completedAt": "2026-10-06T05:45:41Z"
+        },
+        {
+          "number": 5,
+          "name": "Enable Corepack",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:45:41Z",
+          "completedAt": "2026-10-06T05:45:41Z"
+        },
+        {
+          "number": 6,
+          "name": "Install locked dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:45:41Z",
+          "completedAt": "2026-10-06T05:45:47Z"
+        },
+        {
+          "number": 7,
+          "name": "Verify committed runtime bundles",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:45:47Z",
+          "completedAt": "2026-10-06T05:45:48Z"
+        },
+        {
+          "number": 8,
+          "name": "Report Claude plugin drift",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:45:48Z",
+          "completedAt": "2026-10-06T05:45:49Z"
+        },
+        {
+          "number": 9,
+          "name": "Lint",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:45:49Z",
+          "completedAt": "2026-10-06T05:45:57Z"
+        },
+        {
+          "number": 10,
+          "name": "Verify release metadata",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:45:57Z",
+          "completedAt": "2026-10-06T05:45:58Z"
+        },
+        {
+          "number": 11,
+          "name": "Verify source lock",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:45:58Z",
+          "completedAt": "2026-10-06T05:46:00Z"
+        },
+        {
+          "number": 12,
+          "name": "Build",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:46:00Z",
+          "completedAt": "2026-10-06T05:46:05Z"
+        },
+        {
+          "number": 13,
+          "name": "Verify process identity probe",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:46:05Z",
+          "completedAt": "2026-10-06T05:46:06Z"
+        },
+        {
+          "number": 14,
+          "name": "Test",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:46:06Z",
+          "completedAt": "2026-10-06T05:47:38Z"
+        },
+        {
+          "number": 15,
+          "name": "Verify installed runtime",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:47:38Z",
+          "completedAt": "2026-10-06T05:47:45Z"
+        },
+        {
+          "number": 16,
+          "name": "Validate plugin and skills",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:47:45Z",
+          "completedAt": "2026-10-06T05:47:51Z"
+        },
+        {
+          "number": 17,
+          "name": "Check pull request whitespace",
+          "status": "completed",
+          "conclusion": "skipped",
+          "startedAt": "2026-10-06T05:47:51Z",
+          "completedAt": "2026-10-06T05:47:51Z"
+        },
+        {
+          "number": 18,
+          "name": "Check pushed commit whitespace",
+          "status": "completed",
+          "conclusion": "skipped",
+          "startedAt": "2026-10-06T05:47:51Z",
+          "completedAt": "2026-10-06T05:47:51Z"
+        },
+        {
+          "number": 19,
+          "name": "Check manually dispatched commit whitespace",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:47:51Z",
+          "completedAt": "2026-10-06T05:47:51Z"
+        },
+        {
+          "number": 36,
+          "name": "Post Set up Python",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:47:51Z",
+          "completedAt": "2026-10-06T05:47:51Z"
+        },
+        {
+          "number": 37,
+          "name": "Post Set up Node.js",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:47:51Z",
+          "completedAt": "2026-10-06T05:47:51Z"
+        },
+        {
+          "number": 38,
+          "name": "Post Check out repository",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:47:51Z",
+          "completedAt": "2026-10-06T05:47:52Z"
+        },
+        {
+          "number": 39,
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-06T05:47:52Z",
+          "completedAt": "2026-10-06T05:47:52Z"
+        }
+      ]
+    }
+  ],
+  "testSummaryPerJob": {
+    "112127409201": {
+      "testFiles": {
+        "passed": 67,
+        "failed": 0,
+        "skipped": 1,
+        "total": 68
+      },
+      "tests": {
+        "passed": 916,
+        "failed": 0,
+        "skipped": 5,
+        "total": 921
+      }
+    },
+    "112127409391": {
+      "testFiles": {
+        "passed": 67,
+        "failed": 0,
+        "skipped": 1,
+        "total": 68
+      },
+      "tests": {
+        "passed": 916,
+        "failed": 0,
+        "skipped": 5,
+        "total": 921
+      }
+    }
+  },
+  "summary": {
+    "jobCount": 2,
+    "successfulJobs": 2,
+    "failedJobs": 0,
+    "matrix": [
+      "windows-latest / Node 24",
+      "ubuntu-latest / Node 24"
+    ]
+  },
+  "interpretation": {
+    "workflowConclusionOnly": true,
+    "independentAuditVerdict": null,
+    "productReleaseVerdict": null
+  }
+}

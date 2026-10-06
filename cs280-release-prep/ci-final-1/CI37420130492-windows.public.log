@@ -1,0 +1,1024 @@
+Node 24 / windows-latest	UNKNOWN STEP	﻿2026-10-06T05:45:36.5175172Z Current runner version: '2.337.0'
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5200809Z ##[group]Runner Image Provisioner
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5202199Z Hosted Compute Agent
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5202877Z Version: 20260901.588
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5203495Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5204230Z Build Date: 2026-09-01T19:56:44Z
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5204967Z Worker ID: {<RUNNER_ID>}
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5205659Z Azure Region: westus
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5206205Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5207734Z ##[group]Operating System
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5208462Z Microsoft Windows Server 2025
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5209216Z 10.0.26100
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5209722Z Datacenter
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5210197Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5210739Z ##[group]Runner Image
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5211303Z Image: windows-2025-vs2026
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5211859Z Version: 20260925.250.1
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5213302Z Included Software: https://github.com/actions/runner-images/blob/win25-vs2026/20260925.250/images/windows/Windows2025-VS2026-Readme.md
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5214933Z Image Release: https://github.com/actions/runner-images/releases/tag/win25-vs2026%2F20260925.250
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5215894Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5216955Z ##[group]GITHUB_TOKEN Permissions
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5218988Z Contents: read
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5219595Z Metadata: read
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5220149Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5222745Z Secret source: Actions
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5223734Z Cache mode: write
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5224574Z Prepare workflow directory
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5697468Z Prepare all required actions
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.5751028Z Getting action download info
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:36.9526091Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.0828918Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.2491912Z Download action repository 'actions/setup-python@v7' (SHA:5fda3b95a4ea91299a34e894583c3862153e4b97)
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.5439041Z Complete job name: Node 24 / windows-latest
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.7070759Z ##[group]Run actions/checkout@v7
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.7072141Z with:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.7072891Z   fetch-depth: 0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.7073992Z   repository: jaeseongs95/agent-governance-suite
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.7083413Z   token: ***
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.7084170Z   ssh-strict: true
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.7084916Z   ssh-user: git
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.7085663Z   persist-credentials: true
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.7086507Z   clean: true
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.7087263Z   sparse-checkout-cone-mode: true
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.7088171Z   fetch-tags: false
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.7088934Z   show-progress: true
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.7089687Z   lfs: false
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.7090375Z   submodules: false
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.7091172Z   set-safe-directory: true
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.7092034Z   allow-unsafe-pr-checkout: false
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.7093188Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.8582314Z Syncing repository: jaeseongs95/agent-governance-suite
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.8584979Z ##[group]Getting Git version info
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.8586309Z Working directory is '<RUNNER_WORK>\agent-governance-suite\agent-governance-suite'
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:37.9508885Z [command]"C:\Program Files\Git\bin\git.exe" version
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.2813144Z git version 2.55.0.windows.5
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.2864886Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.2881141Z Temporarily overriding HOME='<RUNNER_WORK>\_temp\<RUNNER_ID>' before making global git config changes
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.2883490Z Adding repository directory to the temporary git global config as a safe directory
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.2891973Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory <RUNNER_WORK>\agent-governance-suite\agent-governance-suite
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.3483156Z Deleting the contents of '<RUNNER_WORK>\agent-governance-suite\agent-governance-suite'
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.3488218Z ##[group]Determining repository object format
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.3493654Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.3495967Z ##[group]Initializing the repository
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.3501466Z [command]"C:\Program Files\Git\bin\git.exe" init <RUNNER_WORK>\agent-governance-suite\agent-governance-suite
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.4301354Z Initialized empty Git repository in <RUNNER_WORK>/agent-governance-suite/agent-governance-suite/.git/
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.4348898Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/jaeseongs95/agent-governance-suite
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.4934204Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.4935558Z ##[group]Disabling automatic garbage collection
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.4943686Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.5235002Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.5236365Z ##[group]Setting up auth
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.5237547Z Removing SSH command configuration
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.5245089Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:38.5535158Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:39.9080879Z Removing HTTP extra header
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:39.9091634Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:39.9389932Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:40.5182084Z Removing includeIf entries pointing to credentials config files
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:40.5192227Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:40.5488177Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:41.0923679Z [command]"C:\Program Files\Git\bin\git.exe" config --file <RUNNER_WORK>\_temp\git-credentials-<RUNNER_ID>.config http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:41.1235714Z [command]"C:\Program Files\Git\bin\git.exe" config --local includeIf.gitdir:<RUNNER_WORK>/agent-governance-suite/agent-governance-suite/.git.path <RUNNER_WORK>\_temp\git-credentials-<RUNNER_ID>.config
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:41.1534928Z [command]"C:\Program Files\Git\bin\git.exe" config --local includeIf.gitdir:<RUNNER_WORK>/agent-governance-suite/agent-governance-suite/.git/worktrees/*.path <RUNNER_WORK>\_temp\git-credentials-<RUNNER_ID>.config
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:41.1911215Z [command]"C:\Program Files\Git\bin\git.exe" config --local includeIf.gitdir:<WORKSPACE>/.git.path <RUNNER_TEMP>/git-credentials-<RUNNER_ID>.config
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:41.2231731Z [command]"C:\Program Files\Git\bin\git.exe" config --local includeIf.gitdir:<WORKSPACE>/.git/worktrees/*.path <RUNNER_TEMP>/git-credentials-<RUNNER_ID>.config
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:41.2528755Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:41.2529424Z ##[group]Fetching the repository
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:41.2541716Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.0962063Z From https://github.com/jaeseongs95/agent-governance-suite
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.0964407Z  * [new branch]        chore/discussions-setup-20261002 -> origin/chore/discussions-setup-20261002
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.0965676Z  * [new branch]        claude/docs-host-attestation-drift -> origin/claude/docs-host-attestation-drift
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.0967259Z  * [new branch]        claude/skill-intake-common-vendor -> origin/claude/skill-intake-common-vendor
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.0969822Z  * [new branch]        claude/v273-evidence-windows-20260928T173839Z -> origin/claude/v273-evidence-windows-20260928T173839Z
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.0971002Z  * [new branch]        claude/v273-inputs     -> origin/claude/v273-inputs
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.0971518Z  * [new branch]        claude/v273-intake-src -> origin/claude/v273-intake-src
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.0972195Z  * [new branch]        claude/v273-msgqueue-retention-analysis-vmzcqs -> origin/claude/v273-msgqueue-retention-analysis-vmzcqs
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.0972920Z  * [new branch]        claude/v276-presence-deadline -> origin/claude/v276-presence-deadline
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.0973456Z  * [new branch]        claude/v277-utf8-framing -> origin/claude/v277-utf8-framing
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.0974047Z  * [new branch]        claude/v3x-v06-b3-linux-closure -> origin/claude/v3x-v06-b3-linux-closure
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.0974567Z  * [new branch]        claude/v3x-v06-b3b-r1  -> origin/claude/v3x-v06-b3b-r1
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.0975080Z  * [new branch]        codex/dot-w05-source-20261002 -> origin/codex/dot-w05-source-20261002
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.0975825Z  * [new branch]        codex/release-candidate-2.8.0 -> origin/codex/release-candidate-2.8.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.0977218Z  * [new branch]        codex/results-ags-f06-f07-r66-20261001 -> origin/codex/results-ags-f06-f07-r66-20261001
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.0978018Z  * [new branch]        codex/v260-semantic-decision-layer -> origin/codex/v260-semantic-decision-layer
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.0979030Z  * [new branch]        codex/v272-skill-intake-port -> origin/codex/v272-skill-intake-port
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.0979636Z  * [new branch]        codex/v3x-w05-r3-messaging-parity -> origin/codex/v3x-w05-r3-messaging-parity
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1052266Z  * [new branch]        codex/v3x-w05-r3-noreply-transport -> origin/codex/v3x-w05-r3-noreply-transport
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1053531Z  * [new branch]        codex/w05-f1-cloud-inputs-20261003 -> origin/codex/w05-f1-cloud-inputs-20261003
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1055790Z  * [new branch]        dot/ags-3x-results-20261002 -> origin/dot/ags-3x-results-20261002
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1056919Z  * [new branch]        dot/ags-b14-decision-20261002 -> origin/dot/ags-b14-decision-20261002
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1058004Z  * [new branch]        dot/ags-g18-reproduction-20261002 -> origin/dot/ags-g18-reproduction-20261002
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1058972Z  * [new branch]        dot/ags-w05-evidence-20261002 -> origin/dot/ags-w05-evidence-20261002
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1059941Z  * [new branch]        dot/ags-w06w07-evidence-20261002 -> origin/dot/ags-w06w07-evidence-20261002
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1060789Z  * [new branch]        evidence               -> origin/evidence
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1061389Z  * [new branch]        main                   -> origin/main
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1061930Z  * [new tag]           v0.1.0                 -> v0.1.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1062451Z  * [new tag]           v0.2.0                 -> v0.2.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1063072Z  * [new tag]           v1.0.0                 -> v1.0.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1063459Z  * [new tag]           v1.0.1                 -> v1.0.1
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1063756Z  * [new tag]           v1.0.2                 -> v1.0.2
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1064048Z  * [new tag]           v1.0.3                 -> v1.0.3
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1064363Z  * [new tag]           v1.0.4                 -> v1.0.4
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1064896Z  * [new tag]           v1.0.5                 -> v1.0.5
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1065418Z  * [new tag]           v1.1.0                 -> v1.1.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1065967Z  * [new tag]           v1.10.0                -> v1.10.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1066511Z  * [new tag]           v1.11.0                -> v1.11.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1067120Z  * [new tag]           v1.12.0                -> v1.12.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1067446Z  * [new tag]           v1.13.0                -> v1.13.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1067735Z  * [new tag]           v1.14.0                -> v1.14.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1068272Z  * [new tag]           v1.14.1                -> v1.14.1
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1068570Z  * [new tag]           v1.15.0                -> v1.15.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1068860Z  * [new tag]           v1.15.1                -> v1.15.1
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1069147Z  * [new tag]           v1.16.0                -> v1.16.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1069439Z  * [new tag]           v1.16.1                -> v1.16.1
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1070111Z  * [new tag]           v1.16.2                -> v1.16.2
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1070414Z  * [new tag]           v1.17.0                -> v1.17.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1070705Z  * [new tag]           v1.18.0                -> v1.18.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1070988Z  * [new tag]           v1.19.0                -> v1.19.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1071271Z  * [new tag]           v1.19.1                -> v1.19.1
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1071550Z  * [new tag]           v1.2.0                 -> v1.2.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1071828Z  * [new tag]           v1.20.0                -> v1.20.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1072118Z  * [new tag]           v1.20.1                -> v1.20.1
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1072421Z  * [new tag]           v1.20.2                -> v1.20.2
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1072705Z  * [new tag]           v1.20.3                -> v1.20.3
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1072983Z  * [new tag]           v1.21.0                -> v1.21.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1073272Z  * [new tag]           v1.3.0                 -> v1.3.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1073561Z  * [new tag]           v1.4.0                 -> v1.4.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1073848Z  * [new tag]           v1.4.1                 -> v1.4.1
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1074127Z  * [new tag]           v1.4.2                 -> v1.4.2
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1074406Z  * [new tag]           v1.4.3                 -> v1.4.3
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1074687Z  * [new tag]           v1.5.0                 -> v1.5.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1074983Z  * [new tag]           v1.6.0                 -> v1.6.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1075265Z  * [new tag]           v1.7.0                 -> v1.7.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1075556Z  * [new tag]           v1.8.0                 -> v1.8.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1075952Z  * [new tag]           v1.9.0                 -> v1.9.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1076253Z  * [new tag]           v2.0.0                 -> v2.0.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1076556Z  * [new tag]           v2.1.0                 -> v2.1.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1076844Z  * [new tag]           v2.1.1                 -> v2.1.1
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1077126Z  * [new tag]           v2.1.2                 -> v2.1.2
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1077410Z  * [new tag]           v2.2.0                 -> v2.2.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1077698Z  * [new tag]           v2.2.1                 -> v2.2.1
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1077992Z  * [new tag]           v2.2.2                 -> v2.2.2
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1078278Z  * [new tag]           v2.2.3                 -> v2.2.3
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1078605Z  * [new tag]           v2.2.4                 -> v2.2.4
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1079160Z  * [new tag]           v2.2.5                 -> v2.2.5
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1079475Z  * [new tag]           v2.2.6                 -> v2.2.6
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1079779Z  * [new tag]           v2.3.0                 -> v2.3.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1080073Z  * [new tag]           v2.4.0                 -> v2.4.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1080368Z  * [new tag]           v2.5.0                 -> v2.5.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1080651Z  * [new tag]           v2.6.0                 -> v2.6.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1080937Z  * [new tag]           v2.7.0                 -> v2.7.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1081221Z  * [new tag]           v2.7.1                 -> v2.7.1
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1081507Z  * [new tag]           v2.7.2                 -> v2.7.2
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1081792Z  * [new tag]           v2.7.3                 -> v2.7.3
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1082073Z  * [new tag]           v2.7.4                 -> v2.7.4
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1082354Z  * [new tag]           v2.7.5                 -> v2.7.5
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1082638Z  * [new tag]           v2.7.6                 -> v2.7.6
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1083064Z  * [new tag]           v2.7.7                 -> v2.7.7
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1084484Z [command]"C:\Program Files\Git\bin\git.exe" branch --list --remote origin/codex/release-candidate-2.8.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1429534Z   origin/codex/release-candidate-2.8.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1473378Z [command]"C:\Program Files\Git\bin\git.exe" rev-parse refs/remotes/origin/codex/release-candidate-2.8.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1739910Z b7341d3e6636b79217b1f3d37d7a5014fcbf47be
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1778313Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1778912Z ##[group]Determining the checkout info
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1779650Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.1788407Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.2241377Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.2539067Z ##[group]Checking out the ref
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.2547093Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force -B codex/release-candidate-2.8.0 refs/remotes/origin/codex/release-candidate-2.8.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.7162217Z Switched to a new branch 'codex/release-candidate-2.8.0'
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.7226016Z branch 'codex/release-candidate-2.8.0' set up to track 'origin/codex/release-candidate-2.8.0'.
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.7289432Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.7738745Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.8011432Z b7341d3e6636b79217b1f3d37d7a5014fcbf47be
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.8475882Z ##[group]Run actions/setup-node@v4
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.8476219Z with:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.8476414Z   node-version: 24
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.8476626Z   always-auth: false
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.8476830Z   check-latest: false
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.8479183Z   token: ***
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:44.8479451Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:45.0307283Z Found in cache @ <HOSTED_TOOLCACHE>\windows\node\24.21.0\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:45.0315053Z (node:1060) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:45.0316081Z (Use `node --trace-deprecation ...` to show where the warning was created)
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:45.0320037Z ##[group]Environment details
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:49.7572042Z node: v24.21.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:49.7572418Z npm: 11.19.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:49.7572720Z yarn: 1.22.22
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:49.7573490Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:49.7908092Z ##[group]Run actions/setup-python@v7
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:49.7908429Z with:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:49.7908631Z   python-version: 3.12
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:49.7908850Z   check-latest: false
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:49.7911192Z   token: ***
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:49.7911400Z   update-environment: true
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:49.7911638Z   allow-prereleases: false
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:49.7911854Z   freethreaded: false
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:49.7912061Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:49.9419735Z ##[group]Installed versions
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.0053736Z Successfully set up CPython (3.12.10)
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.0054274Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.0332258Z ##[group]Run corepack enable
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.0332628Z ^[[36;1mcorepack enable^[[0m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.0357368Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.0357791Z env:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.0358079Z   pythonLocation: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.0358567Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64/lib/pkgconfig
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.0359048Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.0359497Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.0359935Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.0360344Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.5242897Z ##[group]Run pnpm install --frozen-lockfile
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.5243353Z ^[[36;1mpnpm install --frozen-lockfile^[[0m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.5261892Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.5262302Z env:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.5262585Z   pythonLocation: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.5263511Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64/lib/pkgconfig
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.5263994Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.5264417Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.5264859Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.5265192Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:50.7667499Z ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-11.19.0.tgz
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:59.9845907Z ? Verifying lockfile against supply-chain policies (267 entries)...
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:45:59.9967797Z Lockfile is up to date, resolution step is skipped
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:00.1382632Z Progress: resolved 1, reused 0, downloaded 0, added 0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:00.2096831Z Packages: +217
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:00.2099487Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:01.1519443Z Progress: resolved 217, reused 0, downloaded 15, added 0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:01.4584779Z Packages are hard linked from the content-addressable store to the virtual store.
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:01.4586558Z   Content-addressable store is at: <PNPM_STORE>\v11
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:01.4597968Z   Virtual store is at:             node_modules/.pnpm
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:02.1641316Z Progress: resolved 217, reused 0, downloaded 79, added 4
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:03.2020508Z Progress: resolved 217, reused 0, downloaded 217, added 21
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:03.6230627Z ✓ Lockfile passes supply-chain policies (267 entries in 3.6s)
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:03.7784722Z Progress: resolved 217, reused 0, downloaded 217, added 217, done
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.0152252Z .../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.1718179Z .../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.5276473Z 
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.5276963Z dependencies:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.5277305Z + @modelcontextprotocol/sdk 1.30.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.5277589Z + ajv 8.20.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.5277798Z + ajv-formats 3.0.1
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.5278003Z + zod 4.5.4
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.5278104Z 
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.5278197Z devDependencies:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.5278722Z + @eslint/js 10.0.1
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.5279041Z + @types/node 26.5.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.5279341Z + esbuild 0.28.2
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.5279624Z + eslint 10.10.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.5279918Z + tsx 4.23.13
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.5280228Z + typescript 6.0.2
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.5280592Z + typescript-eslint 8.70.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.5281025Z + vitest 5.0.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.5281211Z 
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.5597827Z Done in 5.5s using pnpm v11.19.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.6252427Z ##[group]Run pnpm bundle:check
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.6252776Z ^[[36;1mpnpm bundle:check^[[0m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.6270434Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.6270823Z env:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.6271090Z   pythonLocation: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.6271547Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64/lib/pkgconfig
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.6272001Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.6272419Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.6272811Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:04.6273122Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:05.8485171Z Already up to date
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:05.8493584Z Done in 463ms using pnpm v11.19.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:05.8663273Z $ node scripts/check-bundle.mjs
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:06.3143315Z ##[group]Run pnpm claude:drift
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:06.3143664Z ^[[36;1mpnpm claude:drift^[[0m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:06.3161678Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:06.3162249Z env:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:06.3162526Z   pythonLocation: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:06.3162979Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64/lib/pkgconfig
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:06.3163428Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:06.3163823Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:06.3164221Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:06.3164538Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:07.5251363Z Already up to date
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:07.5259443Z Done in 460ms using pnpm v11.19.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:07.5433418Z $ node scripts/build-claude-plugin.mjs --drift
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:07.9201345Z claude-plugin: fresh
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:07.9673300Z ##[group]Run pnpm lint
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:07.9673608Z ^[[36;1mpnpm lint^[[0m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:07.9691165Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:07.9691567Z env:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:07.9691827Z   pythonLocation: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:07.9692273Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64/lib/pkgconfig
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:07.9692711Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:07.9693106Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:07.9693494Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:07.9693806Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:09.1904459Z Already up to date
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:09.1914097Z Done in 456ms using pnpm v11.19.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:09.2084754Z $ eslint . && node scripts/validate-repository.mjs
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:20.4879168Z repository: valid
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:20.5355404Z ##[group]Run pnpm release:check
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:20.5355765Z ^[[36;1mpnpm release:check^[[0m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:20.5372753Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:20.5373177Z env:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:20.5373449Z   pythonLocation: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:20.5373913Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64/lib/pkgconfig
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:20.5374367Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:20.5374764Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:20.5375152Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:20.5375463Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:21.7679556Z Already up to date
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:21.7687909Z Done in 466ms using pnpm v11.19.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:21.7859292Z $ node scripts/sync-release-metadata.mjs
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:21.8557648Z release metadata is synchronized
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:21.9008910Z ##[group]Run pnpm source:check
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:21.9009270Z ^[[36;1mpnpm source:check^[[0m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:21.9027115Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:21.9027528Z env:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:21.9027800Z   pythonLocation: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:21.9028257Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64/lib/pkgconfig
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:21.9028709Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:21.9029221Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:21.9029625Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:21.9029944Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:23.1414354Z Already up to date
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:23.1423855Z Done in 480ms using pnpm v11.19.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:23.1615352Z $ node scripts/check-source-lock.mjs
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:23.3754993Z source lock is consistent
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:23.4240738Z ##[group]Run pnpm build
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:23.4241369Z ^[[36;1mpnpm build^[[0m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:23.4258404Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:23.4258812Z env:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:23.4259105Z   pythonLocation: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:23.4259577Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64/lib/pkgconfig
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:23.4260035Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:23.4260437Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:23.4260843Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:23.4261162Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:24.6463264Z Already up to date
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:24.6471789Z Done in 452ms using pnpm v11.19.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:24.6642153Z $ tsc --noEmit && node scripts/build.mjs
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:29.6616429Z ##[group]Run pnpm process-identity:check
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:29.6616837Z ^[[36;1mpnpm process-identity:check^[[0m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:29.6634795Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:29.6635214Z env:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:29.6635482Z   pythonLocation: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:29.6635944Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64/lib/pkgconfig
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:29.6636406Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:29.6636823Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:29.6637223Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:29.6637539Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:30.8794165Z Already up to date
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:30.8802258Z Done in 465ms using pnpm v11.19.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:30.8971346Z $ tsx scripts/check-process-identity.ts
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:33.4377533Z process identity: ready (win32)
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:33.4980274Z ##[group]Run pnpm test
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:33.4980590Z ^[[36;1mpnpm test^[[0m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:33.4998581Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:33.4998996Z env:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:33.4999264Z   pythonLocation: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:33.4999793Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64/lib/pkgconfig
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:33.5000240Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:33.5000643Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:33.5001044Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:33.5001364Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:34.7146200Z Already up to date
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:34.7153958Z Done in 462ms using pnpm v11.19.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:34.7321378Z $ node scripts/build.mjs && vitest run
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:35.4901898Z 
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:35.4906888Z ^[[1m^[[30m^[[46m RUN ^[[49m^[[39m^[[22m ^[[36mv5.0.0 ^[[39m^[[90m<RUNNER_WORK>/agent-governance-suite/agent-governance-suite^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:35.4907652Z 
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:53.6239572Z  ^[[32m✓^[[39m tests/mcp/workflow-service.test.ts ^[[2m(^[[22m^[[2m40 tests^[[22m^[[2m)^[[22m^[[33m 17317^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:53.6240812Z    ^[[32m✓^[[39m SqliteWorkflowStore ^[[2m(4)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:53.6242147Z      ^[[33m^[[2m✓^[[22m^[[39m migrates a v1 database without losing workflow state^[[33m 409^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:53.6243560Z      ^[[33m^[[2m✓^[[22m^[[39m migrates an active v2 workflow to v5 and preserves receipt updates^[[33m 1315^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:53.6244591Z    ^[[32m✓^[[39m WorkflowService ^[[2m(36)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:53.6245687Z      ^[[33m^[[2m✓^[[22m^[[39m persists runs, signing keys, revisions, and run sequences in SQLite^[[33m 809^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:53.6247134Z      ^[[33m^[[2m✓^[[22m^[[39m rejects stale, replayed, and cross-stage trusted observations^[[33m 626^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:53.6248821Z      ^[[33m^[[2m✓^[[22m^[[39m observes a failing stage without holding it to the assurance floor^[[33m 881^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:53.6250625Z      ^[[33m^[[2m✓^[[22m^[[39m still holds a passing stage to the assurance floor^[[33m 318^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:53.6252030Z      ^[[33m^[[2m✓^[[22m^[[39m persists trusted observation claims across service restart^[[33m 453^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:53.6253462Z      ^[[33m^[[2m✓^[[22m^[[39m rejects non-canonical plan integrity token spellings^[[33m 333^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:53.6255190Z      ^[[33m^[[2m✓^[[22m^[[39m binds execution requirements and rejects missing or under-provisioned stage execution^[[33m 323^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:53.6256988Z      ^[[33m^[[2m✓^[[22m^[[39m rejects forged, modified, and foreign-process plans without creating a run^[[33m 364^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:53.6258864Z      ^[[33m^[[2m✓^[[22m^[[39m requires a PASS verdict and an auditor independent from implementation actors^[[33m 364^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:46:53.6260534Z      ^[[33m^[[2m✓^[[22m^[[39m rejects every canonical invalid DecisionRecord at the MCP gate^[[33m 5471^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6303542Z  ^[[32m✓^[[39m tests/session-messaging/session-message.test.ts ^[[2m(^[[22m^[[2m73 tests^[[22m^[[2m)^[[22m^[[33m 33884^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6305239Z    ^[[32m✓^[[39m session message spool ^[[2m(17)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6306990Z      ^[[33m^[[2m✓^[[22m^[[39m allows only one unconsumed wake and suppresses wakes during a live claim^[[33m 511^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6309678Z      ^[[33m^[[2m✓^[[22m^[[39m locks claim selection before a competing connection can reserve a wake^[[33m 318^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6311210Z      ^[[33m^[[2m✓^[[22m^[[39m caps the unacknowledged spool and expires messages^[[33m 583^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6313370Z      ^[[33m^[[2m✓^[[22m^[[39m atomically verifies a session-bound wake before claiming and rejects reuse or mismatch^[[33m 344^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6317791Z      ^[[33m^[[2m✓^[[22m^[[39m allows one wake claim across two concurrent SQLite connections^[[33m 770^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6319581Z      ^[[33m^[[2m✓^[[22m^[[39m migrates legacy messages without inventing unknown first-delivery evidence^[[33m 357^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6321055Z    ^[[32m✓^[[39m TLS 1.3 broker and vendor-neutral adapter ^[[2m(54)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6322679Z      ^[[33m^[[2m✓^[[22m^[[39m fails fast on broker exit and leaves deadline cleanup to the state-directory owner^[[33m 343^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6324275Z      ^[[33m^[[2m✓^[[22m^[[39m converges simultaneous startup requests on one broker^[[33m 464^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6326167Z      ^[[33m^[[2m✓^[[22m^[[39m returns at the startup deadline while state preparation is still blocked and never spawns afterward^[[33m 559^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6328479Z      ^[[33m^[[2m✓^[[22m^[[39m enforces an absolute request deadline while a TLS peer keeps sending partial data^[[33m 510^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6330347Z      ^[[33m^[[2m✓^[[22m^[[39m treats merged wake bells as internal only when every nonce is broker-recognized^[[33m 663^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6332276Z      ^[[33m^[[2m✓^[[22m^[[39m uses one plugin queue profile for packaged presence and relay until the next SessionStart^[[33m 6714^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6334575Z      ^[[33m^[[2m✓^[[22m^[[39m consumes queued peers at safe boundaries after restart without waking again after ACK^[[33m 318^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6336337Z      ^[[33m^[[2m✓^[[22m^[[39m serializes wake reservation and release through the TLS broker^[[33m 518^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6338157Z      ^[[33m^[[2m✓^[[22m^[[39m pins the certificate, authenticates requests, survives restart, and supports arbitrary hosts^[[33m 1047^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6339955Z      ^[[33m^[[2m✓^[[22m^[[39m blocks only verified empty Codex wake prompts in the source hook^[[33m 2589^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6341575Z      ^[[33m^[[2m✓^[[22m^[[39m blocks only verified empty Codex wake prompts in the packaged hook^[[33m 5904^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6343486Z      ^[[33m^[[2m✓^[[22m^[[39m blocks a verified retired Codex wake marker without claiming the current body through the source hook^[[33m 1671^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6346668Z      ^[[33m^[[2m✓^[[22m^[[39m blocks a verified retired Codex wake marker without claiming the current body through the packaged hook^[[33m 1819^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6348887Z      ^[[33m^[[2m✓^[[22m^[[39m keeps a maximum-size peer message within the hook context limit^[[33m 988^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6349887Z      ^[[33m^[[2m✓^[[22m^[[39m escapes peer bodies inside one bounded JSON block^[[33m 996^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6350715Z      ^[[33m^[[2m✓^[[22m^[[39m starts the relay without spending a second claim budget during SessionStart^[[33m 1106^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6351590Z      ^[[33m^[[2m✓^[[22m^[[39m leaves Codex Stop messages queued for a supported context event^[[33m 1125^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6352349Z      ^[[33m^[[2m✓^[[22m^[[39m keeps packaged hook and relay entrypoints isolated^[[33m 651^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6353047Z      ^[[33m^[[2m✓^[[22m^[[39m keeps Claude Code Stop context delivery enabled^[[33m 917^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6353698Z      ^[[33m^[[2m✓^[[22m^[[39m does not speak plaintext on the loopback port^[[33m 443^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6354218Z    ^[[32m✓^[[39m session message MCP tools ^[[2m(2)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:10.6354822Z      ^[[33m^[[2m✓^[[22m^[[39m validates bound send, status, and acknowledgement calls^[[33m 920^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3876349Z  ^[[32m✓^[[39m tests/mcp/convergence-guard.test.ts ^[[2m(^[[22m^[[2m66 tests^[[22m^[[2m)^[[22m^[[33m 35071^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3877412Z    ^[[32m✓^[[39m local MCP convergence guard ^[[2m(33)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3878643Z      ^[[33m^[[2m✓^[[22m^[[39m opens an immutable root and rejects overlapping active scope even under a changed taskId^[[33m 673^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3881026Z      ^[[33m^[[2m✓^[[22m^[[39m requires a lease for every valid orchestrated plan^[[33m 379^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3882494Z      ^[[33m^[[2m✓^[[22m^[[39m rejects a signed plan produced from a different task envelope with the same taskId^[[33m 383^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3884593Z      ^[[33m^[[2m✓^[[22m^[[39m reuses root and lease bindings when compact claim and guarded start omit duplicate values^[[33m 681^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3886069Z      ^[[33m^[[2m✓^[[22m^[[39m preserves stale and expiry checks for planless guarded starts^[[33m 374^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3887337Z      ^[[33m^[[2m✓^[[22m^[[39m atomically consumes the first lease and rejects reuse^[[33m 463^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3888906Z      ^[[33m^[[2m✓^[[22m^[[39m does not issue another lease while the previous consumed attempt is still running^[[33m 494^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3889934Z      ^[[33m^[[2m✓^[[22m^[[39m preserves a pending frame-review gate when an older running attempt terminates^[[33m 408^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3890929Z      ^[[33m^[[2m✓^[[22m^[[39m records failed outcomes and allows target-only, evidence-bearing retries through ordinal 3^[[33m 497^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3891894Z      ^[[33m^[[2m✓^[[22m^[[39m rejects a repeated target and repeated evidence as NEW_EVIDENCE_REQUIRED^[[33m 517^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3892730Z      ^[[33m^[[2m✓^[[22m^[[39m records a rejected retry on the root without spending attempt budget^[[33m 664^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3893562Z      ^[[33m^[[2m✓^[[22m^[[39m records a stale-fingerprint rejection without burning its evidence^[[33m 678^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3894709Z      ^[[33m^[[2m✓^[[22m^[[39m reads a root stored before retry rejections existed^[[33m 686^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3895755Z      ^[[33m^[[2m✓^[[22m^[[39m refuses evidence burnt by an earlier rejection even in the next epoch^[[33m 612^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3896683Z      ^[[33m^[[2m✓^[[22m^[[39m persists roots, consumed budget, running attempts, and aborted outcomes across restart^[[33m 477^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3897574Z      ^[[33m^[[2m✓^[[22m^[[39m allows only one competing lease claim across two SQLite connections^[[33m 1343^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3898930Z      ^[[33m^[[2m✓^[[22m^[[39m allows only one trusted observation claim across two SQLite connections^[[33m 530^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3900301Z      ^[[33m^[[2m✓^[[22m^[[39m opens epoch 2 exactly once after a fresh independent semantics-preserving review^[[33m 406^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3902215Z      ^[[33m^[[2m✓^[[22m^[[39m does not open a new epoch when an otherwise preserving review has no target correction^[[33m 413^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3904628Z      ^[[33m^[[2m✓^[[22m^[[39m genericized Korean attempt-6/7 regression gates changed evaluation meaning before attempt 7 starts^[[33m 545^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3906758Z      ^[[33m^[[2m✓^[[22m^[[39m returns the root to the user and requires a new user contract after a needs-approval attempt^[[33m 322^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3908123Z      ^[[33m^[[2m✓^[[22m^[[39m returns the root to the user and requires a new user contract after a needs-input attempt^[[33m 457^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3909048Z      ^[[33m^[[2m✓^[[22m^[[39m does not reset the attempt budget by reopening after a stop review^[[33m 518^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3909907Z      ^[[33m^[[2m✓^[[22m^[[39m treats a sibling-path rescope of the same write surface as the same root^[[33m 350^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3910589Z    ^[[32m✓^[[39m server-derived workspace identity ^[[2m(20)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3911336Z      ^[[33m^[[2m✓^[[22m^[[39m checks nested checkout containers sharing a repository (.worktrees, reverse=false)^[[33m 429^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3912821Z      ^[[33m^[[2m✓^[[22m^[[39m checks nested checkout containers sharing a repository (.worktrees/*/src/candidate.ts, reverse=false)^[[33m 506^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3914988Z      ^[[33m^[[2m✓^[[22m^[[39m checks nested checkout containers sharing a repository (.worktrees, reverse=true)^[[33m 484^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3917153Z      ^[[33m^[[2m✓^[[22m^[[39m checks nested checkout containers sharing a repository (.worktrees/*/src/candidate.ts, reverse=true)^[[33m 499^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3919179Z      ^[[33m^[[2m✓^[[22m^[[39m blocks checkout containers across separate gitdir layouts (admin, nested=false)^[[33m 658^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3920865Z      ^[[33m^[[2m✓^[[22m^[[39m blocks checkout containers across separate gitdir layouts (.git, nested=false)^[[33m 696^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3921834Z      ^[[33m^[[2m✓^[[22m^[[39m blocks checkout containers across separate gitdir layouts (admin, nested=true)^[[33m 793^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3922768Z      ^[[33m^[[2m✓^[[22m^[[39m blocks checkout containers across separate gitdir layouts (.git, nested=true)^[[33m 634^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3923669Z      ^[[33m^[[2m✓^[[22m^[[39m rejects the same physical target under a changed workspace id and locator^[[33m 424^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3924975Z      ^[[33m^[[2m✓^[[22m^[[39m rejects the same physical target reached through a junction or symlink^[[33m 391^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3926118Z      ^[[33m^[[2m✓^[[22m^[[39m keeps open roots of different checkouts independent even on the same relative path^[[33m 414^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3927071Z      ^[[33m^[[2m✓^[[22m^[[39m keeps a gated root blocking its relative surface in every checkout of the repository^[[33m 982^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3928056Z      ^[[33m^[[2m✓^[[22m^[[39m blocks a non-Git folder or glob that holds a sibling checkout of a gated root's repository^[[33m 666^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3928975Z      ^[[33m^[[2m✓^[[22m^[[39m follows the write surface of a stored root after a review replaces its frame^[[33m 725^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3929835Z      ^[[33m^[[2m✓^[[22m^[[39m replaces the gated root of a deleted worktree from a sibling checkout^[[33m 544^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3930791Z      ^[[33m^[[2m✓^[[22m^[[39m lets two gated roots be replaced without blocking each other, but not widened or rescoped past a gate^[[33m 949^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3931932Z      ^[[33m^[[2m✓^[[22m^[[39m identifies a gitdir without commondir and rejects damaged Git evidence^[[33m 393^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3932794Z      ^[[33m^[[2m✓^[[22m^[[39m widens globs conservatively and rejects scope entries that are not paths^[[33m 421^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3933844Z      ^[[33m^[[2m✓^[[22m^[[39m backfills identities for stored roots without rewriting them and treats legacy URI scope as the whole workspace^[[33m 857^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3935629Z      ^[[33m^[[2m✓^[[22m^[[39m admits only one of two connections that open the same target at once^[[33m 975^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3936871Z    ^[[32m✓^[[39m gated roots stored before identities existed ^[[2m(13)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3939819Z      ^[[33m^[[2m✓^[[22m^[[39m does not let a sibling worktree bypass a gated legacy root whose checkout is deleted^[[33m 485^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3941658Z      ^[[33m^[[2m✓^[[22m^[[39m does not let a sibling worktree bypass a gated legacy root whose checkout is damaged^[[33m 573^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3945523Z      ^[[33m^[[2m✓^[[22m^[[39m does not store a guessed identity for a legacy root under a non-Git parent locator whose checkout is gone^[[33m 558^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3948315Z      ^[[33m^[[2m✓^[[22m^[[39m does not guess an identity for a legacy gated root on a target inside the nested worktree once that worktree is deleted^[[33m 586^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3950267Z      ^[[33m^[[2m✓^[[22m^[[39m does not guess an identity for a legacy gated root on the nested worktree itself as '.' once that worktree is deleted^[[33m 565^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3952608Z      ^[[33m^[[2m✓^[[22m^[[39m does not guess an identity for a legacy gated root on the nested worktree named from the oute… once that worktree is deleted^[[33m 497^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3955002Z      ^[[33m^[[2m✓^[[22m^[[39m backfills a legacy root whose target exists and leaves one whose target file was never written unresolved^[[33m 452^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3956788Z      ^[[33m^[[2m✓^[[22m^[[39m keeps a checkout observed for the current inputs after it is deleted, surface by surface^[[33m 545^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3958463Z      ^[[33m^[[2m✓^[[22m^[[39m does not reuse an identity observed for a replaced frame, and grants no legacy exception for it^[[33m 968^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3960199Z      ^[[33m^[[2m✓^[[22m^[[39m takes a checkout that appears above an observed non-Git surface only once the target itself exists^[[33m 508^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3962168Z      ^[[33m^[[2m✓^[[22m^[[39m follows a checkout created after a root was registered for a workspace that does not exist yet, and keeps it once it is deleted^[[33m 578^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3964685Z      ^[[33m^[[2m✓^[[22m^[[39m follows a checkout created after a root was registered for an absolute target below an existing ch…, and keeps it once it is deleted^[[33m 600^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:11.3966607Z      ^[[33m^[[2m✓^[[22m^[[39m still replaces a gated legacy root of a deleted checkout when the same workspace is named^[[33m 516^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9412252Z  ^[[32m✓^[[39m tests/session-messaging/wake-lifecycle.test.mjs ^[[2m(^[[22m^[[2m51 tests^[[22m^[[2m)^[[22m^[[33m 35050^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9414063Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 claimDeferred and ACK leave the managed notification fenced^[[33m 406^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9415637Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 claimTurnEnd and ACK leave the managed notification fenced^[[33m 436^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9417212Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 start rechecks claim/ACK and persists no-effect retirement^[[33m 468^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9419021Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 claim after start keeps one fence until the actual hook, including an empty batch^[[33m 690^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9420756Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 transport remains part of the exact stored attempt binding^[[33m 510^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9423219Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 definite failure uses durable backoff and exact dispatch epoch for late results^[[33m 526^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9425143Z    ^[[33m^[[2m✓^[[22m^[[39m old no-effect reserved H1/instance retires and starts a separate attempt after durable backoff^[[33m 707^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9427144Z    ^[[33m^[[2m✓^[[22m^[[39m old no-effect reserved H1/rebirth retires and starts a separate attempt after durable backoff^[[33m 844^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9429221Z    ^[[33m^[[2m✓^[[22m^[[39m old no-effect reserved H1/transport retires and starts a separate attempt after durable backoff^[[33m 731^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9431774Z    ^[[33m^[[2m✓^[[22m^[[39m old no-effect reserved H2/instance retires and starts a separate attempt after durable backoff^[[33m 342^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9433554Z    ^[[33m^[[2m✓^[[22m^[[39m old no-effect reserved H2/rebirth retires and starts a separate attempt after durable backoff^[[33m 706^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9435663Z    ^[[33m^[[2m✓^[[22m^[[39m old no-effect reserved H2/transport retires and starts a separate attempt after durable backoff^[[33m 765^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9437702Z    ^[[33m^[[2m✓^[[22m^[[39m old no-effect reserved H3/instance retires and starts a separate attempt after durable backoff^[[33m 688^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9441519Z    ^[[33m^[[2m✓^[[22m^[[39m old no-effect reserved H3/rebirth retires and starts a separate attempt after durable backoff^[[33m 825^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9443809Z    ^[[33m^[[2m✓^[[22m^[[39m old no-effect reserved H3/transport retires and starts a separate attempt after durable backoff^[[33m 437^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9445916Z    ^[[33m^[[2m✓^[[22m^[[39m generation replacement alone preserves the submitted effect fence^[[33m 381^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9448994Z    ^[[33m^[[2m✓^[[22m^[[39m generation replacement alone preserves the accepted-or-unknown effect fence^[[33m 415^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9450798Z    ^[[33m^[[2m✓^[[22m^[[39m generation replacement alone preserves the late effect fence^[[33m 390^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9451778Z    ^[[33m^[[2m✓^[[22m^[[39m old-generation definite failure requires every original binding field and epoch^[[33m 463^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9452747Z    ^[[33m^[[2m✓^[[22m^[[39m stale reserved late_observed_at cannot be normalized as a no-effect attempt^[[33m 411^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9453661Z    ^[[33m^[[2m✓^[[22m^[[39m stale reserved observed_at cannot be normalized as a no-effect attempt^[[33m 563^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9454522Z    ^[[33m^[[2m✓^[[22m^[[39m stale reserved unproved-retry cannot be normalized as a no-effect attempt^[[33m 419^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9455393Z    ^[[33m^[[2m✓^[[22m^[[39m terminal pruning cannot erase an outstanding old-generation backoff^[[33m 1283^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9456329Z    ^[[33m^[[2m✓^[[22m^[[39m outstanding terminal backoffs share the active wake budget and release it at the deadline^[[33m 682^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9457353Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 unknown survives restart, both TTLs, ordinary claim, ACK and generation replacement^[[33m 431^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9458454Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 ordinary peer provenance, expired hook receipts and changed observation digests cannot release a fence^[[33m 470^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9459591Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 observation holds the SQLite generation lock and notices a generation change during verification^[[33m 580^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9461000Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 forged nonce, caller approved and normalized observation cannot observe without the hook receipt^[[33m 338^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9462131Z    ^[[33m^[[2m✓^[[22m^[[39m verified expired/old-generation arrival retires only its attempt before a separate current wake^[[33m 3408^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9463222Z    ^[[33m^[[2m✓^[[22m^[[39m old-generation retirement still rejects wrong target, unknown or mixed nonces and stale provenance^[[33m 907^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9464465Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 batch/ACK-loss redelivery and hook rollback preserve exact nonce consumption^[[33m 943^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9465408Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 hook-before-outcome, adapter exception and new vendor use the same core^[[33m 708^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9466566Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 additive legacy migration never imports old consumed_at as observed^[[33m 432^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9467485Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 active budget overflow is an explicit rejection and does not remove unknowns^[[33m 1101^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9468768Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 terminal observation retention is bounded while unresolved rows are retained^[[33m 745^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9471069Z    ^[[33m^[[2m✓^[[22m^[[39m independent generation/outcome-first-race workers permit exactly one separate new effect^[[33m 1310^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9473405Z    ^[[33m^[[2m✓^[[22m^[[39m independent generation/start-first-race workers permit exactly one separate new effect^[[33m 1096^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9476469Z    ^[[33m^[[2m✓^[[22m^[[39m verified old arrival in another process releases only the old attempt and permits one new effect^[[33m 1294^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9478386Z    ^[[33m^[[2m✓^[[22m^[[39m Codex running body claim in another process prevents the external queue call before start^[[33m 698^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9480195Z    ^[[33m^[[2m✓^[[22m^[[39m Codex post-start claim in another process leaves one marker and a verified empty discard^[[33m 1000^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9481568Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 independent senders and relay processes perform exactly one external call^[[33m 910^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9482657Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 independent process crash before start recovers the same attempt; after effect never resends^[[33m 2354^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9483751Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 independent migration failure rolls back every added nonce column and preserves legacy bytes^[[33m 547^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:28.9484725Z    ^[[33m^[[2m✓^[[22m^[[39m public wake binding requires a fresh presence birth after lease expiry^[[33m 328^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3293862Z  ^[[32m✓^[[39m tests/session-messaging/wake-liveness.test.mjs ^[[2m(^[[22m^[[2m36 tests^[[22m^[[2m)^[[22m^[[33m 19051^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3296183Z    ^[[33m^[[2m✓^[[22m^[[39m an expired submitted latch retires for a newer live generation and a new wake is reserved^[[33m 611^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3298847Z    ^[[33m^[[2m✓^[[22m^[[39m an expired accepted-or-unknown latch retires for a newer live generation and a new wake is reserved^[[33m 598^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3301502Z    ^[[33m^[[2m✓^[[22m^[[39m an expired started latch retires for a newer live generation and a new wake is reserved^[[33m 493^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3303651Z    ^[[33m^[[2m✓^[[22m^[[39m an expired latch of a live, quiet birth without activity stays latched: same-generation^[[33m 507^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3305748Z    ^[[33m^[[2m✓^[[22m^[[39m an expired latch of a live, quiet birth without activity stays latched: other-transport^[[33m 618^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3308727Z    ^[[33m^[[2m✓^[[22m^[[39m an expired latch whose birth is no longer live retires after the grace without activity: unreachable^[[33m 428^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3320656Z    ^[[33m^[[2m✓^[[22m^[[39m an expired latch whose birth is no longer live retires after the grace without activity: ended^[[33m 451^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3323727Z    ^[[33m^[[2m✓^[[22m^[[39m an expired latch whose birth is no longer live retires after the grace without activity: ended-new-generation^[[33m 457^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3326056Z    ^[[33m^[[2m✓^[[22m^[[39m an expired latch whose birth is no longer live retires after the grace without activity: purged^[[33m 478^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3328690Z    ^[[33m^[[2m✓^[[22m^[[39m an expired latch whose birth is no longer live retires after the grace without activity: older-instance-live^[[33m 531^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3331117Z    ^[[33m^[[2m✓^[[22m^[[39m an expired latch whose birth is no longer live retires after the grace without activity: generation-missing^[[33m 477^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3333570Z    ^[[33m^[[2m✓^[[22m^[[39m an expired latch whose birth is no longer live retires after the grace without activity: live-birth-behind-ended^[[33m 543^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3336075Z    ^[[33m^[[2m✓^[[22m^[[39m an expired latch whose birth is no longer live retires after the grace without activity: same-ms-other-instance^[[33m 480^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3338590Z    ^[[33m^[[2m✓^[[22m^[[39m an expired latch whose birth is no longer live retires after the grace without activity: lease-ends-at-retirement^[[33m 536^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3341112Z    ^[[33m^[[2m✓^[[22m^[[39m a wake of an ended birth retired without activity records a late arrival as evidence only, then a rebirth delivers^[[33m 963^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3343954Z    ^[[33m^[[2m✓^[[22m^[[39m same-generation activity claim after expiry retires the latch after the grace^[[33m 377^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3350170Z    ^[[33m^[[2m✓^[[22m^[[39m same-generation activity observeNativeInput after expiry retires the latch after the grace^[[33m 344^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3352893Z    ^[[33m^[[2m✓^[[22m^[[39m retirement and re-reservation are idempotent across prunes and reopened connections^[[33m 353^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3355365Z    ^[[33m^[[2m✓^[[22m^[[39m a verified late arrival of a retired nonce is recorded without claiming the current generation body^[[33m 699^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3357987Z    ^[[33m^[[2m✓^[[22m^[[39m F1: a retired nonce mixed with the current nonce records late only and lets the current attempt claim its body^[[33m 786^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3360246Z    ^[[33m^[[2m✓^[[22m^[[39m a retired nonce cannot be laundered by forged provenance or a mixed unknown nonce^[[33m 497^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3363132Z    ^[[33m^[[2m✓^[[22m^[[39m K: an arrival whose hook receipt expired during a broker outage stays latched until retirement evidence, then a new wake delivers^[[33m 701^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3365655Z    ^[[33m^[[2m✓^[[22m^[[39m C2: a same-millisecond rebirth gets a distinct generation, so the previous birth cannot claim^[[33m 601^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3376262Z    ^[[33m^[[2m✓^[[22m^[[39m autoWake is advisory and reports each delivery path state^[[33m 306^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3385136Z    ^[[33m^[[2m✓^[[22m^[[39m G: v2.7.2 latch rows migrate once, keep evidence and retire under the new rule^[[33m 750^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3442140Z    ^[[33m^[[2m✓^[[22m^[[39m G: a newer message schema version is rejected without mutation^[[33m 675^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3479124Z    ^[[33m^[[2m✓^[[22m^[[39m G: two independent processes racing the v2.7.2 upgrade both open one migrated schema^[[33m 978^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3485368Z    ^[[33m^[[2m✓^[[22m^[[39m G: a failure inside the table rebuild rolls back columns, rows and schema version^[[33m 1330^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3487640Z    ^[[33m^[[2m✓^[[22m^[[39m crash right after a committed retirement leaves a retired row and one later reservation^[[33m 407^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3490020Z    ^[[33m^[[2m✓^[[22m^[[39m two independent processes racing the retirement of an ended birth retire it once^[[33m 456^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:30.3501670Z    ^[[33m^[[2m✓^[[22m^[[39m two independent relay processes racing retirement create one active attempt^[[33m 552^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:32.8313308Z  ^[[32m✓^[[39m tests/mcp/host-attestation.test.ts ^[[2m(^[[22m^[[2m30 tests^[[22m^[[2m)^[[22m^[[33m 3201^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:32.8316111Z    ^[[32m✓^[[39m Claude Code host attestation through the MCP boundary ^[[2m(11)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:32.8317799Z      ^[[33m^[[2m✓^[[22m^[[39m completes an orchestrated workflow with claude-code observations^[[33m 757^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:32.8320691Z      ^[[33m^[[2m✓^[[22m^[[39m completes an orchestrated workflow with codex observations^[[33m 422^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:32.8322775Z      ^[[33m^[[2m✓^[[22m^[[39m keeps the default server without a provider on BINDING_REQUIRED^[[33m 400^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:35.0376357Z  ^[[32m✓^[[39m tests/mcp/korean-prose-cycle-receipt.test.ts ^[[2m(^[[22m^[[2m13 tests^[[22m^[[2m)^[[22m^[[33m 23335^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:35.0377794Z    ^[[32m✓^[[39m range-aware Korean prose cycle receipts ^[[2m(13)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:35.0378627Z      ^[[33m^[[2m✓^[[22m^[[39m records canonical structured work products and binds selection through finalization^[[33m 2693^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:35.0379810Z      ^[[33m^[[2m✓^[[22m^[[39m rejects a cycle work product changed after the receipt was recorded^[[33m 2263^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:35.0381436Z      ^[[33m^[[2m✓^[[22m^[[39m rejects a cycle directory outside the evaluation root^[[33m 629^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:35.0382495Z      ^[[33m^[[2m✓^[[22m^[[39m rejects a structured cycle that omits formal readiness evidence^[[33m 595^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:35.0383359Z      ^[[33m^[[2m✓^[[22m^[[39m does not silently select the historical cycle when no cycle path is given^[[33m 632^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:35.0384251Z      ^[[33m^[[2m✓^[[22m^[[39m rejects structured run metadata without execution provenance^[[33m 791^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:35.0385072Z      ^[[33m^[[2m✓^[[22m^[[39m rejects structured run metadata with an unverified actual model^[[33m 982^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:35.0385883Z      ^[[33m^[[2m✓^[[22m^[[39m derives a passing quality decision from the bound final records^[[33m 2344^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:35.0387029Z      ^[[33m^[[2m✓^[[22m^[[39m verifies a receipt whose quality evidence passed only with the external quality digest^[[33m 3573^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:35.0388035Z      ^[[33m^[[2m✓^[[22m^[[39m rejects quality evidence when bound final records miss the improvement threshold^[[33m 2329^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:35.0388893Z      ^[[33m^[[2m✓^[[22m^[[39m rejects a label leaked into the independent adjudicator input^[[33m 2188^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:35.0389735Z      ^[[33m^[[2m✓^[[22m^[[39m does not count an unsafe independently adjudicated edit as an improvement^[[33m 2202^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:35.0390695Z      ^[[33m^[[2m✓^[[22m^[[39m rejects a start claim and role metadata replaced after the workflow receipt was finalized^[[33m 2114^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:36.9947716Z  ^[[32m✓^[[39m tests/tooling/claude-plugin.test.mjs ^[[2m(^[[22m^[[2m20 tests^[[22m^[[2m)^[[22m^[[33m 3919^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:36.9949073Z    ^[[32m✓^[[39m generated Claude plugin ^[[2m(12)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:36.9950712Z      ^[[33m^[[2m✓^[[22m^[[39m keeps no copy of the common intake sentences in any tracked file outside the shared source^[[33m 857^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:36.9952575Z      ^[[33m^[[2m✓^[[22m^[[39m projects the current common intake at session start without keyword selection^[[33m 378^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:36.9954200Z      ^[[33m^[[2m✓^[[22m^[[39m removes a caller-supplied token when it cannot attest^[[33m 845^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:36.9955721Z      ^[[33m^[[2m✓^[[22m^[[39m signs host attestation with a key in the plugin data directory^[[33m 333^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:36.9957220Z      ^[[33m^[[2m✓^[[22m^[[39m stores continuity state under the plugin data directory^[[33m 1047^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:47.8175618Z  ^[[32m✓^[[39m tests/session-messaging/peer-wait.test.ts ^[[2m(^[[22m^[[2m28 tests^[[22m^[[2m)^[[22m^[[33m 10574^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:47.8177475Z    ^[[33m^[[2m✓^[[22m^[[39m enforces native wait through the public packaged hook and preserves unrelated waits^[[33m 2035^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:47.8179487Z    ^[[33m^[[2m✓^[[22m^[[39m the public CLI consumes the decision before delay and sends no repeated poll when denied^[[33m 1423^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:47.8183063Z    ^[[33m^[[2m✓^[[22m^[[39m public native hook suppresses equivalent payloads but permits actual cursor change^[[33m 1688^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:47.8187694Z    ^[[33m^[[2m✓^[[22m^[[39m public CLI equivalent retransmissions consume one decision each and state change restores a snapshot^[[33m 1602^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:47.8189703Z    ^[[33m^[[2m✓^[[22m^[[39m CLI unknown resume uses one bounded wait and does not force permanent stopping^[[33m 1602^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:47.8191576Z    ^[[33m^[[2m✓^[[22m^[[39m broker restart preserves messages but drops resume and repeat-suppression evidence^[[33m 2038^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.3155619Z  ^[[32m✓^[[39m tests/session-messaging/message-retention.test.ts ^[[2m(^[[22m^[[2m16 tests^[[22m^[[2m)^[[22m^[[33m 19060^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.3158283Z    ^[[33m^[[2m✓^[[22m^[[39m caps one sender at the sender limit (limit-1, limit, limit+1) without blocking other senders^[[33m 440^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.3160385Z    ^[[33m^[[2m✓^[[22m^[[39m rejects prepare and send with global scope when the global receipt pool is full^[[33m 1853^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.3162308Z    ^[[33m^[[2m✓^[[22m^[[39m drained senders regain capacity at ACK+1h instead of message expiry+1h^[[33m 360^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.3164184Z    ^[[33m^[[2m✓^[[22m^[[39m two processes sending for one sender at limit-1 never exceed the sender limit^[[33m 1963^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.3166035Z    ^[[33m^[[2m✓^[[22m^[[39m concurrent send and ACK keep one row and only shorten receipt expiry^[[33m 641^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.3167887Z    ^[[33m^[[2m✓^[[22m^[[39m opens a v2.7.2 receipt without migration and applies ACK+1h only to new ACKs^[[33m 685^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.3171329Z    ^[[33m^[[2m✓^[[22m^[[39m service reports capacity rejections as definite no-effect with scope and earliest release details^[[33m 7340^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.3173761Z    ^[[33m^[[2m✓^[[22m^[[39m a resend of an already sent ID at full sender and global capacity is a duplicate, not a capacity rejection^[[33m 2024^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.3176040Z    ^[[33m^[[2m✓^[[22m^[[39m reports sender scope and the sender's own earliest expiry when sender and global limits are both full^[[33m 1999^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.3178815Z    ^[[33m^[[2m✓^[[22m^[[39m when earliestReleaseAt is after the draft expiry, the guidance leads to a new prepare that succeeds^[[33m 1610^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.6665550Z  ^[[32m✓^[[39m tests/context-continuity/continuity.test.ts ^[[2m(^[[22m^[[2m15 tests^[[22m^[[2m)^[[22m^[[33m 6588^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.6667211Z    ^[[32m✓^[[39m direct task continuity ^[[2m(10)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.6668434Z      ^[[33m^[[2m✓^[[22m^[[39m stores replacement snapshots with CAS and request idempotency^[[33m 307^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.6670252Z      ^[[33m^[[2m✓^[[22m^[[39m separates suppression and clear while allowing old-epoch purge without retained payload^[[33m 702^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.6672120Z      ^[[33m^[[2m✓^[[22m^[[39m rejects and later scrubs a malformed purge receipt with extra snapshot content^[[33m 849^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.6676178Z      ^[[33m^[[2m✓^[[22m^[[39m allows only one winner across two SQLite connections using the same CAS revision^[[33m 705^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.6677845Z      ^[[33m^[[2m✓^[[22m^[[39m rejects a payload whose stored JSON no longer matches its digest^[[33m 992^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.6683407Z    ^[[32m✓^[[39m workflow projection and fail-open lifecycle ^[[2m(5)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:54.6685012Z      ^[[33m^[[2m✓^[[22m^[[39m rewrites only bound MCP tool inputs and persists only HMAC lifecycle correlations^[[33m 1299^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:58.9443001Z  ^[[32m✓^[[39m tests/session-board/session-board.test.ts ^[[2m(^[[22m^[[2m15 tests^[[22m^[[2m)^[[22m^[[33m 3597^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:58.9445139Z    ^[[32m✓^[[39m session board store ^[[2m(6)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:58.9446800Z      ^[[33m^[[2m✓^[[22m^[[39m denies the first gated call of each request once until the line is written for that request^[[33m 533^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:58.9450084Z    ^[[32m✓^[[39m session board hook ^[[2m(6)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:58.9452293Z      ^[[33m^[[2m✓^[[22m^[[39m denies exactly once when several hook processes race on the same request^[[33m 370^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:58.9457536Z    ^[[32m✓^[[39m session board MCP tools ^[[2m(3)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:58.9459084Z      ^[[33m^[[2m✓^[[22m^[[39m shares one board between the Claude launcher and the Codex hook and lists both hosts^[[33m 696^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:47:58.9460781Z      ^[[33m^[[2m✓^[[22m^[[39m reads back the hook-written line, lists the host board and refuses unbound updates^[[33m 1056^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1278636Z  ^[[32m✓^[[39m tests/session-messaging/historical-wake.test.mjs ^[[2m(^[[22m^[[2m65 tests^[[22m^[[2m)^[[22m^[[33m 32478^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1280962Z    ^[[33m^[[2m✓^[[22m^[[39m history rejects no-current without changing any message state^[[33m 308^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1282577Z    ^[[33m^[[2m✓^[[22m^[[39m history rejects invalid time relation after-late^[[33m 320^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1283990Z    ^[[33m^[[2m✓^[[22m^[[39m history rejects invalid time relation not-expired^[[33m 336^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1285343Z    ^[[33m^[[2m✓^[[22m^[[39m history rejects invalid time relation invalid-late^[[33m 409^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1286762Z    ^[[33m^[[2m✓^[[22m^[[39m reconstructs only the exact signed actor digest main/observed^[[33m 770^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1297994Z    ^[[33m^[[2m✓^[[22m^[[39m readonly trust rejection missing-db creates no database/key/receipt^[[33m 334^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1300059Z    ^[[33m^[[2m✓^[[22m^[[39m readonly trust rejection missing-key creates no database/key/receipt^[[33m 482^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1302302Z    ^[[33m^[[2m✓^[[22m^[[39m readonly trust rejection bad-key creates no database/key/receipt^[[33m 628^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1304314Z    ^[[33m^[[2m✓^[[22m^[[39m readonly trust rejection missing-table creates no database/key/receipt^[[33m 436^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1306424Z    ^[[33m^[[2m✓^[[22m^[[39m readonly trust respects initializer version compatibility without migrating version 0^[[33m 725^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1308569Z    ^[[33m^[[2m✓^[[22m^[[39m readonly trust respects initializer version compatibility without migrating version 1^[[33m 778^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1310635Z    ^[[33m^[[2m✓^[[22m^[[39m readonly trust respects initializer version compatibility without migrating version 2^[[33m 569^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1312668Z    ^[[33m^[[2m✓^[[22m^[[39m readonly trust respects initializer version compatibility without migrating version 99^[[33m 684^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1315326Z    ^[[33m^[[2m✓^[[22m^[[39m readonly version and receipt share a snapshot while an independent writer upgrades the version^[[33m 532^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1317089Z    ^[[33m^[[2m✓^[[22m^[[39m broker rejects caller supplied nowMs^[[33m 643^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1318474Z    ^[[33m^[[2m✓^[[22m^[[39m broker rejects caller supplied receipt^[[33m 607^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1319947Z    ^[[33m^[[2m✓^[[22m^[[39m broker rejects caller supplied approved^[[33m 388^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1321859Z    ^[[33m^[[2m✓^[[22m^[[39m broker rejects caller supplied observation^[[33m 368^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1323587Z    ^[[33m^[[2m✓^[[22m^[[39m broker rejects caller supplied nonce^[[33m 309^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1325326Z    ^[[33m^[[2m✓^[[22m^[[39m broker rejects caller supplied instanceId^[[33m 539^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1327202Z    ^[[33m^[[2m✓^[[22m^[[39m two independent recovery processes CAS once; pending uses separate normal reserve/start^[[33m 532^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1329052Z    ^[[33m^[[2m✓^[[22m^[[39m CAS rechecks generation after historical verification^[[33m 705^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1330540Z    ^[[33m^[[2m✓^[[22m^[[39m CAS rechecks late after historical verification^[[33m 649^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1333412Z    ^[[33m^[[2m✓^[[22m^[[39m CAS rechecks state after historical verification^[[33m 547^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1346053Z    ^[[33m^[[2m✓^[[22m^[[39m read-only verification holds one key/receipt snapshot while an independent writer rotates both^[[33m 562^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1354928Z    ^[[33m^[[2m✓^[[22m^[[39m bundled public CLI forwards only IDs to the private broker and cannot repeat recovery^[[33m 827^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1372735Z    ^[[33m^[[2m✓^[[22m^[[39m packaged CLI binds history to explicit broker state directory: prestarted^[[33m 1499^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1428577Z    ^[[33m^[[2m✓^[[22m^[[39m packaged CLI binds history to explicit broker state directory: client-ensure^[[33m 1770^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1433363Z    ^[[33m^[[2m✓^[[22m^[[39m packaged root CLI rejects unsupported trust schema without mutation: 0^[[33m 1157^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1437794Z    ^[[33m^[[2m✓^[[22m^[[39m packaged root CLI rejects unsupported trust schema without mutation: 1^[[33m 757^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1469721Z    ^[[33m^[[2m✓^[[22m^[[39m packaged root CLI rejects unsupported trust schema without mutation: 2^[[33m 1170^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1472425Z    ^[[33m^[[2m✓^[[22m^[[39m packaged root CLI rejects unsupported trust schema without mutation: 99^[[33m 894^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1475126Z    ^[[33m^[[2m✓^[[22m^[[39m packaged root CLI rejects unsupported trust schema without mutation: missing-table^[[33m 705^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1477968Z    ^[[33m^[[2m✓^[[22m^[[39m packaged root CLI rejects unsupported trust schema without mutation: wrong-column^[[33m 692^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1480174Z    ^[[33m^[[2m✓^[[22m^[[39m packaged claude CLI rejects unsupported trust schema without mutation: 0^[[33m 690^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1482010Z    ^[[33m^[[2m✓^[[22m^[[39m packaged claude CLI rejects unsupported trust schema without mutation: 1^[[33m 763^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1483819Z    ^[[33m^[[2m✓^[[22m^[[39m packaged claude CLI rejects unsupported trust schema without mutation: 2^[[33m 581^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1485651Z    ^[[33m^[[2m✓^[[22m^[[39m packaged claude CLI rejects unsupported trust schema without mutation: 99^[[33m 856^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1487654Z    ^[[33m^[[2m✓^[[22m^[[39m packaged claude CLI rejects unsupported trust schema without mutation: missing-table^[[33m 698^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.1489740Z    ^[[33m^[[2m✓^[[22m^[[39m packaged claude CLI rejects unsupported trust schema without mutation: wrong-column^[[33m 742^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.9559671Z ^[[90mstderr^[[2m | tests/recovery-strategy-selector/recovery-selector.test.mjs
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.9561515Z ^[[22m^[[39munknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.9563109Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.9564632Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.9566102Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.9567635Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.9569523Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.9571021Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.9572498Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:03.9574574Z 
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:04.9205338Z  ^[[32m✓^[[39m tests/recovery-strategy-selector/recovery-selector.test.mjs ^[[2m(^[[22m^[[2m17 tests^[[22m^[[2m)^[[22m^[[33m 959^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:04.9206903Z    ^[[32m✓^[[39m recovery strategy selector ^[[2m(17)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:04.9208864Z      ^[[33m^[[2m✓^[[22m^[[39m contracts compile and the digest CLI accepts stdin JSON^[[33m 678^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:04.9438740Z  ^[[32m✓^[[39m tests/mcp/receipt-policy.test.ts ^[[2m(^[[22m^[[2m33 tests^[[22m^[[2m)^[[22m^[[33m 10306^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:04.9449879Z    ^[[32m✓^[[39m descriptor-declared reference-only receipts ^[[2m(33)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:04.9452026Z      ^[[33m^[[2m✓^[[22m^[[39m propagates all four policies, orders artifact dependencies, and binds policy to the plan HMAC^[[33m 430^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:04.9454297Z      ^[[33m^[[2m✓^[[22m^[[39m rejects invalid actor-array policies in descriptors and plans: {"actorIdsPointer":"/output/actorIds"}^[[33m 475^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:04.9457292Z      ^[[33m^[[2m✓^[[22m^[[39m rejects invalid actor-array policies in descriptors and plans: {"actorIdsPointer":"/output/actorIds","actorIdsMatch":"any-actors"}^[[33m 315^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:04.9459440Z      ^[[33m^[[2m✓^[[22m^[[39m rejects missing final actor arrays without changing the receipt^[[33m 354^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:04.9461277Z      ^[[33m^[[2m✓^[[22m^[[39m rejects incomplete final actor arrays without changing the receipt^[[33m 386^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:04.9463025Z      ^[[33m^[[2m✓^[[22m^[[39m rejects extra final actor arrays without changing the receipt^[[33m 383^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:04.9464720Z      ^[[33m^[[2m✓^[[22m^[[39m rejects reordered final actor arrays without changing the receipt^[[33m 384^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:04.9466526Z      ^[[33m^[[2m✓^[[22m^[[39m rejects duplicate final actor arrays without changing the receipt^[[33m 317^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:04.9468842Z      ^[[33m^[[2m✓^[[22m^[[39m rejects unrelated final actor arrays without changing the receipt^[[33m 325^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:04.9471831Z      ^[[33m^[[2m✓^[[22m^[[39m blocks finalization when the bound selection artifact is unavailable and proceeds when restored^[[33m 542^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:04.9473758Z      ^[[33m^[[2m✓^[[22m^[[39m rejects actor reuse after SQLite restart^[[33m 621^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:04.9475911Z      ^[[33m^[[2m✓^[[22m^[[39m binds arbitrary capability actor arrays in plan order after SQLite restart^[[33m 626^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:04.9477906Z      ^[[33m^[[2m✓^[[22m^[[39m rejects raw output and receipt text surfaces before SQLite persistence^[[33m 325^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:04.9480523Z      ^[[33m^[[2m✓^[[22m^[[39m finalizes deterministically without requiring a fourth actor and keeps direct mode unverified^[[33m 392^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:05.1864557Z  ^[[2m^[[90m↓^[[39m^[[22m tests/session-messaging/previous-broker.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m | ^[[22m^[[33m5 skipped^[[39m^[[2m)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:12.4295263Z  ^[[32m✓^[[39m tests/mcp/state-cleanup.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[33m 6912^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:12.4296386Z    ^[[32m✓^[[39m state cleanup ^[[2m(8)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:12.4297487Z      ^[[33m^[[2m✓^[[22m^[[39m backs up and deletes only preview-bound inactive terminal state^[[33m 1567^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:12.4298832Z      ^[[33m^[[2m✓^[[22m^[[39m rejects stale and tampered tokens before deletion^[[33m 490^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:12.4300215Z      ^[[33m^[[2m✓^[[22m^[[39m migrates workflow v3 and continuity v1 databases without losing rows^[[33m 1012^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:12.4301622Z      ^[[33m^[[2m✓^[[22m^[[39m claims a no-op plan only once across two database connections^[[33m 508^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:12.4302881Z      ^[[33m^[[2m✓^[[22m^[[39m keeps candidates when backup verification fails^[[33m 333^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:12.4304252Z      ^[[33m^[[2m✓^[[22m^[[39m keeps a continuity task when a recent child record appears after backup^[[33m 1276^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:12.4305809Z      ^[[33m^[[2m✓^[[22m^[[39m keeps continuity state when its workflow root becomes active after preview^[[33m 1437^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:12.9840371Z  ^[[32m✓^[[39m tests/mcp/workspace-identity.test.ts ^[[2m(^[[22m^[[2m24 tests^[[22m^[[2m)^[[22m^[[33m 341^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:17.0965923Z ^[[90mstdout^[[2m | tests/session-messaging/message-lifecycle.test.ts^[[2m > ^[[22m^[[2mpackaged TLS cycles use one request instead of three or two without changing pending state
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:17.0969257Z ^[[22m^[[39mrelay tick measured TLS request counts [{"transport":"test-inbox","cycles":10,"baselineRequests":30,"tickRequests":10},{"transport":"codex-deferred","cycles":10,"baselineRequests":20,"tickRequests":10}]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:17.0980902Z 
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:25.1682326Z  ^[[32m✓^[[39m tests/session-messaging/presence-retention.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m)^[[22m^[[33m 25966^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:25.1724208Z    ^[[33m^[[2m✓^[[22m^[[39m serves board presence from a 342-identity, 1302-row database through a real broker^[[33m 1032^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:25.1739114Z    ^[[33m^[[2m✓^[[22m^[[39m ends a board lookup against a slow real broker at one overall client deadline^[[33m 20466^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:25.1761957Z    ^[[33m^[[2m✓^[[22m^[[39m B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve^[[33m 701^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:25.1766396Z    ^[[33m^[[2m✓^[[22m^[[39m keeps retirement, presence and autoWake identical to a run that deletes no presence row^[[33m 1409^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:25.1789461Z    ^[[33m^[[2m✓^[[22m^[[39m gives a purged instance's rebirth a later generation, so an old-generation marker still claims nothing^[[33m 972^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:25.1808452Z    ^[[33m^[[2m✓^[[22m^[[39m prunes presence idempotently when two processes race on one database^[[33m 1286^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:25.5754417Z  ^[[32m✓^[[39m tests/session-messaging/message-lifecycle.test.ts ^[[2m(^[[22m^[[2m14 tests^[[22m^[[2m)^[[22m^[[33m 12358^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:25.5758322Z    ^[[33m^[[2m✓^[[22m^[[39m applies global draft, receipt and byte backpressure without evicting valid records^[[33m 2488^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:25.5760434Z    ^[[33m^[[2m✓^[[22m^[[39m packaged TLS cycles use one request instead of three or two without changing pending state^[[33m 1237^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:25.5764057Z    ^[[33m^[[2m✓^[[22m^[[39m a real post-commit prepare reply loss leaves only orphan drafts^[[33m 659^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:25.5765738Z    ^[[33m^[[2m✓^[[22m^[[39m a real send reply loss retries the known ID once and survives broker restart^[[33m 3013^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:25.5767591Z    ^[[33m^[[2m✓^[[22m^[[39m two independent processes submit one ID atomically and enforce sender preparation capacity^[[33m 2922^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:25.5769631Z    ^[[33m^[[2m✓^[[22m^[[39m preserves old messages across additive schema initialization but refuses old IDs as new sends^[[33m 599^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:25.5771639Z    ^[[33m^[[2m✓^[[22m^[[39m packaged CLI discovers prepare/send and rejects old or unknown send with zero queue effect^[[33m 1271^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:28.6605862Z  ^[[32m✓^[[39m tests/context-continuity/schema-compat.test.ts ^[[2m(^[[22m^[[2m18 tests^[[22m^[[2m)^[[22m^[[33m 23174^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:28.6607304Z    ^[[32m✓^[[39m 2.7.x continuity schema compatibility ^[[2m(13)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:28.6608757Z      ^[[33m^[[2m✓^[[22m^[[39m preserves schema 2 state across reopen, restore, CAS, purge and epoch rotation^[[33m 1735^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:28.6610546Z      ^[[33m^[[2m✓^[[22m^[[39m preserves schema 3 state across reopen, restore, CAS, purge and epoch rotation^[[33m 973^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:28.6611986Z      ^[[33m^[[2m✓^[[22m^[[39m creates new databases as schema 2^[[33m 1143^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:28.6613481Z      ^[[33m^[[2m✓^[[22m^[[39m preserves receiver-owned tasks, refuses stale origins and keeps unrelated tasks usable^[[33m 1539^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:28.6614946Z      ^[[33m^[[2m✓^[[22m^[[39m checks receiver state inside the checkpoint transaction after service preflight^[[33m 1407^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:28.6616830Z      ^[[33m^[[2m✓^[[22m^[[39m detects a schema 3 receiver added by another connection after opening schema 2^[[33m 580^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:28.6619043Z      ^[[33m^[[2m✓^[[22m^[[39m protects receiver state added after snapshot cleanup preview^[[33m 554^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:28.6620611Z      ^[[33m^[[2m✓^[[22m^[[39m protects receiver state added after task cleanup preview^[[33m 530^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:28.6621917Z      ^[[33m^[[2m✓^[[22m^[[39m rejects changed schema 3 defaults instead of changing task suppression implicitly^[[33m 323^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:28.6622895Z      ^[[33m^[[2m✓^[[22m^[[39m rejects missing schema 3 tables and future schemas without creating state^[[33m 596^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:28.6624077Z      ^[[33m^[[2m✓^[[22m^[[39m rejects a schema 3 database with valid column definitions and malformed pages^[[33m 681^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:28.6625003Z    ^[[32m✓^[[39m source STDIO continuity startup diagnostics ^[[2m(5)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:28.6625671Z      ^[[33m^[[2m✓^[[22m^[[39m keeps normal MCP usable when continuity is healthy^[[33m 2935^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:28.6626404Z      ^[[33m^[[2m✓^[[22m^[[39m keeps normal MCP usable when continuity is receiver^[[33m 1945^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:28.6627111Z      ^[[33m^[[2m✓^[[22m^[[39m keeps normal MCP usable when continuity is future^[[33m 2347^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:28.6627830Z      ^[[33m^[[2m✓^[[22m^[[39m keeps normal MCP usable when continuity is incompatible^[[33m 2900^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:28.6628555Z      ^[[33m^[[2m✓^[[22m^[[39m keeps normal MCP usable when continuity is corrupt^[[33m 2416^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:34.2930837Z  ^[[32m✓^[[39m tests/mcp/stdio-integration.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[33m 8550^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:34.2932194Z    ^[[32m✓^[[39m bundled STDIO MCP server ^[[2m(4)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:34.2935226Z      ^[[33m^[[2m✓^[[22m^[[39m starts from an isolated plugin tree without node_modules^[[33m 4061^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:34.2986357Z      ^[[33m^[[2m✓^[[22m^[[39m keeps workflow startup clean when both database settings resolve to one file^[[33m 1257^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:34.2991393Z      ^[[33m^[[2m✓^[[22m^[[39m starts with the packaged registry and fails semantic planning closed without a trusted provider^[[33m 1361^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:34.2997822Z      ^[[33m^[[2m✓^[[22m^[[39m shares signed continuity bindings between the packaged hook and MCP server^[[33m 1867^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:34.8296468Z  ^[[32m✓^[[39m tests/tooling/commands.test.mjs ^[[2m(^[[22m^[[2m12 tests^[[22m^[[2m)^[[22m^[[33m 8939^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:34.8297806Z    ^[[32m✓^[[39m skill maintenance commands ^[[2m(12)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:34.8300860Z      ^[[33m^[[2m✓^[[22m^[[39m forwards pnpm script arguments without a standalone separator^[[33m 733^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:34.8303510Z      ^[[33m^[[2m✓^[[22m^[[39m imports only files committed at the requested Git ref^[[33m 1381^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:34.8342314Z      ^[[33m^[[2m✓^[[22m^[[39m refuses a replacement that does not contain the required ancestor commit^[[33m 2287^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:34.8344522Z      ^[[33m^[[2m✓^[[22m^[[39m keeps the registered routing when a replaced skill ships no integration descriptor^[[33m 2019^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:34.8346069Z      ^[[33m^[[2m✓^[[22m^[[39m rejects a lock whose auto-pr source is pinned to a commit^[[33m 811^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:34.8347522Z      ^[[33m^[[2m✓^[[22m^[[39m refuses to replace a suite-managed skill through the external importer^[[33m 1244^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:36.4825193Z  ^[[32m✓^[[39m tests/mcp/plugin-update-service.test.ts ^[[2m(^[[22m^[[2m17 tests^[[22m^[[2m)^[[22m^[[33m 1301^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:36.4825901Z    ^[[32m✓^[[39m PluginUpdateService ^[[2m(17)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:36.4826619Z      ^[[33m^[[2m✓^[[22m^[[39m caches a successful check for 24 hours and force bypasses the cache^[[33m 511^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:37.2816467Z  ^[[32m✓^[[39m tests/mcp/trust-provenance.test.ts ^[[2m(^[[22m^[[2m11 tests^[[22m^[[2m)^[[22m^[[33m 2186^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:37.2818105Z    ^[[32m✓^[[39m trust provenance ^[[2m(11)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:37.2819644Z      ^[[33m^[[2m✓^[[22m^[[39m stores peer provenance by digest without persisting the raw body^[[33m 516^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:37.2821680Z      ^[[33m^[[2m✓^[[22m^[[39m records and verifies a claimed peer message before injecting its receipt-bound body^[[33m 807^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:37.2832009Z      ^[[33m^[[2m✓^[[22m^[[39m exposes read-only MCP validation without trusting an arbitrary caller host name^[[33m 369^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:38.4943871Z  ^[[32m✓^[[39m tests/mcp/codex-host-observation.test.ts ^[[2m(^[[22m^[[2m18 tests^[[22m^[[2m)^[[22m^[[33m 846^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:38.4945312Z    ^[[32m✓^[[39m host-owned hookless provider ingress ^[[2m(2)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:38.4947048Z      ^[[33m^[[2m✓^[[22m^[[39m shares the strict bootstrap, missing, policy and replay gates for claude-code^[[33m 478^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:38.4949040Z      ^[[33m^[[2m✓^[[22m^[[39m shares the strict bootstrap, missing, policy and replay gates for codex^[[33m 329^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:41.7553091Z  ^[[32m✓^[[39m tests/cs-engineering/workflow-integration.test.ts ^[[2m(^[[22m^[[2m15 tests^[[22m^[[2m)^[[22m^[[33m 12494^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:41.7554877Z    ^[[33m^[[2m✓^[[22m^[[39m registered CS providers are discoverable at bootstrap 25 and workflow 67^[[33m 655^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:41.7556401Z    ^[[33m^[[2m✓^[[22m^[[39m selected review runs actual packaged CLI and finalizes with matching files^[[33m 1602^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:41.7558272Z    ^[[33m^[[2m✓^[[22m^[[39m stage rejects missing-bundle without consuming its revision^[[33m 408^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:41.7559660Z    ^[[33m^[[2m✓^[[22m^[[39m stage rejects stale-task without consuming its revision^[[33m 520^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:41.7561386Z    ^[[33m^[[2m✓^[[22m^[[39m stage rejects raw-evidence without consuming its revision^[[33m 722^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:41.7562985Z    ^[[33m^[[2m✓^[[22m^[[39m stage rejects provider-substitution without consuming its revision^[[33m 602^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:41.7564392Z    ^[[33m^[[2m✓^[[22m^[[39m stage rejects NOT_RUN-as-PASS without consuming its revision^[[33m 697^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:41.7565664Z    ^[[33m^[[2m✓^[[22m^[[39m stage rejects manifest-traversal without consuming its revision^[[33m 608^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:41.7567056Z    ^[[33m^[[2m✓^[[22m^[[39m stage rejects candidate-target without consuming its revision^[[33m 720^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:41.7568537Z    ^[[33m^[[2m✓^[[22m^[[39m proper unexecuted evidence records BLOCKED even with supplied observe policy^[[33m 520^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:41.7569951Z    ^[[33m^[[2m✓^[[22m^[[39m guarded lease/start and SQLite restart retain recorded bundle pins; finalize rereads evidence^[[33m 1183^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:41.7571311Z    ^[[33m^[[2m✓^[[22m^[[39m actual MCP tools validate a selected CS stage with synthetic server observations^[[33m 1264^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:41.7572975Z    ^[[33m^[[2m✓^[[22m^[[39m file-backed CS output follows the same record and finalize validation^[[33m 1220^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:41.7574110Z    ^[[33m^[[2m✓^[[22m^[[39m generated Claude review and copied deployment CLI validate without node_modules^[[33m 1513^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:42.1221801Z  ^[[32m✓^[[39m tests/mcp/tool-schema-profile.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[33m 5101^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:42.1223987Z    ^[[32m✓^[[39m MCP tool schema profiles ^[[2m(7)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:42.1238431Z      ^[[33m^[[2m✓^[[22m^[[39m keeps the historical schemas when no profile is selected^[[33m 816^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:42.1240407Z      ^[[33m^[[2m✓^[[22m^[[39m removes top-level combinators from every advertised schema for Anthropic hosts^[[33m 484^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:42.1242492Z      ^[[33m^[[2m✓^[[22m^[[39m accepts and rejects the same inputs with inlined Anthropic schemas as with the referenced contracts^[[33m 653^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:42.1244683Z      ^[[33m^[[2m✓^[[22m^[[39m validates plan_workflow input identically in both profiles^[[33m 541^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:42.1246397Z      ^[[33m^[[2m✓^[[22m^[[39m advertises the same host-neutral intake instructions to every schema profile^[[33m 745^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:42.1248366Z      ^[[33m^[[2m✓^[[22m^[[39m applies the environment profile in the bundled server^[[33m 1857^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:43.9416008Z  ^[[32m✓^[[39m tests/mcp/korean-prose-readiness.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[33m 1448^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:43.9418358Z    ^[[32m✓^[[39m Korean prose evaluation readiness ^[[2m(7)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:43.9419530Z      ^[[33m^[[2m✓^[[22m^[[39m reports readiness without confusing it with activation^[[33m 459^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:44.4703308Z  ^[[32m✓^[[39m tests/mcp/stage-output-file.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[33m 2435^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:44.4704907Z    ^[[32m✓^[[39m stage output by file reference ^[[2m(7)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:44.4707143Z      ^[[33m^[[2m✓^[[22m^[[39m validates a file-backed output like inline output and stores only the reference^[[33m 675^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:44.4709982Z      ^[[33m^[[2m✓^[[22m^[[39m keeps inline output unchanged^[[33m 556^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:44.4711710Z      ^[[33m^[[2m✓^[[22m^[[39m fails closed on inline content next to a file, digest mismatch and unreadable files^[[33m 410^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:44.4714203Z      ^[[33m^[[2m✓^[[22m^[[39m keeps receipt-policy stages inline so cross-stage actor checks still see their output^[[33m 393^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:44.4725168Z      ^[[33m^[[2m✓^[[22m^[[39m rejects outputFile fields that break the contract^[[33m 330^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:45.2520034Z  ^[[32m✓^[[39m tests/mcp/trusted-mcp-integration.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 700^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:45.2522947Z    ^[[32m✓^[[39m trusted MCP server boundary ^[[2m(1)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:45.2530668Z      ^[[33m^[[2m✓^[[22m^[[39m completes and aborts guarded workflows with server-side observations^[[33m 697^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:48.7495132Z  ^[[32m✓^[[39m tests/mcp/provider-result-envelope.test.ts ^[[2m(^[[22m^[[2m9 tests^[[22m^[[2m)^[[22m^[[33m 3433^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:48.7500130Z    ^[[32m✓^[[39m provider result envelope ^[[2m(4)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:48.7501703Z      ^[[33m^[[2m✓^[[22m^[[39m accepts the shared envelope version for acceptance-evidence-validation even though its provider schema omits it^[[33m 517^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:48.7502913Z      ^[[33m^[[2m✓^[[22m^[[39m accepts the shared envelope version for blocker-diagnosis even though its provider schema omits it^[[33m 323^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:48.7504118Z      ^[[33m^[[2m✓^[[22m^[[39m accepts the shared envelope version for recovery-strategy-selection even though its provider schema omits it^[[33m 350^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:48.7505127Z      ^[[33m^[[2m✓^[[22m^[[39m keeps validating schemaVersion where the provider schema declares it^[[33m 319^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:48.7505746Z    ^[[32m✓^[[39m artifact digest form ^[[2m(4)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:48.7506591Z      ^[[33m^[[2m✓^[[22m^[[39m accepts a digest that differs only by the sha256: prefix for mutation-risk-preflight and returns the caller's value^[[33m 301^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:48.7507700Z      ^[[33m^[[2m✓^[[22m^[[39m still rejects digests that are not lowercase SHA-256 hex for change-scope-baseline-capture^[[33m 511^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:48.7510049Z      ^[[33m^[[2m✓^[[22m^[[39m still rejects digests that are not lowercase SHA-256 hex for mutation-risk-preflight^[[33m 439^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:48.7511159Z    ^[[32m✓^[[39m recorded artifact digests ^[[2m(1)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:48.7511967Z      ^[[33m^[[2m✓^[[22m^[[39m stores the caller's digest form and still reports missing artifacts and output-file mismatches^[[33m 374^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:49.4010916Z  ^[[32m✓^[[39m tests/mcp/korean-prose-glossary.test.ts ^[[2m(^[[22m^[[2m18 tests^[[22m^[[2m)^[[22m^[[33m 385^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:49.8593765Z  ^[[32m✓^[[39m tests/coordinate-subagents/model-routing.test.mjs ^[[2m(^[[22m^[[2m15 tests^[[22m^[[2m)^[[22m^[[32m 195^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:49.9145710Z  ^[[32m✓^[[39m tests/evaluation-validity-auditor/suite-integration.test.mjs ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[33m 3970^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:49.9147221Z    ^[[32m✓^[[39m evaluation-validity-auditor suite descriptor ^[[2m(7)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:49.9148752Z      ^[[33m^[[2m✓^[[22m^[[39m selects only its explicit capability at phase order 68 with the conditional gate^[[33m 443^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:49.9150530Z      ^[[33m^[[2m✓^[[22m^[[39m accepts a safe post-execution PASS receipt and still rejects free text^[[33m 908^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:49.9152271Z      ^[[33m^[[2m✓^[[22m^[[39m freezes the audit purpose in the signed plan and enforces pre versus post completion^[[33m 908^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:49.9153997Z      ^[[33m^[[2m✓^[[22m^[[39m requires an explicit structured purpose for evaluation validity planning^[[33m 498^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:49.9156093Z      ^[[33m^[[2m✓^[[22m^[[39m keeps one evaluation TaskEnvelope compatible with task-contract and acceptance validation^[[33m 525^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:49.9170851Z      ^[[33m^[[2m✓^[[22m^[[39m maps FAIL and BLOCKED reports to their fixed workflow error states^[[33m 682^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:52.0316735Z  ^[[32m✓^[[39m tests/codex-token-usage-analyzer/integration.test.mjs ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m)^[[22m^[[33m 1603^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:52.0317651Z    ^[[32m✓^[[39m codex-token-usage-analyzer integration ^[[2m(6)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:52.0318326Z      ^[[33m^[[2m✓^[[22m^[[39m records and finalizes a no-Markdown PASS workflow^[[33m 742^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:52.0320170Z      ^[[33m^[[2m✓^[[22m^[[39m records and finalizes a no-Markdown PARTIAL workflow^[[33m 667^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:55.9845504Z  ^[[32m✓^[[39m tests/mcp/host-attestation-stdio.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[33m 16941^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:55.9863722Z    ^[[32m✓^[[39m packaged execution observation fixtures (not native-host evidence) ^[[2m(4)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:55.9865700Z      ^[[33m^[[2m✓^[[22m^[[39m completes guarded STDIO and keeps restart replay rejection for claude-code/hook/claude-opus-5^[[33m 4412^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:55.9867842Z      ^[[33m^[[2m✓^[[22m^[[39m completes guarded STDIO and keeps restart replay rejection for codex/hook/gpt-6-astra^[[33m 4066^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:55.9871061Z      ^[[33m^[[2m✓^[[22m^[[39m completes guarded STDIO and keeps restart replay rejection for codex/hook/gpt-6-sol^[[33m 4139^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:55.9873134Z      ^[[33m^[[2m✓^[[22m^[[39m completes guarded STDIO and keeps restart replay rejection for codex/wrapper/gpt-6-astra^[[33m 4315^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:56.2155589Z  ^[[32m✓^[[39m tests/mcp/runtime-config.test.ts ^[[2m(^[[22m^[[2m18 tests^[[22m^[[2m)^[[22m^[[32m 20^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:56.4483761Z  ^[[32m✓^[[39m tests/mcp/evaluation-preflight.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 19^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:56.6177647Z  ^[[32m✓^[[39m tests/session-messaging/utf8-framing.test.ts ^[[2m(^[[22m^[[2m12 tests^[[22m^[[2m)^[[22m^[[33m 6513^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:56.6179979Z    ^[[33m^[[2m✓^[[22m^[[39m accepts a real claim answer of exactly the response limit with a Korean character split 1|rest at the TLS chunk, and rejects one byte more^[[33m 745^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:56.6182590Z    ^[[33m^[[2m✓^[[22m^[[39m accepts a real claim answer of exactly the response limit with a Korean character split 2|rest at the TLS chunk, and rejects one byte more^[[33m 767^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:56.6185509Z    ^[[33m^[[2m✓^[[22m^[[39m accepts a request of exactly the request limit with a Korean character split 1|rest at the TLS chunk, and rejects one byte more^[[33m 568^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:56.6188524Z    ^[[33m^[[2m✓^[[22m^[[39m accepts a request of exactly the request limit with a Korean character split 2|rest at the TLS chunk, and rejects one byte more^[[33m 565^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:56.6191072Z    ^[[33m^[[2m✓^[[22m^[[39m delivers twelve batches of Korean messages through the CLI claim path byte for byte^[[33m 3321^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:56.6192914Z    ^[[33m^[[2m✓^[[22m^[[39m hands a Korean claim answer one byte under the limit to the CLI instead of retrying into an empty 120 s lease^[[33m 535^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:56.7591820Z  ^[[32m✓^[[39m tests/orchestrator/collaboration-decision.test.mjs ^[[2m(^[[22m^[[2m14 tests^[[22m^[[2m)^[[22m^[[32m 15^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:57.8239261Z  ^[[32m✓^[[39m tests/ponytail/ponytail.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[33m 896^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:57.8240558Z    ^[[32m✓^[[39m ponytail at the implementation step ^[[2m(5)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:57.8242443Z      ^[[33m^[[2m✓^[[22m^[[39m routes minimal-implementation to ponytail after the scope baseline and before the pre-mutation gate and scope verification^[[33m 526^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:57.8244583Z      ^[[33m^[[2m✓^[[22m^[[39m adds no ponytail stage when the plan does not ask for minimal-implementation^[[33m 360^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:57.8768545Z  ^[[32m✓^[[39m tests/mcp/response-projections.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[33m 786^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:57.8769299Z    ^[[32m✓^[[39m compact MCP response projections ^[[2m(2)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:57.8770133Z      ^[[33m^[[2m✓^[[22m^[[39m keeps successful workflow progress fixed-size and reduces repeated payload bytes by at least 80%^[[33m 482^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:57.8771136Z      ^[[33m^[[2m✓^[[22m^[[39m projects convergence roots and status without task, frame, or append-only history^[[33m 301^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:58.0741171Z  ^[[32m✓^[[39m tests/session-messaging/presence-deadline.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 25^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:58.2384820Z  ^[[32m✓^[[39m tests/korean-prose-editor/glossary-finalizer.test.mjs ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 110^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:58.2588098Z ^[[90mstdout^[[2m | tests/session-messaging/broker-lifecycle.test.ts^[[2m > ^[[22m^[[2misolates socket resets and a lost send response while preserving the broker and one committed message
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:58.2590514Z ^[[22m^[[39mDisposable reset broker exited: { code: ^[[1mnull^[[22m, signal: ^[[32m'SIGTERM'^[[39m, stderr: ^[[32m''^[[39m }
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:58.2603970Z 
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:58.2626099Z  ^[[32m✓^[[39m tests/session-messaging/broker-lifecycle.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[33m 5988^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:58.2629938Z    ^[[33m^[[2m✓^[[22m^[[39m retries transient endpoint publication failures and serves the published endpoint^[[33m 581^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:58.2632588Z    ^[[33m^[[2m✓^[[22m^[[39m releases startup resources after permanent failure and allows recovery^[[33m 1403^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:58.2642638Z    ^[[33m^[[2m✓^[[22m^[[39m releases startup resources after ENOSPC failure and allows recovery^[[33m 754^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:58.2644754Z    ^[[33m^[[2m✓^[[22m^[[39m releases startup resources after credentials failure and allows recovery^[[33m 663^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:58.2647285Z    ^[[33m^[[2m✓^[[22m^[[39m releases startup resources after database failure and allows recovery^[[33m 624^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:58.2649392Z    ^[[33m^[[2m✓^[[22m^[[39m delivers and acknowledges a message using only the packaged CLI and broker^[[33m 1146^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:58.2651574Z    ^[[33m^[[2m✓^[[22m^[[39m isolates socket resets and a lost send response while preserving the broker and one committed message^[[33m 814^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:58.4716466Z  ^[[32m✓^[[39m tests/mcp/korean-prose-evaluation-preflight.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 77^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:58.7669745Z  ^[[32m✓^[[39m tests/tooling/tooling.test.mjs ^[[2m(^[[22m^[[2m9 tests^[[22m^[[2m)^[[22m^[[32m 28^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:59.7592595Z  ^[[32m✓^[[39m tests/software-security-auditor/security-audit.test.mjs ^[[2m(^[[22m^[[2m23 tests^[[22m^[[2m)^[[22m^[[33m 1058^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:59.7593740Z    ^[[32m✓^[[39m security audit evidence contract ^[[2m(23)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:59.7594449Z      ^[[33m^[[2m✓^[[22m^[[39m runs positive and negative CLI in node_modules-free . packaging^[[33m 537^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:59.7595328Z      ^[[33m^[[2m✓^[[22m^[[39m runs positive and negative CLI in node_modules-free claude-plugin packaging^[[33m 444^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:59.8488869Z  ^[[32m✓^[[39m tests/session-messaging/presence-batches.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[33m 818^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:59.8490991Z    ^[[33m^[[2m✓^[[22m^[[39m stops after a transport failure, so an unresponsive broker costs one batch deadline, not one per batch^[[33m 408^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:48:59.8493442Z    ^[[33m^[[2m✓^[[22m^[[39m keeps earlier answers and marks the failed and remaining batches unanswered after a transport failure^[[33m 401^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:00.9950039Z  ^[[32m✓^[[39m tests/mcp/registry-contract.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[33m 910^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:00.9951414Z    ^[[32m✓^[[39m bundled skill registry ^[[2m(2)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:00.9953067Z      ^[[33m^[[2m✓^[[22m^[[39m conforms to SkillDescriptor.v2 and exposes all specialist capabilities^[[33m 518^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:00.9954787Z      ^[[33m^[[2m✓^[[22m^[[39m bundles and enables the Korean prose workflow for runtime selection^[[33m 389^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:01.1127767Z  ^[[32m✓^[[39m tests/software-security-auditor/integration.test.mjs ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[33m 2262^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:01.1129591Z    ^[[32m✓^[[39m security audit integration ^[[2m(7)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:01.1131037Z      ^[[33m^[[2m✓^[[22m^[[39m loads schema and maps complete report with findings in ^[[33m 562^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:01.1133522Z      ^[[33m^[[2m✓^[[22m^[[39m loads schema and maps complete report with findings in claude-plugin/^[[33m 312^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:01.1137026Z      ^[[33m^[[2m✓^[[22m^[[39m rejects semantic lies even with schema-valid fields and verified booleans^[[33m 308^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:01.1139702Z      ^[[33m^[[2m✓^[[22m^[[39m preserves partial rather than converting uncertainty to safety^[[33m 426^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:01.1145903Z      ^[[33m^[[2m✓^[[22m^[[39m preserves blocked rather than converting uncertainty to safety^[[33m 385^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:01.2616303Z  ^[[32m✓^[[39m tests/mcp/tool-schema-inline.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 10^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:01.8189000Z  ^[[32m✓^[[39m tests/orchestrator/query-registry.test.mjs ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[33m 324^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:02.0634041Z  ^[[32m✓^[[39m tests/mcp/orchestrator-fixtures.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 127^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:02.3263106Z  ^[[32m✓^[[39m tests/model-effort-advisor/suite-integration.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 177^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:02.6358754Z  ^[[32m✓^[[39m tests/release-state-backup.test.mjs ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 86^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:02.8900764Z  ^[[32m✓^[[39m tests/software-security-auditor/evaluation-evidence.test.mjs ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 13^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:03.1263962Z  ^[[32m✓^[[39m tests/mcp/korean-prose-execution-provenance.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 9^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:03.3687837Z  ^[[32m✓^[[39m tests/session-messaging/self-signed-certificate.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 13^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:04.6812471Z  ^[[32m✓^[[39m tests/tooling/skill-context-optimization.test.mjs ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[33m 2361^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:04.6814419Z    ^[[32m✓^[[39m skill context optimization ^[[2m(3)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:04.6817298Z      ^[[33m^[[2m✓^[[22m^[[39m preserves the reviewed skill revisions while reducing their initial load^[[33m 2352^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:06.1180243Z  ^[[32m✓^[[39m tests/instruction-scope-resolver/suite-integration.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 1204^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:06.1182014Z    ^[[32m✓^[[39m instruction-scope-resolver standalone regression ^[[2m(1)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:06.1183474Z      ^[[33m^[[2m✓^[[22m^[[39m runs every node:test case^[[33m 1201^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:06.3544730Z  ^[[32m✓^[[39m tests/acceptance-evidence-validator/suite-integration.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 2775^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:06.3546607Z    ^[[32m✓^[[39m acceptance-evidence-validator standalone regression ^[[2m(1)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:06.3549182Z      ^[[33m^[[2m✓^[[22m^[[39m runs every node:test case^[[33m 2773^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:11.8172212Z  ^[[32m✓^[[39m tests/cs-engineering/suite-integration.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 5218^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:11.8173435Z    ^[[33m^[[2m✓^[[22m^[[39m CS Node regressions run in an isolated process with the AGS Ajv runtime^[[33m 5216^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:13.6506668Z  ^[[32m✓^[[39m tests/task-contract/suite-integration.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 1666^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:13.6509484Z    ^[[33m^[[2m✓^[[22m^[[39m task-contract Node tests pass in an isolated process^[[33m 1664^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:14.6966348Z  ^[[32m✓^[[39m tests/evaluation-validity-auditor/standalone-regression.test.mjs ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 821^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:14.6967663Z    ^[[32m✓^[[39m evaluation-validity-auditor imported core ^[[2m(1)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:14.6968454Z      ^[[33m^[[2m✓^[[22m^[[39m passes the suite's normal, boundary, failure, and security regression cases^[[33m 819^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:15.3230579Z  ^[[32m✓^[[39m tests/runtime/runtime-smoke.test.mjs ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m)^[[22m^[[33m 15230^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:15.3231824Z    ^[[32m✓^[[39m installed skill runtime ^[[2m(6)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:15.3232972Z      ^[[33m^[[2m✓^[[22m^[[39m runs every documented Node CLI without node_modules^[[33m 14959^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:24.0189404Z  ^[[32m✓^[[39m tests/change-scope-guardian/suite-integration.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 17649^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:24.0197494Z    ^[[33m^[[2m✓^[[22m^[[39m change-scope-guardian Node tests pass in an isolated process^[[33m 17647^[[2mms^[[22m^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:24.0240364Z 
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:24.0246805Z ^[[2m Test Files ^[[22m ^[[1m^[[32m67 passed^[[39m^[[22m^[[2m | ^[[22m^[[33m1 skipped^[[39m^[[90m (68)^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:24.0254887Z ^[[2m      Tests ^[[22m ^[[1m^[[32m916 passed^[[39m^[[22m^[[2m | ^[[22m^[[33m5 skipped^[[39m^[[90m (921)^[[39m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:24.0255880Z ^[[2m   Start at ^[[22m 05:46:35
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:24.0261971Z ^[[2m   Duration ^[[22m 168.49s^[[2m (tests 97%, import 2%, transform 1%)^[[22m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:24.0276627Z 
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:24.1024204Z ##[group]Run pnpm runtime:check
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:24.1024552Z ^[[36;1mpnpm runtime:check^[[0m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:24.1042198Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:24.1042770Z env:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:24.1043040Z   pythonLocation: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:24.1043494Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64/lib/pkgconfig
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:24.1043943Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:24.1044345Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:24.1044737Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:24.1045055Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:25.3295993Z Already up to date
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:25.3304469Z Done in 474ms using pnpm v11.19.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:25.3475302Z $ node scripts/check-runtime.mjs
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:34.8197803Z runtime: ready (30 skill CLIs, Node.js 24.21.0)
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:34.8654129Z ##[group]Run pnpm validate:all
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:34.8654484Z ^[[36;1mpnpm validate:all^[[0m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:34.8672183Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:34.8672595Z env:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:34.8672873Z   pythonLocation: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:34.8673339Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64/lib/pkgconfig
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:34.8673787Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:34.8674193Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:34.8674592Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:34.8674916Z   PYTHONUTF8: 1
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:34.8675103Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:36.1144266Z Already up to date
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:36.1151732Z Done in 467ms using pnpm v11.19.0
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:36.1331813Z $ node scripts/validate-repository.mjs && node scripts/run-python-validations.mjs && tsx scripts/korean-prose-glossary.ts --mode check
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:37.0039678Z repository: valid
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:38.0356411Z PASS validate_frontmatter
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:38.0356760Z PASS validate_openai_yaml
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:38.0357036Z PASS validate_markdown_links
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:38.0357315Z PASS validate_no_placeholders
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:38.0357610Z PASS validate_no_sensitive_data
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:38.0357888Z PASS validate_routing_presets
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:38.0358158Z PASS validate_behavior_cases
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:38.0358804Z All skill package validations passed.
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:38.5021779Z Skill validation passed: <RUNNER_WORK>\agent-governance-suite\agent-governance-suite\skills\independent-audit-gate
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:43.8739312Z PASS validate_skill_package
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:43.8740179Z PASS validate_decision_record_contracts
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:43.8740729Z PASS validate_behavior_cases
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:43.8741346Z All independent-deliberation-panel validations passed.
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:43.9204735Z model-effort-advisor: valid
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:44.2151531Z {"status":"ok","entries":243,"id":"korean-prose-core","version":"1.2.1","contentDigest":"1262b46c6c07d3ecf0551167308df2aa3ec1ad9fb02e3a33fc9619ce2ec683d4"}
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:44.2736082Z ##[group]Run git show --check --oneline --no-renames HEAD
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:44.2736572Z ^[[36;1mgit show --check --oneline --no-renames HEAD^[[0m
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:44.2754309Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:44.2754712Z env:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:44.2754988Z   pythonLocation: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:44.2755464Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64/lib/pkgconfig
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:44.2755924Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:44.2756326Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:44.2756727Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>\windows\Python\3.12.10\x64
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:44.2757048Z ##[endgroup]
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:44.3435820Z b7341d3e docs: remove stale release candidate notice
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:44.3680753Z Post job cleanup.
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:44.5399401Z Post job cleanup.
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:44.6989689Z (node:8752) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:44.6990669Z (Use `node --trace-deprecation ...` to show where the warning was created)
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:44.7294249Z Post job cleanup.
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:44.9330958Z [command]"C:\Program Files\Git\bin\git.exe" version
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:44.9617098Z git version 2.55.0.windows.5
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8764440Z Temporarily overriding HOME='<RUNNER_WORK>\_temp\<RUNNER_ID>' before making global git config changes
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8768378Z Adding repository directory to the temporary git global config as a safe directory
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8771315Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory <RUNNER_WORK>\agent-governance-suite\agent-governance-suite
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8774325Z Removing SSH command configuration
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8775316Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8777846Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8779198Z Removing HTTP extra header
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8780198Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8783720Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8785183Z Removing includeIf entries pointing to credentials config files
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8785846Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8786886Z includeif.gitdir:<RUNNER_WORK>/agent-governance-suite/agent-governance-suite/.git.path
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8787558Z includeif.gitdir:<RUNNER_WORK>/agent-governance-suite/agent-governance-suite/.git/worktrees/*.path
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8788093Z includeif.gitdir:<WORKSPACE>/.git.path
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8788494Z includeif.gitdir:<WORKSPACE>/.git/worktrees/*.path
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8789976Z [command]"C:\Program Files\Git\bin\git.exe" config --local --get-all includeif.gitdir:<RUNNER_WORK>/agent-governance-suite/agent-governance-suite/.git.path
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8790788Z <RUNNER_WORK>\_temp\git-credentials-<RUNNER_ID>.config
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8792221Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset includeif.gitdir:<RUNNER_WORK>/agent-governance-suite/agent-governance-suite/.git.path <RUNNER_WORK>\\_temp\\git\-credentials\-<RUNNER_ID>\.config
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8793889Z [command]"C:\Program Files\Git\bin\git.exe" config --local --get-all includeif.gitdir:<RUNNER_WORK>/agent-governance-suite/agent-governance-suite/.git/worktrees/*.path
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8794872Z <RUNNER_WORK>\_temp\git-credentials-<RUNNER_ID>.config
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8799364Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset includeif.gitdir:<RUNNER_WORK>/agent-governance-suite/agent-governance-suite/.git/worktrees/*.path <RUNNER_WORK>\\_temp\\git\-credentials\-<RUNNER_ID>\.config
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8802213Z [command]"C:\Program Files\Git\bin\git.exe" config --local --get-all includeif.gitdir:<WORKSPACE>/.git.path
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8803558Z <RUNNER_TEMP>/git-credentials-<RUNNER_ID>.config
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8806163Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset includeif.gitdir:<WORKSPACE>/.git.path <RUNNER_TEMP>\/git\-credentials\-<RUNNER_ID>\.config
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8809184Z [command]"C:\Program Files\Git\bin\git.exe" config --local --get-all includeif.gitdir:<WORKSPACE>/.git/worktrees/*.path
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8811418Z <RUNNER_TEMP>/git-credentials-<RUNNER_ID>.config
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8817147Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset includeif.gitdir:<WORKSPACE>/.git/worktrees/*.path <RUNNER_TEMP>\/git\-credentials\-<RUNNER_ID>\.config
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8820516Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8822753Z Removing credentials config '<RUNNER_WORK>\_temp\git-credentials-<RUNNER_ID>.config'
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8887621Z Cleaning up orphan processes
+Node 24 / windows-latest	UNKNOWN STEP	2026-10-06T05:49:48.8941664Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

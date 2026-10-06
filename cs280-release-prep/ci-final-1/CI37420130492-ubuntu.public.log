@@ -1,0 +1,857 @@
+Node 24 / ubuntu-latest	UNKNOWN STEP	﻿2026-10-06T05:45:36.5034260Z Current runner version: '2.337.0'
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5059813Z ##[group]Runner Image Provisioner
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5060812Z Hosted Compute Agent
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5061449Z Version: 20260901.588
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5062083Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5063150Z Build Date: 2026-09-01T19:56:44Z
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5063855Z Worker ID: {<RUNNER_ID>}
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5064595Z Azure Region: westus3
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5065262Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5066980Z ##[group]Operating System
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5067833Z Ubuntu
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5068418Z 24.04.5
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5068896Z LTS
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5069913Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5070547Z ##[group]Runner Image
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5071236Z Image: ubuntu-24.04
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5071864Z Version: 20260927.320.1
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5073588Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260927.320/images/ubuntu/Ubuntu2404-Readme.md
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5075194Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260927.320
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5076242Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5077529Z ##[group]GITHUB_TOKEN Permissions
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5079776Z Contents: read
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5080480Z Metadata: read
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5081101Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5083638Z Secret source: Actions
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5084592Z Cache mode: write
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5085449Z Prepare workflow directory
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5490792Z Prepare all required actions
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.5539185Z Getting action download info
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.8771325Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:36.9931427Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.0815104Z Download action repository 'actions/setup-python@v7' (SHA:5fda3b95a4ea91299a34e894583c3862153e4b97)
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.2709389Z Complete job name: Node 24 / ubuntu-latest
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.3579945Z ##[group]Run actions/checkout@v7
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.3580858Z with:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.3581290Z   fetch-depth: 0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.3581824Z   repository: jaeseongs95/agent-governance-suite
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.3586212Z   token: ***
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.3586658Z   ssh-strict: true
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.3587091Z   ssh-user: git
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.3587540Z   persist-credentials: true
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.3588021Z   clean: true
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.3588464Z   sparse-checkout-cone-mode: true
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.3588983Z   fetch-tags: false
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.3589428Z   show-progress: true
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.3589876Z   lfs: false
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.3590322Z   submodules: false
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.3590795Z   set-safe-directory: true
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.3591304Z   allow-unsafe-pr-checkout: false
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.3592102Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.4640853Z Syncing repository: jaeseongs95/agent-governance-suite
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.4644260Z ##[group]Getting Git version info
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.4645767Z Working directory is '<RUNNER_HOME>/work/agent-governance-suite/agent-governance-suite'
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.4647774Z [command]/usr/bin/git version
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.4737962Z git version 2.55.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.4763903Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.4777020Z Temporarily overriding HOME='<RUNNER_HOME>/work/_temp/<RUNNER_ID>' before making global git config changes
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.4779840Z Adding repository directory to the temporary git global config as a safe directory
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.4785474Z [command]/usr/bin/git config --global --add safe.directory <RUNNER_HOME>/work/agent-governance-suite/agent-governance-suite
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.4848032Z Deleting the contents of '<RUNNER_HOME>/work/agent-governance-suite/agent-governance-suite'
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.4851730Z ##[group]Determining repository object format
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.4853448Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.4854594Z ##[group]Initializing the repository
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.4859225Z [command]/usr/bin/git init <RUNNER_HOME>/work/agent-governance-suite/agent-governance-suite
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5021546Z hint: Using 'master' as the name for the initial branch. This default branch name
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5023525Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5026593Z hint: to use in all of your new repositories, which will suppress this warning,
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5027843Z hint: call:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5028528Z hint:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5029348Z hint: 	git config --global init.defaultBranch <name>
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5030320Z hint:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5031230Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5032988Z hint: 'development'. The just-created branch can be renamed via this command:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5034226Z hint:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5034876Z hint: 	git branch -m <name>
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5035615Z hint:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5036675Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5038805Z Initialized empty Git repository in <RUNNER_HOME>/work/agent-governance-suite/agent-governance-suite/.git/
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5042071Z [command]/usr/bin/git remote add origin https://github.com/jaeseongs95/agent-governance-suite
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5107280Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5108617Z ##[group]Disabling automatic garbage collection
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5110549Z [command]/usr/bin/git config --local gc.auto 0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5171036Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5172237Z ##[group]Setting up auth
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5173285Z Removing SSH command configuration
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5174500Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5204108Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5703593Z Removing HTTP extra header
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5711132Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.5756441Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.6007829Z Removing includeIf entries pointing to credentials config files
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.6013864Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.6054534Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.6314382Z [command]/usr/bin/git config --file <RUNNER_HOME>/work/_temp/git-credentials-<RUNNER_ID>.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.6359511Z [command]/usr/bin/git config --local includeIf.gitdir:<RUNNER_HOME>/work/agent-governance-suite/agent-governance-suite/.git.path <RUNNER_HOME>/work/_temp/git-credentials-<RUNNER_ID>.config
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.6398135Z [command]/usr/bin/git config --local includeIf.gitdir:<RUNNER_HOME>/work/agent-governance-suite/agent-governance-suite/.git/worktrees/*.path <RUNNER_HOME>/work/_temp/git-credentials-<RUNNER_ID>.config
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.6438779Z [command]/usr/bin/git config --local includeIf.gitdir:<WORKSPACE>/.git.path <RUNNER_TEMP>/git-credentials-<RUNNER_ID>.config
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.6476353Z [command]/usr/bin/git config --local includeIf.gitdir:<WORKSPACE>/.git/worktrees/*.path <RUNNER_TEMP>/git-credentials-<RUNNER_ID>.config
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.6508878Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.6509723Z ##[group]Fetching the repository
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:37.6516185Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2804978Z From https://github.com/jaeseongs95/agent-governance-suite
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2806903Z  * [new branch]        chore/discussions-setup-20261002 -> origin/chore/discussions-setup-20261002
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2834150Z  * [new branch]        claude/docs-host-attestation-drift -> origin/claude/docs-host-attestation-drift
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2836383Z  * [new branch]        claude/skill-intake-common-vendor -> origin/claude/skill-intake-common-vendor
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2864475Z  * [new branch]        claude/v273-evidence-windows-20260928T173839Z -> origin/claude/v273-evidence-windows-20260928T173839Z
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2867005Z  * [new branch]        claude/v273-inputs     -> origin/claude/v273-inputs
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2868606Z  * [new branch]        claude/v273-intake-src -> origin/claude/v273-intake-src
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2871590Z  * [new branch]        claude/v273-msgqueue-retention-analysis-vmzcqs -> origin/claude/v273-msgqueue-retention-analysis-vmzcqs
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2874954Z  * [new branch]        claude/v276-presence-deadline -> origin/claude/v276-presence-deadline
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2877156Z  * [new branch]        claude/v277-utf8-framing -> origin/claude/v277-utf8-framing
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2879351Z  * [new branch]        claude/v3x-v06-b3-linux-closure -> origin/claude/v3x-v06-b3-linux-closure
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2968405Z  * [new branch]        claude/v3x-v06-b3b-r1  -> origin/claude/v3x-v06-b3b-r1
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2970485Z  * [new branch]        codex/dot-w05-source-20261002 -> origin/codex/dot-w05-source-20261002
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2971985Z  * [new branch]        codex/release-candidate-2.8.0 -> origin/codex/release-candidate-2.8.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2974329Z  * [new branch]        codex/results-ags-f06-f07-r66-20261001 -> origin/codex/results-ags-f06-f07-r66-20261001
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2976364Z  * [new branch]        codex/v260-semantic-decision-layer -> origin/codex/v260-semantic-decision-layer
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2978036Z  * [new branch]        codex/v272-skill-intake-port -> origin/codex/v272-skill-intake-port
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2979617Z  * [new branch]        codex/v3x-w05-r3-messaging-parity -> origin/codex/v3x-w05-r3-messaging-parity
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2981235Z  * [new branch]        codex/v3x-w05-r3-noreply-transport -> origin/codex/v3x-w05-r3-noreply-transport
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2983244Z  * [new branch]        codex/w05-f1-cloud-inputs-20261003 -> origin/codex/w05-f1-cloud-inputs-20261003
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2984954Z  * [new branch]        dot/ags-3x-results-20261002 -> origin/dot/ags-3x-results-20261002
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2986404Z  * [new branch]        dot/ags-b14-decision-20261002 -> origin/dot/ags-b14-decision-20261002
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2987827Z  * [new branch]        dot/ags-g18-reproduction-20261002 -> origin/dot/ags-g18-reproduction-20261002
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2989178Z  * [new branch]        dot/ags-w05-evidence-20261002 -> origin/dot/ags-w05-evidence-20261002
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2990510Z  * [new branch]        dot/ags-w06w07-evidence-20261002 -> origin/dot/ags-w06w07-evidence-20261002
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2991649Z  * [new branch]        evidence               -> origin/evidence
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2992800Z  * [new branch]        main                   -> origin/main
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2993804Z  * [new tag]           v0.1.0                 -> v0.1.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2994591Z  * [new tag]           v0.2.0                 -> v0.2.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2995456Z  * [new tag]           v1.0.0                 -> v1.0.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2996229Z  * [new tag]           v1.0.1                 -> v1.0.1
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2996955Z  * [new tag]           v1.0.2                 -> v1.0.2
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2997688Z  * [new tag]           v1.0.3                 -> v1.0.3
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2998425Z  * [new tag]           v1.0.4                 -> v1.0.4
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.2999154Z  * [new tag]           v1.0.5                 -> v1.0.5
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3000101Z  * [new tag]           v1.1.0                 -> v1.1.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3000851Z  * [new tag]           v1.10.0                -> v1.10.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3001600Z  * [new tag]           v1.11.0                -> v1.11.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3002583Z  * [new tag]           v1.12.0                -> v1.12.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3003467Z  * [new tag]           v1.13.0                -> v1.13.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3004770Z  * [new tag]           v1.14.0                -> v1.14.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3005878Z  * [new tag]           v1.14.1                -> v1.14.1
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3006667Z  * [new tag]           v1.15.0                -> v1.15.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3007413Z  * [new tag]           v1.15.1                -> v1.15.1
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3008152Z  * [new tag]           v1.16.0                -> v1.16.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3008913Z  * [new tag]           v1.16.1                -> v1.16.1
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3009652Z  * [new tag]           v1.16.2                -> v1.16.2
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3010438Z  * [new tag]           v1.17.0                -> v1.17.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3011191Z  * [new tag]           v1.18.0                -> v1.18.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3011941Z  * [new tag]           v1.19.0                -> v1.19.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3012983Z  * [new tag]           v1.19.1                -> v1.19.1
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3013731Z  * [new tag]           v1.2.0                 -> v1.2.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3014474Z  * [new tag]           v1.20.0                -> v1.20.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3015228Z  * [new tag]           v1.20.1                -> v1.20.1
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3015983Z  * [new tag]           v1.20.2                -> v1.20.2
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3016729Z  * [new tag]           v1.20.3                -> v1.20.3
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3017481Z  * [new tag]           v1.21.0                -> v1.21.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3018271Z  * [new tag]           v1.3.0                 -> v1.3.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3019042Z  * [new tag]           v1.4.0                 -> v1.4.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3020180Z  * [new tag]           v1.4.1                 -> v1.4.1
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3021104Z  * [new tag]           v1.4.2                 -> v1.4.2
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3021924Z  * [new tag]           v1.4.3                 -> v1.4.3
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3023132Z  * [new tag]           v1.5.0                 -> v1.5.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3023944Z  * [new tag]           v1.6.0                 -> v1.6.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3024712Z  * [new tag]           v1.7.0                 -> v1.7.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3025692Z  * [new tag]           v1.8.0                 -> v1.8.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3026506Z  * [new tag]           v1.9.0                 -> v1.9.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3027390Z  * [new tag]           v2.0.0                 -> v2.0.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3028187Z  * [new tag]           v2.1.0                 -> v2.1.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3028948Z  * [new tag]           v2.1.1                 -> v2.1.1
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3029687Z  * [new tag]           v2.1.2                 -> v2.1.2
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3030512Z  * [new tag]           v2.2.0                 -> v2.2.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3031291Z  * [new tag]           v2.2.1                 -> v2.2.1
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3032097Z  * [new tag]           v2.2.2                 -> v2.2.2
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3033151Z  * [new tag]           v2.2.3                 -> v2.2.3
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3034009Z  * [new tag]           v2.2.4                 -> v2.2.4
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3034853Z  * [new tag]           v2.2.5                 -> v2.2.5
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3035603Z  * [new tag]           v2.2.6                 -> v2.2.6
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3036366Z  * [new tag]           v2.3.0                 -> v2.3.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3037108Z  * [new tag]           v2.4.0                 -> v2.4.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3037850Z  * [new tag]           v2.5.0                 -> v2.5.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3038592Z  * [new tag]           v2.6.0                 -> v2.6.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3039333Z  * [new tag]           v2.7.0                 -> v2.7.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3040293Z  * [new tag]           v2.7.1                 -> v2.7.1
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3041033Z  * [new tag]           v2.7.2                 -> v2.7.2
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3041787Z  * [new tag]           v2.7.3                 -> v2.7.3
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3042965Z  * [new tag]           v2.7.4                 -> v2.7.4
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3043826Z  * [new tag]           v2.7.5                 -> v2.7.5
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3044882Z  * [new tag]           v2.7.6                 -> v2.7.6
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3046046Z  * [new tag]           v2.7.7                 -> v2.7.7
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3048201Z [command]/usr/bin/git branch --list --remote origin/codex/release-candidate-2.8.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3049277Z   origin/codex/release-candidate-2.8.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3050928Z [command]/usr/bin/git rev-parse refs/remotes/origin/codex/release-candidate-2.8.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3051943Z b7341d3e6636b79217b1f3d37d7a5014fcbf47be
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3053678Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3054511Z ##[group]Determining the checkout info
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3055446Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3055978Z [command]/usr/bin/git sparse-checkout disable
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3057600Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3059545Z ##[group]Checking out the ref
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.3060977Z [command]/usr/bin/git checkout --progress --force -B codex/release-candidate-2.8.0 refs/remotes/origin/codex/release-candidate-2.8.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.4264095Z Switched to a new branch 'codex/release-candidate-2.8.0'
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.4268494Z branch 'codex/release-candidate-2.8.0' set up to track 'origin/codex/release-candidate-2.8.0'.
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.4293114Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.4346620Z [command]/usr/bin/git log -1 --format=%H
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.4379300Z b7341d3e6636b79217b1f3d37d7a5014fcbf47be
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.4731184Z ##[group]Run actions/setup-node@v4
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.4731879Z with:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.4732614Z   node-version: 24
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.4733265Z   always-auth: false
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.4733821Z   check-latest: false
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.4738735Z   token: ***
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.4739198Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.6251545Z Found in cache @ <HOSTED_TOOLCACHE>/node/24.21.0/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.6256283Z (node:2309) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.6258711Z (Use `node --trace-deprecation ...` to show where the warning was created)
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:40.6260504Z ##[group]Environment details
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.0760817Z node: v24.21.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.0762170Z npm: 11.19.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.0763807Z yarn: 1.22.22
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.0766102Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.1055794Z ##[group]Run actions/setup-python@v7
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.1057014Z with:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.1057891Z   python-version: 3.12
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.1058908Z   check-latest: false
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.1069089Z   token: ***
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.1070076Z   update-environment: true
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.1071179Z   allow-prereleases: false
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.1072269Z   freethreaded: false
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.1073401Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.2293323Z ##[group]Installed versions
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.2388969Z Successfully set up CPython (3.12.14)
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.2393012Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.2566515Z ##[group]Run corepack enable
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.2567685Z ^[[36;1mcorepack enable^[[0m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.2927233Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.2928685Z env:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.2929749Z   pythonLocation: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.2931569Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib/pkgconfig
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.2933611Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.2935251Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.2936873Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.2938854Z   LD_LIBRARY_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.2940246Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.4195870Z ##[group]Run pnpm install --frozen-lockfile
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.4197208Z ^[[36;1mpnpm install --frozen-lockfile^[[0m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.4266042Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.4267451Z env:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.4268496Z   pythonLocation: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.4270221Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib/pkgconfig
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.4271979Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.4274066Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.4275679Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.4277320Z   LD_LIBRARY_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.4278691Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:41.4881736Z ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-11.19.0.tgz
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:43.4781205Z ? Verifying lockfile against supply-chain policies (267 entries)...
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:43.4875344Z Lockfile is up to date, resolution step is skipped
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:43.5964960Z Progress: resolved 1, reused 0, downloaded 0, added 0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:43.6376518Z Packages: +217
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:43.6377476Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:44.1925556Z Packages are copied from the content-addressable store to the virtual store.
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:44.1942170Z   Content-addressable store is at: <RUNNER_HOME>/.local/share/pnpm/store/v11
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:44.1943909Z   Virtual store is at:             node_modules/.pnpm
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:44.6024018Z Progress: resolved 217, reused 0, downloaded 104, added 7
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:45.5101221Z Progress: resolved 217, reused 0, downloaded 217, added 217, done
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.2702911Z ✓ Lockfile passes supply-chain policies (267 entries in 2.7s)
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.2760223Z .../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.3575083Z .../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.8363737Z 
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.8364504Z dependencies:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.8365522Z + @modelcontextprotocol/sdk 1.30.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.8367347Z + ajv 8.20.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.8368012Z + ajv-formats 3.0.1
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.8368728Z + zod 4.5.4
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.8369226Z 
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.8369656Z devDependencies:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.8370322Z + @eslint/js 10.0.1
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.8371038Z + @types/node 26.5.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.8371820Z + esbuild 0.28.2
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.8372769Z + eslint 10.10.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.8374345Z + tsx 4.23.13
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.8374962Z + typescript 6.0.2
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.8375701Z + typescript-eslint 8.70.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.8376442Z + vitest 5.0.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:46.8377013Z 
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:47.0403633Z Done in 4.2s using pnpm v11.19.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:47.1089708Z ##[group]Run pnpm bundle:check
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:47.1090029Z ^[[36;1mpnpm bundle:check^[[0m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:47.1157291Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:47.1157638Z env:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:47.1157912Z   pythonLocation: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:47.1158346Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib/pkgconfig
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:47.1158774Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:47.1159160Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:47.1159542Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:47.1159932Z   LD_LIBRARY_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:47.1160257Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:48.0956336Z Already up to date
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:48.0966358Z Done in 468ms using pnpm v11.19.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:48.1121835Z $ node scripts/check-bundle.mjs
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:48.4333258Z ##[group]Run pnpm claude:drift
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:48.4333599Z ^[[36;1mpnpm claude:drift^[[0m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:48.4398574Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:48.4398926Z env:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:48.4399189Z   pythonLocation: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:48.4399624Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib/pkgconfig
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:48.4400054Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:48.4400435Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:48.4400817Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:48.4401199Z   LD_LIBRARY_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:48.4401520Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:49.3789547Z Already up to date
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:49.3798579Z Done in 429ms using pnpm v11.19.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:49.3939180Z $ node scripts/build-claude-plugin.mjs --drift
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:49.6342919Z claude-plugin: fresh
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:49.6574649Z ##[group]Run pnpm lint
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:49.6575151Z ^[[36;1mpnpm lint^[[0m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:49.6668701Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:49.6669299Z env:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:49.6669748Z   pythonLocation: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:49.6670517Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib/pkgconfig
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:49.6671290Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:49.6671976Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:49.6672997Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:49.6673734Z   LD_LIBRARY_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:49.6674332Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:50.6200803Z Already up to date
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:50.6208781Z Done in 439ms using pnpm v11.19.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:50.6364443Z $ eslint . && node scripts/validate-repository.mjs
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:57.9011714Z repository: valid
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:57.9242284Z ##[group]Run pnpm release:check
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:57.9243257Z ^[[36;1mpnpm release:check^[[0m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:57.9307850Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:57.9308192Z env:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:57.9308454Z   pythonLocation: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:57.9308895Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib/pkgconfig
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:57.9309313Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:57.9309705Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:57.9310089Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:57.9310487Z   LD_LIBRARY_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:57.9310813Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:58.8927339Z Already up to date
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:58.8934590Z Done in 437ms using pnpm v11.19.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:58.9076828Z $ node scripts/sync-release-metadata.mjs
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:58.9511247Z release metadata is synchronized
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:58.9711684Z ##[group]Run pnpm source:check
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:58.9714085Z ^[[36;1mpnpm source:check^[[0m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:58.9777325Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:58.9777678Z env:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:58.9777945Z   pythonLocation: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:58.9778380Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib/pkgconfig
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:58.9778804Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:58.9779183Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:58.9779566Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:58.9779955Z   LD_LIBRARY_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:58.9780299Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:59.9238892Z Already up to date
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:59.9246873Z Done in 432ms using pnpm v11.19.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:45:59.9385595Z $ node scripts/check-source-lock.mjs
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:00.0935297Z source lock is consistent
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:00.1161795Z ##[group]Run pnpm build
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:00.1162281Z ^[[36;1mpnpm build^[[0m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:00.1236522Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:00.1237134Z env:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:00.1237605Z   pythonLocation: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:00.1238411Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib/pkgconfig
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:00.1239102Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:00.1239505Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:00.1239901Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:00.1240286Z   LD_LIBRARY_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:00.1240623Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:01.0427125Z Already up to date
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:01.0435521Z Done in 419ms using pnpm v11.19.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:01.0576014Z $ tsc --noEmit && node scripts/build.mjs
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:05.7511016Z ##[group]Run pnpm process-identity:check
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:05.7511361Z ^[[36;1mpnpm process-identity:check^[[0m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:05.7575002Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:05.7575344Z env:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:05.7575605Z   pythonLocation: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:05.7576048Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib/pkgconfig
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:05.7576472Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:05.7576853Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:05.7577221Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:05.7577594Z   LD_LIBRARY_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:05.7577906Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:06.6900714Z Already up to date
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:06.6908531Z Done in 420ms using pnpm v11.19.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:06.7046499Z $ tsx scripts/check-process-identity.ts
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:06.8988069Z process identity: ready (linux)
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:06.9359344Z ##[group]Run pnpm test
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:06.9359882Z ^[[36;1mpnpm test^[[0m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:06.9436452Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:06.9436803Z env:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:06.9437069Z   pythonLocation: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:06.9437530Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib/pkgconfig
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:06.9437958Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:06.9438331Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:06.9438710Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:06.9439086Z   LD_LIBRARY_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:06.9439402Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:07.8787808Z Already up to date
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:07.8796637Z Done in 431ms using pnpm v11.19.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:07.8939901Z $ node scripts/build.mjs && vitest run
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:08.4726187Z 
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:08.4730941Z ^[[1m^[[30m^[[46m RUN ^[[49m^[[39m^[[22m ^[[36mv5.0.0 ^[[39m^[[90m<RUNNER_HOME>/work/agent-governance-suite/agent-governance-suite^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:08.4732058Z 
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7881767Z  ^[[32m✓^[[39m tests/session-messaging/session-message.test.ts ^[[2m(^[[22m^[[2m73 tests^[[22m^[[2m)^[[22m^[[33m 16327^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7884455Z    ^[[32m✓^[[39m session message spool ^[[2m(17)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7895055Z      ^[[33m^[[2m✓^[[22m^[[39m caps the unacknowledged spool and expires messages^[[33m 607^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7896839Z      ^[[33m^[[2m✓^[[22m^[[39m allows one wake claim across two concurrent SQLite connections^[[33m 494^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7898317Z    ^[[32m✓^[[39m TLS 1.3 broker and vendor-neutral adapter ^[[2m(54)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7901145Z      ^[[33m^[[2m✓^[[22m^[[39m fails fast on broker exit and leaves deadline cleanup to the state-directory owner^[[33m 376^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7903816Z      ^[[33m^[[2m✓^[[22m^[[39m returns at the startup deadline while state preparation is still blocked and never spawns afterward^[[33m 557^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7930892Z      ^[[33m^[[2m✓^[[22m^[[39m enforces an absolute request deadline while a TLS peer keeps sending partial data^[[33m 347^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7933296Z      ^[[33m^[[2m✓^[[22m^[[39m uses one plugin queue profile for packaged presence and relay until the next SessionStart^[[33m 5681^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7935504Z      ^[[33m^[[2m✓^[[22m^[[39m pins the certificate, authenticates requests, survives restart, and supports arbitrary hosts^[[33m 609^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7937294Z      ^[[33m^[[2m✓^[[22m^[[39m blocks only verified empty Codex wake prompts in the source hook^[[33m 650^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7939154Z      ^[[33m^[[2m✓^[[22m^[[39m blocks only verified empty Codex wake prompts in the packaged hook^[[33m 1655^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7941045Z      ^[[33m^[[2m✓^[[22m^[[39m blocks a verified retired Codex wake marker without claiming the current body through the source hook^[[33m 461^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7943292Z      ^[[33m^[[2m✓^[[22m^[[39m blocks a verified retired Codex wake marker without claiming the current body through the packaged hook^[[33m 584^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7944996Z      ^[[33m^[[2m✓^[[22m^[[39m keeps a maximum-size peer message within the hook context limit^[[33m 316^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7946371Z      ^[[33m^[[2m✓^[[22m^[[39m escapes peer bodies inside one bounded JSON block^[[33m 316^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7947799Z      ^[[33m^[[2m✓^[[22m^[[39m starts the relay without spending a second claim budget during SessionStart^[[33m 331^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7949445Z      ^[[33m^[[2m✓^[[22m^[[39m leaves Codex Stop messages queued for a supported context event^[[33m 326^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7950819Z      ^[[33m^[[2m✓^[[22m^[[39m keeps packaged hook and relay entrypoints isolated^[[33m 339^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7953564Z      ^[[33m^[[2m✓^[[22m^[[39m keeps Claude Code Stop context delivery enabled^[[33m 407^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7954653Z    ^[[32m✓^[[39m session message MCP tools ^[[2m(2)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:25.7969359Z      ^[[33m^[[2m✓^[[22m^[[39m validates bound send, status, and acknowledgement calls^[[33m 713^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:26.0506513Z  ^[[32m✓^[[39m tests/mcp/workflow-service.test.ts ^[[2m(^[[22m^[[2m40 tests^[[22m^[[2m)^[[22m^[[33m 16910^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:26.0507582Z    ^[[32m✓^[[39m SqliteWorkflowStore ^[[2m(4)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:26.0508950Z      ^[[33m^[[2m✓^[[22m^[[39m migrates an active v2 workflow to v5 and preserves receipt updates^[[33m 800^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:26.0509849Z    ^[[32m✓^[[39m WorkflowService ^[[2m(36)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:26.0511231Z      ^[[33m^[[2m✓^[[22m^[[39m persists runs, signing keys, revisions, and run sequences in SQLite^[[33m 613^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:26.0513459Z      ^[[33m^[[2m✓^[[22m^[[39m rejects stale, replayed, and cross-stage trusted observations^[[33m 521^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:26.0515112Z      ^[[33m^[[2m✓^[[22m^[[39m observes a failing stage without holding it to the assurance floor^[[33m 807^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:26.0523266Z      ^[[33m^[[2m✓^[[22m^[[39m still holds a passing stage to the assurance floor^[[33m 366^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:26.0524989Z      ^[[33m^[[2m✓^[[22m^[[39m persists trusted observation claims across service restart^[[33m 367^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:26.0526845Z      ^[[33m^[[2m✓^[[22m^[[39m starts from a plan and enforces revision, ordering, and evidence^[[33m 307^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:26.0528835Z      ^[[33m^[[2m✓^[[22m^[[39m requires a PASS verdict and an auditor independent from implementation actors^[[33m 547^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:26.0530734Z      ^[[33m^[[2m✓^[[22m^[[39m rejects deliberation without an eligible DecisionRecord^[[33m 416^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:26.0533456Z      ^[[33m^[[2m✓^[[22m^[[39m validates a replacement deliberation provider without a hardcoded skill path^[[33m 314^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:26.0555262Z      ^[[33m^[[2m✓^[[22m^[[39m rejects incomplete or stale mandatory audit handoffs^[[33m 389^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:26.0557182Z      ^[[33m^[[2m✓^[[22m^[[39m rejects every canonical invalid DecisionRecord at the MCP gate^[[33m 6780^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:27.9774658Z  ^[[32m✓^[[39m tests/mcp/convergence-guard.test.ts ^[[2m(^[[22m^[[2m66 tests^[[22m^[[2m)^[[22m^[[33m 18800^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:27.9827116Z    ^[[32m✓^[[39m local MCP convergence guard ^[[2m(33)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:27.9874225Z      ^[[33m^[[2m✓^[[22m^[[39m opens an immutable root and rejects overlapping active scope even under a changed taskId^[[33m 490^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:27.9910994Z      ^[[33m^[[2m✓^[[22m^[[39m reuses root and lease bindings when compact claim and guarded start omit duplicate values^[[33m 542^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:27.9926277Z      ^[[33m^[[2m✓^[[22m^[[39m records a rejected retry on the root without spending attempt budget^[[33m 397^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:27.9953862Z      ^[[33m^[[2m✓^[[22m^[[39m records a stale-fingerprint rejection without burning its evidence^[[33m 396^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:27.9983691Z      ^[[33m^[[2m✓^[[22m^[[39m reads a root stored before retry rejections existed^[[33m 427^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:28.0013714Z      ^[[33m^[[2m✓^[[22m^[[39m allows only one competing lease claim across two SQLite connections^[[33m 1125^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:28.0038070Z      ^[[33m^[[2m✓^[[22m^[[39m allows only one trusted observation claim across two SQLite connections^[[33m 417^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:28.0082986Z      ^[[33m^[[2m✓^[[22m^[[39m does not reset the attempt budget by reopening after a stop review^[[33m 351^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:28.0123552Z    ^[[32m✓^[[39m server-derived workspace identity ^[[2m(20)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:28.0125781Z      ^[[33m^[[2m✓^[[22m^[[39m blocks checkout containers across separate gitdir layouts (admin, nested=false)^[[33m 317^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:28.0145979Z      ^[[33m^[[2m✓^[[22m^[[39m blocks checkout containers across separate gitdir layouts (.git, nested=false)^[[33m 355^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:28.0147943Z      ^[[33m^[[2m✓^[[22m^[[39m blocks checkout containers across separate gitdir layouts (admin, nested=true)^[[33m 362^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:28.0150179Z      ^[[33m^[[2m✓^[[22m^[[39m keeps a gated root blocking its relative surface in every checkout of the repository^[[33m 404^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:28.0152305Z      ^[[33m^[[2m✓^[[22m^[[39m follows the write surface of a stored root after a review replaces its frame^[[33m 363^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:28.0154367Z      ^[[33m^[[2m✓^[[22m^[[39m lets two gated roots be replaced without blocking each other, but not widened or rescoped past a gate^[[33m 317^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:28.0156437Z      ^[[33m^[[2m✓^[[22m^[[39m backfills identities for stored roots without rewriting them and treats legacy URI scope as the whole workspace^[[33m 430^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:28.0158197Z      ^[[33m^[[2m✓^[[22m^[[39m admits only one of two connections that open the same target at once^[[33m 501^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:28.0159398Z    ^[[32m✓^[[39m gated roots stored before identities existed ^[[2m(13)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:28.0160889Z      ^[[33m^[[2m✓^[[22m^[[39m does not reuse an identity observed for a replaced frame, and grants no legacy exception for it^[[33m 335^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:28.0162846Z      ^[[33m^[[2m✓^[[22m^[[39m still replaces a gated legacy root of a deleted checkout when the same workspace is named^[[33m 430^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:29.3564691Z  ^[[32m✓^[[39m tests/session-messaging/wake-liveness.test.mjs ^[[2m(^[[22m^[[2m36 tests^[[22m^[[2m)^[[22m^[[33m 2732^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:29.3580848Z    ^[[33m^[[2m✓^[[22m^[[39m G: two independent processes racing the v2.7.2 upgrade both open one migrated schema^[[33m 466^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:29.3603889Z    ^[[33m^[[2m✓^[[22m^[[39m two independent processes racing the retirement of an ended birth retire it once^[[33m 398^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:29.3666994Z    ^[[33m^[[2m✓^[[22m^[[39m two independent relay processes racing retirement create one active attempt^[[33m 379^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:32.2269958Z  ^[[32m✓^[[39m tests/session-messaging/wake-lifecycle.test.mjs ^[[2m(^[[22m^[[2m51 tests^[[22m^[[2m)^[[22m^[[33m 6167^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:32.2277352Z    ^[[33m^[[2m✓^[[22m^[[39m independent generation/outcome-first-race workers permit exactly one separate new effect^[[33m 779^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:32.2279650Z    ^[[33m^[[2m✓^[[22m^[[39m independent generation/start-first-race workers permit exactly one separate new effect^[[33m 585^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:32.2282017Z    ^[[33m^[[2m✓^[[22m^[[39m verified old arrival in another process releases only the old attempt and permits one new effect^[[33m 652^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:32.2284636Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 independent senders and relay processes perform exactly one external call^[[33m 606^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:32.2286943Z    ^[[33m^[[2m✓^[[22m^[[39m W05-r2 independent process crash before start recovers the same attempt; after effect never resends^[[33m 1351^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:33.5314351Z  ^[[32m✓^[[39m tests/mcp/host-attestation.test.ts ^[[2m(^[[22m^[[2m30 tests^[[22m^[[2m)^[[22m^[[33m 3564^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:33.5384159Z    ^[[32m✓^[[39m Claude Code host attestation through the MCP boundary ^[[2m(11)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:33.5444243Z      ^[[33m^[[2m✓^[[22m^[[39m completes an orchestrated workflow with claude-code observations^[[33m 730^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:33.5467415Z      ^[[33m^[[2m✓^[[22m^[[39m completes an orchestrated workflow with codex observations^[[33m 431^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:33.5509263Z      ^[[33m^[[2m✓^[[22m^[[39m completes an orchestrated workflow with codex observations^[[33m 345^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:33.5511090Z      ^[[33m^[[2m✓^[[22m^[[39m keeps the default server without a provider on BINDING_REQUIRED^[[33m 461^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:35.9264039Z  ^[[32m✓^[[39m tests/tooling/claude-plugin.test.mjs ^[[2m(^[[22m^[[2m20 tests^[[22m^[[2m)^[[22m^[[33m 2181^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:35.9265551Z    ^[[32m✓^[[39m generated Claude plugin ^[[2m(12)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:35.9267287Z      ^[[33m^[[2m✓^[[22m^[[39m keeps no copy of the common intake sentences in any tracked file outside the shared source^[[33m 847^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:35.9269398Z      ^[[33m^[[2m✓^[[22m^[[39m removes a caller-supplied token when it cannot attest^[[33m 477^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:40.3664617Z  ^[[32m✓^[[39m tests/session-messaging/historical-wake.test.mjs ^[[2m(^[[22m^[[2m65 tests^[[22m^[[2m)^[[22m^[[33m 7848^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:40.3711371Z    ^[[33m^[[2m✓^[[22m^[[39m bundled public CLI forwards only IDs to the private broker and cannot repeat recovery^[[33m 417^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:40.3713623Z    ^[[33m^[[2m✓^[[22m^[[39m packaged CLI binds history to explicit broker state directory: prestarted^[[33m 595^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:40.3748899Z    ^[[33m^[[2m✓^[[22m^[[39m packaged CLI binds history to explicit broker state directory: client-ensure^[[33m 713^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:40.3795073Z    ^[[33m^[[2m✓^[[22m^[[39m packaged root CLI rejects unsupported trust schema without mutation: 0^[[33m 357^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:40.3796919Z    ^[[33m^[[2m✓^[[22m^[[39m packaged root CLI rejects unsupported trust schema without mutation: 1^[[33m 315^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:40.3843945Z    ^[[33m^[[2m✓^[[22m^[[39m packaged root CLI rejects unsupported trust schema without mutation: 2^[[33m 347^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:40.3849198Z    ^[[33m^[[2m✓^[[22m^[[39m packaged root CLI rejects unsupported trust schema without mutation: 99^[[33m 325^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:40.3874423Z    ^[[33m^[[2m✓^[[22m^[[39m packaged root CLI rejects unsupported trust schema without mutation: missing-table^[[33m 352^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:40.3902009Z    ^[[33m^[[2m✓^[[22m^[[39m packaged root CLI rejects unsupported trust schema without mutation: wrong-column^[[33m 341^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:40.3944107Z    ^[[33m^[[2m✓^[[22m^[[39m packaged claude CLI rejects unsupported trust schema without mutation: 0^[[33m 308^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:40.3959425Z    ^[[33m^[[2m✓^[[22m^[[39m packaged claude CLI rejects unsupported trust schema without mutation: 1^[[33m 338^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:40.4003958Z    ^[[33m^[[2m✓^[[22m^[[39m packaged claude CLI rejects unsupported trust schema without mutation: 2^[[33m 339^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:40.4006054Z    ^[[33m^[[2m✓^[[22m^[[39m packaged claude CLI rejects unsupported trust schema without mutation: 99^[[33m 337^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:40.4013947Z    ^[[33m^[[2m✓^[[22m^[[39m packaged claude CLI rejects unsupported trust schema without mutation: missing-table^[[33m 370^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:40.4016169Z    ^[[33m^[[2m✓^[[22m^[[39m packaged claude CLI rejects unsupported trust schema without mutation: wrong-column^[[33m 367^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:45.4297114Z  ^[[32m✓^[[39m tests/session-messaging/peer-wait.test.ts ^[[2m(^[[22m^[[2m28 tests^[[22m^[[2m)^[[22m^[[33m 4788^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:45.4299243Z    ^[[33m^[[2m✓^[[22m^[[39m enforces native wait through the public packaged hook and preserves unrelated waits^[[33m 970^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:45.4301314Z    ^[[33m^[[2m✓^[[22m^[[39m the public CLI consumes the decision before delay and sends no repeated poll when denied^[[33m 392^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:45.4303543Z    ^[[33m^[[2m✓^[[22m^[[39m public native hook suppresses equivalent payloads but permits actual cursor change^[[33m 596^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:45.4306062Z    ^[[33m^[[2m✓^[[22m^[[39m public CLI equivalent retransmissions consume one decision each and state change restores a snapshot^[[33m 672^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:45.4307750Z    ^[[33m^[[2m✓^[[22m^[[39m CLI unknown resume uses one bounded wait and does not force permanent stopping^[[33m 1251^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:45.4308783Z    ^[[33m^[[2m✓^[[22m^[[39m broker restart preserves messages but drops resume and repeat-suppression evidence^[[33m 712^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:47.1963522Z  ^[[32m✓^[[39m tests/mcp/korean-prose-cycle-receipt.test.ts ^[[2m(^[[22m^[[2m13 tests^[[22m^[[2m)^[[22m^[[33m 18848^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:47.1972121Z    ^[[32m✓^[[39m range-aware Korean prose cycle receipts ^[[2m(13)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:47.1974425Z      ^[[33m^[[2m✓^[[22m^[[39m records canonical structured work products and binds selection through finalization^[[33m 3054^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:47.1976407Z      ^[[33m^[[2m✓^[[22m^[[39m rejects a cycle work product changed after the receipt was recorded^[[33m 2002^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:47.1978109Z      ^[[33m^[[2m✓^[[22m^[[39m rejects a cycle directory outside the evaluation root^[[33m 401^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:47.1979863Z      ^[[33m^[[2m✓^[[22m^[[39m rejects a structured cycle that omits formal readiness evidence^[[33m 478^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:47.1981735Z      ^[[33m^[[2m✓^[[22m^[[39m does not silently select the historical cycle when no cycle path is given^[[33m 366^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:47.1984015Z      ^[[33m^[[2m✓^[[22m^[[39m rejects structured run metadata without execution provenance^[[33m 655^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:47.1985866Z      ^[[33m^[[2m✓^[[22m^[[39m rejects structured run metadata with an unverified actual model^[[33m 625^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:47.1987656Z      ^[[33m^[[2m✓^[[22m^[[39m derives a passing quality decision from the bound final records^[[33m 1978^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:47.1989718Z      ^[[33m^[[2m✓^[[22m^[[39m verifies a receipt whose quality evidence passed only with the external quality digest^[[33m 3180^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:47.1991880Z      ^[[33m^[[2m✓^[[22m^[[39m rejects quality evidence when bound final records miss the improvement threshold^[[33m 1680^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:47.1994064Z      ^[[33m^[[2m✓^[[22m^[[39m rejects a label leaked into the independent adjudicator input^[[33m 1262^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:47.1996276Z      ^[[33m^[[2m✓^[[22m^[[39m does not count an unsafe independently adjudicated edit as an improvement^[[33m 1399^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:47.1998414Z      ^[[33m^[[2m✓^[[22m^[[39m rejects a start claim and role metadata replaced after the workflow receipt was finalized^[[33m 1765^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:48.1811125Z  ^[[32m✓^[[39m tests/session-messaging/message-retention.test.ts ^[[2m(^[[22m^[[2m16 tests^[[22m^[[2m)^[[22m^[[33m 12027^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:48.1813451Z    ^[[33m^[[2m✓^[[22m^[[39m caps one sender at the sender limit (limit-1, limit, limit+1) without blocking other senders^[[33m 492^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:48.1818658Z    ^[[33m^[[2m✓^[[22m^[[39m rejects prepare and send with global scope when the global receipt pool is full^[[33m 2177^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:48.1820702Z    ^[[33m^[[2m✓^[[22m^[[39m drained senders regain capacity at ACK+1h instead of message expiry+1h^[[33m 418^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:48.1822873Z    ^[[33m^[[2m✓^[[22m^[[39m two processes sending for one sender at limit-1 never exceed the sender limit^[[33m 968^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:48.1825057Z    ^[[33m^[[2m✓^[[22m^[[39m service reports capacity rejections as definite no-effect with scope and earliest release details^[[33m 2542^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:48.1827019Z    ^[[33m^[[2m✓^[[22m^[[39m a resend of an already sent ID at full sender and global capacity is a duplicate, not a capacity rejection^[[33m 1913^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:48.1828919Z    ^[[33m^[[2m✓^[[22m^[[39m reports sender scope and the sender's own earliest expiry when sender and global limits are both full^[[33m 2247^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:48.1831003Z    ^[[33m^[[2m✓^[[22m^[[39m when earliestReleaseAt is after the draft expiry, the guidance leads to a new prepare that succeeds^[[33m 799^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:48.9227373Z  ^[[32m✓^[[39m tests/context-continuity/continuity.test.ts ^[[2m(^[[22m^[[2m15 tests^[[22m^[[2m)^[[22m^[[33m 3244^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:48.9228718Z    ^[[32m✓^[[39m direct task continuity ^[[2m(10)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:48.9253893Z      ^[[33m^[[2m✓^[[22m^[[39m stores replacement snapshots with CAS and request idempotency^[[33m 456^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:48.9256161Z      ^[[33m^[[2m✓^[[22m^[[39m returns body-free candidates and loads body only after exact revalidation^[[33m 307^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:48.9258034Z      ^[[33m^[[2m✓^[[22m^[[39m allows only one winner across two SQLite connections using the same CAS revision^[[33m 463^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:50.5514601Z  ^[[32m✓^[[39m tests/session-board/session-board.test.ts ^[[2m(^[[22m^[[2m15 tests^[[22m^[[2m)^[[22m^[[33m 1861^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:50.5543901Z    ^[[32m✓^[[39m session board MCP tools ^[[2m(3)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:50.5574119Z      ^[[33m^[[2m✓^[[22m^[[39m shares one board between the Claude launcher and the Codex hook and lists both hosts^[[33m 501^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:50.5576013Z      ^[[33m^[[2m✓^[[22m^[[39m reads back the hook-written line, lists the host board and refuses unbound updates^[[33m 881^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:51.2319704Z ^[[90mstderr^[[2m | tests/recovery-strategy-selector/recovery-selector.test.mjs
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:51.2343956Z ^[[22m^[[39munknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:51.2345752Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:51.2347771Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:51.2349600Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:51.2351446Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:51.2353395Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:51.2355120Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:51.2357364Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:51.2368101Z 
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:52.0514728Z  ^[[32m✓^[[39m tests/recovery-strategy-selector/recovery-selector.test.mjs ^[[2m(^[[22m^[[2m17 tests^[[22m^[[2m)^[[22m^[[33m 813^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:52.0516077Z    ^[[32m✓^[[39m recovery strategy selector ^[[2m(17)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:52.0544039Z      ^[[33m^[[2m✓^[[22m^[[39m contracts compile and the digest CLI accepts stdin JSON^[[33m 543^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:52.2669096Z  ^[[2m^[[90m↓^[[39m^[[22m tests/session-messaging/previous-broker.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m | ^[[22m^[[33m5 skipped^[[39m^[[2m)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:57.5731511Z  ^[[32m✓^[[39m tests/mcp/receipt-policy.test.ts ^[[2m(^[[22m^[[2m33 tests^[[22m^[[2m)^[[22m^[[33m 10104^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:57.5740003Z    ^[[32m✓^[[39m descriptor-declared reference-only receipts ^[[2m(33)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:57.5742134Z      ^[[33m^[[2m✓^[[22m^[[39m propagates all four policies, orders artifact dependencies, and binds policy to the plan HMAC^[[33m 452^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:57.5744923Z      ^[[33m^[[2m✓^[[22m^[[39m rejects invalid actor-array policies in descriptors and plans: {"actorIdsPointer":"/output/actorIds"}^[[33m 521^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:57.5747573Z      ^[[33m^[[2m✓^[[22m^[[39m rejects invalid actor-array policies in descriptors and plans: {"actorIdsMatch":"prior-policy-actors"}^[[33m 505^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:57.5754160Z      ^[[33m^[[2m✓^[[22m^[[39m rejects invalid actor-array policies in descriptors and plans: {"actorIdsPointer":"output/actorIds","actorIdsMatch":"prior-policy-actors"}^[[33m 462^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:57.5757216Z      ^[[33m^[[2m✓^[[22m^[[39m rejects invalid actor-array policies in descriptors and plans: {"actorIdsPointer":"/output/actorIds","actorIdsMatch":"any-actors"}^[[33m 448^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:57.5760164Z      ^[[33m^[[2m✓^[[22m^[[39m rejects missing final actor arrays without changing the receipt^[[33m 360^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:57.5762065Z      ^[[33m^[[2m✓^[[22m^[[39m rejects empty final actor arrays without changing the receipt^[[33m 346^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:57.5764785Z      ^[[33m^[[2m✓^[[22m^[[39m rejects incomplete final actor arrays without changing the receipt^[[33m 358^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:57.5766710Z      ^[[33m^[[2m✓^[[22m^[[39m rejects extra final actor arrays without changing the receipt^[[33m 379^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:57.5768714Z      ^[[33m^[[2m✓^[[22m^[[39m rejects reordered final actor arrays without changing the receipt^[[33m 321^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:57.5770594Z      ^[[33m^[[2m✓^[[22m^[[39m rejects duplicate final actor arrays without changing the receipt^[[33m 309^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:57.5773010Z      ^[[33m^[[2m✓^[[22m^[[39m blocks finalization when the bound selection artifact is unavailable and proceeds when restored^[[33m 366^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:57.5774898Z      ^[[33m^[[2m✓^[[22m^[[39m rejects actor reuse after SQLite restart^[[33m 374^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:57.5776663Z      ^[[33m^[[2m✓^[[22m^[[39m binds arbitrary capability actor arrays in plan order after SQLite restart^[[33m 526^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:46:57.5778858Z      ^[[33m^[[2m✓^[[22m^[[39m finalizes deterministically without requiring a fourth actor and keeps direct mode unverified^[[33m 331^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:00.0131544Z  ^[[32m✓^[[39m tests/mcp/state-cleanup.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[33m 2166^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:00.0153329Z    ^[[32m✓^[[39m state cleanup ^[[2m(8)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:00.0188674Z      ^[[33m^[[2m✓^[[22m^[[39m backs up and deletes only preview-bound inactive terminal state^[[33m 440^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:00.0189900Z      ^[[33m^[[2m✓^[[22m^[[39m claims a no-op plan only once across two database connections^[[33m 481^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:00.3020918Z  ^[[32m✓^[[39m tests/mcp/workspace-identity.test.ts ^[[2m(^[[22m^[[2m24 tests^[[22m^[[2m)^[[22m^[[32m 93^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:02.7361933Z  ^[[32m✓^[[39m tests/context-continuity/schema-compat.test.ts ^[[2m(^[[22m^[[2m18 tests^[[22m^[[2m)^[[22m^[[33m 10073^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:02.7413963Z    ^[[32m✓^[[39m 2.7.x continuity schema compatibility ^[[2m(13)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:02.7454456Z      ^[[33m^[[2m✓^[[22m^[[39m preserves schema 2 state across reopen, restore, CAS, purge and epoch rotation^[[33m 593^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:02.7484108Z      ^[[33m^[[2m✓^[[22m^[[39m preserves schema 3 state across reopen, restore, CAS, purge and epoch rotation^[[33m 404^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:02.7486268Z      ^[[33m^[[2m✓^[[22m^[[39m preserves receiver-owned tasks, refuses stale origins and keeps unrelated tasks usable^[[33m 362^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:02.7510934Z      ^[[33m^[[2m✓^[[22m^[[39m rejects a schema 3 database with valid column definitions and malformed pages^[[33m 539^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:02.7514562Z    ^[[32m✓^[[39m source STDIO continuity startup diagnostics ^[[2m(5)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:02.7515998Z      ^[[33m^[[2m✓^[[22m^[[39m keeps normal MCP usable when continuity is healthy^[[33m 2037^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:02.7517527Z      ^[[33m^[[2m✓^[[22m^[[39m keeps normal MCP usable when continuity is receiver^[[33m 1658^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:02.7519000Z      ^[[33m^[[2m✓^[[22m^[[39m keeps normal MCP usable when continuity is future^[[33m 1070^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:02.7520543Z      ^[[33m^[[2m✓^[[22m^[[39m keeps normal MCP usable when continuity is incompatible^[[33m 1150^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:02.7522013Z      ^[[33m^[[2m✓^[[22m^[[39m keeps normal MCP usable when continuity is corrupt^[[33m 986^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:04.0359725Z ^[[90mstdout^[[2m | tests/session-messaging/message-lifecycle.test.ts^[[2m > ^[[22m^[[2mpackaged TLS cycles use one request instead of three or two without changing pending state
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:04.0363214Z ^[[22m^[[39mrelay tick measured TLS request counts [{"transport":"test-inbox","cycles":10,"baselineRequests":30,"tickRequests":10},{"transport":"codex-deferred","cycles":10,"baselineRequests":20,"tickRequests":10}]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:04.0383213Z 
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:06.6206324Z  ^[[32m✓^[[39m tests/mcp/stdio-integration.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[33m 3517^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:06.6208090Z    ^[[32m✓^[[39m bundled STDIO MCP server ^[[2m(4)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:06.6209448Z      ^[[33m^[[2m✓^[[22m^[[39m starts from an isolated plugin tree without node_modules^[[33m 1474^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:06.6211190Z      ^[[33m^[[2m✓^[[22m^[[39m keeps workflow startup clean when both database settings resolve to one file^[[33m 795^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:06.6213418Z      ^[[33m^[[2m✓^[[22m^[[39m starts with the packaged registry and fails semantic planning closed without a trusted provider^[[33m 526^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:06.6215409Z      ^[[33m^[[2m✓^[[22m^[[39m shares signed continuity bindings between the packaged hook and MCP server^[[33m 719^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:08.3990155Z  ^[[32m✓^[[39m tests/session-messaging/message-lifecycle.test.ts ^[[2m(^[[22m^[[2m14 tests^[[22m^[[2m)^[[22m^[[33m 7863^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:08.3998764Z    ^[[33m^[[2m✓^[[22m^[[39m applies global draft, receipt and byte backpressure without evicting valid records^[[33m 2815^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:08.4000905Z    ^[[33m^[[2m✓^[[22m^[[39m packaged TLS cycles use one request instead of three or two without changing pending state^[[33m 537^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:08.4003069Z    ^[[33m^[[2m✓^[[22m^[[39m a real post-commit prepare reply loss leaves only orphan drafts^[[33m 433^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:08.4004821Z    ^[[33m^[[2m✓^[[22m^[[39m a real send reply loss retries the known ID once and survives broker restart^[[33m 2777^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:08.4006738Z    ^[[33m^[[2m✓^[[22m^[[39m two independent processes submit one ID atomically and enforce sender preparation capacity^[[33m 503^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:08.4008755Z    ^[[33m^[[2m✓^[[22m^[[39m packaged CLI discovers prepare/send and rejects old or unknown send with zero queue effect^[[33m 611^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:09.2198907Z  ^[[32m✓^[[39m tests/tooling/commands.test.mjs ^[[2m(^[[22m^[[2m12 tests^[[22m^[[2m)^[[22m^[[33m 2465^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:09.2200984Z    ^[[32m✓^[[39m skill maintenance commands ^[[2m(12)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:09.2206471Z      ^[[33m^[[2m✓^[[22m^[[39m forwards pnpm script arguments without a standalone separator^[[33m 567^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:09.2208256Z      ^[[33m^[[2m✓^[[22m^[[39m refuses a replacement that does not contain the required ancestor commit^[[33m 466^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:09.2210247Z      ^[[33m^[[2m✓^[[22m^[[39m keeps the registered routing when a replaced skill ships no integration descriptor^[[33m 452^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:10.7354585Z  ^[[32m✓^[[39m tests/mcp/trust-provenance.test.ts ^[[2m(^[[22m^[[2m11 tests^[[22m^[[2m)^[[22m^[[33m 942^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:10.7377703Z    ^[[32m✓^[[39m trust provenance ^[[2m(11)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:10.7399950Z      ^[[33m^[[2m✓^[[22m^[[39m stores peer provenance by digest without persisting the raw body^[[33m 419^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:11.6122571Z  ^[[32m✓^[[39m tests/session-messaging/presence-retention.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m)^[[22m^[[33m 22458^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:11.6125180Z    ^[[33m^[[2m✓^[[22m^[[39m serves board presence from a 342-identity, 1302-row database through a real broker^[[33m 898^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:11.6127745Z    ^[[33m^[[2m✓^[[22m^[[39m ends a board lookup against a slow real broker at one overall client deadline^[[33m 20435^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:11.6129984Z    ^[[33m^[[2m✓^[[22m^[[39m prunes presence idempotently when two processes race on one database^[[33m 645^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:11.8415938Z  ^[[32m✓^[[39m tests/mcp/plugin-update-service.test.ts ^[[2m(^[[22m^[[2m17 tests^[[22m^[[2m)^[[22m^[[33m 866^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:11.8433687Z    ^[[32m✓^[[39m PluginUpdateService ^[[2m(17)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:11.8435623Z      ^[[33m^[[2m✓^[[22m^[[39m caches a successful check for 24 hours and force bypasses the cache^[[33m 537^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:12.9877546Z  ^[[32m✓^[[39m tests/mcp/codex-host-observation.test.ts ^[[2m(^[[22m^[[2m18 tests^[[22m^[[2m)^[[22m^[[33m 884^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:12.9903995Z    ^[[32m✓^[[39m host-owned hookless provider ingress ^[[2m(2)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:12.9914154Z      ^[[33m^[[2m✓^[[22m^[[39m shares the strict bootstrap, missing, policy and replay gates for claude-code^[[33m 526^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:12.9916266Z      ^[[33m^[[2m✓^[[22m^[[39m shares the strict bootstrap, missing, policy and replay gates for codex^[[33m 303^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:15.5728864Z  ^[[32m✓^[[39m tests/mcp/tool-schema-profile.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[33m 3450^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:15.5732725Z    ^[[32m✓^[[39m MCP tool schema profiles ^[[2m(7)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:15.5734314Z      ^[[33m^[[2m✓^[[22m^[[39m keeps the historical schemas when no profile is selected^[[33m 716^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:15.5736344Z      ^[[33m^[[2m✓^[[22m^[[39m removes top-level combinators from every advertised schema for Anthropic hosts^[[33m 466^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:15.5738677Z      ^[[33m^[[2m✓^[[22m^[[39m accepts and rejects the same inputs with inlined Anthropic schemas as with the referenced contracts^[[33m 526^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:15.5740701Z      ^[[33m^[[2m✓^[[22m^[[39m validates plan_workflow input identically in both profiles^[[33m 442^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:15.5742912Z      ^[[33m^[[2m✓^[[22m^[[39m advertises the same host-neutral intake instructions to every schema profile^[[33m 553^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:15.5753881Z      ^[[33m^[[2m✓^[[22m^[[39m applies the environment profile in the bundled server^[[33m 743^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:17.5360418Z  ^[[32m✓^[[39m tests/mcp/stage-output-file.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[33m 1713^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:17.5361955Z    ^[[32m✓^[[39m stage output by file reference ^[[2m(7)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:17.5374409Z      ^[[33m^[[2m✓^[[22m^[[39m validates a file-backed output like inline output and stores only the reference^[[33m 563^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:17.5376158Z      ^[[33m^[[2m✓^[[22m^[[39m keeps inline output unchanged^[[33m 407^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:18.5635617Z  ^[[32m✓^[[39m tests/mcp/korean-prose-readiness.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[33m 734^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:18.5637443Z    ^[[32m✓^[[39m Korean prose evaluation readiness ^[[2m(7)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:18.5639702Z      ^[[33m^[[2m✓^[[22m^[[39m reports readiness without confusing it with activation^[[33m 301^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:18.7768176Z  ^[[32m✓^[[39m tests/cs-engineering/workflow-integration.test.ts ^[[2m(^[[22m^[[2m15 tests^[[22m^[[2m)^[[22m^[[33m 9937^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:18.7770082Z    ^[[33m^[[2m✓^[[22m^[[39m registered CS providers are discoverable at bootstrap 25 and workflow 67^[[33m 453^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:18.7777221Z    ^[[33m^[[2m✓^[[22m^[[39m selected review runs actual packaged CLI and finalizes with matching files^[[33m 1222^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:18.7779331Z    ^[[33m^[[2m✓^[[22m^[[39m stage rejects missing-bundle without consuming its revision^[[33m 317^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:18.7781203Z    ^[[33m^[[2m✓^[[22m^[[39m stage rejects stale-task without consuming its revision^[[33m 459^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:18.7783267Z    ^[[33m^[[2m✓^[[22m^[[39m stage rejects raw-evidence without consuming its revision^[[33m 634^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:18.7785165Z    ^[[33m^[[2m✓^[[22m^[[39m stage rejects provider-substitution without consuming its revision^[[33m 600^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:18.7787087Z    ^[[33m^[[2m✓^[[22m^[[39m stage rejects NOT_RUN-as-PASS without consuming its revision^[[33m 580^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:18.7788910Z    ^[[33m^[[2m✓^[[22m^[[39m stage rejects manifest-traversal without consuming its revision^[[33m 504^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:18.7790729Z    ^[[33m^[[2m✓^[[22m^[[39m stage rejects candidate-target without consuming its revision^[[33m 495^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:18.7792937Z    ^[[33m^[[2m✓^[[22m^[[39m proper unexecuted evidence records BLOCKED even with supplied observe policy^[[33m 546^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:18.7795170Z    ^[[33m^[[2m✓^[[22m^[[39m guarded lease/start and SQLite restart retain recorded bundle pins; finalize rereads evidence^[[33m 939^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:18.7797781Z    ^[[33m^[[2m✓^[[22m^[[39m actual MCP tools validate a selected CS stage with synthetic server observations^[[33m 996^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:18.7799817Z    ^[[33m^[[2m✓^[[22m^[[39m file-backed CS output follows the same record and finalize validation^[[33m 805^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:18.7801819Z    ^[[33m^[[2m✓^[[22m^[[39m generated Claude review and copied deployment CLI validate without node_modules^[[33m 1157^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:19.6299394Z  ^[[32m✓^[[39m tests/mcp/trusted-mcp-integration.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 612^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:19.6301295Z    ^[[32m✓^[[39m trusted MCP server boundary ^[[2m(1)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:19.6303308Z      ^[[33m^[[2m✓^[[22m^[[39m completes and aborts guarded workflows with server-side observations^[[33m 610^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:22.2284532Z  ^[[32m✓^[[39m tests/mcp/provider-result-envelope.test.ts ^[[2m(^[[22m^[[2m9 tests^[[22m^[[2m)^[[22m^[[33m 2715^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:22.2323739Z    ^[[32m✓^[[39m provider result envelope ^[[2m(4)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:22.2355951Z      ^[[33m^[[2m✓^[[22m^[[39m accepts the shared envelope version for acceptance-evidence-validation even though its provider schema omits it^[[33m 407^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:22.2358304Z      ^[[33m^[[2m✓^[[22m^[[39m accepts the shared envelope version for blocker-diagnosis even though its provider schema omits it^[[33m 327^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:22.2391105Z    ^[[32m✓^[[39m artifact digest form ^[[2m(4)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:22.2443511Z      ^[[33m^[[2m✓^[[22m^[[39m still rejects digests that are not lowercase SHA-256 hex for change-scope-baseline-capture^[[33m 315^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:22.2445626Z      ^[[33m^[[2m✓^[[22m^[[39m still rejects digests that are not lowercase SHA-256 hex for mutation-risk-preflight^[[33m 360^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:22.6373661Z  ^[[32m✓^[[39m tests/mcp/host-attestation-stdio.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[33m 9290^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:22.6420052Z    ^[[32m✓^[[39m packaged execution observation fixtures (not native-host evidence) ^[[2m(4)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:22.6430893Z      ^[[33m^[[2m✓^[[22m^[[39m completes guarded STDIO and keeps restart replay rejection for claude-code/hook/claude-opus-5^[[33m 2352^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:22.6433459Z      ^[[33m^[[2m✓^[[22m^[[39m completes guarded STDIO and keeps restart replay rejection for codex/hook/gpt-6-astra^[[33m 2354^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:22.6435584Z      ^[[33m^[[2m✓^[[22m^[[39m completes guarded STDIO and keeps restart replay rejection for codex/hook/gpt-6-sol^[[33m 2208^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:22.6437724Z      ^[[33m^[[2m✓^[[22m^[[39m completes guarded STDIO and keeps restart replay rejection for codex/wrapper/gpt-6-astra^[[33m 2364^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:22.6454413Z  ^[[32m✓^[[39m tests/mcp/korean-prose-glossary.test.ts ^[[2m(^[[22m^[[2m18 tests^[[22m^[[2m)^[[22m^[[32m 222^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:22.9161687Z  ^[[32m✓^[[39m tests/coordinate-subagents/model-routing.test.mjs ^[[2m(^[[22m^[[2m15 tests^[[22m^[[2m)^[[22m^[[32m 97^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:23.5418240Z  ^[[32m✓^[[39m tests/evaluation-validity-auditor/suite-integration.test.mjs ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[33m 3242^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:23.5420283Z    ^[[32m✓^[[39m evaluation-validity-auditor suite descriptor ^[[2m(7)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:23.5422167Z      ^[[33m^[[2m✓^[[22m^[[39m selects only its explicit capability at phase order 68 with the conditional gate^[[33m 394^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:23.5424565Z      ^[[33m^[[2m✓^[[22m^[[39m accepts a safe post-execution PASS receipt and still rejects free text^[[33m 694^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:23.5426595Z      ^[[33m^[[2m✓^[[22m^[[39m freezes the audit purpose in the signed plan and enforces pre versus post completion^[[33m 638^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:23.5428604Z      ^[[33m^[[2m✓^[[22m^[[39m requires an explicit structured purpose for evaluation validity planning^[[33m 436^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:23.5431206Z      ^[[33m^[[2m✓^[[22m^[[39m keeps one evaluation TaskEnvelope compatible with task-contract and acceptance validation^[[33m 485^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:23.5433584Z      ^[[33m^[[2m✓^[[22m^[[39m maps FAIL and BLOCKED reports to their fixed workflow error states^[[33m 589^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:24.6121615Z  ^[[32m✓^[[39m tests/codex-token-usage-analyzer/integration.test.mjs ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m)^[[22m^[[33m 1281^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:24.6123430Z    ^[[32m✓^[[39m codex-token-usage-analyzer integration ^[[2m(6)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:24.6124733Z      ^[[33m^[[2m✓^[[22m^[[39m records and finalizes a no-Markdown PASS workflow^[[33m 731^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:24.6126190Z      ^[[33m^[[2m✓^[[22m^[[39m records and finalizes a no-Markdown PARTIAL workflow^[[33m 411^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:24.7796199Z  ^[[32m✓^[[39m tests/mcp/runtime-config.test.ts ^[[2m(^[[22m^[[2m18 tests^[[22m^[[2m)^[[22m^[[32m 14^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:24.9397445Z  ^[[32m✓^[[39m tests/mcp/evaluation-preflight.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 17^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:25.1546036Z  ^[[32m✓^[[39m tests/session-messaging/utf8-framing.test.ts ^[[2m(^[[22m^[[2m12 tests^[[22m^[[2m)^[[22m^[[33m 2306^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:25.1560510Z    ^[[33m^[[2m✓^[[22m^[[39m accepts a real claim answer of exactly the response limit with a Korean character split 1|rest at the TLS chunk, and rejects one byte more^[[33m 420^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:25.1564836Z    ^[[33m^[[2m✓^[[22m^[[39m accepts a real claim answer of exactly the response limit with a Korean character split 2|rest at the TLS chunk, and rejects one byte more^[[33m 418^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:25.1567483Z    ^[[33m^[[2m✓^[[22m^[[39m accepts a request of exactly the request limit with a Korean character split 1|rest at the TLS chunk, and rejects one byte more^[[33m 341^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:25.1569603Z    ^[[33m^[[2m✓^[[22m^[[39m delivers twelve batches of Korean messages through the CLI claim path byte for byte^[[33m 601^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:25.2317115Z  ^[[32m✓^[[39m tests/orchestrator/collaboration-decision.test.mjs ^[[2m(^[[22m^[[2m14 tests^[[22m^[[2m)^[[22m^[[32m 14^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:26.1209631Z  ^[[32m✓^[[39m tests/ponytail/ponytail.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[33m 723^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:26.1210702Z    ^[[32m✓^[[39m ponytail at the implementation step ^[[2m(5)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:26.1223924Z      ^[[33m^[[2m✓^[[22m^[[39m routes minimal-implementation to ponytail after the scope baseline and before the pre-mutation gate and scope verification^[[33m 403^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:26.1235195Z      ^[[33m^[[2m✓^[[22m^[[39m adds no ponytail stage when the plan does not ask for minimal-implementation^[[33m 314^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:26.1519834Z  ^[[32m✓^[[39m tests/mcp/response-projections.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[33m 705^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:26.1530918Z    ^[[32m✓^[[39m compact MCP response projections ^[[2m(2)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:26.1533083Z      ^[[33m^[[2m✓^[[22m^[[39m keeps successful workflow progress fixed-size and reduces repeated payload bytes by at least 80%^[[33m 394^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:26.1537833Z      ^[[33m^[[2m✓^[[22m^[[39m projects convergence roots and status without task, frame, or append-only history^[[33m 308^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:26.3191880Z  ^[[32m✓^[[39m tests/session-messaging/presence-deadline.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 25^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:26.4479905Z  ^[[32m✓^[[39m tests/korean-prose-editor/glossary-finalizer.test.mjs ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 108^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:26.6084876Z  ^[[32m✓^[[39m tests/mcp/korean-prose-evaluation-preflight.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 40^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:27.4795362Z  ^[[32m✓^[[39m tests/session-messaging/broker-lifecycle.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[33m 3704^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:27.4798273Z    ^[[33m^[[2m✓^[[22m^[[39m retries transient endpoint publication failures and serves the published endpoint^[[33m 382^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:27.4800895Z    ^[[33m^[[2m✓^[[22m^[[39m releases startup resources after permanent failure and allows recovery^[[33m 1050^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:27.4803250Z    ^[[33m^[[2m✓^[[22m^[[39m releases startup resources after database failure and allows recovery^[[33m 361^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:27.4805232Z    ^[[33m^[[2m✓^[[22m^[[39m delivers and acknowledges a message using only the packaged CLI and broker^[[33m 747^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:27.4807198Z    ^[[33m^[[2m✓^[[22m^[[39m isolates socket resets and a lost send response while preserving the broker and one committed message^[[33m 681^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:27.5481255Z  ^[[32m✓^[[39m tests/software-security-auditor/security-audit.test.mjs ^[[2m(^[[22m^[[2m23 tests^[[22m^[[2m)^[[22m^[[33m 742^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:27.5483583Z    ^[[32m✓^[[39m security audit evidence contract ^[[2m(23)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:27.5485586Z      ^[[33m^[[2m✓^[[22m^[[39m runs positive and negative CLI in node_modules-free . packaging^[[33m 335^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:27.5487694Z      ^[[33m^[[2m✓^[[22m^[[39m runs positive and negative CLI in node_modules-free claude-plugin packaging^[[33m 381^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:27.7002816Z  ^[[32m✓^[[39m tests/tooling/tooling.test.mjs ^[[2m(^[[22m^[[2m9 tests^[[22m^[[2m)^[[22m^[[32m 18^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:28.4435280Z  ^[[32m✓^[[39m tests/mcp/registry-contract.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[33m 552^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:28.4436660Z    ^[[32m✓^[[39m bundled skill registry ^[[2m(2)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:28.4444488Z      ^[[33m^[[2m✓^[[22m^[[39m conforms to SkillDescriptor.v2 and exposes all specialist capabilities^[[33m 307^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:28.5771655Z  ^[[32m✓^[[39m tests/session-messaging/presence-batches.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[33m 813^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:28.5774303Z    ^[[33m^[[2m✓^[[22m^[[39m stops after a transport failure, so an unresponsive broker costs one batch deadline, not one per batch^[[33m 402^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:28.5779595Z    ^[[33m^[[2m✓^[[22m^[[39m keeps earlier answers and marks the failed and remaining batches unanswered after a transport failure^[[33m 402^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:28.6606810Z  ^[[32m✓^[[39m tests/software-security-auditor/integration.test.mjs ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[33m 1665^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:28.6609156Z    ^[[32m✓^[[39m security audit integration ^[[2m(7)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:28.6610872Z      ^[[33m^[[2m✓^[[22m^[[39m loads schema and maps complete report with findings in ^[[33m 461^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:28.6613340Z      ^[[33m^[[2m✓^[[22m^[[39m loads schema and maps complete report with findings in claude-plugin/^[[33m 348^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:28.7496626Z  ^[[32m✓^[[39m tests/mcp/tool-schema-inline.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 11^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:29.0789822Z  ^[[32m✓^[[39m tests/orchestrator/query-registry.test.mjs ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[32m 172^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:29.3949380Z  ^[[32m✓^[[39m tests/mcp/orchestrator-fixtures.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 68^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:29.4704617Z  ^[[32m✓^[[39m tests/model-effort-advisor/suite-integration.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 156^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:29.6761573Z  ^[[32m✓^[[39m tests/release-state-backup.test.mjs ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 19^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:29.8529199Z  ^[[32m✓^[[39m tests/software-security-auditor/evaluation-evidence.test.mjs ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 10^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:29.9407091Z  ^[[32m✓^[[39m tests/tooling/skill-context-optimization.test.mjs ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[33m 347^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:29.9410295Z    ^[[32m✓^[[39m skill context optimization ^[[2m(3)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:29.9411995Z      ^[[33m^[[2m✓^[[22m^[[39m preserves the reviewed skill revisions while reducing their initial load^[[33m 339^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:30.0254699Z  ^[[32m✓^[[39m tests/mcp/korean-prose-execution-provenance.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 8^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:30.1522175Z  ^[[32m✓^[[39m tests/session-messaging/self-signed-certificate.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 12^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:31.2637218Z  ^[[32m✓^[[39m tests/instruction-scope-resolver/suite-integration.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 946^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:31.2639132Z    ^[[32m✓^[[39m instruction-scope-resolver standalone regression ^[[2m(1)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:31.2641806Z      ^[[33m^[[2m✓^[[22m^[[39m runs every node:test case^[[33m 944^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:32.7453209Z  ^[[32m✓^[[39m tests/acceptance-evidence-validator/suite-integration.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 2562^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:32.7492859Z    ^[[32m✓^[[39m acceptance-evidence-validator standalone regression ^[[2m(1)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:32.7523864Z      ^[[33m^[[2m✓^[[22m^[[39m runs every node:test case^[[33m 2559^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:34.1001694Z  ^[[32m✓^[[39m tests/change-scope-guardian/suite-integration.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 2669^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:34.1051454Z    ^[[33m^[[2m✓^[[22m^[[39m change-scope-guardian Node tests pass in an isolated process^[[33m 2667^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:35.9445916Z  ^[[32m✓^[[39m tests/task-contract/suite-integration.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 1629^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:35.9447652Z    ^[[33m^[[2m✓^[[22m^[[39m task-contract Node tests pass in an isolated process^[[33m 1627^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:36.0611762Z  ^[[32m✓^[[39m tests/cs-engineering/suite-integration.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 3120^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:36.0615454Z    ^[[33m^[[2m✓^[[22m^[[39m CS Node regressions run in an isolated process with the AGS Ajv runtime^[[33m 3118^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:36.5306687Z  ^[[32m✓^[[39m tests/evaluation-validity-auditor/standalone-regression.test.mjs ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 416^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:36.5308752Z    ^[[32m✓^[[39m evaluation-validity-auditor imported core ^[[2m(1)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:36.5310129Z      ^[[33m^[[2m✓^[[22m^[[39m passes the suite's normal, boundary, failure, and security regression cases^[[33m 415^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.4960988Z  ^[[32m✓^[[39m tests/runtime/runtime-smoke.test.mjs ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m)^[[22m^[[33m 9875^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.4962652Z    ^[[32m✓^[[39m installed skill runtime ^[[2m(6)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.4963902Z      ^[[33m^[[2m✓^[[22m^[[39m runs every documented Node CLI without node_modules^[[33m 9716^[[2mms^[[22m^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.5014935Z 
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.5024834Z ^[[2m Test Files ^[[22m ^[[1m^[[32m67 passed^[[39m^[[22m^[[2m | ^[[22m^[[33m1 skipped^[[39m^[[90m (68)^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.5033591Z ^[[2m      Tests ^[[22m ^[[1m^[[32m916 passed^[[39m^[[22m^[[2m | ^[[22m^[[33m5 skipped^[[39m^[[90m (921)^[[39m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.5034197Z ^[[2m   Start at ^[[22m 05:46:08
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.5036336Z ^[[2m   Duration ^[[22m 90.00s^[[2m (tests 96%, import 3%, transform 1%)^[[22m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.5055299Z 
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.5656488Z ##[group]Run pnpm runtime:check
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.5656806Z ^[[36;1mpnpm runtime:check^[[0m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.5720032Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.5720397Z env:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.5720665Z   pythonLocation: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.5721104Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib/pkgconfig
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.5721526Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.5721896Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.5722272Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.5722942Z   LD_LIBRARY_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:38.5723272Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:39.5167904Z Already up to date
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:39.5176556Z Done in 422ms using pnpm v11.19.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:39.5331857Z $ node scripts/check-runtime.mjs
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:45.7156143Z runtime: ready (30 skill CLIs, Node.js 24.21.0)
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:45.7396866Z ##[group]Run pnpm validate:all
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:45.7397186Z ^[[36;1mpnpm validate:all^[[0m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:45.7460037Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:45.7460377Z env:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:45.7460643Z   pythonLocation: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:45.7461077Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib/pkgconfig
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:45.7461520Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:45.7461899Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:45.7462274Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:45.7462922Z   LD_LIBRARY_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:45.7463256Z   PYTHONUTF8: 1
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:45.7463446Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:46.6630699Z Already up to date
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:46.6638424Z Done in 419ms using pnpm v11.19.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:46.6798095Z $ node scripts/validate-repository.mjs && node scripts/run-python-validations.mjs && tsx scripts/korean-prose-glossary.ts --mode check
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:47.3415282Z repository: valid
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:47.5171308Z PASS validate_frontmatter
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:47.5171940Z PASS validate_openai_yaml
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:47.5172667Z PASS validate_markdown_links
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:47.5173129Z PASS validate_no_placeholders
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:47.5173480Z PASS validate_no_sensitive_data
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:47.5173781Z PASS validate_routing_presets
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:47.5174152Z PASS validate_behavior_cases
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:47.5174696Z All skill package validations passed.
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:47.7438618Z Skill validation passed: <RUNNER_HOME>/work/agent-governance-suite/agent-governance-suite/skills/independent-audit-gate
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.3580383Z PASS validate_skill_package
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.3580818Z PASS validate_decision_record_contracts
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.3581228Z PASS validate_behavior_cases
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.3582004Z All independent-deliberation-panel validations passed.
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.3869051Z model-effort-advisor: valid
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.6009654Z {"status":"ok","entries":243,"id":"korean-prose-core","version":"1.2.1","contentDigest":"1262b46c6c07d3ecf0551167308df2aa3ec1ad9fb02e3a33fc9619ce2ec683d4"}
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.6413659Z ##[group]Run git show --check --oneline --no-renames HEAD
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.6414116Z ^[[36;1mgit show --check --oneline --no-renames HEAD^[[0m
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.6476556Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.6476903Z env:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.6477168Z   pythonLocation: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.6477602Z   PKG_CONFIG_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib/pkgconfig
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.6478038Z   Python_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.6478419Z   Python2_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.6478794Z   Python3_ROOT_DIR: <HOSTED_TOOLCACHE>/Python/3.12.14/x64
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.6479168Z   LD_LIBRARY_PATH: <HOSTED_TOOLCACHE>/Python/3.12.14/x64/lib
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.6479483Z ##[endgroup]
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.6587443Z b7341d3e docs: remove stale release candidate notice
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.6691876Z Post job cleanup.
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.8060585Z Post job cleanup.
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.9375329Z (node:8977) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.9376241Z (Use `node --trace-deprecation ...` to show where the warning was created)
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:51.9600182Z Post job cleanup.
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.0497887Z [command]/usr/bin/git version
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.0543685Z git version 2.55.0
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.0594198Z Temporarily overriding HOME='<RUNNER_HOME>/work/_temp/<RUNNER_ID>' before making global git config changes
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.0595797Z Adding repository directory to the temporary git global config as a safe directory
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.0600466Z [command]/usr/bin/git config --global --add safe.directory <RUNNER_HOME>/work/agent-governance-suite/agent-governance-suite
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.0636765Z Removing SSH command configuration
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.0645390Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.0687361Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.0942932Z Removing HTTP extra header
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.0949502Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.0993826Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1254704Z Removing includeIf entries pointing to credentials config files
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1273636Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1306722Z includeif.gitdir:<RUNNER_HOME>/work/agent-governance-suite/agent-governance-suite/.git.path
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1308300Z includeif.gitdir:<RUNNER_HOME>/work/agent-governance-suite/agent-governance-suite/.git/worktrees/*.path
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1309433Z includeif.gitdir:<WORKSPACE>/.git.path
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1310284Z includeif.gitdir:<WORKSPACE>/.git/worktrees/*.path
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1314419Z [command]/usr/bin/git config --local --get-all includeif.gitdir:<RUNNER_HOME>/work/agent-governance-suite/agent-governance-suite/.git.path
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1346370Z <RUNNER_HOME>/work/_temp/git-credentials-<RUNNER_ID>.config
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1359083Z [command]/usr/bin/git config --local --unset includeif.gitdir:<RUNNER_HOME>/work/agent-governance-suite/agent-governance-suite/.git.path <RUNNER_HOME>\/work\/_temp\/git\-credentials\-<RUNNER_ID>\.config
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1405593Z [command]/usr/bin/git config --local --get-all includeif.gitdir:<RUNNER_HOME>/work/agent-governance-suite/agent-governance-suite/.git/worktrees/*.path
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1435719Z <RUNNER_HOME>/work/_temp/git-credentials-<RUNNER_ID>.config
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1445272Z [command]/usr/bin/git config --local --unset includeif.gitdir:<RUNNER_HOME>/work/agent-governance-suite/agent-governance-suite/.git/worktrees/*.path <RUNNER_HOME>\/work\/_temp\/git\-credentials\-<RUNNER_ID>\.config
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1492404Z [command]/usr/bin/git config --local --get-all includeif.gitdir:<WORKSPACE>/.git.path
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1519149Z <RUNNER_TEMP>/git-credentials-<RUNNER_ID>.config
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1526939Z [command]/usr/bin/git config --local --unset includeif.gitdir:<WORKSPACE>/.git.path <RUNNER_TEMP>\/git\-credentials\-<RUNNER_ID>\.config
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1563733Z [command]/usr/bin/git config --local --get-all includeif.gitdir:<WORKSPACE>/.git/worktrees/*.path
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1591436Z <RUNNER_TEMP>/git-credentials-<RUNNER_ID>.config
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1598571Z [command]/usr/bin/git config --local --unset includeif.gitdir:<WORKSPACE>/.git/worktrees/*.path <RUNNER_TEMP>\/git\-credentials\-<RUNNER_ID>\.config
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1638249Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.1867894Z Removing credentials config '<RUNNER_HOME>/work/_temp/git-credentials-<RUNNER_ID>.config'
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.2024422Z Cleaning up orphan processes
+Node 24 / ubuntu-latest	UNKNOWN STEP	2026-10-06T05:47:52.2378362Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

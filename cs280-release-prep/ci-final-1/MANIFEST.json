@@ -1,0 +1,114 @@
+{
+  "schemaVersion": "1.0.0",
+  "artifactKind": "SanitizedCiEvidenceSet.v1",
+  "publicPathCandidate": "cs280-release-prep/ci-final-1/",
+  "candidate": {
+    "commit": "b7341d3e6636b79217b1f3d37d7a5014fcbf47be",
+    "tree": "5648f76558e923244cedf78a8263892d00df8299",
+    "branch": "codex/release-candidate-2.8.0"
+  },
+  "run": {
+    "databaseId": 37420130492,
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "databaseId": 112127409201,
+        "platform": "windows-latest",
+        "conclusion": "success"
+      },
+      {
+        "databaseId": 112127409391,
+        "platform": "ubuntu-latest",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "sourceFormat": {
+    "kind": "gh-rendered-full-text",
+    "originalBinaryZipIncluded": false
+  },
+  "logMappings": [
+    {
+      "platform": "windows",
+      "jobId": 112127409201,
+      "original": {
+        "path": "private/release-publication/CI37420130492-windows.log",
+        "sha256": "afec0f62b6e407a937de22daf14c27e40f60b922c727bc091d476ccbe95f8f26",
+        "bytes": 166388,
+        "lines": 1024,
+        "encoding": "UTF-8 without file BOM",
+        "lineEndings": "LF"
+      },
+      "public": {
+        "path": "CI37420130492-windows.public.log",
+        "sha256": "0739668928353f134b529004b06d8e1cd56a044b34a2deac29b4b1c7d44e28a9",
+        "bytes": 166087,
+        "lines": 1024,
+        "encoding": "UTF-8 without file BOM",
+        "lineEndings": "LF"
+      },
+      "redactionCounts": {
+        "runner-credential-config-id": 17,
+        "windows-runner-root-escaped": 2,
+        "windows-runner-root-backslash": 14,
+        "windows-runner-root-forward": 10,
+        "windows-toolcache": 66,
+        "windows-pnpm-store": 1,
+        "github-runner-temp-escaped": 2,
+        "github-runner-temp": 4,
+        "github-workspace": 8
+      },
+      "githubPremaskedMarkerOccurrencesPreserved": 4
+    },
+    {
+      "platform": "ubuntu",
+      "jobId": 112127409391,
+      "original": {
+        "path": "private/release-publication/CI37420130492-ubuntu.log",
+        "sha256": "0a20d3743f747ead6aca4282963c073c8bc7220a4e9dde67a6bed574472cae35",
+        "bytes": 127796,
+        "lines": 857,
+        "encoding": "UTF-8 without file BOM",
+        "lineEndings": "LF"
+      },
+      "public": {
+        "path": "CI37420130492-ubuntu.public.log",
+        "sha256": "501078fbe1595387fa01c20b6d0f3498f8c79e9f33931f6ecbaf96efe70793a2",
+        "bytes": 127132,
+        "lines": 857,
+        "encoding": "UTF-8 without file BOM",
+        "lineEndings": "LF"
+      },
+      "redactionCounts": {
+        "runner-credential-config-id": 17,
+        "linux-runner-home-escaped": 2,
+        "linux-runner-home": 25,
+        "github-runner-temp-escaped": 2,
+        "github-runner-temp": 4,
+        "github-workspace": 8,
+        "linux-toolcache": 79
+      },
+      "githubPremaskedMarkerOccurrencesPreserved": 4
+    }
+  ],
+  "supportingFiles": [
+    "ci-run-result.json",
+    "redaction-review.json",
+    "SHA256SUMS"
+  ],
+  "sha256SumsPolicy": {
+    "algorithm": "SHA-256",
+    "includes": [
+      "CI37420130492-ubuntu.public.log",
+      "CI37420130492-windows.public.log",
+      "MANIFEST.json",
+      "ci-run-result.json",
+      "redaction-review.json"
+    ],
+    "excludes": [
+      "SHA256SUMS"
+    ],
+    "reason": "The checksum file excludes itself to avoid a circular digest."
+  }
+}

@@ -1,0 +1,177 @@
+{
+  "schemaVersion": "1.0.0",
+  "artifactKind": "CiLogRedactionReview.v1",
+  "reviewedSources": [
+    "CI37420130492-windows.log",
+    "CI37420130492-ubuntu.log"
+  ],
+  "files": [
+    {
+      "source": "CI37420130492-windows.log",
+      "public": "CI37420130492-windows.public.log",
+      "replacementCounts": {
+        "runner-credential-config-id": 17,
+        "windows-runner-root-escaped": 2,
+        "windows-runner-root-backslash": 14,
+        "windows-runner-root-forward": 10,
+        "windows-toolcache": 66,
+        "windows-pnpm-store": 1,
+        "github-runner-temp-escaped": 2,
+        "github-runner-temp": 4,
+        "github-workspace": 8
+      },
+      "highRiskPatternMatchesBefore": [],
+      "highRiskPatternMatchesAfter": [],
+      "githubPremaskedMarkerOccurrencesPreserved": 4
+    },
+    {
+      "source": "CI37420130492-ubuntu.log",
+      "public": "CI37420130492-ubuntu.public.log",
+      "replacementCounts": {
+        "runner-credential-config-id": 17,
+        "linux-runner-home-escaped": 2,
+        "linux-runner-home": 25,
+        "github-runner-temp-escaped": 2,
+        "github-runner-temp": 4,
+        "github-workspace": 8,
+        "linux-toolcache": 79
+      },
+      "highRiskPatternMatchesBefore": [
+        {
+          "kind": "linux-home",
+          "line": 53
+        },
+        {
+          "kind": "linux-home",
+          "line": 57
+        },
+        {
+          "kind": "linux-home",
+          "line": 59
+        },
+        {
+          "kind": "linux-home",
+          "line": 60
+        },
+        {
+          "kind": "linux-home",
+          "line": 64
+        },
+        {
+          "kind": "linux-home",
+          "line": 78
+        },
+        {
+          "kind": "linux-home",
+          "line": 94
+        },
+        {
+          "kind": "linux-home",
+          "line": 95
+        },
+        {
+          "kind": "linux-home",
+          "line": 96
+        },
+        {
+          "kind": "linux-home",
+          "line": 264
+        },
+        {
+          "kind": "linux-home",
+          "line": 407
+        },
+        {
+          "kind": "linux-home",
+          "line": 801
+        },
+        {
+          "kind": "linux-home",
+          "line": 827
+        },
+        {
+          "kind": "linux-home",
+          "line": 829
+        },
+        {
+          "kind": "linux-home",
+          "line": 838
+        },
+        {
+          "kind": "linux-home",
+          "line": 839
+        },
+        {
+          "kind": "linux-home",
+          "line": 842
+        },
+        {
+          "kind": "linux-home",
+          "line": 843
+        },
+        {
+          "kind": "linux-home",
+          "line": 844
+        },
+        {
+          "kind": "linux-home",
+          "line": 845
+        },
+        {
+          "kind": "linux-home",
+          "line": 846
+        },
+        {
+          "kind": "linux-home",
+          "line": 847
+        },
+        {
+          "kind": "linux-home",
+          "line": 855
+        }
+      ],
+      "highRiskPatternMatchesAfter": [],
+      "githubPremaskedMarkerOccurrencesPreserved": 4
+    }
+  ],
+  "retainedByDesign": [
+    {
+      "kind": "public-repository-identity",
+      "reason": "The public repository locator binds the logs to the reviewed candidate and is not a private account credential."
+    },
+    {
+      "kind": "github-hosted-runner-image-and-tool-versions",
+      "reason": "Generic image, tool and operating-system identifiers are required to interpret the execution environment."
+    },
+    {
+      "kind": "official-public-urls-without-query",
+      "reason": "Image and action documentation URLs have no signed or credential-bearing query."
+    },
+    {
+      "kind": "github-premasked-secret-markers",
+      "reason": "The rendered logs already contain only *** markers; the masked values are unavailable and the markers show where GitHub masking occurred."
+    },
+    {
+      "kind": "synthetic-test-fixtures",
+      "reason": "Fixture identifiers and hashes are test data; pattern review found no live credential form or personal account value."
+    }
+  ],
+  "environmentAssessment": {
+    "overallState": "unknown",
+    "reason": "The logs identify GitHub-hosted runner images and show a checkout, but do not attest whether the underlying runner instance was newly provisioned or reused.",
+    "observations": {
+      "windowsImage": "windows-2025-vs2026 / 20260925.250.1",
+      "ubuntuImage": "ubuntu-24.04 / 20260927.320.1",
+      "runnerVersion": "2.337.0",
+      "dependencyInstall": "Both jobs report pnpm reused 0 and downloaded 217 packages.",
+      "workspace": "actions/checkout initialized and checked out the exact candidate; temporary runner-local paths are redacted in the public copies."
+    }
+  },
+  "knownLimits": [
+    "The sources are gh-rendered full-text exports, not the original binary GitHub log ZIP.",
+    "The evidence covers CI workflow run 37420130492 only.",
+    "Official independent release audit and separate Claude verification are not included.",
+    "Runner-local paths and transient credential-config identifiers are redacted; commands, conclusions, failures, skips and test totals are preserved.",
+    "A successful workflow conclusion is not an independent audit or a release/installation completion claim."
+  ]
+}
