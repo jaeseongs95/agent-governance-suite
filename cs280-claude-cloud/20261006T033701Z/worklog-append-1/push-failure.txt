@@ -1,0 +1,8 @@
+utc: 2026-10-06T04:05:28Z
+command: git push origin HEAD:evidence  (cwd /root/evidence-wt, local commit 32f81188e60867e37c0e69a416e20fab450f80c1)
+exit: 128
+remote: access denied by the git proxy: [REDACTED]/agent-governance-suite is not in this session's authorized repository set, so the proxy will not inject a credential for it. To fix, add the repository to the session's sources.
+fatal: unable to access 'https://github.com/[REDACTED]/agent-governance-suite.git/': The requested URL returned error: 403
+
+resolved_utc: 2026-10-06T04:16:41Z
+resolution: repository attached to session with push access; retry `git push origin HEAD:evidence` succeeded (7a6bb5f..32f8118, non-force)

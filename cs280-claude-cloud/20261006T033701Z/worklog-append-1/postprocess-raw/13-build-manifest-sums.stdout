@@ -1,0 +1,3 @@
+payload=67 {'original-E': 41, 'generated': 3, 'raw-new': 23}
+changed_by_redaction=['postprocess-raw/01-precheck.stdout', 'scratchpad/redact.py', 'scratchpad/residual.sh']
+unchanged_but_marked=[]

@@ -1,0 +1,4 @@
+drwxr-xr-x  2 root root 4096 Oct  6 04:39 /root/cs280-publish/postprocess-raw
+-rw-r--r--  1 root root  684 Oct  6 04:16 /root/cs280-publish/push-failure.txt
+drwxr-xr-x 73 root root 4096 Oct  6 04:39 /root/evidence-wt
+dba035b1e77ff2b4992ceac629bc582cb526971cb1c4fc4b4a4587be05663b37  scratchpad/build_append_manifest.py

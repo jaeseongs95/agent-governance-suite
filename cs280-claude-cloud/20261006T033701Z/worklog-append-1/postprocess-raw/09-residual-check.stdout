@@ -1,0 +1,17 @@
+# residual grep over 64 files (recursive; excludes control files SHA256SUMS, MANIFEST.tsv)
+email                      0
+github-token               0
+sk-standalone-token        0
+sk-word-internal           19
+slack-xox                  0
+aws-AKIA                   0
+bearer-value               0
+secret-assignment          0
+jwt                        0
+windows-home-name          0
+account-name               0
+url-query                  0
+ipv4-non-loopback          0
+encoded-block-200          0
+runtime-secret-literal     0
+ipv6-non-loopback          0
