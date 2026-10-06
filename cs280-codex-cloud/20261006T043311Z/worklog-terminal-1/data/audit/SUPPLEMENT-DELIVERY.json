@@ -1,0 +1,20 @@
+{
+  "commit": "2b3c5539dd1648386d1dbf51353a63c73914e3d8",
+  "tree": "29a9efa6500cf623ac8ac723734381efd60bee61",
+  "parent": "c030b4a71baf9a15dd0f5aea08a828b1507a7385",
+  "prefix": "cs280-codex-cloud/20261006T043311Z",
+  "pinnedUrl": "https://github.com/jaeseongs95/agent-governance-suite/tree/2b3c5539dd1648386d1dbf51353a63c73914e3d8/cs280-codex-cloud/20261006T043311Z",
+  "branchUrl": "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-codex-cloud/20261006T043311Z",
+  "publicFiles": 33,
+  "rawFiles": 27,
+  "removals": 0,
+  "manifestSha256": "a8d3073e8cb6093ef2569174cc6c3eef7b0e47344afe72a60a72bea9c65e3ae5",
+  "sha256SumsSha256": "3a68b32b876d00f90cdb54252695d685fc3b0c49e66677d53b69512529a98d4a",
+  "remoteTipVerified": "2b3c5539dd1648386d1dbf51353a63c73914e3d8",
+  "allRemoteFilesByteExact": true,
+  "existingFiles": 9990,
+  "existingFilesChanged": 0,
+  "noForce": true,
+  "cutoff": "2026-10-06T04:34:57.473017+00:00",
+  "verifiedAt": "2026-10-06T04:35:34.572727+00:00"
+}

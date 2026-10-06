@@ -1,0 +1,10 @@
+{
+  "path": "/workspace/ags-cs-2x/publication-20261006T040502Z/AGS-CS280-Codex-Cloud-evidence-publication-review.zip",
+  "bytes": 649946,
+  "sha256": "14f2a58b29ace39eef35e3d2ef1bfadc3f4186d3603c07573fd33cc2481b7451",
+  "manifestSha256": "a123f5988d8920987cfd0eefc378e25121fdea717b5993ec37331ff087eeb9c1",
+  "files": 270,
+  "firstCommit": "c030b4a71baf9a15dd0f5aea08a828b1507a7385",
+  "supplementCommit": "2b3c5539dd1648386d1dbf51353a63c73914e3d8",
+  "redactionResidualFindings": 0
+}

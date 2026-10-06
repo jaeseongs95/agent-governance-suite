@@ -1,0 +1,16 @@
+{
+  "cutoffUtc": "2026-10-06T04:43:54Z",
+  "cutoffKst": "2026-10-06T13:43:54+09:00",
+  "frozenRawInventorySha256": "0c9e7edaa025af9bc73c73443f1730e619408c039ec6de3f07e494b0eca79523",
+  "originalFiles": 28,
+  "excludedFiles": 3,
+  "publicCopyFiles": 28,
+  "scope": "Existing current-CS tail frozen before this delivery. Raw files are immutable private copies, not reconstructed transcripts.",
+  "parentMessageId": "e18a85ac-287e-4218-a5dd-ea21bf95f160",
+  "first33Fetch": "NOT_VERIFIABLE: first individual stdout/stderr was overwritten by same label; both command records and enclosing failure/correction captures are preserved.",
+  "fullNativeTranscript": "EXCLUDED / NOT_VERIFIABLE: no full transcript or internal reasoning collected.",
+  "libraryServiceValues": "EXCLUDED: service identity file retained privately, no values published.",
+  "encodedArtifacts": "No ZIP/DB/Gitbundle/base64/compressed payload supplied in this tail; no payload published.",
+  "deliveryAfterCutoff": "Current delivery command/exit/scope/preflight/commit/push/re-fetch receipts are outside this frozen document set and returned by native callback. No recursive self-publication.",
+  "parentFiles": "Existing 211 and 33 file byte sets remain unchanged. This appended child owns its separate exact inventory and MANIFEST."
+}

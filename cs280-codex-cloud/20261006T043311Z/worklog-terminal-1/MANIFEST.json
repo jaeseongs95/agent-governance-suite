@@ -1,0 +1,183 @@
+{
+  "schema": "AGSTerminalPublicManifest.v1",
+  "prefix": "cs280-codex-cloud/20261006T043311Z/worklog-terminal-1",
+  "cutoffUtc": "2026-10-06T04:43:54Z",
+  "files": [
+    {
+      "path": "COLLECTION.json",
+      "bytes": 1303,
+      "sha256": "2324511a8aa4a0b6c9e8e6c5b055981807ccdcad7c59135e5491b082f35e14a4"
+    },
+    {
+      "path": "EXCLUSIONS.json",
+      "bytes": 1034,
+      "sha256": "322a9ba34edd71fb71c0b24de544b9d251a9adc8948c8da73c7c432c235cc3f4"
+    },
+    {
+      "path": "INVENTORY.json",
+      "bytes": 9982,
+      "sha256": "75663f6a2e36c1cafbf997d5e06de402799727ede93d6e307622c1adacebf599"
+    },
+    {
+      "path": "README.ko.md",
+      "bytes": 698,
+      "sha256": "189982d77c54917b9cd6afbaef2f65522b0299742f8e6fa411e924a6b204a509"
+    },
+    {
+      "path": "REDACTION.json",
+      "bytes": 12394,
+      "sha256": "d4e5bb12df1d88f2b550a56be409e475ab294334dada94620d90d6fe9f93c205"
+    },
+    {
+      "path": "RESIDUAL-SCAN.json",
+      "bytes": 581,
+      "sha256": "b1799d8fd8c80bdf86f1343a9a1fc6993f4f3bd04487838ce2f8b95da7a5527c"
+    },
+    {
+      "path": "SEMANTIC-CHECK.json",
+      "bytes": 5614,
+      "sha256": "82a8f44fe842dc56561adcf87e67966b60982bda68d89b6593712b3ef4b482f8"
+    },
+    {
+      "path": "data/audit/39-supplement-preflight.log",
+      "bytes": 3448,
+      "sha256": "20736c05f4fa9235ff52e568fc86266684da2c348d6b2b37d29cb12aa838c3af"
+    },
+    {
+      "path": "data/audit/40-supplement-scan.log",
+      "bytes": 953,
+      "sha256": "306aaf06c791d9ffe0ff50ec7b6f6d67c49c2a1a07314eda045a04c4af56c8c9"
+    },
+    {
+      "path": "data/audit/41-supplement-sha256.log",
+      "bytes": 295,
+      "sha256": "563256fd3e42a3632009e0b932ce5dfcd08b408fe9c2b7af1bb9fe104994b9d5"
+    },
+    {
+      "path": "data/audit/42-supplement-stage.log",
+      "bytes": 269,
+      "sha256": "4e9dca0b695d6a8fcdc720ef4bbc1ae43fe23a1fb1aebe0390086ae71587d78b"
+    },
+    {
+      "path": "data/audit/43-supplement-scope.log",
+      "bytes": 13081,
+      "sha256": "0a38c46b902685af7eaa16aeb66fb102de61a6b9a85b3d8debf1253df6521f01"
+    },
+    {
+      "path": "data/audit/44-supplement-receipt.log",
+      "bytes": 801,
+      "sha256": "edeb473b8885c521aad342cb1d24999ab1a4ee89c1a5a1a976ec40b9148c770c"
+    },
+    {
+      "path": "data/audit/45-supplement-ref-check.log",
+      "bytes": 328,
+      "sha256": "a7a5e26973d61a03e987b372b2296bddb622b9c1b694177c9b72ef89ec143ea5"
+    },
+    {
+      "path": "data/audit/46-supplement-commit.log",
+      "bytes": 3416,
+      "sha256": "78ccfc8f30a7ee4ddf24973854f6fd614f10f0e0ade1025f66b5aabf25ec4dfa"
+    },
+    {
+      "path": "data/audit/47-supplement-push.log",
+      "bytes": 361,
+      "sha256": "7277b0631d2b1cd56b76fa1adc47e494ba2b911dbf932cf961b4b0569d2f8cde"
+    },
+    {
+      "path": "data/audit/48-supplement-refetch.log",
+      "bytes": 379,
+      "sha256": "0dfa4d32c72b54785e50887a23ac3c352d844b3e2b093d77ada6488b5395ac89"
+    },
+    {
+      "path": "data/audit/49-supplement-native.log",
+      "bytes": 6965,
+      "sha256": "740933b8234725c478001b19eb1058e2887af23b414effec7ded8ce89b1a4244"
+    },
+    {
+      "path": "data/audit/50-build-review.log",
+      "bytes": 1247,
+      "sha256": "1f1e6beb87719e3fd8056679bb5c016d698a925f2db4a0b698834b980b59db7b"
+    },
+    {
+      "path": "data/audit/DELIVERY-RECEIPT.json",
+      "bytes": 2731,
+      "sha256": "49eee521ddcffcbfc456bdc19f7ebe217ce0784a2199f87f7764daa086a2d733"
+    },
+    {
+      "path": "data/audit/SUPPLEMENT-DELIVERY.json",
+      "bytes": 1002,
+      "sha256": "90e111190241b5949dc85eaee44c6c2a0da1b5d4ff25102ae1feff6831868cdf"
+    },
+    {
+      "path": "data/audit/ZIP-DELIVERY-before-summary-clarification.json",
+      "bytes": 484,
+      "sha256": "be432a27290e802cc7169e442102c7c5d76294ec393db6040783a6f3dcdf3b84"
+    },
+    {
+      "path": "data/audit/ZIP-DELIVERY.json",
+      "bytes": 484,
+      "sha256": "2513c880a2fd8e7c18411da25c49f4e0ef2ea139b64c67e0e06d95c2f9bcbb69"
+    },
+    {
+      "path": "data/audit/current-state-supplement.json",
+      "bytes": 358,
+      "sha256": "a717cf4040596879c021c642c0a3fcac1472569f67ea153425accd22917d6c32"
+    },
+    {
+      "path": "data/audit/mutation-intent-supplement.json",
+      "bytes": 3765,
+      "sha256": "d5baace7679a86de712666bb3c242636bc38ea0e2886ef0ee173250f7cf5d427"
+    },
+    {
+      "path": "data/audit/mutation-receipt-input-supplement.json",
+      "bytes": 7689,
+      "sha256": "a8f17cb0a927e4a9f2852ffefa2c46fc5017f11e0ceae0803cafcb69a9ead52d"
+    },
+    {
+      "path": "data/audit/mutation-report-supplement.json",
+      "bytes": 3535,
+      "sha256": "ef6b75dc97c876ae7597647e90342c53f4a65cdb992ac529ccd635a71360819c"
+    },
+    {
+      "path": "data/audit/publication-commands.jsonl",
+      "bytes": 22280,
+      "sha256": "736e638da5fa4a6704adb9ebfef3ce36cabd3bf57914dc9550e2b51b1a8af1c6"
+    },
+    {
+      "path": "data/audit/residual-scan-attempts.jsonl",
+      "bytes": 4571,
+      "sha256": "64537853c67267c077b652f7e41da8f3a588fb41742f1766e33b55f2dd72e6b7"
+    },
+    {
+      "path": "data/audit/restore-supplement.json",
+      "bytes": 261,
+      "sha256": "ccbe8243e1a54be447cdb67c0f368b932708a692b2b26e73092750903a70841d"
+    },
+    {
+      "path": "data/audit/scope-baseline-digest-supplement.json",
+      "bytes": 137,
+      "sha256": "213e5591741d9d8a633597b275b9be19f096ed93c9ed8f81450c057ce5adcf9a"
+    },
+    {
+      "path": "data/audit/scope-capture-input-supplement.json",
+      "bytes": 1961,
+      "sha256": "3dbb00815402a9c8596ec9a58df1abc5f5e021b26911702c7169ddca49553bc3"
+    },
+    {
+      "path": "data/final-review/ENVIRONMENT.json",
+      "bytes": 391,
+      "sha256": "fe8d56536dcf0b80c5bbcac4afaf0a5a456dad783bb4a00c213f2a2b89e36877"
+    },
+    {
+      "path": "data/final-review/FINAL-REPORT.json",
+      "bytes": 4699,
+      "sha256": "07ccaf3b4bd87356d405d716ff5f8f96cf7117a531ab99ac46671f96f7ebc9dc"
+    },
+    {
+      "path": "data/final-review/REDACTION-TERMINAL.json",
+      "bytes": 6973,
+      "sha256": "19de80138782fcfaab4feed10686e87befc02d28256b4104c2ddbc230a1db65f"
+    }
+  ],
+  "scope": "Exact child payload excluding its own MANIFEST.json and SHA256SUMS. SUMS includes MANIFEST, excludes itself; native delivery receipt externally hashes both."
+}

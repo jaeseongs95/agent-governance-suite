@@ -1,0 +1,259 @@
+{
+  "cutoffUtc": "2026-10-06T04:43:54Z",
+  "cutoffKst": "2026-10-06T13:43:54+09:00",
+  "frozenRawInventorySha256": "0c9e7edaa025af9bc73c73443f1730e619408c039ec6de3f07e494b0eca79523",
+  "originalFiles": 28,
+  "excludedFiles": 3,
+  "publicCopyFiles": 28,
+  "scope": "Existing current-CS tail frozen before this delivery. Raw files are immutable private copies, not reconstructed transcripts.",
+  "files": [
+    {
+      "sourcePath": "audit/39-supplement-preflight.log",
+      "originalBytes": 3330,
+      "originalSha256": "4a37a57dbadb50b6419ccbc6abf3e889954912b2fea3898944823de5089ae1c1",
+      "sourceMtimeNs": 1791261297269137080,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/40-supplement-scan.log",
+      "originalBytes": 953,
+      "originalSha256": "306aaf06c791d9ffe0ff50ec7b6f6d67c49c2a1a07314eda045a04c4af56c8c9",
+      "sourceMtimeNs": 1791261297552396913,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/41-supplement-sha256.log",
+      "originalBytes": 295,
+      "originalSha256": "563256fd3e42a3632009e0b932ce5dfcd08b408fe9c2b7af1bb9fe104994b9d5",
+      "sourceMtimeNs": 1791261297586516015,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/42-supplement-stage.log",
+      "originalBytes": 269,
+      "originalSha256": "4e9dca0b695d6a8fcdc720ef4bbc1ae43fe23a1fb1aebe0390086ae71587d78b",
+      "sourceMtimeNs": 1791261297613294737,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/43-supplement-scope.log",
+      "originalBytes": 13081,
+      "originalSha256": "0a38c46b902685af7eaa16aeb66fb102de61a6b9a85b3d8debf1253df6521f01",
+      "sourceMtimeNs": 1791261331997751395,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/44-supplement-receipt.log",
+      "originalBytes": 790,
+      "originalSha256": "b0a52295ae2143220231e9c5834515918b780297ea240bbb35bc9abef60f8c3a",
+      "sourceMtimeNs": 1791261332165754374,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/45-supplement-ref-check.log",
+      "originalBytes": 328,
+      "originalSha256": "a7a5e26973d61a03e987b372b2296bddb622b9c1b694177c9b72ef89ec143ea5",
+      "sourceMtimeNs": 1791261332485760048,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/46-supplement-commit.log",
+      "originalBytes": 3416,
+      "originalSha256": "78ccfc8f30a7ee4ddf24973854f6fd614f10f0e0ade1025f66b5aabf25ec4dfa",
+      "sourceMtimeNs": 1791261332533760901,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/47-supplement-push.log",
+      "originalBytes": 361,
+      "originalSha256": "7277b0631d2b1cd56b76fa1adc47e494ba2b911dbf932cf961b4b0569d2f8cde",
+      "sourceMtimeNs": 1791261333757782542,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/48-supplement-refetch.log",
+      "originalBytes": 379,
+      "originalSha256": "0dfa4d32c72b54785e50887a23ac3c352d844b3e2b093d77ada6488b5395ac89",
+      "sourceMtimeNs": 1791261334149789214,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/49-supplement-native.log",
+      "originalBytes": 6965,
+      "originalSha256": "740933b8234725c478001b19eb1058e2887af23b414effec7ded8ce89b1a4244",
+      "sourceMtimeNs": 1791261334573009894,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/50-build-review.log",
+      "originalBytes": 1247,
+      "originalSha256": "1f1e6beb87719e3fd8056679bb5c016d698a925f2db4a0b698834b980b59db7b",
+      "sourceMtimeNs": 1791261433033133430,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/DELIVERY-RECEIPT.json",
+      "originalBytes": 2731,
+      "originalSha256": "49eee521ddcffcbfc456bdc19f7ebe217ce0784a2199f87f7764daa086a2d733",
+      "sourceMtimeNs": 1791261112208194274,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/LIBRARY-DELIVERY.json",
+      "originalBytes": 611,
+      "originalSha256": "61dbbc5d92623d174ccea995f43446f444e202d09d4ff4050793743c2a3434ff",
+      "sourceMtimeNs": 1791261533589221292,
+      "publicDisposition": "EXCLUDED",
+      "exclusionReason": "Library service identity excluded; no payload or identifier published"
+    },
+    {
+      "sourcePath": "audit/SUPPLEMENT-DELIVERY.json",
+      "originalBytes": 1002,
+      "originalSha256": "90e111190241b5949dc85eaee44c6c2a0da1b5d4ff25102ae1feff6831868cdf",
+      "sourceMtimeNs": 1791261334573009894,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/ZIP-DELIVERY-before-summary-clarification.json",
+      "originalBytes": 484,
+      "originalSha256": "be432a27290e802cc7169e442102c7c5d76294ec393db6040783a6f3dcdf3b84",
+      "sourceMtimeNs": 1791261488326668093,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/ZIP-DELIVERY.json",
+      "originalBytes": 484,
+      "originalSha256": "2513c880a2fd8e7c18411da25c49f4e0ef2ea139b64c67e0e06d95c2f9bcbb69",
+      "sourceMtimeNs": 1791261489247046052,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/current-state-supplement.json",
+      "originalBytes": 358,
+      "originalSha256": "a717cf4040596879c021c642c0a3fcac1472569f67ea153425accd22917d6c32",
+      "sourceMtimeNs": 1791261297140122537,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/mutation-intent-supplement.json",
+      "originalBytes": 3765,
+      "originalSha256": "d5baace7679a86de712666bb3c242636bc38ea0e2886ef0ee173250f7cf5d427",
+      "sourceMtimeNs": 1791261297140579593,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/mutation-receipt-input-supplement.json",
+      "originalBytes": 7689,
+      "originalSha256": "a8f17cb0a927e4a9f2852ffefa2c46fc5017f11e0ceae0803cafcb69a9ead52d",
+      "sourceMtimeNs": 1791261297284294760,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/mutation-report-supplement.json",
+      "originalBytes": 3535,
+      "originalSha256": "ef6b75dc97c876ae7597647e90342c53f4a65cdb992ac529ccd635a71360819c",
+      "sourceMtimeNs": 1791261297284134670,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/publication-commands.jsonl",
+      "originalBytes": 22280,
+      "originalSha256": "736e638da5fa4a6704adb9ebfef3ce36cabd3bf57914dc9550e2b51b1a8af1c6",
+      "sourceMtimeNs": 1791261433035459332,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/residual-scan-attempts.jsonl",
+      "originalBytes": 4571,
+      "originalSha256": "64537853c67267c077b652f7e41da8f3a588fb41742f1766e33b55f2dd72e6b7",
+      "sourceMtimeNs": 1791261489056441918,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/restore-supplement.json",
+      "originalBytes": 261,
+      "originalSha256": "ccbe8243e1a54be447cdb67c0f368b932708a692b2b26e73092750903a70841d",
+      "sourceMtimeNs": 1791261296767308743,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/scope-baseline-digest-supplement.json",
+      "originalBytes": 137,
+      "originalSha256": "213e5591741d9d8a633597b275b9be19f096ed93c9ed8f81450c057ce5adcf9a",
+      "sourceMtimeNs": 1791261295921986255,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/scope-baseline-supplement.json",
+      "originalBytes": 2867068,
+      "originalSha256": "f4851f6f848c14ee43e255d48703dd5d80a4893372f85b51b04451469fdb5ad4",
+      "sourceMtimeNs": 1791261295919940478,
+      "publicDisposition": "EXCLUDED",
+      "exclusionReason": "Other-job baseline entries excluded"
+    },
+    {
+      "sourcePath": "audit/scope-capture-input-supplement.json",
+      "originalBytes": 1961,
+      "originalSha256": "3dbb00815402a9c8596ec9a58df1abc5f5e021b26911702c7169ddca49553bc3",
+      "sourceMtimeNs": 1791261263552565179,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "audit/scope-verify-input-supplement.json",
+      "originalBytes": 3029007,
+      "originalSha256": "0e781e426fc1edeae5c0fbebb3861810553b9b702b286fe372f2a22706893050",
+      "sourceMtimeNs": 1791261297669615237,
+      "publicDisposition": "EXCLUDED",
+      "exclusionReason": "Contains other-job baseline entries; exclude full input dump"
+    },
+    {
+      "sourcePath": "final-review/ENVIRONMENT.json",
+      "originalBytes": 391,
+      "originalSha256": "fe8d56536dcf0b80c5bbcac4afaf0a5a456dad783bb4a00c213f2a2b89e36877",
+      "sourceMtimeNs": 1791261432117256668,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "final-review/FINAL-REPORT.json",
+      "originalBytes": 4699,
+      "originalSha256": "07ccaf3b4bd87356d405d716ff5f8f96cf7117a531ab99ac46671f96f7ebc9dc",
+      "sourceMtimeNs": 1791261432117554404,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    },
+    {
+      "sourcePath": "final-review/REDACTION-TERMINAL.json",
+      "originalBytes": 6973,
+      "originalSha256": "19de80138782fcfaab4feed10686e87befc02d28256b4104c2ddbc230a1db65f",
+      "sourceMtimeNs": 1791261432117422857,
+      "publicDisposition": "INCLUDED",
+      "exclusionReason": null
+    }
+  ]
+}

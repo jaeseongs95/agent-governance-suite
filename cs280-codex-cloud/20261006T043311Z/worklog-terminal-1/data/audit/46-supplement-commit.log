@@ -1,0 +1,36 @@
+{"label": "46-supplement-commit", "command": ["git", "-c", "user.name=Codex-Cloud-Evidence", "-c", "user.email=redacted", "-c", "commit.gpgsign=false", "commit", "-m", "evidence: append CS Codex Cloud publication stdout and receipts"], "cwd": "/workspace/ags-cs-2x/publication-20261006T040502Z/repo-final3", "started": "2026-10-06T04:35:32.518587+00:00", "kind": "publication-only; no product test"}
+[detached HEAD 2b3c553] evidence: append CS Codex Cloud publication stdout and receipts
+ 33 files changed, 3115 insertions(+)
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/COLLECTION.json
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/MANIFEST.json
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/README.ko.md
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/REDACTION.json
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/RESIDUAL-SCAN.json
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/SHA256SUMS
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/27-stage-attempt3.log
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/27a-residual-scan-corrected.log
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/27b-seal-corrected.log
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/27c-preservation-corrected.log
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/27d-sha256-check.log
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/27e-resume-native.log
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/28-scope-attempt3.log
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/29-receipt-attempt3.log
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/30-ref-check-attempt3.log
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/31-commit-attempt3.log
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/32-push-attempt3.log
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/33-fetch-published.log
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/34-remote-bytes.log
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/35-remote-bytes-corrected.log
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/36-supplement-fetch.log
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/37-supplement-checkout.log
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/39-supplement-preflight.log
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/DELIVERY-RECEIPT.json
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/authorization-supplement.json
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/current-state-supplement.json
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/mutation-intent-supplement.json
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/mutation-report-supplement.json
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/publication-commands.jsonl
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/push-success-attempt3.json
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/restore-supplement.json
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/scope-baseline-digest-supplement.json
+ create mode 100644 cs280-codex-cloud/20261006T043311Z/post-seal/scope-capture-input-supplement.json

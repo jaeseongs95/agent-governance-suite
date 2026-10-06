@@ -1,0 +1,12 @@
+{
+  "environment": "Actual Codex Cloud Linux container",
+  "cwdPublication": "/workspace/ags-cs-2x/publication-20261006T040502Z/repo-final3",
+  "node": "v24.19.0",
+  "pnpm": "11.19.0",
+  "python": "3.12.14",
+  "kernel": "6.18.44",
+  "machine": "x86_64",
+  "sourceHead": "f7912c452483ddc67ba874a185c08fa0038a38e7",
+  "sourceWorkingTreeClean": true,
+  "productTestsRunForPublication": false
+}

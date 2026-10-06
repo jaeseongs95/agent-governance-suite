@@ -1,0 +1,2 @@
+{"label": "45-supplement-ref-check", "command": ["git", "ls-remote", "origin", "refs/heads/evidence"], "cwd": "/workspace/ags-cs-2x/publication-20261006T040502Z/repo-final3", "started": "2026-10-06T04:35:32.197455+00:00", "kind": "publication-only; no product test"}
+c030b4a71baf9a15dd0f5aea08a828b1507a7385	refs/heads/evidence

@@ -1,0 +1,95 @@
+{
+  "firstPublication": {
+    "schema": "AGSPublicationDeliveryReceipt.v1",
+    "commit": "c030b4a71baf9a15dd0f5aea08a828b1507a7385",
+    "tree": "2a91b4d35a3343c03d2a1cef28052ef92bc15cc1",
+    "parent": "22ad719ac0ea376659b3182ce0692c6a90fd8583",
+    "prefix": "cs280-codex-cloud/20261006T040502Z",
+    "publicManifestSha256": "60af80b198cf0bc9486d48b96cd34766c147342a68a14a1583b909196525bca6",
+    "publicFiles": 211,
+    "redaction": {
+      "originalFiles": 139,
+      "publicCopies": 139,
+      "excludedFiles": 9,
+      "removals": 806,
+      "publicationArtifactFiles": 63,
+      "filesInRedactionLedger": 202
+    },
+    "pushedAt": "2026-10-06T04:30:44.781794+00:00",
+    "noForce": true,
+    "remoteTipVerified": "c030b4a71baf9a15dd0f5aea08a828b1507a7385",
+    "pinnedUrl": "https://github.com/jaeseongs95/agent-governance-suite/tree/c030b4a71baf9a15dd0f5aea08a828b1507a7385/cs280-codex-cloud/20261006T040502Z",
+    "branchUrl": "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-codex-cloud/20261006T040502Z",
+    "allRemoteFilesByteExact": true,
+    "manifestSha256": "60af80b198cf0bc9486d48b96cd34766c147342a68a14a1583b909196525bca6",
+    "sha256SumsSha256": "6aec918e8cc2b9bd18d60890e3a969b0a6bc81e0adbfc9cf9d5e12b97cdaa70e",
+    "manifestCircularExclusions": "MANIFEST excludes itself and SHA256SUMS; SHA256SUMS includes MANIFEST but excludes itself; delivery externally hashes both.",
+    "baselineExistingFiles": 9779,
+    "baselineChangedFiles": 0,
+    "changesAdded": 211,
+    "mainRefUnchanged": "f39501efe5dfe51d83af9afddf39dec7b7e26b01",
+    "sourceHeadUnchanged": "f7912c452483ddc67ba874a185c08fa0038a38e7",
+    "sourceWorkingTreeClean": true,
+    "privateOriginalFiles": 139,
+    "privateCopiesImmutableHashExact": true,
+    "originalZipPins": [
+      {
+        "path": "/workspace/ags-cs-2x/output/AGS-2.8.0-CS-RC-review.zip",
+        "bytes": 3956830,
+        "sha256": "2f4067919ec83cccef39650cdac61d4dca61d47e9c8ccdf4558fe0f011f06fc4"
+      },
+      {
+        "path": "/workspace/ags-cs-2x/linux-lifecycle-r1/output/AGS-2.8.0-CS-Linux-lifecycle-r1-review.zip",
+        "bytes": 3537167,
+        "sha256": "06305d4faa2ac07f14170c2742185c4e2564f50b48bee66cd0ed070341867317"
+      },
+      {
+        "path": "/workspace/ags-cs-2x/linux-lifecycle-r2/output/AGS-2.8.0-CS-Linux-lifecycle-r2-review.zip",
+        "bytes": 3492904,
+        "sha256": "ae59a27bfa99364e0ec8e0a295a8702b2773c83ac2385eb0a5ed4c74c45fef4f"
+      }
+    ],
+    "verifiedAt": "2026-10-06T04:31:52.207975+00:00",
+    "postSealCapture": "audit/publication-commands.jsonl and actual audit/27a..33*.log files; receipt package includes actual captured merged stdout/stderr.",
+    "fullNativeTranscript": "NOT_VERIFIABLE; not supplied",
+    "peers": "Existing paths preserved. No other session transcripts republished; Claude runtime not claimed."
+  },
+  "supplement": {
+    "commit": "2b3c5539dd1648386d1dbf51353a63c73914e3d8",
+    "tree": "29a9efa6500cf623ac8ac723734381efd60bee61",
+    "parent": "c030b4a71baf9a15dd0f5aea08a828b1507a7385",
+    "prefix": "cs280-codex-cloud/20261006T043311Z",
+    "pinnedUrl": "https://github.com/jaeseongs95/agent-governance-suite/tree/2b3c5539dd1648386d1dbf51353a63c73914e3d8/cs280-codex-cloud/20261006T043311Z",
+    "branchUrl": "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-codex-cloud/20261006T043311Z",
+    "publicFiles": 33,
+    "rawFiles": 27,
+    "removals": 0,
+    "manifestSha256": "a8d3073e8cb6093ef2569174cc6c3eef7b0e47344afe72a60a72bea9c65e3ae5",
+    "sha256SumsSha256": "3a68b32b876d00f90cdb54252695d685fc3b0c49e66677d53b69512529a98d4a",
+    "remoteTipVerified": "2b3c5539dd1648386d1dbf51353a63c73914e3d8",
+    "allRemoteFilesByteExact": true,
+    "existingFiles": 9990,
+    "existingFilesChanged": 0,
+    "noForce": true,
+    "cutoff": "2026-10-06T04:34:57.473017+00:00",
+    "verifiedAt": "2026-10-06T04:35:34.572727+00:00"
+  },
+  "minimumInventory": {
+    "total": 122,
+    "original": 68,
+    "r1": 33,
+    "r2": 21,
+    "mismatches": 0
+  },
+  "sourceCopies": {
+    "raw": 139,
+    "public": 139
+  },
+  "excludedArchivesBundlesPatches": 9,
+  "terminalCopies": 19,
+  "terminalRemovals": 0,
+  "finalCaptureCutoff": "2026-10-06T04:37:12.117449+00:00",
+  "fullNativeTranscript": "NOT_VERIFIABLE: not supplied",
+  "individualFirst33Fetch": "NOT_VERIFIABLE: overwritten by second same-label fetch; both metadata records and enclosing failure/correction captures retained",
+  "scope": "Two append-only sanitized evidence publications. No source push, product tests, installation, permissions change or release. No claim that final self-referential push/Library save logs are inside their own Git/ZIP payload."
+}

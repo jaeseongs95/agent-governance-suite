@@ -1,0 +1,178 @@
+{
+  "files": [
+    {
+      "path": "terminal/40-supplement-scan.log",
+      "originalSha256": "306aaf06c791d9ffe0ff50ec7b6f6d67c49c2a1a07314eda045a04c4af56c8c9",
+      "publicSha256": "306aaf06c791d9ffe0ff50ec7b6f6d67c49c2a1a07314eda045a04c4af56c8c9",
+      "originalBytes": 953,
+      "publicBytes": 953,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "terminal/41-supplement-sha256.log",
+      "originalSha256": "563256fd3e42a3632009e0b932ce5dfcd08b408fe9c2b7af1bb9fe104994b9d5",
+      "publicSha256": "563256fd3e42a3632009e0b932ce5dfcd08b408fe9c2b7af1bb9fe104994b9d5",
+      "originalBytes": 295,
+      "publicBytes": 295,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "terminal/42-supplement-stage.log",
+      "originalSha256": "4e9dca0b695d6a8fcdc720ef4bbc1ae43fe23a1fb1aebe0390086ae71587d78b",
+      "publicSha256": "4e9dca0b695d6a8fcdc720ef4bbc1ae43fe23a1fb1aebe0390086ae71587d78b",
+      "originalBytes": 269,
+      "publicBytes": 269,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "terminal/43-supplement-scope.log",
+      "originalSha256": "0a38c46b902685af7eaa16aeb66fb102de61a6b9a85b3d8debf1253df6521f01",
+      "publicSha256": "0a38c46b902685af7eaa16aeb66fb102de61a6b9a85b3d8debf1253df6521f01",
+      "originalBytes": 13081,
+      "publicBytes": 13081,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "terminal/44-supplement-receipt.log",
+      "originalSha256": "b0a52295ae2143220231e9c5834515918b780297ea240bbb35bc9abef60f8c3a",
+      "publicSha256": "edeb473b8885c521aad342cb1d24999ab1a4ee89c1a5a1a976ec40b9148c770c",
+      "originalBytes": 790,
+      "publicBytes": 801,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "terminal/45-supplement-ref-check.log",
+      "originalSha256": "a7a5e26973d61a03e987b372b2296bddb622b9c1b694177c9b72ef89ec143ea5",
+      "publicSha256": "a7a5e26973d61a03e987b372b2296bddb622b9c1b694177c9b72ef89ec143ea5",
+      "originalBytes": 328,
+      "publicBytes": 328,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "terminal/46-supplement-commit.log",
+      "originalSha256": "78ccfc8f30a7ee4ddf24973854f6fd614f10f0e0ade1025f66b5aabf25ec4dfa",
+      "publicSha256": "78ccfc8f30a7ee4ddf24973854f6fd614f10f0e0ade1025f66b5aabf25ec4dfa",
+      "originalBytes": 3416,
+      "publicBytes": 3416,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "terminal/47-supplement-push.log",
+      "originalSha256": "7277b0631d2b1cd56b76fa1adc47e494ba2b911dbf932cf961b4b0569d2f8cde",
+      "publicSha256": "7277b0631d2b1cd56b76fa1adc47e494ba2b911dbf932cf961b4b0569d2f8cde",
+      "originalBytes": 361,
+      "publicBytes": 361,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "terminal/48-supplement-refetch.log",
+      "originalSha256": "0dfa4d32c72b54785e50887a23ac3c352d844b3e2b093d77ada6488b5395ac89",
+      "publicSha256": "0dfa4d32c72b54785e50887a23ac3c352d844b3e2b093d77ada6488b5395ac89",
+      "originalBytes": 379,
+      "publicBytes": 379,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "terminal/49-supplement-native.log",
+      "originalSha256": "740933b8234725c478001b19eb1058e2887af23b414effec7ded8ce89b1a4244",
+      "publicSha256": "740933b8234725c478001b19eb1058e2887af23b414effec7ded8ce89b1a4244",
+      "originalBytes": 6965,
+      "publicBytes": 6965,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "terminal/publication-commands.jsonl",
+      "originalSha256": "d99660140b3a5e2351872d07665eaa540640ae215da57a997de7652403f2c9ee",
+      "publicSha256": "d99660140b3a5e2351872d07665eaa540640ae215da57a997de7652403f2c9ee",
+      "originalBytes": 21914,
+      "publicBytes": 21914,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "terminal/DELIVERY-RECEIPT.json",
+      "originalSha256": "49eee521ddcffcbfc456bdc19f7ebe217ce0784a2199f87f7764daa086a2d733",
+      "publicSha256": "49eee521ddcffcbfc456bdc19f7ebe217ce0784a2199f87f7764daa086a2d733",
+      "originalBytes": 2731,
+      "publicBytes": 2731,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "terminal/SUPPLEMENT-DELIVERY.json",
+      "originalSha256": "90e111190241b5949dc85eaee44c6c2a0da1b5d4ff25102ae1feff6831868cdf",
+      "publicSha256": "90e111190241b5949dc85eaee44c6c2a0da1b5d4ff25102ae1feff6831868cdf",
+      "originalBytes": 1002,
+      "publicBytes": 1002,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "terminal/scope-baseline-digest-supplement.json",
+      "originalSha256": "213e5591741d9d8a633597b275b9be19f096ed93c9ed8f81450c057ce5adcf9a",
+      "publicSha256": "213e5591741d9d8a633597b275b9be19f096ed93c9ed8f81450c057ce5adcf9a",
+      "originalBytes": 137,
+      "publicBytes": 137,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "terminal/mutation-intent-supplement.json",
+      "originalSha256": "d5baace7679a86de712666bb3c242636bc38ea0e2886ef0ee173250f7cf5d427",
+      "publicSha256": "d5baace7679a86de712666bb3c242636bc38ea0e2886ef0ee173250f7cf5d427",
+      "originalBytes": 3765,
+      "publicBytes": 3765,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "terminal/mutation-report-supplement.json",
+      "originalSha256": "ef6b75dc97c876ae7597647e90342c53f4a65cdb992ac529ccd635a71360819c",
+      "publicSha256": "ef6b75dc97c876ae7597647e90342c53f4a65cdb992ac529ccd635a71360819c",
+      "originalBytes": 3535,
+      "publicBytes": 3535,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "terminal/scripts/verify-delivery.py",
+      "originalSha256": "d0c97ed7d7ee28d3574e18e0c73ddec02fae26e7e740a5ec348f725d7f6f8abe",
+      "publicSha256": "d0c97ed7d7ee28d3574e18e0c73ddec02fae26e7e740a5ec348f725d7f6f8abe",
+      "originalBytes": 4920,
+      "publicBytes": 4920,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "terminal/scripts/verify-delivery-before-path-correction.py",
+      "originalSha256": "1acb0360bacec4d581cb15c987ccb34262f74640959aeae31b762659df990de7",
+      "publicSha256": "1acb0360bacec4d581cb15c987ccb34262f74640959aeae31b762659df990de7",
+      "originalBytes": 4898,
+      "publicBytes": 4898,
+      "removalsByKind": {},
+      "removalCount": 0
+    },
+    {
+      "path": "terminal/scripts/publish-supplement.py",
+      "originalSha256": "95ea4faf21260d81fc417bdeb7a09c3ebc82d561f9e416640a4aad9c78836061",
+      "publicSha256": "95ea4faf21260d81fc417bdeb7a09c3ebc82d561f9e416640a4aad9c78836061",
+      "originalBytes": 12750,
+      "publicBytes": 12750,
+      "removalsByKind": {},
+      "removalCount": 0
+    }
+  ],
+  "rawFiles": 19,
+  "removals": 0,
+  "scope": "Actual terminal captures with raw/public SHA; generated ENVIRONMENT and summary are controls. No native transcript reconstruction."
+}

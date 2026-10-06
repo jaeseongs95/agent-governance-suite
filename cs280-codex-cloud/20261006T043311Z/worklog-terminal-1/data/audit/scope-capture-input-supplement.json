@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0.0",
+  "mode": "capture",
+  "repositoryRoot": "/workspace/ags-cs-2x/publication-20261006T040502Z/repo-final3",
+  "comparisonTarget": "index",
+  "taskEnvelope": {
+    "schemaVersion": "1.0.0",
+    "taskId": "cs280-codex-cloud-post-seal-evidence",
+    "objective": "Append actual post-seal publication logs as a continuation of the explicitly authorized current CS evidence publication",
+    "scope": {
+      "included": [
+        "cs280-codex-cloud/20261006T043311Z/"
+      ],
+      "excluded": [
+        "cs280-claude-cloud/",
+        "main/",
+        "source/",
+        "cs280-codex-cloud/20261006T040502Z/"
+      ]
+    },
+    "acceptanceCriteria": [
+      "All available original/r1/r2 execution logs inventoried with raw and public SHA256",
+      "Sensitive values removed and residual scan verified",
+      "Only new evidence subtree added; existing paths and main unchanged",
+      "Original failures and candidate-specific claims retained"
+    ],
+    "riskLevel": "high",
+    "workUnits": [
+      {
+        "id": "redact-and-publish",
+        "objective": "Publish evidence only",
+        "dependencies": [],
+        "writeTargets": [
+          "cs280-codex-cloud/20261006T043311Z/"
+        ]
+      }
+    ],
+    "requiredCapabilities": [
+      "git",
+      "redaction"
+    ],
+    "constraints": [
+      "No source changes, product tests, force push, install or sharing changes"
+    ],
+    "authorization": {
+      "allowedActions": [
+        "Publish sanitized evidence copies via a nonforce evidence branch push"
+      ],
+      "prohibitedActions": [
+        "Modify main, candidate branch, existing evidence folders, credentials or operational state",
+        "Publish raw private archives, databases or keys"
+      ],
+      "approvalRequired": []
+    },
+    "decision": {
+      "complexity": "complex",
+      "hasConflicts": false
+    },
+    "orchestration": {
+      "requested": false,
+      "mcpAvailable": false
+    }
+  }
+}

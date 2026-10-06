@@ -1,0 +1,190 @@
+{
+  "state": "PASS",
+  "checkedFiles": 28,
+  "files": [
+    {
+      "sourcePath": "audit/39-supplement-preflight.log",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "lines": 2,
+      "commandHeaderPreserved": true
+    },
+    {
+      "sourcePath": "audit/40-supplement-scan.log",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "lines": 2,
+      "commandHeaderPreserved": true
+    },
+    {
+      "sourcePath": "audit/41-supplement-sha256.log",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "lines": 1,
+      "commandHeaderPreserved": true
+    },
+    {
+      "sourcePath": "audit/42-supplement-stage.log",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "lines": 1,
+      "commandHeaderPreserved": true
+    },
+    {
+      "sourcePath": "audit/43-supplement-scope.log",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "lines": 319,
+      "commandHeaderPreserved": true
+    },
+    {
+      "sourcePath": "audit/44-supplement-receipt.log",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "lines": 2,
+      "commandHeaderPreserved": true
+    },
+    {
+      "sourcePath": "audit/45-supplement-ref-check.log",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "lines": 2,
+      "commandHeaderPreserved": true
+    },
+    {
+      "sourcePath": "audit/46-supplement-commit.log",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "lines": 36,
+      "commandHeaderPreserved": true
+    },
+    {
+      "sourcePath": "audit/47-supplement-push.log",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "lines": 3,
+      "commandHeaderPreserved": true
+    },
+    {
+      "sourcePath": "audit/48-supplement-refetch.log",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "lines": 3,
+      "commandHeaderPreserved": true
+    },
+    {
+      "sourcePath": "audit/49-supplement-native.log",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "lines": 34,
+      "commandHeaderPreserved": true
+    },
+    {
+      "sourcePath": "audit/50-build-review.log",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "lines": 3,
+      "commandHeaderPreserved": true
+    },
+    {
+      "sourcePath": "audit/DELIVERY-RECEIPT.json",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "structuredJsonPreserved": true
+    },
+    {
+      "sourcePath": "audit/SUPPLEMENT-DELIVERY.json",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "structuredJsonPreserved": true
+    },
+    {
+      "sourcePath": "audit/ZIP-DELIVERY-before-summary-clarification.json",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "structuredJsonPreserved": true
+    },
+    {
+      "sourcePath": "audit/ZIP-DELIVERY.json",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "structuredJsonPreserved": true
+    },
+    {
+      "sourcePath": "audit/current-state-supplement.json",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "structuredJsonPreserved": true
+    },
+    {
+      "sourcePath": "audit/mutation-intent-supplement.json",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "structuredJsonPreserved": true
+    },
+    {
+      "sourcePath": "audit/mutation-receipt-input-supplement.json",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "structuredJsonPreserved": true
+    },
+    {
+      "sourcePath": "audit/mutation-report-supplement.json",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "structuredJsonPreserved": true
+    },
+    {
+      "sourcePath": "audit/publication-commands.jsonl",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "recordCount": 53,
+      "recordOrderPreserved": true
+    },
+    {
+      "sourcePath": "audit/residual-scan-attempts.jsonl",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "recordCount": 9,
+      "recordOrderPreserved": true
+    },
+    {
+      "sourcePath": "audit/restore-supplement.json",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "structuredJsonPreserved": true
+    },
+    {
+      "sourcePath": "audit/scope-baseline-digest-supplement.json",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "structuredJsonPreserved": true
+    },
+    {
+      "sourcePath": "audit/scope-capture-input-supplement.json",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "structuredJsonPreserved": true
+    },
+    {
+      "sourcePath": "final-review/ENVIRONMENT.json",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "structuredJsonPreserved": true
+    },
+    {
+      "sourcePath": "final-review/FINAL-REPORT.json",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "structuredJsonPreserved": true
+    },
+    {
+      "sourcePath": "final-review/REDACTION-TERMINAL.json",
+      "statusTokenOrderPreserved": true,
+      "criticalValuesPreserved": true,
+      "structuredJsonPreserved": true
+    }
+  ],
+  "commandRecords": 53,
+  "mismatchCount": 0
+}

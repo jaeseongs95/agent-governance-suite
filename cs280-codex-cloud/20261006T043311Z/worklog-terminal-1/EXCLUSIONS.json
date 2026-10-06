@@ -1,0 +1,26 @@
+[
+  {
+    "sourcePath": "audit/LIBRARY-DELIVERY.json",
+    "originalBytes": 611,
+    "originalSha256": "61dbbc5d92623d174ccea995f43446f444e202d09d4ff4050793743c2a3434ff",
+    "sourceMtimeNs": 1791261533589221292,
+    "publicDisposition": "EXCLUDED",
+    "exclusionReason": "Library service identity excluded; no payload or identifier published"
+  },
+  {
+    "sourcePath": "audit/scope-baseline-supplement.json",
+    "originalBytes": 2867068,
+    "originalSha256": "f4851f6f848c14ee43e255d48703dd5d80a4893372f85b51b04451469fdb5ad4",
+    "sourceMtimeNs": 1791261295919940478,
+    "publicDisposition": "EXCLUDED",
+    "exclusionReason": "Other-job baseline entries excluded"
+  },
+  {
+    "sourcePath": "audit/scope-verify-input-supplement.json",
+    "originalBytes": 3029007,
+    "originalSha256": "0e781e426fc1edeae5c0fbebb3861810553b9b702b286fe372f2a22706893050",
+    "sourceMtimeNs": 1791261297669615237,
+    "publicDisposition": "EXCLUDED",
+    "exclusionReason": "Contains other-job baseline entries; exclude full input dump"
+  }
+]
