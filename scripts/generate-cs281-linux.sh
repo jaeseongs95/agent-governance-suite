@@ -8,7 +8,7 @@ mkdir -p "$out"
 exec > >(tee "$out/full.log") 2>&1
 printf 'NOT_FULL_QA\n' > "$out/STATUS.txt"
 finish() {
-  local code=$?
+  local command_code=$? artifact_code=0 code
   trap - EXIT
   set +e
   {
@@ -19,16 +19,26 @@ finish() {
   git diff --binary > "$out/generated.patch"
   git diff --name-only > "$out/changed-paths.txt"
   # Explicit generation roots preserve additions and full shipped bytes.
-  tar -czf "$out/generated-bytes.tar.gz" mcp-server/dist runtime claude-plugin || code=$?
-  find mcp-server/dist runtime claude-plugin -type f -print0 | sort -z | xargs -0 sha256sum > "$out/generated-files.sha256" || code=$?
+  tar -czf "$out/generated-bytes.tar.gz" mcp-server/dist runtime claude-plugin || artifact_code=$?
+  find mcp-server/dist runtime claude-plugin -type f -print0 | sort -z | xargs -0 sha256sum > "$out/generated-files.sha256" || artifact_code=$?
+  printf '%s\n' "$command_code" > "$out/command-exit-code.txt"
+  code=$command_code
+  if [ "$code" -eq 0 ]; then code=$artifact_code; fi
   if [ "$code" -eq 0 ]; then
     printf 'GENERATED_BYTES_READY_NOT_FULL_QA\n' > "$out/STATUS.txt"
   else
     printf 'FAILED_NOT_FULL_QA\n' > "$out/STATUS.txt"
   fi
   printf '%s\n' "$code" > "$out/script-exit-code.txt"
+  printf '%s\n' "$artifact_code" > "$out/artifact-exit-code.txt"
   # full.log is still open here; the upload artifact supplies its final bytes.
-  (cd "$out" && find . -type f ! -name SHA256SUMS ! -name full.log -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS) || code=$?
+  (cd "$out" && find . -type f ! -name 'SHA256SUMS*' ! -name full.log -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.tmp && mv SHA256SUMS.tmp SHA256SUMS) || artifact_code=$?
+  code=$command_code
+  if [ "$code" -eq 0 ]; then code=$artifact_code; fi
+  # On checksum failure these final records invalidate any incomplete sums.
+  if [ "$code" -ne 0 ]; then printf 'FAILED_NOT_FULL_QA\n' > "$out/STATUS.txt"; fi
+  printf '%s\n' "$artifact_code" > "$out/artifact-exit-code.txt"
+  printf '%s\n' "$code" > "$out/script-exit-code.txt"
   exit "$code"
 }
 trap finish EXIT
