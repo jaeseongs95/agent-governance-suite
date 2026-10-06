@@ -1,0 +1,121 @@
+seq=7 name=pnpm-test exit=0 dirty=0 head=4ba47558020bd5e501fa9718f09d562dcf573713 start=2026-10-06T03:40:13.090Z end=2026-10-06T03:41:33.707Z log=07-pnpm-test.log
+ ✓ tests/ponytail/ponytail.test.ts > ponytail at the implementation step > routes minimal-implementation to ponytail after the scope baseline and before the pre-mutation gate and scope verification 302ms
+ ✓ tests/mcp/response-projections.test.ts > compact MCP response projections > keeps successful workflow progress fixed-size and reduces repeated payload bytes by at least 80% 313ms
+ ✓ tests/ponytail/ponytail.test.ts > ponytail at the implementation step > keeps the implementation-stage boundaries in the shared and Claude orchestrator copies 4ms
+ ✓ tests/ponytail/ponytail.test.ts > ponytail at the implementation step > limits the skill body to code-writing turns and yields to repository instructions on both hosts 1ms
+ ✓ tests/ponytail/ponytail.test.ts > ponytail at the implementation step > adds no ponytail stage when the plan does not ask for minimal-implementation 231ms
+ ✓ tests/ponytail/ponytail.test.ts > ponytail at the implementation step > integrates only the pinned skill instructions, without the upstream always-on hooks 2ms
+ ✓ tests/session-messaging/broker-lifecycle.test.ts > releases startup resources after permanent failure and allows recovery 1057ms
+ ✓ tests/session-messaging/presence-deadline.test.ts > ends a lookup against a slow but answering broker at one overall deadline, keeping answers and leaving the rest unanswered 13ms
+ ✓ tests/session-messaging/presence-deadline.test.ts > does not let an answer that arrives after the deadline change the result 2ms
+ ✓ tests/session-messaging/presence-deadline.test.ts > bounds an unresponsive broker by the same deadline and asks only once 1ms
+ ✓ tests/session-messaging/presence-deadline.test.ts > returns every identity exactly once, in order, from a normal broker 7ms
+ ✓ tests/session-messaging/presence-deadline.test.ts > keeps the overall deadline when the wall clock steps back during a lookup 4ms
+ ✓ tests/mcp/response-projections.test.ts > compact MCP response projections > projects convergence roots and status without task, frame, or append-only history 310ms
+ ✓ tests/session-messaging/broker-lifecycle.test.ts > releases startup resources after ENOSPC failure and allows recovery 248ms
+ ✓ tests/korean-prose-editor/glossary-finalizer.test.mjs > Korean prose glossary finalizer binding > accepts one identical MCP binding across all roles 32ms
+ ✓ tests/korean-prose-editor/glossary-finalizer.test.mjs > Korean prose glossary finalizer binding > uses no glossary artifact in direct mode 3ms
+ ✓ tests/korean-prose-editor/glossary-finalizer.test.mjs > Korean prose glossary finalizer binding > falls back for role binding differences and match-set tampering 22ms
+ ✓ tests/korean-prose-editor/glossary-finalizer.test.mjs > Korean prose glossary finalizer binding > falls back when a protect match is absent from the manifest 10ms
+ ✓ tests/korean-prose-editor/glossary-finalizer.test.mjs > Korean prose glossary finalizer binding > continues without glossary matches when MCP lookup is unavailable 6ms
+ ✓ tests/mcp/korean-prose-evaluation-preflight.test.ts > Korean prose evaluation preflight > requires every frozen model phase to pass the repository preflight 8ms
+ ✓ tests/mcp/korean-prose-evaluation-preflight.test.ts > Korean prose evaluation preflight > accepts a frozen complete run before recording its workflow receipt 24ms
+ ✓ tests/mcp/korean-prose-evaluation-preflight.test.ts > Korean prose evaluation preflight > blocks a provider phase when its output already exists 8ms
+ ✓ tests/mcp/korean-prose-evaluation-preflight.test.ts > Korean prose evaluation preflight > blocks recording when the verification actor reuses another role 7ms
+ ✓ tests/session-messaging/broker-lifecycle.test.ts > releases startup resources after credentials failure and allows recovery 241ms
+ ✓ tests/session-messaging/broker-lifecycle.test.ts > releases startup resources after database failure and allows recovery 239ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > accepts complete research containing a confirmed high finding 8ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > preserves partial coverage: tool unavailable 2ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > preserves partial coverage: configuration missing 1ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > preserves partial coverage: reproduction timeout 1ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > accepts blocked only when meaningful checks are unavailable 0ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > rejects duplicate check 0ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > rejects missing check 0ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > rejects unknown ref 0ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > rejects duplicate evidence 0ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > rejects unexecuted check 0ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > rejects stale evidence 0ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > rejects unverified finding 0ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > rejects unauthorized execution 0ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > binds actual uncommitted bytes and rejects target/evidence changes 2ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > rejects a report for a different external request 1ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > rejects unsafe locator ../outside 1ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > rejects unsafe locator /absolute 1ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > rejects unsafe locator C:/windows 1ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > rejects unsafe locator dir\file 1ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > rejects unsafe locator file:stream 1ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > rejects an external directory symlink/junction 1ms
+ ✓ tests/software-security-auditor/integration.test.mjs > security audit integration > loads schema and maps complete report with findings in  489ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > runs positive and negative CLI in node_modules-free . packaging 343ms
+ ✓ tests/software-security-auditor/security-audit.test.mjs > security audit evidence contract > runs positive and negative CLI in node_modules-free claude-plugin packaging 351ms
+ ✓ tests/session-messaging/broker-lifecycle.test.ts > delivers and acknowledges a message using only the packaged CLI and broker 708ms
+ ✓ tests/software-security-auditor/integration.test.mjs > security audit integration > loads schema and maps complete report with findings in claude-plugin/ 259ms
+ ✓ tests/tooling/tooling.test.mjs > repository tooling > reads single-line and YAML block scalar frontmatter values 2ms
+ ✓ tests/tooling/tooling.test.mjs > repository tooling > normalizes CRLF text without changing binary content 1ms
+ ✓ tests/tooling/tooling.test.mjs > repository tooling > parses named command arguments 0ms
+ ✓ tests/tooling/tooling.test.mjs > repository tooling > accepts only kebab-case skill names 0ms
+ ✓ tests/tooling/tooling.test.mjs > repository tooling > reads required frontmatter fields 1ms
+ ✓ tests/tooling/tooling.test.mjs > repository tooling > selects only exact stable semantic-version tags and peels annotated tags 1ms
+ ✓ tests/tooling/tooling.test.mjs > repository tooling > does not treat a same-version commit pin that differs from the tag as an update 0ms
+ ✓ tests/tooling/tooling.test.mjs > repository tooling > fails closed when a release marker is missing or duplicated 1ms
+ ✓ tests/tooling/tooling.test.mjs > repository tooling > keeps every generated release surface synchronized 11ms
+ ✓ tests/software-security-auditor/integration.test.mjs > security audit integration > rejects semantic lies even with schema-valid fields and verified booleans 197ms
+ ✓ tests/session-messaging/presence-batches.test.ts > keeps successful batches when the broker refuses one batch and reports only that batch as unanswered 3ms
+ ✓ tests/session-messaging/presence-batches.test.ts > never asks the broker for identities outside its identifier pattern 1ms
+ ✓ tests/software-security-auditor/integration.test.mjs > security audit integration > preserves partial rather than converting uncertainty to safety 192ms
+ ✓ tests/session-messaging/broker-lifecycle.test.ts > isolates socket resets and a lost send response while preserving the broker and one committed message 683ms
+ ✓ tests/software-security-auditor/integration.test.mjs > security audit integration > preserves blocked rather than converting uncertainty to safety 182ms
+ ✓ tests/session-messaging/presence-batches.test.ts > stops after a transport failure, so an unresponsive broker costs one batch deadline, not one per batch 400ms
+ ✓ tests/software-security-auditor/integration.test.mjs > security audit integration > orders research before acceptance and independent audit without adding a gate 128ms
+ ✓ tests/software-security-auditor/integration.test.mjs > security audit integration > passes findings as refuting evidence to acceptance without treating research completion as safety 4ms
+ ✓ tests/runtime/runtime-smoke.test.mjs > installed skill runtime > rejects unsupported Node 22.13.0 before runtime smoke execution 47ms
+ ✓ tests/runtime/runtime-smoke.test.mjs > installed skill runtime > rejects unsupported Node 23.11.0 before runtime smoke execution 44ms
+ ✓ tests/mcp/registry-contract.test.ts > bundled skill registry > conforms to SkillDescriptor.v2 and exposes all specialist capabilities 300ms
+ ✓ tests/session-messaging/presence-batches.test.ts > keeps earlier answers and marks the failed and remaining batches unanswered after a transport failure 401ms
+ ✓ tests/mcp/tool-schema-inline.test.ts > inlineSchemaReferences > resolves absolute, relative and local references against each document 3ms
+ ✓ tests/mcp/tool-schema-inline.test.ts > inlineSchemaReferences > keeps property names that look like keywords 0ms
+ ✓ tests/mcp/tool-schema-inline.test.ts > inlineSchemaReferences > merges annotations but combines constraining siblings with allOf 0ms
+ ✓ tests/mcp/tool-schema-inline.test.ts > inlineSchemaReferences > reads JSON Pointer fragments literally, including the empty member name 0ms
+ ✓ tests/mcp/tool-schema-inline.test.ts > inlineSchemaReferences > refuses recursive and unknown references instead of emitting a wrong schema 1ms
+ ✓ tests/mcp/registry-contract.test.ts > bundled skill registry > bundles and enables the Korean prose workflow for runtime selection 225ms
+ ✓ tests/orchestrator/query-registry.test.mjs > compact orchestrator registry query > projects every enabled provider deterministically below 25% of the registry bytes 71ms
+ ✓ tests/orchestrator/query-registry.test.mjs > compact orchestrator registry query > returns only matching providers and reports unavailable capabilities 80ms
+ ✓ tests/model-effort-advisor/suite-integration.test.ts > model-effort-advisor > keeps representative outputs inside ModelEffortAdvice.v1 86ms
+ ✓ tests/model-effort-advisor/suite-integration.test.ts > model-effort-advisor > rejects invalid observation claims, risk floors, and recommendation ranges 41ms
+ ✓ tests/model-effort-advisor/suite-integration.test.ts > model-effort-advisor > warns only on observed material mismatches 1ms
+ ✓ tests/mcp/orchestrator-fixtures.test.ts > orchestrator behavior fixtures > complex-parallel-high-risk-orchestration 41ms
+ ✓ tests/mcp/orchestrator-fixtures.test.ts > orchestrator behavior fixtures > parallel-low-risk-no-implicit-coordination 4ms
+ ✓ tests/mcp/orchestrator-fixtures.test.ts > orchestrator behavior fixtures > complex-parallel-high-risk-no-implicit-expansion 4ms
+ ✓ tests/mcp/orchestrator-fixtures.test.ts > orchestrator behavior fixtures > scope-preflight-acceptance-by-provider-metadata 7ms
+ ✓ tests/mcp/orchestrator-fixtures.test.ts > orchestrator behavior fixtures > confirmed-cause-recovery-selection 4ms
+ ✓ tests/mcp/orchestrator-fixtures.test.ts > orchestrator behavior fixtures > single-specialist-direct-invocation 6ms
+ ✓ tests/mcp/orchestrator-fixtures.test.ts > orchestrator behavior fixtures > mcp-unavailable-blocks-integration-only 6ms
+ ✓ tests/mcp/orchestrator-fixtures.test.ts > orchestrator behavior fixtures > keeps trusted execution attestation on the server-side MCP boundary 1ms
+ ✓ tests/release-state-backup.test.mjs > backs up a live WAL database and refuses to overwrite an existing backup 28ms
+ ✓ tests/software-security-auditor/evaluation-evidence.test.mjs > preserves the recorded blind static evaluation, not a fresh model evaluation 8ms
+ ✓ tests/tooling/skill-context-optimization.test.mjs > skill context optimization > allows the runtime minimum update while rejecting other README changes 2ms
+ ✓ tests/tooling/skill-context-optimization.test.mjs > skill context optimization > pins the intake revision and rejects a one-byte policy or reference change 2ms
+ ✓ tests/tooling/skill-context-optimization.test.mjs > skill context optimization > preserves the reviewed skill revisions while reducing their initial load 340ms
+ ✓ tests/mcp/korean-prose-execution-provenance.test.ts > Korean prose execution provenance > accepts recorded provider identity even when the provider exposes no seed 2ms
+ ✓ tests/mcp/korean-prose-execution-provenance.test.ts > Korean prose execution provenance > rejects an unverified actualModel 1ms
+ ✓ tests/mcp/korean-prose-execution-provenance.test.ts > Korean prose execution provenance > rejects an unverified provider 0ms
+ ✓ tests/mcp/korean-prose-execution-provenance.test.ts > Korean prose execution provenance > rejects an unverified providerVersion 0ms
+ ✓ tests/mcp/korean-prose-execution-provenance.test.ts > Korean prose execution provenance > rejects an invalid prompt digest 0ms
+ ✓ tests/session-messaging/self-signed-certificate.test.ts > self-signed certificate > encodes random serial numbers as canonical positive DER integers 8ms
+ ✓ tests/instruction-scope-resolver/suite-integration.test.ts > instruction-scope-resolver standalone regression > runs every node:test case 780ms
+ ✓ tests/acceptance-evidence-validator/suite-integration.test.ts > acceptance-evidence-validator standalone regression > runs every node:test case 2133ms
+ ✓ tests/cs-engineering/suite-integration.test.ts > CS Node regressions run in an isolated process with the AGS Ajv runtime 2153ms
+ ✓ tests/change-scope-guardian/suite-integration.test.ts > change-scope-guardian Node tests pass in an isolated process 4349ms
+ ✓ tests/task-contract/suite-integration.test.ts > task-contract Node tests pass in an isolated process 1285ms
+ ✓ tests/evaluation-validity-auditor/standalone-regression.test.mjs > evaluation-validity-auditor imported core > passes the suite's normal, boundary, failure, and security regression cases 409ms
+ ✓ tests/runtime/runtime-smoke.test.mjs > installed skill runtime > runs every documented Node CLI without node_modules 8161ms
+ ✓ tests/runtime/runtime-smoke.test.mjs > installed skill runtime > accounts for every CLI documented by SKILL.md or README.md 13ms
+ ✓ tests/runtime/runtime-smoke.test.mjs > installed skill runtime > does not leave npm package imports in installed skill scripts 24ms
+ ✓ tests/runtime/runtime-smoke.test.mjs > installed skill runtime > checks committed bundles in CI before commands that rebuild them 1ms
+
+ Test Files  67 passed | 1 skipped (68)
+      Tests  914 passed | 5 skipped (919)
+   Start at  03:40:14
+   Duration  78.84s (tests 95%, import 3%, transform 2%)
+
+JSON report written to /root/cs280-claude-cloud/20261006T033701Z/07-vitest-results.json

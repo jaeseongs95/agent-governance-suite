@@ -1,0 +1,16 @@
+# residual grep (grep -P, counts of matching lines across all files except SHA256SUMS*/REDACTION.md)
+email                  0
+github-token           0
+sk-standalone          0
+sk-word-internal       15
+slack-xox              0
+aws-AKIA               0
+bearer                 0
+secret-assignment      0
+jwt                    0
+windows-home           0
+account-name           0
+ipv4-non-loopback      0
+messaging-token-literal 0
+runtime-secret-literals(env *TOKEN*/*SECRET*/*KEY*/*SOCKET*, ingress token file): 0
+ipv6 (python ipaddress-validated, excluding ::1 and ::): 0

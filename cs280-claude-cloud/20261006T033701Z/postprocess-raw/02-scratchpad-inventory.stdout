@@ -1,0 +1,12 @@
+total 56
+drwx------ 2 root root  4096 Oct  6 04:20 .
+drwx------ 4 root root  4096 Oct  6 03:37 ..
+-rw-r--r-- 1 root root 16884 Oct  6 03:41 07-runner.out
+-rw-r--r-- 1 root root     5 Oct  6 03:40 07.pid
+-rw-r--r-- 1 root root   824 Oct  6 03:38 env.sh
+-rw-r--r-- 1 root root  4264 Oct  6 04:20 redact.py
+-rw-r--r-- 1 root root   571 Oct  6 04:04 residual.txt
+-rwxr-xr-x 1 root root  1423 Oct  6 03:38 run.sh
+-rwxr-xr-x 1 root root   799 Oct  6 04:19 wrap.sh
+
+15:unset CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN
