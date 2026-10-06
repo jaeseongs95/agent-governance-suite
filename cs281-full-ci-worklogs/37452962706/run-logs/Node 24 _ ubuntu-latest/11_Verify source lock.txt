@@ -1,0 +1,15 @@
+﻿2026-10-06T10:55:32.2075865Z ##[group]Run pnpm source:check
+2026-10-06T10:55:32.2076052Z [36;1mpnpm source:check[0m
+2026-10-06T10:55:32.2125074Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:55:32.2125253Z env:
+2026-10-06T10:55:32.2125398Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:55:32.2125624Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T10:55:32.2125844Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:55:32.2126197Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:55:32.2126400Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:55:32.2126601Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T10:55:32.2126770Z ##[endgroup]
+2026-10-06T10:55:32.7212391Z Already up to date
+2026-10-06T10:55:32.7217118Z Done in 234ms using pnpm v11.19.0
+2026-10-06T10:55:32.7327554Z $ node scripts/check-source-lock.mjs
+2026-10-06T10:55:32.8095410Z source lock is consistent

@@ -1,0 +1,43 @@
+{
+  "total_count": 2,
+  "artifacts": [
+    {
+      "id": 11408171128,
+      "name": "official-codex-37452962706-1-Windows",
+      "size_in_bytes": 16202,
+      "url": "https://api.github.com/repos/jaeseongs95/agent-governance-suite/actions/artifacts/11408171128",
+      "archive_download_url": "https://api.github.com/repos/jaeseongs95/agent-governance-suite/actions/artifacts/11408171128/zip",
+      "expired": false,
+      "digest": "sha256:8da767c476748499941313975dc5ade26430faa8ac13783de4bcb8b1505fcdb7",
+      "created_at": "2026-10-06T10:59:33Z",
+      "updated_at": "2026-10-06T10:59:33Z",
+      "expires_at": "2026-10-20T10:59:33Z",
+      "workflow_run": {
+        "id": 37452962706,
+        "repository_id": 1362118877,
+        "head_repository_id": 1362118877,
+        "head_branch": "codex/engineering-practices-2.8.1",
+        "head_sha": "b28a442ad424b255283fe32fe3c0e661b195fa4e"
+      }
+    },
+    {
+      "id": 11407581086,
+      "name": "official-codex-37452962706-1-Linux",
+      "size_in_bytes": 16245,
+      "url": "https://api.github.com/repos/jaeseongs95/agent-governance-suite/actions/artifacts/11407581086",
+      "archive_download_url": "https://api.github.com/repos/jaeseongs95/agent-governance-suite/actions/artifacts/11407581086/zip",
+      "expired": false,
+      "digest": "sha256:588bbc54388b5220fb867fb64c5aa54dcb8a89eef7d59cfe463c286565c1e1a2",
+      "created_at": "2026-10-06T10:56:46Z",
+      "updated_at": "2026-10-06T10:56:46Z",
+      "expires_at": "2026-10-20T10:56:46Z",
+      "workflow_run": {
+        "id": 37452962706,
+        "repository_id": 1362118877,
+        "head_repository_id": 1362118877,
+        "head_branch": "codex/engineering-practices-2.8.1",
+        "head_sha": "b28a442ad424b255283fe32fe3c0e661b195fa4e"
+      }
+    }
+  ]
+}

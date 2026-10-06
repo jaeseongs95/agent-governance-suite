@@ -1,0 +1,11 @@
+﻿2026-10-06T10:59:33.7383173Z ##[group]Run git show --check --oneline --no-renames HEAD
+2026-10-06T10:59:33.7383677Z [36;1mgit show --check --oneline --no-renames HEAD[0m
+2026-10-06T10:59:33.7401563Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:59:33.7401979Z env:
+2026-10-06T10:59:33.7402249Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:59:33.7402724Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T10:59:33.7403180Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:59:33.7403581Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:59:33.7404348Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:59:33.7404779Z ##[endgroup]
+2026-10-06T10:59:33.8110813Z b28a442a docs: prepare 2.8.1 public metadata and validation scope

@@ -1,0 +1,248 @@
+﻿2026-10-06T10:55:36.6904619Z ##[group]Run pnpm test
+2026-10-06T10:55:36.6904791Z [36;1mpnpm test[0m
+2026-10-06T10:55:36.6956541Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:55:36.6956728Z env:
+2026-10-06T10:55:36.6956871Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:55:36.6957095Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T10:55:36.6957327Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:55:36.6957529Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:55:36.6957738Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:55:36.6957942Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T10:55:36.6958112Z ##[endgroup]
+2026-10-06T10:55:37.2026447Z Already up to date
+2026-10-06T10:55:37.2030109Z Done in 229ms using pnpm v11.19.0
+2026-10-06T10:55:37.2132903Z $ node scripts/build.mjs && vitest run
+2026-10-06T10:55:37.5527615Z 
+2026-10-06T10:55:37.5536739Z [1m[30m[46m RUN [49m[39m[22m [36mv5.0.0 [39m[90m<repo>[39m
+2026-10-06T10:55:37.5537237Z 
+2026-10-06T10:55:45.8747776Z  [32m✓[39m tests/mcp/workflow-service.test.ts [2m([22m[2m40 tests[22m[2m)[22m[33m 7944[2mms[22m[39m
+2026-10-06T10:55:45.8748768Z    [32m✓[39m SqliteWorkflowStore [2m(4)[22m
+2026-10-06T10:55:45.8749877Z      [33m[2m✓[22m[39m migrates an active v2 workflow to v5 and preserves receipt updates[33m 471[2mms[22m[39m
+2026-10-06T10:55:45.8750675Z    [32m✓[39m WorkflowService [2m(36)[22m
+2026-10-06T10:55:45.8751321Z      [33m[2m✓[22m[39m persists runs, signing keys, revisions, and run sequences in SQLite[33m 322[2mms[22m[39m
+2026-10-06T10:55:45.8752102Z      [33m[2m✓[22m[39m observes a failing stage without holding it to the assurance floor[33m 369[2mms[22m[39m
+2026-10-06T10:55:45.8752859Z      [33m[2m✓[22m[39m rejects every canonical invalid DecisionRecord at the MCP gate[33m 2979[2mms[22m[39m
+2026-10-06T10:55:47.6225974Z  [32m✓[39m tests/mcp/convergence-guard.test.ts [2m([22m[2m66 tests[22m[2m)[22m[33m 9676[2mms[22m[39m
+2026-10-06T10:55:47.6232926Z    [32m✓[39m local MCP convergence guard [2m(33)[22m
+2026-10-06T10:55:47.6234137Z      [33m[2m✓[22m[39m allows only one competing lease claim across two SQLite connections[33m 756[2mms[22m[39m
+2026-10-06T10:55:47.6235444Z    [32m✓[39m server-derived workspace identity [2m(20)[22m
+2026-10-06T10:55:47.6246187Z      [33m[2m✓[22m[39m admits only one of two connections that open the same target at once[33m 337[2mms[22m[39m
+2026-10-06T10:55:49.5053163Z  [32m✓[39m tests/session-messaging/wake-lifecycle.test.mjs [2m([22m[2m51 tests[22m[2m)[22m[33m 3471[2mms[22m[39m
+2026-10-06T10:55:49.5070185Z    [33m[2m✓[22m[39m independent generation/outcome-first-race workers permit exactly one separate new effect[33m 382[2mms[22m[39m
+2026-10-06T10:55:49.5071209Z    [33m[2m✓[22m[39m independent generation/start-first-race workers permit exactly one separate new effect[33m 318[2mms[22m[39m
+2026-10-06T10:55:49.5072233Z    [33m[2m✓[22m[39m W05-r2 independent process crash before start recovers the same attempt; after effect never resends[33m 741[2mms[22m[39m
+2026-10-06T10:55:49.5873623Z  [32m✓[39m tests/session-messaging/wake-liveness.test.mjs [2m([22m[2m36 tests[22m[2m)[22m[33m 1544[2mms[22m[39m
+2026-10-06T10:55:51.5962704Z  [32m✓[39m tests/mcp/host-attestation.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 1732[2mms[22m[39m
+2026-10-06T10:55:51.6012850Z    [32m✓[39m Claude Code host attestation through the MCP boundary [2m(11)[22m
+2026-10-06T10:55:51.6013673Z      [33m[2m✓[22m[39m completes an orchestrated workflow with claude-code observations[33m 345[2mms[22m[39m
+2026-10-06T10:55:52.0118101Z  [32m✓[39m tests/session-messaging/session-message.test.ts [2m([22m[2m73 tests[22m[2m)[22m[33m 13860[2mms[22m[39m
+2026-10-06T10:55:52.0118822Z    [32m✓[39m session message spool [2m(17)[22m
+2026-10-06T10:55:52.0119608Z      [33m[2m✓[22m[39m caps the unacknowledged spool and expires messages[33m 301[2mms[22m[39m
+2026-10-06T10:55:52.0120105Z    [32m✓[39m TLS 1.3 broker and vendor-neutral adapter [2m(54)[22m
+2026-10-06T10:55:52.0120706Z      [33m[2m✓[22m[39m fails fast on broker exit and leaves deadline cleanup to the state-directory owner[33m 374[2mms[22m[39m
+2026-10-06T10:55:52.0121558Z      [33m[2m✓[22m[39m returns at the startup deadline while state preparation is still blocked and never spawns afterward[33m 553[2mms[22m[39m
+2026-10-06T10:55:52.0122708Z      [33m[2m✓[22m[39m enforces an absolute request deadline while a TLS peer keeps sending partial data[33m 322[2mms[22m[39m
+2026-10-06T10:55:52.0123849Z      [33m[2m✓[22m[39m uses one plugin queue profile for packaged presence and relay until the next SessionStart[33m 5570[2mms[22m[39m
+2026-10-06T10:55:52.0125349Z      [33m[2m✓[22m[39m pins the certificate, authenticates requests, survives restart, and supports arbitrary hosts[33m 522[2mms[22m[39m
+2026-10-06T10:55:52.0126512Z      [33m[2m✓[22m[39m blocks only verified empty Codex wake prompts in the source hook[33m 555[2mms[22m[39m
+2026-10-06T10:55:52.0127372Z      [33m[2m✓[22m[39m blocks only verified empty Codex wake prompts in the packaged hook[33m 965[2mms[22m[39m
+2026-10-06T10:55:52.0128596Z      [33m[2m✓[22m[39m blocks a verified retired Codex wake marker without claiming the current body through the packaged hook[33m 420[2mms[22m[39m
+2026-10-06T10:55:52.0129448Z      [33m[2m✓[22m[39m keeps a maximum-size peer message within the hook context limit[33m 308[2mms[22m[39m
+2026-10-06T10:55:52.0130106Z      [33m[2m✓[22m[39m escapes peer bodies inside one bounded JSON block[33m 329[2mms[22m[39m
+2026-10-06T10:55:52.0130768Z      [33m[2m✓[22m[39m leaves Codex Stop messages queued for a supported context event[33m 305[2mms[22m[39m
+2026-10-06T10:55:52.0131270Z    [32m✓[39m session message MCP tools [2m(2)[22m
+2026-10-06T10:55:52.0131825Z      [33m[2m✓[22m[39m validates bound send, status, and acknowledgement calls[33m 471[2mms[22m[39m
+2026-10-06T10:55:53.5239768Z  [32m✓[39m tests/tooling/claude-plugin.test.mjs [2m([22m[2m20 tests[22m[2m)[22m[33m 1378[2mms[22m[39m
+2026-10-06T10:55:53.5255657Z    [32m✓[39m generated Claude plugin [2m(12)[22m
+2026-10-06T10:55:53.5256690Z      [33m[2m✓[22m[39m keeps no copy of the common intake sentences in any tracked file outside the shared source[33m 433[2mms[22m[39m
+2026-10-06T10:55:53.5257778Z      [33m[2m✓[22m[39m removes a caller-supplied token when it cannot attest[33m 411[2mms[22m[39m
+2026-10-06T10:55:57.7961759Z  [32m✓[39m tests/session-messaging/historical-wake.test.mjs [2m([22m[2m65 tests[22m[2m)[22m[33m 6056[2mms[22m[39m
+2026-10-06T10:55:57.7986720Z    [33m[2m✓[22m[39m readonly version and receipt share a snapshot while an independent writer upgrades the version[33m 328[2mms[22m[39m
+2026-10-06T10:55:57.8048709Z    [33m[2m✓[22m[39m bundled public CLI forwards only IDs to the private broker and cannot repeat recovery[33m 327[2mms[22m[39m
+2026-10-06T10:55:57.8077690Z    [33m[2m✓[22m[39m packaged CLI binds history to explicit broker state directory: prestarted[33m 437[2mms[22m[39m
+2026-10-06T10:55:57.8078691Z    [33m[2m✓[22m[39m packaged CLI binds history to explicit broker state directory: client-ensure[33m 516[2mms[22m[39m
+2026-10-06T10:55:59.8525129Z  [32m✓[39m tests/session-messaging/message-retention.test.ts [2m([22m[2m16 tests[22m[2m)[22m[33m 6207[2mms[22m[39m
+2026-10-06T10:55:59.8526446Z    [33m[2m✓[22m[39m rejects prepare and send with global scope when the global receipt pool is full[33m 1027[2mms[22m[39m
+2026-10-06T10:55:59.8527451Z    [33m[2m✓[22m[39m two processes sending for one sender at limit-1 never exceed the sender limit[33m 533[2mms[22m[39m
+2026-10-06T10:55:59.8528519Z    [33m[2m✓[22m[39m service reports capacity rejections as definite no-effect with scope and earliest release details[33m 1510[2mms[22m[39m
+2026-10-06T10:55:59.8530094Z    [33m[2m✓[22m[39m a resend of an already sent ID at full sender and global capacity is a duplicate, not a capacity rejection[33m 908[2mms[22m[39m
+2026-10-06T10:55:59.8531209Z    [33m[2m✓[22m[39m reports sender scope and the sender's own earliest expiry when sender and global limits are both full[33m 835[2mms[22m[39m
+2026-10-06T10:55:59.8532239Z    [33m[2m✓[22m[39m when earliestReleaseAt is after the draft expiry, the guidance leads to a new prepare that succeeds[33m 756[2mms[22m[39m
+2026-10-06T10:56:00.7586673Z  [32m✓[39m tests/mcp/korean-prose-cycle-receipt.test.ts [2m([22m[2m13 tests[22m[2m)[22m[33m 11043[2mms[22m[39m
+2026-10-06T10:56:00.7587143Z    [32m✓[39m range-aware Korean prose cycle receipts [2m(13)[22m
+2026-10-06T10:56:00.7595913Z      [33m[2m✓[22m[39m records canonical structured work products and binds selection through finalization[33m 1435[2mms[22m[39m
+2026-10-06T10:56:00.7605177Z      [33m[2m✓[22m[39m rejects a cycle work product changed after the receipt was recorded[33m 1051[2mms[22m[39m
+2026-10-06T10:56:00.7613008Z      [33m[2m✓[22m[39m does not silently select the historical cycle when no cycle path is given[33m 434[2mms[22m[39m
+2026-10-06T10:56:00.7613988Z      [33m[2m✓[22m[39m rejects structured run metadata without execution provenance[33m 381[2mms[22m[39m
+2026-10-06T10:56:00.7616306Z      [33m[2m✓[22m[39m rejects structured run metadata with an unverified actual model[33m 383[2mms[22m[39m
+2026-10-06T10:56:00.7617077Z      [33m[2m✓[22m[39m derives a passing quality decision from the bound final records[33m 1071[2mms[22m[39m
+2026-10-06T10:56:00.7618093Z      [33m[2m✓[22m[39m verifies a receipt whose quality evidence passed only with the external quality digest[33m 1668[2mms[22m[39m
+2026-10-06T10:56:00.7619457Z      [33m[2m✓[22m[39m rejects quality evidence when bound final records miss the improvement threshold[33m 871[2mms[22m[39m
+2026-10-06T10:56:00.7620399Z      [33m[2m✓[22m[39m rejects a label leaked into the independent adjudicator input[33m 799[2mms[22m[39m
+2026-10-06T10:56:00.7621347Z      [33m[2m✓[22m[39m does not count an unsafe independently adjudicated edit as an improvement[33m 1591[2mms[22m[39m
+2026-10-06T10:56:00.7625707Z      [33m[2m✓[22m[39m rejects a start claim and role metadata replaced after the workflow receipt was finalized[33m 942[2mms[22m[39m
+2026-10-06T10:56:01.6227470Z  [32m✓[39m tests/context-continuity/continuity.test.ts [2m([22m[2m15 tests[22m[2m)[22m[33m 1605[2mms[22m[39m
+2026-10-06T10:56:02.5556673Z  [32m✓[39m tests/session-messaging/peer-wait.test.ts [2m([22m[2m28 tests[22m[2m)[22m[33m 4627[2mms[22m[39m
+2026-10-06T10:56:02.5557634Z    [33m[2m✓[22m[39m enforces native wait through the public packaged hook and preserves unrelated waits[33m 942[2mms[22m[39m
+2026-10-06T10:56:02.5586076Z    [33m[2m✓[22m[39m the public CLI consumes the decision before delay and sends no repeated poll when denied[33m 795[2mms[22m[39m
+2026-10-06T10:56:02.5587021Z    [33m[2m✓[22m[39m public native hook suppresses equivalent payloads but permits actual cursor change[33m 473[2mms[22m[39m
+2026-10-06T10:56:02.5587889Z    [33m[2m✓[22m[39m public CLI equivalent retransmissions consume one decision each and state change restores a snapshot[33m 512[2mms[22m[39m
+2026-10-06T10:56:02.5588750Z    [33m[2m✓[22m[39m CLI unknown resume uses one bounded wait and does not force permanent stopping[33m 1200[2mms[22m[39m
+2026-10-06T10:56:02.5589541Z    [33m[2m✓[22m[39m broker restart preserves messages but drops resume and repeat-suppression evidence[33m 602[2mms[22m[39m
+2026-10-06T10:56:02.8808415Z  [32m✓[39m tests/session-board/session-board.test.ts [2m([22m[2m15 tests[22m[2m)[22m[33m 1031[2mms[22m[39m
+2026-10-06T10:56:02.8836303Z    [32m✓[39m session board MCP tools [2m(3)[22m
+2026-10-06T10:56:02.8866063Z      [33m[2m✓[22m[39m reads back the hook-written line, lists the host board and refuses unbound updates[33m 465[2mms[22m[39m
+2026-10-06T10:56:03.3532373Z [90mstderr[2m | tests/recovery-strategy-selector/recovery-selector.test.mjs
+2026-10-06T10:56:03.3533359Z [22m[39munknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+2026-10-06T10:56:03.3534087Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+2026-10-06T10:56:03.3534614Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+2026-10-06T10:56:03.3535281Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+2026-10-06T10:56:03.3535919Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+2026-10-06T10:56:03.3536590Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+2026-10-06T10:56:03.3537276Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+2026-10-06T10:56:03.3537914Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+2026-10-06T10:56:03.3538237Z 
+2026-10-06T10:56:03.8333525Z  [32m✓[39m tests/recovery-strategy-selector/recovery-selector.test.mjs [2m([22m[2m17 tests[22m[2m)[22m[33m 479[2mms[22m[39m
+2026-10-06T10:56:03.8335531Z    [32m✓[39m recovery strategy selector [2m(17)[22m
+2026-10-06T10:56:03.8336267Z      [33m[2m✓[22m[39m contracts compile and the digest CLI accepts stdin JSON[33m 338[2mms[22m[39m
+2026-10-06T10:56:03.9626026Z  [2m[90m↓[39m[22m tests/session-messaging/previous-broker.test.ts [2m([22m[2m5 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m
+2026-10-06T10:56:05.7616632Z  [32m✓[39m tests/mcp/receipt-policy.test.ts [2m([22m[2m33 tests[22m[2m)[22m[33m 4854[2mms[22m[39m
+2026-10-06T10:56:05.7641728Z    [32m✓[39m descriptor-declared reference-only receipts [2m(33)[22m
+2026-10-06T10:56:05.7643132Z      [33m[2m✓[22m[39m binds arbitrary capability actor arrays in plan order after SQLite restart[33m 341[2mms[22m[39m
+2026-10-06T10:56:07.0736494Z  [32m✓[39m tests/mcp/state-cleanup.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 1180[2mms[22m[39m
+2026-10-06T10:56:07.2466704Z  [32m✓[39m tests/mcp/workspace-identity.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 57[2mms[22m[39m
+2026-10-06T10:56:09.1863697Z [90mstdout[2m | tests/session-messaging/message-lifecycle.test.ts[2m > [22m[2mpackaged TLS cycles use one request instead of three or two without changing pending state
+2026-10-06T10:56:09.1894380Z [22m[39mrelay tick measured TLS request counts [{"transport":"test-inbox","cycles":10,"baselineRequests":30,"tickRequests":10},{"transport":"codex-deferred","cycles":10,"baselineRequests":20,"tickRequests":10}]
+2026-10-06T10:56:09.1895394Z 
+2026-10-06T10:56:10.3302656Z  [32m✓[39m tests/context-continuity/schema-compat.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 6129[2mms[22m[39m
+2026-10-06T10:56:10.3326394Z    [32m✓[39m 2.7.x continuity schema compatibility [2m(13)[22m
+2026-10-06T10:56:10.3329884Z      [33m[2m✓[22m[39m preserves schema 2 state across reopen, restore, CAS, purge and epoch rotation[33m 392[2mms[22m[39m
+2026-10-06T10:56:10.3330748Z    [32m✓[39m source STDIO continuity startup diagnostics [2m(5)[22m
+2026-10-06T10:56:10.3331524Z      [33m[2m✓[22m[39m keeps normal MCP usable when continuity is healthy[33m 1257[2mms[22m[39m
+2026-10-06T10:56:10.3332341Z      [33m[2m✓[22m[39m keeps normal MCP usable when continuity is receiver[33m 1004[2mms[22m[39m
+2026-10-06T10:56:10.3333096Z      [33m[2m✓[22m[39m keeps normal MCP usable when continuity is future[33m 585[2mms[22m[39m
+2026-10-06T10:56:10.3333857Z      [33m[2m✓[22m[39m keeps normal MCP usable when continuity is incompatible[33m 515[2mms[22m[39m
+2026-10-06T10:56:10.3335065Z      [33m[2m✓[22m[39m keeps normal MCP usable when continuity is corrupt[33m 915[2mms[22m[39m
+2026-10-06T10:56:12.4906576Z  [32m✓[39m tests/mcp/stdio-integration.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 1990[2mms[22m[39m
+2026-10-06T10:56:12.4907199Z    [32m✓[39m bundled STDIO MCP server [2m(4)[22m
+2026-10-06T10:56:12.4907750Z      [33m[2m✓[22m[39m starts from an isolated plugin tree without node_modules[33m 798[2mms[22m[39m
+2026-10-06T10:56:12.4908537Z      [33m[2m✓[22m[39m keeps workflow startup clean when both database settings resolve to one file[33m 470[2mms[22m[39m
+2026-10-06T10:56:12.4909411Z      [33m[2m✓[22m[39m starts with the packaged registry and fails semantic planning closed without a trusted provider[33m 308[2mms[22m[39m
+2026-10-06T10:56:12.4910251Z      [33m[2m✓[22m[39m shares signed continuity bindings between the packaged hook and MCP server[33m 411[2mms[22m[39m
+2026-10-06T10:56:13.5337372Z  [32m✓[39m tests/session-messaging/message-lifecycle.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 6135[2mms[22m[39m
+2026-10-06T10:56:13.5338580Z    [33m[2m✓[22m[39m applies global draft, receipt and byte backpressure without evicting valid records[33m 1272[2mms[22m[39m
+2026-10-06T10:56:13.5339893Z    [33m[2m✓[22m[39m packaged TLS cycles use one request instead of three or two without changing pending state[33m 445[2mms[22m[39m
+2026-10-06T10:56:13.5341105Z    [33m[2m✓[22m[39m a real post-commit prepare reply loss leaves only orphan drafts[33m 446[2mms[22m[39m
+2026-10-06T10:56:13.5341970Z    [33m[2m✓[22m[39m a real send reply loss retries the known ID once and survives broker restart[33m 3112[2mms[22m[39m
+2026-10-06T10:56:13.5342904Z    [33m[2m✓[22m[39m two independent processes submit one ID atomically and enforce sender preparation capacity[33m 325[2mms[22m[39m
+2026-10-06T10:56:13.5343896Z    [33m[2m✓[22m[39m packaged CLI discovers prepare/send and rejects old or unknown send with zero queue effect[33m 438[2mms[22m[39m
+2026-10-06T10:56:14.2377619Z  [32m✓[39m tests/tooling/commands.test.mjs [2m([22m[2m12 tests[22m[2m)[22m[33m 1659[2mms[22m[39m
+2026-10-06T10:56:14.2382101Z    [32m✓[39m skill maintenance commands [2m(12)[22m
+2026-10-06T10:56:14.2383027Z      [33m[2m✓[22m[39m forwards pnpm script arguments without a standalone separator[33m 357[2mms[22m[39m
+2026-10-06T10:56:15.5196567Z  [32m✓[39m tests/mcp/trust-provenance.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 960[2mms[22m[39m
+2026-10-06T10:56:15.5197160Z    [32m✓[39m trust provenance [2m(11)[22m
+2026-10-06T10:56:15.5197722Z      [33m[2m✓[22m[39m stores peer provenance by digest without persisting the raw body[33m 561[2mms[22m[39m
+2026-10-06T10:56:16.1407059Z  [32m✓[39m tests/mcp/plugin-update-service.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 468[2mms[22m[39m
+2026-10-06T10:56:18.4983445Z  [32m✓[39m tests/mcp/tool-schema-profile.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 2104[2mms[22m[39m
+2026-10-06T10:56:18.4991676Z    [32m✓[39m MCP tool schema profiles [2m(7)[22m
+2026-10-06T10:56:18.4992650Z      [33m[2m✓[22m[39m keeps the historical schemas when no profile is selected[33m 436[2mms[22m[39m
+2026-10-06T10:56:18.4993725Z      [33m[2m✓[22m[39m accepts and rejects the same inputs with inlined Anthropic schemas as with the referenced contracts[33m 359[2mms[22m[39m
+2026-10-06T10:56:18.4994752Z      [33m[2m✓[22m[39m advertises the same host-neutral intake instructions to every schema profile[33m 317[2mms[22m[39m
+2026-10-06T10:56:18.4995788Z      [33m[2m✓[22m[39m applies the environment profile in the bundled server[33m 429[2mms[22m[39m
+2026-10-06T10:56:19.0808395Z  [32m✓[39m tests/mcp/codex-host-observation.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 415[2mms[22m[39m
+2026-10-06T10:56:19.8954008Z  [32m✓[39m tests/cs-engineering/workflow-integration.test.ts [2m([22m[2m15 tests[22m[2m)[22m[33m 6140[2mms[22m[39m
+2026-10-06T10:56:19.8997574Z    [33m[2m✓[22m[39m selected review runs actual packaged CLI and finalizes with matching files[33m 1099[2mms[22m[39m
+2026-10-06T10:56:19.8998375Z    [33m[2m✓[22m[39m stage rejects raw-evidence without consuming its revision[33m 329[2mms[22m[39m
+2026-10-06T10:56:19.8998926Z    [33m[2m✓[22m[39m stage rejects provider-substitution without consuming its revision[33m 303[2mms[22m[39m
+2026-10-06T10:56:19.8999392Z    [33m[2m✓[22m[39m stage rejects candidate-target without consuming its revision[33m 391[2mms[22m[39m
+2026-10-06T10:56:19.8999975Z    [33m[2m✓[22m[39m proper unexecuted evidence records BLOCKED even with supplied observe policy[33m 320[2mms[22m[39m
+2026-10-06T10:56:19.9000483Z    [33m[2m✓[22m[39m guarded lease/start and SQLite restart retain recorded bundle pins; finalize rereads evidence[33m 673[2mms[22m[39m
+2026-10-06T10:56:19.9001098Z    [33m[2m✓[22m[39m actual MCP tools validate a selected CS stage with synthetic server observations[33m 490[2mms[22m[39m
+2026-10-06T10:56:19.9001560Z    [33m[2m✓[22m[39m file-backed CS output follows the same record and finalize validation[33m 472[2mms[22m[39m
+2026-10-06T10:56:19.9002287Z    [33m[2m✓[22m[39m generated Claude review and copied deployment CLI validate without node_modules[33m 625[2mms[22m[39m
+2026-10-06T10:56:20.9100014Z  [32m✓[39m tests/mcp/stage-output-file.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 870[2mms[22m[39m
+2026-10-06T10:56:23.4446103Z  [32m✓[39m tests/mcp/host-attestation-stdio.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 4150[2mms[22m[39m
+2026-10-06T10:56:23.4447091Z    [32m✓[39m packaged execution observation fixtures (not native-host evidence) [2m(4)[22m
+2026-10-06T10:56:23.4473653Z      [33m[2m✓[22m[39m completes guarded STDIO and keeps restart replay rejection for claude-code/hook/claude-opus-5[33m 1364[2mms[22m[39m
+2026-10-06T10:56:23.4476325Z      [33m[2m✓[22m[39m completes guarded STDIO and keeps restart replay rejection for codex/hook/gpt-6-astra[33m 968[2mms[22m[39m
+2026-10-06T10:56:23.4477800Z      [33m[2m✓[22m[39m completes guarded STDIO and keeps restart replay rejection for codex/hook/gpt-6-sol[33m 926[2mms[22m[39m
+2026-10-06T10:56:23.4479173Z      [33m[2m✓[22m[39m completes guarded STDIO and keeps restart replay rejection for codex/wrapper/gpt-6-astra[33m 890[2mms[22m[39m
+2026-10-06T10:56:23.8869954Z  [32m✓[39m tests/mcp/korean-prose-readiness.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 289[2mms[22m[39m
+2026-10-06T10:56:24.1011605Z  [32m✓[39m tests/session-messaging/presence-retention.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 21389[2mms[22m[39m
+2026-10-06T10:56:24.1013682Z    [33m[2m✓[22m[39m serves board presence from a 342-identity, 1302-row database through a real broker[33m 492[2mms[22m[39m
+2026-10-06T10:56:24.1014774Z    [33m[2m✓[22m[39m ends a board lookup against a slow real broker at one overall client deadline[33m 20313[2mms[22m[39m
+2026-10-06T10:56:24.3333580Z  [32m✓[39m tests/session-messaging/broker-lifecycle.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 3309[2mms[22m[39m
+2026-10-06T10:56:24.3357295Z    [33m[2m✓[22m[39m retries transient endpoint publication failures and serves the published endpoint[33m 340[2mms[22m[39m
+2026-10-06T10:56:24.3376183Z    [33m[2m✓[22m[39m releases startup resources after permanent failure and allows recovery[33m 1035[2mms[22m[39m
+2026-10-06T10:56:24.3405733Z    [33m[2m✓[22m[39m delivers and acknowledges a message using only the packaged CLI and broker[33m 579[2mms[22m[39m
+2026-10-06T10:56:24.3426215Z    [33m[2m✓[22m[39m isolates socket resets and a lost send response while preserving the broker and one committed message[33m 663[2mms[22m[39m
+2026-10-06T10:56:24.3978253Z  [32m✓[39m tests/mcp/trusted-mcp-integration.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 304[2mms[22m[39m
+2026-10-06T10:56:24.3983165Z    [32m✓[39m trusted MCP server boundary [2m(1)[22m
+2026-10-06T10:56:24.3984562Z      [33m[2m✓[22m[39m completes and aborts guarded workflows with server-side observations[33m 303[2mms[22m[39m
+2026-10-06T10:56:24.6590953Z  [32m✓[39m tests/mcp/korean-prose-glossary.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 155[2mms[22m[39m
+2026-10-06T10:56:24.8477510Z  [32m✓[39m tests/coordinate-subagents/model-routing.test.mjs [2m([22m[2m15 tests[22m[2m)[22m[32m 72[2mms[22m[39m
+2026-10-06T10:56:25.9200473Z  [32m✓[39m tests/mcp/provider-result-envelope.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 1445[2mms[22m[39m
+2026-10-06T10:56:26.4223562Z  [32m✓[39m tests/evaluation-validity-auditor/suite-integration.test.mjs [2m([22m[2m7 tests[22m[2m)[22m[33m 1672[2mms[22m[39m
+2026-10-06T10:56:26.4224509Z    [32m✓[39m evaluation-validity-auditor suite descriptor [2m(7)[22m
+2026-10-06T10:56:26.4234976Z      [33m[2m✓[22m[39m accepts a safe post-execution PASS receipt and still rejects free text[33m 405[2mms[22m[39m
+2026-10-06T10:56:26.4240089Z      [33m[2m✓[22m[39m freezes the audit purpose in the signed plan and enforces pre versus post completion[33m 362[2mms[22m[39m
+2026-10-06T10:56:26.5522064Z  [32m✓[39m tests/mcp/runtime-config.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+2026-10-06T10:56:26.6784347Z  [32m✓[39m tests/mcp/evaluation-preflight.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+2026-10-06T10:56:26.8368921Z  [32m✓[39m tests/session-messaging/utf8-framing.test.ts [2m([22m[2m12 tests[22m[2m)[22m[33m 1860[2mms[22m[39m
+2026-10-06T10:56:26.8376255Z    [33m[2m✓[22m[39m delivers twelve batches of Korean messages through the CLI claim path byte for byte[33m 568[2mms[22m[39m
+2026-10-06T10:56:26.8432566Z  [32m✓[39m tests/orchestrator/collaboration-decision.test.mjs [2m([22m[2m14 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+2026-10-06T10:56:26.9476122Z  [32m✓[39m tests/codex-token-usage-analyzer/integration.test.mjs [2m([22m[2m6 tests[22m[2m)[22m[33m 728[2mms[22m[39m
+2026-10-06T10:56:26.9485958Z    [32m✓[39m codex-token-usage-analyzer integration [2m(6)[22m
+2026-10-06T10:56:26.9486850Z      [33m[2m✓[22m[39m records and finalizes a no-Markdown PASS workflow[33m 389[2mms[22m[39m
+2026-10-06T10:56:27.1017100Z  [32m✓[39m tests/session-messaging/presence-deadline.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+2026-10-06T10:56:27.3545574Z  [32m✓[39m tests/korean-prose-editor/glossary-finalizer.test.mjs [2m([22m[2m5 tests[22m[2m)[22m[32m 84[2mms[22m[39m
+2026-10-06T10:56:27.4056338Z  [32m✓[39m tests/mcp/response-projections.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 417[2mms[22m[39m
+2026-10-06T10:56:27.4271216Z  [32m✓[39m tests/ponytail/ponytail.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 437[2mms[22m[39m
+2026-10-06T10:56:27.5521916Z  [32m✓[39m tests/mcp/korean-prose-evaluation-preflight.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+2026-10-06T10:56:28.1823587Z  [32m✓[39m tests/software-security-auditor/security-audit.test.mjs [2m([22m[2m23 tests[22m[2m)[22m[33m 576[2mms[22m[39m
+2026-10-06T10:56:28.2351464Z  [32m✓[39m tests/mcp/registry-contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 550[2mms[22m[39m
+2026-10-06T10:56:28.4116917Z  [32m✓[39m tests/tooling/tooling.test.mjs [2m([22m[2m9 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+2026-10-06T10:56:28.8306714Z  [32m✓[39m tests/software-security-auditor/integration.test.mjs [2m([22m[2m7 tests[22m[2m)[22m[33m 1158[2mms[22m[39m
+2026-10-06T10:56:28.8311277Z    [32m✓[39m security audit integration [2m(7)[22m
+2026-10-06T10:56:28.8335901Z      [33m[2m✓[22m[39m loads schema and maps complete report with findings in [33m 342[2mms[22m[39m
+2026-10-06T10:56:28.9089532Z  [32m✓[39m tests/tooling/skill-context-optimization.test.mjs [2m([22m[2m5 tests[22m[2m)[22m[33m 378[2mms[22m[39m
+2026-10-06T10:56:29.7705194Z  [32m✓[39m tests/session-messaging/presence-batches.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 808[2mms[22m[39m
+2026-10-06T10:56:29.7730108Z    [33m[2m✓[22m[39m stops after a transport failure, so an unresponsive broker costs one batch deadline, not one per batch[33m 401[2mms[22m[39m
+2026-10-06T10:56:29.7770150Z    [33m[2m✓[22m[39m keeps earlier answers and marks the failed and remaining batches unanswered after a transport failure[33m 402[2mms[22m[39m
+2026-10-06T10:56:29.8779283Z  [32m✓[39m tests/mcp/tool-schema-inline.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+2026-10-06T10:56:30.1915864Z  [32m✓[39m tests/test-engineering/suite-integration.test.mjs [2m([22m[2m3 tests[22m[2m)[22m[33m 1901[2mms[22m[39m
+2026-10-06T10:56:30.1930886Z    [32m✓[39m Engineering Practices source integration [2m(3)[22m
+2026-10-06T10:56:30.1931678Z      [33m[2m✓[22m[39m runs the original core and public CLI regression suites with the native AGS schema runtime[33m 941[2mms[22m[39m
+2026-10-06T10:56:30.1932567Z      [33m[2m✓[22m[39m runs both installed host layouts without node_modules and binds Claude's exact adapted bytes[33m 926[2mms[22m[39m
+2026-10-06T10:56:30.2208352Z  [32m✓[39m tests/mcp/orchestrator-fixtures.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 38[2mms[22m[39m
+2026-10-06T10:56:30.4065943Z  [32m✓[39m tests/orchestrator/query-registry.test.mjs [2m([22m[2m2 tests[22m[2m)[22m[32m 117[2mms[22m[39m
+2026-10-06T10:56:30.4301411Z  [32m✓[39m tests/model-effort-advisor/suite-integration.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 96[2mms[22m[39m
+2026-10-06T10:56:30.5612223Z  [32m✓[39m tests/release-state-backup.test.mjs [2m([22m[2m1 test[22m[2m)[22m[32m 13[2mms[22m[39m
+2026-10-06T10:56:30.6678871Z  [32m✓[39m tests/software-security-auditor/evaluation-evidence.test.mjs [2m([22m[2m1 test[22m[2m)[22m[32m 5[2mms[22m[39m
+2026-10-06T10:56:30.7731115Z  [32m✓[39m tests/mcp/korean-prose-execution-provenance.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+2026-10-06T10:56:30.8896839Z  [32m✓[39m tests/session-messaging/self-signed-certificate.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 6[2mms[22m[39m
+2026-10-06T10:56:31.1911758Z  [32m✓[39m tests/code-review/public-cli.test.mjs [2m([22m[2m3 tests[22m[2m)[22m[33m 361[2mms[22m[39m
+2026-10-06T10:56:31.8421929Z  [32m✓[39m tests/instruction-scope-resolver/suite-integration.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 541[2mms[22m[39m
+2026-10-06T10:56:31.8423415Z    [32m✓[39m instruction-scope-resolver standalone regression [2m(1)[22m
+2026-10-06T10:56:31.8424155Z      [33m[2m✓[22m[39m runs every node:test case[33m 539[2mms[22m[39m
+2026-10-06T10:56:32.4522777Z  [32m✓[39m tests/acceptance-evidence-validator/suite-integration.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 1470[2mms[22m[39m
+2026-10-06T10:56:32.4559599Z    [32m✓[39m acceptance-evidence-validator standalone regression [2m(1)[22m
+2026-10-06T10:56:32.4560627Z      [33m[2m✓[22m[39m runs every node:test case[33m 1468[2mms[22m[39m
+2026-10-06T10:56:33.7592886Z  [32m✓[39m tests/change-scope-guardian/suite-integration.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 1823[2mms[22m[39m
+2026-10-06T10:56:33.7593809Z    [33m[2m✓[22m[39m change-scope-guardian Node tests pass in an isolated process[33m 1822[2mms[22m[39m
+2026-10-06T10:56:34.2790656Z  [32m✓[39m tests/cs-engineering/suite-integration.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 1707[2mms[22m[39m
+2026-10-06T10:56:34.2791871Z    [33m[2m✓[22m[39m CS Node regressions run in an isolated process with the AGS Ajv runtime[33m 1706[2mms[22m[39m
+2026-10-06T10:56:34.6941085Z  [32m✓[39m tests/evaluation-validity-auditor/standalone-regression.test.mjs [2m([22m[2m1 test[22m[2m)[22m[33m 314[2mms[22m[39m
+2026-10-06T10:56:34.6942054Z    [32m✓[39m evaluation-validity-auditor imported core [2m(1)[22m
+2026-10-06T10:56:34.6942890Z      [33m[2m✓[22m[39m passes the suite's normal, boundary, failure, and security regression cases[33m 312[2mms[22m[39m
+2026-10-06T10:56:34.7197612Z  [32m✓[39m tests/task-contract/suite-integration.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 875[2mms[22m[39m
+2026-10-06T10:56:34.7198488Z    [33m[2m✓[22m[39m task-contract Node tests pass in an isolated process[33m 874[2mms[22m[39m
+2026-10-06T10:56:34.9448104Z  [32m✓[39m tests/runtime/runtime-smoke.test.mjs [2m([22m[2m6 tests[22m[2m)[22m[33m 5932[2mms[22m[39m
+2026-10-06T10:56:34.9448806Z    [32m✓[39m installed skill runtime [2m(6)[22m
+2026-10-06T10:56:34.9449355Z      [33m[2m✓[22m[39m runs every documented Node CLI without node_modules[33m 5858[2mms[22m[39m
+2026-10-06T10:56:34.9494299Z 
+2026-10-06T10:56:34.9498851Z [2m Test Files [22m [1m[32m69 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (70)[39m
+2026-10-06T10:56:34.9503003Z [2m      Tests [22m [1m[32m925 passed[39m[22m[2m | [22m[33m5 skipped[39m[90m (930)[39m
+2026-10-06T10:56:34.9503692Z [2m   Start at [22m 10:55:37
+2026-10-06T10:56:34.9507573Z [2m   Duration [22m 57.38s[2m (tests 96%, import 3%, transform 1%)[22m
+2026-10-06T10:56:34.9518608Z 

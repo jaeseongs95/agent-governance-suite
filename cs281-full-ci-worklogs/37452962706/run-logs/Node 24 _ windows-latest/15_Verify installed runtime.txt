@@ -1,0 +1,14 @@
+﻿2026-10-06T10:59:04.6487424Z ##[group]Run pnpm runtime:check
+2026-10-06T10:59:04.6487779Z [36;1mpnpm runtime:check[0m
+2026-10-06T10:59:04.6504712Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:59:04.6505110Z env:
+2026-10-06T10:59:04.6505376Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:59:04.6505827Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T10:59:04.6506265Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:59:04.6506649Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:59:04.6507033Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:59:04.6507833Z ##[endgroup]
+2026-10-06T10:59:05.9400369Z Already up to date
+2026-10-06T10:59:05.9409194Z Done in 504ms using pnpm v11.19.0
+2026-10-06T10:59:05.9577285Z $ node scripts/check-runtime.mjs
+2026-10-06T10:59:14.7456938Z runtime: ready (32 skill CLIs, Node.js 24.21.0)

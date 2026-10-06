@@ -1,0 +1,4481 @@
+{
+  "schema": "FullCiWorklogManifest.v1",
+  "baseEvidenceCommit": "e352b53da3daf7ba1300be9c9a744169dbb47ef6",
+  "run": {
+    "id": 37452962706,
+    "head_sha": "b28a442ad424b255283fe32fe3c0e661b195fa4e",
+    "status": "completed",
+    "conclusion": "success",
+    "run_attempt": 1,
+    "created_at": "2026-10-06T10:55:13Z",
+    "updated_at": "2026-10-06T10:59:39Z",
+    "run_started_at": "2026-10-06T10:55:13Z",
+    "html_url": "https://github.com/jaeseongs95/agent-governance-suite/actions/runs/37452962706",
+    "event": "workflow_dispatch"
+  },
+  "files": [
+    {
+      "source": "run.json",
+      "public": "metadata/run.json",
+      "sourceBytes": 13589,
+      "sourceSha256": "a5728d7440fc8cc7a8f1266738589b914dcbc7434fe6f04f8c5bffb8948ba26a",
+      "publicBytes": 991,
+      "publicSha256": "0784cb1e4a056e90a940e4a269fbd64e799a028e2a8dead9eebb9cd756b68456",
+      "redactions": [],
+      "metadataProjection": true
+    },
+    {
+      "source": "jobs.json",
+      "public": "metadata/jobs.json",
+      "sourceBytes": 10178,
+      "sourceSha256": "e74a523e0d0c9d954f2f5771109b5e959836d8225cbcceb60b8c4233221aadf0",
+      "publicBytes": 13847,
+      "publicSha256": "6cad34034a511b6dc2822a326bb7f9731078577c1a1ffd61bcffcef7bf1c2aed",
+      "redactions": [],
+      "metadataProjection": true
+    },
+    {
+      "source": "artifacts.json",
+      "public": "metadata/artifacts.json",
+      "sourceBytes": 1551,
+      "sourceSha256": "eb8289aa5fdb1c5b834a1851795b8755911808da81d046c71d071746bf6821d8",
+      "publicBytes": 1784,
+      "publicSha256": "c1003fd8d71eb5491d9c77e94a41399c035ea62719a0c4288b83a25f457c522b",
+      "redactions": [],
+      "metadataProjection": true
+    },
+    {
+      "source": "run-logs/0_Node 24 _ windows-latest.txt",
+      "public": "run-logs/0_Node 24 _ windows-latest.txt",
+      "sourceBytes": 131833,
+      "sourceSha256": "5eab436b595460645d0e7062e7e3649f539fee00c7cb40ff63237f7a13109814",
+      "publicBytes": 129924,
+      "publicSha256": "a4caaf2059bfa5f74957893af373ea1f887c41543af5f867147e3959a624bb5a",
+      "redactions": [
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_checkout",
+          "line": 54
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_checkout",
+          "line": 60
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_checkout",
+          "line": 61
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_checkout",
+          "line": 65
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_checkout",
+          "line": 66
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_checkout",
+          "line": 83
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_checkout",
+          "line": 84
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_checkout",
+          "line": 389
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_checkout",
+          "line": 938
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_checkout",
+          "line": 1033
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_checkout",
+          "line": 1109
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_checkout",
+          "line": 1118
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_checkout",
+          "line": 1119
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_checkout",
+          "line": 1122
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_checkout",
+          "line": 1124
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_checkout",
+          "line": 1125
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_checkout",
+          "line": 1127
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_temp",
+          "line": 58
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_temp",
+          "line": 82
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_temp",
+          "line": 83
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_temp",
+          "line": 84
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_temp",
+          "line": 1013
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_temp",
+          "line": 1014
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_temp",
+          "line": 1062
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_temp",
+          "line": 1107
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_temp",
+          "line": 1123
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_temp",
+          "line": 1126
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_temp",
+          "line": 1135
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 205
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 229
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 230
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 231
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 232
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 233
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 239
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 240
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 241
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 242
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 243
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 283
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 284
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 285
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 286
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 287
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 296
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 297
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 298
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 299
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 300
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 310
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 311
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 312
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 313
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 314
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 324
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 325
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 326
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 327
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 328
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 338
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 339
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 340
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 341
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 342
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 352
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 353
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 354
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 355
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 356
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 365
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 366
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 367
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 368
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 369
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 379
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 380
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 381
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 382
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 383
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 905
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 906
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 907
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 908
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 909
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 919
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 920
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 921
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 922
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 923
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 1007
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 1008
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 1009
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 1010
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 1011
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 1069
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 1070
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 1071
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 1072
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 1073
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 1093
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 1094
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 1095
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 1096
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_toolcache",
+          "line": 1097
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 55
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 60
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 65
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 67
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 70
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 74
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 75
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 77
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 78
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 80
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 81
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 82
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 83
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 84
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 85
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 86
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 89
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 182
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 184
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 189
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 190
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 192
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 196
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 227
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 237
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 281
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 294
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 308
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 322
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 336
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 350
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 363
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 377
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 903
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 917
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 1005
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 1091
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 1105
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 1109
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 1111
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 1112
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 1114
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 1115
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 1117
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 1122
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 1124
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 1125
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 1127
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 1128
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 1130
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 1131
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 1133
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_git",
+          "line": 1134
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "windows_absolute",
+          "line": 253
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "uuid",
+          "line": 7
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "uuid",
+          "line": 58
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "uuid",
+          "line": 82
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "uuid",
+          "line": 83
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "uuid",
+          "line": 84
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "uuid",
+          "line": 85
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "uuid",
+          "line": 86
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "uuid",
+          "line": 1107
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "uuid",
+          "line": 1123
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "uuid",
+          "line": 1126
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "uuid",
+          "line": 1129
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "uuid",
+          "line": 1132
+        },
+        {
+          "location": "run-logs/0_Node 24 _ windows-latest.txt",
+          "criterion": "uuid",
+          "line": 1135
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+      "public": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+      "sourceBytes": 87848,
+      "sourceSha256": "95e9612da7ae478fa53de7d7c63d8941591ddd72816b2c19f107d02a5af717c1",
+      "publicBytes": 85665,
+      "publicSha256": "84d66930dc6f7a7f0b5d707a33c4951171d8c2e837b204edfd76fe85ee0f4c2b",
+      "redactions": [
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 54
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 60
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 61
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 65
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 79
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 96
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 97
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 410
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 682
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 779
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 857
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 866
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 867
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 870
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 872
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 873
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "checkout_path",
+          "line": 875
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "runner_temp_path",
+          "line": 58
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "runner_temp_path",
+          "line": 95
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "runner_temp_path",
+          "line": 96
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "runner_temp_path",
+          "line": 97
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "runner_temp_path",
+          "line": 758
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "runner_temp_path",
+          "line": 759
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "runner_temp_path",
+          "line": 808
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "runner_temp_path",
+          "line": 855
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "runner_temp_path",
+          "line": 871
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "runner_temp_path",
+          "line": 874
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "runner_temp_path",
+          "line": 883
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "runner_home_path",
+          "line": 267
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 218
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 242
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 243
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 244
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 245
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 246
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 247
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 253
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 254
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 255
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 256
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 257
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 258
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 296
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 297
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 298
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 299
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 300
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 301
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 310
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 311
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 312
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 313
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 314
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 315
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 325
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 326
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 327
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 328
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 329
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 330
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 340
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 341
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 342
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 343
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 344
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 345
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 355
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 356
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 357
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 358
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 359
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 360
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 370
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 371
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 372
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 373
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 374
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 375
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 384
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 385
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 386
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 387
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 388
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 389
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 399
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 400
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 401
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 402
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 403
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 404
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 647
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 648
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 649
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 650
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 651
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 652
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 662
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 663
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 664
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 665
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 666
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 667
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 751
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 752
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 753
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 754
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 755
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 756
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 815
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 816
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 817
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 818
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 819
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 820
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 840
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 841
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 842
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 843
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 844
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "toolcache_path",
+          "line": 845
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "uuid",
+          "line": 7
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "uuid",
+          "line": 58
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "uuid",
+          "line": 95
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "uuid",
+          "line": 96
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "uuid",
+          "line": 97
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "uuid",
+          "line": 98
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "uuid",
+          "line": 99
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "uuid",
+          "line": 855
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "uuid",
+          "line": 871
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "uuid",
+          "line": 874
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "uuid",
+          "line": 877
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "uuid",
+          "line": 880
+        },
+        {
+          "location": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+          "criterion": "uuid",
+          "line": 883
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/10_Verify release metadata.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/10_Verify release metadata.txt",
+      "sourceBytes": 1077,
+      "sourceSha256": "23b4ec76557f61efa0e0e2017ab3faba39c56cb3db1ee6176865fe05b68bd87a",
+      "publicBytes": 1023,
+      "publicSha256": "dadcbf487c9ae481cfcfe580995967d27241421f50355f5518fabec84418914f",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/10_Verify release metadata.txt",
+          "criterion": "toolcache_path",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/10_Verify release metadata.txt",
+          "criterion": "toolcache_path",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/10_Verify release metadata.txt",
+          "criterion": "toolcache_path",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/10_Verify release metadata.txt",
+          "criterion": "toolcache_path",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/10_Verify release metadata.txt",
+          "criterion": "toolcache_path",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/10_Verify release metadata.txt",
+          "criterion": "toolcache_path",
+          "line": 10
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/11_Verify source lock.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/11_Verify source lock.txt",
+      "sourceBytes": 1064,
+      "sourceSha256": "00c9ef5c34070b1a7f095f3e1ec3a8ea809eac1417fc499f618e827876f9900c",
+      "publicBytes": 1010,
+      "publicSha256": "e03a44eee00e55ce4db10507781a8b73a8506dcd3a83fac3a35e2ac9fff71c71",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/11_Verify source lock.txt",
+          "criterion": "toolcache_path",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/11_Verify source lock.txt",
+          "criterion": "toolcache_path",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/11_Verify source lock.txt",
+          "criterion": "toolcache_path",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/11_Verify source lock.txt",
+          "criterion": "toolcache_path",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/11_Verify source lock.txt",
+          "criterion": "toolcache_path",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/11_Verify source lock.txt",
+          "criterion": "toolcache_path",
+          "line": 10
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/12_Build.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/12_Build.txt",
+      "sourceBytes": 999,
+      "sourceSha256": "35521cfa20843e70c608e73a7118ce635c9c3bf4e13d9fc1f4ceca241d6e7b84",
+      "publicBytes": 945,
+      "publicSha256": "45022b3698eab1276a81ba829cba034833058384830ed1990e74204f354e2117",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/12_Build.txt",
+          "criterion": "toolcache_path",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/12_Build.txt",
+          "criterion": "toolcache_path",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/12_Build.txt",
+          "criterion": "toolcache_path",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/12_Build.txt",
+          "criterion": "toolcache_path",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/12_Build.txt",
+          "criterion": "toolcache_path",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/12_Build.txt",
+          "criterion": "toolcache_path",
+          "line": 10
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/13_Verify process identity probe.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/13_Verify process identity probe.txt",
+      "sourceBytes": 1093,
+      "sourceSha256": "78095cd90d3cde3f5ef51a22f90b41cc46440ad6ab86ce54ebaa0f4128ad4da8",
+      "publicBytes": 1039,
+      "publicSha256": "c1be221fc04626e4fb0664cacefae815d655e6ef9fc0b8e167dd05dd8c134efc",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/13_Verify process identity probe.txt",
+          "criterion": "toolcache_path",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/13_Verify process identity probe.txt",
+          "criterion": "toolcache_path",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/13_Verify process identity probe.txt",
+          "criterion": "toolcache_path",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/13_Verify process identity probe.txt",
+          "criterion": "toolcache_path",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/13_Verify process identity probe.txt",
+          "criterion": "toolcache_path",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/13_Verify process identity probe.txt",
+          "criterion": "toolcache_path",
+          "line": 10
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/14_Test.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/14_Test.txt",
+      "sourceBytes": 34417,
+      "sourceSha256": "a471888f4a9a3743a71aab9abc4168c33aa37fbc10f084a892accfdc29cbc59d",
+      "publicBytes": 34306,
+      "publicSha256": "dea0d7f368b6a65583a3859ae31e0e61de2437bc964c2aa06cac734cee9bbbfd",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/14_Test.txt",
+          "criterion": "checkout_path",
+          "line": 16
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/14_Test.txt",
+          "criterion": "toolcache_path",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/14_Test.txt",
+          "criterion": "toolcache_path",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/14_Test.txt",
+          "criterion": "toolcache_path",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/14_Test.txt",
+          "criterion": "toolcache_path",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/14_Test.txt",
+          "criterion": "toolcache_path",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/14_Test.txt",
+          "criterion": "toolcache_path",
+          "line": 10
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/15_Verify installed runtime.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/15_Verify installed runtime.txt",
+      "sourceBytes": 1084,
+      "sourceSha256": "8477f54229815ea6fe2fbca8bddf8506b58fc678105a8e23d42dfd12816c7aa6",
+      "publicBytes": 1030,
+      "publicSha256": "0b6b7dbf4ee138af14f041d709619ce427185a10245369f8b71584ebd6d9e7fd",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/15_Verify installed runtime.txt",
+          "criterion": "toolcache_path",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/15_Verify installed runtime.txt",
+          "criterion": "toolcache_path",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/15_Verify installed runtime.txt",
+          "criterion": "toolcache_path",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/15_Verify installed runtime.txt",
+          "criterion": "toolcache_path",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/15_Verify installed runtime.txt",
+          "criterion": "toolcache_path",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/15_Verify installed runtime.txt",
+          "criterion": "toolcache_path",
+          "line": 10
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/16_Validate plugin and skills.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/16_Validate plugin and skills.txt",
+      "sourceBytes": 2329,
+      "sourceSha256": "a3b2d76f513cd23071d14a030fdd16c11a9b7f42b7fd36837194595078c1ae29",
+      "publicBytes": 2218,
+      "publicSha256": "744fdb105299df11f4da9ddf0b962f05f0cccf057bb338a4dd77041074363d43",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/16_Validate plugin and skills.txt",
+          "criterion": "checkout_path",
+          "line": 25
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/16_Validate plugin and skills.txt",
+          "criterion": "toolcache_path",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/16_Validate plugin and skills.txt",
+          "criterion": "toolcache_path",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/16_Validate plugin and skills.txt",
+          "criterion": "toolcache_path",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/16_Validate plugin and skills.txt",
+          "criterion": "toolcache_path",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/16_Validate plugin and skills.txt",
+          "criterion": "toolcache_path",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/16_Validate plugin and skills.txt",
+          "criterion": "toolcache_path",
+          "line": 10
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/17_Validate official Codex metadata with pinned supplier.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/17_Validate official Codex metadata with pinned supplier.txt",
+      "sourceBytes": 9944,
+      "sourceSha256": "885cb60c73ee0ac15950a01f42d42230e0b49526abaf6053923c175c2ef91369",
+      "publicBytes": 9813,
+      "publicSha256": "1e641613f0d92194ff8037a821fc371a4569405f13c33f015817a21d509fa764",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/17_Validate official Codex metadata with pinned supplier.txt",
+          "criterion": "checkout_path",
+          "line": 91
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/17_Validate official Codex metadata with pinned supplier.txt",
+          "criterion": "runner_temp_path",
+          "line": 70
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/17_Validate official Codex metadata with pinned supplier.txt",
+          "criterion": "runner_temp_path",
+          "line": 71
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/17_Validate official Codex metadata with pinned supplier.txt",
+          "criterion": "toolcache_path",
+          "line": 63
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/17_Validate official Codex metadata with pinned supplier.txt",
+          "criterion": "toolcache_path",
+          "line": 64
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/17_Validate official Codex metadata with pinned supplier.txt",
+          "criterion": "toolcache_path",
+          "line": 65
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/17_Validate official Codex metadata with pinned supplier.txt",
+          "criterion": "toolcache_path",
+          "line": 66
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/17_Validate official Codex metadata with pinned supplier.txt",
+          "criterion": "toolcache_path",
+          "line": 67
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/17_Validate official Codex metadata with pinned supplier.txt",
+          "criterion": "toolcache_path",
+          "line": 68
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/18_Upload official validation evidence.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/18_Upload official validation evidence.txt",
+      "sourceBytes": 2704,
+      "sourceSha256": "d200006219d555f5c920279888c64f436e28d4c406d8cb760e4d659323971c03",
+      "publicBytes": 2640,
+      "publicSha256": "b12b37aadeb8e411cbd8aa4487ed02f1c826a5d36bc84267a07e13aa790a9a86",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/18_Upload official validation evidence.txt",
+          "criterion": "runner_temp_path",
+          "line": 4
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/18_Upload official validation evidence.txt",
+          "criterion": "toolcache_path",
+          "line": 11
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/18_Upload official validation evidence.txt",
+          "criterion": "toolcache_path",
+          "line": 12
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/18_Upload official validation evidence.txt",
+          "criterion": "toolcache_path",
+          "line": 13
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/18_Upload official validation evidence.txt",
+          "criterion": "toolcache_path",
+          "line": 14
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/18_Upload official validation evidence.txt",
+          "criterion": "toolcache_path",
+          "line": 15
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/18_Upload official validation evidence.txt",
+          "criterion": "toolcache_path",
+          "line": 16
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/1_Set up job.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/1_Set up job.txt",
+      "sourceBytes": 2264,
+      "sourceSha256": "afe1a4af9d2410fb1e90a09ccfd1ca2c5ecab5e5bc15f08a444d9b83551f313a",
+      "publicBytes": 2242,
+      "publicSha256": "fdc43e343f8b497cbafacf78e87db6693fa371d905e3875f0b8727bec5e5f52b",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/1_Set up job.txt",
+          "criterion": "uuid",
+          "line": 7
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/21_Check manually dispatched commit whitespace.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/21_Check manually dispatched commit whitespace.txt",
+      "sourceBytes": 981,
+      "sourceSha256": "eea1164f07ba7d1ed15ed8827f7a895ea2320064844cecea778e2b9fba14cc2d",
+      "publicBytes": 927,
+      "publicSha256": "506f205d72b84acfce298a5784725011a9252004ba500164470b366861b93cdd",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/21_Check manually dispatched commit whitespace.txt",
+          "criterion": "toolcache_path",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/21_Check manually dispatched commit whitespace.txt",
+          "criterion": "toolcache_path",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/21_Check manually dispatched commit whitespace.txt",
+          "criterion": "toolcache_path",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/21_Check manually dispatched commit whitespace.txt",
+          "criterion": "toolcache_path",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/21_Check manually dispatched commit whitespace.txt",
+          "criterion": "toolcache_path",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/21_Check manually dispatched commit whitespace.txt",
+          "criterion": "toolcache_path",
+          "line": 10
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+      "sourceBytes": 16454,
+      "sourceSha256": "876c79a0e516459470009aca74a28b1fb5d27a71b3dcce3f422a69241476c783",
+      "publicBytes": 15883,
+      "publicSha256": "f1203eaf858fce547d72ebc6bf92430bfe8a9343833216e481101585afd00ce1",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 20
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 26
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 27
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 31
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 45
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 62
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 63
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+          "criterion": "runner_temp_path",
+          "line": 24
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+          "criterion": "runner_temp_path",
+          "line": 61
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+          "criterion": "runner_temp_path",
+          "line": 62
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+          "criterion": "runner_temp_path",
+          "line": 63
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+          "criterion": "uuid",
+          "line": 24
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+          "criterion": "uuid",
+          "line": 61
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+          "criterion": "uuid",
+          "line": 62
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+          "criterion": "uuid",
+          "line": 63
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+          "criterion": "uuid",
+          "line": 64
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+          "criterion": "uuid",
+          "line": 65
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/3_Set up Node.js.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/3_Set up Node.js.txt",
+      "sourceBytes": 903,
+      "sourceSha256": "a4bfc26d6fcfe4e94ca9a53f0d884001177b5d16626080ba9703a4cc5db88d39",
+      "publicBytes": 894,
+      "publicSha256": "6ee6a54c6d7e1d52990e9d1db3bab49c01aa614005911ff97cb00286992796e7",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/3_Set up Node.js.txt",
+          "criterion": "toolcache_path",
+          "line": 8
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/40_Post Set up Python.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/40_Post Set up Python.txt",
+      "sourceBytes": 50,
+      "sourceSha256": "d8d504e3882b0e0a2ce4cfda99c4726f6bfe42a39b32912cc68fcc7f91628bd4",
+      "publicBytes": 50,
+      "publicSha256": "d8d504e3882b0e0a2ce4cfda99c4726f6bfe42a39b32912cc68fcc7f91628bd4",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/41_Post Set up Node.js.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/41_Post Set up Node.js.txt",
+      "sourceBytes": 305,
+      "sourceSha256": "d5ab47a146a3e94e9e24e59172719fdc0a030f382f95151a3c27794f84cb477c",
+      "publicBytes": 305,
+      "publicSha256": "d5ab47a146a3e94e9e24e59172719fdc0a030f382f95151a3c27794f84cb477c",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+      "sourceBytes": 4334,
+      "sourceSha256": "8745c683ca7c416a56715b62c735b197a98bdb647ec5861fdb82d30d169a95be",
+      "publicBytes": 3763,
+      "publicSha256": "ebe45bb450340c5f627a7aa53ef5d99bbf9a2ba11c7a25611462a0608b32658b",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 15
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 16
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 19
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 21
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 22
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "checkout_path",
+          "line": 24
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "runner_temp_path",
+          "line": 4
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "runner_temp_path",
+          "line": 20
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "runner_temp_path",
+          "line": 23
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "runner_temp_path",
+          "line": 32
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "uuid",
+          "line": 4
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "uuid",
+          "line": 20
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "uuid",
+          "line": 23
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "uuid",
+          "line": 26
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "uuid",
+          "line": 29
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+          "criterion": "uuid",
+          "line": 32
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/43_Complete job.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/43_Complete job.txt",
+      "sourceBytes": 378,
+      "sourceSha256": "9a19b86fb54b287b89eaf9bc70fc02061f2e301ace604ed3850ece22d0140614",
+      "publicBytes": 378,
+      "publicSha256": "9a19b86fb54b287b89eaf9bc70fc02061f2e301ace604ed3850ece22d0140614",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/4_Set up Python.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/4_Set up Python.txt",
+      "sourceBytes": 620,
+      "sourceSha256": "39f988e5c47c05518fb99f7e1f12b7104ff3d0754b04be8e198804d5037ff119",
+      "publicBytes": 620,
+      "publicSha256": "39f988e5c47c05518fb99f7e1f12b7104ff3d0754b04be8e198804d5037ff119",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/5_Enable Corepack.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/5_Enable Corepack.txt",
+      "sourceBytes": 828,
+      "sourceSha256": "4d65d9682f5b997aaf16e932e03af36903238e623f8e74c6315f24ceb1fc67c1",
+      "publicBytes": 774,
+      "publicSha256": "c67ed71893e982318f00f7f7f560a6daf9e7e35dd2c12cca8bfac74972cceb01",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/5_Enable Corepack.txt",
+          "criterion": "toolcache_path",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/5_Enable Corepack.txt",
+          "criterion": "toolcache_path",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/5_Enable Corepack.txt",
+          "criterion": "toolcache_path",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/5_Enable Corepack.txt",
+          "criterion": "toolcache_path",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/5_Enable Corepack.txt",
+          "criterion": "toolcache_path",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/5_Enable Corepack.txt",
+          "criterion": "toolcache_path",
+          "line": 10
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/6_Install locked dependencies.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/6_Install locked dependencies.txt",
+      "sourceBytes": 2959,
+      "sourceSha256": "547825124609aefda81aac9f2941405143f3fa12a7d9736a2a9c672817896ec2",
+      "publicBytes": 2906,
+      "publicSha256": "bdcde06765066791b45312bb5615f999bc4aa2e743b9a50b2c0bc75f5cf5b59a",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/6_Install locked dependencies.txt",
+          "criterion": "runner_home_path",
+          "line": 19
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/6_Install locked dependencies.txt",
+          "criterion": "toolcache_path",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/6_Install locked dependencies.txt",
+          "criterion": "toolcache_path",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/6_Install locked dependencies.txt",
+          "criterion": "toolcache_path",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/6_Install locked dependencies.txt",
+          "criterion": "toolcache_path",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/6_Install locked dependencies.txt",
+          "criterion": "toolcache_path",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/6_Install locked dependencies.txt",
+          "criterion": "toolcache_path",
+          "line": 10
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/7_Verify committed runtime bundles.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/7_Verify committed runtime bundles.txt",
+      "sourceBytes": 1004,
+      "sourceSha256": "54da30ab35a9d8cf2ebd8f432aab474d39655c597e5797100a12e0f3a17efa69",
+      "publicBytes": 950,
+      "publicSha256": "1a996c729402c9db0b0a8b454ac13539390fcd6dcbb28db164ebfd2ba3988bcc",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/7_Verify committed runtime bundles.txt",
+          "criterion": "toolcache_path",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/7_Verify committed runtime bundles.txt",
+          "criterion": "toolcache_path",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/7_Verify committed runtime bundles.txt",
+          "criterion": "toolcache_path",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/7_Verify committed runtime bundles.txt",
+          "criterion": "toolcache_path",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/7_Verify committed runtime bundles.txt",
+          "criterion": "toolcache_path",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/7_Verify committed runtime bundles.txt",
+          "criterion": "toolcache_path",
+          "line": 10
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/8_Report Claude plugin drift.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/8_Report Claude plugin drift.txt",
+      "sourceBytes": 1069,
+      "sourceSha256": "f71baad2300229c74ab9161d5bb96d0e3fad199d6a13bd5b6314fa2d720ee374",
+      "publicBytes": 1015,
+      "publicSha256": "6163c3401e77cba13e702c0e3645d8e922efacb77f3562d30e5d8e949d685758",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/8_Report Claude plugin drift.txt",
+          "criterion": "toolcache_path",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/8_Report Claude plugin drift.txt",
+          "criterion": "toolcache_path",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/8_Report Claude plugin drift.txt",
+          "criterion": "toolcache_path",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/8_Report Claude plugin drift.txt",
+          "criterion": "toolcache_path",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/8_Report Claude plugin drift.txt",
+          "criterion": "toolcache_path",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/8_Report Claude plugin drift.txt",
+          "criterion": "toolcache_path",
+          "line": 10
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/9_Lint.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/9_Lint.txt",
+      "sourceBytes": 1054,
+      "sourceSha256": "5f81a97a6ed32ea8343a25ee1d603dd727f81b7de86884635d815ce7bc364320",
+      "publicBytes": 1000,
+      "publicSha256": "25d7b0b460e541c19dcf5f05dd8365c95f9b4d3105f736222d9d4699ea8e0f23",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/9_Lint.txt",
+          "criterion": "toolcache_path",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/9_Lint.txt",
+          "criterion": "toolcache_path",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/9_Lint.txt",
+          "criterion": "toolcache_path",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/9_Lint.txt",
+          "criterion": "toolcache_path",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/9_Lint.txt",
+          "criterion": "toolcache_path",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ ubuntu-latest/9_Lint.txt",
+          "criterion": "toolcache_path",
+          "line": 10
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ ubuntu-latest/system.txt",
+      "public": "run-logs/Node 24 _ ubuntu-latest/system.txt",
+      "sourceBytes": 613,
+      "sourceSha256": "136f0ddff9bd05d3e7b6e4f44e45031804a5bf28dbee70a8f99beb522d83f277",
+      "publicBytes": 613,
+      "publicSha256": "136f0ddff9bd05d3e7b6e4f44e45031804a5bf28dbee70a8f99beb522d83f277",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/10_Verify release metadata.txt",
+      "public": "run-logs/Node 24 _ windows-latest/10_Verify release metadata.txt",
+      "sourceBytes": 1049,
+      "sourceSha256": "3784674ce8d5dbba5e22cfa8963c59196e0955029b93642633cd428ee7478ae2",
+      "publicBytes": 1007,
+      "publicSha256": "9c421e0163695296600e51bdb1d1aca6969a5d19f9d9432d199023a2e252d1d8",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ windows-latest/10_Verify release metadata.txt",
+          "criterion": "windows_toolcache",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/10_Verify release metadata.txt",
+          "criterion": "windows_toolcache",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/10_Verify release metadata.txt",
+          "criterion": "windows_toolcache",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/10_Verify release metadata.txt",
+          "criterion": "windows_toolcache",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/10_Verify release metadata.txt",
+          "criterion": "windows_toolcache",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/10_Verify release metadata.txt",
+          "criterion": "windows_git",
+          "line": 3
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/11_Verify source lock.txt",
+      "public": "run-logs/Node 24 _ windows-latest/11_Verify source lock.txt",
+      "sourceBytes": 1036,
+      "sourceSha256": "45bb880ac7aeb7ebff62d9e1848f875ba8e040a6a9bec9621a2d111a373fa933",
+      "publicBytes": 994,
+      "publicSha256": "a3e1d14e53a1be9f5d2a43d56cd9908c1db4cee4b78a12e924b10301083d3241",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ windows-latest/11_Verify source lock.txt",
+          "criterion": "windows_toolcache",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/11_Verify source lock.txt",
+          "criterion": "windows_toolcache",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/11_Verify source lock.txt",
+          "criterion": "windows_toolcache",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/11_Verify source lock.txt",
+          "criterion": "windows_toolcache",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/11_Verify source lock.txt",
+          "criterion": "windows_toolcache",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/11_Verify source lock.txt",
+          "criterion": "windows_git",
+          "line": 3
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/12_Build.txt",
+      "public": "run-logs/Node 24 _ windows-latest/12_Build.txt",
+      "sourceBytes": 970,
+      "sourceSha256": "472eae7a6806bc7b0ddcddc7b9597a0b671715fc154c92f5aada7c676c67c570",
+      "publicBytes": 928,
+      "publicSha256": "ab2ec9777b594f2eed281653d9da2d82421eb8e63f82f8428bf586fd8e6b5c35",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ windows-latest/12_Build.txt",
+          "criterion": "windows_toolcache",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/12_Build.txt",
+          "criterion": "windows_toolcache",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/12_Build.txt",
+          "criterion": "windows_toolcache",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/12_Build.txt",
+          "criterion": "windows_toolcache",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/12_Build.txt",
+          "criterion": "windows_toolcache",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/12_Build.txt",
+          "criterion": "windows_git",
+          "line": 3
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/13_Verify process identity probe.txt",
+      "public": "run-logs/Node 24 _ windows-latest/13_Verify process identity probe.txt",
+      "sourceBytes": 1065,
+      "sourceSha256": "627837d8d2f7d556a0fdb517c35466b4a59721b26dbb98b10bff352ad4d58b5a",
+      "publicBytes": 1023,
+      "publicSha256": "fd5cea0a254dec41017d4ca168b051a9ae01745456eccb4f367960d31d1bf42c",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ windows-latest/13_Verify process identity probe.txt",
+          "criterion": "windows_toolcache",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/13_Verify process identity probe.txt",
+          "criterion": "windows_toolcache",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/13_Verify process identity probe.txt",
+          "criterion": "windows_toolcache",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/13_Verify process identity probe.txt",
+          "criterion": "windows_toolcache",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/13_Verify process identity probe.txt",
+          "criterion": "windows_toolcache",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/13_Verify process identity probe.txt",
+          "criterion": "windows_git",
+          "line": 3
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/14_Test.txt",
+      "public": "run-logs/Node 24 _ windows-latest/14_Test.txt",
+      "sourceBytes": 78903,
+      "sourceSha256": "fe4f46187c36b647cb6bb06110f4ce75504a4429b9d8ce0815b7955a185c4e50",
+      "publicBytes": 78817,
+      "publicSha256": "180310ef92635ae56b752caf179791f2248d0f970c7950d3795b2961a54ac683",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ windows-latest/14_Test.txt",
+          "criterion": "windows_checkout",
+          "line": 15
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/14_Test.txt",
+          "criterion": "windows_toolcache",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/14_Test.txt",
+          "criterion": "windows_toolcache",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/14_Test.txt",
+          "criterion": "windows_toolcache",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/14_Test.txt",
+          "criterion": "windows_toolcache",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/14_Test.txt",
+          "criterion": "windows_toolcache",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/14_Test.txt",
+          "criterion": "windows_git",
+          "line": 3
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/15_Verify installed runtime.txt",
+      "public": "run-logs/Node 24 _ windows-latest/15_Verify installed runtime.txt",
+      "sourceBytes": 1056,
+      "sourceSha256": "4913770519186887c2e6f8318cf2260fc7b8715197dc7159e7a475b446fc5197",
+      "publicBytes": 1014,
+      "publicSha256": "0b1b3a177e84ecf810857dfa7c035bf50066f2b43786af0a3d738b9db3d97b03",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ windows-latest/15_Verify installed runtime.txt",
+          "criterion": "windows_toolcache",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/15_Verify installed runtime.txt",
+          "criterion": "windows_toolcache",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/15_Verify installed runtime.txt",
+          "criterion": "windows_toolcache",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/15_Verify installed runtime.txt",
+          "criterion": "windows_toolcache",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/15_Verify installed runtime.txt",
+          "criterion": "windows_toolcache",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/15_Verify installed runtime.txt",
+          "criterion": "windows_git",
+          "line": 3
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/16_Validate plugin and skills.txt",
+      "public": "run-logs/Node 24 _ windows-latest/16_Validate plugin and skills.txt",
+      "sourceBytes": 2304,
+      "sourceSha256": "81bb7e41161790b9ede31da69da52e87a6c4c5aa99138eb051edeeae9e6497a1",
+      "publicBytes": 2218,
+      "publicSha256": "f38a98eccdd8ebe58f763abf533b045badcd8fc9cda07398df0ca5c64861458c",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ windows-latest/16_Validate plugin and skills.txt",
+          "criterion": "windows_checkout",
+          "line": 24
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/16_Validate plugin and skills.txt",
+          "criterion": "windows_toolcache",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/16_Validate plugin and skills.txt",
+          "criterion": "windows_toolcache",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/16_Validate plugin and skills.txt",
+          "criterion": "windows_toolcache",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/16_Validate plugin and skills.txt",
+          "criterion": "windows_toolcache",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/16_Validate plugin and skills.txt",
+          "criterion": "windows_toolcache",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/16_Validate plugin and skills.txt",
+          "criterion": "windows_git",
+          "line": 3
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/17_Validate official Codex metadata with pinned supplier.txt",
+      "public": "run-logs/Node 24 _ windows-latest/17_Validate official Codex metadata with pinned supplier.txt",
+      "sourceBytes": 9684,
+      "sourceSha256": "6979fbcb96f4a6883dab4662a493375dc025c79a4f73e9041bfc0a32a0404de0",
+      "publicBytes": 9604,
+      "publicSha256": "e38eb8d9e8fb0398554767eda5b8aaa68d8f21355b4188da4ea9978bf9ecf6d1",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ windows-latest/17_Validate official Codex metadata with pinned supplier.txt",
+          "criterion": "windows_checkout",
+          "line": 89
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/17_Validate official Codex metadata with pinned supplier.txt",
+          "criterion": "windows_temp",
+          "line": 69
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/17_Validate official Codex metadata with pinned supplier.txt",
+          "criterion": "windows_temp",
+          "line": 70
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/17_Validate official Codex metadata with pinned supplier.txt",
+          "criterion": "windows_toolcache",
+          "line": 63
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/17_Validate official Codex metadata with pinned supplier.txt",
+          "criterion": "windows_toolcache",
+          "line": 64
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/17_Validate official Codex metadata with pinned supplier.txt",
+          "criterion": "windows_toolcache",
+          "line": 65
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/17_Validate official Codex metadata with pinned supplier.txt",
+          "criterion": "windows_toolcache",
+          "line": 66
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/17_Validate official Codex metadata with pinned supplier.txt",
+          "criterion": "windows_toolcache",
+          "line": 67
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/17_Validate official Codex metadata with pinned supplier.txt",
+          "criterion": "windows_git",
+          "line": 61
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/18_Upload official validation evidence.txt",
+      "public": "run-logs/Node 24 _ windows-latest/18_Upload official validation evidence.txt",
+      "sourceBytes": 2667,
+      "sourceSha256": "8fe7560e3d97af458084a280867902e3420b34c4a7350187818809fae5c3ec54",
+      "publicBytes": 2635,
+      "publicSha256": "5394f5a626451970b6af20c94b862977e11ac68ad995c005ba6cd9e2f5f705f8",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ windows-latest/18_Upload official validation evidence.txt",
+          "criterion": "windows_temp",
+          "line": 4
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/18_Upload official validation evidence.txt",
+          "criterion": "windows_toolcache",
+          "line": 11
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/18_Upload official validation evidence.txt",
+          "criterion": "windows_toolcache",
+          "line": 12
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/18_Upload official validation evidence.txt",
+          "criterion": "windows_toolcache",
+          "line": 13
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/18_Upload official validation evidence.txt",
+          "criterion": "windows_toolcache",
+          "line": 14
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/18_Upload official validation evidence.txt",
+          "criterion": "windows_toolcache",
+          "line": 15
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/1_Set up job.txt",
+      "public": "run-logs/Node 24 _ windows-latest/1_Set up job.txt",
+      "sourceBytes": 2361,
+      "sourceSha256": "afbd1d680c25e4de6aaa12935e79ff7425c5321c1194dfb327b09abd6befca15",
+      "publicBytes": 2339,
+      "publicSha256": "da08452262ef06ed5fe90e72171153542b05715c8c06e9c5c6151f54120a8e00",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ windows-latest/1_Set up job.txt",
+          "criterion": "uuid",
+          "line": 7
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/21_Check manually dispatched commit whitespace.txt",
+      "public": "run-logs/Node 24 _ windows-latest/21_Check manually dispatched commit whitespace.txt",
+      "sourceBytes": 950,
+      "sourceSha256": "261011053e8d9aa250229186d2a3781c2295ebd19598f2711efd5ee015bd451a",
+      "publicBytes": 908,
+      "publicSha256": "e746653cdf5e3a7bd12843c128e8852e7e18726b754f0c03997f8b1671b45153",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ windows-latest/21_Check manually dispatched commit whitespace.txt",
+          "criterion": "windows_toolcache",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/21_Check manually dispatched commit whitespace.txt",
+          "criterion": "windows_toolcache",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/21_Check manually dispatched commit whitespace.txt",
+          "criterion": "windows_toolcache",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/21_Check manually dispatched commit whitespace.txt",
+          "criterion": "windows_toolcache",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/21_Check manually dispatched commit whitespace.txt",
+          "criterion": "windows_toolcache",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/21_Check manually dispatched commit whitespace.txt",
+          "criterion": "windows_git",
+          "line": 3
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+      "public": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+      "sourceBytes": 16039,
+      "sourceSha256": "413ed79db9d399981d50a324db535507d09df0308cdc63e8bfec077c57353f20",
+      "publicBytes": 15450,
+      "publicSha256": "d3c99bf6cf67e2c6e504b4a553d1e0e9aad654aca0582565a256e18aa266b95b",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_checkout",
+          "line": 20
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_checkout",
+          "line": 26
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_checkout",
+          "line": 27
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_checkout",
+          "line": 31
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_checkout",
+          "line": 32
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_checkout",
+          "line": 49
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_checkout",
+          "line": 50
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_temp",
+          "line": 24
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_temp",
+          "line": 48
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_temp",
+          "line": 49
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_temp",
+          "line": 50
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 21
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 26
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 31
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 33
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 36
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 40
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 41
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 43
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 44
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 46
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 47
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 48
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 49
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 50
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 51
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 52
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 55
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 148
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 150
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 155
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 156
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 158
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 162
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "uuid",
+          "line": 24
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "uuid",
+          "line": 48
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "uuid",
+          "line": 49
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "uuid",
+          "line": 50
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "uuid",
+          "line": 51
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+          "criterion": "uuid",
+          "line": 52
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/3_Set up Node.js.txt",
+      "public": "run-logs/Node 24 _ windows-latest/3_Set up Node.js.txt",
+      "sourceBytes": 924,
+      "sourceSha256": "4f2340ab867f35ffee3fa4e0e53977462b5e31558da0c45c5f5a904ed22db9b7",
+      "publicBytes": 917,
+      "publicSha256": "b59f78ba501042a39a69bb19bd23f3ce689b128b97d089b5b503acdf5267538b",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ windows-latest/3_Set up Node.js.txt",
+          "criterion": "windows_toolcache",
+          "line": 8
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/40_Post Set up Python.txt",
+      "public": "run-logs/Node 24 _ windows-latest/40_Post Set up Python.txt",
+      "sourceBytes": 51,
+      "sourceSha256": "94c67bf41468a1d979ec207c3efa95ecf7c800943572706e1fa013cde19bcd4f",
+      "publicBytes": 51,
+      "publicSha256": "94c67bf41468a1d979ec207c3efa95ecf7c800943572706e1fa013cde19bcd4f",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/41_Post Set up Node.js.txt",
+      "public": "run-logs/Node 24 _ windows-latest/41_Post Set up Node.js.txt",
+      "sourceBytes": 308,
+      "sourceSha256": "f4a1ee2809c7cea62e0363b28760a1802423f1c06fe76221a711d01b9885abcc",
+      "publicBytes": 308,
+      "publicSha256": "f4a1ee2809c7cea62e0363b28760a1802423f1c06fe76221a711d01b9885abcc",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+      "public": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+      "sourceBytes": 4567,
+      "sourceSha256": "4eaa4eebd749196176b125304a0d23e0ff9258aab25321fe5273c48a6a954b15",
+      "publicBytes": 4027,
+      "publicSha256": "b4792fda15a9f29291978730d94ff45f16169cc705e9cc9610deea3074c40030",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_checkout",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_checkout",
+          "line": 15
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_checkout",
+          "line": 16
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_checkout",
+          "line": 19
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_checkout",
+          "line": 21
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_checkout",
+          "line": 22
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_checkout",
+          "line": 24
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_temp",
+          "line": 4
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_temp",
+          "line": 20
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_temp",
+          "line": 23
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_temp",
+          "line": 32
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 2
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 11
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 12
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 14
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 19
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 21
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 22
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 24
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 25
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 27
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 28
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 30
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "windows_git",
+          "line": 31
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "uuid",
+          "line": 4
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "uuid",
+          "line": 20
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "uuid",
+          "line": 23
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "uuid",
+          "line": 26
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "uuid",
+          "line": 29
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+          "criterion": "uuid",
+          "line": 32
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/43_Complete job.txt",
+      "public": "run-logs/Node 24 _ windows-latest/43_Complete job.txt",
+      "sourceBytes": 380,
+      "sourceSha256": "86c24b92b753d7a26cd85b4e74481510deea9143c4f5e3c8f61ee89a22315608",
+      "publicBytes": 380,
+      "publicSha256": "86c24b92b753d7a26cd85b4e74481510deea9143c4f5e3c8f61ee89a22315608",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/4_Set up Python.txt",
+      "public": "run-logs/Node 24 _ windows-latest/4_Set up Python.txt",
+      "sourceBytes": 632,
+      "sourceSha256": "1c5fb7f0314d270f27f4ffd9dfd44eb72428034637dc59335c5792b201b59340",
+      "publicBytes": 632,
+      "publicSha256": "1c5fb7f0314d270f27f4ffd9dfd44eb72428034637dc59335c5792b201b59340",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/5_Enable Corepack.txt",
+      "public": "run-logs/Node 24 _ windows-latest/5_Enable Corepack.txt",
+      "sourceBytes": 796,
+      "sourceSha256": "b523ffc92ce800a198d06ed5aa6fc2d1b047b5fcee242608bfd54334f0afc89c",
+      "publicBytes": 754,
+      "publicSha256": "c93836faaa5da35abc3cc7a3d2644bffe7eae0b06795c05b0e5aec6c33c2013a",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ windows-latest/5_Enable Corepack.txt",
+          "criterion": "windows_toolcache",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/5_Enable Corepack.txt",
+          "criterion": "windows_toolcache",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/5_Enable Corepack.txt",
+          "criterion": "windows_toolcache",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/5_Enable Corepack.txt",
+          "criterion": "windows_toolcache",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/5_Enable Corepack.txt",
+          "criterion": "windows_toolcache",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/5_Enable Corepack.txt",
+          "criterion": "windows_git",
+          "line": 3
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/6_Install locked dependencies.txt",
+      "public": "run-logs/Node 24 _ windows-latest/6_Install locked dependencies.txt",
+      "sourceBytes": 3115,
+      "sourceSha256": "3d51b18698a211d394fe08177c1b4dbc5deb0a0d3976bb2fdd3bda794fff0f9e",
+      "publicBytes": 3068,
+      "publicSha256": "bc6315b79602fe03f436312fd617ffd25d40accf6ad73e71c3d5a21acaddb1ae",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ windows-latest/6_Install locked dependencies.txt",
+          "criterion": "windows_toolcache",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/6_Install locked dependencies.txt",
+          "criterion": "windows_toolcache",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/6_Install locked dependencies.txt",
+          "criterion": "windows_toolcache",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/6_Install locked dependencies.txt",
+          "criterion": "windows_toolcache",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/6_Install locked dependencies.txt",
+          "criterion": "windows_toolcache",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/6_Install locked dependencies.txt",
+          "criterion": "windows_git",
+          "line": 3
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/6_Install locked dependencies.txt",
+          "criterion": "windows_absolute",
+          "line": 19
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/7_Verify committed runtime bundles.txt",
+      "public": "run-logs/Node 24 _ windows-latest/7_Verify committed runtime bundles.txt",
+      "sourceBytes": 975,
+      "sourceSha256": "33afef8ce22dfa2ad80ca2874680c05b2d7d65e0525610b02b438449a8d1366d",
+      "publicBytes": 933,
+      "publicSha256": "61c6d3c12ada52030e9b2e55dd51c2d478f74066ca6bb55cc8c1835a427952de",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ windows-latest/7_Verify committed runtime bundles.txt",
+          "criterion": "windows_toolcache",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/7_Verify committed runtime bundles.txt",
+          "criterion": "windows_toolcache",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/7_Verify committed runtime bundles.txt",
+          "criterion": "windows_toolcache",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/7_Verify committed runtime bundles.txt",
+          "criterion": "windows_toolcache",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/7_Verify committed runtime bundles.txt",
+          "criterion": "windows_toolcache",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/7_Verify committed runtime bundles.txt",
+          "criterion": "windows_git",
+          "line": 3
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/8_Report Claude plugin drift.txt",
+      "public": "run-logs/Node 24 _ windows-latest/8_Report Claude plugin drift.txt",
+      "sourceBytes": 1041,
+      "sourceSha256": "f5691e9db38829352b60518c370027abec2dd8770c6ace5938d3fd7538b6e1d8",
+      "publicBytes": 999,
+      "publicSha256": "be076c75d19d4724a425b1bee4ad3b365468c1cb55d3624c9814384afb61f2e7",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ windows-latest/8_Report Claude plugin drift.txt",
+          "criterion": "windows_toolcache",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/8_Report Claude plugin drift.txt",
+          "criterion": "windows_toolcache",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/8_Report Claude plugin drift.txt",
+          "criterion": "windows_toolcache",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/8_Report Claude plugin drift.txt",
+          "criterion": "windows_toolcache",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/8_Report Claude plugin drift.txt",
+          "criterion": "windows_toolcache",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/8_Report Claude plugin drift.txt",
+          "criterion": "windows_git",
+          "line": 3
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/9_Lint.txt",
+      "public": "run-logs/Node 24 _ windows-latest/9_Lint.txt",
+      "sourceBytes": 1026,
+      "sourceSha256": "aed024a792bed0250b665aa6553e9c8bee38a8e286cddc0e9ef5e06a80dab1bc",
+      "publicBytes": 984,
+      "publicSha256": "ac88b472fb0d8a0e70130df7d4d05621ecb5d26358645f146a4f2f7e8691b8a4",
+      "redactions": [
+        {
+          "location": "run-logs/Node 24 _ windows-latest/9_Lint.txt",
+          "criterion": "windows_toolcache",
+          "line": 5
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/9_Lint.txt",
+          "criterion": "windows_toolcache",
+          "line": 6
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/9_Lint.txt",
+          "criterion": "windows_toolcache",
+          "line": 7
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/9_Lint.txt",
+          "criterion": "windows_toolcache",
+          "line": 8
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/9_Lint.txt",
+          "criterion": "windows_toolcache",
+          "line": 9
+        },
+        {
+          "location": "run-logs/Node 24 _ windows-latest/9_Lint.txt",
+          "criterion": "windows_git",
+          "line": 3
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "run-logs/Node 24 _ windows-latest/system.txt",
+      "public": "run-logs/Node 24 _ windows-latest/system.txt",
+      "sourceBytes": 614,
+      "sourceSha256": "0b8b862615c95d653fd6a28a5f7c1619b458b5e4c270ff9d469b44ae0569f2a5",
+      "publicBytes": 614,
+      "publicSha256": "0b8b862615c95d653fd6a28a5f7c1619b458b5e4c270ff9d469b44ae0569f2a5",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/codex-home/.supplier/LICENSE",
+      "public": "artifacts/official-codex-37452962706-1-Linux/codex-home/.supplier/LICENSE",
+      "sourceBytes": 10926,
+      "sourceSha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc",
+      "publicBytes": 10926,
+      "publicSha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/codex-home/.supplier/NOTICE",
+      "public": "artifacts/official-codex-37452962706-1-Linux/codex-home/.supplier/NOTICE",
+      "sourceBytes": 242,
+      "sourceSha256": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915",
+      "publicBytes": 242,
+      "publicSha256": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/codex-home/skills/.system/plugin-creator/scripts/identifier_validation.py",
+      "public": "artifacts/official-codex-37452962706-1-Linux/codex-home/skills/.system/plugin-creator/scripts/identifier_validation.py",
+      "sourceBytes": 784,
+      "sourceSha256": "a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223",
+      "publicBytes": 784,
+      "publicSha256": "a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/codex-home/skills/.system/plugin-creator/scripts/validate_plugin.py",
+      "public": "artifacts/official-codex-37452962706-1-Linux/codex-home/skills/.system/plugin-creator/scripts/validate_plugin.py",
+      "sourceBytes": 21739,
+      "sourceSha256": "f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944",
+      "publicBytes": 21739,
+      "publicSha256": "f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/codex-home/skills/.system/skill-creator/scripts/quick_validate.py",
+      "public": "artifacts/official-codex-37452962706-1-Linux/codex-home/skills/.system/skill-creator/scripts/quick_validate.py",
+      "sourceBytes": 4249,
+      "sourceSha256": "ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c",
+      "publicBytes": 4249,
+      "publicSha256": "ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/environment-after.txt",
+      "public": "artifacts/official-codex-37452962706-1-Linux/environment-after.txt",
+      "sourceBytes": 82,
+      "sourceSha256": "4f08dd48455419ca08a405ea162d0499bf6bc001678be84fcf83d75675752212",
+      "publicBytes": 82,
+      "publicSha256": "4f08dd48455419ca08a405ea162d0499bf6bc001678be84fcf83d75675752212",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/environment-before.txt",
+      "public": "artifacts/official-codex-37452962706-1-Linux/environment-before.txt",
+      "sourceBytes": 189,
+      "sourceSha256": "ef7c1bc0523a4e2636c429f0030067eddeef712ed3f878dd4623fbad27f784ae",
+      "publicBytes": 189,
+      "publicSha256": "ef7c1bc0523a4e2636c429f0030067eddeef712ed3f878dd4623fbad27f784ae",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/last-phase.txt",
+      "public": "artifacts/official-codex-37452962706-1-Linux/last-phase.txt",
+      "sourceBytes": 9,
+      "sourceSha256": "9d03ccc18cd99569e6f79989e5321a1f2bf23d547fcc47c4b148b425e17c0ae1",
+      "publicBytes": 9,
+      "publicSha256": "9d03ccc18cd99569e6f79989e5321a1f2bf23d547fcc47c4b148b425e17c0ae1",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/metadata-exit-code.txt",
+      "public": "artifacts/official-codex-37452962706-1-Linux/metadata-exit-code.txt",
+      "sourceBytes": 2,
+      "sourceSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publicBytes": 2,
+      "publicSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/official-command.txt",
+      "public": "artifacts/official-codex-37452962706-1-Linux/official-command.txt",
+      "sourceBytes": 27,
+      "sourceSha256": "3bf0ec0b54120cfc9fc070b94e89660bb3e9266720150b102faf69266c467065",
+      "publicBytes": 27,
+      "publicSha256": "3bf0ec0b54120cfc9fc070b94e89660bb3e9266720150b102faf69266c467065",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/official-exit-code.txt",
+      "public": "artifacts/official-codex-37452962706-1-Linux/official-exit-code.txt",
+      "sourceBytes": 2,
+      "sourceSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publicBytes": 2,
+      "publicSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/official-status.txt",
+      "public": "artifacts/official-codex-37452962706-1-Linux/official-status.txt",
+      "sourceBytes": 9,
+      "sourceSha256": "0b1d3ce47d17a1d83a5d8f1f9686226c606c99f9c545dc561452cdbb641e47a8",
+      "publicBytes": 9,
+      "publicSha256": "0b1d3ce47d17a1d83a5d8f1f9686226c606c99f9c545dc561452cdbb641e47a8",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/official-step-exit-code.txt",
+      "public": "artifacts/official-codex-37452962706-1-Linux/official-step-exit-code.txt",
+      "sourceBytes": 2,
+      "sourceSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publicBytes": 2,
+      "publicSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/official.stderr",
+      "public": "artifacts/official-codex-37452962706-1-Linux/official.stderr",
+      "sourceBytes": 37,
+      "sourceSha256": "b69cece30371f85cb4988e6ab25658f49b62afc54092a445054e0bd563159c0c",
+      "publicBytes": 37,
+      "publicSha256": "b69cece30371f85cb4988e6ab25658f49b62afc54092a445054e0bd563159c0c",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/official.stdout",
+      "public": "artifacts/official-codex-37452962706-1-Linux/official.stdout",
+      "sourceBytes": 527,
+      "sourceSha256": "344f1cb4a692879e415892d92aa70b95508e2c593e2ee0f38dc6970525c98b42",
+      "publicBytes": 470,
+      "publicSha256": "ac80f5bf6215db353f5cb7ce1684e7214553e037d8189af851cefc0be5b57562",
+      "redactions": [
+        {
+          "location": "artifacts/official-codex-37452962706-1-Linux/official.stdout",
+          "criterion": "checkout_path",
+          "line": 3
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/preparation-exit-code.txt",
+      "public": "artifacts/official-codex-37452962706-1-Linux/preparation-exit-code.txt",
+      "sourceBytes": 2,
+      "sourceSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publicBytes": 2,
+      "publicSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/python-yaml.txt",
+      "public": "artifacts/official-codex-37452962706-1-Linux/python-yaml.txt",
+      "sourceBytes": 143,
+      "sourceSha256": "cdb6fef018a939eaaefe1b51b7538ff37aded1bb898f6f7bb6e4a73ebf0aaad7",
+      "publicBytes": 134,
+      "publicSha256": "968ad125daaf80674d3b75c5f6010441964cc467b91154a9b8fb1c00889acd68",
+      "redactions": [
+        {
+          "location": "artifacts/official-codex-37452962706-1-Linux/python-yaml.txt",
+          "criterion": "toolcache_path",
+          "line": 3
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/skill-inventory.txt",
+      "public": "artifacts/official-codex-37452962706-1-Linux/skill-inventory.txt",
+      "sourceBytes": 516,
+      "sourceSha256": "2aab4d3456f23c89299cbbcc28c8b0dbe0bf09bf7c00b41244aa20c5834935c9",
+      "publicBytes": 516,
+      "publicSha256": "2aab4d3456f23c89299cbbcc28c8b0dbe0bf09bf7c00b41244aa20c5834935c9",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/step-exit-code.txt",
+      "public": "artifacts/official-codex-37452962706-1-Linux/step-exit-code.txt",
+      "sourceBytes": 2,
+      "sourceSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publicBytes": 2,
+      "publicSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/step.stderr",
+      "public": "artifacts/official-codex-37452962706-1-Linux/step.stderr",
+      "sourceBytes": 37,
+      "sourceSha256": "b69cece30371f85cb4988e6ab25658f49b62afc54092a445054e0bd563159c0c",
+      "publicBytes": 37,
+      "publicSha256": "b69cece30371f85cb4988e6ab25658f49b62afc54092a445054e0bd563159c0c",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/step.stdout",
+      "public": "artifacts/official-codex-37452962706-1-Linux/step.stdout",
+      "sourceBytes": 1975,
+      "sourceSha256": "5109519955de6ca5037d9017dc89da380518d754159e894998230fc6c13d6282",
+      "publicBytes": 1918,
+      "publicSha256": "77684d6c93fe82a091b4eec66353edf9beb5df651e7e4c0ed812cf2bd2900f01",
+      "redactions": [
+        {
+          "location": "artifacts/official-codex-37452962706-1-Linux/step.stdout",
+          "criterion": "checkout_path",
+          "line": 19
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/supplier-pin.txt",
+      "public": "artifacts/official-codex-37452962706-1-Linux/supplier-pin.txt",
+      "sourceBytes": 73,
+      "sourceSha256": "4363744599ed6a2c3329358aee889f17c590585bf67a6774174bddf9349588a4",
+      "publicBytes": 73,
+      "publicSha256": "4363744599ed6a2c3329358aee889f17c590585bf67a6774174bddf9349588a4",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Linux/supplier.sha256",
+      "public": "artifacts/official-codex-37452962706-1-Linux/supplier.sha256",
+      "sourceBytes": 540,
+      "sourceSha256": "3dbbfedfda9965cbafd7073de80c90de52eebcb08fd3b22e9f5bb7e562d2b1d5",
+      "publicBytes": 540,
+      "publicSha256": "3dbbfedfda9965cbafd7073de80c90de52eebcb08fd3b22e9f5bb7e562d2b1d5",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/codex-home/.supplier/LICENSE",
+      "public": "artifacts/official-codex-37452962706-1-Windows/codex-home/.supplier/LICENSE",
+      "sourceBytes": 10926,
+      "sourceSha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc",
+      "publicBytes": 10926,
+      "publicSha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/codex-home/.supplier/NOTICE",
+      "public": "artifacts/official-codex-37452962706-1-Windows/codex-home/.supplier/NOTICE",
+      "sourceBytes": 242,
+      "sourceSha256": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915",
+      "publicBytes": 242,
+      "publicSha256": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/codex-home/skills/.system/plugin-creator/scripts/identifier_validation.py",
+      "public": "artifacts/official-codex-37452962706-1-Windows/codex-home/skills/.system/plugin-creator/scripts/identifier_validation.py",
+      "sourceBytes": 784,
+      "sourceSha256": "a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223",
+      "publicBytes": 784,
+      "publicSha256": "a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/codex-home/skills/.system/plugin-creator/scripts/validate_plugin.py",
+      "public": "artifacts/official-codex-37452962706-1-Windows/codex-home/skills/.system/plugin-creator/scripts/validate_plugin.py",
+      "sourceBytes": 21739,
+      "sourceSha256": "f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944",
+      "publicBytes": 21739,
+      "publicSha256": "f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/codex-home/skills/.system/skill-creator/scripts/quick_validate.py",
+      "public": "artifacts/official-codex-37452962706-1-Windows/codex-home/skills/.system/skill-creator/scripts/quick_validate.py",
+      "sourceBytes": 4249,
+      "sourceSha256": "ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c",
+      "publicBytes": 4249,
+      "publicSha256": "ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/environment-after.txt",
+      "public": "artifacts/official-codex-37452962706-1-Windows/environment-after.txt",
+      "sourceBytes": 82,
+      "sourceSha256": "4f08dd48455419ca08a405ea162d0499bf6bc001678be84fcf83d75675752212",
+      "publicBytes": 82,
+      "publicSha256": "4f08dd48455419ca08a405ea162d0499bf6bc001678be84fcf83d75675752212",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/environment-before.txt",
+      "public": "artifacts/official-codex-37452962706-1-Windows/environment-before.txt",
+      "sourceBytes": 191,
+      "sourceSha256": "823fefb93ef2a4600400a4df4671313b83c58a3b9df0ff634b50c7bf3e83910d",
+      "publicBytes": 191,
+      "publicSha256": "823fefb93ef2a4600400a4df4671313b83c58a3b9df0ff634b50c7bf3e83910d",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/last-phase.txt",
+      "public": "artifacts/official-codex-37452962706-1-Windows/last-phase.txt",
+      "sourceBytes": 9,
+      "sourceSha256": "9d03ccc18cd99569e6f79989e5321a1f2bf23d547fcc47c4b148b425e17c0ae1",
+      "publicBytes": 9,
+      "publicSha256": "9d03ccc18cd99569e6f79989e5321a1f2bf23d547fcc47c4b148b425e17c0ae1",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/metadata-exit-code.txt",
+      "public": "artifacts/official-codex-37452962706-1-Windows/metadata-exit-code.txt",
+      "sourceBytes": 2,
+      "sourceSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publicBytes": 2,
+      "publicSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/official-command.txt",
+      "public": "artifacts/official-codex-37452962706-1-Windows/official-command.txt",
+      "sourceBytes": 27,
+      "sourceSha256": "3bf0ec0b54120cfc9fc070b94e89660bb3e9266720150b102faf69266c467065",
+      "publicBytes": 27,
+      "publicSha256": "3bf0ec0b54120cfc9fc070b94e89660bb3e9266720150b102faf69266c467065",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/official-exit-code.txt",
+      "public": "artifacts/official-codex-37452962706-1-Windows/official-exit-code.txt",
+      "sourceBytes": 2,
+      "sourceSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publicBytes": 2,
+      "publicSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/official-status.txt",
+      "public": "artifacts/official-codex-37452962706-1-Windows/official-status.txt",
+      "sourceBytes": 9,
+      "sourceSha256": "0b1d3ce47d17a1d83a5d8f1f9686226c606c99f9c545dc561452cdbb641e47a8",
+      "publicBytes": 9,
+      "publicSha256": "0b1d3ce47d17a1d83a5d8f1f9686226c606c99f9c545dc561452cdbb641e47a8",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/official-step-exit-code.txt",
+      "public": "artifacts/official-codex-37452962706-1-Windows/official-step-exit-code.txt",
+      "sourceBytes": 2,
+      "sourceSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publicBytes": 2,
+      "publicSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/official.stderr",
+      "public": "artifacts/official-codex-37452962706-1-Windows/official.stderr",
+      "sourceBytes": 37,
+      "sourceSha256": "b69cece30371f85cb4988e6ab25658f49b62afc54092a445054e0bd563159c0c",
+      "publicBytes": 37,
+      "publicSha256": "b69cece30371f85cb4988e6ab25658f49b62afc54092a445054e0bd563159c0c",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/official.stdout",
+      "public": "artifacts/official-codex-37452962706-1-Windows/official.stdout",
+      "sourceBytes": 539,
+      "sourceSha256": "5591790436757da571b13ea874e354d4e94e8211d7ba667c7ca96ebd4069c53c",
+      "publicBytes": 495,
+      "publicSha256": "aa6c34c41528c7363c70ec7e6adfcc4e322e67aca710363d85b4ce5c9588ce0a",
+      "redactions": [
+        {
+          "location": "artifacts/official-codex-37452962706-1-Windows/official.stdout",
+          "criterion": "windows_checkout",
+          "line": 3
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/preparation-exit-code.txt",
+      "public": "artifacts/official-codex-37452962706-1-Windows/preparation-exit-code.txt",
+      "sourceBytes": 2,
+      "sourceSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publicBytes": 2,
+      "publicSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/python-yaml.txt",
+      "public": "artifacts/official-codex-37452962706-1-Windows/python-yaml.txt",
+      "sourceBytes": 173,
+      "sourceSha256": "7f5be20fe1906fdd5f77ecdf6bad8e65a523626445bd3679c50a621009685757",
+      "publicBytes": 166,
+      "publicSha256": "50f92006a8fd22ce4013b4e3b7e4aab6f4f99ce23269421cf7462b8d306cf421",
+      "redactions": [
+        {
+          "location": "artifacts/official-codex-37452962706-1-Windows/python-yaml.txt",
+          "criterion": "windows_toolcache",
+          "line": 3
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/skill-inventory.txt",
+      "public": "artifacts/official-codex-37452962706-1-Windows/skill-inventory.txt",
+      "sourceBytes": 516,
+      "sourceSha256": "2aab4d3456f23c89299cbbcc28c8b0dbe0bf09bf7c00b41244aa20c5834935c9",
+      "publicBytes": 516,
+      "publicSha256": "2aab4d3456f23c89299cbbcc28c8b0dbe0bf09bf7c00b41244aa20c5834935c9",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/step-exit-code.txt",
+      "public": "artifacts/official-codex-37452962706-1-Windows/step-exit-code.txt",
+      "sourceBytes": 2,
+      "sourceSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publicBytes": 2,
+      "publicSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/step.stderr",
+      "public": "artifacts/official-codex-37452962706-1-Windows/step.stderr",
+      "sourceBytes": 37,
+      "sourceSha256": "b69cece30371f85cb4988e6ab25658f49b62afc54092a445054e0bd563159c0c",
+      "publicBytes": 37,
+      "publicSha256": "b69cece30371f85cb4988e6ab25658f49b62afc54092a445054e0bd563159c0c",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/step.stdout",
+      "public": "artifacts/official-codex-37452962706-1-Windows/step.stdout",
+      "sourceBytes": 1724,
+      "sourceSha256": "51d8b7b55bf49d25878ba552b9c8c3cb55016799c79893bd88c59345af1883c1",
+      "publicBytes": 1680,
+      "publicSha256": "29df2ee78d57355df9aa7fdb3433c4b523c1e39a95cbcd5b908064cf9861048f",
+      "redactions": [
+        {
+          "location": "artifacts/official-codex-37452962706-1-Windows/step.stdout",
+          "criterion": "windows_checkout",
+          "line": 18
+        }
+      ],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/supplier-pin.txt",
+      "public": "artifacts/official-codex-37452962706-1-Windows/supplier-pin.txt",
+      "sourceBytes": 73,
+      "sourceSha256": "4363744599ed6a2c3329358aee889f17c590585bf67a6774174bddf9349588a4",
+      "publicBytes": 73,
+      "publicSha256": "4363744599ed6a2c3329358aee889f17c590585bf67a6774174bddf9349588a4",
+      "redactions": [],
+      "metadataProjection": false
+    },
+    {
+      "source": "artifacts/official-codex-37452962706-1-Windows/supplier.sha256",
+      "public": "artifacts/official-codex-37452962706-1-Windows/supplier.sha256",
+      "sourceBytes": 540,
+      "sourceSha256": "3dbbfedfda9965cbafd7073de80c90de52eebcb08fd3b22e9f5bb7e562d2b1d5",
+      "publicBytes": 540,
+      "publicSha256": "3dbbfedfda9965cbafd7073de80c90de52eebcb08fd3b22e9f5bb7e562d2b1d5",
+      "redactions": [],
+      "metadataProjection": false
+    }
+  ],
+  "redactionCounts": {
+    "windows_checkout": 36,
+    "windows_temp": 22,
+    "windows_toolcache": 153,
+    "windows_git": 106,
+    "windows_absolute": 2,
+    "checkout_path": 36,
+    "runner_temp_path": 22,
+    "runner_home_path": 2,
+    "toolcache_path": 183,
+    "uuid": 52
+  },
+  "metadataOmissions": {
+    "run.json": [
+      "node_id",
+      "check_suite_id",
+      "check_suite_node_id",
+      "url",
+      "pull_requests",
+      "actor",
+      "referenced_workflows",
+      "triggering_actor",
+      "jobs_url",
+      "logs_url",
+      "check_suite_url",
+      "artifacts_url",
+      "cancel_url",
+      "rerun_url",
+      "previous_attempt_url",
+      "workflow_url",
+      "head_repository"
+    ],
+    "jobs.json": "runner/account/token context omitted; command timing/status/steps retained",
+    "artifacts.json": "opaque node IDs and account context omitted; artifact identity/size/digest/timestamps retained"
+  },
+  "redactionRules": [
+    {
+      "criterion": "windows_checkout",
+      "pattern": "[A-Z]:[\\\\/]a[\\\\/]agent-governance-suite[\\\\/]agent-governance-suite",
+      "replacement": "<repo>",
+      "flags": 2
+    },
+    {
+      "criterion": "windows_temp",
+      "pattern": "[A-Z]:[\\\\/]a[\\\\/]_temp",
+      "replacement": "<runner-temp>",
+      "flags": 2
+    },
+    {
+      "criterion": "windows_work",
+      "pattern": "[A-Z]:[\\\\/]a(?=[\\\\/])",
+      "replacement": "<runner-work>",
+      "flags": 2
+    },
+    {
+      "criterion": "windows_toolcache",
+      "pattern": "[A-Z]:[\\\\/]hostedtoolcache",
+      "replacement": "<toolcache>",
+      "flags": 2
+    },
+    {
+      "criterion": "windows_home",
+      "pattern": "[A-Z]:[\\\\/]Users[\\\\/][^\\\\/\\s\\\"\\']+",
+      "replacement": "<runner-home>",
+      "flags": 2
+    },
+    {
+      "criterion": "windows_git",
+      "pattern": "[A-Z]:[\\\\/]Program Files[\\\\/]Git",
+      "replacement": "<git-install>",
+      "flags": 2
+    },
+    {
+      "criterion": "windows_system",
+      "pattern": "[A-Z]:[\\\\/](?:Windows|ProgramData|Program Files(?: \\(x86\\))?)",
+      "replacement": "<system-path>",
+      "flags": 2
+    },
+    {
+      "criterion": "windows_absolute",
+      "pattern": "(?<![A-Za-z0-9_])[A-Z]:[\\\\/][^\\s\\\"\\'<>;]+",
+      "replacement": "<runner-path>",
+      "flags": 2
+    },
+    {
+      "criterion": "bash_windows_checkout",
+      "pattern": "/[a-z]/a/agent-governance-suite/agent-governance-suite",
+      "replacement": "<repo>",
+      "flags": 2
+    },
+    {
+      "criterion": "bash_windows_work",
+      "pattern": "/[a-z]/a(?=/)",
+      "replacement": "<runner-work>",
+      "flags": 2
+    },
+    {
+      "criterion": "azure_hostname",
+      "pattern": "\\bfv-az[0-9]+-[0-9]+\\b",
+      "replacement": "<runner-host>",
+      "flags": 2
+    },
+    {
+      "criterion": "checkout_path",
+      "pattern": "/home/runner/work/agent-governance-suite/agent-governance-suite",
+      "replacement": "<repo>",
+      "flags": 0
+    },
+    {
+      "criterion": "runner_temp_path",
+      "pattern": "/home/runner/work/_temp",
+      "replacement": "<runner-temp>",
+      "flags": 0
+    },
+    {
+      "criterion": "runner_work_path",
+      "pattern": "/home/runner/work",
+      "replacement": "<runner-work>",
+      "flags": 0
+    },
+    {
+      "criterion": "runner_home_path",
+      "pattern": "/home/runner",
+      "replacement": "<runner-home>",
+      "flags": 0
+    },
+    {
+      "criterion": "toolcache_path",
+      "pattern": "/opt/hostedtoolcache",
+      "replacement": "<toolcache>",
+      "flags": 0
+    },
+    {
+      "criterion": "runner_hostname",
+      "pattern": "\\brunnervm[A-Za-z0-9_-]*\\b",
+      "replacement": "<runner-host>",
+      "flags": 0
+    },
+    {
+      "criterion": "uuid",
+      "pattern": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+      "replacement": "<ephemeral-id>",
+      "flags": 2
+    },
+    {
+      "criterion": "email",
+      "pattern": "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}",
+      "replacement": "<redacted-email>",
+      "flags": 2
+    },
+    {
+      "criterion": "credential",
+      "pattern": "(?<![A-Za-z0-9_-])(?:gh[pousr]_|github_pat_|sk-(?:proj-)?)[A-Za-z0-9_-]{12,}",
+      "replacement": "<redacted-credential>",
+      "flags": 0
+    },
+    {
+      "criterion": "authorization",
+      "pattern": "(?i)(authorization:\\s*(?:basic|bearer)\\s+)(?!\\*{3})[A-Za-z0-9_./+=-]+",
+      "replacement": "\\1<redacted-credential>",
+      "flags": 0
+    },
+    {
+      "criterion": "encoded_payload",
+      "pattern": "(?<![A-Za-z0-9+/])(?=[A-Za-z0-9+/=]*[A-Za-z])[A-Za-z0-9+/]{80,}={0,2}(?![A-Za-z0-9+/=])",
+      "replacement": "<redacted-encoded-payload>",
+      "flags": 0
+    }
+  ],
+  "windowsAbsoluteRuleCorrection": "Drive-letter pattern now requires a preceding non-alphanumeric boundary so https:// is retained. Earlier packets remain unchanged.",
+  "observations": {
+    "run": 37452962706,
+    "actualHead": "b28a442ad424b255283fe32fe3c0e661b195fa4e",
+    "official": [
+      {
+        "artifact": "official-codex-37452962706-1-Linux",
+        "receipts": {
+          "official-command.txt": "pnpm run validate:official",
+          "official-exit-code.txt": "0",
+          "official-status.txt": "EXECUTED",
+          "official-step-exit-code.txt": "0",
+          "step-exit-code.txt": "0",
+          "preparation-exit-code.txt": "0",
+          "metadata-exit-code.txt": "0",
+          "last-phase.txt": "official",
+          "supplier-pin.txt": "https://github.com/openai/codex\n10382da79a2a2d6e8ae221fa63077215389c1ad2",
+          "python-yaml.txt": "3.12.14 (main, Aug 13 2026, 02:47:42) [GCC 13.3.0]\n6.0.3\n<toolcache>/Python/3.12.14/x64/lib/python3.12/site-packages/yaml/__init__.py"
+        },
+        "supplierFive": [
+          {
+            "name": "validate_plugin.py",
+            "bytes": 21739,
+            "sha256": "f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944"
+          },
+          {
+            "name": "identifier_validation.py",
+            "bytes": 784,
+            "sha256": "a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223"
+          },
+          {
+            "name": "quick_validate.py",
+            "bytes": 4249,
+            "sha256": "ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c"
+          },
+          {
+            "name": "LICENSE",
+            "bytes": 10926,
+            "sha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc"
+          },
+          {
+            "name": "NOTICE",
+            "bytes": 242,
+            "sha256": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915"
+          }
+        ],
+        "environmentBeforeSanitized": "b28a442ad424b255283fe32fe3c0e661b195fa4e\ne1ffc736bc999781e7ea0670e43d7eca3bd80a82\nv24.21.0\n11.19.0\nPython 3.12.14\nrun=37452962706 attempt=1 ref=refs/heads/codex/engineering-practices-2.8.1\n",
+        "environmentAfterSanitized": "b28a442ad424b255283fe32fe3c0e661b195fa4e\ne1ffc736bc999781e7ea0670e43d7eca3bd80a82\n",
+        "officialStdoutBytes": 527,
+        "officialStderrBytes": 37,
+        "officialOutputSelected": [
+          "Plugin validation passed: <repo>",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!"
+        ],
+        "freshReuse": "UNKNOWN"
+      },
+      {
+        "artifact": "official-codex-37452962706-1-Windows",
+        "receipts": {
+          "official-command.txt": "pnpm run validate:official",
+          "official-exit-code.txt": "0",
+          "official-status.txt": "EXECUTED",
+          "official-step-exit-code.txt": "0",
+          "step-exit-code.txt": "0",
+          "preparation-exit-code.txt": "0",
+          "metadata-exit-code.txt": "0",
+          "last-phase.txt": "official",
+          "supplier-pin.txt": "https://github.com/openai/codex\n10382da79a2a2d6e8ae221fa63077215389c1ad2",
+          "python-yaml.txt": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]\n6.0.3\n<toolcache>\\windows\\Python\\3.12.10\\x64\\Lib\\site-packages\\yaml\\__init__.py"
+        },
+        "supplierFive": [
+          {
+            "name": "validate_plugin.py",
+            "bytes": 21739,
+            "sha256": "f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944"
+          },
+          {
+            "name": "identifier_validation.py",
+            "bytes": 784,
+            "sha256": "a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223"
+          },
+          {
+            "name": "quick_validate.py",
+            "bytes": 4249,
+            "sha256": "ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c"
+          },
+          {
+            "name": "LICENSE",
+            "bytes": 10926,
+            "sha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc"
+          },
+          {
+            "name": "NOTICE",
+            "bytes": 242,
+            "sha256": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915"
+          }
+        ],
+        "environmentBeforeSanitized": "b28a442ad424b255283fe32fe3c0e661b195fa4e\ne1ffc736bc999781e7ea0670e43d7eca3bd80a82\nv24.21.0\n11.19.0\nPython 3.12.10\nrun=37452962706 attempt=1 ref=refs/heads/codex/engineering-practices-2.8.1\n",
+        "environmentAfterSanitized": "b28a442ad424b255283fe32fe3c0e661b195fa4e\ne1ffc736bc999781e7ea0670e43d7eca3bd80a82\n",
+        "officialStdoutBytes": 514,
+        "officialStderrBytes": 37,
+        "officialOutputSelected": [
+          "Plugin validation passed: <repo>",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!",
+          "Skill is valid!"
+        ],
+        "freshReuse": "UNKNOWN"
+      }
+    ],
+    "tests": [
+      {
+        "log": "run-logs/Node 24 _ ubuntu-latest/14_Test.txt",
+        "summary": [
+          "2026-10-06T10:56:34.9498851Z  Test Files  69 passed | 1 skipped (70)",
+          "2026-10-06T10:56:34.9503003Z       Tests  925 passed | 5 skipped (930)"
+        ]
+      },
+      {
+        "log": "run-logs/Node 24 _ windows-latest/14_Test.txt",
+        "summary": [
+          "2026-10-06T10:59:04.5768761Z  Test Files  69 passed | 1 skipped (70)",
+          "2026-10-06T10:59:04.5776491Z       Tests  925 passed | 5 skipped (930)"
+        ]
+      }
+    ],
+    "apiArtifactDigestMatch": true,
+    "priorWindowsFailureRootCause": "UNKNOWN; this success does not establish a cause",
+    "sourceProductExecutions": 0,
+    "remoteMutations": 0
+  },
+  "baselineFileSha256": "3360819a3b92f42dd5d49eaa75d9c4c2e7601c2991f9718f3e65761031dfacd6",
+  "baselineManifestSha256": "eceaff3389a9a56bd0fe4a7c1ef0b4e2d56e8d50678d077c370fdc35e0e244c5",
+  "rootFrozenReceiptSha256": "7b768bf79b08a24ad99d4372c3c5ca1d2b2d732dea3b80582159ce689ebd5095",
+  "rawDownloadManifestSha256": "0687c9adac6e72a1350beae3225a4c2d04e3787907d33afc217e317b52508fa5",
+  "limitations": [
+    "This run completed/success, both OS925passed/5skipped; official receipts provide actual numeric0.",
+    "Previous1209 Windows broker failure root cause remains UNKNOWN; later success does not establish a cause.",
+    "Per-check fresh/reuse remains UNKNOWN.",
+    "Two Python bytecode files remain private; all46artifact text/source files are copied.",
+    "No source/product/local executions or remote mutations."
+  ],
+  "productExecutions": 0,
+  "remoteMutations": 0
+}

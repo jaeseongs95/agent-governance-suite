@@ -1,0 +1,31 @@
+﻿2026-10-06T10:56:45.9483051Z ##[group]Run actions/upload-artifact@v4
+2026-10-06T10:56:45.9483455Z with:
+2026-10-06T10:56:45.9483686Z   name: official-codex-37452962706-1-Linux
+2026-10-06T10:56:45.9483946Z   path: <runner-temp>/official-validation-Linux/
+2026-10-06T10:56:45.9484244Z   include-hidden-files: true
+2026-10-06T10:56:45.9484444Z   if-no-files-found: error
+2026-10-06T10:56:45.9484620Z   retention-days: 14
+2026-10-06T10:56:45.9485043Z   compression-level: 6
+2026-10-06T10:56:45.9485225Z   overwrite: false
+2026-10-06T10:56:45.9485456Z env:
+2026-10-06T10:56:45.9485659Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:56:45.9485942Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T10:56:45.9486302Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:56:45.9486571Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:56:45.9486867Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:56:45.9487145Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T10:56:45.9487422Z ##[endgroup]
+2026-10-06T10:56:46.0491074Z (node:9113) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-06T10:56:46.0491885Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-06T10:56:46.0570421Z With the provided path, there will be 24 files uploaded
+2026-10-06T10:56:46.0571467Z Artifact name is valid!
+2026-10-06T10:56:46.0571759Z Root directory input is valid!
+2026-10-06T10:56:46.2931482Z Beginning upload of artifact content to blob storage
+2026-10-06T10:56:46.3177795Z (node:9113) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-06T10:56:46.4780881Z Uploaded bytes 16245
+2026-10-06T10:56:46.5131838Z Finished uploading artifact content to blob storage!
+2026-10-06T10:56:46.5132584Z SHA256 digest of uploaded artifact zip is 588bbc54388b5220fb867fb64c5aa54dcb8a89eef7d59cfe463c286565c1e1a2
+2026-10-06T10:56:46.5133075Z Finalizing artifact upload
+2026-10-06T10:56:46.7204312Z Artifact official-codex-37452962706-1-Linux.zip successfully finalized. Artifact ID 11407581086
+2026-10-06T10:56:46.7205108Z Artifact official-codex-37452962706-1-Linux has been successfully uploaded! Final size is 16245 bytes. Artifact ID is 11407581086
+2026-10-06T10:56:46.7209209Z Artifact download URL: https://github.com/jaeseongs95/agent-governance-suite/actions/runs/37452962706/artifacts/11407581086

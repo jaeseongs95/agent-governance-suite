@@ -1,0 +1,29 @@
+{
+  "id": 37452962706,
+  "name": "CI",
+  "head_branch": "codex/engineering-practices-2.8.1",
+  "head_sha": "b28a442ad424b255283fe32fe3c0e661b195fa4e",
+  "path": ".github/workflows/ci.yml",
+  "display_title": "CI",
+  "run_number": 139,
+  "event": "workflow_dispatch",
+  "status": "completed",
+  "conclusion": "success",
+  "workflow_id": 353647941,
+  "run_attempt": 1,
+  "html_url": "https://github.com/jaeseongs95/agent-governance-suite/actions/runs/37452962706",
+  "created_at": "2026-10-06T10:55:13Z",
+  "updated_at": "2026-10-06T10:59:39Z",
+  "run_started_at": "2026-10-06T10:55:13Z",
+  "repository": {
+    "id": 1362118877,
+    "name": "agent-governance-suite",
+    "full_name": "jaeseongs95/agent-governance-suite",
+    "html_url": "https://github.com/jaeseongs95/agent-governance-suite"
+  },
+  "head_commit": {
+    "id": "b28a442ad424b255283fe32fe3c0e661b195fa4e",
+    "message": "docs: prepare 2.8.1 public metadata and validation scope",
+    "timestamp": "2026-10-06T10:43:23Z"
+  }
+}

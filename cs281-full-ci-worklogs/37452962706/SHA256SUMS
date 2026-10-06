@@ -1,0 +1,103 @@
+a907fcb758b39f9d182cd670270ff519228b10c0f0db77b724df562db5c15634  ARTIFACT-CONTENTS.json
+d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc  artifacts/official-codex-37452962706-1-Linux/codex-home/.supplier/LICENSE
+9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915  artifacts/official-codex-37452962706-1-Linux/codex-home/.supplier/NOTICE
+a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223  artifacts/official-codex-37452962706-1-Linux/codex-home/skills/.system/plugin-creator/scripts/identifier_validation.py
+f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944  artifacts/official-codex-37452962706-1-Linux/codex-home/skills/.system/plugin-creator/scripts/validate_plugin.py
+ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c  artifacts/official-codex-37452962706-1-Linux/codex-home/skills/.system/skill-creator/scripts/quick_validate.py
+4f08dd48455419ca08a405ea162d0499bf6bc001678be84fcf83d75675752212  artifacts/official-codex-37452962706-1-Linux/environment-after.txt
+ef7c1bc0523a4e2636c429f0030067eddeef712ed3f878dd4623fbad27f784ae  artifacts/official-codex-37452962706-1-Linux/environment-before.txt
+9d03ccc18cd99569e6f79989e5321a1f2bf23d547fcc47c4b148b425e17c0ae1  artifacts/official-codex-37452962706-1-Linux/last-phase.txt
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  artifacts/official-codex-37452962706-1-Linux/metadata-exit-code.txt
+3bf0ec0b54120cfc9fc070b94e89660bb3e9266720150b102faf69266c467065  artifacts/official-codex-37452962706-1-Linux/official-command.txt
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  artifacts/official-codex-37452962706-1-Linux/official-exit-code.txt
+0b1d3ce47d17a1d83a5d8f1f9686226c606c99f9c545dc561452cdbb641e47a8  artifacts/official-codex-37452962706-1-Linux/official-status.txt
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  artifacts/official-codex-37452962706-1-Linux/official-step-exit-code.txt
+b69cece30371f85cb4988e6ab25658f49b62afc54092a445054e0bd563159c0c  artifacts/official-codex-37452962706-1-Linux/official.stderr
+ac80f5bf6215db353f5cb7ce1684e7214553e037d8189af851cefc0be5b57562  artifacts/official-codex-37452962706-1-Linux/official.stdout
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  artifacts/official-codex-37452962706-1-Linux/preparation-exit-code.txt
+968ad125daaf80674d3b75c5f6010441964cc467b91154a9b8fb1c00889acd68  artifacts/official-codex-37452962706-1-Linux/python-yaml.txt
+2aab4d3456f23c89299cbbcc28c8b0dbe0bf09bf7c00b41244aa20c5834935c9  artifacts/official-codex-37452962706-1-Linux/skill-inventory.txt
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  artifacts/official-codex-37452962706-1-Linux/step-exit-code.txt
+b69cece30371f85cb4988e6ab25658f49b62afc54092a445054e0bd563159c0c  artifacts/official-codex-37452962706-1-Linux/step.stderr
+77684d6c93fe82a091b4eec66353edf9beb5df651e7e4c0ed812cf2bd2900f01  artifacts/official-codex-37452962706-1-Linux/step.stdout
+4363744599ed6a2c3329358aee889f17c590585bf67a6774174bddf9349588a4  artifacts/official-codex-37452962706-1-Linux/supplier-pin.txt
+3dbbfedfda9965cbafd7073de80c90de52eebcb08fd3b22e9f5bb7e562d2b1d5  artifacts/official-codex-37452962706-1-Linux/supplier.sha256
+d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc  artifacts/official-codex-37452962706-1-Windows/codex-home/.supplier/LICENSE
+9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915  artifacts/official-codex-37452962706-1-Windows/codex-home/.supplier/NOTICE
+a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223  artifacts/official-codex-37452962706-1-Windows/codex-home/skills/.system/plugin-creator/scripts/identifier_validation.py
+f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944  artifacts/official-codex-37452962706-1-Windows/codex-home/skills/.system/plugin-creator/scripts/validate_plugin.py
+ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c  artifacts/official-codex-37452962706-1-Windows/codex-home/skills/.system/skill-creator/scripts/quick_validate.py
+4f08dd48455419ca08a405ea162d0499bf6bc001678be84fcf83d75675752212  artifacts/official-codex-37452962706-1-Windows/environment-after.txt
+823fefb93ef2a4600400a4df4671313b83c58a3b9df0ff634b50c7bf3e83910d  artifacts/official-codex-37452962706-1-Windows/environment-before.txt
+9d03ccc18cd99569e6f79989e5321a1f2bf23d547fcc47c4b148b425e17c0ae1  artifacts/official-codex-37452962706-1-Windows/last-phase.txt
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  artifacts/official-codex-37452962706-1-Windows/metadata-exit-code.txt
+3bf0ec0b54120cfc9fc070b94e89660bb3e9266720150b102faf69266c467065  artifacts/official-codex-37452962706-1-Windows/official-command.txt
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  artifacts/official-codex-37452962706-1-Windows/official-exit-code.txt
+0b1d3ce47d17a1d83a5d8f1f9686226c606c99f9c545dc561452cdbb641e47a8  artifacts/official-codex-37452962706-1-Windows/official-status.txt
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  artifacts/official-codex-37452962706-1-Windows/official-step-exit-code.txt
+b69cece30371f85cb4988e6ab25658f49b62afc54092a445054e0bd563159c0c  artifacts/official-codex-37452962706-1-Windows/official.stderr
+aa6c34c41528c7363c70ec7e6adfcc4e322e67aca710363d85b4ce5c9588ce0a  artifacts/official-codex-37452962706-1-Windows/official.stdout
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  artifacts/official-codex-37452962706-1-Windows/preparation-exit-code.txt
+50f92006a8fd22ce4013b4e3b7e4aab6f4f99ce23269421cf7462b8d306cf421  artifacts/official-codex-37452962706-1-Windows/python-yaml.txt
+2aab4d3456f23c89299cbbcc28c8b0dbe0bf09bf7c00b41244aa20c5834935c9  artifacts/official-codex-37452962706-1-Windows/skill-inventory.txt
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  artifacts/official-codex-37452962706-1-Windows/step-exit-code.txt
+b69cece30371f85cb4988e6ab25658f49b62afc54092a445054e0bd563159c0c  artifacts/official-codex-37452962706-1-Windows/step.stderr
+29df2ee78d57355df9aa7fdb3433c4b523c1e39a95cbcd5b908064cf9861048f  artifacts/official-codex-37452962706-1-Windows/step.stdout
+4363744599ed6a2c3329358aee889f17c590585bf67a6774174bddf9349588a4  artifacts/official-codex-37452962706-1-Windows/supplier-pin.txt
+3dbbfedfda9965cbafd7073de80c90de52eebcb08fd3b22e9f5bb7e562d2b1d5  artifacts/official-codex-37452962706-1-Windows/supplier.sha256
+fdc3993cddd6a78e627e3cdd2ada77229b0a6e87df81f484c73d2d0fad8f6619  MANIFEST.json
+c1003fd8d71eb5491d9c77e94a41399c035ea62719a0c4288b83a25f457c522b  metadata/artifacts.json
+6cad34034a511b6dc2822a326bb7f9731078577c1a1ffd61bcffcef7bf1c2aed  metadata/jobs.json
+0784cb1e4a056e90a940e4a269fbd64e799a028e2a8dead9eebb9cd756b68456  metadata/run.json
+39f2a9f6c1321c735c2f8ac3bd040e43348e2bbf06e9ebe7d7434b2ea6014a27  RUN-LOG-CONTENTS.json
+a4caaf2059bfa5f74957893af373ea1f887c41543af5f867147e3959a624bb5a  run-logs/0_Node 24 _ windows-latest.txt
+84d66930dc6f7a7f0b5d707a33c4951171d8c2e837b204edfd76fe85ee0f4c2b  run-logs/1_Node 24 _ ubuntu-latest.txt
+dadcbf487c9ae481cfcfe580995967d27241421f50355f5518fabec84418914f  run-logs/Node 24 _ ubuntu-latest/10_Verify release metadata.txt
+e03a44eee00e55ce4db10507781a8b73a8506dcd3a83fac3a35e2ac9fff71c71  run-logs/Node 24 _ ubuntu-latest/11_Verify source lock.txt
+45022b3698eab1276a81ba829cba034833058384830ed1990e74204f354e2117  run-logs/Node 24 _ ubuntu-latest/12_Build.txt
+c1be221fc04626e4fb0664cacefae815d655e6ef9fc0b8e167dd05dd8c134efc  run-logs/Node 24 _ ubuntu-latest/13_Verify process identity probe.txt
+dea0d7f368b6a65583a3859ae31e0e61de2437bc964c2aa06cac734cee9bbbfd  run-logs/Node 24 _ ubuntu-latest/14_Test.txt
+0b6b7dbf4ee138af14f041d709619ce427185a10245369f8b71584ebd6d9e7fd  run-logs/Node 24 _ ubuntu-latest/15_Verify installed runtime.txt
+744fdb105299df11f4da9ddf0b962f05f0cccf057bb338a4dd77041074363d43  run-logs/Node 24 _ ubuntu-latest/16_Validate plugin and skills.txt
+1e641613f0d92194ff8037a821fc371a4569405f13c33f015817a21d509fa764  run-logs/Node 24 _ ubuntu-latest/17_Validate official Codex metadata with pinned supplier.txt
+b12b37aadeb8e411cbd8aa4487ed02f1c826a5d36bc84267a07e13aa790a9a86  run-logs/Node 24 _ ubuntu-latest/18_Upload official validation evidence.txt
+fdc43e343f8b497cbafacf78e87db6693fa371d905e3875f0b8727bec5e5f52b  run-logs/Node 24 _ ubuntu-latest/1_Set up job.txt
+506f205d72b84acfce298a5784725011a9252004ba500164470b366861b93cdd  run-logs/Node 24 _ ubuntu-latest/21_Check manually dispatched commit whitespace.txt
+f1203eaf858fce547d72ebc6bf92430bfe8a9343833216e481101585afd00ce1  run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt
+6ee6a54c6d7e1d52990e9d1db3bab49c01aa614005911ff97cb00286992796e7  run-logs/Node 24 _ ubuntu-latest/3_Set up Node.js.txt
+d8d504e3882b0e0a2ce4cfda99c4726f6bfe42a39b32912cc68fcc7f91628bd4  run-logs/Node 24 _ ubuntu-latest/40_Post Set up Python.txt
+d5ab47a146a3e94e9e24e59172719fdc0a030f382f95151a3c27794f84cb477c  run-logs/Node 24 _ ubuntu-latest/41_Post Set up Node.js.txt
+ebe45bb450340c5f627a7aa53ef5d99bbf9a2ba11c7a25611462a0608b32658b  run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt
+9a19b86fb54b287b89eaf9bc70fc02061f2e301ace604ed3850ece22d0140614  run-logs/Node 24 _ ubuntu-latest/43_Complete job.txt
+39f988e5c47c05518fb99f7e1f12b7104ff3d0754b04be8e198804d5037ff119  run-logs/Node 24 _ ubuntu-latest/4_Set up Python.txt
+c67ed71893e982318f00f7f7f560a6daf9e7e35dd2c12cca8bfac74972cceb01  run-logs/Node 24 _ ubuntu-latest/5_Enable Corepack.txt
+bdcde06765066791b45312bb5615f999bc4aa2e743b9a50b2c0bc75f5cf5b59a  run-logs/Node 24 _ ubuntu-latest/6_Install locked dependencies.txt
+1a996c729402c9db0b0a8b454ac13539390fcd6dcbb28db164ebfd2ba3988bcc  run-logs/Node 24 _ ubuntu-latest/7_Verify committed runtime bundles.txt
+6163c3401e77cba13e702c0e3645d8e922efacb77f3562d30e5d8e949d685758  run-logs/Node 24 _ ubuntu-latest/8_Report Claude plugin drift.txt
+25d7b0b460e541c19dcf5f05dd8365c95f9b4d3105f736222d9d4699ea8e0f23  run-logs/Node 24 _ ubuntu-latest/9_Lint.txt
+136f0ddff9bd05d3e7b6e4f44e45031804a5bf28dbee70a8f99beb522d83f277  run-logs/Node 24 _ ubuntu-latest/system.txt
+9c421e0163695296600e51bdb1d1aca6969a5d19f9d9432d199023a2e252d1d8  run-logs/Node 24 _ windows-latest/10_Verify release metadata.txt
+a3e1d14e53a1be9f5d2a43d56cd9908c1db4cee4b78a12e924b10301083d3241  run-logs/Node 24 _ windows-latest/11_Verify source lock.txt
+ab2ec9777b594f2eed281653d9da2d82421eb8e63f82f8428bf586fd8e6b5c35  run-logs/Node 24 _ windows-latest/12_Build.txt
+fd5cea0a254dec41017d4ca168b051a9ae01745456eccb4f367960d31d1bf42c  run-logs/Node 24 _ windows-latest/13_Verify process identity probe.txt
+180310ef92635ae56b752caf179791f2248d0f970c7950d3795b2961a54ac683  run-logs/Node 24 _ windows-latest/14_Test.txt
+0b1b3a177e84ecf810857dfa7c035bf50066f2b43786af0a3d738b9db3d97b03  run-logs/Node 24 _ windows-latest/15_Verify installed runtime.txt
+f38a98eccdd8ebe58f763abf533b045badcd8fc9cda07398df0ca5c64861458c  run-logs/Node 24 _ windows-latest/16_Validate plugin and skills.txt
+e38eb8d9e8fb0398554767eda5b8aaa68d8f21355b4188da4ea9978bf9ecf6d1  run-logs/Node 24 _ windows-latest/17_Validate official Codex metadata with pinned supplier.txt
+5394f5a626451970b6af20c94b862977e11ac68ad995c005ba6cd9e2f5f705f8  run-logs/Node 24 _ windows-latest/18_Upload official validation evidence.txt
+da08452262ef06ed5fe90e72171153542b05715c8c06e9c5c6151f54120a8e00  run-logs/Node 24 _ windows-latest/1_Set up job.txt
+e746653cdf5e3a7bd12843c128e8852e7e18726b754f0c03997f8b1671b45153  run-logs/Node 24 _ windows-latest/21_Check manually dispatched commit whitespace.txt
+d3c99bf6cf67e2c6e504b4a553d1e0e9aad654aca0582565a256e18aa266b95b  run-logs/Node 24 _ windows-latest/2_Check out repository.txt
+b59f78ba501042a39a69bb19bd23f3ce689b128b97d089b5b503acdf5267538b  run-logs/Node 24 _ windows-latest/3_Set up Node.js.txt
+94c67bf41468a1d979ec207c3efa95ecf7c800943572706e1fa013cde19bcd4f  run-logs/Node 24 _ windows-latest/40_Post Set up Python.txt
+f4a1ee2809c7cea62e0363b28760a1802423f1c06fe76221a711d01b9885abcc  run-logs/Node 24 _ windows-latest/41_Post Set up Node.js.txt
+b4792fda15a9f29291978730d94ff45f16169cc705e9cc9610deea3074c40030  run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt
+86c24b92b753d7a26cd85b4e74481510deea9143c4f5e3c8f61ee89a22315608  run-logs/Node 24 _ windows-latest/43_Complete job.txt
+1c5fb7f0314d270f27f4ffd9dfd44eb72428034637dc59335c5792b201b59340  run-logs/Node 24 _ windows-latest/4_Set up Python.txt
+c93836faaa5da35abc3cc7a3d2644bffe7eae0b06795c05b0e5aec6c33c2013a  run-logs/Node 24 _ windows-latest/5_Enable Corepack.txt
+bc6315b79602fe03f436312fd617ffd25d40accf6ad73e71c3d5a21acaddb1ae  run-logs/Node 24 _ windows-latest/6_Install locked dependencies.txt
+61c6d3c12ada52030e9b2e55dd51c2d478f74066ca6bb55cc8c1835a427952de  run-logs/Node 24 _ windows-latest/7_Verify committed runtime bundles.txt
+be076c75d19d4724a425b1bee4ad3b365468c1cb55d3624c9814384afb61f2e7  run-logs/Node 24 _ windows-latest/8_Report Claude plugin drift.txt
+ac88b472fb0d8a0e70130df7d4d05621ecb5d26358645f146a4f2f7e8691b8a4  run-logs/Node 24 _ windows-latest/9_Lint.txt
+0b8b862615c95d653fd6a28a5f7c1619b458b5e4c270ff9d469b44ae0569f2a5  run-logs/Node 24 _ windows-latest/system.txt
+560d3b72c1bc08df6c1483ca1887c093ae71d3058af6819a954510ee43ca1e05  WORKLOG.ko.md

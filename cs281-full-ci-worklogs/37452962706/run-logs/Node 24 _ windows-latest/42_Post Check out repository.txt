@@ -1,0 +1,32 @@
+﻿2026-10-06T10:59:34.2125679Z Post job cleanup.
+2026-10-06T10:59:34.4125635Z [command]"<git-install>\bin\git.exe" version
+2026-10-06T10:59:34.4397016Z git version 2.55.0.windows.5
+2026-10-06T10:59:34.4459827Z Temporarily overriding HOME='<runner-temp>\<ephemeral-id>' before making global git config changes
+2026-10-06T10:59:34.4460977Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-06T10:59:34.4471315Z [command]"<git-install>\bin\git.exe" config --global --add safe.directory <repo>
+2026-10-06T10:59:34.4779825Z Removing SSH command configuration
+2026-10-06T10:59:34.4790510Z [command]"<git-install>\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-06T10:59:34.5094572Z [command]"<git-install>\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-06T10:59:35.0829278Z Removing HTTP extra header
+2026-10-06T10:59:35.0839734Z [command]"<git-install>\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-06T10:59:35.1185750Z [command]"<git-install>\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-06T10:59:35.6579305Z Removing includeIf entries pointing to credentials config files
+2026-10-06T10:59:35.6591433Z [command]"<git-install>\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-06T10:59:35.6884757Z includeif.gitdir:<repo>/.git.path
+2026-10-06T10:59:35.6885542Z includeif.gitdir:<repo>/.git/worktrees/*.path
+2026-10-06T10:59:35.6886083Z includeif.gitdir:/github/workspace/.git.path
+2026-10-06T10:59:35.6886540Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-10-06T10:59:35.6924284Z [command]"<git-install>\bin\git.exe" config --local --get-all includeif.gitdir:<repo>/.git.path
+2026-10-06T10:59:35.7184088Z <runner-temp>\git-credentials-<ephemeral-id>.config
+2026-10-06T10:59:35.7226059Z [command]"<git-install>\bin\git.exe" config --local --unset includeif.gitdir:<repo>/.git.path D\:\\a\\_temp\\git\-credentials\-4efef74d\-541c\-4f59\-87f7\-4e5eb8f2ed3b\.config
+2026-10-06T10:59:35.7539581Z [command]"<git-install>\bin\git.exe" config --local --get-all includeif.gitdir:<repo>/.git/worktrees/*.path
+2026-10-06T10:59:35.7800765Z <runner-temp>\git-credentials-<ephemeral-id>.config
+2026-10-06T10:59:35.7840970Z [command]"<git-install>\bin\git.exe" config --local --unset includeif.gitdir:<repo>/.git/worktrees/*.path D\:\\a\\_temp\\git\-credentials\-4efef74d\-541c\-4f59\-87f7\-4e5eb8f2ed3b\.config
+2026-10-06T10:59:35.8141918Z [command]"<git-install>\bin\git.exe" config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-10-06T10:59:35.8398465Z /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T10:59:35.8437527Z [command]"<git-install>\bin\git.exe" config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-4efef74d\-541c\-4f59\-87f7\-4e5eb8f2ed3b\.config
+2026-10-06T10:59:35.8738292Z [command]"<git-install>\bin\git.exe" config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-10-06T10:59:35.8991818Z /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T10:59:35.9064119Z [command]"<git-install>\bin\git.exe" config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-4efef74d\-541c\-4f59\-87f7\-4e5eb8f2ed3b\.config
+2026-10-06T10:59:35.9367232Z [command]"<git-install>\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-06T10:59:36.4812772Z Removing credentials config '<runner-temp>\git-credentials-<ephemeral-id>.config'

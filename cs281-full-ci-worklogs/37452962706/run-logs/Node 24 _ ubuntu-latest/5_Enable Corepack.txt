@@ -1,0 +1,11 @@
+﻿2026-10-06T10:55:21.7958453Z ##[group]Run corepack enable
+2026-10-06T10:55:21.7958760Z [36;1mcorepack enable[0m
+2026-10-06T10:55:21.8200953Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:55:21.8201181Z env:
+2026-10-06T10:55:21.8201350Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:55:21.8201763Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T10:55:21.8202000Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:55:21.8202218Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:55:21.8202433Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:55:21.8202642Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T10:55:21.8202826Z ##[endgroup]
