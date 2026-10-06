@@ -1,10 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { checkSkillContextOptimization, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
+import { checkSkillContextOptimization, matchesEngineeringReferenceUpdate, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
 
 describe("skill context optimization", () => {
+  it("accepts only the frozen engineering reference paths and bytes", () => {
+    const directory = new URL("../../skills/orchestrator/references/engineering-practices/", import.meta.url);
+    for (const name of readdirSync(directory)) {
+      const bytes = readFileSync(new URL(name, directory));
+      expect(matchesEngineeringReferenceUpdate(name, bytes), name).toBe(true);
+      const altered = Buffer.from(bytes);
+      altered[altered.length - 1] ^= 1;
+      expect(matchesEngineeringReferenceUpdate(name, altered), name).toBe(false);
+    }
+    expect(matchesEngineeringReferenceUpdate("unreviewed.md", Buffer.from("extra"))).toBe(false);
+  });
   it("rejects a changed engineering bridge and still rejects changes to the preceding CS bridge", () => {
     const root = path.resolve(import.meta.dirname, "../..");
     const directory = mkdtempSync(path.join(tmpdir(), "ags-engineering-bridge-"));

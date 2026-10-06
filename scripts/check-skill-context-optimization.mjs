@@ -16,6 +16,20 @@ const CS_REGISTRY_SHA256 = "63fc38d9dff8570173af73092e320c4ff2467d26185fb6528ea3
 const ENGINEERING_ADDITION = "scripts/fixtures/engineering-practices-handoff.2.8.1.md";
 const ENGINEERING_ADDITION_SHA256 = "6f4bc0fd90113630f077415038492cbceddbaafb9e4e566c750111fafb3abef1";
 const ENGINEERING_REGISTRY_SHA256 = "dd9c818c5e50d15316b3adc82c77c06810f3efbc6633c957855c1655d6159adc";
+const ENGINEERING_REFERENCES = Object.freeze({
+  "agent-instructions.md": "a6df55ef522a75262b93381ad2f8b5fcaca4212a0afeab6cc0d1a90de2230424",
+  "catalog.json": "936714985d22b8ea67b51c5d74cceef2d1321efac8dbfca58989ba124bff3d81",
+  "cli.md": "be715633beccc35385f6b1ae3c0c822d1a3487afcae9398bda0d9cf74cfa9341",
+  "code-review.md": "2f0e7f9a75293084a766aa997daf39fe3d2dbbd6e45f9c7455709e9766f8b492",
+  "debugging.md": "86239a76c5553be28fe4fddc89fa55b355015e20361d528fcb4c4874bc7fab84",
+  "dependency.md": "88c6db7f0e7f2feb90484c8519eacdb51a313f96f38d7e3f62858e3df1d3ceaa",
+  "implementation.md": "4b338f1d4b7dd51726f8f007c927bcae575c120283142136f802e64590defbd1",
+  "index.md": "75d831fd83588e02f8604fa827ceace01b88cee04c0af5e820d46edd50ffe081",
+  "sources.lock.json": "2c3bff501633df40599cf6e631db0a885beec38e4690e51a9628097c8e719b9d",
+  "test-design.md": "fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c",
+  "test-proof.md": "7ac0a9d5031d32e5d2b3770a080c1629451903184dac1e38e240812c6fc91e1d",
+  "verification.md": "0eb46c1e34a3d53cd171b4e254c186aab11e062d7b2ebf456fa700df347c4f62",
+});
 // Intake changes policy after the original optimization. Pin only this revision;
 // all other skills keep their historical byte-for-byte checks.
 const ORCHESTRATOR_INTAKE = Object.freeze({
@@ -89,6 +103,11 @@ export function matchesNode24ReadmeUpdate(skillId, baseline, candidate) {
 export function matchesOrchestratorIntakeUpdate(kind, bytes) {
   return Object.hasOwn(ORCHESTRATOR_INTAKE.hashes, kind)
     && createHash("sha256").update(bytes).digest("hex") === ORCHESTRATOR_INTAKE.hashes[kind];
+}
+
+export function matchesEngineeringReferenceUpdate(name, bytes) {
+  return Object.hasOwn(ENGINEERING_REFERENCES, name)
+    && createHash("sha256").update(bytes).digest("hex") === ENGINEERING_REFERENCES[name];
 }
 
 export function reconstructOptimizedSkill(skillId, root = ROOT) {
@@ -165,7 +184,16 @@ export function checkSkillContextOptimization() {
     if (!readFileSync(join(ROOT, ...descriptorPath.split("/"))).equals(baselineFile(descriptorPath))) errors.push(`${skillId}: agents/openai.yaml changed`);
 
     const allowed = new Set([skillPath, detailPath]);
-    if (skillId === "orchestrator") allowed.add("skills/orchestrator/references/mcp-execution.md");
+    if (skillId === "orchestrator") {
+      allowed.add("skills/orchestrator/references/mcp-execution.md");
+      for (const name of Object.keys(ENGINEERING_REFERENCES)) {
+        const referencePath = `skills/orchestrator/references/engineering-practices/${name}`;
+        if (!matchesEngineeringReferenceUpdate(name, readFileSync(join(ROOT, referencePath)))) {
+          errors.push(`orchestrator: pinned engineering reference differs: ${name}`);
+        }
+        allowed.add(referencePath);
+      }
+    }
     if (README_CHANGES.has(skillId)) allowed.add(`skills/${skillId}/README.md`);
     if (Object.hasOwn(NODE24_README_MINIMUMS, skillId)) {
       const readmePath = `skills/${skillId}/README.md`;
