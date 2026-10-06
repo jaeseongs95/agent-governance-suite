@@ -25,7 +25,7 @@ drwxr-xr-x  6 root root  4096 2026-10-03 05:42:46.000000000 +0000 .config
 drwxr-xr-x  4 root root  4096 2026-10-03 05:38:13.000000000 +0000 .gradle
 drwxr-xr-x  6 root root  4096 2026-10-06 11:04:15.450984313 +0000 .local
 drwxr-xr-x  2 root root  4096 2026-10-03 05:42:29.000000000 +0000 .nix-defexpr
-lrwxrwxrwx  1 root root    43 2026-10-03 05:42:30.000000000 +0000 .nix-profile -> /nix/var/nix/profiles/per-user/root/profile
+lrwxrwxrwx  1 root root    43 2026-10-03 05:42:30.000000000 +0000 .nix-profile -> /nix/var/nix/profiles/per-user<PRIVATE_HOME>
 drwxr-xr-x  4 root root  4096 2026-10-06 11:04:01.202983466 +0000 .npm
 drwxr-xr-x  3 root root  4096 2026-10-06 11:04:14.590984262 +0000 .pki
 -rw-r--r--  1 root root   187 2026-10-03 05:41:44.000000000 +0000 .profile
