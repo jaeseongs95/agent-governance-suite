@@ -31,7 +31,7 @@ function run(directory, args) {
 
 describe("Engineering Practices source integration", () => {
   it("runs the original core and public CLI regression suites with the native AGS schema runtime", () => {
-    const result = run(root, ["--test", "tests/engineering-practices/core.node.mjs", "tests/engineering-practices/paths-runner-cli.node.mjs"]);
+    const result = run(root, ["--test", "--test-reporter=tap", "tests/engineering-practices/core.node.mjs", "tests/engineering-practices/paths-runner-cli.node.mjs"]);
     expect(result.error).toBeUndefined();
     expect(result.status, result.stderr + result.stdout).toBe(0);
     expect(result.stdout).toMatch(/# fail 0/u);

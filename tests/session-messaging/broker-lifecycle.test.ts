@@ -1,6 +1,6 @@
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { once } from "node:events";
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, open, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import net from "node:net";
 import path from "node:path";
@@ -32,6 +32,7 @@ async function launch(mode: string) {
   await writeFile(path.join(directory, "endpoint.json"), "previous endpoint\n");
   if (mode === "database") await mkdir(path.join(directory, "session-messages.sqlite3"));
   if (mode === "credentials") await mkdir(path.join(directory, "broker.token"));
+  const started = performance.now();
   const child = spawn(process.execPath, ["--import", fixture, broker, "--state-directory", directory], {
     windowsHide: true,
     stdio: ["ignore", "ignore", "pipe"],
@@ -40,12 +41,43 @@ async function launch(mode: string) {
   children.push(child);
   let stderr = "";
   child.stderr!.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
-  return { directory, child, stderr: () => stderr };
+  async function diagnose(error: unknown) {
+    const snapshot = {
+      mode, pid: child.pid, elapsedMs: performance.now() - started,
+      exitCode: child.exitCode, signalCode: child.signalCode,
+      error: error instanceof Error ? error.message : String(error),
+      stderr: stderr.slice(0, 8192), stderrTruncated: stderr.length > 8192,
+    };
+    async function fileState(name: string) {
+      try {
+        const file = await open(path.join(directory, name), "r");
+        try {
+          const buffer = Buffer.alloc(4096);
+          const { bytesRead } = await file.read(buffer, 0, buffer.length, 0);
+          return { exists: true, content: buffer.subarray(0, bytesRead).toString("utf8"),
+            truncated: (await file.stat()).size > bytesRead };
+        } finally {
+          await file.close();
+        }
+      } catch (failure) {
+        const code = (failure as NodeJS.ErrnoException).code;
+        return { exists: code === "ENOENT" ? false : null, errorCode: code ?? "UNKNOWN" };
+      }
+    }
+    const [endpoint, lock] = await Promise.all([fileState("endpoint.json"), fileState("broker.lock")]);
+    console.error("Disposable broker readiness failure:", { ...snapshot, endpoint, lock });
+  }
+  return { directory, child, stderr: () => stderr, diagnose };
 }
 
 it("retries transient endpoint publication failures and serves the published endpoint", async () => {
-  const { directory, child } = await launch("transient");
-  await waitForSessionMessageBrokerReady(directory, child, 3000);
+  const { directory, child, diagnose } = await launch("transient");
+  try {
+    await waitForSessionMessageBrokerReady(directory, child, 3000);
+  } catch (error) {
+    await diagnose(error).catch(() => {});
+    throw error;
+  }
   expect(JSON.parse(await readFile(path.join(directory, "endpoint.json"), "utf8")).pid).toBe(child.pid);
   await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toMatchObject({
     protocolVersion: "1.0.0",
@@ -55,8 +87,13 @@ it("retries transient endpoint publication failures and serves the published end
 });
 
 it.each(["permanent", "ENOSPC", "credentials", "database"])("releases startup resources after %s failure and allows recovery", async (mode) => {
-  const { directory, child, stderr } = await launch(mode);
-  await expect(waitForSessionMessageBrokerReady(directory, child, 3000)).rejects.toThrow(/exited before it was ready/u);
+  const { directory, child, stderr, diagnose } = await launch(mode);
+  try {
+    await expect(waitForSessionMessageBrokerReady(directory, child, 3000)).rejects.toThrow(/exited before it was ready/u);
+  } catch (error) {
+    await diagnose(error).catch(() => {});
+    throw error;
+  }
   expect(child.exitCode).toBe(1);
   expect(stderr()).toContain(mode === "permanent" ? "EPERM" : mode === "ENOSPC" ? "ENOSPC" : "startup failed");
   expect(await readFile(path.join(directory, "endpoint.json"), "utf8")).toBe("previous endpoint\n");
