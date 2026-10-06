@@ -38,8 +38,6 @@ You need Node.js **24.0.0 or later** and plugin support in the host you use. Ins
 The current public release is `v2.8.0` and includes seventeen governance specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow.
 <!-- release-version:end -->
 
-This tree is the 2.8.0 review candidate; the public release remains v2.7.7. Remote installation examples retain the public version. Review the candidate from its ZIP/patch.
-
 ### Claude Code
 
 Run inside Claude Code:
