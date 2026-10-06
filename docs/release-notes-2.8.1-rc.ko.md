@@ -10,4 +10,4 @@ AGS 2.8.1 후보는 테스트 설계·근거 검토와 고정 변경분 코드 �
 
 후보 작업 트리에는 source, registry·source lock, orchestrator bridge와 기존 테스트 wrapper 연결이 반영되어 있다. 입력 payload 47개 중 42개는 byte를 유지하고 5개는 lint와 content lock 정합성을 위한 통합 delta다. 새 package script와 npm 의존성은 추가하지 않았다. 직접 스킬 선택, registry provider 실행, 통합된 validator, 전체 repository·bundle·runtime·official 검사, Codex·Claude 생성물, 실제 호스트 로딩과 독립 감사를 실행하지 않았다. 입력 패키지의 자체 검증 보고는 통합 후보의 PASS로 재사용하지 않는다.
 
-후보 tree의 package·plugin·marketplace metadata는 2.8.1로 맞추되, `publicVersion`과 README 설치 예시는 선행 출시 대상인 2.8.0을 가리킨다. 현재 원격 공개 `main`과 tag에는 2.8.0이 아직 게시되지 않았다. 사용자 지시로 승인된 출시 순서에 따라 2.8.0의 공개·현재 PC 설치 검증을 먼저 완료하고, 2.8.1의 source pin·생성물·실제 검사와 독립 감사를 고정한 뒤 2.8.1 공개 tag·Release·Cloud 검증·사용자 설치를 진행한다.
+후보 tree의 package·plugin·marketplace metadata는 2.8.1로 맞추되, `publicVersion`과 README 설치 예시는 공개 순서상 앞선 2.8.0을 가리킨다. 현재 원격 공개 `main`과 tag에는 2.8.0이 아직 게시되지 않았다. 2.8.1 Cloud 검증은 2.8.0 설치 QA와 병행하고, 이어 최종 source·generated pin과 독립 감사를 고정한 뒤 2.8.0 다음 순서로 2.8.1 공개 tag·Release를 진행한다. 공개 뒤 release metadata 생성기가 README 설치 예시를 전환한다. 현재 PC 설치 권한은 2.8.0에만 적용되며 2.8.1 업데이트 권한으로 확대하지 않는다.
