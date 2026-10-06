@@ -1,0 +1,14 @@
+{
+  "label": "06-final2-validate-official",
+  "command": [
+    "pnpm",
+    "run",
+    "validate:official"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate",
+  "startedUtc": "2026-10-06T06:05:01.567026+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:05:03.567101+00:00",
+  "stdout": "06-final2-validate-official.stdout.log",
+  "stderr": "06-final2-validate-official.stderr.log"
+}

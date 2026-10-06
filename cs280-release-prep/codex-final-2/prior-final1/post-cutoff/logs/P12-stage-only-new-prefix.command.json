@@ -1,0 +1,15 @@
+{
+  "label": "P12-stage-only-new-prefix",
+  "command": [
+    "git",
+    "add",
+    "--",
+    "cs280-release-prep/codex-final-1/"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/evidence-repo",
+  "startedUtc": "2026-10-06T05:59:41.404531+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:59:41.435547+00:00",
+  "stdout": "P12-stage-only-new-prefix.stdout.log",
+  "stderr": "P12-stage-only-new-prefix.stderr.log"
+}

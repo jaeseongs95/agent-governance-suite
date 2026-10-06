@@ -1,0 +1,22 @@
+{
+  "origin": "https://github.com/jaeseongs95/agent-governance-suite.git",
+  "ref": "refs/heads/codex/release-candidate-2.8.0",
+  "commit": "b7341d3e6636b79217b1f3d37d7a5014fcbf47be",
+  "tree": "5648f76558e923244cedf78a8263892d00df8299",
+  "detached": true,
+  "clean": true,
+  "baseline": "4ba47558020bd5e501fa9718f09d562dcf573713",
+  "changedPaths": [
+    "M\tREADME.en.md",
+    "M\tREADME.md",
+    "M\tdocs/release-notes-2.8.0-rc.ko.md",
+    "M\tdocs/roadmap.md",
+    "M\trelease/version.json",
+    "M\ttests/cs-engineering/files.node.mjs",
+    "M\ttests/session-messaging/session-message.test.ts"
+  ],
+  "productDelta": "Two test files, four docs and release/version.json only. Official plugin/skills/runner/package/lock and production runtime/bundles unchanged versus4ba. Public-release wording is prepared metadata, not evidence of a release.",
+  "firstPacketDelivered": true,
+  "firstPacketLibraryId": "[REDACTED:PRIVATE_RESOURCE]",
+  "firstPacketZipSha256": "1110e6b0bea193247b66ec17e3f312f84ac6187e38b4bf57bb74c5fea690210d"
+}

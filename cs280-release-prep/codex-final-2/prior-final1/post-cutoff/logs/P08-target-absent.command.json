@@ -1,0 +1,16 @@
+{
+  "label": "P08-target-absent",
+  "command": [
+    "git",
+    "ls-tree",
+    "HEAD",
+    "--",
+    "cs280-release-prep/codex-final-1"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/evidence-repo",
+  "startedUtc": "2026-10-06T05:59:08.777147+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:59:08.779527+00:00",
+  "stdout": "P08-target-absent.stdout.log",
+  "stderr": "P08-target-absent.stderr.log"
+}

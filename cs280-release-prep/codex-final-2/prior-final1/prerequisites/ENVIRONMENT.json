@@ -1,0 +1,58 @@
+{
+  "environment": "Actual Codex Cloud Linux",
+  "observedAtUtc": "2026-10-06T05:50:05.137146+00:00",
+  "hostname": "d19a608d7837",
+  "kernel": "6.18.44",
+  "architecture": "x86_64",
+  "pidNamespace": "pid:[4026532200]",
+  "containerCgroupSha256": "e57fd7b21104f091de366ace1464596378a498b0a5e63f1b21147a8998c20107",
+  "node": "v24.19.0",
+  "pnpm": "11.19.0",
+  "python": "3.12.14",
+  "pythonExecutable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+  "yamlVersion": "6.0.3",
+  "yamlModule": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/site-packages/yaml/__init__.py",
+  "workspace": "REUSED; this candidate checkout is NEW",
+  "runtime": "REUSED preinstalled Node/pnpm/Python/PyYAML",
+  "container": "Current local namespace identity and PID1 match prior official1",
+  "remoteEnvironmentReuse": "Not inferred",
+  "deps": {
+    "state": "NEW, no node_modules before install, no sharing of prior node_modules",
+    "storeArgument": "/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private",
+    "effectiveStore": "/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private/v11",
+    "storeNewEmptyAtCreation": true,
+    "userGlobalConfiguration": "Not queried/repaired/modified by task"
+  },
+  "tmp": {
+    "path": "/workspace/ags-cs-2x/official-final-3ff79982/tmp-private",
+    "createdNew": true
+  },
+  "state": {
+    "path": "/workspace/ags-cs-2x/official-final-3ff79982/state-private",
+    "createdNew": true,
+    "database": "NONE used/opened"
+  },
+  "otherDatabases": "UNKNOWN/not queried",
+  "codeHome": {
+    "path": "/workspace/ags-cs-2x/official-final-3ff79982/codex-home-disposable",
+    "createdNew": true,
+    "supplierBytesReverified": true,
+    "noProfilesRegistryKeys": true
+  },
+  "priorJobs": "Prior CS/official1 artifacts retained; prior results not reused as this outcome",
+  "concurrent": {
+    "observedAtUtc": "2026-10-06T05:50:04.225525+00:00",
+    "pid1": {
+      "pid": 1,
+      "state": "S",
+      "ppid": 0,
+      "starttime": "27",
+      "comm": "tail"
+    },
+    "activeTestBuildInstallProcesses": [],
+    "zombiesObserved": 253,
+    "scope": "Current namespace /proc metadata only, no argv contents, signals/sockets/reaping. Outside namespace jobs UNKNOWN."
+  },
+  "firstOfficial1": "exit1 before Python validators, implicit install/user-store ENOENT retained",
+  "changedInput": "New final source b734; explicitly authorized frozen install with private --store-dir; no dependency gate relaxation"
+}

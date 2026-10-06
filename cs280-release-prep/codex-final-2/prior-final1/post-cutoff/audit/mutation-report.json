@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "1.0.0",
+  "operationId": "cs280-final-official-evidence-3ff79982",
+  "actionDigest": "sha256:e69ec713d77c2a0dbf92c855d7c8073e5c8f48630d8085cf45f4812b545cb620",
+  "targetDigest": "sha256:791e8a7e08f07975ed6b4d6192543130abd5a76be54c217d7fe27f9c3d90c301",
+  "classification": {
+    "actionClass": "publish",
+    "reversibility": "reversible",
+    "externalImpact": true,
+    "dataLossPotential": false,
+    "permissionImpact": false
+  },
+  "checks": [
+    {
+      "checkId": "target-specificity",
+      "state": "passed",
+      "evidenceRefs": [],
+      "message": "모든 대상이 구체적으로 식별됐습니다."
+    },
+    {
+      "checkId": "scope-match",
+      "state": "passed",
+      "evidenceRefs": [
+        "/workspace/ags-cs-2x/official-final-3ff79982/audit/scope-capture-input.json"
+      ],
+      "message": "대상이 작업 범위 안에 있습니다."
+    },
+    {
+      "checkId": "authorization-match",
+      "state": "passed",
+      "evidenceRefs": [
+        "/workspace/ags-cs-2x/official-final-3ff79982/audit/authorization.json"
+      ],
+      "message": "행동, 대상과 환경이 허용 범위에 있습니다."
+    },
+    {
+      "checkId": "current-state",
+      "state": "passed",
+      "evidenceRefs": [
+        "/workspace/ags-cs-2x/official-final-3ff79982/audit/current-state.json"
+      ],
+      "message": "현재 fingerprint가 예상값과 일치합니다."
+    },
+    {
+      "checkId": "approval",
+      "state": "passed",
+      "evidenceRefs": [
+        "/workspace/ags-cs-2x/official-final-3ff79982/audit/authorization.json"
+      ],
+      "message": "승인 상태: observed"
+    },
+    {
+      "checkId": "recovery",
+      "state": "passed",
+      "evidenceRefs": [
+        "/workspace/ags-cs-2x/official-final-3ff79982/audit/scope-baseline-frozen.json",
+        "/workspace/ags-cs-2x/official-final-3ff79982/audit/restore-rehearsal.json"
+      ],
+      "message": "복구 또는 명시적 비가역성 수용 근거가 있습니다."
+    },
+    {
+      "checkId": "blast-radius",
+      "state": "passed",
+      "evidenceRefs": [],
+      "message": "예상 영향 범위가 모든 대상을 포함합니다."
+    }
+  ],
+  "approval": {
+    "required": true,
+    "status": "observed",
+    "evidenceRefs": [
+      "/workspace/ags-cs-2x/official-final-3ff79982/audit/authorization.json"
+    ]
+  },
+  "recovery": {
+    "available": true,
+    "restoreTested": true,
+    "irreversibilityAccepted": false,
+    "evidenceRefs": [
+      "/workspace/ags-cs-2x/official-final-3ff79982/audit/scope-baseline-frozen.json",
+      "/workspace/ags-cs-2x/official-final-3ff79982/audit/restore-rehearsal.json"
+    ]
+  },
+  "blastRadius": {
+    "affectedTargets": 1,
+    "affectedUsers": 0,
+    "external": true,
+    "description": "One publicly readable evidence subtree; no operational/product users or installations changed. Public readership is not bounded by this numeric affectedUsers field."
+  },
+  "unresolved": [],
+  "invalidationTriggers": [
+    "action 또는 planned tool 변경",
+    "target 또는 environment 변경",
+    "current-state evidence 또는 fingerprint 변경",
+    "scope 또는 authorization 변경",
+    "승인 evidence의 만료 또는 범위 변경",
+    "복구 계획 변경",
+    "예상 blast radius 변경"
+  ],
+  "validUntil": "2026-10-06T06:15:14.110Z",
+  "observedAt": "2026-10-06T06:00:14.110Z",
+  "verdict": "READY"
+}

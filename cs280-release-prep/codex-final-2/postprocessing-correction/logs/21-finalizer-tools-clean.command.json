@@ -1,0 +1,14 @@
+{
+  "label": "21-finalizer-tools-clean",
+  "command": [
+    "git",
+    "status",
+    "--porcelain"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final2-d0ce2935/tools",
+  "startedUtc": "2026-10-06T06:12:56.723537+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:12:56.725386+00:00",
+  "stdout": "21-finalizer-tools-clean.stdout.log",
+  "stderr": "21-finalizer-tools-clean.stderr.log"
+}

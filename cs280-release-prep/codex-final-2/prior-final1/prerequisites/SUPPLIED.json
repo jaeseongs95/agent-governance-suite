@@ -1,0 +1,44 @@
+{
+  "sourceCommit": "10382da79a2a2d6e8ae221fa63077215389c1ad2",
+  "suppliedHome": "/workspace/ags-cs-2x/official-final-3ff79982/codex-home-disposable",
+  "createdNew": true,
+  "verifiedFiles": [
+    {
+      "sourcePath": "codex-rs/skills/src/assets/samples/plugin-creator/scripts/validate_plugin.py",
+      "temporaryPath": "skills/.system/plugin-creator/scripts/validate_plugin.py",
+      "bytes": 21739,
+      "sha256": "f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944",
+      "gitBlob": "b5be462c3b4fe3ea6083cca948ccf52e05301546"
+    },
+    {
+      "sourcePath": "codex-rs/skills/src/assets/samples/plugin-creator/scripts/identifier_validation.py",
+      "temporaryPath": "skills/.system/plugin-creator/scripts/identifier_validation.py",
+      "bytes": 784,
+      "sha256": "a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223",
+      "gitBlob": "41a1a2f1b503c165f5d4b93f7f0e99eb0b3add6e"
+    },
+    {
+      "sourcePath": "codex-rs/skills/src/assets/samples/skill-creator/scripts/quick_validate.py",
+      "temporaryPath": "skills/.system/skill-creator/scripts/quick_validate.py",
+      "bytes": 4249,
+      "sha256": "ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c",
+      "gitBlob": "e27023ece4bd259ef36560e19995eec7b6a345bf"
+    },
+    {
+      "sourcePath": "LICENSE",
+      "temporaryPath": ".supplier/LICENSE",
+      "bytes": 10926,
+      "sha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc",
+      "gitBlob": "4606e72e042564097e8780d66c1d4dcb611869bd"
+    },
+    {
+      "sourcePath": "NOTICE",
+      "temporaryPath": ".supplier/NOTICE",
+      "bytes": 242,
+      "sha256": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915",
+      "gitBlob": "2805899d56d0332d175cfc613c67d45d6f006db7"
+    }
+  ],
+  "reuse": "Same previously remote-verified supplier objects; all5 blobs/raw bytes rechecked, new private home copies.",
+  "defaultHomeModified": false
+}

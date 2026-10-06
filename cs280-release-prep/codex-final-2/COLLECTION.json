@@ -1,0 +1,21 @@
+{
+  "cutoffUtc": "2026-10-06T06:09:50.260913+00:00",
+  "candidate": "b7341d3e6636b79217b1f3d37d7a5014fcbf47be",
+  "tree": "5648f76558e923244cedf78a8263892d00df8299",
+  "sourceTrackedFiles": 1344,
+  "sourceByteExactPrePost": true,
+  "supplier": "10382da79a2a2d6e8ae221fa63077215389c1ad2",
+  "supplierFilesByteExact": 5,
+  "actualOfficial": "ONE authorized child-store binding pnpm run validate:official, exit0, plugin PASS plus22 skill PASS",
+  "priorWrapperFailures": "First official1 user-store ENOENT and final1 unsupported run store-dir retained; original FAIL/NOT_RUN not overwritten",
+  "dependencyInput": "Reused locked final1 private store/node_modules. Child config get store-dir and store path matched; workspace/module state and lock unchanged",
+  "internalPnpmPrefix": "Already up to date / Done observed; detailed invocation path untraced, raw narrow implicitInstallObserved flag not a zero-call claim",
+  "priorFinal1": "Existing187-file remote folder c46f20c283a9a31198dcea262e0b65b2f9eafefe unchanged. Its actual post-cutoff worklogs/proof inputs included in prior-final1 subtree, metadata only for other existing evidence; no other session transcript/body copied.",
+  "unavailable": "Full native transcript and unexported read-only exploratory tool stdout NOT_VERIFIABLE. No internal reasoning reconstructed. Drive/Library provider signed URL/service values excluded.",
+  "publication": "Only new authorized cs280-release-prep/codex-final-2 subtree; no first official1 publication, main/tag/release/host install writes",
+  "remaining": "Plain fullLinux3F not rerun/promoted, quality A/B/C NOT_RUN, signed whole lifecycle/global acceptance NOT_IMPLEMENTED, SOURCE/release audit separate parent responsibility",
+  "postCutoff": "13,14 and10 completion, scope/preflight/push/Library delivery outside initial packet; actual local captures retained with final delivery cutoff separately",
+  "correctionCutoffUtc": "2026-10-06T06:12:56.725614+00:00",
+  "failedScan": "13 exit1 on generated generic HOME wording; before prose/FAIL/command kept. Expression corrected, scanner checks unchanged.",
+  "afterCorrectionCutoff": "18,19,current17 completion and scope/preflight/push/Library delivery are outside this packet. Actual captures retained separately."
+}

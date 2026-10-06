@@ -1,0 +1,15 @@
+{
+  "label": "P00-publish-syntax",
+  "command": [
+    "python",
+    "-m",
+    "py_compile",
+    "tools/publish.py"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982",
+  "startedUtc": "2026-10-06T05:59:06.046925+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:59:06.072292+00:00",
+  "stdout": "P00-publish-syntax.stdout.log",
+  "stderr": "P00-publish-syntax.stderr.log"
+}

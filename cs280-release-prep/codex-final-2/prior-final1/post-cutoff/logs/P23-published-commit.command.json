@@ -1,0 +1,14 @@
+{
+  "label": "P23-published-commit",
+  "command": [
+    "git",
+    "rev-parse",
+    "HEAD"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/evidence-repo",
+  "startedUtc": "2026-10-06T06:00:14.634220+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:00:14.635460+00:00",
+  "stdout": "P23-published-commit.stdout.log",
+  "stderr": "P23-published-commit.stderr.log"
+}

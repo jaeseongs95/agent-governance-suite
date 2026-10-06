@@ -1,0 +1,21 @@
+{
+  "label": "P22-evidence-commit",
+  "command": [
+    "git",
+    "-c",
+    "user.name=Codex-Cloud-Evidence",
+    "-c",
+    "user.email=redacted",
+    "-c",
+    "commit.gpgsign=false",
+    "commit",
+    "-m",
+    "docs: append CS final official preparation and pnpm option blocker evidence"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/evidence-repo",
+  "startedUtc": "2026-10-06T06:00:14.612462+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:00:14.633900+00:00",
+  "stdout": "P22-evidence-commit.stdout.log",
+  "stderr": "P22-evidence-commit.stderr.log"
+}

@@ -1,0 +1,15 @@
+{
+  "label": "04-child-config-store-dir",
+  "command": [
+    "pnpm",
+    "config",
+    "get",
+    "store-dir"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate",
+  "startedUtc": "2026-10-06T06:05:00.697568+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:05:01.187191+00:00",
+  "stdout": "04-child-config-store-dir.stdout.log",
+  "stderr": "04-child-config-store-dir.stderr.log"
+}

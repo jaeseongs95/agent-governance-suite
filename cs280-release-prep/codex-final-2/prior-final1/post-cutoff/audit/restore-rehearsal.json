@@ -1,0 +1,6 @@
+{
+  "baseTree": "2e5eafa0daf1bbafd864701d3d0ac5d1b6cb90c0",
+  "restoredTree": "2e5eafa0daf1bbafd864701d3d0ac5d1b6cb90c0",
+  "exact": true,
+  "method": "Only separate temporary index removes own187 new paths; actual index/worktree/existing folders untouched"
+}

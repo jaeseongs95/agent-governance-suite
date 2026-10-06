@@ -1,0 +1,15 @@
+{
+  "label": "P20-exact-staged-scope",
+  "command": [
+    "git",
+    "diff",
+    "--cached",
+    "--name-status"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/evidence-repo",
+  "startedUtc": "2026-10-06T06:00:14.604452+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:00:14.607484+00:00",
+  "stdout": "P20-exact-staged-scope.stdout.log",
+  "stderr": "P20-exact-staged-scope.stderr.log"
+}

@@ -1,0 +1,41 @@
+{
+  "lastValidatedTimestamp": 1791265810677,
+  "projects": {
+    "/workspace/ags-cs-2x/official-final-3ff79982/candidate": {
+      "name": "agent-governance-suite",
+      "version": "2.8.0"
+    }
+  },
+  "pnpmfiles": [],
+  "settings": {
+    "allowBuilds": {
+      "esbuild": true
+    },
+    "autoInstallPeers": true,
+    "catalogs": {},
+    "dedupeDirectDeps": false,
+    "dedupeInjectedDeps": true,
+    "dedupePeerDependents": true,
+    "dedupePeers": false,
+    "dev": true,
+    "excludeLinksFromLockfile": false,
+    "hoistPattern": [
+      "*"
+    ],
+    "hoistWorkspacePackages": true,
+    "injectWorkspacePackages": false,
+    "linkWorkspacePackages": false,
+    "minimumReleaseAge": 1440,
+    "minimumReleaseAgeIgnoreMissingTime": true,
+    "nodeLinker": "isolated",
+    "optional": true,
+    "peersSuffixMaxLength": 1000,
+    "preferWorkspacePackages": false,
+    "production": true,
+    "publicHoistPattern": [],
+    "workspacePackagePatterns": [
+      "."
+    ]
+  },
+  "filteredInstall": false
+}

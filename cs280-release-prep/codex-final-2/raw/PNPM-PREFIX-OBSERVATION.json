@@ -1,0 +1,264 @@
+{
+  "observedLines": [
+    "Already up to date",
+    "Done in 395ms using pnpm v11.19.0"
+  ],
+  "explicitNewInstallCommands": 0,
+  "internalPnpmInstallOutputObserved": true,
+  "rawHeuristic": "OFFICIAL-RESULT implicitInstallObserved=false was a narrow Packages/Progress/Lockfile pattern. It does not establish zero internal installer calls; original report preserved.",
+  "confirmedInternalInvocationPath": null,
+  "sourceSupport": [
+    {
+      "start": 200292,
+      "end": 200314,
+      "lines": [
+        {
+          "number": 200292,
+          "text": "var init_verifyPacquetIdentity = __esm({"
+        },
+        {
+          "number": 200293,
+          "text": "  \"../installing/commands/lib/verifyPacquetIdentity.js\"() {"
+        },
+        {
+          "number": 200294,
+          "text": "    \"use strict\";"
+        },
+        {
+          "number": 200295,
+          "text": "    init_lib28();"
+        },
+        {
+          "number": 200296,
+          "text": "    init_lib136();"
+        },
+        {
+          "number": 200297,
+          "text": "    init_lib2();"
+        },
+        {
+          "number": 200298,
+          "text": "    init_lib80();"
+        },
+        {
+          "number": 200299,
+          "text": "    init_lib3();"
+        },
+        {
+          "number": 200300,
+          "text": "    init_lib52();"
+        },
+        {
+          "number": 200301,
+          "text": "    init_runPacquet();"
+        },
+        {
+          "number": 200302,
+          "text": "  }"
+        },
+        {
+          "number": 200303,
+          "text": "});"
+        },
+        {
+          "number": 200304,
+          "text": ""
+        },
+        {
+          "number": 200305,
+          "text": "// ../installing/commands/lib/installDeps.js"
+        },
+        {
+          "number": 200306,
+          "text": "import path158 from \"node:path\";"
+        },
+        {
+          "number": 200307,
+          "text": "async function installDeps(opts3, params) {"
+        },
+        {
+          "number": 200308,
+          "text": "  if (!opts3.update && !opts3.dedupe && params.length === 0 && opts3.optimisticRepeatInstall) {"
+        },
+        {
+          "number": 200309,
+          "text": "    const { upToDate, wantedLockfileToRestore } = await checkDepsStatus({"
+        },
+        {
+          "number": 200310,
+          "text": "      ...opts3,"
+        },
+        {
+          "number": 200311,
+          "text": "      ignoreFilteredInstallCache: true,"
+        },
+        {
+          "number": 200312,
+          "text": "      treatLocalFileDepsAsOutdated: true"
+        },
+        {
+          "number": 200313,
+          "text": "    });"
+        },
+        {
+          "number": 200314,
+          "text": "    if (upToDate && await restoreWantedLockfileIfMissing(wantedLockfileToRestore, opts3)) {"
+        }
+      ]
+    },
+    {
+      "start": 253961,
+      "end": 253976,
+      "lines": [
+        {
+          "number": 253961,
+          "text": "  if (visible.length > 0)"
+        },
+        {
+          "number": 253962,
+          "text": "    return visible;"
+        },
+        {
+          "number": 253963,
+          "text": "  throw new PnpmError(\"HIDDEN_SCRIPT\", `All matched scripts are hidden and cannot be run directly: ${hidden2.join(\", \")}`, {"
+        },
+        {
+          "number": 253964,
+          "text": "    hint: 'Scripts starting with \".\" are hidden and can only be called from other scripts.'"
+        },
+        {
+          "number": 253965,
+          "text": "  });"
+        },
+        {
+          "number": 253966,
+          "text": "}"
+        },
+        {
+          "number": 253967,
+          "text": "var init_hiddenScripts = __esm({"
+        },
+        {
+          "number": 253968,
+          "text": "  \"../exec/commands/lib/hiddenScripts.js\"() {"
+        },
+        {
+          "number": 253969,
+          "text": "    \"use strict\";"
+        },
+        {
+          "number": 253970,
+          "text": "    init_lib2();"
+        },
+        {
+          "number": 253971,
+          "text": "  }"
+        },
+        {
+          "number": 253972,
+          "text": "});"
+        },
+        {
+          "number": 253973,
+          "text": ""
+        },
+        {
+          "number": 253974,
+          "text": "// ../exec/commands/lib/runDepsStatusCheck.js"
+        },
+        {
+          "number": 253975,
+          "text": "async function runDepsStatusCheck(opts3) {"
+        },
+        {
+          "number": 253976,
+          "text": "  const ignoredWorkspaceStateSettings = [\"dev\", \"optional\", \"production\"];"
+        }
+      ]
+    },
+    {
+      "start": 264433,
+      "end": 264450,
+      "lines": [
+        {
+          "number": 264433,
+          "text": "  const [majorStr, minorStr] = version2.split(\".\");"
+        },
+        {
+          "number": 264434,
+          "text": "  const major = Number(majorStr);"
+        },
+        {
+          "number": 264435,
+          "text": "  const minor = Number(minorStr);"
+        },
+        {
+          "number": 264436,
+          "text": "  return major > MIN_BUILDER_VERSION.major || major === MIN_BUILDER_VERSION.major && minor >= MIN_BUILDER_VERSION.minor;"
+        },
+        {
+          "number": 264437,
+          "text": "}"
+        },
+        {
+          "number": 264438,
+          "text": "async function ensureNodeRuntime(opts3) {"
+        },
+        {
+          "number": 264439,
+          "text": "  const libc = opts3.platform === \"linux\" ? opts3.libc ?? \"glibc\" : opts3.libc;"
+        },
+        {
+          "number": 264440,
+          "text": "  const targetId = [opts3.platform, opts3.arch, libc].filter(Boolean).join(\"-\");"
+        },
+        {
+          "number": 264441,
+          "text": "  const installDir = path210.join(opts3.buildRoot, `${targetId}-${opts3.version}`);"
+        },
+        {
+          "number": 264442,
+          "text": "  const nodeDir = path210.join(installDir, \"node_modules\", \"node\");"
+        },
+        {
+          "number": 264443,
+          "text": "  const binaryPath = nodeBinaryPath(nodeDir, opts3.platform);"
+        },
+        {
+          "number": 264444,
+          "text": "  if (fs118.existsSync(binaryPath))"
+        },
+        {
+          "number": 264445,
+          "text": "    return binaryPath;"
+        },
+        {
+          "number": 264446,
+          "text": "  await mkdir(installDir, { recursive: true });"
+        },
+        {
+          "number": 264447,
+          "text": "  await writeFile2(path210.join(installDir, \"package.json\"), `${JSON.stringify({ name: `pnpm-pack-app-${targetId}`, private: true }, null, 2)}"
+        },
+        {
+          "number": 264448,
+          "text": "`);"
+        },
+        {
+          "number": 264449,
+          "text": "  const args = ["
+        },
+        {
+          "number": 264450,
+          "text": "    \"add\","
+        }
+      ]
+    }
+  ],
+  "limitation": "No per-child process/syscall trace. Do not claim no internal installer attempt solely from unchanged workspace/module state.",
+  "sourceAndLockByteExact": true,
+  "workspaceModuleStateByteExact": true,
+  "allNodeModulesPayloadBytesPreHashed": false,
+  "storeBinding": "Child config get and store path both verified task-owned private store/v11; no global config/HOME repair, gate override or extra install command",
+  "metadataOutcome": "Official plugin plus22 skill emitted success, exit0; this prefix is disclosed separately and does not relabel prior failures"
+}

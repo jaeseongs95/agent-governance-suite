@@ -1,0 +1,14 @@
+{
+  "label": "P05-evidence-base",
+  "command": [
+    "git",
+    "rev-parse",
+    "HEAD"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/evidence-repo",
+  "startedUtc": "2026-10-06T05:59:08.383621+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:59:08.385517+00:00",
+  "stdout": "P05-evidence-base.stdout.log",
+  "stderr": "P05-evidence-base.stderr.log"
+}

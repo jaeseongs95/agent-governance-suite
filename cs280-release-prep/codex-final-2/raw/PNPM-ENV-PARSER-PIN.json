@@ -1,0 +1,398 @@
+{
+  "path": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/pnpm.mjs",
+  "sha256": "43695da62d5a62e0550977425ed39507f68d6f6c3390079ae8a33557f3dec989",
+  "version": "11.19.0",
+  "mapping": "pnpm_config_store_dir -> lower-snake suffix store_dir -> kebab schema store-dir String -> camel storeDir -> pnpmConfig assignment",
+  "excerpts": [
+    {
+      "start": 148057,
+      "end": 148078,
+      "lines": [
+        {
+          "number": 148057,
+          "text": "    return path55.join(opts3.env.LOCALAPPDATA, \"pnpm/config\");"
+        },
+        {
+          "number": 148058,
+          "text": "  }"
+        },
+        {
+          "number": 148059,
+          "text": "  return path55.join(os8.homedir(), \".config/pnpm\");"
+        },
+        {
+          "number": 148060,
+          "text": "}"
+        },
+        {
+          "number": 148061,
+          "text": "var init_dirs = __esm({"
+        },
+        {
+          "number": 148062,
+          "text": "  \"../config/reader/lib/dirs.js\"() {"
+        },
+        {
+          "number": 148063,
+          "text": "    \"use strict\";"
+        },
+        {
+          "number": 148064,
+          "text": "    init_lib();"
+        },
+        {
+          "number": 148065,
+          "text": "  }"
+        },
+        {
+          "number": 148066,
+          "text": "});"
+        },
+        {
+          "number": 148067,
+          "text": ""
+        },
+        {
+          "number": 148068,
+          "text": "// ../config/reader/lib/env.js"
+        },
+        {
+          "number": 148069,
+          "text": "import path56 from \"node:path\";"
+        },
+        {
+          "number": 148070,
+          "text": "import url3 from \"node:url\";"
+        },
+        {
+          "number": 148071,
+          "text": "function* parseEnvVars(getSchema, env4) {"
+        },
+        {
+          "number": 148072,
+          "text": "  for (const envKey in env4) {"
+        },
+        {
+          "number": 148073,
+          "text": "    const suffix = getEnvKeySuffix(envKey);"
+        },
+        {
+          "number": 148074,
+          "text": "    if (!suffix)"
+        },
+        {
+          "number": 148075,
+          "text": "      continue;"
+        },
+        {
+          "number": 148076,
+          "text": "    const envValue = env4[envKey];"
+        },
+        {
+          "number": 148077,
+          "text": "    if (envValue == null)"
+        },
+        {
+          "number": 148078,
+          "text": "      continue;"
+        }
+      ]
+    },
+    {
+      "start": 148172,
+      "end": 148198,
+      "lines": [
+        {
+          "number": 148172,
+          "text": "  const sorted = variants.filter((variant) => variant !== String);"
+        },
+        {
+          "number": 148173,
+          "text": "  if (variants.includes(String)) {"
+        },
+        {
+          "number": 148174,
+          "text": "    sorted.push(String);"
+        },
+        {
+          "number": 148175,
+          "text": "  }"
+        },
+        {
+          "number": 148176,
+          "text": "  return sorted;"
+        },
+        {
+          "number": 148177,
+          "text": "}"
+        },
+        {
+          "number": 148178,
+          "text": "function tryParseObjectOrArray(envVar) {"
+        },
+        {
+          "number": 148179,
+          "text": "  let result2;"
+        },
+        {
+          "number": 148180,
+          "text": "  try {"
+        },
+        {
+          "number": 148181,
+          "text": "    result2 = JSON.parse(envVar);"
+        },
+        {
+          "number": 148182,
+          "text": "  } catch {"
+        },
+        {
+          "number": 148183,
+          "text": "    return void 0;"
+        },
+        {
+          "number": 148184,
+          "text": "  }"
+        },
+        {
+          "number": 148185,
+          "text": "  return result2 == null || typeof result2 !== \"object\" ? void 0 : result2;"
+        },
+        {
+          "number": 148186,
+          "text": "}"
+        },
+        {
+          "number": 148187,
+          "text": "function getEnvKeySuffix(envKey) {"
+        },
+        {
+          "number": 148188,
+          "text": "  if (envKey.startsWith(PREFIX)) {"
+        },
+        {
+          "number": 148189,
+          "text": "    const suffix = envKey.slice(PREFIX.length);"
+        },
+        {
+          "number": 148190,
+          "text": "    return isLowerSnakeCase(suffix) ? suffix : void 0;"
+        },
+        {
+          "number": 148191,
+          "text": "  }"
+        },
+        {
+          "number": 148192,
+          "text": "  if (envKey.startsWith(PREFIX_UPPER)) {"
+        },
+        {
+          "number": 148193,
+          "text": "    const suffix = envKey.slice(PREFIX_UPPER.length);"
+        },
+        {
+          "number": 148194,
+          "text": "    return isUpperSnakeCase(suffix) ? suffix.toLowerCase() : void 0;"
+        },
+        {
+          "number": 148195,
+          "text": "  }"
+        },
+        {
+          "number": 148196,
+          "text": "  return void 0;"
+        },
+        {
+          "number": 148197,
+          "text": "}"
+        },
+        {
+          "number": 148198,
+          "text": "function isLowerSnakeCase(s) {"
+        }
+      ]
+    },
+    {
+      "start": 149733,
+      "end": 149742,
+      "lines": [
+        {
+          "number": 149733,
+          "text": "      reporter: String,"
+        },
+        {
+          "number": 149734,
+          "text": "      \"resolution-mode\": [\"highest\", \"time-based\", \"lowest-direct\"],"
+        },
+        {
+          "number": 149735,
+          "text": "      \"resolve-peers-from-workspace-root\": Boolean,"
+        },
+        {
+          "number": 149736,
+          "text": "      runtime: Boolean,"
+        },
+        {
+          "number": 149737,
+          "text": "      \"runtime-on-fail\": [\"ignore\", \"warn\", \"error\", \"download\"],"
+        },
+        {
+          "number": 149738,
+          "text": "      \"aggregate-output\": Boolean,"
+        },
+        {
+          "number": 149739,
+          "text": "      \"reporter-hide-prefix\": Boolean,"
+        },
+        {
+          "number": 149740,
+          "text": "      \"save-peer\": Boolean,"
+        },
+        {
+          "number": 149741,
+          "text": "      \"save-catalog-name\": String,"
+        },
+        {
+          "number": 149742,
+          "text": "      \"save-workspace-protocol\": Boolean,"
+        }
+      ]
+    },
+    {
+      "start": 150325,
+      "end": 150348,
+      "lines": [
+        {
+          "number": 150325,
+          "text": "    ...cliScopedRegistries"
+        },
+        {
+          "number": 150326,
+          "text": "  };"
+        },
+        {
+          "number": 150327,
+          "text": "  if (explicitlySetKeys.has(\"registry\") && typeof pnpmConfig.registry === \"string\") {"
+        },
+        {
+          "number": 150328,
+          "text": "    pnpmConfig.registries.default = (0, import_normalize_registry_url3.default)(pnpmConfig.registry);"
+        },
+        {
+          "number": 150329,
+          "text": "  }"
+        },
+        {
+          "number": 150330,
+          "text": "  if (!pnpmConfig.registries.default) {"
+        },
+        {
+          "number": 150331,
+          "text": "    pnpmConfig.registries.default = registriesFromNpmrc.default;"
+        },
+        {
+          "number": 150332,
+          "text": "  }"
+        },
+        {
+          "number": 150333,
+          "text": "  for (const [scope, url7] of Object.entries(pnpmConfig.registries)) {"
+        },
+        {
+          "number": 150334,
+          "text": "    if (typeof url7 === \"string\") {"
+        },
+        {
+          "number": 150335,
+          "text": "      pnpmConfig.registries[scope] = (0, import_normalize_registry_url3.default)(url7);"
+        },
+        {
+          "number": 150336,
+          "text": "    }"
+        },
+        {
+          "number": 150337,
+          "text": "  }"
+        },
+        {
+          "number": 150338,
+          "text": "  if (!explicitlySetKeys.has(\"registry\") && pnpmConfig.registries.default !== registriesFromNpmrc.default) {"
+        },
+        {
+          "number": 150339,
+          "text": "    pnpmConfig.registry = pnpmConfig.registries.default;"
+        },
+        {
+          "number": 150340,
+          "text": "  }"
+        },
+        {
+          "number": 150341,
+          "text": "  const envPnpmTypes = omit_default(["
+        },
+        {
+          "number": 150342,
+          "text": "    \"init-version\","
+        },
+        {
+          "number": 150343,
+          "text": "    // the type is a private function named 'semver'"
+        },
+        {
+          "number": 150344,
+          "text": "    \"node-version\","
+        },
+        {
+          "number": 150345,
+          "text": "    // the type is a private function named 'semver'"
+        },
+        {
+          "number": 150346,
+          "text": "    \"umask\""
+        },
+        {
+          "number": 150347,
+          "text": "    // the type is a private function named 'Umask'"
+        },
+        {
+          "number": 150348,
+          "text": "  ], types2);"
+        }
+      ]
+    },
+    {
+      "start": 150079,
+      "end": 150085,
+      "lines": [
+        {
+          "number": 150079,
+          "text": "    \"resolve-peers-from-workspace-root\": true,"
+        },
+        {
+          "number": 150080,
+          "text": "    \"save-peer\": false,"
+        },
+        {
+          "number": 150081,
+          "text": "    \"save-catalog-name\": void 0,"
+        },
+        {
+          "number": 150082,
+          "text": "    \"save-workspace-protocol\": \"rolling\","
+        },
+        {
+          "number": 150083,
+          "text": "    \"scripts-prepend-node-path\": false,"
+        },
+        {
+          "number": 150084,
+          "text": "    \"strict-dep-builds\": true,"
+        },
+        {
+          "number": 150085,
+          "text": "    \"side-effects-cache\": true,"
+        }
+      ]
+    }
+  ]
+}

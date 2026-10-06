@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/workspace/ags-cs-2x/official-final2-d0ce2935/tools/prepare_public.py", line 105, in <module>
+    run('13-public-residual-scan', ['python', str(prior / 'scan-public.py'), str(ROOT), str(public)], ROOT)
+  File "/workspace/ags-cs-2x/official-final2-d0ce2935/tools/runner.py", line 17, in run
+    if check and result.returncode: raise RuntimeError(f'{label} exit {result.returncode}; actual stdout/stderr preserved')
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: 13-public-residual-scan exit 1; actual stdout/stderr preserved

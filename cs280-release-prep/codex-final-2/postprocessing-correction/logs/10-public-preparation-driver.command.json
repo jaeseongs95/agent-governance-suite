@@ -1,0 +1,13 @@
+{
+  "label": "10-public-preparation-driver",
+  "command": [
+    "python",
+    "/workspace/ags-cs-2x/official-final2-d0ce2935/tools/prepare_public.py"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final2-d0ce2935",
+  "startedUtc": "2026-10-06T06:09:50.229537+00:00",
+  "exitCode": 1,
+  "finishedUtc": "2026-10-06T06:10:51.683619+00:00",
+  "stdout": "10-public-preparation-driver.stdout.log",
+  "stderr": "10-public-preparation-driver.stderr.log"
+}

@@ -1,0 +1,46 @@
+{
+  "environment": "Actual Codex Cloud Linux",
+  "hostname": "d19a608d7837",
+  "kernel": "6.18.44",
+  "architecture": "x86_64",
+  "pidNamespace": "pid:[4026532200]",
+  "containerCgroupSha256": "e57fd7b21104f091de366ace1464596378a498b0a5e63f1b21147a8998c20107",
+  "node": "v24.19.0",
+  "pnpm": "11.19.0",
+  "python": "3.12.14",
+  "pythonExecutable": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+  "yamlVersion": "6.0.3",
+  "workspace": "REUSED; same clean disposable final1 checkout",
+  "runtime": "REUSED preinstalled runtime",
+  "deps": "REUSED exact locked final1 node_modules and workspace/module state; no new install",
+  "storeArgument": "/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private",
+  "effectiveStore": "/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private/v11",
+  "store": "REUSED task-owned private store from verified frozen install",
+  "codeHome": "REUSED final1 private CODEX_HOME, exact5 supplier files verified",
+  "tmp": {
+    "path": "/workspace/ags-cs-2x/official-final2-d0ce2935/tmp-private",
+    "createdNew": true
+  },
+  "state": {
+    "path": "/workspace/ags-cs-2x/official-final2-d0ce2935/state-private",
+    "createdNew": true,
+    "database": "NONE"
+  },
+  "otherDatabases": "UNKNOWN/not queried",
+  "container": "Current local identities recorded; remote reuse not inferred",
+  "priorJobs": "Final1 and official1 failures preserved",
+  "concurrent": {
+    "pid1": {
+      "pid": 1,
+      "state": "S",
+      "ppid": 0,
+      "starttime": "27",
+      "comm": "tail"
+    },
+    "activeTestBuildInstallProcesses": [],
+    "zombiesObserved": 261,
+    "observedAtUtc": "2026-10-06T06:05:00.304336+00:00",
+    "scope": "Current /proc namespace only, no argv contents/signals/sockets/reaping; external jobs UNKNOWN"
+  },
+  "changedInput": "Only child pnpm_config_store_dir added; unsupported run CLI store-dir removed. No model/effort/gate[REDACTED:PRIVATE_HOME] config field changed."
+}

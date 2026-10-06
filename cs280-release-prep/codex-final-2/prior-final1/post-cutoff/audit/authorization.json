@@ -1,0 +1,13 @@
+{
+  "operationId": "cs280-final-official-evidence-3ff79982",
+  "actionClass": "publish",
+  "target": "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-release-prep/codex-final-1",
+  "environment": "external",
+  "userAuthorizationMessageIds": [
+    "83b9158e-65f8-41a9-9034-517a82850bcf",
+    "0a4424c4-3881-45d6-a256-85c0ab961681",
+    "3ff79982-0a80-4a58-8dab-71ce4aa52d56"
+  ],
+  "basis": "Current explicit delegation permits finalfollowup append only at this exact prefix under user evidence-posting authorization. First official1 remains publication0.",
+  "receiptWindow": "Adapter imposes local15-minute freshness bound, not a new grant/renewal or user authorization expiry."
+}

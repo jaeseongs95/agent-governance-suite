@@ -1,0 +1,14 @@
+{
+  "label": "P11-scope-baseline",
+  "command": [
+    "node",
+    "/workspace/ags-cs-2x/official-final-3ff79982/candidate/skills/change-scope-guardian/scripts/capture-workspace-baseline.mjs",
+    "/workspace/ags-cs-2x/official-final-3ff79982/audit/scope-capture-input.json"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/evidence-repo",
+  "startedUtc": "2026-10-06T05:59:09.011990+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:59:41.341353+00:00",
+  "stdout": "P11-scope-baseline.stdout.log",
+  "stderr": "P11-scope-baseline.stderr.log"
+}

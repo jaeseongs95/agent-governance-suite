@@ -1,0 +1,13 @@
+{
+  "label": "P16-restore-tree",
+  "command": [
+    "git",
+    "write-tree"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/evidence-repo",
+  "startedUtc": "2026-10-06T06:00:14.001443+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:00:14.007955+00:00",
+  "stdout": "P16-restore-tree.stdout.log",
+  "stderr": "P16-restore-tree.stderr.log"
+}

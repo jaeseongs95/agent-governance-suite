@@ -1,0 +1,13 @@
+{
+  "label": "40-evidence-publication-driver",
+  "command": [
+    "python",
+    "/workspace/ags-cs-2x/official-final-3ff79982/tools/publish.py"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982",
+  "startedUtc": "2026-10-06T05:59:06.366167+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:00:17.358582+00:00",
+  "stdout": "40-evidence-publication-driver.stdout.log",
+  "stderr": "40-evidence-publication-driver.stderr.log"
+}

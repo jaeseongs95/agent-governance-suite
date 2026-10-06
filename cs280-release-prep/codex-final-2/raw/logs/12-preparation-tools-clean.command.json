@@ -1,0 +1,14 @@
+{
+  "label": "12-preparation-tools-clean",
+  "command": [
+    "git",
+    "status",
+    "--porcelain"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final2-d0ce2935/tools",
+  "startedUtc": "2026-10-06T06:09:50.258230+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:09:50.260743+00:00",
+  "stdout": "12-preparation-tools-clean.stdout.log",
+  "stderr": "12-preparation-tools-clean.stderr.log"
+}

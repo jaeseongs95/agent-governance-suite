@@ -1,0 +1,67 @@
+{
+  "schema": "AGSFinal2OfficialValidation.v1",
+  "status": "PASS",
+  "command": [
+    "pnpm",
+    "run",
+    "validate:official"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate",
+  "exitCode": 0,
+  "changedInputCommandAttempts": 1,
+  "priorWrapperFailuresPreserved": 2,
+  "pluginPassed": true,
+  "skillsPassed": 22,
+  "skillsExpected": 22,
+  "officialMetadataScopeOnly": true,
+  "sourceHead": "b7341d3e6636b79217b1f3d37d7a5014fcbf47be",
+  "sourceTree": "5648f76558e923244cedf78a8263892d00df8299",
+  "trackedFiles": 1344,
+  "sourcePrePostExact": true,
+  "sourceClean": true,
+  "supplierCommit": "10382da79a2a2d6e8ae221fa63077215389c1ad2",
+  "supplierFiveFilesByteExact": true,
+  "dependencyStateBefore": {
+    "node_modules/.pnpm-workspace-state-v1.json": "909a679e333e93c47129d193226bd75eb114c7235ba07e9dacd5fc7bb9b6c42b",
+    "node_modules/.modules.yaml": "7888d8906d0dc01d3e6799b2fd279c5f228afadec2150304ef33f90ea201bfaf"
+  },
+  "dependencyStateAfter": {
+    "node_modules/.pnpm-workspace-state-v1.json": "909a679e333e93c47129d193226bd75eb114c7235ba07e9dacd5fc7bb9b6c42b",
+    "node_modules/.modules.yaml": "7888d8906d0dc01d3e6799b2fd279c5f228afadec2150304ef33f90ea201bfaf"
+  },
+  "dependencyStateByteExact": true,
+  "lockSha256": "00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e",
+  "storeConfig": "/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private",
+  "effectiveStore": "/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private/v11",
+  "noGateOverride": true,
+  "newInstallAttempts": 0,
+  "implicitInstallObserved": false,
+  "observationLimit": "Actual pnpm outputs and unchanged source/dependency/supplier bytes; no full per-child syscall trace",
+  "stdoutPath": "/workspace/ags-cs-2x/official-final2-d0ce2935/raw/logs/06-final2-validate-official.stdout.log",
+  "stdoutBytes": 1011,
+  "stdoutSha256": "e977a5d33c59d0b3adeaee7795ae1242231ccfaa4331fb8630b1d819b0931c78",
+  "stderrPath": "/workspace/ags-cs-2x/official-final2-d0ce2935/raw/logs/06-final2-validate-official.stderr.log",
+  "stderrBytes": 37,
+  "stderrSha256": "b69cece30371f85cb4988e6ab25658f49b62afc54092a445054e0bd563159c0c",
+  "fullTestsBuildRuntimeRun": 0,
+  "productWrites": 0,
+  "mainTagReleaseHostInstall": 0,
+  "firstOfficial1AndFinal1Unchanged": true,
+  "signedWholeLifecycleGlobalAcceptance": "NOT_IMPLEMENTED unchanged",
+  "qualityABC": "NOT_RUN",
+  "independentSourceAudit": "Separate parent responsibility",
+  "completedAtUtc": "2026-10-06T06:05:03.628360+00:00",
+  "concurrentAfter": {
+    "pid1": {
+      "pid": 1,
+      "state": "S",
+      "ppid": 0,
+      "starttime": "27",
+      "comm": "tail"
+    },
+    "activeTestBuildInstallProcesses": [],
+    "zombiesObserved": 261,
+    "observedAtUtc": "2026-10-06T06:05:03.644603+00:00",
+    "scope": "Current /proc namespace only, no argv contents/signals/sockets/reaping; external jobs UNKNOWN"
+  }
+}

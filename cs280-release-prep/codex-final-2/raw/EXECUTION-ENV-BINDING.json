@@ -1,0 +1,26 @@
+{
+  "command": [
+    "pnpm",
+    "run",
+    "validate:official"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final-3ff79982/candidate",
+  "childOnlyEnvironment": {
+    "CODEX_HOME": "/workspace/ags-cs-2x/official-final-3ff79982/codex-home-disposable",
+    "PYTHON": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python",
+    "PYTHONUTF8": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONNOUSERSITE": "1",
+    "TMPDIR": "/workspace/ags-cs-2x/official-final2-d0ce2935/tmp-private",
+    "pnpm_config_store_dir": "/workspace/ags-cs-2x/official-final-3ff79982/pnpm-store-private"
+  },
+  "configStoreDirMatches": true,
+  "storePathMatches": true,
+  "dependencyStateBefore": {
+    "node_modules/.pnpm-workspace-state-v1.json": "909a679e333e93c47129d193226bd75eb114c7235ba07e9dacd5fc7bb9b6c42b",
+    "node_modules/.modules.yaml": "7888d8906d0dc01d3e6799b2fd279c5f228afadec2150304ef33f90ea201bfaf"
+  },
+  "noGateOverride": true,
+  "globalUserConfigurationWrites": 0,
+  "priorPnPMWrapperFailures": 2
+}

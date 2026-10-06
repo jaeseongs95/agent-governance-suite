@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0.0",
+  "mode": "capture",
+  "repositoryRoot": "/workspace/ags-cs-2x/official-final-3ff79982/evidence-repo",
+  "comparisonTarget": "index",
+  "taskEnvelope": {
+    "schemaVersion": "1.0.0",
+    "taskId": "cs280-final-official-evidence-3ff79982",
+    "objective": "Append sanitized actual final-pin dependency and official-run blocker logs only",
+    "scope": {
+      "included": [
+        "cs280-release-prep/codex-final-1/"
+      ],
+      "excluded": [
+        "cs280-codex-cloud/",
+        "cs280-claude-cloud/",
+        "cs280-release-prep/codex-official-1/",
+        "main/",
+        "source/"
+      ]
+    },
+    "acceptanceCriteria": [
+      "Exact raw/public SHA and command/exit order retained",
+      "Existing failure and NOT_RUN claims preserved",
+      "Only new designated final1 prefix added and all existing evidence blobs preserved",
+      "No main/source/tag/release/host install change"
+    ],
+    "riskLevel": "high",
+    "workUnits": [
+      {
+        "id": "append-final-official-evidence",
+        "objective": "Publish exact187-file sanitized final1 payload",
+        "dependencies": [],
+        "writeTargets": [
+          "cs280-release-prep/codex-final-1/"
+        ]
+      }
+    ],
+    "requiredCapabilities": [
+      "git",
+      "redaction"
+    ],
+    "constraints": [
+      "No source changes, product tests, force push, install or sharing changes"
+    ],
+    "authorization": {
+      "allowedActions": [
+        "Publish sanitized evidence copies via a nonforce evidence branch push"
+      ],
+      "prohibitedActions": [
+        "Modify main, candidate branch, existing evidence folders, credentials or operational state",
+        "Publish raw private archives, databases or keys"
+      ],
+      "approvalRequired": []
+    },
+    "decision": {
+      "complexity": "complex",
+      "hasConflicts": false
+    },
+    "orchestration": {
+      "requested": false,
+      "mcpAvailable": false
+    }
+  }
+}
