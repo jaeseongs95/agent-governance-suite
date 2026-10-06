@@ -1,0 +1,14 @@
+# residual over 133 files
+email                    12
+github-token             0
+sk-token                 0
+slack-xox                0
+aws-AKIA                 0
+jwt                      0
+bearer                   0
+secret-assignment        0
+url-query                0
+windows-home             0
+account-name             0
+encoded-block-200        0
+ipv4-non-loopback        0

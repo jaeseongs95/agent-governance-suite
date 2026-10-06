@@ -1,0 +1,8 @@
+evidence: publish CS 2.8.0 claude-final-1 Claude Cloud verification (redacted)
+
+Target b7341d3e / tree 5648f765 on claude/cs280-release-final.
+A gates, node_modules-free Claude tree clean-room, disposable-config
+install and child Claude host flows (F1/NEG/SUB/F1B traced/R24B).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_019jWevBCENVcC2gGbN9K5rA

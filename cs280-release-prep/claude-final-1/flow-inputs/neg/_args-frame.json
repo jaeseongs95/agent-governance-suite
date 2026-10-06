@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0.0",
+  "workspace": {
+    "workspaceId": "cs-claude-final-neg",
+    "locator": "/root/cs2x-final-20261006T054615Z/flow/neg"
+  },
+  "controlArtifacts": [
+    {
+      "artifactId": "conditions",
+      "role": "validator",
+      "locator": "/root/cs2x-final-20261006T054615Z/flow/neg/constraints.json",
+      "digest": "sha256:3c4b86b78c6b9c230fda615afa0d6e7a953e4a0c5a8f68e18ab1120822480a1e"
+    }
+  ],
+  "targetArtifacts": [
+    {
+      "artifactId": "candidate",
+      "role": "candidate",
+      "locator": "/root/cs2x-final-20261006T054615Z/flow/neg/candidate.json",
+      "digest": "sha256:420efbcde3bfae38adc317a795528af681c95649d73c739c5065af0f6446baa5"
+    }
+  ],
+  "operationalSettings": {
+    "maxAttemptsPerEpoch": 3,
+    "maxEpochs": 2,
+    "leaseTtlSeconds": 300
+  }
+}

@@ -1,0 +1,314 @@
+{
+ "target": {
+  "branch": "claude/cs280-release-final",
+  "head": "b7341d3e6636b79217b1f3d37d7a5014fcbf47be",
+  "tree": "5648f76558e923244cedf78a8263892d00df8299",
+  "base": "4ba47558020bd5e501fa9718f09d562dcf573713",
+  "baseIsAncestor": true,
+  "commitsBaseToHead": 4,
+  "shallow": false,
+  "squashedSnapshot": false,
+  "diffSha256": "9f7117cd88cfc5c71b6eef06d52f8f584cf87630cb785b0c15a0089848d1062a",
+  "changedFiles": 7,
+  "dirtyAtStart": 0,
+  "untrackedAtStart": 0,
+  "pinMatch": true,
+  "dirtyAtEnd": 0
+ },
+ "A": {
+  "01 pnpm install --frozen-lockfile": {
+   "seq": 1,
+   "status": "PASS",
+   "note": "lock unchanged (dirty 0); store reused 0 / downloaded 217"
+  },
+  "02 bundle:check (pre-build)": {
+   "seq": 2,
+   "status": "PASS"
+  },
+  "03 source:check": {
+   "seq": 3,
+   "status": "PASS",
+   "note": "source lock is consistent; source:verify not run"
+  },
+  "04 claude:drift": {
+   "seq": 4,
+   "status": "PASS",
+   "output": "claude-plugin: fresh"
+  },
+  "05 lint": {
+   "seq": 5,
+   "status": "PASS",
+   "output": "repository: valid"
+  },
+  "06 build": {
+   "seq": 6,
+   "status": "PASS",
+   "note": "dirty after build 0"
+  },
+  "07 test (argv as briefed)": {
+   "seq": 7,
+   "status": "PASS",
+   "note": "916 passed / 5 skipped / 0 failed; pnpm 11 forwarded literal '--' so vitest ignored the reporter flags: no JSON, no per-case output"
+  },
+  "07b test (reporter flags without '--')": {
+   "seq": 8,
+   "status": "PASS",
+   "note": "single rerun with changed argv to obtain per-case IDs; 921 total = 916 passed / 5 skipped / 0 failed; vitest/cases-*.txt; skip set equal to 4ba (5 previous-broker, AGS_PREVIOUS_BROKER_PATH unset); case diff vs 4ba +3/-1 in session-message.test.ts (vitest/compare-vs-4ba.json); W2 file 73/73 passed"
+  },
+  "08 node --test cs-engineering (observation)": {
+   "seq": 9,
+   "status": "PASS (observation, not gate)",
+   "note": "133 tests, 0 skipped; 'file symlink is rejected' and 'intermediate directory symlink or junction is rejected' passed on Linux"
+  },
+  "09 validate:all": {
+   "seq": 10,
+   "status": "PASS"
+  },
+  "10 claude:check": {
+   "seq": 11,
+   "status": "PASS",
+   "output": "claude-plugin: fresh"
+  },
+  "11 bundle:check (post-build)": {
+   "seq": 12,
+   "status": "PASS"
+  },
+  "12 release:check": {
+   "seq": 13,
+   "status": "PASS",
+   "output": "release metadata is synchronized"
+  },
+  "13 git diff --check / porcelain / fsck": {
+   "seq": [
+    14,
+    15,
+    16,
+    17
+   ],
+   "status": "PASS",
+   "note": "also git diff --check base..HEAD; porcelain 0; HEAD/tree unchanged in every step"
+  },
+  "runtime:check": {
+   "status": "BOUND_TO_PRIOR_EVIDENCE",
+   "evidence": "cs280-claude-cloud/20261006T033701Z/08-runtime-check.log"
+  },
+  "skills:context-check": {
+   "status": "BOUND_TO_PRIOR_EVIDENCE",
+   "evidence": "cs280-claude-cloud/20261006T033701Z/13-skills-context-check.log"
+  },
+  "validate:official": {
+   "status": "NOT_RUN",
+   "note": "owner separate: Codex Cloud 01a10ee6"
+  }
+ },
+ "impactTable": [
+  {
+   "file": "README.md",
+   "gates": [
+    "validate:all",
+    "lint"
+   ],
+   "how": "run (seq 10, 5)"
+  },
+  {
+   "file": "README.en.md",
+   "gates": [
+    "validate:all",
+    "lint"
+   ],
+   "how": "run (seq 10, 5)"
+  },
+  {
+   "file": "release/version.json",
+   "gates": [
+    "release:check",
+    "bundle:check",
+    "claude:check"
+   ],
+   "how": "run (seq 13, 2/12, 11)"
+  },
+  {
+   "file": "docs/roadmap.md",
+   "gates": [
+    "lint",
+    "validate:all"
+   ],
+   "how": "run"
+  },
+  {
+   "file": "docs/release-notes-2.8.0-rc.ko.md",
+   "gates": [
+    "lint",
+    "validate:all"
+   ],
+   "how": "run"
+  },
+  {
+   "file": "tests/cs-engineering/files.node.mjs (W1)",
+   "gates": [
+    "test (suite-integration)",
+    "node --test observation"
+   ],
+   "how": "run (seq 8, 9)"
+  },
+  {
+   "file": "tests/session-messaging/session-message.test.ts (W2)",
+   "gates": [
+    "test"
+   ],
+   "how": "run (seq 8), per-case"
+  },
+  {
+   "file": "(product bytes 0)",
+   "gates": [
+    "runtime:check",
+    "skills:context-check"
+   ],
+   "how": "bound to 4ba evidence 08/13; B covers Claude tree separately"
+  }
+ ],
+ "B": {
+  "copy+hash": {
+   "status": "PASS",
+   "note": "463/463 files equal repo claude-plugin; no node_modules in any ancestor or inside copy"
+  },
+  "validate.mjs help": {
+   "seq": 18,
+   "status": "PASS",
+   "exit": 0
+  },
+  "validate.mjs self-check": {
+   "seq": 19,
+   "status": "PASS",
+   "exit": 0,
+   "schemaEngine": "ags-ajv2020",
+   "rules": 40
+  },
+  "validate.mjs check-bundle sqlite-queue": {
+   "seq": 20,
+   "status": "PASS",
+   "exit": 0,
+   "verdict": "PASS"
+  },
+  "validate.mjs not-a-command": {
+   "seq": 21,
+   "status": "PASS",
+   "exit": 2,
+   "code": "INVALID_INPUT"
+  },
+  "MCP STDIO initialize+tools/list": {
+   "seq": 22,
+   "status": "PASS",
+   "tools": 28,
+   "refCount": 0,
+   "topLevelCombinators": 0,
+   "intakeInstructions": true
+  },
+  "claude plugin validate --json": {
+   "seq": 23,
+   "status": "PASS",
+   "exit": 0,
+   "warnings": 0
+  },
+  "claude plugin validate --strict --json": {
+   "seq": 24,
+   "exit": 0,
+   "warnings": 0,
+   "status": "exit 0, 0 warnings (strict verdict: root)"
+  }
+ },
+ "C1": {
+  "marketplace add": {
+   "seq": 25,
+   "status": "PASS"
+  },
+  "plugin install --scope user": {
+   "seq": 26,
+   "status": "PASS"
+  },
+  "plugin list / details": {
+   "seq": [
+    27,
+    28
+   ],
+   "status": "PASS",
+   "version": "2.8.0",
+   "csEngineeringListed": true,
+   "skills": 21
+  },
+  "install cache hash compare": {
+   "status": "PASS",
+   "match": 463,
+   "mismatch": 0,
+   "missing": 0,
+   "extra": 0
+  },
+  "mcp list": {
+   "seq": 29,
+   "status": "PASS",
+   "health": "Connected",
+   "note": "command path is readFromFolder copy ($ST/claude-clean/mkt/claude-plugin), not the cache path"
+  }
+ },
+ "C2": {
+  "auth status": {
+   "seq": 30,
+   "status": "PASS",
+   "loggedIn": true,
+   "authMethod": "oauth_token",
+   "note": "isolated config has no credentials file; no login/copy/injection performed; credential resolved by CLI from the container runtime"
+  },
+  "F1 (child 1)": {
+   "status": "PASS with one unmet sub-condition (bootstrap 25 selection not observed)",
+   "runId": "run-TASK-CS-QUEUE-1",
+   "final": "passed rev 2",
+   "plan": "plan selected only cs-engineering stage-01 phaseOrder 67 (provider cs-engineering:cs-implementation-review:2); phaseOrder 25 was NOT selected in the plan, it appears only as input binding source 'bootstrap:cs-constraint-report'",
+   "observation": "hook runtime, claude-sonnet-5-5/general/high, actor claude-code:session-827606842bca003e4dbf3fce",
+   "successConditions": {
+    "plan selects 25 and 67": "NOT MET (67 only)",
+    "check-stage-bundle executed at record and finalize with rereads": "MET (proved by strace in F1B, same inputs shape)",
+    "final state passed": "MET",
+    "observation from Claude hook": "MET (source runtime, hook-issued observationIds consumed in DB)"
+   }
+  },
+  "NEG (child 1)": {
+   "status": "PASS",
+   "runId": "run-TASK-CS-QUEUE-2",
+   "result": "finalize rejected INTEGRITY_FAILED 'outputFile content does not match its digest.' after +1 byte to review.json; run stays running rev 1"
+  },
+  "SUB release.md:23 (child 1)": {
+   "status": "PASS",
+   "observationId": "wZrApSWD8p5kUvd12ghVBbDtn_wPRIRft8Mbzt93PRs",
+   "actor": "claude-code:session-827606842bca003e4dbf3fce:agent-0505a0dbb22f669ed7fb86c6"
+  },
+  "R24 (child 1)": {
+   "status": "FAIL (input defect, preserved)",
+   "runId": "run-TASK-REPO-INVENTORY-3",
+   "error": "MISSING_EVIDENCE 'A passed stage requires verified evidence.'",
+   "cause": "prep template had evidence: [] (my fixture error); run left running rev 0"
+  },
+  "F1B traced (child 2)": {
+   "status": "PASS",
+   "runId": "run-TASK-CS-QUEUE-4",
+   "final": "passed rev 2",
+   "checkStageBundleExecs": [
+    "06:00:42.138 record (pid 16049)",
+    "06:00:47.426 finalize (pid 16097)"
+   ],
+   "rereads": "each exec opened stage-bundle/binding/task/policy/review/candidate/request/constraints/source/candidate/evidence; MCP server reread review.json at record and finalize",
+   "trace": "C2/c2b-strace-filtered.txt"
+  },
+  "R24B release.md:24 (child 2)": {
+   "status": "PASS",
+   "runId": "run-TASK-REPO-INVENTORY-5",
+   "final": "passed rev 2",
+   "outputFile": "inventory.json 260023 bytes, 1344 files with sha256",
+   "note": "server read inventory.json at record only (06:00:44); no reread at finalize observed"
+  },
+  "overall": "F1/F1B passed end-to-end with hook observations; plan-level selection of bootstrap 25 not observed; NEG rejected; SUB actor is subagent; R24 first attempt FAIL (input defect), R24B passed"
+ },
+ "limitations": [
+  "child sessions reported session_id equal to the parent session (15064980-...); unsetting CLAUDE_CODE_SESSION_ID in child 2 did not change it; both children wrote the same transcript file in the isolated config",
+  "child model claude-sonnet-5-5 chosen by CLI default; effort high set by --effort flag"
+ ]
+}

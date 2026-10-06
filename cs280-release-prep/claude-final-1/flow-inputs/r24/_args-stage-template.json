@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "runId": "<from start>",
+  "stageId": "<from start data.plan.stages[0].stageId>",
+  "expectedRevision": "<from start data.revision>",
+  "state": "passed",
+  "outputFile": {
+    "locator": "/root/cs2x-final-20261006T054615Z/flow/r24/inventory.json",
+    "digest": "sha256:1118a39df42dfe1ec3c4908e45ae910eb70674d10390c8ea65b8403f7e494a36"
+  },
+  "output": {
+    "schemaVersion": "1.0.0",
+    "kind": "output",
+    "output": null,
+    "error": null,
+    "artifacts": []
+  },
+  "evidence": [],
+  "findings": [],
+  "blockers": [],
+  "error": null
+}

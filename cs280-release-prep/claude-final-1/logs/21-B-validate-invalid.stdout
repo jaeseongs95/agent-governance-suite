@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "adapter-error",
+  "output": null,
+  "artifacts": [],
+  "error": {
+    "code": "INVALID_INPUT",
+    "message": "Unknown command.",
+    "details": null
+  }
+}

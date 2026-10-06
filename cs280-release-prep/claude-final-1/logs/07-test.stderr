@@ -1,0 +1,1 @@
+$ node scripts/build.mjs && vitest run -- --reporter=verbose --reporter=json --outputFile.json=/root/cs2x-final-20261006T054615Z/out/vitest/vitest.json

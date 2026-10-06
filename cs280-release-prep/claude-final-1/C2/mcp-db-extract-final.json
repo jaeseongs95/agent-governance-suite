@@ -1,0 +1,386 @@
+{
+ "source": "$ST/claude-config/plugins/data/agent-governance-suite-agent-governance-claude/workflows.sqlite3 (read-only)",
+ "runs": [
+  {
+   "runId": "run-TASK-CS-QUEUE-1",
+   "revision": 2,
+   "state": "passed",
+   "receiptDigest": "sha256:4b7f11121689f53f73172dd353a5fa7a65abecc74807f72ea408b69668b8095f",
+   "selected": [
+    "cs-engineering"
+   ],
+   "stages": [
+    {
+     "stageId": "stage-01-cs-implementation-review",
+     "phaseOrder": 67
+    }
+   ],
+   "bootstrapContext": {
+    "model": "claude-sonnet-5-5",
+    "modelClass": "general",
+    "reasoningEffort": "high",
+    "source": "runtime",
+    "observationId": "ky48VgAlYkmYre92hqarXB1eNie1A0pGPgo-xtJxiO4",
+    "actorId": "claude-code:session-827606842bca003e4dbf3fce"
+   },
+   "stageResults": [
+    {
+     "stageId": "stage-01-cs-implementation-review",
+     "state": "passed",
+     "outputFile": {
+      "locator": "/root/cs2x-final-20261006T054615Z/flow/f1/review.json",
+      "digest": "sha256:51980b33e88751281be8c7e46ebe6d57b8fbcefc7dab23494549c916f244cff3"
+     },
+     "artifacts": [
+      {
+       "artifactId": "cs-review-bundle",
+       "digest": "sha256:4ab4e1f532734ac9173965be0cb49247b044606ce8616a9e4d9a3d156653f5e5"
+      },
+      {
+       "artifactId": "cs-review-report",
+       "digest": "sha256:51980b33e88751281be8c7e46ebe6d57b8fbcefc7dab23494549c916f244cff3"
+      }
+     ],
+     "executionContext": {
+      "model": "claude-sonnet-5-5",
+      "modelClass": "general",
+      "reasoningEffort": "high",
+      "source": "runtime",
+      "observationId": "edAWN3ANAP2yjOXexXr2aQow1kBn9b6wuAgo75yafus",
+      "actorId": "claude-code:session-827606842bca003e4dbf3fce",
+      "observedAt": "2026-10-06T05:56:23.706Z"
+     }
+    }
+   ],
+   "createdAt": "2026-10-06T05:55:43.780Z",
+   "updatedAt": "2026-10-06T05:56:44.102Z"
+  },
+  {
+   "runId": "run-TASK-CS-QUEUE-2",
+   "revision": 1,
+   "state": "running",
+   "receiptDigest": "sha256:9cd88c760b257f8f376f9fe8b32ae594601cc766f1696705f8362b95673f6923",
+   "selected": [
+    "cs-engineering"
+   ],
+   "stages": [
+    {
+     "stageId": "stage-01-cs-implementation-review",
+     "phaseOrder": 67
+    }
+   ],
+   "bootstrapContext": {
+    "model": "claude-sonnet-5-5",
+    "modelClass": "general",
+    "reasoningEffort": "high",
+    "source": "runtime",
+    "observationId": "sByzhgbOtsQVKWoO-LHa8MCcAHS8XnyMoldNTg9KZ28",
+    "actorId": "claude-code:session-827606842bca003e4dbf3fce"
+   },
+   "stageResults": [
+    {
+     "stageId": "stage-01-cs-implementation-review",
+     "state": "passed",
+     "outputFile": {
+      "locator": "/root/cs2x-final-20261006T054615Z/flow/neg/review.json",
+      "digest": "sha256:51980b33e88751281be8c7e46ebe6d57b8fbcefc7dab23494549c916f244cff3"
+     },
+     "artifacts": [
+      {
+       "artifactId": "cs-review-bundle",
+       "digest": "sha256:4ab4e1f532734ac9173965be0cb49247b044606ce8616a9e4d9a3d156653f5e5"
+      },
+      {
+       "artifactId": "cs-review-report",
+       "digest": "sha256:51980b33e88751281be8c7e46ebe6d57b8fbcefc7dab23494549c916f244cff3"
+      }
+     ],
+     "executionContext": {
+      "model": "claude-sonnet-5-5",
+      "modelClass": "general",
+      "reasoningEffort": "high",
+      "source": "runtime",
+      "observationId": "uViMjxTpMPQaVIGAcH0yi6jtERNN3GIpC6IqkH2MW6c",
+      "actorId": "claude-code:session-827606842bca003e4dbf3fce",
+      "observedAt": "2026-10-06T05:56:53.332Z"
+     }
+    }
+   ],
+   "createdAt": "2026-10-06T05:56:33.064Z",
+   "updatedAt": "2026-10-06T05:56:53.661Z"
+  },
+  {
+   "runId": "run-TASK-REPO-INVENTORY-3",
+   "revision": 0,
+   "state": "running",
+   "receiptDigest": "sha256:50d90258467bad7473c7fd1d67853eb6e0b9037d574ef59676ad06b6e9590b65",
+   "selected": [
+    "ponytail"
+   ],
+   "stages": [
+    {
+     "stageId": "stage-01-minimal-implementation",
+     "phaseOrder": 44
+    }
+   ],
+   "bootstrapContext": {
+    "model": "claude-sonnet-5-5",
+    "modelClass": "general",
+    "reasoningEffort": "high",
+    "source": "runtime",
+    "observationId": "tg6njpqzQKdJmLOzYDfvgwYkwv50GsaVX8B3I0fYZBY",
+    "actorId": "claude-code:session-827606842bca003e4dbf3fce"
+   },
+   "stageResults": [],
+   "createdAt": "2026-10-06T05:56:40.612Z",
+   "updatedAt": "2026-10-06T05:56:40.612Z"
+  },
+  {
+   "runId": "run-TASK-CS-QUEUE-4",
+   "revision": 2,
+   "state": "passed",
+   "receiptDigest": "sha256:13ac17dbdfd158d59f05bdc26536c4aaa44e215307a1dc0d090516b0959d0856",
+   "selected": [
+    "cs-engineering"
+   ],
+   "stages": [
+    {
+     "stageId": "stage-01-cs-implementation-review",
+     "phaseOrder": 67
+    }
+   ],
+   "bootstrapContext": {
+    "model": "claude-sonnet-5-5",
+    "modelClass": "general",
+    "reasoningEffort": "high",
+    "source": "runtime",
+    "observationId": "8y6Wv95olC3HmxwnrT-DacKYoSbnYmA06eOyPwPnk7A",
+    "actorId": "claude-code:session-827606842bca003e4dbf3fce"
+   },
+   "stageResults": [
+    {
+     "stageId": "stage-01-cs-implementation-review",
+     "state": "passed",
+     "outputFile": {
+      "locator": "/root/cs2x-final-20261006T054615Z/flow/f1b/review.json",
+      "digest": "sha256:51980b33e88751281be8c7e46ebe6d57b8fbcefc7dab23494549c916f244cff3"
+     },
+     "artifacts": [
+      {
+       "artifactId": "cs-review-bundle",
+       "digest": "sha256:4ab4e1f532734ac9173965be0cb49247b044606ce8616a9e4d9a3d156653f5e5"
+      },
+      {
+       "artifactId": "cs-review-report",
+       "digest": "sha256:51980b33e88751281be8c7e46ebe6d57b8fbcefc7dab23494549c916f244cff3"
+      }
+     ],
+     "executionContext": {
+      "model": "claude-sonnet-5-5",
+      "modelClass": "general",
+      "reasoningEffort": "high",
+      "source": "runtime",
+      "observationId": "ZsERETPcvxnAoUHZwSbZzynLWucR_mmtoiMcapdAJR8",
+      "actorId": "claude-code:session-827606842bca003e4dbf3fce",
+      "observedAt": "2026-10-06T06:00:41.914Z"
+     }
+    }
+   ],
+   "createdAt": "2026-10-06T06:00:23.979Z",
+   "updatedAt": "2026-10-06T06:00:47.909Z"
+  },
+  {
+   "runId": "run-TASK-REPO-INVENTORY-5",
+   "revision": 2,
+   "state": "passed",
+   "receiptDigest": "sha256:045a9bcf3226b12202604bb926e53c94eece913f57abc6849d4de8724a38f88e",
+   "selected": [
+    "ponytail"
+   ],
+   "stages": [
+    {
+     "stageId": "stage-01-minimal-implementation",
+     "phaseOrder": 44
+    }
+   ],
+   "bootstrapContext": {
+    "model": "claude-sonnet-5-5",
+    "modelClass": "general",
+    "reasoningEffort": "high",
+    "source": "runtime",
+    "observationId": "iFqUF6zIyZnCidvZyyVbLS-yt28HQbEsYldKE3Z10Iw",
+    "actorId": "claude-code:session-827606842bca003e4dbf3fce"
+   },
+   "stageResults": [
+    {
+     "stageId": "stage-01-minimal-implementation",
+     "state": "passed",
+     "outputFile": {
+      "locator": "/root/cs2x-final-20261006T054615Z/flow/r24b/inventory.json",
+      "digest": "sha256:1118a39df42dfe1ec3c4908e45ae910eb70674d10390c8ea65b8403f7e494a36"
+     },
+     "artifacts": [],
+     "executionContext": {
+      "model": "claude-sonnet-5-5",
+      "modelClass": "general",
+      "reasoningEffort": "high",
+      "source": "runtime",
+      "observationId": "CFvbCm2KFPiwp9SDO6SeZdsWJdzDsEPg9iEOQ0dtHLk",
+      "actorId": "claude-code:session-827606842bca003e4dbf3fce",
+      "observedAt": "2026-10-06T06:00:44.124Z"
+     }
+    }
+   ],
+   "createdAt": "2026-10-06T06:00:31.328Z",
+   "updatedAt": "2026-10-06T06:00:48.095Z"
+  }
+ ],
+ "roots": [
+  {
+   "rootId": "root-d99a075c-53e6-4fb0-ab5a-97507f72fe94",
+   "revision": 3,
+   "state": "completed",
+   "workspaceId": "cs-claude-final-f1"
+  },
+  {
+   "rootId": "root-51794300-4783-46cb-9479-31e65755df0c",
+   "revision": 2,
+   "state": "open",
+   "workspaceId": "cs-claude-final-neg"
+  },
+  {
+   "rootId": "root-9ddfc52a-ab7f-4800-b931-1d87f625eecd",
+   "revision": 2,
+   "state": "open",
+   "workspaceId": "cs-claude-final-r24"
+  },
+  {
+   "rootId": "root-fbe9fa3a-3d1a-421d-829d-d5c48954277e",
+   "revision": 3,
+   "state": "completed",
+   "workspaceId": "cs-claude-final-f1b"
+  },
+  {
+   "rootId": "root-4f104177-d2ca-4b9a-8d06-9ffb096dd643",
+   "revision": 3,
+   "state": "completed",
+   "workspaceId": "cs-claude-final-r24b"
+  }
+ ],
+ "leases": [
+  {
+   "leaseId": "lease-f18a1581-0dbe-42d6-955d-d609a778f27a",
+   "rootId": "root-d99a075c-53e6-4fb0-ab5a-97507f72fe94",
+   "state": "consumed",
+   "actorId": "claude-final-f1"
+  },
+  {
+   "leaseId": "lease-d7833903-580f-4714-bb8d-ce80753a0e0a",
+   "rootId": "root-51794300-4783-46cb-9479-31e65755df0c",
+   "state": "consumed",
+   "actorId": "claude-final-neg"
+  },
+  {
+   "leaseId": "lease-2aec96cc-8fd7-4907-9db4-32b71c3ba736",
+   "rootId": "root-9ddfc52a-ab7f-4800-b931-1d87f625eecd",
+   "state": "consumed",
+   "actorId": "claude-final-r24"
+  },
+  {
+   "leaseId": "lease-f9c3e900-a875-47d4-95cb-332462abe2d4",
+   "rootId": "root-fbe9fa3a-3d1a-421d-829d-d5c48954277e",
+   "state": "consumed",
+   "actorId": "claude-final-f1b"
+  },
+  {
+   "leaseId": "lease-b31788ac-2e74-424c-be0e-ece0bb457682",
+   "rootId": "root-4f104177-d2ca-4b9a-8d06-9ffb096dd643",
+   "state": "consumed",
+   "actorId": "claude-final-r24b"
+  }
+ ],
+ "attempts": [
+  {
+   "rootId": "root-d99a075c-53e6-4fb0-ab5a-97507f72fe94",
+   "leaseId": "lease-f18a1581-0dbe-42d6-955d-d609a778f27a",
+   "runId": "run-TASK-CS-QUEUE-1",
+   "state": "passed"
+  },
+  {
+   "rootId": "root-51794300-4783-46cb-9479-31e65755df0c",
+   "leaseId": "lease-d7833903-580f-4714-bb8d-ce80753a0e0a",
+   "runId": "run-TASK-CS-QUEUE-2",
+   "state": "running"
+  },
+  {
+   "rootId": "root-9ddfc52a-ab7f-4800-b931-1d87f625eecd",
+   "leaseId": "lease-2aec96cc-8fd7-4907-9db4-32b71c3ba736",
+   "runId": "run-TASK-REPO-INVENTORY-3",
+   "state": "running"
+  },
+  {
+   "rootId": "root-fbe9fa3a-3d1a-421d-829d-d5c48954277e",
+   "leaseId": "lease-f9c3e900-a875-47d4-95cb-332462abe2d4",
+   "runId": "run-TASK-CS-QUEUE-4",
+   "state": "passed"
+  },
+  {
+   "rootId": "root-4f104177-d2ca-4b9a-8d06-9ffb096dd643",
+   "leaseId": "lease-b31788ac-2e74-424c-be0e-ece0bb457682",
+   "runId": "run-TASK-REPO-INVENTORY-5",
+   "state": "passed"
+  }
+ ],
+ "observationClaims": [
+  {
+   "observationId": "ky48VgAlYkmYre92hqarXB1eNie1A0pGPgo-xtJxiO4",
+   "expiresAt": "2026-10-06T05:59:39.402Z",
+   "consumedAt": "2026-10-06T05:54:39.451Z"
+  },
+  {
+   "observationId": "sByzhgbOtsQVKWoO-LHa8MCcAHS8XnyMoldNTg9KZ28",
+   "expiresAt": "2026-10-06T05:59:56.032Z",
+   "consumedAt": "2026-10-06T05:54:56.061Z"
+  },
+  {
+   "observationId": "tg6njpqzQKdJmLOzYDfvgwYkwv50GsaVX8B3I0fYZBY",
+   "expiresAt": "2026-10-06T05:59:58.475Z",
+   "consumedAt": "2026-10-06T05:54:58.501Z"
+  },
+  {
+   "observationId": "edAWN3ANAP2yjOXexXr2aQow1kBn9b6wuAgo75yafus",
+   "expiresAt": "2026-10-06T06:01:23.706Z",
+   "consumedAt": "2026-10-06T05:56:24.049Z"
+  },
+  {
+   "observationId": "uViMjxTpMPQaVIGAcH0yi6jtERNN3GIpC6IqkH2MW6c",
+   "expiresAt": "2026-10-06T06:01:53.332Z",
+   "consumedAt": "2026-10-06T05:56:53.659Z"
+  },
+  {
+   "observationId": "wZrApSWD8p5kUvd12ghVBbDtn_wPRIRft8Mbzt93PRs",
+   "expiresAt": "2026-10-06T06:02:10.632Z",
+   "consumedAt": "2026-10-06T05:57:10.660Z"
+  },
+  {
+   "observationId": "8y6Wv95olC3HmxwnrT-DacKYoSbnYmA06eOyPwPnk7A",
+   "expiresAt": "2026-10-06T06:04:20.749Z",
+   "consumedAt": "2026-10-06T05:59:20.850Z"
+  },
+  {
+   "observationId": "iFqUF6zIyZnCidvZyyVbLS-yt28HQbEsYldKE3Z10Iw",
+   "expiresAt": "2026-10-06T06:04:21.591Z",
+   "consumedAt": "2026-10-06T05:59:21.655Z"
+  },
+  {
+   "observationId": "ZsERETPcvxnAoUHZwSbZzynLWucR_mmtoiMcapdAJR8",
+   "expiresAt": "2026-10-06T06:05:41.914Z",
+   "consumedAt": "2026-10-06T06:00:42.645Z"
+  },
+  {
+   "observationId": "CFvbCm2KFPiwp9SDO6SeZdsWJdzDsEPg9iEOQ0dtHLk",
+   "expiresAt": "2026-10-06T06:05:44.124Z",
+   "consumedAt": "2026-10-06T06:00:44.326Z"
+  }
+ ]
+}

@@ -1,0 +1,12 @@
+{
+ "serverInfo": {
+  "name": "agent-governance-suite",
+  "version": "2.8.0"
+ },
+ "protocolVersion": "2025-06-18",
+ "toolCount": 28,
+ "refCount": 0,
+ "topLevelCombinatorTools": [],
+ "instructionsHasIntake": true,
+ "exitCode": 0
+}

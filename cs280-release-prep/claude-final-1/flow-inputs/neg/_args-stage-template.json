@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0.0",
+  "runId": "<from start_guarded_workflow data.runId>",
+  "stageId": "<from start_guarded_workflow data.plan.stages[0].stageId>",
+  "expectedRevision": "<from start_guarded_workflow data.revision (number)>",
+  "state": "passed",
+  "outputFile": {
+    "locator": "/root/cs2x-final-20261006T054615Z/flow/neg/review.json",
+    "digest": "sha256:51980b33e88751281be8c7e46ebe6d57b8fbcefc7dab23494549c916f244cff3"
+  },
+  "output": {
+    "schemaVersion": "1.0.0",
+    "kind": "output",
+    "output": null,
+    "error": null,
+    "artifacts": [
+      {
+        "artifactId": "cs-review-bundle",
+        "schemaId": "cs-fixture/v1",
+        "locator": "/root/cs2x-final-20261006T054615Z/flow/neg/stage-bundle.json",
+        "digest": "sha256:4ab4e1f532734ac9173965be0cb49247b044606ce8616a9e4d9a3d156653f5e5",
+        "targetDigest": "sha256:6a4b6fdaab6b84bfc9efbb358c68cc1550bf72059a2b53237f44aefe23443f8a",
+        "verified": true
+      },
+      {
+        "artifactId": "cs-review-report",
+        "schemaId": "cs-fixture/v1",
+        "locator": "/root/cs2x-final-20261006T054615Z/flow/neg/review.json",
+        "digest": "sha256:51980b33e88751281be8c7e46ebe6d57b8fbcefc7dab23494549c916f244cff3",
+        "targetDigest": "sha256:6a4b6fdaab6b84bfc9efbb358c68cc1550bf72059a2b53237f44aefe23443f8a",
+        "verified": true
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "artifactId": "cs-review-report",
+      "kind": "file",
+      "locator": "/root/cs2x-final-20261006T054615Z/flow/neg/review.json",
+      "verified": true,
+      "note": "Checked-in CS sqlite-queue review fixture copied for the Claude host flow"
+    }
+  ],
+  "findings": [],
+  "blockers": [],
+  "error": null
+}

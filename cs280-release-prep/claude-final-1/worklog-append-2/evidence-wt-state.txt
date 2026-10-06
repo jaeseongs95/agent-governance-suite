@@ -1,0 +1,7 @@
+e456736916b28104fb0f90eeb026088daef8fb54 39ea5fc3012ee8a37fc2a18d8243d2dc36b14ae5 9f5e850f666846f2cb2d4565cb4eef63f5764562 evidence: append claude-final-1 recollection and post-processing logs (redacted)
+9f5e850f666846f2cb2d4565cb4eef63f5764562 4a7dbab5f979be8d913d5b915f6d91b558dd31ec ed429f2e6c35e77ae79204aa74ac1faeb6f5cded evidence: publish CS 2.8.0 claude-final-1 Claude Cloud verification (redacted)
+ed429f2e6c35e77ae79204aa74ac1faeb6f5cded d3bafc0511aa91ed1ffcf06832cd837de832945e dd02a3579ada48f6ee459fba94db365785baaef7 docs: append bounded official evidence publication terminal logs
+dd02a3579ada48f6ee459fba94db365785baaef7 602718c52a9df18d2eb1834e893e5a4ea78033b2 188a57af035b275ca4bd6c1d34c07015bfdfb263 docs: publish approved first official validator failure evidence
+  evidence              64b469d evidence: append claude-final-1 recollection and post-processing logs (redacted)
+  evidence-local-backup 64b469d evidence: append claude-final-1 recollection and post-processing logs (redacted)
+* evidence-publish      e456736 evidence: append claude-final-1 recollection and post-processing logs (redacted)

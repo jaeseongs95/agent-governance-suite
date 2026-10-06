@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "scope": "knowledge files, catalogue, rule digests and module structure",
+  "schemaEngine": "ags-ajv2020",
+  "version": "0.1.0",
+  "packDigest": "sha256:d8351d9aabb433403830fcffc3a2f2438b6d428711c93b6ded9eff002468c3d1",
+  "modules": 10,
+  "rules": 40,
+  "validatedRules": 20
+}

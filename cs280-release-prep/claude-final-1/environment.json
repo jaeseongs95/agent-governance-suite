@@ -1,0 +1,85 @@
+{
+ "recordedUtc": "2026-10-06T05:55:16Z",
+ "container": {
+  "id": "container_01AgHsKexyWvm252qFX6ycZa",
+  "source": "env CLAUDE_CODE_CONTAINER_ID",
+  "verdict": "new",
+  "evidence": "differs from previous CS280 run container_01X3fps58ifZLjJEtfzpuoxD; kernel uptime 136.85s at first observation (env/uptime.txt, 05:46:15 up 2 min)"
+ },
+ "hostname": {
+  "value": "vm",
+  "verdict": "unknown",
+  "evidence": "generic hostname; cannot distinguish reuse"
+ },
+ "remoteEnvironmentType": {
+  "value": "cloud_default",
+  "source": "env CLAUDE_CODE_REMOTE_ENVIRONMENT_TYPE"
+ },
+ "environmentId": {
+  "value": "unknown",
+  "evidence": "no observed source for environment ID; session id cse_019jWevBCENVcC2gGbN9K5rA (env CLAUDE_CODE_REMOTE_SESSION_ID) is a session, not environment ID"
+ },
+ "pid1": {
+  "value": "/process_api --firecracker-init ...",
+  "file": "env/pid1.txt",
+  "reapsChildren": "unknown",
+  "evidence": "process_api runs as firecracker init; whether it reaps orphaned zombies was not tested; no zombie (Z) rows in env/ps-start.txt"
+ },
+ "startProcesses": {
+  "file": "env/ps-start.txt",
+  "verdict": "new",
+  "evidence": "all processes started 05:43-05:46; only this session's claude (pid 85), its MCP server (pid 267, node mcp-server/dist/server.mjs from repo .mcp.json with HOST_ATTESTATION=codex), environment-manager, telemetry collector; no other job"
+ },
+ "concurrentJobs": {
+  "value": "none observed besides this session's own processes",
+  "verdict": "new"
+ },
+ "homeInitialEntries": {
+  "file": "env/home-ls.txt",
+  "note": "/root/.agent-governance-suite/session-messaging created 05:46 by this session's own MCP server before ST was made; .claude/.codex/.npm/.cache populated by environment at 05:45-05:46; tool dirs (.bun,.cargo,.rustup,.gradle,.nix) dated Oct 3 = image layer"
+ },
+ "workspace": {
+  "verdict": "new",
+  "evidence": "/home/user/.ccr-seed-bundle and /home/user/repo created 05:45; no node_modules before install; git origin remote absent (bundle seed)"
+ },
+ "previousCs280Container": {
+  "verdict": "independent",
+  "evidence": "container id differs; uptime 2 min"
+ },
+ "pnpmStore": {
+  "path": "$ST/pnpm-store",
+  "reused": 0,
+  "downloaded": 217,
+  "added": 217,
+  "verdict": "new",
+  "evidence": "logs/01-pnpm-install.stdout 'resolved 217, reused 0, downloaded 217, added 217'"
+ },
+ "paths": {
+  "ST": "/root/cs2x-final-20261006T054615Z",
+  "TMPDIR": "$ST/tmp",
+  "XDG": "$ST/xdg/*",
+  "AGENT_GOVERNANCE_SHARED_STATE_DIR": "$ST/ags-shared",
+  "CLAUDE_PLUGIN_DATA": "$ST/plugin-data (wrapper); installed plugin used CLAUDE_CONFIG_DIR plugin data dir",
+  "CODEX_HOME": "$ST/codex-home (empty)",
+  "COREPACK_HOME": "$ST/corepack",
+  "CLAUDE_CONFIG_DIR": "$ST/claude-config (C1/C2)",
+  "B_MCP_state": "$ST/B-mcp-state"
+ },
+ "versions": {
+  "node": "v24.21.0",
+  "nodeDefaultOnPath": "v22.22.0 (/opt/node22, not used; PATH puts /opt/node24 first)",
+  "pnpm": "11.19.0 via task-local corepack shim $ST/bin",
+  "corepack": "0.36.0",
+  "python": "Python 3.13.16",
+  "git": "git version 2.43.0",
+  "claude": "2.1.291 (Claude Code)"
+ },
+ "model": {
+  "thisSession": "unknown (configured identifier claude-opus-5-5 per system prompt; serving model not independently observed)",
+  "childSession": "claude-sonnet-5-5 per child stream-json system/init"
+ },
+ "effort": {
+  "thisSession": "unknown",
+  "childSession": "--effort high passed to child CLI; observed value per hook observation in MCP DB"
+ }
+}

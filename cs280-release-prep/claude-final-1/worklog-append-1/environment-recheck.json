@@ -1,0 +1,41 @@
+{
+ "recordedUtc": "2026-10-06T06:24:34Z",
+ "purpose": "read-only recollection after worker restart; no tests rerun",
+ "source": {
+  "head": "b7341d3e6636b79217b1f3d37d7a5014fcbf47be",
+  "tree": "5648f76558e923244cedf78a8263892d00df8299",
+  "dirty": 0
+ },
+ "hostname": {
+  "value": "vm",
+  "verdict": "unknown",
+  "evidence": "generic hostname, same value before and after restart"
+ },
+ "container": {
+  "value": "container_01AgHsKexyWvm252qFX6ycZa",
+  "verdict": "reused (same as this task's first observation); new vs previous CS280 container_01X3fps58ifZLjJEtfzpuoxD",
+  "evidence": "env CLAUDE_CODE_CONTAINER_ID unchanged; disk state ($ST, /root/evidence-wt local commit eff886e) persisted"
+ },
+ "kernelUptime": {
+  "value": "17.59s at 06:24:34Z",
+  "verdict": "new boot after worker restart",
+  "evidence": "/proc/uptime; first observation in this task was 136.85s at 05:46:15Z"
+ },
+ "pid1": {
+  "value": "process_api (--firecracker-init)",
+  "reapsChildren": "unknown",
+  "evidence": "ps -o pid,comm -p 1"
+ },
+ "processes": {
+  "file": "ps-after-restart.txt",
+  "note": "child Claude sessions and MCP probes from before the restart are not running"
+ },
+ "node": {
+  "value": "v24.21.0 (/opt/node24)",
+  "verdict": "image-provided, unknown whether reused"
+ },
+ "pnpm": {
+  "value": "11.19.0",
+  "verdict": "task-local corepack in $ST/corepack (created in this task, persisted across restart)"
+ }
+}

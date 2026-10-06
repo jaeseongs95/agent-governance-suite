@@ -1,0 +1,143 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "StructuredInternalBlockRemovalProvenance",
+  "sourceCommit": "28846ad0ff51e514f5e569e68f13563f3b170923",
+  "targetTypes": [
+    "thinking",
+    "redacted_thinking",
+    "analysis",
+    "reasoning"
+  ],
+  "method": "Raw JSON content-block object and required adjacent array delimiter removal; all retained byte slices copied unchanged; valid records compared to recursive target-block filtering.",
+  "summary": {
+    "pathsChanged": 6,
+    "uniqueSourceGitBlobs": 4,
+    "structuredBlocksRemovedByPath": 100,
+    "structuredBlocksRemovedByUniqueBlob": 87,
+    "parseErrorLinesPreserved": 1
+  },
+  "files": [
+    {
+      "path": "C2/child-transcripts/-root-cs2x-final-20261006T054615Z-flow/15064980-a58d-565b-a1d4-887c2e2a8760.jsonl",
+      "sourceGitBlobOidSha1": "943723f2e9cf5c5a13f66ed88dbc1a56842ceab0",
+      "preCorrectionBytes": 1092110,
+      "preCorrectionPublicSha256": "2b4c89e332937f58b7c43d004303f88feb61e0229bc9f0d5d959648278ba513e",
+      "correctedBytes": 1090125,
+      "correctedPublicSha256": "738de9394059ea2f12d0e9f4ffe6fc14825ecbc2408428993fddd96889c582bb",
+      "structuredBlocksRemoved": {
+        "thinking": 13
+      },
+      "removalObjectCount": 13,
+      "deletionIntervalCount": 13,
+      "deletedBytes": 1985,
+      "validJsonRecordsCompared": 259,
+      "parseErrorLinesPreserved": [],
+      "outsideDeletedRangesBytePreserved": true
+    },
+    {
+      "path": "C2/child1-stream.jsonl",
+      "sourceGitBlobOidSha1": "f562cd73c881b6f7f9a930d206ea7b195f7be9e4",
+      "preCorrectionBytes": 418959,
+      "preCorrectionPublicSha256": "7bf756030f74faee723cfbe7d4235d8f231930baca4aedf7fe0b8d4f62f498d6",
+      "correctedBytes": 417583,
+      "correctedPublicSha256": "afd09a6f8617e07645f40a753e336db414fd5ff56fc5afccc2f789106bc21205",
+      "structuredBlocksRemoved": {
+        "thinking": 9
+      },
+      "removalObjectCount": 9,
+      "deletionIntervalCount": 9,
+      "deletedBytes": 1376,
+      "validJsonRecordsCompared": 228,
+      "parseErrorLinesPreserved": [],
+      "outsideDeletedRangesBytePreserved": true
+    },
+    {
+      "path": "C2/child2-stream.jsonl",
+      "sourceGitBlobOidSha1": "419b3167dbf9bfec7b425f21960aa0b0657c1513",
+      "preCorrectionBytes": 249879,
+      "preCorrectionPublicSha256": "687fef2483023fb279292df684f0a5db2a65985695af67e3319f83aa8a38a5bc",
+      "correctedBytes": 249270,
+      "correctedPublicSha256": "822e82daa7aac99a4f1b451318b5e04b3d1c1a1aaf2bdeca057201a6e8ba7003",
+      "structuredBlocksRemoved": {
+        "thinking": 4
+      },
+      "removalObjectCount": 4,
+      "deletionIntervalCount": 4,
+      "deletedBytes": 609,
+      "validJsonRecordsCompared": 129,
+      "parseErrorLinesPreserved": [],
+      "outsideDeletedRangesBytePreserved": true
+    },
+    {
+      "path": "logs/32-C2-child-session.stdout",
+      "sourceGitBlobOidSha1": "f562cd73c881b6f7f9a930d206ea7b195f7be9e4",
+      "preCorrectionBytes": 418959,
+      "preCorrectionPublicSha256": "7bf756030f74faee723cfbe7d4235d8f231930baca4aedf7fe0b8d4f62f498d6",
+      "correctedBytes": 417583,
+      "correctedPublicSha256": "afd09a6f8617e07645f40a753e336db414fd5ff56fc5afccc2f789106bc21205",
+      "structuredBlocksRemoved": {
+        "thinking": 9
+      },
+      "removalObjectCount": 9,
+      "deletionIntervalCount": 9,
+      "deletedBytes": 1376,
+      "validJsonRecordsCompared": 228,
+      "parseErrorLinesPreserved": [],
+      "outsideDeletedRangesBytePreserved": true
+    },
+    {
+      "path": "logs/34-C2b-child-session-traced.stdout",
+      "sourceGitBlobOidSha1": "419b3167dbf9bfec7b425f21960aa0b0657c1513",
+      "preCorrectionBytes": 249879,
+      "preCorrectionPublicSha256": "687fef2483023fb279292df684f0a5db2a65985695af67e3319f83aa8a38a5bc",
+      "correctedBytes": 249270,
+      "correctedPublicSha256": "822e82daa7aac99a4f1b451318b5e04b3d1c1a1aaf2bdeca057201a6e8ba7003",
+      "structuredBlocksRemoved": {
+        "thinking": 4
+      },
+      "removalObjectCount": 4,
+      "deletionIntervalCount": 4,
+      "deletedBytes": 609,
+      "validJsonRecordsCompared": 129,
+      "parseErrorLinesPreserved": [],
+      "outsideDeletedRangesBytePreserved": true
+    },
+    {
+      "path": "session-transcript/15064980-a58d-565b-a1d4-887c2e2a8760.jsonl",
+      "sourceGitBlobOidSha1": "8162b76becfe2735d0c27b0f358f36415c5b46fa",
+      "preCorrectionBytes": 1175107,
+      "preCorrectionPublicSha256": "c99d235a56c4b4929fb712d017b537b468cdea4545e1d550ae443f075aa4c1d5",
+      "correctedBytes": 1164724,
+      "correctedPublicSha256": "368f053671bc6ba1a873ae4fdeb2360d5380e8f537b0d14b00115ea81bcc9702",
+      "structuredBlocksRemoved": {
+        "thinking": 61
+      },
+      "removalObjectCount": 61,
+      "deletionIntervalCount": 61,
+      "deletedBytes": 10383,
+      "validJsonRecordsCompared": 430,
+      "parseErrorLinesPreserved": [
+        {
+          "line": 12,
+          "startByteInclusive": 90031,
+          "endByteExclusive": 110323,
+          "bytes": 20292,
+          "sha256": "ea28a0511c2ae4ef8cd545d5da22eefa282284eb04b876ef5d57f777ca7a1e51",
+          "targetLabelOccurrences": 0
+        }
+      ],
+      "outsideDeletedRangesBytePreserved": true
+    }
+  ],
+  "accessLimit": "The correction commit supersedes current-tree payloads but does not make parent commits, old Git blobs, forks, or previously fetched copies inaccessible.",
+  "verificationStatus": "LOCAL_CANDIDATE_VERIFIED_NOT_PUBLISHED",
+  "verification": {
+    "payloadPathsDeepEqualAfterTargetRemoval": 6,
+    "parseErrorLinesByteIdentical": 1,
+    "rootManifestEntriesMatched": 133,
+    "rootSha256SumEntriesMatched": 135,
+    "allCloudCandidatePathsScanned": 685,
+    "allCloudUniqueContentSha256Scanned": 626,
+    "structuredInternalBlocksRemaining": 0
+  }
+}

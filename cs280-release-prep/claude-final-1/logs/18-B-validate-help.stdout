@@ -1,0 +1,58 @@
+{
+  "commands": {
+    "help": [],
+    "self-check": [],
+    "catalog": [
+      "--allow-draft"
+    ],
+    "rules": [
+      "--domain",
+      "--rule",
+      "--allow-draft"
+    ],
+    "handoff": [
+      "--root",
+      "--binding",
+      "--task",
+      "--policy"
+    ],
+    "check-stage-bundle": [
+      "--root",
+      "--input",
+      "--bundle-digest",
+      "--task-digest"
+    ],
+    "validate-request": [
+      "--root",
+      "--input"
+    ],
+    "validate-constraints": [
+      "--root",
+      "--input",
+      "--request"
+    ],
+    "validate-review": [
+      "--root",
+      "--input",
+      "--constraint",
+      "--candidate"
+    ],
+    "check-bundle": [
+      "--root",
+      "--binding",
+      "--task",
+      "--policy",
+      "--review",
+      "--candidate"
+    ],
+    "provider-result": [
+      "--root",
+      "--input",
+      "--mode",
+      "--request",
+      "--constraint",
+      "--candidate"
+    ]
+  },
+  "notes": "All input paths are relative to --root. No command executes a candidate, installs dependencies, fetches URLs, or modifies the repository."
+}

@@ -1,0 +1,7 @@
+{
+  "actorIdNote": "use the actorId value you choose consistently",
+  "outputTargets": [
+    "candidate/queue.py"
+  ],
+  "priorFailure": null
+}

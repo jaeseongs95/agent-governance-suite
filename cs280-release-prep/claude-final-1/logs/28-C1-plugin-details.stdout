@@ -1,0 +1,42 @@
+agent-governance-suite 2.8.0
+  Description: Governance specialists, a local MCP workflow guard, and opt-in task continuity for Claude Code.
+  Source: agent-governance-suite@agent-governance-claude
+
+Component inventory
+  Skills (21)  acceptance-evidence-validator, blocker-diagnostician, change-scope-guardian, context-continuity, coordinate-subagents, cs-engineering, evaluation-validity-auditor, independent-audit-gate, independent-deliberation-panel, instruction-scope-resolver, iteration-frame-auditor, korean-prose-editor, model-effort-advisor, mutation-risk-preflight, orchestrator, ponytail, recovery-strategy-selector, session-board, software-security-auditor, task-contract, workspace-convention-profiler
+  Agents (2)  deliberation-reviewer, independent-auditor
+  Hooks (9)  SessionStart, SessionEnd, PreCompact, PostCompact, PostModelSwitch, PreToolUse, UserPromptSubmit, PostToolUse, Stop  (harness-only — no model context cost)
+  MCP servers (1)  agent-governance-suite  (tool schemas resolved at runtime; not counted)
+  LSP servers (0)
+
+Projected token cost
+  Always-on:   ~4,349 tok   added to every session
+
+Per-component (rounded)
+  component                       always-on  on-invoke
+  ponytail                             ~280      ~3.6k
+  cs-engineering                       ~220      ~1.5k
+  session-board                        ~200       ~840
+  orchestrator                         ~150      ~1.9k
+  iteration-frame-auditor              ~190       ~690
+  context-continuity                   ~200       ~630
+  change-scope-guardian                ~200       ~720
+  evaluation-validity-auditor          ~170       ~520
+  coordinate-subagents                 ~170      ~1.1k
+  independent-deliberation-panel       ~190      ~1.9k
+  acceptance-evidence-validator        ~180       ~550
+  task-contract                        ~220       ~490
+  recovery-strategy-selector           ~190       ~390
+  model-effort-advisor                 ~200       ~590
+  korean-prose-editor                  ~180       ~610
+  software-security-auditor            ~140       ~580
+  blocker-diagnostician                ~210       ~600
+  workspace-convention-profiler        ~190       ~590
+  instruction-scope-resolver           ~200       ~860
+  independent-audit-gate               ~230       ~950
+  mutation-risk-preflight              ~150       ~630
+  deliberation-reviewer                ~130       ~310
+  independent-auditor                  ~170       ~410
+
+  On-invoke cost is paid each time a skill or agent fires.
+  Token counts are estimates and may differ from actual usage.

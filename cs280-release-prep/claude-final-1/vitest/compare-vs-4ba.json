@@ -1,0 +1,14 @@
+{
+ "skipSetEqual": true,
+ "oldSkip": 5,
+ "newSkip": 5,
+ "addedCases": [
+  "tests/session-messaging/session-message.test.ts › TLS 1.3 broker and vendor-neutral adapter › blocks a verified retired Codex wake marker without claiming the current body through the packaged hook",
+  "tests/session-messaging/session-message.test.ts › TLS 1.3 broker and vendor-neutral adapter › blocks a verified retired Codex wake marker without claiming the current body through the source hook",
+  "tests/session-messaging/session-message.test.ts › TLS 1.3 broker and vendor-neutral adapter › blocks only verified empty Codex wake prompts in the source hook"
+ ],
+ "removedCases": [
+  "tests/session-messaging/session-message.test.ts › TLS 1.3 broker and vendor-neutral adapter › blocks a verified retired Codex wake marker without claiming the current body"
+ ],
+ "statusChanged": []
+}

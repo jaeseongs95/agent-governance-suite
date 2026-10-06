@@ -1,0 +1,5 @@
+tests/session-messaging/previous-broker.test.ts › gives the new batched presence request a defined result from a previous broker
+tests/session-messaging/previous-broker.test.ts › leaves a previous broker's latch of an ended birth for the new broker to retire, or finds it retired
+tests/session-messaging/previous-broker.test.ts › lets the previous released broker serve a schema 1 database with a retired wake
+tests/session-messaging/previous-broker.test.ts › preserves queued messages when new hooks meet the previous released broker
+tests/session-messaging/previous-broker.test.ts › reads a previous broker's Korean claim answer at the response limit whole, and meets its own request reader

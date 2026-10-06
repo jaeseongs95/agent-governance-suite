@@ -1,0 +1,11 @@
+Already up to date
+Done in 529ms using pnpm v11.19.0
+
+ RUN  v5.0.0 /home/user/repo
+
+
+ Test Files  67 passed | 1 skipped (68)
+      Tests  916 passed | 5 skipped (921)
+   Start at  05:47:31
+   Duration  87.72s (tests 95%, import 3%, transform 2%)
+

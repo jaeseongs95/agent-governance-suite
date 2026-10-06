@@ -1,0 +1,14 @@
+{
+  "success": true,
+  "strict": true,
+  "target": "/root/cs2x-final-20261006T054615Z/claude-clean/mkt/claude-plugin/.claude-plugin/plugin.json",
+  "manifest": {
+    "file": "/root/cs2x-final-20261006T054615Z/claude-clean/mkt/claude-plugin/.claude-plugin/plugin.json",
+    "type": "plugin",
+    "errors": [],
+    "warnings": [],
+    "notes": [],
+    "gatingHooks": []
+  },
+  "contents": []
+}

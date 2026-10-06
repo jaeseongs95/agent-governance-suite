@@ -1,0 +1,9 @@
+{
+ "installPath": "$ST/claude-config/plugins/cache/agent-governance-claude/agent-governance-suite/2.8.0",
+ "repoFiles": 463,
+ "cacheFiles": 463,
+ "match": 463,
+ "mismatch": [],
+ "missing": [],
+ "extra": []
+}

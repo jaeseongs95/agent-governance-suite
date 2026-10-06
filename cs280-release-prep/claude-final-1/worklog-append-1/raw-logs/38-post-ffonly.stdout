@@ -1,0 +1,377 @@
+Updating 4689c61..c46f20c
+Fast-forward
+ cs280-release-prep/codex-final-1/COLLECTION.json   |   17 +
+ cs280-release-prep/codex-final-1/INVENTORY.json    | 2165 ++++++
+ cs280-release-prep/codex-final-1/MANIFEST.json     |  932 +++
+ cs280-release-prep/codex-final-1/README.ko.md      |    7 +
+ cs280-release-prep/codex-final-1/REDACTION.json    | 2168 ++++++
+ .../codex-final-1/RESIDUAL-SCAN.json               |   23 +
+ cs280-release-prep/codex-final-1/SHA256SUMS        |  186 +
+ cs280-release-prep/codex-final-1/STATUS.json       |   28 +
+ cs280-release-prep/codex-final-1/TOOLS-PIN.json    |    6 +
+ .../codex-final-1/checked-in-tools/.gitignore      |    1 +
+ .../codex-final-1/checked-in-tools/annotate.py     |   31 +
+ .../codex-final-1/checked-in-tools/discover.py     |   84 +
+ .../codex-final-1/checked-in-tools/environment.py  |   49 +
+ .../checked-in-tools/install_locked.py             |   77 +
+ .../checked-in-tools/official_once.py              |   51 +
+ .../checked-in-tools/prepare_public.py             |  118 +
+ .../codex-final-1/checked-in-tools/runner.py       |   24 +
+ .../codex-final-1/raw/18-before-install.json       | 8072 ++++++++++++++++++++
+ .../codex-final-1/raw/23-after-install.json        | 8072 ++++++++++++++++++++
+ .../codex-final-1/raw/28-before-official.json      | 8072 ++++++++++++++++++++
+ .../codex-final-1/raw/31-after-official.json       | 8072 ++++++++++++++++++++
+ .../codex-final-1/raw/ANNOTATED-RESULT.json        |   28 +
+ .../codex-final-1/raw/COMPATIBILITY.json           |   29 +
+ .../codex-final-1/raw/ENVIRONMENT.json             |   58 +
+ .../codex-final-1/raw/FINAL-OFFICIAL-ONCE.json     |    6 +
+ .../codex-final-1/raw/INSTALL-ENV-BINDING.json     |   21 +
+ .../codex-final-1/raw/INSTALL-RESULT.json          |   28 +
+ .../codex-final-1/raw/INSTALL-REVIEW.json          |   10 +
+ .../codex-final-1/raw/LOCKED-INSTALL-ONCE.json     |    5 +
+ .../codex-final-1/raw/OFFICIAL-ENV-BINDING.json    |   37 +
+ .../codex-final-1/raw/OFFICIAL-RESULT.json         |   66 +
+ .../codex-final-1/raw/PNPM-MODULES.yaml            |  679 ++
+ .../codex-final-1/raw/PNPM-RUN-OPTION-SOURCE.json  | 1035 +++
+ .../codex-final-1/raw/PNPM-WORKSPACE-STATE.json    |   41 +
+ .../codex-final-1/raw/SOURCE-PIN.json              |   22 +
+ cs280-release-prep/codex-final-1/raw/SUPPLIED.json |   44 +
+ .../codex-final-1/raw/SUPPLIER-PIN.json            |   66 +
+ .../raw/logs/00-discovery-driver.command.json      |   13 +
+ .../raw/logs/00-discovery-driver.stderr.log        |    5 +
+ .../raw/logs/00-discovery-driver.stdout.log        |    9 +
+ .../raw/logs/01-remote-ref.command.json            |   16 +
+ .../raw/logs/01-remote-ref.stderr.log              |    0
+ .../raw/logs/01-remote-ref.stdout.log              |    1 +
+ .../raw/logs/02-candidate-init.command.json        |   14 +
+ .../raw/logs/02-candidate-init.stderr.log          |   13 +
+ .../raw/logs/02-candidate-init.stdout.log          |    1 +
+ .../raw/logs/03-candidate-origin.command.json      |   16 +
+ .../raw/logs/03-candidate-origin.stderr.log        |    0
+ .../raw/logs/03-candidate-origin.stdout.log        |    0
+ .../raw/logs/04-candidate-lf.command.json          |   15 +
+ .../raw/logs/04-candidate-lf.stderr.log            |    0
+ .../raw/logs/04-candidate-lf.stdout.log            |    0
+ .../raw/logs/05-candidate-fetch.command.json       |   16 +
+ .../raw/logs/05-candidate-fetch.stderr.log         |    3 +
+ .../raw/logs/05-candidate-fetch.stdout.log         |    0
+ .../raw/logs/06-candidate-checkout.command.json    |   15 +
+ .../raw/logs/06-candidate-checkout.stderr.log      |    1 +
+ .../raw/logs/06-candidate-checkout.stdout.log      |    0
+ .../raw/logs/07-candidate-pin.command.json         |   15 +
+ .../raw/logs/07-candidate-pin.stderr.log           |    0
+ .../raw/logs/07-candidate-pin.stdout.log           |    2 +
+ .../raw/logs/08-candidate-clean.command.json       |   14 +
+ .../raw/logs/08-candidate-clean.stderr.log         |    0
+ .../raw/logs/08-candidate-clean.stdout.log         |    0
+ .../raw/logs/09-delta-paths.command.json           |   16 +
+ .../raw/logs/09-delta-paths.stderr.log             |    0
+ .../raw/logs/09-delta-paths.stdout.log             |    7 +
+ .../raw/logs/11-supplier-blob-0.command.json       |   17 +
+ .../raw/logs/11-supplier-blob-0.stderr.log         |    0
+ .../raw/logs/11-supplier-blob-0.stdout.log         |  657 ++
+ .../raw/logs/11-supplier-blob-1.command.json       |   17 +
+ .../raw/logs/11-supplier-blob-1.stderr.log         |    0
+ .../raw/logs/11-supplier-blob-1.stdout.log         |   20 +
+ .../raw/logs/11-supplier-blob-2.command.json       |   17 +
+ .../raw/logs/11-supplier-blob-2.stderr.log         |    0
+ .../raw/logs/11-supplier-blob-2.stdout.log         |  127 +
+ .../raw/logs/11-supplier-blob-3.command.json       |   17 +
+ .../raw/logs/11-supplier-blob-3.stderr.log         |    0
+ .../raw/logs/11-supplier-blob-3.stdout.log         |  201 +
+ .../raw/logs/11-supplier-blob-4.command.json       |   17 +
+ .../raw/logs/11-supplier-blob-4.stderr.log         |    0
+ .../raw/logs/11-supplier-blob-4.stdout.log         |    6 +
+ .../logs/12-resume-discovery-driver.command.json   |   13 +
+ .../raw/logs/12-resume-discovery-driver.stderr.log |    0
+ .../raw/logs/12-resume-discovery-driver.stdout.log |   10 +
+ .../raw/logs/13-resume-candidate-pin.command.json  |   15 +
+ .../raw/logs/13-resume-candidate-pin.stderr.log    |    0
+ .../raw/logs/13-resume-candidate-pin.stdout.log    |    2 +
+ .../logs/14-resume-candidate-clean.command.json    |   14 +
+ .../raw/logs/14-resume-candidate-clean.stderr.log  |    0
+ .../raw/logs/14-resume-candidate-clean.stdout.log  |    0
+ .../raw/logs/15-resume-delta-paths.command.json    |   16 +
+ .../raw/logs/15-resume-delta-paths.stderr.log      |    0
+ .../raw/logs/15-resume-delta-paths.stdout.log      |    7 +
+ .../raw/logs/16-reviewed-delta-patch.command.json  |   16 +
+ .../raw/logs/16-reviewed-delta-patch.stderr.log    |    0
+ .../raw/logs/16-reviewed-delta-patch.stdout.log    |  165 +
+ .../raw/logs/17-locked-install-driver.command.json |   13 +
+ .../raw/logs/17-locked-install-driver.stderr.log   |    4 +
+ .../raw/logs/17-locked-install-driver.stdout.log   |    0
+ .../raw/logs/18-before-install-paths.command.json  |   14 +
+ .../raw/logs/18-before-install-paths.stderr.log    |    0
+ .../raw/logs/18-before-install-paths.stdout.log    |    1 +
+ .../raw/logs/18-before-install-pin.command.json    |   15 +
+ .../raw/logs/18-before-install-pin.stderr.log      |    0
+ .../raw/logs/18-before-install-pin.stdout.log      |    2 +
+ .../raw/logs/18-before-install-status.command.json |   14 +
+ .../raw/logs/18-before-install-status.stderr.log   |    0
+ .../raw/logs/18-before-install-status.stdout.log   |    0
+ .../raw/logs/19-node-version.command.json          |   13 +
+ .../raw/logs/19-node-version.stderr.log            |    0
+ .../raw/logs/19-node-version.stdout.log            |    1 +
+ .../raw/logs/20-pnpm-version.command.json          |   13 +
+ .../raw/logs/20-pnpm-version.stderr.log            |    0
+ .../raw/logs/20-pnpm-version.stdout.log            |    1 +
+ .../logs/21-effective-store-before.command.json    |   16 +
+ .../raw/logs/21-effective-store-before.stderr.log  |    0
+ .../raw/logs/21-effective-store-before.stdout.log  |    1 +
+ .../raw/logs/22-locked-install.command.json        |   16 +
+ .../raw/logs/22-locked-install.stderr.log          |    0
+ .../raw/logs/22-locked-install.stdout.log          |   43 +
+ .../raw/logs/23-after-install-paths.command.json   |   14 +
+ .../raw/logs/23-after-install-paths.stderr.log     |    0
+ .../raw/logs/23-after-install-paths.stdout.log     |    1 +
+ .../raw/logs/23-after-install-pin.command.json     |   15 +
+ .../raw/logs/23-after-install-pin.stderr.log       |    0
+ .../raw/logs/23-after-install-pin.stdout.log       |    2 +
+ .../raw/logs/23-after-install-status.command.json  |   14 +
+ .../raw/logs/23-after-install-status.stderr.log    |    0
+ .../raw/logs/23-after-install-status.stdout.log    |    0
+ .../raw/logs/24-effective-store-after.command.json |   16 +
+ .../raw/logs/24-effective-store-after.stderr.log   |    0
+ .../raw/logs/24-effective-store-after.stdout.log   |    1 +
+ .../raw/logs/25-driver-syntax.command.json         |   18 +
+ .../raw/logs/25-driver-syntax.stderr.log           |    0
+ .../raw/logs/25-driver-syntax.stdout.log           |    0
+ .../logs/26-corrected-install-driver.command.json  |   13 +
+ .../logs/26-corrected-install-driver.stderr.log    |    0
+ .../logs/26-corrected-install-driver.stdout.log    |   39 +
+ .../raw/logs/27-final-official-driver.command.json |   13 +
+ .../raw/logs/27-final-official-driver.stderr.log   |    0
+ .../raw/logs/27-final-official-driver.stdout.log   |   74 +
+ .../raw/logs/28-before-official-paths.command.json |   14 +
+ .../raw/logs/28-before-official-paths.stderr.log   |    0
+ .../raw/logs/28-before-official-paths.stdout.log   |    1 +
+ .../raw/logs/28-before-official-pin.command.json   |   15 +
+ .../raw/logs/28-before-official-pin.stderr.log     |    0
+ .../raw/logs/28-before-official-pin.stdout.log     |    2 +
+ .../logs/28-before-official-status.command.json    |   14 +
+ .../raw/logs/28-before-official-status.stderr.log  |    0
+ .../raw/logs/28-before-official-status.stdout.log  |    0
+ .../logs/29-effective-store-official.command.json  |   16 +
+ .../logs/29-effective-store-official.stderr.log    |    0
+ .../logs/29-effective-store-official.stdout.log    |    1 +
+ .../logs/30-final-validate-official.command.json   |   15 +
+ .../raw/logs/30-final-validate-official.stderr.log |    3 +
+ .../raw/logs/30-final-validate-official.stdout.log |    0
+ .../raw/logs/31-after-official-paths.command.json  |   14 +
+ .../raw/logs/31-after-official-paths.stderr.log    |    0
+ .../raw/logs/31-after-official-paths.stdout.log    |    1 +
+ .../raw/logs/31-after-official-pin.command.json    |   15 +
+ .../raw/logs/31-after-official-pin.stderr.log      |    0
+ .../raw/logs/31-after-official-pin.stdout.log      |    2 +
+ .../raw/logs/31-after-official-status.command.json |   14 +
+ .../raw/logs/31-after-official-status.stderr.log   |    0
+ .../raw/logs/31-after-official-status.stdout.log   |    0
+ .../logs/32-official-driver-syntax.command.json    |   15 +
+ .../raw/logs/32-official-driver-syntax.stderr.log  |    0
+ .../raw/logs/32-official-driver-syntax.stdout.log  |    0
+ .../logs/33-annotate-option-blocker.command.json   |   13 +
+ .../raw/logs/33-annotate-option-blocker.stderr.log |    0
+ .../raw/logs/33-annotate-option-blocker.stdout.log |    2 +
+ .../raw/logs/34-pnpm-run-help.command.json         |   14 +
+ .../raw/logs/34-pnpm-run-help.stderr.log           |    0
+ .../raw/logs/34-pnpm-run-help.stdout.log           |  148 +
+ .../raw/logs/36-preparation-tools-pin.command.json |   15 +
+ .../raw/logs/36-preparation-tools-pin.stderr.log   |    0
+ .../raw/logs/36-preparation-tools-pin.stdout.log   |    2 +
+ .../logs/37-preparation-tools-clean.command.json   |   14 +
+ .../raw/logs/37-preparation-tools-clean.stderr.log |    0
+ .../raw/logs/37-preparation-tools-clean.stdout.log |    0
+ .../codex-final-1/raw/logs/commands.jsonl          |   48 +
+ .../supplied-official/.supplier/LICENSE            |  201 +
+ .../supplied-official/.supplier/NOTICE             |    6 +
+ .../scripts/identifier_validation.py               |   20 +
+ .../plugin-creator/scripts/validate_plugin.py      |  657 ++
+ .../skill-creator/scripts/quick_validate.py        |  127 +
+ 187 files changed, 43772 insertions(+)
+ create mode 100644 cs280-release-prep/codex-final-1/COLLECTION.json
+ create mode 100644 cs280-release-prep/codex-final-1/INVENTORY.json
+ create mode 100644 cs280-release-prep/codex-final-1/MANIFEST.json
+ create mode 100644 cs280-release-prep/codex-final-1/README.ko.md
+ create mode 100644 cs280-release-prep/codex-final-1/REDACTION.json
+ create mode 100644 cs280-release-prep/codex-final-1/RESIDUAL-SCAN.json
+ create mode 100644 cs280-release-prep/codex-final-1/SHA256SUMS
+ create mode 100644 cs280-release-prep/codex-final-1/STATUS.json
+ create mode 100644 cs280-release-prep/codex-final-1/TOOLS-PIN.json
+ create mode 100644 cs280-release-prep/codex-final-1/checked-in-tools/.gitignore
+ create mode 100644 cs280-release-prep/codex-final-1/checked-in-tools/annotate.py
+ create mode 100644 cs280-release-prep/codex-final-1/checked-in-tools/discover.py
+ create mode 100644 cs280-release-prep/codex-final-1/checked-in-tools/environment.py
+ create mode 100644 cs280-release-prep/codex-final-1/checked-in-tools/install_locked.py
+ create mode 100644 cs280-release-prep/codex-final-1/checked-in-tools/official_once.py
+ create mode 100644 cs280-release-prep/codex-final-1/checked-in-tools/prepare_public.py
+ create mode 100644 cs280-release-prep/codex-final-1/checked-in-tools/runner.py
+ create mode 100644 cs280-release-prep/codex-final-1/raw/18-before-install.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/23-after-install.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/28-before-official.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/31-after-official.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/ANNOTATED-RESULT.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/COMPATIBILITY.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/ENVIRONMENT.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/FINAL-OFFICIAL-ONCE.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/INSTALL-ENV-BINDING.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/INSTALL-RESULT.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/INSTALL-REVIEW.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/LOCKED-INSTALL-ONCE.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/OFFICIAL-ENV-BINDING.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/OFFICIAL-RESULT.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/PNPM-MODULES.yaml
+ create mode 100644 cs280-release-prep/codex-final-1/raw/PNPM-RUN-OPTION-SOURCE.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/PNPM-WORKSPACE-STATE.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/SOURCE-PIN.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/SUPPLIED.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/SUPPLIER-PIN.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/00-discovery-driver.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/00-discovery-driver.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/00-discovery-driver.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/01-remote-ref.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/01-remote-ref.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/01-remote-ref.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/02-candidate-init.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/02-candidate-init.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/02-candidate-init.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/03-candidate-origin.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/03-candidate-origin.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/03-candidate-origin.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/04-candidate-lf.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/04-candidate-lf.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/04-candidate-lf.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/05-candidate-fetch.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/05-candidate-fetch.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/05-candidate-fetch.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/06-candidate-checkout.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/06-candidate-checkout.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/06-candidate-checkout.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/07-candidate-pin.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/07-candidate-pin.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/07-candidate-pin.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/08-candidate-clean.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/08-candidate-clean.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/08-candidate-clean.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/09-delta-paths.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/09-delta-paths.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/09-delta-paths.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/11-supplier-blob-0.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/11-supplier-blob-0.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/11-supplier-blob-0.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/11-supplier-blob-1.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/11-supplier-blob-1.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/11-supplier-blob-1.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/11-supplier-blob-2.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/11-supplier-blob-2.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/11-supplier-blob-2.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/11-supplier-blob-3.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/11-supplier-blob-3.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/11-supplier-blob-3.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/11-supplier-blob-4.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/11-supplier-blob-4.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/11-supplier-blob-4.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/12-resume-discovery-driver.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/12-resume-discovery-driver.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/12-resume-discovery-driver.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/13-resume-candidate-pin.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/13-resume-candidate-pin.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/13-resume-candidate-pin.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/14-resume-candidate-clean.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/14-resume-candidate-clean.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/14-resume-candidate-clean.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/15-resume-delta-paths.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/15-resume-delta-paths.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/15-resume-delta-paths.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/16-reviewed-delta-patch.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/16-reviewed-delta-patch.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/16-reviewed-delta-patch.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/17-locked-install-driver.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/17-locked-install-driver.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/17-locked-install-driver.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/18-before-install-paths.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/18-before-install-paths.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/18-before-install-paths.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/18-before-install-pin.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/18-before-install-pin.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/18-before-install-pin.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/18-before-install-status.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/18-before-install-status.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/18-before-install-status.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/19-node-version.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/19-node-version.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/19-node-version.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/20-pnpm-version.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/20-pnpm-version.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/20-pnpm-version.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/21-effective-store-before.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/21-effective-store-before.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/21-effective-store-before.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/22-locked-install.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/22-locked-install.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/22-locked-install.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/23-after-install-paths.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/23-after-install-paths.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/23-after-install-paths.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/23-after-install-pin.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/23-after-install-pin.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/23-after-install-pin.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/23-after-install-status.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/23-after-install-status.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/23-after-install-status.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/24-effective-store-after.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/24-effective-store-after.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/24-effective-store-after.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/25-driver-syntax.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/25-driver-syntax.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/25-driver-syntax.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/26-corrected-install-driver.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/26-corrected-install-driver.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/26-corrected-install-driver.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/27-final-official-driver.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/27-final-official-driver.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/27-final-official-driver.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/28-before-official-paths.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/28-before-official-paths.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/28-before-official-paths.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/28-before-official-pin.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/28-before-official-pin.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/28-before-official-pin.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/28-before-official-status.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/28-before-official-status.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/28-before-official-status.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/29-effective-store-official.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/29-effective-store-official.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/29-effective-store-official.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/30-final-validate-official.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/30-final-validate-official.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/30-final-validate-official.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/31-after-official-paths.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/31-after-official-paths.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/31-after-official-paths.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/31-after-official-pin.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/31-after-official-pin.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/31-after-official-pin.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/31-after-official-status.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/31-after-official-status.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/31-after-official-status.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/32-official-driver-syntax.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/32-official-driver-syntax.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/32-official-driver-syntax.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/33-annotate-option-blocker.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/33-annotate-option-blocker.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/33-annotate-option-blocker.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/34-pnpm-run-help.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/34-pnpm-run-help.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/34-pnpm-run-help.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/36-preparation-tools-pin.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/36-preparation-tools-pin.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/36-preparation-tools-pin.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/37-preparation-tools-clean.command.json
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/37-preparation-tools-clean.stderr.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/37-preparation-tools-clean.stdout.log
+ create mode 100644 cs280-release-prep/codex-final-1/raw/logs/commands.jsonl
+ create mode 100644 cs280-release-prep/codex-final-1/supplied-official/.supplier/LICENSE
+ create mode 100644 cs280-release-prep/codex-final-1/supplied-official/.supplier/NOTICE
+ create mode 100644 cs280-release-prep/codex-final-1/supplied-official/skills/.system/plugin-creator/scripts/identifier_validation.py
+ create mode 100644 cs280-release-prep/codex-final-1/supplied-official/skills/.system/plugin-creator/scripts/validate_plugin.py
+ create mode 100644 cs280-release-prep/codex-final-1/supplied-official/skills/.system/skill-creator/scripts/quick_validate.py

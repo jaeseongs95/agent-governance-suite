@@ -1,0 +1,3 @@
+export CLAUDE_CONFIG_DIR=$ST/claude-config
+unset CLAUDE_CODE_MESSAGING_SOCKET CLAUDE_CODE_MESSAGING_TOKEN
+exec claude "$@"
