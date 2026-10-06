@@ -1,0 +1,30 @@
+﻿2026-10-06T10:21:31.3033007Z ##[group]Run pnpm validate:all
+2026-10-06T10:21:31.3033236Z [36;1mpnpm validate:all[0m
+2026-10-06T10:21:31.3042100Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:21:31.3042327Z env:
+2026-10-06T10:21:31.3042500Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:31.3042770Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T10:21:31.3043036Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:31.3043273Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:31.3043508Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:31.3043702Z   PYTHONUTF8: 1
+2026-10-06T10:21:31.3043822Z ##[endgroup]
+2026-10-06T10:21:32.0347831Z Already up to date
+2026-10-06T10:21:32.0352293Z Done in 268ms using pnpm v11.19.0
+2026-10-06T10:21:32.0493751Z $ node scripts/validate-repository.mjs && node scripts/run-python-validations.mjs && tsx scripts/korean-prose-glossary.ts --mode check
+2026-10-06T10:21:32.4921022Z repository: valid
+2026-10-06T10:21:33.4742535Z PASS validate_frontmatter
+2026-10-06T10:21:33.4742822Z PASS validate_openai_yaml
+2026-10-06T10:21:33.4742983Z PASS validate_markdown_links
+2026-10-06T10:21:33.4743140Z PASS validate_no_placeholders
+2026-10-06T10:21:33.4743304Z PASS validate_no_sensitive_data
+2026-10-06T10:21:33.4743455Z PASS validate_routing_presets
+2026-10-06T10:21:33.4743607Z PASS validate_behavior_cases
+2026-10-06T10:21:33.4743769Z All skill package validations passed.
+2026-10-06T10:21:33.8015319Z Skill validation passed: <repo>\skills\independent-audit-gate
+2026-10-06T10:21:37.3000591Z PASS validate_skill_package
+2026-10-06T10:21:37.3000900Z PASS validate_decision_record_contracts
+2026-10-06T10:21:37.3001086Z PASS validate_behavior_cases
+2026-10-06T10:21:37.3001300Z All independent-deliberation-panel validations passed.
+2026-10-06T10:21:37.3290802Z model-effort-advisor: valid
+2026-10-06T10:21:37.5173122Z {"status":"ok","entries":243,"id":"korean-prose-core","version":"1.2.1","contentDigest":"1262b46c6c07d3ecf0551167308df2aa3ec1ad9fb02e3a33fc9619ce2ec683d4"}

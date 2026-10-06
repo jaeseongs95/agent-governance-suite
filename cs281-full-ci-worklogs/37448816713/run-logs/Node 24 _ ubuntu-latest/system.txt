@@ -1,0 +1,8 @@
+2026-10-06T10:17:42.0040000Z Evaluating verify.if
+2026-10-06T10:17:42.0040000Z Evaluating: success()
+2026-10-06T10:17:42.0040000Z Result: true
+2026-10-06T10:17:42.0130000Z Requested labels: ubuntu-latest
+2026-10-06T10:17:42.0130000Z Job defined at: jaeseongs95/agent-governance-suite/.github/workflows/ci.yml@refs/heads/codex/engineering-practices-2.8.1
+2026-10-06T10:17:42.0130000Z Waiting for a runner to pick up this job...
+2026-10-06T10:17:42.2230000Z Job is waiting for a hosted runner to come online.
+2026-10-06T10:17:42.2230000Z Job is about to start running on the hosted runner: GitHub Actions 1000001581

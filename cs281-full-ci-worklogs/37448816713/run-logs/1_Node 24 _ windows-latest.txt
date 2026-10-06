@@ -1,0 +1,1150 @@
+﻿2026-10-06T10:17:44.0379798Z Current runner version: '2.337.0'
+2026-10-06T10:17:44.0402988Z ##[group]Runner Image Provisioner
+2026-10-06T10:17:44.0403633Z Hosted Compute Agent
+2026-10-06T10:17:44.0404005Z Version: 20260901.588
+2026-10-06T10:17:44.0404401Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+2026-10-06T10:17:44.0404827Z Build Date: 2026-09-01T19:56:44Z
+2026-10-06T10:17:44.0405250Z Worker ID: {<ephemeral-id>}
+2026-10-06T10:17:44.0405659Z Azure Region: centralus
+2026-10-06T10:17:44.0406052Z ##[endgroup]
+2026-10-06T10:17:44.0406986Z ##[group]Operating System
+2026-10-06T10:17:44.0407347Z Microsoft Windows Server 2025
+2026-10-06T10:17:44.0407734Z 10.0.26100
+2026-10-06T10:17:44.0408074Z Datacenter
+2026-10-06T10:17:44.0408495Z ##[endgroup]
+2026-10-06T10:17:44.0408806Z ##[group]Runner Image
+2026-10-06T10:17:44.0409175Z Image: windows-2025-vs2026
+2026-10-06T10:17:44.0409622Z Version: 20260925.250.1
+2026-10-06T10:17:44.0410752Z Included Software: https://github.com/actions/runner-images/blob/win25-vs2026/20260925.250/images/windows/Windows2025-VS2026-Readme.md
+2026-10-06T10:17:44.0411714Z Image Release: https://github.com/actions/runner-images/releases/tag/win25-vs2026%2F20260925.250
+2026-10-06T10:17:44.0412296Z ##[endgroup]
+2026-10-06T10:17:44.0413376Z ##[group]GITHUB_TOKEN Permissions
+2026-10-06T10:17:44.0414773Z Contents: read
+2026-10-06T10:17:44.0415109Z Metadata: read
+2026-10-06T10:17:44.0415457Z ##[endgroup]
+2026-10-06T10:17:44.0417103Z Secret source: Actions
+2026-10-06T10:17:44.0417639Z Cache mode: write
+2026-10-06T10:17:44.0418098Z Prepare workflow directory
+2026-10-06T10:17:44.0688683Z Prepare all required actions
+2026-10-06T10:17:44.0724284Z Getting action download info
+2026-10-06T10:17:44.3156208Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-10-06T10:17:44.4013230Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-10-06T10:17:44.5149820Z Download action repository 'actions/setup-python@v7' (SHA:5fda3b95a4ea91299a34e894583c3862153e4b97)
+2026-10-06T10:17:44.6165700Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-10-06T10:17:44.8774942Z Complete job name: Node 24 / windows-latest
+2026-10-06T10:17:45.0261103Z ##[group]Run actions/checkout@v7
+2026-10-06T10:17:45.0261902Z with:
+2026-10-06T10:17:45.0262140Z   fetch-depth: 0
+2026-10-06T10:17:45.0262445Z   repository: jaeseongs95/agent-governance-suite
+2026-10-06T10:17:45.0265522Z   token: ***
+2026-10-06T10:17:45.0265763Z   ssh-strict: true
+2026-10-06T10:17:45.0266006Z   ssh-user: git
+2026-10-06T10:17:45.0266271Z   persist-credentials: true
+2026-10-06T10:17:45.0266553Z   clean: true
+2026-10-06T10:17:45.0266806Z   sparse-checkout-cone-mode: true
+2026-10-06T10:17:45.0267117Z   fetch-tags: false
+2026-10-06T10:17:45.0267364Z   show-progress: true
+2026-10-06T10:17:45.0267613Z   lfs: false
+2026-10-06T10:17:45.0267841Z   submodules: false
+2026-10-06T10:17:45.0268130Z   set-safe-directory: true
+2026-10-06T10:17:45.0268426Z   allow-unsafe-pr-checkout: false
+2026-10-06T10:17:45.0268858Z ##[endgroup]
+2026-10-06T10:17:45.1520095Z Syncing repository: jaeseongs95/agent-governance-suite
+2026-10-06T10:17:45.1521653Z ##[group]Getting Git version info
+2026-10-06T10:17:45.1522171Z Working directory is '<repo>'
+2026-10-06T10:17:45.2059586Z [command]"<git-install>\bin\git.exe" version
+2026-10-06T10:17:45.5857629Z git version 2.55.0.windows.5
+2026-10-06T10:17:45.5915644Z ##[endgroup]
+2026-10-06T10:17:45.5927939Z Temporarily overriding HOME='<runner-temp>\<ephemeral-id>' before making global git config changes
+2026-10-06T10:17:45.5929812Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-06T10:17:45.5935595Z [command]"<git-install>\bin\git.exe" config --global --add safe.directory <repo>
+2026-10-06T10:17:45.6550305Z Deleting the contents of '<repo>'
+2026-10-06T10:17:45.6554410Z ##[group]Determining repository object format
+2026-10-06T10:17:45.6556192Z ##[endgroup]
+2026-10-06T10:17:45.6557197Z ##[group]Initializing the repository
+2026-10-06T10:17:45.6563745Z [command]"<git-install>\bin\git.exe" init <repo>
+2026-10-06T10:17:45.7332398Z Initialized empty Git repository in <repo>/.git/
+2026-10-06T10:17:45.7375811Z [command]"<git-install>\bin\git.exe" remote add origin https://github.com/jaeseongs95/agent-governance-suite
+2026-10-06T10:17:45.7965231Z ##[endgroup]
+2026-10-06T10:17:45.7966470Z ##[group]Disabling automatic garbage collection
+2026-10-06T10:17:45.7972834Z [command]"<git-install>\bin\git.exe" config --local gc.auto 0
+2026-10-06T10:17:45.8224005Z ##[endgroup]
+2026-10-06T10:17:45.8225663Z ##[group]Setting up auth
+2026-10-06T10:17:45.8227017Z Removing SSH command configuration
+2026-10-06T10:17:45.8233324Z [command]"<git-install>\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-06T10:17:45.8498052Z [command]"<git-install>\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-06T10:17:47.3004662Z Removing HTTP extra header
+2026-10-06T10:17:47.3012489Z [command]"<git-install>\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-06T10:17:47.3275076Z [command]"<git-install>\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-06T10:17:47.7857137Z Removing includeIf entries pointing to credentials config files
+2026-10-06T10:17:47.7868195Z [command]"<git-install>\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-06T10:17:47.8135385Z [command]"<git-install>\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-06T10:17:48.2630321Z [command]"<git-install>\bin\git.exe" config --file <runner-temp>\git-credentials-<ephemeral-id>.config http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2026-10-06T10:17:48.2899963Z [command]"<git-install>\bin\git.exe" config --local includeIf.gitdir:<repo>/.git.path <runner-temp>\git-credentials-<ephemeral-id>.config
+2026-10-06T10:17:48.3171509Z [command]"<git-install>\bin\git.exe" config --local includeIf.gitdir:<repo>/.git/worktrees/*.path <runner-temp>\git-credentials-<ephemeral-id>.config
+2026-10-06T10:17:48.3471377Z [command]"<git-install>\bin\git.exe" config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T10:17:48.3730461Z [command]"<git-install>\bin\git.exe" config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T10:17:48.3982870Z ##[endgroup]
+2026-10-06T10:17:48.3983300Z ##[group]Fetching the repository
+2026-10-06T10:17:48.3994175Z [command]"<git-install>\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+2026-10-06T10:17:51.9832021Z From https://github.com/jaeseongs95/agent-governance-suite
+2026-10-06T10:17:51.9832810Z  * [new branch]        chore/discussions-setup-20261002 -> origin/chore/discussions-setup-20261002
+2026-10-06T10:17:51.9833438Z  * [new branch]        claude/docs-host-attestation-drift -> origin/claude/docs-host-attestation-drift
+2026-10-06T10:17:51.9835625Z  * [new branch]        claude/skill-intake-common-vendor -> origin/claude/skill-intake-common-vendor
+2026-10-06T10:17:51.9836445Z  * [new branch]        claude/v273-evidence-windows-20260928T173839Z -> origin/claude/v273-evidence-windows-20260928T173839Z
+2026-10-06T10:17:51.9837158Z  * [new branch]        claude/v273-inputs     -> origin/claude/v273-inputs
+2026-10-06T10:17:51.9837667Z  * [new branch]        claude/v273-intake-src -> origin/claude/v273-intake-src
+2026-10-06T10:17:51.9838228Z  * [new branch]        claude/v273-msgqueue-retention-analysis-vmzcqs -> origin/claude/v273-msgqueue-retention-analysis-vmzcqs
+2026-10-06T10:17:51.9838884Z  * [new branch]        claude/v276-presence-deadline -> origin/claude/v276-presence-deadline
+2026-10-06T10:17:51.9839334Z  * [new branch]        claude/v277-utf8-framing -> origin/claude/v277-utf8-framing
+2026-10-06T10:17:51.9839662Z  * [new branch]        claude/v3x-v06-b3-linux-closure -> origin/claude/v3x-v06-b3-linux-closure
+2026-10-06T10:17:51.9840016Z  * [new branch]        claude/v3x-v06-b3b-r1  -> origin/claude/v3x-v06-b3b-r1
+2026-10-06T10:17:51.9840452Z  * [new branch]        codex/dot-w05-source-20261002 -> origin/codex/dot-w05-source-20261002
+2026-10-06T10:17:51.9840944Z  * [new branch]        codex/engineering-practices-2.8.1 -> origin/codex/engineering-practices-2.8.1
+2026-10-06T10:17:51.9841409Z  * [new branch]        codex/release-candidate-2.8.0 -> origin/codex/release-candidate-2.8.0
+2026-10-06T10:17:51.9841954Z  * [new branch]        codex/results-ags-f06-f07-r66-20261001 -> origin/codex/results-ags-f06-f07-r66-20261001
+2026-10-06T10:17:51.9842576Z  * [new branch]        codex/v260-semantic-decision-layer -> origin/codex/v260-semantic-decision-layer
+2026-10-06T10:17:51.9843085Z  * [new branch]        codex/v272-skill-intake-port -> origin/codex/v272-skill-intake-port
+2026-10-06T10:17:51.9844059Z  * [new branch]        codex/v3x-w05-r3-messaging-parity -> origin/codex/v3x-w05-r3-messaging-parity
+2026-10-06T10:17:51.9844828Z  * [new branch]        codex/v3x-w05-r3-noreply-transport -> origin/codex/v3x-w05-r3-noreply-transport
+2026-10-06T10:17:51.9846459Z  * [new branch]        codex/w05-f1-cloud-inputs-20261003 -> origin/codex/w05-f1-cloud-inputs-20261003
+2026-10-06T10:17:51.9847051Z  * [new branch]        dot/ags-3x-results-20261002 -> origin/dot/ags-3x-results-20261002
+2026-10-06T10:17:51.9847536Z  * [new branch]        dot/ags-b14-decision-20261002 -> origin/dot/ags-b14-decision-20261002
+2026-10-06T10:17:51.9848038Z  * [new branch]        dot/ags-g18-reproduction-20261002 -> origin/dot/ags-g18-reproduction-20261002
+2026-10-06T10:17:51.9848541Z  * [new branch]        dot/ags-w05-evidence-20261002 -> origin/dot/ags-w05-evidence-20261002
+2026-10-06T10:17:51.9849056Z  * [new branch]        dot/ags-w06w07-evidence-20261002 -> origin/dot/ags-w06w07-evidence-20261002
+2026-10-06T10:17:51.9849482Z  * [new branch]        evidence               -> origin/evidence
+2026-10-06T10:17:51.9849795Z  * [new branch]        main                   -> origin/main
+2026-10-06T10:17:51.9850061Z  * [new tag]           v0.1.0                 -> v0.1.0
+2026-10-06T10:17:51.9850339Z  * [new tag]           v0.2.0                 -> v0.2.0
+2026-10-06T10:17:51.9850608Z  * [new tag]           v1.0.0                 -> v1.0.0
+2026-10-06T10:17:51.9850870Z  * [new tag]           v1.0.1                 -> v1.0.1
+2026-10-06T10:17:51.9851121Z  * [new tag]           v1.0.2                 -> v1.0.2
+2026-10-06T10:17:51.9851425Z  * [new tag]           v1.0.3                 -> v1.0.3
+2026-10-06T10:17:51.9851754Z  * [new tag]           v1.0.4                 -> v1.0.4
+2026-10-06T10:17:51.9852022Z  * [new tag]           v1.0.5                 -> v1.0.5
+2026-10-06T10:17:51.9852273Z  * [new tag]           v1.1.0                 -> v1.1.0
+2026-10-06T10:17:51.9852555Z  * [new tag]           v1.10.0                -> v1.10.0
+2026-10-06T10:17:51.9852830Z  * [new tag]           v1.11.0                -> v1.11.0
+2026-10-06T10:17:51.9853312Z  * [new tag]           v1.12.0                -> v1.12.0
+2026-10-06T10:17:51.9853582Z  * [new tag]           v1.13.0                -> v1.13.0
+2026-10-06T10:17:51.9853846Z  * [new tag]           v1.14.0                -> v1.14.0
+2026-10-06T10:17:51.9854126Z  * [new tag]           v1.14.1                -> v1.14.1
+2026-10-06T10:17:51.9854396Z  * [new tag]           v1.15.0                -> v1.15.0
+2026-10-06T10:17:51.9854656Z  * [new tag]           v1.15.1                -> v1.15.1
+2026-10-06T10:17:51.9854905Z  * [new tag]           v1.16.0                -> v1.16.0
+2026-10-06T10:17:51.9855164Z  * [new tag]           v1.16.1                -> v1.16.1
+2026-10-06T10:17:51.9855432Z  * [new tag]           v1.16.2                -> v1.16.2
+2026-10-06T10:17:51.9855698Z  * [new tag]           v1.17.0                -> v1.17.0
+2026-10-06T10:17:51.9855963Z  * [new tag]           v1.18.0                -> v1.18.0
+2026-10-06T10:17:51.9856230Z  * [new tag]           v1.19.0                -> v1.19.0
+2026-10-06T10:17:51.9856495Z  * [new tag]           v1.19.1                -> v1.19.1
+2026-10-06T10:17:51.9856766Z  * [new tag]           v1.2.0                 -> v1.2.0
+2026-10-06T10:17:51.9857053Z  * [new tag]           v1.20.0                -> v1.20.0
+2026-10-06T10:17:51.9857328Z  * [new tag]           v1.20.1                -> v1.20.1
+2026-10-06T10:17:51.9857591Z  * [new tag]           v1.20.2                -> v1.20.2
+2026-10-06T10:17:51.9857861Z  * [new tag]           v1.20.3                -> v1.20.3
+2026-10-06T10:17:51.9858115Z  * [new tag]           v1.21.0                -> v1.21.0
+2026-10-06T10:17:51.9858365Z  * [new tag]           v1.3.0                 -> v1.3.0
+2026-10-06T10:17:51.9858619Z  * [new tag]           v1.4.0                 -> v1.4.0
+2026-10-06T10:17:51.9858890Z  * [new tag]           v1.4.1                 -> v1.4.1
+2026-10-06T10:17:51.9859142Z  * [new tag]           v1.4.2                 -> v1.4.2
+2026-10-06T10:17:51.9859401Z  * [new tag]           v1.4.3                 -> v1.4.3
+2026-10-06T10:17:51.9859662Z  * [new tag]           v1.5.0                 -> v1.5.0
+2026-10-06T10:17:51.9859925Z  * [new tag]           v1.6.0                 -> v1.6.0
+2026-10-06T10:17:51.9860358Z  * [new tag]           v1.7.0                 -> v1.7.0
+2026-10-06T10:17:51.9860621Z  * [new tag]           v1.8.0                 -> v1.8.0
+2026-10-06T10:17:51.9860872Z  * [new tag]           v1.9.0                 -> v1.9.0
+2026-10-06T10:17:51.9861130Z  * [new tag]           v2.0.0                 -> v2.0.0
+2026-10-06T10:17:51.9861388Z  * [new tag]           v2.1.0                 -> v2.1.0
+2026-10-06T10:17:51.9861637Z  * [new tag]           v2.1.1                 -> v2.1.1
+2026-10-06T10:17:51.9861899Z  * [new tag]           v2.1.2                 -> v2.1.2
+2026-10-06T10:17:51.9862156Z  * [new tag]           v2.2.0                 -> v2.2.0
+2026-10-06T10:17:51.9862411Z  * [new tag]           v2.2.1                 -> v2.2.1
+2026-10-06T10:17:51.9862669Z  * [new tag]           v2.2.2                 -> v2.2.2
+2026-10-06T10:17:51.9862934Z  * [new tag]           v2.2.3                 -> v2.2.3
+2026-10-06T10:17:51.9863180Z  * [new tag]           v2.2.4                 -> v2.2.4
+2026-10-06T10:17:51.9863423Z  * [new tag]           v2.2.5                 -> v2.2.5
+2026-10-06T10:17:51.9863665Z  * [new tag]           v2.2.6                 -> v2.2.6
+2026-10-06T10:17:51.9864405Z  * [new tag]           v2.3.0                 -> v2.3.0
+2026-10-06T10:17:51.9864712Z  * [new tag]           v2.4.0                 -> v2.4.0
+2026-10-06T10:17:51.9864966Z  * [new tag]           v2.5.0                 -> v2.5.0
+2026-10-06T10:17:51.9865221Z  * [new tag]           v2.6.0                 -> v2.6.0
+2026-10-06T10:17:51.9865479Z  * [new tag]           v2.7.0                 -> v2.7.0
+2026-10-06T10:17:51.9865736Z  * [new tag]           v2.7.1                 -> v2.7.1
+2026-10-06T10:17:51.9865991Z  * [new tag]           v2.7.2                 -> v2.7.2
+2026-10-06T10:17:51.9866512Z  * [new tag]           v2.7.3                 -> v2.7.3
+2026-10-06T10:17:51.9866762Z  * [new tag]           v2.7.4                 -> v2.7.4
+2026-10-06T10:17:51.9866999Z  * [new tag]           v2.7.5                 -> v2.7.5
+2026-10-06T10:17:51.9867258Z  * [new tag]           v2.7.6                 -> v2.7.6
+2026-10-06T10:17:51.9867511Z  * [new tag]           v2.7.7                 -> v2.7.7
+2026-10-06T10:17:51.9867769Z  * [new tag]           v2.8.0                 -> v2.8.0
+2026-10-06T10:17:51.9900872Z [command]"<git-install>\bin\git.exe" branch --list --remote origin/codex/engineering-practices-2.8.1
+2026-10-06T10:17:52.0307558Z   origin/codex/engineering-practices-2.8.1
+2026-10-06T10:17:52.0365827Z [command]"<git-install>\bin\git.exe" rev-parse refs/remotes/origin/codex/engineering-practices-2.8.1
+2026-10-06T10:17:52.0607659Z 1b36ec771d641137e821f27c2066e05205c1e8f8
+2026-10-06T10:17:52.0641644Z ##[endgroup]
+2026-10-06T10:17:52.0641941Z ##[group]Determining the checkout info
+2026-10-06T10:17:52.0642940Z ##[endgroup]
+2026-10-06T10:17:52.0650575Z [command]"<git-install>\bin\git.exe" sparse-checkout disable
+2026-10-06T10:17:52.2998393Z [command]"<git-install>\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2026-10-06T10:17:52.3263234Z ##[group]Checking out the ref
+2026-10-06T10:17:52.3271114Z [command]"<git-install>\bin\git.exe" checkout --progress --force -B codex/engineering-practices-2.8.1 refs/remotes/origin/codex/engineering-practices-2.8.1
+2026-10-06T10:17:52.8867714Z Switched to a new branch 'codex/engineering-practices-2.8.1'
+2026-10-06T10:17:52.8944378Z branch 'codex/engineering-practices-2.8.1' set up to track 'origin/codex/engineering-practices-2.8.1'.
+2026-10-06T10:17:52.9005170Z ##[endgroup]
+2026-10-06T10:17:52.9391058Z [command]"<git-install>\bin\git.exe" log -1 --format=%H
+2026-10-06T10:17:52.9616700Z 1b36ec771d641137e821f27c2066e05205c1e8f8
+2026-10-06T10:17:53.0026283Z ##[group]Run actions/setup-node@v4
+2026-10-06T10:17:53.0026518Z with:
+2026-10-06T10:17:53.0026643Z   node-version: 24
+2026-10-06T10:17:53.0026776Z   always-auth: false
+2026-10-06T10:17:53.0026902Z   check-latest: false
+2026-10-06T10:17:53.0028535Z   token: ***
+2026-10-06T10:17:53.0028655Z ##[endgroup]
+2026-10-06T10:17:53.1481372Z Found in cache @ <toolcache>\windows\node\24.21.0\x64
+2026-10-06T10:17:53.1488657Z (node:7548) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-06T10:17:53.1489214Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-06T10:17:53.1491709Z ##[group]Environment details
+2026-10-06T10:17:58.1398486Z node: v24.21.0
+2026-10-06T10:17:58.1398738Z npm: 11.19.0
+2026-10-06T10:17:58.1398895Z yarn: 1.22.22
+2026-10-06T10:17:58.1399357Z ##[endgroup]
+2026-10-06T10:17:58.1694460Z ##[group]Run actions/setup-python@v7
+2026-10-06T10:17:58.1694669Z with:
+2026-10-06T10:17:58.1694797Z   python-version: 3.12
+2026-10-06T10:17:58.1694940Z   check-latest: false
+2026-10-06T10:17:58.1696525Z   token: ***
+2026-10-06T10:17:58.1696640Z   update-environment: true
+2026-10-06T10:17:58.1696781Z   allow-prereleases: false
+2026-10-06T10:17:58.1696902Z   freethreaded: false
+2026-10-06T10:17:58.1697024Z ##[endgroup]
+2026-10-06T10:17:58.2853729Z ##[group]Installed versions
+2026-10-06T10:17:58.3025515Z Successfully set up CPython (3.12.10)
+2026-10-06T10:17:58.3025894Z ##[endgroup]
+2026-10-06T10:17:58.3268989Z ##[group]Run corepack enable
+2026-10-06T10:17:58.3269237Z [36;1mcorepack enable[0m
+2026-10-06T10:17:58.3285267Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:17:58.3285508Z env:
+2026-10-06T10:17:58.3285680Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:17:58.3285952Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T10:17:58.3286213Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:17:58.3287120Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:17:58.3287349Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:17:58.3287535Z ##[endgroup]
+2026-10-06T10:17:58.7765706Z ##[group]Run pnpm install --frozen-lockfile
+2026-10-06T10:17:58.7766024Z [36;1mpnpm install --frozen-lockfile[0m
+2026-10-06T10:17:58.7776040Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:17:58.7776271Z env:
+2026-10-06T10:17:58.7776442Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:17:58.7776701Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T10:17:58.7776958Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:17:58.7777187Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:17:58.7777411Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:17:58.7777606Z ##[endgroup]
+2026-10-06T10:17:58.9778648Z ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-11.19.0.tgz
+2026-10-06T10:18:09.4349789Z ? Verifying lockfile against supply-chain policies (267 entries)...
+2026-10-06T10:18:09.4403883Z Lockfile is up to date, resolution step is skipped
+2026-10-06T10:18:09.5058430Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-10-06T10:18:09.5330716Z Packages: +217
+2026-10-06T10:18:09.5331211Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-10-06T10:18:10.5132156Z Progress: resolved 217, reused 0, downloaded 17, added 0
+2026-10-06T10:18:11.1227276Z Packages are hard linked from the content-addressable store to the virtual store.
+2026-10-06T10:18:11.1227995Z   Content-addressable store is at: <runner-path>
+2026-10-06T10:18:11.1228714Z   Virtual store is at:             node_modules/.pnpm
+2026-10-06T10:18:11.5138598Z Progress: resolved 217, reused 0, downloaded 124, added 4
+2026-10-06T10:18:12.4150182Z ✓ Lockfile passes supply-chain policies (267 entries in 2.9s)
+2026-10-06T10:18:12.5145488Z Progress: resolved 217, reused 0, downloaded 217, added 22
+2026-10-06T10:18:12.7630339Z Progress: resolved 217, reused 0, downloaded 217, added 217, done
+2026-10-06T10:18:12.9059055Z .../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+2026-10-06T10:18:13.0377401Z .../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+2026-10-06T10:18:13.1953273Z 
+2026-10-06T10:18:13.1953803Z dependencies:
+2026-10-06T10:18:13.1954062Z + @modelcontextprotocol/sdk 1.30.0
+2026-10-06T10:18:13.1954251Z + ajv 8.20.0
+2026-10-06T10:18:13.1954395Z + ajv-formats 3.0.1
+2026-10-06T10:18:13.1954522Z + zod 4.5.4
+2026-10-06T10:18:13.1954593Z 
+2026-10-06T10:18:13.1954654Z devDependencies:
+2026-10-06T10:18:13.1955042Z + @eslint/js 10.0.1
+2026-10-06T10:18:13.1955231Z + @types/node 26.5.0
+2026-10-06T10:18:13.1955405Z + esbuild 0.28.2
+2026-10-06T10:18:13.1955567Z + eslint 10.10.0
+2026-10-06T10:18:13.1955757Z + tsx 4.23.13
+2026-10-06T10:18:13.1955928Z + typescript 6.0.2
+2026-10-06T10:18:13.1956123Z + typescript-eslint 8.70.0
+2026-10-06T10:18:13.1956380Z + vitest 5.0.0
+2026-10-06T10:18:13.1956476Z 
+2026-10-06T10:18:13.2170207Z Done in 4.6s using pnpm v11.19.0
+2026-10-06T10:18:13.2814980Z ##[group]Run pnpm bundle:check
+2026-10-06T10:18:13.2815475Z [36;1mpnpm bundle:check[0m
+2026-10-06T10:18:13.2827003Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:18:13.2827249Z env:
+2026-10-06T10:18:13.2827430Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:13.2827689Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T10:18:13.2827949Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:13.2828177Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:13.2828403Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:13.2828753Z ##[endgroup]
+2026-10-06T10:18:14.1913503Z Already up to date
+2026-10-06T10:18:14.1919186Z Done in 327ms using pnpm v11.19.0
+2026-10-06T10:18:14.2086448Z $ node scripts/check-bundle.mjs
+2026-10-06T10:18:14.5525208Z ##[group]Run pnpm claude:drift
+2026-10-06T10:18:14.5525533Z [36;1mpnpm claude:drift[0m
+2026-10-06T10:18:14.5540101Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:18:14.5540643Z env:
+2026-10-06T10:18:14.5540857Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:14.5541124Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T10:18:14.5541380Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:14.5541612Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:14.5541835Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:14.5542014Z ##[endgroup]
+2026-10-06T10:18:15.4117391Z Already up to date
+2026-10-06T10:18:15.4122381Z Done in 312ms using pnpm v11.19.0
+2026-10-06T10:18:15.4290089Z $ node scripts/build-claude-plugin.mjs --drift
+2026-10-06T10:18:15.6734772Z claude-plugin: fresh
+2026-10-06T10:18:15.7187069Z ##[group]Run pnpm lint
+2026-10-06T10:18:15.7187283Z [36;1mpnpm lint[0m
+2026-10-06T10:18:15.7198234Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:18:15.7198467Z env:
+2026-10-06T10:18:15.7198634Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:15.7198900Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T10:18:15.7199163Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:15.7199398Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:15.7199628Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:15.7199814Z ##[endgroup]
+2026-10-06T10:18:16.6111468Z Already up to date
+2026-10-06T10:18:16.6116188Z Done in 324ms using pnpm v11.19.0
+2026-10-06T10:18:16.6285815Z $ eslint . && node scripts/validate-repository.mjs
+2026-10-06T10:18:27.5592359Z repository: valid
+2026-10-06T10:18:27.6041250Z ##[group]Run pnpm release:check
+2026-10-06T10:18:27.6041538Z [36;1mpnpm release:check[0m
+2026-10-06T10:18:27.6052064Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:18:27.6052316Z env:
+2026-10-06T10:18:27.6052492Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:27.6052763Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T10:18:27.6053036Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:27.6053278Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:27.6053512Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:27.6053699Z ##[endgroup]
+2026-10-06T10:18:28.4898406Z Already up to date
+2026-10-06T10:18:28.4903612Z Done in 328ms using pnpm v11.19.0
+2026-10-06T10:18:28.5071070Z $ node scripts/sync-release-metadata.mjs
+2026-10-06T10:18:28.5637806Z release metadata is synchronized
+2026-10-06T10:18:28.6140522Z ##[group]Run pnpm source:check
+2026-10-06T10:18:28.6140788Z [36;1mpnpm source:check[0m
+2026-10-06T10:18:28.6150579Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:18:28.6150865Z env:
+2026-10-06T10:18:28.6151173Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:28.6152075Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T10:18:28.6152361Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:28.6152608Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:28.6153843Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:28.6154232Z ##[endgroup]
+2026-10-06T10:18:29.4753244Z Already up to date
+2026-10-06T10:18:29.4758505Z Done in 305ms using pnpm v11.19.0
+2026-10-06T10:18:29.4923342Z $ node scripts/check-source-lock.mjs
+2026-10-06T10:18:29.6237473Z source lock is consistent
+2026-10-06T10:18:29.6670749Z ##[group]Run pnpm build
+2026-10-06T10:18:29.6670970Z [36;1mpnpm build[0m
+2026-10-06T10:18:29.6680734Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:18:29.6680970Z env:
+2026-10-06T10:18:29.6681138Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:29.6681407Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T10:18:29.6681682Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:29.6681916Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:29.6682147Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:29.6682329Z ##[endgroup]
+2026-10-06T10:18:30.5389315Z Already up to date
+2026-10-06T10:18:30.5395283Z Done in 306ms using pnpm v11.19.0
+2026-10-06T10:18:30.5582866Z $ tsc --noEmit && node scripts/build.mjs
+2026-10-06T10:18:34.2362776Z ##[group]Run pnpm process-identity:check
+2026-10-06T10:18:34.2363056Z [36;1mpnpm process-identity:check[0m
+2026-10-06T10:18:34.2372779Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:18:34.2373019Z env:
+2026-10-06T10:18:34.2373190Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:34.2373468Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T10:18:34.2373743Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:34.2373992Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:34.2374230Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:34.2374424Z ##[endgroup]
+2026-10-06T10:18:35.1400562Z Already up to date
+2026-10-06T10:18:35.1406076Z Done in 329ms using pnpm v11.19.0
+2026-10-06T10:18:35.1576973Z $ tsx scripts/check-process-identity.ts
+2026-10-06T10:18:37.6118948Z process identity: ready (win32)
+2026-10-06T10:18:37.6722299Z ##[group]Run pnpm test
+2026-10-06T10:18:37.6722530Z [36;1mpnpm test[0m
+2026-10-06T10:18:37.6732662Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:18:37.6732925Z env:
+2026-10-06T10:18:37.6733108Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:37.6733391Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T10:18:37.6733678Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:37.6733938Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:37.6734200Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:37.6734403Z ##[endgroup]
+2026-10-06T10:18:38.5275276Z Already up to date
+2026-10-06T10:18:38.5280869Z Done in 310ms using pnpm v11.19.0
+2026-10-06T10:18:38.5443428Z $ node scripts/build.mjs && vitest run
+2026-10-06T10:18:39.1158887Z 
+2026-10-06T10:18:39.1166349Z [1m[30m[46m RUN [49m[39m[22m [36mv5.0.0 [39m[90m<repo>[39m
+2026-10-06T10:18:39.1166667Z 
+2026-10-06T10:18:52.3579060Z  [32m✓[39m tests/mcp/workflow-service.test.ts [2m([22m[2m40 tests[22m[2m)[22m[33m 12639[2mms[22m[39m
+2026-10-06T10:18:52.3579733Z    [32m✓[39m SqliteWorkflowStore [2m(4)[22m
+2026-10-06T10:18:52.3580212Z      [33m[2m✓[22m[39m migrates a v1 database without losing workflow state[33m 712[2mms[22m[39m
+2026-10-06T10:18:52.3580839Z      [33m[2m✓[22m[39m migrates an active v2 workflow to v5 and preserves receipt updates[33m 1756[2mms[22m[39m
+2026-10-06T10:18:52.3581265Z    [32m✓[39m WorkflowService [2m(36)[22m
+2026-10-06T10:18:52.3581638Z      [33m[2m✓[22m[39m persists runs, signing keys, revisions, and run sequences in SQLite[33m 717[2mms[22m[39m
+2026-10-06T10:18:52.3582418Z      [33m[2m✓[22m[39m rejects stale, replayed, and cross-stage trusted observations[33m 428[2mms[22m[39m
+2026-10-06T10:18:52.3582905Z      [33m[2m✓[22m[39m observes a failing stage without holding it to the assurance floor[33m 649[2mms[22m[39m
+2026-10-06T10:18:52.3583372Z      [33m[2m✓[22m[39m persists trusted observation claims across service restart[33m 385[2mms[22m[39m
+2026-10-06T10:18:52.3583885Z      [33m[2m✓[22m[39m requires a PASS verdict and an auditor independent from implementation actors[33m 317[2mms[22m[39m
+2026-10-06T10:18:52.3584411Z      [33m[2m✓[22m[39m rejects every canonical invalid DecisionRecord at the MCP gate[33m 3201[2mms[22m[39m
+2026-10-06T10:19:13.4882652Z  [32m✓[39m tests/mcp/convergence-guard.test.ts [2m([22m[2m66 tests[22m[2m)[22m[33m 33759[2mms[22m[39m
+2026-10-06T10:19:13.4883379Z    [32m✓[39m local MCP convergence guard [2m(33)[22m
+2026-10-06T10:19:13.4884083Z      [33m[2m✓[22m[39m opens an immutable root and rejects overlapping active scope even under a changed taskId[33m 467[2mms[22m[39m
+2026-10-06T10:19:13.4884768Z      [33m[2m✓[22m[39m requires a lease for every valid orchestrated plan[33m 464[2mms[22m[39m
+2026-10-06T10:19:13.4885437Z      [33m[2m✓[22m[39m rejects a signed plan produced from a different task envelope with the same taskId[33m 340[2mms[22m[39m
+2026-10-06T10:19:13.4886261Z      [33m[2m✓[22m[39m reuses root and lease bindings when compact claim and guarded start omit duplicate values[33m 1047[2mms[22m[39m
+2026-10-06T10:19:13.4887013Z      [33m[2m✓[22m[39m preserves stale and expiry checks for planless guarded starts[33m 330[2mms[22m[39m
+2026-10-06T10:19:13.4887664Z      [33m[2m✓[22m[39m atomically consumes the first lease and rejects reuse[33m 508[2mms[22m[39m
+2026-10-06T10:19:13.4888383Z      [33m[2m✓[22m[39m does not issue another lease while the previous consumed attempt is still running[33m 411[2mms[22m[39m
+2026-10-06T10:19:13.4890997Z      [33m[2m✓[22m[39m preserves a pending frame-review gate when an older running attempt terminates[33m 404[2mms[22m[39m
+2026-10-06T10:19:13.4891833Z      [33m[2m✓[22m[39m records failed outcomes and allows target-only, evidence-bearing retries through ordinal 3[33m 444[2mms[22m[39m
+2026-10-06T10:19:13.4892303Z      [33m[2m✓[22m[39m gates a changed task contract before workflow start[33m 312[2mms[22m[39m
+2026-10-06T10:19:13.4892688Z      [33m[2m✓[22m[39m gates a changed control frame before workflow start[33m 304[2mms[22m[39m
+2026-10-06T10:19:13.4893174Z      [33m[2m✓[22m[39m rejects a repeated target and repeated evidence as NEW_EVIDENCE_REQUIRED[33m 396[2mms[22m[39m
+2026-10-06T10:19:13.4893834Z      [33m[2m✓[22m[39m records a rejected retry on the root without spending attempt budget[33m 536[2mms[22m[39m
+2026-10-06T10:19:13.4895372Z      [33m[2m✓[22m[39m records a stale-fingerprint rejection without burning its evidence[33m 555[2mms[22m[39m
+2026-10-06T10:19:13.4896018Z      [33m[2m✓[22m[39m reads a root stored before retry rejections existed[33m 671[2mms[22m[39m
+2026-10-06T10:19:13.4896630Z      [33m[2m✓[22m[39m refuses evidence burnt by an earlier rejection even in the next epoch[33m 637[2mms[22m[39m
+2026-10-06T10:19:13.4897363Z      [33m[2m✓[22m[39m persists roots, consumed budget, running attempts, and aborted outcomes across restart[33m 475[2mms[22m[39m
+2026-10-06T10:19:13.4898078Z      [33m[2m✓[22m[39m allows only one competing lease claim across two SQLite connections[33m 1068[2mms[22m[39m
+2026-10-06T10:19:13.4898805Z      [33m[2m✓[22m[39m allows only one trusted observation claim across two SQLite connections[33m 383[2mms[22m[39m
+2026-10-06T10:19:13.4900177Z      [33m[2m✓[22m[39m opens epoch 2 exactly once after a fresh independent semantics-preserving review[33m 416[2mms[22m[39m
+2026-10-06T10:19:13.4901930Z      [33m[2m✓[22m[39m does not open a new epoch when an otherwise preserving review has no target correction[33m 363[2mms[22m[39m
+2026-10-06T10:19:13.4902830Z      [33m[2m✓[22m[39m genericized Korean attempt-6/7 regression gates changed evaluation meaning before attempt 7 starts[33m 463[2mms[22m[39m
+2026-10-06T10:19:13.4903756Z      [33m[2m✓[22m[39m returns the root to the user and requires a new user contract after a needs-redesign attempt[33m 413[2mms[22m[39m
+2026-10-06T10:19:13.4904702Z      [33m[2m✓[22m[39m does not reset the attempt budget by reopening after a stop review[33m 639[2mms[22m[39m
+2026-10-06T10:19:13.4905494Z      [33m[2m✓[22m[39m treats a sibling-path rescope of the same write surface as the same root[33m 351[2mms[22m[39m
+2026-10-06T10:19:13.4906231Z      [33m[2m✓[22m[39m opens a second root for unrelated work that shares only the control frame[33m 388[2mms[22m[39m
+2026-10-06T10:19:13.4906766Z    [32m✓[39m server-derived workspace identity [2m(20)[22m
+2026-10-06T10:19:13.4907390Z      [33m[2m✓[22m[39m checks nested checkout containers sharing a repository (.worktrees, reverse=false)[33m 526[2mms[22m[39m
+2026-10-06T10:19:13.4908245Z      [33m[2m✓[22m[39m checks nested checkout containers sharing a repository (.worktrees/*/src/candidate.ts, reverse=false)[33m 459[2mms[22m[39m
+2026-10-06T10:19:13.4909066Z      [33m[2m✓[22m[39m checks nested checkout containers sharing a repository (.worktrees, reverse=true)[33m 487[2mms[22m[39m
+2026-10-06T10:19:13.4909907Z      [33m[2m✓[22m[39m checks nested checkout containers sharing a repository (.worktrees/*/src/candidate.ts, reverse=true)[33m 818[2mms[22m[39m
+2026-10-06T10:19:13.4910723Z      [33m[2m✓[22m[39m blocks checkout containers across separate gitdir layouts (admin, nested=false)[33m 640[2mms[22m[39m
+2026-10-06T10:19:13.4911482Z      [33m[2m✓[22m[39m blocks checkout containers across separate gitdir layouts (.git, nested=false)[33m 881[2mms[22m[39m
+2026-10-06T10:19:13.4912251Z      [33m[2m✓[22m[39m blocks checkout containers across separate gitdir layouts (admin, nested=true)[33m 778[2mms[22m[39m
+2026-10-06T10:19:13.4913573Z      [33m[2m✓[22m[39m blocks checkout containers across separate gitdir layouts (.git, nested=true)[33m 768[2mms[22m[39m
+2026-10-06T10:19:13.4914316Z      [33m[2m✓[22m[39m rejects the same physical target under a changed workspace id and locator[33m 392[2mms[22m[39m
+2026-10-06T10:19:13.4915029Z      [33m[2m✓[22m[39m rejects the same physical target reached through a junction or symlink[33m 345[2mms[22m[39m
+2026-10-06T10:19:13.4915790Z      [33m[2m✓[22m[39m keeps open roots of different checkouts independent even on the same relative path[33m 361[2mms[22m[39m
+2026-10-06T10:19:13.4916572Z      [33m[2m✓[22m[39m keeps a gated root blocking its relative surface in every checkout of the repository[33m 804[2mms[22m[39m
+2026-10-06T10:19:13.4917355Z      [33m[2m✓[22m[39m blocks a non-Git folder or glob that holds a sibling checkout of a gated root's repository[33m 527[2mms[22m[39m
+2026-10-06T10:19:13.4918123Z      [33m[2m✓[22m[39m follows the write surface of a stored root after a review replaces its frame[33m 682[2mms[22m[39m
+2026-10-06T10:19:13.4918820Z      [33m[2m✓[22m[39m replaces the gated root of a deleted worktree from a sibling checkout[33m 462[2mms[22m[39m
+2026-10-06T10:19:13.4919609Z      [33m[2m✓[22m[39m lets two gated roots be replaced without blocking each other, but not widened or rescoped past a gate[33m 853[2mms[22m[39m
+2026-10-06T10:19:13.4920391Z      [33m[2m✓[22m[39m identifies a gitdir without commondir and rejects damaged Git evidence[33m 371[2mms[22m[39m
+2026-10-06T10:19:13.4921116Z      [33m[2m✓[22m[39m widens globs conservatively and rejects scope entries that are not paths[33m 425[2mms[22m[39m
+2026-10-06T10:19:13.4921967Z      [33m[2m✓[22m[39m backfills identities for stored roots without rewriting them and treats legacy URI scope as the whole workspace[33m 831[2mms[22m[39m
+2026-10-06T10:19:13.4922925Z      [33m[2m✓[22m[39m admits only one of two connections that open the same target at once[33m 860[2mms[22m[39m
+2026-10-06T10:19:13.4923499Z    [32m✓[39m gated roots stored before identities existed [2m(13)[22m
+2026-10-06T10:19:13.4924128Z      [33m[2m✓[22m[39m does not let a sibling worktree bypass a gated legacy root whose checkout is deleted[33m 555[2mms[22m[39m
+2026-10-06T10:19:13.4925474Z      [33m[2m✓[22m[39m does not let a sibling worktree bypass a gated legacy root whose checkout is damaged[33m 504[2mms[22m[39m
+2026-10-06T10:19:13.4926476Z      [33m[2m✓[22m[39m does not store a guessed identity for a legacy root under a non-Git parent locator whose checkout is gone[33m 557[2mms[22m[39m
+2026-10-06T10:19:13.4927550Z      [33m[2m✓[22m[39m does not guess an identity for a legacy gated root on a target inside the nested worktree once that worktree is deleted[33m 473[2mms[22m[39m
+2026-10-06T10:19:13.4928649Z      [33m[2m✓[22m[39m does not guess an identity for a legacy gated root on the nested worktree itself as '.' once that worktree is deleted[33m 488[2mms[22m[39m
+2026-10-06T10:19:13.4929812Z      [33m[2m✓[22m[39m does not guess an identity for a legacy gated root on the nested worktree named from the oute… once that worktree is deleted[33m 526[2mms[22m[39m
+2026-10-06T10:19:13.4930903Z      [33m[2m✓[22m[39m backfills a legacy root whose target exists and leaves one whose target file was never written unresolved[33m 444[2mms[22m[39m
+2026-10-06T10:19:13.4931864Z      [33m[2m✓[22m[39m keeps a checkout observed for the current inputs after it is deleted, surface by surface[33m 453[2mms[22m[39m
+2026-10-06T10:19:13.4932780Z      [33m[2m✓[22m[39m does not reuse an identity observed for a replaced frame, and grants no legacy exception for it[33m 871[2mms[22m[39m
+2026-10-06T10:19:13.4933739Z      [33m[2m✓[22m[39m takes a checkout that appears above an observed non-Git surface only once the target itself exists[33m 507[2mms[22m[39m
+2026-10-06T10:19:13.4935056Z      [33m[2m✓[22m[39m follows a checkout created after a root was registered for a workspace that does not exist yet, and keeps it once it is deleted[33m 545[2mms[22m[39m
+2026-10-06T10:19:13.4936236Z      [33m[2m✓[22m[39m follows a checkout created after a root was registered for an absolute target below an existing ch…, and keeps it once it is deleted[33m 508[2mms[22m[39m
+2026-10-06T10:19:13.4937261Z      [33m[2m✓[22m[39m still replaces a gated legacy root of a deleted checkout when the same workspace is named[33m 484[2mms[22m[39m
+2026-10-06T10:19:19.0224822Z  [32m✓[39m tests/session-messaging/session-message.test.ts [2m([22m[2m73 tests[22m[2m)[22m[33m 38908[2mms[22m[39m
+2026-10-06T10:19:19.0225470Z    [32m✓[39m session message spool [2m(17)[22m
+2026-10-06T10:19:19.0226062Z      [33m[2m✓[22m[39m keeps stable IDs until ACK, enforces limits, and recovers stale relay leases[33m 532[2mms[22m[39m
+2026-10-06T10:19:19.0226771Z      [33m[2m✓[22m[39m allows only one unconsumed wake and suppresses wakes during a live claim[33m 1012[2mms[22m[39m
+2026-10-06T10:19:19.0227236Z      [33m[2m✓[22m[39m locks claim selection before a competing connection can reserve a wake[33m 376[2mms[22m[39m
+2026-10-06T10:19:19.0227871Z      [33m[2m✓[22m[39m atomically verifies a session-bound wake before claiming and rejects reuse or mismatch[33m 477[2mms[22m[39m
+2026-10-06T10:19:19.0228347Z      [33m[2m✓[22m[39m allows one wake claim across two concurrent SQLite connections[33m 672[2mms[22m[39m
+2026-10-06T10:19:19.0228797Z      [33m[2m✓[22m[39m migrates legacy messages without inventing unknown first-delivery evidence[33m 421[2mms[22m[39m
+2026-10-06T10:19:19.0229175Z    [32m✓[39m TLS 1.3 broker and vendor-neutral adapter [2m(54)[22m
+2026-10-06T10:19:19.0229591Z      [33m[2m✓[22m[39m fails fast on broker exit and leaves deadline cleanup to the state-directory owner[33m 354[2mms[22m[39m
+2026-10-06T10:19:19.0230286Z      [33m[2m✓[22m[39m converges simultaneous startup requests on one broker[33m 562[2mms[22m[39m
+2026-10-06T10:19:19.0230930Z      [33m[2m✓[22m[39m returns at the startup deadline while state preparation is still blocked and never spawns afterward[33m 573[2mms[22m[39m
+2026-10-06T10:19:19.0231738Z      [33m[2m✓[22m[39m enforces an absolute request deadline while a TLS peer keeps sending partial data[33m 400[2mms[22m[39m
+2026-10-06T10:19:19.0232505Z      [33m[2m✓[22m[39m treats merged wake bells as internal only when every nonce is broker-recognized[33m 913[2mms[22m[39m
+2026-10-06T10:19:19.0233309Z      [33m[2m✓[22m[39m uses one plugin queue profile for packaged presence and relay until the next SessionStart[33m 6544[2mms[22m[39m
+2026-10-06T10:19:19.0234093Z      [33m[2m✓[22m[39m consumes queued peers at safe boundaries after restart without waking again after ACK[33m 735[2mms[22m[39m
+2026-10-06T10:19:19.0234924Z      [33m[2m✓[22m[39m serializes wake reservation and release through the TLS broker[33m 665[2mms[22m[39m
+2026-10-06T10:19:19.0235791Z      [33m[2m✓[22m[39m pins the certificate, authenticates requests, survives restart, and supports arbitrary hosts[33m 2006[2mms[22m[39m
+2026-10-06T10:19:19.0236525Z      [33m[2m✓[22m[39m blocks only verified empty Codex wake prompts in the source hook[33m 5599[2mms[22m[39m
+2026-10-06T10:19:19.0237252Z      [33m[2m✓[22m[39m blocks only verified empty Codex wake prompts in the packaged hook[33m 5838[2mms[22m[39m
+2026-10-06T10:19:19.0238107Z      [33m[2m✓[22m[39m blocks a verified retired Codex wake marker without claiming the current body through the source hook[33m 1731[2mms[22m[39m
+2026-10-06T10:19:19.0239022Z      [33m[2m✓[22m[39m blocks a verified retired Codex wake marker without claiming the current body through the packaged hook[33m 1790[2mms[22m[39m
+2026-10-06T10:19:19.0239805Z      [33m[2m✓[22m[39m keeps a maximum-size peer message within the hook context limit[33m 1056[2mms[22m[39m
+2026-10-06T10:19:19.0241159Z      [33m[2m✓[22m[39m escapes peer bodies inside one bounded JSON block[33m 994[2mms[22m[39m
+2026-10-06T10:19:19.0241794Z      [33m[2m✓[22m[39m starts the relay without spending a second claim budget during SessionStart[33m 872[2mms[22m[39m
+2026-10-06T10:19:19.0242276Z      [33m[2m✓[22m[39m leaves Codex Stop messages queued for a supported context event[33m 1016[2mms[22m[39m
+2026-10-06T10:19:19.0242720Z      [33m[2m✓[22m[39m keeps packaged hook and relay entrypoints isolated[33m 696[2mms[22m[39m
+2026-10-06T10:19:19.0243100Z      [33m[2m✓[22m[39m keeps Claude Code Stop context delivery enabled[33m 923[2mms[22m[39m
+2026-10-06T10:19:19.0243473Z      [33m[2m✓[22m[39m does not speak plaintext on the loopback port[33m 537[2mms[22m[39m
+2026-10-06T10:19:19.0243791Z    [32m✓[39m session message MCP tools [2m(2)[22m
+2026-10-06T10:19:19.0244132Z      [33m[2m✓[22m[39m validates bound send, status, and acknowledgement calls[33m 835[2mms[22m[39m
+2026-10-06T10:19:32.3510224Z  [32m✓[39m tests/session-messaging/wake-lifecycle.test.mjs [2m([22m[2m51 tests[22m[2m)[22m[33m 39838[2mms[22m[39m
+2026-10-06T10:19:32.3510767Z    [33m[2m✓[22m[39m W05-r2 board ownership check has no nonce state effect[33m 334[2mms[22m[39m
+2026-10-06T10:19:32.3511206Z    [33m[2m✓[22m[39m W05-r2 claimDeferred and ACK leave the managed notification fenced[33m 306[2mms[22m[39m
+2026-10-06T10:19:32.3511647Z    [33m[2m✓[22m[39m W05-r2 claimTurnEnd and ACK leave the managed notification fenced[33m 393[2mms[22m[39m
+2026-10-06T10:19:32.3512071Z    [33m[2m✓[22m[39m W05-r2 start rechecks claim/ACK and persists no-effect retirement[33m 591[2mms[22m[39m
+2026-10-06T10:19:32.3512548Z    [33m[2m✓[22m[39m W05-r2 claim after start keeps one fence until the actual hook, including an empty batch[33m 663[2mms[22m[39m
+2026-10-06T10:19:32.3513290Z    [33m[2m✓[22m[39m W05-r2 reserved crash recovery keeps the nonce/attempt and rejects replaced lease CAS[33m 443[2mms[22m[39m
+2026-10-06T10:19:32.3513753Z    [33m[2m✓[22m[39m W05-r2 transport remains part of the exact stored attempt binding[33m 550[2mms[22m[39m
+2026-10-06T10:19:32.3514223Z    [33m[2m✓[22m[39m W05-r2 definite failure uses durable backoff and exact dispatch epoch for late results[33m 803[2mms[22m[39m
+2026-10-06T10:19:32.3514750Z    [33m[2m✓[22m[39m old no-effect reserved H1/instance retires and starts a separate attempt after durable backoff[33m 868[2mms[22m[39m
+2026-10-06T10:19:32.3515285Z    [33m[2m✓[22m[39m old no-effect reserved H1/rebirth retires and starts a separate attempt after durable backoff[33m 1166[2mms[22m[39m
+2026-10-06T10:19:32.3515816Z    [33m[2m✓[22m[39m old no-effect reserved H1/transport retires and starts a separate attempt after durable backoff[33m 832[2mms[22m[39m
+2026-10-06T10:19:32.3516354Z    [33m[2m✓[22m[39m old no-effect reserved H2/instance retires and starts a separate attempt after durable backoff[33m 946[2mms[22m[39m
+2026-10-06T10:19:32.3516886Z    [33m[2m✓[22m[39m old no-effect reserved H2/rebirth retires and starts a separate attempt after durable backoff[33m 958[2mms[22m[39m
+2026-10-06T10:19:32.3517424Z    [33m[2m✓[22m[39m old no-effect reserved H2/transport retires and starts a separate attempt after durable backoff[33m 911[2mms[22m[39m
+2026-10-06T10:19:32.3517953Z    [33m[2m✓[22m[39m old no-effect reserved H3/instance retires and starts a separate attempt after durable backoff[33m 895[2mms[22m[39m
+2026-10-06T10:19:32.3519492Z    [33m[2m✓[22m[39m old no-effect reserved H3/rebirth retires and starts a separate attempt after durable backoff[33m 879[2mms[22m[39m
+2026-10-06T10:19:32.3520475Z    [33m[2m✓[22m[39m old no-effect reserved H3/transport retires and starts a separate attempt after durable backoff[33m 964[2mms[22m[39m
+2026-10-06T10:19:32.3521427Z    [33m[2m✓[22m[39m generation replacement alone preserves the submitted effect fence[33m 523[2mms[22m[39m
+2026-10-06T10:19:32.3523082Z    [33m[2m✓[22m[39m generation replacement alone preserves the accepted-or-unknown effect fence[33m 435[2mms[22m[39m
+2026-10-06T10:19:32.3523952Z    [33m[2m✓[22m[39m generation replacement alone preserves the none effect fence[33m 558[2mms[22m[39m
+2026-10-06T10:19:32.3524828Z    [33m[2m✓[22m[39m generation replacement alone preserves the late effect fence[33m 440[2mms[22m[39m
+2026-10-06T10:19:32.3525569Z    [33m[2m✓[22m[39m old-generation definite failure requires every original binding field and epoch[33m 344[2mms[22m[39m
+2026-10-06T10:19:32.3526324Z    [33m[2m✓[22m[39m stale reserved late_observed_at cannot be normalized as a no-effect attempt[33m 477[2mms[22m[39m
+2026-10-06T10:19:32.3527028Z    [33m[2m✓[22m[39m stale reserved observed_at cannot be normalized as a no-effect attempt[33m 441[2mms[22m[39m
+2026-10-06T10:19:32.3527781Z    [33m[2m✓[22m[39m stale reserved consumed_at cannot be normalized as a no-effect attempt[33m 383[2mms[22m[39m
+2026-10-06T10:19:32.3528495Z    [33m[2m✓[22m[39m stale reserved unproved-retry cannot be normalized as a no-effect attempt[33m 497[2mms[22m[39m
+2026-10-06T10:19:32.3529240Z    [33m[2m✓[22m[39m terminal pruning cannot erase an outstanding old-generation backoff[33m 1230[2mms[22m[39m
+2026-10-06T10:19:32.3530041Z    [33m[2m✓[22m[39m outstanding terminal backoffs share the active wake budget and release it at the deadline[33m 944[2mms[22m[39m
+2026-10-06T10:19:32.3530867Z    [33m[2m✓[22m[39m W05-r2 unknown survives restart, both TTLs, ordinary claim, ACK and generation replacement[33m 574[2mms[22m[39m
+2026-10-06T10:19:32.3531809Z    [33m[2m✓[22m[39m W05-r2 ordinary peer provenance, expired hook receipts and changed observation digests cannot release a fence[33m 996[2mms[22m[39m
+2026-10-06T10:19:32.3532746Z    [33m[2m✓[22m[39m W05-r2 observation holds the SQLite generation lock and notices a generation change during verification[33m 544[2mms[22m[39m
+2026-10-06T10:19:32.3533388Z    [33m[2m✓[22m[39m W05-r2 lost committed outcome response never dispatches again[33m 498[2mms[22m[39m
+2026-10-06T10:19:32.3534167Z    [33m[2m✓[22m[39m W05-r2 forged nonce, caller approved and normalized observation cannot observe without the hook receipt[33m 841[2mms[22m[39m
+2026-10-06T10:19:32.3535042Z    [33m[2m✓[22m[39m verified expired/old-generation arrival retires only its attempt before a separate current wake[33m 3803[2mms[22m[39m
+2026-10-06T10:19:32.3535916Z    [33m[2m✓[22m[39m old-generation retirement still rejects wrong target, unknown or mixed nonces and stale provenance[33m 981[2mms[22m[39m
+2026-10-06T10:19:32.3536851Z    [33m[2m✓[22m[39m W05-r2 batch/ACK-loss redelivery and hook rollback preserve exact nonce consumption[33m 905[2mms[22m[39m
+2026-10-06T10:19:32.3537812Z    [33m[2m✓[22m[39m W05-r2 hook-before-outcome, adapter exception and new vendor use the same core[33m 842[2mms[22m[39m
+2026-10-06T10:19:32.3538710Z    [33m[2m✓[22m[39m W05-r2 additive legacy migration never imports old consumed_at as observed[33m 368[2mms[22m[39m
+2026-10-06T10:19:32.3539629Z    [33m[2m✓[22m[39m W05-r2 active budget overflow is an explicit rejection and does not remove unknowns[33m 1129[2mms[22m[39m
+2026-10-06T10:19:32.3540508Z    [33m[2m✓[22m[39m W05-r2 terminal observation retention is bounded while unresolved rows are retained[33m 878[2mms[22m[39m
+2026-10-06T10:19:32.3541461Z    [33m[2m✓[22m[39m independent generation/outcome-first-race workers permit exactly one separate new effect[33m 1048[2mms[22m[39m
+2026-10-06T10:19:32.3543086Z    [33m[2m✓[22m[39m independent generation/start-first-race workers permit exactly one separate new effect[33m 1005[2mms[22m[39m
+2026-10-06T10:19:32.3544565Z    [33m[2m✓[22m[39m verified old arrival in another process releases only the old attempt and permits one new effect[33m 1131[2mms[22m[39m
+2026-10-06T10:19:32.3545806Z    [33m[2m✓[22m[39m Codex running body claim in another process prevents the external queue call before start[33m 567[2mms[22m[39m
+2026-10-06T10:19:32.3546879Z    [33m[2m✓[22m[39m Codex post-start claim in another process leaves one marker and a verified empty discard[33m 876[2mms[22m[39m
+2026-10-06T10:19:32.3547809Z    [33m[2m✓[22m[39m W05-r2 independent senders and relay processes perform exactly one external call[33m 726[2mms[22m[39m
+2026-10-06T10:19:32.3548810Z    [33m[2m✓[22m[39m W05-r2 independent process crash before start recovers the same attempt; after effect never resends[33m 2206[2mms[22m[39m
+2026-10-06T10:19:32.3549867Z    [33m[2m✓[22m[39m W05-r2 independent migration failure rolls back every added nonce column and preserves legacy bytes[33m 546[2mms[22m[39m
+2026-10-06T10:19:32.3550822Z    [33m[2m✓[22m[39m public wake binding requires a fresh presence birth after lease expiry[33m 310[2mms[22m[39m
+2026-10-06T10:19:34.3499024Z  [32m✓[39m tests/mcp/host-attestation.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 1601[2mms[22m[39m
+2026-10-06T10:19:35.0160220Z  [32m✓[39m tests/mcp/korean-prose-cycle-receipt.test.ts [2m([22m[2m13 tests[22m[2m)[22m[33m 15790[2mms[22m[39m
+2026-10-06T10:19:35.0160690Z    [32m✓[39m range-aware Korean prose cycle receipts [2m(13)[22m
+2026-10-06T10:19:35.0161142Z      [33m[2m✓[22m[39m records canonical structured work products and binds selection through finalization[33m 1840[2mms[22m[39m
+2026-10-06T10:19:35.0161642Z      [33m[2m✓[22m[39m rejects a cycle work product changed after the receipt was recorded[33m 1628[2mms[22m[39m
+2026-10-06T10:19:35.0162070Z      [33m[2m✓[22m[39m rejects a cycle directory outside the evaluation root[33m 418[2mms[22m[39m
+2026-10-06T10:19:35.0162738Z      [33m[2m✓[22m[39m rejects a structured cycle that omits formal readiness evidence[33m 490[2mms[22m[39m
+2026-10-06T10:19:35.0163202Z      [33m[2m✓[22m[39m does not silently select the historical cycle when no cycle path is given[33m 452[2mms[22m[39m
+2026-10-06T10:19:35.0163646Z      [33m[2m✓[22m[39m rejects structured run metadata without execution provenance[33m 656[2mms[22m[39m
+2026-10-06T10:19:35.0164065Z      [33m[2m✓[22m[39m rejects structured run metadata with an unverified actual model[33m 562[2mms[22m[39m
+2026-10-06T10:19:35.0164498Z      [33m[2m✓[22m[39m derives a passing quality decision from the bound final records[33m 1577[2mms[22m[39m
+2026-10-06T10:19:35.0164975Z      [33m[2m✓[22m[39m verifies a receipt whose quality evidence passed only with the external quality digest[33m 2319[2mms[22m[39m
+2026-10-06T10:19:35.0165490Z      [33m[2m✓[22m[39m rejects quality evidence when bound final records miss the improvement threshold[33m 1568[2mms[22m[39m
+2026-10-06T10:19:35.0165941Z      [33m[2m✓[22m[39m rejects a label leaked into the independent adjudicator input[33m 1334[2mms[22m[39m
+2026-10-06T10:19:35.0166398Z      [33m[2m✓[22m[39m does not count an unsafe independently adjudicated edit as an improvement[33m 1522[2mms[22m[39m
+2026-10-06T10:19:35.0166904Z      [33m[2m✓[22m[39m rejects a start claim and role metadata replaced after the workflow receipt was finalized[33m 1422[2mms[22m[39m
+2026-10-06T10:19:36.6735835Z  [32m✓[39m tests/session-messaging/wake-liveness.test.mjs [2m([22m[2m36 tests[22m[2m)[22m[33m 22808[2mms[22m[39m
+2026-10-06T10:19:36.6736732Z    [33m[2m✓[22m[39m an expired submitted latch retires for a newer live generation and a new wake is reserved[33m 684[2mms[22m[39m
+2026-10-06T10:19:36.6737607Z    [33m[2m✓[22m[39m an expired accepted-or-unknown latch retires for a newer live generation and a new wake is reserved[33m 498[2mms[22m[39m
+2026-10-06T10:19:36.6738275Z    [33m[2m✓[22m[39m an expired started latch retires for a newer live generation and a new wake is reserved[33m 625[2mms[22m[39m
+2026-10-06T10:19:36.6739053Z    [33m[2m✓[22m[39m an expired latch of a live, quiet birth without activity stays latched: same-generation[33m 590[2mms[22m[39m
+2026-10-06T10:19:36.6739601Z    [33m[2m✓[22m[39m an expired latch of a live, quiet birth without activity stays latched: other-transport[33m 583[2mms[22m[39m
+2026-10-06T10:19:36.6740175Z    [33m[2m✓[22m[39m an expired latch whose birth is no longer live retires after the grace without activity: unreachable[33m 477[2mms[22m[39m
+2026-10-06T10:19:36.6740759Z    [33m[2m✓[22m[39m an expired latch whose birth is no longer live retires after the grace without activity: ended[33m 469[2mms[22m[39m
+2026-10-06T10:19:36.6741378Z    [33m[2m✓[22m[39m an expired latch whose birth is no longer live retires after the grace without activity: ended-new-generation[33m 551[2mms[22m[39m
+2026-10-06T10:19:36.6741991Z    [33m[2m✓[22m[39m an expired latch whose birth is no longer live retires after the grace without activity: purged[33m 457[2mms[22m[39m
+2026-10-06T10:19:36.6742600Z    [33m[2m✓[22m[39m an expired latch whose birth is no longer live retires after the grace without activity: older-instance-live[33m 579[2mms[22m[39m
+2026-10-06T10:19:36.6743232Z    [33m[2m✓[22m[39m an expired latch whose birth is no longer live retires after the grace without activity: generation-missing[33m 480[2mms[22m[39m
+2026-10-06T10:19:36.6744052Z    [33m[2m✓[22m[39m an expired latch whose birth is no longer live retires after the grace without activity: live-birth-behind-ended[33m 589[2mms[22m[39m
+2026-10-06T10:19:36.6744960Z    [33m[2m✓[22m[39m an expired latch whose birth is no longer live retires after the grace without activity: same-ms-other-instance[33m 504[2mms[22m[39m
+2026-10-06T10:19:36.6745919Z    [33m[2m✓[22m[39m an expired latch whose birth is no longer live retires after the grace without activity: lease-ends-at-retirement[33m 553[2mms[22m[39m
+2026-10-06T10:19:36.6747113Z    [33m[2m✓[22m[39m a wake of an ended birth retired without activity records a late arrival as evidence only, then a rebirth delivers[33m 1138[2mms[22m[39m
+2026-10-06T10:19:36.6747976Z    [33m[2m✓[22m[39m same-generation activity claim after expiry retires the latch after the grace[33m 566[2mms[22m[39m
+2026-10-06T10:19:36.6748794Z    [33m[2m✓[22m[39m same-generation activity claimDeferred after expiry retires the latch after the grace[33m 609[2mms[22m[39m
+2026-10-06T10:19:36.6749631Z    [33m[2m✓[22m[39m same-generation activity claimTurnEnd after expiry retires the latch after the grace[33m 573[2mms[22m[39m
+2026-10-06T10:19:36.6750763Z    [33m[2m✓[22m[39m same-generation activity clearDeferred after expiry retires the latch after the grace[33m 361[2mms[22m[39m
+2026-10-06T10:19:36.6751612Z    [33m[2m✓[22m[39m same-generation activity acknowledge after expiry retires the latch after the grace[33m 424[2mms[22m[39m
+2026-10-06T10:19:36.6752458Z    [33m[2m✓[22m[39m same-generation activity observeNativeInput after expiry retires the latch after the grace[33m 310[2mms[22m[39m
+2026-10-06T10:19:36.6753314Z    [33m[2m✓[22m[39m same-generation activity before-expiry after expiry retires the latch after the grace[33m 454[2mms[22m[39m
+2026-10-06T10:19:36.6754216Z    [33m[2m✓[22m[39m retirement and re-reservation are idempotent across prunes and reopened connections[33m 455[2mms[22m[39m
+2026-10-06T10:19:36.6755065Z    [33m[2m✓[22m[39m a verified late arrival of a retired nonce is recorded without claiming the current generation body[33m 900[2mms[22m[39m
+2026-10-06T10:19:36.6755963Z    [33m[2m✓[22m[39m F1: a retired nonce mixed with the current nonce records late only and lets the current attempt claim its body[33m 828[2mms[22m[39m
+2026-10-06T10:19:36.6756803Z    [33m[2m✓[22m[39m a retired nonce cannot be laundered by forged provenance or a mixed unknown nonce[33m 721[2mms[22m[39m
+2026-10-06T10:19:36.6757955Z    [33m[2m✓[22m[39m K: an arrival whose hook receipt expired during a broker outage stays latched until retirement evidence, then a new wake delivers[33m 707[2mms[22m[39m
+2026-10-06T10:19:36.6758930Z    [33m[2m✓[22m[39m C2: a same-millisecond rebirth gets a distinct generation, so the previous birth cannot claim[33m 304[2mms[22m[39m
+2026-10-06T10:19:36.6759676Z    [33m[2m✓[22m[39m autoWake is advisory and reports each delivery path state[33m 607[2mms[22m[39m
+2026-10-06T10:19:36.6760403Z    [33m[2m✓[22m[39m G: v2.7.2 latch rows migrate once, keep evidence and retire under the new rule[33m 1317[2mms[22m[39m
+2026-10-06T10:19:36.6761172Z    [33m[2m✓[22m[39m G: a newer message schema version is rejected without mutation[33m 933[2mms[22m[39m
+2026-10-06T10:19:36.6761916Z    [33m[2m✓[22m[39m G: two independent processes racing the v2.7.2 upgrade both open one migrated schema[33m 1130[2mms[22m[39m
+2026-10-06T10:19:36.6762723Z    [33m[2m✓[22m[39m G: a failure inside the table rebuild rolls back columns, rows and schema version[33m 1019[2mms[22m[39m
+2026-10-06T10:19:36.6763542Z    [33m[2m✓[22m[39m crash right after a committed retirement leaves a retired row and one later reservation[33m 596[2mms[22m[39m
+2026-10-06T10:19:36.6764348Z    [33m[2m✓[22m[39m two independent processes racing the retirement of an ended birth retire it once[33m 541[2mms[22m[39m
+2026-10-06T10:19:36.6765130Z    [33m[2m✓[22m[39m two independent relay processes racing retirement create one active attempt[33m 675[2mms[22m[39m
+2026-10-06T10:19:38.1512630Z  [32m✓[39m tests/tooling/claude-plugin.test.mjs [2m([22m[2m20 tests[22m[2m)[22m[33m 2997[2mms[22m[39m
+2026-10-06T10:19:38.1513057Z    [32m✓[39m generated Claude plugin [2m(12)[22m
+2026-10-06T10:19:38.1513486Z      [33m[2m✓[22m[39m keeps no copy of the common intake sentences in any tracked file outside the shared source[33m 365[2mms[22m[39m
+2026-10-06T10:19:38.1514616Z      [33m[2m✓[22m[39m removes a caller-supplied token when it cannot attest[33m 731[2mms[22m[39m
+2026-10-06T10:19:38.1515130Z      [33m[2m✓[22m[39m stores continuity state under the plugin data directory[33m 1117[2mms[22m[39m
+2026-10-06T10:19:48.3568454Z  [32m✓[39m tests/session-messaging/peer-wait.test.ts [2m([22m[2m28 tests[22m[2m)[22m[33m 10066[2mms[22m[39m
+2026-10-06T10:19:48.3569655Z    [33m[2m✓[22m[39m enforces native wait through the public packaged hook and preserves unrelated waits[33m 1880[2mms[22m[39m
+2026-10-06T10:19:48.3570691Z    [33m[2m✓[22m[39m the public CLI consumes the decision before delay and sends no repeated poll when denied[33m 1371[2mms[22m[39m
+2026-10-06T10:19:48.3571221Z    [33m[2m✓[22m[39m public native hook suppresses equivalent payloads but permits actual cursor change[33m 1553[2mms[22m[39m
+2026-10-06T10:19:48.3571774Z    [33m[2m✓[22m[39m public CLI equivalent retransmissions consume one decision each and state change restores a snapshot[33m 1761[2mms[22m[39m
+2026-10-06T10:19:48.3572350Z    [33m[2m✓[22m[39m CLI unknown resume uses one bounded wait and does not force permanent stopping[33m 1579[2mms[22m[39m
+2026-10-06T10:19:48.3572956Z    [33m[2m✓[22m[39m broker restart preserves messages but drops resume and repeat-suppression evidence[33m 1838[2mms[22m[39m
+2026-10-06T10:19:51.9491943Z  [32m✓[39m tests/session-messaging/message-retention.test.ts [2m([22m[2m16 tests[22m[2m)[22m[33m 15131[2mms[22m[39m
+2026-10-06T10:19:51.9492833Z    [33m[2m✓[22m[39m rejects prepare and send with global scope when the global receipt pool is full[33m 849[2mms[22m[39m
+2026-10-06T10:19:51.9493534Z    [33m[2m✓[22m[39m two processes sending for one sender at limit-1 never exceed the sender limit[33m 1766[2mms[22m[39m
+2026-10-06T10:19:51.9494208Z    [33m[2m✓[22m[39m concurrent send and ACK keep one row and only shorten receipt expiry[33m 512[2mms[22m[39m
+2026-10-06T10:19:51.9494899Z    [33m[2m✓[22m[39m opens a v2.7.2 receipt without migration and applies ACK+1h only to new ACKs[33m 709[2mms[22m[39m
+2026-10-06T10:19:51.9496536Z    [33m[2m✓[22m[39m service reports capacity rejections as definite no-effect with scope and earliest release details[33m 7139[2mms[22m[39m
+2026-10-06T10:19:51.9497437Z    [33m[2m✓[22m[39m a resend of an already sent ID at full sender and global capacity is a duplicate, not a capacity rejection[33m 1089[2mms[22m[39m
+2026-10-06T10:19:51.9498282Z    [33m[2m✓[22m[39m reports sender scope and the sender's own earliest expiry when sender and global limits are both full[33m 765[2mms[22m[39m
+2026-10-06T10:19:51.9499165Z    [33m[2m✓[22m[39m when earliestReleaseAt is after the draft expiry, the guidance leads to a new prepare that succeeds[33m 1848[2mms[22m[39m
+2026-10-06T10:19:57.0894400Z  [32m✓[39m tests/context-continuity/continuity.test.ts [2m([22m[2m15 tests[22m[2m)[22m[33m 8502[2mms[22m[39m
+2026-10-06T10:19:57.0895691Z    [32m✓[39m direct task continuity [2m(10)[22m
+2026-10-06T10:19:57.0896181Z      [33m[2m✓[22m[39m separates suppression and clear while allowing old-epoch purge without retained payload[33m 1454[2mms[22m[39m
+2026-10-06T10:19:57.0896721Z      [33m[2m✓[22m[39m rejects and later scrubs a malformed purge receipt with extra snapshot content[33m 1695[2mms[22m[39m
+2026-10-06T10:19:57.0897209Z      [33m[2m✓[22m[39m allows only one winner across two SQLite connections using the same CAS revision[33m 1268[2mms[22m[39m
+2026-10-06T10:19:57.0897684Z      [33m[2m✓[22m[39m rejects a payload whose stored JSON no longer matches its digest[33m 1260[2mms[22m[39m
+2026-10-06T10:19:57.0898054Z    [32m✓[39m workflow projection and fail-open lifecycle [2m(5)[22m
+2026-10-06T10:19:57.0898465Z      [33m[2m✓[22m[39m rewrites only bound MCP tool inputs and persists only HMAC lifecycle correlations[33m 1408[2mms[22m[39m
+2026-10-06T10:19:57.8359758Z  [32m✓[39m tests/mcp/receipt-policy.test.ts [2m([22m[2m33 tests[22m[2m)[22m[33m 5722[2mms[22m[39m
+2026-10-06T10:19:57.8360276Z    [32m✓[39m descriptor-declared reference-only receipts [2m(33)[22m
+2026-10-06T10:19:57.8360763Z      [33m[2m✓[22m[39m blocks finalization when the bound selection artifact is unavailable and proceeds when restored[33m 560[2mms[22m[39m
+2026-10-06T10:19:57.8361225Z      [33m[2m✓[22m[39m rejects actor reuse after SQLite restart[33m 542[2mms[22m[39m
+2026-10-06T10:19:57.8361653Z      [33m[2m✓[22m[39m binds arbitrary capability actor arrays in plan order after SQLite restart[33m 763[2mms[22m[39m
+2026-10-06T10:19:57.8362131Z      [33m[2m✓[22m[39m rejects raw output and receipt text surfaces before SQLite persistence[33m 382[2mms[22m[39m
+2026-10-06T10:20:02.0326593Z  [32m✓[39m tests/session-board/session-board.test.ts [2m([22m[2m15 tests[22m[2m)[22m[33m 4607[2mms[22m[39m
+2026-10-06T10:20:02.0330166Z    [32m✓[39m session board store [2m(6)[22m
+2026-10-06T10:20:02.0331007Z      [33m[2m✓[22m[39m denies the first gated call of each request once until the line is written for that request[33m 512[2mms[22m[39m
+2026-10-06T10:20:02.0331684Z      [33m[2m✓[22m[39m accepts only one bounded line[33m 310[2mms[22m[39m
+2026-10-06T10:20:02.0332463Z      [33m[2m✓[22m[39m lists recent sessions newest first with stale and current flags and prunes day-old rows[33m 351[2mms[22m[39m
+2026-10-06T10:20:02.0333458Z      [33m[2m✓[22m[39m keeps rows intact and denies once when two connections race on the same request[33m 409[2mms[22m[39m
+2026-10-06T10:20:02.0334492Z    [32m✓[39m session board hook [2m(6)[22m
+2026-10-06T10:20:02.0335183Z      [33m[2m✓[22m[39m gates edits once per request, lets read-only commands and subagents through, and records the line[33m 380[2mms[22m[39m
+2026-10-06T10:20:02.0336240Z      [33m[2m✓[22m[39m does not create a new request boundary for a broker-verified wake bell[33m 387[2mms[22m[39m
+2026-10-06T10:20:02.0340939Z      [33m[2m✓[22m[39m denies exactly once when several hook processes race on the same request[33m 311[2mms[22m[39m
+2026-10-06T10:20:02.0341566Z    [32m✓[39m session board MCP tools [2m(3)[22m
+2026-10-06T10:20:02.0342181Z      [33m[2m✓[22m[39m shares one board between the Claude launcher and the Codex hook and lists both hosts[33m 649[2mms[22m[39m
+2026-10-06T10:20:02.0342744Z      [33m[2m✓[22m[39m reads back the hook-written line, lists the host board and refuses unbound updates[33m 536[2mms[22m[39m
+2026-10-06T10:20:02.0343219Z      [33m[2m✓[22m[39m overlays matching broker presence and leaves missing sessions unknown[33m 320[2mms[22m[39m
+2026-10-06T10:20:02.5092319Z [90mstderr[2m | tests/recovery-strategy-selector/recovery-selector.test.mjs
+2026-10-06T10:20:02.5093374Z [22m[39munknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+2026-10-06T10:20:02.5093840Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+2026-10-06T10:20:02.5094249Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+2026-10-06T10:20:02.5094638Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+2026-10-06T10:20:02.5095022Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+2026-10-06T10:20:02.5095401Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+2026-10-06T10:20:02.5095778Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+2026-10-06T10:20:02.5096155Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+2026-10-06T10:20:02.5096712Z 
+2026-10-06T10:20:03.0092764Z  [32m✓[39m tests/recovery-strategy-selector/recovery-selector.test.mjs [2m([22m[2m17 tests[22m[2m)[22m[33m 497[2mms[22m[39m
+2026-10-06T10:20:03.0093752Z    [32m✓[39m recovery strategy selector [2m(17)[22m
+2026-10-06T10:20:03.0094648Z      [33m[2m✓[22m[39m contracts compile and the digest CLI accepts stdin JSON[33m 339[2mms[22m[39m
+2026-10-06T10:20:03.1725474Z  [2m[90m↓[39m[22m tests/session-messaging/previous-broker.test.ts [2m([22m[2m5 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m
+2026-10-06T10:20:17.8897512Z  [32m✓[39m tests/session-messaging/historical-wake.test.mjs [2m([22m[2m65 tests[22m[2m)[22m[33m 43357[2mms[22m[39m
+2026-10-06T10:20:17.8898194Z    [33m[2m✓[22m[39m expired original evidence retires only the exact old attempt, preserving historical time and pending body[33m 685[2mms[22m[39m
+2026-10-06T10:20:17.8898708Z    [33m[2m✓[22m[39m history rejects target without changing any message state[33m 321[2mms[22m[39m
+2026-10-06T10:20:17.8899140Z    [33m[2m✓[22m[39m history rejects attempt without changing any message state[33m 379[2mms[22m[39m
+2026-10-06T10:20:17.8899551Z    [33m[2m✓[22m[39m history rejects receipt without changing any message state[33m 545[2mms[22m[39m
+2026-10-06T10:20:17.8899942Z    [33m[2m✓[22m[39m history rejects nonce without changing any message state[33m 398[2mms[22m[39m
+2026-10-06T10:20:17.8900322Z    [33m[2m✓[22m[39m history rejects current without changing any message state[33m 391[2mms[22m[39m
+2026-10-06T10:20:17.8900728Z    [33m[2m✓[22m[39m history rejects no-current without changing any message state[33m 654[2mms[22m[39m
+2026-10-06T10:20:17.8901127Z    [33m[2m✓[22m[39m history rejects no-late without changing any message state[33m 332[2mms[22m[39m
+2026-10-06T10:20:17.8901516Z    [33m[2m✓[22m[39m history rejects submitted without changing any message state[33m 777[2mms[22m[39m
+2026-10-06T10:20:17.8902428Z    [33m[2m✓[22m[39m history rejects already-consumed without changing any message state[33m 641[2mms[22m[39m
+2026-10-06T10:20:17.8903162Z    [33m[2m✓[22m[39m history rejects bad-signature without changing any message state[33m 596[2mms[22m[39m
+2026-10-06T10:20:17.8904091Z    [33m[2m✓[22m[39m history rejects digest without changing any message state[33m 858[2mms[22m[39m
+2026-10-06T10:20:17.8904589Z    [33m[2m✓[22m[39m history rejects adapter without changing any message state[33m 662[2mms[22m[39m
+2026-10-06T10:20:17.8904988Z    [33m[2m✓[22m[39m history rejects authority without changing any message state[33m 885[2mms[22m[39m
+2026-10-06T10:20:17.8905377Z    [33m[2m✓[22m[39m history rejects invalid time relation before-start[33m 847[2mms[22m[39m
+2026-10-06T10:20:17.8905741Z    [33m[2m✓[22m[39m history rejects invalid time relation after-late[33m 851[2mms[22m[39m
+2026-10-06T10:20:17.8906105Z    [33m[2m✓[22m[39m history rejects invalid time relation expiry-at-late[33m 707[2mms[22m[39m
+2026-10-06T10:20:17.8906519Z    [33m[2m✓[22m[39m history rejects invalid time relation not-expired[33m 526[2mms[22m[39m
+2026-10-06T10:20:17.8907095Z    [33m[2m✓[22m[39m history rejects invalid time relation invalid-observed[33m 737[2mms[22m[39m
+2026-10-06T10:20:17.8907666Z    [33m[2m✓[22m[39m history rejects invalid time relation invalid-late[33m 800[2mms[22m[39m
+2026-10-06T10:20:17.8908248Z    [33m[2m✓[22m[39m history rejects invalid time relation invalid-start[33m 665[2mms[22m[39m
+2026-10-06T10:20:17.8908872Z    [33m[2m✓[22m[39m reconstructs only the exact signed actor digest main/observed[33m 648[2mms[22m[39m
+2026-10-06T10:20:17.8909540Z    [33m[2m✓[22m[39m reconstructs only the exact signed actor digest main/unknown[33m 318[2mms[22m[39m
+2026-10-06T10:20:17.8910191Z    [33m[2m✓[22m[39m reconstructs only the exact signed actor digest unknown/unknown[33m 612[2mms[22m[39m
+2026-10-06T10:20:17.8910942Z    [33m[2m✓[22m[39m a signed multiple-nonce observation cannot be approximated by a single old nonce[33m 851[2mms[22m[39m
+2026-10-06T10:20:17.8911903Z    [33m[2m✓[22m[39m readonly trust rejection missing-db creates no database/key/receipt[33m 870[2mms[22m[39m
+2026-10-06T10:20:17.8912569Z    [33m[2m✓[22m[39m readonly trust rejection missing-key creates no database/key/receipt[33m 787[2mms[22m[39m
+2026-10-06T10:20:17.8913224Z    [33m[2m✓[22m[39m readonly trust rejection bad-key creates no database/key/receipt[33m 536[2mms[22m[39m
+2026-10-06T10:20:17.8913897Z    [33m[2m✓[22m[39m readonly trust rejection missing-table creates no database/key/receipt[33m 741[2mms[22m[39m
+2026-10-06T10:20:17.8915007Z    [33m[2m✓[22m[39m readonly trust rejection wrong-column creates no database/key/receipt[33m 365[2mms[22m[39m
+2026-10-06T10:20:17.8915819Z    [33m[2m✓[22m[39m readonly trust respects initializer version compatibility without migrating version 0[33m 728[2mms[22m[39m
+2026-10-06T10:20:17.8916636Z    [33m[2m✓[22m[39m readonly trust respects initializer version compatibility without migrating version 1[33m 647[2mms[22m[39m
+2026-10-06T10:20:17.8917485Z    [33m[2m✓[22m[39m readonly trust respects initializer version compatibility without migrating version 2[33m 825[2mms[22m[39m
+2026-10-06T10:20:17.8918321Z    [33m[2m✓[22m[39m readonly trust respects initializer version compatibility without migrating version 99[33m 729[2mms[22m[39m
+2026-10-06T10:20:17.8919131Z    [33m[2m✓[22m[39m readonly version and receipt share a snapshot while an independent writer upgrades the version[33m 547[2mms[22m[39m
+2026-10-06T10:20:17.8919783Z    [33m[2m✓[22m[39m broker rejects caller supplied nowMs[33m 425[2mms[22m[39m
+2026-10-06T10:20:17.8920443Z    [33m[2m✓[22m[39m broker rejects caller supplied receipt[33m 775[2mms[22m[39m
+2026-10-06T10:20:17.8921162Z    [33m[2m✓[22m[39m broker rejects caller supplied approved[33m 707[2mms[22m[39m
+2026-10-06T10:20:17.8921723Z    [33m[2m✓[22m[39m broker rejects caller supplied observation[33m 639[2mms[22m[39m
+2026-10-06T10:20:17.8922295Z    [33m[2m✓[22m[39m broker rejects caller supplied nonce[33m 539[2mms[22m[39m
+2026-10-06T10:20:17.8930913Z    [33m[2m✓[22m[39m broker rejects caller supplied instanceId[33m 494[2mms[22m[39m
+2026-10-06T10:20:17.8931723Z    [33m[2m✓[22m[39m two independent recovery processes CAS once; pending uses separate normal reserve/start[33m 576[2mms[22m[39m
+2026-10-06T10:20:17.8933037Z    [33m[2m✓[22m[39m CAS rechecks epoch after historical verification[33m 408[2mms[22m[39m
+2026-10-06T10:20:17.8933813Z    [33m[2m✓[22m[39m read-only verification holds one key/receipt snapshot while an independent writer rotates both[33m 399[2mms[22m[39m
+2026-10-06T10:20:17.8934682Z    [33m[2m✓[22m[39m bundled public CLI forwards only IDs to the private broker and cannot repeat recovery[33m 1007[2mms[22m[39m
+2026-10-06T10:20:17.8935476Z    [33m[2m✓[22m[39m packaged CLI binds history to explicit broker state directory: prestarted[33m 1319[2mms[22m[39m
+2026-10-06T10:20:17.8936256Z    [33m[2m✓[22m[39m packaged CLI binds history to explicit broker state directory: client-ensure[33m 1400[2mms[22m[39m
+2026-10-06T10:20:17.8937014Z    [33m[2m✓[22m[39m packaged root CLI rejects unsupported trust schema without mutation: 0[33m 1043[2mms[22m[39m
+2026-10-06T10:20:17.8937764Z    [33m[2m✓[22m[39m packaged root CLI rejects unsupported trust schema without mutation: 1[33m 788[2mms[22m[39m
+2026-10-06T10:20:17.8938484Z    [33m[2m✓[22m[39m packaged root CLI rejects unsupported trust schema without mutation: 2[33m 755[2mms[22m[39m
+2026-10-06T10:20:17.8939459Z    [33m[2m✓[22m[39m packaged root CLI rejects unsupported trust schema without mutation: 99[33m 830[2mms[22m[39m
+2026-10-06T10:20:17.8940210Z    [33m[2m✓[22m[39m packaged root CLI rejects unsupported trust schema without mutation: missing-table[33m 874[2mms[22m[39m
+2026-10-06T10:20:17.8941500Z    [33m[2m✓[22m[39m packaged root CLI rejects unsupported trust schema without mutation: wrong-column[33m 725[2mms[22m[39m
+2026-10-06T10:20:17.8942291Z    [33m[2m✓[22m[39m packaged claude CLI rejects unsupported trust schema without mutation: 0[33m 990[2mms[22m[39m
+2026-10-06T10:20:17.8943073Z    [33m[2m✓[22m[39m packaged claude CLI rejects unsupported trust schema without mutation: 1[33m 897[2mms[22m[39m
+2026-10-06T10:20:17.8943848Z    [33m[2m✓[22m[39m packaged claude CLI rejects unsupported trust schema without mutation: 2[33m 920[2mms[22m[39m
+2026-10-06T10:20:17.8944630Z    [33m[2m✓[22m[39m packaged claude CLI rejects unsupported trust schema without mutation: 99[33m 1050[2mms[22m[39m
+2026-10-06T10:20:17.8945404Z    [33m[2m✓[22m[39m packaged claude CLI rejects unsupported trust schema without mutation: missing-table[33m 863[2mms[22m[39m
+2026-10-06T10:20:17.8946257Z    [33m[2m✓[22m[39m packaged claude CLI rejects unsupported trust schema without mutation: wrong-column[33m 870[2mms[22m[39m
+2026-10-06T10:20:24.1674346Z  [32m✓[39m tests/session-messaging/presence-retention.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 26180[2mms[22m[39m
+2026-10-06T10:20:24.1678161Z    [33m[2m✓[22m[39m serves board presence from a 342-identity, 1302-row database through a real broker[33m 965[2mms[22m[39m
+2026-10-06T10:20:24.1699034Z    [33m[2m✓[22m[39m ends a board lookup against a slow real broker at one overall client deadline[33m 20467[2mms[22m[39m
+2026-10-06T10:20:24.1734858Z    [33m[2m✓[22m[39m B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve[33m 492[2mms[22m[39m
+2026-10-06T10:20:24.1829832Z    [33m[2m✓[22m[39m keeps retirement, presence and autoWake identical to a run that deletes no presence row[33m 1405[2mms[22m[39m
+2026-10-06T10:20:24.1851131Z    [33m[2m✓[22m[39m gives a purged instance's rebirth a later generation, so an old-generation marker still claims nothing[33m 919[2mms[22m[39m
+2026-10-06T10:20:24.1855096Z    [33m[2m✓[22m[39m prunes presence idempotently when two processes race on one database[33m 1878[2mms[22m[39m
+2026-10-06T10:20:24.8436183Z  [32m✓[39m tests/mcp/workspace-identity.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 305[2mms[22m[39m
+2026-10-06T10:20:28.9315083Z  [32m✓[39m tests/mcp/state-cleanup.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 10816[2mms[22m[39m
+2026-10-06T10:20:28.9315675Z    [32m✓[39m state cleanup [2m(8)[22m
+2026-10-06T10:20:28.9316261Z      [33m[2m✓[22m[39m backs up and deletes only preview-bound inactive terminal state[33m 1169[2mms[22m[39m
+2026-10-06T10:20:28.9316982Z      [33m[2m✓[22m[39m rejects stale and tampered tokens before deletion[33m 323[2mms[22m[39m
+2026-10-06T10:20:28.9317731Z      [33m[2m✓[22m[39m migrates workflow v3 and continuity v1 databases without losing rows[33m 2240[2mms[22m[39m
+2026-10-06T10:20:28.9318477Z      [33m[2m✓[22m[39m claims a no-op plan only once across two database connections[33m 499[2mms[22m[39m
+2026-10-06T10:20:28.9319181Z      [33m[2m✓[22m[39m keeps candidates when backup verification fails[33m 435[2mms[22m[39m
+2026-10-06T10:20:28.9319923Z      [33m[2m✓[22m[39m keeps a continuity task when a recent child record appears after backup[33m 2166[2mms[22m[39m
+2026-10-06T10:20:28.9320755Z      [33m[2m✓[22m[39m keeps continuity state when its workflow root becomes active after preview[33m 3512[2mms[22m[39m
+2026-10-06T10:20:28.9321454Z      [33m[2m✓[22m[39m expires an unused plan after fifteen minutes[33m 472[2mms[22m[39m
+2026-10-06T10:20:29.7699123Z [90mstdout[2m | tests/session-messaging/message-lifecycle.test.ts[2m > [22m[2mpackaged TLS cycles use one request instead of three or two without changing pending state
+2026-10-06T10:20:29.7701155Z [22m[39mrelay tick measured TLS request counts [{"transport":"test-inbox","cycles":10,"baselineRequests":30,"tickRequests":10},{"transport":"codex-deferred","cycles":10,"baselineRequests":20,"tickRequests":10}]
+2026-10-06T10:20:29.7702159Z 
+2026-10-06T10:20:36.0259381Z  [32m✓[39m tests/context-continuity/schema-compat.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 32526[2mms[22m[39m
+2026-10-06T10:20:36.0260653Z    [32m✓[39m 2.7.x continuity schema compatibility [2m(13)[22m
+2026-10-06T10:20:36.0261179Z      [33m[2m✓[22m[39m preserves schema 2 state across reopen, restore, CAS, purge and epoch rotation[33m 1358[2mms[22m[39m
+2026-10-06T10:20:36.0261850Z      [33m[2m✓[22m[39m preserves schema 3 state across reopen, restore, CAS, purge and epoch rotation[33m 1029[2mms[22m[39m
+2026-10-06T10:20:36.0262382Z      [33m[2m✓[22m[39m creates new databases as schema 2[33m 1371[2mms[22m[39m
+2026-10-06T10:20:36.0262982Z      [33m[2m✓[22m[39m preserves receiver-owned tasks, refuses stale origins and keeps unrelated tasks usable[33m 1274[2mms[22m[39m
+2026-10-06T10:20:36.0263695Z      [33m[2m✓[22m[39m checks receiver state inside the checkpoint transaction after service preflight[33m 907[2mms[22m[39m
+2026-10-06T10:20:36.0264394Z      [33m[2m✓[22m[39m detects a schema 3 receiver added by another connection after opening schema 2[33m 833[2mms[22m[39m
+2026-10-06T10:20:36.0265012Z      [33m[2m✓[22m[39m protects receiver state added after snapshot cleanup preview[33m 797[2mms[22m[39m
+2026-10-06T10:20:36.0265574Z      [33m[2m✓[22m[39m protects receiver state added after task cleanup preview[33m 792[2mms[22m[39m
+2026-10-06T10:20:36.0266141Z      [33m[2m✓[22m[39m rejects incompatible schema 3 without repairing or downgrading it[33m 582[2mms[22m[39m
+2026-10-06T10:20:36.0266590Z      [33m[2m✓[22m[39m rejects changed schema 3 defaults instead of changing task suppression implicitly[33m 770[2mms[22m[39m
+2026-10-06T10:20:36.0267054Z      [33m[2m✓[22m[39m rejects missing schema 3 tables and future schemas without creating state[33m 1597[2mms[22m[39m
+2026-10-06T10:20:36.0267473Z      [33m[2m✓[22m[39m rejects damaged bytes without replacing the database[33m 494[2mms[22m[39m
+2026-10-06T10:20:36.0268118Z      [33m[2m✓[22m[39m rejects a schema 3 database with valid column definitions and malformed pages[33m 879[2mms[22m[39m
+2026-10-06T10:20:36.0268472Z    [32m✓[39m source STDIO continuity startup diagnostics [2m(5)[22m
+2026-10-06T10:20:36.0268795Z      [33m[2m✓[22m[39m keeps normal MCP usable when continuity is healthy[33m 2524[2mms[22m[39m
+2026-10-06T10:20:36.0269154Z      [33m[2m✓[22m[39m keeps normal MCP usable when continuity is receiver[33m 2221[2mms[22m[39m
+2026-10-06T10:20:36.0269516Z      [33m[2m✓[22m[39m keeps normal MCP usable when continuity is future[33m 2486[2mms[22m[39m
+2026-10-06T10:20:36.0270133Z      [33m[2m✓[22m[39m keeps normal MCP usable when continuity is incompatible[33m 3637[2mms[22m[39m
+2026-10-06T10:20:36.0270491Z      [33m[2m✓[22m[39m keeps normal MCP usable when continuity is corrupt[33m 8973[2mms[22m[39m
+2026-10-06T10:20:42.3169155Z  [32m✓[39m tests/session-messaging/message-lifecycle.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 17305[2mms[22m[39m
+2026-10-06T10:20:42.3174512Z    [33m[2m✓[22m[39m applies global draft, receipt and byte backpressure without evicting valid records[33m 1176[2mms[22m[39m
+2026-10-06T10:20:42.3176599Z    [33m[2m✓[22m[39m packaged TLS cycles use one request instead of three or two without changing pending state[33m 3520[2mms[22m[39m
+2026-10-06T10:20:42.3177956Z    [33m[2m✓[22m[39m a real post-commit prepare reply loss leaves only orphan drafts[33m 3916[2mms[22m[39m
+2026-10-06T10:20:42.3179738Z    [33m[2m✓[22m[39m a real send reply loss retries the known ID once and survives broker restart[33m 4774[2mms[22m[39m
+2026-10-06T10:20:42.3181764Z    [33m[2m✓[22m[39m two independent processes submit one ID atomically and enforce sender preparation capacity[33m 2365[2mms[22m[39m
+2026-10-06T10:20:42.3182980Z    [33m[2m✓[22m[39m preserves old messages across additive schema initialization but refuses old IDs as new sends[33m 752[2mms[22m[39m
+2026-10-06T10:20:42.3188237Z    [33m[2m✓[22m[39m packaged CLI discovers prepare/send and rejects old or unknown send with zero queue effect[33m 716[2mms[22m[39m
+2026-10-06T10:20:45.8425074Z  [32m✓[39m tests/tooling/commands.test.mjs [2m([22m[2m12 tests[22m[2m)[22m[33m 9694[2mms[22m[39m
+2026-10-06T10:20:45.8425688Z    [32m✓[39m skill maintenance commands [2m(12)[22m
+2026-10-06T10:20:45.8426257Z      [33m[2m✓[22m[39m forwards pnpm script arguments without a standalone separator[33m 429[2mms[22m[39m
+2026-10-06T10:20:45.8426895Z      [33m[2m✓[22m[39m scaffolds a skill, behavior fixtures, and registry descriptor[33m 815[2mms[22m[39m
+2026-10-06T10:20:45.8427703Z      [33m[2m✓[22m[39m imports only files committed at the requested Git ref[33m 1782[2mms[22m[39m
+2026-10-06T10:20:45.8428385Z      [33m[2m✓[22m[39m refuses a replacement that does not contain the required ancestor commit[33m 2768[2mms[22m[39m
+2026-10-06T10:20:45.8429210Z      [33m[2m✓[22m[39m keeps the registered routing when a replaced skill ships no integration descriptor[33m 2091[2mms[22m[39m
+2026-10-06T10:20:45.8429912Z      [33m[2m✓[22m[39m rejects a lock whose auto-pr source is pinned to a commit[33m 639[2mms[22m[39m
+2026-10-06T10:20:45.8430640Z      [33m[2m✓[22m[39m refuses to replace a suite-managed skill through the external importer[33m 937[2mms[22m[39m
+2026-10-06T10:20:46.5072352Z  [32m✓[39m tests/mcp/stdio-integration.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 17336[2mms[22m[39m
+2026-10-06T10:20:46.5073920Z    [32m✓[39m bundled STDIO MCP server [2m(4)[22m
+2026-10-06T10:20:46.5074672Z      [33m[2m✓[22m[39m starts from an isolated plugin tree without node_modules[33m 13281[2mms[22m[39m
+2026-10-06T10:20:46.5075766Z      [33m[2m✓[22m[39m keeps workflow startup clean when both database settings resolve to one file[33m 1438[2mms[22m[39m
+2026-10-06T10:20:46.5076985Z      [33m[2m✓[22m[39m starts with the packaged registry and fails semantic planning closed without a trusted provider[33m 1194[2mms[22m[39m
+2026-10-06T10:20:46.5096216Z      [33m[2m✓[22m[39m shares signed continuity bindings between the packaged hook and MCP server[33m 1422[2mms[22m[39m
+2026-10-06T10:20:47.8237600Z  [32m✓[39m tests/mcp/plugin-update-service.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 1035[2mms[22m[39m
+2026-10-06T10:20:47.8238207Z    [32m✓[39m PluginUpdateService [2m(17)[22m
+2026-10-06T10:20:47.8238810Z      [33m[2m✓[22m[39m preserves a concurrent SQLite notice claim against a stale check write[33m 319[2mms[22m[39m
+2026-10-06T10:20:47.8239581Z      [33m[2m✓[22m[39m preserves a concurrent successful SQLite result when a stale check fails[33m 308[2mms[22m[39m
+2026-10-06T10:20:48.3260926Z  [32m✓[39m tests/mcp/trust-provenance.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 2078[2mms[22m[39m
+2026-10-06T10:20:48.3261590Z    [32m✓[39m trust provenance [2m(11)[22m
+2026-10-06T10:20:48.3262180Z      [33m[2m✓[22m[39m stores peer provenance by digest without persisting the raw body[33m 330[2mms[22m[39m
+2026-10-06T10:20:48.3262976Z      [33m[2m✓[22m[39m records and verifies a claimed peer message before injecting its receipt-bound body[33m 429[2mms[22m[39m
+2026-10-06T10:20:49.0573359Z  [32m✓[39m tests/mcp/codex-host-observation.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 499[2mms[22m[39m
+2026-10-06T10:20:50.5770712Z  [32m✓[39m tests/cs-engineering/workflow-integration.test.ts [2m([22m[2m15 tests[22m[2m)[22m[33m 7839[2mms[22m[39m
+2026-10-06T10:20:50.5771713Z    [33m[2m✓[22m[39m registered CS providers are discoverable at bootstrap 25 and workflow 67[33m 373[2mms[22m[39m
+2026-10-06T10:20:50.5773629Z    [33m[2m✓[22m[39m selected review runs actual packaged CLI and finalizes with matching files[33m 1317[2mms[22m[39m
+2026-10-06T10:20:50.5774852Z    [33m[2m✓[22m[39m stage rejects stale-task without consuming its revision[33m 307[2mms[22m[39m
+2026-10-06T10:20:50.5775377Z    [33m[2m✓[22m[39m stage rejects raw-evidence without consuming its revision[33m 317[2mms[22m[39m
+2026-10-06T10:20:50.5775818Z    [33m[2m✓[22m[39m stage rejects provider-substitution without consuming its revision[33m 401[2mms[22m[39m
+2026-10-06T10:20:50.5776267Z    [33m[2m✓[22m[39m stage rejects NOT_RUN-as-PASS without consuming its revision[33m 376[2mms[22m[39m
+2026-10-06T10:20:50.5776693Z    [33m[2m✓[22m[39m stage rejects candidate-target without consuming its revision[33m 410[2mms[22m[39m
+2026-10-06T10:20:50.5777364Z    [33m[2m✓[22m[39m proper unexecuted evidence records BLOCKED even with supplied observe policy[33m 407[2mms[22m[39m
+2026-10-06T10:20:50.5778081Z    [33m[2m✓[22m[39m guarded lease/start and SQLite restart retain recorded bundle pins; finalize rereads evidence[33m 872[2mms[22m[39m
+2026-10-06T10:20:50.5778631Z    [33m[2m✓[22m[39m actual MCP tools validate a selected CS stage with synthetic server observations[33m 827[2mms[22m[39m
+2026-10-06T10:20:50.5779238Z    [33m[2m✓[22m[39m file-backed CS output follows the same record and finalize validation[33m 705[2mms[22m[39m
+2026-10-06T10:20:50.5779962Z    [33m[2m✓[22m[39m generated Claude review and copied deployment CLI validate without node_modules[33m 938[2mms[22m[39m
+2026-10-06T10:20:51.3931923Z  [32m✓[39m tests/mcp/tool-schema-profile.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 3237[2mms[22m[39m
+2026-10-06T10:20:51.3932588Z    [32m✓[39m MCP tool schema profiles [2m(7)[22m
+2026-10-06T10:20:51.3933139Z      [33m[2m✓[22m[39m keeps the historical schemas when no profile is selected[33m 455[2mms[22m[39m
+2026-10-06T10:20:51.3933915Z      [33m[2m✓[22m[39m removes top-level combinators from every advertised schema for Anthropic hosts[33m 312[2mms[22m[39m
+2026-10-06T10:20:51.3934873Z      [33m[2m✓[22m[39m accepts and rejects the same inputs with inlined Anthropic schemas as with the referenced contracts[33m 392[2mms[22m[39m
+2026-10-06T10:20:51.3936052Z      [33m[2m✓[22m[39m advertises the same host-neutral intake instructions to every schema profile[33m 309[2mms[22m[39m
+2026-10-06T10:20:51.3936759Z      [33m[2m✓[22m[39m applies the environment profile in the bundled server[33m 1510[2mms[22m[39m
+2026-10-06T10:20:51.6239654Z  [32m✓[39m tests/mcp/stage-output-file.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 889[2mms[22m[39m
+2026-10-06T10:20:52.5006881Z  [32m✓[39m tests/mcp/korean-prose-readiness.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 694[2mms[22m[39m
+2026-10-06T10:20:53.1988334Z  [32m✓[39m tests/mcp/trusted-mcp-integration.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 312[2mms[22m[39m
+2026-10-06T10:20:53.1988773Z    [32m✓[39m trusted MCP server boundary [2m(1)[22m
+2026-10-06T10:20:53.1989168Z      [33m[2m✓[22m[39m completes and aborts guarded workflows with server-side observations[33m 310[2mms[22m[39m
+2026-10-06T10:20:54.8891859Z  [32m✓[39m tests/mcp/provider-result-envelope.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 1331[2mms[22m[39m
+2026-10-06T10:20:56.6844151Z [90mstdout[2m | tests/session-messaging/broker-lifecycle.test.ts[2m > [22m[2misolates socket resets and a lost send response while preserving the broker and one committed message
+2026-10-06T10:20:56.6845312Z [22m[39mDisposable reset broker exited: { code: [1mnull[22m, signal: [32m'SIGTERM'[39m, stderr: [32m''[39m }
+2026-10-06T10:20:56.6845691Z 
+2026-10-06T10:20:56.6888478Z  [32m✓[39m tests/session-messaging/broker-lifecycle.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 5144[2mms[22m[39m
+2026-10-06T10:20:56.6889421Z    [33m[2m✓[22m[39m retries transient endpoint publication failures and serves the published endpoint[33m 558[2mms[22m[39m
+2026-10-06T10:20:56.6890238Z    [33m[2m✓[22m[39m releases startup resources after permanent failure and allows recovery[33m 1161[2mms[22m[39m
+2026-10-06T10:20:56.6891305Z    [33m[2m✓[22m[39m releases startup resources after ENOSPC failure and allows recovery[33m 466[2mms[22m[39m
+2026-10-06T10:20:56.6892111Z    [33m[2m✓[22m[39m releases startup resources after credentials failure and allows recovery[33m 358[2mms[22m[39m
+2026-10-06T10:20:56.6892884Z    [33m[2m✓[22m[39m releases startup resources after database failure and allows recovery[33m 630[2mms[22m[39m
+2026-10-06T10:20:56.6893662Z    [33m[2m✓[22m[39m delivers and acknowledges a message using only the packaged CLI and broker[33m 1125[2mms[22m[39m
+2026-10-06T10:20:56.6894547Z    [33m[2m✓[22m[39m isolates socket resets and a lost send response while preserving the broker and one committed message[33m 845[2mms[22m[39m
+2026-10-06T10:20:57.1816169Z  [32m✓[39m tests/evaluation-validity-auditor/suite-integration.test.mjs [2m([22m[2m7 tests[22m[2m)[22m[33m 1988[2mms[22m[39m
+2026-10-06T10:20:57.1816719Z    [32m✓[39m evaluation-validity-auditor suite descriptor [2m(7)[22m
+2026-10-06T10:20:57.1817166Z      [33m[2m✓[22m[39m accepts a safe post-execution PASS receipt and still rejects free text[33m 453[2mms[22m[39m
+2026-10-06T10:20:57.1817664Z      [33m[2m✓[22m[39m freezes the audit purpose in the signed plan and enforces pre versus post completion[33m 372[2mms[22m[39m
+2026-10-06T10:20:57.1818136Z      [33m[2m✓[22m[39m maps FAIL and BLOCKED reports to their fixed workflow error states[33m 562[2mms[22m[39m
+2026-10-06T10:20:57.2363498Z  [32m✓[39m tests/mcp/korean-prose-glossary.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 400[2mms[22m[39m
+2026-10-06T10:20:57.4545986Z  [32m✓[39m tests/coordinate-subagents/model-routing.test.mjs [2m([22m[2m15 tests[22m[2m)[22m[32m 134[2mms[22m[39m
+2026-10-06T10:20:58.4405569Z  [32m✓[39m tests/codex-token-usage-analyzer/integration.test.mjs [2m([22m[2m6 tests[22m[2m)[22m[33m 674[2mms[22m[39m
+2026-10-06T10:20:58.4406083Z    [32m✓[39m codex-token-usage-analyzer integration [2m(6)[22m
+2026-10-06T10:20:58.4407649Z      [33m[2m✓[22m[39m records and finalizes a no-Markdown PASS workflow[33m 346[2mms[22m[39m
+2026-10-06T10:20:58.5558850Z  [32m✓[39m tests/mcp/runtime-config.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+2026-10-06T10:20:58.6765963Z  [32m✓[39m tests/mcp/evaluation-preflight.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+2026-10-06T10:20:58.8671496Z  [32m✓[39m tests/orchestrator/collaboration-decision.test.mjs [2m([22m[2m14 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+2026-10-06T10:20:59.4225987Z  [32m✓[39m tests/ponytail/ponytail.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 386[2mms[22m[39m
+2026-10-06T10:21:00.0490511Z  [32m✓[39m tests/mcp/response-projections.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 415[2mms[22m[39m
+2026-10-06T10:21:00.1892369Z  [32m✓[39m tests/session-messaging/presence-deadline.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+2026-10-06T10:21:00.3843795Z  [32m✓[39m tests/korean-prose-editor/glossary-finalizer.test.mjs [2m([22m[2m5 tests[22m[2m)[22m[32m 46[2mms[22m[39m
+2026-10-06T10:21:00.6087942Z  [32m✓[39m tests/mcp/korean-prose-evaluation-preflight.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 71[2mms[22m[39m
+2026-10-06T10:21:02.3633082Z  [32m✓[39m tests/software-security-auditor/security-audit.test.mjs [2m([22m[2m23 tests[22m[2m)[22m[33m 1556[2mms[22m[39m
+2026-10-06T10:21:02.3633560Z    [32m✓[39m security audit evidence contract [2m(23)[22m
+2026-10-06T10:21:02.3633958Z      [33m[2m✓[22m[39m runs positive and negative CLI in node_modules-free . packaging[33m 1231[2mms[22m[39m
+2026-10-06T10:21:03.5169686Z  [32m✓[39m tests/software-security-auditor/integration.test.mjs [2m([22m[2m7 tests[22m[2m)[22m[33m 901[2mms[22m[39m
+2026-10-06T10:21:04.0722540Z  [32m✓[39m tests/mcp/registry-contract.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 407[2mms[22m[39m
+2026-10-06T10:21:05.1901631Z  [32m✓[39m tests/mcp/host-attestation-stdio.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 15764[2mms[22m[39m
+2026-10-06T10:21:05.1913640Z    [32m✓[39m packaged execution observation fixtures (not native-host evidence) [2m(4)[22m
+2026-10-06T10:21:05.1914512Z      [33m[2m✓[22m[39m completes guarded STDIO and keeps restart replay rejection for claude-code/hook/claude-opus-5[33m 3430[2mms[22m[39m
+2026-10-06T10:21:05.1915408Z      [33m[2m✓[22m[39m completes guarded STDIO and keeps restart replay rejection for codex/hook/gpt-6-astra[33m 3398[2mms[22m[39m
+2026-10-06T10:21:05.1916262Z      [33m[2m✓[22m[39m completes guarded STDIO and keeps restart replay rejection for codex/hook/gpt-6-sol[33m 3849[2mms[22m[39m
+2026-10-06T10:21:05.1917143Z      [33m[2m✓[22m[39m completes guarded STDIO and keeps restart replay rejection for codex/wrapper/gpt-6-astra[33m 5085[2mms[22m[39m
+2026-10-06T10:21:05.2107656Z  [32m✓[39m tests/session-messaging/utf8-framing.test.ts [2m([22m[2m12 tests[22m[2m)[22m[33m 7811[2mms[22m[39m
+2026-10-06T10:21:05.2110271Z    [33m[2m✓[22m[39m accepts a real claim answer of exactly the response limit with a Korean character split 1|rest at the TLS chunk, and rejects one byte more[33m 759[2mms[22m[39m
+2026-10-06T10:21:05.2111418Z    [33m[2m✓[22m[39m accepts a real claim answer of exactly the response limit with a Korean character split 2|rest at the TLS chunk, and rejects one byte more[33m 952[2mms[22m[39m
+2026-10-06T10:21:05.2112474Z    [33m[2m✓[22m[39m accepts a request of exactly the request limit with a Korean character split 1|rest at the TLS chunk, and rejects one byte more[33m 369[2mms[22m[39m
+2026-10-06T10:21:05.2113494Z    [33m[2m✓[22m[39m accepts a request of exactly the request limit with a Korean character split 2|rest at the TLS chunk, and rejects one byte more[33m 384[2mms[22m[39m
+2026-10-06T10:21:05.2114416Z    [33m[2m✓[22m[39m delivers twelve batches of Korean messages through the CLI claim path byte for byte[33m 4605[2mms[22m[39m
+2026-10-06T10:21:05.2115521Z    [33m[2m✓[22m[39m hands a Korean claim answer one byte under the limit to the CLI instead of retrying into an empty 120 s lease[33m 737[2mms[22m[39m
+2026-10-06T10:21:05.4007243Z  [32m✓[39m tests/tooling/tooling.test.mjs [2m([22m[2m9 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+2026-10-06T10:21:06.3712508Z  [32m✓[39m tests/session-messaging/presence-batches.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 811[2mms[22m[39m
+2026-10-06T10:21:06.3713710Z    [33m[2m✓[22m[39m stops after a transport failure, so an unresponsive broker costs one batch deadline, not one per batch[33m 402[2mms[22m[39m
+2026-10-06T10:21:06.3714627Z    [33m[2m✓[22m[39m keeps earlier answers and marks the failed and remaining batches unanswered after a transport failure[33m 404[2mms[22m[39m
+2026-10-06T10:21:06.6403532Z  [32m✓[39m tests/tooling/skill-context-optimization.test.mjs [2m([22m[2m5 tests[22m[2m)[22m[33m 1270[2mms[22m[39m
+2026-10-06T10:21:06.6404199Z    [32m✓[39m skill context optimization [2m(5)[22m
+2026-10-06T10:21:06.6404794Z      [33m[2m✓[22m[39m preserves the reviewed skill revisions while reducing their initial load[33m 1187[2mms[22m[39m
+2026-10-06T10:21:06.7429744Z  [32m✓[39m tests/mcp/tool-schema-inline.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+2026-10-06T10:21:07.1139543Z  [32m✓[39m tests/mcp/orchestrator-fixtures.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 67[2mms[22m[39m
+2026-10-06T10:21:07.4004441Z  [32m✓[39m tests/orchestrator/query-registry.test.mjs [2m([22m[2m2 tests[22m[2m)[22m[32m 161[2mms[22m[39m
+2026-10-06T10:21:07.6106595Z  [32m✓[39m tests/model-effort-advisor/suite-integration.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 64[2mms[22m[39m
+2026-10-06T10:21:09.0332228Z  [32m✓[39m tests/code-review/public-cli.test.mjs [2m([22m[2m3 tests[22m[2m)[22m[33m 494[2mms[22m[39m
+2026-10-06T10:21:09.6458750Z  [32m✓[39m tests/release-state-backup.test.mjs [2m([22m[2m1 test[22m[2m)[22m[33m 484[2mms[22m[39m
+2026-10-06T10:21:09.6461317Z    [33m[2m✓[22m[39m backs up a live WAL database and refuses to overwrite an existing backup[33m 483[2mms[22m[39m
+2026-10-06T10:21:09.7908381Z  [32m✓[39m tests/software-security-auditor/evaluation-evidence.test.mjs [2m([22m[2m1 test[22m[2m)[22m[32m 6[2mms[22m[39m
+2026-10-06T10:21:09.9263008Z  [32m✓[39m tests/mcp/korean-prose-execution-provenance.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+2026-10-06T10:21:10.0748958Z  [32m✓[39m tests/session-messaging/self-signed-certificate.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 7[2mms[22m[39m
+2026-10-06T10:21:10.5726408Z  [32m✓[39m tests/test-engineering/suite-integration.test.mjs [2m([22m[2m3 tests[22m[2m)[22m[33m 6366[2mms[22m[39m
+2026-10-06T10:21:10.5727501Z    [32m✓[39m Engineering Practices source integration [2m(3)[22m
+2026-10-06T10:21:10.5728278Z      [33m[2m✓[22m[39m runs the original core and public CLI regression suites with the native AGS schema runtime[33m 1789[2mms[22m[39m
+2026-10-06T10:21:10.5729158Z      [33m[2m✓[22m[39m runs both installed host layouts without node_modules and binds Claude's exact adapted bytes[33m 4480[2mms[22m[39m
+2026-10-06T10:21:11.4967136Z  [32m✓[39m tests/instruction-scope-resolver/suite-integration.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 770[2mms[22m[39m
+2026-10-06T10:21:11.4967896Z    [32m✓[39m instruction-scope-resolver standalone regression [2m(1)[22m
+2026-10-06T10:21:11.4968395Z      [33m[2m✓[22m[39m runs every node:test case[33m 768[2mms[22m[39m
+2026-10-06T10:21:11.9550108Z  [32m✓[39m tests/acceptance-evidence-validator/suite-integration.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 1732[2mms[22m[39m
+2026-10-06T10:21:11.9550956Z    [32m✓[39m acceptance-evidence-validator standalone regression [2m(1)[22m
+2026-10-06T10:21:11.9551530Z      [33m[2m✓[22m[39m runs every node:test case[33m 1731[2mms[22m[39m
+2026-10-06T10:21:15.2676534Z  [32m✓[39m tests/cs-engineering/suite-integration.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 3159[2mms[22m[39m
+2026-10-06T10:21:15.2677404Z    [33m[2m✓[22m[39m CS Node regressions run in an isolated process with the AGS Ajv runtime[33m 3157[2mms[22m[39m
+2026-10-06T10:21:16.3069990Z  [32m✓[39m tests/task-contract/suite-integration.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 905[2mms[22m[39m
+2026-10-06T10:21:16.3070738Z    [33m[2m✓[22m[39m task-contract Node tests pass in an isolated process[33m 904[2mms[22m[39m
+2026-10-06T10:21:16.9778109Z  [32m✓[39m tests/evaluation-validity-auditor/standalone-regression.test.mjs [2m([22m[2m1 test[22m[2m)[22m[33m 555[2mms[22m[39m
+2026-10-06T10:21:16.9778596Z    [32m✓[39m evaluation-validity-auditor imported core [2m(1)[22m
+2026-10-06T10:21:16.9779055Z      [33m[2m✓[22m[39m passes the suite's normal, boundary, failure, and security regression cases[33m 554[2mms[22m[39m
+2026-10-06T10:21:17.6751864Z  [32m✓[39m tests/runtime/runtime-smoke.test.mjs [2m([22m[2m6 tests[22m[2m)[22m[33m 11152[2mms[22m[39m
+2026-10-06T10:21:17.6752506Z    [32m✓[39m installed skill runtime [2m(6)[22m
+2026-10-06T10:21:17.6752857Z      [33m[2m✓[22m[39m runs every documented Node CLI without node_modules[33m 11011[2mms[22m[39m
+2026-10-06T10:21:23.6304950Z  [32m✓[39m tests/change-scope-guardian/suite-integration.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 11876[2mms[22m[39m
+2026-10-06T10:21:23.6306277Z    [33m[2m✓[22m[39m change-scope-guardian Node tests pass in an isolated process[33m 11875[2mms[22m[39m
+2026-10-06T10:21:23.6353986Z 
+2026-10-06T10:21:23.6357843Z [2m Test Files [22m [1m[32m69 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (70)[39m
+2026-10-06T10:21:23.6362251Z [2m      Tests [22m [1m[32m925 passed[39m[22m[2m | [22m[33m5 skipped[39m[90m (930)[39m
+2026-10-06T10:21:23.6363469Z [2m   Start at [22m 10:18:39
+2026-10-06T10:21:23.6366464Z [2m   Duration [22m 164.49s[2m (tests 98%, import 1%, transform 1%)[22m
+2026-10-06T10:21:23.6375017Z 
+2026-10-06T10:21:23.6962581Z ##[group]Run pnpm runtime:check
+2026-10-06T10:21:23.6962798Z [36;1mpnpm runtime:check[0m
+2026-10-06T10:21:23.6971730Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:21:23.6971961Z env:
+2026-10-06T10:21:23.6972126Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:23.6972395Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T10:21:23.6972660Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:23.6972901Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:23.6973141Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:23.6973344Z ##[endgroup]
+2026-10-06T10:21:24.4567642Z Already up to date
+2026-10-06T10:21:24.4571797Z Done in 285ms using pnpm v11.19.0
+2026-10-06T10:21:24.4767841Z $ node scripts/check-runtime.mjs
+2026-10-06T10:21:31.2638075Z runtime: ready (32 skill CLIs, Node.js 24.21.0)
+2026-10-06T10:21:31.3033026Z ##[group]Run pnpm validate:all
+2026-10-06T10:21:31.3033238Z [36;1mpnpm validate:all[0m
+2026-10-06T10:21:31.3042104Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:21:31.3042329Z env:
+2026-10-06T10:21:31.3042502Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:31.3042772Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T10:21:31.3043038Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:31.3043275Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:31.3043509Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:31.3043704Z   PYTHONUTF8: 1
+2026-10-06T10:21:31.3043823Z ##[endgroup]
+2026-10-06T10:21:32.0347882Z Already up to date
+2026-10-06T10:21:32.0352295Z Done in 268ms using pnpm v11.19.0
+2026-10-06T10:21:32.0493835Z $ node scripts/validate-repository.mjs && node scripts/run-python-validations.mjs && tsx scripts/korean-prose-glossary.ts --mode check
+2026-10-06T10:21:32.4921067Z repository: valid
+2026-10-06T10:21:33.4742584Z PASS validate_frontmatter
+2026-10-06T10:21:33.4742824Z PASS validate_openai_yaml
+2026-10-06T10:21:33.4742985Z PASS validate_markdown_links
+2026-10-06T10:21:33.4743141Z PASS validate_no_placeholders
+2026-10-06T10:21:33.4743305Z PASS validate_no_sensitive_data
+2026-10-06T10:21:33.4743457Z PASS validate_routing_presets
+2026-10-06T10:21:33.4743609Z PASS validate_behavior_cases
+2026-10-06T10:21:33.4743782Z All skill package validations passed.
+2026-10-06T10:21:33.8015366Z Skill validation passed: <repo>\skills\independent-audit-gate
+2026-10-06T10:21:37.3000637Z PASS validate_skill_package
+2026-10-06T10:21:37.3000903Z PASS validate_decision_record_contracts
+2026-10-06T10:21:37.3001090Z PASS validate_behavior_cases
+2026-10-06T10:21:37.3001323Z All independent-deliberation-panel validations passed.
+2026-10-06T10:21:37.3290833Z model-effort-advisor: valid
+2026-10-06T10:21:37.5173168Z {"status":"ok","entries":243,"id":"korean-prose-core","version":"1.2.1","contentDigest":"1262b46c6c07d3ecf0551167308df2aa3ec1ad9fb02e3a33fc9619ce2ec683d4"}
+2026-10-06T10:21:37.5629862Z ##[group]Run set -euo pipefail
+2026-10-06T10:21:37.5630116Z [36;1mset -euo pipefail[0m
+2026-10-06T10:21:37.5630268Z [36;1mlog="${OFFICIAL_LOG_DIR:?}"[0m
+2026-10-06T10:21:37.5630424Z [36;1mmkdir -p "$log"[0m
+2026-10-06T10:21:37.5630610Z [36;1mexec > >(tee "$log/step.stdout") 2> >(tee "$log/step.stderr" >&2)[0m
+2026-10-06T10:21:37.5630823Z [36;1mphase=preparation[0m
+2026-10-06T10:21:37.5630953Z [36;1mfinish() {[0m
+2026-10-06T10:21:37.5631267Z [36;1m  local command_code=$? metadata_code=0 final_code[0m
+2026-10-06T10:21:37.5631448Z [36;1m  trap - EXIT[0m
+2026-10-06T10:21:37.5631568Z [36;1m  set +e[0m
+2026-10-06T10:21:37.5631822Z [36;1m  { git rev-parse HEAD 'HEAD^{tree}' && git status --porcelain=v1; } > "$log/environment-after.txt" || metadata_code=$?[0m
+2026-10-06T10:21:37.5632164Z [36;1m  printf '%s\n' "$command_code" > "$log/$phase-step-exit-code.txt"[0m
+2026-10-06T10:21:37.5632434Z [36;1m  printf '%s\n' "$metadata_code" > "$log/metadata-exit-code.txt"[0m
+2026-10-06T10:21:37.5632653Z [36;1m  printf '%s\n' "$phase" > "$log/last-phase.txt"[0m
+2026-10-06T10:21:37.5632825Z [36;1m  final_code=$command_code[0m
+2026-10-06T10:21:37.5633013Z [36;1m  if [ "$final_code" -eq 0 ]; then final_code=$metadata_code; fi[0m
+2026-10-06T10:21:37.5633237Z [36;1m  printf '%s\n' "$final_code" > "$log/step-exit-code.txt"[0m
+2026-10-06T10:21:37.5633418Z [36;1m  exit "$final_code"[0m
+2026-10-06T10:21:37.5633543Z [36;1m}[0m
+2026-10-06T10:21:37.5633655Z [36;1mtrap finish EXIT[0m
+2026-10-06T10:21:37.5633811Z [36;1mprintf 'NOT_RUN\n' > "$log/official-status.txt"[0m
+2026-10-06T10:21:37.5633977Z [36;1m{[0m
+2026-10-06T10:21:37.5634096Z [36;1m  git rev-parse HEAD 'HEAD^{tree}'[0m
+2026-10-06T10:21:37.5634257Z [36;1m  git status --porcelain=v1[0m
+2026-10-06T10:21:37.5634397Z [36;1m  node --version[0m
+2026-10-06T10:21:37.5634520Z [36;1m  pnpm --version[0m
+2026-10-06T10:21:37.5634647Z [36;1m  python --version[0m
+2026-10-06T10:21:37.5634865Z [36;1m  printf 'run=%s attempt=%s ref=%s\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$GITHUB_REF"[0m
+2026-10-06T10:21:37.5635103Z [36;1m} > "$log/environment-before.txt"[0m
+2026-10-06T10:21:37.5635343Z [36;1mpython -m pip install --disable-pip-version-check --no-cache-dir PyYAML==6.0.3[0m
+2026-10-06T10:21:37.5635829Z [36;1mpython -c 'import sys,yaml; print(sys.version); print(yaml.__version__); print(yaml.__file__); assert sys.version_info[:2] == (3,12) and yaml.__version__ == "6.0.3"' > "$log/python-yaml.txt"[0m
+2026-10-06T10:21:37.5636250Z [36;1msupplier=10382da79a2a2d6e8ae221fa63077215389c1ad2[0m
+2026-10-06T10:21:37.5636534Z [36;1mprintf '%s\n' "https://github.com/openai/codex" "$supplier" > "$log/supplier-pin.txt"[0m
+2026-10-06T10:21:37.5636951Z [36;1mmkdir -p "$CODEX_HOME/skills/.system/plugin-creator/scripts" "$CODEX_HOME/skills/.system/skill-creator/scripts" "$CODEX_HOME/.supplier"[0m
+2026-10-06T10:21:37.5637298Z [36;1mwhile read -r source destination digest; do[0m
+2026-10-06T10:21:37.5637547Z [36;1m  url="https://raw.githubusercontent.com/openai/codex/$supplier/$source"[0m
+2026-10-06T10:21:37.5637769Z [36;1m  printf 'FETCH %s\n' "$url"[0m
+2026-10-06T10:21:37.5638063Z [36;1m  curl --fail --show-error --silent --location --max-time 60 --proto '=https' "$url" --output "$CODEX_HOME/$destination"[0m
+2026-10-06T10:21:37.5638405Z [36;1m  printf '%s  %s\n' "$digest" "$destination" >> "$log/supplier.sha256"[0m
+2026-10-06T10:21:37.5638688Z [36;1m  (cd "$CODEX_HOME" && printf '%s  %s\n' "$digest" "$destination" | sha256sum --check --strict)[0m
+2026-10-06T10:21:37.5638925Z [36;1mdone <<'SUPPLIER'[0m
+2026-10-06T10:21:37.5639372Z [36;1mcodex-rs/skills/src/assets/samples/plugin-creator/scripts/validate_plugin.py skills/.system/plugin-creator/scripts/validate_plugin.py f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944[0m
+2026-10-06T10:21:37.5641063Z [36;1mcodex-rs/skills/src/assets/samples/plugin-creator/scripts/identifier_validation.py skills/.system/plugin-creator/scripts/identifier_validation.py a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223[0m
+2026-10-06T10:21:37.5641840Z [36;1mcodex-rs/skills/src/assets/samples/skill-creator/scripts/quick_validate.py skills/.system/skill-creator/scripts/quick_validate.py ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c[0m
+2026-10-06T10:21:37.5642381Z [36;1mLICENSE .supplier/LICENSE d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc[0m
+2026-10-06T10:21:37.5643100Z [36;1mNOTICE .supplier/NOTICE 9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915[0m
+2026-10-06T10:21:37.5643359Z [36;1mSUPPLIER[0m
+2026-10-06T10:21:37.5643506Z [36;1mprintf '0\n' > "$log/preparation-exit-code.txt"[0m
+2026-10-06T10:21:37.5643680Z [36;1mphase=official[0m
+2026-10-06T10:21:37.5643864Z [36;1mgit ls-tree -d --name-only HEAD:skills > "$log/skill-inventory.txt"[0m
+2026-10-06T10:21:37.5644127Z [36;1mprintf 'pnpm run validate:official\n' > "$log/official-command.txt"[0m
+2026-10-06T10:21:37.5644325Z [36;1mset +e[0m
+2026-10-06T10:21:37.5644512Z [36;1mpnpm run validate:official > "$log/official.stdout" 2> "$log/official.stderr"[0m
+2026-10-06T10:21:37.5644728Z [36;1mcode=$?[0m
+2026-10-06T10:21:37.5644836Z [36;1mset -e[0m
+2026-10-06T10:21:37.5644994Z [36;1mprintf '%s\n' "$code" > "$log/official-exit-code.txt"[0m
+2026-10-06T10:21:37.5645201Z [36;1mprintf 'EXECUTED\n' > "$log/official-status.txt"[0m
+2026-10-06T10:21:37.5645378Z [36;1mcat "$log/official.stdout"[0m
+2026-10-06T10:21:37.5645528Z [36;1mcat "$log/official.stderr" >&2[0m
+2026-10-06T10:21:37.5645720Z [36;1mexit "$code"[0m
+2026-10-06T10:21:37.5654321Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:21:37.5654535Z env:
+2026-10-06T10:21:37.5654692Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:37.5654948Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T10:21:37.5655198Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:37.5655420Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:37.5655645Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:37.5655823Z   PYTHONUTF8: 1
+2026-10-06T10:21:37.5655981Z   CODEX_HOME: <runner-temp>/official-validation-Windows/codex-home
+2026-10-06T10:21:37.5656204Z   OFFICIAL_LOG_DIR: <runner-temp>/official-validation-Windows
+2026-10-06T10:21:37.5656390Z ##[endgroup]
+2026-10-06T10:21:41.0363409Z Collecting PyYAML==6.0.3
+2026-10-06T10:21:41.1939269Z   Downloading pyyaml-6.0.3-cp312-cp312-win_amd64.whl.metadata (2.4 kB)
+2026-10-06T10:21:41.2097423Z Downloading pyyaml-6.0.3-cp312-cp312-win_amd64.whl (154 kB)
+2026-10-06T10:21:41.5264653Z Installing collected packages: PyYAML
+2026-10-06T10:21:41.6055175Z Successfully installed PyYAML-6.0.3
+2026-10-06T10:21:41.6860815Z FETCH https://raw.githubusercontent.com/openai/codex/10382da79a2a2d6e8ae221fa63077215389c1ad2/codex-rs/skills/src/assets/samples/plugin-creator/scripts/validate_plugin.py
+2026-10-06T10:21:42.1080279Z skills/.system/plugin-creator/scripts/validate_plugin.py: OK
+2026-10-06T10:21:42.1097599Z FETCH https://raw.githubusercontent.com/openai/codex/10382da79a2a2d6e8ae221fa63077215389c1ad2/codex-rs/skills/src/assets/samples/plugin-creator/scripts/identifier_validation.py
+2026-10-06T10:21:42.2909290Z skills/.system/plugin-creator/scripts/identifier_validation.py: OK
+2026-10-06T10:21:42.2924166Z FETCH https://raw.githubusercontent.com/openai/codex/10382da79a2a2d6e8ae221fa63077215389c1ad2/codex-rs/skills/src/assets/samples/skill-creator/scripts/quick_validate.py
+2026-10-06T10:21:42.4676611Z skills/.system/skill-creator/scripts/quick_validate.py: OK
+2026-10-06T10:21:42.4841868Z FETCH https://raw.githubusercontent.com/openai/codex/10382da79a2a2d6e8ae221fa63077215389c1ad2/LICENSE
+2026-10-06T10:21:42.5762321Z .supplier/LICENSE: OK
+2026-10-06T10:21:42.5774623Z FETCH https://raw.githubusercontent.com/openai/codex/10382da79a2a2d6e8ae221fa63077215389c1ad2/NOTICE
+2026-10-06T10:21:42.7367807Z .supplier/NOTICE: OK
+2026-10-06T10:21:44.5740089Z Already up to date
+2026-10-06T10:21:44.5740412Z Done in 275ms using pnpm v11.19.0
+2026-10-06T10:21:44.5740865Z Plugin validation passed: <repo>
+2026-10-06T10:21:44.5741244Z Skill is valid!
+2026-10-06T10:21:44.5741428Z Skill is valid!
+2026-10-06T10:21:44.5741599Z Skill is valid!
+2026-10-06T10:21:44.5742018Z Skill is valid!
+2026-10-06T10:21:44.5742185Z Skill is valid!
+2026-10-06T10:21:44.5742359Z Skill is valid!
+2026-10-06T10:21:44.5742532Z Skill is valid!
+2026-10-06T10:21:44.5742700Z Skill is valid!
+2026-10-06T10:21:44.5742872Z Skill is valid!
+2026-10-06T10:21:44.5743038Z Skill is valid!
+2026-10-06T10:21:44.5743206Z Skill is valid!
+2026-10-06T10:21:44.5743370Z Skill is valid!
+2026-10-06T10:21:44.5743533Z Skill is valid!
+2026-10-06T10:21:44.5743702Z Skill is valid!
+2026-10-06T10:21:44.5743862Z Skill is valid!
+2026-10-06T10:21:44.5744032Z Skill is valid!
+2026-10-06T10:21:44.5744192Z Skill is valid!
+2026-10-06T10:21:44.5744357Z Skill is valid!
+2026-10-06T10:21:44.5744522Z Skill is valid!
+2026-10-06T10:21:44.5744691Z Skill is valid!
+2026-10-06T10:21:44.5744853Z Skill is valid!
+2026-10-06T10:21:44.5745012Z Skill is valid!
+2026-10-06T10:21:44.5745173Z Skill is valid!
+2026-10-06T10:21:44.5745336Z Skill is valid!
+2026-10-06T10:21:44.5855073Z $ node scripts/validate-official.mjs
+2026-10-06T10:21:44.6536131Z ##[group]Run actions/upload-artifact@v4
+2026-10-06T10:21:44.6536311Z with:
+2026-10-06T10:21:44.6536435Z   name: official-codex-37448816713-1-Windows
+2026-10-06T10:21:44.6536605Z   path: <runner-temp>/official-validation-Windows/
+2026-10-06T10:21:44.6536771Z   include-hidden-files: true
+2026-10-06T10:21:44.6536904Z   if-no-files-found: error
+2026-10-06T10:21:44.6537023Z   retention-days: 14
+2026-10-06T10:21:44.6537138Z   compression-level: 6
+2026-10-06T10:21:44.6537251Z   overwrite: false
+2026-10-06T10:21:44.6537353Z env:
+2026-10-06T10:21:44.6537498Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:44.6537747Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T10:21:44.6537991Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:44.6538207Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:44.6538446Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:44.6538624Z ##[endgroup]
+2026-10-06T10:21:44.7813801Z (node:9108) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-06T10:21:44.7814244Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-06T10:21:44.7906282Z With the provided path, there will be 24 files uploaded
+2026-10-06T10:21:44.7909787Z Artifact name is valid!
+2026-10-06T10:21:44.7910481Z Root directory input is valid!
+2026-10-06T10:21:45.0474678Z Beginning upload of artifact content to blob storage
+2026-10-06T10:21:45.0808437Z (node:9108) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-06T10:21:45.2677875Z Uploaded bytes 16201
+2026-10-06T10:21:45.3128755Z Finished uploading artifact content to blob storage!
+2026-10-06T10:21:45.3129657Z SHA256 digest of uploaded artifact zip is 1a4ad093475d40f4978f77be1faacb2bafe7cdac7e08e08ee7b72c378df46b4d
+2026-10-06T10:21:45.3131045Z Finalizing artifact upload
+2026-10-06T10:21:45.5421067Z Artifact official-codex-37448816713-1-Windows.zip successfully finalized. Artifact ID 11404628141
+2026-10-06T10:21:45.5421601Z Artifact official-codex-37448816713-1-Windows has been successfully uploaded! Final size is 16201 bytes. Artifact ID is 11404628141
+2026-10-06T10:21:45.5428335Z Artifact download URL: https://github.com/jaeseongs95/agent-governance-suite/actions/runs/37448816713/artifacts/11404628141
+2026-10-06T10:21:45.5651114Z ##[group]Run git show --check --oneline --no-renames HEAD
+2026-10-06T10:21:45.5651372Z [36;1mgit show --check --oneline --no-renames HEAD[0m
+2026-10-06T10:21:45.5660094Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:21:45.5660303Z env:
+2026-10-06T10:21:45.5660456Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:45.5660851Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T10:21:45.5661099Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:45.5661325Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:45.5661541Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:21:45.5661715Z ##[endgroup]
+2026-10-06T10:21:45.6102768Z 1b36ec77 test: pin TAP output and capture readiness failures
+2026-10-06T10:21:45.6270634Z Post job cleanup.
+2026-10-06T10:21:45.7385178Z Post job cleanup.
+2026-10-06T10:21:45.8394115Z (node:7116) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-06T10:21:45.8394559Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-06T10:21:45.8616464Z Post job cleanup.
+2026-10-06T10:21:45.9733539Z [command]"<git-install>\bin\git.exe" version
+2026-10-06T10:21:45.9921005Z git version 2.55.0.windows.5
+2026-10-06T10:21:45.9963714Z Temporarily overriding HOME='<runner-temp>\<ephemeral-id>' before making global git config changes
+2026-10-06T10:21:45.9964174Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-06T10:21:45.9970409Z [command]"<git-install>\bin\git.exe" config --global --add safe.directory <repo>
+2026-10-06T10:21:46.0163370Z Removing SSH command configuration
+2026-10-06T10:21:46.0169758Z [command]"<git-install>\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-06T10:21:46.0361180Z [command]"<git-install>\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-06T10:21:46.4156916Z Removing HTTP extra header
+2026-10-06T10:21:46.4164449Z [command]"<git-install>\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-06T10:21:46.4383312Z [command]"<git-install>\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-06T10:21:46.8238145Z Removing includeIf entries pointing to credentials config files
+2026-10-06T10:21:46.8247609Z [command]"<git-install>\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-06T10:21:46.8451197Z includeif.gitdir:<repo>/.git.path
+2026-10-06T10:21:46.8451796Z includeif.gitdir:<repo>/.git/worktrees/*.path
+2026-10-06T10:21:46.8452262Z includeif.gitdir:/github/workspace/.git.path
+2026-10-06T10:21:46.8452606Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-10-06T10:21:46.8483114Z [command]"<git-install>\bin\git.exe" config --local --get-all includeif.gitdir:<repo>/.git.path
+2026-10-06T10:21:46.8683081Z <runner-temp>\git-credentials-<ephemeral-id>.config
+2026-10-06T10:21:46.8705650Z [command]"<git-install>\bin\git.exe" config --local --unset includeif.gitdir:<repo>/.git.path D\:\\a\\_temp\\git\-credentials\-73755840\-ae46\-4f28\-bef1\-db5cd21243bb\.config
+2026-10-06T10:21:46.8954282Z [command]"<git-install>\bin\git.exe" config --local --get-all includeif.gitdir:<repo>/.git/worktrees/*.path
+2026-10-06T10:21:46.9138661Z <runner-temp>\git-credentials-<ephemeral-id>.config
+2026-10-06T10:21:46.9156261Z [command]"<git-install>\bin\git.exe" config --local --unset includeif.gitdir:<repo>/.git/worktrees/*.path D\:\\a\\_temp\\git\-credentials\-73755840\-ae46\-4f28\-bef1\-db5cd21243bb\.config
+2026-10-06T10:21:46.9365489Z [command]"<git-install>\bin\git.exe" config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-10-06T10:21:46.9552141Z /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T10:21:46.9576355Z [command]"<git-install>\bin\git.exe" config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-73755840\-ae46\-4f28\-bef1\-db5cd21243bb\.config
+2026-10-06T10:21:46.9766445Z [command]"<git-install>\bin\git.exe" config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-10-06T10:21:46.9926825Z /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T10:21:46.9954400Z [command]"<git-install>\bin\git.exe" config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-73755840\-ae46\-4f28\-bef1\-db5cd21243bb\.config
+2026-10-06T10:21:47.0143783Z [command]"<git-install>\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-06T10:21:47.3695637Z Removing credentials config '<runner-temp>\git-credentials-<ephemeral-id>.config'
+2026-10-06T10:21:47.3853141Z Cleaning up orphan processes
+2026-10-06T10:21:47.4265116Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/setup-node@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

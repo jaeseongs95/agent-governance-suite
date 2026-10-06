@@ -1,0 +1,116 @@
+﻿2026-10-06T10:19:19.4153764Z ##[group]Run set -euo pipefail
+2026-10-06T10:19:19.4154036Z [36;1mset -euo pipefail[0m
+2026-10-06T10:19:19.4154180Z [36;1mlog="${OFFICIAL_LOG_DIR:?}"[0m
+2026-10-06T10:19:19.4154334Z [36;1mmkdir -p "$log"[0m
+2026-10-06T10:19:19.4154515Z [36;1mexec > >(tee "$log/step.stdout") 2> >(tee "$log/step.stderr" >&2)[0m
+2026-10-06T10:19:19.4154722Z [36;1mphase=preparation[0m
+2026-10-06T10:19:19.4154853Z [36;1mfinish() {[0m
+2026-10-06T10:19:19.4155007Z [36;1m  local command_code=$? metadata_code=0 final_code[0m
+2026-10-06T10:19:19.4155190Z [36;1m  trap - EXIT[0m
+2026-10-06T10:19:19.4155311Z [36;1m  set +e[0m
+2026-10-06T10:19:19.4155571Z [36;1m  { git rev-parse HEAD 'HEAD^{tree}' && git status --porcelain=v1; } > "$log/environment-after.txt" || metadata_code=$?[0m
+2026-10-06T10:19:19.4155914Z [36;1m  printf '%s\n' "$command_code" > "$log/$phase-step-exit-code.txt"[0m
+2026-10-06T10:19:19.4156181Z [36;1m  printf '%s\n' "$metadata_code" > "$log/metadata-exit-code.txt"[0m
+2026-10-06T10:19:19.4156407Z [36;1m  printf '%s\n' "$phase" > "$log/last-phase.txt"[0m
+2026-10-06T10:19:19.4156613Z [36;1m  final_code=$command_code[0m
+2026-10-06T10:19:19.4156807Z [36;1m  if [ "$final_code" -eq 0 ]; then final_code=$metadata_code; fi[0m
+2026-10-06T10:19:19.4157038Z [36;1m  printf '%s\n' "$final_code" > "$log/step-exit-code.txt"[0m
+2026-10-06T10:19:19.4157223Z [36;1m  exit "$final_code"[0m
+2026-10-06T10:19:19.4157355Z [36;1m}[0m
+2026-10-06T10:19:19.4157471Z [36;1mtrap finish EXIT[0m
+2026-10-06T10:19:19.4157645Z [36;1mprintf 'NOT_RUN\n' > "$log/official-status.txt"[0m
+2026-10-06T10:19:19.4157814Z [36;1m{[0m
+2026-10-06T10:19:19.4157938Z [36;1m  git rev-parse HEAD 'HEAD^{tree}'[0m
+2026-10-06T10:19:19.4158105Z [36;1m  git status --porcelain=v1[0m
+2026-10-06T10:19:19.4158255Z [36;1m  node --version[0m
+2026-10-06T10:19:19.4158390Z [36;1m  pnpm --version[0m
+2026-10-06T10:19:19.4158676Z [36;1m  python --version[0m
+2026-10-06T10:19:19.4158900Z [36;1m  printf 'run=%s attempt=%s ref=%s\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$GITHUB_REF"[0m
+2026-10-06T10:19:19.4159152Z [36;1m} > "$log/environment-before.txt"[0m
+2026-10-06T10:19:19.4159407Z [36;1mpython -m pip install --disable-pip-version-check --no-cache-dir PyYAML==6.0.3[0m
+2026-10-06T10:19:19.4159906Z [36;1mpython -c 'import sys,yaml; print(sys.version); print(yaml.__version__); print(yaml.__file__); assert sys.version_info[:2] == (3,12) and yaml.__version__ == "6.0.3"' > "$log/python-yaml.txt"[0m
+2026-10-06T10:19:19.4160343Z [36;1msupplier=10382da79a2a2d6e8ae221fa63077215389c1ad2[0m
+2026-10-06T10:19:19.4160631Z [36;1mprintf '%s\n' "https://github.com/openai/codex" "$supplier" > "$log/supplier-pin.txt"[0m
+2026-10-06T10:19:19.4161081Z [36;1mmkdir -p "$CODEX_HOME/skills/.system/plugin-creator/scripts" "$CODEX_HOME/skills/.system/skill-creator/scripts" "$CODEX_HOME/.supplier"[0m
+2026-10-06T10:19:19.4161688Z [36;1mwhile read -r source destination digest; do[0m
+2026-10-06T10:19:19.4161939Z [36;1m  url="https://raw.githubusercontent.com/openai/codex/$supplier/$source"[0m
+2026-10-06T10:19:19.4162174Z [36;1m  printf 'FETCH %s\n' "$url"[0m
+2026-10-06T10:19:19.4162474Z [36;1m  curl --fail --show-error --silent --location --max-time 60 --proto '=https' "$url" --output "$CODEX_HOME/$destination"[0m
+2026-10-06T10:19:19.4162826Z [36;1m  printf '%s  %s\n' "$digest" "$destination" >> "$log/supplier.sha256"[0m
+2026-10-06T10:19:19.4163119Z [36;1m  (cd "$CODEX_HOME" && printf '%s  %s\n' "$digest" "$destination" | sha256sum --check --strict)[0m
+2026-10-06T10:19:19.4163356Z [36;1mdone <<'SUPPLIER'[0m
+2026-10-06T10:19:19.4163820Z [36;1mcodex-rs/skills/src/assets/samples/plugin-creator/scripts/validate_plugin.py skills/.system/plugin-creator/scripts/validate_plugin.py f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944[0m
+2026-10-06T10:19:19.4164622Z [36;1mcodex-rs/skills/src/assets/samples/plugin-creator/scripts/identifier_validation.py skills/.system/plugin-creator/scripts/identifier_validation.py a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223[0m
+2026-10-06T10:19:19.4165536Z [36;1mcodex-rs/skills/src/assets/samples/skill-creator/scripts/quick_validate.py skills/.system/skill-creator/scripts/quick_validate.py ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c[0m
+2026-10-06T10:19:19.4166093Z [36;1mLICENSE .supplier/LICENSE d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc[0m
+2026-10-06T10:19:19.4166460Z [36;1mNOTICE .supplier/NOTICE 9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915[0m
+2026-10-06T10:19:19.4166714Z [36;1mSUPPLIER[0m
+2026-10-06T10:19:19.4166865Z [36;1mprintf '0\n' > "$log/preparation-exit-code.txt"[0m
+2026-10-06T10:19:19.4167042Z [36;1mphase=official[0m
+2026-10-06T10:19:19.4167236Z [36;1mgit ls-tree -d --name-only HEAD:skills > "$log/skill-inventory.txt"[0m
+2026-10-06T10:19:19.4167511Z [36;1mprintf 'pnpm run validate:official\n' > "$log/official-command.txt"[0m
+2026-10-06T10:19:19.4167720Z [36;1mset +e[0m
+2026-10-06T10:19:19.4167912Z [36;1mpnpm run validate:official > "$log/official.stdout" 2> "$log/official.stderr"[0m
+2026-10-06T10:19:19.4168142Z [36;1mcode=$?[0m
+2026-10-06T10:19:19.4168253Z [36;1mset -e[0m
+2026-10-06T10:19:19.4168406Z [36;1mprintf '%s\n' "$code" > "$log/official-exit-code.txt"[0m
+2026-10-06T10:19:19.4168623Z [36;1mprintf 'EXECUTED\n' > "$log/official-status.txt"[0m
+2026-10-06T10:19:19.4168806Z [36;1mcat "$log/official.stdout"[0m
+2026-10-06T10:19:19.4168960Z [36;1mcat "$log/official.stderr" >&2[0m
+2026-10-06T10:19:19.4169109Z [36;1mexit "$code"[0m
+2026-10-06T10:19:19.4226140Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:19:19.4226341Z env:
+2026-10-06T10:19:19.4226492Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:19:19.4226730Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T10:19:19.4227119Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:19:19.4227335Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:19:19.4227553Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:19:19.4227768Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T10:19:19.4227946Z   PYTHONUTF8: 1
+2026-10-06T10:19:19.4228126Z   CODEX_HOME: <runner-temp>/official-validation-Linux/codex-home
+2026-10-06T10:19:19.4228390Z   OFFICIAL_LOG_DIR: <runner-temp>/official-validation-Linux
+2026-10-06T10:19:19.4228589Z ##[endgroup]
+2026-10-06T10:19:20.3572738Z Collecting PyYAML==6.0.3
+2026-10-06T10:19:20.4277781Z   Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+2026-10-06T10:19:20.4416971Z Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (807 kB)
+2026-10-06T10:19:20.5099082Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 807.9/807.9 kB 18.4 MB/s  0:00:00
+2026-10-06T10:19:20.5385851Z Installing collected packages: PyYAML
+2026-10-06T10:19:20.5763793Z Successfully installed PyYAML-6.0.3
+2026-10-06T10:19:20.6347401Z FETCH https://raw.githubusercontent.com/openai/codex/10382da79a2a2d6e8ae221fa63077215389c1ad2/codex-rs/skills/src/assets/samples/plugin-creator/scripts/validate_plugin.py
+2026-10-06T10:19:20.8694947Z skills/.system/plugin-creator/scripts/validate_plugin.py: OK
+2026-10-06T10:19:20.8698515Z FETCH https://raw.githubusercontent.com/openai/codex/10382da79a2a2d6e8ae221fa63077215389c1ad2/codex-rs/skills/src/assets/samples/plugin-creator/scripts/identifier_validation.py
+2026-10-06T10:19:21.0137412Z skills/.system/plugin-creator/scripts/identifier_validation.py: OK
+2026-10-06T10:19:21.0141489Z FETCH https://raw.githubusercontent.com/openai/codex/10382da79a2a2d6e8ae221fa63077215389c1ad2/codex-rs/skills/src/assets/samples/skill-creator/scripts/quick_validate.py
+2026-10-06T10:19:21.1744517Z skills/.system/skill-creator/scripts/quick_validate.py: OK
+2026-10-06T10:19:21.1747494Z FETCH https://raw.githubusercontent.com/openai/codex/10382da79a2a2d6e8ae221fa63077215389c1ad2/LICENSE
+2026-10-06T10:19:21.4386918Z .supplier/LICENSE: OK
+2026-10-06T10:19:21.4390041Z FETCH https://raw.githubusercontent.com/openai/codex/10382da79a2a2d6e8ae221fa63077215389c1ad2/NOTICE
+2026-10-06T10:19:21.5862364Z .supplier/NOTICE: OK
+2026-10-06T10:19:22.8959512Z Already up to date
+2026-10-06T10:19:22.8959894Z Done in 244ms using pnpm v11.19.0
+2026-10-06T10:19:22.8960446Z Plugin validation passed: <repo>
+2026-10-06T10:19:22.8960910Z Skill is valid!
+2026-10-06T10:19:22.8961222Z Skill is valid!
+2026-10-06T10:19:22.8961402Z Skill is valid!
+2026-10-06T10:19:22.8961578Z Skill is valid!
+2026-10-06T10:19:22.8961745Z Skill is valid!
+2026-10-06T10:19:22.8961915Z Skill is valid!
+2026-10-06T10:19:22.8962079Z Skill is valid!
+2026-10-06T10:19:22.8962239Z Skill is valid!
+2026-10-06T10:19:22.8962391Z Skill is valid!
+2026-10-06T10:19:22.8962502Z Skill is valid!
+2026-10-06T10:19:22.8962609Z Skill is valid!
+2026-10-06T10:19:22.8962719Z Skill is valid!
+2026-10-06T10:19:22.8962837Z Skill is valid!
+2026-10-06T10:19:22.8962944Z Skill is valid!
+2026-10-06T10:19:22.8963057Z Skill is valid!
+2026-10-06T10:19:22.8963173Z Skill is valid!
+2026-10-06T10:19:22.8963283Z Skill is valid!
+2026-10-06T10:19:22.8963392Z Skill is valid!
+2026-10-06T10:19:22.8963499Z Skill is valid!
+2026-10-06T10:19:22.8963607Z Skill is valid!
+2026-10-06T10:19:22.8963711Z Skill is valid!
+2026-10-06T10:19:22.8963828Z Skill is valid!
+2026-10-06T10:19:22.8963935Z Skill is valid!
+2026-10-06T10:19:22.8964040Z Skill is valid!
+2026-10-06T10:19:22.8968412Z $ node scripts/validate-official.mjs

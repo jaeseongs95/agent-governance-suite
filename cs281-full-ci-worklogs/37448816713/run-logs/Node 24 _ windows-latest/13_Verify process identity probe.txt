@@ -1,0 +1,14 @@
+﻿2026-10-06T10:18:34.2362747Z ##[group]Run pnpm process-identity:check
+2026-10-06T10:18:34.2363055Z [36;1mpnpm process-identity:check[0m
+2026-10-06T10:18:34.2372765Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:18:34.2373017Z env:
+2026-10-06T10:18:34.2373188Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:34.2373466Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T10:18:34.2373742Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:34.2373990Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:34.2374229Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T10:18:34.2374423Z ##[endgroup]
+2026-10-06T10:18:35.1400511Z Already up to date
+2026-10-06T10:18:35.1406056Z Done in 329ms using pnpm v11.19.0
+2026-10-06T10:18:35.1576920Z $ tsx scripts/check-process-identity.ts
+2026-10-06T10:18:37.6118830Z process identity: ready (win32)

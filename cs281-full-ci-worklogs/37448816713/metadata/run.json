@@ -1,0 +1,29 @@
+{
+  "id": 37448816713,
+  "name": "CI",
+  "head_branch": "codex/engineering-practices-2.8.1",
+  "head_sha": "1b36ec771d641137e821f27c2066e05205c1e8f8",
+  "path": ".github/workflows/ci.yml",
+  "display_title": "CI",
+  "run_number": 138,
+  "event": "workflow_dispatch",
+  "status": "completed",
+  "conclusion": "success",
+  "workflow_id": 353647941,
+  "run_attempt": 1,
+  "html_url": "https://github.com/jaeseongs95/agent-governance-suite/actions/runs/37448816713",
+  "created_at": "2026-10-06T10:17:39Z",
+  "updated_at": "2026-10-06T10:21:49Z",
+  "run_started_at": "2026-10-06T10:17:39Z",
+  "repository": {
+    "id": 1362118877,
+    "name": "agent-governance-suite",
+    "full_name": "jaeseongs95/agent-governance-suite",
+    "html_url": "https://github.com/jaeseongs95/agent-governance-suite"
+  },
+  "head_commit": {
+    "id": "1b36ec771d641137e821f27c2066e05205c1e8f8",
+    "message": "test: pin TAP output and capture readiness failures",
+    "timestamp": "2026-10-06T10:14:16Z"
+  }
+}

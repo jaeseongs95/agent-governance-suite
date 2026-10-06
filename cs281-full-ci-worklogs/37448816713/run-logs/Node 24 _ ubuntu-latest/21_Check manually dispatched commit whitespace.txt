@@ -1,0 +1,12 @@
+﻿2026-10-06T10:19:23.7541820Z ##[group]Run git show --check --oneline --no-renames HEAD
+2026-10-06T10:19:23.7542078Z [36;1mgit show --check --oneline --no-renames HEAD[0m
+2026-10-06T10:19:23.7596121Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T10:19:23.7596305Z env:
+2026-10-06T10:19:23.7596457Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:19:23.7596690Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T10:19:23.7596921Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:19:23.7597130Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:19:23.7597349Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T10:19:23.7597560Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T10:19:23.7597738Z ##[endgroup]
+2026-10-06T10:19:23.7680438Z 1b36ec77 test: pin TAP output and capture readiness failures

@@ -1,0 +1,312 @@
+[
+  {
+    "zip": "artifact-11404628141.zip",
+    "bytes": 16201,
+    "sha256": "1a4ad093475d40f4978f77be1faacb2bafe7cdac7e08e08ee7b72c378df46b4d",
+    "apiDigest": "sha256:1a4ad093475d40f4978f77be1faacb2bafe7cdac7e08e08ee7b72c378df46b4d",
+    "id": 11404628141,
+    "name": "official-codex-37448816713-1-Windows",
+    "files": [
+      {
+        "path": "codex-home/.supplier/LICENSE",
+        "bytes": 10926,
+        "sha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc",
+        "publicCopy": true
+      },
+      {
+        "path": "codex-home/skills/.system/plugin-creator/scripts/identifier_validation.py",
+        "bytes": 784,
+        "sha256": "a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223",
+        "publicCopy": true
+      },
+      {
+        "path": "codex-home/.supplier/NOTICE",
+        "bytes": 242,
+        "sha256": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915",
+        "publicCopy": true
+      },
+      {
+        "path": "codex-home/skills/.system/plugin-creator/scripts/validate_plugin.py",
+        "bytes": 21739,
+        "sha256": "f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944",
+        "publicCopy": true
+      },
+      {
+        "path": "codex-home/skills/.system/plugin-creator/scripts/__pycache__/identifier_validation.cpython-312.pyc",
+        "bytes": 1248,
+        "sha256": "1d1172a7216a4fa4fc2f6fb3b4b8c87e85d78a8bb32df823b16a7fb01247d0df",
+        "publicCopy": false
+      },
+      {
+        "path": "environment-after.txt",
+        "bytes": 82,
+        "sha256": "10f4021bc015485bc44d8a668b3c7b781ed83cd1733efccadb5713e55e5d3ab4",
+        "publicCopy": true
+      },
+      {
+        "path": "codex-home/skills/.system/skill-creator/scripts/quick_validate.py",
+        "bytes": 4249,
+        "sha256": "ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c",
+        "publicCopy": true
+      },
+      {
+        "path": "environment-before.txt",
+        "bytes": 191,
+        "sha256": "b4c7a26b0656ca98fb227a2bbd7f0699a289819b577365dde32d24a93df8c85b",
+        "publicCopy": true
+      },
+      {
+        "path": "last-phase.txt",
+        "bytes": 9,
+        "sha256": "9d03ccc18cd99569e6f79989e5321a1f2bf23d547fcc47c4b148b425e17c0ae1",
+        "publicCopy": true
+      },
+      {
+        "path": "metadata-exit-code.txt",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "publicCopy": true
+      },
+      {
+        "path": "official-command.txt",
+        "bytes": 27,
+        "sha256": "3bf0ec0b54120cfc9fc070b94e89660bb3e9266720150b102faf69266c467065",
+        "publicCopy": true
+      },
+      {
+        "path": "official-exit-code.txt",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "publicCopy": true
+      },
+      {
+        "path": "official-status.txt",
+        "bytes": 9,
+        "sha256": "0b1d3ce47d17a1d83a5d8f1f9686226c606c99f9c545dc561452cdbb641e47a8",
+        "publicCopy": true
+      },
+      {
+        "path": "official-step-exit-code.txt",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "publicCopy": true
+      },
+      {
+        "path": "official.stderr",
+        "bytes": 37,
+        "sha256": "b69cece30371f85cb4988e6ab25658f49b62afc54092a445054e0bd563159c0c",
+        "publicCopy": true
+      },
+      {
+        "path": "official.stdout",
+        "bytes": 539,
+        "sha256": "3f4c020fd6d7c4867de13ede34ba358e4b6e1a9cfa2cf7be139c9be6a98d8f4a",
+        "publicCopy": true
+      },
+      {
+        "path": "preparation-exit-code.txt",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "publicCopy": true
+      },
+      {
+        "path": "python-yaml.txt",
+        "bytes": 173,
+        "sha256": "7f5be20fe1906fdd5f77ecdf6bad8e65a523626445bd3679c50a621009685757",
+        "publicCopy": true
+      },
+      {
+        "path": "step-exit-code.txt",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "publicCopy": true
+      },
+      {
+        "path": "skill-inventory.txt",
+        "bytes": 516,
+        "sha256": "2aab4d3456f23c89299cbbcc28c8b0dbe0bf09bf7c00b41244aa20c5834935c9",
+        "publicCopy": true
+      },
+      {
+        "path": "step.stderr",
+        "bytes": 37,
+        "sha256": "b69cece30371f85cb4988e6ab25658f49b62afc54092a445054e0bd563159c0c",
+        "publicCopy": true
+      },
+      {
+        "path": "step.stdout",
+        "bytes": 1724,
+        "sha256": "401351ab2633478fe23964e0b4b9f512383b57a4583cc7dc0d31d6383bfa00d3",
+        "publicCopy": true
+      },
+      {
+        "path": "supplier-pin.txt",
+        "bytes": 73,
+        "sha256": "4363744599ed6a2c3329358aee889f17c590585bf67a6774174bddf9349588a4",
+        "publicCopy": true
+      },
+      {
+        "path": "supplier.sha256",
+        "bytes": 540,
+        "sha256": "3dbbfedfda9965cbafd7073de80c90de52eebcb08fd3b22e9f5bb7e562d2b1d5",
+        "publicCopy": true
+      }
+    ],
+    "apiDigestMatch": true
+  },
+  {
+    "zip": "artifact-11404433734.zip",
+    "bytes": 16244,
+    "sha256": "397d6a43f80834aef2655cb413b7c3fcdaa470d4d4f4d4b26e5ecb94ac84bc23",
+    "apiDigest": "sha256:397d6a43f80834aef2655cb413b7c3fcdaa470d4d4f4d4b26e5ecb94ac84bc23",
+    "id": 11404433734,
+    "name": "official-codex-37448816713-1-Linux",
+    "files": [
+      {
+        "path": "codex-home/.supplier/LICENSE",
+        "bytes": 10926,
+        "sha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc",
+        "publicCopy": true
+      },
+      {
+        "path": "codex-home/.supplier/NOTICE",
+        "bytes": 242,
+        "sha256": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915",
+        "publicCopy": true
+      },
+      {
+        "path": "codex-home/skills/.system/plugin-creator/scripts/__pycache__/identifier_validation.cpython-312.pyc",
+        "bytes": 1259,
+        "sha256": "43ad235dcb93ca098d45a8c17a9ea496bf41af6fd57f06f60e7923846ba3e9df",
+        "publicCopy": false
+      },
+      {
+        "path": "codex-home/skills/.system/plugin-creator/scripts/identifier_validation.py",
+        "bytes": 784,
+        "sha256": "a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223",
+        "publicCopy": true
+      },
+      {
+        "path": "codex-home/skills/.system/plugin-creator/scripts/validate_plugin.py",
+        "bytes": 21739,
+        "sha256": "f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944",
+        "publicCopy": true
+      },
+      {
+        "path": "codex-home/skills/.system/skill-creator/scripts/quick_validate.py",
+        "bytes": 4249,
+        "sha256": "ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c",
+        "publicCopy": true
+      },
+      {
+        "path": "environment-after.txt",
+        "bytes": 82,
+        "sha256": "10f4021bc015485bc44d8a668b3c7b781ed83cd1733efccadb5713e55e5d3ab4",
+        "publicCopy": true
+      },
+      {
+        "path": "environment-before.txt",
+        "bytes": 189,
+        "sha256": "fdc5e74acf2d88ae0c852cf138a4f9aa2cc16636c56bff8076bb301bb842ebd2",
+        "publicCopy": true
+      },
+      {
+        "path": "last-phase.txt",
+        "bytes": 9,
+        "sha256": "9d03ccc18cd99569e6f79989e5321a1f2bf23d547fcc47c4b148b425e17c0ae1",
+        "publicCopy": true
+      },
+      {
+        "path": "metadata-exit-code.txt",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "publicCopy": true
+      },
+      {
+        "path": "official-command.txt",
+        "bytes": 27,
+        "sha256": "3bf0ec0b54120cfc9fc070b94e89660bb3e9266720150b102faf69266c467065",
+        "publicCopy": true
+      },
+      {
+        "path": "official-exit-code.txt",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "publicCopy": true
+      },
+      {
+        "path": "official-status.txt",
+        "bytes": 9,
+        "sha256": "0b1d3ce47d17a1d83a5d8f1f9686226c606c99f9c545dc561452cdbb641e47a8",
+        "publicCopy": true
+      },
+      {
+        "path": "official-step-exit-code.txt",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "publicCopy": true
+      },
+      {
+        "path": "official.stderr",
+        "bytes": 37,
+        "sha256": "b69cece30371f85cb4988e6ab25658f49b62afc54092a445054e0bd563159c0c",
+        "publicCopy": true
+      },
+      {
+        "path": "official.stdout",
+        "bytes": 527,
+        "sha256": "ae2d68edd0a5b0125c0a7b7f3c900f9ddc7a5a89a0a8c9d5a9f4e3021e4f31e6",
+        "publicCopy": true
+      },
+      {
+        "path": "preparation-exit-code.txt",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "publicCopy": true
+      },
+      {
+        "path": "python-yaml.txt",
+        "bytes": 143,
+        "sha256": "cdb6fef018a939eaaefe1b51b7538ff37aded1bb898f6f7bb6e4a73ebf0aaad7",
+        "publicCopy": true
+      },
+      {
+        "path": "skill-inventory.txt",
+        "bytes": 516,
+        "sha256": "2aab4d3456f23c89299cbbcc28c8b0dbe0bf09bf7c00b41244aa20c5834935c9",
+        "publicCopy": true
+      },
+      {
+        "path": "step-exit-code.txt",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "publicCopy": true
+      },
+      {
+        "path": "step.stdout",
+        "bytes": 1975,
+        "sha256": "146fc330c4fc9ff15df1536557b667cdd6e9c0edd873ba4e215233d2f5c1c8e4",
+        "publicCopy": true
+      },
+      {
+        "path": "step.stderr",
+        "bytes": 37,
+        "sha256": "b69cece30371f85cb4988e6ab25658f49b62afc54092a445054e0bd563159c0c",
+        "publicCopy": true
+      },
+      {
+        "path": "supplier.sha256",
+        "bytes": 540,
+        "sha256": "3dbbfedfda9965cbafd7073de80c90de52eebcb08fd3b22e9f5bb7e562d2b1d5",
+        "publicCopy": true
+      },
+      {
+        "path": "supplier-pin.txt",
+        "bytes": 73,
+        "sha256": "4363744599ed6a2c3329358aee889f17c590585bf67a6774174bddf9349588a4",
+        "publicCopy": true
+      }
+    ],
+    "apiDigestMatch": true
+  }
+]
