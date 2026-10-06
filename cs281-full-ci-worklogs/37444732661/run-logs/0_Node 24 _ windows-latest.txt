@@ -1,0 +1,377 @@
+﻿2026-10-06T09:41:50.2051923Z Current runner version: '2.337.0'
+2026-10-06T09:41:50.2079918Z ##[group]Runner Image Provisioner
+2026-10-06T09:41:50.2080820Z Hosted Compute Agent
+2026-10-06T09:41:50.2081450Z Version: 20260901.588
+2026-10-06T09:41:50.2082138Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+2026-10-06T09:41:50.2082937Z Build Date: 2026-09-01T19:56:44Z
+2026-10-06T09:41:50.2083617Z Worker ID: {<ephemeral-id>}
+2026-10-06T09:41:50.2084322Z Azure Region: westcentralus
+2026-10-06T09:41:50.2084922Z ##[endgroup]
+2026-10-06T09:41:50.2086232Z ##[group]Operating System
+2026-10-06T09:41:50.2086829Z Microsoft Windows Server 2025
+2026-10-06T09:41:50.2088096Z 10.0.26100
+2026-10-06T09:41:50.2089652Z Datacenter
+2026-10-06T09:41:50.2090439Z ##[endgroup]
+2026-10-06T09:41:50.2091163Z ##[group]Runner Image
+2026-10-06T09:41:50.2092032Z Image: windows-2025-vs2026
+2026-10-06T09:41:50.2093249Z Version: 20260925.250.1
+2026-10-06T09:41:50.2095617Z Included Software: http<runner-path>
+2026-10-06T09:41:50.2098237Z Image Release: http<runner-path>
+2026-10-06T09:41:50.2099667Z ##[endgroup]
+2026-10-06T09:41:50.2101285Z ##[group]GITHUB_TOKEN Permissions
+2026-10-06T09:41:50.2104584Z Contents: read
+2026-10-06T09:41:50.2105489Z Metadata: read
+2026-10-06T09:41:50.2106288Z ##[endgroup]
+2026-10-06T09:41:50.2109214Z Secret source: Actions
+2026-10-06T09:41:50.2110508Z Cache mode: write
+2026-10-06T09:41:50.2111619Z Prepare workflow directory
+2026-10-06T09:41:50.2482075Z Prepare all required actions
+2026-10-06T09:41:50.2533915Z Getting action download info
+2026-10-06T09:41:50.5621245Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-10-06T09:41:50.6753562Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-10-06T09:41:50.8446042Z Download action repository 'actions/setup-python@v7' (SHA:5fda3b95a4ea91299a34e894583c3862153e4b97)
+2026-10-06T09:41:50.9989673Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-10-06T09:41:51.3971983Z Complete job name: Node 24 / windows-latest
+2026-10-06T09:41:51.5942201Z ##[group]Run actions/checkout@v7
+2026-10-06T09:41:51.5944081Z with:
+2026-10-06T09:41:51.5944862Z   fetch-depth: 0
+2026-10-06T09:41:51.5945813Z   repository: jaeseongs95/agent-governance-suite
+2026-10-06T09:41:51.5952732Z   token: ***
+2026-10-06T09:41:51.5953605Z   ssh-strict: true
+2026-10-06T09:41:51.5954655Z   ssh-user: git
+2026-10-06T09:41:51.5956104Z   persist-credentials: true
+2026-10-06T09:41:51.5957045Z   clean: true
+2026-10-06T09:41:51.5957974Z   sparse-checkout-cone-mode: true
+2026-10-06T09:41:51.5958956Z   fetch-tags: false
+2026-10-06T09:41:51.5959801Z   show-progress: true
+2026-10-06T09:41:51.5960674Z   lfs: false
+2026-10-06T09:41:51.5961491Z   submodules: false
+2026-10-06T09:41:51.5962899Z   set-safe-directory: true
+2026-10-06T09:41:51.5963822Z   allow-unsafe-pr-checkout: false
+2026-10-06T09:41:51.5965321Z ##[endgroup]
+2026-10-06T09:41:51.7781282Z Syncing repository: jaeseongs95/agent-governance-suite
+2026-10-06T09:41:51.7785461Z ##[group]Getting Git version info
+2026-10-06T09:41:51.7786906Z Working directory is '<repo>'
+2026-10-06T09:41:51.8629839Z [command]"<git-install>\bin\git.exe" version
+2026-10-06T09:41:52.2250077Z git version 2.55.0.windows.5
+2026-10-06T09:41:52.2304989Z ##[endgroup]
+2026-10-06T09:41:52.2322361Z Temporarily overriding HOME='<runner-temp>\<ephemeral-id>' before making global git config changes
+2026-10-06T09:41:52.2324901Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-06T09:41:52.2332586Z [command]"<git-install>\bin\git.exe" config --global --add safe.directory <repo>
+2026-10-06T09:41:52.3054530Z Deleting the contents of '<repo>'
+2026-10-06T09:41:52.3064262Z ##[group]Determining repository object format
+2026-10-06T09:41:52.3066835Z ##[endgroup]
+2026-10-06T09:41:52.3068707Z ##[group]Initializing the repository
+2026-10-06T09:41:52.3073740Z [command]"<git-install>\bin\git.exe" init <repo>
+2026-10-06T09:41:52.3907243Z Initialized empty Git repository in <repo>/.git/
+2026-10-06T09:41:52.3961053Z [command]"<git-install>\bin\git.exe" remote add origin http<runner-path>
+2026-10-06T09:41:52.4636973Z ##[endgroup]
+2026-10-06T09:41:52.4638504Z ##[group]Disabling automatic garbage collection
+2026-10-06T09:41:52.4647087Z [command]"<git-install>\bin\git.exe" config --local gc.auto 0
+2026-10-06T09:41:52.5020676Z ##[endgroup]
+2026-10-06T09:41:52.5022200Z ##[group]Setting up auth
+2026-10-06T09:41:52.5023829Z Removing SSH command configuration
+2026-10-06T09:41:52.5034907Z [command]"<git-install>\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-06T09:41:52.5392869Z [command]"<git-install>\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-06T09:41:54.0745039Z Removing HTTP extra header
+2026-10-06T09:41:54.0756327Z [command]"<git-install>\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-06T09:41:54.1079381Z [command]"<git-install>\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.http<runner-path>' || :\""
+2026-10-06T09:41:54.6732033Z Removing includeIf entries pointing to credentials config files
+2026-10-06T09:41:54.6746328Z [command]"<git-install>\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-06T09:41:54.7088502Z [command]"<git-install>\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-06T09:41:55.3078864Z [command]"<git-install>\bin\git.exe" config --file <runner-temp>\git-credentials-<ephemeral-id>.config http.http<runner-path> "AUTHORIZATION: basic ***"
+2026-10-06T09:41:55.3438595Z [command]"<git-install>\bin\git.exe" config --local includeIf.gitdir:<repo>/.git.path <runner-temp>\git-credentials-<ephemeral-id>.config
+2026-10-06T09:41:55.3764734Z [command]"<git-install>\bin\git.exe" config --local includeIf.gitdir:<repo>/.git/worktrees/*.path <runner-temp>\git-credentials-<ephemeral-id>.config
+2026-10-06T09:41:55.4160939Z [command]"<git-install>\bin\git.exe" config --local includeIf.gitdi<runner-path> /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:41:55.4504135Z [command]"<git-install>\bin\git.exe" config --local includeIf.gitdi<runner-path> /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:41:55.4866033Z ##[endgroup]
+2026-10-06T09:41:55.4867011Z ##[group]Fetching the repository
+2026-10-06T09:41:55.4881256Z [command]"<git-install>\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+2026-10-06T09:41:58.8855347Z From http<runner-path>
+2026-10-06T09:41:58.8857109Z  * [new branch]        chore/discussions-setup-20261002 -> origin/chore/discussions-setup-20261002
+2026-10-06T09:41:58.8858415Z  * [new branch]        claude/docs-host-attestation-drift -> origin/claude/docs-host-attestation-drift
+2026-10-06T09:41:58.8860162Z  * [new branch]        claude/skill-intake-common-vendor -> origin/claude/skill-intake-common-vendor
+2026-10-06T09:41:58.8862129Z  * [new branch]        claude/v273-evidence-windows-20260928T173839Z -> origin/claude/v273-evidence-windows-20260928T173839Z
+2026-10-06T09:41:58.8862862Z  * [new branch]        claude/v273-inputs     -> origin/claude/v273-inputs
+2026-10-06T09:41:58.8863419Z  * [new branch]        claude/v273-intake-src -> origin/claude/v273-intake-src
+2026-10-06T09:41:58.8864123Z  * [new branch]        claude/v273-msgqueue-retention-analysis-vmzcqs -> origin/claude/v273-msgqueue-retention-analysis-vmzcqs
+2026-10-06T09:41:58.8865184Z  * [new branch]        claude/v276-presence-deadline -> origin/claude/v276-presence-deadline
+2026-10-06T09:41:58.8865787Z  * [new branch]        claude/v277-utf8-framing -> origin/claude/v277-utf8-framing
+2026-10-06T09:41:58.8866368Z  * [new branch]        claude/v3x-v06-b3-linux-closure -> origin/claude/v3x-v06-b3-linux-closure
+2026-10-06T09:41:58.8866995Z  * [new branch]        claude/v3x-v06-b3b-r1  -> origin/claude/v3x-v06-b3b-r1
+2026-10-06T09:41:58.8867865Z  * [new branch]        codex/dot-w05-source-20261002 -> origin/codex/dot-w05-source-20261002
+2026-10-06T09:41:58.8868545Z  * [new branch]        codex/engineering-practices-2.8.1 -> origin/codex/engineering-practices-2.8.1
+2026-10-06T09:41:58.8870457Z  * [new branch]        codex/release-candidate-2.8.0 -> origin/codex/release-candidate-2.8.0
+2026-10-06T09:41:58.8871958Z  * [new branch]        codex/results-ags-f06-f07-r66-20261001 -> origin/codex/results-ags-f06-f07-r66-20261001
+2026-10-06T09:41:58.8873268Z  * [new branch]        codex/v260-semantic-decision-layer -> origin/codex/v260-semantic-decision-layer
+2026-10-06T09:41:58.8874321Z  * [new branch]        codex/v272-skill-intake-port -> origin/codex/v272-skill-intake-port
+2026-10-06T09:41:58.8875318Z  * [new branch]        codex/v3x-w05-r3-messaging-parity -> origin/codex/v3x-w05-r3-messaging-parity
+2026-10-06T09:41:58.8876475Z  * [new branch]        codex/v3x-w05-r3-noreply-transport -> origin/codex/v3x-w05-r3-noreply-transport
+2026-10-06T09:41:58.8878930Z  * [new branch]        codex/w05-f1-cloud-inputs-20261003 -> origin/codex/w05-f1-cloud-inputs-20261003
+2026-10-06T09:41:58.8880032Z  * [new branch]        dot/ags-3x-results-20261002 -> origin/dot/ags-3x-results-20261002
+2026-10-06T09:41:58.8880969Z  * [new branch]        dot/ags-b14-decision-20261002 -> origin/dot/ags-b14-decision-20261002
+2026-10-06T09:41:58.8881961Z  * [new branch]        dot/ags-g18-reproduction-20261002 -> origin/dot/ags-g18-reproduction-20261002
+2026-10-06T09:41:58.8882978Z  * [new branch]        dot/ags-w05-evidence-20261002 -> origin/dot/ags-w05-evidence-20261002
+2026-10-06T09:41:58.8883944Z  * [new branch]        dot/ags-w06w07-evidence-20261002 -> origin/dot/ags-w06w07-evidence-20261002
+2026-10-06T09:41:58.8884760Z  * [new branch]        evidence               -> origin/evidence
+2026-10-06T09:41:58.8885399Z  * [new branch]        main                   -> origin/main
+2026-10-06T09:41:58.8885991Z  * [new tag]           v0.1.0                 -> v0.1.0
+2026-10-06T09:41:58.8886557Z  * [new tag]           v0.2.0                 -> v0.2.0
+2026-10-06T09:41:58.8887109Z  * [new tag]           v1.0.0                 -> v1.0.0
+2026-10-06T09:41:58.8887614Z  * [new tag]           v1.0.1                 -> v1.0.1
+2026-10-06T09:41:58.8888159Z  * [new tag]           v1.0.2                 -> v1.0.2
+2026-10-06T09:41:58.8888699Z  * [new tag]           v1.0.3                 -> v1.0.3
+2026-10-06T09:41:58.8889337Z  * [new tag]           v1.0.4                 -> v1.0.4
+2026-10-06T09:41:58.8889854Z  * [new tag]           v1.0.5                 -> v1.0.5
+2026-10-06T09:41:58.8890392Z  * [new tag]           v1.1.0                 -> v1.1.0
+2026-10-06T09:41:58.8890950Z  * [new tag]           v1.10.0                -> v1.10.0
+2026-10-06T09:41:58.8891506Z  * [new tag]           v1.11.0                -> v1.11.0
+2026-10-06T09:41:58.8892373Z  * [new tag]           v1.12.0                -> v1.12.0
+2026-10-06T09:41:58.8892982Z  * [new tag]           v1.13.0                -> v1.13.0
+2026-10-06T09:41:58.8893887Z  * [new tag]           v1.14.0                -> v1.14.0
+2026-10-06T09:41:58.8894764Z  * [new tag]           v1.14.1                -> v1.14.1
+2026-10-06T09:41:58.8895144Z  * [new tag]           v1.15.0                -> v1.15.0
+2026-10-06T09:41:58.8896164Z  * [new tag]           v1.15.1                -> v1.15.1
+2026-10-06T09:41:58.8896559Z  * [new tag]           v1.16.0                -> v1.16.0
+2026-10-06T09:41:58.8896937Z  * [new tag]           v1.16.1                -> v1.16.1
+2026-10-06T09:41:58.8897334Z  * [new tag]           v1.16.2                -> v1.16.2
+2026-10-06T09:41:58.8897726Z  * [new tag]           v1.17.0                -> v1.17.0
+2026-10-06T09:41:58.8898111Z  * [new tag]           v1.18.0                -> v1.18.0
+2026-10-06T09:41:58.8898537Z  * [new tag]           v1.19.0                -> v1.19.0
+2026-10-06T09:41:58.8898927Z  * [new tag]           v1.19.1                -> v1.19.1
+2026-10-06T09:41:58.8899332Z  * [new tag]           v1.2.0                 -> v1.2.0
+2026-10-06T09:41:58.8899726Z  * [new tag]           v1.20.0                -> v1.20.0
+2026-10-06T09:41:58.8900116Z  * [new tag]           v1.20.1                -> v1.20.1
+2026-10-06T09:41:58.8900491Z  * [new tag]           v1.20.2                -> v1.20.2
+2026-10-06T09:41:58.8900851Z  * [new tag]           v1.20.3                -> v1.20.3
+2026-10-06T09:41:58.8901253Z  * [new tag]           v1.21.0                -> v1.21.0
+2026-10-06T09:41:58.8901671Z  * [new tag]           v1.3.0                 -> v1.3.0
+2026-10-06T09:41:58.8902055Z  * [new tag]           v1.4.0                 -> v1.4.0
+2026-10-06T09:41:58.8902429Z  * [new tag]           v1.4.1                 -> v1.4.1
+2026-10-06T09:41:58.8902788Z  * [new tag]           v1.4.2                 -> v1.4.2
+2026-10-06T09:41:58.8903188Z  * [new tag]           v1.4.3                 -> v1.4.3
+2026-10-06T09:41:58.8903570Z  * [new tag]           v1.5.0                 -> v1.5.0
+2026-10-06T09:41:58.8903952Z  * [new tag]           v1.6.0                 -> v1.6.0
+2026-10-06T09:41:58.8904768Z  * [new tag]           v1.7.0                 -> v1.7.0
+2026-10-06T09:41:58.8905205Z  * [new tag]           v1.8.0                 -> v1.8.0
+2026-10-06T09:41:58.8905615Z  * [new tag]           v1.9.0                 -> v1.9.0
+2026-10-06T09:41:58.8906000Z  * [new tag]           v2.0.0                 -> v2.0.0
+2026-10-06T09:41:58.8906370Z  * [new tag]           v2.1.0                 -> v2.1.0
+2026-10-06T09:41:58.8906759Z  * [new tag]           v2.1.1                 -> v2.1.1
+2026-10-06T09:41:58.8907361Z  * [new tag]           v2.1.2                 -> v2.1.2
+2026-10-06T09:41:58.8907956Z  * [new tag]           v2.2.0                 -> v2.2.0
+2026-10-06T09:41:58.8908440Z  * [new tag]           v2.2.1                 -> v2.2.1
+2026-10-06T09:41:58.8908865Z  * [new tag]           v2.2.2                 -> v2.2.2
+2026-10-06T09:41:58.8909272Z  * [new tag]           v2.2.3                 -> v2.2.3
+2026-10-06T09:41:58.8909651Z  * [new tag]           v2.2.4                 -> v2.2.4
+2026-10-06T09:41:58.8910049Z  * [new tag]           v2.2.5                 -> v2.2.5
+2026-10-06T09:41:58.8910421Z  * [new tag]           v2.2.6                 -> v2.2.6
+2026-10-06T09:41:58.8910782Z  * [new tag]           v2.3.0                 -> v2.3.0
+2026-10-06T09:41:58.8911178Z  * [new tag]           v2.4.0                 -> v2.4.0
+2026-10-06T09:41:58.8911555Z  * [new tag]           v2.5.0                 -> v2.5.0
+2026-10-06T09:41:58.8911971Z  * [new tag]           v2.6.0                 -> v2.6.0
+2026-10-06T09:41:58.8912340Z  * [new tag]           v2.7.0                 -> v2.7.0
+2026-10-06T09:41:58.8912702Z  * [new tag]           v2.7.1                 -> v2.7.1
+2026-10-06T09:41:58.8913103Z  * [new tag]           v2.7.2                 -> v2.7.2
+2026-10-06T09:41:58.8913673Z  * [new tag]           v2.7.3                 -> v2.7.3
+2026-10-06T09:41:58.8914178Z  * [new tag]           v2.7.4                 -> v2.7.4
+2026-10-06T09:41:58.8914804Z  * [new tag]           v2.7.5                 -> v2.7.5
+2026-10-06T09:41:58.8915228Z  * [new tag]           v2.7.6                 -> v2.7.6
+2026-10-06T09:41:58.8915856Z  * [new tag]           v2.7.7                 -> v2.7.7
+2026-10-06T09:41:58.8916372Z  * [new tag]           v2.8.0                 -> v2.8.0
+2026-10-06T09:41:58.8927839Z [command]"<git-install>\bin\git.exe" branch --list --remote origin/codex/engineering-practices-2.8.1
+2026-10-06T09:41:58.9325005Z   origin/codex/engineering-practices-2.8.1
+2026-10-06T09:41:58.9375376Z [command]"<git-install>\bin\git.exe" rev-parse refs/remotes/origin/codex/engineering-practices-2.8.1
+2026-10-06T09:41:58.9655418Z bdaf8a223ce78d2f81b3368d845d8e1fbaa60248
+2026-10-06T09:41:58.9697539Z ##[endgroup]
+2026-10-06T09:41:58.9698507Z ##[group]Determining the checkout info
+2026-10-06T09:41:58.9699338Z ##[endgroup]
+2026-10-06T09:41:58.9708267Z [command]"<git-install>\bin\git.exe" sparse-checkout disable
+2026-10-06T09:41:59.0150878Z [command]"<git-install>\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2026-10-06T09:41:59.0453430Z ##[group]Checking out the ref
+2026-10-06T09:41:59.0468198Z [command]"<git-install>\bin\git.exe" checkout --progress --force -B codex/engineering-practices-2.8.1 refs/remotes/origin/codex/engineering-practices-2.8.1
+2026-10-06T09:41:59.4353718Z Switched to a new branch 'codex/engineering-practices-2.8.1'
+2026-10-06T09:41:59.4422145Z branch 'codex/engineering-practices-2.8.1' set up to track 'origin/codex/engineering-practices-2.8.1'.
+2026-10-06T09:41:59.4496107Z ##[endgroup]
+2026-10-06T09:41:59.4980851Z [command]"<git-install>\bin\git.exe" log -1 --format=%H
+2026-10-06T09:41:59.5250097Z bdaf8a223ce78d2f81b3368d845d8e1fbaa60248
+2026-10-06T09:41:59.5730353Z ##[group]Run actions/setup-node@v4
+2026-10-06T09:41:59.5730937Z with:
+2026-10-06T09:41:59.5731252Z   node-version: 24
+2026-10-06T09:41:59.5731575Z   always-auth: false
+2026-10-06T09:41:59.5731917Z   check-latest: false
+2026-10-06T09:41:59.5734369Z   token: ***
+2026-10-06T09:41:59.5734676Z ##[endgroup]
+2026-10-06T09:41:59.7554107Z Found in cache @ <toolcache>\windows\node\24.21.0\x64
+2026-10-06T09:41:59.7561649Z (node:6068) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-06T09:41:59.7562511Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-06T09:41:59.7565525Z ##[group]Environment details
+2026-10-06T09:42:04.1561314Z node: v24.21.0
+2026-10-06T09:42:04.1561926Z npm: 11.19.0
+2026-10-06T09:42:04.1562307Z yarn: 1.22.22
+2026-10-06T09:42:04.1563343Z ##[endgroup]
+2026-10-06T09:42:04.1968214Z ##[group]Run actions/setup-python@v7
+2026-10-06T09:42:04.1968759Z with:
+2026-10-06T09:42:04.1969083Z   python-version: 3.12
+2026-10-06T09:42:04.1969422Z   check-latest: false
+2026-10-06T09:42:04.1971923Z   token: ***
+2026-10-06T09:42:04.1972229Z   update-environment: true
+2026-10-06T09:42:04.1972617Z   allow-prereleases: false
+2026-10-06T09:42:04.1972961Z   freethreaded: false
+2026-10-06T09:42:04.1973270Z ##[endgroup]
+2026-10-06T09:42:04.3750883Z ##[group]Installed versions
+2026-10-06T09:42:04.3957054Z Successfully set up CPython (3.12.10)
+2026-10-06T09:42:04.3958303Z ##[endgroup]
+2026-10-06T09:42:04.4282972Z ##[group]Run corepack enable
+2026-10-06T09:42:04.4283697Z [36;1mcorepack enable[0m
+2026-10-06T09:42:04.4310377Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:42:04.4310886Z env:
+2026-10-06T09:42:04.4311307Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:04.4311861Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T09:42:04.4312400Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:04.4313853Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:04.4314323Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:04.4314819Z ##[endgroup]
+2026-10-06T09:42:04.9616913Z ##[group]Run pnpm install --frozen-lockfile
+2026-10-06T09:42:04.9617584Z [36;1mpnpm install --frozen-lockfile[0m
+2026-10-06T09:42:04.9632565Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:42:04.9633065Z env:
+2026-10-06T09:42:04.9633472Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:04.9633998Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T09:42:04.9634581Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:04.9635065Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:04.9635545Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:04.9635995Z ##[endgroup]
+2026-10-06T09:42:05.2868341Z ! Corepack is about to download http<runner-path>
+2026-10-06T09:42:19.3844498Z ? Verifying lockfile against supply-chain policies (267 entries)...
+2026-10-06T09:42:19.3942714Z Lockfile is up to date, resolution step is skipped
+2026-10-06T09:42:19.5055486Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-10-06T09:42:19.5494181Z Packages: +217
+2026-10-06T09:42:19.5496451Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-10-06T09:42:20.0456556Z Packages are copied from the content-addressable store to the virtual store.
+2026-10-06T09:42:20.0462936Z   Content-addressable store is at: <runner-path>
+2026-10-06T09:42:20.0468275Z   Virtual store is at:             node_modules/.pnpm
+2026-10-06T09:42:20.5205143Z Progress: resolved 217, reused 0, downloaded 18, added 4
+2026-10-06T09:42:21.5357187Z Progress: resolved 217, reused 0, downloaded 64, added 7
+2026-10-06T09:42:22.5371826Z Progress: resolved 217, reused 0, downloaded 152, added 14
+2026-10-06T09:42:23.5860947Z ✓ Lockfile passes supply-chain policies (267 entries in 4.2s)
+2026-10-06T09:42:23.5863366Z Progress: resolved 217, reused 0, downloaded 217, added 51
+2026-10-06T09:42:24.5868256Z Progress: resolved 217, reused 0, downloaded 217, added 61
+2026-10-06T09:42:24.7461385Z Progress: resolved 217, reused 0, downloaded 217, added 217, done
+2026-10-06T09:42:24.9639588Z .../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+2026-10-06T09:42:25.1274279Z .../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+2026-10-06T09:42:25.1770120Z 
+2026-10-06T09:42:25.1770785Z dependencies:
+2026-10-06T09:42:25.1771276Z + @modelcontextprotocol/sdk 1.30.0
+2026-10-06T09:42:25.1771665Z + ajv 8.20.0
+2026-10-06T09:42:25.1771976Z + ajv-formats 3.0.1
+2026-10-06T09:42:25.1772581Z + zod 4.5.4
+2026-10-06T09:42:25.1772811Z 
+2026-10-06T09:42:25.1772953Z devDependencies:
+2026-10-06T09:42:25.1773347Z + @eslint/js 10.0.1
+2026-10-06T09:42:25.1773765Z + @types/node 26.5.0
+2026-10-06T09:42:25.1774156Z + esbuild 0.28.2
+2026-10-06T09:42:25.1774501Z + eslint 10.10.0
+2026-10-06T09:42:25.1774833Z + tsx 4.23.13
+2026-10-06T09:42:25.1775254Z + typescript 6.0.2
+2026-10-06T09:42:25.1775723Z + typescript-eslint 8.70.0
+2026-10-06T09:42:25.1776119Z + vitest 5.0.0
+2026-10-06T09:42:25.1776269Z 
+2026-10-06T09:42:25.2070391Z Done in 6.5s using pnpm v11.19.0
+2026-10-06T09:42:25.2938556Z ##[group]Run pnpm bundle:check
+2026-10-06T09:42:25.2939009Z [36;1mpnpm bundle:check[0m
+2026-10-06T09:42:25.2953116Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:42:25.2953601Z env:
+2026-10-06T09:42:25.2953962Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:25.2954514Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T09:42:25.2955072Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:25.2955746Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:25.2956226Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:25.2956611Z ##[endgroup]
+2026-10-06T09:42:26.5037501Z Already up to date
+2026-10-06T09:42:26.5045167Z Done in 459ms using pnpm v11.19.0
+2026-10-06T09:42:26.5244364Z $ node scripts/check-bundle.mjs
+2026-10-06T09:42:26.9695107Z ##[group]Run pnpm claude:drift
+2026-10-06T09:42:26.9695564Z [36;1mpnpm claude:drift[0m
+2026-10-06T09:42:26.9709746Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:42:26.9710299Z env:
+2026-10-06T09:42:26.9710763Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:26.9711364Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T09:42:26.9711902Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:26.9712383Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:26.9712913Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:26.9713322Z ##[endgroup]
+2026-10-06T09:42:28.1924378Z Already up to date
+2026-10-06T09:42:28.1932162Z Done in 462ms using pnpm v11.19.0
+2026-10-06T09:42:28.2133597Z $ node scripts/build-claude-plugin.mjs --drift
+2026-10-06T09:42:28.6020723Z claude-plugin: fresh
+2026-10-06T09:42:28.6589803Z ##[group]Run pnpm lint
+2026-10-06T09:42:28.6590220Z [36;1mpnpm lint[0m
+2026-10-06T09:42:28.6604305Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:42:28.6604787Z env:
+2026-10-06T09:42:28.6605583Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:28.6606159Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T09:42:28.6606705Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:28.6607255Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:28.6607764Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:28.6608172Z ##[endgroup]
+2026-10-06T09:42:29.9920835Z Already up to date
+2026-10-06T09:42:29.9929652Z Done in 488ms using pnpm v11.19.0
+2026-10-06T09:42:30.0135528Z $ eslint . && node scripts/validate-repository.mjs
+2026-10-06T09:42:41.8213110Z - code-review: missing tests/code-review
+2026-10-06T09:42:41.8213766Z - test-engineering: missing tests/test-engineering
+2026-10-06T09:42:41.8589835Z [ELIFECYCLE] Command failed with exit code 1.
+2026-10-06T09:42:41.8875292Z ##[error]Process completed with exit code 1.
+2026-10-06T09:42:41.9170232Z ##[group]Run actions/upload-artifact@v4
+2026-10-06T09:42:41.9171008Z with:
+2026-10-06T09:42:41.9171469Z   name: official-codex-37444732661-1-Windows
+2026-10-06T09:42:41.9171917Z   path: <runner-temp>/official-validation-Windows/
+2026-10-06T09:42:41.9172326Z   include-hidden-files: true
+2026-10-06T09:42:41.9172707Z   if-no-files-found: error
+2026-10-06T09:42:41.9173076Z   retention-days: 14
+2026-10-06T09:42:41.9173405Z   compression-level: 6
+2026-10-06T09:42:41.9173718Z   overwrite: false
+2026-10-06T09:42:41.9174002Z env:
+2026-10-06T09:42:41.9174394Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:41.9174988Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T09:42:41.9175525Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:41.9176012Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:41.9176634Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:41.9177041Z ##[endgroup]
+2026-10-06T09:42:42.1402610Z (node:7128) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-06T09:42:42.1403962Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-06T09:42:42.1473710Z ##[error]No files were found with the provided path: <runner-temp>/official-validation-Windows/. No artifacts will be uploaded.
+2026-10-06T09:42:42.1893627Z Post job cleanup.
+2026-10-06T09:42:42.3926782Z [command]"<git-install>\bin\git.exe" version
+2026-10-06T09:42:42.4235872Z git version 2.55.0.windows.5
+2026-10-06T09:42:42.4303479Z Temporarily overriding HOME='<runner-temp>\<ephemeral-id>' before making global git config changes
+2026-10-06T09:42:42.4304426Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-06T09:42:42.4314728Z [command]"<git-install>\bin\git.exe" config --global --add safe.directory <repo>
+2026-10-06T09:42:42.4690950Z Removing SSH command configuration
+2026-10-06T09:42:42.4711771Z [command]"<git-install>\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-06T09:42:42.5074082Z [command]"<git-install>\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-06T09:42:43.1139619Z Removing HTTP extra header
+2026-10-06T09:42:43.1152337Z [command]"<git-install>\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-06T09:42:43.1506629Z [command]"<git-install>\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.http<runner-path>' || :\""
+2026-10-06T09:42:43.7501518Z Removing includeIf entries pointing to credentials config files
+2026-10-06T09:42:43.7516746Z [command]"<git-install>\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-06T09:42:43.7839743Z includeif.gitdir:<repo>/.git.path
+2026-10-06T09:42:43.7840665Z includeif.gitdir:<repo>/.git/worktrees/*.path
+2026-10-06T09:42:43.7841437Z includeif.gitdi<runner-path>
+2026-10-06T09:42:43.7841936Z includeif.gitdi<runner-path>
+2026-10-06T09:42:43.7902366Z [command]"<git-install>\bin\git.exe" config --local --get-all includeif.gitdir:<repo>/.git.path
+2026-10-06T09:42:43.8224906Z <runner-temp>\git-credentials-<ephemeral-id>.config
+2026-10-06T09:42:43.8287797Z [command]"<git-install>\bin\git.exe" config --local --unset includeif.gitdir:<repo>/.git.path D\:\\a\\_temp\\git\-credentials\-b8d4e5c0\-9d16\-4ad3\-b113\-de49658f45aa\.config
+2026-10-06T09:42:43.8751024Z [command]"<git-install>\bin\git.exe" config --local --get-all includeif.gitdir:<repo>/.git/worktrees/*.path
+2026-10-06T09:42:43.9057797Z <runner-temp>\git-credentials-<ephemeral-id>.config
+2026-10-06T09:42:43.9115079Z [command]"<git-install>\bin\git.exe" config --local --unset includeif.gitdir:<repo>/.git/worktrees/*.path D\:\\a\\_temp\\git\-credentials\-b8d4e5c0\-9d16\-4ad3\-b113\-de49658f45aa\.config
+2026-10-06T09:42:43.9502238Z [command]"<git-install>\bin\git.exe" config --local --get-all includeif.gitdi<runner-path>
+2026-10-06T09:42:43.9815498Z /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:42:43.9867122Z [command]"<git-install>\bin\git.exe" config --local --unset includeif.gitdi<runner-path> \/github\/runner_temp\/git\-credentials\-b8d4e5c0\-9d16\-4ad3\-b113\-de49658f45aa\.config
+2026-10-06T09:42:44.0219721Z [command]"<git-install>\bin\git.exe" config --local --get-all includeif.gitdi<runner-path>
+2026-10-06T09:42:44.0522360Z /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:42:44.0581212Z [command]"<git-install>\bin\git.exe" config --local --unset includeif.gitdi<runner-path> \/github\/runner_temp\/git\-credentials\-b8d4e5c0\-9d16\-4ad3\-b113\-de49658f45aa\.config
+2026-10-06T09:42:44.0949350Z [command]"<git-install>\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-06T09:42:44.7013317Z Removing credentials config '<runner-temp>\git-credentials-<ephemeral-id>.config'
+2026-10-06T09:42:44.7259964Z Cleaning up orphan processes
+2026-10-06T09:42:44.7302895Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/setup-node@v4, actions/upload-artifact@v4. For more information see: http<runner-path>

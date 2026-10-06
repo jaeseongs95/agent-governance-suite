@@ -1,0 +1,14 @@
+﻿2026-10-06T09:42:26.9695080Z ##[group]Run pnpm claude:drift
+2026-10-06T09:42:26.9695561Z [36;1mpnpm claude:drift[0m
+2026-10-06T09:42:26.9709730Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:42:26.9710296Z env:
+2026-10-06T09:42:26.9710759Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:26.9711301Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T09:42:26.9711899Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:26.9712378Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:26.9712911Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:26.9713318Z ##[endgroup]
+2026-10-06T09:42:28.1924317Z Already up to date
+2026-10-06T09:42:28.1932149Z Done in 462ms using pnpm v11.19.0
+2026-10-06T09:42:28.2133552Z $ node scripts/build-claude-plugin.mjs --drift
+2026-10-06T09:42:28.6020384Z claude-plugin: fresh

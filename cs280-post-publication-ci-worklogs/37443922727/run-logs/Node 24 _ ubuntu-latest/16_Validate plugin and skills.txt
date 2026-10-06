@@ -1,0 +1,31 @@
+﻿2026-10-06T09:36:56.4036969Z ##[group]Run pnpm validate:all
+2026-10-06T09:36:56.4037304Z [36;1mpnpm validate:all[0m
+2026-10-06T09:36:56.4100607Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:36:56.4100969Z env:
+2026-10-06T09:36:56.4101239Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:36:56.4101686Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:36:56.4102127Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:36:56.4102520Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:36:56.4102906Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:36:56.4103295Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:36:56.4103638Z   PYTHONUTF8: 1
+2026-10-06T09:36:56.4103840Z ##[endgroup]
+2026-10-06T09:36:57.3225172Z Already up to date
+2026-10-06T09:36:57.3233236Z Done in 417ms using pnpm v11.19.0
+2026-10-06T09:36:57.3373469Z $ node scripts/validate-repository.mjs && node scripts/run-python-validations.mjs && tsx scripts/korean-prose-glossary.ts --mode check
+2026-10-06T09:36:57.9618733Z repository: valid
+2026-10-06T09:36:58.1158786Z PASS validate_frontmatter
+2026-10-06T09:36:58.1159399Z PASS validate_openai_yaml
+2026-10-06T09:36:58.1159893Z PASS validate_markdown_links
+2026-10-06T09:36:58.1160430Z PASS validate_no_placeholders
+2026-10-06T09:36:58.1160843Z PASS validate_no_sensitive_data
+2026-10-06T09:36:58.1161141Z PASS validate_routing_presets
+2026-10-06T09:36:58.1161413Z PASS validate_behavior_cases
+2026-10-06T09:36:58.1161732Z All skill package validations passed.
+2026-10-06T09:36:58.3360253Z Skill validation passed: <repo>/skills/independent-audit-gate
+2026-10-06T09:37:01.9525871Z PASS validate_skill_package
+2026-10-06T09:37:01.9526578Z PASS validate_decision_record_contracts
+2026-10-06T09:37:01.9527699Z PASS validate_behavior_cases
+2026-10-06T09:37:01.9528715Z All independent-deliberation-panel validations passed.
+2026-10-06T09:37:01.9819632Z model-effort-advisor: valid
+2026-10-06T09:37:02.2030968Z {"status":"ok","entries":243,"id":"korean-prose-core","version":"1.2.1","contentDigest":"1262b46c6c07d3ecf0551167308df2aa3ec1ad9fb02e3a33fc9619ce2ec683d4"}

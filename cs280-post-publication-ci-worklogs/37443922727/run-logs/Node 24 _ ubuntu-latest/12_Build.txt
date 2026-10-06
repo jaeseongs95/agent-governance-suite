@@ -1,0 +1,14 @@
+﻿2026-10-06T09:35:12.0860405Z ##[group]Run pnpm build
+2026-10-06T09:35:12.0860722Z [36;1mpnpm build[0m
+2026-10-06T09:35:12.0926484Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:35:12.0926849Z env:
+2026-10-06T09:35:12.0927131Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:12.0927592Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:35:12.0928049Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:12.0928726Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:12.0929163Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:12.0929571Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:35:12.0929930Z ##[endgroup]
+2026-10-06T09:35:13.0221493Z Already up to date
+2026-10-06T09:35:13.0230160Z Done in 420ms using pnpm v11.19.0
+2026-10-06T09:35:13.0362994Z $ tsc --noEmit && node scripts/build.mjs

@@ -1,0 +1,176 @@
+﻿2026-10-06T09:34:47.2972228Z ##[group]Run actions/checkout@v7
+2026-10-06T09:34:47.2973127Z with:
+2026-10-06T09:34:47.2973580Z   fetch-depth: 0
+2026-10-06T09:34:47.2974115Z   repository: jaeseongs95/agent-governance-suite
+2026-10-06T09:34:47.2978191Z   token: ***
+2026-10-06T09:34:47.2979056Z   ssh-strict: true
+2026-10-06T09:34:47.2979530Z   ssh-user: git
+2026-10-06T09:34:47.2979990Z   persist-credentials: true
+2026-10-06T09:34:47.2980487Z   clean: true
+2026-10-06T09:34:47.2980939Z   sparse-checkout-cone-mode: true
+2026-10-06T09:34:47.2981472Z   fetch-tags: false
+2026-10-06T09:34:47.2982121Z   show-progress: true
+2026-10-06T09:34:47.2982802Z   lfs: false
+2026-10-06T09:34:47.2983238Z   submodules: false
+2026-10-06T09:34:47.2983700Z   set-safe-directory: true
+2026-10-06T09:34:47.2984210Z   allow-unsafe-pr-checkout: false
+2026-10-06T09:34:47.2985069Z ##[endgroup]
+2026-10-06T09:34:47.4024699Z Syncing repository: jaeseongs95/agent-governance-suite
+2026-10-06T09:34:47.4026714Z ##[group]Getting Git version info
+2026-10-06T09:34:47.4027634Z Working directory is '<repo>'
+2026-10-06T09:34:47.4029556Z [command]/usr/bin/git version
+2026-10-06T09:34:47.4112285Z git version 2.55.0
+2026-10-06T09:34:47.4141624Z ##[endgroup]
+2026-10-06T09:34:47.4150772Z Temporarily overriding HOME='<runner-temp>/<ephemeral-id>' before making global git config changes
+2026-10-06T09:34:47.4153141Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-06T09:34:47.4157315Z [command]/usr/bin/git config --global --add safe.directory <repo>
+2026-10-06T09:34:47.4208844Z Deleting the contents of '<repo>'
+2026-10-06T09:34:47.4212171Z ##[group]Determining repository object format
+2026-10-06T09:34:47.4213945Z ##[endgroup]
+2026-10-06T09:34:47.4215211Z ##[group]Initializing the repository
+2026-10-06T09:34:47.4220856Z [command]/usr/bin/git init <repo>
+2026-10-06T09:34:47.4331461Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-06T09:34:47.4333535Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-06T09:34:47.4336095Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-06T09:34:47.4337295Z hint: call:
+2026-10-06T09:34:47.4337915Z hint:
+2026-10-06T09:34:47.4338938Z hint: 	git config --global init.defaultBranch <name>
+2026-10-06T09:34:47.4339927Z hint:
+2026-10-06T09:34:47.4340874Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-06T09:34:47.4342409Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-06T09:34:47.4343601Z hint:
+2026-10-06T09:34:47.4344248Z hint: 	git branch -m <name>
+2026-10-06T09:34:47.4345023Z hint:
+2026-10-06T09:34:47.4346041Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-06T09:34:47.4348036Z Initialized empty Git repository in <repo>/.git/
+2026-10-06T09:34:47.4351271Z [command]/usr/bin/git remote add origin http<runner-path>
+2026-10-06T09:34:47.4401478Z ##[endgroup]
+2026-10-06T09:34:47.4402980Z ##[group]Disabling automatic garbage collection
+2026-10-06T09:34:47.4404231Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-06T09:34:47.4437373Z ##[endgroup]
+2026-10-06T09:34:47.4439259Z ##[group]Setting up auth
+2026-10-06T09:34:47.4449283Z Removing SSH command configuration
+2026-10-06T09:34:47.4450766Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-06T09:34:47.4497765Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-06T09:34:47.4931716Z Removing HTTP extra header
+2026-10-06T09:34:47.4942817Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-06T09:34:47.4984129Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.http<runner-path>' || :"
+2026-10-06T09:34:47.5243612Z Removing includeIf entries pointing to credentials config files
+2026-10-06T09:34:47.5249538Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-06T09:34:47.5288899Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-06T09:34:47.5522159Z [command]/usr/bin/git config --file <runner-temp>/git-credentials-<ephemeral-id>.config http.http<runner-path> AUTHORIZATION: basic ***
+2026-10-06T09:34:47.5562639Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> <runner-temp>/git-credentials-<ephemeral-id>.config
+2026-10-06T09:34:47.5596441Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> <runner-temp>/git-credentials-<ephemeral-id>.config
+2026-10-06T09:34:47.5634213Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:34:47.5671711Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:34:47.5703633Z ##[endgroup]
+2026-10-06T09:34:47.5704996Z ##[group]Fetching the repository
+2026-10-06T09:34:47.5711994Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+2026-10-06T09:34:50.3635226Z From http<runner-path>
+2026-10-06T09:34:50.3638119Z  * [new branch]        chore/discussions-setup-20261002 -> origin/chore/discussions-setup-20261002
+2026-10-06T09:34:50.3641192Z  * [new branch]        claude/docs-host-attestation-drift -> origin/claude/docs-host-attestation-drift
+2026-10-06T09:34:50.3643890Z  * [new branch]        claude/skill-intake-common-vendor -> origin/claude/skill-intake-common-vendor
+2026-10-06T09:34:50.3647095Z  * [new branch]        claude/v273-evidence-windows-20260928T173839Z -> origin/claude/v273-evidence-windows-20260928T173839Z
+2026-10-06T09:34:50.3650654Z  * [new branch]        claude/v273-inputs     -> origin/claude/v273-inputs
+2026-10-06T09:34:50.3653167Z  * [new branch]        claude/v273-intake-src -> origin/claude/v273-intake-src
+2026-10-06T09:34:50.3656314Z  * [new branch]        claude/v273-msgqueue-retention-analysis-vmzcqs -> origin/claude/v273-msgqueue-retention-analysis-vmzcqs
+2026-10-06T09:34:50.3660392Z  * [new branch]        claude/v276-presence-deadline -> origin/claude/v276-presence-deadline
+2026-10-06T09:34:50.3663450Z  * [new branch]        claude/v277-utf8-framing -> origin/claude/v277-utf8-framing
+2026-10-06T09:34:50.3665643Z  * [new branch]        claude/v3x-v06-b3-linux-closure -> origin/claude/v3x-v06-b3-linux-closure
+2026-10-06T09:34:50.3667813Z  * [new branch]        claude/v3x-v06-b3b-r1  -> origin/claude/v3x-v06-b3b-r1
+2026-10-06T09:34:50.3670194Z  * [new branch]        codex/dot-w05-source-20261002 -> origin/codex/dot-w05-source-20261002
+2026-10-06T09:34:50.3672949Z  * [new branch]        codex/engineering-practices-2.8.1 -> origin/codex/engineering-practices-2.8.1
+2026-10-06T09:34:50.3675962Z  * [new branch]        codex/release-candidate-2.8.0 -> origin/codex/release-candidate-2.8.0
+2026-10-06T09:34:50.3679226Z  * [new branch]        codex/results-ags-f06-f07-r66-20261001 -> origin/codex/results-ags-f06-f07-r66-20261001
+2026-10-06T09:34:50.3682709Z  * [new branch]        codex/v260-semantic-decision-layer -> origin/codex/v260-semantic-decision-layer
+2026-10-06T09:34:50.3685518Z  * [new branch]        codex/v272-skill-intake-port -> origin/codex/v272-skill-intake-port
+2026-10-06T09:34:50.3688364Z  * [new branch]        codex/v3x-w05-r3-messaging-parity -> origin/codex/v3x-w05-r3-messaging-parity
+2026-10-06T09:34:50.3692595Z  * [new branch]        codex/v3x-w05-r3-noreply-transport -> origin/codex/v3x-w05-r3-noreply-transport
+2026-10-06T09:34:50.3695851Z  * [new branch]        codex/w05-f1-cloud-inputs-20261003 -> origin/codex/w05-f1-cloud-inputs-20261003
+2026-10-06T09:34:50.3699375Z  * [new branch]        dot/ags-3x-results-20261002 -> origin/dot/ags-3x-results-20261002
+2026-10-06T09:34:50.3702187Z  * [new branch]        dot/ags-b14-decision-20261002 -> origin/dot/ags-b14-decision-20261002
+2026-10-06T09:34:50.3705151Z  * [new branch]        dot/ags-g18-reproduction-20261002 -> origin/dot/ags-g18-reproduction-20261002
+2026-10-06T09:34:50.3708349Z  * [new branch]        dot/ags-w05-evidence-20261002 -> origin/dot/ags-w05-evidence-20261002
+2026-10-06T09:34:50.3711643Z  * [new branch]        dot/ags-w06w07-evidence-20261002 -> origin/dot/ags-w06w07-evidence-20261002
+2026-10-06T09:34:50.3714136Z  * [new branch]        evidence               -> origin/evidence
+2026-10-06T09:34:50.3716031Z  * [new branch]        main                   -> origin/main
+2026-10-06T09:34:50.3717811Z  * [new tag]           v0.1.0                 -> v0.1.0
+2026-10-06T09:34:50.3719875Z  * [new tag]           v0.2.0                 -> v0.2.0
+2026-10-06T09:34:50.3721610Z  * [new tag]           v1.0.0                 -> v1.0.0
+2026-10-06T09:34:50.3723267Z  * [new tag]           v1.0.1                 -> v1.0.1
+2026-10-06T09:34:50.3725043Z  * [new tag]           v1.0.2                 -> v1.0.2
+2026-10-06T09:34:50.3727180Z  * [new tag]           v1.0.3                 -> v1.0.3
+2026-10-06T09:34:50.3729588Z  * [new tag]           v1.0.4                 -> v1.0.4
+2026-10-06T09:34:50.3731427Z  * [new tag]           v1.0.5                 -> v1.0.5
+2026-10-06T09:34:50.3733117Z  * [new tag]           v1.1.0                 -> v1.1.0
+2026-10-06T09:34:50.3735226Z  * [new tag]           v1.10.0                -> v1.10.0
+2026-10-06T09:34:50.3736966Z  * [new tag]           v1.11.0                -> v1.11.0
+2026-10-06T09:34:50.3738902Z  * [new tag]           v1.12.0                -> v1.12.0
+2026-10-06T09:34:50.3740655Z  * [new tag]           v1.13.0                -> v1.13.0
+2026-10-06T09:34:50.3742495Z  * [new tag]           v1.14.0                -> v1.14.0
+2026-10-06T09:34:50.3744276Z  * [new tag]           v1.14.1                -> v1.14.1
+2026-10-06T09:34:50.3745908Z  * [new tag]           v1.15.0                -> v1.15.0
+2026-10-06T09:34:50.3747517Z  * [new tag]           v1.15.1                -> v1.15.1
+2026-10-06T09:34:50.3749463Z  * [new tag]           v1.16.0                -> v1.16.0
+2026-10-06T09:34:50.3751157Z  * [new tag]           v1.16.1                -> v1.16.1
+2026-10-06T09:34:50.3752771Z  * [new tag]           v1.16.2                -> v1.16.2
+2026-10-06T09:34:50.3755041Z  * [new tag]           v1.17.0                -> v1.17.0
+2026-10-06T09:34:50.3756958Z  * [new tag]           v1.18.0                -> v1.18.0
+2026-10-06T09:34:50.3758850Z  * [new tag]           v1.19.0                -> v1.19.0
+2026-10-06T09:34:50.3760474Z  * [new tag]           v1.19.1                -> v1.19.1
+2026-10-06T09:34:50.3762054Z  * [new tag]           v1.2.0                 -> v1.2.0
+2026-10-06T09:34:50.3763599Z  * [new tag]           v1.20.0                -> v1.20.0
+2026-10-06T09:34:50.3765304Z  * [new tag]           v1.20.1                -> v1.20.1
+2026-10-06T09:34:50.3766881Z  * [new tag]           v1.20.2                -> v1.20.2
+2026-10-06T09:34:50.3768862Z  * [new tag]           v1.20.3                -> v1.20.3
+2026-10-06T09:34:50.3770580Z  * [new tag]           v1.21.0                -> v1.21.0
+2026-10-06T09:34:50.3772304Z  * [new tag]           v1.3.0                 -> v1.3.0
+2026-10-06T09:34:50.3774298Z  * [new tag]           v1.4.0                 -> v1.4.0
+2026-10-06T09:34:50.3775871Z  * [new tag]           v1.4.1                 -> v1.4.1
+2026-10-06T09:34:50.3777401Z  * [new tag]           v1.4.2                 -> v1.4.2
+2026-10-06T09:34:50.3779187Z  * [new tag]           v1.4.3                 -> v1.4.3
+2026-10-06T09:34:50.3780832Z  * [new tag]           v1.5.0                 -> v1.5.0
+2026-10-06T09:34:50.3782571Z  * [new tag]           v1.6.0                 -> v1.6.0
+2026-10-06T09:34:50.3784136Z  * [new tag]           v1.7.0                 -> v1.7.0
+2026-10-06T09:34:50.3785692Z  * [new tag]           v1.8.0                 -> v1.8.0
+2026-10-06T09:34:50.3787524Z  * [new tag]           v1.9.0                 -> v1.9.0
+2026-10-06T09:34:50.3789400Z  * [new tag]           v2.0.0                 -> v2.0.0
+2026-10-06T09:34:50.3791690Z  * [new tag]           v2.1.0                 -> v2.1.0
+2026-10-06T09:34:50.3793524Z  * [new tag]           v2.1.1                 -> v2.1.1
+2026-10-06T09:34:50.3795141Z  * [new tag]           v2.1.2                 -> v2.1.2
+2026-10-06T09:34:50.3796670Z  * [new tag]           v2.2.0                 -> v2.2.0
+2026-10-06T09:34:50.3798204Z  * [new tag]           v2.2.1                 -> v2.2.1
+2026-10-06T09:34:50.3800618Z  * [new tag]           v2.2.2                 -> v2.2.2
+2026-10-06T09:34:50.3802208Z  * [new tag]           v2.2.3                 -> v2.2.3
+2026-10-06T09:34:50.3803760Z  * [new tag]           v2.2.4                 -> v2.2.4
+2026-10-06T09:34:50.3805299Z  * [new tag]           v2.2.5                 -> v2.2.5
+2026-10-06T09:34:50.3806833Z  * [new tag]           v2.2.6                 -> v2.2.6
+2026-10-06T09:34:50.3808378Z  * [new tag]           v2.3.0                 -> v2.3.0
+2026-10-06T09:34:50.3810529Z  * [new tag]           v2.4.0                 -> v2.4.0
+2026-10-06T09:34:50.3812478Z  * [new tag]           v2.5.0                 -> v2.5.0
+2026-10-06T09:34:50.3814294Z  * [new tag]           v2.6.0                 -> v2.6.0
+2026-10-06T09:34:50.3815835Z  * [new tag]           v2.7.0                 -> v2.7.0
+2026-10-06T09:34:50.3817375Z  * [new tag]           v2.7.1                 -> v2.7.1
+2026-10-06T09:34:50.3819052Z  * [new tag]           v2.7.2                 -> v2.7.2
+2026-10-06T09:34:50.3820744Z  * [new tag]           v2.7.3                 -> v2.7.3
+2026-10-06T09:34:50.3822311Z  * [new tag]           v2.7.4                 -> v2.7.4
+2026-10-06T09:34:50.3823819Z  * [new tag]           v2.7.5                 -> v2.7.5
+2026-10-06T09:34:50.3825604Z  * [new tag]           v2.7.6                 -> v2.7.6
+2026-10-06T09:34:50.3827237Z  * [new tag]           v2.7.7                 -> v2.7.7
+2026-10-06T09:34:50.3829031Z  * [new tag]           v2.8.0                 -> v2.8.0
+2026-10-06T09:34:50.3832868Z [command]/usr/bin/git branch --list --remote origin/main
+2026-10-06T09:34:50.3834457Z   origin/main
+2026-10-06T09:34:50.3836930Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+2026-10-06T09:34:50.3838706Z b7341d3e6636b79217b1f3d37d7a5014fcbf47be
+2026-10-06T09:34:50.3841934Z ##[endgroup]
+2026-10-06T09:34:50.3843488Z ##[group]Determining the checkout info
+2026-10-06T09:34:50.3845295Z ##[endgroup]
+2026-10-06T09:34:50.3846302Z [command]/usr/bin/git sparse-checkout disable
+2026-10-06T09:34:50.3849667Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-06T09:34:50.3853256Z ##[group]Checking out the ref
+2026-10-06T09:34:50.3854951Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-10-06T09:34:50.5022610Z Switched to a new branch 'main'
+2026-10-06T09:34:50.5028065Z branch 'main' set up to track 'origin/main'.
+2026-10-06T09:34:50.5054032Z ##[endgroup]
+2026-10-06T09:34:50.5102499Z [command]/usr/bin/git log -1 --format=%H
+2026-10-06T09:34:50.5131945Z b7341d3e6636b79217b1f3d37d7a5014fcbf47be

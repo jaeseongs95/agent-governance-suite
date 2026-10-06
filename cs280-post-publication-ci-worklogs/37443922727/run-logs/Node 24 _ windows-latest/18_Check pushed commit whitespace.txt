@@ -1,0 +1,11 @@
+﻿2026-10-06T09:38:56.1102675Z ##[group]Run git show --check --oneline --no-renames HEAD
+2026-10-06T09:38:56.1103364Z [36;1mgit show --check --oneline --no-renames HEAD[0m
+2026-10-06T09:38:56.1120617Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:38:56.1121023Z env:
+2026-10-06T09:38:56.1121309Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:38:56.1121777Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T09:38:56.1122230Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:38:56.1122633Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:38:56.1123028Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:38:56.1123334Z ##[endgroup]
+2026-10-06T09:38:56.1817452Z b7341d3e docs: remove stale release candidate notice

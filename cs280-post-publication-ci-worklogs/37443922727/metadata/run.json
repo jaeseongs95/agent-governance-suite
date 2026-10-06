@@ -1,0 +1,29 @@
+{
+  "id": 37443922727,
+  "name": "CI",
+  "head_branch": "main",
+  "head_sha": "b7341d3e6636b79217b1f3d37d7a5014fcbf47be",
+  "path": ".github/workflows/ci.yml",
+  "display_title": "docs: remove stale release candidate notice",
+  "run_number": 135,
+  "event": "push",
+  "status": "completed",
+  "conclusion": "success",
+  "workflow_id": 353647941,
+  "run_attempt": 1,
+  "html_url": "http<runner-path>",
+  "created_at": "2026-10-06T09:34:42Z",
+  "updated_at": "2026-10-06T09:39:00Z",
+  "run_started_at": "2026-10-06T09:34:42Z",
+  "repository": {
+    "id": 1362118877,
+    "name": "agent-governance-suite",
+    "full_name": "jaeseongs95/agent-governance-suite",
+    "html_url": "http<runner-path>"
+  },
+  "head_commit": {
+    "id": "b7341d3e6636b79217b1f3d37d7a5014fcbf47be",
+    "message": "docs: remove stale release candidate notice",
+    "timestamp": "2026-10-06T05:30:11Z"
+  }
+}

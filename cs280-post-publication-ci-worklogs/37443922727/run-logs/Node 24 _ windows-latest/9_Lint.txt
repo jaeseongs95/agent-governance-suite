@@ -1,0 +1,14 @@
+﻿2026-10-06T09:35:20.4385693Z ##[group]Run pnpm lint
+2026-10-06T09:35:20.4386174Z [36;1mpnpm lint[0m
+2026-10-06T09:35:20.4405022Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:35:20.4405419Z env:
+2026-10-06T09:35:20.4405676Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:35:20.4406125Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T09:35:20.4406577Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:35:20.4406998Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:35:20.4407398Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:35:20.4407705Z ##[endgroup]
+2026-10-06T09:35:21.7958657Z Already up to date
+2026-10-06T09:35:21.7968856Z Done in 469ms using pnpm v11.19.0
+2026-10-06T09:35:21.8138798Z $ eslint . && node scripts/validate-repository.mjs
+2026-10-06T09:35:32.4321112Z repository: valid

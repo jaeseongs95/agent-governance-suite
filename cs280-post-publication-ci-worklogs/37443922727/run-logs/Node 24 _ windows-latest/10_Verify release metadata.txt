@@ -1,0 +1,14 @@
+﻿2026-10-06T09:35:32.4821915Z ##[group]Run pnpm release:check
+2026-10-06T09:35:32.4822297Z [36;1mpnpm release:check[0m
+2026-10-06T09:35:32.4850555Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:35:32.4851000Z env:
+2026-10-06T09:35:32.4851267Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:35:32.4852035Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T09:35:32.4852931Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:35:32.4853635Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:35:32.4854413Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:35:32.4855266Z ##[endgroup]
+2026-10-06T09:35:33.7362489Z Already up to date
+2026-10-06T09:35:33.7371503Z Done in 497ms using pnpm v11.19.0
+2026-10-06T09:35:33.7545094Z $ node scripts/sync-release-metadata.mjs
+2026-10-06T09:35:33.8257517Z release metadata is synchronized

@@ -1,0 +1,46 @@
+﻿2026-10-06T09:42:04.9616878Z ##[group]Run pnpm install --frozen-lockfile
+2026-10-06T09:42:04.9617580Z [36;1mpnpm install --frozen-lockfile[0m
+2026-10-06T09:42:04.9632547Z shell: <git-install>\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:42:04.9633062Z env:
+2026-10-06T09:42:04.9633468Z   pythonLocation: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:04.9633996Z   PKG_CONFIG_PATH: <toolcache>\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-06T09:42:04.9634578Z   Python_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:04.9635063Z   Python2_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:04.9635542Z   Python3_ROOT_DIR: <toolcache>\windows\Python\3.12.10\x64
+2026-10-06T09:42:04.9635993Z ##[endgroup]
+2026-10-06T09:42:05.2868286Z ! Corepack is about to download http<runner-path>
+2026-10-06T09:42:19.3844239Z ? Verifying lockfile against supply-chain policies (267 entries)...
+2026-10-06T09:42:19.3942665Z Lockfile is up to date, resolution step is skipped
+2026-10-06T09:42:19.5055436Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-10-06T09:42:19.5494113Z Packages: +217
+2026-10-06T09:42:19.5496441Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-10-06T09:42:20.0456498Z Packages are copied from the content-addressable store to the virtual store.
+2026-10-06T09:42:20.0462897Z   Content-addressable store is at: <runner-path>
+2026-10-06T09:42:20.0465819Z   Virtual store is at:             node_modules/.pnpm
+2026-10-06T09:42:20.5205086Z Progress: resolved 217, reused 0, downloaded 18, added 4
+2026-10-06T09:42:21.5357116Z Progress: resolved 217, reused 0, downloaded 64, added 7
+2026-10-06T09:42:22.5371773Z Progress: resolved 217, reused 0, downloaded 152, added 14
+2026-10-06T09:42:23.5860851Z ✓ Lockfile passes supply-chain policies (267 entries in 4.2s)
+2026-10-06T09:42:23.5863315Z Progress: resolved 217, reused 0, downloaded 217, added 51
+2026-10-06T09:42:24.5868197Z Progress: resolved 217, reused 0, downloaded 217, added 61
+2026-10-06T09:42:24.7461256Z Progress: resolved 217, reused 0, downloaded 217, added 217, done
+2026-10-06T09:42:24.9639537Z .../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+2026-10-06T09:42:25.1274235Z .../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+2026-10-06T09:42:25.1770071Z 
+2026-10-06T09:42:25.1770781Z dependencies:
+2026-10-06T09:42:25.1771273Z + @modelcontextprotocol/sdk 1.30.0
+2026-10-06T09:42:25.1771663Z + ajv 8.20.0
+2026-10-06T09:42:25.1771972Z + ajv-formats 3.0.1
+2026-10-06T09:42:25.1772573Z + zod 4.5.4
+2026-10-06T09:42:25.1772807Z 
+2026-10-06T09:42:25.1772950Z devDependencies:
+2026-10-06T09:42:25.1773342Z + @eslint/js 10.0.1
+2026-10-06T09:42:25.1773761Z + @types/node 26.5.0
+2026-10-06T09:42:25.1774153Z + esbuild 0.28.2
+2026-10-06T09:42:25.1774497Z + eslint 10.10.0
+2026-10-06T09:42:25.1774830Z + tsx 4.23.13
+2026-10-06T09:42:25.1775231Z + typescript 6.0.2
+2026-10-06T09:42:25.1775720Z + typescript-eslint 8.70.0
+2026-10-06T09:42:25.1776115Z + vitest 5.0.0
+2026-10-06T09:42:25.1776266Z 
+2026-10-06T09:42:25.2070347Z Done in 6.5s using pnpm v11.19.0

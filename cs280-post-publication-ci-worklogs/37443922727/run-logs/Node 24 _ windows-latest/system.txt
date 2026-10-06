@@ -1,0 +1,8 @@
+2026-10-06T09:34:43.5880000Z Evaluating verify.if
+2026-10-06T09:34:43.5880000Z Evaluating: success()
+2026-10-06T09:34:43.5880000Z Result: true
+2026-10-06T09:34:43.5960000Z Requested labels: windows-latest
+2026-10-06T09:34:43.5960000Z Job defined at: jaeseongs95/agent-governance-suite/.github/workflows/ci.yml@refs/heads/main
+2026-10-06T09:34:43.5960000Z Waiting for a runner to pick up this job...
+2026-10-06T09:34:43.7700000Z Job is waiting for a hosted runner to come online.
+2026-10-06T09:34:43.7680000Z Job is about to start running on the hosted runner: GitHub Actions 1000001575

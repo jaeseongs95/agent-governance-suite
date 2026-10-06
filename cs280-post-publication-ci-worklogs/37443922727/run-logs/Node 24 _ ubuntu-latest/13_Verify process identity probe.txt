@@ -1,0 +1,15 @@
+﻿2026-10-06T09:35:17.5495778Z ##[group]Run pnpm process-identity:check
+2026-10-06T09:35:17.5496156Z [36;1mpnpm process-identity:check[0m
+2026-10-06T09:35:17.5559505Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:35:17.5559875Z env:
+2026-10-06T09:35:17.5560149Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:17.5560614Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:35:17.5561068Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:17.5561475Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:17.5561895Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:17.5562307Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:35:17.5562666Z ##[endgroup]
+2026-10-06T09:35:18.4997307Z Already up to date
+2026-10-06T09:35:18.5004854Z Done in 414ms using pnpm v11.19.0
+2026-10-06T09:35:18.5137986Z $ tsx scripts/check-process-identity.ts
+2026-10-06T09:35:18.7001083Z process identity: ready (linux)

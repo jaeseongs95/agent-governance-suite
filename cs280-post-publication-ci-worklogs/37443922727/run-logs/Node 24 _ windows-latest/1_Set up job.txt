@@ -1,0 +1,33 @@
+﻿2026-10-06T09:34:45.6273808Z Current runner version: '2.337.0'
+2026-10-06T09:34:45.6319974Z ##[group]Runner Image Provisioner
+2026-10-06T09:34:45.6320935Z Hosted Compute Agent
+2026-10-06T09:34:45.6321603Z Version: 20260901.588
+2026-10-06T09:34:45.6322222Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+2026-10-06T09:34:45.6322926Z Build Date: 2026-09-01T19:56:44Z
+2026-10-06T09:34:45.6323601Z Worker ID: {<ephemeral-id>}
+2026-10-06T09:34:45.6324316Z Azure Region: eastus2
+2026-10-06T09:34:45.6324848Z ##[endgroup]
+2026-10-06T09:34:45.6326275Z ##[group]Operating System
+2026-10-06T09:34:45.6327951Z Microsoft Windows Server 2025
+2026-10-06T09:34:45.6328671Z 10.0.26100
+2026-10-06T09:34:45.6329180Z Datacenter
+2026-10-06T09:34:45.6329665Z ##[endgroup]
+2026-10-06T09:34:45.6330216Z ##[group]Runner Image
+2026-10-06T09:34:45.6330817Z Image: windows-2025-vs2026
+2026-10-06T09:34:45.6331398Z Version: 20260925.250.1
+2026-10-06T09:34:45.6332550Z Included Software: http<runner-path>
+2026-10-06T09:34:45.6334611Z Image Release: http<runner-path>
+2026-10-06T09:34:45.6335594Z ##[endgroup]
+2026-10-06T09:34:45.6336679Z ##[group]GITHUB_TOKEN Permissions
+2026-10-06T09:34:45.6338656Z Contents: read
+2026-10-06T09:34:45.6339271Z Metadata: read
+2026-10-06T09:34:45.6339844Z ##[endgroup]
+2026-10-06T09:34:45.6341947Z Secret source: Actions
+2026-10-06T09:34:45.6342962Z Cache mode: write
+2026-10-06T09:34:45.6343646Z Prepare workflow directory
+2026-10-06T09:34:45.6759521Z Prepare all required actions
+2026-10-06T09:34:45.6829444Z Getting action download info
+2026-10-06T09:34:45.8551159Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-10-06T09:34:45.9922803Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-10-06T09:34:46.1660827Z Download action repository 'actions/setup-python@v7' (SHA:5fda3b95a4ea91299a34e894583c3862153e4b97)
+2026-10-06T09:34:46.4472734Z Complete job name: Node 24 / windows-latest

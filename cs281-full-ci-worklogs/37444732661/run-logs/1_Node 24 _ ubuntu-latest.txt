@@ -1,0 +1,392 @@
+﻿2026-10-06T09:41:49.7759370Z Current runner version: '2.337.0'
+2026-10-06T09:41:49.7779051Z ##[group]Runner Image Provisioner
+2026-10-06T09:41:49.7779588Z Hosted Compute Agent
+2026-10-06T09:41:49.7780042Z Version: 20260901.588
+2026-10-06T09:41:49.7780454Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+2026-10-06T09:41:49.7781136Z Build Date: 2026-09-01T19:56:44Z
+2026-10-06T09:41:49.7781552Z Worker ID: {<ephemeral-id>}
+2026-10-06T09:41:49.7781976Z Azure Region: centralus
+2026-10-06T09:41:49.7782366Z ##[endgroup]
+2026-10-06T09:41:49.7783301Z ##[group]Operating System
+2026-10-06T09:41:49.7783658Z Ubuntu
+2026-10-06T09:41:49.7784021Z 24.04.5
+2026-10-06T09:41:49.7784337Z LTS
+2026-10-06T09:41:49.7784711Z ##[endgroup]
+2026-10-06T09:41:49.7785076Z ##[group]Runner Image
+2026-10-06T09:41:49.7785418Z Image: ubuntu-24.04
+2026-10-06T09:41:49.7785804Z Version: 20260927.320.1
+2026-10-06T09:41:49.7786549Z Included Software: http<runner-path>
+2026-10-06T09:41:49.7787507Z Image Release: http<runner-path>
+2026-10-06T09:41:49.7788058Z ##[endgroup]
+2026-10-06T09:41:49.7788750Z ##[group]GITHUB_TOKEN Permissions
+2026-10-06T09:41:49.7790131Z Contents: read
+2026-10-06T09:41:49.7790544Z Metadata: read
+2026-10-06T09:41:49.7791090Z ##[endgroup]
+2026-10-06T09:41:49.7792546Z Secret source: Actions
+2026-10-06T09:41:49.7793117Z Cache mode: write
+2026-10-06T09:41:49.7793569Z Prepare workflow directory
+2026-10-06T09:41:49.8002025Z Prepare all required actions
+2026-10-06T09:41:49.8033484Z Getting action download info
+2026-10-06T09:41:50.0774099Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-10-06T09:41:50.1620888Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-10-06T09:41:50.2702553Z Download action repository 'actions/setup-python@v7' (SHA:5fda3b95a4ea91299a34e894583c3862153e4b97)
+2026-10-06T09:41:50.3644059Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-10-06T09:41:50.5684003Z Complete job name: Node 24 / ubuntu-latest
+2026-10-06T09:41:50.6197841Z ##[group]Run actions/checkout@v7
+2026-10-06T09:41:50.6198267Z with:
+2026-10-06T09:41:50.6198500Z   fetch-depth: 0
+2026-10-06T09:41:50.6198783Z   repository: jaeseongs95/agent-governance-suite
+2026-10-06T09:41:50.6201164Z   token: ***
+2026-10-06T09:41:50.6201399Z   ssh-strict: true
+2026-10-06T09:41:50.6201644Z   ssh-user: git
+2026-10-06T09:41:50.6201897Z   persist-credentials: true
+2026-10-06T09:41:50.6202164Z   clean: true
+2026-10-06T09:41:50.6202412Z   sparse-checkout-cone-mode: true
+2026-10-06T09:41:50.6202701Z   fetch-tags: false
+2026-10-06T09:41:50.6202946Z   show-progress: true
+2026-10-06T09:41:50.6203192Z   lfs: false
+2026-10-06T09:41:50.6203419Z   submodules: false
+2026-10-06T09:41:50.6203666Z   set-safe-directory: true
+2026-10-06T09:41:50.6203947Z   allow-unsafe-pr-checkout: false
+2026-10-06T09:41:50.6204326Z ##[endgroup]
+2026-10-06T09:41:50.6905616Z Syncing repository: jaeseongs95/agent-governance-suite
+2026-10-06T09:41:50.6907192Z ##[group]Getting Git version info
+2026-10-06T09:41:50.6908053Z Working directory is '<repo>'
+2026-10-06T09:41:50.6909142Z [command]/usr/bin/git version
+2026-10-06T09:41:50.6980134Z git version 2.55.0
+2026-10-06T09:41:50.6994148Z ##[endgroup]
+2026-10-06T09:41:50.7004174Z Temporarily overriding HOME='<runner-temp>/<ephemeral-id>' before making global git config changes
+2026-10-06T09:41:50.7005415Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-06T09:41:50.7008801Z [command]/usr/bin/git config --global --add safe.directory <repo>
+2026-10-06T09:41:50.7055313Z Deleting the contents of '<repo>'
+2026-10-06T09:41:50.7058095Z ##[group]Determining repository object format
+2026-10-06T09:41:50.7059504Z ##[endgroup]
+2026-10-06T09:41:50.7060148Z ##[group]Initializing the repository
+2026-10-06T09:41:50.7063703Z [command]/usr/bin/git init <repo>
+2026-10-06T09:41:50.7182528Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-06T09:41:50.7184018Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-06T09:41:50.7184881Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-06T09:41:50.7255947Z hint: call:
+2026-10-06T09:41:50.7257018Z hint:
+2026-10-06T09:41:50.7257564Z hint: 	git config --global init.defaultBranch <name>
+2026-10-06T09:41:50.7258126Z hint:
+2026-10-06T09:41:50.7258640Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-06T09:41:50.7259470Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-06T09:41:50.7260121Z hint:
+2026-10-06T09:41:50.7260516Z hint: 	git branch -m <name>
+2026-10-06T09:41:50.7261186Z hint:
+2026-10-06T09:41:50.7261732Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-06T09:41:50.7262790Z Initialized empty Git repository in <repo>/.git/
+2026-10-06T09:41:50.7264885Z [command]/usr/bin/git remote add origin http<runner-path>
+2026-10-06T09:41:50.7266370Z ##[endgroup]
+2026-10-06T09:41:50.7267042Z ##[group]Disabling automatic garbage collection
+2026-10-06T09:41:50.7267604Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-06T09:41:50.7285002Z ##[endgroup]
+2026-10-06T09:41:50.7285512Z ##[group]Setting up auth
+2026-10-06T09:41:50.7286119Z Removing SSH command configuration
+2026-10-06T09:41:50.7291245Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-06T09:41:50.7327804Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-06T09:41:50.7665155Z Removing HTTP extra header
+2026-10-06T09:41:50.7670095Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-06T09:41:50.7701772Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.http<runner-path>' || :"
+2026-10-06T09:41:50.7900132Z Removing includeIf entries pointing to credentials config files
+2026-10-06T09:41:50.7904438Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-06T09:41:50.7940469Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-06T09:41:50.8133705Z [command]/usr/bin/git config --file <runner-temp>/git-credentials-<ephemeral-id>.config http.http<runner-path> AUTHORIZATION: basic ***
+2026-10-06T09:41:50.8582626Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> <runner-temp>/git-credentials-<ephemeral-id>.config
+2026-10-06T09:41:50.8673592Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> <runner-temp>/git-credentials-<ephemeral-id>.config
+2026-10-06T09:41:50.8767747Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:41:50.8867659Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:41:50.9062311Z ##[endgroup]
+2026-10-06T09:41:50.9063017Z ##[group]Fetching the repository
+2026-10-06T09:41:50.9069100Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+2026-10-06T09:41:53.5865229Z From http<runner-path>
+2026-10-06T09:41:53.5866555Z  * [new branch]        chore/discussions-setup-20261002 -> origin/chore/discussions-setup-20261002
+2026-10-06T09:41:53.5867756Z  * [new branch]        claude/docs-host-attestation-drift -> origin/claude/docs-host-attestation-drift
+2026-10-06T09:41:53.5868967Z  * [new branch]        claude/skill-intake-common-vendor -> origin/claude/skill-intake-common-vendor
+2026-10-06T09:41:53.5870372Z  * [new branch]        claude/v273-evidence-windows-20260928T173839Z -> origin/claude/v273-evidence-windows-20260928T173839Z
+2026-10-06T09:41:53.5871701Z  * [new branch]        claude/v273-inputs     -> origin/claude/v273-inputs
+2026-10-06T09:41:53.5872524Z  * [new branch]        claude/v273-intake-src -> origin/claude/v273-intake-src
+2026-10-06T09:41:53.5873293Z  * [new branch]        claude/v273-msgqueue-retention-analysis-vmzcqs -> origin/claude/v273-msgqueue-retention-analysis-vmzcqs
+2026-10-06T09:41:53.5874090Z  * [new branch]        claude/v276-presence-deadline -> origin/claude/v276-presence-deadline
+2026-10-06T09:41:53.5874716Z  * [new branch]        claude/v277-utf8-framing -> origin/claude/v277-utf8-framing
+2026-10-06T09:41:53.5875336Z  * [new branch]        claude/v3x-v06-b3-linux-closure -> origin/claude/v3x-v06-b3-linux-closure
+2026-10-06T09:41:53.5875938Z  * [new branch]        claude/v3x-v06-b3b-r1  -> origin/claude/v3x-v06-b3b-r1
+2026-10-06T09:41:53.5876513Z  * [new branch]        codex/dot-w05-source-20261002 -> origin/codex/dot-w05-source-20261002
+2026-10-06T09:41:53.5877199Z  * [new branch]        codex/engineering-practices-2.8.1 -> origin/codex/engineering-practices-2.8.1
+2026-10-06T09:41:53.5877953Z  * [new branch]        codex/release-candidate-2.8.0 -> origin/codex/release-candidate-2.8.0
+2026-10-06T09:41:53.5878977Z  * [new branch]        codex/results-ags-f06-f07-r66-20261001 -> origin/codex/results-ags-f06-f07-r66-20261001
+2026-10-06T09:41:53.5879754Z  * [new branch]        codex/v260-semantic-decision-layer -> origin/codex/v260-semantic-decision-layer
+2026-10-06T09:41:53.5880427Z  * [new branch]        codex/v272-skill-intake-port -> origin/codex/v272-skill-intake-port
+2026-10-06T09:41:53.5881400Z  * [new branch]        codex/v3x-w05-r3-messaging-parity -> origin/codex/v3x-w05-r3-messaging-parity
+2026-10-06T09:41:53.5882345Z  * [new branch]        codex/v3x-w05-r3-noreply-transport -> origin/codex/v3x-w05-r3-noreply-transport
+2026-10-06T09:41:53.5883520Z  * [new branch]        codex/w05-f1-cloud-inputs-20261003 -> origin/codex/w05-f1-cloud-inputs-20261003
+2026-10-06T09:41:53.5884585Z  * [new branch]        dot/ags-3x-results-20261002 -> origin/dot/ags-3x-results-20261002
+2026-10-06T09:41:53.5885468Z  * [new branch]        dot/ags-b14-decision-20261002 -> origin/dot/ags-b14-decision-20261002
+2026-10-06T09:41:53.5886143Z  * [new branch]        dot/ags-g18-reproduction-20261002 -> origin/dot/ags-g18-reproduction-20261002
+2026-10-06T09:41:53.5886810Z  * [new branch]        dot/ags-w05-evidence-20261002 -> origin/dot/ags-w05-evidence-20261002
+2026-10-06T09:41:53.5887458Z  * [new branch]        dot/ags-w06w07-evidence-20261002 -> origin/dot/ags-w06w07-evidence-20261002
+2026-10-06T09:41:53.5888019Z  * [new branch]        evidence               -> origin/evidence
+2026-10-06T09:41:53.5888459Z  * [new branch]        main                   -> origin/main
+2026-10-06T09:41:53.5888871Z  * [new tag]           v0.1.0                 -> v0.1.0
+2026-10-06T09:41:53.5889350Z  * [new tag]           v0.2.0                 -> v0.2.0
+2026-10-06T09:41:53.5889880Z  * [new tag]           v1.0.0                 -> v1.0.0
+2026-10-06T09:41:53.5890274Z  * [new tag]           v1.0.1                 -> v1.0.1
+2026-10-06T09:41:53.5890961Z  * [new tag]           v1.0.2                 -> v1.0.2
+2026-10-06T09:41:53.5891483Z  * [new tag]           v1.0.3                 -> v1.0.3
+2026-10-06T09:41:53.5891872Z  * [new tag]           v1.0.4                 -> v1.0.4
+2026-10-06T09:41:53.5892259Z  * [new tag]           v1.0.5                 -> v1.0.5
+2026-10-06T09:41:53.5892661Z  * [new tag]           v1.1.0                 -> v1.1.0
+2026-10-06T09:41:53.5893047Z  * [new tag]           v1.10.0                -> v1.10.0
+2026-10-06T09:41:53.5893435Z  * [new tag]           v1.11.0                -> v1.11.0
+2026-10-06T09:41:53.5893823Z  * [new tag]           v1.12.0                -> v1.12.0
+2026-10-06T09:41:53.5894208Z  * [new tag]           v1.13.0                -> v1.13.0
+2026-10-06T09:41:53.5894596Z  * [new tag]           v1.14.0                -> v1.14.0
+2026-10-06T09:41:53.5894980Z  * [new tag]           v1.14.1                -> v1.14.1
+2026-10-06T09:41:53.5895366Z  * [new tag]           v1.15.0                -> v1.15.0
+2026-10-06T09:41:53.5895757Z  * [new tag]           v1.15.1                -> v1.15.1
+2026-10-06T09:41:53.5896149Z  * [new tag]           v1.16.0                -> v1.16.0
+2026-10-06T09:41:53.5896538Z  * [new tag]           v1.16.1                -> v1.16.1
+2026-10-06T09:41:53.5896924Z  * [new tag]           v1.16.2                -> v1.16.2
+2026-10-06T09:41:53.5897309Z  * [new tag]           v1.17.0                -> v1.17.0
+2026-10-06T09:41:53.5897697Z  * [new tag]           v1.18.0                -> v1.18.0
+2026-10-06T09:41:53.5898081Z  * [new tag]           v1.19.0                -> v1.19.0
+2026-10-06T09:41:53.5898466Z  * [new tag]           v1.19.1                -> v1.19.1
+2026-10-06T09:41:53.5898855Z  * [new tag]           v1.2.0                 -> v1.2.0
+2026-10-06T09:41:53.5899241Z  * [new tag]           v1.20.0                -> v1.20.0
+2026-10-06T09:41:53.5899645Z  * [new tag]           v1.20.1                -> v1.20.1
+2026-10-06T09:41:53.5900306Z  * [new tag]           v1.20.2                -> v1.20.2
+2026-10-06T09:41:53.5901074Z  * [new tag]           v1.20.3                -> v1.20.3
+2026-10-06T09:41:53.5901702Z  * [new tag]           v1.21.0                -> v1.21.0
+2026-10-06T09:41:53.5902405Z  * [new tag]           v1.3.0                 -> v1.3.0
+2026-10-06T09:41:53.5902968Z  * [new tag]           v1.4.0                 -> v1.4.0
+2026-10-06T09:41:53.5903544Z  * [new tag]           v1.4.1                 -> v1.4.1
+2026-10-06T09:41:53.5904162Z  * [new tag]           v1.4.2                 -> v1.4.2
+2026-10-06T09:41:53.5904778Z  * [new tag]           v1.4.3                 -> v1.4.3
+2026-10-06T09:41:53.5905405Z  * [new tag]           v1.5.0                 -> v1.5.0
+2026-10-06T09:41:53.5906020Z  * [new tag]           v1.6.0                 -> v1.6.0
+2026-10-06T09:41:53.5906670Z  * [new tag]           v1.7.0                 -> v1.7.0
+2026-10-06T09:41:53.5907319Z  * [new tag]           v1.8.0                 -> v1.8.0
+2026-10-06T09:41:53.5907933Z  * [new tag]           v1.9.0                 -> v1.9.0
+2026-10-06T09:41:53.5908557Z  * [new tag]           v2.0.0                 -> v2.0.0
+2026-10-06T09:41:53.5909276Z  * [new tag]           v2.1.0                 -> v2.1.0
+2026-10-06T09:41:53.5909934Z  * [new tag]           v2.1.1                 -> v2.1.1
+2026-10-06T09:41:53.5910733Z  * [new tag]           v2.1.2                 -> v2.1.2
+2026-10-06T09:41:53.5911383Z  * [new tag]           v2.2.0                 -> v2.2.0
+2026-10-06T09:41:53.5911999Z  * [new tag]           v2.2.1                 -> v2.2.1
+2026-10-06T09:41:53.5912695Z  * [new tag]           v2.2.2                 -> v2.2.2
+2026-10-06T09:41:53.5913232Z  * [new tag]           v2.2.3                 -> v2.2.3
+2026-10-06T09:41:53.5913780Z  * [new tag]           v2.2.4                 -> v2.2.4
+2026-10-06T09:41:53.5914326Z  * [new tag]           v2.2.5                 -> v2.2.5
+2026-10-06T09:41:53.5914867Z  * [new tag]           v2.2.6                 -> v2.2.6
+2026-10-06T09:41:53.5915408Z  * [new tag]           v2.3.0                 -> v2.3.0
+2026-10-06T09:41:53.5915950Z  * [new tag]           v2.4.0                 -> v2.4.0
+2026-10-06T09:41:53.5916715Z  * [new tag]           v2.5.0                 -> v2.5.0
+2026-10-06T09:41:53.5917255Z  * [new tag]           v2.6.0                 -> v2.6.0
+2026-10-06T09:41:53.5917779Z  * [new tag]           v2.7.0                 -> v2.7.0
+2026-10-06T09:41:53.5918312Z  * [new tag]           v2.7.1                 -> v2.7.1
+2026-10-06T09:41:53.5918844Z  * [new tag]           v2.7.2                 -> v2.7.2
+2026-10-06T09:41:53.5919383Z  * [new tag]           v2.7.3                 -> v2.7.3
+2026-10-06T09:41:53.5919918Z  * [new tag]           v2.7.4                 -> v2.7.4
+2026-10-06T09:41:53.5920452Z  * [new tag]           v2.7.5                 -> v2.7.5
+2026-10-06T09:41:53.5921126Z  * [new tag]           v2.7.6                 -> v2.7.6
+2026-10-06T09:41:53.5921663Z  * [new tag]           v2.7.7                 -> v2.7.7
+2026-10-06T09:41:53.5922205Z  * [new tag]           v2.8.0                 -> v2.8.0
+2026-10-06T09:41:53.5923840Z [command]/usr/bin/git branch --list --remote origin/codex/engineering-practices-2.8.1
+2026-10-06T09:41:53.5932850Z   origin/codex/engineering-practices-2.8.1
+2026-10-06T09:41:53.5941169Z [command]/usr/bin/git rev-parse refs/remotes/origin/codex/engineering-practices-2.8.1
+2026-10-06T09:41:53.5965548Z bdaf8a223ce78d2f81b3368d845d8e1fbaa60248
+2026-10-06T09:41:53.5972114Z ##[endgroup]
+2026-10-06T09:41:53.5972752Z ##[group]Determining the checkout info
+2026-10-06T09:41:53.5973453Z ##[endgroup]
+2026-10-06T09:41:53.5973877Z [command]/usr/bin/git sparse-checkout disable
+2026-10-06T09:41:53.6636467Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-06T09:41:53.7321284Z ##[group]Checking out the ref
+2026-10-06T09:41:53.7323979Z [command]/usr/bin/git checkout --progress --force -B codex/engineering-practices-2.8.1 refs/remotes/origin/codex/engineering-practices-2.8.1
+2026-10-06T09:41:53.8917840Z Switched to a new branch 'codex/engineering-practices-2.8.1'
+2026-10-06T09:41:53.8922643Z branch 'codex/engineering-practices-2.8.1' set up to track 'origin/codex/engineering-practices-2.8.1'.
+2026-10-06T09:41:53.8949746Z ##[endgroup]
+2026-10-06T09:41:53.8995129Z [command]/usr/bin/git log -1 --format=%H
+2026-10-06T09:41:53.9024060Z bdaf8a223ce78d2f81b3368d845d8e1fbaa60248
+2026-10-06T09:41:53.9247791Z ##[group]Run actions/setup-node@v4
+2026-10-06T09:41:53.9248014Z with:
+2026-10-06T09:41:53.9248167Z   node-version: 24
+2026-10-06T09:41:53.9248326Z   always-auth: false
+2026-10-06T09:41:53.9248477Z   check-latest: false
+2026-10-06T09:41:53.9249981Z   token: ***
+2026-10-06T09:41:53.9250132Z ##[endgroup]
+2026-10-06T09:41:54.0227474Z Found in cache @ <toolcache>/node/24.21.0/x64
+2026-10-06T09:41:54.0230090Z (node:2104) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-06T09:41:54.0230903Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-06T09:41:54.0232540Z ##[group]Environment details
+2026-10-06T09:41:54.3935823Z node: v24.21.0
+2026-10-06T09:41:54.3936186Z npm: 11.19.0
+2026-10-06T09:41:54.3936359Z yarn: 1.22.22
+2026-10-06T09:41:54.3937138Z ##[endgroup]
+2026-10-06T09:41:54.4441802Z ##[group]Run actions/setup-python@v7
+2026-10-06T09:41:54.4441997Z with:
+2026-10-06T09:41:54.4442115Z   python-version: 3.12
+2026-10-06T09:41:54.4442243Z   check-latest: false
+2026-10-06T09:41:54.4443752Z   token: ***
+2026-10-06T09:41:54.4443874Z   update-environment: true
+2026-10-06T09:41:54.4444045Z   allow-prereleases: false
+2026-10-06T09:41:54.4444218Z   freethreaded: false
+2026-10-06T09:41:54.4444343Z ##[endgroup]
+2026-10-06T09:41:54.5275259Z ##[group]Installed versions
+2026-10-06T09:41:54.5332603Z Successfully set up CPython (3.12.14)
+2026-10-06T09:41:54.5333133Z ##[endgroup]
+2026-10-06T09:41:54.6257290Z ##[group]Run corepack enable
+2026-10-06T09:41:54.6257574Z [36;1mcorepack enable[0m
+2026-10-06T09:41:54.7139843Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:41:54.7140099Z env:
+2026-10-06T09:41:54.7140288Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:41:54.7140871Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:41:54.7141119Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:41:54.7141339Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:41:54.7141559Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:41:54.7141782Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:41:54.7141974Z ##[endgroup]
+2026-10-06T09:41:54.8648507Z ##[group]Run pnpm install --frozen-lockfile
+2026-10-06T09:41:54.8648879Z [36;1mpnpm install --frozen-lockfile[0m
+2026-10-06T09:41:54.8706682Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:41:54.8706887Z env:
+2026-10-06T09:41:54.8707051Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:41:54.8707296Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:41:54.8707548Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:41:54.8707769Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:41:54.8707980Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:41:54.8708200Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:41:54.8708385Z ##[endgroup]
+2026-10-06T09:41:54.9721287Z ! Corepack is about to download http<runner-path>
+2026-10-06T09:41:56.1975824Z ? Verifying lockfile against supply-chain policies (267 entries)...
+2026-10-06T09:41:56.2035932Z Lockfile is up to date, resolution step is skipped
+2026-10-06T09:41:56.2751937Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-10-06T09:41:56.3074309Z Packages: +217
+2026-10-06T09:41:56.3074743Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-10-06T09:41:56.7397750Z Packages are copied from the content-addressable store to the virtual store.
+2026-10-06T09:41:56.7398441Z   Content-addressable store is at: <runner-home>/.local/share/pnpm/store/v11
+2026-10-06T09:41:56.7398887Z   Virtual store is at:             node_modules/.pnpm
+2026-10-06T09:41:57.2751897Z Progress: resolved 217, reused 0, downloaded 215, added 81
+2026-10-06T09:41:57.4633727Z Progress: resolved 217, reused 0, downloaded 217, added 217, done
+2026-10-06T09:41:58.1192609Z ✓ Lockfile passes supply-chain policies (267 entries in 1.9s)
+2026-10-06T09:41:58.1559707Z .../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+2026-10-06T09:41:58.2090189Z .../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+2026-10-06T09:41:58.5753306Z 
+2026-10-06T09:41:58.5753916Z dependencies:
+2026-10-06T09:41:58.5754166Z + @modelcontextprotocol/sdk 1.30.0
+2026-10-06T09:41:58.5754352Z + ajv 8.20.0
+2026-10-06T09:41:58.5754481Z + ajv-formats 3.0.1
+2026-10-06T09:41:58.5754605Z + zod 4.5.4
+2026-10-06T09:41:58.5754671Z 
+2026-10-06T09:41:58.5754727Z devDependencies:
+2026-10-06T09:41:58.5754857Z + @eslint/js 10.0.1
+2026-10-06T09:41:58.5755024Z + @types/node 26.5.0
+2026-10-06T09:41:58.5755191Z + esbuild 0.28.2
+2026-10-06T09:41:58.5755308Z + eslint 10.10.0
+2026-10-06T09:41:58.5755420Z + tsx 4.23.13
+2026-10-06T09:41:58.5755541Z + typescript 6.0.2
+2026-10-06T09:41:58.5755696Z + typescript-eslint 8.70.0
+2026-10-06T09:41:58.5755832Z + vitest 5.0.0
+2026-10-06T09:41:58.5755900Z 
+2026-10-06T09:41:58.6519575Z Done in 2.8s using pnpm v11.19.0
+2026-10-06T09:41:58.7388110Z ##[group]Run pnpm bundle:check
+2026-10-06T09:41:58.7388295Z [36;1mpnpm bundle:check[0m
+2026-10-06T09:41:58.7448570Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:41:58.7448768Z env:
+2026-10-06T09:41:58.7448935Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:41:58.7449177Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:41:58.7449411Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:41:58.7449623Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:41:58.7450034Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:41:58.7450253Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:41:58.7450435Z ##[endgroup]
+2026-10-06T09:41:59.3949805Z Already up to date
+2026-10-06T09:41:59.3955284Z Done in 285ms using pnpm v11.19.0
+2026-10-06T09:41:59.4093305Z $ node scripts/check-bundle.mjs
+2026-10-06T09:41:59.6631252Z ##[group]Run pnpm claude:drift
+2026-10-06T09:41:59.6631447Z [36;1mpnpm claude:drift[0m
+2026-10-06T09:41:59.6687650Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:41:59.6687839Z env:
+2026-10-06T09:41:59.6687989Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:41:59.6688229Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:41:59.6688462Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:41:59.6688673Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:41:59.6688903Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:41:59.6689117Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:41:59.6689302Z ##[endgroup]
+2026-10-06T09:42:00.2966433Z Already up to date
+2026-10-06T09:42:00.2970532Z Done in 266ms using pnpm v11.19.0
+2026-10-06T09:42:00.3091737Z $ node scripts/build-claude-plugin.mjs --drift
+2026-10-06T09:42:00.4639822Z claude-plugin: fresh
+2026-10-06T09:42:00.4822483Z ##[group]Run pnpm lint
+2026-10-06T09:42:00.4822644Z [36;1mpnpm lint[0m
+2026-10-06T09:42:00.4875487Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:42:00.4875675Z env:
+2026-10-06T09:42:00.4875828Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:42:00.4876070Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:42:00.4876311Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:42:00.4876522Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:42:00.4876751Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:42:00.4876970Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:42:00.4877155Z ##[endgroup]
+2026-10-06T09:42:01.0634543Z Already up to date
+2026-10-06T09:42:01.0639097Z Done in 262ms using pnpm v11.19.0
+2026-10-06T09:42:01.0763234Z $ eslint . && node scripts/validate-repository.mjs
+2026-10-06T09:42:06.0132371Z - code-review: missing tests/code-review
+2026-10-06T09:42:06.0132716Z - test-engineering: missing tests/test-engineering
+2026-10-06T09:42:06.0318838Z [ELIFECYCLE] Command failed with exit code 1.
+2026-10-06T09:42:06.0550075Z ##[error]Process completed with exit code 1.
+2026-10-06T09:42:06.0634576Z ##[group]Run actions/upload-artifact@v4
+2026-10-06T09:42:06.0634751Z with:
+2026-10-06T09:42:06.0634886Z   name: official-codex-37444732661-1-Linux
+2026-10-06T09:42:06.0635097Z   path: <runner-temp>/official-validation-Linux/
+2026-10-06T09:42:06.0635298Z   include-hidden-files: true
+2026-10-06T09:42:06.0635457Z   if-no-files-found: error
+2026-10-06T09:42:06.0635594Z   retention-days: 14
+2026-10-06T09:42:06.0635724Z   compression-level: 6
+2026-10-06T09:42:06.0635851Z   overwrite: false
+2026-10-06T09:42:06.0635966Z env:
+2026-10-06T09:42:06.0636117Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:42:06.0636402Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:42:06.0636648Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:42:06.0636869Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:42:06.0637095Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:42:06.0637349Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:42:06.0637538Z ##[endgroup]
+2026-10-06T09:42:06.1793024Z (node:2327) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-06T09:42:06.1793906Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-06T09:42:06.1816391Z ##[error]No files were found with the provided path: <runner-temp>/official-validation-Linux/. No artifacts will be uploaded.
+2026-10-06T09:42:06.2048147Z Post job cleanup.
+2026-10-06T09:42:06.2669792Z [command]/usr/bin/git version
+2026-10-06T09:42:06.2706063Z git version 2.55.0
+2026-10-06T09:42:06.2738358Z Temporarily overriding HOME='<runner-temp>/<ephemeral-id>' before making global git config changes
+2026-10-06T09:42:06.2739203Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-06T09:42:06.2742910Z [command]/usr/bin/git config --global --add safe.directory <repo>
+2026-10-06T09:42:06.2781696Z Removing SSH command configuration
+2026-10-06T09:42:06.2784321Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-06T09:42:06.2826216Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-06T09:42:06.3041070Z Removing HTTP extra header
+2026-10-06T09:42:06.3046594Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-06T09:42:06.3086952Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.http<runner-path>' || :"
+2026-10-06T09:42:06.3324849Z Removing includeIf entries pointing to credentials config files
+2026-10-06T09:42:06.3325441Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-06T09:42:06.3359606Z includeif.gitdi<runner-path>
+2026-10-06T09:42:06.3360285Z includeif.gitdi<runner-path>
+2026-10-06T09:42:06.3360881Z includeif.gitdi<runner-path>
+2026-10-06T09:42:06.3361652Z includeif.gitdi<runner-path>
+2026-10-06T09:42:06.3367846Z [command]/usr/bin/git config --local --get-all includeif.gitdi<runner-path>
+2026-10-06T09:42:06.3393521Z <runner-temp>/git-credentials-<ephemeral-id>.config
+2026-10-06T09:42:06.3402571Z [command]/usr/bin/git config --local --unset includeif.gitdi<runner-path> \/home\/runner\/work\/_temp\/git\-credentials\-f4b33698\-aefb\-4d36\-a91f\-f8eaa22eef7e\.config
+2026-10-06T09:42:06.3436650Z [command]/usr/bin/git config --local --get-all includeif.gitdi<runner-path>
+2026-10-06T09:42:06.3460894Z <runner-temp>/git-credentials-<ephemeral-id>.config
+2026-10-06T09:42:06.3469237Z [command]/usr/bin/git config --local --unset includeif.gitdi<runner-path> \/home\/runner\/work\/_temp\/git\-credentials\-f4b33698\-aefb\-4d36\-a91f\-f8eaa22eef7e\.config
+2026-10-06T09:42:06.3509077Z [command]/usr/bin/git config --local --get-all includeif.gitdi<runner-path>
+2026-10-06T09:42:06.3533035Z /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:42:06.3539045Z [command]/usr/bin/git config --local --unset includeif.gitdi<runner-path> \/github\/runner_temp\/git\-credentials\-f4b33698\-aefb\-4d36\-a91f\-f8eaa22eef7e\.config
+2026-10-06T09:42:06.3572478Z [command]/usr/bin/git config --local --get-all includeif.gitdi<runner-path>
+2026-10-06T09:42:06.3595704Z /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:42:06.3601606Z [command]/usr/bin/git config --local --unset includeif.gitdi<runner-path> \/github\/runner_temp\/git\-credentials\-f4b33698\-aefb\-4d36\-a91f\-f8eaa22eef7e\.config
+2026-10-06T09:42:06.3637001Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-06T09:42:06.3834768Z Removing credentials config '<runner-temp>/git-credentials-<ephemeral-id>.config'
+2026-10-06T09:42:06.3965602Z Cleaning up orphan processes
+2026-10-06T09:42:06.4171586Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/setup-node@v4, actions/upload-artifact@v4. For more information see: http<runner-path>

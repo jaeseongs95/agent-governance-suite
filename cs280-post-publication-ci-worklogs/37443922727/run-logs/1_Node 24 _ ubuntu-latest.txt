@@ -1,0 +1,858 @@
+﻿2026-10-06T09:34:46.3895779Z Current runner version: '2.337.0'
+2026-10-06T09:34:46.3920598Z ##[group]Runner Image Provisioner
+2026-10-06T09:34:46.3921510Z Hosted Compute Agent
+2026-10-06T09:34:46.3922290Z Version: 20260901.588
+2026-10-06T09:34:46.3922936Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+2026-10-06T09:34:46.3923720Z Build Date: 2026-09-01T19:56:44Z
+2026-10-06T09:34:46.3924414Z Worker ID: {<ephemeral-id>}
+2026-10-06T09:34:46.3925179Z Azure Region: westus
+2026-10-06T09:34:46.3925814Z ##[endgroup]
+2026-10-06T09:34:46.3927612Z ##[group]Operating System
+2026-10-06T09:34:46.3928331Z Ubuntu
+2026-10-06T09:34:46.3929248Z 24.04.5
+2026-10-06T09:34:46.3929806Z LTS
+2026-10-06T09:34:46.3930433Z ##[endgroup]
+2026-10-06T09:34:46.3930990Z ##[group]Runner Image
+2026-10-06T09:34:46.3931647Z Image: ubuntu-24.04
+2026-10-06T09:34:46.3932237Z Version: 20260927.320.1
+2026-10-06T09:34:46.3933551Z Included Software: http<runner-path>
+2026-10-06T09:34:46.3935129Z Image Release: http<runner-path>
+2026-10-06T09:34:46.3936129Z ##[endgroup]
+2026-10-06T09:34:46.3937228Z ##[group]GITHUB_TOKEN Permissions
+2026-10-06T09:34:46.3939580Z Contents: read
+2026-10-06T09:34:46.3940214Z Metadata: read
+2026-10-06T09:34:46.3940764Z ##[endgroup]
+2026-10-06T09:34:46.3942874Z Secret source: Actions
+2026-10-06T09:34:46.3943872Z Cache mode: write
+2026-10-06T09:34:46.3944712Z Prepare workflow directory
+2026-10-06T09:34:46.4285712Z Prepare all required actions
+2026-10-06T09:34:46.4334989Z Getting action download info
+2026-10-06T09:34:46.7983778Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-10-06T09:34:46.9102492Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-10-06T09:34:47.0324728Z Download action repository 'actions/setup-python@v7' (SHA:5fda3b95a4ea91299a34e894583c3862153e4b97)
+2026-10-06T09:34:47.2140281Z Complete job name: Node 24 / ubuntu-latest
+2026-10-06T09:34:47.2972254Z ##[group]Run actions/checkout@v7
+2026-10-06T09:34:47.2973136Z with:
+2026-10-06T09:34:47.2973584Z   fetch-depth: 0
+2026-10-06T09:34:47.2974118Z   repository: jaeseongs95/agent-governance-suite
+2026-10-06T09:34:47.2978194Z   token: ***
+2026-10-06T09:34:47.2979066Z   ssh-strict: true
+2026-10-06T09:34:47.2979533Z   ssh-user: git
+2026-10-06T09:34:47.2979993Z   persist-credentials: true
+2026-10-06T09:34:47.2980490Z   clean: true
+2026-10-06T09:34:47.2980942Z   sparse-checkout-cone-mode: true
+2026-10-06T09:34:47.2981474Z   fetch-tags: false
+2026-10-06T09:34:47.2982129Z   show-progress: true
+2026-10-06T09:34:47.2982808Z   lfs: false
+2026-10-06T09:34:47.2983241Z   submodules: false
+2026-10-06T09:34:47.2983703Z   set-safe-directory: true
+2026-10-06T09:34:47.2984214Z   allow-unsafe-pr-checkout: false
+2026-10-06T09:34:47.2985076Z ##[endgroup]
+2026-10-06T09:34:47.4024754Z Syncing repository: jaeseongs95/agent-governance-suite
+2026-10-06T09:34:47.4026729Z ##[group]Getting Git version info
+2026-10-06T09:34:47.4027692Z Working directory is '<repo>'
+2026-10-06T09:34:47.4029573Z [command]/usr/bin/git version
+2026-10-06T09:34:47.4112315Z git version 2.55.0
+2026-10-06T09:34:47.4141657Z ##[endgroup]
+2026-10-06T09:34:47.4150795Z Temporarily overriding HOME='<runner-temp>/<ephemeral-id>' before making global git config changes
+2026-10-06T09:34:47.4153154Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-06T09:34:47.4157344Z [command]/usr/bin/git config --global --add safe.directory <repo>
+2026-10-06T09:34:47.4208873Z Deleting the contents of '<repo>'
+2026-10-06T09:34:47.4212196Z ##[group]Determining repository object format
+2026-10-06T09:34:47.4213967Z ##[endgroup]
+2026-10-06T09:34:47.4215223Z ##[group]Initializing the repository
+2026-10-06T09:34:47.4220912Z [command]/usr/bin/git init <repo>
+2026-10-06T09:34:47.4331509Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-06T09:34:47.4333542Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-06T09:34:47.4336106Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-06T09:34:47.4337300Z hint: call:
+2026-10-06T09:34:47.4337920Z hint:
+2026-10-06T09:34:47.4338946Z hint: 	git config --global init.defaultBranch <name>
+2026-10-06T09:34:47.4339933Z hint:
+2026-10-06T09:34:47.4340881Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-06T09:34:47.4342415Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-06T09:34:47.4343605Z hint:
+2026-10-06T09:34:47.4344266Z hint: 	git branch -m <name>
+2026-10-06T09:34:47.4345028Z hint:
+2026-10-06T09:34:47.4346085Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-06T09:34:47.4348044Z Initialized empty Git repository in <repo>/.git/
+2026-10-06T09:34:47.4351284Z [command]/usr/bin/git remote add origin http<runner-path>
+2026-10-06T09:34:47.4401512Z ##[endgroup]
+2026-10-06T09:34:47.4402999Z ##[group]Disabling automatic garbage collection
+2026-10-06T09:34:47.4404243Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-06T09:34:47.4437410Z ##[endgroup]
+2026-10-06T09:34:47.4439304Z ##[group]Setting up auth
+2026-10-06T09:34:47.4449326Z Removing SSH command configuration
+2026-10-06T09:34:47.4450775Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-06T09:34:47.4497791Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-06T09:34:47.4931784Z Removing HTTP extra header
+2026-10-06T09:34:47.4943293Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-06T09:34:47.4984155Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.http<runner-path>' || :"
+2026-10-06T09:34:47.5243668Z Removing includeIf entries pointing to credentials config files
+2026-10-06T09:34:47.5249562Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-06T09:34:47.5288927Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-06T09:34:47.5522201Z [command]/usr/bin/git config --file <runner-temp>/git-credentials-<ephemeral-id>.config http.http<runner-path> AUTHORIZATION: basic ***
+2026-10-06T09:34:47.5562688Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> <runner-temp>/git-credentials-<ephemeral-id>.config
+2026-10-06T09:34:47.5596462Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> <runner-temp>/git-credentials-<ephemeral-id>.config
+2026-10-06T09:34:47.5634252Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:34:47.5671740Z [command]/usr/bin/git config --local includeIf.gitdi<runner-path> /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:34:47.5703658Z ##[endgroup]
+2026-10-06T09:34:47.5705015Z ##[group]Fetching the repository
+2026-10-06T09:34:47.5712042Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+2026-10-06T09:34:50.3635341Z From http<runner-path>
+2026-10-06T09:34:50.3638140Z  * [new branch]        chore/discussions-setup-20261002 -> origin/chore/discussions-setup-20261002
+2026-10-06T09:34:50.3641214Z  * [new branch]        claude/docs-host-attestation-drift -> origin/claude/docs-host-attestation-drift
+2026-10-06T09:34:50.3643907Z  * [new branch]        claude/skill-intake-common-vendor -> origin/claude/skill-intake-common-vendor
+2026-10-06T09:34:50.3647116Z  * [new branch]        claude/v273-evidence-windows-20260928T173839Z -> origin/claude/v273-evidence-windows-20260928T173839Z
+2026-10-06T09:34:50.3650682Z  * [new branch]        claude/v273-inputs     -> origin/claude/v273-inputs
+2026-10-06T09:34:50.3653191Z  * [new branch]        claude/v273-intake-src -> origin/claude/v273-intake-src
+2026-10-06T09:34:50.3656407Z  * [new branch]        claude/v273-msgqueue-retention-analysis-vmzcqs -> origin/claude/v273-msgqueue-retention-analysis-vmzcqs
+2026-10-06T09:34:50.3660428Z  * [new branch]        claude/v276-presence-deadline -> origin/claude/v276-presence-deadline
+2026-10-06T09:34:50.3663470Z  * [new branch]        claude/v277-utf8-framing -> origin/claude/v277-utf8-framing
+2026-10-06T09:34:50.3665649Z  * [new branch]        claude/v3x-v06-b3-linux-closure -> origin/claude/v3x-v06-b3-linux-closure
+2026-10-06T09:34:50.3667818Z  * [new branch]        claude/v3x-v06-b3b-r1  -> origin/claude/v3x-v06-b3b-r1
+2026-10-06T09:34:50.3670203Z  * [new branch]        codex/dot-w05-source-20261002 -> origin/codex/dot-w05-source-20261002
+2026-10-06T09:34:50.3672972Z  * [new branch]        codex/engineering-practices-2.8.1 -> origin/codex/engineering-practices-2.8.1
+2026-10-06T09:34:50.3675981Z  * [new branch]        codex/release-candidate-2.8.0 -> origin/codex/release-candidate-2.8.0
+2026-10-06T09:34:50.3679500Z  * [new branch]        codex/results-ags-f06-f07-r66-20261001 -> origin/codex/results-ags-f06-f07-r66-20261001
+2026-10-06T09:34:50.3682717Z  * [new branch]        codex/v260-semantic-decision-layer -> origin/codex/v260-semantic-decision-layer
+2026-10-06T09:34:50.3685524Z  * [new branch]        codex/v272-skill-intake-port -> origin/codex/v272-skill-intake-port
+2026-10-06T09:34:50.3688374Z  * [new branch]        codex/v3x-w05-r3-messaging-parity -> origin/codex/v3x-w05-r3-messaging-parity
+2026-10-06T09:34:50.3692624Z  * [new branch]        codex/v3x-w05-r3-noreply-transport -> origin/codex/v3x-w05-r3-noreply-transport
+2026-10-06T09:34:50.3695865Z  * [new branch]        codex/w05-f1-cloud-inputs-20261003 -> origin/codex/w05-f1-cloud-inputs-20261003
+2026-10-06T09:34:50.3699404Z  * [new branch]        dot/ags-3x-results-20261002 -> origin/dot/ags-3x-results-20261002
+2026-10-06T09:34:50.3702193Z  * [new branch]        dot/ags-b14-decision-20261002 -> origin/dot/ags-b14-decision-20261002
+2026-10-06T09:34:50.3705191Z  * [new branch]        dot/ags-g18-reproduction-20261002 -> origin/dot/ags-g18-reproduction-20261002
+2026-10-06T09:34:50.3708356Z  * [new branch]        dot/ags-w05-evidence-20261002 -> origin/dot/ags-w05-evidence-20261002
+2026-10-06T09:34:50.3711655Z  * [new branch]        dot/ags-w06w07-evidence-20261002 -> origin/dot/ags-w06w07-evidence-20261002
+2026-10-06T09:34:50.3714141Z  * [new branch]        evidence               -> origin/evidence
+2026-10-06T09:34:50.3716036Z  * [new branch]        main                   -> origin/main
+2026-10-06T09:34:50.3717816Z  * [new tag]           v0.1.0                 -> v0.1.0
+2026-10-06T09:34:50.3719889Z  * [new tag]           v0.2.0                 -> v0.2.0
+2026-10-06T09:34:50.3721615Z  * [new tag]           v1.0.0                 -> v1.0.0
+2026-10-06T09:34:50.3723280Z  * [new tag]           v1.0.1                 -> v1.0.1
+2026-10-06T09:34:50.3725058Z  * [new tag]           v1.0.2                 -> v1.0.2
+2026-10-06T09:34:50.3727191Z  * [new tag]           v1.0.3                 -> v1.0.3
+2026-10-06T09:34:50.3729621Z  * [new tag]           v1.0.4                 -> v1.0.4
+2026-10-06T09:34:50.3731437Z  * [new tag]           v1.0.5                 -> v1.0.5
+2026-10-06T09:34:50.3733121Z  * [new tag]           v1.1.0                 -> v1.1.0
+2026-10-06T09:34:50.3735244Z  * [new tag]           v1.10.0                -> v1.10.0
+2026-10-06T09:34:50.3736971Z  * [new tag]           v1.11.0                -> v1.11.0
+2026-10-06T09:34:50.3738910Z  * [new tag]           v1.12.0                -> v1.12.0
+2026-10-06T09:34:50.3740660Z  * [new tag]           v1.13.0                -> v1.13.0
+2026-10-06T09:34:50.3742517Z  * [new tag]           v1.14.0                -> v1.14.0
+2026-10-06T09:34:50.3744280Z  * [new tag]           v1.14.1                -> v1.14.1
+2026-10-06T09:34:50.3745912Z  * [new tag]           v1.15.0                -> v1.15.0
+2026-10-06T09:34:50.3747522Z  * [new tag]           v1.15.1                -> v1.15.1
+2026-10-06T09:34:50.3749476Z  * [new tag]           v1.16.0                -> v1.16.0
+2026-10-06T09:34:50.3751169Z  * [new tag]           v1.16.1                -> v1.16.1
+2026-10-06T09:34:50.3752776Z  * [new tag]           v1.16.2                -> v1.16.2
+2026-10-06T09:34:50.3755069Z  * [new tag]           v1.17.0                -> v1.17.0
+2026-10-06T09:34:50.3756970Z  * [new tag]           v1.18.0                -> v1.18.0
+2026-10-06T09:34:50.3758861Z  * [new tag]           v1.19.0                -> v1.19.0
+2026-10-06T09:34:50.3760479Z  * [new tag]           v1.19.1                -> v1.19.1
+2026-10-06T09:34:50.3762059Z  * [new tag]           v1.2.0                 -> v1.2.0
+2026-10-06T09:34:50.3763604Z  * [new tag]           v1.20.0                -> v1.20.0
+2026-10-06T09:34:50.3765311Z  * [new tag]           v1.20.1                -> v1.20.1
+2026-10-06T09:34:50.3766885Z  * [new tag]           v1.20.2                -> v1.20.2
+2026-10-06T09:34:50.3768883Z  * [new tag]           v1.20.3                -> v1.20.3
+2026-10-06T09:34:50.3770586Z  * [new tag]           v1.21.0                -> v1.21.0
+2026-10-06T09:34:50.3772505Z  * [new tag]           v1.3.0                 -> v1.3.0
+2026-10-06T09:34:50.3774308Z  * [new tag]           v1.4.0                 -> v1.4.0
+2026-10-06T09:34:50.3775876Z  * [new tag]           v1.4.1                 -> v1.4.1
+2026-10-06T09:34:50.3777405Z  * [new tag]           v1.4.2                 -> v1.4.2
+2026-10-06T09:34:50.3779199Z  * [new tag]           v1.4.3                 -> v1.4.3
+2026-10-06T09:34:50.3780842Z  * [new tag]           v1.5.0                 -> v1.5.0
+2026-10-06T09:34:50.3782578Z  * [new tag]           v1.6.0                 -> v1.6.0
+2026-10-06T09:34:50.3784142Z  * [new tag]           v1.7.0                 -> v1.7.0
+2026-10-06T09:34:50.3785698Z  * [new tag]           v1.8.0                 -> v1.8.0
+2026-10-06T09:34:50.3787537Z  * [new tag]           v1.9.0                 -> v1.9.0
+2026-10-06T09:34:50.3789409Z  * [new tag]           v2.0.0                 -> v2.0.0
+2026-10-06T09:34:50.3791713Z  * [new tag]           v2.1.0                 -> v2.1.0
+2026-10-06T09:34:50.3793575Z  * [new tag]           v2.1.1                 -> v2.1.1
+2026-10-06T09:34:50.3795145Z  * [new tag]           v2.1.2                 -> v2.1.2
+2026-10-06T09:34:50.3796674Z  * [new tag]           v2.2.0                 -> v2.2.0
+2026-10-06T09:34:50.3798208Z  * [new tag]           v2.2.1                 -> v2.2.1
+2026-10-06T09:34:50.3800637Z  * [new tag]           v2.2.2                 -> v2.2.2
+2026-10-06T09:34:50.3802213Z  * [new tag]           v2.2.3                 -> v2.2.3
+2026-10-06T09:34:50.3803765Z  * [new tag]           v2.2.4                 -> v2.2.4
+2026-10-06T09:34:50.3805304Z  * [new tag]           v2.2.5                 -> v2.2.5
+2026-10-06T09:34:50.3806837Z  * [new tag]           v2.2.6                 -> v2.2.6
+2026-10-06T09:34:50.3808382Z  * [new tag]           v2.3.0                 -> v2.3.0
+2026-10-06T09:34:50.3810559Z  * [new tag]           v2.4.0                 -> v2.4.0
+2026-10-06T09:34:50.3812491Z  * [new tag]           v2.5.0                 -> v2.5.0
+2026-10-06T09:34:50.3814307Z  * [new tag]           v2.6.0                 -> v2.6.0
+2026-10-06T09:34:50.3815840Z  * [new tag]           v2.7.0                 -> v2.7.0
+2026-10-06T09:34:50.3817379Z  * [new tag]           v2.7.1                 -> v2.7.1
+2026-10-06T09:34:50.3819059Z  * [new tag]           v2.7.2                 -> v2.7.2
+2026-10-06T09:34:50.3820756Z  * [new tag]           v2.7.3                 -> v2.7.3
+2026-10-06T09:34:50.3822316Z  * [new tag]           v2.7.4                 -> v2.7.4
+2026-10-06T09:34:50.3823824Z  * [new tag]           v2.7.5                 -> v2.7.5
+2026-10-06T09:34:50.3825619Z  * [new tag]           v2.7.6                 -> v2.7.6
+2026-10-06T09:34:50.3827243Z  * [new tag]           v2.7.7                 -> v2.7.7
+2026-10-06T09:34:50.3829041Z  * [new tag]           v2.8.0                 -> v2.8.0
+2026-10-06T09:34:50.3832902Z [command]/usr/bin/git branch --list --remote origin/main
+2026-10-06T09:34:50.3834463Z   origin/main
+2026-10-06T09:34:50.3836935Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+2026-10-06T09:34:50.3838724Z b7341d3e6636b79217b1f3d37d7a5014fcbf47be
+2026-10-06T09:34:50.3841940Z ##[endgroup]
+2026-10-06T09:34:50.3843492Z ##[group]Determining the checkout info
+2026-10-06T09:34:50.3845299Z ##[endgroup]
+2026-10-06T09:34:50.3846306Z [command]/usr/bin/git sparse-checkout disable
+2026-10-06T09:34:50.3849683Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-06T09:34:50.3853261Z ##[group]Checking out the ref
+2026-10-06T09:34:50.3854957Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-10-06T09:34:50.5022674Z Switched to a new branch 'main'
+2026-10-06T09:34:50.5028095Z branch 'main' set up to track 'origin/main'.
+2026-10-06T09:34:50.5054072Z ##[endgroup]
+2026-10-06T09:34:50.5102538Z [command]/usr/bin/git log -1 --format=%H
+2026-10-06T09:34:50.5131978Z b7341d3e6636b79217b1f3d37d7a5014fcbf47be
+2026-10-06T09:34:50.5497768Z ##[group]Run actions/setup-node@v4
+2026-10-06T09:34:50.5499235Z with:
+2026-10-06T09:34:50.5500145Z   node-version: 24
+2026-10-06T09:34:50.5501100Z   always-auth: false
+2026-10-06T09:34:50.5502080Z   check-latest: false
+2026-10-06T09:34:50.5512668Z   token: ***
+2026-10-06T09:34:50.5513576Z ##[endgroup]
+2026-10-06T09:34:50.7104611Z (node:2305) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-06T09:34:50.7106143Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-06T09:34:50.7109120Z Found in cache @ <toolcache>/node/24.21.0/x64
+2026-10-06T09:34:50.7110615Z ##[group]Environment details
+2026-10-06T09:34:53.4730640Z node: v24.21.0
+2026-10-06T09:34:53.4731531Z npm: 11.19.0
+2026-10-06T09:34:53.4732087Z yarn: 1.22.22
+2026-10-06T09:34:53.4733584Z ##[endgroup]
+2026-10-06T09:34:53.4926189Z ##[group]Run actions/setup-python@v7
+2026-10-06T09:34:53.4926544Z with:
+2026-10-06T09:34:53.4926809Z   python-version: 3.12
+2026-10-06T09:34:53.4927090Z   check-latest: false
+2026-10-06T09:34:53.4930142Z   token: ***
+2026-10-06T09:34:53.4930447Z   update-environment: true
+2026-10-06T09:34:53.4930744Z   allow-prereleases: false
+2026-10-06T09:34:53.4931023Z   freethreaded: false
+2026-10-06T09:34:53.4931284Z ##[endgroup]
+2026-10-06T09:34:53.6090000Z ##[group]Installed versions
+2026-10-06T09:34:53.6173352Z Successfully set up CPython (3.12.14)
+2026-10-06T09:34:53.6174211Z ##[endgroup]
+2026-10-06T09:34:53.6338042Z ##[group]Run corepack enable
+2026-10-06T09:34:53.6338869Z [36;1mcorepack enable[0m
+2026-10-06T09:34:53.6789479Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:34:53.6790041Z env:
+2026-10-06T09:34:53.6790468Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:34:53.6791129Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:34:53.6791750Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:34:53.6792328Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:34:53.6792893Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:34:53.6793766Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:34:53.6794261Z ##[endgroup]
+2026-10-06T09:34:53.8270013Z ##[group]Run pnpm install --frozen-lockfile
+2026-10-06T09:34:53.8270488Z [36;1mpnpm install --frozen-lockfile[0m
+2026-10-06T09:34:53.8339882Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:34:53.8340373Z env:
+2026-10-06T09:34:53.8340751Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:34:53.8341310Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:34:53.8341859Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:34:53.8342358Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:34:53.8342860Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:34:53.8343358Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:34:53.8343777Z ##[endgroup]
+2026-10-06T09:34:53.8912115Z ! Corepack is about to download http<runner-path>
+2026-10-06T09:34:56.1698689Z ? Verifying lockfile against supply-chain policies (267 entries)...
+2026-10-06T09:34:56.1764172Z Lockfile is up to date, resolution step is skipped
+2026-10-06T09:34:56.2943153Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-10-06T09:34:56.3317941Z Packages: +217
+2026-10-06T09:34:56.3329598Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-10-06T09:34:57.3020750Z Progress: resolved 217, reused 0, downloaded 55, added 0
+2026-10-06T09:34:57.9484879Z Packages are hard linked from the content-addressable store to the virtual store.
+2026-10-06T09:34:57.9486474Z   Content-addressable store is at: <runner-home>/.local/share/pnpm/store/v11
+2026-10-06T09:34:57.9487427Z   Virtual store is at:             node_modules/.pnpm
+2026-10-06T09:34:58.3232384Z Progress: resolved 217, reused 0, downloaded 128, added 8
+2026-10-06T09:34:58.7672750Z Progress: resolved 217, reused 0, downloaded 217, added 217, done
+2026-10-06T09:34:59.0310363Z ✓ Lockfile passes supply-chain policies (267 entries in 2.8s)
+2026-10-06T09:34:59.0448301Z .../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+2026-10-06T09:34:59.1128223Z .../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+2026-10-06T09:34:59.2873916Z 
+2026-10-06T09:34:59.2898686Z dependencies:
+2026-10-06T09:34:59.2899262Z + @modelcontextprotocol/sdk 1.30.0
+2026-10-06T09:34:59.2899717Z + ajv 8.20.0
+2026-10-06T09:34:59.2900048Z + ajv-formats 3.0.1
+2026-10-06T09:34:59.2900371Z + zod 4.5.4
+2026-10-06T09:34:59.2900576Z 
+2026-10-06T09:34:59.2900731Z devDependencies:
+2026-10-06T09:34:59.2901108Z + @eslint/js 10.0.1
+2026-10-06T09:34:59.2901542Z + @types/node 26.5.0
+2026-10-06T09:34:59.2901888Z + esbuild 0.28.2
+2026-10-06T09:34:59.2902235Z + eslint 10.10.0
+2026-10-06T09:34:59.2902546Z + tsx 4.23.13
+2026-10-06T09:34:59.2902918Z + typescript 6.0.2
+2026-10-06T09:34:59.2903345Z + typescript-eslint 8.70.0
+2026-10-06T09:34:59.2903781Z + vitest 5.0.0
+2026-10-06T09:34:59.2903984Z 
+2026-10-06T09:34:59.3841402Z Done in 4.1s using pnpm v11.19.0
+2026-10-06T09:34:59.4474985Z ##[group]Run pnpm bundle:check
+2026-10-06T09:34:59.4475324Z [36;1mpnpm bundle:check[0m
+2026-10-06T09:34:59.4542549Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:34:59.4542934Z env:
+2026-10-06T09:34:59.4543226Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:34:59.4543711Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:34:59.4544190Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:34:59.4544618Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:34:59.4545054Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:34:59.4545487Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:34:59.4545855Z ##[endgroup]
+2026-10-06T09:35:00.3946122Z Already up to date
+2026-10-06T09:35:00.3954133Z Done in 421ms using pnpm v11.19.0
+2026-10-06T09:35:00.4099845Z $ node scripts/check-bundle.mjs
+2026-10-06T09:35:00.7097993Z ##[group]Run pnpm claude:drift
+2026-10-06T09:35:00.7098311Z [36;1mpnpm claude:drift[0m
+2026-10-06T09:35:00.7163937Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:35:00.7164304Z env:
+2026-10-06T09:35:00.7164585Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:00.7165041Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:35:00.7165492Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:00.7165908Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:00.7166359Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:00.7166810Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:35:00.7167191Z ##[endgroup]
+2026-10-06T09:35:01.6376602Z Already up to date
+2026-10-06T09:35:01.6384257Z Done in 419ms using pnpm v11.19.0
+2026-10-06T09:35:01.6522628Z $ node scripts/build-claude-plugin.mjs --drift
+2026-10-06T09:35:01.8979925Z claude-plugin: fresh
+2026-10-06T09:35:01.9204311Z ##[group]Run pnpm lint
+2026-10-06T09:35:01.9204598Z [36;1mpnpm lint[0m
+2026-10-06T09:35:01.9268214Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:35:01.9268926Z env:
+2026-10-06T09:35:01.9269225Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:01.9269734Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:35:01.9270233Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:01.9270674Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:01.9271104Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:01.9271538Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:35:01.9271909Z ##[endgroup]
+2026-10-06T09:35:02.8753933Z Already up to date
+2026-10-06T09:35:02.8761753Z Done in 443ms using pnpm v11.19.0
+2026-10-06T09:35:02.8899278Z $ eslint . && node scripts/validate-repository.mjs
+2026-10-06T09:35:09.9420845Z repository: valid
+2026-10-06T09:35:09.9637535Z ##[group]Run pnpm release:check
+2026-10-06T09:35:09.9637851Z [36;1mpnpm release:check[0m
+2026-10-06T09:35:09.9703543Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:35:09.9703988Z env:
+2026-10-06T09:35:09.9704292Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:09.9704811Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:35:09.9705328Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:09.9705784Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:09.9706250Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:09.9706722Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:35:09.9707114Z ##[endgroup]
+2026-10-06T09:35:10.9061096Z Already up to date
+2026-10-06T09:35:10.9068887Z Done in 426ms using pnpm v11.19.0
+2026-10-06T09:35:10.9202739Z $ node scripts/sync-release-metadata.mjs
+2026-10-06T09:35:10.9624551Z release metadata is synchronized
+2026-10-06T09:35:10.9812106Z ##[group]Run pnpm source:check
+2026-10-06T09:35:10.9812431Z [36;1mpnpm source:check[0m
+2026-10-06T09:35:10.9875188Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:35:10.9875743Z env:
+2026-10-06T09:35:10.9876035Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:10.9876521Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:35:10.9876999Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:10.9877427Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:10.9877886Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:10.9878338Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:35:10.9879138Z ##[endgroup]
+2026-10-06T09:35:11.9026993Z Already up to date
+2026-10-06T09:35:11.9034811Z Done in 417ms using pnpm v11.19.0
+2026-10-06T09:35:11.9189872Z $ node scripts/check-source-lock.mjs
+2026-10-06T09:35:12.0636677Z source lock is consistent
+2026-10-06T09:35:12.0860417Z ##[group]Run pnpm build
+2026-10-06T09:35:12.0860724Z [36;1mpnpm build[0m
+2026-10-06T09:35:12.0926492Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:35:12.0926852Z env:
+2026-10-06T09:35:12.0927133Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:12.0927594Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:35:12.0928051Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:12.0928730Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:12.0929165Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:12.0929573Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:35:12.0929933Z ##[endgroup]
+2026-10-06T09:35:13.0221541Z Already up to date
+2026-10-06T09:35:13.0230172Z Done in 420ms using pnpm v11.19.0
+2026-10-06T09:35:13.0363015Z $ tsc --noEmit && node scripts/build.mjs
+2026-10-06T09:35:17.5495792Z ##[group]Run pnpm process-identity:check
+2026-10-06T09:35:17.5496159Z [36;1mpnpm process-identity:check[0m
+2026-10-06T09:35:17.5559512Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:35:17.5559878Z env:
+2026-10-06T09:35:17.5560152Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:17.5560617Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:35:17.5561071Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:17.5561484Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:17.5561898Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:17.5562310Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:35:17.5562668Z ##[endgroup]
+2026-10-06T09:35:18.4997341Z Already up to date
+2026-10-06T09:35:18.5004876Z Done in 414ms using pnpm v11.19.0
+2026-10-06T09:35:18.5138066Z $ tsx scripts/check-process-identity.ts
+2026-10-06T09:35:18.7001132Z process identity: ready (linux)
+2026-10-06T09:35:18.7417138Z ##[group]Run pnpm test
+2026-10-06T09:35:18.7417448Z [36;1mpnpm test[0m
+2026-10-06T09:35:18.7482132Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:35:18.7482486Z env:
+2026-10-06T09:35:18.7482757Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:18.7483190Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:35:18.7483622Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:18.7484013Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:18.7484416Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:35:18.7484843Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:35:18.7485166Z ##[endgroup]
+2026-10-06T09:35:19.6653529Z Already up to date
+2026-10-06T09:35:19.6661559Z Done in 420ms using pnpm v11.19.0
+2026-10-06T09:35:19.6800917Z $ node scripts/build.mjs && vitest run
+2026-10-06T09:35:20.2402283Z 
+2026-10-06T09:35:20.2410566Z [1m[30m[46m RUN [49m[39m[22m [36mv5.0.0 [39m[90m<repo>[39m
+2026-10-06T09:35:20.2411389Z 
+2026-10-06T09:35:36.8087557Z  [32m✓[39m tests/session-messaging/session-message.test.ts [2m([22m[2m73 tests[22m[2m)[22m[33m 15636[2mms[22m[39m
+2026-10-06T09:35:36.8095137Z    [32m✓[39m session message spool [2m(17)[22m
+2026-10-06T09:35:36.8116115Z      [33m[2m✓[22m[39m caps the unacknowledged spool and expires messages[33m 599[2mms[22m[39m
+2026-10-06T09:35:36.8118077Z      [33m[2m✓[22m[39m allows one wake claim across two concurrent SQLite connections[33m 493[2mms[22m[39m
+2026-10-06T09:35:36.8120558Z    [32m✓[39m TLS 1.3 broker and vendor-neutral adapter [2m(54)[22m
+2026-10-06T09:35:36.8122429Z      [33m[2m✓[22m[39m fails fast on broker exit and leaves deadline cleanup to the state-directory owner[33m 389[2mms[22m[39m
+2026-10-06T09:35:36.8124422Z      [33m[2m✓[22m[39m returns at the startup deadline while state preparation is still blocked and never spawns afterward[33m 555[2mms[22m[39m
+2026-10-06T09:35:36.8126388Z      [33m[2m✓[22m[39m enforces an absolute request deadline while a TLS peer keeps sending partial data[33m 348[2mms[22m[39m
+2026-10-06T09:35:36.8128392Z      [33m[2m✓[22m[39m uses one plugin queue profile for packaged presence and relay until the next SessionStart[33m 5782[2mms[22m[39m
+2026-10-06T09:35:36.8130851Z      [33m[2m✓[22m[39m pins the certificate, authenticates requests, survives restart, and supports arbitrary hosts[33m 550[2mms[22m[39m
+2026-10-06T09:35:36.8132748Z      [33m[2m✓[22m[39m blocks only verified empty Codex wake prompts in the source hook[33m 544[2mms[22m[39m
+2026-10-06T09:35:36.8134447Z      [33m[2m✓[22m[39m blocks only verified empty Codex wake prompts in the packaged hook[33m 1308[2mms[22m[39m
+2026-10-06T09:35:36.8136540Z      [33m[2m✓[22m[39m blocks a verified retired Codex wake marker without claiming the current body through the source hook[33m 354[2mms[22m[39m
+2026-10-06T09:35:36.8139067Z      [33m[2m✓[22m[39m blocks a verified retired Codex wake marker without claiming the current body through the packaged hook[33m 427[2mms[22m[39m
+2026-10-06T09:35:36.8141094Z      [33m[2m✓[22m[39m keeps a maximum-size peer message within the hook context limit[33m 314[2mms[22m[39m
+2026-10-06T09:35:36.8142609Z      [33m[2m✓[22m[39m escapes peer bodies inside one bounded JSON block[33m 317[2mms[22m[39m
+2026-10-06T09:35:36.8144320Z      [33m[2m✓[22m[39m starts the relay without spending a second claim budget during SessionStart[33m 332[2mms[22m[39m
+2026-10-06T09:35:36.8146062Z      [33m[2m✓[22m[39m leaves Codex Stop messages queued for a supported context event[33m 312[2mms[22m[39m
+2026-10-06T09:35:36.8147620Z      [33m[2m✓[22m[39m keeps packaged hook and relay entrypoints isolated[33m 324[2mms[22m[39m
+2026-10-06T09:35:36.8149621Z      [33m[2m✓[22m[39m keeps Claude Code Stop context delivery enabled[33m 408[2mms[22m[39m
+2026-10-06T09:35:36.8150883Z    [32m✓[39m session message MCP tools [2m(2)[22m
+2026-10-06T09:35:36.8152155Z      [33m[2m✓[22m[39m validates bound send, status, and acknowledgement calls[33m 770[2mms[22m[39m
+2026-10-06T09:35:37.6363024Z  [32m✓[39m tests/mcp/workflow-service.test.ts [2m([22m[2m40 tests[22m[2m)[22m[33m 16762[2mms[22m[39m
+2026-10-06T09:35:37.6370164Z    [32m✓[39m SqliteWorkflowStore [2m(4)[22m
+2026-10-06T09:35:37.6371800Z      [33m[2m✓[22m[39m migrates an active v2 workflow to v5 and preserves receipt updates[33m 891[2mms[22m[39m
+2026-10-06T09:35:37.6373138Z    [32m✓[39m WorkflowService [2m(36)[22m
+2026-10-06T09:35:37.6374696Z      [33m[2m✓[22m[39m persists runs, signing keys, revisions, and run sequences in SQLite[33m 693[2mms[22m[39m
+2026-10-06T09:35:37.6399966Z      [33m[2m✓[22m[39m rejects stale, replayed, and cross-stage trusted observations[33m 511[2mms[22m[39m
+2026-10-06T09:35:37.6403148Z      [33m[2m✓[22m[39m observes a failing stage without holding it to the assurance floor[33m 1006[2mms[22m[39m
+2026-10-06T09:35:37.6404626Z      [33m[2m✓[22m[39m still holds a passing stage to the assurance floor[33m 430[2mms[22m[39m
+2026-10-06T09:35:37.6406010Z      [33m[2m✓[22m[39m persists trusted observation claims across service restart[33m 443[2mms[22m[39m
+2026-10-06T09:35:37.6407404Z      [33m[2m✓[22m[39m rejects non-canonical plan integrity token spellings[33m 361[2mms[22m[39m
+2026-10-06T09:35:37.6409302Z      [33m[2m✓[22m[39m binds execution requirements and rejects missing or under-provisioned stage execution[33m 317[2mms[22m[39m
+2026-10-06T09:35:37.6411332Z      [33m[2m✓[22m[39m starts from a plan and enforces revision, ordering, and evidence[33m 341[2mms[22m[39m
+2026-10-06T09:35:37.6412969Z      [33m[2m✓[22m[39m rejects forged, modified, and foreign-process plans without creating a run[33m 311[2mms[22m[39m
+2026-10-06T09:35:37.6414652Z      [33m[2m✓[22m[39m requires a PASS verdict and an auditor independent from implementation actors[33m 405[2mms[22m[39m
+2026-10-06T09:35:37.6416205Z      [33m[2m✓[22m[39m rejects deliberation without an eligible DecisionRecord[33m 330[2mms[22m[39m
+2026-10-06T09:35:37.6417895Z      [33m[2m✓[22m[39m rejects every canonical invalid DecisionRecord at the MCP gate[33m 6222[2mms[22m[39m
+2026-10-06T09:35:40.1263887Z  [32m✓[39m tests/mcp/convergence-guard.test.ts [2m([22m[2m66 tests[22m[2m)[22m[33m 19243[2mms[22m[39m
+2026-10-06T09:35:40.1307325Z    [32m✓[39m local MCP convergence guard [2m(33)[22m
+2026-10-06T09:35:40.1338305Z      [33m[2m✓[22m[39m opens an immutable root and rejects overlapping active scope even under a changed taskId[33m 498[2mms[22m[39m
+2026-10-06T09:35:40.1340461Z      [33m[2m✓[22m[39m requires a lease for every valid orchestrated plan[33m 332[2mms[22m[39m
+2026-10-06T09:35:40.1380470Z      [33m[2m✓[22m[39m reuses root and lease bindings when compact claim and guarded start omit duplicate values[33m 588[2mms[22m[39m
+2026-10-06T09:35:40.1411601Z      [33m[2m✓[22m[39m rejects a repeated target and repeated evidence as NEW_EVIDENCE_REQUIRED[33m 333[2mms[22m[39m
+2026-10-06T09:35:40.1432509Z      [33m[2m✓[22m[39m records a rejected retry on the root without spending attempt budget[33m 622[2mms[22m[39m
+2026-10-06T09:35:40.1434791Z      [33m[2m✓[22m[39m records a stale-fingerprint rejection without burning its evidence[33m 437[2mms[22m[39m
+2026-10-06T09:35:40.1436599Z      [33m[2m✓[22m[39m reads a root stored before retry rejections existed[33m 349[2mms[22m[39m
+2026-10-06T09:35:40.1438679Z      [33m[2m✓[22m[39m allows only one competing lease claim across two SQLite connections[33m 1371[2mms[22m[39m
+2026-10-06T09:35:40.1440960Z      [33m[2m✓[22m[39m allows only one trusted observation claim across two SQLite connections[33m 457[2mms[22m[39m
+2026-10-06T09:35:40.1443573Z      [33m[2m✓[22m[39m does not open a new epoch when an otherwise preserving review has no target correction[33m 327[2mms[22m[39m
+2026-10-06T09:35:40.1446002Z      [33m[2m✓[22m[39m genericized Korean attempt-6/7 regression gates changed evaluation meaning before attempt 7 starts[33m 408[2mms[22m[39m
+2026-10-06T09:35:40.1447682Z    [32m✓[39m server-derived workspace identity [2m(20)[22m
+2026-10-06T09:35:40.1450429Z      [33m[2m✓[22m[39m keeps a gated root blocking its relative surface in every checkout of the repository[33m 370[2mms[22m[39m
+2026-10-06T09:35:40.1452823Z      [33m[2m✓[22m[39m follows the write surface of a stored root after a review replaces its frame[33m 321[2mms[22m[39m
+2026-10-06T09:35:40.1455334Z      [33m[2m✓[22m[39m lets two gated roots be replaced without blocking each other, but not widened or rescoped past a gate[33m 353[2mms[22m[39m
+2026-10-06T09:35:40.1458285Z      [33m[2m✓[22m[39m backfills identities for stored roots without rewriting them and treats legacy URI scope as the whole workspace[33m 442[2mms[22m[39m
+2026-10-06T09:35:40.1460762Z      [33m[2m✓[22m[39m admits only one of two connections that open the same target at once[33m 469[2mms[22m[39m
+2026-10-06T09:35:40.1462346Z    [32m✓[39m gated roots stored before identities existed [2m(13)[22m
+2026-10-06T09:35:40.1464423Z      [33m[2m✓[22m[39m does not reuse an identity observed for a replaced frame, and grants no legacy exception for it[33m 395[2mms[22m[39m
+2026-10-06T09:35:40.1466925Z      [33m[2m✓[22m[39m takes a checkout that appears above an observed non-Git surface only once the target itself exists[33m 364[2mms[22m[39m
+2026-10-06T09:35:40.1470059Z      [33m[2m✓[22m[39m follows a checkout created after a root was registered for an absolute target below an existing ch…, and keeps it once it is deleted[33m 388[2mms[22m[39m
+2026-10-06T09:35:40.1473488Z      [33m[2m✓[22m[39m still replaces a gated legacy root of a deleted checkout when the same workspace is named[33m 302[2mms[22m[39m
+2026-10-06T09:35:40.7581304Z  [32m✓[39m tests/session-messaging/wake-liveness.test.mjs [2m([22m[2m36 tests[22m[2m)[22m[33m 2471[2mms[22m[39m
+2026-10-06T09:35:40.7610757Z    [33m[2m✓[22m[39m G: two independent processes racing the v2.7.2 upgrade both open one migrated schema[33m 303[2mms[22m[39m
+2026-10-06T09:35:40.7643655Z    [33m[2m✓[22m[39m two independent relay processes racing retirement create one active attempt[33m 302[2mms[22m[39m
+2026-10-06T09:35:42.8597856Z  [32m✓[39m tests/session-messaging/wake-lifecycle.test.mjs [2m([22m[2m51 tests[22m[2m)[22m[33m 5774[2mms[22m[39m
+2026-10-06T09:35:42.8630378Z    [33m[2m✓[22m[39m independent generation/outcome-first-race workers permit exactly one separate new effect[33m 630[2mms[22m[39m
+2026-10-06T09:35:42.8660007Z    [33m[2m✓[22m[39m independent generation/start-first-race workers permit exactly one separate new effect[33m 579[2mms[22m[39m
+2026-10-06T09:35:42.8680683Z    [33m[2m✓[22m[39m verified old arrival in another process releases only the old attempt and permits one new effect[33m 527[2mms[22m[39m
+2026-10-06T09:35:42.8736420Z    [33m[2m✓[22m[39m W05-r2 independent senders and relay processes perform exactly one external call[33m 532[2mms[22m[39m
+2026-10-06T09:35:42.8761281Z    [33m[2m✓[22m[39m W05-r2 independent process crash before start recovers the same attempt; after effect never resends[33m 1321[2mms[22m[39m
+2026-10-06T09:35:44.9821027Z  [32m✓[39m tests/mcp/host-attestation.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 3539[2mms[22m[39m
+2026-10-06T09:35:44.9895455Z    [32m✓[39m Claude Code host attestation through the MCP boundary [2m(11)[22m
+2026-10-06T09:35:44.9898353Z      [33m[2m✓[22m[39m completes an orchestrated workflow with claude-code observations[33m 633[2mms[22m[39m
+2026-10-06T09:35:44.9900665Z      [33m[2m✓[22m[39m completes an orchestrated workflow with codex observations[33m 393[2mms[22m[39m
+2026-10-06T09:35:44.9902864Z      [33m[2m✓[22m[39m completes an orchestrated workflow with codex observations[33m 305[2mms[22m[39m
+2026-10-06T09:35:44.9904621Z      [33m[2m✓[22m[39m keeps the default server without a provider on BINDING_REQUIRED[33m 464[2mms[22m[39m
+2026-10-06T09:35:47.4260664Z  [32m✓[39m tests/tooling/claude-plugin.test.mjs [2m([22m[2m20 tests[22m[2m)[22m[33m 2170[2mms[22m[39m
+2026-10-06T09:35:47.4289376Z    [32m✓[39m generated Claude plugin [2m(12)[22m
+2026-10-06T09:35:47.4291150Z      [33m[2m✓[22m[39m keeps no copy of the common intake sentences in any tracked file outside the shared source[33m 884[2mms[22m[39m
+2026-10-06T09:35:47.4322758Z      [33m[2m✓[22m[39m removes a caller-supplied token when it cannot attest[33m 446[2mms[22m[39m
+2026-10-06T09:35:50.7191139Z  [32m✓[39m tests/session-messaging/historical-wake.test.mjs [2m([22m[2m65 tests[22m[2m)[22m[33m 7622[2mms[22m[39m
+2026-10-06T09:35:50.7195225Z    [33m[2m✓[22m[39m bundled public CLI forwards only IDs to the private broker and cannot repeat recovery[33m 387[2mms[22m[39m
+2026-10-06T09:35:50.7197612Z    [33m[2m✓[22m[39m packaged CLI binds history to explicit broker state directory: prestarted[33m 602[2mms[22m[39m
+2026-10-06T09:35:50.7200108Z    [33m[2m✓[22m[39m packaged CLI binds history to explicit broker state directory: client-ensure[33m 648[2mms[22m[39m
+2026-10-06T09:35:50.7202232Z    [33m[2m✓[22m[39m packaged root CLI rejects unsupported trust schema without mutation: 0[33m 311[2mms[22m[39m
+2026-10-06T09:35:50.7228272Z    [33m[2m✓[22m[39m packaged root CLI rejects unsupported trust schema without mutation: 1[33m 311[2mms[22m[39m
+2026-10-06T09:35:50.7230783Z    [33m[2m✓[22m[39m packaged root CLI rejects unsupported trust schema without mutation: 2[33m 332[2mms[22m[39m
+2026-10-06T09:35:50.7232617Z    [33m[2m✓[22m[39m packaged root CLI rejects unsupported trust schema without mutation: 99[33m 312[2mms[22m[39m
+2026-10-06T09:35:50.7234325Z    [33m[2m✓[22m[39m packaged root CLI rejects unsupported trust schema without mutation: missing-table[33m 333[2mms[22m[39m
+2026-10-06T09:35:50.7236094Z    [33m[2m✓[22m[39m packaged root CLI rejects unsupported trust schema without mutation: wrong-column[33m 317[2mms[22m[39m
+2026-10-06T09:35:50.7238921Z    [33m[2m✓[22m[39m packaged claude CLI rejects unsupported trust schema without mutation: 0[33m 331[2mms[22m[39m
+2026-10-06T09:35:50.7240737Z    [33m[2m✓[22m[39m packaged claude CLI rejects unsupported trust schema without mutation: 1[33m 302[2mms[22m[39m
+2026-10-06T09:35:50.7242394Z    [33m[2m✓[22m[39m packaged claude CLI rejects unsupported trust schema without mutation: 2[33m 340[2mms[22m[39m
+2026-10-06T09:35:50.7244056Z    [33m[2m✓[22m[39m packaged claude CLI rejects unsupported trust schema without mutation: 99[33m 330[2mms[22m[39m
+2026-10-06T09:35:50.7245867Z    [33m[2m✓[22m[39m packaged claude CLI rejects unsupported trust schema without mutation: missing-table[33m 429[2mms[22m[39m
+2026-10-06T09:35:50.7247680Z    [33m[2m✓[22m[39m packaged claude CLI rejects unsupported trust schema without mutation: wrong-column[33m 315[2mms[22m[39m
+2026-10-06T09:35:55.8906952Z  [32m✓[39m tests/session-messaging/peer-wait.test.ts [2m([22m[2m28 tests[22m[2m)[22m[33m 4965[2mms[22m[39m
+2026-10-06T09:35:55.8924530Z    [33m[2m✓[22m[39m enforces native wait through the public packaged hook and preserves unrelated waits[33m 1153[2mms[22m[39m
+2026-10-06T09:35:55.8926327Z    [33m[2m✓[22m[39m the public CLI consumes the decision before delay and sends no repeated poll when denied[33m 387[2mms[22m[39m
+2026-10-06T09:35:55.8930315Z    [33m[2m✓[22m[39m public native hook suppresses equivalent payloads but permits actual cursor change[33m 672[2mms[22m[39m
+2026-10-06T09:35:55.8932495Z    [33m[2m✓[22m[39m public CLI equivalent retransmissions consume one decision each and state change restores a snapshot[33m 612[2mms[22m[39m
+2026-10-06T09:35:55.8934740Z    [33m[2m✓[22m[39m CLI unknown resume uses one bounded wait and does not force permanent stopping[33m 1228[2mms[22m[39m
+2026-10-06T09:35:55.8936686Z    [33m[2m✓[22m[39m broker restart preserves messages but drops resume and repeat-suppression evidence[33m 700[2mms[22m[39m
+2026-10-06T09:35:58.9450481Z  [32m✓[39m tests/mcp/korean-prose-cycle-receipt.test.ts [2m([22m[2m13 tests[22m[2m)[22m[33m 18392[2mms[22m[39m
+2026-10-06T09:35:58.9451684Z    [32m✓[39m range-aware Korean prose cycle receipts [2m(13)[22m
+2026-10-06T09:35:58.9453088Z      [33m[2m✓[22m[39m records canonical structured work products and binds selection through finalization[33m 2880[2mms[22m[39m
+2026-10-06T09:35:58.9454444Z      [33m[2m✓[22m[39m rejects a cycle work product changed after the receipt was recorded[33m 1848[2mms[22m[39m
+2026-10-06T09:35:58.9455901Z      [33m[2m✓[22m[39m rejects a cycle directory outside the evaluation root[33m 371[2mms[22m[39m
+2026-10-06T09:35:58.9457325Z      [33m[2m✓[22m[39m rejects a structured cycle that omits formal readiness evidence[33m 381[2mms[22m[39m
+2026-10-06T09:35:58.9459080Z      [33m[2m✓[22m[39m does not silently select the historical cycle when no cycle path is given[33m 398[2mms[22m[39m
+2026-10-06T09:35:58.9460666Z      [33m[2m✓[22m[39m rejects structured run metadata without execution provenance[33m 607[2mms[22m[39m
+2026-10-06T09:35:58.9462185Z      [33m[2m✓[22m[39m rejects structured run metadata with an unverified actual model[33m 655[2mms[22m[39m
+2026-10-06T09:35:58.9463707Z      [33m[2m✓[22m[39m derives a passing quality decision from the bound final records[33m 1913[2mms[22m[39m
+2026-10-06T09:35:58.9465582Z      [33m[2m✓[22m[39m verifies a receipt whose quality evidence passed only with the external quality digest[33m 3009[2mms[22m[39m
+2026-10-06T09:35:58.9467131Z      [33m[2m✓[22m[39m rejects quality evidence when bound final records miss the improvement threshold[33m 1673[2mms[22m[39m
+2026-10-06T09:35:58.9468809Z      [33m[2m✓[22m[39m rejects a label leaked into the independent adjudicator input[33m 1058[2mms[22m[39m
+2026-10-06T09:35:58.9470368Z      [33m[2m✓[22m[39m does not count an unsafe independently adjudicated edit as an improvement[33m 1739[2mms[22m[39m
+2026-10-06T09:35:58.9472087Z      [33m[2m✓[22m[39m rejects a start claim and role metadata replaced after the workflow receipt was finalized[33m 1854[2mms[22m[39m
+2026-10-06T09:35:59.3935435Z  [32m✓[39m tests/context-continuity/continuity.test.ts [2m([22m[2m15 tests[22m[2m)[22m[33m 3279[2mms[22m[39m
+2026-10-06T09:35:59.3966676Z    [32m✓[39m direct task continuity [2m(10)[22m
+2026-10-06T09:35:59.3968136Z      [33m[2m✓[22m[39m stores replacement snapshots with CAS and request idempotency[33m 378[2mms[22m[39m
+2026-10-06T09:35:59.3969915Z      [33m[2m✓[22m[39m returns body-free candidates and loads body only after exact revalidation[33m 343[2mms[22m[39m
+2026-10-06T09:35:59.3972754Z      [33m[2m✓[22m[39m allows only one winner across two SQLite connections using the same CAS revision[33m 399[2mms[22m[39m
+2026-10-06T09:35:59.4317344Z  [32m✓[39m tests/session-messaging/message-retention.test.ts [2m([22m[2m16 tests[22m[2m)[22m[33m 11787[2mms[22m[39m
+2026-10-06T09:35:59.4319710Z    [33m[2m✓[22m[39m caps one sender at the sender limit (limit-1, limit, limit+1) without blocking other senders[33m 526[2mms[22m[39m
+2026-10-06T09:35:59.4321653Z    [33m[2m✓[22m[39m rejects prepare and send with global scope when the global receipt pool is full[33m 2163[2mms[22m[39m
+2026-10-06T09:35:59.4323442Z    [33m[2m✓[22m[39m drained senders regain capacity at ACK+1h instead of message expiry+1h[33m 447[2mms[22m[39m
+2026-10-06T09:35:59.4325261Z    [33m[2m✓[22m[39m two processes sending for one sender at limit-1 never exceed the sender limit[33m 923[2mms[22m[39m
+2026-10-06T09:35:59.4327653Z    [33m[2m✓[22m[39m service reports capacity rejections as definite no-effect with scope and earliest release details[33m 2462[2mms[22m[39m
+2026-10-06T09:35:59.4330160Z    [33m[2m✓[22m[39m a resend of an already sent ID at full sender and global capacity is a duplicate, not a capacity rejection[33m 2033[2mms[22m[39m
+2026-10-06T09:35:59.4332159Z    [33m[2m✓[22m[39m reports sender scope and the sender's own earliest expiry when sender and global limits are both full[33m 2103[2mms[22m[39m
+2026-10-06T09:35:59.4334181Z    [33m[2m✓[22m[39m when earliestReleaseAt is after the draft expiry, the guidance leads to a new prepare that succeeds[33m 699[2mms[22m[39m
+2026-10-06T09:36:01.9830356Z  [32m✓[39m tests/session-board/session-board.test.ts [2m([22m[2m15 tests[22m[2m)[22m[33m 2021[2mms[22m[39m
+2026-10-06T09:36:01.9850319Z    [32m✓[39m session board MCP tools [2m(3)[22m
+2026-10-06T09:36:01.9852190Z      [33m[2m✓[22m[39m shares one board between the Claude launcher and the Codex hook and lists both hosts[33m 555[2mms[22m[39m
+2026-10-06T09:36:01.9854375Z      [33m[2m✓[22m[39m reads back the hook-written line, lists the host board and refuses unbound updates[33m 990[2mms[22m[39m
+2026-10-06T09:36:02.8220627Z [90mstderr[2m | tests/recovery-strategy-selector/recovery-selector.test.mjs
+2026-10-06T09:36:02.8222486Z [22m[39munknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+2026-10-06T09:36:02.8232659Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+2026-10-06T09:36:02.8234354Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+2026-10-06T09:36:02.8236542Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+2026-10-06T09:36:02.8238083Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+2026-10-06T09:36:02.8239936Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/observedAt"
+2026-10-06T09:36:02.8241421Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+2026-10-06T09:36:02.8242917Z unknown format "date-time" ignored in schema at path "#/$defs/executionContext/properties/expiresAt"
+2026-10-06T09:36:02.8243733Z 
+2026-10-06T09:36:03.8291304Z  [32m✓[39m tests/recovery-strategy-selector/recovery-selector.test.mjs [2m([22m[2m17 tests[22m[2m)[22m[33m 999[2mms[22m[39m
+2026-10-06T09:36:03.8292947Z    [32m✓[39m recovery strategy selector [2m(17)[22m
+2026-10-06T09:36:03.8294528Z      [33m[2m✓[22m[39m contracts compile and the digest CLI accepts stdin JSON[33m 684[2mms[22m[39m
+2026-10-06T09:36:04.0755517Z  [2m[90m↓[39m[22m tests/session-messaging/previous-broker.test.ts [2m([22m[2m5 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m
+2026-10-06T09:36:09.1958363Z  [32m✓[39m tests/mcp/receipt-policy.test.ts [2m([22m[2m33 tests[22m[2m)[22m[33m 10018[2mms[22m[39m
+2026-10-06T09:36:09.1960381Z    [32m✓[39m descriptor-declared reference-only receipts [2m(33)[22m
+2026-10-06T09:36:09.1963178Z      [33m[2m✓[22m[39m propagates all four policies, orders artifact dependencies, and binds policy to the plan HMAC[33m 423[2mms[22m[39m
+2026-10-06T09:36:09.1966977Z      [33m[2m✓[22m[39m rejects invalid actor-array policies in descriptors and plans: {"actorIdsPointer":"/output/actorIds"}[33m 466[2mms[22m[39m
+2026-10-06T09:36:09.1969563Z      [33m[2m✓[22m[39m rejects invalid actor-array policies in descriptors and plans: {"actorIdsMatch":"prior-policy-actors"}[33m 522[2mms[22m[39m
+2026-10-06T09:36:09.1972080Z      [33m[2m✓[22m[39m rejects invalid actor-array policies in descriptors and plans: {"actorIdsPointer":"output/actorIds","actorIdsMatch":"prior-policy-actors"}[33m 483[2mms[22m[39m
+2026-10-06T09:36:09.1975078Z      [33m[2m✓[22m[39m rejects invalid actor-array policies in descriptors and plans: {"actorIdsPointer":"/output/actorIds","actorIdsMatch":"any-actors"}[33m 424[2mms[22m[39m
+2026-10-06T09:36:09.1977092Z      [33m[2m✓[22m[39m rejects missing final actor arrays without changing the receipt[33m 371[2mms[22m[39m
+2026-10-06T09:36:09.1978810Z      [33m[2m✓[22m[39m rejects empty final actor arrays without changing the receipt[33m 339[2mms[22m[39m
+2026-10-06T09:36:09.1980502Z      [33m[2m✓[22m[39m rejects incomplete final actor arrays without changing the receipt[33m 355[2mms[22m[39m
+2026-10-06T09:36:09.1982034Z      [33m[2m✓[22m[39m rejects extra final actor arrays without changing the receipt[33m 404[2mms[22m[39m
+2026-10-06T09:36:09.1983571Z      [33m[2m✓[22m[39m rejects reordered final actor arrays without changing the receipt[33m 355[2mms[22m[39m
+2026-10-06T09:36:09.1985173Z      [33m[2m✓[22m[39m rejects duplicate final actor arrays without changing the receipt[33m 316[2mms[22m[39m
+2026-10-06T09:36:09.1986769Z      [33m[2m✓[22m[39m rejects unrelated final actor arrays without changing the receipt[33m 337[2mms[22m[39m
+2026-10-06T09:36:09.1988331Z      [33m[2m✓[22m[39m rejects actor reuse after SQLite restart[33m 364[2mms[22m[39m
+2026-10-06T09:36:09.1990736Z      [33m[2m✓[22m[39m binds arbitrary capability actor arrays in plan order after SQLite restart[33m 555[2mms[22m[39m
+2026-10-06T09:36:09.1992587Z      [33m[2m✓[22m[39m finalizes deterministically without requiring a fourth actor and keeps direct mode unverified[33m 325[2mms[22m[39m
+2026-10-06T09:36:11.7948815Z  [32m✓[39m tests/mcp/state-cleanup.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 2327[2mms[22m[39m
+2026-10-06T09:36:11.7950364Z    [32m✓[39m state cleanup [2m(8)[22m
+2026-10-06T09:36:11.7954187Z      [33m[2m✓[22m[39m backs up and deletes only preview-bound inactive terminal state[33m 478[2mms[22m[39m
+2026-10-06T09:36:11.7959473Z      [33m[2m✓[22m[39m rejects stale and tampered tokens before deletion[33m 340[2mms[22m[39m
+2026-10-06T09:36:11.7961161Z      [33m[2m✓[22m[39m claims a no-op plan only once across two database connections[33m 462[2mms[22m[39m
+2026-10-06T09:36:12.0844875Z  [32m✓[39m tests/mcp/workspace-identity.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 94[2mms[22m[39m
+2026-10-06T09:36:14.3957760Z  [32m✓[39m tests/context-continuity/schema-compat.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 9879[2mms[22m[39m
+2026-10-06T09:36:14.4017405Z    [32m✓[39m 2.7.x continuity schema compatibility [2m(13)[22m
+2026-10-06T09:36:14.4067511Z      [33m[2m✓[22m[39m preserves schema 2 state across reopen, restore, CAS, purge and epoch rotation[33m 731[2mms[22m[39m
+2026-10-06T09:36:14.4100602Z      [33m[2m✓[22m[39m preserves schema 3 state across reopen, restore, CAS, purge and epoch rotation[33m 479[2mms[22m[39m
+2026-10-06T09:36:14.4181514Z      [33m[2m✓[22m[39m preserves receiver-owned tasks, refuses stale origins and keeps unrelated tasks usable[33m 420[2mms[22m[39m
+2026-10-06T09:36:14.4232413Z      [33m[2m✓[22m[39m rejects a schema 3 database with valid column definitions and malformed pages[32m 300[2mms[22m[39m
+2026-10-06T09:36:14.4246552Z    [32m✓[39m source STDIO continuity startup diagnostics [2m(5)[22m
+2026-10-06T09:36:14.4270598Z      [33m[2m✓[22m[39m keeps normal MCP usable when continuity is healthy[33m 1875[2mms[22m[39m
+2026-10-06T09:36:14.4281730Z      [33m[2m✓[22m[39m keeps normal MCP usable when continuity is receiver[33m 1656[2mms[22m[39m
+2026-10-06T09:36:14.4283344Z      [33m[2m✓[22m[39m keeps normal MCP usable when continuity is future[33m 1035[2mms[22m[39m
+2026-10-06T09:36:14.4284893Z      [33m[2m✓[22m[39m keeps normal MCP usable when continuity is incompatible[33m 1152[2mms[22m[39m
+2026-10-06T09:36:14.4286436Z      [33m[2m✓[22m[39m keeps normal MCP usable when continuity is corrupt[33m 1115[2mms[22m[39m
+2026-10-06T09:36:16.0331676Z [90mstdout[2m | tests/session-messaging/message-lifecycle.test.ts[2m > [22m[2mpackaged TLS cycles use one request instead of three or two without changing pending state
+2026-10-06T09:36:16.0335792Z [22m[39mrelay tick measured TLS request counts [{"transport":"test-inbox","cycles":10,"baselineRequests":30,"tickRequests":10},{"transport":"codex-deferred","cycles":10,"baselineRequests":20,"tickRequests":10}]
+2026-10-06T09:36:16.0337411Z 
+2026-10-06T09:36:18.2621783Z  [32m✓[39m tests/mcp/stdio-integration.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 3462[2mms[22m[39m
+2026-10-06T09:36:18.2622938Z    [32m✓[39m bundled STDIO MCP server [2m(4)[22m
+2026-10-06T09:36:18.2631174Z      [33m[2m✓[22m[39m starts from an isolated plugin tree without node_modules[33m 1501[2mms[22m[39m
+2026-10-06T09:36:18.2633243Z      [33m[2m✓[22m[39m keeps workflow startup clean when both database settings resolve to one file[33m 733[2mms[22m[39m
+2026-10-06T09:36:18.2635412Z      [33m[2m✓[22m[39m starts with the packaged registry and fails semantic planning closed without a trusted provider[33m 527[2mms[22m[39m
+2026-10-06T09:36:18.2637323Z      [33m[2m✓[22m[39m shares signed continuity bindings between the packaged hook and MCP server[33m 699[2mms[22m[39m
+2026-10-06T09:36:20.4120427Z  [32m✓[39m tests/session-messaging/message-lifecycle.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 8098[2mms[22m[39m
+2026-10-06T09:36:20.4122470Z    [33m[2m✓[22m[39m applies global draft, receipt and byte backpressure without evicting valid records[33m 3109[2mms[22m[39m
+2026-10-06T09:36:20.4124394Z    [33m[2m✓[22m[39m packaged TLS cycles use one request instead of three or two without changing pending state[33m 484[2mms[22m[39m
+2026-10-06T09:36:20.4126016Z    [33m[2m✓[22m[39m a real post-commit prepare reply loss leaves only orphan drafts[33m 444[2mms[22m[39m
+2026-10-06T09:36:20.4127765Z    [33m[2m✓[22m[39m a real send reply loss retries the known ID once and survives broker restart[33m 2786[2mms[22m[39m
+2026-10-06T09:36:20.4129546Z    [33m[2m✓[22m[39m two independent processes submit one ID atomically and enforce sender preparation capacity[33m 501[2mms[22m[39m
+2026-10-06T09:36:20.4131342Z    [33m[2m✓[22m[39m packaged CLI discovers prepare/send and rejects old or unknown send with zero queue effect[33m 606[2mms[22m[39m
+2026-10-06T09:36:20.7109331Z  [32m✓[39m tests/tooling/commands.test.mjs [2m([22m[2m12 tests[22m[2m)[22m[33m 2288[2mms[22m[39m
+2026-10-06T09:36:20.7111195Z    [32m✓[39m skill maintenance commands [2m(12)[22m
+2026-10-06T09:36:20.7112743Z      [33m[2m✓[22m[39m forwards pnpm script arguments without a standalone separator[33m 506[2mms[22m[39m
+2026-10-06T09:36:20.7114712Z      [33m[2m✓[22m[39m refuses a replacement that does not contain the required ancestor commit[33m 502[2mms[22m[39m
+2026-10-06T09:36:20.7116850Z      [33m[2m✓[22m[39m keeps the registered routing when a replaced skill ships no integration descriptor[33m 460[2mms[22m[39m
+2026-10-06T09:36:22.0601012Z  [32m✓[39m tests/session-messaging/presence-retention.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 22349[2mms[22m[39m
+2026-10-06T09:36:22.0608106Z    [33m[2m✓[22m[39m serves board presence from a 342-identity, 1302-row database through a real broker[33m 829[2mms[22m[39m
+2026-10-06T09:36:22.0640088Z    [33m[2m✓[22m[39m ends a board lookup against a slow real broker at one overall client deadline[33m 20347[2mms[22m[39m
+2026-10-06T09:36:22.0670139Z    [33m[2m✓[22m[39m B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve[33m 304[2mms[22m[39m
+2026-10-06T09:36:22.0676078Z    [33m[2m✓[22m[39m prunes presence idempotently when two processes race on one database[33m 633[2mms[22m[39m
+2026-10-06T09:36:22.2581939Z  [32m✓[39m tests/mcp/trust-provenance.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 957[2mms[22m[39m
+2026-10-06T09:36:22.2605604Z    [32m✓[39m trust provenance [2m(11)[22m
+2026-10-06T09:36:22.2607887Z      [33m[2m✓[22m[39m stores peer provenance by digest without persisting the raw body[33m 392[2mms[22m[39m
+2026-10-06T09:36:22.2610267Z      [33m[2m✓[22m[39m exposes read-only MCP validation without trusting an arbitrary caller host name[33m 301[2mms[22m[39m
+2026-10-06T09:36:23.1008971Z  [32m✓[39m tests/mcp/plugin-update-service.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 784[2mms[22m[39m
+2026-10-06T09:36:23.1019772Z    [32m✓[39m PluginUpdateService [2m(17)[22m
+2026-10-06T09:36:23.1021251Z      [33m[2m✓[22m[39m caches a successful check for 24 hours and force bypasses the cache[33m 435[2mms[22m[39m
+2026-10-06T09:36:23.1022957Z      [33m[2m✓[22m[39m emits each available version once and persists that claim[33m 302[2mms[22m[39m
+2026-10-06T09:36:24.2154559Z  [32m✓[39m tests/mcp/codex-host-observation.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 787[2mms[22m[39m
+2026-10-06T09:36:24.2156785Z    [32m✓[39m host-owned hookless provider ingress [2m(2)[22m
+2026-10-06T09:36:24.2158880Z      [33m[2m✓[22m[39m shares the strict bootstrap, missing, policy and replay gates for claude-code[33m 461[2mms[22m[39m
+2026-10-06T09:36:26.1635894Z  [32m✓[39m tests/mcp/tool-schema-profile.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 3484[2mms[22m[39m
+2026-10-06T09:36:26.1643148Z    [32m✓[39m MCP tool schema profiles [2m(7)[22m
+2026-10-06T09:36:26.1651443Z      [33m[2m✓[22m[39m keeps the historical schemas when no profile is selected[33m 761[2mms[22m[39m
+2026-10-06T09:36:26.1653265Z      [33m[2m✓[22m[39m removes top-level combinators from every advertised schema for Anthropic hosts[33m 465[2mms[22m[39m
+2026-10-06T09:36:26.1655348Z      [33m[2m✓[22m[39m accepts and rejects the same inputs with inlined Anthropic schemas as with the referenced contracts[33m 553[2mms[22m[39m
+2026-10-06T09:36:26.1657528Z      [33m[2m✓[22m[39m validates plan_workflow input identically in both profiles[33m 434[2mms[22m[39m
+2026-10-06T09:36:26.1659669Z      [33m[2m✓[22m[39m advertises the same host-neutral intake instructions to every schema profile[33m 573[2mms[22m[39m
+2026-10-06T09:36:26.1661348Z      [33m[2m✓[22m[39m applies the environment profile in the bundled server[33m 695[2mms[22m[39m
+2026-10-06T09:36:28.1450835Z  [32m✓[39m tests/mcp/stage-output-file.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 1713[2mms[22m[39m
+2026-10-06T09:36:28.1469863Z    [32m✓[39m stage output by file reference [2m(7)[22m
+2026-10-06T09:36:28.1475785Z      [33m[2m✓[22m[39m validates a file-backed output like inline output and stores only the reference[33m 619[2mms[22m[39m
+2026-10-06T09:36:28.1500002Z      [33m[2m✓[22m[39m keeps inline output unchanged[33m 383[2mms[22m[39m
+2026-10-06T09:36:29.1911225Z  [32m✓[39m tests/mcp/korean-prose-readiness.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 765[2mms[22m[39m
+2026-10-06T09:36:29.1917642Z    [32m✓[39m Korean prose evaluation readiness [2m(7)[22m
+2026-10-06T09:36:29.1919448Z      [33m[2m✓[22m[39m reports readiness without confusing it with activation[33m 310[2mms[22m[39m
+2026-10-06T09:36:30.2506858Z  [32m✓[39m tests/mcp/trusted-mcp-integration.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 596[2mms[22m[39m
+2026-10-06T09:36:30.2511923Z    [32m✓[39m trusted MCP server boundary [2m(1)[22m
+2026-10-06T09:36:30.2513852Z      [33m[2m✓[22m[39m completes and aborts guarded workflows with server-side observations[33m 594[2mms[22m[39m
+2026-10-06T09:36:30.7257210Z  [32m✓[39m tests/cs-engineering/workflow-integration.test.ts [2m([22m[2m15 tests[22m[2m)[22m[33m 9926[2mms[22m[39m
+2026-10-06T09:36:30.7262477Z    [33m[2m✓[22m[39m registered CS providers are discoverable at bootstrap 25 and workflow 67[33m 518[2mms[22m[39m
+2026-10-06T09:36:30.7264687Z    [33m[2m✓[22m[39m selected review runs actual packaged CLI and finalizes with matching files[33m 1315[2mms[22m[39m
+2026-10-06T09:36:30.7266568Z    [33m[2m✓[22m[39m stage rejects missing-bundle without consuming its revision[33m 364[2mms[22m[39m
+2026-10-06T09:36:30.7269342Z    [33m[2m✓[22m[39m stage rejects stale-task without consuming its revision[33m 507[2mms[22m[39m
+2026-10-06T09:36:30.7271310Z    [33m[2m✓[22m[39m stage rejects raw-evidence without consuming its revision[33m 535[2mms[22m[39m
+2026-10-06T09:36:30.7273021Z    [33m[2m✓[22m[39m stage rejects provider-substitution without consuming its revision[33m 597[2mms[22m[39m
+2026-10-06T09:36:30.7274747Z    [33m[2m✓[22m[39m stage rejects NOT_RUN-as-PASS without consuming its revision[33m 505[2mms[22m[39m
+2026-10-06T09:36:30.7276640Z    [33m[2m✓[22m[39m stage rejects manifest-traversal without consuming its revision[33m 477[2mms[22m[39m
+2026-10-06T09:36:30.7278387Z    [33m[2m✓[22m[39m stage rejects candidate-target without consuming its revision[33m 539[2mms[22m[39m
+2026-10-06T09:36:30.7280506Z    [33m[2m✓[22m[39m proper unexecuted evidence records BLOCKED even with supplied observe policy[33m 539[2mms[22m[39m
+2026-10-06T09:36:30.7282555Z    [33m[2m✓[22m[39m guarded lease/start and SQLite restart retain recorded bundle pins; finalize rereads evidence[33m 909[2mms[22m[39m
+2026-10-06T09:36:30.7284985Z    [33m[2m✓[22m[39m actual MCP tools validate a selected CS stage with synthetic server observations[33m 877[2mms[22m[39m
+2026-10-06T09:36:30.7286909Z    [33m[2m✓[22m[39m file-backed CS output follows the same record and finalize validation[33m 862[2mms[22m[39m
+2026-10-06T09:36:30.7288982Z    [33m[2m✓[22m[39m generated Claude review and copied deployment CLI validate without node_modules[33m 1177[2mms[22m[39m
+2026-10-06T09:36:33.5850678Z  [32m✓[39m tests/mcp/provider-result-envelope.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 2628[2mms[22m[39m
+2026-10-06T09:36:33.5900214Z    [32m✓[39m provider result envelope [2m(4)[22m
+2026-10-06T09:36:33.5931983Z      [33m[2m✓[22m[39m accepts the shared envelope version for acceptance-evidence-validation even though its provider schema omits it[33m 426[2mms[22m[39m
+2026-10-06T09:36:33.5940177Z    [32m✓[39m artifact digest form [2m(4)[22m
+2026-10-06T09:36:33.5954401Z      [33m[2m✓[22m[39m still rejects digests that are not lowercase SHA-256 hex for change-scope-baseline-capture[33m 334[2mms[22m[39m
+2026-10-06T09:36:33.7810831Z  [32m✓[39m tests/mcp/host-attestation-stdio.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 9169[2mms[22m[39m
+2026-10-06T09:36:33.7840469Z    [32m✓[39m packaged execution observation fixtures (not native-host evidence) [2m(4)[22m
+2026-10-06T09:36:33.7842547Z      [33m[2m✓[22m[39m completes guarded STDIO and keeps restart replay rejection for claude-code/hook/claude-opus-5[33m 2327[2mms[22m[39m
+2026-10-06T09:36:33.7844910Z      [33m[2m✓[22m[39m completes guarded STDIO and keeps restart replay rejection for codex/hook/gpt-6-astra[33m 2255[2mms[22m[39m
+2026-10-06T09:36:33.7847083Z      [33m[2m✓[22m[39m completes guarded STDIO and keeps restart replay rejection for codex/hook/gpt-6-sol[33m 2310[2mms[22m[39m
+2026-10-06T09:36:33.7849456Z      [33m[2m✓[22m[39m completes guarded STDIO and keeps restart replay rejection for codex/wrapper/gpt-6-astra[33m 2267[2mms[22m[39m
+2026-10-06T09:36:33.9840953Z  [32m✓[39m tests/mcp/korean-prose-glossary.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 172[2mms[22m[39m
+2026-10-06T09:36:34.1111191Z  [32m✓[39m tests/coordinate-subagents/model-routing.test.mjs [2m([22m[2m15 tests[22m[2m)[22m[32m 126[2mms[22m[39m
+2026-10-06T09:36:34.7051054Z  [32m✓[39m tests/evaluation-validity-auditor/suite-integration.test.mjs [2m([22m[2m7 tests[22m[2m)[22m[33m 3323[2mms[22m[39m
+2026-10-06T09:36:34.7069979Z    [32m✓[39m evaluation-validity-auditor suite descriptor [2m(7)[22m
+2026-10-06T09:36:34.7085637Z      [33m[2m✓[22m[39m selects only its explicit capability at phase order 68 with the conditional gate[33m 387[2mms[22m[39m
+2026-10-06T09:36:34.7088231Z      [33m[2m✓[22m[39m accepts a safe post-execution PASS receipt and still rejects free text[33m 746[2mms[22m[39m
+2026-10-06T09:36:34.7090829Z      [33m[2m✓[22m[39m freezes the audit purpose in the signed plan and enforces pre versus post completion[33m 703[2mms[22m[39m
+2026-10-06T09:36:34.7092934Z      [33m[2m✓[22m[39m requires an explicit structured purpose for evaluation validity planning[33m 432[2mms[22m[39m
+2026-10-06T09:36:34.7095142Z      [33m[2m✓[22m[39m keeps one evaluation TaskEnvelope compatible with task-contract and acceptance validation[33m 442[2mms[22m[39m
+2026-10-06T09:36:34.7097285Z      [33m[2m✓[22m[39m maps FAIL and BLOCKED reports to their fixed workflow error states[33m 609[2mms[22m[39m
+2026-10-06T09:36:35.8187423Z  [32m✓[39m tests/codex-token-usage-analyzer/integration.test.mjs [2m([22m[2m6 tests[22m[2m)[22m[33m 1177[2mms[22m[39m
+2026-10-06T09:36:35.8189383Z    [32m✓[39m codex-token-usage-analyzer integration [2m(6)[22m
+2026-10-06T09:36:35.8190542Z      [33m[2m✓[22m[39m records and finalizes a no-Markdown PASS workflow[33m 650[2mms[22m[39m
+2026-10-06T09:36:35.8191764Z      [33m[2m✓[22m[39m records and finalizes a no-Markdown PARTIAL workflow[33m 372[2mms[22m[39m
+2026-10-06T09:36:35.9810305Z  [32m✓[39m tests/mcp/runtime-config.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+2026-10-06T09:36:36.1511011Z  [32m✓[39m tests/mcp/evaluation-preflight.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+2026-10-06T09:36:36.3147701Z  [32m✓[39m tests/session-messaging/utf8-framing.test.ts [2m([22m[2m12 tests[22m[2m)[22m[33m 2121[2mms[22m[39m
+2026-10-06T09:36:36.3150086Z    [33m[2m✓[22m[39m accepts a real claim answer of exactly the response limit with a Korean character split 1|rest at the TLS chunk, and rejects one byte more[33m 331[2mms[22m[39m
+2026-10-06T09:36:36.3153118Z    [33m[2m✓[22m[39m accepts a real claim answer of exactly the response limit with a Korean character split 2|rest at the TLS chunk, and rejects one byte more[33m 416[2mms[22m[39m
+2026-10-06T09:36:36.3155150Z    [33m[2m✓[22m[39m delivers twelve batches of Korean messages through the CLI claim path byte for byte[33m 597[2mms[22m[39m
+2026-10-06T09:36:36.4868972Z  [32m✓[39m tests/orchestrator/collaboration-decision.test.mjs [2m([22m[2m14 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+2026-10-06T09:36:37.2680586Z  [32m✓[39m tests/ponytail/ponytail.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 694[2mms[22m[39m
+2026-10-06T09:36:37.2686443Z    [32m✓[39m ponytail at the implementation step [2m(5)[22m
+2026-10-06T09:36:37.2688396Z      [33m[2m✓[22m[39m routes minimal-implementation to ponytail after the scope baseline and before the pre-mutation gate and scope verification[33m 399[2mms[22m[39m
+2026-10-06T09:36:37.3655479Z  [32m✓[39m tests/mcp/response-projections.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 672[2mms[22m[39m
+2026-10-06T09:36:37.3656281Z    [32m✓[39m compact MCP response projections [2m(2)[22m
+2026-10-06T09:36:37.3657189Z      [33m[2m✓[22m[39m keeps successful workflow progress fixed-size and reduces repeated payload bytes by at least 80%[33m 408[2mms[22m[39m
+2026-10-06T09:36:37.4736922Z  [32m✓[39m tests/session-messaging/presence-deadline.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+2026-10-06T09:36:37.6795048Z  [32m✓[39m tests/korean-prose-editor/glossary-finalizer.test.mjs [2m([22m[2m5 tests[22m[2m)[22m[32m 100[2mms[22m[39m
+2026-10-06T09:36:37.7448431Z  [32m✓[39m tests/mcp/korean-prose-evaluation-preflight.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+2026-10-06T09:36:38.6258951Z  [32m✓[39m tests/session-messaging/broker-lifecycle.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 3714[2mms[22m[39m
+2026-10-06T09:36:38.6261339Z    [33m[2m✓[22m[39m retries transient endpoint publication failures and serves the published endpoint[33m 369[2mms[22m[39m
+2026-10-06T09:36:38.6263789Z    [33m[2m✓[22m[39m releases startup resources after permanent failure and allows recovery[33m 1059[2mms[22m[39m
+2026-10-06T09:36:38.6265736Z    [33m[2m✓[22m[39m releases startup resources after database failure and allows recovery[33m 353[2mms[22m[39m
+2026-10-06T09:36:38.6267610Z    [33m[2m✓[22m[39m delivers and acknowledges a message using only the packaged CLI and broker[33m 751[2mms[22m[39m
+2026-10-06T09:36:38.6269887Z    [33m[2m✓[22m[39m isolates socket resets and a lost send response while preserving the broker and one committed message[33m 703[2mms[22m[39m
+2026-10-06T09:36:38.8141244Z  [32m✓[39m tests/software-security-auditor/security-audit.test.mjs [2m([22m[2m23 tests[22m[2m)[22m[33m 775[2mms[22m[39m
+2026-10-06T09:36:38.8142820Z    [32m✓[39m security audit evidence contract [2m(23)[22m
+2026-10-06T09:36:38.8146247Z      [33m[2m✓[22m[39m runs positive and negative CLI in node_modules-free . packaging[33m 351[2mms[22m[39m
+2026-10-06T09:36:38.8148688Z      [33m[2m✓[22m[39m runs positive and negative CLI in node_modules-free claude-plugin packaging[33m 392[2mms[22m[39m
+2026-10-06T09:36:38.8671821Z  [32m✓[39m tests/tooling/tooling.test.mjs [2m([22m[2m9 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+2026-10-06T09:36:39.6065537Z  [32m✓[39m tests/mcp/registry-contract.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 527[2mms[22m[39m
+2026-10-06T09:36:39.8094888Z  [32m✓[39m tests/software-security-auditor/integration.test.mjs [2m([22m[2m7 tests[22m[2m)[22m[33m 1674[2mms[22m[39m
+2026-10-06T09:36:39.8095666Z    [32m✓[39m security audit integration [2m(7)[22m
+2026-10-06T09:36:39.8096317Z      [33m[2m✓[22m[39m loads schema and maps complete report with findings in [33m 459[2mms[22m[39m
+2026-10-06T09:36:39.8097594Z      [33m[2m✓[22m[39m loads schema and maps complete report with findings in claude-plugin/[33m 348[2mms[22m[39m
+2026-10-06T09:36:39.8321592Z  [32m✓[39m tests/session-messaging/presence-batches.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 814[2mms[22m[39m
+2026-10-06T09:36:39.8324182Z    [33m[2m✓[22m[39m stops after a transport failure, so an unresponsive broker costs one batch deadline, not one per batch[33m 402[2mms[22m[39m
+2026-10-06T09:36:39.8347935Z    [33m[2m✓[22m[39m keeps earlier answers and marks the failed and remaining batches unanswered after a transport failure[33m 402[2mms[22m[39m
+2026-10-06T09:36:39.9943449Z  [32m✓[39m tests/mcp/tool-schema-inline.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+2026-10-06T09:36:40.3378180Z  [32m✓[39m tests/orchestrator/query-registry.test.mjs [2m([22m[2m2 tests[22m[2m)[22m[32m 181[2mms[22m[39m
+2026-10-06T09:36:40.5250732Z  [32m✓[39m tests/mcp/orchestrator-fixtures.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 60[2mms[22m[39m
+2026-10-06T09:36:40.7161650Z  [32m✓[39m tests/model-effort-advisor/suite-integration.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 155[2mms[22m[39m
+2026-10-06T09:36:40.9069150Z  [32m✓[39m tests/release-state-backup.test.mjs [2m([22m[2m1 test[22m[2m)[22m[32m 23[2mms[22m[39m
+2026-10-06T09:36:41.0431150Z  [32m✓[39m tests/tooling/skill-context-optimization.test.mjs [2m([22m[2m3 tests[22m[2m)[22m[33m 329[2mms[22m[39m
+2026-10-06T09:36:41.0458153Z    [32m✓[39m skill context optimization [2m(3)[22m
+2026-10-06T09:36:41.0460013Z      [33m[2m✓[22m[39m preserves the reviewed skill revisions while reducing their initial load[33m 319[2mms[22m[39m
+2026-10-06T09:36:41.0961956Z  [32m✓[39m tests/software-security-auditor/evaluation-evidence.test.mjs [2m([22m[2m1 test[22m[2m)[22m[32m 10[2mms[22m[39m
+2026-10-06T09:36:41.1835312Z  [32m✓[39m tests/mcp/korean-prose-execution-provenance.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+2026-10-06T09:36:41.3079962Z  [32m✓[39m tests/session-messaging/self-signed-certificate.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 12[2mms[22m[39m
+2026-10-06T09:36:42.4509528Z  [32m✓[39m tests/instruction-scope-resolver/suite-integration.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 975[2mms[22m[39m
+2026-10-06T09:36:42.4511499Z    [32m✓[39m instruction-scope-resolver standalone regression [2m(1)[22m
+2026-10-06T09:36:42.4520234Z      [33m[2m✓[22m[39m runs every node:test case[33m 973[2mms[22m[39m
+2026-10-06T09:36:43.8734397Z  [32m✓[39m tests/acceptance-evidence-validator/suite-integration.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 2534[2mms[22m[39m
+2026-10-06T09:36:43.8755454Z    [32m✓[39m acceptance-evidence-validator standalone regression [2m(1)[22m
+2026-10-06T09:36:43.8769824Z      [33m[2m✓[22m[39m runs every node:test case[33m 2531[2mms[22m[39m
+2026-10-06T09:36:45.0979483Z  [32m✓[39m tests/change-scope-guardian/suite-integration.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 2504[2mms[22m[39m
+2026-10-06T09:36:45.1030184Z    [33m[2m✓[22m[39m change-scope-guardian Node tests pass in an isolated process[33m 2502[2mms[22m[39m
+2026-10-06T09:36:47.0505011Z  [32m✓[39m tests/task-contract/suite-integration.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 1770[2mms[22m[39m
+2026-10-06T09:36:47.0509999Z    [33m[2m✓[22m[39m task-contract Node tests pass in an isolated process[33m 1767[2mms[22m[39m
+2026-10-06T09:36:47.1750574Z  [32m✓[39m tests/cs-engineering/suite-integration.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 3105[2mms[22m[39m
+2026-10-06T09:36:47.1752523Z    [33m[2m✓[22m[39m CS Node regressions run in an isolated process with the AGS Ajv runtime[33m 3103[2mms[22m[39m
+2026-10-06T09:36:47.6015256Z  [32m✓[39m tests/evaluation-validity-auditor/standalone-regression.test.mjs [2m([22m[2m1 test[22m[2m)[22m[33m 390[2mms[22m[39m
+2026-10-06T09:36:47.6016711Z    [32m✓[39m evaluation-validity-auditor imported core [2m(1)[22m
+2026-10-06T09:36:47.6018208Z      [33m[2m✓[22m[39m passes the suite's normal, boundary, failure, and security regression cases[33m 388[2mms[22m[39m
+2026-10-06T09:36:49.2995202Z  [32m✓[39m tests/runtime/runtime-smoke.test.mjs [2m([22m[2m6 tests[22m[2m)[22m[33m 9534[2mms[22m[39m
+2026-10-06T09:36:49.2995915Z    [32m✓[39m installed skill runtime [2m(6)[22m
+2026-10-06T09:36:49.2996560Z      [33m[2m✓[22m[39m runs every documented Node CLI without node_modules[33m 9392[2mms[22m[39m
+2026-10-06T09:36:49.3047552Z 
+2026-10-06T09:36:49.3055898Z [2m Test Files [22m [1m[32m67 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (68)[39m
+2026-10-06T09:36:49.3063053Z [2m      Tests [22m [1m[32m916 passed[39m[22m[2m | [22m[33m5 skipped[39m[90m (921)[39m
+2026-10-06T09:36:49.3063994Z [2m   Start at [22m 09:35:20
+2026-10-06T09:36:49.3069849Z [2m   Duration [22m 89.04s[2m (tests 95%, import 3%, transform 1%)[22m
+2026-10-06T09:36:49.3089791Z 
+2026-10-06T09:36:49.3625493Z ##[group]Run pnpm runtime:check
+2026-10-06T09:36:49.3625805Z [36;1mpnpm runtime:check[0m
+2026-10-06T09:36:49.3688080Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:36:49.3688691Z env:
+2026-10-06T09:36:49.3688975Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:36:49.3689421Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:36:49.3689852Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:36:49.3690256Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:36:49.3690671Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:36:49.3691062Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:36:49.3691384Z ##[endgroup]
+2026-10-06T09:36:50.2826467Z Already up to date
+2026-10-06T09:36:50.2834316Z Done in 416ms using pnpm v11.19.0
+2026-10-06T09:36:50.2977752Z $ node scripts/check-runtime.mjs
+2026-10-06T09:36:56.3800371Z runtime: ready (30 skill CLIs, Node.js 24.21.0)
+2026-10-06T09:36:56.4036984Z ##[group]Run pnpm validate:all
+2026-10-06T09:36:56.4037307Z [36;1mpnpm validate:all[0m
+2026-10-06T09:36:56.4100615Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:36:56.4100972Z env:
+2026-10-06T09:36:56.4101242Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:36:56.4101689Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:36:56.4102137Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:36:56.4102523Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:36:56.4102909Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:36:56.4103297Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:36:56.4103640Z   PYTHONUTF8: 1
+2026-10-06T09:36:56.4103843Z ##[endgroup]
+2026-10-06T09:36:57.3225202Z Already up to date
+2026-10-06T09:36:57.3233253Z Done in 417ms using pnpm v11.19.0
+2026-10-06T09:36:57.3373661Z $ node scripts/validate-repository.mjs && node scripts/run-python-validations.mjs && tsx scripts/korean-prose-glossary.ts --mode check
+2026-10-06T09:36:57.9618786Z repository: valid
+2026-10-06T09:36:58.1158838Z PASS validate_frontmatter
+2026-10-06T09:36:58.1159404Z PASS validate_openai_yaml
+2026-10-06T09:36:58.1159898Z PASS validate_markdown_links
+2026-10-06T09:36:58.1160437Z PASS validate_no_placeholders
+2026-10-06T09:36:58.1160849Z PASS validate_no_sensitive_data
+2026-10-06T09:36:58.1161145Z PASS validate_routing_presets
+2026-10-06T09:36:58.1161416Z PASS validate_behavior_cases
+2026-10-06T09:36:58.1161735Z All skill package validations passed.
+2026-10-06T09:36:58.3360294Z Skill validation passed: <repo>/skills/independent-audit-gate
+2026-10-06T09:37:01.9525924Z PASS validate_skill_package
+2026-10-06T09:37:01.9526595Z PASS validate_decision_record_contracts
+2026-10-06T09:37:01.9527711Z PASS validate_behavior_cases
+2026-10-06T09:37:01.9528746Z All independent-deliberation-panel validations passed.
+2026-10-06T09:37:01.9819680Z model-effort-advisor: valid
+2026-10-06T09:37:02.2031049Z {"status":"ok","entries":243,"id":"korean-prose-core","version":"1.2.1","contentDigest":"1262b46c6c07d3ecf0551167308df2aa3ec1ad9fb02e3a33fc9619ce2ec683d4"}
+2026-10-06T09:37:02.2384041Z ##[group]Run git show --check --oneline --no-renames HEAD
+2026-10-06T09:37:02.2384676Z [36;1mgit show --check --oneline --no-renames HEAD[0m
+2026-10-06T09:37:02.2448262Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:37:02.2449459Z env:
+2026-10-06T09:37:02.2449989Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:37:02.2450768Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:37:02.2451743Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:37:02.2452453Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:37:02.2453253Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:37:02.2453972Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:37:02.2454595Z ##[endgroup]
+2026-10-06T09:37:02.2563225Z b7341d3e docs: remove stale release candidate notice
+2026-10-06T09:37:02.2657292Z Post job cleanup.
+2026-10-06T09:37:02.3933283Z Post job cleanup.
+2026-10-06T09:37:02.5243484Z (node:8959) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-06T09:37:02.5244943Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-06T09:37:02.5407956Z Post job cleanup.
+2026-10-06T09:37:02.6360595Z [command]/usr/bin/git version
+2026-10-06T09:37:02.6423724Z git version 2.55.0
+2026-10-06T09:37:02.6459930Z Temporarily overriding HOME='<runner-temp>/<ephemeral-id>' before making global git config changes
+2026-10-06T09:37:02.6461661Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-06T09:37:02.6479921Z [command]/usr/bin/git config --global --add safe.directory <repo>
+2026-10-06T09:37:02.6497917Z Removing SSH command configuration
+2026-10-06T09:37:02.6505060Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-06T09:37:02.6541631Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-06T09:37:02.6800018Z Removing HTTP extra header
+2026-10-06T09:37:02.6805680Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-06T09:37:02.6849725Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.http<runner-path>' || :"
+2026-10-06T09:37:02.7109904Z Removing includeIf entries pointing to credentials config files
+2026-10-06T09:37:02.7119522Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-06T09:37:02.7153844Z includeif.gitdi<runner-path>
+2026-10-06T09:37:02.7155462Z includeif.gitdi<runner-path>
+2026-10-06T09:37:02.7156706Z includeif.gitdi<runner-path>
+2026-10-06T09:37:02.7157675Z includeif.gitdi<runner-path>
+2026-10-06T09:37:02.7162957Z [command]/usr/bin/git config --local --get-all includeif.gitdi<runner-path>
+2026-10-06T09:37:02.7207138Z <runner-temp>/git-credentials-<ephemeral-id>.config
+2026-10-06T09:37:02.7210678Z [command]/usr/bin/git config --local --unset includeif.gitdi<runner-path> \/home\/runner\/work\/_temp\/git\-credentials\-b35689fe\-ae4e\-442f\-9daa\-67f5307785a5\.config
+2026-10-06T09:37:02.7249184Z [command]/usr/bin/git config --local --get-all includeif.gitdi<runner-path>
+2026-10-06T09:37:02.7277080Z <runner-temp>/git-credentials-<ephemeral-id>.config
+2026-10-06T09:37:02.7287572Z [command]/usr/bin/git config --local --unset includeif.gitdi<runner-path> \/home\/runner\/work\/_temp\/git\-credentials\-b35689fe\-ae4e\-442f\-9daa\-67f5307785a5\.config
+2026-10-06T09:37:02.7335817Z [command]/usr/bin/git config --local --get-all includeif.gitdi<runner-path>
+2026-10-06T09:37:02.7364578Z /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:37:02.7376772Z [command]/usr/bin/git config --local --unset includeif.gitdi<runner-path> \/github\/runner_temp\/git\-credentials\-b35689fe\-ae4e\-442f\-9daa\-67f5307785a5\.config
+2026-10-06T09:37:02.7417726Z [command]/usr/bin/git config --local --get-all includeif.gitdi<runner-path>
+2026-10-06T09:37:02.7444298Z /github/runner_temp/git-credentials-<ephemeral-id>.config
+2026-10-06T09:37:02.7453080Z [command]/usr/bin/git config --local --unset includeif.gitdi<runner-path> \/github\/runner_temp\/git\-credentials\-b35689fe\-ae4e\-442f\-9daa\-67f5307785a5\.config
+2026-10-06T09:37:02.7490603Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-06T09:37:02.7773207Z Removing credentials config '<runner-temp>/git-credentials-<ephemeral-id>.config'
+2026-10-06T09:37:02.7919571Z Cleaning up orphan processes
+2026-10-06T09:37:02.8350980Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/setup-node@v4. For more information see: http<runner-path>

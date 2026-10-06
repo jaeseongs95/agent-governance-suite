@@ -1,0 +1,18 @@
+﻿2026-10-06T09:42:00.4822466Z ##[group]Run pnpm lint
+2026-10-06T09:42:00.4822643Z [36;1mpnpm lint[0m
+2026-10-06T09:42:00.4875480Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:42:00.4875673Z env:
+2026-10-06T09:42:00.4875825Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:42:00.4876067Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:42:00.4876309Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:42:00.4876521Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:42:00.4876749Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:42:00.4876966Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:42:00.4877151Z ##[endgroup]
+2026-10-06T09:42:01.0634490Z Already up to date
+2026-10-06T09:42:01.0639080Z Done in 262ms using pnpm v11.19.0
+2026-10-06T09:42:01.0763193Z $ eslint . && node scripts/validate-repository.mjs
+2026-10-06T09:42:06.0132224Z - code-review: missing tests/code-review
+2026-10-06T09:42:06.0132714Z - test-engineering: missing tests/test-engineering
+2026-10-06T09:42:06.0318781Z [ELIFECYCLE] Command failed with exit code 1.
+2026-10-06T09:42:06.0550046Z ##[error]Process completed with exit code 1.

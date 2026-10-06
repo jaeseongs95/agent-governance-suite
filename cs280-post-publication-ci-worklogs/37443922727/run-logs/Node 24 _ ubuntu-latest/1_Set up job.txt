@@ -1,0 +1,33 @@
+﻿2026-10-06T09:34:46.3895146Z Current runner version: '2.337.0'
+2026-10-06T09:34:46.3920575Z ##[group]Runner Image Provisioner
+2026-10-06T09:34:46.3921503Z Hosted Compute Agent
+2026-10-06T09:34:46.3922286Z Version: 20260901.588
+2026-10-06T09:34:46.3922932Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+2026-10-06T09:34:46.3923717Z Build Date: 2026-09-01T19:56:44Z
+2026-10-06T09:34:46.3924411Z Worker ID: {<ephemeral-id>}
+2026-10-06T09:34:46.3925175Z Azure Region: westus
+2026-10-06T09:34:46.3925811Z ##[endgroup]
+2026-10-06T09:34:46.3927595Z ##[group]Operating System
+2026-10-06T09:34:46.3928326Z Ubuntu
+2026-10-06T09:34:46.3929241Z 24.04.5
+2026-10-06T09:34:46.3929803Z LTS
+2026-10-06T09:34:46.3930429Z ##[endgroup]
+2026-10-06T09:34:46.3930987Z ##[group]Runner Image
+2026-10-06T09:34:46.3931644Z Image: ubuntu-24.04
+2026-10-06T09:34:46.3932233Z Version: 20260927.320.1
+2026-10-06T09:34:46.3933320Z Included Software: http<runner-path>
+2026-10-06T09:34:46.3935125Z Image Release: http<runner-path>
+2026-10-06T09:34:46.3936126Z ##[endgroup]
+2026-10-06T09:34:46.3937223Z ##[group]GITHUB_TOKEN Permissions
+2026-10-06T09:34:46.3939558Z Contents: read
+2026-10-06T09:34:46.3940210Z Metadata: read
+2026-10-06T09:34:46.3940761Z ##[endgroup]
+2026-10-06T09:34:46.3942858Z Secret source: Actions
+2026-10-06T09:34:46.3943868Z Cache mode: write
+2026-10-06T09:34:46.3944706Z Prepare workflow directory
+2026-10-06T09:34:46.4285681Z Prepare all required actions
+2026-10-06T09:34:46.4334963Z Getting action download info
+2026-10-06T09:34:46.7983745Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-10-06T09:34:46.9102467Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-10-06T09:34:47.0324684Z Download action repository 'actions/setup-python@v7' (SHA:5fda3b95a4ea91299a34e894583c3862153e4b97)
+2026-10-06T09:34:47.2140250Z Complete job name: Node 24 / ubuntu-latest
