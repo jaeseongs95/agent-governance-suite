@@ -1154,12 +1154,13 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(database.includes(Buffer.from("cc-msg-socket-probe"))).toBe(false);
   }, 30_000);
 
-  it("blocks only verified empty Codex wake prompts in the packaged hook", async () => {
+  it.each(["source", "packaged"] as const)("blocks only verified empty Codex wake prompts in the %s hook", async (entrypoint) => {
     const directory = stateDirectory();
-    await startSourceBroker(directory);
     vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", directory);
     vi.stubEnv("AGENT_GOVERNANCE_TRUST_DB_PATH", path.join(directory, "trust.sqlite3"));
     vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "1");
+    // The broker captures its trust DB at startup; inherit the same fixture path as the hook.
+    await startSourceBroker(directory);
     for (const scenario of ["submitted", "unknown", "duplicate", "late", "idle", "forged", "mixed", "claude", "legacy"]) {
       const target = { host: scenario === "claude" ? "claude-code" : "codex", sessionId: `empty-hook-${scenario}` };
       const nonce = `empty-hook-${scenario}-nonce-abcdefghijklmnop`;
@@ -1198,7 +1199,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
         : `[agent-governance-suite:wake:${nonce}]${scenario === "mixed" ? "\nactual user request" : ""}`;
       const input = { hook_event_name: "UserPromptSubmit", session_id: target.sessionId, agent_id: "", prompt };
       const invoke = () => {
-        if (scenario === "claude") return handleSessionMessageHook(input, "claude-code");
+        if (scenario === "claude" || entrypoint === "source") return handleSessionMessageHook(input, scenario === "claude" ? "claude-code" : "codex");
         const child = spawnSync(process.execPath, [bundledSessionMessageHook], { input: JSON.stringify(input), encoding: "utf8",
           timeout: 10_000, windowsHide: true, env: { ...process.env } });
         expect(child.status, child.stderr).toBe(0);
@@ -1226,12 +1227,13 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     }
   }, 30_000);
 
-  it("blocks a verified retired Codex wake marker without claiming the current body", async () => {
+  it.each(["source", "packaged"] as const)("blocks a verified retired Codex wake marker without claiming the current body through the %s hook", async (entrypoint) => {
     const directory = stateDirectory();
-    await startSourceBroker(directory);
     vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", directory);
     vi.stubEnv("AGENT_GOVERNANCE_TRUST_DB_PATH", path.join(directory, "trust.sqlite3"));
     vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "1");
+    // The broker captures its trust DB at startup; inherit the same fixture path as the hook.
+    await startSourceBroker(directory);
     const capabilities: DeliveryCapabilities = { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" };
     for (const host of ["codex", "claude-code"]) {
       const target = { host, sessionId: `retired-hook-${host}` };
@@ -1254,7 +1256,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       } finally { store.close(); }
       const input = { hook_event_name: "UserPromptSubmit", session_id: target.sessionId, agent_id: "", prompt: `[agent-governance-suite:wake:${nonce}]` };
       let output: Record<string, unknown>;
-      if (host === "claude-code") output = await handleSessionMessageHook(input, "claude-code");
+      if (host === "claude-code" || entrypoint === "source") output = await handleSessionMessageHook(input, host === "claude-code" ? "claude-code" : "codex");
       else {
         const child = spawnSync(process.execPath, [bundledSessionMessageHook], { input: JSON.stringify(input), encoding: "utf8",
           timeout: 10_000, windowsHide: true, env: { ...process.env } });
