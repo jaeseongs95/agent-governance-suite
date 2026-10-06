@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "1.0.0",
+  "operationId": "cs280-final2-official-evidence-d0ce2935",
+  "actionClass": "publish",
+  "targets": [
+    {
+      "locator": "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-release-prep/codex-final-2",
+      "targetType": "git-evidence-subtree",
+      "environment": "external",
+      "expectedFingerprint": "sha256:79e752c0e87e6a3ed3c54016b612a3aefce3db162f836e220716553ff1ab83d2"
+    }
+  ],
+  "plannedCommandOrTool": {
+    "tool": "git",
+    "action": "git push origin HEAD:refs/heads/evidence (nonforce; append only cs280-release-prep/codex-final-2/)"
+  },
+  "scopeRef": {
+    "locator": "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/scope-capture-input.json",
+    "digest": "sha256:52d748d7b8675c7ba2e01234fa75cdabb2a2168810018b47a169a5e793465fdb",
+    "includedTargets": [
+      "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-release-prep/codex-final-2"
+    ],
+    "excludedTargets": [
+      "https://github.com/jaeseongs95/agent-governance-suite/tree/main",
+      "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-codex-cloud",
+      "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-claude-cloud",
+      "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-release-prep/codex-official-1"
+    ]
+  },
+  "authorizationRef": {
+    "locator": "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/authorization.json",
+    "digest": "sha256:e4f9d4854039bfa1734afff30d097a51466095d5b68e638fff649b452521ca72",
+    "allowedActions": [
+      "publish"
+    ],
+    "allowedTargets": [
+      "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-release-prep/codex-final-2"
+    ],
+    "environments": [
+      "external"
+    ]
+  },
+  "approvalEvidenceRefs": [
+    {
+      "locator": "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/authorization.json",
+      "digest": "sha256:e4f9d4854039bfa1734afff30d097a51466095d5b68e638fff649b452521ca72",
+      "operationId": "cs280-final2-official-evidence-d0ce2935",
+      "actionClass": "publish",
+      "targetLocators": [
+        "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-release-prep/codex-final-2"
+      ],
+      "environments": [
+        "external"
+      ],
+      "expiresAt": "2026-10-06T06:32:33.239048+00:00"
+    }
+  ],
+  "currentStateEvidenceRefs": [
+    {
+      "locator": "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/current-state.json",
+      "digest": "sha256:dc18ebde8ae80cecc560d62d897985f52571c9f5d9ab6dc6f2c6d10e40f9af54",
+      "targetLocator": "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-release-prep/codex-final-2",
+      "fingerprint": "sha256:79e752c0e87e6a3ed3c54016b612a3aefce3db162f836e220716553ff1ab83d2"
+    }
+  ],
+  "recoveryPlan": {
+    "available": true,
+    "method": "Append-only evidence subtree: selective forward revert can remove this prefix while preserving all previous paths; local temporary-index restore exactly reproduces prior tree. Public downloads are not recalled.",
+    "backupRef": "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/scope-baseline-frozen.json",
+    "restoreProcedureRef": "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/restore-rehearsal.json",
+    "restoreTestEvidenceRef": "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/restore-rehearsal.json",
+    "irreversibilityAccepted": false
+  },
+  "expectedBlastRadius": {
+    "affectedTargets": 1,
+    "affectedUsers": 0,
+    "external": true,
+    "description": "One publicly readable evidence subtree; no operational/product users or installations changed. Public readership is not bounded by this numeric affectedUsers field."
+  }
+}

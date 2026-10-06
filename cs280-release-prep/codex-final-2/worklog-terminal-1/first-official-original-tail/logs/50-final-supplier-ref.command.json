@@ -1,0 +1,16 @@
+{
+  "label": "50-final-supplier-ref",
+  "command": [
+    "git",
+    "ls-remote",
+    "--heads",
+    "https://github.com/jaeseongs95/agent-governance-suite.git",
+    "refs/heads/codex/release-candidate-2.8.0"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9",
+  "startedUtc": "2026-10-06T05:36:58.596354+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:36:58.980406+00:00",
+  "stdout": "50-final-supplier-ref.stdout.log",
+  "stderr": "50-final-supplier-ref.stderr.log"
+}

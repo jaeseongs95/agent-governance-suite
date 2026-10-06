@@ -1,0 +1,19 @@
+{
+  "cutoffUtc": "2026-10-06T06:20:07.923628+00:00",
+  "scope": "Existing completed final2 post-core-cutoff and approved first official1 publication command/stdout/stderr/audit/tool captures; original official1 post-terminal-cutoff tail. This collector and later delivery/push are outside cutoff.",
+  "counts": {
+    "final2": 36,
+    "firstPublication": 38,
+    "firstOriginalTail": 4
+  },
+  "sourceFiles": 286,
+  "coreFinal2Commit": "188a57af035b275ca4bd6c1d34c07015bfdfb263",
+  "firstOfficialCommit": "dd02a3579ada48f6ee459fba94db365785baaef7",
+  "excludes": [
+    "Private ZIP/DB/WAL/key/trustfile/store payload",
+    "Drive/Library raw service values and signed URLs",
+    "Internal reasoning/full native transcript",
+    "Other session transcripts"
+  ],
+  "claim": "Captured raw files only; not all native tool outputs. No product validator/test/runtime rerun. Prior failures and NOT_RUN retained."
+}

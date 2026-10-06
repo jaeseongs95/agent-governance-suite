@@ -1,0 +1,16 @@
+{
+  "label": "P02-evidence-origin",
+  "command": [
+    "git",
+    "remote",
+    "add",
+    "origin",
+    "https://github.com/jaeseongs95/agent-governance-suite.git"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final2-d0ce2935/evidence-repo",
+  "startedUtc": "2026-10-06T06:16:22.160955+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:16:22.163026+00:00",
+  "stdout": "P02-evidence-origin.stdout.log",
+  "stderr": "P02-evidence-origin.stderr.log"
+}

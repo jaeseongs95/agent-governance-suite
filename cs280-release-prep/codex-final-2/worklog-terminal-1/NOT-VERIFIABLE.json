@@ -1,0 +1,8 @@
+{
+  "nativeCompleteTranscript": "NOT_VERIFIABLE: no supported complete native transcript/tool-event export provided.",
+  "uncapturedToolOutputs": "NOT_VERIFIABLE: direct shell file-read/file-write and local tools-Git init/add/commit outputs not persisted as raw files. No reconstruction claimed. Standard runner captures listed in inventory are actual files.",
+  "first29EmptyAtInitialCutoff": "NOT_VERIFIABLE: original empty-at-cutoff bytes not supplied; preserve later partial/complete captures separately.",
+  "original33Overwrite": "NOT_VERIFIABLE: older publication same-label stdout overwrite limit unchanged.",
+  "privateOriginalDelivery": "Not supplied as public bytes; private immutable originals remain local. Public source digests are not proof of independently delivered all private bytes.",
+  "laterDelivery": "T03 collector completion/T04 scan/T05 sums and later tail scope/preflight/commit/push/Library actions fall after cutoff. Bounded native receipt only; no infinite republication."
+}

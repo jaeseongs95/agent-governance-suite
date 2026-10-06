@@ -1,0 +1,15 @@
+{
+  "label": "P10-main-ref",
+  "command": [
+    "git",
+    "ls-remote",
+    "origin",
+    "refs/heads/main"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official1-publication-8c6eacff/evidence-repo",
+  "startedUtc": "2026-10-06T06:18:12.918536+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:18:13.276097+00:00",
+  "stdout": "P10-main-ref.stdout.log",
+  "stderr": "P10-main-ref.stderr.log"
+}

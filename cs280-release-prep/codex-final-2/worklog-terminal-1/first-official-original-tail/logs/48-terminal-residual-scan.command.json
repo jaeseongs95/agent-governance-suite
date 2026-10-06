@@ -1,0 +1,15 @@
+{
+  "label": "48-terminal-residual-scan",
+  "command": [
+    "python",
+    "/workspace/ags-cs-2x/publication-20261006T040502Z/scan-public.py",
+    "/workspace/ags-cs-2x/official-validator-26c6c9d9",
+    "/workspace/ags-cs-2x/official-validator-26c6c9d9/terminal-public"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9",
+  "startedUtc": "2026-10-06T05:35:59.561255+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:35:59.602070+00:00",
+  "stdout": "48-terminal-residual-scan.stdout.log",
+  "stderr": "48-terminal-residual-scan.stderr.log"
+}

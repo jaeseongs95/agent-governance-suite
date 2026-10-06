@@ -1,0 +1,13 @@
+{
+  "label": "I05-evidence-publication-driver",
+  "command": [
+    "python",
+    "/workspace/ags-cs-2x/official1-publication-8c6eacff/tools/publish.py"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official1-publication-8c6eacff",
+  "startedUtc": "2026-10-06T06:18:10.464336+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:19:27.629616+00:00",
+  "stdout": "I05-evidence-publication-driver.stdout.log",
+  "stderr": "I05-evidence-publication-driver.stderr.log"
+}

@@ -1,0 +1,15 @@
+{
+  "label": "P04-evidence-checkout",
+  "command": [
+    "git",
+    "checkout",
+    "--detach",
+    "FETCH_HEAD"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official1-publication-8c6eacff/evidence-repo",
+  "startedUtc": "2026-10-06T06:18:11.985292+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:18:12.425501+00:00",
+  "stdout": "P04-evidence-checkout.stdout.log",
+  "stderr": "P04-evidence-checkout.stderr.log"
+}

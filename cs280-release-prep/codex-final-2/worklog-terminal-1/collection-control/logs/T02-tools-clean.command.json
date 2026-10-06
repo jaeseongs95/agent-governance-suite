@@ -1,0 +1,14 @@
+{
+  "label": "T02-tools-clean",
+  "command": [
+    "git",
+    "status",
+    "--porcelain"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final2-tail-20261006/tools",
+  "startedUtc": "2026-10-06T06:20:07.921023+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:20:07.923485+00:00",
+  "stdout": "T02-tools-clean.stdout.log",
+  "stderr": "T02-tools-clean.stderr.log"
+}

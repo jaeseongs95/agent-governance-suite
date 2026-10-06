@@ -1,0 +1,144 @@
+{"label": "I01-collection-original-sums", "command": ["sha256sum", "--check", "--quiet", "SHA256SUMS"], "cwd": "/workspace/ags-cs-2x/official1-publication-8c6eacff/public/cs280-release-prep/codex-official-1/collection", "startedUtc": "2026-10-06T06:18:00.166590+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T06:18:00.171450+00:00", "stdout": "I01-collection-original-sums.stdout.log", "stderr": "I01-collection-original-sums.stderr.log"}
+{"label": "I01-delivery-terminal-original-sums", "command": ["sha256sum", "--check", "--quiet", "SHA256SUMS"], "cwd": "/workspace/ags-cs-2x/official1-publication-8c6eacff/public/cs280-release-prep/codex-official-1/delivery-terminal", "startedUtc": "2026-10-06T06:18:00.171691+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T06:18:00.174094+00:00", "stdout": "I01-delivery-terminal-original-sums.stdout.log", "stderr": "I01-delivery-terminal-original-sums.stderr.log"}
+{"label": "I02-unchanged-copy-residual-scan", "command": ["python", "/workspace/ags-cs-2x/publication-20261006T040502Z/scan-public.py", "/workspace/ags-cs-2x/official1-publication-8c6eacff", "/workspace/ags-cs-2x/official1-publication-8c6eacff/disposable-scan-copy"], "cwd": "/workspace/ags-cs-2x/official1-publication-8c6eacff", "startedUtc": "2026-10-06T06:18:00.186302+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T06:18:00.625990+00:00", "stdout": "I02-unchanged-copy-residual-scan.stdout.log", "stderr": "I02-unchanged-copy-residual-scan.stderr.log"}
+{"label": "I03-root-sums", "command": ["sha256sum", "--check", "--quiet", "ROOT-SHA256SUMS"], "cwd": "/workspace/ags-cs-2x/official1-publication-8c6eacff/public/cs280-release-prep/codex-official-1", "startedUtc": "2026-10-06T06:18:00.644744+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T06:18:00.650920+00:00", "stdout": "I03-root-sums.stdout.log", "stderr": "I03-root-sums.stderr.log"}
+{
+  "status": "APPROVED_UNCHANGED_OFFICIAL1_PACKET_PREPARED",
+  "publicPath": "/workspace/ags-cs-2x/official1-publication-8c6eacff/public/cs280-release-prep/codex-official-1",
+  "publicFiles": 253,
+  "originalFiles": 250,
+  "cutoffUtc": "2026-10-06T06:18:00.175143+00:00",
+  "manifestSha256": "19956999bf73376d0e8a579ee30845ab900a10a5a98039774a1a8fd2b209c45b",
+  "sumsSha256": "f77bcce91f521217ba481199cbd45107e7bcc7de93e8752943701e8813b53451",
+  "originalZipBytes": 451171,
+  "originalZipSha256": "1110e6b0bea193247b66ec17e3f312f84ac6187e38b4bf57bb74c5fea690210d",
+  "originalPluginStatus": "NOT_RUN",
+  "originalSkillsStatus": "NOT_RUN",
+  "residualFindings": 0,
+  "commandCounts": {
+    "collection": {
+      "records": 54,
+      "nonzero": 6,
+      "nonzeroCommands": [
+        {
+          "label": "19-validate-official",
+          "command": [
+            "pnpm",
+            "validate:official"
+          ],
+          "exitCode": 1
+        },
+        {
+          "label": "23-official-driver",
+          "command": [
+            "python",
+            "/workspace/ags-cs-2x/official-validator-26c6c9d9/tools/execute_once.py"
+          ],
+          "exitCode": 1
+        },
+        {
+          "label": "27-public-residual-scan",
+          "command": [
+            "python",
+            "/workspace/ags-cs-2x/publication-20261006T040502Z/scan-public.py",
+            "/workspace/ags-cs-2x/official-validator-26c6c9d9",
+            "/workspace/ags-cs-2x/official-validator-26c6c9d9/public/cs280-release-prep/codex-official-1"
+          ],
+          "exitCode": 1
+        },
+        {
+          "label": "29-prepare-driver",
+          "command": [
+            "python",
+            "/workspace/ags-cs-2x/official-validator-26c6c9d9/tools/prepare.py"
+          ],
+          "exitCode": 1
+        },
+        {
+          "label": "33-final-residual-scan",
+          "command": [
+            "python",
+            "/workspace/ags-cs-2x/publication-20261006T040502Z/scan-public.py",
+            "/workspace/ags-cs-2x/official-validator-26c6c9d9",
+            "/workspace/ags-cs-2x/official-validator-26c6c9d9/public-final/cs280-release-prep/codex-official-1"
+          ],
+          "exitCode": 1
+        },
+        {
+          "label": "31-final-prepare-driver",
+          "command": [
+            "python",
+            "/workspace/ags-cs-2x/official-validator-26c6c9d9/tools/prepare_final.py"
+          ],
+          "exitCode": 1
+        }
+      ]
+    },
+    "terminal": {
+      "records": 64,
+      "nonzero": 7,
+      "nonzeroCommands": [
+        {
+          "label": "19-validate-official",
+          "command": [
+            "pnpm",
+            "validate:official"
+          ],
+          "exitCode": 1
+        },
+        {
+          "label": "23-official-driver",
+          "command": [
+            "python",
+            "/workspace/ags-cs-2x/official-validator-26c6c9d9/tools/execute_once.py"
+          ],
+          "exitCode": 1
+        },
+        {
+          "label": "27-public-residual-scan",
+          "command": [
+            "python",
+            "/workspace/ags-cs-2x/publication-20261006T040502Z/scan-public.py",
+            "/workspace/ags-cs-2x/official-validator-26c6c9d9",
+            "/workspace/ags-cs-2x/official-validator-26c6c9d9/public/cs280-release-prep/codex-official-1"
+          ],
+          "exitCode": 1
+        },
+        {
+          "label": "29-prepare-driver",
+          "command": [
+            "python",
+            "/workspace/ags-cs-2x/official-validator-26c6c9d9/tools/prepare.py"
+          ],
+          "exitCode": 1
+        },
+        {
+          "label": "33-final-residual-scan",
+          "command": [
+            "python",
+            "/workspace/ags-cs-2x/publication-20261006T040502Z/scan-public.py",
+            "/workspace/ags-cs-2x/official-validator-26c6c9d9",
+            "/workspace/ags-cs-2x/official-validator-26c6c9d9/public-final/cs280-release-prep/codex-official-1"
+          ],
+          "exitCode": 1
+        },
+        {
+          "label": "31-final-prepare-driver",
+          "command": [
+            "python",
+            "/workspace/ags-cs-2x/official-validator-26c6c9d9/tools/prepare_final.py"
+          ],
+          "exitCode": 1
+        },
+        {
+          "label": "40-delivery-verifier",
+          "command": [
+            "python",
+            "/workspace/ags-cs-2x/official-validator-26c6c9d9/tools/verify_delivery.py"
+          ],
+          "exitCode": 1
+        }
+      ]
+    }
+  }
+}

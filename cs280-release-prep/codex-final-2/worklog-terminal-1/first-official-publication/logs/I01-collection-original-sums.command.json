@@ -1,0 +1,15 @@
+{
+  "label": "I01-collection-original-sums",
+  "command": [
+    "sha256sum",
+    "--check",
+    "--quiet",
+    "SHA256SUMS"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official1-publication-8c6eacff/public/cs280-release-prep/codex-official-1/collection",
+  "startedUtc": "2026-10-06T06:18:00.166590+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:18:00.171450+00:00",
+  "stdout": "I01-collection-original-sums.stdout.log",
+  "stderr": "I01-collection-original-sums.stderr.log"
+}

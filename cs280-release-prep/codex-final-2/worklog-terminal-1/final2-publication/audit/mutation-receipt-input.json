@@ -1,0 +1,185 @@
+{
+  "report": {
+    "schemaVersion": "1.0.0",
+    "operationId": "cs280-final2-official-evidence-d0ce2935",
+    "actionDigest": "sha256:95ee8a826bbe7cad285633cc20a0dbabf64322b01cddcf8dd035723dd2fef703",
+    "targetDigest": "sha256:5f7655c39fb2f690e7f7dee0858ddcea02bba54cd0312800609df21c5cdba683",
+    "classification": {
+      "actionClass": "publish",
+      "reversibility": "reversible",
+      "externalImpact": true,
+      "dataLossPotential": false,
+      "permissionImpact": false
+    },
+    "checks": [
+      {
+        "checkId": "target-specificity",
+        "state": "passed",
+        "evidenceRefs": [],
+        "message": "모든 대상이 구체적으로 식별됐습니다."
+      },
+      {
+        "checkId": "scope-match",
+        "state": "passed",
+        "evidenceRefs": [
+          "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/scope-capture-input.json"
+        ],
+        "message": "대상이 작업 범위 안에 있습니다."
+      },
+      {
+        "checkId": "authorization-match",
+        "state": "passed",
+        "evidenceRefs": [
+          "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/authorization.json"
+        ],
+        "message": "행동, 대상과 환경이 허용 범위에 있습니다."
+      },
+      {
+        "checkId": "current-state",
+        "state": "passed",
+        "evidenceRefs": [
+          "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/current-state.json"
+        ],
+        "message": "현재 fingerprint가 예상값과 일치합니다."
+      },
+      {
+        "checkId": "approval",
+        "state": "passed",
+        "evidenceRefs": [
+          "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/authorization.json"
+        ],
+        "message": "승인 상태: observed"
+      },
+      {
+        "checkId": "recovery",
+        "state": "passed",
+        "evidenceRefs": [
+          "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/scope-baseline-frozen.json",
+          "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/restore-rehearsal.json"
+        ],
+        "message": "복구 또는 명시적 비가역성 수용 근거가 있습니다."
+      },
+      {
+        "checkId": "blast-radius",
+        "state": "passed",
+        "evidenceRefs": [],
+        "message": "예상 영향 범위가 모든 대상을 포함합니다."
+      }
+    ],
+    "approval": {
+      "required": true,
+      "status": "observed",
+      "evidenceRefs": [
+        "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/authorization.json"
+      ]
+    },
+    "recovery": {
+      "available": true,
+      "restoreTested": true,
+      "irreversibilityAccepted": false,
+      "evidenceRefs": [
+        "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/scope-baseline-frozen.json",
+        "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/restore-rehearsal.json"
+      ]
+    },
+    "blastRadius": {
+      "affectedTargets": 1,
+      "affectedUsers": 0,
+      "external": true,
+      "description": "One publicly readable evidence subtree; no operational/product users or installations changed. Public readership is not bounded by this numeric affectedUsers field."
+    },
+    "unresolved": [],
+    "invalidationTriggers": [
+      "action 또는 planned tool 변경",
+      "target 또는 environment 변경",
+      "current-state evidence 또는 fingerprint 변경",
+      "scope 또는 authorization 변경",
+      "승인 evidence의 만료 또는 범위 변경",
+      "복구 계획 변경",
+      "예상 blast radius 변경"
+    ],
+    "validUntil": "2026-10-06T06:32:33.334Z",
+    "observedAt": "2026-10-06T06:17:33.334Z",
+    "verdict": "READY"
+  },
+  "intent": {
+    "schemaVersion": "1.0.0",
+    "operationId": "cs280-final2-official-evidence-d0ce2935",
+    "actionClass": "publish",
+    "targets": [
+      {
+        "locator": "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-release-prep/codex-final-2",
+        "targetType": "git-evidence-subtree",
+        "environment": "external",
+        "expectedFingerprint": "sha256:79e752c0e87e6a3ed3c54016b612a3aefce3db162f836e220716553ff1ab83d2"
+      }
+    ],
+    "plannedCommandOrTool": {
+      "tool": "git",
+      "action": "git push origin HEAD:refs/heads/evidence (nonforce; append only cs280-release-prep/codex-final-2/)"
+    },
+    "scopeRef": {
+      "locator": "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/scope-capture-input.json",
+      "digest": "sha256:52d748d7b8675c7ba2e01234fa75cdabb2a2168810018b47a169a5e793465fdb",
+      "includedTargets": [
+        "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-release-prep/codex-final-2"
+      ],
+      "excludedTargets": [
+        "https://github.com/jaeseongs95/agent-governance-suite/tree/main",
+        "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-codex-cloud",
+        "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-claude-cloud",
+        "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-release-prep/codex-official-1"
+      ]
+    },
+    "authorizationRef": {
+      "locator": "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/authorization.json",
+      "digest": "sha256:e4f9d4854039bfa1734afff30d097a51466095d5b68e638fff649b452521ca72",
+      "allowedActions": [
+        "publish"
+      ],
+      "allowedTargets": [
+        "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-release-prep/codex-final-2"
+      ],
+      "environments": [
+        "external"
+      ]
+    },
+    "approvalEvidenceRefs": [
+      {
+        "locator": "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/authorization.json",
+        "digest": "sha256:e4f9d4854039bfa1734afff30d097a51466095d5b68e638fff649b452521ca72",
+        "operationId": "cs280-final2-official-evidence-d0ce2935",
+        "actionClass": "publish",
+        "targetLocators": [
+          "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-release-prep/codex-final-2"
+        ],
+        "environments": [
+          "external"
+        ],
+        "expiresAt": "2026-10-06T06:32:33.239048+00:00"
+      }
+    ],
+    "currentStateEvidenceRefs": [
+      {
+        "locator": "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/current-state.json",
+        "digest": "sha256:dc18ebde8ae80cecc560d62d897985f52571c9f5d9ab6dc6f2c6d10e40f9af54",
+        "targetLocator": "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-release-prep/codex-final-2",
+        "fingerprint": "sha256:79e752c0e87e6a3ed3c54016b612a3aefce3db162f836e220716553ff1ab83d2"
+      }
+    ],
+    "recoveryPlan": {
+      "available": true,
+      "method": "Append-only evidence subtree: selective forward revert can remove this prefix while preserving all previous paths; local temporary-index restore exactly reproduces prior tree. Public downloads are not recalled.",
+      "backupRef": "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/scope-baseline-frozen.json",
+      "restoreProcedureRef": "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/restore-rehearsal.json",
+      "restoreTestEvidenceRef": "/workspace/ags-cs-2x/official-final2-d0ce2935/audit/restore-rehearsal.json",
+      "irreversibilityAccepted": false
+    },
+    "expectedBlastRadius": {
+      "affectedTargets": 1,
+      "affectedUsers": 0,
+      "external": true,
+      "description": "One publicly readable evidence subtree; no operational/product users or installations changed. Public readership is not bounded by this numeric affectedUsers field."
+    }
+  }
+}

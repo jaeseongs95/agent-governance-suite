@@ -1,0 +1,15 @@
+{
+  "label": "P18-mutation-receipt",
+  "command": [
+    "node",
+    "/workspace/ags-cs-2x/official-final-3ff79982/candidate/skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+    "--input",
+    "/workspace/ags-cs-2x/official1-publication-8c6eacff/audit/mutation-receipt-input.json"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official1-publication-8c6eacff/evidence-repo",
+  "startedUtc": "2026-10-06T06:19:24.413351+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:19:24.523992+00:00",
+  "stdout": "P18-mutation-receipt.stdout.log",
+  "stderr": "P18-mutation-receipt.stderr.log"
+}

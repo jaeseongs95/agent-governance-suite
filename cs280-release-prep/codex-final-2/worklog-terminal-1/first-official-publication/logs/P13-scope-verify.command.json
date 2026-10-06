@@ -1,0 +1,14 @@
+{
+  "label": "P13-scope-verify",
+  "command": [
+    "node",
+    "/workspace/ags-cs-2x/official-final-3ff79982/candidate/skills/change-scope-guardian/scripts/compare-change-scope.mjs",
+    "/workspace/ags-cs-2x/official1-publication-8c6eacff/audit/scope-verify-input.json"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official1-publication-8c6eacff/evidence-repo",
+  "startedUtc": "2026-10-06T06:18:46.065577+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:19:24.276421+00:00",
+  "stdout": "P13-scope-verify.stdout.log",
+  "stderr": "P13-scope-verify.stderr.log"
+}

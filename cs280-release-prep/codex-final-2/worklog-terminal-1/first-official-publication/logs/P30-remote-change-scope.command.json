@@ -1,0 +1,16 @@
+{
+  "label": "P30-remote-change-scope",
+  "command": [
+    "git",
+    "diff",
+    "--name-status",
+    "188a57af035b275ca4bd6c1d34c07015bfdfb263",
+    "dd02a3579ada48f6ee459fba94db365785baaef7"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official1-publication-8c6eacff/evidence-repo",
+  "startedUtc": "2026-10-06T06:19:27.343472+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:19:27.345567+00:00",
+  "stdout": "P30-remote-change-scope.stdout.log",
+  "stderr": "P30-remote-change-scope.stderr.log"
+}

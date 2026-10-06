@@ -1,0 +1,15 @@
+{
+  "label": "P21-staged-sums",
+  "command": [
+    "sha256sum",
+    "--check",
+    "--quiet",
+    "ROOT-SHA256SUMS"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official1-publication-8c6eacff/evidence-repo/cs280-release-prep/codex-official-1",
+  "startedUtc": "2026-10-06T06:19:24.879997+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:19:24.885312+00:00",
+  "stdout": "P21-staged-sums.stdout.log",
+  "stderr": "P21-staged-sums.stderr.log"
+}

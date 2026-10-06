@@ -1,0 +1,13 @@
+{
+  "operationId": "cs280-final2-official-evidence-d0ce2935",
+  "actionClass": "publish",
+  "target": "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/cs280-release-prep/codex-final-2",
+  "environment": "external",
+  "userAuthorizationMessageIds": [
+    "83b9158e-65f8-41a9-9034-517a82850bcf",
+    "0a4424c4-3881-45d6-a256-85c0ab961681",
+    "d0ce2935-ef6b-45b5-b3d0-68b4fc2a1c75"
+  ],
+  "basis": "Current explicit delegation permits finalfollowup append only at this exact prefix under user evidence-posting authorization. Existing official1/final1 files unchanged; this explicit changed-input final2 append is authorized.",
+  "receiptWindow": "Adapter imposes local15-minute freshness bound, not a new grant/renewal or user authorization expiry."
+}

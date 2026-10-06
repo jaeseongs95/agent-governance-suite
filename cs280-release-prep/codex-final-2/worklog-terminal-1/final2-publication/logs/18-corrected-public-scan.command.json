@@ -1,0 +1,15 @@
+{
+  "label": "18-corrected-public-scan",
+  "command": [
+    "python",
+    "/workspace/ags-cs-2x/publication-20261006T040502Z/scan-public.py",
+    "/workspace/ags-cs-2x/official-final2-d0ce2935",
+    "/workspace/ags-cs-2x/official-final2-d0ce2935/public/cs280-release-prep/codex-final-2"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final2-d0ce2935",
+  "startedUtc": "2026-10-06T06:12:56.874089+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:12:59.240480+00:00",
+  "stdout": "18-corrected-public-scan.stdout.log",
+  "stderr": "18-corrected-public-scan.stderr.log"
+}

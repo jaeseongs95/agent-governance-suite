@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0.0",
+  "mode": "capture",
+  "repositoryRoot": "/workspace/ags-cs-2x/official1-publication-8c6eacff/evidence-repo",
+  "comparisonTarget": "index",
+  "taskEnvelope": {
+    "schemaVersion": "1.0.0",
+    "taskId": "cs280-first-official-evidence-8c6eacff",
+    "objective": "Append sanitized the approved unchanged first official1 packet with its original FAIL and NOT_RUN with unchanged prior failures",
+    "scope": {
+      "included": [
+        "cs280-release-prep/codex-official-1/"
+      ],
+      "excluded": [
+        "cs280-codex-cloud/",
+        "cs280-claude-cloud/",
+        "cs280-release-prep/codex-final-1/",
+        "cs280-release-prep/codex-final-2/",
+        "main/",
+        "source/"
+      ]
+    },
+    "acceptanceCriteria": [
+      "Exact raw/public SHA and command/exit order retained",
+      "Existing failure and NOT_RUN claims preserved",
+      "Only new designated first official1 prefix added and all existing evidence blobs preserved",
+      "No main/source/tag/release/host install change"
+    ],
+    "riskLevel": "high",
+    "workUnits": [
+      {
+        "id": "append-final-official-evidence",
+        "objective": "Publish exact sanitized first official1 payload",
+        "dependencies": [],
+        "writeTargets": [
+          "cs280-release-prep/codex-official-1/"
+        ]
+      }
+    ],
+    "requiredCapabilities": [
+      "git",
+      "redaction"
+    ],
+    "constraints": [
+      "No source changes, product tests, force push, install or sharing changes"
+    ],
+    "authorization": {
+      "allowedActions": [
+        "Publish sanitized evidence copies via a nonforce evidence branch push"
+      ],
+      "prohibitedActions": [
+        "Modify main, candidate branch, existing evidence folders, credentials or operational state",
+        "Publish raw private archives, databases or keys"
+      ],
+      "approvalRequired": []
+    },
+    "decision": {
+      "complexity": "complex",
+      "hasConflicts": false
+    },
+    "orchestration": {
+      "requested": false,
+      "mcpAvailable": false
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "label": "P01-evidence-init",
+  "command": [
+    "git",
+    "init",
+    "/workspace/ags-cs-2x/official1-publication-8c6eacff/evidence-repo"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official1-publication-8c6eacff",
+  "startedUtc": "2026-10-06T06:18:10.496452+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:18:10.499674+00:00",
+  "stdout": "P01-evidence-init.stdout.log",
+  "stderr": "P01-evidence-init.stderr.log"
+}

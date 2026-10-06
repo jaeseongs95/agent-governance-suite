@@ -1,0 +1,14 @@
+{
+  "label": "P07-evidence-clean",
+  "command": [
+    "git",
+    "status",
+    "--porcelain"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final2-d0ce2935/evidence-repo",
+  "startedUtc": "2026-10-06T06:16:24.215169+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:16:24.418124+00:00",
+  "stdout": "P07-evidence-clean.stdout.log",
+  "stderr": "P07-evidence-clean.stderr.log"
+}

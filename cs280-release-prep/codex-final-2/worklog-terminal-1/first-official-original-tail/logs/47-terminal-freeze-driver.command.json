@@ -1,0 +1,13 @@
+{
+  "label": "47-terminal-freeze-driver",
+  "command": [
+    "python",
+    "/workspace/ags-cs-2x/official-validator-26c6c9d9/tools/freeze_terminal.py"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9",
+  "startedUtc": "2026-10-06T05:35:59.183723+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T05:35:59.704178+00:00",
+  "stdout": "47-terminal-freeze-driver.stdout.log",
+  "stderr": "47-terminal-freeze-driver.stderr.log"
+}

@@ -1,0 +1,15 @@
+{
+  "label": "T01-tools-pin",
+  "command": [
+    "git",
+    "rev-parse",
+    "HEAD",
+    "HEAD^{tree}"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final2-tail-20261006/tools",
+  "startedUtc": "2026-10-06T06:20:07.918238+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:20:07.920737+00:00",
+  "stdout": "T01-tools-pin.stdout.log",
+  "stderr": "T01-tools-pin.stderr.log"
+}

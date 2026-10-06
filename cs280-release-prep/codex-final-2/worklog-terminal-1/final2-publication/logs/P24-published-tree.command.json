@@ -1,0 +1,14 @@
+{
+  "label": "P24-published-tree",
+  "command": [
+    "git",
+    "rev-parse",
+    "HEAD^{tree}"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final2-d0ce2935/evidence-repo",
+  "startedUtc": "2026-10-06T06:17:33.909261+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:17:33.910758+00:00",
+  "stdout": "P24-published-tree.stdout.log",
+  "stderr": "P24-published-tree.stderr.log"
+}

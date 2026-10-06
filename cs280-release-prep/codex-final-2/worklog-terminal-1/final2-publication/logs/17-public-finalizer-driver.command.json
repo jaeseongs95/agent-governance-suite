@@ -1,0 +1,13 @@
+{
+  "label": "17-public-finalizer-driver",
+  "command": [
+    "python",
+    "/workspace/ags-cs-2x/official-final2-d0ce2935/tools/finalize_public.py"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final2-d0ce2935",
+  "startedUtc": "2026-10-06T06:12:56.694462+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:13:00.010173+00:00",
+  "stdout": "17-public-finalizer-driver.stdout.log",
+  "stderr": "17-public-finalizer-driver.stderr.log"
+}

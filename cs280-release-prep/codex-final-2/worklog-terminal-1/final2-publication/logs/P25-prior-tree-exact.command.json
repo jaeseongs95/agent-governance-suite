@@ -1,0 +1,16 @@
+{
+  "label": "P25-prior-tree-exact",
+  "command": [
+    "git",
+    "ls-tree",
+    "-r",
+    "--full-tree",
+    "0a38002fb58483115d9a445aafbad41cfb3c23b1"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final2-d0ce2935/evidence-repo",
+  "startedUtc": "2026-10-06T06:17:33.910987+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:17:33.917520+00:00",
+  "stdout": "P25-prior-tree-exact.stdout.log",
+  "stderr": "P25-prior-tree-exact.stderr.log"
+}

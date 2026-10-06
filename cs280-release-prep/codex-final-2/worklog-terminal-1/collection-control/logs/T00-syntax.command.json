@@ -1,0 +1,16 @@
+{
+  "label": "T00-syntax",
+  "command": [
+    "python",
+    "-m",
+    "py_compile",
+    "tools/prepare.py",
+    "tools/publish.py"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final2-tail-20261006",
+  "startedUtc": "2026-10-06T06:20:00.910216+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:20:00.939507+00:00",
+  "stdout": "T00-syntax.stdout.log",
+  "stderr": "T00-syntax.stderr.log"
+}

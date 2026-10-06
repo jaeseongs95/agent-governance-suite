@@ -1,0 +1,15 @@
+{
+  "label": "P17-mutation-preflight",
+  "command": [
+    "node",
+    "/workspace/ags-cs-2x/official-final-3ff79982/candidate/skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
+    "--input",
+    "/workspace/ags-cs-2x/official1-publication-8c6eacff/audit/mutation-intent.json"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official1-publication-8c6eacff/evidence-repo",
+  "startedUtc": "2026-10-06T06:19:24.298126+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:19:24.412581+00:00",
+  "stdout": "P17-mutation-preflight.stdout.log",
+  "stderr": "P17-mutation-preflight.stderr.log"
+}

@@ -1,0 +1,27 @@
+{"label": "45-terminal-tools-pin", "command": ["git", "rev-parse", "HEAD", "HEAD^{tree}"], "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9/tools", "startedUtc": "2026-10-06T05:35:59.210341+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:35:59.212349+00:00", "stdout": "45-terminal-tools-pin.stdout.log", "stderr": "45-terminal-tools-pin.stderr.log"}
+{"label": "46-terminal-tools-clean", "command": ["git", "status", "--porcelain"], "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9/tools", "startedUtc": "2026-10-06T05:35:59.212597+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:35:59.215648+00:00", "stdout": "46-terminal-tools-clean.stdout.log", "stderr": "46-terminal-tools-clean.stderr.log"}
+{"label": "48-terminal-residual-scan", "command": ["python", "/workspace/ags-cs-2x/publication-20261006T040502Z/scan-public.py", "/workspace/ags-cs-2x/official-validator-26c6c9d9", "/workspace/ags-cs-2x/official-validator-26c6c9d9/terminal-public"], "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9", "startedUtc": "2026-10-06T05:35:59.561255+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:35:59.602070+00:00", "stdout": "48-terminal-residual-scan.stdout.log", "stderr": "48-terminal-residual-scan.stderr.log"}
+{"label": "49-terminal-sums", "command": ["sha256sum", "--check", "--quiet", "SHA256SUMS"], "cwd": "/workspace/ags-cs-2x/official-validator-26c6c9d9/terminal-public", "startedUtc": "2026-10-06T05:35:59.604510+00:00", "exitCode": 0, "finishedUtc": "2026-10-06T05:35:59.607284+00:00", "stdout": "49-terminal-sums.stdout.log", "stderr": "49-terminal-sums.stderr.log"}
+{
+  "status": "PREPARED_BLOCKED_NO_PUSH",
+  "cutoffUtc": "2026-10-06T05:35:59.215793+00:00",
+  "collectionFiles": 209,
+  "terminalFiles": 41,
+  "terminalOriginalFiles": 35,
+  "terminalRedactionMatches": 0,
+  "residualFindings": 0,
+  "terminalManifestSha256": "8f56ab85ade60ee151a6a9c68b39180cbc94260f735b52af17ab3d9feb078d22",
+  "terminalSumsSha256": "1b9696f023393cd4aa4ba870c2beec6500991d080118bf08d4f02b61a61fcfa9",
+  "toolsCommit": "766b812ce965ca1a507843a166fe49150bbb7347",
+  "zip": {
+    "path": "/workspace/ags-cs-2x/official-validator-26c6c9d9/AGS-CS280-Codex-official-1-delivery.zip",
+    "bytes": 451171,
+    "sha256": "1110e6b0bea193247b66ec17e3f312f84ac6187e38b4bf57bb74c5fea690210d"
+  },
+  "originalSealedReviewZip": {
+    "path": "/workspace/ags-cs-2x/official-validator-26c6c9d9/AGS-CS280-Codex-official-1-review.zip",
+    "bytes": 416728,
+    "sha256": "6ecd4152e5af6dc71c3884cbb81d5d61302433452059ebd611dbe6ece5b9d5a1"
+  },
+  "remainingOutOfCutoff": "48,49,47 completion and Library receipt. Actual captures retained locally; not claimed in frozen ZIP."
+}

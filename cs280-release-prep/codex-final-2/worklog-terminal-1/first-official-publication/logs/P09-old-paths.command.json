@@ -1,0 +1,16 @@
+{
+  "label": "P09-old-paths",
+  "command": [
+    "git",
+    "ls-tree",
+    "-r",
+    "--full-tree",
+    "HEAD"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official1-publication-8c6eacff/evidence-repo",
+  "startedUtc": "2026-10-06T06:18:12.909529+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:18:12.916573+00:00",
+  "stdout": "P09-old-paths.stdout.log",
+  "stderr": "P09-old-paths.stderr.log"
+}

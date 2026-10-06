@@ -1,0 +1,15 @@
+{
+  "label": "I03-root-sums",
+  "command": [
+    "sha256sum",
+    "--check",
+    "--quiet",
+    "ROOT-SHA256SUMS"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official1-publication-8c6eacff/public/cs280-release-prep/codex-official-1",
+  "startedUtc": "2026-10-06T06:18:00.644744+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:18:00.650920+00:00",
+  "stdout": "I03-root-sums.stdout.log",
+  "stderr": "I03-root-sums.stderr.log"
+}

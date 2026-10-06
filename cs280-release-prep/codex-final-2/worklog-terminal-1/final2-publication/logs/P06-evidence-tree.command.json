@@ -1,0 +1,14 @@
+{
+  "label": "P06-evidence-tree",
+  "command": [
+    "git",
+    "rev-parse",
+    "HEAD^{tree}"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official-final2-d0ce2935/evidence-repo",
+  "startedUtc": "2026-10-06T06:16:24.212988+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:16:24.214689+00:00",
+  "stdout": "P06-evidence-tree.stdout.log",
+  "stderr": "P06-evidence-tree.stderr.log"
+}

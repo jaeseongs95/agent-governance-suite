@@ -1,0 +1,15 @@
+{
+  "label": "P14-new-paths",
+  "command": [
+    "git",
+    "ls-files",
+    "--",
+    "cs280-release-prep/codex-official-1/"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official1-publication-8c6eacff/evidence-repo",
+  "startedUtc": "2026-10-06T06:19:24.278567+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:19:24.281562+00:00",
+  "stdout": "P14-new-paths.stdout.log",
+  "stderr": "P14-new-paths.stderr.log"
+}

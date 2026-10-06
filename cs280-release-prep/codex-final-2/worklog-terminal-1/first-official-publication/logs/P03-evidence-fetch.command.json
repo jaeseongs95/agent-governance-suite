@@ -1,0 +1,16 @@
+{
+  "label": "P03-evidence-fetch",
+  "command": [
+    "git",
+    "fetch",
+    "--no-tags",
+    "origin",
+    "refs/heads/evidence"
+  ],
+  "cwd": "/workspace/ags-cs-2x/official1-publication-8c6eacff/evidence-repo",
+  "startedUtc": "2026-10-06T06:18:10.502529+00:00",
+  "exitCode": 0,
+  "finishedUtc": "2026-10-06T06:18:11.984927+00:00",
+  "stdout": "P03-evidence-fetch.stdout.log",
+  "stderr": "P03-evidence-fetch.stderr.log"
+}
