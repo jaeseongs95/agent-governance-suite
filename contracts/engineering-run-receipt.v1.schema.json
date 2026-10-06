@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/engineering-run-receipt.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "argv",
+    "snapshot",
+    "afterDigest",
+    "startedAt",
+    "finishedAt",
+    "status",
+    "exitCode",
+    "signal",
+    "stdout",
+    "stderr",
+    "stdoutDigest",
+    "stderrDigest",
+    "timeoutMs",
+    "executable",
+    "nodeVersion",
+    "platform",
+    "environmentNote",
+    "digest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "kind": {
+      "const": "engineering-run-receipt"
+    },
+    "argv": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 8192
+      },
+      "minItems": 1,
+      "maxItems": 128
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "kind",
+        "files",
+        "digest"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0.0"
+        },
+        "kind": {
+          "const": "engineering-snapshot"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "digest",
+              "size",
+              "lineCount"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 8192
+              },
+              "digest": {
+                "type": "string",
+                "pattern": "^sha256:[a-f0-9]{64}$"
+              },
+              "size": {
+                "type": "integer"
+              },
+              "lineCount": {
+                "type": "integer"
+              }
+            }
+          },
+          "minItems": 1,
+          "maxItems": 10000
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      }
+    },
+    "afterDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "startedAt": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8192
+    },
+    "finishedAt": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8192
+    },
+    "status": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "TIMED_OUT",
+        "SPAWN_ERROR",
+        "INPUT_CHANGED"
+      ]
+    },
+    "exitCode": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "signal": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "stdout": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 2097152
+    },
+    "stderr": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 2097152
+    },
+    "stdoutDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "stderrDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "timeoutMs": {
+      "type": "integer"
+    },
+    "executable": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8192
+    },
+    "nodeVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8192
+    },
+    "platform": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8192
+    },
+    "environmentNote": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8192
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  }
+}

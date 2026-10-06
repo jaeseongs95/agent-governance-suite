@@ -39,6 +39,8 @@ describe("bundled skill registry", () => {
       "model-effort-advisor",
       "iteration-frame-auditor",
       "evaluation-validity-auditor",
+      "test-engineering",
+      "code-review",
     ]) {
       expect(lockedVersions.get(skillId), `${skillId} is missing from skills/source-lock.json`).toMatch(/^\d+\.\d+\.\d+$/u);
       expect(registeredVersions.get(skillId), `${skillId} registry version`).toBe(lockedVersions.get(skillId));
@@ -60,6 +62,22 @@ describe("bundled skill registry", () => {
       "iteration-frame-audit",
       "evaluation-validity-audit",
     ]));
+  });
+
+  it("selects the engineering providers while keeping external inputs and existing authority", () => {
+    const providers = new FileSkillRegistry(registryPath, new ContractValidator()).read();
+    for (const [capability, skillId, executionClass, order] of [
+      ["test-plan-validation", "test-engineering", "bootstrap", 35],
+      ["test-sensitivity-review", "test-engineering", "workflow", 66],
+      ["change-code-review", "code-review", "workflow", 68],
+    ] as const) {
+      const provider = selectSkillByCapability(providers, capability)!;
+      expect(provider).toMatchObject({ skillId, executionClass, phaseOrder: order, gate: { kind: "none", policy: "none" } });
+      expect(provider.inputBindings.every((binding) => binding.operation === "require-external" && binding.sources.every((source) => source.startsWith("task:")))).toBe(true);
+    }
+    expect(selectSkillByCapability(providers, "cs-implementation-review")?.skillId).toBe("cs-engineering");
+    expect(selectSkillByCapability(providers, "independent-audit")?.skillId).toBe("independent-audit-gate");
+    expect(selectSkillByCapability(providers, "acceptance-evidence-validation")?.skillId).toBe("acceptance-evidence-validator");
   });
 
   it("bundles and enables the Korean prose workflow for runtime selection", () => {

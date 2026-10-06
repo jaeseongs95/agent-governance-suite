@@ -1,8 +1,31 @@
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { checkSkillContextOptimization, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
 
 describe("skill context optimization", () => {
+  it("rejects a changed engineering bridge and still rejects changes to the preceding CS bridge", () => {
+    const root = path.resolve(import.meta.dirname, "../..");
+    const directory = mkdtempSync(path.join(tmpdir(), "ags-engineering-bridge-"));
+    try {
+      for (const relative of ["skills/orchestrator/SKILL.md", "skills/orchestrator/references/entry-details.md", "scripts/fixtures/cs-engineering-handoff.2.8.0.md", "scripts/fixtures/engineering-practices-handoff.2.8.1.md"]) {
+        mkdirSync(path.dirname(path.join(directory, relative)), { recursive: true });
+        cpSync(path.join(root, relative), path.join(directory, relative));
+      }
+      expect(reconstructOptimizedSkill("orchestrator", directory)).toEqual(reconstructOptimizedSkill("orchestrator"));
+      const relative = "skills/orchestrator/references/entry-details.md";
+      const original = readFileSync(path.join(directory, relative));
+      writeFileSync(path.join(directory, relative), Buffer.concat([original, Buffer.from("extra\n")]));
+      expect(() => reconstructOptimizedSkill("orchestrator", directory)).toThrow(/2.8.1 Engineering Practices/u);
+      const changed = original.toString("utf8").replace("cs-constraint-derivation", "cs-constraint-derivatioX");
+      expect(changed).not.toBe(original.toString("utf8"));
+      writeFileSync(path.join(directory, relative), changed);
+      expect(() => reconstructOptimizedSkill("orchestrator", directory)).toThrow(/2.8.0 CS handoff/u);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
   it("allows the runtime minimum update while rejecting other README changes", () => {
     const baseline = "# skill\nNode.js 22 이상\nexisting contract\n";
     const updated = "# skill\nNode.js 24.0.0 이상\nexisting contract\n";

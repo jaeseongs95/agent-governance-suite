@@ -1,4 +1,6 @@
 export const SKILL_RUNTIME_ENTRYPOINTS = Object.freeze([
+  { path: "skills/test-engineering/scripts/run.mjs", expectedExitCode: 2, outputIncludes: "INVALID_INPUT" },
+  { path: "skills/code-review/scripts/run.mjs", expectedExitCode: 2, outputIncludes: "INVALID_INPUT" },
   { path: "skills/cs-engineering/scripts/validate.mjs", expectedExitCode: 0, outputIncludes: "check-stage-bundle" },
   { path: "skills/coordinate-subagents/scripts/model-routing.mjs", expectedExitCode: 1, outputIncludes: "Usage:" },
   { path: "skills/software-security-auditor/scripts/cli.mjs", expectedExitCode: 2, outputIncludes: "INVALID_INPUT" },

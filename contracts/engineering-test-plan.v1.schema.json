@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/engineering-test-plan.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "taskId",
+    "contractDigest",
+    "requirements",
+    "scopeFiles",
+    "runner",
+    "environment",
+    "cases",
+    "exclusions"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "kind": {
+      "const": "engineering-test-plan"
+    },
+    "taskId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8192
+    },
+    "contractDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "requirements": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 8192
+      },
+      "minItems": 1,
+      "maxItems": 1000
+    },
+    "scopeFiles": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 8192
+      },
+      "minItems": 1,
+      "maxItems": 10000
+    },
+    "runner": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8192
+    },
+    "environment": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8192
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "requirementIds",
+          "scenario",
+          "entryPoint",
+          "level",
+          "expectedBehavior",
+          "oracle",
+          "testFiles",
+          "required",
+          "sensitivity",
+          "sensitivityReason"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "requirementIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 8192
+            },
+            "minItems": 1,
+            "maxItems": 100
+          },
+          "scenario": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "entryPoint": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "level": {
+            "enum": [
+              "unit",
+              "integration",
+              "e2e",
+              "static"
+            ]
+          },
+          "expectedBehavior": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "oracle": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "testFiles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 8192
+            },
+            "minItems": 1,
+            "maxItems": 100
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "sensitivity": {
+            "enum": [
+              "red-green",
+              "mutation",
+              "manual-review",
+              "not-applicable"
+            ]
+          },
+          "sensitivityReason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        }
+      },
+      "minItems": 1,
+      "maxItems": 1000
+    },
+    "exclusions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 8192
+      },
+      "minItems": 0,
+      "maxItems": 10000,
+      "uniqueItems": true
+    }
+  }
+}

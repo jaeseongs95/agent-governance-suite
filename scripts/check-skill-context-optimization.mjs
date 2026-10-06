@@ -13,6 +13,9 @@ const SESSION_BOARD_ADDITION_SHA256 = "381be4018118086b3c4087be043c004d8d6de986d
 const CS_HANDOFF_ADDITION = "scripts/fixtures/cs-engineering-handoff.2.8.0.md";
 const CS_HANDOFF_SHA256 = "c8937d58fd2d9193f191d86c629c9b54731d08d82ec12cb3249ff82e6362ed52";
 const CS_REGISTRY_SHA256 = "63fc38d9dff8570173af73092e320c4ff2467d26185fb6528ea33a8af59db6a9";
+const ENGINEERING_ADDITION = "scripts/fixtures/engineering-practices-handoff.2.8.1.md";
+const ENGINEERING_ADDITION_SHA256 = "6f4bc0fd90113630f077415038492cbceddbaafb9e4e566c750111fafb3abef1";
+const ENGINEERING_REGISTRY_SHA256 = "dd9c818c5e50d15316b3adc82c77c06810f3efbc6633c957855c1655d6159adc";
 // Intake changes policy after the original optimization. Pin only this revision;
 // all other skills keep their historical byte-for-byte checks.
 const ORCHESTRATOR_INTAKE = Object.freeze({
@@ -92,6 +95,12 @@ export function reconstructOptimizedSkill(skillId, root = ROOT) {
   const candidate = readFileSync(join(root, "skills", skillId, "SKILL.md"));
   let detail = readFileSync(join(root, "skills", skillId, "references", "entry-details.md"));
   if (skillId === "orchestrator") {
+    const engineeringAddition = readFileSync(join(root, ENGINEERING_ADDITION));
+    if (createHash("sha256").update(engineeringAddition).digest("hex") !== ENGINEERING_ADDITION_SHA256
+      || !detail.subarray(-engineeringAddition.length).equals(engineeringAddition)) {
+      throw new Error("orchestrator: pinned 2.8.1 Engineering Practices addition differs");
+    }
+    detail = detail.subarray(0, detail.length - engineeringAddition.length);
     const addition = readFileSync(join(root, CS_HANDOFF_ADDITION));
     if (createHash("sha256").update(addition).digest("hex") !== CS_HANDOFF_SHA256
       || !detail.subarray(-addition.length).equals(addition)) {
@@ -174,7 +183,12 @@ export function checkSkillContextOptimization() {
     skills.push({ skillId, baselineBytes: baseline.length, candidateBytes: candidate.length, reducedBytes: baseline.length - candidate.length });
   }
 
-  if (createHash("sha256").update(readFileSync(join(ROOT, "skills", "registry.json"))).digest("hex") !== CS_REGISTRY_SHA256) errors.push("skills/registry.json differs from pinned 2.8.0 candidate");
+  const registry = JSON.parse(readFileSync(join(ROOT, "skills", "registry.json"), "utf8"));
+  const engineering = registry.skills.filter((skill) => ["test-engineering", "code-review"].includes(skill.skillId));
+  const frozenRegistry = { ...registry, skills: registry.skills.filter((skill) => !engineering.includes(skill)) };
+  const registryDigest = (value) => createHash("sha256").update(`${JSON.stringify(value, null, 2)}\n`).digest("hex");
+  if (registryDigest(frozenRegistry) !== CS_REGISTRY_SHA256) errors.push("existing skills/registry.json differs from pinned 2.8.0 candidate");
+  if (registryDigest(engineering) !== ENGINEERING_REGISTRY_SHA256) errors.push("Engineering Practices registry differs from pinned descriptors");
   if (git("diff", "--name-only", BASELINE, "--", "skills/ponytail").toString("utf8").trim()) errors.push("excluded skill ponytail changed");
   if (candidateBytes >= baselineBytes) errors.push("combined initial SKILL.md bytes did not shrink");
 

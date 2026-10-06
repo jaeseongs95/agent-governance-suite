@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/engineering-review-report.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "requestDigest",
+    "headDigest",
+    "reviewer",
+    "independence",
+    "coverage",
+    "findings",
+    "openQuestions",
+    "handoffs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "kind": {
+      "const": "engineering-review-report"
+    },
+    "requestDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "headDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "reviewer": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8192
+    },
+    "independence": {
+      "enum": [
+        "self-review",
+        "separate-reviewer",
+        "not-established"
+      ]
+    },
+    "coverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "status",
+          "reason"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "status": {
+            "enum": [
+              "REVIEWED",
+              "NOT_REVIEWED"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        }
+      },
+      "minItems": 1,
+      "maxItems": 10000
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "path",
+          "side",
+          "lineStart",
+          "lineEnd",
+          "category",
+          "severity",
+          "confidence",
+          "blocking",
+          "title",
+          "contract",
+          "trace",
+          "impact",
+          "correction"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "side": {
+            "enum": [
+              "base",
+              "head"
+            ]
+          },
+          "lineStart": {
+            "type": "integer"
+          },
+          "lineEnd": {
+            "type": "integer"
+          },
+          "category": {
+            "enum": [
+              "defect",
+              "recommendation"
+            ]
+          },
+          "severity": {
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low",
+              "informational"
+            ]
+          },
+          "confidence": {
+            "enum": [
+              "confirmed",
+              "supported",
+              "hypothesis"
+            ]
+          },
+          "blocking": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "contract": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "trace": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "impact": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "correction": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        }
+      },
+      "minItems": 0,
+      "maxItems": 1000
+    },
+    "openQuestions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 8192
+      },
+      "minItems": 0,
+      "maxItems": 10000,
+      "uniqueItems": true
+    },
+    "handoffs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "owner",
+          "path",
+          "reason"
+        ],
+        "properties": {
+          "owner": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          }
+        }
+      },
+      "minItems": 0,
+      "maxItems": 1000
+    }
+  }
+}

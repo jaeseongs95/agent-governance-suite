@@ -8,6 +8,7 @@
 //   --check  fail when claude-plugin/ differs from a fresh render
 //   --drift  report the same differences as warnings and exit 0
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -180,6 +181,40 @@ function trackedFiles(root) {
   return output.split("\0").filter(Boolean);
 }
 
+const ENGINEERING_LOCK = "runtime/engineering-practices/CONTENT_LOCK.json";
+const engineeringPath = (file) => /^(?:skills\/(?:test-engineering|code-review)\/|skills\/orchestrator\/references\/engineering-practices\/|runtime\/engineering-practices\/|contracts\/engineering-[a-z-]+\.v1\.schema\.json$|claude-overlay\/adaptations\/(?:test-engineering|code-review)\.json$)/u.test(file);
+const digest = (bytes) => `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
+
+// Validate every source byte before adapting it; only the host's actual shipped
+// bytes belong in its runtime lock. Codex keeps the unchanged source lock.
+export async function readEngineeringSourceLock(root, tracked) {
+  if (!tracked.includes(ENGINEERING_LOCK)) return null;
+  const lock = JSON.parse(await readFile(path.join(root, ENGINEERING_LOCK), "utf8"));
+  const expected = tracked.filter((file) => engineeringPath(file) && file !== ENGINEERING_LOCK).sort();
+  if (lock.schemaVersion !== "1.0.0" || !Array.isArray(lock.files)
+    || JSON.stringify(lock.files.map((file) => file.path).sort()) !== JSON.stringify(expected)) {
+    throw new Error("Engineering Practices source lock must cover the exact source inventory.");
+  }
+  for (const file of lock.files) {
+    if (digest(await readFile(path.join(root, file.path))) !== file.digest) {
+      throw new Error(`Engineering Practices source lock mismatch: ${file.path}`);
+    }
+  }
+  return lock;
+}
+
+export function projectEngineeringContentLock(files, lock) {
+  if (!lock) return;
+  const projected = lock.files
+    .filter((file) => !file.path.startsWith(`${OVERLAY_DIRECTORY}/`) && !isCodexOnlySkillPath(file.path))
+    .map((file) => {
+      const bytes = files.get(file.path);
+      if (!bytes) throw new Error(`Engineering Practices shipped file is missing: ${file.path}`);
+      return { path: file.path, digest: digest(bytes) };
+    });
+  files.set(ENGINEERING_LOCK, Buffer.from(formatJson({ schemaVersion: "1.0.0", files: projected })));
+}
+
 async function walk(directory, base = directory) {
   const files = [];
   for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -205,6 +240,7 @@ function formatJson(value) {
 export async function renderClaudePlugin(root = ROOT) {
   const files = new Map();
   const tracked = trackedFiles(root);
+  const engineeringLock = await readEngineeringSourceLock(root, tracked);
   const version = JSON.parse(await readFile(path.join(root, "release/version.json"), "utf8")).version;
   let registry = null;
 
@@ -242,6 +278,7 @@ export async function renderClaudePlugin(root = ROOT) {
     applySkillAdaptation(files, match[1], JSON.parse(await readFile(path.join(overlayRoot, relativePath), "utf8")), source);
   }
   mapSkillInvocations(files, (registry?.skills ?? []).map((entry) => entry.skillId));
+  projectEngineeringContentLock(files, engineeringLock);
   const wording = findCodexOnlyWording(files);
   if (wording.length > 0) throw new Error(`Claude overlay is incomplete:\n${wording.map((problem) => `- ${problem}`).join("\n")}`);
   return files;

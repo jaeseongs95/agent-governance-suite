@@ -186,6 +186,24 @@
       "updatePolicy": "internal",
       "integratedChecksum": "sha256:1c41f903d82b881bb4ea740aabb2fbabde89b1412faaa65b9cf0ea72de4fec6d",
       "checksumScope": "relative paths and normalized text bytes under skills/cs-engineering"
+    },
+    {
+      "skillId": "test-engineering",
+      "path": "skills/test-engineering",
+      "version": "0.1.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:87a36a697acbec7d70c4e1bfbbffb499258e1a548bfcd93cf6a5072bddfbb735",
+      "checksumScope": "relative paths and normalized text bytes under skills/test-engineering"
+    },
+    {
+      "skillId": "code-review",
+      "path": "skills/code-review",
+      "version": "0.1.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:321fafc8490a97119e6f2684013876512e84e3074093226c44e42c77b11cdd0b",
+      "checksumScope": "relative paths and normalized text bytes under skills/code-review"
     }
   ]
 }
