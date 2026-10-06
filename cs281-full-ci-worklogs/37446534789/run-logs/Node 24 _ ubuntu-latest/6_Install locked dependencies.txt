@@ -1,0 +1,43 @@
+﻿2026-10-06T09:57:46.1611154Z ##[group]Run pnpm install --frozen-lockfile
+2026-10-06T09:57:46.1611580Z [36;1mpnpm install --frozen-lockfile[0m
+2026-10-06T09:57:46.1678996Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T09:57:46.1679375Z env:
+2026-10-06T09:57:46.1679663Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:57:46.1680128Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:57:46.1680602Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:57:46.1681006Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:57:46.1681419Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:57:46.1681828Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:57:46.1682172Z ##[endgroup]
+2026-10-06T09:57:46.2314301Z ! Corepack is about to download http<runner-path>
+2026-10-06T09:57:48.0167111Z ? Verifying lockfile against supply-chain policies (267 entries)...
+2026-10-06T09:57:48.0263133Z Lockfile is up to date, resolution step is skipped
+2026-10-06T09:57:48.1312167Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-10-06T09:57:48.1659899Z Packages: +217
+2026-10-06T09:57:48.1661136Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-10-06T09:57:49.1395093Z Progress: resolved 217, reused 0, downloaded 59, added 0
+2026-10-06T09:57:49.1637991Z Packages are hard linked from the content-addressable store to the virtual store.
+2026-10-06T09:57:49.1664830Z   Content-addressable store is at: <runner-home>/.local/share/pnpm/store/v11
+2026-10-06T09:57:49.1674893Z   Virtual store is at:             node_modules/.pnpm
+2026-10-06T09:57:49.7958407Z Progress: resolved 217, reused 0, downloaded 217, added 217, done
+2026-10-06T09:57:50.5425193Z ✓ Lockfile passes supply-chain policies (267 entries in 2.5s)
+2026-10-06T09:57:50.5481281Z .../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+2026-10-06T09:57:50.6078790Z .../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+2026-10-06T09:57:50.7680191Z 
+2026-10-06T09:57:50.7680743Z dependencies:
+2026-10-06T09:57:50.7681309Z + @modelcontextprotocol/sdk 1.30.0
+2026-10-06T09:57:50.7681819Z + ajv 8.20.0
+2026-10-06T09:57:50.7682215Z + ajv-formats 3.0.1
+2026-10-06T09:57:50.7682614Z + zod 4.5.4
+2026-10-06T09:57:50.7682828Z 
+2026-10-06T09:57:50.7683005Z devDependencies:
+2026-10-06T09:57:50.7683692Z + @eslint/js 10.0.1
+2026-10-06T09:57:50.7684213Z + @types/node 26.5.0
+2026-10-06T09:57:50.7684670Z + esbuild 0.28.2
+2026-10-06T09:57:50.7685066Z + eslint 10.10.0
+2026-10-06T09:57:50.7685439Z + tsx 4.23.13
+2026-10-06T09:57:50.7685859Z + typescript 6.0.2
+2026-10-06T09:57:50.7686382Z + typescript-eslint 8.70.0
+2026-10-06T09:57:50.7686882Z + vitest 5.0.0
+2026-10-06T09:57:50.7687129Z 
+2026-10-06T09:57:50.8641963Z Done in 3.4s using pnpm v11.19.0

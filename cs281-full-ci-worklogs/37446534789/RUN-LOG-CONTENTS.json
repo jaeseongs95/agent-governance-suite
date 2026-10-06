@@ -1,0 +1,196 @@
+{
+  "archiveBytes": 121000,
+  "archiveSha256": "2b6c5a7796f26726b6d2e11965f6501c4e04139cd5e62e5f8580b69c3b627648",
+  "files": [
+    {
+      "path": "run-logs/0_Node 24 _ windows-latest.txt",
+      "bytes": 140301,
+      "sha256": "89b12cfe52b36392b2f177c6872fe1de1e82fba8c79898cc5795d63799882d8e"
+    },
+    {
+      "path": "run-logs/1_Node 24 _ ubuntu-latest.txt",
+      "bytes": 104478,
+      "sha256": "c696ef50ec694f882135b4c8e26b370d7d26376847ec2f0e452320b9ea41f783"
+    },
+    {
+      "path": "run-logs/Node 24 _ ubuntu-latest/10_Verify release metadata.txt",
+      "bytes": 1077,
+      "sha256": "efde17bcbc4b1dc92c943a8daaef524cd6d5bb71f31f9ced7028f399085c1a09"
+    },
+    {
+      "path": "run-logs/Node 24 _ ubuntu-latest/11_Verify source lock.txt",
+      "bytes": 1064,
+      "sha256": "1e9c964e9c50bb3fae67296d30a23ace75932f346a488338d5e726bf96f7bc22"
+    },
+    {
+      "path": "run-logs/Node 24 _ ubuntu-latest/12_Build.txt",
+      "bytes": 999,
+      "sha256": "086ea29c7cf008cb59a7ebabe5aed20ad13cba351ffbd0e8469d25d6262e6823"
+    },
+    {
+      "path": "run-logs/Node 24 _ ubuntu-latest/13_Verify process identity probe.txt",
+      "bytes": 1093,
+      "sha256": "24e0dc16daa1df398fc81e4d4c634cbcb44a02b485716f754a063b7944d4b2aa"
+    },
+    {
+      "path": "run-logs/Node 24 _ ubuntu-latest/14_Test.txt",
+      "bytes": 66853,
+      "sha256": "365e4db762cba7d0fe0b83ad4f7cb760ec63dd5d8913fa07c77bfe87497add02"
+    },
+    {
+      "path": "run-logs/Node 24 _ ubuntu-latest/18_Upload official validation evidence.txt",
+      "bytes": 1574,
+      "sha256": "0362083cd0e080e42a20bb57d5e381b0c9000c6f9775c7612bc1a93fb1a517a0"
+    },
+    {
+      "path": "run-logs/Node 24 _ ubuntu-latest/1_Set up job.txt",
+      "bytes": 2261,
+      "sha256": "ad444e03551437cbcffe90e989f02ddfddad78982cfb98cdd3fed57b6d0b7589"
+    },
+    {
+      "path": "run-logs/Node 24 _ ubuntu-latest/2_Check out repository.txt",
+      "bytes": 16454,
+      "sha256": "03858498e99a497e3179279af2c753db2319b33c6588b421b86aec45bce8eb9a"
+    },
+    {
+      "path": "run-logs/Node 24 _ ubuntu-latest/3_Set up Node.js.txt",
+      "bytes": 903,
+      "sha256": "7c507f3257f7a258f08f4aa37015b2add3d4e7bec31ff7ec3dd832db238fd8de"
+    },
+    {
+      "path": "run-logs/Node 24 _ ubuntu-latest/42_Post Check out repository.txt",
+      "bytes": 4334,
+      "sha256": "dd4a716ce3cafcbac3e8ca91eecbf7ea1150e2e331b44eb99edc62b91b60e60b"
+    },
+    {
+      "path": "run-logs/Node 24 _ ubuntu-latest/43_Complete job.txt",
+      "bytes": 378,
+      "sha256": "090dedcdba33dcdfda7384d2874e50dcb1dfcbf94ca211da8b1d156feea5f088"
+    },
+    {
+      "path": "run-logs/Node 24 _ ubuntu-latest/4_Set up Python.txt",
+      "bytes": 620,
+      "sha256": "d35e0f98f83949c04173387bffffc8a33482379e2123932e5a2538a629f8644f"
+    },
+    {
+      "path": "run-logs/Node 24 _ ubuntu-latest/5_Enable Corepack.txt",
+      "bytes": 828,
+      "sha256": "26dd7ab8aba6255e630467ef25d2d5502547a366be86ddb67e0e0f5a0234ef0d"
+    },
+    {
+      "path": "run-logs/Node 24 _ ubuntu-latest/6_Install locked dependencies.txt",
+      "bytes": 2961,
+      "sha256": "c9cff41543d3b1fdb998e39f9c075f91a53dc42480dfe106e3733647326d0d6e"
+    },
+    {
+      "path": "run-logs/Node 24 _ ubuntu-latest/7_Verify committed runtime bundles.txt",
+      "bytes": 1004,
+      "sha256": "916648bcf520bfb411f6756309a02f6bc855c4c0752dc9829423364a82140275"
+    },
+    {
+      "path": "run-logs/Node 24 _ ubuntu-latest/8_Report Claude plugin drift.txt",
+      "bytes": 1069,
+      "sha256": "c6adb3c8a992a445041a55fa6c1e10833c4250fa82542aa23bdf24f9616cc1c0"
+    },
+    {
+      "path": "run-logs/Node 24 _ ubuntu-latest/9_Lint.txt",
+      "bytes": 1054,
+      "sha256": "8fa9a2c1abfd3cac4e97872f4a940a66408c4a6960259eba732b69907c097a88"
+    },
+    {
+      "path": "run-logs/Node 24 _ ubuntu-latest/system.txt",
+      "bytes": 613,
+      "sha256": "bf12d76a9e3860f17499cba395410ed9d94c017ddb2dea6b59ed7c97925249b1"
+    },
+    {
+      "path": "run-logs/Node 24 _ windows-latest/10_Verify release metadata.txt",
+      "bytes": 1049,
+      "sha256": "40f8c691faef056c9dd996763c337ffd97fd9c9214209fe73f61435e15a1169a"
+    },
+    {
+      "path": "run-logs/Node 24 _ windows-latest/11_Verify source lock.txt",
+      "bytes": 1036,
+      "sha256": "c595480e94a455f1399a0eb6b8d6057b766b7cded5c60e4347808cfb651e126d"
+    },
+    {
+      "path": "run-logs/Node 24 _ windows-latest/12_Build.txt",
+      "bytes": 970,
+      "sha256": "7647fce878ac768c527768cc602f70df488550d6b21e61967bc3d54cf8b4fc84"
+    },
+    {
+      "path": "run-logs/Node 24 _ windows-latest/13_Verify process identity probe.txt",
+      "bytes": 1065,
+      "sha256": "5adf9e63185d551a69ded803a66262f4a71ca5c6c514a12e22c5b3967c40c372"
+    },
+    {
+      "path": "run-logs/Node 24 _ windows-latest/14_Test.txt",
+      "bytes": 102956,
+      "sha256": "c67b2cc3034febc575c9d6b206236f14be064eea22b02127ce02e2423f9cd499"
+    },
+    {
+      "path": "run-logs/Node 24 _ windows-latest/18_Upload official validation evidence.txt",
+      "bytes": 1511,
+      "sha256": "44c17c16697d09ae6d3cdf90aa6d5d39c526284ce7ea1b26f751b906150db483"
+    },
+    {
+      "path": "run-logs/Node 24 _ windows-latest/1_Set up job.txt",
+      "bytes": 2354,
+      "sha256": "8eb19f2c98d6564aba21fb0d42cdec2e178e08bd7ccaf174dd7ce1d1809023a9"
+    },
+    {
+      "path": "run-logs/Node 24 _ windows-latest/2_Check out repository.txt",
+      "bytes": 16039,
+      "sha256": "79b17ac49cc7e6e9bd5f6a5bb582e3aeefcbfba0b0a636669409cb857fc16200"
+    },
+    {
+      "path": "run-logs/Node 24 _ windows-latest/3_Set up Node.js.txt",
+      "bytes": 924,
+      "sha256": "2a72d3a6dfa725c8da4149c4672f599ed5ca417d52122531d80309122551c223"
+    },
+    {
+      "path": "run-logs/Node 24 _ windows-latest/42_Post Check out repository.txt",
+      "bytes": 4567,
+      "sha256": "8422b1ddf4fe1700e40673d8d2bd533fb25c543697e8bcb3ed7db3fd341fa3ff"
+    },
+    {
+      "path": "run-logs/Node 24 _ windows-latest/43_Complete job.txt",
+      "bytes": 380,
+      "sha256": "4c2b7477310470f407e3a98d8b56b60fec7343b076c3ef89b8951128b01f517a"
+    },
+    {
+      "path": "run-logs/Node 24 _ windows-latest/4_Set up Python.txt",
+      "bytes": 632,
+      "sha256": "14c6cbc6cc83059fcc11976b39aed49c2c5e9e7161ef0b029d33f8e1e86331ed"
+    },
+    {
+      "path": "run-logs/Node 24 _ windows-latest/5_Enable Corepack.txt",
+      "bytes": 796,
+      "sha256": "6f1b22de2ec77013521831f652a9f6aa8e5ed31fd6504b120e939b2ebf29d803"
+    },
+    {
+      "path": "run-logs/Node 24 _ windows-latest/6_Install locked dependencies.txt",
+      "bytes": 3028,
+      "sha256": "4d2210bf5d76c2c5ca137891d972fff1c46a67f38158374b905b2f722c5f7630"
+    },
+    {
+      "path": "run-logs/Node 24 _ windows-latest/7_Verify committed runtime bundles.txt",
+      "bytes": 975,
+      "sha256": "00a1d0721e279e57df991845ea5cb7537f73c1e8d3769e814ebcf57b3205247b"
+    },
+    {
+      "path": "run-logs/Node 24 _ windows-latest/8_Report Claude plugin drift.txt",
+      "bytes": 1041,
+      "sha256": "42d22bbd3f8fab7345963ce9c3934edd52fa91971a73a6833a9393d769e9ffe8"
+    },
+    {
+      "path": "run-logs/Node 24 _ windows-latest/9_Lint.txt",
+      "bytes": 1026,
+      "sha256": "c8357c5b50463a737221f7fef11e502a678f4afe9a7a702a87c13f56dce1c6e5"
+    },
+    {
+      "path": "run-logs/Node 24 _ windows-latest/system.txt",
+      "bytes": 614,
+      "sha256": "c41c07de6e99ebbb6bc05930e9c3ce719f520fb7f2702d1e1317ed89014c1b7b"
+    }
+  ]
+}

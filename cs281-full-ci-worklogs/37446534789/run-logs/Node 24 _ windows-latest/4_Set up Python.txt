@@ -1,0 +1,12 @@
+﻿2026-10-06T09:57:53.8349397Z ##[group]Run actions/setup-python@v7
+2026-10-06T09:57:53.8349624Z with:
+2026-10-06T09:57:53.8349727Z   python-version: 3.12
+2026-10-06T09:57:53.8349846Z   check-latest: false
+2026-10-06T09:57:53.8351003Z   token: ***
+2026-10-06T09:57:53.8351103Z   update-environment: true
+2026-10-06T09:57:53.8351224Z   allow-prereleases: false
+2026-10-06T09:57:53.8351344Z   freethreaded: false
+2026-10-06T09:57:53.8351445Z ##[endgroup]
+2026-10-06T09:57:53.9275490Z ##[group]Installed versions
+2026-10-06T09:57:54.1374335Z Successfully set up CPython (3.12.10)
+2026-10-06T09:57:54.1374752Z ##[endgroup]

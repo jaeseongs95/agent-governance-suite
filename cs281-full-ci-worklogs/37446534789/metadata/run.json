@@ -1,0 +1,29 @@
+{
+  "id": 37446534789,
+  "name": "CI",
+  "head_branch": "codex/engineering-practices-2.8.1",
+  "head_sha": "1209b3e9a0307c4cd28a7ffa0cccd1ff7e80d132",
+  "path": ".github/workflows/ci.yml",
+  "display_title": "CI",
+  "run_number": 137,
+  "event": "workflow_dispatch",
+  "status": "completed",
+  "conclusion": "failure",
+  "workflow_id": 353647941,
+  "run_attempt": 1,
+  "html_url": "http<runner-path>",
+  "created_at": "2026-10-06T09:57:37Z",
+  "updated_at": "2026-10-06T10:02:16Z",
+  "run_started_at": "2026-10-06T09:57:37Z",
+  "repository": {
+    "id": 1362118877,
+    "name": "agent-governance-suite",
+    "full_name": "jaeseongs95/agent-governance-suite",
+    "html_url": "http<runner-path>"
+  },
+  "head_commit": {
+    "id": "1209b3e9a0307c4cd28a7ffa0cccd1ff7e80d132",
+    "message": "test: connect engineering suites to skill test paths",
+    "timestamp": "2026-10-06T09:50:06Z"
+  }
+}

@@ -1,0 +1,20 @@
+﻿2026-10-06T09:59:40.6978118Z ##[group]Run actions/upload-artifact@v4
+2026-10-06T09:59:40.6978432Z with:
+2026-10-06T09:59:40.6978659Z   name: official-codex-37446534789-1-Linux
+2026-10-06T09:59:40.6979010Z   path: <runner-temp>/official-validation-Linux/
+2026-10-06T09:59:40.6979544Z   include-hidden-files: true
+2026-10-06T09:59:40.6979870Z   if-no-files-found: error
+2026-10-06T09:59:40.6980107Z   retention-days: 14
+2026-10-06T09:59:40.6980328Z   compression-level: 6
+2026-10-06T09:59:40.6980554Z   overwrite: false
+2026-10-06T09:59:40.6980751Z env:
+2026-10-06T09:59:40.6981001Z   pythonLocation: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:59:40.6981429Z   PKG_CONFIG_PATH: <toolcache>/Python/3.12.14/x64/lib/pkgconfig
+2026-10-06T09:59:40.6981861Z   Python_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:59:40.6982247Z   Python2_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:59:40.6982634Z   Python3_ROOT_DIR: <toolcache>/Python/3.12.14/x64
+2026-10-06T09:59:40.6983020Z   LD_LIBRARY_PATH: <toolcache>/Python/3.12.14/x64/lib
+2026-10-06T09:59:40.6983686Z ##[endgroup]
+2026-10-06T09:59:40.8677896Z (node:8741) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-06T09:59:40.8679423Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-06T09:59:40.8699325Z ##[error]No files were found with the provided path: <runner-temp>/official-validation-Linux/. No artifacts will be uploaded.
