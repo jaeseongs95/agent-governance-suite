@@ -1,0 +1,86 @@
+## git diff --check
+diff_check_exit=0
+## git diff --check HEAD (staged+unstaged)
+## HEAD/tree/branch
+claude/cs280-cloud-verification
+4ba47558020bd5e501fa9718f09d562dcf573713
+5fcc66de8aa37e6a347511c2def0eae54a0ed1e5
+base_ancestor=ok_if_rc0
+## porcelain (untracked all)
+count=0
+## worktree vs HEAD
+worktree_matches_HEAD
+## index tree
+5fcc66de8aa37e6a347511c2def0eae54a0ed1e5
+## ignored entries (top-level)
+!! node_modules/
+!! skills/independent-deliberation-panel/scripts/__pycache__/
+## git fsck
+fsck_done
+## stash/refs
+0
+refs/heads/claude/cs280-cloud-verification 4ba47558020bd5e501fa9718f09d562dcf573713
+refs/tags/v0.1.0 5d775c124981aec4d5c04da5f3f6e303d612bd75
+refs/tags/v0.2.0 ad5c3bbaa6dddfe01ca119dd2c6b0cb940a02dc1
+refs/tags/v1.0.0 8771229035be103e9163c5edb557613d6dc0f77c
+refs/tags/v1.0.1 fdc28c3abcec34597aa017f732bbd91be5ab1f6b
+refs/tags/v1.0.2 0e572d5eecfb5e307682debace2c438160d6b73c
+refs/tags/v1.0.3 88c282991dc61e286a3a80d5d5a26a783d8db9fd
+refs/tags/v1.0.4 e8567a7ad60568d359aa03905598ae0ef3823265
+refs/tags/v1.0.5 4314ef43fae43980f7f9260996321105bc40ea8f
+refs/tags/v1.1.0 57b676e48b9deae8655dd3c04a041c9f5fa2b10e
+refs/tags/v1.10.0 368142ec2181e867665a395ec94cd66cfe7c7337
+refs/tags/v1.11.0 0fd377dd80ff78d7790b0cfed29a0390ec357242
+refs/tags/v1.12.0 92b8bde22542f9e84acaa19a427a71f904efd4a6
+refs/tags/v1.13.0 ac0944a14c303e99025168263a98423d3f991ecb
+refs/tags/v1.14.0 80d0f533f421c41e860af6cc58cb7778ca9ddb2b
+refs/tags/v1.14.1 b997ac439ac7a3b5d70777bd91000c750633520b
+refs/tags/v1.15.0 331f20d03c01099e4cd09a5ac0144e7154c6dbce
+refs/tags/v1.15.1 7cad349f576685ef6bef4ff70553293c48c583c2
+refs/tags/v1.16.0 d53960519d49a3c6c85694e81172f8a81cf390d5
+refs/tags/v1.16.1 ff596ac137b7b1dc72d7043e26d30b05cdf3f5b4
+refs/tags/v1.16.2 47117a801696478fa5bae76fb3deb5d9d6eac9e6
+refs/tags/v1.17.0 efbecf3375f466bdf609c211fe7f687339a607c3
+refs/tags/v1.18.0 ef75ecc8d8892cdc3e058dee78f0c635834367f7
+refs/tags/v1.19.0 97e196fe5d4ea829bfbefe57ba57970e7658dd01
+refs/tags/v1.19.1 7ef1532e8de64cbc9ce46dff4a2e7b4c4c2cc823
+refs/tags/v1.2.0 17f0ee4fa949e7bb65f7fb474bd545db00c0737f
+refs/tags/v1.20.0 a66f2526efb5a2b8137b03ecbc9b15f8b1abeb9d
+refs/tags/v1.20.1 979177627b88107f9d8310803edb18f5530a37a0
+refs/tags/v1.20.2 ab35abda4ace861b89af0339c87c7ca743ebf947
+refs/tags/v1.20.3 997d39aecc03edfad2428167a83e3ab27cf05543
+refs/tags/v1.21.0 a489f7888b503bb5c2905ce2c9d109fb70593179
+refs/tags/v1.3.0 68a7ce84504972812faf1644b587900e8b19283b
+refs/tags/v1.4.0 242e9442744f4628792b4187abe9d4773b7951b8
+refs/tags/v1.4.1 2b7554d0013e9c189394d84585e549bf9089acdc
+refs/tags/v1.4.2 0c50fc115d6fca53175e2f93eb92deef799a5e45
+refs/tags/v1.4.3 6f882ab9509b1686288f853961fabfde10469b47
+refs/tags/v1.5.0 0bc3ffcc21779f62ae7dc5d757edda6fea3febc7
+refs/tags/v1.6.0 13451ba3b88ab7fa799d0c68350e70096a70d65f
+refs/tags/v1.7.0 945bebf522ed109fd9802891086237adac7c0de6
+refs/tags/v1.8.0 46849051531eb2ba5c505f75f2755d553d2e969b
+refs/tags/v1.9.0 85d3cadf3348ae3949d5c6623d7131e6ef841add
+refs/tags/v2.0.0 fddd16b9cee4cdd527edd8206ebc354a9c07d1ec
+refs/tags/v2.1.0 28e18f01099b04a76abe5f346d14a299feb457a4
+refs/tags/v2.1.1 c4636045352d55359140dc9931be9424c2303948
+refs/tags/v2.1.2 21777815d11c351cadbe571dd9282f87a3964242
+refs/tags/v2.2.0 da7cfed7d134a61ec288c6edc880546381ef3ce0
+refs/tags/v2.2.1 e4583a620a42754f5869d9cd7946a46b20306c15
+refs/tags/v2.2.2 c81dd2db03dfe37bb65270ccc261edf9504bb724
+refs/tags/v2.2.3 c56cbc56c370fabf20892041c08fabb34887f4be
+refs/tags/v2.2.4 40ebf3b6f269010a14a7614eba49783fa7779b8d
+refs/tags/v2.2.5 8b4bfaf93ae26762c5c5a0fa19e7ecc2892c8f07
+refs/tags/v2.2.6 289435767d298f75cc352e305b2a63487ed8f190
+refs/tags/v2.3.0 3ce65e663a45438c5a39380ceab793e099422f66
+refs/tags/v2.4.0 9363c28f6dce76c748332e7fddbe803ccb39545e
+refs/tags/v2.5.0 9a576264a9207059ec0af476d1e034daa93e4922
+refs/tags/v2.6.0 12dfd019afaa934959cb1739600796ac8d25312a
+refs/tags/v2.7.0 45f7243a4dda429f136903014d50834b24f21340
+refs/tags/v2.7.1 6436651166d7547c203c4e4f254654510a4ec3da
+refs/tags/v2.7.2 02b2255e6bbc224f36c178c2274c3ec0d7a1a740
+refs/tags/v2.7.3 5396bc3dec3de1d45f90957a86358d95c3160a3e
+refs/tags/v2.7.4 ed8d3d28694a0c3d225b3d0039bf1f022ff78993
+refs/tags/v2.7.5 e54bd58eb06eb7d57f99812a3ea47e63de74eadd
+refs/tags/v2.7.6 7e156dd5e54f7c088f660c620ada581920e3a628
+refs/tags/v2.7.7 c329674678c098007104a5170bbef75c82686c69
+integrity_rc=0

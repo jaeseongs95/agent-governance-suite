@@ -1,0 +1,2 @@
+# git status --porcelain --untracked-files=all
+# git diff --stat

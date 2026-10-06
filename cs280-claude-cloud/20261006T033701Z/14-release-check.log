@@ -1,0 +1,4 @@
+Already up to date
+Done in 460ms using pnpm v11.19.0
+$ node scripts/sync-release-metadata.mjs
+release metadata is synchronized

@@ -1,0 +1,171 @@
+{
+  "candidate": {
+    "head": "4ba47558020bd5e501fa9718f09d562dcf573713",
+    "tree": "5fcc66de8aa37e6a347511c2def0eae54a0ed1e5",
+    "branch": "claude/cs280-cloud-verification"
+  },
+  "evidenceDir": "/root/cs280-claude-cloud/20261006T033701Z",
+  "cloud": {
+    "remoteSessionId": "cse_01TfKN48Ms7GMevzr5DLqDkX",
+    "sessionUrl": "https://claude.ai/code/session_01TfKN48Ms7GMevzr5DLqDkX",
+    "environmentId": "unknown"
+  },
+  "steps": [
+    {
+      "step": "0 source pin",
+      "seq": 0,
+      "status": "PASS",
+      "exitCode": 0,
+      "log": "00-source-pin.log",
+      "evidence": "HEAD/tree/branch match, base f39501e is ancestor (direct parent), porcelain 0, history 314 commits (not squashed)"
+    },
+    {
+      "step": "0 environment ID",
+      "status": "unknown",
+      "evidence": "No observable env_ ID source in container; env type cloud_default; no conflicting ID observed -> proceeded"
+    },
+    {
+      "step": "0 model/effort",
+      "status": "unknown",
+      "evidence": "No per-turn observation source (CLAUDE_EFFORT=high env setting only)"
+    },
+    {
+      "step": "runtime pin",
+      "status": "PASS",
+      "evidence": "node v24.21.0 (/opt/node24), pnpm 11.19.0 via task-local Corepack ($ST/bin)"
+    },
+    {
+      "step": "1 pnpm install --frozen-lockfile",
+      "seq": 1,
+      "status": "PASS",
+      "exitCode": 0,
+      "log": "01-pnpm-install.log",
+      "evidence": "exit 0; pnpm-lock.yaml sha256 unchanged (00441d01...); store $ST/pnpm-store/v11"
+    },
+    {
+      "step": "2 bundle:check (pre-build)",
+      "seq": 2,
+      "status": "PASS",
+      "exitCode": 0,
+      "log": "02-bundle-check-prebuild.log",
+      "evidence": "exit 0 before build (seq 2 < seq 6); script prints no message on success"
+    },
+    {
+      "step": "3 source:check",
+      "seq": 3,
+      "status": "PASS",
+      "exitCode": 0,
+      "log": "03-source-check.log",
+      "evidence": "exit 0; 'source lock is consistent'"
+    },
+    {
+      "step": "4 claude:drift",
+      "seq": 4,
+      "status": "PASS",
+      "exitCode": 0,
+      "log": "04-claude-drift.log",
+      "evidence": "exit 0; output 'claude-plugin: fresh' (no warnings printed)"
+    },
+    {
+      "step": "5 lint",
+      "seq": 5,
+      "status": "PASS",
+      "exitCode": 0,
+      "log": "05-lint.log",
+      "evidence": "exit 0; eslint clean; 'repository: valid'"
+    },
+    {
+      "step": "6 build",
+      "seq": 6,
+      "status": "PASS",
+      "exitCode": 0,
+      "log": "06-build.log",
+      "evidence": "exit 0; tracked/untracked delta 0 after build (post-git empty)"
+    },
+    {
+      "step": "7 pnpm test",
+      "seq": 7,
+      "status": "PASS",
+      "exitCode": 0,
+      "log": "07-pnpm-test.log",
+      "evidence": "exit 0; 914 PASS / 0 FAIL / 5 SKIP (919), 67+1 skipped files; differs from prior Linux 911/3/5 — compared only, not declared resolved; CS 16 vitest cases PASS; Node harness per-case count NOT_VERIFIABLE (wrapper hides child stdout on success)"
+    },
+    {
+      "step": "8 runtime:check",
+      "seq": 8,
+      "status": "PASS",
+      "exitCode": 0,
+      "log": "08-runtime-check.log",
+      "evidence": "exit 0; 'runtime: ready (30 skill CLIs, Node.js 24.21.0)'"
+    },
+    {
+      "step": "9 validate:all",
+      "seq": 9,
+      "status": "PASS",
+      "exitCode": 0,
+      "log": "09-validate-all.log",
+      "evidence": "exit 0 on first run; no missing Python dependency, so no venv/rerun"
+    },
+    {
+      "step": "10 validate:official",
+      "seq": 10,
+      "status": "BLOCKED",
+      "exitCode": 1,
+      "log": "10-validate-official.log",
+      "evidence": "exit 1 ENOENT: $CODEX_HOME/skills/.system/plugin-creator/scripts/validate_plugin.py absent (isolated CODEX_HOME empty; real ~/.codex also has no skills/); no substitute PASS"
+    },
+    {
+      "step": "11 claude:check",
+      "seq": 11,
+      "status": "PASS",
+      "exitCode": 0,
+      "log": "11-claude-check.log",
+      "evidence": "exit 0; 'claude-plugin: fresh' (generated tree matches sources, no claude:build run)"
+    },
+    {
+      "step": "12 bundle:check (post-build)",
+      "seq": 12,
+      "status": "PASS",
+      "exitCode": 0,
+      "log": "12-bundle-check-postbuild.log",
+      "evidence": "exit 0 after build"
+    },
+    {
+      "step": "13 skills:context-check",
+      "seq": 13,
+      "status": "PASS",
+      "exitCode": 0,
+      "log": "13-skills-context-check.log",
+      "evidence": "exit 0; report pass=true errors=[]; CS registry sha256 63fc38d9... and CS handoff fixture c8937d58... pins enforced in script; note: report's approvedAdditions lists only session-board"
+    },
+    {
+      "step": "14 release:check",
+      "seq": 14,
+      "status": "PASS",
+      "exitCode": 0,
+      "log": "14-release-check.log",
+      "evidence": "exit 0; 'release metadata is synchronized' (no --write)"
+    },
+    {
+      "step": "15 git diff --check + integrity",
+      "seq": 15,
+      "status": "PASS",
+      "exitCode": 0,
+      "log": "15-git-integrity.log",
+      "evidence": "git diff --check clean; HEAD 4ba47558/tree 5fcc66de kept; index tree = HEAD tree; porcelain 0; fsck clean; ignored only node_modules/ and independent-deliberation-panel __pycache__/"
+    }
+  ],
+  "overall": "INCOMPLETE",
+  "overallReason": "validate:official BLOCKED (official Codex validator scripts absent in this Cloud environment); environment ID and model/effort unknown; Node harness per-case counts not observable. Full validation not satisfied.",
+  "notInScope": [
+    "Full-lifecycle CS binding and global acceptance remain unimplemented (unchanged)",
+    "No push/merge/tag/release/PR/claude:build/commit performed",
+    "Synthetic MCP observations are not real Claude host completion or model quality evidence",
+    "SOURCE R-042 static pass not promoted to test/install/host/release PASS"
+  ],
+  "staticObservations": [
+    "CS rule cards validationScope cite nonexistent tests/cs-engineering/reference-mechanisms.test.mjs (actual: reference-mechanisms.node.mjs)",
+    "tests/cs-engineering/schema_reference_test.py and sqlite_reference_test.py not wired into any script; not executed"
+  ],
+  "isolation": "TMP/XDG/CLAUDE_PLUGIN_DATA/PLUGIN_DATA/pnpm store/AGENT_GOVERNANCE_SHARED_STATE_DIR/CODEX_HOME under /root/cs280-state; CLAUDE_CODE_MESSAGING_SOCKET/TOKEN unset for all product commands"
+}

@@ -1,0 +1,48 @@
+{
+  "observedUtc": "2026-10-06T03:38:24Z",
+  "evidenceLog": "00-source-pin.log",
+  "expected": {
+    "branch": "claude/cs280-cloud-verification",
+    "head": "4ba47558020bd5e501fa9718f09d562dcf573713",
+    "tree": "5fcc66de8aa37e6a347511c2def0eae54a0ed1e5",
+    "base": "f39501efe5dfe51d83af9afddf39dec7b7e26b01",
+    "dirtyUntracked": 0
+  },
+  "observed": {
+    "branch": "claude/cs280-cloud-verification",
+    "head": "4ba47558020bd5e501fa9718f09d562dcf573713",
+    "tree": "5fcc66de8aa37e6a347511c2def0eae54a0ed1e5",
+    "baseIsAncestor": true,
+    "headParent": "f39501efe5dfe51d83af9afddf39dec7b7e26b01",
+    "porcelainCount": 0,
+    "logLast": "feat: integrate CS engineering with AGS 2.x review stages",
+    "remotes": [],
+    "isShallow": false,
+    "commitCount": 314,
+    "coreAutocrlf": "unset in Cloud clone (local config not carried by bundle upload)"
+  },
+  "squashedSnapshot": false,
+  "match": true,
+  "environmentId": {
+    "value": "unknown",
+    "expected": "env_01NaUG8DzDCAkxhmxR7CK4MV",
+    "note": "No env var name matching ENVIRONMENT/ENV_ID carries an env_ ID; no env var value contains 'env_01'. CLAUDE_CODE_REMOTE_ENVIRONMENT_TYPE=cloud_default (type, not ID). No conflicting ID observed, so product commands proceeded per instruction.",
+    "idLikeObserved": {
+      "CLAUDE_CODE_REMOTE_SESSION_ID": "cse_01TfKN48Ms7GMevzr5DLqDkX",
+      "CLAUDE_CODE_SESSION_ID": "18c02fd3-c896-5e2e-9f77-882740e282d4",
+      "CLAUDE_CODE_CONTAINER_ID": "container_01X3fps58ifZLjJEtfzpuoxD",
+      "CLAUDE_CODE_REMOTE_ENVIRONMENT_TYPE": "cloud_default",
+      "CLAUDE_CODE_ENVIRONMENT_RUNNER_VERSION": "release-66c6e19d9d-ext",
+      "CLAUDE_CODE_VERSION": "2.1.42"
+    }
+  },
+  "model": {
+    "actual": "unknown",
+    "note": "System prompt states configured model id claude-opus-5-5 but says the serving model may differ; no per-turn observation source."
+  },
+  "effort": {
+    "actual": "unknown",
+    "envObserved": "CLAUDE_EFFORT=high",
+    "note": "Env value is a session setting, not a per-turn observation of the serving model's effort."
+  }
+}

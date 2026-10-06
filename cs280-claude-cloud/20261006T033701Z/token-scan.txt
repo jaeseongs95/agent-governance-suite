@@ -1,0 +1,5 @@
+# token-pattern scan (ghp_|sk-|xox|AKIA|Bearer), names only
+loose matches: 07-pnpm-test.log 07-vitest-results.json 13-skills-context-check.log environment.json status.json
+strict token-shaped matches: 07-pnpm-test.log(2) 07-vitest-results.json(4); all are word-internal (preceded by 'task'/'risk'), standalone=0
+classification: all matches are 'sk-' inside words 'task-'/'risk-'; no ghp_/xox/AKIA/Bearer found
+scanUtc: 2026-10-06T03:44:33Z

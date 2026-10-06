@@ -1,0 +1,50 @@
+{
+  "uname": "Linux vm 6.18.44-fc-v70 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux",
+  "osPrettyName": "Ubuntu 24.04.5 LTS",
+  "node": "v24.21.0",
+  "pnpm": "11.19.0",
+  "python3": "Python 3.13.16",
+  "git": "git version 2.43.0",
+  "whichNode": "/opt/node24/bin/node",
+  "whichPnpm": "/root/cs280-state/bin/pnpm",
+  "environmentId": "unknown",
+  "environmentIdNote": "No observation source for env_ ID in container env; CLAUDE_CODE_REMOTE_ENVIRONMENT_TYPE=cloud_default. /opt/node24 present (consistent with, but not proof of, the 'node24 추가' environment).",
+  "remoteSessionId": "cse_01TfKN48Ms7GMevzr5DLqDkX",
+  "containerId": "container_01X3fps58ifZLjJEtfzpuoxD",
+  "model": "unknown (configured id per system prompt: claude-opus-5-5; serving model not observed)",
+  "effort": "unknown (env CLAUDE_EFFORT=high is a setting, not a per-turn observation)",
+  "evidenceDir": "/root/cs280-claude-cloud/20261006T033701Z",
+  "stateDir": "/root/cs280-state",
+  "pnpmPinning": "task-local Corepack: COREPACK_HOME=$ST/corepack, shims in $ST/bin via `corepack enable --install-directory`; no global config change. Path unified under ST=$HOME/cs280-state (instruction example used $E/../cs280-state).",
+  "isolationEnv": {
+    "PATH": "/root/cs280-state/bin:/opt/node24/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "COREPACK_HOME": "/root/cs280-state/corepack",
+    "TMPDIR": "/root/cs280-state/tmp",
+    "TEMP": "/root/cs280-state/tmp",
+    "TMP": "/root/cs280-state/tmp",
+    "XDG_CONFIG_HOME": "/root/cs280-state/xdg-config",
+    "XDG_DATA_HOME": "/root/cs280-state/xdg-data",
+    "XDG_STATE_HOME": "/root/cs280-state/xdg-state",
+    "XDG_CACHE_HOME": "/root/cs280-state/xdg-cache",
+    "CLAUDE_PLUGIN_DATA": "/root/cs280-state/claude-plugin-data",
+    "PLUGIN_DATA": "/root/cs280-state/plugin-data",
+    "npm_config_store_dir": "/root/cs280-state/pnpm-store",
+    "AGENT_GOVERNANCE_SHARED_STATE_DIR": "/root/cs280-state/shared-state",
+    "CODEX_HOME": "/root/cs280-state/codex-home"
+  },
+  "unsetForProductCommands": [
+    "CLAUDE_CODE_MESSAGING_SOCKET",
+    "CLAUDE_CODE_MESSAGING_TOKEN"
+  ],
+  "unsetReason": "Present in the real Cloud session; read by mcp-server/src/session-message-wake-port.ts. Removed so tests cannot reach the real session wake port.",
+  "stateVarsReview": {
+    "XDG_STATE_HOME": "set -> default workflows.sqlite3/continuity.sqlite3 root (runtime-config.ts userStateDirectory on Linux)",
+    "AGENT_GOVERNANCE_SHARED_STATE_DIR": "set -> default session-board.sqlite3, session-messaging/, trust.sqlite3 root (otherwise $HOME/.agent-governance-suite)",
+    "CODEX_HOME": "set to empty $ST/codex-home (validate-official.mjs, codex-token-usage-analyzer); real ~/.codex has no skills/.system either",
+    "CLAUDE_PLUGIN_DATA/PLUGIN_DATA": "set",
+    "AGENT_GOVERNANCE_DB_PATH, AGENT_GOVERNANCE_CONTINUITY_DB_PATH": "not set: default resolves under XDG_STATE_HOME; runtime-smoke/tests set their own per-case paths",
+    "AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR, AGENT_GOVERNANCE_TRUST_DB_PATH": "not set: tests set/restore them themselves; defaults resolve under AGENT_GOVERNANCE_SHARED_STATE_DIR",
+    "AGENT_GOVERNANCE_ROOT, SKILL_REGISTRY_PATH": "not set: they point to repository/registry inputs, not state",
+    "HOME": "unchanged per instruction"
+  }
+}
