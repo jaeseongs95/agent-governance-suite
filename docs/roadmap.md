@@ -1,7 +1,7 @@
 # Agent Governance Suite 향후 로드맵
 
 <!-- release-version:start -->
-문서 기준일은 2026년 10월 6일이다. 현재 릴리스 후보는 `v2.8.1`이며 후보의 `publicVersion`과 현재 PC 설치 대상은 `v2.8.0`이다. 원격 공개 `main`과 tag에는 2.8.0이 아직 게시되지 않았다. 2.8.1 Cloud 검증은 2.8.0 설치 QA와 병행할 수 있지만 공개는 2.8.0 다음 순서로 진행한다. 2.8.1 후보는 `test-engineering`·`code-review` 0.1.0과 필요한 엔지니어링 참조만 추가하며, 2.8.0의 CS 범위와 한계를 유지한다. v2.4.0은 20개 스킬의 상세 절차를 활성화 뒤에 읽는 reference로 분리하고 SourceLock v3에서 suite 소유 스킬과 외부 fork를 구분한다. v2.2 계열의 공용 상태 경로, TLS 1.3 loopback broker, 호스트 중립 메시지 계약과 중복 wake 억제는 유지한다. 한국어 산문 워크플로의 candidate-v2 정책은 2026년 9월 17일 동결 frame `0.3.0-gate-1`의 평가 대상이 아니므로 품질 미평가 상태로 유지한다.
+문서 기준일은 2026년 10월 6일이다. 이 문서는 2.8.1 공개 준비를 반영하며, 게시 후 현재 공개 릴리스는 `v2.8.1`로 전환된다. 2.8.0 릴리스는 이미 공개돼 있다. 2.8.1은 `test-engineering`·`code-review` 0.1.0과 필요한 엔지니어링 참조를 추가하며, 2.8.0의 CS 범위와 한계를 유지한다. v2.4.0은 20개 스킬의 상세 절차를 활성화 뒤에 읽는 reference로 분리하고 SourceLock v3에서 suite 소유 스킬과 외부 fork를 구분한다. v2.2 계열의 공용 상태 경로, TLS 1.3 loopback broker, 호스트 중립 메시지 계약과 중복 wake 억제는 유지한다. 한국어 산문 워크플로의 candidate-v2 정책은 2026년 9월 17일 동결 frame `0.3.0-gate-1`의 평가 대상이 아니므로 품질 미평가 상태로 유지한다.
 <!-- release-version:end -->
 
 이 문서는 프로젝트 코드와 설계 문서뿐 아니라 이 저장소에서 진행한 Codex 작업의 논의를 함께 반영한다. 일정은 특정 날짜보다 단계별 종료 조건을 기준으로 관리한다. 각 단계의 필수 검증을 마치기 전에는 다음 릴리스 범위로 넘기지 않는다.
@@ -33,7 +33,7 @@
 | 0. `v1.1.0` 안정화 | 품질 게이트 통과 (`0.3.0-gate-1`, candidate-v2 이전 정책) · candidate-v2 정책 미평가 · 용어집 짝 비교 완료 | 거버넌스 릴리스 운영과 한국어 산문 워크플로의 계약·품질·재현성 확보 | 활성 평가 후보, 검증된 receipt 경로, 품질 평가 결과, 고정된 원본 ref |
 | 0.5. 업데이트 알림 | 완료 | 안정 버전 존재 여부만 안내 | `check_for_updates`, SQLite v2 상태, 일회성 MCP notice |
 | 0.6. 모델·추론 수준 안내 | 완료 | 요청 난도와 관측 가능한 현재 설정을 비교해 과다·적정·부족 여부 안내 | `model-effort-advisor`, `ModelEffortAdvice.v1`, 정상·경계·실패 fixture |
-| 0.7. 엔지니어링 실무 | 2.8.1 후보 통합 중 | 테스트 설계·근거와 고정 변경분 리뷰를 기존 책임 경계에 연결 | `test-engineering`, `code-review`, 8개 참조 모듈, 9개 계약 |
+| 0.7. 엔지니어링 실무 | 소스 통합·CI 실행, 실제 호스트 검증·최종 감사 대기 | 테스트 설계·근거와 고정 변경분 리뷰를 기존 책임 경계에 연결 | `test-engineering`, `code-review`, 8개 참조 모듈, 9개 계약 |
 | 1. 실행 전 신뢰성 | 부분 구현 | 평가 오류와 동시 작업 충돌을 조기에 차단 | 구현된 `evaluation-validity-auditor`, 계획된 `active-workspace-guard` |
 | 2. 복구 워크플로 | 구현됨 | blocker 진단 뒤 선택 가능한 복구 전략 제공 | `recovery-strategy-selector`, `RecoveryHandoff.v1` |
 | 3. 실행 환경과 연속성 | 부분 구현 | 실행 가능 여부를 먼저 확인하고 세션 복원을 표준화 | 구현된 exact-instance session presence와 로컬 task continuity, 계획된 `runtime-capability-profiler` |
@@ -133,9 +133,9 @@
 ### 후보 상태와 종료 기준
 
 - 소스 편입과 registry·source lock·오케스트레이터 연결은 후보 작업 트리에 반영됐으며 최종 pin과 검증을 기다린다.
-- 이 문서 작성 시점에는 AGS에서의 직접 스킬 선택, registry 실행, standalone validator, 전체 repository·bundle·runtime 검사와 실제 호스트 로딩을 실행하지 않았다.
+- source `1b36ec77`의 [CI 37448816713](https://github.com/jaeseongs95/agent-governance-suite/actions/runs/37448816713)에서 양OS 각각 925개 통과·5개 skip과 official exit 0이 관측됐다. 원자료 인수 후 해당 source pin의 검사 근거로 사용하며, 이후 변경된 후보에 자동 승계하지 않는다. 실제 2.8.1 Codex·Claude 호스트 로딩과 최종 독립 감사는 미실행이다.
 - 최종 후보에서 source pin과 생성물을 고정하고 관련 검사, 전체 회귀, 공식 validator와 독립 감사를 실제 결과로 확인해야 한다.
-- 2.8.1 Cloud 검증, 최종 source·generated pin과 독립 감사를 완료한 뒤 2.8.0 다음 순서로 2.8.1 공개 tag·Release를 진행한다. 공개 뒤 release metadata 생성기가 README 설치 예시를 전환하며, 현재 PC를 2.8.1로 업데이트하는 권한은 별도로 확인한다.
+- 공개 준비용 메타데이터·설치 예시는 실제 게시 완료를 뜻하지 않는다. 변경 후 최종 후보의 필요한 검사·실제 호스트 검증·독립 감사를 마친 뒤 2.8.1 tag·Release를 게시한다. 2.8.0 릴리스의 검증 결과를 2.8.1의 실제 호스트 로딩 근거로 재사용하지 않는다.
 
 ## 1단계: 평가와 작업 공간의 신뢰성 확보
 
