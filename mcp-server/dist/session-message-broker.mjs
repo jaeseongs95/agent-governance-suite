@@ -2,7 +2,7 @@
 
 // mcp-server/src/session-message-broker.ts
 import { createHash as createHash3, createPublicKey, randomBytes as randomBytes3, timingSafeEqual as timingSafeEqual2, X509Certificate as X509Certificate2 } from "node:crypto";
-import { closeSync, existsSync as existsSync2, openSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { closeSync, existsSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import path4 from "node:path";
 import tls from "node:tls";
@@ -39,7 +39,6 @@ import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
 
 // mcp-server/src/session-message-wake-port.ts
 import { createHash, randomUUID as randomUUID2 } from "node:crypto";
-import { existsSync } from "node:fs";
 
 // mcp-server/src/trust-store.ts
 import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
@@ -428,14 +427,9 @@ function verifyHistoricalWakeObservation(target, nonce, sourceReceiptId, started
 function createWakeHookObservationReader(source = resolveTrustDatabasePath()) {
   return {
     verifyObservation(target, observation, receiptId, nowMs) {
-      if (!isWakeHookObservation(observation, target) || !receiptId || typeof source === "string" && !existsSync(source)) return false;
-      const trust = typeof source === "string" ? new TrustStore(source) : null;
-      try {
-        const receipt = trust ? trust.getInputSource(receiptId) : source.readVerifiedInputSource(receiptId);
-        return receipt !== null && (!trust || trust.verify(receipt)) && receipt.host === target.host && receipt.sessionId === target.sessionId && receipt.originKind === "peer" && receipt.authorityEffect === "none" && receipt.attestation.kind === "broker-peer-envelope" && receipt.attestation.adapter === "session-message-wake-hook" && receipt.attestation.capabilityVersion === "1.0.0" && receipt.contentDigest === observationDigest(observation) && Date.parse(receipt.observedAt) <= nowMs && Date.parse(receipt.expiresAt) > nowMs;
-      } finally {
-        trust?.close();
-      }
+      if (!isWakeHookObservation(observation, target) || !receiptId) return false;
+      const receipt = typeof source === "string" ? TrustStore.readVerifiedInputSource(source, receiptId) : source.readVerifiedInputSource(receiptId);
+      return receipt !== null && receipt.host === target.host && receipt.sessionId === target.sessionId && receipt.originKind === "peer" && receipt.authorityEffect === "none" && receipt.attestation.kind === "broker-peer-envelope" && receipt.attestation.adapter === "session-message-wake-hook" && receipt.attestation.capabilityVersion === "1.0.0" && receipt.contentDigest === observationDigest(observation) && Date.parse(receipt.observedAt) <= nowMs && Date.parse(receipt.expiresAt) > nowMs;
     }
   };
 }
@@ -1732,7 +1726,7 @@ async function credentials(stateDirectory) {
   let key = "";
   let certificate = "";
   let regenerate = true;
-  if (existsSync2(keyPath) && existsSync2(certificatePath)) {
+  if (existsSync(keyPath) && existsSync(certificatePath)) {
     try {
       [key, certificate] = await Promise.all([readFile(keyPath, "utf8"), readFile(certificatePath, "utf8")]);
       const parsed = new X509Certificate2(certificate);
@@ -1747,7 +1741,7 @@ async function credentials(stateDirectory) {
     const generated = createSelfSignedCertificate();
     key = generated.privateKeyPem;
     certificate = generated.certificatePem;
-    if (existsSync2(keyPath) || existsSync2(certificatePath)) {
+    if (existsSync(keyPath) || existsSync(certificatePath)) {
       await Promise.all([
         writeFile(keyPath, key, { encoding: "utf8", mode: 384 }),
         writeFile(certificatePath, certificate, { encoding: "utf8", mode: 384 })
@@ -1765,7 +1759,7 @@ async function credentials(stateDirectory) {
     }
   }
   let token;
-  if (existsSync2(tokenPath)) token = (await readFile(tokenPath, "utf8")).trim();
+  if (existsSync(tokenPath)) token = (await readFile(tokenPath, "utf8")).trim();
   else token = "";
   if (!/^[A-Za-z0-9_-]{43}$/u.test(token)) {
     token = randomBytes3(32).toString("base64url");

@@ -1,6 +1,5 @@
 import { execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { existsSync } from "node:fs";
 import net from "node:net";
 import type { DeliveryCapabilities, InputObservation } from "./input-observation.js";
 import type { SessionIdentity } from "./session-message-store.js";
@@ -150,16 +149,13 @@ export function recordWakeHookObservation(observation: InputObservation, nowMs =
 export function createWakeHookObservationReader(source: string | VerifiedInputSourceReader = resolveTrustDatabasePath()): WakeHookObservationReader {
   return {
   verifyObservation(target, observation, receiptId, nowMs) {
-    if (!isWakeHookObservation(observation, target) || !receiptId || (typeof source === "string" && !existsSync(source))) return false;
-    const trust = typeof source === "string" ? new TrustStore(source) : null;
-    try {
-      const receipt = trust ? trust.getInputSource(receiptId) : (source as VerifiedInputSourceReader).readVerifiedInputSource(receiptId);
-      return receipt !== null && (!trust || trust.verify(receipt)) && receipt.host === target.host && receipt.sessionId === target.sessionId
-        && receipt.originKind === "peer" && receipt.authorityEffect === "none"
-        && receipt.attestation.kind === "broker-peer-envelope" && receipt.attestation.adapter === "session-message-wake-hook"
-        && receipt.attestation.capabilityVersion === "1.0.0" && receipt.contentDigest === observationDigest(observation)
-        && Date.parse(receipt.observedAt) <= nowMs && Date.parse(receipt.expiresAt) > nowMs;
-    } finally { trust?.close(); }
+    if (!isWakeHookObservation(observation, target) || !receiptId) return false;
+    const receipt = typeof source === "string" ? TrustStore.readVerifiedInputSource(source, receiptId) : source.readVerifiedInputSource(receiptId);
+    return receipt !== null && receipt.host === target.host && receipt.sessionId === target.sessionId
+      && receipt.originKind === "peer" && receipt.authorityEffect === "none"
+      && receipt.attestation.kind === "broker-peer-envelope" && receipt.attestation.adapter === "session-message-wake-hook"
+      && receipt.attestation.capabilityVersion === "1.0.0" && receipt.contentDigest === observationDigest(observation)
+      && Date.parse(receipt.observedAt) <= nowMs && Date.parse(receipt.expiresAt) > nowMs;
   },
   };
 }
