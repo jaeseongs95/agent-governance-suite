@@ -1,0 +1,117 @@
+# env-probe-r1 publish.log
+# started_utc=2026-10-07T07:05:52Z
+# target: branch evidence, folder claude-cloud-env-probe/20261007T070316Z, non-force, new files only
+
+$ git config user.name; git config user.email
+Claude
+noreply@anthropic.com
+[exit=0]
+
+$ git fetch origin evidence
+From https://github.com/jaeseongs95/agent-governance-suite
+ * branch            evidence   -> FETCH_HEAD
+ * [new branch]      evidence   -> origin/evidence
+[exit=0]
+
+$ git rev-parse FETCH_HEAD origin/evidence
+f83d56e2ecd46a5551ad398980c105ca7d405b43
+f83d56e2ecd46a5551ad398980c105ca7d405b43
+[exit=0]
+
+$ git worktree add --detach /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/evidence-wt origin/evidence
+Preparing worktree (detached HEAD f83d56e)
+Updating files:  45% (5608/12344)Updating files:  46% (5679/12344)Updating files:  47% (5802/12344)Updating files:  48% (5926/12344)Updating files:  49% (6049/12344)Updating files:  50% (6172/12344)Updating files:  51% (6296/12344)Updating files:  52% (6419/12344)Updating files:  53% (6543/12344)Updating files:  54% (6666/12344)Updating files:  55% (6790/12344)Updating files:  56% (6913/12344)Updating files:  57% (7037/12344)Updating files:  58% (7160/12344)Updating files:  59% (7283/12344)Updating files:  60% (7407/12344)Updating files:  61% (7530/12344)Updating files:  62% (7654/12344)Updating files:  63% (7777/12344)Updating files:  64% (7901/12344)Updating files:  65% (8024/12344)Updating files:  66% (8148/12344)Updating files:  67% (8271/12344)Updating files:  68% (8394/12344)Updating files:  69% (8518/12344)Updating files:  70% (8641/12344)Updating files:  71% (8765/12344)Updating files:  72% (8888/12344)Updating files:  73% (9012/12344)Updating files:  74% (9135/12344)Updating files:  75% (9258/12344)Updating files:  76% (9382/12344)Updating files:  77% (9505/12344)Updating files:  78% (9629/12344)Updating files:  79% (9752/12344)Updating files:  80% (9876/12344)Updating files:  81% (9999/12344)Updating files:  82% (10123/12344)Updating files:  83% (10246/12344)Updating files:  84% (10369/12344)Updating files:  85% (10493/12344)Updating files:  86% (10616/12344)Updating files:  87% (10740/12344)Updating files:  88% (10863/12344)Updating files:  89% (10987/12344)Updating files:  90% (11110/12344)Updating files:  91% (11234/12344)Updating files:  92% (11357/12344)Updating files:  93% (11480/12344)Updating files:  94% (11604/12344)Updating files:  95% (11727/12344)Updating files:  96% (11851/12344)Updating files:  97% (11974/12344)Updating files:  98% (12098/12344)Updating files:  99% (12221/12344)Updating files: 100% (12344/12344)Updating files: 100% (12344/12344), done.
+HEAD is now at f83d56e evidence: add CS 2.8.1 b28a Claude Cloud C2 child run packet (claude-b28a-c2-child-1)
+[exit=0]
+
+$ git -C /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/evidence-wt log -1 --format='%H %s'
+f83d56e2ecd46a5551ad398980c105ca7d405b43 evidence: add CS 2.8.1 b28a Claude Cloud C2 child run packet (claude-b28a-c2-child-1)
+[exit=0]
+
+$ git -C /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/evidence-wt ls-tree -d --name-only HEAD claude-cloud-env-probe/ ; echo '(existing claude-cloud-env-probe entries above)'
+(existing claude-cloud-env-probe entries above)
+[exit=0]
+
+$ git -C /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/evidence-wt ls-tree HEAD -- claude-cloud-env-probe/20261007T070316Z | wc -l
+0
+[exit=0]
+
+$ test -e /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/evidence-wt/claude-cloud-env-probe/20261007T070316Z && echo EXISTS || echo ABSENT
+ABSENT
+[exit=0]
+
+## secret pattern scan (case-insensitive, before publish)
+$ grep -o -i -F 'ghp_' /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out/report.md | wc -l | sed 's/^/report.md ghp_: /'
+report.md ghp_: 0
+[exit=0]
+
+$ grep -o -i -F 'gho_' /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out/report.md | wc -l | sed 's/^/report.md gho_: /'
+report.md gho_: 0
+[exit=0]
+
+$ grep -o -i -F 'sk-ant' /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out/report.md | wc -l | sed 's/^/report.md sk-ant: /'
+report.md sk-ant: 0
+[exit=0]
+
+$ grep -o -i -F 'token' /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out/report.md | wc -l | sed 's/^/report.md token: /'
+report.md token: 0
+[exit=0]
+
+$ grep -o -i -F 'Authorization' /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out/report.md | wc -l | sed 's/^/report.md Authorization: /'
+report.md Authorization: 0
+[exit=0]
+
+$ grep -o -i -F 'ghp_' /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out/observations.log | wc -l | sed 's/^/observations.log ghp_: /'
+observations.log ghp_: 1
+[exit=0]
+
+$ grep -o -i -F 'gho_' /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out/observations.log | wc -l | sed 's/^/observations.log gho_: /'
+observations.log gho_: 1
+[exit=0]
+
+$ grep -o -i -F 'sk-ant' /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out/observations.log | wc -l | sed 's/^/observations.log sk-ant: /'
+observations.log sk-ant: 1
+[exit=0]
+
+$ grep -o -i -F 'token' /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out/observations.log | wc -l | sed 's/^/observations.log token: /'
+observations.log token: 0
+[exit=0]
+
+$ grep -o -i -F 'Authorization' /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out/observations.log | wc -l | sed 's/^/observations.log Authorization: /'
+observations.log Authorization: 0
+[exit=0]
+
+$ grep -n -i -E 'ghp_|gho_|sk-ant|token|Authorization' /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out/report.md /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out/observations.log
+/tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out/observations.log:211:1054 ppid=1053 sed -E s/(ghp_|gho_|ghs_|github_pat_|sk-ant-)[A-Za-z0-9_-]+/<redacted>/g; s#(plugins/synced/)[A-Za-z0-9_-]{32,}#\1<redacted>#g 
+[exit=0]
+
+## final report.md rescan (hits expected only in the scan table/literals)
+$ grep -n -i -E 'ghp_|gho_|sk-ant|token|Authorization' /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out/report.md
+126:| `ghp_` | 0 | 1 |
+127:| `gho_` | 0 | 1 |
+128:| `sk-ant` | 0 | 1 |
+129:| `token` | 0 | 0 |
+130:| `Authorization` | 0 | 0 |
+[exit=0]
+
+$ grep -n -E '(ghp_|gho_|ghs_|github_pat_)[A-Za-z0-9]{20,}|sk-ant-[A-Za-z0-9_-]{20,}|Authorization: *(Bearer|Basic|token) [A-Za-z0-9]' /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out/report.md /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out/observations.log | wc -l
+0
+[exit=0]
+
+## checksums and staging
+$ cd /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out && sha256sum report.md observations.log > SHA256SUMS && cat SHA256SUMS && sha256sum -c SHA256SUMS
+880160fa20780e6911d681401d5389f9bdc1f8dbba6db6f3caa55620a7443c66  report.md
+a2d5c058b65b28238e24354c807ddc5b09130c3072730f60986c0140092f3fdb  observations.log
+report.md: OK
+observations.log: OK
+[exit=0]
+
+$ mkdir -p /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/evidence-wt/claude-cloud-env-probe/20261007T070316Z && cp /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out/report.md /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out/observations.log /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/out/SHA256SUMS /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/evidence-wt/claude-cloud-env-probe/20261007T070316Z/ && ls -l /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/evidence-wt/claude-cloud-env-probe/20261007T070316Z
+total 28
+-rw-r--r-- 1 root root   159 Oct  7 07:06 SHA256SUMS
+-rw-r--r-- 1 root root  8738 Oct  7 07:06 observations.log
+-rw-r--r-- 1 root root 10075 Oct  7 07:06 report.md
+[exit=0]
+
+# publish.log is copied into claude-cloud-env-probe/20261007T070316Z after this point; commit and push output are reported in the session response only.
+# staged_utc=2026-10-07T07:06:47Z

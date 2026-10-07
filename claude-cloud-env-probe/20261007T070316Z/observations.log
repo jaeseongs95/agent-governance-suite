@@ -1,0 +1,262 @@
+# env-probe-r1 observations
+# started_utc=2026-10-07T07:03:16Z
+
+## 2. host
+$ hostname
+vm
+[exit=0]
+
+$ uname -a
+Linux vm 6.18.44-fc-v77 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux
+[exit=0]
+
+$ cat /etc/os-release | head -3
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+[exit=0]
+
+$ cat /proc/1/comm
+process_api
+[exit=0]
+
+$ nproc
+4
+[exit=0]
+
+$ free -m
+               total        used        free      shared  buff/cache   available
+Mem:           16094         597       14463          13        1274       15496
+Swap:              0           0           0
+[exit=0]
+
+$ df -h .
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/vda        252G  9.9G   30G  26% /
+[exit=0]
+
+## 3. cloud markers
+$ env | grep -E '^(CLAUDE_CODE_REMOTE[A-Z_]*|CLAUDE_CODE_VERSION|CLAUDE_CODE_CONTAINER_ID|CLAUDE_CODE_REMOTE_SESSION_ID|CLAUDE_CODE_ENTRYPOINT)=' | sort
+CLAUDE_CODE_CONTAINER_ID=container_01GbpE3uZmBQfbGw3r3fjKYA
+CLAUDE_CODE_ENTRYPOINT=remote
+CLAUDE_CODE_REMOTE=true
+CLAUDE_CODE_REMOTE_ENVIRONMENT_TYPE=cloud_default
+CLAUDE_CODE_REMOTE_HERMETIC_MODE=0
+CLAUDE_CODE_REMOTE_SDK_URL=https://api.anthropic.com/v1/code/sessions/cse_01SYxtBgrhohfGEbRPonbSkK
+CLAUDE_CODE_REMOTE_SEND_KEEPALIVES=true
+CLAUDE_CODE_REMOTE_SESSION_ID=cse_01SYxtBgrhohfGEbRPonbSkK
+CLAUDE_CODE_REMOTE_TOOLS_FORWARD=1
+CLAUDE_CODE_VERSION=2.1.42
+[exit=0]
+
+## 4. toolchain
+$ ls -d /opt/node*
+/opt/node-tools
+/opt/node20
+/opt/node21
+/opt/node22
+/opt/node24
+[exit=0]
+
+$ if [ -x /opt/node24/bin/node ]; then /opt/node24/bin/node -v; else echo MISSING; fi
+v24.21.0
+[exit=0]
+
+$ node -v
+v22.22.0
+[exit=0]
+
+$ which node
+/opt/node22/bin/node
+[exit=0]
+
+$ corepack --version
+0.34.0
+[exit=0]
+
+$ pnpm -v 2>&1 | head -1
+11.19.0
+[exit=0]
+
+$ python3 --version
+Python 3.13.16
+[exit=0]
+
+$ git --version
+git version 2.43.0
+[exit=0]
+
+## 5. repository
+$ git remote -v
+origin	https://github.com/jaeseongs95/agent-governance-suite (fetch)
+origin	https://github.com/jaeseongs95/agent-governance-suite (push)
+[exit=0]
+
+$ git branch --show-current
+claude/ags-cloud-env-probe-h97a1x
+[exit=0]
+
+$ git rev-parse HEAD 'HEAD^{tree}'
+b28a442ad424b255283fe32fe3c0e661b195fa4e
+e1ffc736bc999781e7ea0670e43d7eca3bd80a82
+[exit=0]
+
+$ git status --porcelain | wc -l
+0
+[exit=0]
+
+$ git fetch origin b28a442ad424b255283fe32fe3c0e661b195fa4e && git rev-parse 'b28a442ad424b255283fe32fe3c0e661b195fa4e^{tree}'
+From https://github.com/jaeseongs95/agent-governance-suite
+ * branch            b28a442ad424b255283fe32fe3c0e661b195fa4e -> FETCH_HEAD
+e1ffc736bc999781e7ea0670e43d7eca3bd80a82
+[exit=0]
+
+$ git ls-remote origin refs/heads/main refs/heads/evidence refs/tags/v2.8.1
+f83d56e2ecd46a5551ad398980c105ca7d405b43	refs/heads/evidence
+b28a442ad424b255283fe32fe3c0e661b195fa4e	refs/heads/main
+42c5477fb1c27f946ee139297fcbb34c970ff99a	refs/tags/v2.8.1
+[exit=0]
+
+$ git ls-remote origin 'refs/tags/v2.8.1^{}'
+b28a442ad424b255283fe32fe3c0e661b195fa4e	refs/tags/v2.8.1^{}
+[exit=0]
+
+## 6. network (read-only)
+$ curl -sS -o /dev/null -w '%{http_code}\n' https://registry.npmjs.org/pnpm
+200
+[exit=0]
+
+$ curl -sS -o /dev/null -w '%{http_code}\n' https://github.com
+400
+[exit=0]
+
+## 7. processes
+$ ps -eo pid,comm,args | head -40
+  PID COMMAND         COMMAND
+    1 process_api     /process_api --firecracker-init --addr 0.0.0.0:2024 --max-ws-buffer-size 32768 --block-local-connections --listen-vsock-port 2024 --log-vsock-port 5002
+    2 kthreadd        [kthreadd]
+    3 pool_workqueue_ [pool_workqueue_release]
+    4 kworker/R-rcu_g [kworker/R-rcu_gp]
+    5 kworker/R-sync_ [kworker/R-sync_wq]
+    6 kworker/R-kvfre [kworker/R-kvfree_rcu_reclaim]
+    7 kworker/R-slub_ [kworker/R-slub_flushwq]
+    8 kworker/R-netns [kworker/R-netns]
+    9 kworker/0:0-eve [kworker/0:0-events]
+   10 kworker/0:0H-ev [kworker/0:0H-events_highpri]
+   11 kworker/0:1-eve [kworker/0:1-events]
+   12 kworker/u16:0-i [kworker/u16:0-iou_exit]
+   13 kworker/R-mm_pe [kworker/R-mm_percpu_wq]
+   14 ksoftirqd/0     [ksoftirqd/0]
+   15 rcu_preempt     [rcu_preempt]
+   16 rcu_exp_par_gp_ [rcu_exp_par_gp_kthread_worker/0]
+   17 rcu_exp_gp_kthr [rcu_exp_gp_kthread_worker]
+   18 migration/0     [migration/0]
+   19 cpuhp/0         [cpuhp/0]
+   20 cpuhp/1         [cpuhp/1]
+   21 migration/1     [migration/1]
+   22 ksoftirqd/1     [ksoftirqd/1]
+   23 kworker/1:0-slu [kworker/1:0-slub_flushwq]
+   24 kworker/1:0H-ev [kworker/1:0H-events_highpri]
+   25 cpuhp/2         [cpuhp/2]
+   26 migration/2     [migration/2]
+   27 ksoftirqd/2     [ksoftirqd/2]
+   28 kworker/2:0-slu [kworker/2:0-slub_flushwq]
+   29 kworker/2:0H-ev [kworker/2:0H-events_highpri]
+   30 cpuhp/3         [cpuhp/3]
+   31 migration/3     [migration/3]
+   32 ksoftirqd/3     [ksoftirqd/3]
+   33 kworker/3:0-slu [kworker/3:0-slub_flushwq]
+   34 kworker/3:0H-ev [kworker/3:0H-events_highpri]
+   35 kdevtmpfs       [kdevtmpfs]
+   36 kworker/R-inet_ [kworker/R-inet_frag_wq]
+   37 rcu_tasks_kthre [rcu_tasks_kthread]
+   38 rcu_tasks_rude_ [rcu_tasks_rude_kthread]
+   39 rcu_tasks_trace [rcu_tasks_trace_kthread]
+[exit=0]
+
+$ ps -eo pid,ppid,comm --no-headers | grep -v -E "kworker|ksoftirq|migration|cpuhp|rcu_|kthreadd|pool_work|idle_inject|watchdog"
+    1     0 process_api
+   35     2 kdevtmpfs
+   40     2 kauditd
+   41     2 khungtaskd
+   42     2 oom_reaper
+   46     2 kcompactd0
+   47     2 ksmd
+   48     2 khugepaged
+   56     2 kswapd0
+   59     2 irq/24-ACPI:Ged
+   60     2 irq/25-ACPI:Ged
+   61     2 hwrng
+   81     1 6
+   82     1 sh
+   86     1 claude
+   99     1 sh
+  103    99 environment-man
+  304    86 node
+  381    86 node
+  409     1 node
+  446     1 node
+  901    86 bash
+  903   901 bash
+ 1047   903 bash
+ 1048   903 bash
+ 1049  1048 sed
+ 1050  1047 ps
+ 1051  1047 grep
+[exit=0]
+
+$ for p in /proc/[0-9]*; do c=$(readlink $p/cwd 2>/dev/null); case "$c" in /home/user/agent-governance-suite*) echo "$(basename $p) ppid=$(awk "/^PPid/{print \$2}" $p/status) $(tr "\0" " " < $p/cmdline | cut -c1-160)";; esac; done
+1052 ppid=903 bash -c for p in /proc/[0-9]*; do c=$(readlink $p/cwd 2>/dev/null); case "$c" in /home/user/agent-governance-suite*) echo "$(basename $p) ppid=$(awk "/^PPid/{pr
+1053 ppid=903 bash /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/probe.sh 
+1054 ppid=1053 sed -E s/(ghp_|gho_|ghs_|github_pat_|sk-ant-)[A-Za-z0-9_-]+/<redacted>/g; s#(plugins/synced/)[A-Za-z0-9_-]{32,}#\1<redacted>#g 
+304 ppid=86 node mcp-server/dist/server.mjs 
+381 ppid=86 node /root/.claude/plugins/synced/<redacted>/agent-governance-suite/mcp-server/dist/server.mjs 
+409 ppid=1 /opt/node22/bin/node /root/.claude/plugins/synced/<redacted>/agent-governance-suite/mcp-server/di
+446 ppid=1 /opt/node22/bin/node /root/.claude/plugins/synced/<redacted>/agent-governance-suite/mcp-server/di
+86 ppid=1 /opt/node22/bin/claude --preload /home/claude/.claude/remote/spare.sock 
+901 ppid=86 /bin/bash -c source /root/.claude/shell-snapshots/snapshot-bash-1791356540348-lcidml.sh 2>/dev/null || true && export BUN_OPTIONS="--smol${BUN_OPTIONS:+ $BUN_OP
+903 ppid=901 bash /tmp/claude-0/-home-user-agent-governance-suite/cb0c69ab-1736-5f3b-ae23-bcf7c1cc67a8/scratchpad/probe.sh 
+[exit=0]
+
+$ git worktree list
+/home/user/agent-governance-suite  b28a442 [claude/ags-cloud-env-probe-h97a1x]
+[exit=0]
+
+## 8. install candidates (no execution)
+$ ls package.json pnpm-lock.yaml .mcp.json
+.mcp.json
+package.json
+pnpm-lock.yaml
+[exit=0]
+
+$ python3 -I -c 'import json;d=json.load(open("package.json"));print(json.dumps({k:d.get(k) for k in ("name","version","engines","packageManager")},ensure_ascii=False))'
+{"name": "agent-governance-suite", "version": "2.8.1", "engines": {"node": ">=24.0.0"}, "packageManager": "pnpm@11.19.0"}
+[exit=0]
+
+# finished_utc=2026-10-07T07:03:22Z
+## 6b. supplementary (github.com 400 diagnosis, read-only)
+$ curl -sS -D - -o /dev/null https://github.com | grep -iE '^(HTTP|server|content-type|x-github|via|x-agentproxy|x-proxy)'
+HTTP/1.1 200 Connection Established
+HTTP/1.1 400 Bad Request
+Content-Type: application/json; charset=utf-8
+[exit=0]
+
+$ curl -sS -o /dev/null -w '%{http_code}\n' https://api.github.com/zen
+403
+[exit=0]
+
+$ which pnpm corepack claude
+/opt/node22/bin/pnpm
+/opt/node22/bin/corepack
+/opt/node22/bin/claude
+[exit=0]
+
+$ curl -sS https://github.com | head -c 600
+{"message":"Request path could not be canonicalized.","documentation_url":"https://docs.anthropic.com/en/docs/claude-code/github-actions"}
+[exit=0]
+
+$ curl -sS https://api.github.com/zen | head -c 600
+{"message":"This GitHub API path is not available: sessions are bound to their configured repositories. Use repository-scoped endpoints (repos/{owner}/{repo}/...).","documentation_url":"https://docs.anthropic.com/en/docs/claude-code/github-actions"}
+[exit=0]
+
+# supplementary_finished_utc=2026-10-07T07:03:46Z
