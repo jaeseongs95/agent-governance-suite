@@ -1,0 +1,59 @@
+{
+  "target": "e2/target-original.mjs",
+  "verdict": "FAIL",
+  "pass": 4,
+  "total": 11,
+  "results": [
+    {
+      "id": "X01-default-maxKeys-32-and-1024-bound",
+      "state": "PASS"
+    },
+    {
+      "id": "X02-id-charset-boundaries",
+      "state": "PASS"
+    },
+    {
+      "id": "X03-many-concurrent-duplicates-one-effect",
+      "state": "FAIL",
+      "error": "Expected values to be strictly deep-equal:"
+    },
+    {
+      "id": "X04-pending-conflict-no-hook-no-effect",
+      "state": "FAIL",
+      "error": "Missing expected rejection."
+    },
+    {
+      "id": "X05-sync-throw-and-non-function-hook-release",
+      "state": "PASS"
+    },
+    {
+      "id": "X06-timeout-then-retry-with-different-amount-allowed",
+      "state": "PASS"
+    },
+    {
+      "id": "X07-ack-lost-on-pending-waiter",
+      "state": "FAIL",
+      "error": "Expected values to be strictly deep-equal:"
+    },
+    {
+      "id": "X08-ack-lost-then-conflict",
+      "state": "FAIL",
+      "error": "Missing expected rejection."
+    },
+    {
+      "id": "X09-request-read-once",
+      "state": "FAIL",
+      "error": "검증한 값과 반영한 값이 같아야 함(total=2000)"
+    },
+    {
+      "id": "X10-waiter-result-isolation",
+      "state": "FAIL",
+      "error": "Expected values to be strictly deep-equal:"
+    },
+    {
+      "id": "X11-capacity-freed-after-failed-reservation-concurrent",
+      "state": "FAIL",
+      "error": "Missing expected rejection."
+    }
+  ]
+}

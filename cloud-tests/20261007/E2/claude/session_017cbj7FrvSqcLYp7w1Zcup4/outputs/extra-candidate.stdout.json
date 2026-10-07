@@ -1,0 +1,52 @@
+{
+  "target": "output/e2/candidate.mjs",
+  "verdict": "PASS",
+  "pass": 11,
+  "total": 11,
+  "results": [
+    {
+      "id": "X01-default-maxKeys-32-and-1024-bound",
+      "state": "PASS"
+    },
+    {
+      "id": "X02-id-charset-boundaries",
+      "state": "PASS"
+    },
+    {
+      "id": "X03-many-concurrent-duplicates-one-effect",
+      "state": "PASS"
+    },
+    {
+      "id": "X04-pending-conflict-no-hook-no-effect",
+      "state": "PASS"
+    },
+    {
+      "id": "X05-sync-throw-and-non-function-hook-release",
+      "state": "PASS"
+    },
+    {
+      "id": "X06-timeout-then-retry-with-different-amount-allowed",
+      "state": "PASS"
+    },
+    {
+      "id": "X07-ack-lost-on-pending-waiter",
+      "state": "PASS"
+    },
+    {
+      "id": "X08-ack-lost-then-conflict",
+      "state": "PASS"
+    },
+    {
+      "id": "X09-request-read-once",
+      "state": "PASS"
+    },
+    {
+      "id": "X10-waiter-result-isolation",
+      "state": "PASS"
+    },
+    {
+      "id": "X11-capacity-freed-after-failed-reservation-concurrent",
+      "state": "PASS"
+    }
+  ]
+}

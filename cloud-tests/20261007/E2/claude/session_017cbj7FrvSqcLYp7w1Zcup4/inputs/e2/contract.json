@@ -1,0 +1,19 @@
+{
+  "fixtureVersion": "1.0.0",
+  "entryPoint": "createLedger({maxKeys=32}) -> {apply(request, options), snapshot()}",
+  "scope": "단일 Node.js 프로세스와 ledger 인스턴스 수명 안의 멱등 반영. DB, 외부 효과, 재시작 내구성, 네트워크 취소 아님.",
+  "input": {"id": "ASCII [A-Za-z0-9_-], 1..64자", "amount": "정수 1..1000", "maxKeys": "정수 1..1024, 기본 32"},
+  "behavior": {
+    "invalid": "INVALID_REQUEST, 상태 변화 없음",
+    "duplicate": "동일 ID/amount의 pending 또는 completed 재요청은 효과 한 번, 최초 확정 result 재사용",
+    "conflict": "동일 ID/다른 amount는 pending/completed 모두 CONFLICT, 추가 효과 없음",
+    "commit": "검증 및 신규 ID 예약 -> beforeCommit 1회 -> 효과와 completed 확정 -> ACK",
+    "preCommitFailure": "beforeCommit 오류는 효과 없이 예약 해제, 재시도 가능. 같은 pending 작업을 기다리던 요청에도 실패 전달",
+    "ackLoss": "loseAck는 반영 후 해당 호출의 ACK_LOST만 뜻함. 동일 ID 재시도는 이미 확정된 result와 효과 1회 유지",
+    "capacity": "pending+completed ID가 maxKeys를 넘지 않음. 신규 ID는 CAPACITY, 기존 ID 재시도는 허용. 실패 예약은 해제. 완료 ID는 인스턴스 수명 동안 퇴거하지 않음",
+    "snapshot": "{total,effects,keys,pending}, keys는 pending+completed, pending은 현재 예약 수",
+    "resultIsolation": "반환 객체 수정으로 후속 재시도의 결과가 바뀌지 않음"
+  },
+  "cost": {"reviewObligation": "ID lookup 평균 O(1), 유지 상태 O(maxKeys), 무한 retry/대기열/ID 퇴거 없음", "measured": "checker는 keys/pending과 유한 완료만 검증. 실제 시간복잡도·heap·처리량 benchmark 미실행"},
+  "excluded": ["cross-process claim", "운영 DB migration", "host hook 부재", "권한 전환", "guarded attestation", "Cloud 환경 준비", "AGS 자체 E2E PASS"]
+}

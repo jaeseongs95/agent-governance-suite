@@ -1,0 +1,58 @@
+{
+  "oracleVersion": "1.0.1",
+  "verdict": "FAIL",
+  "results": [
+    {
+      "id": "C01-empty-normal-bounds",
+      "state": "PASS"
+    },
+    {
+      "id": "C02-invalid-no-effect",
+      "state": "PASS"
+    },
+    {
+      "id": "C03-sequential-duplicate-conflict",
+      "state": "FAIL",
+      "error": "Missing expected rejection."
+    },
+    {
+      "id": "C04-concurrent-same-id",
+      "state": "FAIL",
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    effects: 0,\n+   keys: 0,\n+   pending: 0,\n-   keys: 1,\n-   pending: 1,\n    total: 0\n  }\n"
+    },
+    {
+      "id": "C05-pending-payload-conflict",
+      "state": "FAIL",
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    {\n+     status: 'fulfilled',\n+     value: {\n+       amount: 8,\n+       id: 'a',\n+       total: 8\n+     }\n-     reason: Error: CONFLICT\n-         at createLedger.maxKeys (file:///tmp/claude-0/-home-user-agent-governance-suite/3001496d-76a8-55be-8698-a822f90ccc28/scratchpad/e2work/e2/checker.mjs:67:71)\n-         at async runSuite (file:///tmp/claude-0/-home-user-agent-governance-suite/3001496d-76a8-55be-8698-a822f90ccc28/scratchpad/e2work/e2/checker.mjs:125:11)\n-         at async file:///tmp/claude-0/-home-user-agent-governance-suite/3001496d-76a8-55be-8698-a822f90ccc28/scratchpad/e2work/e2/checker.mjs:137:22,\n-     status: 'rejected'\n    }\n  ]\n"
+    },
+    {
+      "id": "C06-timeout-releases-pending-retry",
+      "state": "FAIL",
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    effects: 0,\n+   keys: 0,\n+   pending: 0,\n-   keys: 1,\n-   pending: 1,\n    total: 0\n  }\n"
+    },
+    {
+      "id": "C07-ack-lost-retry",
+      "state": "FAIL",
+      "error": "Missing expected rejection."
+    },
+    {
+      "id": "C08-capacity-pending-and-retained-retry",
+      "state": "FAIL",
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   effects: 2,\n+   keys: 2,\n+   pending: 0,\n+   total: 15\n-   effects: 0,\n-   keys: 1,\n-   pending: 1,\n-   total: 0\n  }\n"
+    },
+    {
+      "id": "C09-result-alias-isolation",
+      "state": "FAIL",
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    amount: 7,\n    id: 'a',\n+   total: 600\n-   total: 7\n  }\n"
+    },
+    {
+      "id": "C10-permutation-duplicate-metamorphic",
+      "state": "FAIL",
+      "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n+   effects: 4,\n-   effects: 2,\n    keys: 2,\n    pending: 0,\n+   total: 10\n-   total: 5\n  }\n"
+    },
+    {
+      "id": "C11-capacity-boundary-load",
+      "state": "PASS"
+    }
+  ]
+}

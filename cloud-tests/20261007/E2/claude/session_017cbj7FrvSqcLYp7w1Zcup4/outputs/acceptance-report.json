@@ -1,0 +1,181 @@
+{
+  "schemaVersion": "1.0.0",
+  "target": {
+    "kind": "artifact",
+    "identifier": "output/e2/candidate.mjs",
+    "digest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a"
+  },
+  "criteria": [
+    {
+      "criterionId": "AC-001",
+      "statement": "A1 기준 checker가 후보에서 exit 0, PASS 11/11",
+      "status": "satisfied",
+      "evidenceRefs": [
+        "command:checker-candidate"
+      ],
+      "observedResult": "Verification command exited with code 0.",
+      "rationale": "Verified evidence for the current target supports this criterion."
+    },
+    {
+      "criterionId": "AC-002",
+      "statement": "A2 같은 checker가 원본에서 FAIL로 실제 실패를 재현",
+      "status": "satisfied",
+      "evidenceRefs": [
+        "checker-original"
+      ],
+      "observedResult": "node e2/checker.mjs e2/target-original.mjs exit 1, verdict FAIL, PASS 3/11, FAIL 8/11 (C03~C10)",
+      "rationale": "Verified evidence for the current target supports this criterion."
+    },
+    {
+      "criterionId": "AC-003",
+      "statement": "A3 output/e2/extra-checks.mjs 보강 검사가 후보에서 모두 PASS, 원본에서 결함 항목 FAIL",
+      "status": "satisfied",
+      "evidenceRefs": [
+        "extra-candidate",
+        "extra-original",
+        "command:extra-candidate-cmd"
+      ],
+      "observedResult": "extra-checks 후보 exit 0, PASS 11/11; extra-checks 원본 exit 1, PASS 4/11 (X03,X04,X07~X11 FAIL); Verification command exited with code 0.",
+      "rationale": "Verified evidence for the current target supports this criterion."
+    },
+    {
+      "criterionId": "AC-004",
+      "statement": "A4 verify-inputs.mjs가 작업 전후 PASS(불변 입력 무수정)",
+      "status": "satisfied",
+      "evidenceRefs": [
+        "verify-before",
+        "verify-after"
+      ],
+      "observedResult": "node verify-inputs.mjs 작업 전 exit 0, 10/10 pass; node verify-inputs.mjs 작업 후 exit 0, 10/10 pass",
+      "rationale": "Verified evidence for the current target supports this criterion."
+    },
+    {
+      "criterionId": "AC-005",
+      "statement": "A5 원본 대비 후보 diff를 저장하고 검토 결과를 기록",
+      "status": "satisfied",
+      "evidenceRefs": [
+        "diff"
+      ],
+      "observedResult": "diff -u 원본 후보 저장, 검토는 output/e2/skill-usage-summary.md 기록",
+      "rationale": "Verified evidence for the current target supports this criterion."
+    },
+    {
+      "criterionId": "AC-006",
+      "statement": "A6 후보는 표준 Node.js만 사용",
+      "status": "satisfied",
+      "evidenceRefs": [
+        "no-imports"
+      ],
+      "observedResult": "grep import 결과 0건(exit 1). 전역 Map/Promise만 사용",
+      "rationale": "Verified evidence for the current target supports this criterion."
+    }
+  ],
+  "verifiedEvidenceIndex": [
+    {
+      "evidenceId": "checker-original",
+      "kind": "test",
+      "locator": "output/e2/checker-original.stdout.json",
+      "digest": "sha256:e8feec06a73a64eca4725d87dad4536c1698587e56bca7017c90f7364b8e1be2",
+      "targetDigest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "criterionIds": [
+        "AC-002"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "extra-candidate",
+      "kind": "test",
+      "locator": "output/e2/extra-candidate.stdout.json",
+      "digest": "sha256:e6dcc84b120bf7be611e295136a9d78f84a879d2a5c25ce70f1e39bef2babf02",
+      "targetDigest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "criterionIds": [
+        "AC-003"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "extra-original",
+      "kind": "test",
+      "locator": "output/e2/extra-original.stdout.json",
+      "digest": "sha256:69d24c818d98e56b5e7a01424736eb75d7d1c95cffea3b64d541756ab863f059",
+      "targetDigest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "criterionIds": [
+        "AC-003"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "verify-before",
+      "kind": "tool",
+      "locator": "output/e2/verify-inputs.stdout.json",
+      "digest": "sha256:f22bdecf52464f3d2c56525c11e339d0c9039f01ecea8c984de99446bcc074c1",
+      "targetDigest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "criterionIds": [
+        "AC-004"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "verify-after",
+      "kind": "tool",
+      "locator": "output/e2/verify-inputs-after.stdout.json",
+      "digest": "sha256:f22bdecf52464f3d2c56525c11e339d0c9039f01ecea8c984de99446bcc074c1",
+      "targetDigest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "criterionIds": [
+        "AC-004"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "diff",
+      "kind": "file",
+      "locator": "output/e2/candidate.diff",
+      "digest": "sha256:ed71660cf86911e5085ed161e5cab37fb1ade758d213f304bd73ff8aa8e60ebd",
+      "targetDigest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "criterionIds": [
+        "AC-005"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "no-imports",
+      "kind": "file",
+      "locator": "output/e2/candidate.mjs",
+      "digest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "targetDigest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "criterionIds": [
+        "AC-006"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "command:checker-candidate",
+      "kind": "verification-command",
+      "locator": "output/e2/checker-candidate.stdout.json",
+      "digest": "sha256:e6e49181c8f73b224d2da69e809eaab9c28457bfab6e41ed3340d08538bfbfa3",
+      "targetDigest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "criterionIds": [
+        "AC-001"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "command:extra-candidate-cmd",
+      "kind": "verification-command",
+      "locator": "output/e2/extra-candidate.stdout.json",
+      "digest": "sha256:dc0fbbe9f0167d644d91ec8d666723d2d1a5671fd8d7f2e6ca9bca2b0ac67c66",
+      "targetDigest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "criterionIds": [
+        "AC-003"
+      ],
+      "direction": "supports"
+    }
+  ],
+  "unresolvedCriteria": [],
+  "limitations": [
+    "단일 프로세스 검사만 수행. 실제 시간복잡도·heap·처리량 benchmark 미실행",
+    "Node 24.21.0에서만 실행. Node 20/22 미실행",
+    "독립 감사 미실행(저위험 범위)"
+  ],
+  "verdict": "PASS"
+}

@@ -1,0 +1,183 @@
+{
+  "schemaVersion": "1.0.0",
+  "taskEnvelope": {
+    "schemaVersion": "1.0.0",
+    "taskId": "e2-ledger-candidate",
+    "objective": "ledger 동시·재시도 중복 반영과 같은 ID 다른 금액 수용 결함을 output/e2/candidate.mjs에서 수정한다.",
+    "scope": {
+      "included": [
+        "output/e2"
+      ],
+      "excluded": [
+        "e2/target-original.mjs",
+        "e2/checker.mjs",
+        "e2/contract.json",
+        "운영 DB·외부 API·호스트 기능 검증",
+        "E4",
+        "E9"
+      ]
+    },
+    "acceptanceCriteria": [
+      "A1 기준 checker가 후보에서 exit 0, PASS 11/11",
+      "A2 같은 checker가 원본에서 FAIL로 실제 실패를 재현",
+      "A3 output/e2/extra-checks.mjs 보강 검사가 후보에서 모두 PASS, 원본에서 결함 항목 FAIL",
+      "A4 verify-inputs.mjs가 작업 전후 PASS(불변 입력 무수정)",
+      "A5 원본 대비 후보 diff를 저장하고 검토 결과를 기록",
+      "A6 후보는 표준 Node.js만 사용"
+    ],
+    "riskLevel": "low",
+    "workUnits": [],
+    "requiredCapabilities": [],
+    "constraints": [
+      "표준 Node.js만 사용",
+      "결과는 output/e2/에만 작성"
+    ],
+    "authorization": {
+      "allowedActions": [
+        "read",
+        "write output/e2"
+      ],
+      "prohibitedActions": [
+        "git commit/push",
+        "PR",
+        "릴리스",
+        "운영 설치"
+      ],
+      "approvalRequired": []
+    },
+    "decision": {
+      "complexity": "simple",
+      "hasConflicts": false
+    },
+    "orchestration": {
+      "requested": false,
+      "mcpAvailable": true
+    }
+  },
+  "target": {
+    "kind": "artifact",
+    "identifier": "output/e2/candidate.mjs",
+    "digest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a"
+  },
+  "evidence": [
+    {
+      "id": "checker-original",
+      "kind": "test",
+      "locator": "output/e2/checker-original.stdout.json",
+      "digest": "sha256:e8feec06a73a64eca4725d87dad4536c1698587e56bca7017c90f7364b8e1be2",
+      "targetDigest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "verified": true,
+      "criterionIds": [
+        "AC-002"
+      ],
+      "direction": "supports",
+      "observedResult": "node e2/checker.mjs e2/target-original.mjs exit 1, verdict FAIL, PASS 3/11, FAIL 8/11 (C03~C10)"
+    },
+    {
+      "id": "extra-candidate",
+      "kind": "test",
+      "locator": "output/e2/extra-candidate.stdout.json",
+      "digest": "sha256:e6dcc84b120bf7be611e295136a9d78f84a879d2a5c25ce70f1e39bef2babf02",
+      "targetDigest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "verified": true,
+      "criterionIds": [
+        "AC-003"
+      ],
+      "direction": "supports",
+      "observedResult": "extra-checks 후보 exit 0, PASS 11/11"
+    },
+    {
+      "id": "extra-original",
+      "kind": "test",
+      "locator": "output/e2/extra-original.stdout.json",
+      "digest": "sha256:69d24c818d98e56b5e7a01424736eb75d7d1c95cffea3b64d541756ab863f059",
+      "targetDigest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "verified": true,
+      "criterionIds": [
+        "AC-003"
+      ],
+      "direction": "supports",
+      "observedResult": "extra-checks 원본 exit 1, PASS 4/11 (X03,X04,X07~X11 FAIL)"
+    },
+    {
+      "id": "verify-before",
+      "kind": "tool",
+      "locator": "output/e2/verify-inputs.stdout.json",
+      "digest": "sha256:f22bdecf52464f3d2c56525c11e339d0c9039f01ecea8c984de99446bcc074c1",
+      "targetDigest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "verified": true,
+      "criterionIds": [
+        "AC-004"
+      ],
+      "direction": "supports",
+      "observedResult": "node verify-inputs.mjs 작업 전 exit 0, 10/10 pass"
+    },
+    {
+      "id": "verify-after",
+      "kind": "tool",
+      "locator": "output/e2/verify-inputs-after.stdout.json",
+      "digest": "sha256:f22bdecf52464f3d2c56525c11e339d0c9039f01ecea8c984de99446bcc074c1",
+      "targetDigest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "verified": true,
+      "criterionIds": [
+        "AC-004"
+      ],
+      "direction": "supports",
+      "observedResult": "node verify-inputs.mjs 작업 후 exit 0, 10/10 pass"
+    },
+    {
+      "id": "diff",
+      "kind": "file",
+      "locator": "output/e2/candidate.diff",
+      "digest": "sha256:ed71660cf86911e5085ed161e5cab37fb1ade758d213f304bd73ff8aa8e60ebd",
+      "targetDigest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "verified": true,
+      "criterionIds": [
+        "AC-005"
+      ],
+      "direction": "supports",
+      "observedResult": "diff -u 원본 후보 저장, 검토는 output/e2/skill-usage-summary.md 기록"
+    },
+    {
+      "id": "no-imports",
+      "kind": "file",
+      "locator": "output/e2/candidate.mjs",
+      "digest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "targetDigest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "verified": true,
+      "criterionIds": [
+        "AC-006"
+      ],
+      "direction": "supports",
+      "observedResult": "grep import 결과 0건(exit 1). 전역 Map/Promise만 사용"
+    }
+  ],
+  "verificationCommands": [
+    {
+      "id": "checker-candidate",
+      "command": "/opt/node24/bin/node e2/checker.mjs output/e2/candidate.mjs",
+      "exitCode": 0,
+      "locator": "output/e2/checker-candidate.stdout.json",
+      "targetDigest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "criterionIds": [
+        "AC-001"
+      ]
+    },
+    {
+      "id": "extra-candidate-cmd",
+      "command": "/opt/node24/bin/node output/e2/extra-checks.mjs output/e2/candidate.mjs",
+      "exitCode": 0,
+      "locator": "output/e2/extra-candidate.stdout.json",
+      "targetDigest": "sha256:cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+      "criterionIds": [
+        "AC-003"
+      ]
+    }
+  ],
+  "knownLimitations": [
+    "단일 프로세스 검사만 수행. 실제 시간복잡도·heap·처리량 benchmark 미실행",
+    "Node 24.21.0에서만 실행. Node 20/22 미실행",
+    "독립 감사 미실행(저위험 범위)"
+  ],
+  "criterionOverrides": []
+}

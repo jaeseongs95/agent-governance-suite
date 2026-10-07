@@ -1,0 +1,98 @@
+{
+  "version": "1.0.1",
+  "pluginBaseline": "b28a442ad424b255283fe32fe3c0e661b195fa4e",
+  "productModifiedCandidate": null,
+  "runtime": "Node.js >=20; standard library only",
+  "delivery": "동일한 이 manifest와 immutableInputs 파일만 각각 fresh Cloud 작업영역에 제공. evaluator-only 파일과 정상 witness는 agent에게 제공하지 않음",
+  "immutableInputs": [
+    {
+      "path": "e2/target-original.mjs",
+      "bytes": 1249,
+      "sha256": "cf6103d0c03428988ebbe08b5b62bf4e6272e6c41f39744a9dcd4e21e4256812"
+    },
+    {
+      "path": "e2/contract.json",
+      "bytes": 1947,
+      "sha256": "fc9e3d06aee30afa1a99223611efecffd12a9b4f0de8e07df2af961f7729b69e"
+    },
+    {
+      "path": "e2/checker.mjs",
+      "bytes": 7625,
+      "sha256": "079c37b2007a8f2d10f3de522155dc88309cc67bc3a9615d61aa8083df5464b4"
+    },
+    {
+      "path": "e2/prompt.txt",
+      "bytes": 1280,
+      "sha256": "6081a5a29783345907a5660e2a7014fbd2b4486fdaed0d115dfb6cf336b9abd6"
+    },
+    {
+      "path": "e4/ui-original.txt",
+      "bytes": 19,
+      "sha256": "26254f0445134719a3a170c0b92126c294c77e01cbecf192a5305f5389081f1c"
+    },
+    {
+      "path": "e4/prompt.txt",
+      "bytes": 402,
+      "sha256": "d3eec350b58bc348acaabafd411bc745c2248e5bcedf1f991a57b3cafef90aab"
+    },
+    {
+      "path": "e9/ui-original.txt",
+      "bytes": 21,
+      "sha256": "0144913ed63155bfc59fb219fb9df7d86b665cd4462ce594a6e6abb369000e03"
+    },
+    {
+      "path": "e9/prompt.txt",
+      "bytes": 354,
+      "sha256": "c113e85416cfc718fc6bdc49b783b0f9e08241b465b53913d22eebe2e7c59860"
+    },
+    {
+      "path": "check-text.mjs",
+      "bytes": 522,
+      "sha256": "e7261e0c7c0273212ba654badf07ae3875fd8e045a5a77a25027a99faeb8d378"
+    },
+    {
+      "path": "verify-inputs.mjs",
+      "bytes": 834,
+      "sha256": "9a7d602545cbd749b91dc0e6dacccf3d13b610d71730943a76bedf6cc33ccba1"
+    }
+  ],
+  "mutableOutputs": [
+    "output/e2/",
+    "output/e4/",
+    "output/e9/"
+  ],
+  "commands": {
+    "integrity": [
+      "node",
+      "verify-inputs.mjs"
+    ],
+    "E2Red": [
+      "node",
+      "e2/checker.mjs",
+      "e2/target-original.mjs"
+    ],
+    "E2Candidate": [
+      "node",
+      "e2/checker.mjs",
+      "output/e2/candidate.mjs"
+    ],
+    "E4": [
+      "node",
+      "check-text.mjs",
+      "E4",
+      "output/e4/ui.txt"
+    ],
+    "E9": [
+      "node",
+      "check-text.mjs",
+      "E9",
+      "output/e9/ui.txt"
+    ]
+  },
+  "caseIsolation": "E2/E4/E9는 독립 fresh 세션에 해당 prompt만 일반요청으로 보냄. E4/E9에 E2 대화 또는 evaluator 선택 기대값을 전달하지 않음",
+  "completion": "공개계약과 고정입력보존, 현재후보 실제검사, 선택/인계/활용 host증거, 최종 실검사·미해결 반환을 분리 판정. checker PASS만으로 AGS E2E PASS 불가",
+  "cloud": {
+    "codex": "NOT_RUN",
+    "claude": "NOT_RUN"
+  }
+}

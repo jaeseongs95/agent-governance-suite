@@ -1,0 +1,117 @@
+{
+  "schemaVersion": "1.0.0",
+  "sourceSession": "session_017cbj7FrvSqcLYp7w1Zcup4",
+  "sourceSessionUrl": "https://claude.ai/code/session_017cbj7FrvSqcLYp7w1Zcup4",
+  "sourceCommit": "b28a442ad424b255283fe32fe3c0e661b195fa4e",
+  "inputManifestSha256": "4dd6cc2d24e22d3a4db7c90661174bd5e3ac9227c0dd1d56770b9f6db877c98d",
+  "candidateFileSha256": "cafc929fe14143fd86e46c97fc85c80cb0972e31419e53ee75e631906b45660a",
+  "resultCommit": "Use the fixed Git commit carrying this file; source commit and file SHA are different identifiers",
+  "caller": {
+    "agent": "Codex AGS tester",
+    "host": "Windows local",
+    "transport": "Claude Code CLI 2.1.292 --cloud",
+    "launchExit": 0,
+    "newCloudJobsCreated": 1
+  },
+  "execution": {
+    "platform": "Claude Cloud",
+    "os": "Ubuntu 24.04.5 LTS",
+    "cwd": "/home/user/agent-governance-suite",
+    "node": "/opt/node24/bin/node v24.21.0",
+    "defaultShellNode": "v22.22.0",
+    "actualModelServingProvider": "NOT_INDEPENDENTLY_OBSERVED",
+    "requestedModel": "claude-opus-5-5",
+    "requestedEffort": "high",
+    "cloudMarkers": [
+      "CLAUDE_CODE_REMOTE=true",
+      "CLAUDE_CODE_ENTRYPOINT=remote",
+      "IS_SANDBOX=1"
+    ]
+  },
+  "results": {
+    "originalChecker": {
+      "pass": 3,
+      "fail": 8,
+      "exitCode": 1
+    },
+    "candidateChecker": {
+      "pass": 11,
+      "fail": 0,
+      "exitCode": 0
+    },
+    "extraOriginal": {
+      "pass": 4,
+      "fail": 7,
+      "exitCode": 1
+    },
+    "extraCandidate": {
+      "pass": 11,
+      "fail": 0,
+      "exitCode": 0
+    },
+    "inputIntegrity": "10/10 PASS",
+    "mutationsDetected": 6,
+    "repeatBothSuitesPass": 30,
+    "fixtureVerdict": "PASS",
+    "fullAgsE2E": "NOT_CLAIMED",
+    "agsProductBugFixClaimed": false
+  },
+  "nativeEvidence": {
+    "skillCalls": [
+      "agent-governance-suite:ponytail",
+      "agent-governance-suite:acceptance-evidence-validator"
+    ],
+    "mcpUiObserved": "plugin agent-governance-suite agent-governance-suite: update session status",
+    "actualMcpSourceVersion": "UNKNOWN for this job; probe/cache presence is not exact adapter pin",
+    "properClaudeAdapterPin": "UNKNOWN",
+    "twoMcpSplit": "NOT_VERIFIED",
+    "daemonNodeRuntime": "UNKNOWN",
+    "fixtureNode24IsNotDaemonMigration": true,
+    "nativeCsTestEngineeringCodeReviewCalls": "NOT_OBSERVED",
+    "expertSkillNamesForcedInGenericPrompt": false,
+    "firstHookBlockAndBoundStatusUpdateObserved": true
+  },
+  "recovery": {
+    "browserDownload": "FAILED_TIMEOUT",
+    "publicOriginalBashByteReadback": "15 files received, individual byte lengths and SHA256 matched",
+    "byteReadbackIsNotClaimedAsBrowserDownload": true,
+    "artifactRewrite": false,
+    "rawConversationPublished": false,
+    "stderrFileBytes": "NOT_RECOVERED_AS_FILES",
+    "stderrObservation": "Original Bash cat of redirected stderr files emitted no stderr text; individual files not byte-received",
+    "missingFileNames": [
+      "checker-original.stderr.txt",
+      "checker-candidate.stderr.txt",
+      "extra-original.stderr.txt",
+      "extra-candidate.stderr.txt"
+    ]
+  },
+  "notRun": [
+    "Codex Cloud E2",
+    "E4",
+    "E9",
+    "full repository tests",
+    "production DB/API/host verification",
+    "independent acceptance"
+  ],
+  "codexHandoff": {
+    "ownCloudSendCount": 0,
+    "ownCloudJobId": null,
+    "originalExecPrefixFromLead": "exec-4c6e4bbb",
+    "originalExecOutputReadByThisOwner": false,
+    "externalOriginalExecJobExistence": "UNKNOWN",
+    "savedConfig": "bc34ad38-1d9c-4f0e-8dd7-5ff703d624c0~asenvcfg_a011352c8064819195ef09bdaeba23b7",
+    "legacyCliEnvironment": "6abdb83134cc819188cc9e705e452d36",
+    "relation": "UNKNOWN_NOT_ASSUMED",
+    "normalBrowserObservation": "AGS environment selector: 게시된 환경이 없습니다",
+    "newSendOwner": "Existing parent owner after it confirms its original send state",
+    "delivery": "Only inputs/ manifest+10 immutable files and corresponding generic prompt. Do not provide Claude outputs or private evaluator/witness to the Codex case."
+  },
+  "guideDelta": {
+    "appliedRequestPrefix": "78397489",
+    "seq2DeltaOnlyRead": true,
+    "seq2FullPageRead": false,
+    "githubFixedCommitRecoveryPreferred": true
+  },
+  "publicationScope": "Only this original job result, candidate, public fixture inputs and necessary metadata; additive evidence branch files; no new test or job"
+}

@@ -1,0 +1,1 @@
+repeat 30 (checker + extra on candidate): both exit 0 in 30/30

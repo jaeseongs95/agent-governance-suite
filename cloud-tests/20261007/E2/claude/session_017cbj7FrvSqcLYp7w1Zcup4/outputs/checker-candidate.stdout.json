@@ -1,0 +1,50 @@
+{
+  "oracleVersion": "1.0.1",
+  "verdict": "PASS",
+  "results": [
+    {
+      "id": "C01-empty-normal-bounds",
+      "state": "PASS"
+    },
+    {
+      "id": "C02-invalid-no-effect",
+      "state": "PASS"
+    },
+    {
+      "id": "C03-sequential-duplicate-conflict",
+      "state": "PASS"
+    },
+    {
+      "id": "C04-concurrent-same-id",
+      "state": "PASS"
+    },
+    {
+      "id": "C05-pending-payload-conflict",
+      "state": "PASS"
+    },
+    {
+      "id": "C06-timeout-releases-pending-retry",
+      "state": "PASS"
+    },
+    {
+      "id": "C07-ack-lost-retry",
+      "state": "PASS"
+    },
+    {
+      "id": "C08-capacity-pending-and-retained-retry",
+      "state": "PASS"
+    },
+    {
+      "id": "C09-result-alias-isolation",
+      "state": "PASS"
+    },
+    {
+      "id": "C10-permutation-duplicate-metamorphic",
+      "state": "PASS"
+    },
+    {
+      "id": "C11-capacity-boundary-load",
+      "state": "PASS"
+    }
+  ]
+}

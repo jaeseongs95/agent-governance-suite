@@ -1,0 +1,13 @@
+{"note":"각 mutant는 candidate.mjs에 결함 1개를 주입. exit 1 = 해당 검사가 결함을 검출","mutants":[
+{"mutant":"m1-no-conflict.mjs","checkerExit":1,"extraExit":1}
+,
+{"mutant":"m2-alias-return.mjs","checkerExit":1,"extraExit":1}
+,
+{"mutant":"m3-no-release.mjs","checkerExit":1,"extraExit":1}
+,
+{"mutant":"m4-ackloss-only-new.mjs","checkerExit":1,"extraExit":0}
+,
+{"mutant":"m5-commit-rereads-amount.mjs","checkerExit":0,"extraExit":1}
+,
+{"mutant":"m6-pending-not-counted.mjs","checkerExit":1,"extraExit":1}
+]}

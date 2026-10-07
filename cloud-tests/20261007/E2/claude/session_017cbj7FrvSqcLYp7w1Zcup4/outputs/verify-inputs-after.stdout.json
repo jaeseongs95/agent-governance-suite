@@ -1,0 +1,45 @@
+{
+  "verdict": "PASS",
+  "results": [
+    {
+      "path": "e2/target-original.mjs",
+      "pass": true
+    },
+    {
+      "path": "e2/contract.json",
+      "pass": true
+    },
+    {
+      "path": "e2/checker.mjs",
+      "pass": true
+    },
+    {
+      "path": "e2/prompt.txt",
+      "pass": true
+    },
+    {
+      "path": "e4/ui-original.txt",
+      "pass": true
+    },
+    {
+      "path": "e4/prompt.txt",
+      "pass": true
+    },
+    {
+      "path": "e9/ui-original.txt",
+      "pass": true
+    },
+    {
+      "path": "e9/prompt.txt",
+      "pass": true
+    },
+    {
+      "path": "check-text.mjs",
+      "pass": true
+    },
+    {
+      "path": "verify-inputs.mjs",
+      "pass": true
+    }
+  ]
+}
