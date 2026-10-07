@@ -5,6 +5,11 @@ import net from "node:net";
 import type { DeliveryCapabilities, InputObservation } from "./input-observation.js";
 import type { SessionIdentity } from "./session-message-store.js";
 import { TrustStore } from "./trust-store.js";
+import type { InputSourceReceiptV1 } from "../../contracts/types.js";
+
+export interface VerifiedInputSourceReader {
+  readVerifiedInputSource(receiptId: string): InputSourceReceiptV1 | null;
+}
 import { resolveTrustDatabasePath } from "./runtime-config.js";
 
 export type WakeDispatchOutcome = "submitted" | "definite-failure" | "accepted-or-unknown";
@@ -110,8 +115,8 @@ export interface HistoricalWakeEvidence {
 /** Historical liveness proof, never a current hook claim or an approval source. */
 export function verifyHistoricalWakeObservation(target: SessionIdentity, nonce: string, sourceReceiptId: string,
   startedAt: string, lateObservedAt: string, nowMs: number,
-  databasePath = resolveTrustDatabasePath()): HistoricalWakeEvidence | null {
-  const receipt = TrustStore.readVerifiedInputSource(databasePath, sourceReceiptId);
+  source: string | VerifiedInputSourceReader = resolveTrustDatabasePath()): HistoricalWakeEvidence | null {
+  const receipt = typeof source === "string" ? TrustStore.readVerifiedInputSource(source, sourceReceiptId) : source.readVerifiedInputSource(sourceReceiptId);
   if (!receipt || receipt.schemaVersion !== "1.0.0" || receipt.host !== target.host || receipt.sessionId !== target.sessionId
     || receipt.originKind !== "peer" || receipt.authorityEffect !== "none"
     || receipt.attestation?.kind !== "broker-peer-envelope" || receipt.attestation.adapter !== "session-message-wake-hook"
@@ -142,19 +147,19 @@ export function recordWakeHookObservation(observation: InputObservation, nowMs =
       attestation: { kind: "broker-peer-envelope", adapter: "session-message-wake-hook", capabilityVersion: "1.0.0" } }).receiptId;
   } finally { trust.close(); }
 }
-export function createWakeHookObservationReader(databasePath = resolveTrustDatabasePath()): WakeHookObservationReader {
+export function createWakeHookObservationReader(source: string | VerifiedInputSourceReader = resolveTrustDatabasePath()): WakeHookObservationReader {
   return {
   verifyObservation(target, observation, receiptId, nowMs) {
-    if (!isWakeHookObservation(observation, target) || !receiptId || !existsSync(databasePath)) return false;
-    const trust = new TrustStore(databasePath);
+    if (!isWakeHookObservation(observation, target) || !receiptId || (typeof source === "string" && !existsSync(source))) return false;
+    const trust = typeof source === "string" ? new TrustStore(source) : null;
     try {
-      const receipt = trust.getInputSource(receiptId);
-      return receipt !== null && trust.verify(receipt) && receipt.host === target.host && receipt.sessionId === target.sessionId
+      const receipt = trust ? trust.getInputSource(receiptId) : (source as VerifiedInputSourceReader).readVerifiedInputSource(receiptId);
+      return receipt !== null && (!trust || trust.verify(receipt)) && receipt.host === target.host && receipt.sessionId === target.sessionId
         && receipt.originKind === "peer" && receipt.authorityEffect === "none"
         && receipt.attestation.kind === "broker-peer-envelope" && receipt.attestation.adapter === "session-message-wake-hook"
         && receipt.attestation.capabilityVersion === "1.0.0" && receipt.contentDigest === observationDigest(observation)
         && Date.parse(receipt.observedAt) <= nowMs && Date.parse(receipt.expiresAt) > nowMs;
-    } finally { trust.close(); }
+    } finally { trust?.close(); }
   },
   };
 }

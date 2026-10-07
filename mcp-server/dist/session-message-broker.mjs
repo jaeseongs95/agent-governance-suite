@@ -115,8 +115,25 @@ function rejectUnexpectedKeys(value, allowed, label) {
   }
 }
 var TrustStore = class {
-  constructor(databasePath) {
-    this.databasePath = databasePath;
+  database;
+  shared;
+  databasePath;
+  signingKey;
+  syntheticSecret;
+  closed = false;
+  constructor(input, syntheticSecret) {
+    this.shared = typeof input === "string" ? void 0 : input;
+    this.databasePath = typeof input === "string" ? input : input.databasePath;
+    this.syntheticSecret = syntheticSecret;
+    const databasePath = this.databasePath;
+    if (this.shared) {
+      this.database = this.shared.database;
+      if (!syntheticSecret || Buffer.from(syntheticSecret, "base64url").length !== 32) throw new WorkflowContractError("INVALID_INPUT", "An explicit new synthetic trust key is required.");
+      this.shared.initialize(() => this.initializeSchema());
+      this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
+      if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", "The stored trust key differs from the explicit synthetic namespace.");
+      return;
+    }
     if (!databasePath.trim()) throw new WorkflowContractError("INVALID_INPUT", "Trust database path must not be empty.");
     if (databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true, mode: 448 });
     this.database = new DatabaseSync(databasePath);
@@ -126,6 +143,7 @@ var TrustStore = class {
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
       this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
+      if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", "The stored trust key differs from the explicit synthetic namespace.");
       if (this.signingKey.length !== 32) throw new Error("Stored trust signing key is invalid.");
       if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync(path.resolve(databasePath), 384);
     } catch (cause) {
@@ -137,10 +155,6 @@ var TrustStore = class {
       throw this.storageError("Cannot initialize the trust database.", cause);
     }
   }
-  databasePath;
-  database;
-  signingKey;
-  closed = false;
   recordInputSource(input) {
     rejectUnexpectedKeys(input, INPUT_SOURCE_KEYS, "Input source metadata");
     if (!input.attestation || typeof input.attestation !== "object" || Array.isArray(input.attestation)) {
@@ -257,7 +271,7 @@ var TrustStore = class {
     };
   }
   initializeSchema() {
-    const version = this.database.prepare("PRAGMA user_version").get().user_version;
+    const version = this.shared?.getSchemaVersion() ?? this.database.prepare("PRAGMA user_version").get().user_version;
     if (version > SCHEMA_VERSION) {
       throw new WorkflowContractError("INVALID_INPUT", "Trust database schema is newer than this server supports.", {
         databasePath: this.databasePath,
@@ -265,8 +279,8 @@ var TrustStore = class {
         actualVersion: version
       });
     }
-    this.database.exec(`
-      BEGIN IMMEDIATE;
+    this.transaction(() => {
+      this.database.exec(`
       CREATE TABLE IF NOT EXISTS trust_metadata (
         key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL
       ) STRICT;
@@ -284,20 +298,22 @@ var TrustStore = class {
       ) STRICT;
       CREATE INDEX IF NOT EXISTS input_source_latest
         ON input_source_receipts(host, session_id, observed_at DESC);
-      PRAGMA user_version = ${SCHEMA_VERSION};
-      COMMIT;
     `);
+      if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION);
+      else this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
+    });
   }
   getOrCreateSecret(name) {
     return this.transaction(() => {
       const existing = this.database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(name);
       if (existing) return existing.value;
-      const value = randomBytes(32).toString("base64url");
+      const value = this.syntheticSecret ?? randomBytes(32).toString("base64url");
       this.database.prepare("INSERT INTO trust_metadata (key, value, updated_at) VALUES (?, ?, ?)").run(name, value, (/* @__PURE__ */ new Date()).toISOString());
       return value;
     });
   }
   transaction(operation) {
+    if (this.shared) return this.shared.transaction(operation);
     this.database.exec("BEGIN IMMEDIATE;");
     try {
       const result = operation();
@@ -381,8 +397,8 @@ function observationDigest(event) {
   ];
   return `sha256:${createHash("sha256").update(JSON.stringify(normalized)).digest("hex")}`;
 }
-function verifyHistoricalWakeObservation(target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs, databasePath = resolveTrustDatabasePath()) {
-  const receipt = TrustStore.readVerifiedInputSource(databasePath, sourceReceiptId);
+function verifyHistoricalWakeObservation(target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs, source = resolveTrustDatabasePath()) {
+  const receipt = typeof source === "string" ? TrustStore.readVerifiedInputSource(source, sourceReceiptId) : source.readVerifiedInputSource(sourceReceiptId);
   if (!receipt || receipt.schemaVersion !== "1.0.0" || receipt.host !== target.host || receipt.sessionId !== target.sessionId || receipt.originKind !== "peer" || receipt.authorityEffect !== "none" || receipt.attestation?.kind !== "broker-peer-envelope" || receipt.attestation.adapter !== "session-message-wake-hook" || receipt.attestation.capabilityVersion !== "1.0.0") return null;
   const [started, observed, late, expires] = [
     Date.parse(startedAt),
@@ -409,16 +425,16 @@ function verifyHistoricalWakeObservation(target, nonce, sourceReceiptId, started
     receiptExpiresAt: receipt.expiresAt
   } : null;
 }
-function createWakeHookObservationReader(databasePath = resolveTrustDatabasePath()) {
+function createWakeHookObservationReader(source = resolveTrustDatabasePath()) {
   return {
     verifyObservation(target, observation, receiptId, nowMs) {
-      if (!isWakeHookObservation(observation, target) || !receiptId || !existsSync(databasePath)) return false;
-      const trust = new TrustStore(databasePath);
+      if (!isWakeHookObservation(observation, target) || !receiptId || typeof source === "string" && !existsSync(source)) return false;
+      const trust = typeof source === "string" ? new TrustStore(source) : null;
       try {
-        const receipt = trust.getInputSource(receiptId);
-        return receipt !== null && trust.verify(receipt) && receipt.host === target.host && receipt.sessionId === target.sessionId && receipt.originKind === "peer" && receipt.authorityEffect === "none" && receipt.attestation.kind === "broker-peer-envelope" && receipt.attestation.adapter === "session-message-wake-hook" && receipt.attestation.capabilityVersion === "1.0.0" && receipt.contentDigest === observationDigest(observation) && Date.parse(receipt.observedAt) <= nowMs && Date.parse(receipt.expiresAt) > nowMs;
+        const receipt = trust ? trust.getInputSource(receiptId) : source.readVerifiedInputSource(receiptId);
+        return receipt !== null && (!trust || trust.verify(receipt)) && receipt.host === target.host && receipt.sessionId === target.sessionId && receipt.originKind === "peer" && receipt.authorityEffect === "none" && receipt.attestation.kind === "broker-peer-envelope" && receipt.attestation.adapter === "session-message-wake-hook" && receipt.attestation.capabilityVersion === "1.0.0" && receipt.contentDigest === observationDigest(observation) && Date.parse(receipt.observedAt) <= nowMs && Date.parse(receipt.expiresAt) > nowMs;
       } finally {
-        trust.close();
+        trust?.close();
       }
     }
   };
@@ -483,17 +499,21 @@ var MessageCapacityError = class extends Error {
 };
 var SessionMessageStore = class {
   database;
-  constructor(databasePath) {
-    if (databasePath !== ":memory:") mkdirSync2(path3.dirname(path3.resolve(databasePath)), { recursive: true, mode: 448 });
-    this.database = new DatabaseSync2(databasePath);
-    this.database.exec("PRAGMA busy_timeout = 5000;");
-    const storedVersion = this.database.prepare("PRAGMA user_version").get().user_version;
-    if (storedVersion > MESSAGE_SCHEMA_VERSION) {
-      this.database.close();
-      throw new Error(`The session message database schema ${storedVersion} is newer than this broker supports.`);
-    }
-    if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
-    this.database.exec(`CREATE TABLE IF NOT EXISTS messages (
+  shared;
+  constructor(input) {
+    this.shared = typeof input === "string" ? void 0 : input;
+    const databasePath = typeof input === "string" ? input : input.databasePath;
+    if (!this.shared && databasePath !== ":memory:") mkdirSync2(path3.dirname(path3.resolve(databasePath)), { recursive: true, mode: 448 });
+    this.database = this.shared?.database ?? new DatabaseSync2(databasePath);
+    const initialize = () => {
+      if (!this.shared) this.database.exec("PRAGMA busy_timeout = 5000;");
+      const storedVersion = this.shared?.getSchemaVersion() ?? this.database.prepare("PRAGMA user_version").get().user_version;
+      if (storedVersion > MESSAGE_SCHEMA_VERSION) {
+        this.database.close();
+        throw new Error(`The session message database schema ${storedVersion} is newer than this broker supports.`);
+      }
+      if (!this.shared && databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
+      this.database.exec(`CREATE TABLE IF NOT EXISTS messages (
       message_id TEXT PRIMARY KEY,
       sender_host TEXT NOT NULL,
       sender_session_id TEXT NOT NULL,
@@ -550,11 +570,10 @@ var SessionMessageStore = class {
     ) STRICT;
     CREATE INDEX IF NOT EXISTS session_presence_latest
       ON session_presence (host, session_id, started_at DESC);`);
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
-      const version = this.database.prepare("PRAGMA user_version").get().user_version;
-      if (version > MESSAGE_SCHEMA_VERSION) throw new Error(`The session message database schema ${version} is newer than this broker supports.`);
-      this.database.exec(`CREATE TABLE IF NOT EXISTS prepared_messages (
+      return this.transaction(() => {
+        const version = this.shared?.getSchemaVersion() ?? this.database.prepare("PRAGMA user_version").get().user_version;
+        if (version > MESSAGE_SCHEMA_VERSION) throw new Error(`The session message database schema ${version} is newer than this broker supports.`);
+        this.database.exec(`CREATE TABLE IF NOT EXISTS prepared_messages (
         message_id TEXT PRIMARY KEY,
         sender_host TEXT NOT NULL,
         sender_session_id TEXT NOT NULL,
@@ -569,49 +588,49 @@ var SessionMessageStore = class {
       ) STRICT;
       CREATE INDEX IF NOT EXISTS prepared_messages_expiry ON prepared_messages (expires_at);
       CREATE INDEX IF NOT EXISTS prepared_messages_owner ON prepared_messages (sender_host, sender_session_id, receipt);`);
-      const messageColumns = this.database.prepare("PRAGMA table_info(messages)").all();
-      if (!messageColumns.some((column) => column.name === "delivery_attempts")) {
-        this.database.exec("ALTER TABLE messages ADD COLUMN delivery_attempts INTEGER NOT NULL DEFAULT 0;");
-      }
-      if (!messageColumns.some((column) => column.name === "first_delivered_at")) {
-        this.database.exec("ALTER TABLE messages ADD COLUMN first_delivered_at TEXT;");
-      }
-      const presenceColumns = this.database.prepare("PRAGMA table_info(session_presence)").all();
-      if (!presenceColumns.some((column) => column.name === "supported_injection")) {
-        this.database.exec("ALTER TABLE session_presence ADD COLUMN supported_injection TEXT NOT NULL DEFAULT '[]';");
-      }
-      if (!presenceColumns.some((column) => column.name === "idle_wake")) {
-        this.database.exec("ALTER TABLE session_presence ADD COLUMN idle_wake TEXT NOT NULL DEFAULT 'none';");
-        this.database.exec("UPDATE session_presence SET idle_wake = wake_visibility;");
-      }
-      this.database.exec(`CREATE TABLE IF NOT EXISTS input_observations (
+        const messageColumns = this.database.prepare("PRAGMA table_info(messages)").all();
+        if (!messageColumns.some((column) => column.name === "delivery_attempts")) {
+          this.database.exec("ALTER TABLE messages ADD COLUMN delivery_attempts INTEGER NOT NULL DEFAULT 0;");
+        }
+        if (!messageColumns.some((column) => column.name === "first_delivered_at")) {
+          this.database.exec("ALTER TABLE messages ADD COLUMN first_delivered_at TEXT;");
+        }
+        const presenceColumns = this.database.prepare("PRAGMA table_info(session_presence)").all();
+        if (!presenceColumns.some((column) => column.name === "supported_injection")) {
+          this.database.exec("ALTER TABLE session_presence ADD COLUMN supported_injection TEXT NOT NULL DEFAULT '[]';");
+        }
+        if (!presenceColumns.some((column) => column.name === "idle_wake")) {
+          this.database.exec("ALTER TABLE session_presence ADD COLUMN idle_wake TEXT NOT NULL DEFAULT 'none';");
+          this.database.exec("UPDATE session_presence SET idle_wake = wake_visibility;");
+        }
+        this.database.exec(`CREATE TABLE IF NOT EXISTS input_observations (
         host TEXT NOT NULL,
         session_id TEXT NOT NULL,
         deferred_tool_claim INTEGER NOT NULL DEFAULT 0 CHECK (deferred_tool_claim IN (0, 1)),
         observed_at TEXT NOT NULL,
         PRIMARY KEY (host, session_id)
       ) STRICT;`);
-      const wakeColumns = this.database.prepare("PRAGMA table_info(wake_nonces)").all();
-      for (const [name, definition] of [
-        ["state", "TEXT NOT NULL DEFAULT 'legacy' CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted'))"],
-        ["nonce", "TEXT"],
-        ["instance_id", "TEXT"],
-        ["birth_generation", "TEXT"],
-        ["transport", "TEXT"],
-        ["relay_id", "TEXT"],
-        ["attempt_id", "TEXT"],
-        ["dispatch_epoch", "INTEGER NOT NULL DEFAULT 0"],
-        ["retry_not_before", "TEXT"],
-        ["retry_count", "INTEGER NOT NULL DEFAULT 0"],
-        ["started_at", "TEXT"],
-        ["outcome_at", "TEXT"],
-        ["observed_at", "TEXT"],
-        ["late_observed_at", "TEXT"]
-      ]) {
-        if (!wakeColumns.some((column) => column.name === name)) this.database.exec(`ALTER TABLE wake_nonces ADD COLUMN ${name} ${definition};`);
-      }
-      if (version < 1) {
-        this.database.exec(`CREATE TABLE wake_nonces_next (
+        const wakeColumns = this.database.prepare("PRAGMA table_info(wake_nonces)").all();
+        for (const [name, definition] of [
+          ["state", "TEXT NOT NULL DEFAULT 'legacy' CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted'))"],
+          ["nonce", "TEXT"],
+          ["instance_id", "TEXT"],
+          ["birth_generation", "TEXT"],
+          ["transport", "TEXT"],
+          ["relay_id", "TEXT"],
+          ["attempt_id", "TEXT"],
+          ["dispatch_epoch", "INTEGER NOT NULL DEFAULT 0"],
+          ["retry_not_before", "TEXT"],
+          ["retry_count", "INTEGER NOT NULL DEFAULT 0"],
+          ["started_at", "TEXT"],
+          ["outcome_at", "TEXT"],
+          ["observed_at", "TEXT"],
+          ["late_observed_at", "TEXT"]
+        ]) {
+          if (!wakeColumns.some((column) => column.name === name)) this.database.exec(`ALTER TABLE wake_nonces ADD COLUMN ${name} ${definition};`);
+        }
+        if (version < 1) {
+          this.database.exec(`CREATE TABLE wake_nonces_next (
           nonce_digest TEXT PRIMARY KEY, host TEXT NOT NULL, session_id TEXT NOT NULL, expires_at TEXT NOT NULL, consumed_at TEXT,
           state TEXT NOT NULL DEFAULT 'legacy' ${WAKE_STATE_CHECK},
           nonce TEXT, instance_id TEXT, birth_generation TEXT, transport TEXT, relay_id TEXT, attempt_id TEXT,
@@ -620,27 +639,29 @@ var SessionMessageStore = class {
         ) STRICT;
         INSERT INTO wake_nonces_next (rowid, ${WAKE_COPY_COLUMNS}) SELECT rowid, ${WAKE_COPY_COLUMNS} FROM wake_nonces;
         DROP TABLE wake_nonces;`);
-        this.database.exec("ALTER TABLE wake_nonces_next RENAME TO wake_nonces;");
-      }
-      this.database.exec(`CREATE UNIQUE INDEX IF NOT EXISTS wake_active_target ON wake_nonces (host, session_id)
+          this.database.exec("ALTER TABLE wake_nonces_next RENAME TO wake_nonces;");
+        }
+        this.database.exec(`CREATE UNIQUE INDEX IF NOT EXISTS wake_active_target ON wake_nonces (host, session_id)
         WHERE state IN ${ACTIVE_WAKE_STATES};`);
-      this.database.exec(`CREATE TABLE IF NOT EXISTS session_activity (
+        this.database.exec(`CREATE TABLE IF NOT EXISTS session_activity (
         host TEXT NOT NULL,
         session_id TEXT NOT NULL,
         active_at TEXT NOT NULL,
         PRIMARY KEY (host, session_id)
       ) STRICT;`);
-      if (version < MESSAGE_SCHEMA_VERSION) this.database.exec(`PRAGMA user_version = ${MESSAGE_SCHEMA_VERSION};`);
-      this.database.exec("COMMIT");
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+        if (this.shared) this.shared.setSchemaVersion(MESSAGE_SCHEMA_VERSION);
+        else if (version < MESSAGE_SCHEMA_VERSION) this.database.exec(`PRAGMA user_version = ${MESSAGE_SCHEMA_VERSION};`);
+      });
+    };
+    if (this.shared) this.shared.initialize(initialize);
+    else initialize();
   }
   close() {
     this.database.close();
   }
   prune(nowMs = Date.now()) {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.prune(nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const now = iso(nowMs);
     const acknowledgedBefore = iso(nowMs - 36e5);
     this.database.prepare("DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)").run(now, acknowledgedBefore);
@@ -700,10 +721,11 @@ var SessionMessageStore = class {
     if (typeof input.body !== "string" || !input.body.trim() || Buffer.byteLength(input.body, "utf8") > MESSAGE_BODY_MAX_BYTES) throw new Error("body must contain 1-4096 UTF-8 bytes.");
     if (input.body.includes("\0")) throw new Error("body must not contain NUL characters.");
     if (!Number.isInteger(ttlSeconds) || ttlSeconds < 30 || ttlSeconds > MESSAGE_TTL_MAX_SECONDS) throw new Error("ttlSeconds must be an integer from 30 to 86400.");
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.prepare(input, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const result = { messageId: randomUUID3(), preparedAt: iso(nowMs), expiresAt: iso(nowMs + MESSAGE_DRAFT_TTL_MS) };
     const recordBytes = Buffer.byteLength(JSON.stringify({ ...input, ttlSeconds, ...result }), "utf8");
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    return this.transaction(() => {
       this.prune(nowMs);
       this.assertReceiptCapacity(input.sender, "; no draft was created.");
       const drafts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL").get();
@@ -712,18 +734,15 @@ var SessionMessageStore = class {
       if (drafts.count >= MESSAGE_DRAFT_LIMIT || owned.count >= MESSAGE_SENDER_DRAFT_LIMIT || bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new Error("The bounded message preparation store is full.");
       this.database.prepare(`INSERT INTO prepared_messages (message_id, sender_host, sender_session_id, target_host, target_session_id, body, ttl_seconds, prepared_at, expires_at, record_bytes)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(result.messageId, input.sender.host, input.sender.sessionId, input.target.host, input.target.sessionId, input.body, ttlSeconds, result.preparedAt, result.expiresAt, recordBytes);
-      this.database.exec("COMMIT");
       return result;
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
   }
   /** ID ownership, capacity, queue insert and first receipt share one transaction. */
   submitPrepared(sender, messageId, nowMs = Date.now()) {
     boundedIdentity(sender);
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.submitPrepared(sender, messageId, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
       this.prune(nowMs);
       const row = this.database.prepare("SELECT * FROM prepared_messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ? AND expires_at > ?").get(messageId, sender.host, sender.sessionId, iso(nowMs));
       if (!row) throw new Error("Issued message ID is unavailable; delivery may be unknown. Compare saved receipts/status; prepare only a new intent.");
@@ -731,7 +750,6 @@ var SessionMessageStore = class {
       if (row.receipt !== null) {
         const receipt2 = JSON.parse(String(row.receipt));
         const autoWake2 = this.autoWakeOutlook(target, nowMs);
-        this.database.exec("COMMIT");
         return { ...receipt2, duplicate: true, autoWake: autoWake2 };
       }
       this.assertReceiptCapacity(sender, ".");
@@ -743,12 +761,8 @@ var SessionMessageStore = class {
       if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new MessageCapacityError("The bounded message receipt store is full.", { scope: "global", earliestReleaseAt: bytes.earliest });
       this.database.prepare("UPDATE prepared_messages SET body = NULL, receipt = ?, expires_at = ?, record_bytes = ? WHERE message_id = ?").run(receiptJson, expiresAt, recordBytes, messageId);
       const autoWake = this.autoWakeOutlook(target, nowMs);
-      this.database.exec("COMMIT");
       return { ...receipt, autoWake };
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
   }
   /** Internal queue primitive, also retained for existing-data fixtures; public send uses submitPrepared. */
   send(input, nowMs = Date.now()) {
@@ -763,6 +777,8 @@ var SessionMessageStore = class {
     }
     const messageId = input.messageId ?? randomUUID3();
     if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/u.test(messageId)) throw new Error("messageId must be 8-128 safe identifier characters.");
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.send(input, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
     const existing = this.database.prepare("SELECT * FROM messages WHERE message_id = ?").get(messageId);
     if (existing) {
@@ -838,18 +854,15 @@ var SessionMessageStore = class {
   }
   claim(target, nowMs = Date.now(), limits = {}) {
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.claim(target, nowMs, limits));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    return this.transaction(() => {
       const claimed = this.claimLocked(target, nowMs, limits);
       if (claimed.length > 0) this.consumePendingWakes(target, nowMs);
       this.recordActivity(target, nowMs);
-      this.database.exec("COMMIT");
       return claimed;
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
   }
   claimWake(target, nonces, nowMs = Date.now(), limits = {}) {
     boundedIdentity(target);
@@ -857,110 +870,93 @@ var SessionMessageStore = class {
       throw new Error("wake nonces are invalid.");
     }
     const digests = [...new Set(nonces.map(nonceDigest))];
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.claimWake(target, nonces, nowMs, limits));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
     const now = iso(nowMs);
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    return this.transaction(() => {
       const recognized = digests.every((digest) => Boolean(this.database.prepare(`SELECT 1 FROM wake_nonces
         WHERE nonce_digest = ? AND host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ?`).get(digest, target.host, target.sessionId, now)));
       if (!recognized) {
-        this.database.exec("COMMIT");
         return { recognized: false, messages: [] };
       }
       const messages = this.claimLocked(target, nowMs, limits);
       const consume = this.database.prepare("UPDATE wake_nonces SET consumed_at = ? WHERE nonce_digest = ? AND consumed_at IS NULL");
       for (const digest of digests) consume.run(now, digest);
-      this.database.exec("COMMIT");
       return { recognized: true, messages };
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
   }
   observeNativeInput(target, nowMs = Date.now()) {
     boundedIdentity(target);
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.observeNativeInput(target, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
       this.database.prepare(`INSERT INTO input_observations (host, session_id, deferred_tool_claim, observed_at)
         VALUES (?, ?, 1, ?) ON CONFLICT (host, session_id) DO UPDATE SET deferred_tool_claim = 1, observed_at = excluded.observed_at`).run(target.host, target.sessionId, iso(nowMs));
       this.recordActivity(target, nowMs);
-      this.database.exec("COMMIT");
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
   }
   claimDeferred(target, nowMs = Date.now(), limits = {}) {
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.claimDeferred(target, nowMs, limits));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    return this.transaction(() => {
       const skipped = this.database.prepare(`UPDATE input_observations SET deferred_tool_claim = 0
         WHERE host = ? AND session_id = ? AND deferred_tool_claim = 1`).run(target.host, target.sessionId).changes === 1;
       const messages = skipped ? [] : this.claimLocked(target, nowMs, limits);
       if (messages.length > 0) this.consumePendingWakes(target, nowMs);
       this.recordActivity(target, nowMs);
-      this.database.exec("COMMIT");
       return messages;
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
   }
   claimTurnEnd(target, nowMs = Date.now(), limits = {}) {
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.claimTurnEnd(target, nowMs, limits));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    return this.transaction(() => {
       this.database.prepare("DELETE FROM input_observations WHERE host = ? AND session_id = ?").run(target.host, target.sessionId);
       const messages = this.claimLocked(target, nowMs, limits);
       if (messages.length > 0) this.consumePendingWakes(target, nowMs);
       this.recordActivity(target, nowMs);
-      this.database.exec("COMMIT");
       return messages;
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
   }
   clearDeferred(target, nowMs = Date.now()) {
     boundedIdentity(target);
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.clearDeferred(target, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
       this.database.prepare("DELETE FROM input_observations WHERE host = ? AND session_id = ?").run(target.host, target.sessionId);
       this.recordActivity(target, nowMs);
-      this.database.exec("COMMIT");
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
   }
   acknowledge(target, messageIds, nowMs = Date.now()) {
     boundedIdentity(target);
     if (messageIds.length < 1 || messageIds.length > 50 || messageIds.some((id) => typeof id !== "string" || id.length > 128)) {
       throw new Error("messageIds must contain 1-50 bounded identifiers.");
     }
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.acknowledge(target, messageIds, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const statement = this.database.prepare(`UPDATE messages SET acknowledged_at = ?, claim_until = NULL
       WHERE message_id = ? AND target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL`);
     const receipt = this.database.prepare("UPDATE prepared_messages SET expires_at = min(expires_at, ?) WHERE message_id = ? AND receipt IS NOT NULL");
     let count = 0;
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    return this.transaction(() => {
       for (const messageId of new Set(messageIds)) {
         if (statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes !== 1) continue;
         receipt.run(iso(nowMs + MESSAGE_RECEIPT_EXTRA_MS), messageId);
         count++;
       }
       this.recordActivity(target, nowMs);
-      this.database.exec("COMMIT");
       return count;
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
   }
   status(sender, messageId, nowMs = Date.now()) {
     boundedIdentity(sender);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.status(sender, messageId, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
     const row = this.database.prepare(`SELECT message_id, target_host, target_session_id, created_at, expires_at,
       claimed_at, acknowledged_at, delivery_attempts, first_delivered_at FROM messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ?`).get(messageId, sender.host, sender.sessionId);
@@ -987,6 +983,8 @@ var SessionMessageStore = class {
   peerWaitState(sender, target, nowMs = Date.now()) {
     boundedIdentity(sender);
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.peerWaitState(sender, target, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const rows = this.database.prepare(`SELECT message_id, sender_host, sender_session_id, target_host, target_session_id,
       created_at, claimed_at, acknowledged_at, delivery_attempts, first_delivered_at FROM messages
       WHERE expires_at > ? AND ((sender_host = ? AND sender_session_id = ? AND target_host = ? AND target_session_id = ?)
@@ -996,6 +994,8 @@ var SessionMessageStore = class {
   }
   liveRelay(target, transport, nowMs = Date.now()) {
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.liveRelay(target, transport, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const row = this.database.prepare("SELECT relay_id, pid, parent_pid, updated_at FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lease_until > ?").get(target.host, target.sessionId, transport, iso(nowMs));
     return row ? { relayId: row.relay_id, pid: row.pid, parentPid: row.parent_pid, updatedAt: row.updated_at } : null;
   }
@@ -1005,6 +1005,8 @@ var SessionMessageStore = class {
    */
   autoWakeOutlook(target, nowMs = Date.now()) {
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.autoWakeOutlook(target, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const now = iso(nowMs);
     const outlook = (state, reason, basisAt) => ({ state, reason, basisAt: basisAt === null || basisAt === void 0 ? null : String(basisAt), checkedAt: now, authorityEffect: "none" });
     const presence = this.presence(target, nowMs);
@@ -1029,6 +1031,8 @@ var SessionMessageStore = class {
   }
   pendingCount(target, nowMs = Date.now()) {
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.pendingCount(target, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
     const now = iso(nowMs);
     const row = this.database.prepare(`SELECT count(*) AS count FROM messages
@@ -1039,6 +1043,8 @@ var SessionMessageStore = class {
   acquireRelay(input, nowMs = Date.now()) {
     boundedIdentity(input);
     if (!input.transport || input.transport.length > 64 || !input.relayId || input.relayId.length > 128) throw new Error("Invalid relay identity.");
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.acquireRelay(input, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
     const now = iso(nowMs);
     const until = iso(nowMs + RELAY_LEASE_MS);
@@ -1054,6 +1060,8 @@ var SessionMessageStore = class {
     return result.changes === 1;
   }
   heartbeatRelay(input, nowMs = Date.now()) {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.heartbeatRelay(input, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const result = this.database.prepare(`UPDATE relay_leases SET lease_until = ?, updated_at = ?
       WHERE host = ? AND session_id = ? AND transport = ? AND relay_id = ?`).run(iso(nowMs + RELAY_LEASE_MS), iso(nowMs), input.host, input.sessionId, input.transport, input.relayId);
     return result.changes === 1;
@@ -1062,31 +1070,28 @@ var SessionMessageStore = class {
   relayTick(input, nowMs = Date.now()) {
     boundedIdentity(input);
     if (!input.transport || input.transport.length > 64 || !input.relayId || input.relayId.length > 128 || !input.instanceId || input.instanceId.length > 128 || typeof input.includePending !== "boolean") throw new Error("Invalid relay tick identity or includePending.");
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.relayTick(input, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
       const presence = this.presence(input, nowMs);
       const relay = this.liveRelay(input, input.transport, nowMs);
       if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport || relay?.relayId !== input.relayId) {
-        this.database.exec("ROLLBACK");
         return { alive: false, count: 0 };
       }
       this.heartbeatRelay(input, nowMs);
       this.heartbeatPresence(input, input.instanceId, nowMs);
       const count = input.includePending ? this.pendingCount(input, nowMs) : 0;
-      this.database.exec("COMMIT");
       return { alive: true, count };
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
   }
   reserveWake(target, nonce, nowMs = Date.now()) {
     boundedIdentity(target);
     if (nonce.length < 16 || nonce.length > 200) throw new Error("Invalid wake nonce.");
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.reserveWake(target, nonce, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
     const now = iso(nowMs);
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    return this.transaction(() => {
       const outstanding = this.database.prepare(`SELECT 1 FROM wake_nonces
         WHERE host = ? AND session_id = ? AND (state IN ('reserved', 'started', 'submitted', 'unknown')
           OR (state = 'legacy' AND consumed_at IS NULL AND expires_at > ?)) LIMIT 1`).get(target.host, target.sessionId, now);
@@ -1097,16 +1102,11 @@ var SessionMessageStore = class {
         WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL
           AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?) LIMIT 1`).get(target.host, target.sessionId, now, now);
       if (outstanding || delivering || !claimable) {
-        this.database.exec("COMMIT");
         return false;
       }
       this.database.prepare("INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at) VALUES (?, ?, ?, ?)").run(nonceDigest(nonce), target.host, target.sessionId, iso(nowMs + WAKE_TTL_MS));
-      this.database.exec("COMMIT");
       return true;
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
   }
   releaseWake(target, nonce) {
     boundedIdentity(target);
@@ -1117,6 +1117,8 @@ var SessionMessageStore = class {
   /** Board classification checks ownership; only the host hook can record observation. */
   consumeWake(target, nonce, nowMs = Date.now()) {
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.consumeWake(target, nonce, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     return Boolean(this.database.prepare(`SELECT 1 FROM wake_nonces
       WHERE nonce_digest = ? AND host = ? AND session_id = ? AND expires_at > ?`).get(nonceDigest(nonce), target.host, target.sessionId, iso(nowMs)));
   }
@@ -1157,8 +1159,9 @@ var SessionMessageStore = class {
     for (const value of [input.instanceId, input.relayId, input.transport]) {
       if (typeof value !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(value)) throw new Error("Invalid wake relay binding.");
     }
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.reserveManagedWake(input, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
       this.prune(nowMs);
       let attempt = null;
       let active = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ?
@@ -1205,17 +1208,14 @@ var SessionMessageStore = class {
           attempt = { ...input, generation, attemptId, dispatchEpoch: 0 };
         }
       }
-      this.database.exec("COMMIT");
       return { dispatch: attempt !== null, attempt };
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
   }
   /** CAS succeeds once. The caller must not call a host adapter without this committed start. */
   startManagedWake(attempt, nowMs = Date.now()) {
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.startManagedWake(attempt, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
       const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
         AND state = 'reserved' AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND attempt_id = ? AND dispatch_epoch = ?`).get(
         nonceDigest(attempt.nonce),
@@ -1229,26 +1229,21 @@ var SessionMessageStore = class {
         attempt.dispatchEpoch
       );
       if (!row || !this.wakeBindingCurrent(attempt, attempt.generation, nowMs) || row.retry_not_before !== null && String(row.retry_not_before) > iso(nowMs)) {
-        this.database.exec("COMMIT");
         return { dispatch: false, attempt: null };
       }
       if (String(row.expires_at) <= iso(nowMs) || !this.wakeClaimable(attempt, nowMs)) {
         this.database.prepare("UPDATE wake_nonces SET state = 'not-submitted', outcome_at = ? WHERE nonce_digest = ? AND state = 'reserved'").run(iso(nowMs), nonceDigest(attempt.nonce));
-        this.database.exec("COMMIT");
         return { dispatch: false, attempt: null };
       }
       this.database.prepare("UPDATE wake_nonces SET state = 'started', started_at = ?, dispatch_epoch = dispatch_epoch + 1 WHERE nonce_digest = ?").run(iso(nowMs), nonceDigest(attempt.nonce));
-      this.database.exec("COMMIT");
       return { dispatch: true, attempt: { ...attempt, dispatchEpoch: attempt.dispatchEpoch + 1 } };
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
   }
   recordManagedWakeOutcome(attempt, outcome, nowMs = Date.now()) {
     if (!["submitted", "definite-failure", "accepted-or-unknown"].includes(outcome)) throw new Error("Invalid wake dispatch outcome.");
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.recordManagedWakeOutcome(attempt, outcome, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
       const row = this.database.prepare(`SELECT retry_count FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
         AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND attempt_id = ? AND dispatch_epoch = ?
         AND late_observed_at IS NULL AND observed_at IS NULL AND consumed_at IS NULL
@@ -1264,7 +1259,6 @@ var SessionMessageStore = class {
         attempt.dispatchEpoch
       );
       if (!row) {
-        this.database.exec("COMMIT");
         return false;
       }
       const retry = outcome === "definite-failure";
@@ -1277,15 +1271,13 @@ var SessionMessageStore = class {
         row.retry_count + (retry ? 1 : 0),
         nonceDigest(attempt.nonce)
       );
-      this.database.exec("COMMIT");
       return true;
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
   }
   managedWakeStatus(target, nowMs = Date.now()) {
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.managedWakeStatus(target, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state <> 'legacy'
       ORDER BY CASE WHEN state IN ('reserved', 'started', 'submitted', 'unknown') THEN 0 ELSE 1 END, rowid DESC LIMIT 1`).get(target.host, target.sessionId);
     if (!row) return null;
@@ -1307,25 +1299,24 @@ var SessionMessageStore = class {
     };
   }
   /** Terminal-only maintenance. Historical evidence cannot claim bodies or observe a current relay. */
-  reconcileHistoricalWake(target, attemptId, sourceReceiptId, nowMs = Date.now(), verify = verifyHistoricalWakeObservation) {
+  reconcileHistoricalWake(target, attemptId, sourceReceiptId, nowMs = Date.now(), verify = this.shared ? () => null : verifyHistoricalWakeObservation) {
     boundedIdentity(target);
     if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(attemptId) || !/^source-[A-Za-z0-9-]{1,128}$/u.test(sourceReceiptId)) throw new Error("Invalid historical wake identity.");
     const rejected = { reconciled: false, evidence: null };
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.reconcileHistoricalWake(target, attemptId, sourceReceiptId, nowMs, verify));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const isOldGeneration = (row) => {
       const presence = this.presence(target, nowMs);
       return presence.instanceId !== null && presence.startedAt !== null && (row.instance_id !== presence.instanceId || row.birth_generation !== presence.startedAt);
     };
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    return this.transaction(() => {
       const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ?
         AND state = 'unknown' AND late_observed_at IS NOT NULL AND consumed_at IS NULL AND observed_at IS NULL`).get(target.host, target.sessionId, attemptId);
       if (!row || ![row.nonce, row.instance_id, row.birth_generation, row.transport, row.relay_id, row.started_at].every((value) => typeof value === "string") || row.nonce_digest !== nonceDigest(String(row.nonce)) || Number(row.dispatch_epoch) < 1 || !isOldGeneration(row)) {
-        this.database.exec("COMMIT");
         return rejected;
       }
       const proof = verify(target, String(row.nonce), sourceReceiptId, String(row.started_at), String(row.late_observed_at), nowMs);
       if (!proof || !isOldGeneration(row)) {
-        this.database.exec("COMMIT");
         return rejected;
       }
       const changed = this.database.prepare(`UPDATE wake_nonces SET state = 'observed', observed_at = ?, consumed_at = ?
@@ -1347,7 +1338,6 @@ var SessionMessageStore = class {
         String(row.started_at),
         String(row.late_observed_at)
       ).changes;
-      this.database.exec("COMMIT");
       if (changed !== 1) return rejected;
       const attempt = this.wakeAttempt(row);
       const oldBinding = {
@@ -1361,10 +1351,7 @@ var SessionMessageStore = class {
         dispatchEpoch: attempt.dispatchEpoch
       };
       return { reconciled: true, evidence: { ...proof, oldBinding, lateObservedAt: String(row.late_observed_at), reconciledAt: iso(nowMs) } };
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
   }
   /** Verified arrival retires its attempt; only current bindings may claim bodies in the same transaction. */
   claimHostWake(target, observation, receiptId, reader, nowMs = Date.now(), limits = {}) {
@@ -1372,15 +1359,14 @@ var SessionMessageStore = class {
     const rejected = { recognized: false, messages: [], binding: null };
     if (!isWakeHookObservation(observation, target) || !reader) return rejected;
     const digests = [...new Set(observation.wakeCandidates.map(nonceDigest))];
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.claimHostWake(target, observation, receiptId, reader, nowMs, limits));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
       if (!reader.verifyObservation(target, observation, receiptId, nowMs)) {
-        this.database.exec("COMMIT");
         return rejected;
       }
       const rows = digests.map((digest) => this.database.prepare("SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?").get(digest, target.host, target.sessionId));
       if (rows.some((row) => !row || !["legacy", "started", "submitted", "unknown", "expired-unobserved"].includes(String(row.state)))) {
-        this.database.exec("COMMIT");
         return rejected;
       }
       this.recordActivity(target, nowMs);
@@ -1389,7 +1375,6 @@ var SessionMessageStore = class {
         WHERE host = ? AND session_id = ? AND state = 'expired-unobserved' AND nonce_digest IN (SELECT value FROM json_each(?))`).run(iso(nowMs), target.host, target.sessionId, JSON.stringify(digests));
       const live = rows.filter((row) => row.state !== "expired-unobserved");
       if (live.length === 0) {
-        this.database.exec("COMMIT");
         return { ...rejected, retired: true };
       }
       const valid = live.every((row) => row.state === "legacy" ? row.consumed_at === null && String(row.expires_at) > iso(nowMs) : row.instance_id === presence.instanceId && row.birth_generation === presence.startedAt && row.transport === presence.transport && presence.state === "online" && presence.deliveryCapabilities.supportedInjection.includes("peer-wake") && String(row.expires_at) > iso(nowMs));
@@ -1397,7 +1382,6 @@ var SessionMessageStore = class {
         for (const row of live) if (row.state !== "legacy") this.database.prepare(`UPDATE wake_nonces
           SET late_observed_at = coalesce(late_observed_at, ?), state = 'observed', consumed_at = ?, observed_at = ?
           WHERE nonce_digest = ? AND state IN ('started', 'submitted', 'unknown')`).run(iso(nowMs), iso(nowMs), iso(nowMs), String(row.nonce_digest));
-        this.database.exec("COMMIT");
         return rejected;
       }
       const messages = this.claimLocked(target, nowMs, limits);
@@ -1409,12 +1393,8 @@ var SessionMessageStore = class {
           binding = this.wakeAttempt(row);
         }
       }
-      this.database.exec("COMMIT");
       return { recognized: true, messages, binding };
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+    });
   }
   startPresence(input, nowMs = Date.now()) {
     boundedIdentity(input);
@@ -1426,6 +1406,8 @@ var SessionMessageStore = class {
     ]) {
       if (value !== void 0 && (!value || value.length > maximum)) throw new Error(`${name} is invalid.`);
     }
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.startPresence(input, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const now = iso(nowMs);
     this.database.prepare(`INSERT INTO session_presence (
       host, session_id, instance_id, transport, wake_visibility, can_wake_silently, supported_injection, idle_wake,
@@ -1463,6 +1445,8 @@ var SessionMessageStore = class {
   heartbeatPresence(target, instanceId, nowMs = Date.now()) {
     boundedIdentity(target);
     if (!instanceId) throw new Error("presence instanceId is required.");
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.heartbeatPresence(target, instanceId, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const row = this.database.prepare(`SELECT instance_id FROM session_presence
       WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL AND lease_until > ?`).get(target.host, target.sessionId, instanceId, iso(nowMs));
     const selected = row;
@@ -1475,6 +1459,8 @@ var SessionMessageStore = class {
     boundedIdentity(target);
     if (!reason || reason.length > 100) throw new Error("endReason is invalid.");
     if (!instanceId) throw new Error("presence instanceId is required.");
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.endPresence(target, reason, instanceId, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const row = this.database.prepare(`SELECT instance_id FROM session_presence
       WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL`).get(target.host, target.sessionId, instanceId);
     const selected = row;
@@ -1485,6 +1471,8 @@ var SessionMessageStore = class {
   }
   presence(target, nowMs = Date.now()) {
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.presence(target, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const row = this.database.prepare(`SELECT * FROM session_presence
       WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1`).get(target.host, target.sessionId);
     if (!row) return {
@@ -1530,10 +1518,24 @@ var SessionMessageStore = class {
   }
   /** Without targets every stored identity is listed (the pre-2.7.4 request); callers bound the batch themselves. */
   listPresence(nowMs = Date.now(), targets) {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.listPresence(nowMs, targets));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
     const identities = targets ?? this.database.prepare(`SELECT host, session_id FROM session_presence
       GROUP BY host, session_id ORDER BY host, session_id`).all().map((row) => ({ host: row.host, sessionId: row.session_id }));
     return identities.map((target) => ({ ...this.presence(target, nowMs), autoWake: this.autoWakeOutlook(target, nowMs) }));
+  }
+  transaction(operation) {
+    if (this.shared) return this.shared.transaction(operation);
+    this.database.exec("BEGIN IMMEDIATE");
+    try {
+      const result = operation();
+      this.database.exec("COMMIT");
+      return result;
+    } catch (error) {
+      this.database.exec("ROLLBACK");
+      throw error;
+    }
   }
 };
 

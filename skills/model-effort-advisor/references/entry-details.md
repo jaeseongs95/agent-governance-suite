@@ -40,6 +40,8 @@ node <SKILL_DIR>/scripts/support-guard.mjs < request.json
 
 이 검사는 JSON 형태·공급자 일치·명시된 대응 관계를 확인한다. adapter 주장이나 locator의 진실성을 인증하거나 모델 이름을 자동 분류하지 않는다. 원자료를 신뢰할 수 없으면 근거를 제공하지 말고 `UNOBSERVABLE`로 처리한다. 이 CLI는 stdin만 읽으며 네트워크·UI·설정·권한·세션을 변경하지 않는다. 실패 exit 2를 제품·의미 검증 PASS로 바꾸지 않는다.
 
+관측·지원이 확인되어 비교할 때는 초안의 `rationaleCodes`에 실제 요청에서 확인한 작업 판단 근거가 있어야 한다. `CURRENT_SELECTION_NOT_OBSERVED`를 제거한 뒤 근거 code가 하나도 없으면 API는 `MISSING_DEMAND_RATIONALE`로 비교를 거부한다. CLI도 이 고정 code만 stderr에 반환하며 exit 2와 빈 stdout을 유지한다. 다른 parse·schema·알 수 없는 오류는 `INVALID_INPUT`이다. caller는 실제 요청을 다시 대조해 초안을 보완하며 모델·추론 수준이나 작업 근거를 추정해 채우지 않는다.
+
 ### 작업 강도
 
 | band | 대표 조건 | 권장 시작점 |

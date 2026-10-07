@@ -41,7 +41,7 @@ export function readCodexMetadata(file: string): CodexMetadataWindow | null {
   }
 }
 
-/** Only host metadata records are parsed; chat content, credentials and tool bodies are not exported. */
+/** Bounded JSONL is decoded to identify host metadata; chat content, credentials and tool bodies are not exported. */
 export function observeCodexHook(input: Record<string, unknown>, options: CodexObservationOptions = {}): CodexObservationResult {
   const missing = (reason: string): CodexObservationResult => ({ observation: null, reason });
   const sessionId = text(input.session_id);
@@ -67,7 +67,7 @@ export function observeCodexHook(input: Record<string, unknown>, options: CodexO
   const lines = window.tail.split("\n");
   for (let index = lines.length - 1; index >= 0; index -= 1) {
     const line = lines[index];
-    if (!line?.slice(0, 200).includes('"type":"turn_context"')) continue;
+    if (!line) continue;
     try {
       const entry = record(JSON.parse(line));
       if (entry?.type === "turn_context") { context = record(entry.payload); break; }

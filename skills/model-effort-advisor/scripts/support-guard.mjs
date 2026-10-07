@@ -82,8 +82,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     }
     const request = JSON.parse(input);
     process.stdout.write(JSON.stringify(guardModelSupport(request.advice, request.context)) + "\n");
-  } catch {
-    process.stderr.write("INVALID_INPUT\n");
+  } catch (error) {
+    const code = error instanceof Error && error.message === "MISSING_DEMAND_RATIONALE"
+      ? "MISSING_DEMAND_RATIONALE" : "INVALID_INPUT";
+    process.stderr.write(code + "\n");
     process.exitCode = 2;
   }
 }

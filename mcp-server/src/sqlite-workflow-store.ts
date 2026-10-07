@@ -1,6 +1,7 @@
 import { chmodSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import type { SharedModuleContext, SqlDatabase } from "../../runtime/unified-state/shared-connection.mjs";
 
 import {
   type AttemptLeaseV1,
@@ -98,10 +99,20 @@ interface PluginUpdateRow {
 const SCHEMA_VERSION = 5;
 
 export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
-  private readonly database: DatabaseSync;
+  private readonly database: SqlDatabase;
+  private readonly shared: SharedModuleContext | undefined;
+  readonly databasePath: string;
   private closed = false;
 
-  constructor(readonly databasePath: string) {
+  constructor(input: string | SharedModuleContext) {
+    this.shared = typeof input === "string" ? undefined : input;
+    this.databasePath = typeof input === "string" ? input : input.databasePath;
+    const databasePath = this.databasePath;
+    if (this.shared) {
+      this.database = this.shared.database;
+      this.shared.initialize(() => this.initializeSchema());
+      return;
+    }
     if (!databasePath.trim()) {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow database path must not be empty.");
     }
@@ -328,6 +339,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
     lease: AttemptLeaseV1,
   ): boolean {
     return this.guard("Cannot claim the convergence attempt lease.", { rootId: root.rootId }, () => this.transaction(() => {
+      if (this.shared && Date.parse(lease.expiresAt) <= this.shared.time(Date.parse(lease.issuedAt))) return false;
       if (!this.casRoot(root, expectedRevision)) return false;
       this.database.prepare(`
         INSERT INTO convergence_leases (
@@ -386,7 +398,8 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       if (!leaseRow) return null;
       const lease = JSON.parse(leaseRow.lease_json) as AttemptLeaseV1;
       const proposal = JSON.parse(leaseRow.proposal_json) as AttemptProposalV1;
-      if (lease.state !== "issued" || lease.rootRevision !== expectedRootRevision || Date.parse(lease.expiresAt) <= Date.parse(consumedAt)) return null;
+      const decisionTime = this.shared ? this.shared.time(Date.parse(consumedAt)) : Date.parse(consumedAt);
+      if (lease.state !== "issued" || lease.rootRevision !== expectedRootRevision || Date.parse(lease.expiresAt) <= decisionTime) return null;
       const rootRow = this.rootRow(lease.rootId);
       if (!rootRow || rootRow.revision !== expectedRootRevision) return null;
       const root = JSON.parse(rootRow.root_json) as ConvergenceRootV1;
@@ -494,7 +507,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   }
 
   getSchemaVersion(): number {
-    return (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
+    return this.shared?.getSchemaVersion() ?? (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
   }
 
   isConvergenceRootActive(rootId: string): boolean {
@@ -570,6 +583,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   }
 
   backupTo(targetPath: string): void {
+    if (this.shared) throw new Error("SHARED_BACKUP_OWNER_REQUIRED: a shared database backup requires an explicit owner contract.");
     if (this.databasePath === ":memory:") {
       throw new WorkflowContractError("INVALID_INPUT", "An in-memory workflow database cannot be cleaned destructively.");
     }
@@ -645,7 +659,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   }
 
   private initializeSchema(): void {
-    const row = this.database.prepare("PRAGMA user_version").get() as { user_version: number };
+    const row = { user_version: this.getSchemaVersion() };
     if (row.user_version > SCHEMA_VERSION) {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow database schema is newer than this server supports.", {
         databasePath: this.databasePath,
@@ -776,8 +790,10 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
           expires_at TEXT NOT NULL,
           consumed_at TEXT NOT NULL
         ) STRICT;
-        PRAGMA user_version = ${SCHEMA_VERSION};
+
       `);
+      if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION);
+      else this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
     });
   }
 
@@ -866,6 +882,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
 
   /** Writers take the lock up front with BEGIN IMMEDIATE; snapshot reads pass "BEGIN;". */
   private transaction<T>(operation: () => T, begin = "BEGIN IMMEDIATE;"): T {
+    if (this.shared) return this.shared.transaction(operation);
     this.database.exec(begin);
     try {
       const result = operation();

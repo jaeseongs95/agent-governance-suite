@@ -97,7 +97,7 @@
       "version": "0.1.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:78b0a4c5057410b9da2edba220a6ea42b3e00ea3dc5819e250e16283b70be73f",
+      "integratedChecksum": "sha256:b07a4503c13004e93c27d476e49c76a7a7c5591f60953e7d5186f0dda8a2b0bb",
       "checksumScope": "relative paths and normalized text bytes under skills/model-effort-advisor"
     },
     {

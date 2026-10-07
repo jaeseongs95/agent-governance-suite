@@ -16513,8 +16513,19 @@ function taskRecord(row) {
   };
 }
 var SqliteContinuityStore = class {
-  constructor(databasePath) {
-    this.databasePath = databasePath;
+  database;
+  shared;
+  databasePath;
+  closed = false;
+  constructor(input) {
+    this.shared = typeof input === "string" ? void 0 : input;
+    this.databasePath = typeof input === "string" ? input : input.databasePath;
+    const databasePath = this.databasePath;
+    if (this.shared) {
+      this.database = this.shared.database;
+      this.shared.initialize(() => this.initializeSchema());
+      return;
+    }
     if (!databasePath.trim()) throw new ContinuityStoreError("Continuity database path must not be empty.");
     if (databasePath !== ":memory:") mkdirSync(path4.dirname(path4.resolve(databasePath)), { recursive: true, mode: 448 });
     let opened = null;
@@ -16534,9 +16545,6 @@ var SqliteContinuityStore = class {
       throw new ContinuityStoreError("Cannot initialize the continuity database.", cause, continuityUnavailableReason(cause));
     }
   }
-  databasePath;
-  database;
-  closed = false;
   close() {
     if (this.closed) return;
     this.closed = true;
@@ -16719,7 +16727,7 @@ var SqliteContinuityStore = class {
     }, taskCorrelation);
   }
   getSchemaVersion() {
-    return this.database.prepare("PRAGMA user_version").get().user_version;
+    return this.shared?.getSchemaVersion() ?? this.database.prepare("PRAGMA user_version").get().user_version;
   }
   previewCleanup(payloadCutoff, recordCutoff) {
     this.assertSupportedSchema();
@@ -16798,6 +16806,7 @@ var SqliteContinuityStore = class {
     return { snapshots: snapshots.filter((snapshot) => !fullTaskIds.has(snapshot.taskCorrelation)), tasks, protectedActiveTasks };
   }
   backupTo(targetPath) {
+    if (this.shared) throw new Error("SHARED_BACKUP_OWNER_REQUIRED: a shared database backup requires an explicit owner contract.");
     if (this.databasePath === ":memory:") throw new ContinuityStoreError("An in-memory continuity database cannot be cleaned destructively.");
     try {
       this.database.prepare("VACUUM INTO ?").run(targetPath);
@@ -16903,6 +16912,17 @@ var SqliteContinuityStore = class {
    * failures roll back and surface as ContinuityStoreError.
    */
   transaction(message, operation, taskCorrelation) {
+    if (this.shared) {
+      try {
+        return this.shared.transaction(() => {
+          if (taskCorrelation !== void 0) this.assertCompatibleTask(taskCorrelation);
+          return operation();
+        });
+      } catch (cause) {
+        if (cause instanceof ContinuityStoreError) throw cause;
+        throw new ContinuityStoreError(message, cause);
+      }
+    }
     this.database.exec("BEGIN IMMEDIATE;");
     try {
       if (taskCorrelation !== void 0) this.assertCompatibleTask(taskCorrelation);
@@ -17023,7 +17043,8 @@ var SqliteContinuityStore = class {
       CREATE INDEX IF NOT EXISTS continuity_observations_cleanup
         ON continuity_observations(observed_at, task_correlation, epoch);
     `);
-    this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
+    if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION);
+    else this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
   }
 };
 
@@ -19620,13 +19641,16 @@ import path7 from "node:path";
 import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
 var SUMMARY_MAX_LENGTH = 200;
 var RETAIN_MS = 24 * 36e5;
-function openBoard(databasePath, { busyTimeoutMs = 5e3 } = {}) {
-  if (databasePath !== ":memory:") mkdirSync2(path7.dirname(path7.resolve(databasePath)), { recursive: true });
-  const db = new DatabaseSync2(databasePath);
-  try {
-    db.exec(`PRAGMA busy_timeout = ${Math.trunc(busyTimeoutMs)};`);
-    if (databasePath !== ":memory:") db.exec("PRAGMA journal_mode = WAL;");
-    db.exec(`CREATE TABLE IF NOT EXISTS sessions (
+function openBoard(input, { busyTimeoutMs = 5e3 } = {}) {
+  const shared = typeof input === "string" ? null : input;
+  const databasePath = shared ? shared.databasePath : input;
+  if (!shared && databasePath !== ":memory:") mkdirSync2(path7.dirname(path7.resolve(databasePath)), { recursive: true });
+  const db = shared ? shared.database : new DatabaseSync2(databasePath);
+  const initialize = () => {
+    try {
+      if (!shared) db.exec(`PRAGMA busy_timeout = ${Math.trunc(busyTimeoutMs)};`);
+      if (!shared && databasePath !== ":memory:") db.exec("PRAGMA journal_mode = WAL;");
+      db.exec(`CREATE TABLE IF NOT EXISTS sessions (
       host TEXT NOT NULL,
       session_id TEXT NOT NULL,
       cwd TEXT NOT NULL,
@@ -19638,10 +19662,14 @@ function openBoard(databasePath, { busyTimeoutMs = 5e3 } = {}) {
       updated_at TEXT NOT NULL,
       PRIMARY KEY (host, session_id)
     ) STRICT;`);
-  } catch (error2) {
-    db.close();
-    throw error2;
-  }
+    } catch (error2) {
+      db.close();
+      throw error2;
+    }
+    if (shared) shared.setSchemaVersion(0);
+  };
+  if (shared) shared.initialize(initialize);
+  else initialize();
   return db;
 }
 function normalizeSummary(value) {
@@ -21518,8 +21546,19 @@ function mergePluginUpdateState(existing, incoming) {
 // mcp-server/src/sqlite-workflow-store.ts
 var SCHEMA_VERSION2 = 5;
 var SqliteWorkflowStore = class {
-  constructor(databasePath) {
-    this.databasePath = databasePath;
+  database;
+  shared;
+  databasePath;
+  closed = false;
+  constructor(input) {
+    this.shared = typeof input === "string" ? void 0 : input;
+    this.databasePath = typeof input === "string" ? input : input.databasePath;
+    const databasePath = this.databasePath;
+    if (this.shared) {
+      this.database = this.shared.database;
+      this.shared.initialize(() => this.initializeSchema());
+      return;
+    }
     if (!databasePath.trim()) {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow database path must not be empty.");
     }
@@ -21545,9 +21584,6 @@ var SqliteWorkflowStore = class {
       throw this.storageError("Cannot initialize the workflow database.", cause);
     }
   }
-  databasePath;
-  database;
-  closed = false;
   getOrCreateSecret(name, create) {
     return this.guard("Cannot read or create workflow metadata.", { key: name }, () => this.transaction(() => {
       const existing = this.database.prepare("SELECT value FROM workflow_metadata WHERE key = ?").get(name);
@@ -21727,6 +21763,7 @@ var SqliteWorkflowStore = class {
   }
   insertAttemptLease(root, expectedRevision, proposal, lease) {
     return this.guard("Cannot claim the convergence attempt lease.", { rootId: root.rootId }, () => this.transaction(() => {
+      if (this.shared && Date.parse(lease.expiresAt) <= this.shared.time(Date.parse(lease.issuedAt))) return false;
       if (!this.casRoot(root, expectedRevision)) return false;
       this.database.prepare(`
         INSERT INTO convergence_leases (
@@ -21777,7 +21814,8 @@ var SqliteWorkflowStore = class {
       if (!leaseRow) return null;
       const lease = JSON.parse(leaseRow.lease_json);
       const proposal = JSON.parse(leaseRow.proposal_json);
-      if (lease.state !== "issued" || lease.rootRevision !== expectedRootRevision || Date.parse(lease.expiresAt) <= Date.parse(consumedAt)) return null;
+      const decisionTime = this.shared ? this.shared.time(Date.parse(consumedAt)) : Date.parse(consumedAt);
+      if (lease.state !== "issued" || lease.rootRevision !== expectedRootRevision || Date.parse(lease.expiresAt) <= decisionTime) return null;
       const rootRow = this.rootRow(lease.rootId);
       if (!rootRow || rootRow.revision !== expectedRootRevision) return null;
       const root = JSON.parse(rootRow.root_json);
@@ -21875,7 +21913,7 @@ var SqliteWorkflowStore = class {
     }));
   }
   getSchemaVersion() {
-    return this.database.prepare("PRAGMA user_version").get().user_version;
+    return this.shared?.getSchemaVersion() ?? this.database.prepare("PRAGMA user_version").get().user_version;
   }
   isConvergenceRootActive(rootId) {
     const row = this.database.prepare(`
@@ -21946,6 +21984,7 @@ var SqliteWorkflowStore = class {
     });
   }
   backupTo(targetPath) {
+    if (this.shared) throw new Error("SHARED_BACKUP_OWNER_REQUIRED: a shared database backup requires an explicit owner contract.");
     if (this.databasePath === ":memory:") {
       throw new WorkflowContractError("INVALID_INPUT", "An in-memory workflow database cannot be cleaned destructively.");
     }
@@ -22017,7 +22056,7 @@ var SqliteWorkflowStore = class {
     this.closed = true;
   }
   initializeSchema() {
-    const row = this.database.prepare("PRAGMA user_version").get();
+    const row = { user_version: this.getSchemaVersion() };
     if (row.user_version > SCHEMA_VERSION2) {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow database schema is newer than this server supports.", {
         databasePath: this.databasePath,
@@ -22148,8 +22187,10 @@ var SqliteWorkflowStore = class {
           expires_at TEXT NOT NULL,
           consumed_at TEXT NOT NULL
         ) STRICT;
-        PRAGMA user_version = ${SCHEMA_VERSION2};
+
       `);
+      if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION2);
+      else this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION2};`);
     });
   }
   rootRow(rootId) {
@@ -22222,6 +22263,7 @@ var SqliteWorkflowStore = class {
   }
   /** Writers take the lock up front with BEGIN IMMEDIATE; snapshot reads pass "BEGIN;". */
   transaction(operation, begin = "BEGIN IMMEDIATE;") {
+    if (this.shared) return this.shared.transaction(operation);
     this.database.exec(begin);
     try {
       const result = operation();
@@ -25068,8 +25110,25 @@ function rejectUnexpectedKeys(value, allowed, label) {
   }
 }
 var TrustStore = class {
-  constructor(databasePath) {
-    this.databasePath = databasePath;
+  database;
+  shared;
+  databasePath;
+  signingKey;
+  syntheticSecret;
+  closed = false;
+  constructor(input, syntheticSecret) {
+    this.shared = typeof input === "string" ? void 0 : input;
+    this.databasePath = typeof input === "string" ? input : input.databasePath;
+    this.syntheticSecret = syntheticSecret;
+    const databasePath = this.databasePath;
+    if (this.shared) {
+      this.database = this.shared.database;
+      if (!syntheticSecret || Buffer.from(syntheticSecret, "base64url").length !== 32) throw new WorkflowContractError("INVALID_INPUT", "An explicit new synthetic trust key is required.");
+      this.shared.initialize(() => this.initializeSchema());
+      this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
+      if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", "The stored trust key differs from the explicit synthetic namespace.");
+      return;
+    }
     if (!databasePath.trim()) throw new WorkflowContractError("INVALID_INPUT", "Trust database path must not be empty.");
     if (databasePath !== ":memory:") mkdirSync5(path14.dirname(path14.resolve(databasePath)), { recursive: true, mode: 448 });
     this.database = new DatabaseSync5(databasePath);
@@ -25079,6 +25138,7 @@ var TrustStore = class {
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
       this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
+      if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", "The stored trust key differs from the explicit synthetic namespace.");
       if (this.signingKey.length !== 32) throw new Error("Stored trust signing key is invalid.");
       if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync4(path14.resolve(databasePath), 384);
     } catch (cause) {
@@ -25090,10 +25150,6 @@ var TrustStore = class {
       throw this.storageError("Cannot initialize the trust database.", cause);
     }
   }
-  databasePath;
-  database;
-  signingKey;
-  closed = false;
   recordInputSource(input) {
     rejectUnexpectedKeys(input, INPUT_SOURCE_KEYS, "Input source metadata");
     if (!input.attestation || typeof input.attestation !== "object" || Array.isArray(input.attestation)) {
@@ -25210,7 +25266,7 @@ var TrustStore = class {
     };
   }
   initializeSchema() {
-    const version2 = this.database.prepare("PRAGMA user_version").get().user_version;
+    const version2 = this.shared?.getSchemaVersion() ?? this.database.prepare("PRAGMA user_version").get().user_version;
     if (version2 > SCHEMA_VERSION3) {
       throw new WorkflowContractError("INVALID_INPUT", "Trust database schema is newer than this server supports.", {
         databasePath: this.databasePath,
@@ -25218,8 +25274,8 @@ var TrustStore = class {
         actualVersion: version2
       });
     }
-    this.database.exec(`
-      BEGIN IMMEDIATE;
+    this.transaction(() => {
+      this.database.exec(`
       CREATE TABLE IF NOT EXISTS trust_metadata (
         key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL
       ) STRICT;
@@ -25237,20 +25293,22 @@ var TrustStore = class {
       ) STRICT;
       CREATE INDEX IF NOT EXISTS input_source_latest
         ON input_source_receipts(host, session_id, observed_at DESC);
-      PRAGMA user_version = ${SCHEMA_VERSION3};
-      COMMIT;
     `);
+      if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION3);
+      else this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION3};`);
+    });
   }
   getOrCreateSecret(name) {
     return this.transaction(() => {
       const existing = this.database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(name);
       if (existing) return existing.value;
-      const value = randomBytes5(32).toString("base64url");
+      const value = this.syntheticSecret ?? randomBytes5(32).toString("base64url");
       this.database.prepare("INSERT INTO trust_metadata (key, value, updated_at) VALUES (?, ?, ?)").run(name, value, (/* @__PURE__ */ new Date()).toISOString());
       return value;
     });
   }
   transaction(operation) {
+    if (this.shared) return this.shared.transaction(operation);
     this.database.exec("BEGIN IMMEDIATE;");
     try {
       const result = operation();

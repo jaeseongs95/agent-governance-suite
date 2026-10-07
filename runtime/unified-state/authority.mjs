@@ -1,7 +1,6 @@
-import { existsSync, lstatSync, mkdirSync, realpathSync } from "node:fs";
-import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { canonicalJson, hashBytes, hashJson } from "../engineering-practices/io.mjs";
+import { runObservedTimeTransaction, resolveInactiveSharedDatabasePath, SharedStateError } from "./shared-connection.mjs";
 
 const APPLICATION_ID = 0x41475355;
 const SCHEMA_VERSION = 1;
@@ -66,12 +65,8 @@ function normalizeRecord(entry, boundScope) {
 
 /** No environment/vendor installation resolver and no legacy database or constructor access. */
 export function resolveInactiveDatabasePath(directory) {
-  need(path.isAbsolute(directory) && !directory.startsWith("\\\\"), "INVALID_PATH", "An explicit local, caller-owned inactive directory is required.");
-  mkdirSync(directory, { recursive: true });
-  need(!lstatSync(directory).isSymbolicLink(), "INVALID_PATH", "The candidate directory must not be a symlink.");
-  const filename = path.join(realpathSync(directory), "ags-state.sqlite3");
-  if (existsSync(filename)) need(!lstatSync(filename).isSymbolicLink() && lstatSync(filename).nlink === 1, "INVALID_PATH", "The candidate DB must not be linked.");
-  return filename;
+  try { return resolveInactiveSharedDatabasePath(directory); }
+  catch (error) { if (error instanceof SharedStateError) throw new UnifiedStateError(error.code, error.message); throw error; }
 }
 
 /** Component candidate only: caller-bound fixture scopes are not authenticated host identities. */
@@ -122,29 +117,7 @@ export class InactiveUnifiedAuthority {
     catch (error) { this.#database.exec("ROLLBACK"); throw error; }
   }
   #observedTimeTransaction(action) {
-    this.#database.exec("BEGIN IMMEDIATE");
-    let result;
-    let rejected = false;
-    let rejection;
-    try {
-      const now = this.#now();
-      // Time is authority metadata: a recoverable domain rejection must not roll it back.
-      // Keep the writer lock and lease comparison together; only domain writes use the savepoint.
-      this.#database.exec("SAVEPOINT domain_operation");
-      try { result = action(now); }
-      catch (error) {
-        rejected = true;
-        rejection = error;
-        this.#database.exec("ROLLBACK TO domain_operation");
-      }
-      this.#database.exec("RELEASE domain_operation");
-      this.#database.exec("COMMIT");
-    } catch (error) {
-      try { this.#database.exec("ROLLBACK"); } catch { /* Preserve the clock/storage failure. */ }
-      throw error;
-    }
-    if (rejected) throw rejection;
-    return result;
+    return runObservedTimeTransaction(this.#database, () => this.#now(), action);
   }
   #identity(scope, ref) {
     need(ref && TABLES[ref.table]?.module === ref.module, "UNSUPPORTED_TABLE", "An explicit supported record reference is required.");

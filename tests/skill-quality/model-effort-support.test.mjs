@@ -79,4 +79,30 @@ describe("model effort provider support boundary", () => {
     expect(result.stdout).toBe("");
     expect(result.stderr).toBe("INVALID_INPUT\n");
   });
+  it("preserves only the literal missing-demand rationale code across the public CLI boundary", () => {
+    const item = structuredClone(cases.find((value) => value.id === "trusted-provider-q"));
+    item.advice.verdict = "UNOBSERVABLE";
+    item.advice.observation = { status: "unobservable", source: null, model: null, modelClass: null, reasoningEffort: null };
+    item.advice.rationaleCodes = ["CURRENT_SELECTION_NOT_OBSERVED"];
+    item.advice.userNotice = null;
+    const request = JSON.stringify({ advice: item.advice, context: item.context });
+    expect(() => guardModelSupport(item.advice, item.context)).toThrow("MISSING_DEMAND_RATIONALE");
+    const result = spawnSync(process.execPath, [cli], { input: request, encoding: "utf8" });
+    expect(result.status).toBe(2);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe("MISSING_DEMAND_RATIONALE\n");
+    expect(JSON.stringify({ advice: item.advice, context: item.context })).toBe(request);
+  });
+  it("keeps schema failures and caller-supplied reason strings generic without echoing them", () => {
+    for (const input of [
+      JSON.stringify({ advice: { userNotice: "secret-sentinel", rationaleCodes: ["MISSING_DEMAND_RATIONALE"] } }),
+      JSON.stringify({ advice: "MISSING_DEMAND_RATIONALE secret-sentinel" }),
+    ]) {
+      const result = spawnSync(process.execPath, [cli], { input, encoding: "utf8" });
+      expect(result.status).toBe(2);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toBe("INVALID_INPUT\n");
+      expect(result.stderr).not.toContain("secret-sentinel");
+    }
+  });
 });

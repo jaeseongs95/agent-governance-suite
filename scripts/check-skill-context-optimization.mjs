@@ -56,6 +56,19 @@ const REVIEWED_IMPLEMENTATION_R1 = Object.freeze({
     "skills/orchestrator/references/engineering-practices/cli.md": "42d409ec8fd0f39c491dfdeb18da3f3d15d9fb518c82a8d9f69ed0ae87a59f69",
   }),
 });
+// Preserve the R1 history; validate only the exact current R2 successor bytes.
+const REVIEWED_IMPLEMENTATION_R2 = Object.freeze({
+  "revision": "2.8.1-implementation-r2-model-diagnostic-shared-board",
+  "approvalReference": "implementation-r2 scoped human request Sentinel_ffd3e94fbe088191b35bdea70e40bc7f; D fixed-candidate review is recorded separately",
+  "authorityEffect": "none",
+  "modelReconstructedSha256": "8b5fb5d5f9afaf4c5716fc3928495f0bf6f9e99bf2d2c31d5376686fad26917e",
+  hashes: Object.freeze({
+  "skills/model-effort-advisor/references/entry-details.md": "806874cf4ff417e5e5416a48df8f373ba7483591dbc916ce5edb3868280255de",
+  "skills/model-effort-advisor/scripts/support-guard.mjs": "f080508b68211eddad4a29e59ed0290dc54bd7200617dbcc4e46a2cfd319cfd2",
+  "skills/session-board/scripts/board-store.mjs": "87851a74230cc3ba03d3ff34ef3e1bb6a9c3b8aaa1566b158cd9906b35b1fb81",
+  "skills/session-board/scripts/board-store.d.mts": "d4a156f0a4f3a83fdaf655daf3fe88efd14c427c79ffceb1b8012d14c38a0098"
+}),
+});
 const TARGETS = [
   "acceptance-evidence-validator",
   "blocker-diagnostician",
@@ -130,8 +143,9 @@ export function matchesEngineeringReferenceUpdate(name, bytes) {
 }
 
 export function matchesReviewedImplementationUpdate(path, bytes) {
-  return Object.hasOwn(REVIEWED_IMPLEMENTATION_R1.hashes, path)
-    && createHash("sha256").update(bytes).digest("hex") === REVIEWED_IMPLEMENTATION_R1.hashes[path];
+  const reviewed = Object.hasOwn(REVIEWED_IMPLEMENTATION_R2.hashes, path) ? REVIEWED_IMPLEMENTATION_R2 : REVIEWED_IMPLEMENTATION_R1;
+  return Object.hasOwn(reviewed.hashes, path)
+    && createHash("sha256").update(bytes).digest("hex") === reviewed.hashes[path];
 }
 
 export function reconstructOptimizedSkill(skillId, root = ROOT) {
@@ -204,7 +218,7 @@ export function checkSkillContextOptimization() {
           errors.push(`model-effort-advisor: reviewed implementation bytes differ: ${approvedPath}`);
         }
       }
-      if (createHash("sha256").update(reconstructed).digest("hex") !== REVIEWED_IMPLEMENTATION_R1.modelReconstructedSha256) {
+      if (createHash("sha256").update(reconstructed).digest("hex") !== REVIEWED_IMPLEMENTATION_R2.modelReconstructedSha256) {
         errors.push("model-effort-advisor: reconstructed reviewed implementation differs");
       }
       if (candidate.length > REVIEWED_IMPLEMENTATION_R1.modelInitialMaxBytes) errors.push("model-effort-advisor: initial load exceeds its reviewed limit");
@@ -219,6 +233,14 @@ export function checkSkillContextOptimization() {
     if (!readFileSync(join(ROOT, ...descriptorPath.split("/"))).equals(baselineFile(descriptorPath))) errors.push(`${skillId}: agents/openai.yaml changed`);
 
     const allowed = new Set([skillPath, detailPath]);
+    if (skillId === "session-board") {
+      for (const reviewedPath of ["skills/session-board/scripts/board-store.mjs", "skills/session-board/scripts/board-store.d.mts"]) {
+        if (!matchesReviewedImplementationUpdate(reviewedPath, readFileSync(join(ROOT, reviewedPath)))) {
+          errors.push(`session-board: reviewed implementation bytes differ: ${reviewedPath}`);
+        }
+        allowed.add(reviewedPath);
+      }
+    }
     if (skillId === "model-effort-advisor") allowed.add("skills/model-effort-advisor/scripts/support-guard.mjs");
     if (skillId === "orchestrator") {
       allowed.add("skills/orchestrator/references/mcp-execution.md");
@@ -265,6 +287,7 @@ export function checkSkillContextOptimization() {
     approvedAdditions: [{ skillId: "session-board", path: SESSION_BOARD_ADDITION, sha256: SESSION_BOARD_ADDITION_SHA256 }],
     policyBaselineUpdates: [{ skillId: "orchestrator", ...ORCHESTRATOR_INTAKE }],
     reviewedImplementationUpdates: [REVIEWED_IMPLEMENTATION_R1],
+    activeReviewedImplementationUpdates: [REVIEWED_IMPLEMENTATION_R2],
     runtimeBaselineUpdates: Object.entries(NODE24_README_MINIMUMS).map(([skillId, before]) => ({ skillId, before, after: "Node.js 24.0.0 이상" })),
     pass: errors.length === 0,
     errors,

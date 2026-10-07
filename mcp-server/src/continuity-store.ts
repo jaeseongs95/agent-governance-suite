@@ -1,6 +1,7 @@
 import { chmodSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import type { SharedModuleContext, SqlDatabase } from "../../runtime/unified-state/shared-connection.mjs";
 
 import type { ContinuitySnapshotV1, StateCleanupPlanV1 } from "../../contracts/types.js";
 
@@ -134,10 +135,20 @@ function taskRecord(row: TaskRow): ContinuityTaskRecord {
 }
 
 export class SqliteContinuityStore {
-  private readonly database: DatabaseSync;
+  private readonly database: SqlDatabase;
+  private readonly shared: SharedModuleContext | undefined;
+  readonly databasePath: string;
   private closed = false;
 
-  constructor(readonly databasePath: string) {
+  constructor(input: string | SharedModuleContext) {
+    this.shared = typeof input === "string" ? undefined : input;
+    this.databasePath = typeof input === "string" ? input : input.databasePath;
+    const databasePath = this.databasePath;
+    if (this.shared) {
+      this.database = this.shared.database;
+      this.shared.initialize(() => this.initializeSchema());
+      return;
+    }
     if (!databasePath.trim()) throw new ContinuityStoreError("Continuity database path must not be empty.");
     if (databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true, mode: 0o700 });
     let opened: DatabaseSync | null = null;
@@ -378,7 +389,7 @@ export class SqliteContinuityStore {
   }
 
   getSchemaVersion(): number {
-    return (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
+    return this.shared?.getSchemaVersion() ?? (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
   }
 
   previewCleanup(payloadCutoff: string, recordCutoff: string): ContinuityCleanupPreview {
@@ -472,6 +483,7 @@ export class SqliteContinuityStore {
   }
 
   backupTo(targetPath: string): void {
+    if (this.shared) throw new Error("SHARED_BACKUP_OWNER_REQUIRED: a shared database backup requires an explicit owner contract.");
     if (this.databasePath === ":memory:") throw new ContinuityStoreError("An in-memory continuity database cannot be cleaned destructively.");
     try {
       this.database.prepare("VACUUM INTO ?").run(targetPath);
@@ -585,6 +597,17 @@ export class SqliteContinuityStore {
    * failures roll back and surface as ContinuityStoreError.
    */
   private transaction<T>(message: string, operation: () => T, taskCorrelation?: string): T {
+    if (this.shared) {
+      try {
+        return this.shared.transaction(() => {
+          if (taskCorrelation !== undefined) this.assertCompatibleTask(taskCorrelation);
+          return operation();
+        });
+      } catch (cause) {
+        if (cause instanceof ContinuityStoreError) throw cause;
+        throw new ContinuityStoreError(message, cause);
+      }
+    }
     this.database.exec("BEGIN IMMEDIATE;");
     try {
       if (taskCorrelation !== undefined) this.assertCompatibleTask(taskCorrelation);
@@ -708,6 +731,7 @@ export class SqliteContinuityStore {
       CREATE INDEX IF NOT EXISTS continuity_observations_cleanup
         ON continuity_observations(observed_at, task_correlation, epoch);
     `);
-    this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
+    if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION);
+    else this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
   }
 }
