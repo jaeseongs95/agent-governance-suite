@@ -31,7 +31,7 @@ function run(directory, args) {
 
 describe("Engineering Practices source integration", () => {
   it("runs the original core and public CLI regression suites with the native AGS schema runtime", () => {
-    const result = run(root, ["--test", "--test-reporter=tap", "tests/engineering-practices/core.node.mjs", "tests/engineering-practices/paths-runner-cli.node.mjs"]);
+    const result = run(root, ["--test", "--test-reporter=tap", "tests/engineering-practices/core.node.mjs", "tests/engineering-practices/paths-runner-cli.node.mjs", "tests/engineering-practices/stage-bundle.node.mjs"]);
     expect(result.error).toBeUndefined();
     expect(result.status, result.stderr + result.stdout).toBe(0);
     expect(result.stdout).toMatch(/# fail 0/u);
@@ -62,7 +62,7 @@ describe("Engineering Practices source integration", () => {
       "claude-overlay/adaptations/code-review.json", "claude-overlay/adaptations/test-engineering.json",
       "skills/code-review/agents/openai.yaml", "skills/test-engineering/agents/openai.yaml",
     ]);
-    expect(hostLock.files).toHaveLength(42);
+    expect(hostLock.files).toHaveLength(sourceLock.files.length - omitted.length);
     for (const file of hostLock.files) expect(file.digest, file.path).toBe(sha256(rendered.get(file.path)));
     const incomplete = new Map(rendered);
     incomplete.delete("runtime/engineering-practices/core.mjs");
@@ -80,7 +80,7 @@ describe("Engineering Practices source integration", () => {
       for (const skill of ["test-engineering", "code-review"]) {
         const result = run(directory, [`skills/${skill}/scripts/run.mjs`, "self-check"]);
         expect(result.status, result.stderr).toBe(0);
-        expect(JSON.parse(result.stdout)).toMatchObject({ status: "CONTENT_CONSISTENT", schemaEngine: "ags-ajv2020", lockedFiles: host === "source" ? 46 : 42 });
+        expect(JSON.parse(result.stdout)).toMatchObject({ status: "CONTENT_CONSISTENT", schemaEngine: "ags-ajv2020", lockedFiles: host === "source" ? sourceLock.files.length : hostLock.files.length });
       }
       await writeFile(path.join(directory, "runtime/engineering-practices/core.mjs"), `${await readFile(path.join(directory, "runtime/engineering-practices/core.mjs"), "utf8")}\n`);
       const altered = run(directory, ["skills/test-engineering/scripts/run.mjs", "self-check"]);

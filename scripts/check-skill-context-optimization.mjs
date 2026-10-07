@@ -41,6 +41,21 @@ const ORCHESTRATOR_INTAKE = Object.freeze({
     mcpExecution: "be972eaa9b6d2ceab78f48f37fcc0eb4e1d4ce52cd8cfb5de356f019da46c546",
   }),
 });
+// A separately reviewed implementation revision; do not rewrite the historical
+// optimization baseline or accept arbitrary additions to the skill tree.
+const REVIEWED_IMPLEMENTATION_R1 = Object.freeze({
+  revision: "2.8.1-implementation-r1-model-support-stage-bundle",
+  approvalReference: "implementation-r1 scoped human request Sentinel_ffd3e94fbe088191b35bdea70e40bc7f and D fixed-candidate review",
+  authorityEffect: "none",
+  modelInitialMaxBytes: 2024,
+  modelReconstructedSha256: "6da88c97055fc65932c6412cc3f9cd6265cbd9678f1934d7338f1b3f6c4733ca",
+  hashes: Object.freeze({
+    "skills/model-effort-advisor/SKILL.md": "55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106",
+    "skills/model-effort-advisor/references/entry-details.md": "2ae266a21db394f6b156a2a71a38edcfa0a64270ef7ca1a494c9af2a88a2d10c",
+    "skills/model-effort-advisor/scripts/support-guard.mjs": "a688cc5ee30bd4b6b7a3b40f88dd8147ee2bebfeafe30bbcb723014e7d906c97",
+    "skills/orchestrator/references/engineering-practices/cli.md": "42d409ec8fd0f39c491dfdeb18da3f3d15d9fb518c82a8d9f69ed0ae87a59f69",
+  }),
+});
 const TARGETS = [
   "acceptance-evidence-validator",
   "blocker-diagnostician",
@@ -106,8 +121,17 @@ export function matchesOrchestratorIntakeUpdate(kind, bytes) {
 }
 
 export function matchesEngineeringReferenceUpdate(name, bytes) {
+  const reviewedPath = `skills/orchestrator/references/engineering-practices/${name}`;
+  if (Object.hasOwn(REVIEWED_IMPLEMENTATION_R1.hashes, reviewedPath)) {
+    return matchesReviewedImplementationUpdate(reviewedPath, bytes);
+  }
   return Object.hasOwn(ENGINEERING_REFERENCES, name)
     && createHash("sha256").update(bytes).digest("hex") === ENGINEERING_REFERENCES[name];
+}
+
+export function matchesReviewedImplementationUpdate(path, bytes) {
+  return Object.hasOwn(REVIEWED_IMPLEMENTATION_R1.hashes, path)
+    && createHash("sha256").update(bytes).digest("hex") === REVIEWED_IMPLEMENTATION_R1.hashes[path];
 }
 
 export function reconstructOptimizedSkill(skillId, root = ROOT) {
@@ -174,6 +198,17 @@ export function checkSkillContextOptimization() {
       if (candidate.length > ORCHESTRATOR_INTAKE.initialMaxBytes) errors.push("orchestrator: initial load exceeds the pre-intake limit");
       const reference = readFileSync(join(ROOT, "skills/orchestrator/references/mcp-execution.md"));
       if (!matchesOrchestratorIntakeUpdate("mcpExecution", reference)) errors.push("orchestrator: MCP execution policy differs from the pinned revision");
+    } else if (skillId === "model-effort-advisor") {
+      for (const approvedPath of [skillPath, detailPath, "skills/model-effort-advisor/scripts/support-guard.mjs"]) {
+        if (!matchesReviewedImplementationUpdate(approvedPath, readFileSync(join(ROOT, approvedPath)))) {
+          errors.push(`model-effort-advisor: reviewed implementation bytes differ: ${approvedPath}`);
+        }
+      }
+      if (createHash("sha256").update(reconstructed).digest("hex") !== REVIEWED_IMPLEMENTATION_R1.modelReconstructedSha256) {
+        errors.push("model-effort-advisor: reconstructed reviewed implementation differs");
+      }
+      if (candidate.length > REVIEWED_IMPLEMENTATION_R1.modelInitialMaxBytes) errors.push("model-effort-advisor: initial load exceeds its reviewed limit");
+      if (!frontmatter(candidate).equals(frontmatter(baseline))) errors.push("model-effort-advisor: frontmatter changed");
     } else {
       if (!reconstructed.equals(expectedBaseline)) errors.push(`${skillId}: SKILL.md plus entry-details.md does not reconstruct the baseline byte-for-byte`);
       if (!frontmatter(candidate).equals(frontmatter(baseline))) errors.push(`${skillId}: frontmatter changed`);
@@ -184,6 +219,7 @@ export function checkSkillContextOptimization() {
     if (!readFileSync(join(ROOT, ...descriptorPath.split("/"))).equals(baselineFile(descriptorPath))) errors.push(`${skillId}: agents/openai.yaml changed`);
 
     const allowed = new Set([skillPath, detailPath]);
+    if (skillId === "model-effort-advisor") allowed.add("skills/model-effort-advisor/scripts/support-guard.mjs");
     if (skillId === "orchestrator") {
       allowed.add("skills/orchestrator/references/mcp-execution.md");
       for (const name of Object.keys(ENGINEERING_REFERENCES)) {
@@ -203,6 +239,10 @@ export function checkSkillContextOptimization() {
       allowed.add(readmePath);
     }
     const changed = git("diff", "--name-only", BASELINE, "--", `skills/${skillId}`).toString("utf8").trim().split(/\r?\n/u).filter(Boolean);
+    if (skillId === "model-effort-advisor") {
+      changed.push(...git("ls-files", "--others", "--exclude-standard", "--", `skills/${skillId}`)
+        .toString("utf8").trim().split(/\r?\n/u).filter(Boolean));
+    }
     const unexpected = changed.filter((path) => !allowed.has(path));
     if (unexpected.length) errors.push(`${skillId}: unexpected skill-owned changes: ${unexpected.join(", ")}`);
 
@@ -224,6 +264,7 @@ export function checkSkillContextOptimization() {
     baselineRevision: BASELINE,
     approvedAdditions: [{ skillId: "session-board", path: SESSION_BOARD_ADDITION, sha256: SESSION_BOARD_ADDITION_SHA256 }],
     policyBaselineUpdates: [{ skillId: "orchestrator", ...ORCHESTRATOR_INTAKE }],
+    reviewedImplementationUpdates: [REVIEWED_IMPLEMENTATION_R1],
     runtimeBaselineUpdates: Object.entries(NODE24_README_MINIMUMS).map(([skillId, before]) => ({ skillId, before, after: "Node.js 24.0.0 이상" })),
     pass: errors.length === 0,
     errors,

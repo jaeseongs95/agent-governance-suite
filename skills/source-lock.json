@@ -97,7 +97,7 @@
       "version": "0.1.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:4bd281f54c8ae826e966826b85c72028693628cde461ce51c2c8942e19e59dd0",
+      "integratedChecksum": "sha256:78b0a4c5057410b9da2edba220a6ea42b3e00ea3dc5819e250e16283b70be73f",
       "checksumScope": "relative paths and normalized text bytes under skills/model-effort-advisor"
     },
     {
@@ -193,7 +193,7 @@
       "version": "0.1.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:b68c3d16d46052cbf186da513f23d171a547a40fc003da50bd24c929eec5eb57",
+      "integratedChecksum": "sha256:5dd4b6776b25d6c9b9ac8892b1b63503686786be0e242b65baf6e4f9b2c80119",
       "checksumScope": "relative paths and normalized text bytes under skills/test-engineering"
     },
     {
@@ -202,7 +202,7 @@
       "version": "0.1.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:3ca5e41ca82ca3158424626a8febe3bd7467baaf6ce1fd9d0e7945022f002b02",
+      "integratedChecksum": "sha256:47d1bfdb836850284a2468a85829d7721daeb8adf05831d9370d4973e4bf3eab",
       "checksumScope": "relative paths and normalized text bytes under skills/code-review"
     }
   ]

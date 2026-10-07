@@ -45,6 +45,7 @@ import { ContractValidator } from "./schema-validator.js";
 import { assertReceiptPolicy, jsonPointer } from "./receipt-policy.js";
 import { loadStageOutputFile } from "./stage-output-file.js";
 import { assertCsStageBundle } from "./cs-engineering-validator.js";
+import { assertEngineeringStageBundle } from "./engineering-practices-validator.js";
 import {
   clone,
   createPlanSigningKey,
@@ -694,6 +695,7 @@ export class WorkflowService {
         if (target.requiredCapability === "cs-implementation-review") {
           assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
         }
+        assertEngineeringStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, target.requiredCapability, checked, this.validator);
         this.assertDeclaredReceiptPolicy(receipt, target, checked);
         if (result.state === "passed") {
           this.assertRequiredArtifacts(target, checked);
@@ -753,12 +755,15 @@ export class WorkflowService {
           });
         }
         this.assertRequiredArtifacts(stage, result);
-        if (stage.requiredCapability === "cs-implementation-review") {
+        if (["cs-implementation-review", "test-sensitivity-review", "change-code-review"].includes(stage.requiredCapability)) {
           const checked = result.outputFile
             ? {...result, output:{...result.output, output:loadStageOutputFile(result.outputFile)}}
             : result;
           this.assertResultSemantics(stage, checked);
-          assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
+          if (stage.requiredCapability === "cs-implementation-review") {
+            assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
+          }
+          assertEngineeringStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, stage.requiredCapability, checked, this.validator);
         }
         this.assertExecutionAssurance(stage, result);
         this.assertDeclaredReceiptPolicy(receipt, stage, result);

@@ -1,6 +1,7 @@
-import { readFile, readdir } from "node:fs/promises";
+import { access, cp, mkdir, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
+import { tmpdir } from "node:os";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 
@@ -8,6 +9,13 @@ import { SKILL_RUNTIME_ENTRYPOINTS } from "../../scripts/runtime-entrypoints.mjs
 import { runRuntimeSmokeCheck } from "../../scripts/runtime-smoke.mjs";
 
 const root = path.resolve(import.meta.dirname, "../..");
+
+async function removeModelRuntimeFixture(cleanRoot) {
+  if (path.dirname(cleanRoot) !== path.resolve(tmpdir()) || !path.basename(cleanRoot).startsWith("ags-model-effort-runtime-")) {
+    throw new Error("Unexpected runtime fixture cleanup path");
+  }
+  await rm(cleanRoot, { recursive: true, force: true });
+}
 
 async function scriptFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -20,6 +28,37 @@ async function scriptFiles(directory) {
 }
 
 describe("installed skill runtime", () => {
+  it("runs the model-effort support guard with observed and unobserved fixtures without node_modules", async () => {
+    const cleanRoot = await mkdtemp(path.join(tmpdir(), "ags-model-effort-runtime-"));
+    try {
+      await mkdir(path.join(cleanRoot, "runtime"), { recursive: true });
+      await cp(path.join(root, "runtime/schema-validation.mjs"), path.join(cleanRoot, "runtime/schema-validation.mjs"));
+      await mkdir(path.join(cleanRoot, "skills"), { recursive: true });
+      await cp(path.join(root, "skills/model-effort-advisor"), path.join(cleanRoot, "skills/model-effort-advisor"), { recursive: true });
+      await expect(access(path.join(cleanRoot, "node_modules"))).rejects.toMatchObject({ code: "ENOENT" });
+      const fixture = JSON.parse(await readFile(path.join(root, "tests/skill-quality/model-effort-support-cases.json"), "utf8"));
+      const environment = { ...process.env };
+      delete environment.NODE_OPTIONS;
+      delete environment.NODE_PATH;
+      for (const id of ["trusted-provider-q", "missing-current"]) {
+        const item = fixture.cases.find((value) => value.id === id);
+        expect(item, id).toBeDefined();
+        const result = spawnSync(process.execPath, [path.join(cleanRoot, "skills/model-effort-advisor/scripts/support-guard.mjs")], {
+          cwd: cleanRoot, env: environment, input: JSON.stringify({ advice: item.advice, context: item.context }),
+          encoding: "utf8", timeout: 10_000, windowsHide: true,
+        });
+        expect(result.error, id).toBeUndefined();
+        expect(result.status, result.stderr).toBe(0);
+        const output = JSON.parse(result.stdout);
+        expect(output.advice.verdict, id).toBe(item.expected.verdict);
+        expect(output.supportStatus, id).toBe(item.expected.supportStatus);
+        expect(output.advice.userNotice, id).toBeNull();
+        if (id === "missing-current") expect(output.advice.observation.model).toBeNull();
+      }
+    } finally {
+      await removeModelRuntimeFixture(cleanRoot);
+    }
+  }, 10_000);
   it.each(["22.13.0", "23.11.0"])("rejects unsupported Node %s before runtime smoke execution", (version) => {
     const result = spawnSync(process.execPath, [
       "--import", pathToFileURL(path.join(root, "tests/runtime/fixtures/node-version.mjs")).href,
