@@ -1,0 +1,1 @@
+When implementing code, apply the relevant [Engineering Practices implementation rules](../orchestrator/references/engineering-practices/implementation.md). Preserve CS invariants and verification obligations supplied for the task; minimal implementation does not replace CS review or test design.

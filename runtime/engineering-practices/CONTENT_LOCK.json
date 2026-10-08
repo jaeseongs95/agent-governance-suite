@@ -106,6 +106,10 @@
       "digest": "sha256:0ce2c7256664836d3c0517d3aed202a282f805028a68b4753a7b855d427b3368"
     },
     {
+      "path": "skills/code-review/classification.json",
+      "digest": "sha256:90a64f660dd70304a9e9d15e43a72c69d27eda26722e63b0a133914194403bb9"
+    },
+    {
       "path": "skills/code-review/integration/skill-descriptor.json",
       "digest": "sha256:9cae248bf3d0606fe7011354fd87d8c8462d6786dab7479d964f6a3eb5360851"
     },
@@ -180,6 +184,10 @@
     {
       "path": "skills/test-engineering/assets/shared-dependencies.json",
       "digest": "sha256:0ce2c7256664836d3c0517d3aed202a282f805028a68b4753a7b855d427b3368"
+    },
+    {
+      "path": "skills/test-engineering/classification.json",
+      "digest": "sha256:1ba6f5ddd650a209a53b8babaec0f07e17ab2d098d06c8bb92af44e69863c34a"
     },
     {
       "path": "skills/test-engineering/integration/skill-descriptor.json",

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "resolve-instruction-scope"
+  ],
+  "targets": [
+    "workspace-paths",
+    "AGENTS.md",
+    "AGENTS.override.md"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/instruction-scope-resolver/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb"
+    },
+    {
+      "path": "skills/instruction-scope-resolver/SKILL.md",
+      "startLine": 8,
+      "endLine": 18,
+      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/instruction-scope-resolver/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb"
+    },
+    {
+      "path": "skills/instruction-scope-resolver/SKILL.md",
+      "startLine": 8,
+      "endLine": 18,
+      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb"
+    }
+  ]
+}

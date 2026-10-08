@@ -113,6 +113,8 @@ test, YAGNI applies to tests too.
 
 ## Boundaries
 
+When implementing code, apply the relevant [Engineering Practices implementation rules](../orchestrator/references/engineering-practices/implementation.md). Preserve CS invariants and verification obligations supplied for the task; minimal implementation does not replace CS review or test design.
+
 Ponytail governs what you build, not how you talk. It does not apply to
 reviews, audits, verification, completion reports, or non-coding answers.
 User, project, and repository instructions (report format, language, test

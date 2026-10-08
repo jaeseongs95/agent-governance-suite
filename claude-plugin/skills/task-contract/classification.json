@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "define-task-contract"
+  ],
+  "targets": [
+    "user-request",
+    "instructions",
+    "acceptance-criteria"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/task-contract/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100"
+    },
+    {
+      "path": "skills/task-contract/SKILL.md",
+      "startLine": 8,
+      "endLine": 12,
+      "digest": "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/task-contract/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100"
+    },
+    {
+      "path": "skills/task-contract/SKILL.md",
+      "startLine": 8,
+      "endLine": 12,
+      "digest": "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100"
+    }
+  ]
+}

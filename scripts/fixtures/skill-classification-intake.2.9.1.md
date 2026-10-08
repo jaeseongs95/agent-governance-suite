@@ -1,0 +1,1 @@
+- 스킬 분류 지원이 설정된 환경에서는 [공통 분류 지원 계약](references/skill-classification.md)에 따라 전체 inventory와 원문을 `classify_skills`에 전달하고 AGENT가 최종 선택한다. JEV OFF·불가 시 사용 벤더의 검증된 중앙 고정 profile을 사용한다. 추천·선택·읽기·적용·검증과 실행 승인은 구분하며 미가용·미검증을 성공으로 처리하지 않는다.

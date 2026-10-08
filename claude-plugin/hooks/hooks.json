@@ -123,7 +123,7 @@
         ]
       },
       {
-        "matcher": "^mcp__plugin_agent-governance-suite_agent-governance-suite__(plan_workflow|record_stage_result)$",
+        "matcher": "^mcp__plugin_agent-governance-suite_agent-governance-suite__(plan_workflow|record_stage_result|classify_skills|record_skill_selection)$",
         "hooks": [
           {
             "type": "command",

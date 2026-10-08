@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "analyze-local-token-usage"
+  ],
+  "targets": [
+    "codex-session-logs"
+  ],
+  "constraints": [
+    "explicit-invocation-only"
+  ],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/codex-token-usage-analyzer/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:81e119d5c8ef11d8f2c928f8c3c9d518941643ae9c88c03cdb8a6ece09f80f1f"
+    },
+    {
+      "path": "skills/codex-token-usage-analyzer/SKILL.md",
+      "startLine": 8,
+      "endLine": 12,
+      "digest": "sha256:81e119d5c8ef11d8f2c928f8c3c9d518941643ae9c88c03cdb8a6ece09f80f1f"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/codex-token-usage-analyzer/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:81e119d5c8ef11d8f2c928f8c3c9d518941643ae9c88c03cdb8a6ece09f80f1f"
+    },
+    {
+      "path": "skills/codex-token-usage-analyzer/SKILL.md",
+      "startLine": 8,
+      "endLine": 12,
+      "digest": "sha256:81e119d5c8ef11d8f2c928f8c3c9d518941643ae9c88c03cdb8a6ece09f80f1f"
+    }
+  ]
+}

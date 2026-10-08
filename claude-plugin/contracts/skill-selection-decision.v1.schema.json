@@ -1,0 +1,230 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "classificationResponseRef": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "requestDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "inventoryDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "taskRevision": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "configRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profileRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "explicitSkillIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "ruleRequiredSkillIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "agentSelectedSkillIds": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "selectionReasons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "skillId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "skillId",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "applicabilityChecks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "skillId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "applies": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "excluded": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "reasonRefs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required": [
+          "skillId",
+          "applies",
+          "excluded",
+          "reasonRefs"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "unresolvedSkillReferences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "reference": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "reference",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "selectionStatus": {
+      "type": "string",
+      "enum": [
+        "PROPOSED",
+        "SELECTED",
+        "PARTIAL",
+        "NEEDS_INPUT"
+      ]
+    },
+    "adviceApplied": {
+      "type": "boolean"
+    },
+    "hostReceipt": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "receiptId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "host": {
+              "type": "string",
+              "minLength": 1
+            },
+            "requestDigest": {
+              "type": "string",
+              "pattern": "^sha256:[a-f0-9]{64}$"
+            },
+            "inventoryDigest": {
+              "type": "string",
+              "pattern": "^sha256:[a-f0-9]{64}$"
+            },
+            "agentSelectedSkillIds": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "acceptedAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            }
+          },
+          "required": [
+            "receiptId",
+            "host",
+            "requestDigest",
+            "inventoryDigest",
+            "agentSelectedSkillIds",
+            "acceptedAt"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "classificationResponseRef",
+    "requestDigest",
+    "inventoryDigest",
+    "taskRevision",
+    "configRevision",
+    "profileRevision",
+    "explicitSkillIds",
+    "ruleRequiredSkillIds",
+    "agentSelectedSkillIds",
+    "selectionReasons",
+    "applicabilityChecks",
+    "unresolvedSkillReferences",
+    "selectionStatus",
+    "adviceApplied",
+    "hostReceipt"
+  ],
+  "additionalProperties": false,
+  "$id": "https://agent-governance.local/skill-selection-decision.v1.schema.json"
+}

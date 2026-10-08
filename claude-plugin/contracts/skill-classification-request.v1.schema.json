@@ -1,0 +1,389 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "originalPrompt": {
+      "type": "string"
+    },
+    "promptDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "confirmedContext": {
+      "type": "object",
+      "properties": {
+        "taskRevision": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "objective": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "actions": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "targets": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "constraints": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "prohibitedActions": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "background": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "taskRevision",
+        "objective",
+        "actions",
+        "targets",
+        "constraints",
+        "prohibitedActions",
+        "background"
+      ],
+      "additionalProperties": false
+    },
+    "contextSources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "enum": [
+              "taskRevision",
+              "objective",
+              "actions",
+              "targets",
+              "constraints",
+              "prohibitedActions",
+              "background"
+            ]
+          },
+          "reference": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "field",
+          "reference"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "skillId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "installed": {
+            "type": "boolean"
+          },
+          "hostSupported": {
+            "type": "boolean"
+          },
+          "capabilities": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "targets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "constraints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "applicability": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exclusions": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "phases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "capability": {
+                  "type": "string"
+                },
+                "phase": {
+                  "type": "string"
+                },
+                "phaseOrder": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "requiredInputArtifacts": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "producedArtifacts": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "gate": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                },
+                "inputBindings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "targetArtifact": {
+                        "type": "string"
+                      },
+                      "sources": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "operation": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "targetArtifact",
+                      "sources",
+                      "operation"
+                    ],
+                    "additionalProperties": {}
+                  }
+                }
+              },
+              "required": [
+                "capability",
+                "phase",
+                "phaseOrder",
+                "requiredInputArtifacts",
+                "producedArtifacts"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "sourceRefs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "digest": {
+                  "type": "string",
+                  "pattern": "^sha256:[a-f0-9]{64}$"
+                }
+              },
+              "required": [
+                "path",
+                "digest"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "sourceMap": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "startLine": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "endLine": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "digest": {
+                  "type": "string",
+                  "pattern": "^sha256:[a-f0-9]{64}$"
+                }
+              },
+              "required": [
+                "field",
+                "path",
+                "digest"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "skillId",
+          "version",
+          "description",
+          "enabled",
+          "installed",
+          "hostSupported",
+          "capabilities",
+          "actions",
+          "targets",
+          "constraints",
+          "applicability",
+          "exclusions",
+          "dependencies",
+          "phases",
+          "sourceRefs"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "inventoryDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "taxonomyRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "classificationCriteriaRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requestDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "operationId",
+    "originalPrompt",
+    "promptDigest",
+    "confirmedContext",
+    "contextSources",
+    "skills",
+    "inventoryDigest",
+    "taxonomyRevision",
+    "classificationCriteriaRef",
+    "requestDigest"
+  ],
+  "additionalProperties": false,
+  "$id": "https://agent-governance.local/skill-classification-request.v1.schema.json"
+}

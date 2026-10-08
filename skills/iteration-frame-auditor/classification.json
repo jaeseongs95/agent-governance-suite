@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "read-only-iteration-frame-audit"
+  ],
+  "targets": [
+    "invariant-contract",
+    "iteration-frame"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/iteration-frame-auditor/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:e83cf0abff280adfca9f12c35afd67e3787c75ce4e7866f7d1e402f59211945f"
+    },
+    {
+      "path": "skills/iteration-frame-auditor/SKILL.md",
+      "startLine": 7,
+      "endLine": 17,
+      "digest": "sha256:e83cf0abff280adfca9f12c35afd67e3787c75ce4e7866f7d1e402f59211945f"
+    },
+    {
+      "path": "skills/iteration-frame-auditor/references/entry-details.md",
+      "startLine": 30,
+      "endLine": 37,
+      "digest": "sha256:e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/iteration-frame-auditor/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:e83cf0abff280adfca9f12c35afd67e3787c75ce4e7866f7d1e402f59211945f"
+    },
+    {
+      "path": "skills/iteration-frame-auditor/SKILL.md",
+      "startLine": 7,
+      "endLine": 17,
+      "digest": "sha256:e83cf0abff280adfca9f12c35afd67e3787c75ce4e7866f7d1e402f59211945f"
+    },
+    {
+      "path": "skills/iteration-frame-auditor/references/entry-details.md",
+      "startLine": 30,
+      "endLine": 37,
+      "digest": "sha256:e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432"
+    }
+  ]
+}

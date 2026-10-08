@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "assess-model-effort-fit"
+  ],
+  "targets": [
+    "observed-current-model",
+    "observed-reasoning-effort"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/model-effort-advisor/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106"
+    },
+    {
+      "path": "skills/model-effort-advisor/SKILL.md",
+      "startLine": 8,
+      "endLine": 20,
+      "digest": "sha256:55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/model-effort-advisor/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106"
+    },
+    {
+      "path": "skills/model-effort-advisor/SKILL.md",
+      "startLine": 8,
+      "endLine": 20,
+      "digest": "sha256:55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106"
+    }
+  ]
+}

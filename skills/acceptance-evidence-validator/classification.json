@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "validate-acceptance-evidence"
+  ],
+  "targets": [
+    "implementation",
+    "test-evidence"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/acceptance-evidence-validator/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/SKILL.md",
+      "startLine": 8,
+      "endLine": 19,
+      "digest": "sha256:1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/references/entry-details.md",
+      "startLine": 24,
+      "endLine": 31,
+      "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/acceptance-evidence-validator/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/SKILL.md",
+      "startLine": 8,
+      "endLine": 19,
+      "digest": "sha256:1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/references/entry-details.md",
+      "startLine": 24,
+      "endLine": 31,
+      "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "skill-classification-provider-profiles.v1.schema.json",
+  "title": "ProviderProfileRegistry.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profileRevision", "profiles"],
+  "properties": {
+    "schemaVersion": {"const": "1.0.0"},
+    "profileRevision": {"type": "string", "minLength": 1},
+    "profiles": {"type": "array", "items": {"$ref": "#/$defs/profile"}}
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "effort": {"oneOf": [{"$ref": "#/$defs/text"}, {"type": "null"}]},
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profileId", "providerKind", "vendorId", "modelId", "modelRevision", "reasoningEffort", "supportedOptions", "approvedRouteRef", "qualificationRevision", "qualification", "adapterRevision", "promptRevision", "maximumInputBytes", "maximumOutputTokens", "maximumCostUsd", "judgmentPolicy"],
+      "properties": {
+        "profileId": {"$ref": "#/$defs/text"},
+        "providerKind": {"enum": ["jev", "vendor"]},
+        "vendorId": {"$ref": "#/$defs/text"},
+        "modelId": {"$ref": "#/$defs/text"},
+        "modelRevision": {"$ref": "#/$defs/text"},
+        "reasoningEffort": {"$ref": "#/$defs/effort"},
+        "supportedOptions": {
+          "type": "object", "additionalProperties": false, "required": ["reasoningEfforts", "structuredOutput"],
+          "properties": {"reasoningEfforts": {"type": "array", "items": {"$ref": "#/$defs/effort"}}, "structuredOutput": {"type": "boolean"}}
+        },
+        "approvedRouteRef": {"$ref": "#/$defs/text"},
+        "qualificationRevision": {"$ref": "#/$defs/text"},
+        "qualification": {
+          "type": "object", "additionalProperties": false,
+          "required": ["status", "inventoryDigest", "taxonomyRevision", "modelRevision", "promptRevision", "validUntil", "profileConfigurationDigest"],
+          "properties": {
+            "status": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
+            "inventoryDigest": {"$ref": "#/$defs/text"}, "taxonomyRevision": {"$ref": "#/$defs/text"},
+            "modelRevision": {"$ref": "#/$defs/text"}, "promptRevision": {"$ref": "#/$defs/text"},
+            "validUntil": {"type": "string", "format": "date-time"},
+            "profileConfigurationDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+          }
+        },
+        "adapterRevision": {"$ref": "#/$defs/text"},
+        "promptRevision": {"$ref": "#/$defs/text"},
+        "maximumInputBytes": {"type": "integer", "minimum": 1},
+        "maximumOutputTokens": {"type": "integer", "minimum": 1},
+        "maximumCostUsd": {"type": ["number", "null"], "minimum": 0},
+        "judgmentPolicy": {"oneOf": [{"type": "null"}, {
+          "type": "object", "additionalProperties": false, "required": ["neededAt", "notNeededAt"],
+          "properties": {"neededAt": {"type": "number", "minimum": 0, "maximum": 1}, "notNeededAt": {"type": "number", "minimum": 0, "maximum": 1}}
+        }]}
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "independent-deliberation",
+    "cross-examination",
+    "evidence-resolution"
+  ],
+  "targets": [
+    "complex-decisions",
+    "high-cost-failure-design"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/independent-deliberation-panel/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/SKILL.md",
+      "startLine": 8,
+      "endLine": 18,
+      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/independent-deliberation-panel/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/SKILL.md",
+      "startLine": 8,
+      "endLine": 18,
+      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "independent-audit",
+    "evaluate-completion"
+  ],
+  "targets": [
+    "high-risk-changes",
+    "release-evidence"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/independent-audit-gate/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8"
+    },
+    {
+      "path": "skills/independent-audit-gate/SKILL.md",
+      "startLine": 8,
+      "endLine": 28,
+      "digest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8"
+    },
+    {
+      "path": "skills/independent-audit-gate/references/entry-details.md",
+      "startLine": 1,
+      "endLine": 9,
+      "digest": "sha256:3f117c44ba584885a2dc9b370a20f3f4ae4a8e672dae1bd174586d8d27b9ca7e"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/independent-audit-gate/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8"
+    },
+    {
+      "path": "skills/independent-audit-gate/SKILL.md",
+      "startLine": 8,
+      "endLine": 28,
+      "digest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8"
+    },
+    {
+      "path": "skills/independent-audit-gate/references/entry-details.md",
+      "startLine": 1,
+      "endLine": 9,
+      "digest": "sha256:3f117c44ba584885a2dc9b370a20f3f4ae4a8e672dae1bd174586d8d27b9ca7e"
+    }
+  ]
+}

@@ -20,6 +20,7 @@ metadata:
 - 필요한 전문 스킬 하나로 충분하면 그 스킬을 직접 호출한다. 여러 전문 결과의 순서·입출력·필수 gate를 연결해야 하면 `orchestrator`를 실제 호출한 뒤 각 전문 단계를 연결한다. 예를 들어 공개 push·태그·배포의 범위 확인과 위험 사전 점검을 함께 요구하는 흐름은 이 연결 기준으로 판단한다. 읽기 전용 확인에서 환경·권한 선행이 없으면 실제 변경을 실행하지 않는다.
 - 선택한 스킬은 설치된 본문과 해당 참고 자료를 로드하고 지침에 따라 실제 작업·검증·산출물까지 수행한다. 이 문서와 참고 자료를 읽는 것은 전문 스킬 실행이 아니다. 스킬 이름을 언급하거나 호출이 시작됐다는 응답만으로 수행 완료를 판단하지 않는다.
 - 전문 스킬이 필요 없는 설명·인사·일반 질문은 그대로 답한다. 단독 전문 작업이나 스킬이 필요 없는 요청에 registry 조회·계획·workflow run을 만들지 않는다. 모든 요청에 실패 영향 분류나 생략 이유를 출력하지 않는다.
+- 스킬 분류 지원이 설정된 환경에서는 [공통 분류 지원 계약](references/skill-classification.md)에 따라 전체 inventory와 원문을 `classify_skills`에 전달하고 AGENT가 최종 선택한다. JEV OFF·불가 시 사용 벤더의 검증된 중앙 고정 profile을 사용한다. 추천·선택·읽기·적용·검증과 실행 승인은 구분하며 미가용·미검증을 성공으로 처리하지 않는다.
 <!-- skill-intake:end -->
 
 한국어 산문을 작성·편집하거나 자연스러움을 검증하는 요청은 일부 단계만 선택하지 않는다. `korean-prose-selection`, `korean-prose-editing`, `korean-prose-verification`, `korean-prose-finalization` 네 capability를 모두 요청하고, descriptor의 artifact 의존성과 `phaseOrder`에 따라 순서대로 실행한다. 원문은 전문 스킬 내부에서만 다루고 MCP 영수증에는 reference-only policy가 허용하는 digest, artifact reference와 고정 토큰만 전달한다.

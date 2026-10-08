@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "update-session-status",
+    "read-session-status"
+  ],
+  "targets": [
+    "same-computer-concurrent-sessions"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "capabilities": [
+    "local-session-coordination"
+  ],
+  "applicability": [
+    {
+      "path": "skills/session-board/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a"
+    },
+    {
+      "path": "skills/session-board/SKILL.md",
+      "startLine": 8,
+      "endLine": 22,
+      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a"
+    },
+    {
+      "path": "skills/session-board/references/entry-details.md",
+      "startLine": 7,
+      "endLine": 13,
+      "digest": "sha256:e8ea65d5d3d372fe70ba0fe7cdba18d965704450f2a7084b27ce885695e68660"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/session-board/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a"
+    },
+    {
+      "path": "skills/session-board/SKILL.md",
+      "startLine": 8,
+      "endLine": 22,
+      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a"
+    },
+    {
+      "path": "skills/session-board/references/entry-details.md",
+      "startLine": 7,
+      "endLine": 13,
+      "digest": "sha256:e8ea65d5d3d372fe70ba0fe7cdba18d965704450f2a7084b27ce885695e68660"
+    }
+  ]
+}

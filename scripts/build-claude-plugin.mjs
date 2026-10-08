@@ -184,6 +184,54 @@ function trackedFiles(root) {
 const ENGINEERING_LOCK = "runtime/engineering-practices/CONTENT_LOCK.json";
 const engineeringPath = (file) => /^(?:skills\/(?:test-engineering|code-review)\/|skills\/orchestrator\/references\/engineering-practices\/|runtime\/engineering-practices\/|contracts\/engineering-[a-z-]+\.v1\.schema\.json$|claude-overlay\/adaptations\/(?:test-engineering|code-review)\.json$)/u.test(file);
 const digest = (bytes) => `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
+export const CLASSIFICATION_PROJECTION = "skills/classification-projection.json";
+
+/** Capture original bytes once; adapted host files never become a second semantic source. */
+export async function readClassificationSources(root, tracked) {
+  const skillFiles = tracked.filter((file) => /^skills\/[^/]+\/SKILL\.md$/u.test(file)).sort();
+  const classifications = [];
+  for (const skillFile of skillFiles) {
+    const metadataPath = skillFile.replace(/SKILL\.md$/u, "classification.json");
+    try { classifications.push([metadataPath, await readFile(path.join(root, metadataPath))]); }
+    catch (error) { if (error.code !== "ENOENT") throw error; }
+  }
+  if (classifications.length === 0) return null;
+  if (classifications.length !== skillFiles.length) throw new Error("Classification metadata must cover every canonical skill.");
+  const sources = new Map([["skills/registry.json", await readFile(path.join(root, "skills/registry.json"))]]);
+  for (const [metadataPath, bytes] of classifications) {
+    sources.set(metadataPath, bytes);
+    const skillFile = metadataPath.replace(/classification\.json$/u, "SKILL.md");
+    sources.set(skillFile, await readFile(path.join(root, skillFile)));
+    const metadata = JSON.parse(bytes.toString("utf8"));
+    if (metadata.schemaVersion !== "1.0.0" || !Array.isArray(metadata.applicability) || !Array.isArray(metadata.exclusions)) throw new Error(`Invalid classification source: ${metadataPath}`);
+    const prefix = metadataPath.slice(0, metadataPath.lastIndexOf("/") + 1);
+    for (const span of [...metadata.applicability, ...metadata.exclusions]) {
+      if (typeof span.path !== "string" || !span.path.startsWith(prefix) || span.path.split("/").some((part) => !part || part === ".." || part === ".") || span.path.includes("\\")) throw new Error(`Invalid classification source path: ${metadataPath}`);
+      const content = sources.get(span.path) ?? await readFile(path.join(root, span.path));
+      if (digest(content) !== span.digest) throw new Error(`Stale classification source: ${span.path}`);
+      const lines = content.toString("utf8").split(/\r?\n/u);
+      if (!Number.isSafeInteger(span.startLine) || !Number.isSafeInteger(span.endLine) || span.startLine < 1 || span.endLine < span.startLine || span.endLine > lines.length) throw new Error(`Invalid classification source span: ${span.path}`);
+      sources.set(span.path, content);
+    }
+  }
+  return sources;
+}
+
+/** Derived canonical source snapshot plus closed inventory of actual shipped host bytes. */
+export function projectClassificationSources(files, canonicalSources) {
+  if (!canonicalSources) return;
+  const sorted = [...canonicalSources].sort(([a], [b]) => a.localeCompare(b));
+  const installedSkillIds = [...files.keys()].filter((file) => /^skills\/[^/]+\/SKILL\.md$/u.test(file)).map((file) => file.split("/")[1]).sort();
+  for (const [relative, content] of sorted) {
+    if (/^skills\/[^/]+\/classification\.json$/u.test(relative) && files.has(relative.replace(/classification\.json$/u, "SKILL.md"))) files.set(relative, content);
+  }
+  const projection = {
+    schemaVersion: "1.0.0", projectionRevision: "1.0.0", host: "claude-code", installedSkillIds,
+    canonicalSources: sorted.map(([sourcePath, bytes]) => ({ path: sourcePath, digest: digest(bytes), content: bytes.toString("utf8") })),
+    hostSources: sorted.filter(([sourcePath]) => files.has(sourcePath)).map(([sourcePath]) => ({ path: sourcePath, digest: digest(files.get(sourcePath)) })),
+  };
+  files.set(CLASSIFICATION_PROJECTION, Buffer.from(formatJson(projection)));
+}
 
 // Validate every source byte before adapting it; only the host's actual shipped
 // bytes belong in its runtime lock. Codex keeps the unchanged source lock.
@@ -240,6 +288,7 @@ function formatJson(value) {
 export async function renderClaudePlugin(root = ROOT) {
   const files = new Map();
   const tracked = trackedFiles(root);
+  const classificationSources = await readClassificationSources(root, tracked);
   const engineeringLock = await readEngineeringSourceLock(root, tracked);
   const version = JSON.parse(await readFile(path.join(root, "release/version.json"), "utf8")).version;
   let registry = null;
@@ -279,6 +328,7 @@ export async function renderClaudePlugin(root = ROOT) {
   }
   mapSkillInvocations(files, (registry?.skills ?? []).map((entry) => entry.skillId));
   projectEngineeringContentLock(files, engineeringLock);
+  projectClassificationSources(files, classificationSources);
   const wording = findCodexOnlyWording(files);
   if (wording.length > 0) throw new Error(`Claude overlay is incomplete:\n${wording.map((problem) => `- ${problem}`).join("\n")}`);
   return files;

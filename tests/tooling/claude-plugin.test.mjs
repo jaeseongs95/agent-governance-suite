@@ -134,8 +134,17 @@ describe("generated Claude plugin", () => {
     const intake = shared.split("<!-- skill-intake:start -->\n")[1].split("\n<!-- skill-intake:end -->")[0];
     const sentences = intake.split("\n").filter((line) => !line.startsWith("#")).flatMap((line) => line.replace(/^- /u, "").split(/(?<=다\.) /u)).filter((sentence) => sentence.length > 20);
     expect(sentences.length).toBeGreaterThan(10);
-    // The shared source, its generated Claude copy and this file's fixture are the only allowed holders.
-    const allowed = new Set(["skills/orchestrator/SKILL.md", "claude-plugin/skills/orchestrator/SKILL.md", "tests/tooling/claude-plugin.test.mjs"]);
+    // The classification projection embeds immutable canonical bytes mechanically;
+    // it does not define another editable intake policy.
+    const projectionPath = "claude-plugin/skills/classification-projection.json";
+    const projection = JSON.parse(await readFile(path.join(root, projectionPath), "utf8"));
+    const canonicalIntake = projection.canonicalSources.filter((source) => source.path === "skills/orchestrator/SKILL.md");
+    expect(canonicalIntake).toHaveLength(1);
+    expect(canonicalIntake[0].content).toBe(shared);
+    const frozenAdditionPath = "scripts/fixtures/skill-classification-intake.2.9.1.md";
+    const frozenAddition = await readFile(path.join(root, frozenAdditionPath), "utf8");
+    expect(shared.includes(frozenAddition)).toBe(true);
+    const allowed = new Set(["skills/orchestrator/SKILL.md", "claude-plugin/skills/orchestrator/SKILL.md", "tests/tooling/claude-plugin.test.mjs", projectionPath, frozenAdditionPath]);
     const listed = spawnSync("git", ["ls-files", "-z"], { cwd: root, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
     expect(listed.status).toBe(0);
     const files = listed.stdout.split("\0").filter((file) => file && !allowed.has(file));

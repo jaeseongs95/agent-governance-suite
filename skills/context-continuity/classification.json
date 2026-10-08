@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "checkpoint-context",
+    "restore-context"
+  ],
+  "targets": [
+    "direct-task-context"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "capabilities": [
+    "direct-context-continuity"
+  ],
+  "applicability": [
+    {
+      "path": "skills/context-continuity/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022"
+    },
+    {
+      "path": "skills/context-continuity/SKILL.md",
+      "startLine": 8,
+      "endLine": 26,
+      "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/context-continuity/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022"
+    },
+    {
+      "path": "skills/context-continuity/SKILL.md",
+      "startLine": 8,
+      "endLine": 26,
+      "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022"
+    }
+  ]
+}

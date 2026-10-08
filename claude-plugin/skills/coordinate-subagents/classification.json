@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "delegate-work",
+    "coordinate-ownership",
+    "integrate-evidence"
+  ],
+  "targets": [
+    "subagents"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/coordinate-subagents/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0"
+    },
+    {
+      "path": "skills/coordinate-subagents/SKILL.md",
+      "startLine": 8,
+      "endLine": 21,
+      "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/entry-details.md",
+      "startLine": 1,
+      "endLine": 22,
+      "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/entry-details.md",
+      "startLine": 23,
+      "endLine": 33,
+      "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/coordinate-subagents/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0"
+    },
+    {
+      "path": "skills/coordinate-subagents/SKILL.md",
+      "startLine": 8,
+      "endLine": 21,
+      "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/entry-details.md",
+      "startLine": 1,
+      "endLine": 22,
+      "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/entry-details.md",
+      "startLine": 23,
+      "endLine": 33,
+      "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604"
+    }
+  ]
+}

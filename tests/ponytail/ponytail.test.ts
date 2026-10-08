@@ -79,7 +79,7 @@ describe("ponytail at the implementation step", () => {
   });
 
   it("integrates only the pinned skill instructions, without the upstream always-on hooks", () => {
-    expect(readdirSync(`${root}skills/ponytail`).sort()).toEqual(["LICENSE", "SKILL.md", "VERSION", "agents"]);
+    expect(readdirSync(`${root}skills/ponytail`).sort()).toEqual(["LICENSE", "SKILL.md", "VERSION", "agents", "classification.json"]);
     expect(readFileSync(`${root}skills/ponytail/VERSION`, "utf8").trim()).toBe("4.10.0");
     const skill = readFileSync(`${root}skills/ponytail/SKILL.md`, "utf8");
     expect(skill).toMatch(/^---\r?\nname: ponytail\r?\n/u);

@@ -435,7 +435,7 @@ function normalizeWorkspaceLocator(locator) {
 
 // mcp-server/src/host-attestation.ts
 var HOST_ATTESTATION_FIELD = "_hostAttestation";
-var HOST_ATTESTATION_TOOLS = /* @__PURE__ */ new Set(["plan_workflow", "record_stage_result"]);
+var HOST_ATTESTATION_TOOLS = /* @__PURE__ */ new Set(["plan_workflow", "record_stage_result", "classify_skills", "record_skill_selection"]);
 var HOST_ATTESTATION_KEY = "host_attestation_key_v1";
 var TOKEN_PREFIX = "aghs1";
 var TOKEN_TTL_MS = 5 * 60 * 1e3;
@@ -461,6 +461,14 @@ function withoutHostAttestation(input) {
   return copy;
 }
 function hostAttestationBinding(tool, input) {
+  if (tool === "classify_skills") {
+    const taskId = nonEmpty(input.requestId);
+    return taskId ? { phase: "bootstrap", taskId, runId: null, stageId: null, revision: null } : null;
+  }
+  if (tool === "record_skill_selection") {
+    const taskId = nonEmpty(record(input.decision)?.requestDigest);
+    return taskId ? { phase: "bootstrap", taskId, runId: null, stageId: null, revision: null } : null;
+  }
   if (tool === "plan_workflow") {
     const taskId = nonEmpty(record(input.taskEnvelope)?.taskId) ?? nonEmpty(input.taskId);
     return taskId ? { phase: "bootstrap", taskId, runId: null, stageId: null, revision: null } : null;

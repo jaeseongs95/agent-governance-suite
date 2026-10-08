@@ -3,7 +3,7 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writ
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { checkSkillContextOptimization, matchesEngineeringReferenceUpdate, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
-import { matchesReviewedImplementationUpdate } from "../../scripts/check-skill-context-optimization.mjs";
+import { matchesClassificationUpdate, matchesReviewedImplementationUpdate } from "../../scripts/check-skill-context-optimization.mjs";
 
 describe("skill context optimization", () => {
   it("accepts only reviewed integration revision paths and exact bytes", () => {
@@ -32,6 +32,10 @@ describe("skill context optimization", () => {
       modelInitialMaxBytes: 2024,
     }]);
     expect(report.totals.skillCount).toBe(20);
+    expect(report.reviewedClassificationUpdates).toMatchObject([{
+      revision: "2.9.1-skill-classification-metadata-and-entry-bridges", authorityEffect: "none",
+      additions: { orchestrator: { bytes: 441 }, ponytail: { bytes: 299 } },
+    }]);
   });
   it("rejects altered reviewed integration bytes through the public checker", async () => {
     vi.doMock("node:fs", () => ({
@@ -89,11 +93,51 @@ describe("skill context optimization", () => {
     }
     expect(matchesEngineeringReferenceUpdate("unreviewed.md", Buffer.from("extra"))).toBe(false);
   });
+  it("pins every reviewed classification source and rejects one-byte changes or an unreviewed path", () => {
+    const report = checkSkillContextOptimization();
+    const sources = Object.keys(report.reviewedClassificationUpdates[0].hashes);
+    expect(sources).toHaveLength(27);
+    for (const relative of sources) {
+      const bytes = readFileSync(new URL(`../../${relative}`, import.meta.url));
+      expect(matchesClassificationUpdate(relative, bytes), relative).toBe(true);
+      const changed = Buffer.from(bytes); changed[changed.length - 1] ^= 1;
+      expect(matchesClassificationUpdate(relative, changed), relative).toBe(false);
+    }
+    expect(matchesClassificationUpdate("skills/orchestrator/classification-extra.json", readFileSync(new URL("../../skills/orchestrator/classification.json", import.meta.url)))).toBe(false);
+  });
+  it("reports one-byte metadata corruption through the public checker", async () => {
+    const relative = "/skills/orchestrator/classification.json";
+    vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {
+      const bytes = readFileSync(file, ...args);
+      if (String(file).replaceAll("\\", "/").endsWith(relative)) { const changed = Buffer.from(bytes); changed[changed.length - 1] ^= 1; return changed; }
+      return bytes;
+    } }));
+    try {
+      vi.resetModules(); const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      const report = checker.checkSkillContextOptimization();
+      expect(report.pass).toBe(false);
+      expect(report.errors).toContain("classification: reviewed bytes differ: skills/orchestrator/classification.json");
+    } finally { vi.doUnmock("node:fs"); vi.resetModules(); }
+  });
+  it.each(["orchestrator", "ponytail"])("rejects an unreviewed metadata path in %s without source mutations", async (owner) => {
+    const { execFileSync } = await import("node:child_process");
+    const relative = `skills/${owner}/classification-extra.json`;
+    vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
+      if (file === "git" && args.includes("ls-files") && args.at(-1) === `skills/${owner}`) return Buffer.from(`${relative}\n`);
+      return execFileSync(file, args, options);
+    } }));
+    try {
+      vi.resetModules(); const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      const report = checker.checkSkillContextOptimization();
+      expect(report.pass).toBe(false);
+      expect(report.errors.some((error) => error.includes(relative))).toBe(true);
+    } finally { vi.doUnmock("node:child_process"); vi.resetModules(); }
+  });
   it("rejects a changed engineering bridge and still rejects changes to the preceding CS bridge", () => {
     const root = path.resolve(import.meta.dirname, "../..");
     const directory = mkdtempSync(path.join(tmpdir(), "ags-engineering-bridge-"));
     try {
-      for (const relative of ["skills/orchestrator/SKILL.md", "skills/orchestrator/references/entry-details.md", "scripts/fixtures/cs-engineering-handoff.2.8.0.md", "scripts/fixtures/engineering-practices-handoff.2.8.1.md"]) {
+      for (const relative of ["skills/orchestrator/SKILL.md", "skills/orchestrator/references/entry-details.md", "scripts/fixtures/cs-engineering-handoff.2.8.0.md", "scripts/fixtures/engineering-practices-handoff.2.8.1.md", "scripts/fixtures/skill-classification-intake.2.9.1.md"]) {
         mkdirSync(path.dirname(path.join(directory, relative)), { recursive: true });
         cpSync(path.join(root, relative), path.join(directory, relative));
       }
@@ -106,6 +150,10 @@ describe("skill context optimization", () => {
       expect(changed).not.toBe(original.toString("utf8"));
       writeFileSync(path.join(directory, relative), changed);
       expect(() => reconstructOptimizedSkill("orchestrator", directory)).toThrow(/2.8.0 CS handoff/u);
+      writeFileSync(path.join(directory, relative), original);
+      const additionPath = path.join(directory, "scripts/fixtures/skill-classification-intake.2.9.1.md");
+      const addition = readFileSync(additionPath); addition[addition.length - 1] ^= 1; writeFileSync(additionPath, addition);
+      expect(() => reconstructOptimizedSkill("orchestrator", directory)).toThrow(/pinned 2.9.1 classification addition/u);
     } finally {
       rmSync(directory, { recursive: true, force: true });
     }
@@ -142,9 +190,9 @@ describe("skill context optimization", () => {
       totals: {
         skillCount: 20,
         baselineBytes: 115679,
-        candidateBytes: 45851,
-        reducedBytes: 69828,
-        reductionPercent: 60.363592
+        candidateBytes: 46292,
+        reducedBytes: 69387,
+        reductionPercent: 59.982365
       }
     });
     expect(report.skills).toHaveLength(20);

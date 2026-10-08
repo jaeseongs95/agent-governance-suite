@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "read-only-workspace-discovery"
+  ],
+  "targets": [
+    "repository-structure",
+    "tools",
+    "conventions",
+    "verification-commands"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/workspace-convention-profiler/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/SKILL.md",
+      "startLine": 8,
+      "endLine": 20,
+      "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/references/entry-details.md",
+      "startLine": 1,
+      "endLine": 8,
+      "digest": "sha256:9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/workspace-convention-profiler/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/SKILL.md",
+      "startLine": 8,
+      "endLine": 20,
+      "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/references/entry-details.md",
+      "startLine": 1,
+      "endLine": 8,
+      "digest": "sha256:9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91"
+    }
+  ]
+}

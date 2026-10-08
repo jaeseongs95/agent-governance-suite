@@ -21,7 +21,7 @@ import type { WorkflowStore } from "./workflow-store.js";
  * key lives in the plugin's workflow database, readable by the same user.
  */
 export const HOST_ATTESTATION_FIELD = "_hostAttestation";
-export const HOST_ATTESTATION_TOOLS: ReadonlySet<string> = new Set(["plan_workflow", "record_stage_result"]);
+export const HOST_ATTESTATION_TOOLS: ReadonlySet<string> = new Set(["plan_workflow", "record_stage_result", "classify_skills", "record_skill_selection"]);
 
 const HOST_ATTESTATION_KEY = "host_attestation_key_v1";
 const TOKEN_PREFIX = "aghs1";
@@ -92,6 +92,14 @@ export function withoutHostAttestation(input: Record<string, unknown>): Record<s
 
 /** Derives the binding the server will check from the tool arguments the caller sent. */
 export function hostAttestationBinding(tool: string, input: Record<string, unknown>): HostAttestationBindingV1 | null {
+  if (tool === "classify_skills") {
+    const taskId = nonEmpty(input.requestId);
+    return taskId ? { phase: "bootstrap", taskId, runId: null, stageId: null, revision: null } : null;
+  }
+  if (tool === "record_skill_selection") {
+    const taskId = nonEmpty(record(input.decision)?.requestDigest);
+    return taskId ? { phase: "bootstrap", taskId, runId: null, stageId: null, revision: null } : null;
+  }
   if (tool === "plan_workflow") {
     const taskId = nonEmpty(record(input.taskEnvelope)?.taskId) ?? nonEmpty(input.taskId);
     return taskId ? { phase: "bootstrap", taskId, runId: null, stageId: null, revision: null } : null;

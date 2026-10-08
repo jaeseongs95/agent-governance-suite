@@ -69,6 +69,46 @@ const REVIEWED_IMPLEMENTATION_R2 = Object.freeze({
   "skills/session-board/scripts/board-store.d.mts": "d4a156f0a4f3a83fdaf655daf3fe88efd14c427c79ffceb1b8012d14c38a0098"
 }),
 });
+// Historical scope pins for this reviewed change, never a runtime selector
+// allowlist. The classification loader continues to discover descriptors dynamically.
+const CLASSIFICATION_UPDATE = Object.freeze({
+  revision: "2.9.1-skill-classification-metadata-and-entry-bridges",
+  approvalReference: "Scoped AGS 2.9.1 user request; frozen seq7 design/test contract and current implementation scope",
+  authorityEffect: "none",
+  additions: Object.freeze({
+    orchestrator: Object.freeze({ path: "scripts/fixtures/skill-classification-intake.2.9.1.md", sha256: "640b42d913010477835200f35303790cc2015fabc9740d97b4f0ddabbe6f7bd3", bytes: 441 }),
+    ponytail: Object.freeze({ path: "scripts/fixtures/skill-classification-implementation.2.9.1.md", sha256: "8bc16704d7e295f7dd389bf43a39c922d82a1e7733675d9fe37c5ec660bbad16", fixtureBytes: 298, suffix: "\n", bytes: 299 }),
+  }),
+  hashes: Object.freeze({
+    "skills/acceptance-evidence-validator/classification.json": "c0fc53904a0f2a834d81b3ab7bf5dfd4400ac66d02d549ae951bbeebf93d2693",
+    "skills/blocker-diagnostician/classification.json": "1a002221483c19e369e9f65c47f4772f2a9d6ed5d9329463ef22e67e9acf29fd",
+    "skills/change-scope-guardian/classification.json": "7625cfa18ff47fdf506564f940f1e3c9559a707d0abd908f5bbcd98f196b7863",
+    "skills/code-review/classification.json": "90a64f660dd70304a9e9d15e43a72c69d27eda26722e63b0a133914194403bb9",
+    "skills/codex-token-usage-analyzer/classification.json": "86fa37553b99b01d7ecba38118010b81d8c2d5949913d040df221505b38b9178",
+    "skills/context-continuity/classification.json": "e03cc921314a2192ac1fcc08a05b260ccedf7c33aa552c4048be96216be4d7f0",
+    "skills/coordinate-subagents/classification.json": "7c1ce52c2ca49ae39a1bda12b5c6c5cd1375becc6a8bdaf67339142cad76279e",
+    "skills/cs-engineering/classification.json": "e1bf88e230df87c817ba7305e11dddeb993ffc4852293cb897b3fb21049f7e12",
+    "skills/evaluation-validity-auditor/classification.json": "4da293cb328e4d0dce8191e34a209f0305418ece9209ded57c7c874531d00676",
+    "skills/independent-audit-gate/classification.json": "0b80e06250ed5fb3c1ce9367b9c5f0c224ca9314bdebd578cd6f4d763eb4b7c8",
+    "skills/independent-deliberation-panel/classification.json": "7ec268d5af4886dff92c44a602848c99c32db81b42c5bc88515613b0672d6bf4",
+    "skills/instruction-scope-resolver/classification.json": "760673fa882feea5c27169dd7b87350a4b25c1b7d55cba845eee761bcda69bd2",
+    "skills/iteration-frame-auditor/classification.json": "02a2bf5cafee1f37964522380362f7932117ae5b30c55617f75f356eca5bf904",
+    "skills/korean-prose-editor/classification.json": "d5f43baf696b955f788fb119f891599d4f8c996ce891e0aada15251b40e5bd72",
+    "skills/model-effort-advisor/classification.json": "c5fea20468ded9ab7e2b0ed6eef5c302829058596f19daa91ee7929228cdd4f3",
+    "skills/mutation-risk-preflight/classification.json": "265f56f22559dfe7c4db632c373a3e5b73c67f578458f6d54452020bae74a782",
+    "skills/orchestrator/SKILL.md": "96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+    "skills/orchestrator/classification.json": "87c4f8b6c840a219c0516132d2acbff1162b8ecccc5f14832fb4cf688e850320",
+    "skills/orchestrator/references/skill-classification.md": "85cfd39b4c3771669747a9ebf61bc8623b510104c4bd6af40c2168781adc3ef8",
+    "skills/ponytail/SKILL.md": "f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+    "skills/ponytail/classification.json": "ea4c82d05209d0ca29ffcf703223cf2b7d7f04e5c8ef80012c68c2581796c91b",
+    "skills/recovery-strategy-selector/classification.json": "435761fd571f76e5c133d76ac965a6d24df63e3f45d9f8d1fe8b814816bd5a2c",
+    "skills/session-board/classification.json": "dcd26e38b4bc9b23f39ab8fa8e91c1ceaad33445f8a3015151bace926a453448",
+    "skills/software-security-auditor/classification.json": "1ce8edfb98f9608e66d98bc75e1827f4cd8cc585ae8741290c6b093c3119b9c7",
+    "skills/task-contract/classification.json": "fe0c29ea685cd0be6acd277c56fe9e6359cc33ab8aceb4f81aece7c5ee02888e",
+    "skills/test-engineering/classification.json": "1ba6f5ddd650a209a53b8babaec0f07e17ab2d098d06c8bb92af44e69863c34a",
+    "skills/workspace-convention-profiler/classification.json": "30c3892a3ca93f42040a3a3e256daf3b6077459ea3ca55cb50f3ea261ffcb8f6",
+  }),
+});
 const TARGETS = [
   "acceptance-evidence-validator",
   "blocker-diagnostician",
@@ -148,8 +188,26 @@ export function matchesReviewedImplementationUpdate(path, bytes) {
     && createHash("sha256").update(bytes).digest("hex") === reviewed.hashes[path];
 }
 
+export function matchesClassificationUpdate(path, bytes) {
+  return Object.hasOwn(CLASSIFICATION_UPDATE.hashes, path)
+    && createHash("sha256").update(bytes).digest("hex") === CLASSIFICATION_UPDATE.hashes[path];
+}
+
+function withoutClassificationAddition(skillId, bytes, root = ROOT) {
+  const frozen = CLASSIFICATION_UPDATE.additions[skillId];
+  const fixture = readFileSync(join(root, frozen.path));
+  const addition = Buffer.concat([fixture, Buffer.from(frozen.suffix ?? "")]);
+  const index = bytes.indexOf(addition);
+  if (fixture.length !== (frozen.fixtureBytes ?? frozen.bytes) || addition.length !== frozen.bytes || createHash("sha256").update(fixture).digest("hex") !== frozen.sha256
+    || index < 0 || bytes.indexOf(addition, index + addition.length) >= 0) {
+    throw new Error(`${skillId}: pinned 2.9.1 classification addition differs`);
+  }
+  return Buffer.concat([bytes.subarray(0, index), bytes.subarray(index + addition.length)]);
+}
+
 export function reconstructOptimizedSkill(skillId, root = ROOT) {
-  const candidate = readFileSync(join(root, "skills", skillId, "SKILL.md"));
+  const bytes = readFileSync(join(root, "skills", skillId, "SKILL.md"));
+  const candidate = skillId === "orchestrator" ? withoutClassificationAddition(skillId, bytes, root) : bytes;
   let detail = readFileSync(join(root, "skills", skillId, "references", "entry-details.md"));
   if (skillId === "orchestrator") {
     const engineeringAddition = readFileSync(join(root, ENGINEERING_ADDITION));
@@ -174,6 +232,9 @@ export function reconstructOptimizedSkill(skillId, root = ROOT) {
 
 export function checkSkillContextOptimization() {
   const errors = [];
+  for (const reviewedPath of Object.keys(CLASSIFICATION_UPDATE.hashes)) {
+    if (!matchesClassificationUpdate(reviewedPath, readFileSync(join(ROOT, reviewedPath)))) errors.push(`classification: reviewed bytes differ: ${reviewedPath}`);
+  }
   const detailOwners = readdirSync(join(ROOT, "skills"), { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
@@ -209,7 +270,7 @@ export function checkSkillContextOptimization() {
     if (skillId === "orchestrator") {
       if (!matchesOrchestratorIntakeUpdate("reconstructed", reconstructed)) errors.push("orchestrator: reconstructed intake policy differs from the pinned revision");
       if (!matchesOrchestratorIntakeUpdate("frontmatter", frontmatter(candidate))) errors.push("orchestrator: intake frontmatter differs from the pinned revision");
-      if (candidate.length > ORCHESTRATOR_INTAKE.initialMaxBytes) errors.push("orchestrator: initial load exceeds the pre-intake limit");
+      if (withoutClassificationAddition(skillId, candidate).length > ORCHESTRATOR_INTAKE.initialMaxBytes) errors.push("orchestrator: historical initial load exceeds the pre-intake limit");
       const reference = readFileSync(join(ROOT, "skills/orchestrator/references/mcp-execution.md"));
       if (!matchesOrchestratorIntakeUpdate("mcpExecution", reference)) errors.push("orchestrator: MCP execution policy differs from the pinned revision");
     } else if (skillId === "model-effort-advisor") {
@@ -233,6 +294,7 @@ export function checkSkillContextOptimization() {
     if (!readFileSync(join(ROOT, ...descriptorPath.split("/"))).equals(baselineFile(descriptorPath))) errors.push(`${skillId}: agents/openai.yaml changed`);
 
     const allowed = new Set([skillPath, detailPath]);
+    for (const reviewedPath of Object.keys(CLASSIFICATION_UPDATE.hashes)) if (reviewedPath.startsWith(`skills/${skillId}/`)) allowed.add(reviewedPath);
     if (skillId === "session-board") {
       for (const reviewedPath of ["skills/session-board/scripts/board-store.mjs", "skills/session-board/scripts/board-store.d.mts"]) {
         if (!matchesReviewedImplementationUpdate(reviewedPath, readFileSync(join(ROOT, reviewedPath)))) {
@@ -261,11 +323,9 @@ export function checkSkillContextOptimization() {
       allowed.add(readmePath);
     }
     const changed = git("diff", "--name-only", BASELINE, "--", `skills/${skillId}`).toString("utf8").trim().split(/\r?\n/u).filter(Boolean);
-    if (skillId === "model-effort-advisor") {
-      changed.push(...git("ls-files", "--others", "--exclude-standard", "--", `skills/${skillId}`)
-        .toString("utf8").trim().split(/\r?\n/u).filter(Boolean));
-    }
-    const unexpected = changed.filter((path) => !allowed.has(path));
+    changed.push(...git("ls-files", "--others", "--exclude-standard", "--", `skills/${skillId}`)
+      .toString("utf8").trim().split(/\r?\n/u).filter(Boolean));
+    const unexpected = [...new Set(changed)].filter((path) => !allowed.has(path));
     if (unexpected.length) errors.push(`${skillId}: unexpected skill-owned changes: ${unexpected.join(", ")}`);
 
     baselineBytes += baseline.length;
@@ -279,7 +339,13 @@ export function checkSkillContextOptimization() {
   const registryDigest = (value) => createHash("sha256").update(`${JSON.stringify(value, null, 2)}\n`).digest("hex");
   if (registryDigest(frozenRegistry) !== CS_REGISTRY_SHA256) errors.push("existing skills/registry.json differs from pinned 2.8.0 candidate");
   if (registryDigest(engineering) !== ENGINEERING_REGISTRY_SHA256) errors.push("Engineering Practices registry differs from pinned descriptors");
-  if (git("diff", "--name-only", BASELINE, "--", "skills/ponytail").toString("utf8").trim()) errors.push("excluded skill ponytail changed");
+  const ponytail = readFileSync(join(ROOT, "skills/ponytail/SKILL.md"));
+  if (!withoutClassificationAddition("ponytail", ponytail).equals(baselineFile("skills/ponytail/SKILL.md"))) errors.push("excluded skill ponytail historical instructions changed");
+  const ponytailChanged = [...new Set([
+    ...git("diff", "--name-only", BASELINE, "--", "skills/ponytail").toString("utf8").trim().split(/\r?\n/u),
+    ...git("ls-files", "--others", "--exclude-standard", "--", "skills/ponytail").toString("utf8").trim().split(/\r?\n/u),
+  ].filter(Boolean))].filter((file) => !Object.hasOwn(CLASSIFICATION_UPDATE.hashes, file));
+  if (ponytailChanged.length) errors.push(`excluded skill ponytail unexpected changes: ${ponytailChanged.join(", ")}`);
   if (candidateBytes >= baselineBytes) errors.push("combined initial SKILL.md bytes did not shrink");
 
   return {
@@ -288,6 +354,7 @@ export function checkSkillContextOptimization() {
     policyBaselineUpdates: [{ skillId: "orchestrator", ...ORCHESTRATOR_INTAKE }],
     reviewedImplementationUpdates: [REVIEWED_IMPLEMENTATION_R1],
     activeReviewedImplementationUpdates: [REVIEWED_IMPLEMENTATION_R2],
+    reviewedClassificationUpdates: [CLASSIFICATION_UPDATE],
     runtimeBaselineUpdates: Object.entries(NODE24_README_MINIMUMS).map(([skillId, before]) => ({ skillId, before, after: "Node.js 24.0.0 이상" })),
     pass: errors.length === 0,
     errors,

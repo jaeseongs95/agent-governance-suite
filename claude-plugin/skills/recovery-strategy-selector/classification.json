@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "compare-recovery-strategies",
+    "prepare-recovery-handoff"
+  ],
+  "targets": [
+    "confirmed-repeated-failure-cause"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/recovery-strategy-selector/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/SKILL.md",
+      "startLine": 8,
+      "endLine": 12,
+      "digest": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/references/entry-details.md",
+      "startLine": 24,
+      "endLine": 30,
+      "digest": "sha256:08b489c4ace78471ae6737fcea06e1885294d8d0b5f2207c74c6f740ac05375e"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/recovery-strategy-selector/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/SKILL.md",
+      "startLine": 8,
+      "endLine": 12,
+      "digest": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/references/entry-details.md",
+      "startLine": 24,
+      "endLine": 30,
+      "digest": "sha256:08b489c4ace78471ae6737fcea06e1885294d8d0b5f2207c74c6f740ac05375e"
+    }
+  ]
+}

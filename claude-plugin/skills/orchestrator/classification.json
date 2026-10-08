@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "classify-request",
+    "connect-specialist-results"
+  ],
+  "targets": [
+    "skill-selection",
+    "execution-order",
+    "input-output-contract",
+    "gates"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "capabilities": [
+    "skill-orchestration"
+  ],
+  "applicability": [
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "startLine": 8,
+      "endLine": 27,
+      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "startLine": 8,
+      "endLine": 27,
+      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+    }
+  ]
+}

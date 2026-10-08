@@ -138,6 +138,9 @@ describe("bundled STDIO MCP server", () => {
 
       const listed = await client.listTools();
       expect(listed.tools.map((tool) => tool.name)).toEqual([
+        "get_skill_inventory",
+        "classify_skills",
+        "record_skill_selection",
         "lookup_korean_prose_terms",
         "check_for_updates",
         "get_trust_capabilities",
@@ -253,6 +256,9 @@ describe("bundled STDIO MCP server", () => {
       await client.connect(transport);
       const listed = await client.listTools();
       expect(listed.tools.map((tool) => tool.name)).toEqual([
+        "get_skill_inventory",
+        "classify_skills",
+        "record_skill_selection",
         "lookup_korean_prose_terms",
         "check_for_updates",
         "get_trust_capabilities",

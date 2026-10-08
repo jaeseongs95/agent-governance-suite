@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "read-only-security-audit"
+  ],
+  "targets": [
+    "source-code",
+    "configuration",
+    "web",
+    "api",
+    "cli",
+    "mcp"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+    },
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "startLine": 8,
+      "endLine": 12,
+      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+    },
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "startLine": 8,
+      "endLine": 12,
+      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+    }
+  ]
+}

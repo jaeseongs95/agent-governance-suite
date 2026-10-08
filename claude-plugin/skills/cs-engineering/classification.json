@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "derive-cs-constraints",
+    "review-cs-behavior"
+  ],
+  "targets": [
+    "concurrency",
+    "database",
+    "messaging",
+    "algorithms",
+    "resource-lifetime",
+    "performance"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "startLine": 3,
+      "endLine": 8,
+      "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "startLine": 16,
+      "endLine": 21,
+      "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "startLine": 22,
+      "endLine": 26,
+      "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "startLine": 3,
+      "endLine": 8,
+      "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "startLine": 16,
+      "endLine": 21,
+      "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "startLine": 22,
+      "endLine": 26,
+      "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+    }
+  ]
+}

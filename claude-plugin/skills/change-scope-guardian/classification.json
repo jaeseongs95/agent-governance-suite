@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "capture-change-baseline",
+    "verify-change-scope"
+  ],
+  "targets": [
+    "git-changes",
+    "workspace"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/change-scope-guardian/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+    },
+    {
+      "path": "skills/change-scope-guardian/SKILL.md",
+      "startLine": 5,
+      "endLine": 17,
+      "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/change-scope-guardian/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+    },
+    {
+      "path": "skills/change-scope-guardian/SKILL.md",
+      "startLine": 5,
+      "endLine": 17,
+      "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+    }
+  ]
+}

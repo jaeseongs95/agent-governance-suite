@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "diagnose-repeated-failures"
+  ],
+  "targets": [
+    "failure-episodes",
+    "evidence"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/blocker-diagnostician/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e"
+    },
+    {
+      "path": "skills/blocker-diagnostician/SKILL.md",
+      "startLine": 8,
+      "endLine": 19,
+      "digest": "sha256:5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e"
+    },
+    {
+      "path": "skills/blocker-diagnostician/references/entry-details.md",
+      "startLine": 27,
+      "endLine": 33,
+      "digest": "sha256:5d3068c1151d10ff89304f2c3a5e18be6dc235d75cff179e3ff68a28d76aaebf"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/blocker-diagnostician/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e"
+    },
+    {
+      "path": "skills/blocker-diagnostician/SKILL.md",
+      "startLine": 8,
+      "endLine": 19,
+      "digest": "sha256:5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e"
+    },
+    {
+      "path": "skills/blocker-diagnostician/references/entry-details.md",
+      "startLine": 27,
+      "endLine": 33,
+      "digest": "sha256:5d3068c1151d10ff89304f2c3a5e18be6dc235d75cff179e3ff68a28d76aaebf"
+    }
+  ]
+}

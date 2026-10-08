@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "implement-minimal-code",
+    "design-minimal-code",
+    "choose-dependencies"
+  ],
+  "targets": [
+    "code",
+    "libraries",
+    "dependencies"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "startLine": 3,
+      "endLine": 16,
+      "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "startLine": 3,
+      "endLine": 16,
+      "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "startLine": 114,
+      "endLine": 127,
+      "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+    }
+  ]
+}

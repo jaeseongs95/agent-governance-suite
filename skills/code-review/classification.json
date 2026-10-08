@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "read-only-code-review"
+  ],
+  "targets": [
+    "fixed-diff",
+    "patch",
+    "pull-request"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/code-review/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+    },
+    {
+      "path": "skills/code-review/SKILL.md",
+      "startLine": 11,
+      "endLine": 13,
+      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/code-review/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+    },
+    {
+      "path": "skills/code-review/SKILL.md",
+      "startLine": 11,
+      "endLine": 13,
+      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+    }
+  ]
+}

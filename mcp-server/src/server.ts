@@ -26,6 +26,8 @@ import type { HostAttestationProvider } from "./host-attestation.js";
 import { StateCleanupService } from "./state-cleanup-service.js";
 import { type KoreanProseGlossaryGateway, UnavailableKoreanProseGlossary } from "./korean-prose-glossary.js";
 import { ContractValidator } from "./schema-validator.js";
+import { z } from "zod";
+import { classificationInputSchema, selectionInputSchema, type SkillClassificationGateway } from "./skill-classification/gateway.js";
 import { SessionMessageService, type SessionPresenceList } from "./session-message-service.js";
 import type { SessionPresenceView } from "./session-message-store.js";
 import { type TrustService } from "./trust-service.js";
@@ -356,6 +358,7 @@ export function createMcpServer(
   sessionBoardPath: string | null = null,
   sessionMessages: SessionMessageService = new SessionMessageService(),
   trust: TrustService | null = null,
+  classification: SkillClassificationGateway | null = null,
 ): Server {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -379,6 +382,21 @@ export function createMcpServer(
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: advertise([
+      {
+        name: "get_skill_inventory",
+        description: "Read the full installed skill inventory from SKILL.md and registry source metadata, including infrastructure skills and source conflicts. No semantic selection or execution.",
+        inputSchema: {type: "object", additionalProperties: false, properties: {}},
+      },
+      {
+        name: "classify_skills",
+        description: "Package the exact original prompt and confirmed context without an extra LLM; obtain bound classification advice through the configured JEV or current vendor fixed profile. The AGENT still makes the final selection. Missing routes, qualification or budget remain unavailable.",
+        inputSchema: z.toJSONSchema(classificationInputSchema) as Record<string, unknown>,
+      },
+      {
+        name: "record_skill_selection",
+        description: "Validate the AGENT's own selection against the bound advice, explicit/required skills, applicability, dependencies and current revisions. The host hook supplies actual call observation; caller receipts are rejected. Selection does not grant admission or prove reading/application/verification.",
+        inputSchema: z.toJSONSchema(selectionInputSchema) as Record<string, unknown>,
+      },
       {
         name: "lookup_korean_prose_terms",
         description: "Look up curated Korean prose glossary terms once before MCP selection. The source and matches are never persisted.",
@@ -563,7 +581,31 @@ export function createMcpServer(
     let updateStatus: PluginUpdateStatusV1 | null = null;
     let result: ApiResultV1<unknown>;
 
-    if (request.params.name === "lookup_korean_prose_terms") {
+    if (["get_skill_inventory", "classify_skills", "record_skill_selection"].includes(request.params.name)) {
+      if (!classification) result = apiError("MCP_UNAVAILABLE", "Skill classification is not configured for this server.");
+      else {
+        try {
+          if (request.params.name === "get_skill_inventory") {
+            if (Object.keys(args).length > 0) throw new Error("INVALID_INPUT");
+            result = apiOk(await classification.inventory());
+          } else if (request.params.name === "classify_skills") {
+            const classified = attested("classify_skills", input => {
+              const observation = typeof input.requestId === "string" ? hostAttestation?.observe({phase: "bootstrap", taskId: input.requestId, runId: null, stageId: null, revision: null}) ?? null : null;
+              return classification.classify(input, observation);
+            });
+            result = apiOk(await classified);
+          }
+          else {
+            const recorded = attested("record_skill_selection", input => {
+              const decision = asRecord(input.decision);
+              const observation = typeof decision.requestDigest === "string" ? hostAttestation?.observe({phase: "bootstrap", taskId: decision.requestDigest, runId: null, stageId: null, revision: null}) ?? null : null;
+              return classification.accept(input, observation);
+            });
+            result = apiOk(await recorded);
+          }
+        } catch { result = invalidInput("Skill classification input, configuration or host observation is invalid; no selection was accepted."); }
+      }
+    } else if (request.params.name === "lookup_korean_prose_terms") {
       try {
         const input = validator.koreanProseGlossaryLookupRequest(args);
         const output = validator.koreanProseGlossaryLookupResult(glossary.lookup(input));
