@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "public-bootstrap-component-bindings",
+  "baseProduct": {
+    "commit": "5e0f7c1d4c3e38d036c781656bd336c4de9c049c",
+    "tree": "824a6ef526c25693ccedf60909b5f6a67a329207"
+  },
+  "fixture": {
+    "path": "tests/skill-classification/fixtures.json",
+    "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "fixtureRevision": "ags-classification-seq7-oracle-v1"
+  },
+  "components": [
+    {
+      "path": "tests/skill-classification/live-bootstrap/bootstrap.mts",
+      "role": "qualification-bootstrap-runtime",
+      "bytes": 25007,
+      "digest": "sha256:4c55aae69fa16384e922f93ebe0b6a37d8e1a2fd43fb6baaddb11c0c7a892765",
+      "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+    },
+    {
+      "path": "tests/skill-classification/live-bootstrap/contract-selfcheck.mts",
+      "role": "offline-mock-contract",
+      "bytes": 10918,
+      "digest": "sha256:cf4906a1a422517f2884ae29b7ac4528fb0b26ba8031646422fbdf7623a579af",
+      "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+    },
+    {
+      "path": "tests/skill-classification/live-bootstrap/expiry-regression.mts",
+      "role": "offline-expiry-regression",
+      "bytes": 6749,
+      "digest": "sha256:2ec56a24f42fe2146bec65adb8d394a83162b12d65a09b6a41453628267bc474",
+      "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+    },
+    {
+      "path": "tests/skill-classification/live-bootstrap/config.blocked.example.json",
+      "role": "blocked-config-template",
+      "bytes": 615,
+      "digest": "sha256:07eea3d26244de1a5e67f9a1aafc513e120d54cdbd74b6c5122c035155045e6d",
+      "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+    },
+    {
+      "path": "tests/skill-classification/live-bootstrap/README.md",
+      "role": "public-run-instructions",
+      "bytes": 2133,
+      "digest": "sha256:2a1eb1df9680722d3acbff2d412ef52869697444c5169d8d15ecadd071704b16",
+      "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+    }
+  ],
+  "actualApiCalls": 0,
+  "actualCredentialLookups": 0,
+  "qualification": "NOT_RUN",
+  "hostLive": "NOT_RUN",
+  "requiredOutputLocation": "outside-repository-private-directory"
+}

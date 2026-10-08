@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0.0",
+  "runId": "public-qualification-001",
+  "repo": "/workspace/agent-governance-suite",
+  "outputDirectory": "/workspace/ags-qualification-public/public-qualification-001",
+  "endpointEnv": "AGS_BOOTSTRAP_ENDPOINT",
+  "credentialEnv": "AGS_BOOTSTRAP_JEV_KEY",
+  "approvedEndpointDigest": null,
+  "approvedRouteRef": null,
+  "approvalRef": null,
+  "profile": null,
+  "limits": null,
+  "prices": null,
+  "budget": null,
+  "evidence": {
+    "route": null,
+    "price": null,
+    "priorLedger": null,
+    "remaining": null,
+    "hardTokenCaps": null,
+    "operatorAuthorization": null
+  }
+}
