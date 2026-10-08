@@ -68,17 +68,21 @@ export class InactiveSharedConnection {
     this.#database = new DatabaseSync(databasePath);
     try {
       this.#database.exec("PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON; PRAGMA synchronous=FULL;");
-      const app = this.#database.prepare("PRAGMA application_id").get().application_id;
-      const version = this.#database.prepare("PRAGMA user_version").get().user_version;
-      const tables = this.#tables();
-      const empty = app === 0 && version === 0 && tables.length === 0;
-      need(empty || app === APPLICATION_ID && version === FORMAT_VERSION, "FOREIGN_OR_NEWER_DATABASE", "Only empty or matching inactive native-format files are supported.");
-      if (!empty) { this.#validate(); this.#ready = true; }
-      this.#database.exec("PRAGMA journal_mode=WAL;");
+      this.#database.exec("BEGIN IMMEDIATE");
+      this.#ready = this.#validateFormat();
+      this.#database.exec("COMMIT");
     } catch (error) { this.#database.close(); throw error; }
   }
   #open() { need(!this.#closed, "CONNECTION_CLOSED", "The shared owner is closed."); }
   #tables() { return this.#database.prepare("SELECT name FROM sqlite_schema WHERE type='table' AND name <> 'sqlite_sequence' ORDER BY name").all().map(row => row.name); }
+  #validateFormat() {
+    const app = this.#database.prepare("PRAGMA application_id").get().application_id;
+    const version = this.#database.prepare("PRAGMA user_version").get().user_version;
+    const empty = app === 0 && version === 0 && this.#tables().length === 0;
+    need(empty || app === APPLICATION_ID && version === FORMAT_VERSION, "FOREIGN_OR_NEWER_DATABASE", "Only empty or matching inactive native-format files are supported.");
+    if (!empty) this.#validate();
+    return !empty;
+  }
   #shape(module) {
     return JSON.stringify(MODULES[module].tables.map(name => ({ name, columns: this.#database.prepare(`PRAGMA table_info(${name})`).all(), sql: this.#database.prepare("SELECT sql FROM sqlite_schema WHERE type='table' AND name=?").get(name)?.sql })));
   }
@@ -95,11 +99,13 @@ export class InactiveSharedConnection {
     this.#database.exec("BEGIN IMMEDIATE");
     this.#initializing = true;
     try {
+      this.#validateFormat();
       this.#database.exec("CREATE TABLE IF NOT EXISTS shared_module_schema(module TEXT PRIMARY KEY, version INTEGER NOT NULL, schema_json TEXT NOT NULL) STRICT; CREATE TABLE IF NOT EXISTS authority_time(singleton INTEGER PRIMARY KEY CHECK(singleton=1), last_ms INTEGER NOT NULL CHECK(last_ms>=0)) STRICT; INSERT OR IGNORE INTO authority_time VALUES(1,0);");
       synchronous(operation());
       this.#validate();
       this.#database.exec(`PRAGMA application_id=${APPLICATION_ID}; PRAGMA user_version=${FORMAT_VERSION}; COMMIT;`);
       this.#ready = true;
+      this.#database.exec("PRAGMA journal_mode=WAL;");
     } catch (error) { try { this.#database.exec("ROLLBACK"); } catch { /* Primary error wins. */ } throw error; }
     finally { this.#initializing = false; }
   }

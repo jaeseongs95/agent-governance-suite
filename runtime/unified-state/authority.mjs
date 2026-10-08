@@ -81,19 +81,17 @@ export class InactiveUnifiedAuthority {
     this.#fault = fault;
     this.#database = new DatabaseSync(this.databasePath);
     try {
-      this.#database.exec("PRAGMA busy_timeout=5000;");
-      const app = this.#database.prepare("PRAGMA application_id").get().application_id;
-      const version = this.#database.prepare("PRAGMA user_version").get().user_version;
-      const tables = this.#database.prepare("SELECT name FROM sqlite_schema WHERE type='table'").all();
-      need(app === APPLICATION_ID && version === SCHEMA_VERSION || app === 0 && version === 0 && tables.length === 0, "FOREIGN_OR_NEWER_DATABASE", "Existing files must already be this inactive candidate, or empty.");
-      if (app === APPLICATION_ID) {
-        need(canonicalJson(tables.map((table) => table.name).sort()) === canonicalJson(CANDIDATE_TABLES), "CANDIDATE_SCHEMA_DRIFT", "An existing candidate must retain all expected state tables.");
-        const modules = this.#database.prepare("SELECT * FROM module_schema").all();
-        need(modules.length === 5 && modules.every((module) => module.candidate_version === 1 && canonicalJson(JSON.parse(module.source_versions_json)) === canonicalJson(MODULE_VERSIONS[module.module])), "CANDIDATE_SCHEMA_DRIFT", "Stored module schema metadata must match the candidate version.");
-      }
-      this.#database.exec("PRAGMA foreign_keys=ON; PRAGMA synchronous=FULL;");
-      this.#database.exec("PRAGMA journal_mode=WAL;");
+      this.#database.exec("PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON; PRAGMA synchronous=FULL;");
       this.#transaction(() => {
+        const app = this.#database.prepare("PRAGMA application_id").get().application_id;
+        const version = this.#database.prepare("PRAGMA user_version").get().user_version;
+        const tables = this.#database.prepare("SELECT name FROM sqlite_schema WHERE type='table'").all();
+        need(app === APPLICATION_ID && version === SCHEMA_VERSION || app === 0 && version === 0 && tables.length === 0, "FOREIGN_OR_NEWER_DATABASE", "Existing files must already be this inactive candidate, or empty.");
+        if (app === APPLICATION_ID) {
+          need(canonicalJson(tables.map((table) => table.name).sort()) === canonicalJson(CANDIDATE_TABLES), "CANDIDATE_SCHEMA_DRIFT", "An existing candidate must retain all expected state tables.");
+          const modules = this.#database.prepare("SELECT * FROM module_schema").all();
+          need(modules.length === 5 && modules.every((module) => module.candidate_version === 1 && canonicalJson(JSON.parse(module.source_versions_json)) === canonicalJson(MODULE_VERSIONS[module.module])), "CANDIDATE_SCHEMA_DRIFT", "Stored module schema metadata must match the candidate version.");
+        }
         this.#database.exec(`
           CREATE TABLE IF NOT EXISTS module_schema(module TEXT PRIMARY KEY, candidate_version INTEGER NOT NULL, source_versions_json TEXT NOT NULL) STRICT;
           CREATE TABLE IF NOT EXISTS authority_time(singleton INTEGER PRIMARY KEY CHECK(singleton=1), last_ms INTEGER NOT NULL CHECK(last_ms>=0)) STRICT;
@@ -110,6 +108,7 @@ export class InactiveUnifiedAuthority {
         this.#database.prepare("INSERT OR IGNORE INTO authority_time VALUES (1,0)").run();
         this.#database.exec(`PRAGMA application_id=${APPLICATION_ID}; PRAGMA user_version=${SCHEMA_VERSION};`);
       });
+      this.#database.exec("PRAGMA journal_mode=WAL;");
     } catch (error) { this.#database.close(); throw error; }
   }
   #transaction(action) {
