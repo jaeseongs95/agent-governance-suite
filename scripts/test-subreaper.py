@@ -1,5 +1,6 @@
 """Linux-only, invocation-local owner of the test runner's orphan descendants."""
 import ctypes
+from contextlib import closing
 import json
 import os
 from pathlib import Path
@@ -32,24 +33,30 @@ def descendants(pid, budget):
         budget.check()
         parent = pending.pop()
         try:
-            for task in Path(f"/proc/{parent}/task").iterdir():
-                budget.check()
-                with (task / "children").open() as stream:
-                    tail = ""
-                    while True:
-                        budget.check()
-                        chunk = stream.read(4096)
-                        values = (tail + chunk).split()
-                        tail = values.pop() if chunk and not chunk[-1].isspace() else ""
-                        for value in values:
+            with os.scandir(f"/proc/{parent}/task") as tasks:
+                while True:
+                    budget.check()
+                    try:
+                        task = next(tasks)
+                    except StopIteration:
+                        break
+                    budget.check()
+                    with (Path(task.path) / "children").open() as stream:
+                        tail = ""
+                        while True:
                             budget.check()
-                            child = int(value)
-                            if child not in seen:
-                                seen.add(child)
-                                pending.append(child)
-                                yield child
-                        if not chunk:
-                            break
+                            chunk = stream.read(4096)
+                            values = (tail + chunk).split()
+                            tail = values.pop() if chunk and not chunk[-1].isspace() else ""
+                            for value in values:
+                                budget.check()
+                                child = int(value)
+                                if child not in seen:
+                                    seen.add(child)
+                                    pending.append(child)
+                                    yield child
+                            if not chunk:
+                                break
         except FileNotFoundError:
             continue
 
@@ -57,22 +64,24 @@ def descendants(pid, budget):
 def signal_owned(signum, deadline):
     budget = CleanupBudget(deadline)
     try:
-        for pid in descendants(os.getpid(), budget):
-            # A pidfd cannot target a recycled PID. Recheck that the opened process
-            # is still our descendant before sending any termination signal.
-            budget.check()
-            try:
-                descriptor = os.pidfd_open(pid)
-            except ProcessLookupError:
-                continue
-            try:
-                if pid in descendants(os.getpid(), budget):
-                    budget.check()
-                    signal.pidfd_send_signal(descriptor, signum)
-            except ProcessLookupError:
-                pass
-            finally:
-                os.close(descriptor)
+        with closing(descendants(os.getpid(), budget)) as owned:
+            for pid in owned:
+                # A pidfd cannot target a recycled PID. Recheck that the opened process
+                # is still our descendant before sending any termination signal.
+                budget.check()
+                try:
+                    descriptor = os.pidfd_open(pid)
+                except ProcessLookupError:
+                    continue
+                try:
+                    with closing(descendants(os.getpid(), budget)) as current:
+                        if pid in current:
+                            budget.check()
+                            signal.pidfd_send_signal(descriptor, signum)
+                except ProcessLookupError:
+                    pass
+                finally:
+                    os.close(descriptor)
     except CleanupLimit:
         return False
     return True

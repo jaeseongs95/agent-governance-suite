@@ -153,12 +153,6 @@ else:
     class Proc:
         def __init__(self,name):self.name=name
         def __truediv__(self,part):return Proc(self.name+'/'+part)
-        def iterdir(self):
-            while True:
-                calls[0]+=1
-                assert calls[0]<2000,'changing descendants monopolized cleanup'
-                if mode=='deadline':clock[0]+=0.01
-                yield Proc(self.name+'/changing-thread')
         def open(self):
             if mode=='deadline':clock[0]+=0.01
             class Stream(io.StringIO):
@@ -170,6 +164,16 @@ else:
             return Stream(' '.join(str(pid) for pid in range(20,20020)
                 if not(mode=='work' and pid==21 and 21 in opened))+' ')
     m.Path=Proc
+    class Scan:
+        def __init__(self,name):self.name=name
+        def __enter__(self):return self
+        def __exit__(self,*args):pass
+        def __next__(self):
+            calls[0]+=1
+            assert calls[0]<2000,'changing descendants monopolized cleanup'
+            if mode=='deadline':clock[0]+=0.01
+            return types.SimpleNamespace(path=self.name+'/changing-thread')
+    m.os.scandir=Scan
     deadline=0.25 if mode=='deadline' else 1000000
     result=m.signal_owned(m.signal.SIGTERM,deadline)
     assert result is False,'partial traversal must return control, not claim complete'
@@ -208,4 +212,92 @@ it("H10 controlled descendant traversal and ownership recheck honor cleanup dead
   const result = controlledCleanup("deadline");
   expect(result.complete).toBe(false);
   expect(result.clock).toBeLessThanOrEqual(0.27);
+});
+
+it("H11 actual Python directory primitive stays lazy and closes partial, matched, and faulted iterators", () => {
+  const python = findPython();
+  const script = `
+import importlib.util, inspect, json, os, pathlib, sys, tempfile
+spec=importlib.util.spec_from_file_location('subreaper',sys.argv[1])
+m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+primitive=inspect.getsource(pathlib.Path.iterdir)
+native_scan=os.scandir; native_listdir=os.listdir; native_clock=m.time.monotonic
+native_ports={name:getattr(m.os,name,None) for name in ['getpid','pidfd_open','close']}
+native_send=getattr(m.signal,'pidfd_send_signal',None)
+traces=[]
+with tempfile.TemporaryDirectory(prefix='native-scan-') as root:
+    large=pathlib.Path(root)/'large'; large.mkdir()
+    empty=pathlib.Path(root)/'empty'; empty.mkdir()
+    for index in range(384):
+        thread=large/str(index); thread.mkdir(); (thread/'children').write_text('20 ')
+    for phase in ['work','deadline','exception','complete']:
+        clock=[0.0]; calls=[0]; listdir_calls=[0]; scans=[]; opened=[]; closed=[]; signals=[]
+        class NativeScan:
+            def __init__(self,directory):
+                self.native=native_scan(directory); self.closed=False; scans.append(self)
+            def __enter__(self):return self
+            def __iter__(self):return self
+            def __next__(self):
+                calls[0]+=1
+                assert calls[0]<=80,'native iterator eagerly exceeded per-item work bound'
+                if phase=='exception' and calls[0]==3:raise RuntimeError('controlled native iterator fault')
+                entry=next(self.native)
+                if phase=='deadline':clock[0]+=0.01
+                return entry
+            def __exit__(self,*args):
+                self.native.close(); self.closed=True
+                try:next(self.native)
+                except StopIteration:pass
+                else:raise AssertionError('actual native iterator failed to close')
+        def scan(directory):
+            target=large if str(directory)=='/proc/10/task' and phase!='complete' else empty
+            return NativeScan(target)
+        def eager(directory):
+            listdir_calls[0]+=1
+            raise AssertionError('actual Path.iterdir eagerly entered os.listdir before item budget')
+        def close_fd(fd):
+            closed.append(fd)
+            assert all(item.closed for item in scans[1:]),'matched membership iterator not closed before pidfd close'
+        m.os.scandir=scan; m.os.listdir=eager; m.os.getpid=lambda:10
+        m.os.pidfd_open=lambda pid:opened.append(pid) or pid; m.os.close=close_fd
+        m.time.monotonic=lambda:clock[0]
+        m.signal.pidfd_send_signal=lambda fd,sig:signals.append(fd)
+        fault=False
+        try:
+            try:result=m.signal_owned(m.signal.SIGTERM,0.08 if phase=='deadline' else 1000000)
+            except RuntimeError as cause:
+                assert phase=='exception' and str(cause)=='controlled native iterator fault'
+                fault=True; result=None
+            assert listdir_calls[0]==0,'eager listdir boundary used'
+            assert scans and all(item.closed for item in scans),'native iterator leaked on partial/exception/complete'
+            assert opened==closed,'pidfd leaked with native iterator fault'
+            if phase=='complete':assert result is True
+            elif phase=='exception':assert fault,'controlled native iterator exception not reached'
+            else:
+                assert result is False,'partial native scan cannot claim complete'
+                assert 20 in signals,'owned membership must permit PID20 signal'
+            if phase=='deadline':assert clock[0]<=0.09,'native iterator deadline ignored'
+            traces.append({'phase':phase,'complete':result,'fault':fault,'items':calls[0],'clock':clock[0],
+                'listdirCalls':listdir_calls[0],'iterators':len(scans),'allClosed':all(item.closed for item in scans),
+                'opened':opened,'closed':closed,'signals':signals})
+        finally:
+            m.os.scandir=native_scan; m.os.listdir=native_listdir; m.time.monotonic=native_clock
+            for name,value in native_ports.items():
+                if value is None:delattr(m.os,name)
+                else:setattr(m.os,name,value)
+            if native_send is None:delattr(m.signal,'pidfd_send_signal')
+            else:m.signal.pidfd_send_signal=native_send
+print(json.dumps({'kernelExecution':False,'python':sys.version.split()[0],'PathIterdirSource':primitive,'traces':traces}))
+`;
+  const result = spawnSync(python.command, [...python.prefix, "-c", script, path.join(root, "scripts/test-subreaper.py")],
+    { encoding: "utf8", timeout: 10_000, env: { ...process.env, PYTHONDONTWRITEBYTECODE: "1" } });
+  expect(result.error, result.stderr).toBeUndefined();
+  expect(result.status, result.stderr).toBe(0);
+  const trace = JSON.parse(result.stdout);
+  expect(trace.kernelExecution).toBe(false);
+  expect(trace.traces).toHaveLength(4);
+  for (const item of trace.traces) {
+    expect(item.listdirCalls).toBe(0);
+    expect(item.allClosed).toBe(true);
+  }
 });
