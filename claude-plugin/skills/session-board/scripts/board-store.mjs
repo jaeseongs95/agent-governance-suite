@@ -9,12 +9,15 @@ const RETAIN_MS = 24 * 3600_000;
 const READ_ONLY_COMMANDS = new Set(["ls", "cat", "pwd", "rg", "grep"]);
 const READ_ONLY_GIT = new Set(["status", "log", "diff", "show"]);
 
-export function openBoard(databasePath, { busyTimeoutMs = 5000 } = {}) {
-  if (databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true });
-  const db = new DatabaseSync(databasePath);
+export function openBoard(input, { busyTimeoutMs = 5000 } = {}) {
+  const shared = typeof input === "string" ? null : input;
+  const databasePath = shared ? shared.databasePath : input;
+  if (!shared && databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true });
+  const db = shared ? shared.database : new DatabaseSync(databasePath);
+  const initialize = () => {
   try {
-    db.exec(`PRAGMA busy_timeout = ${Math.trunc(busyTimeoutMs)};`);
-    if (databasePath !== ":memory:") db.exec("PRAGMA journal_mode = WAL;");
+    if (!shared) db.exec(`PRAGMA busy_timeout = ${Math.trunc(busyTimeoutMs)};`);
+    if (!shared && databasePath !== ":memory:") db.exec("PRAGMA journal_mode = WAL;");
     db.exec(`CREATE TABLE IF NOT EXISTS sessions (
       host TEXT NOT NULL,
       session_id TEXT NOT NULL,
@@ -31,11 +34,16 @@ export function openBoard(databasePath, { busyTimeoutMs = 5000 } = {}) {
     db.close();
     throw error;
   }
+  if (shared) shared.setSchemaVersion(0);
+  };
+  if (shared) shared.initialize(initialize);
+  else initialize();
   return db;
 }
 
 /** Creates the session row or refreshes its working directory and activity time. */
 export function touchSession(db, { host, sessionId, cwd, now }) {
+  if (db.transaction && !db.inTransaction) return db.transaction(() => touchSession(db, { host, sessionId, cwd, now }));
   db.prepare(`INSERT INTO sessions (host, session_id, cwd, started_at, updated_at) VALUES (?, ?, ?, ?, ?)
     ON CONFLICT (host, session_id) DO UPDATE SET cwd = excluded.cwd, updated_at = excluded.updated_at`)
     .run(host, sessionId, cwd, now, now);
@@ -43,6 +51,7 @@ export function touchSession(db, { host, sessionId, cwd, now }) {
 
 /** Marks a new user request; the summary written before it becomes stale. Only the time is stored, never the text. */
 export function recordPrompt(db, session) {
+  if (db.transaction && !db.inTransaction) return db.transaction(() => recordPrompt(db, session));
   touchSession(db, session);
   db.prepare("UPDATE sessions SET last_prompt_at = ? WHERE host = ? AND session_id = ?")
     .run(session.now, session.host, session.sessionId);
@@ -55,6 +64,7 @@ export function normalizeSummary(value) {
 }
 
 export function setSummary(db, session, summary) {
+  if (db.transaction && !db.inTransaction) return db.transaction(() => setSummary(db, session, summary));
   const line = normalizeSummary(summary);
   if (!line) throw new Error(`summary must be one non-empty line of at most ${SUMMARY_MAX_LENGTH} characters`);
   touchSession(db, session);
@@ -69,6 +79,7 @@ export function setSummary(db, session, summary) {
  * Hosts without a request event use the session start as the request marker.
  */
 export function gateDecision(db, session) {
+  if (db.transaction && !db.inTransaction) return db.transaction(() => gateDecision(db, session));
   touchSession(db, session);
   const row = db.prepare("SELECT summary_at, last_prompt_at, started_at FROM sessions WHERE host = ? AND session_id = ?")
     .get(session.host, session.sessionId);
@@ -81,6 +92,7 @@ export function gateDecision(db, session) {
 }
 
 export function pruneSessions(db, now) {
+  if (db.transaction && !db.inTransaction) return db.transaction(() => pruneSessions(db, now));
   db.prepare("DELETE FROM sessions WHERE updated_at < ?").run(new Date(Date.parse(now) - RETAIN_MS).toISOString());
 }
 

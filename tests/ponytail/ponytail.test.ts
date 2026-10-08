@@ -91,7 +91,7 @@ describe("ponytail at the implementation step", () => {
     expect(readFileSync(`${root}claude-plugin/skills/ponytail/SKILL.md`, "utf8")).toMatch(/\nargument-hint: "\[lite\|full\|ultra\]"\r?\n/u);
     const lock = JSON.parse(readFileSync(`${root}skills/source-lock.json`, "utf8")) as { sources: Array<Record<string, unknown>> };
     expect(lock.sources.find((source) => source.skillId === "ponytail")).toMatchObject({
-      source: "https://github.com/jaeseongs95/ponytail.git",
+      source: "https://github.com/DietrichGebert/ponytail.git",
       sourcePath: "skills/ponytail",
       version: "4.10.0",
       ref: { kind: "commit", commit: "83b2cbc3bc50df3030c49d1dfe598ccefe850a85" },
@@ -100,6 +100,10 @@ describe("ponytail at the implementation step", () => {
     const hooks = readFileSync(`${root}hooks/hooks.json`, "utf8") + readFileSync(`${root}claude-overlay/hooks/hooks.json`, "utf8");
     expect(hooks).not.toMatch(/ponytail/iu);
     expect(readFileSync(`${root}claude-overlay/hooks/skill-trigger-hook.mjs`, "utf8")).not.toMatch(/ponytail/iu);
-    expect((lock.sources.find((source) => source.skillId === "ponytail")!.downstreamModifications as string[]).length).toBe(5);
+    const modifications = lock.sources.find((source) => source.skillId === "ponytail")!.downstreamModifications as string[];
+    expect(modifications).toHaveLength(6);
+    expect(modifications[5]).toContain("Originally imported from https://github.com/jaeseongs95/ponytail.git at commit 83b2cbc3bc50df3030c49d1dfe598ccefe850a85");
+    expect(modifications[5]).toContain("Future stable-tag notifications now use this public upstream");
+    expect(modifications[5]).toContain("notify-only policy and automaticInstall: false remain unchanged");
   });
 });
