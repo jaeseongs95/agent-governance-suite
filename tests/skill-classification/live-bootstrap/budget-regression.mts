@@ -41,9 +41,9 @@ if (process.argv[4] === "worker") {
     const config: RunConfig = {schemaVersion: "2.0.0", runId, repo, outputDirectory: path.join(root, runId), endpointEnv: "AGS_BOOTSTRAP_ENDPOINT", credentialEnv: "AGS_BOOTSTRAP_JEV_KEY",
       approvedEndpointDigest: hash(env.AGS_BOOTSTRAP_ENDPOINT), approvedRouteRef: "mock-route", approvalRef: "mock-only", profile: null,
       reservationMode: estimate ? "reviewed-estimate" : "verified-upper-bound", estimator: null,
-      limits: {requests: 2, inputBytes: 1048576, inputTokens: 300000, outputTokens: 10000, responseBytes: 128000, timeoutMs: 1000, runUsd: 0.06},
+      limits: {requests: 2, inputBytes: 1048576, inputTokens: 300000, outputTokens: 10000, responseBytes: 128000, timeoutMs: 1000, runUsd: 0.15},
       prices: estimate ? {billingMode: "token", inputUsdPer1k: 0.000042, outputUsdPer1k: 0, fixedCallMaxUsd: 0} : {billingMode: "fixed-per-call", inputUsdPer1k: 0, outputUsdPer1k: 0, fixedCallMaxUsd: 0.001},
-      budget: {scope: "run", runId, totalAuthorizationUsd: 5, allocatedUsd: 0.06, allocationRef: "offline-mock-allocation", priorRunConfirmedSpendUsd: 0,
+      budget: {scope: "run", runId, totalAuthorizationUsd: 5, allocatedUsd: 0.15, allocationRef: "offline-mock-allocation", priorRunConfirmedSpendUsd: 0,
         priorRunUnknownReservedUsd: 0, accountBalanceUsd: null, accountPriorSpendUsd: null, accountUnknownReservedUsd: null,
         observedAt: new Date(Date.now() - 1000).toISOString(), validUntil: new Date(Date.now() + 60000).toISOString()},
       evidence: {route: null, price: null, priorLedger: null, remaining: null, hardTokenCaps: null, operatorAuthorization: null}};
@@ -70,7 +70,7 @@ if (process.argv[4] === "worker") {
   }
   try {
     const normal = await ready("unknown-account"); const prepared = await api.prepare(normal);
-    const checked = await api.preflight(normal, prepared); assert.equal(checked.status, "READY_FOR_OPERATOR_DISPATCH");
+    const checked = await api.preflight(normal, prepared); assert.equal(checked.status, "READY_FOR_OPERATOR_DISPATCH", "R11_RUN_ALLOCATION_015_ACCEPTED");
     assert.equal(checked.billingGuarantee, "NOT_VERIFIED"); assert.deepEqual(checked.accountObservation, {balanceUsd: null, priorSpendUsd: null, unknownReservedUsd: null});
     let calls = 0;
     const normalResult = await api.run(normal, {env, executionKind: "offline-mock", fetcher: async (_url, init) => {
@@ -82,16 +82,39 @@ if (process.argv[4] === "worker") {
     assert(Math.abs(normalResult.ledger.entries[0]!.estimatedCostUsd! - 0.0000042) < 1e-12);
     checks.push("run allocation allows unknown account; reservation persisted before mock fetch; usage estimate never clears unknown reservation");
 
+    const full = await ready("full-21-015"); full.limits!.requests = 21; await bind(full);
+    const fullChecked = await api.preflight(full, await api.prepare(full)); assert.equal(fullChecked.status, "READY_FOR_OPERATOR_DISPATCH");
+    const fullReservation = fullChecked.requestReservations.reduce((sum, row) => sum + row.reservedUsd, 0);
+    assert(Math.abs(fullReservation - 0.1204098) < 1e-10, "FULL_21_REVIEWED_ESTIMATE_01204098");
+    let fullCalls = 0;
+    const fullResult = await api.run(full, {env, executionKind: "offline-mock", fetcher: async (_url, init) => {fullCalls++; return response(init);}});
+    if (fullResult.status !== "RAW_EVALUATION_RECORDED") throw new Error("Expected full mocked run");
+    assert.equal(fullCalls, 21); assert.equal(fullResult.transportAttempts, 21); assert.equal(fullResult.qualificationStatus, "NOT_RUN");
+    assert.equal(fullResult.selectedReadAppliedVerified, "NOT_RUN");
+    assert(fullResult.ledger.entries.every(entry => entry.state === "unknown" && entry.actualCostUsd === null));
+    assert(Math.abs(fullResult.ledger.entries.reduce((sum, entry) => sum + entry.reservedUsd, 0) - 0.1204098) < 1e-10);
+    const aggregate = await ready("pilot-plus-21"); aggregate.limits!.requests = 21; aggregate.budget!.priorRunUnknownReservedUsd = 0.005734722; await bind(aggregate);
+    const aggregateChecked = await api.preflight(aggregate, await api.prepare(aggregate));
+    assert.equal(aggregateChecked.status, "READY_FOR_OPERATOR_DISPATCH");
+    const pilotPlusFull = aggregate.budget!.priorRunUnknownReservedUsd + aggregateChecked.requestReservations.reduce((sum, entry) => sum + entry.reservedUsd, 0);
+    assert(Math.abs(pilotPlusFull - 0.126144522) < 1e-10, "PILOT_PLUS_21_REVIEWED_AGGREGATE_0126144522");
+    assert(pilotPlusFull <= 0.15); assert.equal(aggregate.budget!.accountBalanceUsd, null);
+    checks.push(".15 local allocation admits full21 mocked reservations .1204098; pilot unknown plus21 .126144522 is a prospective aggregate estimate, not confirmed bill/balance");
+
     let forbiddenReads = 0, forbiddenCalls = 0;
-    const forbiddenEnv = new Proxy({}, {get: () => {forbiddenReads++; throw new Error("Forbidden ENV lookup");}});
+    const forbiddenEnv = new Proxy({}, {get: () => {forbiddenReads++; assert.fail("R11_NO_ENV_LOOKUP_BEFORE_BOUNDARY_BLOCK");}});
     for (const [id, change, code] of [
       ["wrong-run", (c: RunConfig) => {c.budget!.runId = "different-run";}, "RUN_ALLOCATION_UNVERIFIED"],
       ["wrong-scope", (c: RunConfig) => {Object.assign(c.budget!, {scope: "account"});}, "RUN_ALLOCATION_UNVERIFIED"],
       ["wrong-mode", (c: RunConfig) => {Object.assign(c, {reservationMode: "automatic"});}, "RESERVATION_MODE_INVALID"],
       ["wrong-estimator", (c: RunConfig) => {Object.assign(c.estimator!, {method: "unreviewed-byte-rate"});}, "ESTIMATE_PLAN_MISSING"],
-      ["over-allocation", (c: RunConfig) => {c.budget!.allocatedUsd = 0.061;}, "RUN_ALLOCATION_UNVERIFIED"],
-      ["prior-unknown", (c: RunConfig) => {c.budget!.priorRunUnknownReservedUsd = 0.059;}, "RUN_BUDGET_INSUFFICIENT"],
-      ["uncovered-batch", (c: RunConfig) => {c.limits!.requests = 21;}, "RUN_BUDGET_INSUFFICIENT"],
+      ["over-allocation", (c: RunConfig) => {c.budget!.allocatedUsd = 0.151;}, "RUN_ALLOCATION_UNVERIFIED"],
+      ["run-exceeds-allocation", (c: RunConfig) => {c.limits!.runUsd = 0.151;}, "RUN_ALLOCATION_UNVERIFIED"],
+      ["prior-unknown", (c: RunConfig) => {c.budget!.priorRunUnknownReservedUsd = 0.149;}, "RUN_BUDGET_INSUFFICIENT"],
+      ["confirmed-plus-unknown", (c: RunConfig) => {c.budget!.priorRunConfirmedSpendUsd = 0.08; c.budget!.priorRunUnknownReservedUsd = 0.06;}, "RUN_BUDGET_INSUFFICIENT"],
+      ["uncovered-batch", (c: RunConfig) => {c.limits!.requests = 21; c.budget!.priorRunUnknownReservedUsd = 0.03;}, "RUN_BUDGET_INSUFFICIENT"],
+      ["pilot-plus-full-121", (c: RunConfig) => {c.limits!.requests = 21; c.budget!.allocatedUsd = 0.121; c.limits!.runUsd = 0.121; c.budget!.priorRunUnknownReservedUsd = 0.005734722;}, "RUN_BUDGET_INSUFFICIENT"],
+      ["old-lower-allocation", (c: RunConfig) => {c.limits!.requests = 21; c.budget!.allocatedUsd = 0.06; c.limits!.runUsd = 0.06;}, "RUN_BUDGET_INSUFFICIENT"],
       ["too-many", (c: RunConfig) => {c.limits!.requests = 22;}, "FINITE_LIMITS_MISSING"],
       ["allocation-six", (c: RunConfig) => {c.budget!.totalAuthorizationUsd = 6;}, "BUDGET_HARD_LIMIT_USD_5"],
       ["missing-review", (c: RunConfig) => {c.evidence.operatorAuthorization = null;}, "EVIDENCE_MISSING:operatorAuthorization"],
@@ -100,9 +123,9 @@ if (process.argv[4] === "worker") {
     ] as const) {
       const config = await ready(id); change(config); if (id !== "missing-review") await bind(config);
       const result = await api.run(config, {env: forbiddenEnv, executionKind: "offline-mock", fetcher: async () => {forbiddenCalls++; throw new Error("Forbidden call");}});
-      assert.equal(result.status, "BLOCKED"); assert(result.blocked.includes(code), `${id}:${code}`);
+      assert.equal(result.status, "BLOCKED", `R11_BOUNDARY_BLOCKED:${id}`); assert(result.blocked.includes(code), `${id}:${code}`);
     }
-    assert.equal(forbiddenReads, 0); assert.equal(forbiddenCalls, 0); checks.push("wrong run / >.06 / prior unknown / >USD5 / absent review / changed input artifact block before ENV and dispatch");
+    assert.equal(forbiddenReads, 0); assert.equal(forbiddenCalls, 0); checks.push("wrong run / >.15 / prior unknown / insufficient .06 / >USD5 / absent review / changed input artifact block before ENV and dispatch");
 
     for (const [id, fetcher, expected] of [
       ["auth", async () => new Response("", {status: 401}), "AUTH_UNAVAILABLE"],

@@ -17,7 +17,7 @@
     "scope": "run",
     "runId": "public-qualification-001",
     "totalAuthorizationUsd": 5,
-    "allocatedUsd": 0.06,
+    "allocatedUsd": 0.15,
     "allocationRef": null,
     "priorRunConfirmedSpendUsd": null,
     "priorRunUnknownReservedUsd": null,

@@ -20,8 +20,8 @@
     {
       "path": "tests/skill-classification/live-bootstrap/bootstrap.mts",
       "role": "qualification-bootstrap-runtime",
-      "bytes": 34540,
-      "digest": "sha256:0e4ccf294a1303d0fbdb123aa6b0cea9bc8866eb45affed21880a12cef683866",
+      "bytes": 34715,
+      "digest": "sha256:1e258ae50a0e25d9c2a01a1ff186df1cce73c0693995ea7cef2be3cd187e791c",
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
     },
     {
@@ -42,22 +42,22 @@
       "path": "tests/skill-classification/live-bootstrap/config.blocked.example.json",
       "role": "blocked-config-template",
       "bytes": 1055,
-      "digest": "sha256:b27b198abfd941f52fe21438f9bedd12f3a67f514df164506718a877da392422",
+      "digest": "sha256:739a30d0d6b7d1d38fca95cbd17cd7425d3858a4fff8d266752c2ee7fea9e980",
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
     },
     {
       "path": "tests/skill-classification/live-bootstrap/README.md",
       "role": "public-run-instructions",
-      "bytes": 5056,
-      "digest": "sha256:6c94430f5e1bc323e6ee6ef62c4c5098a5af32f7a560f162533af37cb46af562",
+      "bytes": 5394,
+      "digest": "sha256:d293f128634d26a474b6437dc3da2ff81c8c01700b665bf642e22c1dba208a3a",
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
     },
     {
       "path": "tests/skill-classification/live-bootstrap/budget-regression.mts",
       "role": "offline-run-budget-regression",
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
-      "bytes": 15590,
-      "digest": "sha256:920932db113f63f95d562f2a9933c3b12f26366e768a71e2c5174835dd9d2a50"
+      "bytes": 18419,
+      "digest": "sha256:edb60ffa487657cc55e7ee1822fd4a2197f8fa1b0d94819fdaef0c47768509bf"
     }
   ],
   "actualApiCalls": 0,
@@ -69,5 +69,10 @@
     "commit": "439893b9adc9546c135041219ab4ea9ee9d4adfe",
     "tree": "287510912f935b6776662f2a656a41327e964ccf",
     "originalHelperDigest": "sha256:4c55aae69fa16384e922f93ebe0b6a37d8e1a2fd43fb6baaddb11c0c7a892765"
+  },
+  "priorLocalCandidate": {
+    "commit": "5fa35427f4bdfe205b1705c451df1420b635cea5",
+    "tree": "1f7d78fda9a4ea18b39fd97bfbd43f352c8e4736",
+    "purpose": "R11 local run allocation policy .15; actual API/credentials/qualification/host remain NOT_RUN"
   }
 }

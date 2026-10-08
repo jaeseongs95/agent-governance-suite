@@ -44,6 +44,8 @@ const positiveInt = (value: unknown): value is number => Number.isSafeInteger(va
 const sameKeys = (value: object, keys: string[]) => Object.keys(value).every(key => keys.includes(key)) && keys.every(key => Object.hasOwn(value, key));
 const references = ["route", "price", "priorLedger", "remaining", "hardTokenCaps", "operatorAuthorization"] as const;
 const configKeys = ["schemaVersion", "runId", "repo", "outputDirectory", "endpointEnv", "credentialEnv", "approvedEndpointDigest", "approvedRouteRef", "approvalRef", "profile", "limits", "prices", "budget", "evidence"];
+// Local run-allocation policy within the existing USD5 authority; not account balance or a provider billing guarantee.
+const MAX_RUN_ALLOCATION_USD = 0.15;
 const validConfigKeys = (config: BootstrapConfig) => sameKeys(config, config.schemaVersion === "2.0.0" ? [...configKeys, "reservationMode", "estimator"] : configKeys);
 const estimateMode = (config: BootstrapConfig) => config.schemaVersion === "2.0.0" && config.reservationMode === "reviewed-estimate";
 const remaining = (config: BootstrapConfig) => config.schemaVersion === "2.0.0"
@@ -138,7 +140,7 @@ export async function preflight(config: BootstrapConfig, prepared: Awaited<Retur
     fail(runBudget && sameKeys(runBudget, ["scope", "runId", "totalAuthorizationUsd", "allocatedUsd", "allocationRef", "priorRunConfirmedSpendUsd", "priorRunUnknownReservedUsd", "accountBalanceUsd", "accountPriorSpendUsd", "accountUnknownReservedUsd", "observedAt", "validUntil"])
       && runBudget.scope === "run" && runBudget.runId === config.runId && typeof runBudget.allocationRef === "string" && runBudget.allocationRef.length > 0
       && [runBudget.totalAuthorizationUsd, runBudget.allocatedUsd, runBudget.priorRunConfirmedSpendUsd, runBudget.priorRunUnknownReservedUsd].every(finite)
-      && runBudget.allocatedUsd > 0 && runBudget.allocatedUsd <= 0.06 && runBudget.allocatedUsd <= runBudget.totalAuthorizationUsd
+      && runBudget.allocatedUsd > 0 && runBudget.allocatedUsd <= MAX_RUN_ALLOCATION_USD && runBudget.allocatedUsd <= runBudget.totalAuthorizationUsd
       && [runBudget.accountBalanceUsd, runBudget.accountPriorSpendUsd, runBudget.accountUnknownReservedUsd].every(value => value === null || finite(value))
       && remaining(config)! >= 0 && limits && limits.runUsd <= runBudget.allocatedUsd
       && Number.isFinite(Date.parse(runBudget.observedAt)) && Date.parse(runBudget.observedAt) <= now && Date.parse(runBudget.validUntil) > now, "RUN_ALLOCATION_UNVERIFIED");
