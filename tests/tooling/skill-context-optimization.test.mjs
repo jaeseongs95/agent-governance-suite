@@ -1,10 +1,83 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { checkSkillContextOptimization, matchesEngineeringReferenceUpdate, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
+import { matchesReviewedImplementationUpdate } from "../../scripts/check-skill-context-optimization.mjs";
 
 describe("skill context optimization", () => {
+  it("accepts only reviewed integration revision paths and exact bytes", () => {
+    for (const relative of [
+      "skills/model-effort-advisor/SKILL.md",
+      "skills/model-effort-advisor/references/entry-details.md",
+      "skills/model-effort-advisor/scripts/support-guard.mjs",
+      "skills/orchestrator/references/engineering-practices/cli.md",
+    ]) {
+      const bytes = readFileSync(new URL(`../../${relative}`, import.meta.url));
+      expect(matchesReviewedImplementationUpdate(relative, bytes), relative).toBe(true);
+      const altered = Buffer.from(bytes);
+      altered[altered.length - 1] ^= 1;
+      expect(matchesReviewedImplementationUpdate(relative, altered), relative).toBe(false);
+    }
+    const approvedBytes = readFileSync(new URL("../../skills/model-effort-advisor/scripts/support-guard.mjs", import.meta.url));
+    expect(matchesReviewedImplementationUpdate("skills/model-effort-advisor/scripts/unreviewed.mjs", approvedBytes)).toBe(false);
+    expect(matchesReviewedImplementationUpdate("skills/orchestrator/references/engineering-practices/unreviewed.md", approvedBytes)).toBe(false);
+  });
+  it("reports reviewed integration as frozen-change validation without issuing authority", () => {
+    const report = checkSkillContextOptimization();
+    expect(report.baselineRevision).toBe("7bc7753012227938be2a46f68bf3e29d29d5ef34");
+    expect(report.reviewedImplementationUpdates).toMatchObject([{
+      revision: "2.8.1-implementation-r1-model-support-stage-bundle",
+      authorityEffect: "none",
+      modelInitialMaxBytes: 2024,
+    }]);
+    expect(report.totals.skillCount).toBe(20);
+  });
+  it("rejects altered reviewed integration bytes through the public checker", async () => {
+    vi.doMock("node:fs", () => ({
+      readdirSync,
+      readFileSync: (file, ...args) => {
+        const bytes = readFileSync(file, ...args);
+        if (String(file).replaceAll("\\", "/").endsWith("/skills/model-effort-advisor/scripts/support-guard.mjs")) {
+          const altered = Buffer.from(bytes);
+          altered[altered.length - 1] ^= 1;
+          return altered;
+        }
+        return bytes;
+      },
+    }));
+    try {
+      vi.resetModules();
+      const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      const report = checker.checkSkillContextOptimization();
+      expect(report.pass).toBe(false);
+      expect(report.errors).toContain("model-effort-advisor: reviewed implementation bytes differ: skills/model-effort-advisor/scripts/support-guard.mjs");
+    } finally {
+      vi.doUnmock("node:fs");
+      vi.resetModules();
+    }
+  });
+  it("rejects an unreviewed integration path reported by Git without modifying the source tree", async () => {
+    const { execFileSync } = await import("node:child_process");
+    vi.doMock("node:child_process", () => ({
+      execFileSync: (file, args, options) => {
+        if (file === "git" && args.includes("ls-files") && args.at(-1) === "skills/model-effort-advisor") {
+          return Buffer.from("skills/model-effort-advisor/scripts/unreviewed.mjs\n");
+        }
+        return execFileSync(file, args, options);
+      },
+    }));
+    try {
+      vi.resetModules();
+      const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      const report = checker.checkSkillContextOptimization();
+      expect(report.pass).toBe(false);
+      expect(report.errors).toContain("model-effort-advisor: unexpected skill-owned changes: skills/model-effort-advisor/scripts/unreviewed.mjs");
+    } finally {
+      vi.doUnmock("node:child_process");
+      vi.resetModules();
+    }
+  });
   it("accepts only the frozen engineering reference paths and bytes", () => {
     const directory = new URL("../../skills/orchestrator/references/engineering-practices/", import.meta.url);
     for (const name of readdirSync(directory)) {

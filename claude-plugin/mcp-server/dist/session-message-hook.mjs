@@ -86,8 +86,25 @@ function rejectUnexpectedKeys(value, allowed, label) {
   }
 }
 var TrustStore = class {
-  constructor(databasePath) {
-    this.databasePath = databasePath;
+  database;
+  shared;
+  databasePath;
+  signingKey;
+  syntheticSecret;
+  closed = false;
+  constructor(input, syntheticSecret) {
+    this.shared = typeof input === "string" ? void 0 : input;
+    this.databasePath = typeof input === "string" ? input : input.databasePath;
+    this.syntheticSecret = syntheticSecret;
+    const databasePath = this.databasePath;
+    if (this.shared) {
+      this.database = this.shared.database;
+      if (!syntheticSecret || Buffer.from(syntheticSecret, "base64url").length !== 32) throw new WorkflowContractError("INVALID_INPUT", "An explicit new synthetic trust key is required.");
+      this.shared.initialize(() => this.initializeSchema());
+      this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
+      if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", "The stored trust key differs from the explicit synthetic namespace.");
+      return;
+    }
     if (!databasePath.trim()) throw new WorkflowContractError("INVALID_INPUT", "Trust database path must not be empty.");
     if (databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true, mode: 448 });
     this.database = new DatabaseSync(databasePath);
@@ -97,6 +114,7 @@ var TrustStore = class {
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
       this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
+      if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", "The stored trust key differs from the explicit synthetic namespace.");
       if (this.signingKey.length !== 32) throw new Error("Stored trust signing key is invalid.");
       if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync(path.resolve(databasePath), 384);
     } catch (cause) {
@@ -108,10 +126,6 @@ var TrustStore = class {
       throw this.storageError("Cannot initialize the trust database.", cause);
     }
   }
-  databasePath;
-  database;
-  signingKey;
-  closed = false;
   recordInputSource(input) {
     rejectUnexpectedKeys(input, INPUT_SOURCE_KEYS, "Input source metadata");
     if (!input.attestation || typeof input.attestation !== "object" || Array.isArray(input.attestation)) {
@@ -228,7 +242,7 @@ var TrustStore = class {
     };
   }
   initializeSchema() {
-    const version = this.database.prepare("PRAGMA user_version").get().user_version;
+    const version = this.shared?.getSchemaVersion() ?? this.database.prepare("PRAGMA user_version").get().user_version;
     if (version > SCHEMA_VERSION) {
       throw new WorkflowContractError("INVALID_INPUT", "Trust database schema is newer than this server supports.", {
         databasePath: this.databasePath,
@@ -236,8 +250,8 @@ var TrustStore = class {
         actualVersion: version
       });
     }
-    this.database.exec(`
-      BEGIN IMMEDIATE;
+    this.transaction(() => {
+      this.database.exec(`
       CREATE TABLE IF NOT EXISTS trust_metadata (
         key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL
       ) STRICT;
@@ -255,20 +269,22 @@ var TrustStore = class {
       ) STRICT;
       CREATE INDEX IF NOT EXISTS input_source_latest
         ON input_source_receipts(host, session_id, observed_at DESC);
-      PRAGMA user_version = ${SCHEMA_VERSION};
-      COMMIT;
     `);
+      if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION);
+      else this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
+    });
   }
   getOrCreateSecret(name) {
     return this.transaction(() => {
       const existing = this.database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(name);
       if (existing) return existing.value;
-      const value = randomBytes(32).toString("base64url");
+      const value = this.syntheticSecret ?? randomBytes(32).toString("base64url");
       this.database.prepare("INSERT INTO trust_metadata (key, value, updated_at) VALUES (?, ?, ?)").run(name, value, (/* @__PURE__ */ new Date()).toISOString());
       return value;
     });
   }
   transaction(operation) {
+    if (this.shared) return this.shared.transaction(operation);
     this.database.exec("BEGIN IMMEDIATE;");
     try {
       const result = operation();

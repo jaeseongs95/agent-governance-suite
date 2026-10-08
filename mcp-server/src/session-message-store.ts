@@ -2,6 +2,7 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
+import type { SharedModuleContext, SqlDatabase } from "../../runtime/unified-state/shared-connection.mjs";
 
 import { isBoundedIdentity, SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "./session-message-protocol.js";
 import { isWakeHookObservation, verifyHistoricalWakeObservation, wakeBackoffDelay, type HistoricalWakeEvidence, type WakeDispatchOutcome, type WakeHookObservationReader } from "./session-message-wake-port.js";
@@ -148,19 +149,23 @@ export interface ClaimLimits {
   maxBodyChars?: number;
 }
 
-export class SessionMessageStore {
-  readonly database: DatabaseSync;
+export class SessionMessageStore<Input extends string | SharedModuleContext = string> {
+  readonly database: Input extends string ? DatabaseSync : SqlDatabase;
+  private readonly shared: SharedModuleContext | undefined;
 
-  constructor(databasePath: string) {
-    if (databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true, mode: 0o700 });
-    this.database = new DatabaseSync(databasePath);
-    this.database.exec("PRAGMA busy_timeout = 5000;");
-    const storedVersion = (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
+  constructor(input: Input) {
+    this.shared = typeof input === "string" ? undefined : input;
+    const databasePath = typeof input === "string" ? input : input.databasePath;
+    if (!this.shared && databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true, mode: 0o700 });
+    this.database = (this.shared?.database ?? new DatabaseSync(databasePath)) as Input extends string ? DatabaseSync : SqlDatabase;
+    const initialize = () => {
+    if (!this.shared) this.database.exec("PRAGMA busy_timeout = 5000;");
+    const storedVersion = (this.shared?.getSchemaVersion() ?? (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version);
     if (storedVersion > MESSAGE_SCHEMA_VERSION) {
       this.database.close();
       throw new Error(`The session message database schema ${storedVersion} is newer than this broker supports.`);
     }
-    if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
+    if (!this.shared && databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
     this.database.exec(`CREATE TABLE IF NOT EXISTS messages (
       message_id TEXT PRIMARY KEY,
       sender_host TEXT NOT NULL,
@@ -218,9 +223,8 @@ export class SessionMessageStore {
     ) STRICT;
     CREATE INDEX IF NOT EXISTS session_presence_latest
       ON session_presence (host, session_id, started_at DESC);`);
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
-      const version = (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
+    return this.transaction(() => {
+      const version = (this.shared?.getSchemaVersion() ?? (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version);
       if (version > MESSAGE_SCHEMA_VERSION) throw new Error(`The session message database schema ${version} is newer than this broker supports.`);
       this.database.exec(`CREATE TABLE IF NOT EXISTS prepared_messages (
         message_id TEXT PRIMARY KEY,
@@ -293,12 +297,14 @@ export class SessionMessageStore {
         active_at TEXT NOT NULL,
         PRIMARY KEY (host, session_id)
       ) STRICT;`);
-      if (version < MESSAGE_SCHEMA_VERSION) this.database.exec(`PRAGMA user_version = ${MESSAGE_SCHEMA_VERSION};`);
-      this.database.exec("COMMIT");
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+      if (this.shared) this.shared.setSchemaVersion(MESSAGE_SCHEMA_VERSION);
+      else if (version < MESSAGE_SCHEMA_VERSION) this.database.exec(`PRAGMA user_version = ${MESSAGE_SCHEMA_VERSION};`);
+
+
+    });
+    };
+    if (this.shared) this.shared.initialize(initialize);
+    else initialize();
   }
 
   close(): void {
@@ -306,6 +312,8 @@ export class SessionMessageStore {
   }
 
   prune(nowMs = Date.now()): void {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.prune(nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const now = iso(nowMs);
     const acknowledgedBefore = iso(nowMs - 3600_000);
     this.database.prepare("DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)").run(now, acknowledgedBefore);
@@ -378,10 +386,11 @@ export class SessionMessageStore {
     if (typeof input.body !== "string" || !input.body.trim() || Buffer.byteLength(input.body, "utf8") > MESSAGE_BODY_MAX_BYTES) throw new Error("body must contain 1-4096 UTF-8 bytes.");
     if (input.body.includes("\0")) throw new Error("body must not contain NUL characters.");
     if (!Number.isInteger(ttlSeconds) || ttlSeconds < 30 || ttlSeconds > MESSAGE_TTL_MAX_SECONDS) throw new Error("ttlSeconds must be an integer from 30 to 86400.");
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.prepare(input, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const result = { messageId: randomUUID(), preparedAt: iso(nowMs), expiresAt: iso(nowMs + MESSAGE_DRAFT_TTL_MS) };
     const recordBytes = Buffer.byteLength(JSON.stringify({ ...input, ttlSeconds, ...result }), "utf8");
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    return this.transaction(() => {
       this.prune(nowMs);
       // Admission only; submitPrepared repeats the authoritative check.
       this.assertReceiptCapacity(input.sender, "; no draft was created.");
@@ -392,12 +401,10 @@ export class SessionMessageStore {
       this.database.prepare(`INSERT INTO prepared_messages (message_id, sender_host, sender_session_id, target_host, target_session_id, body, ttl_seconds, prepared_at, expires_at, record_bytes)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
         .run(result.messageId, input.sender.host, input.sender.sessionId, input.target.host, input.target.sessionId, input.body, ttlSeconds, result.preparedAt, result.expiresAt, recordBytes);
-      this.database.exec("COMMIT");
+
       return result;
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+
+    });
   }
 
   /** ID ownership, capacity, queue insert and first receipt share one transaction. */
@@ -405,8 +412,9 @@ export class SessionMessageStore {
     messageId: string; createdAt: string; expiresAt: string; duplicate: boolean; autoWake: SessionAutoWakeOutlookV1;
   } {
     boundedIdentity(sender);
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.submitPrepared(sender, messageId, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
       this.prune(nowMs);
       const row = this.database.prepare("SELECT * FROM prepared_messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ? AND expires_at > ?")
         .get(messageId, sender.host, sender.sessionId, iso(nowMs)) as Record<string, unknown> | undefined;
@@ -415,7 +423,7 @@ export class SessionMessageStore {
       if (row.receipt !== null) {
         const receipt = JSON.parse(String(row.receipt)) as { messageId: string; createdAt: string; expiresAt: string };
         const autoWake = this.autoWakeOutlook(target, nowMs);
-        this.database.exec("COMMIT");
+
         return { ...receipt, duplicate: true, autoWake };
       }
       this.assertReceiptCapacity(sender, ".");
@@ -428,12 +436,10 @@ export class SessionMessageStore {
       this.database.prepare("UPDATE prepared_messages SET body = NULL, receipt = ?, expires_at = ?, record_bytes = ? WHERE message_id = ?")
         .run(receiptJson, expiresAt, recordBytes, messageId);
       const autoWake = this.autoWakeOutlook(target, nowMs);
-      this.database.exec("COMMIT");
+
       return { ...receipt, autoWake };
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+
+    });
   }
 
   /** Internal queue primitive, also retained for existing-data fixtures; public send uses submitPrepared. */
@@ -455,6 +461,8 @@ export class SessionMessageStore {
     }
     const messageId = input.messageId ?? randomUUID();
     if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/u.test(messageId)) throw new Error("messageId must be 8-128 safe identifier characters.");
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.send(input, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
     const existing = this.database.prepare("SELECT * FROM messages WHERE message_id = ?").get(messageId) as Record<string, unknown> | undefined;
     if (existing) {
@@ -534,18 +542,17 @@ export class SessionMessageStore {
 
   claim(target: SessionIdentity, nowMs = Date.now(), limits: ClaimLimits = {}): SessionMessage[] {
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.claim(target, nowMs, limits));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    return this.transaction(() => {
       const claimed = this.claimLocked(target, nowMs, limits);
       if (claimed.length > 0) this.consumePendingWakes(target, nowMs);
       this.recordActivity(target, nowMs);
-      this.database.exec("COMMIT");
+
       return claimed;
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+
+    });
   }
 
   claimWake(target: SessionIdentity, nonces: string[], nowMs = Date.now(), limits: ClaimLimits = {}): { recognized: boolean; messages: SessionMessage[] } {
@@ -554,83 +561,84 @@ export class SessionMessageStore {
       throw new Error("wake nonces are invalid.");
     }
     const digests = [...new Set(nonces.map(nonceDigest))];
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.claimWake(target, nonces, nowMs, limits));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
     const now = iso(nowMs);
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    return this.transaction(() => {
       const recognized = digests.every((digest) => Boolean(this.database.prepare(`SELECT 1 FROM wake_nonces
         WHERE nonce_digest = ? AND host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ?`)
         .get(digest, target.host, target.sessionId, now)));
       if (!recognized) {
-        this.database.exec("COMMIT");
+
         return { recognized: false, messages: [] };
       }
       const messages = this.claimLocked(target, nowMs, limits);
       const consume = this.database.prepare("UPDATE wake_nonces SET consumed_at = ? WHERE nonce_digest = ? AND consumed_at IS NULL");
       for (const digest of digests) consume.run(now, digest);
-      this.database.exec("COMMIT");
+
       return { recognized: true, messages };
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+
+    });
   }
 
   observeNativeInput(target: SessionIdentity, nowMs = Date.now()): void {
     boundedIdentity(target);
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.observeNativeInput(target, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
       this.database.prepare(`INSERT INTO input_observations (host, session_id, deferred_tool_claim, observed_at)
         VALUES (?, ?, 1, ?) ON CONFLICT (host, session_id) DO UPDATE SET deferred_tool_claim = 1, observed_at = excluded.observed_at`)
         .run(target.host, target.sessionId, iso(nowMs));
       this.recordActivity(target, nowMs);
-      this.database.exec("COMMIT");
-    } catch (error) { this.database.exec("ROLLBACK"); throw error; }
+
+
+    });
   }
 
   claimDeferred(target: SessionIdentity, nowMs = Date.now(), limits: ClaimLimits = {}): SessionMessage[] {
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.claimDeferred(target, nowMs, limits));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    return this.transaction(() => {
       const skipped = this.database.prepare(`UPDATE input_observations SET deferred_tool_claim = 0
         WHERE host = ? AND session_id = ? AND deferred_tool_claim = 1`).run(target.host, target.sessionId).changes === 1;
       const messages = skipped ? [] : this.claimLocked(target, nowMs, limits);
       if (messages.length > 0) this.consumePendingWakes(target, nowMs);
       this.recordActivity(target, nowMs);
-      this.database.exec("COMMIT");
+
       return messages;
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+
+    });
   }
 
   claimTurnEnd(target: SessionIdentity, nowMs = Date.now(), limits: ClaimLimits = {}): SessionMessage[] {
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.claimTurnEnd(target, nowMs, limits));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    return this.transaction(() => {
       this.database.prepare("DELETE FROM input_observations WHERE host = ? AND session_id = ?").run(target.host, target.sessionId);
       const messages = this.claimLocked(target, nowMs, limits);
       if (messages.length > 0) this.consumePendingWakes(target, nowMs);
       this.recordActivity(target, nowMs);
-      this.database.exec("COMMIT");
+
       return messages;
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+
+    });
   }
 
   clearDeferred(target: SessionIdentity, nowMs = Date.now()): void {
     boundedIdentity(target);
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.clearDeferred(target, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
       this.database.prepare("DELETE FROM input_observations WHERE host = ? AND session_id = ?").run(target.host, target.sessionId);
       this.recordActivity(target, nowMs);
-      this.database.exec("COMMIT");
-    } catch (error) { this.database.exec("ROLLBACK"); throw error; }
+
+
+    });
   }
 
   acknowledge(target: SessionIdentity, messageIds: string[], nowMs = Date.now()): number {
@@ -638,29 +646,30 @@ export class SessionMessageStore {
     if (messageIds.length < 1 || messageIds.length > 50 || messageIds.some((id) => typeof id !== "string" || id.length > 128)) {
       throw new Error("messageIds must contain 1-50 bounded identifiers.");
     }
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.acknowledge(target, messageIds, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const statement = this.database.prepare(`UPDATE messages SET acknowledged_at = ?, claim_until = NULL
       WHERE message_id = ? AND target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL`);
     // Only the first ACK shortens the receipt, and min() never extends it.
     const receipt = this.database.prepare("UPDATE prepared_messages SET expires_at = min(expires_at, ?) WHERE message_id = ? AND receipt IS NOT NULL");
     let count = 0;
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    return this.transaction(() => {
       for (const messageId of new Set(messageIds)) {
         if (statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes !== 1) continue;
         receipt.run(iso(nowMs + MESSAGE_RECEIPT_EXTRA_MS), messageId);
         count++;
       }
       this.recordActivity(target, nowMs);
-      this.database.exec("COMMIT");
+
       return count;
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+
+    });
   }
 
   status(sender: SessionIdentity, messageId: string, nowMs = Date.now()): Record<string, unknown> | null {
     boundedIdentity(sender);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.status(sender, messageId, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
     const row = this.database.prepare(`SELECT message_id, target_host, target_session_id, created_at, expires_at,
       claimed_at, acknowledged_at, delivery_attempts, first_delivered_at FROM messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ?`)
@@ -692,6 +701,8 @@ export class SessionMessageStore {
   peerWaitState(sender: SessionIdentity, target: SessionIdentity, nowMs = Date.now()): { related: boolean; fingerprint: string } {
     boundedIdentity(sender);
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.peerWaitState(sender, target, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const rows = this.database.prepare(`SELECT message_id, sender_host, sender_session_id, target_host, target_session_id,
       created_at, claimed_at, acknowledged_at, delivery_attempts, first_delivered_at FROM messages
       WHERE expires_at > ? AND ((sender_host = ? AND sender_session_id = ? AND target_host = ? AND target_session_id = ?)
@@ -703,6 +714,8 @@ export class SessionMessageStore {
 
   liveRelay(target: SessionIdentity, transport: string, nowMs = Date.now()): { relayId: string; pid: number; parentPid: number; updatedAt: string } | null {
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.liveRelay(target, transport, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const row = this.database.prepare("SELECT relay_id, pid, parent_pid, updated_at FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lease_until > ?")
       .get(target.host, target.sessionId, transport, iso(nowMs)) as { relay_id: string; pid: number; parent_pid: number; updated_at: string } | undefined;
     return row ? { relayId: row.relay_id, pid: row.pid, parentPid: row.parent_pid, updatedAt: row.updated_at } : null;
@@ -714,6 +727,8 @@ export class SessionMessageStore {
    */
   autoWakeOutlook(target: SessionIdentity, nowMs = Date.now()): SessionAutoWakeOutlookV1 {
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.autoWakeOutlook(target, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const now = iso(nowMs);
     const outlook = (state: SessionAutoWakeOutlookV1["state"], reason: SessionAutoWakeOutlookV1["reason"], basisAt: unknown): SessionAutoWakeOutlookV1 =>
       ({ state, reason, basisAt: basisAt === null || basisAt === undefined ? null : String(basisAt), checkedAt: now, authorityEffect: "none" });
@@ -742,6 +757,8 @@ export class SessionMessageStore {
 
   pendingCount(target: SessionIdentity, nowMs = Date.now()): number {
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.pendingCount(target, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
     const now = iso(nowMs);
     const row = this.database.prepare(`SELECT count(*) AS count FROM messages
@@ -754,6 +771,8 @@ export class SessionMessageStore {
   acquireRelay(input: SessionIdentity & { transport: string; relayId: string; pid: number; parentPid: number }, nowMs = Date.now()): boolean {
     boundedIdentity(input);
     if (!input.transport || input.transport.length > 64 || !input.relayId || input.relayId.length > 128) throw new Error("Invalid relay identity.");
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.acquireRelay(input, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
     const now = iso(nowMs);
     const until = iso(nowMs + RELAY_LEASE_MS);
@@ -771,6 +790,8 @@ export class SessionMessageStore {
   }
 
   heartbeatRelay(input: SessionIdentity & { transport: string; relayId: string }, nowMs = Date.now()): boolean {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.heartbeatRelay(input, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const result = this.database.prepare(`UPDATE relay_leases SET lease_until = ?, updated_at = ?
       WHERE host = ? AND session_id = ? AND transport = ? AND relay_id = ?`)
       .run(iso(nowMs + RELAY_LEASE_MS), iso(nowMs), input.host, input.sessionId, input.transport, input.relayId);
@@ -781,32 +802,32 @@ export class SessionMessageStore {
   relayTick(input: SessionIdentity & { transport: string; relayId: string; instanceId: string; includePending: boolean }, nowMs = Date.now()): { alive: boolean; count: number } {
     boundedIdentity(input);
     if (!input.transport || input.transport.length > 64 || !input.relayId || input.relayId.length > 128 || !input.instanceId || input.instanceId.length > 128 || typeof input.includePending !== "boolean") throw new Error("Invalid relay tick identity or includePending.");
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.relayTick(input, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
       const presence = this.presence(input, nowMs);
       const relay = this.liveRelay(input, input.transport, nowMs);
       if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport || relay?.relayId !== input.relayId) {
-        this.database.exec("ROLLBACK");
+
         return { alive: false, count: 0 };
       }
       this.heartbeatRelay(input, nowMs);
       this.heartbeatPresence(input, input.instanceId, nowMs);
       const count = input.includePending ? this.pendingCount(input, nowMs) : 0;
-      this.database.exec("COMMIT");
+
       return { alive: true, count };
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+
+    });
   }
 
   reserveWake(target: SessionIdentity, nonce: string, nowMs = Date.now()): boolean {
     boundedIdentity(target);
     if (nonce.length < 16 || nonce.length > 200) throw new Error("Invalid wake nonce.");
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.reserveWake(target, nonce, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
     const now = iso(nowMs);
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    return this.transaction(() => {
       const outstanding = this.database.prepare(`SELECT 1 FROM wake_nonces
         WHERE host = ? AND session_id = ? AND (state IN ('reserved', 'started', 'submitted', 'unknown')
           OR (state = 'legacy' AND consumed_at IS NULL AND expires_at > ?)) LIMIT 1`)
@@ -820,17 +841,15 @@ export class SessionMessageStore {
           AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?) LIMIT 1`)
         .get(target.host, target.sessionId, now, now);
       if (outstanding || delivering || !claimable) {
-        this.database.exec("COMMIT");
+
         return false;
       }
       this.database.prepare("INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at) VALUES (?, ?, ?, ?)")
         .run(nonceDigest(nonce), target.host, target.sessionId, iso(nowMs + WAKE_TTL_MS));
-      this.database.exec("COMMIT");
+
       return true;
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
+
+    });
   }
 
   releaseWake(target: SessionIdentity, nonce: string): boolean {
@@ -844,6 +863,8 @@ export class SessionMessageStore {
   /** Board classification checks ownership; only the host hook can record observation. */
   consumeWake(target: SessionIdentity, nonce: string, nowMs = Date.now()): boolean {
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.consumeWake(target, nonce, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     return Boolean(this.database.prepare(`SELECT 1 FROM wake_nonces
       WHERE nonce_digest = ? AND host = ? AND session_id = ? AND expires_at > ?`)
       .get(nonceDigest(nonce), target.host, target.sessionId, iso(nowMs)));
@@ -886,8 +907,9 @@ export class SessionMessageStore {
     for (const value of [input.instanceId, input.relayId, input.transport]) {
       if (typeof value !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(value)) throw new Error("Invalid wake relay binding.");
     }
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.reserveManagedWake(input, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
       this.prune(nowMs);
       let attempt: WakeAttempt | null = null;
       let active = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ?
@@ -936,57 +958,64 @@ export class SessionMessageStore {
           attempt = { ...input, generation, attemptId, dispatchEpoch: 0 };
         }
       }
-      this.database.exec("COMMIT");
+
       return { dispatch: attempt !== null, attempt };
-    } catch (error) { this.database.exec("ROLLBACK"); throw error; }
+
+    });
   }
 
   /** CAS succeeds once. The caller must not call a host adapter without this committed start. */
   startManagedWake(attempt: WakeAttempt, nowMs = Date.now()): WakeReservation {
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.startManagedWake(attempt, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
       const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
         AND state = 'reserved' AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND attempt_id = ? AND dispatch_epoch = ?`)
         .get(nonceDigest(attempt.nonce), attempt.host, attempt.sessionId, attempt.instanceId, attempt.generation,
           attempt.transport, attempt.relayId, attempt.attemptId, attempt.dispatchEpoch) as Record<string, unknown> | undefined;
       if (!row || !this.wakeBindingCurrent(attempt, attempt.generation, nowMs)
         || (row.retry_not_before !== null && String(row.retry_not_before) > iso(nowMs))) {
-        this.database.exec("COMMIT"); return { dispatch: false, attempt: null };
+         return { dispatch: false, attempt: null };
       }
       if (String(row.expires_at) <= iso(nowMs) || !this.wakeClaimable(attempt, nowMs)) {
         this.database.prepare("UPDATE wake_nonces SET state = 'not-submitted', outcome_at = ? WHERE nonce_digest = ? AND state = 'reserved'")
           .run(iso(nowMs), nonceDigest(attempt.nonce));
-        this.database.exec("COMMIT"); return { dispatch: false, attempt: null };
+         return { dispatch: false, attempt: null };
       }
       this.database.prepare("UPDATE wake_nonces SET state = 'started', started_at = ?, dispatch_epoch = dispatch_epoch + 1 WHERE nonce_digest = ?")
         .run(iso(nowMs), nonceDigest(attempt.nonce));
-      this.database.exec("COMMIT");
+
       return { dispatch: true, attempt: { ...attempt, dispatchEpoch: attempt.dispatchEpoch + 1 } };
-    } catch (error) { this.database.exec("ROLLBACK"); throw error; }
+
+    });
   }
 
   recordManagedWakeOutcome(attempt: WakeAttempt, outcome: WakeDispatchOutcome, nowMs = Date.now()): boolean {
     if (!["submitted", "definite-failure", "accepted-or-unknown"].includes(outcome)) throw new Error("Invalid wake dispatch outcome.");
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.recordManagedWakeOutcome(attempt, outcome, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
       const row = this.database.prepare(`SELECT retry_count FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
         AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND attempt_id = ? AND dispatch_epoch = ?
         AND late_observed_at IS NULL AND observed_at IS NULL AND consumed_at IS NULL
         AND state IN ('started', 'unknown')`).get(nonceDigest(attempt.nonce), attempt.host, attempt.sessionId,
           attempt.instanceId, attempt.generation, attempt.transport, attempt.relayId, attempt.attemptId, attempt.dispatchEpoch) as { retry_count: number } | undefined;
-      if (!row) { this.database.exec("COMMIT"); return false; }
+      if (!row) {  return false; }
       const retry = outcome === "definite-failure";
       const nextState = retry ? this.wakeGenerationReplaced(attempt, nowMs) ? "not-submitted" : "reserved"
         : outcome === "submitted" ? "submitted" : "unknown";
       this.database.prepare(`UPDATE wake_nonces SET state = ?, outcome_at = ?, retry_not_before = ?, retry_count = ?
         WHERE nonce_digest = ?`).run(nextState, iso(nowMs),
           retry ? iso(nowMs + wakeBackoffDelay(row.retry_count)) : null, row.retry_count + (retry ? 1 : 0), nonceDigest(attempt.nonce));
-      this.database.exec("COMMIT"); return true;
-    } catch (error) { this.database.exec("ROLLBACK"); throw error; }
+       return true;
+
+    });
   }
 
   managedWakeStatus(target: SessionIdentity, nowMs = Date.now()): Record<string, unknown> | null {
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.managedWakeStatus(target, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state <> 'legacy'
       ORDER BY CASE WHEN state IN ('reserved', 'started', 'submitted', 'unknown') THEN 0 ELSE 1 END, rowid DESC LIMIT 1`)
       .get(target.host, target.sessionId) as Record<string, unknown> | undefined;
@@ -1005,7 +1034,7 @@ export class SessionMessageStore {
 
   /** Terminal-only maintenance. Historical evidence cannot claim bodies or observe a current relay. */
   reconcileHistoricalWake(target: SessionIdentity, attemptId: string, sourceReceiptId: string, nowMs = Date.now(),
-    verify = verifyHistoricalWakeObservation): {
+    verify: typeof verifyHistoricalWakeObservation = this.shared ? () => null : verifyHistoricalWakeObservation): {
       reconciled: boolean;
       evidence: (HistoricalWakeEvidence & { oldBinding: Omit<WakeAttempt, "nonce">; lateObservedAt: string; reconciledAt: string }) | null;
     } {
@@ -1013,22 +1042,23 @@ export class SessionMessageStore {
     if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(attemptId)
       || !/^source-[A-Za-z0-9-]{1,128}$/u.test(sourceReceiptId)) throw new Error("Invalid historical wake identity.");
     const rejected = { reconciled: false, evidence: null };
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.reconcileHistoricalWake(target, attemptId, sourceReceiptId, nowMs, verify));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const isOldGeneration = (row: Record<string, unknown>) => {
       const presence = this.presence(target, nowMs);
       return presence.instanceId !== null && presence.startedAt !== null
         && (row.instance_id !== presence.instanceId || row.birth_generation !== presence.startedAt);
     };
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
+    return this.transaction(() => {
       const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ?
         AND state = 'unknown' AND late_observed_at IS NOT NULL AND consumed_at IS NULL AND observed_at IS NULL`)
         .get(target.host, target.sessionId, attemptId) as Record<string, unknown> | undefined;
       if (!row || ![row.nonce, row.instance_id, row.birth_generation, row.transport, row.relay_id, row.started_at].every((value) => typeof value === "string")
         || row.nonce_digest !== nonceDigest(String(row.nonce)) || Number(row.dispatch_epoch) < 1 || !isOldGeneration(row)) {
-        this.database.exec("COMMIT"); return rejected;
+         return rejected;
       }
       const proof = verify(target, String(row.nonce), sourceReceiptId, String(row.started_at), String(row.late_observed_at), nowMs);
-      if (!proof || !isOldGeneration(row)) { this.database.exec("COMMIT"); return rejected; }
+      if (!proof || !isOldGeneration(row)) {  return rejected; }
       // Recheck every original binding and observation field after the separate read-only trust snapshot.
       const changed = this.database.prepare(`UPDATE wake_nonces SET state = 'observed', observed_at = ?, consumed_at = ?
         WHERE nonce_digest = ? AND nonce = ? AND host = ? AND session_id = ? AND attempt_id = ?
@@ -1037,14 +1067,15 @@ export class SessionMessageStore {
         .run(proof.observedAt, iso(nowMs), String(row.nonce_digest), String(row.nonce), target.host, target.sessionId, attemptId,
           String(row.instance_id), String(row.birth_generation), String(row.transport), String(row.relay_id), Number(row.dispatch_epoch),
           String(row.started_at), String(row.late_observed_at)).changes;
-      this.database.exec("COMMIT");
+
       if (changed !== 1) return rejected;
       const attempt = this.wakeAttempt(row);
       const oldBinding = { host: attempt.host, sessionId: attempt.sessionId, instanceId: attempt.instanceId,
         generation: attempt.generation, transport: attempt.transport, relayId: attempt.relayId,
         attemptId: attempt.attemptId, dispatchEpoch: attempt.dispatchEpoch };
       return { reconciled: true, evidence: { ...proof, oldBinding, lateObservedAt: String(row.late_observed_at), reconciledAt: iso(nowMs) } };
-    } catch (error) { this.database.exec("ROLLBACK"); throw error; }
+
+    });
   }
 
   /** Verified arrival retires its attempt; only current bindings may claim bodies in the same transaction. */
@@ -1055,13 +1086,14 @@ export class SessionMessageStore {
     const rejected = { recognized: false, messages: [], binding: null };
     if (!isWakeHookObservation(observation, target) || !reader) return rejected;
     const digests = [...new Set(observation.wakeCandidates!.map(nonceDigest))];
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
-      if (!reader.verifyObservation(target, observation, receiptId, nowMs)) { this.database.exec("COMMIT"); return rejected; }
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.claimHostWake(target, observation, receiptId, reader, nowMs, limits));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
+      if (!reader.verifyObservation(target, observation, receiptId, nowMs)) {  return rejected; }
       const rows = digests.map((digest) => this.database.prepare("SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?")
         .get(digest, target.host, target.sessionId) as Record<string, unknown> | undefined);
       if (rows.some((row) => !row || !["legacy", "started", "submitted", "unknown", "expired-unobserved"].includes(String(row.state)))) {
-        this.database.exec("COMMIT"); return rejected;
+         return rejected;
       }
       this.recordActivity(target, nowMs);
       const presence = this.presence(target, nowMs);
@@ -1071,7 +1103,7 @@ export class SessionMessageStore {
         WHERE host = ? AND session_id = ? AND state = 'expired-unobserved' AND nonce_digest IN (SELECT value FROM json_each(?))`)
         .run(iso(nowMs), target.host, target.sessionId, JSON.stringify(digests));
       const live = rows.filter((row) => row!.state !== "expired-unobserved");
-      if (live.length === 0) { this.database.exec("COMMIT"); return { ...rejected, retired: true }; }
+      if (live.length === 0) {  return { ...rejected, retired: true }; }
       const valid = live.every((row) => row!.state === "legacy" ? row!.consumed_at === null && String(row!.expires_at) > iso(nowMs)
         : row!.instance_id === presence.instanceId && row!.birth_generation === presence.startedAt
           && row!.transport === presence.transport && presence.state === "online"
@@ -1082,7 +1114,7 @@ export class SessionMessageStore {
           SET late_observed_at = coalesce(late_observed_at, ?), state = 'observed', consumed_at = ?, observed_at = ?
           WHERE nonce_digest = ? AND state IN ('started', 'submitted', 'unknown')`)
           .run(iso(nowMs), iso(nowMs), iso(nowMs), String(row!.nonce_digest));
-        this.database.exec("COMMIT"); return rejected;
+         return rejected;
       }
       const messages = this.claimLocked(target, nowMs, limits);
       let binding: WakeAttempt | null = null;
@@ -1094,8 +1126,9 @@ export class SessionMessageStore {
           binding = this.wakeAttempt(row!);
         }
       }
-      this.database.exec("COMMIT"); return { recognized: true, messages, binding };
-    } catch (error) { this.database.exec("ROLLBACK"); throw error; }
+       return { recognized: true, messages, binding };
+
+    });
   }
 
   startPresence(input: SessionIdentity & {
@@ -1117,6 +1150,8 @@ export class SessionMessageStore {
     ] as const) {
       if (value !== undefined && (!value || value.length > maximum)) throw new Error(`${name} is invalid.`);
     }
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.startPresence(input, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const now = iso(nowMs);
     this.database.prepare(`INSERT INTO session_presence (
       host, session_id, instance_id, transport, wake_visibility, can_wake_silently, supported_injection, idle_wake,
@@ -1145,6 +1180,8 @@ export class SessionMessageStore {
   heartbeatPresence(target: SessionIdentity, instanceId: string, nowMs = Date.now()): boolean {
     boundedIdentity(target);
     if (!instanceId) throw new Error("presence instanceId is required.");
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.heartbeatPresence(target, instanceId, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const row = this.database.prepare(`SELECT instance_id FROM session_presence
       WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL AND lease_until > ?`).get(target.host, target.sessionId, instanceId, iso(nowMs));
     const selected = row as { instance_id: string } | undefined;
@@ -1159,6 +1196,8 @@ export class SessionMessageStore {
     boundedIdentity(target);
     if (!reason || reason.length > 100) throw new Error("endReason is invalid.");
     if (!instanceId) throw new Error("presence instanceId is required.");
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.endPresence(target, reason, instanceId, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const row = this.database.prepare(`SELECT instance_id FROM session_presence
       WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL`).get(target.host, target.sessionId, instanceId);
     const selected = row as { instance_id: string } | undefined;
@@ -1171,6 +1210,8 @@ export class SessionMessageStore {
 
   presence(target: SessionIdentity, nowMs = Date.now()): SessionPresence {
     boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.presence(target, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     const row = this.database.prepare(`SELECT * FROM session_presence
       WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1`)
       .get(target.host, target.sessionId) as Record<string, unknown> | undefined;
@@ -1199,10 +1240,19 @@ export class SessionMessageStore {
 
   /** Without targets every stored identity is listed (the pre-2.7.4 request); callers bound the batch themselves. */
   listPresence(nowMs = Date.now(), targets?: SessionIdentity[]): SessionPresenceView[] {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.listPresence(nowMs, targets));
+    if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
     const identities = targets ?? (this.database.prepare(`SELECT host, session_id FROM session_presence
       GROUP BY host, session_id ORDER BY host, session_id`).all() as Array<{ host: string; session_id: string }>)
       .map((row) => ({ host: row.host, sessionId: row.session_id }));
     return identities.map((target) => ({ ...this.presence(target, nowMs), autoWake: this.autoWakeOutlook(target, nowMs) }));
   }
+  private transaction<T>(operation: () => T): T {
+    if (this.shared) return this.shared.transaction(operation);
+    this.database.exec("BEGIN IMMEDIATE");
+    try { const result = operation(); this.database.exec("COMMIT"); return result; }
+    catch (error) { this.database.exec("ROLLBACK"); throw error; }
+  }
+
 }

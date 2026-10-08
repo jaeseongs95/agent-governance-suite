@@ -23,6 +23,7 @@ export const SKILL_RUNTIME_ENTRYPOINTS = Object.freeze([
   { path: "skills/orchestrator/scripts/query-registry.mjs", expectedExitCode: 2, outputIncludes: "Specify at least one" },
   { path: "skills/orchestrator/scripts/validate-collaboration-decision.mjs", expectedExitCode: 1, outputIncludes: "structural-only" },
   { path: "skills/korean-prose-editor/scripts/finalize.mjs", expectedExitCode: 1, outputIncludes: "REQUEST_SCHEMA_VERSION" },
+  { path: "skills/model-effort-advisor/scripts/support-guard.mjs", expectedExitCode: 2, outputIncludes: "INVALID_INPUT" },
   { path: "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs", expectedExitCode: 2, outputIncludes: '"operationId":"unknown"' },
   { path: "skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs", expectedExitCode: 2, outputIncludes: '"errorCode":"INVALID_INPUT"' },
   { path: "skills/recovery-strategy-selector/scripts/digest-request.mjs", expectedExitCode: 1, outputIncludes: "RecoveryStrategySelectionRequest.v1" },

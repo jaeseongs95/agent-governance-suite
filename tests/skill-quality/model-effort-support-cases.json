@@ -1,0 +1,739 @@
+{
+  "schemaVersion": "C-behavior-fixture.v1",
+  "synthetic": true,
+  "sourceAuthority": "Caller-supplied fixture claims; no live vendor capability attestation",
+  "cases": [
+    {
+      "id": "missing-current",
+      "request": "여러 모듈의 경쟁 조건을 분석하고 수정할 지점을 정리해 주세요.",
+      "advice": {
+        "schemaVersion": "1.0.0",
+        "verdict": "UNOBSERVABLE",
+        "observation": {
+          "status": "unobservable",
+          "source": null,
+          "model": null,
+          "modelClass": null,
+          "reasoningEffort": null
+        },
+        "taskDemand": {
+          "band": "complex",
+          "riskLevel": "medium",
+          "signals": [
+            "여러 모듈의 경쟁 조건과 오류 처리를 분석"
+          ]
+        },
+        "recommendation": {
+          "modelClassMin": "deep",
+          "modelClassMax": "frontier",
+          "reasoningEffortMin": "high",
+          "reasoningEffortMax": "xhigh",
+          "exactModel": null,
+          "confidence": "medium"
+        },
+        "rationaleCodes": [
+          "MULTI_STEP",
+          "HARD_REASONING",
+          "CURRENT_SELECTION_NOT_OBSERVED"
+        ],
+        "userNotice": null
+      },
+      "context": {
+        "explicitFitRequest": false,
+        "currentSelection": null,
+        "supportEvidence": null
+      },
+      "expected": {
+        "verdict": "UNOBSERVABLE",
+        "notice": false,
+        "supportStatus": "CURRENT_SELECTION_UNOBSERVED"
+      }
+    },
+    {
+      "id": "partial-current",
+      "request": "여러 모듈의 경쟁 조건을 분석하고 수정할 지점을 정리해 주세요.",
+      "advice": {
+        "schemaVersion": "1.0.0",
+        "verdict": "UNOBSERVABLE",
+        "observation": {
+          "status": "unobservable",
+          "source": null,
+          "model": null,
+          "modelClass": null,
+          "reasoningEffort": null
+        },
+        "taskDemand": {
+          "band": "complex",
+          "riskLevel": "medium",
+          "signals": [
+            "여러 모듈의 경쟁 조건과 오류 처리를 분석"
+          ]
+        },
+        "recommendation": {
+          "modelClassMin": "deep",
+          "modelClassMax": "frontier",
+          "reasoningEffortMin": "high",
+          "reasoningEffortMax": "xhigh",
+          "exactModel": null,
+          "confidence": "medium"
+        },
+        "rationaleCodes": [
+          "MULTI_STEP",
+          "HARD_REASONING",
+          "CURRENT_SELECTION_NOT_OBSERVED"
+        ],
+        "userNotice": null
+      },
+      "context": {
+        "explicitFitRequest": false,
+        "currentSelection": {
+          "provider": "provider-q",
+          "source": "runtime",
+          "model": "q-deep",
+          "reasoningEffort": null
+        },
+        "supportEvidence": {
+          "provider": "provider-q",
+          "kind": "host-runtime",
+          "locator": "fixture://supported-models/current",
+          "models": [
+            {
+              "id": "q-deep",
+              "modelClass": "deep",
+              "reasoningEfforts": [
+                "high",
+                "xhigh"
+              ]
+            },
+            {
+              "id": "q-frontier",
+              "modelClass": "frontier",
+              "reasoningEfforts": [
+                "max"
+              ]
+            },
+            {
+              "id": "q-general",
+              "modelClass": "general",
+              "reasoningEfforts": [
+                "medium"
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "verdict": "UNOBSERVABLE",
+        "notice": false,
+        "supportStatus": "CURRENT_SELECTION_UNOBSERVED"
+      }
+    },
+    {
+      "id": "catalog-is-not-current",
+      "request": "여러 모듈의 경쟁 조건을 분석하고 수정할 지점을 정리해 주세요.",
+      "advice": {
+        "schemaVersion": "1.0.0",
+        "verdict": "UNOBSERVABLE",
+        "observation": {
+          "status": "unobservable",
+          "source": null,
+          "model": null,
+          "modelClass": null,
+          "reasoningEffort": null
+        },
+        "taskDemand": {
+          "band": "complex",
+          "riskLevel": "medium",
+          "signals": [
+            "여러 모듈의 경쟁 조건과 오류 처리를 분석"
+          ]
+        },
+        "recommendation": {
+          "modelClassMin": "deep",
+          "modelClassMax": "frontier",
+          "reasoningEffortMin": "high",
+          "reasoningEffortMax": "xhigh",
+          "exactModel": null,
+          "confidence": "medium"
+        },
+        "rationaleCodes": [
+          "MULTI_STEP",
+          "HARD_REASONING",
+          "CURRENT_SELECTION_NOT_OBSERVED"
+        ],
+        "userNotice": null
+      },
+      "context": {
+        "explicitFitRequest": false,
+        "currentSelection": null,
+        "supportEvidence": {
+          "provider": "provider-q",
+          "kind": "host-runtime",
+          "locator": "fixture://supported-models/current",
+          "models": [
+            {
+              "id": "q-deep",
+              "modelClass": "deep",
+              "reasoningEfforts": [
+                "high",
+                "xhigh"
+              ]
+            },
+            {
+              "id": "q-frontier",
+              "modelClass": "frontier",
+              "reasoningEfforts": [
+                "max"
+              ]
+            },
+            {
+              "id": "q-general",
+              "modelClass": "general",
+              "reasoningEfforts": [
+                "medium"
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "verdict": "UNOBSERVABLE",
+        "notice": false,
+        "supportStatus": "CURRENT_SELECTION_UNOBSERVED"
+      }
+    },
+    {
+      "id": "trusted-provider-q",
+      "request": "여러 모듈의 경쟁 조건을 분석하려고 합니다. 지금 모델과 추론 설정이 이 작업에 적절한지도 알려 주세요.",
+      "advice": {
+        "schemaVersion": "1.0.0",
+        "verdict": "ADEQUATE",
+        "observation": {
+          "status": "observed",
+          "source": "runtime",
+          "model": "q-deep",
+          "modelClass": "deep",
+          "reasoningEffort": "high"
+        },
+        "taskDemand": {
+          "band": "complex",
+          "riskLevel": "medium",
+          "signals": [
+            "여러 모듈의 경쟁 조건과 오류 처리를 분석"
+          ]
+        },
+        "recommendation": {
+          "modelClassMin": "deep",
+          "modelClassMax": "frontier",
+          "reasoningEffortMin": "high",
+          "reasoningEffortMax": "xhigh",
+          "exactModel": null,
+          "confidence": "medium"
+        },
+        "rationaleCodes": [
+          "MULTI_STEP",
+          "HARD_REASONING"
+        ],
+        "userNotice": null
+      },
+      "context": {
+        "explicitFitRequest": true,
+        "currentSelection": {
+          "provider": "provider-q",
+          "source": "runtime",
+          "model": "q-deep",
+          "reasoningEffort": "high"
+        },
+        "supportEvidence": {
+          "provider": "provider-q",
+          "kind": "host-runtime",
+          "locator": "fixture://supported-models/current",
+          "models": [
+            {
+              "id": "q-deep",
+              "modelClass": "deep",
+              "reasoningEfforts": [
+                "high",
+                "xhigh"
+              ]
+            },
+            {
+              "id": "q-frontier",
+              "modelClass": "frontier",
+              "reasoningEfforts": [
+                "max"
+              ]
+            },
+            {
+              "id": "q-general",
+              "modelClass": "general",
+              "reasoningEfforts": [
+                "medium"
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "verdict": "ADEQUATE",
+        "notice": false,
+        "supportStatus": "SUPPORTED"
+      }
+    },
+    {
+      "id": "trusted-openai-equivalent",
+      "request": "여러 모듈의 경쟁 조건을 분석하려고 합니다. 지금 모델과 추론 설정이 이 작업에 적절한지도 알려 주세요.",
+      "advice": {
+        "schemaVersion": "1.0.0",
+        "verdict": "ADEQUATE",
+        "observation": {
+          "status": "observed",
+          "source": "runtime",
+          "model": "fixture-deep",
+          "modelClass": "deep",
+          "reasoningEffort": "high"
+        },
+        "taskDemand": {
+          "band": "complex",
+          "riskLevel": "medium",
+          "signals": [
+            "여러 모듈의 경쟁 조건과 오류 처리를 분석"
+          ]
+        },
+        "recommendation": {
+          "modelClassMin": "deep",
+          "modelClassMax": "frontier",
+          "reasoningEffortMin": "high",
+          "reasoningEffortMax": "xhigh",
+          "exactModel": null,
+          "confidence": "medium"
+        },
+        "rationaleCodes": [
+          "MULTI_STEP",
+          "HARD_REASONING"
+        ],
+        "userNotice": null
+      },
+      "context": {
+        "explicitFitRequest": true,
+        "currentSelection": {
+          "provider": "openai",
+          "source": "runtime",
+          "model": "fixture-deep",
+          "reasoningEffort": "high"
+        },
+        "supportEvidence": {
+          "provider": "openai",
+          "kind": "host-runtime",
+          "locator": "fixture://openai/supported",
+          "models": [
+            {
+              "id": "fixture-deep",
+              "modelClass": "deep",
+              "reasoningEfforts": [
+                "high",
+                "xhigh"
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "verdict": "ADEQUATE",
+        "notice": false,
+        "supportStatus": "SUPPORTED"
+      }
+    },
+    {
+      "id": "cross-provider-official-source",
+      "request": "여러 모듈의 경쟁 조건을 분석하려고 합니다. 지금 모델과 추론 설정이 이 작업에 적절한지도 알려 주세요.",
+      "advice": {
+        "schemaVersion": "1.0.0",
+        "verdict": "ADEQUATE",
+        "observation": {
+          "status": "observed",
+          "source": "runtime",
+          "model": "q-deep",
+          "modelClass": "deep",
+          "reasoningEffort": "high"
+        },
+        "taskDemand": {
+          "band": "complex",
+          "riskLevel": "medium",
+          "signals": [
+            "여러 모듈의 경쟁 조건과 오류 처리를 분석"
+          ]
+        },
+        "recommendation": {
+          "modelClassMin": "deep",
+          "modelClassMax": "frontier",
+          "reasoningEffortMin": "high",
+          "reasoningEffortMax": "xhigh",
+          "exactModel": null,
+          "confidence": "medium"
+        },
+        "rationaleCodes": [
+          "MULTI_STEP",
+          "HARD_REASONING"
+        ],
+        "userNotice": null
+      },
+      "context": {
+        "explicitFitRequest": true,
+        "currentSelection": {
+          "provider": "provider-q",
+          "source": "runtime",
+          "model": "q-deep",
+          "reasoningEffort": "high"
+        },
+        "supportEvidence": {
+          "provider": "openai",
+          "kind": "provider-official",
+          "locator": "fixture://supported-models/current",
+          "models": [
+            {
+              "id": "q-deep",
+              "modelClass": "deep",
+              "reasoningEfforts": [
+                "high",
+                "xhigh"
+              ]
+            },
+            {
+              "id": "q-frontier",
+              "modelClass": "frontier",
+              "reasoningEfforts": [
+                "max"
+              ]
+            },
+            {
+              "id": "q-general",
+              "modelClass": "general",
+              "reasoningEfforts": [
+                "medium"
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "verdict": "UNOBSERVABLE",
+        "notice": true,
+        "supportStatus": "SUPPORT_PROVIDER_MISMATCH"
+      }
+    },
+    {
+      "id": "matching-provider-official-source",
+      "request": "여러 모듈의 경쟁 조건을 분석하려고 합니다. 지금 모델과 추론 설정이 이 작업에 적절한지도 알려 주세요.",
+      "advice": {
+        "schemaVersion": "1.0.0",
+        "verdict": "ADEQUATE",
+        "observation": {
+          "status": "observed",
+          "source": "runtime",
+          "model": "q-deep",
+          "modelClass": "deep",
+          "reasoningEffort": "high"
+        },
+        "taskDemand": {
+          "band": "complex",
+          "riskLevel": "medium",
+          "signals": [
+            "여러 모듈의 경쟁 조건과 오류 처리를 분석"
+          ]
+        },
+        "recommendation": {
+          "modelClassMin": "deep",
+          "modelClassMax": "frontier",
+          "reasoningEffortMin": "high",
+          "reasoningEffortMax": "xhigh",
+          "exactModel": null,
+          "confidence": "medium"
+        },
+        "rationaleCodes": [
+          "MULTI_STEP",
+          "HARD_REASONING"
+        ],
+        "userNotice": null
+      },
+      "context": {
+        "explicitFitRequest": true,
+        "currentSelection": {
+          "provider": "provider-q",
+          "source": "runtime",
+          "model": "q-deep",
+          "reasoningEffort": "high"
+        },
+        "supportEvidence": {
+          "provider": "provider-q",
+          "kind": "provider-official",
+          "locator": "fixture://supported-models/current",
+          "models": [
+            {
+              "id": "q-deep",
+              "modelClass": "deep",
+              "reasoningEfforts": [
+                "high",
+                "xhigh"
+              ]
+            },
+            {
+              "id": "q-frontier",
+              "modelClass": "frontier",
+              "reasoningEfforts": [
+                "max"
+              ]
+            },
+            {
+              "id": "q-general",
+              "modelClass": "general",
+              "reasoningEfforts": [
+                "medium"
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "verdict": "ADEQUATE",
+        "notice": false,
+        "supportStatus": "SUPPORTED"
+      }
+    },
+    {
+      "id": "unmapped-current-model",
+      "request": "여러 모듈의 경쟁 조건을 분석하려고 합니다. 지금 모델과 추론 설정이 이 작업에 적절한지도 알려 주세요.",
+      "advice": {
+        "schemaVersion": "1.0.0",
+        "verdict": "ADEQUATE",
+        "observation": {
+          "status": "observed",
+          "source": "runtime",
+          "model": "q-unknown",
+          "modelClass": "deep",
+          "reasoningEffort": "high"
+        },
+        "taskDemand": {
+          "band": "complex",
+          "riskLevel": "medium",
+          "signals": [
+            "여러 모듈의 경쟁 조건과 오류 처리를 분석"
+          ]
+        },
+        "recommendation": {
+          "modelClassMin": "deep",
+          "modelClassMax": "frontier",
+          "reasoningEffortMin": "high",
+          "reasoningEffortMax": "xhigh",
+          "exactModel": null,
+          "confidence": "medium"
+        },
+        "rationaleCodes": [
+          "MULTI_STEP",
+          "HARD_REASONING"
+        ],
+        "userNotice": null
+      },
+      "context": {
+        "explicitFitRequest": true,
+        "currentSelection": {
+          "provider": "provider-q",
+          "source": "runtime",
+          "model": "q-unknown",
+          "reasoningEffort": "high"
+        },
+        "supportEvidence": {
+          "provider": "provider-q",
+          "kind": "host-runtime",
+          "locator": "fixture://supported-models/current",
+          "models": [
+            {
+              "id": "q-deep",
+              "modelClass": "deep",
+              "reasoningEfforts": [
+                "high",
+                "xhigh"
+              ]
+            },
+            {
+              "id": "q-frontier",
+              "modelClass": "frontier",
+              "reasoningEfforts": [
+                "max"
+              ]
+            },
+            {
+              "id": "q-general",
+              "modelClass": "general",
+              "reasoningEfforts": [
+                "medium"
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "verdict": "UNOBSERVABLE",
+        "notice": true,
+        "supportStatus": "CURRENT_COMBINATION_UNSUPPORTED"
+      }
+    },
+    {
+      "id": "material-over-fit",
+      "request": "CSV의 날짜 열 하나를 ISO 형식으로 바꿀 예정입니다. 지금 설정이 과한지도 알려 주세요.",
+      "advice": {
+        "schemaVersion": "1.0.0",
+        "verdict": "OVER_PROVISIONED",
+        "observation": {
+          "status": "observed",
+          "source": "runtime",
+          "model": "q-frontier",
+          "modelClass": "frontier",
+          "reasoningEffort": "max"
+        },
+        "taskDemand": {
+          "band": "routine",
+          "riskLevel": "low",
+          "signals": [
+            "좁고 바로 확인 가능한 형식 변환"
+          ]
+        },
+        "recommendation": {
+          "modelClassMin": "lightweight",
+          "modelClassMax": "general",
+          "reasoningEffortMin": "low",
+          "reasoningEffortMax": "medium",
+          "exactModel": null,
+          "confidence": "medium"
+        },
+        "rationaleCodes": [
+          "SIMPLE_SCOPE",
+          "EASY_TO_VERIFY"
+        ],
+        "userNotice": "설정 안내: 현재 설정이 요청의 권장 범위를 벗어납니다. 설정은 자동으로 바꾸지 않고 요청은 계속 진행합니다."
+      },
+      "context": {
+        "explicitFitRequest": true,
+        "currentSelection": {
+          "provider": "provider-q",
+          "source": "runtime",
+          "model": "q-frontier",
+          "reasoningEffort": "max"
+        },
+        "supportEvidence": {
+          "provider": "provider-q",
+          "kind": "host-runtime",
+          "locator": "fixture://supported-models/current",
+          "models": [
+            {
+              "id": "q-deep",
+              "modelClass": "deep",
+              "reasoningEfforts": [
+                "high",
+                "xhigh"
+              ]
+            },
+            {
+              "id": "q-frontier",
+              "modelClass": "frontier",
+              "reasoningEfforts": [
+                "max"
+              ]
+            },
+            {
+              "id": "q-general",
+              "modelClass": "general",
+              "reasoningEfforts": [
+                "medium"
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "verdict": "OVER_PROVISIONED",
+        "notice": true,
+        "supportStatus": "SUPPORTED"
+      }
+    },
+    {
+      "id": "unsupported-exact-recommendation",
+      "request": "여러 모듈의 경쟁 조건을 분석하려고 합니다. 지금 모델과 추론 설정이 이 작업에 적절한지도 알려 주세요.",
+      "advice": {
+        "schemaVersion": "1.0.0",
+        "verdict": "ADEQUATE",
+        "observation": {
+          "status": "observed",
+          "source": "runtime",
+          "model": "q-deep",
+          "modelClass": "deep",
+          "reasoningEffort": "high"
+        },
+        "taskDemand": {
+          "band": "complex",
+          "riskLevel": "medium",
+          "signals": [
+            "여러 모듈의 경쟁 조건과 오류 처리를 분석"
+          ]
+        },
+        "recommendation": {
+          "modelClassMin": "deep",
+          "modelClassMax": "frontier",
+          "reasoningEffortMin": "high",
+          "reasoningEffortMax": "xhigh",
+          "exactModel": "unsupported-other-vendor-model",
+          "confidence": "medium"
+        },
+        "rationaleCodes": [
+          "MULTI_STEP",
+          "HARD_REASONING"
+        ],
+        "userNotice": null
+      },
+      "context": {
+        "explicitFitRequest": true,
+        "currentSelection": {
+          "provider": "provider-q",
+          "source": "runtime",
+          "model": "q-deep",
+          "reasoningEffort": "high"
+        },
+        "supportEvidence": {
+          "provider": "provider-q",
+          "kind": "host-runtime",
+          "locator": "fixture://supported-models/current",
+          "models": [
+            {
+              "id": "q-deep",
+              "modelClass": "deep",
+              "reasoningEfforts": [
+                "high",
+                "xhigh"
+              ]
+            },
+            {
+              "id": "q-frontier",
+              "modelClass": "frontier",
+              "reasoningEfforts": [
+                "max"
+              ]
+            },
+            {
+              "id": "q-general",
+              "modelClass": "general",
+              "reasoningEfforts": [
+                "medium"
+              ]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "verdict": "ADEQUATE",
+        "notice": false,
+        "supportStatus": "SUPPORTED",
+        "exactModel": null
+      }
+    }
+  ]
+}

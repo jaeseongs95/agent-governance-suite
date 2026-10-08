@@ -51,7 +51,7 @@
     },
     {
       "path": "runtime/engineering-practices/cli.mjs",
-      "digest": "sha256:4ac5fe7f3475626758c8ea5e7c617e874f96cfe39ae3e205821f310fd2fa2a2d"
+      "digest": "sha256:7b23bb7db8e74a5acf11bfdbab3704656c8400d68e7b4191ccc8fc101ea203b9"
     },
     {
       "path": "runtime/engineering-practices/core.mjs",
@@ -82,6 +82,10 @@
       "digest": "sha256:9c882762afee30611f4cd5b82edd904ff8c5ee699247d490cde9f059870d64d6"
     },
     {
+      "path": "runtime/engineering-practices/stage-bundle.mjs",
+      "digest": "sha256:230bcb6efe3d94fd6694a84d31427c87a2b74d6c45db6c59cc0e9517e7ce6191"
+    },
+    {
       "path": "skills/code-review/LICENSE",
       "digest": "sha256:75f3ee170babffa9aac464afff60ad521d9731220ae4f67e0c40cb457b18a0a2"
     },
@@ -99,7 +103,7 @@
     },
     {
       "path": "skills/code-review/assets/shared-dependencies.json",
-      "digest": "sha256:cccdac06ae952f5e0e4fc24282a78004bbe5ca2db0e199076d4a9ef03b5fd570"
+      "digest": "sha256:0ce2c7256664836d3c0517d3aed202a282f805028a68b4753a7b855d427b3368"
     },
     {
       "path": "skills/code-review/integration/skill-descriptor.json",
@@ -119,7 +123,7 @@
     },
     {
       "path": "skills/orchestrator/references/engineering-practices/cli.md",
-      "digest": "sha256:be715633beccc35385f6b1ae3c0c822d1a3487afcae9398bda0d9cf74cfa9341"
+      "digest": "sha256:42d409ec8fd0f39c491dfdeb18da3f3d15d9fb518c82a8d9f69ed0ae87a59f69"
     },
     {
       "path": "skills/orchestrator/references/engineering-practices/code-review.md",
@@ -175,7 +179,7 @@
     },
     {
       "path": "skills/test-engineering/assets/shared-dependencies.json",
-      "digest": "sha256:cccdac06ae952f5e0e4fc24282a78004bbe5ca2db0e199076d4a9ef03b5fd570"
+      "digest": "sha256:0ce2c7256664836d3c0517d3aed202a282f805028a68b4753a7b855d427b3368"
     },
     {
       "path": "skills/test-engineering/integration/skill-descriptor.json",

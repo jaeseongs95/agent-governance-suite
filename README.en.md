@@ -35,7 +35,7 @@ AGS supports this workflow with task contracts, specialist skills, the session b
 You need Node.js **24.0.0 or later** and plugin support in the host you use. Install AGS in each participating host. Using the plugin does not require cloning this repository or running `pnpm install`.
 
 <!-- release-version:start -->
-This is a 2.8.1 publication preparation guide; after publication, the current public release is `v2.8.1`. It includes seventeen governance specialist skills, two engineering specialist skills, one implementation-step skill (`ponytail`), two local infrastructure skills (task continuity and the session board), and one Korean prose workflow. The 2.8.0 release has already been published. Use the installation example below after the v2.8.1 tag and Release are published. At the time this publication preparation guide was written, actual Codex and Claude host loading for 2.8.1 had not been validated.
+This is a 2.9.0 publication preparation guide; after publication, the current public release is `v2.9.0`. It includes seventeen governance specialist skills, two engineering specialist skills, one implementation-step skill, two local infrastructure skills, and one Korean prose workflow. Version 2.8.1 has been published; use the v2.9.0 installation example below after the tag and Release are published. This candidate connects engineering evidence, prepares inactive shared-state adapters, and fixes the read-only wake-verification path. Production database migration, shared MCP cutover, and current-candidate testing in both Clouds and native hosts are not claimed complete.
 <!-- release-version:end -->
 
 ### Claude Code
@@ -55,7 +55,7 @@ Run in a terminal:
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.8.1
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v2.9.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->

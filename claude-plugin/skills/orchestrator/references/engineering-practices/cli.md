@@ -12,6 +12,7 @@ node runtime/engineering-practices/cli.mjs run --root /absolute/work --snapshot 
 node runtime/engineering-practices/cli.mjs check-plan --root /absolute/work --plan plan.json
 node runtime/engineering-practices/cli.mjs check-proof --root /absolute/work --plan plan.json --proof proof.json
 node runtime/engineering-practices/cli.mjs check-review --root /absolute/work --request request.json --report review.json
+node runtime/engineering-practices/cli.mjs check-stage-bundle --root /absolute/work --input stage-bundle.json --bundle-digest sha256:<raw-manifest-hash> --task-digest sha256:<signed-task-digest> --capability test-sensitivity-review
 node runtime/engineering-practices/cli.mjs provider-result --root /absolute/work --capability test-sensitivity-review --result test-result.json --locator test-result.json
 ```
 
@@ -30,6 +31,30 @@ plan은 요구 ID↔case, testFiles↔scopeFiles, 중복/누락/형식과 oracle
 proof는 frozen plan digest, 현재 후보의 실제 바이트, case별 coverage, receipt의 실제 파일 hash, 동일한 명령·기재된 환경, red→green 시간 순서, FAIL/PASS 상태, 동일한 테스트 바이트, 명시한 제품 mutation 경로, red assertion witness를 확인한다. 요구 필수 항목의 NOT_RUN은 INCOMPLETE다. EXEMPT는 plan에서 미리 not-applicable로 정한 경우만 허용한다. manual-review는 기계적 red/green 검증을 대신하는 자동 통과 모드가 아니다. 필요한 수동 검증은 기존 acceptance-evidence-validator로 전달한다.
 
 review는 request/head 결속, 선언한 base/head의 파일 변화 전체, 현재 head 바이트, 삭제 상태, 변경 파일별 REVIEWED/NOT_REVIEWED, finding 위치와 줄 범위, 결함·권고·가설의 구분을 검사한다. 권고와 가설은 blocking이 될 수 없다. 근거가 충분한 결함은 supported로 분류할 수 있으며 실측 재현이 없다는 이유만으로 단순 가설로 낮추지 않는다. 차단 결함이면 CHANGES_REQUESTED, 필수 미검토 파일이면 INCOMPLETE다. 모두 해소됐다는 기록만 NO_BLOCKING_FINDINGS다.
+
+## 선택된 workflow 단계의 원파일 결속
+
+`test-sensitivity-review`와 `change-code-review`는 record/finalize에서 같은 공통 CLI의 `check-stage-bundle`을 실행한다. 기존 direct `check-proof`/`check-review`와 provider-result 포장은 유지한다. 포장·verified 자기 선언은 원파일 검증을 대체하지 않는다.
+
+같은 private artifact root에 manifest를 둔다. test 단계는 아래 필드를 사용하고 code review는 `plan`/`proof` 대신 `request`/`report` reference를 사용한다. 각 digest는 원파일 bytes SHA256이며 manifest 자체 digest는 stage artifact에 고정한다.
+
+```json
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-stage-bundle",
+  "capability": "test-sensitivity-review",
+  "task": { "path": "task.json", "digest": "sha256:<raw-task-hash>" },
+  "plan": { "path": "plan.json", "digest": "sha256:<raw-plan-hash>" },
+  "proof": { "path": "proof.json", "digest": "sha256:<raw-proof-hash>" },
+  "result": { "path": "result.json", "digest": "sha256:<raw-result-hash>" }
+}
+```
+
+task는 해당 workflow의 동결 TaskEnvelope다. prepared plan/request의 taskId·contractDigest는 그 task와 canonical digest에 결속하고, requirements는 acceptanceCriteria와 같은 집합이어야 한다. 선택된 test 단계의 각 frozen criterion에는 required red-green/mutation case가 있어야 한다. 필수 의무를 optional·exempt로 낮춰 통과시키지 않는다. 여러 업무 중 일부만 검사하려면 실제 요구와 권한을 보존한 별도 작업 계약으로 범위를 먼저 고정한다.
+
+provider output은 현재 원파일로 다시 계산한 result와 같아야 한다. 기존 `engineering-test-result` 또는 `engineering-review-result` artifact와 추가 `engineering-stage-bundle` artifact를 같은 result bytes/targetDigest로 연결한다. 두 locator는 local 절대 경로, artifact verified는 true여야 하며 result-file reference는 manifest의 result와 같아야 한다. `outputFile`을 쓰는 기록에도 같은 검사를 적용한다. NOT_RUN·CHANGES_REQUESTED·INCOMPLETE와 adapter 오류는 비통과 상태를 유지한다.
+
+이 검사는 선택된 두 workflow capability에만 적용한다. bootstrap 계획 검사, 자연어 의미 선택, CS 의무의 전역 적용성, plan/lease/start/resume 전체 binding, native host attestation·실행 진실성·reviewer 독립성·배포 승인은 발급하지 않는다. 기존 CS 단계와 수용/독립 감사 책임을 유지한다. 다른 후보·변경된 raw proof/candidate는 finalize에서 다시 읽어 거부하며 private root의 OS 수준 공격 격리는 별도다.
 
 ## 실행과 신뢰 경계
 

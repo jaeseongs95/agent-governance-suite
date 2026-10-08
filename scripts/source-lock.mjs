@@ -188,7 +188,15 @@ export async function verifySourceLockRemote() {
     try {
       const repository = path.join(temporaryDirectory, "repository");
       git(["clone", "--quiet", "--no-checkout", source.source, repository]);
-      const resolved = git(["-C", repository, "rev-parse", "--verify", `${source.ref.value}^{commit}`]);
+      let resolved;
+      try {
+        resolved = git(["-C", repository, "rev-parse", "--verify", `${source.ref.value}^{commit}`]);
+      } catch (error) {
+        if (source.ref.kind !== "commit" || !SHA.test(source.ref.value)) throw error;
+        // A preserved commit may no longer be reachable from advertised refs.
+        git(["-C", repository, "fetch", "--no-tags", "origin", source.ref.value]);
+        resolved = git(["-C", repository, "rev-parse", "--verify", `${source.ref.value}^{commit}`]);
+      }
       if (resolved !== source.ref.commit) errors.push(`remote ref/commit mismatch for ${source.skillId}`);
       git(["-C", repository, "checkout", "--quiet", "--detach", source.ref.commit]);
       const sourceDirectory = path.resolve(repository, source.sourcePath);

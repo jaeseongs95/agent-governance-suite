@@ -3262,8 +3262,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path14) {
-      let input = path14;
+    function removeDotSegments(path15) {
+      let input = path15;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3672,8 +3672,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path14 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path14 && path14 !== "/" ? path14 : void 0;
+        const path15 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path15 && path15 !== "/" ? path15 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -8205,10 +8205,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path14) {
-  if (!path14)
+function getElementAtPath(obj, path15) {
+  if (!path15)
     return obj;
-  return path14.reduce((acc, key) => acc?.[key], obj);
+  return path15.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -8620,11 +8620,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path14, issues) {
+function prefixIssues(path15, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path14);
+    iss.path.unshift(path15);
     return iss;
   });
 }
@@ -9053,16 +9053,16 @@ function flattenError(error2, mapper = (issue2) => issue2.message) {
 }
 function formatError(error2, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error3, path14 = []) => {
+  const processError = (error3, path15 = []) => {
     for (const issue2 of error3.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path14, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path15, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path14, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path15, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path14, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path15, ...issue2.path]);
       } else {
-        const fullpath = [...path14, ...issue2.path];
+        const fullpath = [...path15, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -16513,8 +16513,19 @@ function taskRecord(row) {
   };
 }
 var SqliteContinuityStore = class {
-  constructor(databasePath) {
-    this.databasePath = databasePath;
+  database;
+  shared;
+  databasePath;
+  closed = false;
+  constructor(input) {
+    this.shared = typeof input === "string" ? void 0 : input;
+    this.databasePath = typeof input === "string" ? input : input.databasePath;
+    const databasePath = this.databasePath;
+    if (this.shared) {
+      this.database = this.shared.database;
+      this.shared.initialize(() => this.initializeSchema());
+      return;
+    }
     if (!databasePath.trim()) throw new ContinuityStoreError("Continuity database path must not be empty.");
     if (databasePath !== ":memory:") mkdirSync(path4.dirname(path4.resolve(databasePath)), { recursive: true, mode: 448 });
     let opened = null;
@@ -16534,9 +16545,6 @@ var SqliteContinuityStore = class {
       throw new ContinuityStoreError("Cannot initialize the continuity database.", cause, continuityUnavailableReason(cause));
     }
   }
-  databasePath;
-  database;
-  closed = false;
   close() {
     if (this.closed) return;
     this.closed = true;
@@ -16719,7 +16727,7 @@ var SqliteContinuityStore = class {
     }, taskCorrelation);
   }
   getSchemaVersion() {
-    return this.database.prepare("PRAGMA user_version").get().user_version;
+    return this.shared?.getSchemaVersion() ?? this.database.prepare("PRAGMA user_version").get().user_version;
   }
   previewCleanup(payloadCutoff, recordCutoff) {
     this.assertSupportedSchema();
@@ -16798,6 +16806,7 @@ var SqliteContinuityStore = class {
     return { snapshots: snapshots.filter((snapshot) => !fullTaskIds.has(snapshot.taskCorrelation)), tasks, protectedActiveTasks };
   }
   backupTo(targetPath) {
+    if (this.shared) throw new Error("SHARED_BACKUP_OWNER_REQUIRED: a shared database backup requires an explicit owner contract.");
     if (this.databasePath === ":memory:") throw new ContinuityStoreError("An in-memory continuity database cannot be cleaned destructively.");
     try {
       this.database.prepare("VACUUM INTO ?").run(targetPath);
@@ -16903,6 +16912,17 @@ var SqliteContinuityStore = class {
    * failures roll back and surface as ContinuityStoreError.
    */
   transaction(message, operation, taskCorrelation) {
+    if (this.shared) {
+      try {
+        return this.shared.transaction(() => {
+          if (taskCorrelation !== void 0) this.assertCompatibleTask(taskCorrelation);
+          return operation();
+        });
+      } catch (cause) {
+        if (cause instanceof ContinuityStoreError) throw cause;
+        throw new ContinuityStoreError(message, cause);
+      }
+    }
     this.database.exec("BEGIN IMMEDIATE;");
     try {
       if (taskCorrelation !== void 0) this.assertCompatibleTask(taskCorrelation);
@@ -17023,7 +17043,8 @@ var SqliteContinuityStore = class {
       CREATE INDEX IF NOT EXISTS continuity_observations_cleanup
         ON continuity_observations(observed_at, task_correlation, epoch);
     `);
-    this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
+    if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION);
+    else this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
   }
 };
 
@@ -17560,8 +17581,8 @@ import { readFileSync as readFileSync2, readdirSync } from "node:fs";
 import path6 from "node:path";
 var addFormats = import_ajv_formats.default;
 function loadSchema(fileName) {
-  const path14 = new URL(`../../contracts/${fileName}`, import.meta.url);
-  return JSON.parse(readFileSync2(path14, "utf8"));
+  const path15 = new URL(`../../contracts/${fileName}`, import.meta.url);
+  return JSON.parse(readFileSync2(path15, "utf8"));
 }
 var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
@@ -19620,13 +19641,16 @@ import path7 from "node:path";
 import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
 var SUMMARY_MAX_LENGTH = 200;
 var RETAIN_MS = 24 * 36e5;
-function openBoard(databasePath, { busyTimeoutMs = 5e3 } = {}) {
-  if (databasePath !== ":memory:") mkdirSync2(path7.dirname(path7.resolve(databasePath)), { recursive: true });
-  const db = new DatabaseSync2(databasePath);
-  try {
-    db.exec(`PRAGMA busy_timeout = ${Math.trunc(busyTimeoutMs)};`);
-    if (databasePath !== ":memory:") db.exec("PRAGMA journal_mode = WAL;");
-    db.exec(`CREATE TABLE IF NOT EXISTS sessions (
+function openBoard(input, { busyTimeoutMs = 5e3 } = {}) {
+  const shared = typeof input === "string" ? null : input;
+  const databasePath = shared ? shared.databasePath : input;
+  if (!shared && databasePath !== ":memory:") mkdirSync2(path7.dirname(path7.resolve(databasePath)), { recursive: true });
+  const db = shared ? shared.database : new DatabaseSync2(databasePath);
+  const initialize = () => {
+    try {
+      if (!shared) db.exec(`PRAGMA busy_timeout = ${Math.trunc(busyTimeoutMs)};`);
+      if (!shared && databasePath !== ":memory:") db.exec("PRAGMA journal_mode = WAL;");
+      db.exec(`CREATE TABLE IF NOT EXISTS sessions (
       host TEXT NOT NULL,
       session_id TEXT NOT NULL,
       cwd TEXT NOT NULL,
@@ -19638,10 +19662,14 @@ function openBoard(databasePath, { busyTimeoutMs = 5e3 } = {}) {
       updated_at TEXT NOT NULL,
       PRIMARY KEY (host, session_id)
     ) STRICT;`);
-  } catch (error2) {
-    db.close();
-    throw error2;
-  }
+    } catch (error2) {
+      db.close();
+      throw error2;
+    }
+    if (shared) shared.setSchemaVersion(0);
+  };
+  if (shared) shared.initialize(initialize);
+  else initialize();
   return db;
 }
 function normalizeSummary(value) {
@@ -19733,7 +19761,7 @@ function inlineSchemaReferences(schema, documents) {
 // mcp-server/src/plugin-info.ts
 var PLUGIN_INFO = Object.freeze({
   id: "agent-governance-suite",
-  version: "2.8.1",
+  version: "2.9.0",
   repository: "https://github.com/jaeseongs95/agent-governance-suite",
   tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v"
 });
@@ -21518,8 +21546,19 @@ function mergePluginUpdateState(existing, incoming) {
 // mcp-server/src/sqlite-workflow-store.ts
 var SCHEMA_VERSION2 = 5;
 var SqliteWorkflowStore = class {
-  constructor(databasePath) {
-    this.databasePath = databasePath;
+  database;
+  shared;
+  databasePath;
+  closed = false;
+  constructor(input) {
+    this.shared = typeof input === "string" ? void 0 : input;
+    this.databasePath = typeof input === "string" ? input : input.databasePath;
+    const databasePath = this.databasePath;
+    if (this.shared) {
+      this.database = this.shared.database;
+      this.shared.initialize(() => this.initializeSchema());
+      return;
+    }
     if (!databasePath.trim()) {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow database path must not be empty.");
     }
@@ -21545,9 +21584,6 @@ var SqliteWorkflowStore = class {
       throw this.storageError("Cannot initialize the workflow database.", cause);
     }
   }
-  databasePath;
-  database;
-  closed = false;
   getOrCreateSecret(name, create) {
     return this.guard("Cannot read or create workflow metadata.", { key: name }, () => this.transaction(() => {
       const existing = this.database.prepare("SELECT value FROM workflow_metadata WHERE key = ?").get(name);
@@ -21727,6 +21763,7 @@ var SqliteWorkflowStore = class {
   }
   insertAttemptLease(root, expectedRevision, proposal, lease) {
     return this.guard("Cannot claim the convergence attempt lease.", { rootId: root.rootId }, () => this.transaction(() => {
+      if (this.shared && Date.parse(lease.expiresAt) <= this.shared.time(Date.parse(lease.issuedAt))) return false;
       if (!this.casRoot(root, expectedRevision)) return false;
       this.database.prepare(`
         INSERT INTO convergence_leases (
@@ -21777,7 +21814,8 @@ var SqliteWorkflowStore = class {
       if (!leaseRow) return null;
       const lease = JSON.parse(leaseRow.lease_json);
       const proposal = JSON.parse(leaseRow.proposal_json);
-      if (lease.state !== "issued" || lease.rootRevision !== expectedRootRevision || Date.parse(lease.expiresAt) <= Date.parse(consumedAt)) return null;
+      const decisionTime = this.shared ? this.shared.time(Date.parse(consumedAt)) : Date.parse(consumedAt);
+      if (lease.state !== "issued" || lease.rootRevision !== expectedRootRevision || Date.parse(lease.expiresAt) <= decisionTime) return null;
       const rootRow = this.rootRow(lease.rootId);
       if (!rootRow || rootRow.revision !== expectedRootRevision) return null;
       const root = JSON.parse(rootRow.root_json);
@@ -21875,7 +21913,7 @@ var SqliteWorkflowStore = class {
     }));
   }
   getSchemaVersion() {
-    return this.database.prepare("PRAGMA user_version").get().user_version;
+    return this.shared?.getSchemaVersion() ?? this.database.prepare("PRAGMA user_version").get().user_version;
   }
   isConvergenceRootActive(rootId) {
     const row = this.database.prepare(`
@@ -21946,6 +21984,7 @@ var SqliteWorkflowStore = class {
     });
   }
   backupTo(targetPath) {
+    if (this.shared) throw new Error("SHARED_BACKUP_OWNER_REQUIRED: a shared database backup requires an explicit owner contract.");
     if (this.databasePath === ":memory:") {
       throw new WorkflowContractError("INVALID_INPUT", "An in-memory workflow database cannot be cleaned destructively.");
     }
@@ -22017,7 +22056,7 @@ var SqliteWorkflowStore = class {
     this.closed = true;
   }
   initializeSchema() {
-    const row = this.database.prepare("PRAGMA user_version").get();
+    const row = { user_version: this.getSchemaVersion() };
     if (row.user_version > SCHEMA_VERSION2) {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow database schema is newer than this server supports.", {
         databasePath: this.databasePath,
@@ -22148,8 +22187,10 @@ var SqliteWorkflowStore = class {
           expires_at TEXT NOT NULL,
           consumed_at TEXT NOT NULL
         ) STRICT;
-        PRAGMA user_version = ${SCHEMA_VERSION2};
+
       `);
+      if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION2);
+      else this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION2};`);
     });
   }
   rootRow(rootId) {
@@ -22222,6 +22263,7 @@ var SqliteWorkflowStore = class {
   }
   /** Writers take the lock up front with BEGIN IMMEDIATE; snapshot reads pass "BEGIN;". */
   transaction(operation, begin = "BEGIN IMMEDIATE;") {
+    if (this.shared) return this.shared.transaction(operation);
     this.database.exec(begin);
     try {
       const result = operation();
@@ -22974,6 +23016,54 @@ function assertCsStageBundle(rootDirectory, taskDigest, result, validator) {
   }
 }
 
+// mcp-server/src/engineering-practices-validator.ts
+import { spawnSync as spawnSync2 } from "node:child_process";
+import path12 from "node:path";
+function assertEngineeringStageBundle(rootDirectory, taskDigest, capability, result, validator) {
+  if (!["test-sensitivity-review", "change-code-review"].includes(capability) || result.output.kind !== "output") return;
+  if (!taskDigest) throw new WorkflowContractError("BINDING_REQUIRED", "Engineering review requires a signed task digest.");
+  const references = result.output.artifacts.filter((artifact) => artifact.artifactId === "engineering-stage-bundle");
+  const reference = references[0];
+  if (references.length !== 1 || !reference?.verified || !path12.isAbsolute(reference.locator) || /^(?:\\\\|\/\/)/u.test(reference.locator)) {
+    throw new WorkflowContractError("MISSING_EVIDENCE", "Engineering review requires one verified local engineering-stage-bundle artifact.");
+  }
+  const root = path12.dirname(reference.locator);
+  const checked = spawnSync2(process.execPath, [
+    path12.join(rootDirectory, "runtime/engineering-practices/cli.mjs"),
+    "check-stage-bundle",
+    "--root",
+    root,
+    "--input",
+    path12.basename(reference.locator),
+    "--bundle-digest",
+    reference.digest,
+    "--task-digest",
+    taskDigest,
+    "--capability",
+    capability
+  ], { encoding: "utf8", timeout: 1e4, maxBuffer: 4 * 1024 * 1024, windowsHide: true });
+  let assessment;
+  try {
+    assessment = JSON.parse(checked.stdout);
+  } catch {
+    throw new WorkflowContractError("INVALID_INPUT", "Engineering stage validator did not return bounded JSON.");
+  }
+  if (checked.error || ![0, 1].includes(checked.status ?? -1) || assessment.kind !== "engineering-stage-check") {
+    throw new WorkflowContractError("GATE_FAILED", "Engineering stage files could not be validated.");
+  }
+  validator.planWorkflowRequest(assessment.task);
+  if (canonicalJson(assessment.result, "Engineering result") !== canonicalJson(result.output.output, "Engineering provider output")) {
+    throw new WorkflowContractError("INTEGRITY_FAILED", "Provider output differs from validated raw engineering files.");
+  }
+  const resultRef = assessment.resultRef;
+  const artifactId = capability === "test-sensitivity-review" ? "engineering-test-result" : "engineering-review-result";
+  const reports = result.output.artifacts.filter((artifact) => artifact.artifactId === artifactId);
+  const report = reports[0];
+  if (reports.length !== 1 || !report?.verified || report.digest !== resultRef.digest || path12.resolve(report.locator) !== path12.resolve(root, resultRef.path) || report.targetDigest !== assessment.targetDigest || reference.targetDigest !== assessment.targetDigest) {
+    throw new WorkflowContractError("INTEGRITY_FAILED", "Engineering artifacts must bind the validated result bytes and current candidate.");
+  }
+}
+
 // mcp-server/src/workflow-service.ts
 function asRecord2(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
@@ -23533,6 +23623,7 @@ var WorkflowService = class {
         if (target.requiredCapability === "cs-implementation-review") {
           assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
         }
+        assertEngineeringStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, target.requiredCapability, checked, this.validator);
         this.assertDeclaredReceiptPolicy(receipt, target, checked);
         if (result.state === "passed") {
           this.assertRequiredArtifacts(target, checked);
@@ -23589,10 +23680,13 @@ var WorkflowService = class {
           });
         }
         this.assertRequiredArtifacts(stage, result);
-        if (stage.requiredCapability === "cs-implementation-review") {
+        if (["cs-implementation-review", "test-sensitivity-review", "change-code-review"].includes(stage.requiredCapability)) {
           const checked = result.outputFile ? { ...result, output: { ...result.output, output: loadStageOutputFile(result.outputFile) } } : result;
           this.assertResultSemantics(stage, checked);
-          assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
+          if (stage.requiredCapability === "cs-implementation-review") {
+            assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
+          }
+          assertEngineeringStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, stage.requiredCapability, checked, this.validator);
         }
         this.assertExecutionAssurance(stage, result);
         this.assertDeclaredReceiptPolicy(receipt, stage, result);
@@ -24721,7 +24815,7 @@ var codexExecutionAdapter = {
 // mcp-server/src/state-cleanup-service.ts
 import { createHash as createHash8, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 import { chmodSync as chmodSync3, mkdirSync as mkdirSync4 } from "node:fs";
-import path12 from "node:path";
+import path13 from "node:path";
 var DAY_MS = 24 * 60 * 60 * 1e3;
 var TOKEN_TTL_MS2 = 15 * 60 * 1e3;
 var POLICY = {
@@ -24736,7 +24830,7 @@ function protection() {
   return process.platform === "win32" ? "os-managed-unverified" : "filesystem-mode-0600";
 }
 function databaseIdentity(databasePath) {
-  return databasePath === ":memory:" ? databasePath : path12.resolve(databasePath);
+  return databasePath === ":memory:" ? databasePath : path13.resolve(databasePath);
 }
 function apiError3(error2) {
   const normalized = error2 instanceof WorkflowContractError ? error2 : new WorkflowContractError("INVALID_INPUT", error2 instanceof Error ? error2.message : String(error2));
@@ -24971,9 +25065,9 @@ var StateCleanupService = class {
   }
   backupPath(databasePath, label, planId) {
     if (databasePath === ":memory:") throw new WorkflowContractError("INVALID_INPUT", "In-memory databases cannot be cleaned destructively.");
-    const directory = path12.join(path12.dirname(path12.resolve(databasePath)), "backups");
+    const directory = path13.join(path13.dirname(path13.resolve(databasePath)), "backups");
     mkdirSync4(directory, { recursive: true, mode: 448 });
-    return path12.join(directory, `${label}-before-cleanup-${planId}.sqlite3`);
+    return path13.join(directory, `${label}-before-cleanup-${planId}.sqlite3`);
   }
   protectBackup(targetPath) {
     if (process.platform !== "win32") chmodSync3(targetPath, 384);
@@ -24983,7 +25077,7 @@ var StateCleanupService = class {
 // mcp-server/src/trust-store.ts
 import { createHmac as createHmac5, randomBytes as randomBytes5, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
 import { chmodSync as chmodSync4, mkdirSync as mkdirSync5 } from "node:fs";
-import path13 from "node:path";
+import path14 from "node:path";
 import { DatabaseSync as DatabaseSync5 } from "node:sqlite";
 var TRUST_SIGNING_KEY = "trust-signing-key";
 var SCHEMA_VERSION3 = 1;
@@ -25016,10 +25110,27 @@ function rejectUnexpectedKeys(value, allowed, label) {
   }
 }
 var TrustStore = class {
-  constructor(databasePath) {
-    this.databasePath = databasePath;
+  database;
+  shared;
+  databasePath;
+  signingKey;
+  syntheticSecret;
+  closed = false;
+  constructor(input, syntheticSecret) {
+    this.shared = typeof input === "string" ? void 0 : input;
+    this.databasePath = typeof input === "string" ? input : input.databasePath;
+    this.syntheticSecret = syntheticSecret;
+    const databasePath = this.databasePath;
+    if (this.shared) {
+      this.database = this.shared.database;
+      if (!syntheticSecret || Buffer.from(syntheticSecret, "base64url").length !== 32) throw new WorkflowContractError("INVALID_INPUT", "An explicit new synthetic trust key is required.");
+      this.shared.initialize(() => this.initializeSchema());
+      this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
+      if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", "The stored trust key differs from the explicit synthetic namespace.");
+      return;
+    }
     if (!databasePath.trim()) throw new WorkflowContractError("INVALID_INPUT", "Trust database path must not be empty.");
-    if (databasePath !== ":memory:") mkdirSync5(path13.dirname(path13.resolve(databasePath)), { recursive: true, mode: 448 });
+    if (databasePath !== ":memory:") mkdirSync5(path14.dirname(path14.resolve(databasePath)), { recursive: true, mode: 448 });
     this.database = new DatabaseSync5(databasePath);
     try {
       this.database.exec("PRAGMA busy_timeout = 5000;");
@@ -25027,8 +25138,9 @@ var TrustStore = class {
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
       this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
+      if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", "The stored trust key differs from the explicit synthetic namespace.");
       if (this.signingKey.length !== 32) throw new Error("Stored trust signing key is invalid.");
-      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync4(path13.resolve(databasePath), 384);
+      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync4(path14.resolve(databasePath), 384);
     } catch (cause) {
       try {
         this.database.close();
@@ -25038,10 +25150,6 @@ var TrustStore = class {
       throw this.storageError("Cannot initialize the trust database.", cause);
     }
   }
-  databasePath;
-  database;
-  signingKey;
-  closed = false;
   recordInputSource(input) {
     rejectUnexpectedKeys(input, INPUT_SOURCE_KEYS, "Input source metadata");
     if (!input.attestation || typeof input.attestation !== "object" || Array.isArray(input.attestation)) {
@@ -25158,7 +25266,7 @@ var TrustStore = class {
     };
   }
   initializeSchema() {
-    const version2 = this.database.prepare("PRAGMA user_version").get().user_version;
+    const version2 = this.shared?.getSchemaVersion() ?? this.database.prepare("PRAGMA user_version").get().user_version;
     if (version2 > SCHEMA_VERSION3) {
       throw new WorkflowContractError("INVALID_INPUT", "Trust database schema is newer than this server supports.", {
         databasePath: this.databasePath,
@@ -25166,8 +25274,8 @@ var TrustStore = class {
         actualVersion: version2
       });
     }
-    this.database.exec(`
-      BEGIN IMMEDIATE;
+    this.transaction(() => {
+      this.database.exec(`
       CREATE TABLE IF NOT EXISTS trust_metadata (
         key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL
       ) STRICT;
@@ -25185,20 +25293,22 @@ var TrustStore = class {
       ) STRICT;
       CREATE INDEX IF NOT EXISTS input_source_latest
         ON input_source_receipts(host, session_id, observed_at DESC);
-      PRAGMA user_version = ${SCHEMA_VERSION3};
-      COMMIT;
     `);
+      if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION3);
+      else this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION3};`);
+    });
   }
   getOrCreateSecret(name) {
     return this.transaction(() => {
       const existing = this.database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(name);
       if (existing) return existing.value;
-      const value = randomBytes5(32).toString("base64url");
+      const value = this.syntheticSecret ?? randomBytes5(32).toString("base64url");
       this.database.prepare("INSERT INTO trust_metadata (key, value, updated_at) VALUES (?, ?, ?)").run(name, value, (/* @__PURE__ */ new Date()).toISOString());
       return value;
     });
   }
   transaction(operation) {
+    if (this.shared) return this.shared.transaction(operation);
     this.database.exec("BEGIN IMMEDIATE;");
     try {
       const result = operation();

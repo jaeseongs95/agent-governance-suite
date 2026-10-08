@@ -64,6 +64,59 @@ describe("Codex current host observation", () => {
     expect(observeCodexHook(hook, { readMetadata: () => window }).reason).toBe("host-turn-mismatch");
   });
 
+  it("treats meaning-equivalent compact and spaced JSONL contexts equally", () => {
+    const window = metadata();
+    const expected = observeCodexHook(hook, { readMetadata: () => window });
+    expect(expected.reason).toBeNull();
+    for (const separator of ['"type" : ', '"type"\t:\t']) {
+      const tail = window.tail.replace('"type":', separator);
+      expect(JSON.parse(tail)).toEqual(JSON.parse(window.tail));
+      expect(observeCodexHook(hook, { readMetadata: () => ({ ...window, tail }) })).toEqual(expected);
+    }
+  });
+
+  it("rejects the latest spaced mismatching turn instead of using an older compact match", () => {
+    const window = metadata();
+    const latest = metadata({ turn_id: "newer-turn" }).tail.replace('"type":', '"type": ');
+    expect(JSON.parse(latest).payload.turn_id).not.toBe(hook.turn_id);
+    window.tail += latest;
+    expect(observeCodexHook(hook, { readMetadata: () => window }))
+      .toEqual({ observation: null, reason: "host-turn-mismatch" });
+  });
+
+  it("accepts equivalent context beyond character 200 and rejects its latest mismatching turn", () => {
+    const window = metadata();
+    const compact = JSON.parse(window.tail);
+    const tag = '"type" : "turn_context"';
+    for (const end of [200, 201, 4096]) {
+      const line = "{" + " ".repeat(end - 1 - tag.length) + tag + ',"payload":' + JSON.stringify(compact.payload) + "}";
+      expect(JSON.parse(line)).toEqual(compact);
+      expect(observeCodexHook(hook, { readMetadata: () => ({ ...window, tail: line }) }).reason).toBeNull();
+      const latest = line.replace(hook.turn_id, "latest-mismatching-turn");
+      expect(observeCodexHook(hook, { readMetadata: () => ({ ...window, tail: window.tail + latest }) }))
+        .toEqual({ observation: null, reason: "host-turn-mismatch" });
+    }
+    const latest = JSON.stringify({ padding: " ".repeat(300), payload: { ...compact.payload, turn_id: "latest" }, type: "turn_context" });
+    expect(observeCodexHook(hook, { readMetadata: () => ({ ...window, tail: window.tail + latest }) }))
+      .toEqual({ observation: null, reason: "host-turn-mismatch" });
+  });
+
+  it("uses decoded JSON type keys and values for equivalent contexts and latest turn rejection", () => {
+    const window = metadata();
+    const compact = window.tail;
+    for (const escaped of [
+      compact.replace('"type"', '"\\u0074ype"'),
+      compact.replace('"turn_context"', '"turn_\\u0063ontext"'),
+      compact.replace('"type"', '"\\u0074ype"').replace('"turn_context"', '"turn_\\u0063ontext"'),
+    ]) {
+      expect(JSON.parse(escaped)).toEqual(JSON.parse(compact));
+      expect(observeCodexHook(hook, { readMetadata: () => ({ ...window, tail: escaped }) }).reason).toBeNull();
+      const latest = escaped.replace(hook.turn_id, "latest-escaped-turn");
+      expect(observeCodexHook(hook, { readMetadata: () => ({ ...window, tail: compact + latest }) }))
+        .toEqual({ observation: null, reason: "host-turn-mismatch" });
+    }
+  });
+
   it("reports missing, unreadable and truncated metadata without using configuration defaults", () => {
     expect(observeCodexHook({ ...hook, turn_id: undefined }, { readMetadata: () => metadata() }).observation).toBeNull();
     expect(observeCodexHook(hook, { readMetadata: () => null }).reason).toBe("host-metadata-unreadable");

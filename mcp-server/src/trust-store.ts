@@ -2,6 +2,7 @@ import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypt
 import { chmodSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import type { SharedModuleContext, SqlDatabase } from "../../runtime/unified-state/shared-connection.mjs";
 
 import {
   CONTRACT_VERSION,
@@ -39,11 +40,26 @@ function rejectUnexpectedKeys(value: object, allowed: Set<string>, label: string
 
 /** Stores source provenance metadata and content digests only; raw prompt and message bodies are never accepted. */
 export class TrustStore {
-  private readonly database: DatabaseSync;
+  private readonly database: SqlDatabase;
+  private readonly shared: SharedModuleContext | undefined;
+  readonly databasePath: string;
   private readonly signingKey: Buffer;
+  private readonly syntheticSecret: string | undefined;
   private closed = false;
 
-  constructor(readonly databasePath: string) {
+  constructor(input: string | SharedModuleContext, syntheticSecret?: string) {
+    this.shared = typeof input === "string" ? undefined : input;
+    this.databasePath = typeof input === "string" ? input : input.databasePath;
+    this.syntheticSecret = syntheticSecret;
+    const databasePath = this.databasePath;
+    if (this.shared) {
+      this.database = this.shared.database;
+      if (!syntheticSecret || Buffer.from(syntheticSecret, "base64url").length !== 32) throw new WorkflowContractError("INVALID_INPUT", "An explicit new synthetic trust key is required.");
+      this.shared.initialize(() => this.initializeSchema());
+      this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
+      if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", "The stored trust key differs from the explicit synthetic namespace.");
+      return;
+    }
     if (!databasePath.trim()) throw new WorkflowContractError("INVALID_INPUT", "Trust database path must not be empty.");
     if (databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true, mode: 0o700 });
     this.database = new DatabaseSync(databasePath);
@@ -53,6 +69,7 @@ export class TrustStore {
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
       this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
+      if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", "The stored trust key differs from the explicit synthetic namespace.");
       if (this.signingKey.length !== 32) throw new Error("Stored trust signing key is invalid.");
       if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync(path.resolve(databasePath), 0o600);
     } catch (cause) {
@@ -188,7 +205,7 @@ export class TrustStore {
   }
 
   private initializeSchema(): void {
-    const version = (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
+    const version = this.shared?.getSchemaVersion() ?? (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
     if (version > SCHEMA_VERSION) {
       throw new WorkflowContractError("INVALID_INPUT", "Trust database schema is newer than this server supports.", {
         databasePath: this.databasePath,
@@ -196,8 +213,8 @@ export class TrustStore {
         actualVersion: version,
       });
     }
+    this.transaction(() => {
     this.database.exec(`
-      BEGIN IMMEDIATE;
       CREATE TABLE IF NOT EXISTS trust_metadata (
         key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL
       ) STRICT;
@@ -215,16 +232,17 @@ export class TrustStore {
       ) STRICT;
       CREATE INDEX IF NOT EXISTS input_source_latest
         ON input_source_receipts(host, session_id, observed_at DESC);
-      PRAGMA user_version = ${SCHEMA_VERSION};
-      COMMIT;
     `);
+    if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION);
+    else this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
+    });
   }
 
   private getOrCreateSecret(name: string): string {
     return this.transaction(() => {
       const existing = this.database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(name) as { value: string } | undefined;
       if (existing) return existing.value;
-      const value = randomBytes(32).toString("base64url");
+      const value = this.syntheticSecret ?? randomBytes(32).toString("base64url");
       this.database.prepare("INSERT INTO trust_metadata (key, value, updated_at) VALUES (?, ?, ?)")
         .run(name, value, new Date().toISOString());
       return value;
@@ -232,6 +250,7 @@ export class TrustStore {
   }
 
   private transaction<T>(operation: () => T): T {
+    if (this.shared) return this.shared.transaction(operation);
     this.database.exec("BEGIN IMMEDIATE;");
     try {
       const result = operation();

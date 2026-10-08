@@ -601,7 +601,7 @@ function observeCodexHook(input, options = {}) {
   const lines = window.tail.split("\n");
   for (let index = lines.length - 1; index >= 0; index -= 1) {
     const line = lines[index];
-    if (!line?.slice(0, 200).includes('"type":"turn_context"')) continue;
+    if (!line) continue;
     try {
       const entry = record2(JSON.parse(line));
       if (entry?.type === "turn_context") {
@@ -716,8 +716,19 @@ function mergePluginUpdateState(existing, incoming) {
 // mcp-server/src/sqlite-workflow-store.ts
 var SCHEMA_VERSION = 5;
 var SqliteWorkflowStore = class {
-  constructor(databasePath) {
-    this.databasePath = databasePath;
+  database;
+  shared;
+  databasePath;
+  closed = false;
+  constructor(input) {
+    this.shared = typeof input === "string" ? void 0 : input;
+    this.databasePath = typeof input === "string" ? input : input.databasePath;
+    const databasePath = this.databasePath;
+    if (this.shared) {
+      this.database = this.shared.database;
+      this.shared.initialize(() => this.initializeSchema());
+      return;
+    }
     if (!databasePath.trim()) {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow database path must not be empty.");
     }
@@ -743,9 +754,6 @@ var SqliteWorkflowStore = class {
       throw this.storageError("Cannot initialize the workflow database.", cause);
     }
   }
-  databasePath;
-  database;
-  closed = false;
   getOrCreateSecret(name, create) {
     return this.guard("Cannot read or create workflow metadata.", { key: name }, () => this.transaction(() => {
       const existing = this.database.prepare("SELECT value FROM workflow_metadata WHERE key = ?").get(name);
@@ -925,6 +933,7 @@ var SqliteWorkflowStore = class {
   }
   insertAttemptLease(root, expectedRevision, proposal, lease) {
     return this.guard("Cannot claim the convergence attempt lease.", { rootId: root.rootId }, () => this.transaction(() => {
+      if (this.shared && Date.parse(lease.expiresAt) <= this.shared.time(Date.parse(lease.issuedAt))) return false;
       if (!this.casRoot(root, expectedRevision)) return false;
       this.database.prepare(`
         INSERT INTO convergence_leases (
@@ -975,7 +984,8 @@ var SqliteWorkflowStore = class {
       if (!leaseRow) return null;
       const lease = JSON.parse(leaseRow.lease_json);
       const proposal = JSON.parse(leaseRow.proposal_json);
-      if (lease.state !== "issued" || lease.rootRevision !== expectedRootRevision || Date.parse(lease.expiresAt) <= Date.parse(consumedAt)) return null;
+      const decisionTime = this.shared ? this.shared.time(Date.parse(consumedAt)) : Date.parse(consumedAt);
+      if (lease.state !== "issued" || lease.rootRevision !== expectedRootRevision || Date.parse(lease.expiresAt) <= decisionTime) return null;
       const rootRow = this.rootRow(lease.rootId);
       if (!rootRow || rootRow.revision !== expectedRootRevision) return null;
       const root = JSON.parse(rootRow.root_json);
@@ -1073,7 +1083,7 @@ var SqliteWorkflowStore = class {
     }));
   }
   getSchemaVersion() {
-    return this.database.prepare("PRAGMA user_version").get().user_version;
+    return this.shared?.getSchemaVersion() ?? this.database.prepare("PRAGMA user_version").get().user_version;
   }
   isConvergenceRootActive(rootId) {
     const row = this.database.prepare(`
@@ -1144,6 +1154,7 @@ var SqliteWorkflowStore = class {
     });
   }
   backupTo(targetPath) {
+    if (this.shared) throw new Error("SHARED_BACKUP_OWNER_REQUIRED: a shared database backup requires an explicit owner contract.");
     if (this.databasePath === ":memory:") {
       throw new WorkflowContractError("INVALID_INPUT", "An in-memory workflow database cannot be cleaned destructively.");
     }
@@ -1215,7 +1226,7 @@ var SqliteWorkflowStore = class {
     this.closed = true;
   }
   initializeSchema() {
-    const row = this.database.prepare("PRAGMA user_version").get();
+    const row = { user_version: this.getSchemaVersion() };
     if (row.user_version > SCHEMA_VERSION) {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow database schema is newer than this server supports.", {
         databasePath: this.databasePath,
@@ -1346,8 +1357,10 @@ var SqliteWorkflowStore = class {
           expires_at TEXT NOT NULL,
           consumed_at TEXT NOT NULL
         ) STRICT;
-        PRAGMA user_version = ${SCHEMA_VERSION};
+
       `);
+      if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION);
+      else this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
     });
   }
   rootRow(rootId) {
@@ -1420,6 +1433,7 @@ var SqliteWorkflowStore = class {
   }
   /** Writers take the lock up front with BEGIN IMMEDIATE; snapshot reads pass "BEGIN;". */
   transaction(operation, begin = "BEGIN IMMEDIATE;") {
+    if (this.shared) return this.shared.transaction(operation);
     this.database.exec(begin);
     try {
       const result = operation();

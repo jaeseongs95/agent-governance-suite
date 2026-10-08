@@ -13,13 +13,16 @@ var SUMMARY_MAX_LENGTH = 200;
 var RETAIN_MS = 24 * 36e5;
 var READ_ONLY_COMMANDS = /* @__PURE__ */ new Set(["ls", "cat", "pwd", "rg", "grep"]);
 var READ_ONLY_GIT = /* @__PURE__ */ new Set(["status", "log", "diff", "show"]);
-function openBoard(databasePath, { busyTimeoutMs = 5e3 } = {}) {
-  if (databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true });
-  const db = new DatabaseSync(databasePath);
-  try {
-    db.exec(`PRAGMA busy_timeout = ${Math.trunc(busyTimeoutMs)};`);
-    if (databasePath !== ":memory:") db.exec("PRAGMA journal_mode = WAL;");
-    db.exec(`CREATE TABLE IF NOT EXISTS sessions (
+function openBoard(input, { busyTimeoutMs = 5e3 } = {}) {
+  const shared = typeof input === "string" ? null : input;
+  const databasePath = shared ? shared.databasePath : input;
+  if (!shared && databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true });
+  const db = shared ? shared.database : new DatabaseSync(databasePath);
+  const initialize = () => {
+    try {
+      if (!shared) db.exec(`PRAGMA busy_timeout = ${Math.trunc(busyTimeoutMs)};`);
+      if (!shared && databasePath !== ":memory:") db.exec("PRAGMA journal_mode = WAL;");
+      db.exec(`CREATE TABLE IF NOT EXISTS sessions (
       host TEXT NOT NULL,
       session_id TEXT NOT NULL,
       cwd TEXT NOT NULL,
@@ -31,17 +34,23 @@ function openBoard(databasePath, { busyTimeoutMs = 5e3 } = {}) {
       updated_at TEXT NOT NULL,
       PRIMARY KEY (host, session_id)
     ) STRICT;`);
-  } catch (error) {
-    db.close();
-    throw error;
-  }
+    } catch (error) {
+      db.close();
+      throw error;
+    }
+    if (shared) shared.setSchemaVersion(0);
+  };
+  if (shared) shared.initialize(initialize);
+  else initialize();
   return db;
 }
 function touchSession(db, { host, sessionId, cwd, now }) {
+  if (db.transaction && !db.inTransaction) return db.transaction(() => touchSession(db, { host, sessionId, cwd, now }));
   db.prepare(`INSERT INTO sessions (host, session_id, cwd, started_at, updated_at) VALUES (?, ?, ?, ?, ?)
     ON CONFLICT (host, session_id) DO UPDATE SET cwd = excluded.cwd, updated_at = excluded.updated_at`).run(host, sessionId, cwd, now, now);
 }
 function recordPrompt(db, session) {
+  if (db.transaction && !db.inTransaction) return db.transaction(() => recordPrompt(db, session));
   touchSession(db, session);
   db.prepare("UPDATE sessions SET last_prompt_at = ? WHERE host = ? AND session_id = ?").run(session.now, session.host, session.sessionId);
 }
@@ -51,6 +60,7 @@ function normalizeSummary(value) {
   return line && !/[\r\n]/u.test(line) && line.length <= SUMMARY_MAX_LENGTH ? line : null;
 }
 function setSummary(db, session, summary) {
+  if (db.transaction && !db.inTransaction) return db.transaction(() => setSummary(db, session, summary));
   const line = normalizeSummary(summary);
   if (!line) throw new Error(`summary must be one non-empty line of at most ${SUMMARY_MAX_LENGTH} characters`);
   touchSession(db, session);
@@ -58,6 +68,7 @@ function setSummary(db, session, summary) {
   return line;
 }
 function gateDecision(db, session) {
+  if (db.transaction && !db.inTransaction) return db.transaction(() => gateDecision(db, session));
   touchSession(db, session);
   const row = db.prepare("SELECT summary_at, last_prompt_at, started_at FROM sessions WHERE host = ? AND session_id = ?").get(session.host, session.sessionId);
   const marker = row.last_prompt_at ?? row.started_at;
@@ -67,6 +78,7 @@ function gateDecision(db, session) {
   return claimed.changes > 0 ? "deny" : "allow";
 }
 function pruneSessions(db, now) {
+  if (db.transaction && !db.inTransaction) return db.transaction(() => pruneSessions(db, now));
   db.prepare("DELETE FROM sessions WHERE updated_at < ?").run(new Date(Date.parse(now) - RETAIN_MS).toISOString());
 }
 function isReadOnlyCommand(command) {

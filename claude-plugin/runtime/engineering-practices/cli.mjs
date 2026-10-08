@@ -3,11 +3,13 @@ import { fileURLToPath } from 'node:url';
 import { PracticeError, requireCondition as need, readBoundedFile, parseJson, hashBytes } from './io.mjs';
 import { captureSnapshot, validatePlan, validateProof, validateReview, selfCheck, loadCatalog, providerResult } from './core.mjs';
 import { runCommand } from './runner.mjs';
+import { checkStageBundle } from './stage-bundle.mjs';
 const COMMANDS = {
   'self-check': [], 'catalog': ['module'], 'snapshot': ['root', 'files'],
   'run': ['root', 'snapshot', 'timeout-ms', 'environment-note'],
   'check-plan': ['root', 'plan'], 'check-proof': ['root', 'plan', 'proof'],
-  'check-review': ['root', 'request', 'report'], 'provider-result': ['root', 'capability', 'result', 'locator']
+  'check-review': ['root', 'request', 'report'], 'provider-result': ['root', 'capability', 'result', 'locator'],
+  'check-stage-bundle': ['root', 'input', 'bundle-digest', 'task-digest', 'capability']
 };
 export function parseArgs(argv) {
   const [cmd, ...tokens] = argv; need(Object.hasOwn(COMMANDS, cmd), 'INVALID_INPUT', 'Unknown command. Use self-check, catalog, snapshot, run, check-plan, check-proof, check-review or provider-result.');
@@ -20,7 +22,8 @@ export function parseArgs(argv) {
     options[key] = tokens[++i];
   }
   if (!['self-check', 'catalog'].includes(cmd)) need(options.root, 'INVALID_INPUT', '--root is required.');
-  const required = { snapshot: ['files'], run: ['snapshot'], 'check-plan': ['plan'], 'check-proof': ['plan', 'proof'], 'check-review': ['request', 'report'], 'provider-result': ['capability', 'result', 'locator'] };
+  const required = { snapshot: ['files'], run: ['snapshot'], 'check-plan': ['plan'], 'check-proof': ['plan', 'proof'], 'check-review': ['request', 'report'], 'provider-result': ['capability', 'result', 'locator'],
+    'check-stage-bundle': ['input', 'bundle-digest', 'task-digest', 'capability'] };
   for (const k of required[cmd] ?? []) need(options[k], 'INVALID_INPUT', `--${k} is required.`);
   if (cmd === 'run') need(command.length, 'INVALID_INPUT', 'Supply the explicit command after --.');
   return { cmd, options, command };
@@ -39,6 +42,10 @@ export function execute(argv) {
   if (cmd === 'check-plan') return { value: validatePlan(read(o.plan)), exitCode: 0 };
   if (cmd === 'check-proof') { const value = validateProof(o.root, read(o.plan), read(o.proof)); return { value, exitCode: value.verdict === 'CONSISTENT' ? 0 : 1 }; }
   if (cmd === 'check-review') { const value = validateReview(o.root, read(o.request), read(o.report)); return { value, exitCode: value.verdict === 'NO_BLOCKING_FINDINGS' ? 0 : 1 }; }
+  if (cmd === 'check-stage-bundle') {
+    const value = checkStageBundle(o.root, o.input, o['bundle-digest'], o['task-digest'], o.capability);
+    return { value, exitCode: ['CONSISTENT', 'NO_BLOCKING_FINDINGS'].includes(value.result.verdict) ? 0 : 1 };
+  }
   return { value: providerResult(o.capability, read(o.result), o.locator, hashBytes(readBoundedFile(o.root, o.result, 8 * 1024 * 1024))), exitCode: 0 };
 }
 export async function main(argv) {
