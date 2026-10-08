@@ -111,3 +111,101 @@ it.skipIf(process.platform !== "linux")("H07 cancellation drains only owned desc
     expect(() => process.kill(sentinel.pid, 0)).not.toThrow();
   } finally { sentinel.kill(); await sentinelExit; }
 });
+
+// Controlled Python exercises the actual source's scheduler on every platform.
+// Only kernel/clock/process ports are fake; this is not a Linux reap receipt.
+const controlledCleanup = mode => {
+  const python = findPython();
+  const script = `
+import contextlib, importlib.util, io, json, sys, types
+spec=importlib.util.spec_from_file_location('subreaper',sys.argv[1])
+m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+mode=sys.argv[2]; clock=[0.0]; calls=[0]; signals=[]; opened=[]; closed=[]
+m.os.getpid=lambda:10
+m.os.pidfd_open=lambda pid: opened.append(pid) or pid
+m.os.close=lambda fd:closed.append(fd)
+m.time.monotonic=lambda:clock[0]
+m.signal.pidfd_send_signal=lambda fd,sig:signals.append((fd,sig,clock[0]))
+if mode=='drain':
+    handlers={}; m.signal.signal=lambda sig,handler:handlers.update({sig:handler})
+    m.sys.platform='linux'; m.sys.argv=['subreaper','controlled-no-process']
+    m.ctypes.CDLL=lambda *a,**k:types.SimpleNamespace(prctl=lambda *a:0)
+    m.subprocess.Popen=lambda argv:types.SimpleNamespace(pid=20,returncode=None)
+    m.os.WNOHANG=1; m.signal.SIGKILL=9
+    def wait(*args):
+        calls[0]+=1; clock[0]+=0.01
+        assert calls[0]<2000,'wait-ready stream monopolized cancellation/deadline'
+        if calls[0]==2:handlers[m.signal.SIGTERM](m.signal.SIGTERM,None)
+        return (1000+calls[0],0)
+    m.os.waitpid=wait
+    m.time.sleep=lambda seconds:clock.__setitem__(0,clock[0]+seconds)
+    def send(sig,*args):signals.append((10,sig,clock[0]));return True
+    m.signal_owned=send
+    with contextlib.redirect_stderr(io.StringIO()) as captured:result=m.main()
+    receipt=json.loads(captured.getvalue())
+    assert receipt['remainingChildren'] is True and receipt['cancelled'] is True,'unreaped state lost'
+    assert result==70,'unreaped wait-ready stream must fail closed'
+    assert clock[0]<=5.15,'cleanup deadline exceeded'
+    assert any(sig==m.signal.SIGTERM and t<0.5 for _,sig,t in signals),'TERM delayed by drain'
+    assert any(sig==9 and 3<=t<=3.5 for _,sig,t in signals),'KILL delayed by drain'
+    print(json.dumps({'mode':mode,'exit':result,'calls':calls[0],'clock':clock[0],'signals':signals}))
+else:
+    class Proc:
+        def __init__(self,name):self.name=name
+        def __truediv__(self,part):return Proc(self.name+'/'+part)
+        def iterdir(self):
+            while True:
+                calls[0]+=1
+                assert calls[0]<2000,'changing descendants monopolized cleanup'
+                if mode=='deadline':clock[0]+=0.01
+                yield Proc(self.name+'/changing-thread')
+        def open(self):
+            if mode=='deadline':clock[0]+=0.01
+            class Stream(io.StringIO):
+                def read(self,size=-1):
+                    calls[0]+=1
+                    assert calls[0]<2000,'descendant reads exceeded finite work'
+                    assert 0<size<=4096,'unbounded proc read'
+                    return super().read(size)
+            return Stream(' '.join(str(pid) for pid in range(20,20020)
+                if not(mode=='work' and pid==21 and 21 in opened))+' ')
+    m.Path=Proc
+    deadline=0.25 if mode=='deadline' else 1000000
+    result=m.signal_owned(m.signal.SIGTERM,deadline)
+    assert result is False,'partial traversal must return control, not claim complete'
+    assert calls[0]<300,'finite work bound exceeded'
+    assert set(opened)==set(closed),'pidfd leaked at budget/deadline boundary'
+    assert all(fd>=20 for fd,_,_ in signals),'unowned pid signalled'
+    if mode=='deadline':assert clock[0]<=0.27,'traversal/recheck exceeded deadline'
+    else:
+        assert any(fd==20 for fd,_,_ in signals),'owned PID20 must be signalled before yielding'
+        assert 21 in opened and 21 in closed,'ownership change must close acquired PID21 fd'
+        assert all(fd!=21 for fd,_,_ in signals),'no signal after PID21 leaves owned descendants'
+    print(json.dumps({'mode':mode,'complete':result,'calls':calls[0],'clock':clock[0],'signals':signals,'opened':opened,'closed':closed}))
+`;
+  const result = spawnSync(python.command, [...python.prefix, "-c", script, path.join(root, "scripts/test-subreaper.py"), mode],
+    { encoding: "utf8", timeout: 10_000, env: { ...process.env, PYTHONDONTWRITEBYTECODE: "1" } });
+  expect(result.error, result.stderr).toBeUndefined();
+  expect(result.status, result.stderr).toBe(0);
+  const trace = JSON.parse(result.stdout.trim());
+  console.log(JSON.stringify({ kind: "controlled-python-subreaper", kernelExecution: false, trace }));
+  return trace;
+};
+
+it("H08 controlled wait-ready stream reaches cancellation and deadline without false PASS", () => {
+  const result = controlledCleanup("drain");
+  expect(result.exit).toBe(70);
+  expect(result.calls).toBeLessThan(520);
+});
+
+it("H09 controlled large changing descendants yield after finite work and close every pidfd", () => {
+  const result = controlledCleanup("work");
+  expect(result.complete).toBe(false);
+  expect(result.calls).toBeLessThan(300);
+});
+
+it("H10 controlled descendant traversal and ownership recheck honor cleanup deadline", () => {
+  const result = controlledCleanup("deadline");
+  expect(result.complete).toBe(false);
+  expect(result.clock).toBeLessThanOrEqual(0.27);
+});
