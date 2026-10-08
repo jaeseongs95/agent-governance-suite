@@ -81,6 +81,7 @@ export class InactiveUnifiedAuthority {
     this.#fault = fault;
     this.#database = new DatabaseSync(this.databasePath);
     try {
+      this.#database.exec("PRAGMA busy_timeout=5000;");
       const app = this.#database.prepare("PRAGMA application_id").get().application_id;
       const version = this.#database.prepare("PRAGMA user_version").get().user_version;
       const tables = this.#database.prepare("SELECT name FROM sqlite_schema WHERE type='table'").all();
@@ -90,7 +91,7 @@ export class InactiveUnifiedAuthority {
         const modules = this.#database.prepare("SELECT * FROM module_schema").all();
         need(modules.length === 5 && modules.every((module) => module.candidate_version === 1 && canonicalJson(JSON.parse(module.source_versions_json)) === canonicalJson(MODULE_VERSIONS[module.module])), "CANDIDATE_SCHEMA_DRIFT", "Stored module schema metadata must match the candidate version.");
       }
-      this.#database.exec("PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON; PRAGMA synchronous=FULL;");
+      this.#database.exec("PRAGMA foreign_keys=ON; PRAGMA synchronous=FULL;");
       this.#database.exec("PRAGMA journal_mode=WAL;");
       this.#transaction(() => {
         this.#database.exec(`
