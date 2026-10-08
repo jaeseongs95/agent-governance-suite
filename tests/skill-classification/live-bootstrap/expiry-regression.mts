@@ -51,7 +51,7 @@ try {
     if (result.status !== "RAW_EVALUATION_RECORDED") throw new Error("Expected expiry raw record");
     assert.equal(result.stopReason, "BOUND_EVIDENCE_EXPIRED");
     assert.equal(result.validatedEvidenceDeadlineMs, deadline);
-    assert.equal(result.requestsReserved, 1);
+    assert.equal(result.requestsReserved, 1, "NO_SECOND_RESERVATION_AFTER_EXPIRY");
     assert.equal(result.ledger.entries[0]!.state, "unknown");
     assert.equal(result.ledger.entries[0]!.reservedUsd, 0.001);
     assert.equal(result.ledger.entries[0]!.actualCostUsd, null);

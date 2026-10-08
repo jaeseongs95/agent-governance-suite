@@ -9,7 +9,8 @@ const repo = path.resolve(process.argv[2]!);
 assert(process.argv[2], "Usage: contract-selfcheck.mts REPO");
 const root = await mkdtemp(path.join(os.tmpdir(), "ags-bootstrap-contract-"));
 const hash = (data: string) => `sha256:${createHash("sha256").update(data).digest("hex")}`;
-const config = (runId: string): BootstrapConfig => ({schemaVersion: "1.0.0", runId, repo, outputDirectory: path.join(root, runId),
+type LegacyConfig = Extract<BootstrapConfig, {schemaVersion: "1.0.0"}>;
+const config = (runId: string): LegacyConfig => ({schemaVersion: "1.0.0", runId, repo, outputDirectory: path.join(root, runId),
   endpointEnv: "AGS_BOOTSTRAP_ENDPOINT", credentialEnv: "AGS_BOOTSTRAP_JEV_KEY", approvedEndpointDigest: null, approvedRouteRef: null, approvalRef: null,
   profile: null, limits: null, prices: null, budget: null,
   evidence: {route: null, price: null, priorLedger: null, remaining: null, hardTokenCaps: null, operatorAuthorization: null}});
@@ -75,7 +76,7 @@ try {
   if (result.status !== "RAW_EVALUATION_RECORDED") throw new Error("Expected mocked raw evaluation");
   assert.equal(calls, 21); assert.equal(result.transportAttempts, 21); assert.equal(result.qualificationStatus, "NOT_RUN");
   assert.equal(result.selectedReadAppliedVerified, "NOT_RUN"); assert.notEqual(result.raw.verdict, "PASS");
-  assert(result.ledger.entries.every((entry: any) => entry.state === "unknown" && entry.actualCostUsd === null && entry.reservedUsd === 0.001));
+  assert(result.ledger.entries.every((entry: any) => entry.state === "unknown" && entry.actualCostUsd === null && entry.reservedUsd === 0.001), "LEGACY_UNKNOWN_RESERVATION_PRESERVED");
   const text = await readFile(path.join(value.outputDirectory, "report.json"), "utf8"); assert(!text.includes("test-only-not-a-real-key"));
   await assert.rejects(() => run(value, {fetcher, executionKind: "offline-mock"})); assert.equal(calls, 21);
   passed.push("21 one-attempt public wires, no labels/secret logging, unknown cost reservations retained, no synthetic qualification PASS or duplicate run");
@@ -95,9 +96,9 @@ try {
   passed.push("verified input-only price accepts without output billing cap and blocks when input billing cap is absent");
 
   for (const [id, change, expected] of [
-    ["total-six", (value: BootstrapConfig) => {value.budget!.totalLimitUsd = 6;}, "BUDGET_HARD_LIMIT_USD_5"],
+    ["total-six", (value: LegacyConfig) => {value.budget!.totalLimitUsd = 6;}, "BUDGET_HARD_LIMIT_USD_5"],
     ["run-six", (value: BootstrapConfig) => {value.limits!.runUsd = 6;}, "BUDGET_HARD_LIMIT_USD_5"],
-    ["prior-reserve-over", (value: BootstrapConfig) => {value.budget = {...value.budget!, totalLimitUsd: 5, verifiedPriorSpendUsd: 3, priorUnknownReservedUsd: 2, currentRemainingUsd: 1};}, "CURRENT_LEDGER_OR_REMAINING_UNVERIFIED"],
+    ["prior-reserve-over", (value: LegacyConfig) => {value.budget = {...value.budget!, totalLimitUsd: 5, verifiedPriorSpendUsd: 3, priorUnknownReservedUsd: 2, currentRemainingUsd: 1};}, "CURRENT_LEDGER_OR_REMAINING_UNVERIFIED"],
   ] as const) {
     const excess = await readyMock(id); change(excess); await mockedEvidence(excess);
     const refused = await run(excess, {env, fetcher: async () => {actualCalls++; throw new Error("Forbidden call");}, executionKind: "offline-mock"});

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
   "runId": "public-qualification-001",
   "repo": "/workspace/agent-governance-suite",
   "outputDirectory": "/workspace/ags-qualification-public/public-qualification-001",
@@ -11,7 +11,22 @@
   "profile": null,
   "limits": null,
   "prices": null,
-  "budget": null,
+  "reservationMode": "reviewed-estimate",
+  "estimator": null,
+  "budget": {
+    "scope": "run",
+    "runId": "public-qualification-001",
+    "totalAuthorizationUsd": 5,
+    "allocatedUsd": 0.06,
+    "allocationRef": null,
+    "priorRunConfirmedSpendUsd": null,
+    "priorRunUnknownReservedUsd": null,
+    "accountBalanceUsd": null,
+    "accountPriorSpendUsd": null,
+    "accountUnknownReservedUsd": null,
+    "observedAt": null,
+    "validUntil": null
+  },
   "evidence": {
     "route": null,
     "price": null,

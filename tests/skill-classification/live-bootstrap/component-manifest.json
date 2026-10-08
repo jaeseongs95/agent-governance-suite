@@ -20,42 +20,54 @@
     {
       "path": "tests/skill-classification/live-bootstrap/bootstrap.mts",
       "role": "qualification-bootstrap-runtime",
-      "bytes": 25007,
-      "digest": "sha256:4c55aae69fa16384e922f93ebe0b6a37d8e1a2fd43fb6baaddb11c0c7a892765",
+      "bytes": 34540,
+      "digest": "sha256:0e4ccf294a1303d0fbdb123aa6b0cea9bc8866eb45affed21880a12cef683866",
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
     },
     {
       "path": "tests/skill-classification/live-bootstrap/contract-selfcheck.mts",
       "role": "offline-mock-contract",
-      "bytes": 10918,
-      "digest": "sha256:cf4906a1a422517f2884ae29b7ac4528fb0b26ba8031646422fbdf7623a579af",
+      "bytes": 11021,
+      "digest": "sha256:fb5ac964d31c2dbce0a37d3d593fdeef8ceecf4be3b2661bb4c3b3d17776e751",
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
     },
     {
       "path": "tests/skill-classification/live-bootstrap/expiry-regression.mts",
       "role": "offline-expiry-regression",
-      "bytes": 6749,
-      "digest": "sha256:2ec56a24f42fe2146bec65adb8d394a83162b12d65a09b6a41453628267bc474",
+      "bytes": 6787,
+      "digest": "sha256:bccd024d9aed62fc40edc1d861384622c0d181f653c6101f4fa0ebe392468689",
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
     },
     {
       "path": "tests/skill-classification/live-bootstrap/config.blocked.example.json",
       "role": "blocked-config-template",
-      "bytes": 615,
-      "digest": "sha256:07eea3d26244de1a5e67f9a1aafc513e120d54cdbd74b6c5122c035155045e6d",
+      "bytes": 1055,
+      "digest": "sha256:b27b198abfd941f52fe21438f9bedd12f3a67f514df164506718a877da392422",
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
     },
     {
       "path": "tests/skill-classification/live-bootstrap/README.md",
       "role": "public-run-instructions",
-      "bytes": 2430,
-      "digest": "sha256:7af3cd50fd4ff8d73291eb0ca211d78283c154426c7244fd2de486db795e3b4f",
+      "bytes": 5056,
+      "digest": "sha256:6c94430f5e1bc323e6ee6ef62c4c5098a5af32f7a560f162533af37cb46af562",
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+    },
+    {
+      "path": "tests/skill-classification/live-bootstrap/budget-regression.mts",
+      "role": "offline-run-budget-regression",
+      "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+      "bytes": 15590,
+      "digest": "sha256:920932db113f63f95d562f2a9933c3b12f26366e768a71e2c5174835dd9d2a50"
     }
   ],
   "actualApiCalls": 0,
   "actualCredentialLookups": 0,
   "qualification": "NOT_RUN",
   "hostLive": "NOT_RUN",
-  "requiredOutputLocation": "outside-repository-private-directory"
+  "requiredOutputLocation": "outside-repository-private-directory",
+  "previousPublicCandidate": {
+    "commit": "439893b9adc9546c135041219ab4ea9ee9d4adfe",
+    "tree": "287510912f935b6776662f2a656a41327e964ccf",
+    "originalHelperDigest": "sha256:4c55aae69fa16384e922f93ebe0b6a37d8e1a2fd43fb6baaddb11c0c7a892765"
+  }
 }
