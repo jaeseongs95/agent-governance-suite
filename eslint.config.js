@@ -14,6 +14,24 @@ export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    // Audited, SHA-bound development helpers retain their frozen source bytes.
+    // They have separate strict TypeScript and offline effect checks.
+    files: [
+      "tests/skill-classification/live-bootstrap/bootstrap.mts",
+      "tests/skill-classification/live-bootstrap/contract-selfcheck.mts"
+    ],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off"
+    }
+  },
+  {
+    // The frozen helper reports a fixed ledger error without private causes.
+    files: ["tests/skill-classification/live-bootstrap/bootstrap.mts"],
+    rules: {
+      "preserve-caught-error": "off"
+    }
+  },
+  {
     files: ["**/*.mjs", "**/*.js"],
     languageOptions: {
       globals: {

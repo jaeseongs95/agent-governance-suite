@@ -5,6 +5,11 @@
     "commit": "5e0f7c1d4c3e38d036c781656bd336c4de9c049c",
     "tree": "824a6ef526c25693ccedf60909b5f6a67a329207"
   },
+  "developmentTooling": {
+    "path": "eslint.config.js",
+    "digest": "sha256:d7df5aab151c2c99c6cc9913f729ef1865d8f2b5a8291318995d2633e523c1d5",
+    "purpose": "Exact frozen development copies use file-specific style exceptions; runtime source is unchanged"
+  },
   "fixture": {
     "path": "tests/skill-classification/fixtures.json",
     "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
@@ -43,8 +48,8 @@
     {
       "path": "tests/skill-classification/live-bootstrap/README.md",
       "role": "public-run-instructions",
-      "bytes": 2133,
-      "digest": "sha256:2a1eb1df9680722d3acbff2d412ef52869697444c5169d8d15ecadd071704b16",
+      "bytes": 2430,
+      "digest": "sha256:7af3cd50fd4ff8d73291eb0ca211d78283c154426c7244fd2de486db795e3b4f",
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
     }
   ],
