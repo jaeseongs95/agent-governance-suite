@@ -1,0 +1,23 @@
+{
+  "command": [
+    "node",
+    "scripts/run-tests.mjs",
+    "tests/SS28-isolated.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=<ARTIFACTS>/new-tests.vitest.json"
+  ],
+  "cwd": "<REPO>",
+  "startedAt": "2026-10-09T02:57:46.058310+00:00",
+  "finishedAt": "2026-10-09T02:57:47.412886+00:00",
+  "exitCode": 1,
+  "executionKind": "offline-mock",
+  "API0": true,
+  "externalCalls": {
+    "JEV": 0,
+    "vendorAPI": 0,
+    "Claude": 0
+  },
+  "stdoutFile": "new-variants.stdout.log",
+  "stderrFile": "new-variants.stderr.log"
+}

@@ -1,0 +1,16 @@
+{
+  "config": {
+    "jevEnabled": true,
+    "mode": "select",
+    "providerProfileRegistryRef": "unconfigured",
+    "externalClassificationAllowed": false,
+    "configRevision": "unconfigured",
+    "timeoutMs": 30000
+  },
+  "registry": {
+    "schemaVersion": "1.0.0",
+    "profileRevision": "unconfigured",
+    "profiles": []
+  },
+  "allowRemotePrivateContent": false
+}

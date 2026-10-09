@@ -1,0 +1,11 @@
+{
+  "command": [
+    "node",
+    "--input-type=module",
+    "-e",
+    "import {readFileSync,writeFileSync} from 'node:fs';\nimport {captureSnapshot,validatePlan,validateProof} from './runtime/engineering-practices/core.mjs';\nconst out='<ARTIFACTS>', plan=JSON.parse(readFileSync(out+'/engineering-test-plan.json','utf8'));\nconst proof={schemaVersion:'1.0.0',kind:'engineering-test-proof',planDigest:validatePlan(plan).planDigest,candidate:captureSnapshot(process.cwd(),plan.scopeFiles),proofs:plan.cases.map(c=>({caseId:c.id,status:'NOT_RUN',red:{path:'',digest:'sha256:'+'0'.repeat(64)},green:{path:'',digest:'sha256:'+'0'.repeat(64)},mutationPaths:[],assertionWitness:'',reason:'Red-green/mutation NOTRUN: product modifications prohibited; raw variant assertions are in new-tests.vitest.json. This field does not erase the executed structural tests or the reproducible known-cost failure.'}))};\nwriteFileSync(out+'/engineering-test-proof.json',JSON.stringify(proof,null,2)+'\\n');\nconst result=validateProof(process.cwd(),plan,proof);writeFileSync(out+'/engineering-test-result.json',JSON.stringify(result,null,2)+'\\n');console.log(JSON.stringify(result,null,2));process.exitCode=result.verdict==='CONSISTENT'?0:1;\n"
+  ],
+  "exitCode": 1,
+  "executionKind": "local-consistency-check",
+  "API0": true
+}

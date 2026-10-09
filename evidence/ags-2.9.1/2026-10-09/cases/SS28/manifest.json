@@ -1,0 +1,548 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS28",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cases/SS28/",
+  "candidateCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "candidateTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "originalRecoveryMissing": [],
+  "originalRecoveredCount": 37,
+  "patchStatus": "NONE_EXISTED",
+  "payloadFileCount": 38,
+  "payloadTotalBytes": 3451627,
+  "files": [
+    {
+      "path": "SS28-isolated.test.ts",
+      "bytes": 15664,
+      "sha256": "dad7ee090a9034a5aa8e442ecda9e37fecb72ae1e0cd0e87c2da9a28acaad9a3",
+      "sourceOriginal": {
+        "file": "SS28-isolated.test.ts",
+        "bytes": 15662,
+        "sha256": "1dea99c8254e2645d8c6dd4b1dd9daf2098911b6e630c5f8af9de9553c7e0242",
+        "status": "RECOVERED"
+      },
+      "representation": "PUBLIC_REDACTED_DERIVATIVE",
+      "transformations": [
+        "replace private/local absolute location with public placeholder",
+        "reproduction copy uses relative output directory; existing assertions unchanged; this copy NOT_RUN"
+      ]
+    },
+    {
+      "path": "SS28.report.md",
+      "bytes": 3916,
+      "sha256": "76c9f260cf2d06033db108cf10d78502e95eb1ddee68d0a795de8af535bfd7b8",
+      "sourceOriginal": {
+        "file": "SS28.report.md",
+        "bytes": 3930,
+        "sha256": "bcc31d83f56a5cd9813e89cb301a0632ae515933a60ca93fe21c12e46b5848d9",
+        "status": "RECOVERED"
+      },
+      "representation": "PUBLIC_REDACTED_DERIVATIVE",
+      "transformations": [
+        "replace private/local absolute location with public placeholder"
+      ]
+    },
+    {
+      "path": "SS28.result.json",
+      "bytes": 26123,
+      "sha256": "89a4d3c8d7f53fe3dcc7b786d11268c273a916609ee4c9d1145f2e54a8800694",
+      "sourceOriginal": {
+        "file": "SS28.result.json",
+        "bytes": 25486,
+        "sha256": "4ad8ae84feda929246c10393c869a6ca28d57c09608db90adde3390e893f365a",
+        "status": "RECOVERED"
+      },
+      "representation": "PUBLIC_REDACTED_DERIVATIVE",
+      "transformations": [
+        "append packaging metadata; preserve pre-existing trial outcome",
+        "replace private/local absolute location with public placeholder"
+      ]
+    },
+    {
+      "path": "SS28.source.json",
+      "bytes": 3071,
+      "sha256": "122cb5c66ad9f088bc04d99b58b7b26bd604c721b0957b80c25d44309d5805e1",
+      "sourceOriginal": {
+        "file": "SS28.source.json",
+        "bytes": 3071,
+        "sha256": "122cb5c66ad9f088bc04d99b58b7b26bd604c721b0957b80c25d44309d5805e1",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "compact.json",
+      "bytes": 604689,
+      "sha256": "ee421422b3780584d575830b5645a746b72fbfd7cf856ff6905e0dfd34671a20",
+      "sourceOriginal": {
+        "file": "compact.json",
+        "bytes": 604689,
+        "sha256": "ee421422b3780584d575830b5645a746b72fbfd7cf856ff6905e0dfd34671a20",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "engineering-test-plan.json",
+      "bytes": 12909,
+      "sha256": "16fbe4653984b5c73fedf64cdd01341546eedce61625b6ce9205e1a737566511",
+      "sourceOriginal": {
+        "file": "engineering-test-plan.json",
+        "bytes": 13039,
+        "sha256": "ee5fdcee81bf62811960003fc228f81e73eebbcb57973dc0122f47407bbabbdf",
+        "status": "RECOVERED"
+      },
+      "representation": "PUBLIC_REDACTED_DERIVATIVE",
+      "transformations": [
+        "replace private/local absolute location with public placeholder"
+      ]
+    },
+    {
+      "path": "engineering-test-proof.json",
+      "bytes": 8095,
+      "sha256": "8671eba435ab86e863f24baae33ff4fb7d084e53590eb5ca856fad40f2bd2854",
+      "sourceOriginal": {
+        "file": "engineering-test-proof.json",
+        "bytes": 8095,
+        "sha256": "8671eba435ab86e863f24baae33ff4fb7d084e53590eb5ca856fad40f2bd2854",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "engineering-test-result.json",
+      "bytes": 3300,
+      "sha256": "8236a858d2aa93f96577f77dbe2c9c291bda4d1554ad7038b9d3530722e77217",
+      "sourceOriginal": {
+        "file": "engineering-test-result.json",
+        "bytes": 3300,
+        "sha256": "8236a858d2aa93f96577f77dbe2c9c291bda4d1554ad7038b9d3530722e77217",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "original-evidence-manifest.json",
+      "bytes": 5963,
+      "sha256": "9831aeee81d70b588f9223a7272517eff2e9b13ae258c5daa743d2b06c991135",
+      "sourceOriginal": {
+        "file": "evidence-manifest.json",
+        "bytes": 5963,
+        "sha256": "9831aeee81d70b588f9223a7272517eff2e9b13ae258c5daa743d2b06c991135",
+        "status": "RECOVERED"
+      },
+      "representation": "PUBLIC_REDACTED_DERIVATIVE",
+      "transformations": [
+        "rename original evidence index to distinguish publication manifest"
+      ]
+    },
+    {
+      "path": "existing-regression.command.json",
+      "bytes": 723,
+      "sha256": "5a05b572dde7d945830a62aad94c5f0e0e21af68624a5f2cde2b197ef3dc9476",
+      "sourceOriginal": {
+        "file": "existing-regression.command.json",
+        "bytes": 750,
+        "sha256": "9ceb7ee4948ba16c910c5fad2e1e982925f44442b6f4080dd8d882472a18a206",
+        "status": "RECOVERED"
+      },
+      "representation": "PUBLIC_REDACTED_DERIVATIVE",
+      "transformations": [
+        "replace private/local absolute location with public placeholder"
+      ]
+    },
+    {
+      "path": "existing-regression.stderr.log",
+      "bytes": 155,
+      "sha256": "2627cab7edc6d64c442f99f4e88f24ef82ee8772f189af027f4af5d34bd2cc1f",
+      "sourceOriginal": {
+        "file": "existing-regression.stderr.log",
+        "bytes": 155,
+        "sha256": "2627cab7edc6d64c442f99f4e88f24ef82ee8772f189af027f4af5d34bd2cc1f",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "existing-regression.stdout.log",
+      "bytes": 3355,
+      "sha256": "d886fb5784d68220caa517ecbb0e4066290c76a88c11770247864edc02128cd0",
+      "sourceOriginal": {
+        "file": "existing-regression.stdout.log",
+        "bytes": 12081,
+        "sha256": "b69073d60c3e9cab79b7e49218fa06bf84fdb3c163ef8c6f352dd579edd476fd",
+        "status": "RECOVERED"
+      },
+      "representation": "PUBLIC_REDACTED_DERIVATIVE",
+      "transformations": [
+        "omit unexecuted unrelated skipped test-name lines; retain original executed PASS and totals",
+        "replace private/local absolute location with public placeholder"
+      ]
+    },
+    {
+      "path": "existing-tests.vitest.json",
+      "bytes": 25533,
+      "sha256": "506047444fa12e82b38fdee8c02925eba8c0310b48038c20456262261eb645b8",
+      "sourceOriginal": {
+        "file": "existing-tests.vitest.json",
+        "bytes": 25575,
+        "sha256": "02c0510a0c93b0efb6ba40d6971d35545e8a66ece07f27bc52c3f895ec3f49ed",
+        "status": "RECOVERED"
+      },
+      "representation": "PUBLIC_REDACTED_DERIVATIVE",
+      "transformations": [
+        "replace private/local absolute location with public placeholder"
+      ]
+    },
+    {
+      "path": "host-runtime.command.json",
+      "bytes": 438,
+      "sha256": "0c5f581650303afd0df88606f7852cc3f940e966beebd9be0a79a19a6d7ec975",
+      "sourceOriginal": {
+        "file": "host-runtime.command.json",
+        "bytes": 438,
+        "sha256": "0c5f581650303afd0df88606f7852cc3f940e966beebd9be0a79a19a6d7ec975",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "host-runtime.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sourceOriginal": {
+        "file": "host-runtime.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "host-runtime.stdout.log",
+      "bytes": 370,
+      "sha256": "7b35384bd1f1ba881abe59a309db307fbf81ce71646d4cfc3a71d4196acad30b",
+      "sourceOriginal": {
+        "file": "host-runtime.stdout.log",
+        "bytes": 370,
+        "sha256": "7b35384bd1f1ba881abe59a309db307fbf81ce71646d4cfc3a71d4196acad30b",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "inventory.json",
+      "bytes": 254107,
+      "sha256": "6f58f070c711af7ba7c8905276c8bb6ceadbb984b0b93125b18b9d619bf3e10b",
+      "sourceOriginal": {
+        "file": "inventory.json",
+        "bytes": 254107,
+        "sha256": "6f58f070c711af7ba7c8905276c8bb6ceadbb984b0b93125b18b9d619bf3e10b",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "known-cost-invalid-response.json",
+      "bytes": 293779,
+      "sha256": "baa5d3daaa1f51632af5b820636f0a12ed25376af2fad4af296e83b6681195fb",
+      "sourceOriginal": {
+        "file": "known-cost-invalid-response.json",
+        "bytes": 293779,
+        "sha256": "baa5d3daaa1f51632af5b820636f0a12ed25376af2fad4af296e83b6681195fb",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "negation-at-tail.json",
+      "bytes": 473378,
+      "sha256": "a2baaf3fe8aa533c4328c8f982f1fdc0c0392397ee3c282cba756aa52a1a3b9a",
+      "sourceOriginal": {
+        "file": "negation-at-tail.json",
+        "bytes": 473378,
+        "sha256": "a2baaf3fe8aa533c4328c8f982f1fdc0c0392397ee3c282cba756aa52a1a3b9a",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "new-tests.vitest.json",
+      "bytes": 4879,
+      "sha256": "d8e7bab3bca274e448f20ec79f492872c587acedbf4c90d8fc8b5eaead2cad97",
+      "sourceOriginal": {
+        "file": "new-tests.vitest.json",
+        "bytes": 5069,
+        "sha256": "222adddf20641432e794dd74e144b6da74353693b25ebefbdf23d4edba569bac",
+        "status": "RECOVERED"
+      },
+      "representation": "PUBLIC_REDACTED_DERIVATIVE",
+      "transformations": [
+        "replace dependency installation stack path with redaction marker",
+        "replace private/local absolute location with public placeholder"
+      ]
+    },
+    {
+      "path": "new-variants.command.json",
+      "bytes": 553,
+      "sha256": "9f0ceb7a4912141de7d0d24a1c37fd951b27d9c8e8d326821d491e634d5f54f7",
+      "sourceOriginal": {
+        "file": "new-variants.command.json",
+        "bytes": 580,
+        "sha256": "28a864dfa8d986d83ffcbba85fab532c5bedfd5734c117634534904898a0ecc6",
+        "status": "RECOVERED"
+      },
+      "representation": "PUBLIC_REDACTED_DERIVATIVE",
+      "transformations": [
+        "replace private/local absolute location with public placeholder"
+      ]
+    },
+    {
+      "path": "new-variants.stderr.log",
+      "bytes": 623,
+      "sha256": "51309a5a15a84bf257c5a5a2f0f829bd0bad7e67f48970345a5df7feb4a2c266",
+      "sourceOriginal": {
+        "file": "new-variants.stderr.log",
+        "bytes": 623,
+        "sha256": "51309a5a15a84bf257c5a5a2f0f829bd0bad7e67f48970345a5df7feb4a2c266",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "new-variants.stdout.log",
+      "bytes": 1994,
+      "sha256": "fa944533dfe0d42545c667d6c617ef53ce07ef0e91095832daf0a82e66273b3c",
+      "sourceOriginal": {
+        "file": "new-variants.stdout.log",
+        "bytes": 2021,
+        "sha256": "75b0166231dc2048106a78430d2c9f25f7e0d6e84b88b659fc94e515d00b79db",
+        "status": "RECOVERED"
+      },
+      "representation": "PUBLIC_REDACTED_DERIVATIVE",
+      "transformations": [
+        "replace private/local absolute location with public placeholder"
+      ]
+    },
+    {
+      "path": "original.json",
+      "bytes": 265931,
+      "sha256": "8a10510b5439caf31b243b21c9595a3755bffe786eb21e0fa8f371125fda9922",
+      "sourceOriginal": {
+        "file": "original.json",
+        "bytes": 265931,
+        "sha256": "8a10510b5439caf31b243b21c9595a3755bffe786eb21e0fa8f371125fda9922",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "plan-check.command.json",
+      "bytes": 539,
+      "sha256": "1f0fd8005b4ea65613432bf261db70d7634ec0bfd8fcc7727b0d3044f4f7a61d",
+      "sourceOriginal": {
+        "file": "plan-check.command.json",
+        "bytes": 566,
+        "sha256": "19a453e3a5633f8f83b9f4e54eb9a28dcca99aef721ce0a03e79ff76554b2d9d",
+        "status": "RECOVERED"
+      },
+      "representation": "PUBLIC_REDACTED_DERIVATIVE",
+      "transformations": [
+        "replace private/local absolute location with public placeholder"
+      ]
+    },
+    {
+      "path": "plan-check.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sourceOriginal": {
+        "file": "plan-check.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "plan-check.stdout.log",
+      "bytes": 489,
+      "sha256": "9205472925473c8aac898545e1ee11d1c156d56268e2aae356e5af1757f77444",
+      "sourceOriginal": {
+        "file": "plan-check.stdout.log",
+        "bytes": 489,
+        "sha256": "9205472925473c8aac898545e1ee11d1c156d56268e2aae356e5af1757f77444",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "product-integrity.json",
+      "bytes": 451,
+      "sha256": "0c7d695b9d6627b57ec08d28d227c584b30f2eae3c33aee6b5afc4b3f092acee",
+      "sourceOriginal": {
+        "file": "product-integrity.json",
+        "bytes": 451,
+        "sha256": "0c7d695b9d6627b57ec08d28d227c584b30f2eae3c33aee6b5afc4b3f092acee",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "proof-check.command.json",
+      "bytes": 1310,
+      "sha256": "046906608d0f9e8eed21c5a4d851e8172a644828d0acbd9216737b53ba702247",
+      "sourceOriginal": {
+        "file": "proof-check.command.json",
+        "bytes": 1323,
+        "sha256": "cc23499b1f5969a80e86ad15042cdc27bca1129bc4ada59633673006d258b975",
+        "status": "RECOVERED"
+      },
+      "representation": "PUBLIC_REDACTED_DERIVATIVE",
+      "transformations": [
+        "replace private/local absolute location with public placeholder"
+      ]
+    },
+    {
+      "path": "proof-check.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sourceOriginal": {
+        "file": "proof-check.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "proof-check.stdout.log",
+      "bytes": 3300,
+      "sha256": "8236a858d2aa93f96577f77dbe2c9c291bda4d1554ad7038b9d3530722e77217",
+      "sourceOriginal": {
+        "file": "proof-check.stdout.log",
+        "bytes": 3300,
+        "sha256": "8236a858d2aa93f96577f77dbe2c9c291bda4d1554ad7038b9d3530722e77217",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "required-at-tail.json",
+      "bytes": 271202,
+      "sha256": "ebfcc142cb5726ab81e5937dba87d71f95e58723b8d458bd0bcbcc3ee9b119ed",
+      "sourceOriginal": {
+        "file": "required-at-tail.json",
+        "bytes": 271202,
+        "sha256": "ebfcc142cb5726ab81e5937dba87d71f95e58723b8d458bd0bcbcc3ee9b119ed",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "too-long.json",
+      "bytes": 20436,
+      "sha256": "ae2a12a46a39b57860fcc2f7cc016d7170afbc13d465a7a4e9ab5e4e08961c31",
+      "sourceOriginal": {
+        "file": "too-long.json",
+        "bytes": 20436,
+        "sha256": "ae2a12a46a39b57860fcc2f7cc016d7170afbc13d465a7a4e9ab5e4e08961c31",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "truncated-json.json",
+      "bytes": 1164,
+      "sha256": "5319f7f7a020d3a1f6235c2f41f126537a149ce46423e2682da94a067f2a5b94",
+      "sourceOriginal": {
+        "file": "truncated-json.json",
+        "bytes": 1164,
+        "sha256": "5319f7f7a020d3a1f6235c2f41f126537a149ce46423e2682da94a067f2a5b94",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "truncated-question-results.json",
+      "bytes": 1998,
+      "sha256": "c68b0a604e9954537edec72cb24405fd331c3227fb09b25a35a5e3f5c89e51a7",
+      "sourceOriginal": {
+        "file": "truncated-question-results.json",
+        "bytes": 1998,
+        "sha256": "c68b0a604e9954537edec72cb24405fd331c3227fb09b25a35a5e3f5c89e51a7",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "unknown-not-empty.json",
+      "bytes": 551079,
+      "sha256": "d2d789a889314f3d66f0dc552e7191c5f63f56f67dfac1e454fffc80f9b87dda",
+      "sourceOriginal": {
+        "file": "unknown-not-empty.json",
+        "bytes": 551079,
+        "sha256": "d2d789a889314f3d66f0dc552e7191c5f63f56f67dfac1e454fffc80f9b87dda",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "unneeded-log-omitted.json",
+      "bytes": 584367,
+      "sha256": "98cbe65cdf3c73f461a6c4abf6239b205cb698c33598926dc7ebbf3307a0cdf8",
+      "sourceOriginal": {
+        "file": "unneeded-log-omitted.json",
+        "bytes": 584367,
+        "sha256": "98cbe65cdf3c73f461a6c4abf6239b205cb698c33598926dc7ebbf3307a0cdf8",
+        "status": "RECOVERED"
+      },
+      "representation": "ORIGINAL_BYTES_UNCHANGED",
+      "transformations": []
+    },
+    {
+      "path": "README.md",
+      "bytes": 5744,
+      "sha256": "5650666382b7ab7272b3c4805f21c166aecf2ac69c1438e3eede47a05218caed",
+      "representation": "NEW_PUBLIC_PACKAGING_DESCRIPTION",
+      "sourceOriginal": null,
+      "transformations": [
+        "publication instructions only; no new observations"
+      ]
+    }
+  ],
+  "hashPolicy": {
+    "manifestExcludes": [
+      "manifest.json",
+      "SHA256SUMS"
+    ],
+    "SHA256SUMSExcludes": [
+      "SHA256SUMS"
+    ],
+    "noCircularHash": true,
+    "publicationControlDigestsReportedExternally": true
+  }
+}

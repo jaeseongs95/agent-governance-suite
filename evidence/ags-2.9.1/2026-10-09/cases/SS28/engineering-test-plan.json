@@ -1,0 +1,285 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS28",
+  "contractDigest": "sha256:69a7ece80c309dbf95dc2e91573bb19d166bc70f829ebb8c366561171b8b9e6f",
+  "requirements": [
+    "SS28-original",
+    "SS28-compact",
+    "SS28-negation-at-tail",
+    "SS28-required-at-tail",
+    "SS28-truncated-json",
+    "SS28-truncated-question-results",
+    "SS28-too-long",
+    "SS28-unknown-not-empty",
+    "SS28-unneeded-log-omitted",
+    "SS28-known-cost-invalid-response"
+  ],
+  "scopeFiles": [
+    "tests/SS28-isolated.test.ts",
+    "tests/skill-classification/fixtures.json",
+    "mcp-server/src/skill-classification/request.ts",
+    "mcp-server/src/skill-classification/providers.ts",
+    "mcp-server/src/skill-classification/validation.ts",
+    "mcp-server/src/skill-classification/service.ts"
+  ],
+  "runner": "existing Vitest 5.0.0 through scripts/run-tests.mjs; no build",
+  "environment": "isolated Cloud; Node24.19 pnpm11.19 UTC; public synthetic data; all transport mocked; no actual host selection",
+  "cases": [
+    {
+      "id": "SS28-original",
+      "requirementIds": [
+        "SS28-original"
+      ],
+      "scenario": "original",
+      "entryPoint": "createClassificationRequest/projectClassificationRequest/ApprovedRouteClassificationProvider/SkillClassificationService public boundaries",
+      "level": "integration",
+      "expectedBehavior": "exact embedded originalPrompt and all canonical inventory; no semantic oracle",
+      "oracle": "SS28 embedded sourceSpec.fields; operating structural assertions only, semantic oracle null",
+      "testFiles": [
+        "tests/SS28-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "API/host boundaries replaced only with mocks; no product modification authorized. A failed real assertion reproduces known invalid-response cost loss. No red-green or independent audit claim.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/SS28-isolated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/new-tests.vitest.json"
+      ]
+    },
+    {
+      "id": "SS28-compact",
+      "requirementIds": [
+        "SS28-compact"
+      ],
+      "scenario": "compact",
+      "entryPoint": "createClassificationRequest/projectClassificationRequest/ApprovedRouteClassificationProvider/SkillClassificationService public boundaries",
+      "level": "integration",
+      "expectedBehavior": "all semantic fields byte-equal, local trace fields removed and bytes reduced; actual tokens NOTRUN",
+      "oracle": "SS28 embedded sourceSpec.fields; operating structural assertions only, semantic oracle null",
+      "testFiles": [
+        "tests/SS28-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "API/host boundaries replaced only with mocks; no product modification authorized. A failed real assertion reproduces known invalid-response cost loss. No red-green or independent audit claim.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/SS28-isolated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/new-tests.vitest.json"
+      ]
+    },
+    {
+      "id": "SS28-negation-at-tail",
+      "requirementIds": [
+        "SS28-negation-at-tail"
+      ],
+      "scenario": "negation-at-tail",
+      "entryPoint": "createClassificationRequest/projectClassificationRequest/ApprovedRouteClassificationProvider/SkillClassificationService public boundaries",
+      "level": "integration",
+      "expectedBehavior": "exact long prompt final prohibition survives projection and both wire encoders",
+      "oracle": "SS28 embedded sourceSpec.fields; operating structural assertions only, semantic oracle null",
+      "testFiles": [
+        "tests/SS28-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "API/host boundaries replaced only with mocks; no product modification authorized. A failed real assertion reproduces known invalid-response cost loss. No red-green or independent audit claim.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/SS28-isolated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/new-tests.vitest.json"
+      ]
+    },
+    {
+      "id": "SS28-required-at-tail",
+      "requirementIds": [
+        "SS28-required-at-tail"
+      ],
+      "scenario": "required-at-tail",
+      "entryPoint": "createClassificationRequest/projectClassificationRequest/ApprovedRouteClassificationProvider/SkillClassificationService public boundaries",
+      "level": "integration",
+      "expectedBehavior": "canonical cs-engineering last; all candidates/dependencies/phases survive; selection NOTRUN",
+      "oracle": "SS28 embedded sourceSpec.fields; operating structural assertions only, semantic oracle null",
+      "testFiles": [
+        "tests/SS28-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "API/host boundaries replaced only with mocks; no product modification authorized. A failed real assertion reproduces known invalid-response cost loss. No red-green or independent audit claim.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/SS28-isolated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/new-tests.vitest.json"
+      ]
+    },
+    {
+      "id": "SS28-truncated-json",
+      "requirementIds": [
+        "SS28-truncated-json"
+      ],
+      "scenario": "truncated-json",
+      "entryPoint": "createClassificationRequest/projectClassificationRequest/ApprovedRouteClassificationProvider/SkillClassificationService public boundaries",
+      "level": "integration",
+      "expectedBehavior": "INVALID_PROVIDER_RESPONSE; no empty selected set",
+      "oracle": "SS28 embedded sourceSpec.fields; operating structural assertions only, semantic oracle null",
+      "testFiles": [
+        "tests/SS28-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "API/host boundaries replaced only with mocks; no product modification authorized. A failed real assertion reproduces known invalid-response cost loss. No red-green or independent audit claim.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/SS28-isolated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/new-tests.vitest.json"
+      ]
+    },
+    {
+      "id": "SS28-truncated-question-results",
+      "requirementIds": [
+        "SS28-truncated-question-results"
+      ],
+      "scenario": "truncated-question-results",
+      "entryPoint": "createClassificationRequest/projectClassificationRequest/ApprovedRouteClassificationProvider/SkillClassificationService public boundaries",
+      "level": "integration",
+      "expectedBehavior": "missing candidate results invalid; never silently not-needed",
+      "oracle": "SS28 embedded sourceSpec.fields; operating structural assertions only, semantic oracle null",
+      "testFiles": [
+        "tests/SS28-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "API/host boundaries replaced only with mocks; no product modification authorized. A failed real assertion reproduces known invalid-response cost loss. No red-green or independent audit claim.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/SS28-isolated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/new-tests.vitest.json"
+      ]
+    },
+    {
+      "id": "SS28-too-long",
+      "requirementIds": [
+        "SS28-too-long"
+      ],
+      "scenario": "too-long",
+      "entryPoint": "createClassificationRequest/projectClassificationRequest/ApprovedRouteClassificationProvider/SkillClassificationService public boundaries",
+      "level": "integration",
+      "expectedBehavior": "exact UTF8 limit retained; limit minus one INPUT_TOO_LONG; mocked dispatch0; omittedRanges=[]",
+      "oracle": "SS28 embedded sourceSpec.fields; operating structural assertions only, semantic oracle null",
+      "testFiles": [
+        "tests/SS28-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "API/host boundaries replaced only with mocks; no product modification authorized. A failed real assertion reproduces known invalid-response cost loss. No red-green or independent audit claim.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/SS28-isolated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/new-tests.vitest.json"
+      ]
+    },
+    {
+      "id": "SS28-unknown-not-empty",
+      "requirementIds": [
+        "SS28-unknown-not-empty"
+      ],
+      "scenario": "unknown-not-empty",
+      "entryPoint": "createClassificationRequest/projectClassificationRequest/ApprovedRouteClassificationProvider/SkillClassificationService public boundaries",
+      "level": "integration",
+      "expectedBehavior": "unknown null distinct from sourced []; selected null",
+      "oracle": "SS28 embedded sourceSpec.fields; operating structural assertions only, semantic oracle null",
+      "testFiles": [
+        "tests/SS28-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "API/host boundaries replaced only with mocks; no product modification authorized. A failed real assertion reproduces known invalid-response cost loss. No red-green or independent audit claim.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/SS28-isolated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/new-tests.vitest.json"
+      ]
+    },
+    {
+      "id": "SS28-unneeded-log-omitted",
+      "requirementIds": [
+        "SS28-unneeded-log-omitted"
+      ],
+      "scenario": "unneeded-log-omitted",
+      "entryPoint": "createClassificationRequest/projectClassificationRequest/ApprovedRouteClassificationProvider/SkillClassificationService public boundaries",
+      "level": "integration",
+      "expectedBehavior": "only trace/local binding omitted; top-level logs/secrets rejected",
+      "oracle": "SS28 embedded sourceSpec.fields; operating structural assertions only, semantic oracle null",
+      "testFiles": [
+        "tests/SS28-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "API/host boundaries replaced only with mocks; no product modification authorized. A failed real assertion reproduces known invalid-response cost loss. No red-green or independent audit claim.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/SS28-isolated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/new-tests.vitest.json"
+      ]
+    },
+    {
+      "id": "SS28-known-cost-invalid-response",
+      "requirementIds": [
+        "SS28-known-cost-invalid-response"
+      ],
+      "scenario": "known-cost-invalid-response",
+      "entryPoint": "createClassificationRequest/projectClassificationRequest/ApprovedRouteClassificationProvider/SkillClassificationService public boundaries",
+      "level": "integration",
+      "expectedBehavior": "invalid incomplete RESP preserves valid usage.actualCostUsd=0.1 and budget.spentUsd=0.1",
+      "oracle": "SS28 embedded sourceSpec.fields; operating structural assertions only, semantic oracle null",
+      "testFiles": [
+        "tests/SS28-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "API/host boundaries replaced only with mocks; no product modification authorized. A failed real assertion reproduces known invalid-response cost loss. No red-green or independent audit claim.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/SS28-isolated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/new-tests.vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "No product edits or mutation; no full suite or other original IDs; no external provider/JEV/Claude calls; no prior 21-run execution",
+    "Actual tokenizer/model token counts, paired golden semantics, approved provider usage/cache billing and real host selection unavailable. oracle=null; no accuracy score.",
+    "Red/green repair not authorized: reproducible known defect left FAIL; mechanical contract tests do not prove model behavior"
+  ]
+}

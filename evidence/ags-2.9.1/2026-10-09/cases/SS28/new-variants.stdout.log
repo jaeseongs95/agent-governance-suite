@@ -1,0 +1,21 @@
+
+ RUN  v5.0.0 <REPO>
+
+ ✓ tests/SS28-isolated.test.ts > SS28 isolated operational variants > original: exact embedded prompt, full canonical descriptors and null semantic oracle 11ms
+ ✓ tests/SS28-isolated.test.ts > SS28 isolated operational variants > compact: paired body/diff/byte measurements preserve every semantic field including duplicates 99ms
+ ✓ tests/SS28-isolated.test.ts > SS28 isolated operational variants > negation-at-tail: long Unicode input retains final prohibition in both wire formats 78ms
+ ✓ tests/SS28-isolated.test.ts > SS28 isolated operational variants > required-at-tail: inventory reordered with canonical cs-engineering last loses no candidates or dependencies 35ms
+ ✓ tests/SS28-isolated.test.ts > SS28 isolated operational variants > truncated-json: mid-object response becomes invalid and never a no-skill set 33ms
+ ✓ tests/SS28-isolated.test.ts > SS28 isolated operational variants > truncated-question-results: parseable JSON missing trailing candidate is rejected for every success-like status 19ms
+ ✓ tests/SS28-isolated.test.ts > SS28 isolated operational variants > too-long: UTF-8 exact input ceiling passes; minus one rejects without fetch or silent trimming 41ms
+ ✓ tests/SS28-isolated.test.ts > SS28 isolated operational variants > unknown-not-empty: unknown null survives packing separately from sourced empty arrays 22ms
+ ✓ tests/SS28-isolated.test.ts > SS28 isolated operational variants > unneeded-log-omitted: wire excludes local trace metadata and rejects injected top-level secrets 27ms
+ × tests/SS28-isolated.test.ts > SS28 isolated operational variants > truncated-question-results known-cost boundary: invalid RESP must retain independently valid observed usage 17ms
+   → expected null to be 0.1 // Object.is equality
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  02:57:46
+   Duration  939ms (tests 65%, transform 20%, import 15%)
+
+JSON report written to <ARTIFACTS>/new-tests.vitest.json

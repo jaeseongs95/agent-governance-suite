@@ -1,0 +1,18 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/SS28-isolated.test.ts > SS28 isolated operational variants > truncated-question-results known-cost boundary: invalid RESP must retain independently valid observed usage
+AssertionError: expected null to be 0.1 // Object.is equality
+
+- Expected:
+0.1
+
++ Received:
+null
+
+ ❯ tests/SS28-isolated.test.ts:132:98
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+{"harness": "test-subreaper", "ownerPid": 1014, "runnerPid": 1015, "reapedPids": [1015], "remainingChildren": false, "runnerExitCode": 1, "cancelled": false}

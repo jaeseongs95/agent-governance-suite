@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:437548c7b30bec4f4cb096f2c8afca25206039abba7670eb47ee9c30f66a933f",
+  "caseIds": [
+    "SS28-original",
+    "SS28-compact",
+    "SS28-negation-at-tail",
+    "SS28-required-at-tail",
+    "SS28-truncated-json",
+    "SS28-truncated-question-results",
+    "SS28-too-long",
+    "SS28-unknown-not-empty",
+    "SS28-unneeded-log-omitted",
+    "SS28-known-cost-invalid-response"
+  ]
+}

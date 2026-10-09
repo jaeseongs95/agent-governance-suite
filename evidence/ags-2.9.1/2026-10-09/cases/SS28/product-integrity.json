@@ -1,0 +1,15 @@
+{
+  "command": [
+    "git",
+    "diff",
+    "--exit-code"
+  ],
+  "exitCode": 0,
+  "stdout": "",
+  "stderr": "",
+  "gitStatus": "?? tests/SS28-isolated.test.ts\n",
+  "head": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "testSHA": "sha256:1dea99c8254e2645d8c6dd4b1dd9daf2098911b6e630c5f8af9de9553c7e0242"
+}

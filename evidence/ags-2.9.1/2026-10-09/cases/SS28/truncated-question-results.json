@@ -1,0 +1,26 @@
+{
+  "input": {
+    "body": "{\"model\":\"SS28-model\",\"answers\":{\"acceptance-evidence-validator\":{\"type\":\"noul\",\"noul\":0.1},\"blocker-diagnostician\":{\"type\":\"noul\",\"noul\":0.1},\"change-scope-guardian\":{\"type\":\"noul\",\"noul\":0.1},\"code-review\":{\"type\":\"noul\",\"noul\":0.1},\"codex-token-usage-analyzer\":{\"type\":\"noul\",\"noul\":0.1},\"context-continuity\":{\"type\":\"noul\",\"noul\":0.1},\"coordinate-subagents\":{\"type\":\"noul\",\"noul\":0.1},\"cs-engineering\":{\"type\":\"noul\",\"noul\":0.1},\"evaluation-validity-auditor\":{\"type\":\"noul\",\"noul\":0.1},\"independent-audit-gate\":{\"type\":\"noul\",\"noul\":0.1},\"independent-deliberation-panel\":{\"type\":\"noul\",\"noul\":0.1},\"instruction-scope-resolver\":{\"type\":\"noul\",\"noul\":0.1},\"iteration-frame-auditor\":{\"type\":\"noul\",\"noul\":0.1},\"korean-prose-editor\":{\"type\":\"noul\",\"noul\":0.1},\"model-effort-advisor\":{\"type\":\"noul\",\"noul\":0.1},\"mutation-risk-preflight\":{\"type\":\"noul\",\"noul\":0.1},\"orchestrator\":{\"type\":\"noul\",\"noul\":0.1},\"ponytail\":{\"type\":\"noul\",\"noul\":0.1},\"recovery-strategy-selector\":{\"type\":\"noul\",\"noul\":0.1},\"session-board\":{\"type\":\"noul\",\"noul\":0.1},\"software-security-auditor\":{\"type\":\"noul\",\"noul\":0.1},\"task-contract\":{\"type\":\"noul\",\"noul\":0.1},\"test-engineering\":{\"type\":\"noul\",\"noul\":0.1}},\"usage\":{\"input_tokens\":100,\"output_tokens\":10}}",
+    "omittedId": "workspace-convention-profiler"
+  },
+  "expected": "INVALID_PROVIDER_RESPONSE / MISSING_CANDIDATE_JUDGMENT; never []",
+  "observed": {
+    "error": {
+      "code": "INVALID_PROVIDER_RESPONSE",
+      "dispatchState": "started"
+    },
+    "checks": {
+      "SUCCESS": [
+        "MISSING_CANDIDATE_JUDGMENT"
+      ],
+      "PARTIAL": [
+        "MISSING_CANDIDATE_JUDGMENT"
+      ],
+      "UNCERTAIN": [
+        "MISSING_CANDIDATE_JUDGMENT",
+        "MISSING_UNCERTAINTY_EVIDENCE"
+      ]
+    },
+    "selected": null
+  }
+}

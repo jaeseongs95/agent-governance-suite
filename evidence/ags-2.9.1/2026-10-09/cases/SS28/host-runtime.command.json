@@ -1,0 +1,14 @@
+{
+  "command": [
+    "node",
+    "--import",
+    "tsx",
+    "--input-type=module",
+    "-e",
+    "import {readClassificationRuntime} from './mcp-server/src/skill-classification/gateway.ts'; console.log(JSON.stringify(await readClassificationRuntime(process.env.AGENT_GOVERNANCE_CLASSIFICATION_CONFIG,process.cwd()),null,2));"
+  ],
+  "exitCode": 0,
+  "executionKind": "offline-configuration-read",
+  "API0": true,
+  "hostLive": "NOTRUN"
+}

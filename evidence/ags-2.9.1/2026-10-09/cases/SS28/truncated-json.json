@@ -1,0 +1,19 @@
+{
+  "input": {
+    "responseBody": "{\"model\":\"SS28-model\",\"answers\":{\"acceptance-evidence-validator\":{\"type\":\"noul\",\"noul\":0.1},\"blocker-diagnostician\":{\"type\":\"noul\",\"noul\":0.1},\"change-scope-guardian\":{\"type\":\"noul\",\"noul\":0.1},\"code-review\":{\"type\":\"noul\",\"noul\":0.1},\"codex-token-usage-analyzer\":{\"type\":\"noul\",\"noul\":0.1},\"context-continuity\":{\"type\":\"noul\",\"noul\":0.1},\"coordinate-subagents\":{\"type\":\"noul\",\"noul\":0.1},\"cs-engineering\":{\"type\":\"noul\",\"noul\":0.1},\"evaluation-validity-auditor\":{\"type\":\"noul\",\"noul\":0.1},\"independent-audit-gate\":{\"type\":\"noul\",\"noul\":0.1},\"independent-deliberation-panel\":{\"type\":\"noul\",\"noul\":0.1},\"instruction-scope-resolver\":{\"type\":\"noul\",\"",
+    "responseBodyDigest": "sha256:70057c15cc87c1016ecdd595209586736bede5e26fd69d22b38b817208bf2aca"
+  },
+  "expected": {
+    "code": "INVALID_PROVIDER_RESPONSE",
+    "selected": null
+  },
+  "observed": {
+    "error": {
+      "code": "INVALID_PROVIDER_RESPONSE",
+      "dispatchState": "started",
+      "invalid": true
+    },
+    "mockFetchCalls": 1,
+    "selected": null
+  }
+}

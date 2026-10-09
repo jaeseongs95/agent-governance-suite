@@ -1,0 +1,27 @@
+{
+  "command": [
+    "node",
+    "scripts/run-tests.mjs",
+    "tests/mcp/skill-classification-request.test.ts",
+    "tests/mcp/skill-classification-providers.test.ts",
+    "tests/mcp/skill-classification-service.test.ts",
+    "-t",
+    "SS28",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=<ARTIFACTS>/existing-tests.vitest.json"
+  ],
+  "cwd": "<REPO>",
+  "startedAt": "2026-10-09T02:57:44.718101+00:00",
+  "finishedAt": "2026-10-09T02:57:46.057850+00:00",
+  "exitCode": 0,
+  "executionKind": "offline-mock",
+  "API0": true,
+  "externalCalls": {
+    "JEV": 0,
+    "vendorAPI": 0,
+    "Claude": 0
+  },
+  "stdoutFile": "existing-regression.stdout.log",
+  "stderrFile": "existing-regression.stderr.log"
+}

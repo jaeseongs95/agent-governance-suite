@@ -1,0 +1,27 @@
+
+ RUN  v5.0.0 <REPO>
+
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS28 input over limit never sends and never silently drops its trailing prohibition 17ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS28 counts actual UTF-8 stream bytes before parsing despite a false Content-Length 44ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS28 accepts an exact byte ceiling without trusting an oversized Content-Length 6ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS28 multiple individually small chunks cannot evade the cumulative byte ceiling 4ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS28 malformed bounded JSON and invalid UTF-8 never become classification success 8ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS28 partial stream failure is sanitized and releases its reader 3ms
+ ✓ tests/mcp/skill-classification-service.test.ts > fixed-profile classification service > SS28/30/32 AUTH_UNAVAILABLE falls back at most once with no JEV retry 25ms
+ ✓ tests/mcp/skill-classification-service.test.ts > fixed-profile classification service > SS28/30/32 RATE_LIMITED falls back at most once with no JEV retry 4ms
+ ✓ tests/mcp/skill-classification-service.test.ts > fixed-profile classification service > SS28/30/32 API_UNAVAILABLE falls back at most once with no JEV retry 4ms
+ ✓ tests/mcp/skill-classification-service.test.ts > fixed-profile classification service > SS28/30/32 PROVIDER_RESPONSE_TOO_LARGE falls back at most once with no JEV retry 4ms
+ ✓ tests/mcp/skill-classification-service.test.ts > fixed-profile classification service > SS28 native/custom ports also obey the full meaningful-input ceiling before availability 3ms
+ ✓ tests/mcp/skill-classification-service.test.ts > fixed-profile classification service > SS28 known output over the fixed ceiling is rejected while actual cost remains accounted 4ms
+ ✓ tests/mcp/skill-classification-request.test.ts > deterministic exact request and compact projection (SS21/SS28) > retains exact bytes, negations, quotations and unknown context 15ms
+ ✓ tests/mcp/skill-classification-request.test.ts > deterministic exact request and compact projection (SS21/SS28) > preserves confirmed empty values and separate prohibited actions with provenance 6ms
+ ✓ tests/mcp/skill-classification-request.test.ts > deterministic exact request and compact projection (SS21/SS28) > rejects non-JSON inputs and tampered prompt/context bindings 6ms
+ ✓ tests/mcp/skill-classification-request.test.ts > deterministic exact request and compact projection (SS21/SS28) > rejects unknown request/input fields even when their digest is recomputed 3ms
+ ✓ tests/mcp/skill-classification-request.test.ts > deterministic exact request and compact projection (SS21/SS28) > keeps the last prohibition, every candidate, applicability, dependencies and phase gates 182ms
+
+ Test Files  3 passed (3)
+      Tests  17 passed | 51 skipped (68)
+   Start at  02:57:45
+   Duration  726ms (transform 37%, import 33%, tests 28%, worker 1%)
+
+JSON report written to <ARTIFACTS>/existing-tests.vitest.json

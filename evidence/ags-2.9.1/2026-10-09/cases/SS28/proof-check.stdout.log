@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:04696067751da239b93633cf894768dce90cccd418106b3a16369987423d72d7",
+  "reportDigest": "sha256:30f69d022c32342c32cd153a3420b610dccccb8d4329f88c8ec476f6fb9d1066",
+  "issues": [
+    "REQUIRED SS28-original: NOT_RUN — Red-green/mutation NOTRUN: product modifications prohibited; raw variant assertions are in new-tests.vitest.json. This field does not erase the executed structural tests or the reproducible known-cost failure.",
+    "REQUIRED SS28-compact: NOT_RUN — Red-green/mutation NOTRUN: product modifications prohibited; raw variant assertions are in new-tests.vitest.json. This field does not erase the executed structural tests or the reproducible known-cost failure.",
+    "REQUIRED SS28-negation-at-tail: NOT_RUN — Red-green/mutation NOTRUN: product modifications prohibited; raw variant assertions are in new-tests.vitest.json. This field does not erase the executed structural tests or the reproducible known-cost failure.",
+    "REQUIRED SS28-required-at-tail: NOT_RUN — Red-green/mutation NOTRUN: product modifications prohibited; raw variant assertions are in new-tests.vitest.json. This field does not erase the executed structural tests or the reproducible known-cost failure.",
+    "REQUIRED SS28-truncated-json: NOT_RUN — Red-green/mutation NOTRUN: product modifications prohibited; raw variant assertions are in new-tests.vitest.json. This field does not erase the executed structural tests or the reproducible known-cost failure.",
+    "REQUIRED SS28-truncated-question-results: NOT_RUN — Red-green/mutation NOTRUN: product modifications prohibited; raw variant assertions are in new-tests.vitest.json. This field does not erase the executed structural tests or the reproducible known-cost failure.",
+    "REQUIRED SS28-too-long: NOT_RUN — Red-green/mutation NOTRUN: product modifications prohibited; raw variant assertions are in new-tests.vitest.json. This field does not erase the executed structural tests or the reproducible known-cost failure.",
+    "REQUIRED SS28-unknown-not-empty: NOT_RUN — Red-green/mutation NOTRUN: product modifications prohibited; raw variant assertions are in new-tests.vitest.json. This field does not erase the executed structural tests or the reproducible known-cost failure.",
+    "REQUIRED SS28-unneeded-log-omitted: NOT_RUN — Red-green/mutation NOTRUN: product modifications prohibited; raw variant assertions are in new-tests.vitest.json. This field does not erase the executed structural tests or the reproducible known-cost failure.",
+    "REQUIRED SS28-known-cost-invalid-response: NOT_RUN — Red-green/mutation NOTRUN: product modifications prohibited; raw variant assertions are in new-tests.vitest.json. This field does not erase the executed structural tests or the reproducible known-cost failure."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

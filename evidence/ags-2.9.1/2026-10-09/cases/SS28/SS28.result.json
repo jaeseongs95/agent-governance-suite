@@ -1,0 +1,622 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS28",
+  "recordedAt": "2026-10-09T03:00:37.160184+00:00",
+  "status": "FAIL_WITH_UNVERIFIED_REQUIREMENTS",
+  "executionKind": "offline-mock",
+  "API0": true,
+  "apiCalls": {
+    "JEV": 0,
+    "vendorAPI": 0,
+    "Claude": 0,
+    "extraPromptSummarizerLLM": 0
+  },
+  "past21CompletedRunReruns": 0,
+  "source": {
+    "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+    "targetBranch": "codex/skill-classification-2.9.1",
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixturePath": "tests/skill-classification/fixtures.json",
+    "fixtureSHA": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "oracleRecomputedAndMatched": true,
+    "oracle": null,
+    "semanticAccuracy": null,
+    "sourceSpec": {
+      "path": "TEST-SPEC.seq7.ko.md",
+      "section": "SS28",
+      "fields": {
+        "입력": "원문 prompt·전체 정본 descriptor의 원본 REQ와 코드로 compact한 REQ를 같은 fixture에서 짝짓는다. 긴 입력의 마지막에는 “읽기 전용, 수정 금지”, inventory 끝에는 필수 CS를 둔다. 중복 설명·불필요한 로그 metadata를 포함하고, 응답 JSON·질문별 결과를 중간에서 자른 변형도 둔다.",
+        "필수추천": "원본과 compact의 목적 정답·필수 추천·금지 조건·유효 no-skill·불확실 처리 기준이 같다. 전체 필요한 스킬 후보와 적용·제외 의미를 보존한다.",
+        "금지추천 또는 행동": "compact를 이유로 부정·예외·명시 스킬·의존성·전체 후보 삭제; 원문 요약을 위한 추가 LLM 호출; 필요 없는 실행 로그·비밀 metadata를 provider에 전송; 잘린 응답을 reject/no-skill로 간주.",
+        "허용선택": "코드 기반 구조 정리·중복 제거와 분류에 필요 없는 metadata 제외. provider가 실제로 해석할 설명은 남긴다. 한도를 넘으면 INPUT_TOO_LONG 또는 명시된 무손실 분할·완전성 확인이다.",
+        "보류조건": "원문 의미·전체 후보·질문 응답 수·출처를 확인할 수 없거나 최적화가 golden 품질을 낮춤.",
+        "통과기준": "대표 긴 metadata fixture에서 실제 입력 token 수 감소를 측정하고, 원본/compact의 golden 정확성·제약 보존·최종 AGENT 선택을 paired 비교한다. 필수 사례의 저하·새 금지추천·불필요 보류 증가를 숨기지 않는다. 앞단 LLM 호출0, silent truncation0, 불필요 로그 metadata 전송0이다. client cache로 포장/로딩이 빨라져도 provider 청구 token이 줄었다고 추정하지 않는다. 실제 usage와 cache 청구 항목으로 별도 검증한다.",
+        "증거": "E0·E1·E4, 원본/compact body digest·필드 diff·후보 수·입력 tokens·latency·실제 usage, golden 결과, 로컬 cache hit와 provider cache/청구 증거.",
+        "실행종류": "mock 계약 및 오프라인 토큰 측정, 승인된 provider-live의 품질 비교. 소수 표본의 동등 결과를 보편적 무손실 성능 보장으로 확대하지 않는다."
+      },
+      "bodyDigest": "sha256:74aab7c36f19efee9a58b8f677d1c1295ad6b4ded14a2e139b44c4567feb9799"
+    },
+    "sourceSpecPathExists": false,
+    "embeddedSourceOnly": true
+  },
+  "variants": [
+    {
+      "variantId": "original",
+      "status": "BLOCKED",
+      "offlineStructuralStatus": "PASS",
+      "pairedSemanticStatus": "NOTRUN",
+      "executionKind": "offline-mock",
+      "API0": true,
+      "apiCalls": {
+        "JEV": 0,
+        "vendorAPI": 0,
+        "Claude": 0
+      },
+      "semanticOracle": null,
+      "semanticAccuracy": null,
+      "selectedSkillIds": null,
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "inputRef": "original.json#/input",
+      "expectedRef": "original.json",
+      "observedRef": "original.json#/observed",
+      "evidenceDigest": "sha256:8a10510b5439caf31b243b21c9595a3755bffe786eb21e0fa8f371125fda9922",
+      "commandRef": "new-variants.command.json",
+      "commandExitCode": 1,
+      "testAssertionStatus": "passed",
+      "missingInputs": [
+        "target-model tokenizer/version and full original/compact provider wire for actual input token counts",
+        "approved provider-live paired original/compact quality outputs and usage/cache billing evidence; no semantic oracle is supplied for SS28",
+        "real AGENT choice and signed host observation bound to request/inventory/task/config/profile revisions",
+        "stage readRefs, applied obligation/artifact refs, verified matching candidate digest for the same real host trial"
+      ],
+      "notes": "PASS covers mechanical contract only; model semantics and host behavior were not observed."
+    },
+    {
+      "variantId": "compact",
+      "status": "BLOCKED",
+      "offlineStructuralStatus": "PASS",
+      "pairedSemanticStatus": "NOTRUN",
+      "executionKind": "offline-mock",
+      "API0": true,
+      "apiCalls": {
+        "JEV": 0,
+        "vendorAPI": 0,
+        "Claude": 0
+      },
+      "semanticOracle": null,
+      "semanticAccuracy": null,
+      "selectedSkillIds": null,
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "inputRef": "compact.json#/input",
+      "expectedRef": "compact.json",
+      "observedRef": "compact.json#/observed",
+      "evidenceDigest": "sha256:ee421422b3780584d575830b5645a746b72fbfd7cf856ff6905e0dfd34671a20",
+      "commandRef": "new-variants.command.json",
+      "commandExitCode": 1,
+      "testAssertionStatus": "passed",
+      "missingInputs": [
+        "target-model tokenizer/version and full original/compact provider wire for actual input token counts",
+        "approved provider-live paired original/compact quality outputs and usage/cache billing evidence; no semantic oracle is supplied for SS28",
+        "real AGENT choice and signed host observation bound to request/inventory/task/config/profile revisions",
+        "stage readRefs, applied obligation/artifact refs, verified matching candidate digest for the same real host trial"
+      ],
+      "notes": "PASS covers mechanical contract only; model semantics and host behavior were not observed."
+    },
+    {
+      "variantId": "negation-at-tail",
+      "status": "BLOCKED",
+      "offlineStructuralStatus": "PASS",
+      "pairedSemanticStatus": "NOTRUN",
+      "executionKind": "offline-mock",
+      "API0": true,
+      "apiCalls": {
+        "JEV": 0,
+        "vendorAPI": 0,
+        "Claude": 0
+      },
+      "semanticOracle": null,
+      "semanticAccuracy": null,
+      "selectedSkillIds": null,
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "inputRef": "negation-at-tail.json#/input",
+      "expectedRef": "negation-at-tail.json",
+      "observedRef": "negation-at-tail.json#/observed",
+      "evidenceDigest": "sha256:a2baaf3fe8aa533c4328c8f982f1fdc0c0392397ee3c282cba756aa52a1a3b9a",
+      "commandRef": "new-variants.command.json",
+      "commandExitCode": 1,
+      "testAssertionStatus": "passed",
+      "missingInputs": [
+        "target-model tokenizer/version and full original/compact provider wire for actual input token counts",
+        "approved provider-live paired original/compact quality outputs and usage/cache billing evidence; no semantic oracle is supplied for SS28",
+        "real AGENT choice and signed host observation bound to request/inventory/task/config/profile revisions",
+        "stage readRefs, applied obligation/artifact refs, verified matching candidate digest for the same real host trial"
+      ],
+      "notes": "PASS covers mechanical contract only; model semantics and host behavior were not observed."
+    },
+    {
+      "variantId": "required-at-tail",
+      "status": "BLOCKED",
+      "offlineStructuralStatus": "PASS",
+      "pairedSemanticStatus": "NOTRUN",
+      "executionKind": "offline-mock",
+      "API0": true,
+      "apiCalls": {
+        "JEV": 0,
+        "vendorAPI": 0,
+        "Claude": 0
+      },
+      "semanticOracle": null,
+      "semanticAccuracy": null,
+      "selectedSkillIds": null,
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "inputRef": "required-at-tail.json#/input",
+      "expectedRef": "required-at-tail.json",
+      "observedRef": "required-at-tail.json#/observed",
+      "evidenceDigest": "sha256:ebfcc142cb5726ab81e5937dba87d71f95e58723b8d458bd0bcbcc3ee9b119ed",
+      "commandRef": "new-variants.command.json",
+      "commandExitCode": 1,
+      "testAssertionStatus": "passed",
+      "missingInputs": [
+        "target-model tokenizer/version and full original/compact provider wire for actual input token counts",
+        "approved provider-live paired original/compact quality outputs and usage/cache billing evidence; no semantic oracle is supplied for SS28",
+        "real AGENT choice and signed host observation bound to request/inventory/task/config/profile revisions",
+        "stage readRefs, applied obligation/artifact refs, verified matching candidate digest for the same real host trial"
+      ],
+      "notes": "PASS covers mechanical contract only; model semantics and host behavior were not observed."
+    },
+    {
+      "variantId": "truncated-json",
+      "status": "PASS",
+      "offlineStructuralStatus": "PASS",
+      "pairedSemanticStatus": "NOTRUN",
+      "executionKind": "offline-mock",
+      "API0": true,
+      "apiCalls": {
+        "JEV": 0,
+        "vendorAPI": 0,
+        "Claude": 0
+      },
+      "semanticOracle": null,
+      "semanticAccuracy": null,
+      "selectedSkillIds": null,
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "inputRef": "truncated-json.json#/input",
+      "expectedRef": "truncated-json.json",
+      "observedRef": "truncated-json.json#/observed",
+      "evidenceDigest": "sha256:5319f7f7a020d3a1f6235c2f41f126537a149ce46423e2682da94a067f2a5b94",
+      "commandRef": "new-variants.command.json",
+      "commandExitCode": 1,
+      "testAssertionStatus": "passed",
+      "missingInputs": [],
+      "notes": "PASS covers mechanical contract only; model semantics and host behavior were not observed."
+    },
+    {
+      "variantId": "truncated-question-results",
+      "status": "FAIL",
+      "offlineStructuralStatus": "PASS",
+      "pairedSemanticStatus": "NOTRUN",
+      "executionKind": "offline-mock",
+      "API0": true,
+      "apiCalls": {
+        "JEV": 0,
+        "vendorAPI": 0,
+        "Claude": 0
+      },
+      "semanticOracle": null,
+      "semanticAccuracy": null,
+      "selectedSkillIds": null,
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "inputRef": "truncated-question-results.json#/input",
+      "expectedRef": "truncated-question-results.json",
+      "observedRef": "truncated-question-results.json#/observed",
+      "evidenceDigest": "sha256:c68b0a604e9954537edec72cb24405fd331c3227fb09b25a35a5e3f5c89e51a7",
+      "commandRef": "new-variants.command.json",
+      "commandExitCode": 1,
+      "testAssertionStatus": "passed",
+      "missingInputs": [],
+      "notes": "Structural response completeness passes; independently valid cost retention fails in linked boundary."
+    },
+    {
+      "variantId": "too-long",
+      "status": "PASS",
+      "offlineStructuralStatus": "PASS",
+      "pairedSemanticStatus": "NOTRUN",
+      "executionKind": "offline-mock",
+      "API0": true,
+      "apiCalls": {
+        "JEV": 0,
+        "vendorAPI": 0,
+        "Claude": 0
+      },
+      "semanticOracle": null,
+      "semanticAccuracy": null,
+      "selectedSkillIds": null,
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "inputRef": "too-long.json#/input",
+      "expectedRef": "too-long.json",
+      "observedRef": "too-long.json#/observed",
+      "evidenceDigest": "sha256:ae2a12a46a39b57860fcc2f7cc016d7170afbc13d465a7a4e9ab5e4e08961c31",
+      "commandRef": "new-variants.command.json",
+      "commandExitCode": 1,
+      "testAssertionStatus": "passed",
+      "missingInputs": [],
+      "notes": "PASS covers mechanical contract only; model semantics and host behavior were not observed."
+    },
+    {
+      "variantId": "unknown-not-empty",
+      "status": "PASS",
+      "offlineStructuralStatus": "PASS",
+      "pairedSemanticStatus": "NOTRUN",
+      "executionKind": "offline-mock",
+      "API0": true,
+      "apiCalls": {
+        "JEV": 0,
+        "vendorAPI": 0,
+        "Claude": 0
+      },
+      "semanticOracle": null,
+      "semanticAccuracy": null,
+      "selectedSkillIds": null,
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "inputRef": "unknown-not-empty.json#/input",
+      "expectedRef": "unknown-not-empty.json",
+      "observedRef": "unknown-not-empty.json#/observed",
+      "evidenceDigest": "sha256:d2d789a889314f3d66f0dc552e7191c5f63f56f67dfac1e454fffc80f9b87dda",
+      "commandRef": "new-variants.command.json",
+      "commandExitCode": 1,
+      "testAssertionStatus": "passed",
+      "missingInputs": [],
+      "notes": "PASS covers mechanical contract only; model semantics and host behavior were not observed."
+    },
+    {
+      "variantId": "unneeded-log-omitted",
+      "status": "PASS",
+      "offlineStructuralStatus": "PASS",
+      "pairedSemanticStatus": "NOTRUN",
+      "executionKind": "offline-mock",
+      "API0": true,
+      "apiCalls": {
+        "JEV": 0,
+        "vendorAPI": 0,
+        "Claude": 0
+      },
+      "semanticOracle": null,
+      "semanticAccuracy": null,
+      "selectedSkillIds": null,
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "inputRef": "unneeded-log-omitted.json#/input",
+      "expectedRef": "unneeded-log-omitted.json",
+      "observedRef": "unneeded-log-omitted.json#/observed",
+      "evidenceDigest": "sha256:98cbe65cdf3c73f461a6c4abf6239b205cb698c33598926dc7ebbf3307a0cdf8",
+      "commandRef": "new-variants.command.json",
+      "commandExitCode": 1,
+      "testAssertionStatus": "passed",
+      "missingInputs": [],
+      "notes": "PASS covers mechanical contract only; model semantics and host behavior were not observed."
+    }
+  ],
+  "additionalBoundaries": [
+    {
+      "findingId": "SS28-KNOWN-VALID-COST-LOSS",
+      "severity": "HIGH_ACCOUNTING_INTEGRITY",
+      "status": "REPRODUCED",
+      "existingFinding": "유효비용이 invalid RESP와 함께 유실",
+      "deduplicateByRootCause": true,
+      "countAsNewDefect": false,
+      "cause": "service.ts:194 throws after validating usage; catch at :204 replaces usage with unknownUsage(); settle at :210 receives null.",
+      "expected": {
+        "responseStatus": "INVALID",
+        "actualCostUsd": 0.1,
+        "spentUsd": 0.1
+      },
+      "observed": {
+        "responseStatus": "INVALID",
+        "actualCostUsd": null,
+        "spentUsd": 0,
+        "retainedUnknownReservationUsd": 0.4
+      },
+      "effect": "Valid observed cost and token counters are lost; confirmed spending is understated while conservative reservation remains. This reproduces the existing finding, not an independent new root cause.",
+      "evidence": "known-cost-invalid-response.json",
+      "assertion": "expected null to be 0.1",
+      "reproCommand": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/SS28-isolated.test.ts",
+        "-t",
+        "known-cost boundary"
+      ]
+    }
+  ],
+  "summary": {
+    "existingSs28SharedRegression": {
+      "passed": 17,
+      "failed": 0,
+      "skipped": 51,
+      "scope": "Only SS28-name-matching tests in three relevant files; shared SS21/SS27/SS30/SS32 labels are not independent case completion. No full suite run."
+    },
+    "newVariantAssertions": {
+      "passed": 9,
+      "failed": 1,
+      "variantsStructurallyCovered": 9,
+      "additionalKnownCostBoundaryFailures": 1
+    },
+    "candidateCounts": [
+      24,
+      24
+    ],
+    "bodyBytes": {
+      "original": 365370,
+      "compact": 124722
+    },
+    "bytesReduction": 240648,
+    "actualInputTokens": null,
+    "tokenSavings": "NOTRUN",
+    "cacheBilling": "NOTRUN",
+    "pairedGoldenAccuracy": null,
+    "hostPairedFinalSelection": "NOTRUN"
+  },
+  "commands": [
+    {
+      "command": [
+        "node",
+        "skills/test-engineering/scripts/run.mjs",
+        "check-plan",
+        "--root",
+        "<ARTIFACTS>",
+        "--plan",
+        "engineering-test-plan.json"
+      ],
+      "cwd": "<REPO>",
+      "startedAt": "2026-10-09T02:57:44.527199+00:00",
+      "finishedAt": "2026-10-09T02:57:44.717534+00:00",
+      "exitCode": 0,
+      "executionKind": "local-consistency-check",
+      "API0": true,
+      "externalCalls": {
+        "JEV": 0,
+        "vendorAPI": 0,
+        "Claude": 0
+      },
+      "stdoutFile": "plan-check.stdout.log",
+      "stderrFile": "plan-check.stderr.log"
+    },
+    {
+      "command": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/mcp/skill-classification-request.test.ts",
+        "tests/mcp/skill-classification-providers.test.ts",
+        "tests/mcp/skill-classification-service.test.ts",
+        "-t",
+        "SS28",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/existing-tests.vitest.json"
+      ],
+      "cwd": "<REPO>",
+      "startedAt": "2026-10-09T02:57:44.718101+00:00",
+      "finishedAt": "2026-10-09T02:57:46.057850+00:00",
+      "exitCode": 0,
+      "executionKind": "offline-mock",
+      "API0": true,
+      "externalCalls": {
+        "JEV": 0,
+        "vendorAPI": 0,
+        "Claude": 0
+      },
+      "stdoutFile": "existing-regression.stdout.log",
+      "stderrFile": "existing-regression.stderr.log"
+    },
+    {
+      "command": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/SS28-isolated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/new-tests.vitest.json"
+      ],
+      "cwd": "<REPO>",
+      "startedAt": "2026-10-09T02:57:46.058310+00:00",
+      "finishedAt": "2026-10-09T02:57:47.412886+00:00",
+      "exitCode": 1,
+      "executionKind": "offline-mock",
+      "API0": true,
+      "externalCalls": {
+        "JEV": 0,
+        "vendorAPI": 0,
+        "Claude": 0
+      },
+      "stdoutFile": "new-variants.stdout.log",
+      "stderrFile": "new-variants.stderr.log"
+    },
+    {
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "--input-type=module",
+        "-e",
+        "import {readClassificationRuntime} from './mcp-server/src/skill-classification/gateway.ts'; console.log(JSON.stringify(await readClassificationRuntime(process.env.AGENT_GOVERNANCE_CLASSIFICATION_CONFIG,process.cwd()),null,2));"
+      ],
+      "exitCode": 0,
+      "executionKind": "offline-configuration-read",
+      "API0": true,
+      "hostLive": "NOTRUN"
+    },
+    {
+      "command": [
+        "node",
+        "--input-type=module",
+        "-e",
+        "import {readFileSync,writeFileSync} from 'node:fs';\nimport {captureSnapshot,validatePlan,validateProof} from './runtime/engineering-practices/core.mjs';\nconst out='<ARTIFACTS>', plan=JSON.parse(readFileSync(out+'/engineering-test-plan.json','utf8'));\nconst proof={schemaVersion:'1.0.0',kind:'engineering-test-proof',planDigest:validatePlan(plan).planDigest,candidate:captureSnapshot(process.cwd(),plan.scopeFiles),proofs:plan.cases.map(c=>({caseId:c.id,status:'NOT_RUN',red:{path:'',digest:'sha256:'+'0'.repeat(64)},green:{path:'',digest:'sha256:'+'0'.repeat(64)},mutationPaths:[],assertionWitness:'',reason:'Red-green/mutation NOTRUN: product modifications prohibited; raw variant assertions are in new-tests.vitest.json. This field does not erase the executed structural tests or the reproducible known-cost failure.'}))};\nwriteFileSync(out+'/engineering-test-proof.json',JSON.stringify(proof,null,2)+'\\n');\nconst result=validateProof(process.cwd(),plan,proof);writeFileSync(out+'/engineering-test-result.json',JSON.stringify(result,null,2)+'\\n');console.log(JSON.stringify(result,null,2));process.exitCode=result.verdict==='CONSISTENT'?0:1;\n"
+      ],
+      "exitCode": 1,
+      "executionKind": "local-consistency-check",
+      "API0": true
+    }
+  ],
+  "hostLive": {
+    "status": "NOTRUN",
+    "availableClassificationMcpTools": [],
+    "configurationEnvPresent": false,
+    "configurationReadEvidence": "host-runtime.stdout.log",
+    "configurationProfileRevision": "unconfigured",
+    "approvedProfiles": [],
+    "codexExecutable": "<CODEX_EXECUTABLE>",
+    "claudeExecutableFound": false,
+    "supportedRepositoryPath": {
+      "transport": ".mcp.json: node mcp-server/dist/server.mjs cwd installed AGS root",
+      "hostHook": "hooks/hooks.json PreToolUse -> mcp-server/dist/host-attestation-hook.mjs --host=codex",
+      "flow": [
+        "get_skill_inventory",
+        "classify_skills exact original/confirmed context/full inventory",
+        "AGENT independently chooses IDs/reasons/applicability exclusions",
+        "record_skill_selection with caller hostReceipt=null; verified actual host hook observation required"
+      ],
+      "nativeStructuredRoute": "mcp-server/src/skill-classification/native-adapters.ts createNativeClassificationAdapters -> codex exec with fixed model/effort/schema and approved isolation; merely finding the CLI is not route qualification"
+    },
+    "requiredInputs": [
+      "approved AGENT_GOVERNANCE_CLASSIFICATION_CONFIG path and central fixed qualified profile registry bound to inventory/taxonomy/model/prompt/config digest and validUntil",
+      "approved providerRuntimeRef, route/egress authorization and known budget/prior consumption/reservations; no inferred default model or zero billing",
+      "for native route: nativeAdapterDefinitionsRef with executable/cwd/approvalRef/capabilityEvidenceRef/retryPolicyEvidenceRef/isolationEvidenceRef, vetted isolationArgs and limits",
+      "installed AGS MCP plus functioning real host attestation/session-board prompt observation, vendorContext provenance, task revision/currentness",
+      "original/compact identical paired scenario content with target tokenization and usage evidence; CS-required scenario must come from confirmed rule, not fabricated SS28 semantic oracle"
+    ],
+    "hostReceipt": null,
+    "selectedSkillIds": null,
+    "stages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "noSyntheticHostReceiptGenerated": true
+  },
+  "stages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "selectedSkillIds": null,
+  "missingInputs": [
+    "target-model tokenizer/version and full original/compact provider wire for actual input token counts",
+    "approved provider-live paired original/compact quality outputs and usage/cache billing evidence; no semantic oracle is supplied for SS28",
+    "real AGENT choice and signed host observation bound to request/inventory/task/config/profile revisions",
+    "stage readRefs, applied obligation/artifact refs, verified matching candidate digest for the same real host trial"
+  ],
+  "evidenceRefs": [
+    "SS28.source.json",
+    "inventory.json",
+    "engineering-test-plan.json",
+    "engineering-test-proof.json",
+    "engineering-test-result.json",
+    "SS28-isolated.test.ts",
+    "existing-tests.vitest.json",
+    "new-tests.vitest.json",
+    "known-cost-invalid-response.json"
+  ],
+  "verificationLimits": {
+    "engineeringPlan": "READY local consistency only",
+    "redGreenMutationProof": "INCOMPLETE; no product modifications permitted; executed assertions remain separately recorded",
+    "independentAudit": "NOTRUN",
+    "acceptanceHandoff": "Evidence bundle supplied to delegating parent; no acceptance PASS or release claim"
+  },
+  "workspaceInstructions": {
+    "read": [
+      "AGENTS.md",
+      "skills/test-engineering/SKILL.md",
+      "skills/orchestrator/SKILL.md",
+      "skills/orchestrator/references/skill-classification.md",
+      "skills/orchestrator/references/engineering-practices/test-design.md",
+      "skills/orchestrator/references/engineering-practices/test-proof.md",
+      "skills/orchestrator/references/engineering-practices/cli.md",
+      "skills/evaluation-validity-auditor/SKILL.md",
+      "skills/acceptance-evidence-validator/SKILL.md"
+    ],
+    "agentsSkills": {
+      "<HOST_AGENTS_SKILLS>": "ABSENT",
+      "<REPO>/.agents/skills": "ABSENT"
+    },
+    "appliedForDevelopment": [
+      "test-engineering"
+    ],
+    "semanticScenarioStagesAreSeparate": true
+  },
+  "changes": {
+    "trackedProductFilesChanged": [],
+    "newTestFiles": [
+      "tests/SS28-isolated.test.ts"
+    ],
+    "push": false,
+    "PR": false,
+    "release": false
+  },
+  "publicationPackaging": {
+    "kind": "PUBLIC_REDACTED_DERIVATIVE",
+    "originalFile": "SS28.result.json",
+    "originalBytes": 25486,
+    "originalSHA256": "4ad8ae84feda929246c10393c869a6ca28d57c09608db90adde3390e893f365a",
+    "reproductionTestExecuted": false,
+    "newTests": 0,
+    "newTrials": 0,
+    "pastRunsRerun": 0,
+    "publicationApiCalls": {
+      "JEV": 0,
+      "vendor": 0,
+      "Claude": 0,
+      "Codex": 0
+    },
+    "originalRecoveryMissing": [],
+    "patchStatus": "NONE_EXISTED",
+    "note": "Original statuses, candidate/source digests and nulls preserved. Public commands are location-redacted historical commands, not newly executed logs. Existing timestamps remain historical. See manifest for per-file provenance."
+  }
+}
