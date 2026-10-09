@@ -1,0 +1,41 @@
+{
+  "cliPath": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+  "cliVersion": "2.1.286 (Claude Code)",
+  "cliResolvedPath": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+  "cliSHA256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+  "CLIExecutable": true,
+  "CLIInPATH": false,
+  "nodeVersion": "v24.19.0",
+  "pnpmVersion": "11.19.0",
+  "apiKeyPresentNonempty": true,
+  "authenticationTest": "NOT_RUN",
+  "networkAPIProbe": "NOT_RUN",
+  "paidCalls": 0,
+  "workspaceAgentsSkillsExists": false,
+  "originalSourceAgentsSkillsExists": false,
+  "evidenceBranchAGENTSExists": false,
+  "guidanceRead": [
+    "/workspace/agent-governance-suite/AGENTS.md",
+    "Historical c6a8019 AGENTS.md and seven oracle-source SKILL.md files",
+    "Historical test-engineering and evaluation-validity-auditor SKILL.md",
+    "Historical test-design, cli and skill-classification references"
+  ],
+  "localCommands": [
+    "claude absolute-path --version",
+    "claude absolute-path --help",
+    "node --version",
+    "pnpm --version",
+    "sha256sum -c pinned-SS10/SHA256SUMS",
+    "local byte/fixture/oracle/source-hash verification"
+  ],
+  "helpObservations": [
+    "--max-budget-usd supported for --print",
+    "--plugin-dir supported per session",
+    "--output-format stream-json and --include-hook-events supported",
+    "--bare skips hooks; do not assume it is suitable for actual AGS host-attestation test"
+  ],
+  "productCodeModified": false,
+  "generatedDistributionModified": false,
+  "persistentAuthOrPermissionsChanged": false,
+  "networkPolicyChanged": false
+}

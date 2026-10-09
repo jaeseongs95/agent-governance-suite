@@ -1,0 +1,184 @@
+{
+  "schemaVersion": "1.0.0",
+  "sourceRepository": "https://github.com/jaeseongs95/agent-governance-suite",
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "sourcePrefix": "evidence/ags-2.9.1/2026-10-09/cases/SS10/",
+  "publicFiles": [
+    {
+      "path": "README.md",
+      "bytes": 4215,
+      "sha256": "799d04ec8cc4b42826e6da7dc40799e116fdeaddb00f61c83a960e1d87a3d686",
+      "manifestMatched": true
+    },
+    {
+      "path": "SS10.offline-checks.public.json",
+      "bytes": 339101,
+      "sha256": "8673029c6b2083976967452d24c9ea8f4af5e68d3e95ece35ce43aa56070b26f",
+      "manifestMatched": true
+    },
+    {
+      "path": "SS10.report.redacted.md",
+      "bytes": 4443,
+      "sha256": "83fb799f0c4aeb1d631601ab460dd1bfd441b3581faf67974a3ec24c5bb3bf42",
+      "manifestMatched": true
+    },
+    {
+      "path": "SS10.result.public.json",
+      "bytes": 25249,
+      "sha256": "40e5516e67adbf7866470d0ed410adb65860c1b50fab254403f8ecba9f1024c5",
+      "manifestMatched": true
+    },
+    {
+      "path": "inputs/SS10.fixture.json",
+      "bytes": 3733,
+      "sha256": "65763ed769bff6a256b7abc414639650acd515e50b68b74ed31fd63b859a5a0a",
+      "manifestMatched": true
+    },
+    {
+      "path": "inputs/SS10.originalPrompt.utf8.txt",
+      "bytes": 132,
+      "sha256": "9e5d14a624e580e2bf40fcbbb0ecce4abad9e74f204384f79d20246e62ff8875",
+      "manifestMatched": true
+    },
+    {
+      "path": "inputs/SS10.request.public.json",
+      "bytes": 255042,
+      "sha256": "a6f8f27b84509ab1487b6a9a3eb02290eafeb678fe60b20a6f94de0163140580",
+      "manifestMatched": true
+    },
+    {
+      "path": "inputs/fixtures.frozen.json",
+      "bytes": 142450,
+      "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "manifestMatched": true
+    },
+    {
+      "path": "logs/SS10.runner-error-exit.public.json",
+      "bytes": 184,
+      "sha256": "d13e83a061f034fc2bab5a479d7f018dcc0343fee6ccb00ff3a20d309e070fc0",
+      "manifestMatched": true
+    },
+    {
+      "path": "logs/SS10.runner-error.excerpt.redacted.log",
+      "bytes": 298,
+      "sha256": "26c53e4b59fee8398cb0880e1b2a30690f2c865385abdf07e4b938e2deded879",
+      "manifestMatched": true
+    },
+    {
+      "path": "logs/SS10.test-exit.public.json",
+      "bytes": 203,
+      "sha256": "807d9831bf7999969e9d8708fbfa4fcf724d752eb3e9e099f0878ea82c0a748b",
+      "manifestMatched": true
+    },
+    {
+      "path": "logs/SS10.vitest.combined.redacted.log",
+      "bytes": 4148,
+      "sha256": "fd3a7dba2196699466c12c35df2f467d530a7c007c1d4e49b3823192247c2c75",
+      "manifestMatched": true
+    },
+    {
+      "path": "logs/SS10.vitest.public.json",
+      "bytes": 8368,
+      "sha256": "18337f3fa18c9c9a99615b1e3a27a01d044e14b7d436f42616a4847ed3f81c4f",
+      "manifestMatched": true
+    },
+    {
+      "path": "logs/engineering-cli-exits.public.json",
+      "bytes": 630,
+      "sha256": "954c973508244b5e4e977709f243aad77c11cd013133262d67dddd151d9c005e",
+      "manifestMatched": true
+    },
+    {
+      "path": "logs/engineering-plan-cli-result.public.json",
+      "bytes": 606,
+      "sha256": "b9753738d25aeaa95ba338a21b3d5a0cc21fe033cfc4d1b6916d3372db0fcb88",
+      "manifestMatched": true
+    },
+    {
+      "path": "logs/engineering-proof-result.public.json",
+      "bytes": 5217,
+      "sha256": "5f65df26dba51c181ee0d6bd77b545dc8e7d04e5bbc03379739342e248cddca8",
+      "manifestMatched": true
+    },
+    {
+      "path": "reproduce/README.md",
+      "bytes": 2083,
+      "sha256": "8e7c5ae3678f458bf00887393ef05b25578e07c8fa610b76a266fd046c1484f7",
+      "manifestMatched": true
+    },
+    {
+      "path": "reproduce/SS10.test.ts",
+      "bytes": 15349,
+      "sha256": "18790a2956a8f4e7aaf97494eb1daf7402b6a30c65e4fced7a5f94d1f1a1d9d5",
+      "manifestMatched": true
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 16330,
+      "sha256": "efd4df3365f165e4844e348901a19d3f07cea7759d0649fd0137ffee63be5180",
+      "manifestMatched": null
+    },
+    {
+      "path": "SHA256SUMS",
+      "bytes": 1832,
+      "sha256": "c6bf8092e965e321a4c37ab9c821d0dc22a03ce00f36df7369f2f86f9190173e",
+      "manifestMatched": null
+    }
+  ],
+  "sha256sumCheck": {
+    "coveredPayloadFiles": 19,
+    "matched": 19,
+    "mismatches": 0
+  },
+  "fixtureEmbeddedCaseMatched": true,
+  "promptUtf8Matched": true,
+  "oracleProjection": {
+    "expected": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "computed": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "matched": true,
+    "kind": "JS JSON.stringify evaluator projection, not standalone file-byte digest"
+  },
+  "historicalSourceCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "historicalSkills": [
+    {
+      "path": "skills/code-review/SKILL.md",
+      "sha256": "19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "oracleSourceRefMatched": true
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "sha256": "f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "oracleSourceRefMatched": true
+    },
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "sha256": "d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "oracleSourceRefMatched": true
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "sha256": "aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+      "oracleSourceRefMatched": true
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "oracleSourceRefMatched": true
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "sha256": "96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "oracleSourceRefMatched": true
+    },
+    {
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "sha256": "f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "oracleSourceRefMatched": true
+    }
+  ],
+  "sourceSpecStandalone": "MISSING_ORIGINAL; embedded sourceSpec only",
+  "sourceSpecBodyDigest": "sha256:e9a2a6b1535fed0109c0460fdfc6500dc8e92bb4df28e3ddcba4560a00aa2665",
+  "sourceSpecBodyDigestIndependentlyVerified": false,
+  "originalRequestSHA256": "b3f412db3d0674e1d20acab1f293ca4e68f71a09588ad14e3de080bfdd0d2777",
+  "publicRequestSHA256": "a6f8f27b84509ab1487b6a9a3eb02290eafeb678fe60b20a6f94de0163140580"
+}

@@ -1,0 +1,146 @@
+{
+  "caseId": "SS10",
+  "title": "부정문으로 구현을 제외한 리뷰",
+  "runId": "prep-20261009T074239Z-IgvrMHWV",
+  "phase": "PREPARATION_ONLY",
+  "preparationStatus": "COMPLETE",
+  "actualClaudeTestStatus": "NOT_RUN",
+  "fullCasePass": false,
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "candidate": {
+    "label": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "authority": "Parent-reported local fixed candidate only; independent SOURCE and remote publication not yet received",
+    "checkedOut": false,
+    "tested": false
+  },
+  "originalPromptSHA256": "9e5d14a624e580e2bf40fcbbb0ecce4abad9e74f204384f79d20246e62ff8875",
+  "originalPromptBytes": 132,
+  "oracle": {
+    "required": [
+      "code-review"
+    ],
+    "allowed": [],
+    "allowedConditions": {},
+    "forbidden": [
+      "ponytail",
+      "software-security-auditor"
+    ],
+    "notApplicable": [
+      "cs-engineering",
+      "test-engineering",
+      "orchestrator",
+      "korean-prose-editor"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "change-scope-guardian",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      }
+    ],
+    "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+  },
+  "fixtureVariants": [
+    "base"
+  ],
+  "originalResult": {
+    "candidate": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "offlinePassed": 19,
+    "offlineFailed": 1,
+    "total": 20,
+    "exitCode": 1,
+    "knownDefect": "D01 host-active-state-supply-gap; controlled inventory comparison only",
+    "hostStages": "NOT_RUN",
+    "semanticAccuracy": null,
+    "fullCasePass": false
+  },
+  "observations": {
+    "raw": null,
+    "combined": null,
+    "selected": null,
+    "hostReceipt": null,
+    "read": "NOT_RUN",
+    "applied": "NOT_RUN",
+    "verified": "NOT_RUN"
+  },
+  "callLedger": {
+    "softBudgetUSD": 2,
+    "knownCostUSD": 0,
+    "apiCalls": 0,
+    "preparationApiCalls": 0,
+    "JEVCalls": 0,
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cacheRead": 0,
+      "cacheCreation": 0
+    },
+    "retries": 0,
+    "failedCalls": 0,
+    "unknownChargeReserveUSD": 0,
+    "entries": [],
+    "policy": "Count every future attempt including failed, cached and preparation calls. Stop before next call when nearing US$2; never use budget as spending target. Do not start JEV without individual allocation."
+  },
+  "resumeRequirements": [
+    "Parent-confirmed candidate commit/tree, independent SOURCE verdict and fixed remote publication evidence",
+    "Parent-approved common exact Claude model/effort, API authentication procedure and successful preflight receipt",
+    "Approved per-run plugin/MCP/classification/host-attestation configuration with current installed/enabled/supported inventory",
+    "Budget-accounting procedure for CLI and nested provider calls; JEV remains disabled without allocation"
+  ],
+  "reviewTarget": "MISSING_ORIGINAL: retain absent fixed patch, base/head and changed-files. Hold actual review; do not erase code-review recommendation or fabricate patch."
+}
