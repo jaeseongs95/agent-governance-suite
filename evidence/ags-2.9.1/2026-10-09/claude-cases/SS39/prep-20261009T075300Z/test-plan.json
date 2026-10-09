@@ -1,0 +1,155 @@
+{
+  "kind": "SS39-claude-host-preparation-plan",
+  "caseId": "SS39",
+  "title": "중앙 vendor profile과 모델 추론 설정",
+  "status": "PREPARATION_COMPLETE_WAITING_PARENT",
+  "productTestStatus": "NOTRUN",
+  "candidatePending": {
+    "label": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "provenance": "Parent-supplied identifiers only; independent SOURCE and remote publication pending"
+  },
+  "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "entryPoint": "Real Claude Code API-authenticated host -> installed approved AGS MCP/runtime -> classify_skills -> AGENT selection -> actual read/apply/verify hooks",
+  "originalVariants": [
+    {
+      "id": "counterexample-01",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "reason": "Authoritative individual definitions absent"
+    },
+    {
+      "id": "counterexample-02",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "reason": "Authoritative individual definitions absent"
+    },
+    {
+      "id": "counterexample-03",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "reason": "Authoritative individual definitions absent"
+    },
+    {
+      "id": "counterexample-04",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "reason": "Authoritative individual definitions absent"
+    },
+    {
+      "id": "counterexample-05",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "reason": "Authoritative individual definitions absent"
+    },
+    {
+      "id": "counterexample-06",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "reason": "Authoritative individual definitions absent"
+    },
+    {
+      "id": "counterexample-07",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "reason": "Authoritative individual definitions absent"
+    },
+    {
+      "id": "counterexample-08",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "reason": "Authoritative individual definitions absent"
+    },
+    {
+      "id": "counterexample-09",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "reason": "Authoritative individual definitions absent"
+    },
+    {
+      "id": "counterexample-10",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "reason": "Authoritative individual definitions absent"
+    },
+    {
+      "id": "counterexample-11",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "reason": "Authoritative individual definitions absent"
+    },
+    {
+      "id": "counterexample-12",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "reason": "Authoritative individual definitions absent"
+    }
+  ],
+  "steps": [
+    {
+      "id": "S0",
+      "action": "Receive independent SOURCE verdict, exact remotely readable candidate commit/tree, common Claude model/effort/API-auth settings and preflight results; verify all digests before execution",
+      "expected": "Exact validated candidate, no main or c6a8019 substitution"
+    },
+    {
+      "id": "S1",
+      "action": "Read candidate AGENTS and relevant installed SKILL files, registry/runtime config, approved adapters and actual host hooks; pin qualification digest/revision/expiry and fixed-price workload evidence",
+      "expected": "Single central fixed profile and qualified approved route, no runtime catalog or price lookup"
+    },
+    {
+      "id": "S2",
+      "action": "Run parent-authorized real Claude Code host with SS03 synthetic prompt through SS39 profile boundary; Claude performs host work, Sol only prepares environment and gathers evidence",
+      "expected": "Actual modelId, reasoningEffort, supported options, route and revisions exactly match approved central profile; sanitized wire evidence plus actual AGENT selection"
+    },
+    {
+      "id": "S3",
+      "action": "Collect original 12 variant observations only after authoritative definitions are supplied; separately label any approved offline supplemental replay",
+      "expected": "Missing definitions remain NOTRUN/BLOCKED; no invented mapping; no unapproved vendor or JEV call"
+    },
+    {
+      "id": "S4",
+      "action": "Verify holds and stale/update boundaries without fallback; observe expiry/profile changes immediately before dispatch and retain cost for malformed responses",
+      "expected": "Missing/unqualified/unavailable/unsupported/unapproved/egress/budget conditions hold without sends; valid revision update only next qualified request; actual transport timing and cost ledger retained"
+    },
+    {
+      "id": "S5",
+      "action": "Verify real selected/read/applied/verified independently from recommendations and profile lookups, using host receipts and controlled scratch targets approved by parent",
+      "expected": "No fabricated receipts and no product/generated-code edits; SS03 golden is reused context, not an SS39 accuracy oracle"
+    },
+    {
+      "id": "S6",
+      "action": "Aggregate all usage, failed calls, cache and retry observations; sanitize reports; publish unique evidence path and reread immutable remote files",
+      "expected": "US$2 soft limit includes preparation calls; stop before any next call if cost cap or unknown exposure makes headroom uncertain"
+    }
+  ],
+  "specialBoundary": "Synthetic Vendor-B effort=null must not be silently coerced into a non-null native effort. Parent must supply an approved adapter supporting the frozen null case; actual Claude common settings cannot rewrite synthetic expectations.",
+  "resumeConditions": [
+    "Validated candidate and independent SOURCE verdict with immutable remote commit/tree",
+    "Common explicit Claude model/effort/API authentication settings and successful preflight evidence",
+    "Trusted installed central registry/runtime config and approved route/structured capability/no-retry/isolation evidence",
+    "Current-host qualification and same-workload quality/fixed-price minimum-estimated-cost evidence",
+    "Authoritative 12 counterexample inputs and expected outcomes for original-variant adjudication",
+    "Native allowance, prior spend, unknown reservation and per-case US$2 accounting method",
+    "Real host hooks and approved isolated scratch write targets; no product code writes"
+  ],
+  "selected": "NOTRUN",
+  "read": "NOTRUN",
+  "applied": "NOTRUN",
+  "verified": "NOTRUN",
+  "accuracy": null,
+  "hostReceipt": null,
+  "newTestsRun": 0
+}

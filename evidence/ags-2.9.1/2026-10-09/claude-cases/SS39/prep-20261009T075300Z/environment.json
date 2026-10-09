@@ -1,0 +1,88 @@
+{
+  "checkedAt": "2026-10-09T07:51:26.666725+00:00",
+  "claudeExecutable": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+  "resolvedExecutable": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+  "versionCommand": [
+    "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+    "--version"
+  ],
+  "version": "2.1.286 (Claude Code)",
+  "versionExit": 0,
+  "PATHLookup": "not found; explicit path succeeds",
+  "nodeVersion": "v24.19.0",
+  "secretPresenceOnly": {
+    "CLAUDE_API_KEY": true
+  },
+  "authentication": "NOT_TESTED; awaiting parent-provided API authentication procedure",
+  "localInstructionCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+  "localInstructionTree": "77a36bd8c2f2b6a4fcfc3abb292444bde5e92e0d",
+  "instructionsRead": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827"
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/SKILL.md",
+      "sha256": "eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230"
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "sha256": "0bd44e1a780bb930c69f6880102ac3b4d662de3ecdcd16116a48d870aa971d87"
+    },
+    {
+      "path": "skills/change-scope-guardian/SKILL.md",
+      "sha256": "4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+    },
+    {
+      "path": "skills/change-scope-guardian/references/entry-details.md",
+      "sha256": "d164e59584763265a4bd8ccfd6a4ee75560f1df4ef30cd44dee68d814baf185b"
+    },
+    {
+      "path": "skills/change-scope-guardian/references/path-policy.md",
+      "sha256": "8165defb0cb02f683718f8c6c927b0455f30d2120f3d4d6e0a971247c912a56d"
+    },
+    {
+      "path": "skills/change-scope-guardian/references/verdict-rules.md",
+      "sha256": "71d8e964c03874b8bdcaef4e21487a56d672d59553da0c01276e4896a8fc1c28"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "sha256": "eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/entry-details.md",
+      "sha256": "13dc04ff9d74e17f2d0bb6d69583a2c502dc5c69766d9a4ed91a59c0c5741154"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/risk-matrix.md",
+      "sha256": "0377275e0487f9823bed76cd3541e0caa5f3bf030ea407fee5ad17b0f761c801"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/approval-and-authority.md",
+      "sha256": "471afb623db2b67f45465f924eec5426d470dafa0c92bcad14b7bd16d0c16334"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/recovery-requirements.md",
+      "sha256": "60a0bded3a1453092e2d02469393e39f3709f0810e0e4c076628854c4d7d54af"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/test-design.md",
+      "sha256": "fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/cli.md",
+      "sha256": "42d409ec8fd0f39c491dfdeb18da3f3d15d9fb518c82a8d9f69ed0ae87a59f69"
+    }
+  ],
+  "agentsSkillsLookup": {
+    "workspaceAgentsSkillsExists": false,
+    "repoAgentsSkillsExists": false,
+    "relevantSkillsFound": "repo skills/; .agents checked, not used as substitute"
+  },
+  "candidateUse": "Local checkout is not R17 and was not tested",
+  "policyChanges": []
+}

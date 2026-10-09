@@ -1,0 +1,26 @@
+{
+  "caseId": "SS39",
+  "softBudgetUSD": 2,
+  "includesPreparationCalls": true,
+  "aggregate39CaseReservationUSD": 78,
+  "actualCalls": {
+    "ClaudeAPI": 0,
+    "JEV": 0,
+    "otherVendor": 0,
+    "realNativeHost": 0,
+    "runtimeCatalog": 0,
+    "runtimePrice": 0
+  },
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cacheRead": 0,
+    "cacheCreation": 0
+  },
+  "retries": 0,
+  "failedAPICalls": 0,
+  "actualCostUSD": 0,
+  "unknownCostReservationUSD": 0,
+  "records": [],
+  "stopRule": "Before every paid call, include all successful/failed attempts and cached usage in prior exposure. Stop next call and report on approaching US$2 or uncertain headroom. US$2 is not a spending target. JEV remains unallocated."
+}

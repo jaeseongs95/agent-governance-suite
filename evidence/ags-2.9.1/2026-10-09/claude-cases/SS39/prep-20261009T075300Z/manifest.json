@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS39",
+  "run": "prep-20261009T075300Z",
+  "status": "PREPARATION_COMPLETE_WAITING_PARENT",
+  "actualClaudeTest": "NOTRUN",
+  "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "productPatch": "NONE",
+  "files": [
+    {
+      "path": "REPORT.redacted.ko.md",
+      "bytes": 5241,
+      "sha256": "a0af0fcce5f4a6442aa2966b0f53a21573a39a69373a5d17ed31dcb3e783e9aa"
+    },
+    {
+      "path": "environment.json",
+      "bytes": 3526,
+      "sha256": "b7b51ba749d5f21e29372835fc6d87d3d68a16695bf5051f04799c9830b845b9"
+    },
+    {
+      "path": "source-hashes.json",
+      "bytes": 10020,
+      "sha256": "9ad57a48414dbfccd183c57d72860563680a0348dd14e080c1acac979d775ba6"
+    },
+    {
+      "path": "source-input.json",
+      "bytes": 6095,
+      "sha256": "0afa8188480997157b2b4aa9bd40fc063f0d4c7879a94106a0ab0b566b02b4b0"
+    },
+    {
+      "path": "test-plan.json",
+      "bytes": 6596,
+      "sha256": "9b092123efc2a8dd4586ce82916f244094e5a1cee539944dabe0ecb514de7793"
+    },
+    {
+      "path": "usage.json",
+      "bytes": 720,
+      "sha256": "fc40b6aa2f379755e75606db2657a4cc2ec5c5ba7420313d3127b04f97fa0e93"
+    }
+  ]
+}

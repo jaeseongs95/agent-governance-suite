@@ -1,0 +1,125 @@
+{
+  "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "SS39": {
+    "caseId": "SS39",
+    "title": "중앙 vendor profile과 모델 추론 설정",
+    "familyId": "mechanical-SS39",
+    "publicSynthetic": true,
+    "status": "NOT_RUN",
+    "executionKind": "mock·정적 경계·오프라인 비용 검증 우선. 다른 vendor의 추가 유료 API는 미승인이므로 별도 허용 전 NOT_RUN이다.",
+    "originalPrompt": null,
+    "sourceSpec": {
+      "path": "TEST-SPEC.seq7.ko.md",
+      "section": "SS39",
+      "fields": {
+        "입력": "합성 ProviderProfileRegistry 한 곳에 Vendor-A→model-a/reasoning=low, Vendor-B→model-b/reasoning=null, supportedOptions, qualificationRevision, approved route와 profile revision을 둔다. 이름과 추론 값은 시험용이며 실제 모델 지원 사실이 아니다. 기본 prompt·golden은 SS03을 재사용한다.",
+        "필수추천": "현재 사용자 vendor의 고정 modelId·reasoningEffort·지원 옵션을 정확하게 adapter로 전달하고 실제 분류에 사용한다. profile 선정·갱신에는 같은 workload의 품질·최소 추정비용 근거가 있어야 한다.",
+        "금지추천 또는 행동": "runtime 가격·catalog 탐색으로 모델 자동 교체; 상위 AGS·VM의 vendor/model별 분기; 여러 곳에 상수 복제; 임의 고급 모델·reasoning 상향; 미지원 옵션 강제; 미승인 타 벤더·새 API 전송; 키 노출.",
+        "허용선택": "중앙 profile의 고정값과 이미 허용된 route만 사용한다. 명시적인 profile 갱신은 revision과 새 qualification·지원 옵션 검증을 거친 뒤 다음 유효 요청에 적용한다.",
+        "보류조건": "profile 없음, 모델 미가용·미검증, effort/옵션 미지원, route 승인·예산 부족, egress 차단. 다른 모델로 몰래 대체하지 않는다.",
+        "통과기준": "아래 반례의 모델·effort·route·revision과 실제 전송이 일치한다. runtime catalog/가격 탐색 호출은 0이다. profile 조회 성공만으로 모델 분류나 AGENT 스킬 선택 완료를 주장하지 않는다.",
+        "증거": "E0·E1·E3·E4, 중앙 registry 위치·digest·revision, adapter 전송의 비밀 제거본, qualification·지원 옵션·선정/갱신 비용 근거, actual model/effort, AGENT 최종 선택, profile 변경·stale 거부 기록.",
+        "실행종류": "mock·정적 경계·오프라인 비용 검증 우선. 다른 vendor의 추가 유료 API는 미승인이므로 별도 허용 전 NOT_RUN이다."
+      },
+      "bodyDigest": "sha256:adae64ff84af2d82d154aea34ee27bbbb6d34beaee628339ead4488706abcb9e"
+    },
+    "oracle": null,
+    "variants": [
+      "counterexample-01",
+      "counterexample-02",
+      "counterexample-03",
+      "counterexample-04",
+      "counterexample-05",
+      "counterexample-06",
+      "counterexample-07",
+      "counterexample-08",
+      "counterexample-09",
+      "counterexample-10",
+      "counterexample-11",
+      "counterexample-12"
+    ]
+  },
+  "SS03ReusedPrompt": "session-handoff를 구현해 줘. 수신 전 종료, ACK 뒤 crash, 같은 메시지 재수신에서 인계가 유실되거나 중복 완료되지 않아야 해. 최소 구현과 회귀 테스트를 함께 설계해 줘.",
+  "SS03GoldenContextOnly": {
+    "required": [
+      "ponytail",
+      "cs-engineering",
+      "test-engineering",
+      "orchestrator"
+    ],
+    "allowed": [],
+    "allowedConditions": {},
+    "forbidden": [],
+    "notApplicable": [
+      "code-review",
+      "software-security-auditor",
+      "korean-prose-editor"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "change-scope-guardian",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      }
+    ],
+    "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+  },
+  "missingOriginals": [
+    "TEST-SPEC.seq7.ko.md",
+    "individual input and expected outcome for counterexample-01..12"
+  ],
+  "policy": "Do not substitute supplemental scenarios for original variants. SS39 oracle=null and accuracy=null."
+}

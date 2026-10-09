@@ -1,0 +1,304 @@
+{
+  "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "sourceCasePath": "evidence/ags-2.9.1/2026-10-09/cases/SS39",
+  "manifestEntriesVerified": 49,
+  "checksumManifestSHA256": "e282f36bc0942ab7f68e6067dde59fa6cc3e0eed38f6972a17df139727a96dcc",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 4488,
+      "sha256": "b2d8019c13473125613f0b735c26099ed1192bcfc8b047858f170217cce8af31",
+      "verified": true
+    },
+    {
+      "path": "REPORT.redacted.ko.md",
+      "bytes": 6245,
+      "sha256": "598b908a17d5ea5bb03d6bf5312ea39e75575cfa3f0d9da879ef72b225e135d5",
+      "verified": true
+    },
+    {
+      "path": "SS39.public.result.json",
+      "bytes": 29386,
+      "sha256": "fcec6141fbf2becfd60c7f04433c3ce63cd245742c34eabc048e5f5d562e86a7",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-cost.json",
+      "bytes": 7053,
+      "sha256": "5c6afbf327928d8d2b1805083cee86b1c6154e8a54d0714215e0f8fb0301ca4d",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-expiry-race.json",
+      "bytes": 479152,
+      "sha256": "7fe56a2b6c1694f732cd8752c2d9f715d5c660aae65c637a8b65079b0724ef0e",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-fixed-Vendor-A.json",
+      "bytes": 479235,
+      "sha256": "0512e7adf5b0eff865409cb7ac400db063c66f76ea01ecfd19c5bf5a77f8f036",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-fixed-Vendor-B.json",
+      "bytes": 479231,
+      "sha256": "584a34349ad043cfcc5e1225c892ebe7c7586d84ebbe4da221ca1e2f62457413",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-freeze.json",
+      "bytes": 479105,
+      "sha256": "b62681e4abfbab784a87ffde021369544cce668188f57dcbe5d4cee00674a446",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-ambiguous.json",
+      "bytes": 294906,
+      "sha256": "9bacb7185edbc289a411caabe65c1275dd0ff3d7e96de6181cda3d237b282bd4",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-budget.json",
+      "bytes": 294476,
+      "sha256": "95c9dfe334039d3163f5e84d5b1af412375466c0300e8394405bc90c9355bce5",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-egress.json",
+      "bytes": 294317,
+      "sha256": "c1c5deb484b39d0ed5504552fa0dbbbd095d2d7ef1db72b59198124c8fb747e2",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-expired.json",
+      "bytes": 293751,
+      "sha256": "8465476e7e1d6120135281b9c9c2c9c00364c153eccfb3403cc9ef16a48349a3",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-missing.json",
+      "bytes": 293747,
+      "sha256": "9b3ab35fb556792fe123f161e7b3aed4943ec99520cfa0ee0da3157aacbfdb98",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-old-fingerprint.json",
+      "bytes": 293832,
+      "sha256": "723747018db6479086ee488fc487bc6e65f8f2f0c81979a11c04627c9476b647",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-route-model-unavailable.json",
+      "bytes": 294376,
+      "sha256": "b529db210a3ebfd86c24994ddde1cca980b8c965ea2a27beb1f20dd9daf3e76c",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-route-unapproved.json",
+      "bytes": 294313,
+      "sha256": "ce05fc5fa6ca1992017dfe0dc8998f3af0f29413ae954507516fd9b0ec50e14a",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-unknown-cost.json",
+      "bytes": 293746,
+      "sha256": "48b6ec4bb1a32b6f30b913d382ad47ecce4172ebe0af2b5b2ee5a04eea8ca0bf",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-unqualified.json",
+      "bytes": 293764,
+      "sha256": "c989f4178ac8e0c68371e3b83b521d3107bae722ad642fb028275b562ceb979c",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-unsupported-effort.json",
+      "bytes": 293797,
+      "sha256": "cf7e726871a98aaa8266495a6c3a4a0f4ec458082a2bb60d6857d7e165207c4c",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-unsupported-structured.json",
+      "bytes": 293817,
+      "sha256": "d214c121e9a1acdc85349393b07d2404e2780237d06b22c25c2169aebf09b168",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-invalid-response-cost.json",
+      "bytes": 474161,
+      "sha256": "b99f23a79a1b5e8c7d78e2dd578fbe37b7c1e5c313656728b89e41644f9a6946",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-native-encode.json",
+      "bytes": 155245,
+      "sha256": "077c385eced174f5cfc8d646902e421101e755afd8087c3104e36c83f7e830d7",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-stale-availability.json",
+      "bytes": 294273,
+      "sha256": "afeed4372987683013371979f466ca6b006103bab1e76605e152f981c616de9b",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-stale-credential.json",
+      "bytes": 473699,
+      "sha256": "5a8a7a76f51f080595f23cb37b36c9335517b134208890a902a7a3f15eeea75d",
+      "verified": true
+    },
+    {
+      "path": "evidence/SS39-DEV-update.json",
+      "bytes": 658628,
+      "sha256": "d0988455c27b34b6cf6b9ca3935c8c9c427a97e76bfd3bdf11f45780699ea18b",
+      "verified": true
+    },
+    {
+      "path": "evidence/archive-integrity.json",
+      "bytes": 95,
+      "sha256": "0573b3aba700f069b720910fb88df5981ae863d1599b17604747efc1a2fb4d10",
+      "verified": true
+    },
+    {
+      "path": "evidence/check-plan.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "path": "evidence/check-plan.stdout.log",
+      "bytes": 234,
+      "sha256": "7c14f2ed2b3fd99b6d4772d8e2e22ac2d5a4ac5698542ac7dfe12756dd43c235",
+      "verified": true
+    },
+    {
+      "path": "evidence/check-proof.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "path": "evidence/check-proof.stdout.log",
+      "bytes": 976,
+      "sha256": "fbd46a9fe35e33ec2081922be4ed3df06dc22576c371fdd5f55e629bff7af288",
+      "verified": true
+    },
+    {
+      "path": "evidence/commands.json",
+      "bytes": 2943,
+      "sha256": "6da68642255b43c01e877b1d260e856adaaa652b43aee15251b5622d5d8f6744",
+      "verified": true
+    },
+    {
+      "path": "evidence/engineering-test-plan.json",
+      "bytes": 2319,
+      "sha256": "9a1d8056e88d65b63ac4828730fb38edec948fa8b3a7c41245ca963edf89f9bb",
+      "verified": true
+    },
+    {
+      "path": "evidence/engineering-test-proof.json",
+      "bytes": 2154,
+      "sha256": "b96644f6e06be01fd425c569b6ca9d7198f7eaa654ceb59e15c97e84600e006c",
+      "verified": true
+    },
+    {
+      "path": "evidence/engineering-test-result.json",
+      "bytes": 975,
+      "sha256": "fe9266a467c26420168ff5aa2c7da94a323795528acab1f027734c3e816bb54f",
+      "verified": true
+    },
+    {
+      "path": "evidence/existing-OFF-SS39.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "path": "evidence/existing-OFF-SS39.stdout.log",
+      "bytes": 71,
+      "sha256": "3102e3fdd881aebf7cf166eee4a5197267939a33b4448e8fedfe5ebf2bb688b9",
+      "verified": true
+    },
+    {
+      "path": "evidence/existing-OFF-SS39.vitest.json",
+      "bytes": 14909,
+      "sha256": "6f8c612563e3d8d0caaaac140ad85d994232580327181b11d83815fbff15ab5a",
+      "verified": true
+    },
+    {
+      "path": "evidence/existing-SS39.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "path": "evidence/existing-SS39.stdout.log",
+      "bytes": 67,
+      "sha256": "916a25323f56d5502fe6272b79bb6c5c7ad9c95b975cecf38eac9446416c7ec6",
+      "verified": true
+    },
+    {
+      "path": "evidence/existing-SS39.vitest.json",
+      "bytes": 9340,
+      "sha256": "743ff697272630fe3b5ccf27bf3ec817db18327ea18013b0317981f5aa91932b",
+      "verified": true
+    },
+    {
+      "path": "evidence/source.json",
+      "bytes": 7845,
+      "sha256": "9a487aa44c658ba543106908c72622904bdf47eb46f885afd9dd30d814daf3a6",
+      "verified": true
+    },
+    {
+      "path": "evidence/supplemental-SS39.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verified": true
+    },
+    {
+      "path": "evidence/supplemental-SS39.stdout.log",
+      "bytes": 71,
+      "sha256": "90f776e14f88529d278485612c828dcf38c0dc5435f8231de731bc584b0034a7",
+      "verified": true
+    },
+    {
+      "path": "evidence/supplemental-SS39.vitest.json",
+      "bytes": 11679,
+      "sha256": "65961e60a1d72754f519c8c9958bf4f2e201f63e7c7aed3413f50d8c9292b51b",
+      "verified": true
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 26209,
+      "sha256": "fb61f09be0039ae33de68f11aaaf069834bfee8f8e5aa84e1d233bb558e52c98",
+      "verified": true
+    },
+    {
+      "path": "pinned/fixtures.json",
+      "bytes": 142450,
+      "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "verified": true
+    },
+    {
+      "path": "reproduction/SS39.test.ts",
+      "bytes": 16256,
+      "sha256": "39130043dfb7241f989fb7a625c9e76d92acfe72ebd22948144244deb857b049",
+      "verified": true
+    },
+    {
+      "path": "reproduction/ss39-engineering-plan.json",
+      "bytes": 2141,
+      "sha256": "9a0013ee5921482768e4ce70832f5ea056771fa5b503c23881e1bea812a292dc",
+      "verified": true
+    },
+    {
+      "path": "reproduction/ss39-engineering-proof.json",
+      "bytes": 2154,
+      "sha256": "b96644f6e06be01fd425c569b6ca9d7198f7eaa654ceb59e15c97e84600e006c",
+      "verified": true
+    }
+  ],
+  "oracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "oracleDigestVerification": "Matched frozen fixture field and hash-verified prior source.json oracleComputedDigest; no independent algorithm recomputation in this preparation."
+}
