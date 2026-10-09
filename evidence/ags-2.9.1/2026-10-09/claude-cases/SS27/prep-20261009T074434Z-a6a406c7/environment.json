@@ -1,0 +1,72 @@
+{
+  "observedAt": "2026-10-09T07:46:55.472210+00:00",
+  "role": "Sol preparation; Claude must perform actual host work after resume",
+  "claude": {
+    "explicitPath": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+    "resolvedPath": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+    "versionStdout": "2.1.286 (Claude Code)",
+    "versionExit": 0,
+    "helpExit": 0,
+    "helpSHA256": "13dd71866e4b6fde1a11de6fa26bd4f5866308794307ff0fb37804c03db8e0b2",
+    "executableSHA256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+    "onPATH": false,
+    "inferenceCalls": 0,
+    "authenticationVerified": false,
+    "APIConnectivityVerified": false
+  },
+  "helpObservedFlags": [
+    "--print",
+    "--model",
+    "--effort",
+    "--max-budget-usd",
+    "--output-format",
+    "--no-session-persistence",
+    "--plugin-dir",
+    "--mcp-config",
+    "--strict-mcp-config",
+    "--setting-sources",
+    "--settings",
+    "--bare"
+  ],
+  "flagSemantics": {
+    "--bare": "Help says it skips plugin hooks and automatic CLAUDE.md discovery. Parent must choose settings preserving required host observations; no execution configuration chosen here.",
+    "--max-budget-usd": "Available in print mode; case cumulative accounting including failures remains necessary."
+  },
+  "nodeVersion": "v24.19.0",
+  "pnpmVersion": "11.19.0",
+  "timezone": "Etc/UTC",
+  "localInstructionSource": {
+    "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+    "isTestCandidate": false
+  },
+  "historicalInstructionSource": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "isTestCandidate": false,
+    "AGENTSSHA256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827"
+  },
+  "instructionsRead": [
+    "AGENTS.md",
+    "skills/test-engineering/SKILL.md",
+    "skills/orchestrator/SKILL.md",
+    "skills/orchestrator/references/skill-classification.md (historical input source)",
+    "skills/orchestrator/references/engineering-practices/test-design.md",
+    "skills/orchestrator/references/engineering-practices/test-proof.md",
+    "skills/orchestrator/references/engineering-practices/cli.md",
+    "skills/evaluation-validity-auditor/SKILL.md (read only, no independent audit claimed)",
+    "skills/acceptance-evidence-validator/SKILL.md (read only)",
+    "skills/change-scope-guardian/SKILL.md and references",
+    "skills/mutation-risk-preflight/SKILL.md and references"
+  ],
+  "agentsSkillsDiscovery": {
+    "workspaceAgentsSkills": "ABSENT",
+    "localRepositoryAgentsSkills": "ABSENT",
+    "historicalRepositoryAgentsSkills": "ABSENT",
+    "evidenceBranchAGENTS": "ABSENT",
+    "fallbackLocation": "repository skills/<name>/SKILL.md"
+  },
+  "secretsReadOrPrinted": false,
+  "permanentAuthenticationSettingsChanged": false,
+  "permissionsChanged": false,
+  "networkPolicyChanged": false,
+  "CLIProbeRepeatNote": "Initial version/help and final evidence version/help were local probes only; neither invokes inference."
+}

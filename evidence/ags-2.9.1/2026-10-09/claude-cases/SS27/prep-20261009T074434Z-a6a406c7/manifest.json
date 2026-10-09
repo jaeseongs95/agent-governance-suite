@@ -1,0 +1,37 @@
+{
+  "runId": "prep-20261009T074434Z-a6a406c7",
+  "kind": "SS27-preparation-only",
+  "productStatus": "NOT_RUN",
+  "files": [
+    {
+      "path": "REPORT.md",
+      "bytes": 5378,
+      "sha256": "a7fd5694fd5cbb2e892fc2e1676d763ffae81575aa4685f1a8b031b55b901f29"
+    },
+    {
+      "path": "case-source.json",
+      "bytes": 1884,
+      "sha256": "a69888b0116e69c29ec9bdd953c143e0a033445a7d680bca7db79895576ab4c1"
+    },
+    {
+      "path": "cost-ledger.json",
+      "bytes": 1374,
+      "sha256": "01ce2ca73adc68f06d5e4a29ab2086b7991109fe1f4e346182e1048199132aa9"
+    },
+    {
+      "path": "environment.json",
+      "bytes": 3004,
+      "sha256": "769101db408654a11cc36908307d3da7353b9ce5cba63f5c434aeab625c7204d"
+    },
+    {
+      "path": "execution-plan.json",
+      "bytes": 12817,
+      "sha256": "16ab89460afe37af64d4b0671c74770ccba6f9de5b9b69feef2e7951ad14a866"
+    },
+    {
+      "path": "source-verification.json",
+      "bytes": 39765,
+      "sha256": "002418756dfdb0c5190f5787d08d82cc684931236e3dc71dc12d0db43a0b4e44"
+    }
+  ]
+}

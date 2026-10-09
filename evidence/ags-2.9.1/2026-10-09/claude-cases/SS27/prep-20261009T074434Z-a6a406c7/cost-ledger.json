@@ -1,0 +1,40 @@
+{
+  "caseId": "SS27",
+  "runId": "prep-20261009T074434Z-a6a406c7",
+  "status": "NO_PAID_CALLS",
+  "through": "2026-10-09T07:46:55.472210+00:00",
+  "softLimitUsd": 2,
+  "includesPreparationCalls": true,
+  "allocationIsConsumptionTarget": false,
+  "suiteReservation": {
+    "caseCount": 39,
+    "totalUsd": 78,
+    "source": "delegation; not authorization to spend the full amount"
+  },
+  "claudeCalls": 0,
+  "jevCalls": 0,
+  "otherClassificationCalls": 0,
+  "failedCalls": 0,
+  "retries": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheCreationInputTokens": 0,
+  "cacheReadInputTokens": 0,
+  "actualCostUsd": 0,
+  "unknownConsumptionUsd": 0,
+  "remainingSoftBudgetUsd": 2,
+  "calls": [],
+  "nextCall": "BLOCKED_WAITING_PARENT_CANDIDATE_SETTINGS_PREREQUISITES",
+  "recordEachAttempt": [
+    "exact model/revision/effort",
+    "start/end and exit/signal",
+    "input/output tokens",
+    "cache creation/read tokens",
+    "actual cost and source",
+    "failure status",
+    "retry count",
+    "unknown timed-out consumption/reservation"
+  ],
+  "stoppingPolicy": "Before each paid call reconcile cumulative consumption including failed/retried/preparation calls. Stop near US$2 or when consumption is unknown; report to parent. Per-invocation CLI budget alone does not establish a cumulative or strict hard cap.",
+  "gitTransportAndCLIHelpVersionAreInferenceCalls": false
+}

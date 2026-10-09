@@ -1,0 +1,278 @@
+{
+  "kind": "SS27-Claude-Code-resume-plan",
+  "status": "PREPARED_WAITING_PARENT",
+  "createdAt": "2026-10-09T07:46:55.472210+00:00",
+  "caseId": "SS27",
+  "title": "provider 출력의 ID와 구조 검증",
+  "originalPrompt": null,
+  "oracle": null,
+  "criterionAuthority": {
+    "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+    "path": "source-case.json",
+    "fields": {
+      "입력": "raw에 존재하지 않는 ID, 중복 CS, disabled SEC, host 미지원 ID, 잘못된 judgment 값, NaN score를 각각 주입한다.",
+      "필수추천": "유효 항목을 위조하지 않고 오류 항목·사유를 보존한다.",
+      "금지추천 또는 행동": "unknown ID 실행; invalid 구조를 성공으로 처리; disabled를 모델 고득점 때문에 되살림.",
+      "허용선택": "미등록·구조 오류에는 INVALID로 baseline fallback하고 원시 오류를 보존한다. 알려진 ID의 미설치·미지원은 목적 판단을 지우지 않고 실행 가용성 경계로 처리한다. provider의 중복·추가·누락 응답은 INVALID다. 상위의 서로 다른 유효 집합에서 반복되는 ID를 결합 시 한 번만 유지하는 것과 구분한다.",
+      "보류조건": "스키마 또는 inventory membership 검증 실패.",
+      "통과기준": "미등록·구조 오류 항목은 유효 선택으로 채택하지 않는다. 등록된 필요 스킬의 비활성·미지원은 needed에 남기되 runnable에는 0개이며 실행을 차단한다. 중복·충돌·숫자 유효성 결과가 결정적이고 이유가 남는다.",
+      "증거": "E0, schema·membership 오류 경로.",
+      "실행종류": "mock."
+    }
+  },
+  "requestedCandidate": {
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "status": "PARENT_REPORTED_LOCAL_ONLY; independent SOURCE verdict and remote publication unconfirmed",
+    "fetched": false,
+    "checkedOut": false,
+    "tested": false
+  },
+  "resumeConditions": [
+    "Parent supplies verified final candidate commit/tree, independent SOURCE verdict, fixed remote source and prerequisite-check outcomes; if candidate changes, pin it explicitly and re-read applicable instructions.",
+    "Parent supplies common exact Claude model/revision/effort, successful API authentication procedure, supported route/settings and session isolation/permissions consistent with host hooks; do not guess model or disable required attestation.",
+    "Parent supplies approved classification/runtime configuration and qualified current-vendor profile or explicitly limits this run to Claude-executed offline mechanics; any unavailable required live observation remains BLOCKED/NOT_RUN.",
+    "Parent confirms case cumulative budget and measured accounting/timeout/retry policy. JEV remains prohibited until separately assigned."
+  ],
+  "ownership": {
+    "Sol": "Environment, frozen input/hash checks, budget ledger, sanitized evidence collection and publication",
+    "ClaudeCode": "Actual local host reads, commands, product-boundary verification and observed selection/read/apply/verify work"
+  },
+  "stepsAfterResume": [
+    "Verify exact remote candidate commit and tree and read its AGENTS.md and relevant Claude plugin SKILL.md/reference files. Capture a clean immutable product baseline without modifying product sources or generated deployment files.",
+    "Prepare an isolated SS27-only test workspace with the unchanged frozen tests at evidence/SS27/ so ../../ imports and output paths resolve. Preserve original public hashes and test bytes. Do not execute c6a8019 or old main as the candidate.",
+    "Start the real Claude Code CLI through the parent-provided API authentication and exact common model settings. Keep secrets out of arguments, artifacts, process output and transcripts. Grant only parent-authorized ephemeral test-workspace actions.",
+    "Claude reads the frozen criteria and performs the original 8 mock variants through validateClassificationResponse, SkillClassificationService.classify and validateDecision. No real JEV API is needed or authorized for these injected mock responses.",
+    "Claude runs the unchanged boundary tests and targeted regressions using scripts/run-tests.mjs; record argv, exit, assertion counts, source/test digests and sanitized stdout/stderr for the exact verified candidate.",
+    "Check preserved raw error causes and finite known cost on INVALID fallback, duplicate JSON keys before parse collapse, true NaN before serialization (retain numeric tags), 0.99 score versus disabled/unsupported, not-installed, omitted responses across statuses and host-support supply.",
+    "If live selection is in the approved run, observe actual current installed/enabled/host-supported inventory and signed host selection receipts. AGENT is selection authority; classify advice is support. Record selected/read/applied/verified separately. Leave null when unobserved; [] requires actual accepted no-skill evidence. Never fabricate receipts.",
+    "Record upper valid-set deduplication only if actually observed; distinguish it from duplicate provider judgments, which must be INVALID. Frozen mechanical results do not establish semantic accuracy because originalPrompt/oracle are null.",
+    "Update cumulative cost/tokens/cache/retries/failures after every paid attempt, reconcile unknown consumption, and stop before another call when near the US$2 case soft limit. Do not repeat a failed call automatically or use fallback model routing without parent approval.",
+    "Publish only sanitized SS27 reports/evidence/hash lists under a fresh run path on evidence; re-read every file at the fixed remote publication commit and compare byte digests."
+  ],
+  "variants": [
+    {
+      "variant": "unknown-id",
+      "inputSHA256": "2ce7bf765345eb3ffeb6f3ade9b5aca3234050f751f60ed2aee623bf222806d2",
+      "originalExpected": {
+        "validationErrors": [
+          "UNKNOWN_SKILL_ID",
+          "MISSING_CANDIDATE_JUDGMENT"
+        ],
+        "firstAttemptStatus": "INVALID",
+        "firstAttemptError": "INVALID_PROVIDER_RESPONSE",
+        "fallback": true,
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "preserveRawFailureReasons": true
+      },
+      "priorObservedStatus": "FAIL",
+      "newExecutionStatus": "NOT_RUN"
+    },
+    {
+      "variant": "duplicate-id",
+      "inputSHA256": "aa2d7ab460c520dba35a6d432a1dd5118449599c6ef26c44d13e326a97670171",
+      "originalExpected": {
+        "validationErrors": [
+          "DUPLICATE_SKILL_ID"
+        ],
+        "firstAttemptStatus": "INVALID",
+        "firstAttemptError": "INVALID_PROVIDER_RESPONSE",
+        "fallback": true,
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "preserveRawFailureReasons": true
+      },
+      "priorObservedStatus": "FAIL",
+      "newExecutionStatus": "NOT_RUN"
+    },
+    {
+      "variant": "disabled",
+      "inputSHA256": "3f36941207a281ab88bce74f3bae0863f9e97d8a14ffab27828955b51db897bf",
+      "originalExpected": {
+        "validationErrors": [],
+        "firstAttemptStatus": "SUCCESS",
+        "firstAttemptError": null,
+        "fallback": false,
+        "neededSkillIds": [
+          "software-security-auditor"
+        ],
+        "runnableSkillIds": [],
+        "preserveRawFailureReasons": true
+      },
+      "priorObservedStatus": "PASS",
+      "newExecutionStatus": "NOT_RUN"
+    },
+    {
+      "variant": "unsupported",
+      "inputSHA256": "d696a75d286ee9ffb1b738ebb0ba07bef74f7211ae0bcd0bdb53a34f95265470",
+      "originalExpected": {
+        "validationErrors": [],
+        "firstAttemptStatus": "SUCCESS",
+        "firstAttemptError": null,
+        "fallback": false,
+        "neededSkillIds": [
+          "software-security-auditor"
+        ],
+        "runnableSkillIds": [],
+        "preserveRawFailureReasons": true
+      },
+      "priorObservedStatus": "PASS",
+      "newExecutionStatus": "NOT_RUN"
+    },
+    {
+      "variant": "invalid-judgment",
+      "inputSHA256": "dd7d79959579a3e1202b54a7525c818e5beae29020718b4d064248ac8fea4ce5",
+      "originalExpected": {
+        "validationErrors": [
+          "INVALID_RESPONSE_SCHEMA"
+        ],
+        "firstAttemptStatus": "INVALID",
+        "firstAttemptError": "INVALID_PROVIDER_RESPONSE",
+        "fallback": true,
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "preserveRawFailureReasons": true
+      },
+      "priorObservedStatus": "FAIL",
+      "newExecutionStatus": "NOT_RUN"
+    },
+    {
+      "variant": "nan-score",
+      "inputSHA256": "45ce62c92dc248c3a5d39548313ec2d13eca761fda7b1f11703a8443e97b2575",
+      "originalExpected": {
+        "validationErrors": [],
+        "firstAttemptStatus": "INVALID",
+        "firstAttemptError": "INVALID_PROVIDER_USAGE",
+        "fallback": true,
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "preserveRawFailureReasons": true
+      },
+      "priorObservedStatus": "PASS",
+      "newExecutionStatus": "NOT_RUN"
+    },
+    {
+      "variant": "omitted-id",
+      "inputSHA256": "063993b464348e5cedec9b2b9100c782be9bcf698db3dbeb9d1b914cd394eb9f",
+      "originalExpected": {
+        "validationErrors": [
+          "MISSING_CANDIDATE_JUDGMENT"
+        ],
+        "firstAttemptStatus": "INVALID",
+        "firstAttemptError": "INVALID_PROVIDER_RESPONSE",
+        "fallback": true,
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "preserveRawFailureReasons": true
+      },
+      "priorObservedStatus": "FAIL",
+      "newExecutionStatus": "NOT_RUN"
+    },
+    {
+      "variant": "additional-id",
+      "inputSHA256": "239e607da9b246a409ae291a649c6cca3dce5b80aaaf74699b89632d74f137a5",
+      "originalExpected": {
+        "validationErrors": [
+          "UNKNOWN_SKILL_ID"
+        ],
+        "firstAttemptStatus": "INVALID",
+        "firstAttemptError": "INVALID_PROVIDER_RESPONSE",
+        "fallback": true,
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "preserveRawFailureReasons": true
+      },
+      "priorObservedStatus": "FAIL",
+      "newExecutionStatus": "NOT_RUN"
+    }
+  ],
+  "futureCommandsNotExecuted": [
+    [
+      "node",
+      "scripts/run-tests.mjs",
+      "tests/mcp/skill-classification-validation.test.ts",
+      "-t",
+      "rejects unknown, duplicate and invalid output without creating negative judgments",
+      "--reporter=json",
+      "--outputFile=evidence/SS27/regression-response.vitest.json"
+    ],
+    [
+      "node",
+      "scripts/run-tests.mjs",
+      "tests/mcp/skill-classification-service.test.ts",
+      "-t",
+      "SS27/30 malformed and incomplete JEV judgments produce INVALID and vendor fallback",
+      "--reporter=json",
+      "--outputFile=evidence/SS27/regression-fallback.vitest.json"
+    ],
+    [
+      "node",
+      "scripts/run-tests.mjs",
+      "tests/mcp/skill-classification-providers.test.ts",
+      "-t",
+      "SS27/28 rejects (unknown-id|missing-id|nan) responses rather than producing no-skill",
+      "--reporter=json",
+      "--outputFile=evidence/SS27/regression-wire.vitest.json"
+    ],
+    [
+      "node",
+      "scripts/run-tests.mjs",
+      "evidence/SS27/SS27.offline.test.ts",
+      "--reporter=json",
+      "--outputFile=evidence/SS27/new-tests.vitest.json"
+    ],
+    [
+      "node",
+      "scripts/run-tests.mjs",
+      "evidence/SS27/SS27.extra-boundaries.test.ts",
+      "--reporter=json",
+      "--outputFile=evidence/SS27/extra-tests.vitest.json"
+    ]
+  ],
+  "originalTestIdentities": {
+    "SS27.offline.test.ts": "cc8263935701a9d5ad091fcfa9f8761e90d8d142b2452fb1c99e7570368e3306",
+    "SS27.extra-boundaries.test.ts": "faf688c6ccb4fcaee1013be20138a28dbc5de4bae3a92609d008839b1c901309"
+  },
+  "historicalResult": {
+    "candidate": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "status": "FAIL",
+    "hostStages": {
+      "selected": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "read": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "applied": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "verified": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      }
+    },
+    "hostReceipt": null,
+    "mechanicalTotals": {
+      "newAssertionsPassed": 18,
+      "newAssertionsFailed": 4,
+      "targetedRegressionPassed": 5
+    },
+    "usedAsOracle": false
+  },
+  "productTestsExecutedThisRun": 0,
+  "paidCallsExecutedThisRun": 0,
+  "newPASSClaim": false,
+  "sensitivityProof": {
+    "status": "NOT_RUN",
+    "reason": "No product mutation or execution authorized at preparation stage; no paired red/green or independent audit claimed."
+  }
+}
