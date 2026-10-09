@@ -1,0 +1,60 @@
+
+ RUN  v5.0.0 <REPO>
+
+ ✓ tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > pins fixture, oracle, inventory and relevant source bytes 4ms
+ ✓ tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > original-order: preserves every candidate, exact prompt and all four phase dependencies 7ms
+ ✓ tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > original-order: service sends full inventory and handles synthetic K advice without AGENT selection 17ms
+ ✓ tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > original-order: byte limit refuses the whole request without trimming or dispatch 25ms
+ ✓ tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > original-order: rejects top-k judgments missing the tail K 1ms
+ ✓ tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > reversed-order: preserves every candidate, exact prompt and all four phase dependencies 7ms
+ ✓ tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > reversed-order: service sends full inventory and handles synthetic K advice without AGENT selection 14ms
+ ✓ tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > reversed-order: byte limit refuses the whole request without trimming or dispatch 21ms
+ ✓ tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > reversed-order: rejects top-k judgments missing the tail K 0ms
+ ✓ tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > required-at-tail: preserves every candidate, exact prompt and all four phase dependencies 6ms
+ ✓ tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > required-at-tail: service sends full inventory and handles synthetic K advice without AGENT selection 10ms
+ ✓ tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > required-at-tail: byte limit refuses the whole request without trimming or dispatch 19ms
+ ✓ tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > required-at-tail: rejects top-k judgments missing the tail K 0ms
+ ✓ tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > preserves null versus [] and refuses to promote unobserved host selection 0ms
+ × tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > rejects orchestrator with an unrelated conditional reason (expected defect) 5ms
+   → expected 'PASS' to be 'FAIL' // Object.is equality
+ × tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > retains valid known usage when SS16 response omits K (known cost-loss defect) 9ms
+   → expected null to be 0.003 // Object.is equality
+ ✓ tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > offline plan requested korean-prose-selection: expands to four phases and one unique skill 220ms
+ ✓ tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > offline plan requested korean-prose-editing: expands to four phases and one unique skill 156ms
+ ✓ tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > offline plan requested korean-prose-verification: expands to four phases and one unique skill 108ms
+ ✓ tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > offline plan requested korean-prose-finalization: expands to four phases and one unique skill 105ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > rejects orchestrator with an unrelated conditional reason (expected defect)
+AssertionError: expected 'PASS' to be 'FAIL' // Object.is equality
+
+Expected: "FAIL"
+Received: "PASS"
+
+ ❯ tests/skill-classification/SS16-isolated.test.ts:132:103
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/skill-classification/SS16-isolated.test.ts > SS16 only: frozen original and all three variants > retains valid known usage when SS16 response omits K (known cost-loss defect)
+AssertionError: expected null to be 0.003 // Object.is equality
+
+- Expected:
+0.003
+
++ Received:
+null
+
+ ❯ tests/skill-classification/SS16-isolated.test.ts:139:123
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 18 passed (20)
+   Start at  02:56:21
+   Duration  1.31s (tests 71%, transform 19%, import 10%)
+
+JSON report written to <EVIDENCE>/SS16.vitest.json

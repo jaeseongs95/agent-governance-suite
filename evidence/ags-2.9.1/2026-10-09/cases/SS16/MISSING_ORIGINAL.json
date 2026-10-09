@@ -1,0 +1,37 @@
+{
+  "caseId": "SS16",
+  "missingOriginals": [
+    {
+      "item": "separate stdout and stderr streams for original Vitest command",
+      "status": "MISSING_ORIGINAL",
+      "detail": "Only the merged stdout/stderr SS16.vitest.log exists; stream attribution cannot be recovered."
+    },
+    {
+      "item": "initial pnpm setup-failure stdout/stderr raw file",
+      "status": "MISSING_ORIGINAL",
+      "detail": "Result JSON records exit 1 and a diagnostic excerpt; the original log was overwritten. No log is reconstructed."
+    },
+    {
+      "item": "initial plan-CLI absolute-path error stdout/stderr raw file",
+      "status": "MISSING_ORIGINAL",
+      "detail": "Result JSON records exit 2; original raw output was not archived. No log is reconstructed."
+    },
+    {
+      "item": "complete original serialized classification REQ/provider wire bytes",
+      "status": "MISSING_ORIGINAL",
+      "detail": "Existing observed JSON preserves prompt/order/digests, response and structural measurements, but a complete request/wire byte capture was not archived. It is not reconstructed."
+    },
+    {
+      "item": "TEST-SPEC.seq7.ko.md",
+      "status": "MISSING_ORIGINAL",
+      "detail": "File absent in pinned repository; only original embedded sourceSpec.fields is published."
+    },
+    {
+      "item": "announcement body and host execution/selection evidence",
+      "status": "MISSING_ORIGINAL",
+      "detail": "No announcement body or actual host receipt was provided; selected/read/applied/verified remain NOTRUN."
+    }
+  ],
+  "patchStatus": "NO_PATCH",
+  "patchDetail": "No product patch was created or recovered. The existing added test source is published separately; no patch is synthesized."
+}

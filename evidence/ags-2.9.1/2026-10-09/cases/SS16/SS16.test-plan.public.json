@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS16",
+  "contractDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "requirements": [
+    "SS16-FULL-INVENTORY-THREE-ORDERS",
+    "SS16-INPUT-TOO-LONG-HOLD",
+    "SS16-K-AND-CONDITIONAL-O",
+    "SS16-FOUR-PHASES-ONE-SKILL",
+    "SS16-UNOBSERVED-STAGES",
+    "SS16-INVALID-RESPONSE-KNOWN-COST"
+  ],
+  "scopeFiles": [
+    "tests/skill-classification/evaluation.ts",
+    "mcp-server/src/skill-classification/request.ts",
+    "mcp-server/src/skill-classification/inventory.ts",
+    "mcp-server/src/skill-classification/service.ts",
+    "mcp-server/src/skill-classification/validation.ts",
+    "mcp-server/src/skill-classification/gateway.ts",
+    "mcp-server/src/workflow-service.ts",
+    "skills/registry.json",
+    "tests/skill-classification/fixtures.json",
+    "tests/skill-classification/SS16-isolated.test.ts",
+    "vitest.config.mjs",
+    "skills/korean-prose-editor/SKILL.md",
+    "skills/ponytail/SKILL.md",
+    "skills/cs-engineering/SKILL.md",
+    "skills/test-engineering/SKILL.md",
+    "skills/code-review/SKILL.md",
+    "skills/software-security-auditor/SKILL.md",
+    "skills/orchestrator/SKILL.md"
+  ],
+  "runner": "existing Vitest 5.0.0, new SS16-only file",
+  "environment": "Independent Cloud <REPO>; Node 24.19.0; pinned commit; reused installed dependencies; mocked transport; API0",
+  "cases": [
+    {
+      "id": "SS16-offline",
+      "requirementIds": [
+        "SS16-FULL-INVENTORY-THREE-ORDERS",
+        "SS16-INPUT-TOO-LONG-HOLD",
+        "SS16-K-AND-CONDITIONAL-O",
+        "SS16-FOUR-PHASES-ONE-SKILL",
+        "SS16-UNOBSERVED-STAGES",
+        "SS16-INVALID-RESPONSE-KNOWN-COST"
+      ],
+      "scenario": "All three original SS16 variants plus scope-related negative controls; 20 tests",
+      "entryPoint": "loadSkillInventory/createClassificationRequest/projectClassificationRequest/SkillClassificationService.classify/validateClassificationResponse/scoreCase/WorkflowService.planWorkflow",
+      "level": "integration",
+      "expectedBehavior": "Keep all 24 candidates and same inventory digest; preserve original prompt; hold before dispatch on one-byte overflow; reject omitted K; reject unrelated O reason; retain valid known usage; expand any K capability into all four dependencies; no unobserved selection credit.",
+      "oracle": "Frozen SS16 sourceSpec.fields and oracle, read directly; existing documented unknown cost distinction. No invented source article or semantic oracle.",
+      "testFiles": [
+        "tests/skill-classification/SS16-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Characterization and direct requirement-negative-controls. Two unpatched defects have assertion red evidence; repaired green and product mutation are not executed because product modification is prohibited. This plan artifact records the completed source-driven design retrospectively; no prior plan-freeze claim.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS16-isolated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE>/SS16.vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "Other SS cases and full suite",
+    "All historical 21-request live runs",
+    "Provider semantic quality and actual AGENT selection",
+    "Product edits/push/PR/release",
+    "Unprovided source-spec file and announcement body",
+    "Red/green repaired product candidate; no authorized source modification"
+  ]
+}

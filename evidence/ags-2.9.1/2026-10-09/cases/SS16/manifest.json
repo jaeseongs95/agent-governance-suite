@@ -1,0 +1,237 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS16",
+  "packageKind": "public-existing-evidence",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cases/SS16/",
+  "candidate": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+  },
+  "inputBytes": {
+    "path": "inputs/originalPrompt.utf8.txt",
+    "bytes": 124,
+    "sha256": "6d0c8db213a015636577c23521d4075459f37bcb16284da0e1ad54ebd49b70be",
+    "source": "Existing fixture-excerpt originalPrompt string; no normalization/final newline",
+    "completeOriginalProviderWire": "MISSING_ORIGINAL"
+  },
+  "existingResults": {
+    "tests": {
+      "PASS": 18,
+      "FAIL": 2,
+      "total": 20
+    },
+    "exit": 1,
+    "actualHost": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "API0": true
+  },
+  "publicationExecution": {
+    "newTests": 0,
+    "modelAPICalls": 0,
+    "historicalReruns": 0
+  },
+  "patchStatus": "NO_PATCH",
+  "missingOriginals": [
+    {
+      "item": "separate stdout and stderr streams for original Vitest command",
+      "status": "MISSING_ORIGINAL",
+      "detail": "Only the merged stdout/stderr SS16.vitest.log exists; stream attribution cannot be recovered."
+    },
+    {
+      "item": "initial pnpm setup-failure stdout/stderr raw file",
+      "status": "MISSING_ORIGINAL",
+      "detail": "Result JSON records exit 1 and a diagnostic excerpt; the original log was overwritten. No log is reconstructed."
+    },
+    {
+      "item": "initial plan-CLI absolute-path error stdout/stderr raw file",
+      "status": "MISSING_ORIGINAL",
+      "detail": "Result JSON records exit 2; original raw output was not archived. No log is reconstructed."
+    },
+    {
+      "item": "complete original serialized classification REQ/provider wire bytes",
+      "status": "MISSING_ORIGINAL",
+      "detail": "Existing observed JSON preserves prompt/order/digests, response and structural measurements, but a complete request/wire byte capture was not archived. It is not reconstructed."
+    },
+    {
+      "item": "TEST-SPEC.seq7.ko.md",
+      "status": "MISSING_ORIGINAL",
+      "detail": "File absent in pinned repository; only original embedded sourceSpec.fields is published."
+    },
+    {
+      "item": "announcement body and host execution/selection evidence",
+      "status": "MISSING_ORIGINAL",
+      "detail": "No announcement body or actual host receipt was provided; selected/read/applied/verified remain NOTRUN."
+    }
+  ],
+  "hashPolicy": "Payload files only; manifest.json and SHA256SUMS excluded to avoid circular hashing. SHA256SUMS includes manifest.json and payload files, excluding itself.",
+  "files": [
+    {
+      "path": "MISSING_ORIGINAL.json",
+      "bytes": 1713,
+      "sha256": "0f708664a1d0c889b4b77e23aaf6a6235a98f1b957e60865c7fe4d7078c778d1",
+      "representation": "derived-publication",
+      "originArtifact": null,
+      "originBytes": null,
+      "originSHA256": null,
+      "transformation": "publication-only documentation; no prior-run original claimed"
+    },
+    {
+      "path": "ORIGINAL_ARTIFACTS.json",
+      "bytes": 4393,
+      "sha256": "51f90b817950d035833a0ad579421a016c7497f5d07c298e288ce3655f496fcb",
+      "representation": "derived-publication",
+      "originArtifact": null,
+      "originBytes": null,
+      "originSHA256": null,
+      "transformation": "publication-only documentation; no prior-run original claimed"
+    },
+    {
+      "path": "PATCHES.md",
+      "bytes": 213,
+      "sha256": "257ead01e15921c785b72e49d83378bf92f7154af6d896177943b709a5a31a07",
+      "representation": "derived-publication",
+      "originArtifact": null,
+      "originBytes": null,
+      "originSHA256": null,
+      "transformation": "publication-only documentation; no prior-run original claimed"
+    },
+    {
+      "path": "README.md",
+      "bytes": 4611,
+      "sha256": "0f7656bffde644f073fcb8c3e9f1d470c555a79b58cf194f4b244232028c5664",
+      "representation": "derived-publication",
+      "originArtifact": null,
+      "originBytes": null,
+      "originSHA256": null,
+      "transformation": "publication-only documentation; no prior-run original claimed"
+    },
+    {
+      "path": "SS16.fixture-excerpt.json",
+      "bytes": 4520,
+      "sha256": "6b8ec8999656668b252ce536a115a278117170bdfa9ae0903667f443943a5ba2",
+      "representation": "verbatim-original",
+      "originArtifact": "SS16.fixture-excerpt.json",
+      "originBytes": 4520,
+      "originSHA256": "6b8ec8999656668b252ce536a115a278117170bdfa9ae0903667f443943a5ba2",
+      "transformation": "None; existing SS16-only fixture excerpt bytes retained."
+    },
+    {
+      "path": "SS16.observed.public.json",
+      "bytes": 120335,
+      "sha256": "74bf5cca398a2e912f594a7fb82dcb320ef6c4899dd188f091e677f40dfa1e83",
+      "representation": "derived-publication",
+      "originArtifact": "SS16.observed.json",
+      "originBytes": 120387,
+      "originSHA256": "3e39c51f56e92400ae813a4a1a99fde9fa5c673680b0b289a6660a29bdfae60f",
+      "transformation": "Original observed data reserialized, local plan signatures removed. No new observation made."
+    },
+    {
+      "path": "SS16.plan-check.json",
+      "bytes": 220,
+      "sha256": "031c1d94d128cb9376568691423bc222e20d270865cafb69edf4bc1ab465fc87",
+      "representation": "verbatim-original",
+      "originArtifact": "SS16.plan-check.json",
+      "originBytes": 220,
+      "originSHA256": "031c1d94d128cb9376568691423bc222e20d270865cafb69edf4bc1ab465fc87",
+      "transformation": "None. Referenced digests bind original files, not publication derivatives. Formal proof stays NOT_RUN."
+    },
+    {
+      "path": "SS16.result.public.json",
+      "bytes": 74110,
+      "sha256": "3d2b0b1cdb9fcb45c3696994d215a77e8bdb74c221d3942c6a5d66f8e3d3d4de",
+      "representation": "derived-publication",
+      "originArtifact": "SS16.result.json",
+      "originBytes": 71538,
+      "originSHA256": "5ce9960801245f0c1b2c8d368d59f43db695340ae669e676ab3a51c01ec4097c",
+      "transformation": "Recursive private-path redaction and local plan-signature removal; appended publication provenance; original run states/observations/exit codes retained."
+    },
+    {
+      "path": "SS16.snapshot.json",
+      "bytes": 3793,
+      "sha256": "2265c31954feecfbd8d86a7ede61eab5e5ee1d57a47b4f488cca9ef1c95ddbe8",
+      "representation": "verbatim-original",
+      "originArtifact": "SS16.snapshot.json",
+      "originBytes": 3793,
+      "originSHA256": "2265c31954feecfbd8d86a7ede61eab5e5ee1d57a47b4f488cca9ef1c95ddbe8",
+      "transformation": "None. Referenced digests bind original files, not publication derivatives. Formal proof stays NOT_RUN."
+    },
+    {
+      "path": "SS16.test-plan.public.json",
+      "bytes": 3643,
+      "sha256": "42724f720d14f86c077581c1445b3bd21e55ee44c454da756b40620fc55d9bcb",
+      "representation": "derived-publication",
+      "originArtifact": "SS16.test-plan.json",
+      "originBytes": 3671,
+      "originSHA256": "92cb3e8fa36935e5a7a25e6821a6076ee8fc380c9615a051f8bbb4dc8b97bda2",
+      "transformation": "Private paths replaced by symbolic labels and JSON reserialization; retrospective planning limitation preserved. Original plan digest is retained separately in plan-check, not recomputed as an original claim."
+    },
+    {
+      "path": "SS16.test-proof.json",
+      "bytes": 4964,
+      "sha256": "782ef56c94c3da8a55682ed77ddeb406984f20246f2f762d9115368946d6a68e",
+      "representation": "verbatim-original",
+      "originArtifact": "SS16.test-proof.json",
+      "originBytes": 4964,
+      "originSHA256": "782ef56c94c3da8a55682ed77ddeb406984f20246f2f762d9115368946d6a68e",
+      "transformation": "None. Referenced digests bind original files, not publication derivatives. Formal proof stays NOT_RUN."
+    },
+    {
+      "path": "SS16.vitest.public.json",
+      "bytes": 14156,
+      "sha256": "1ed5cd03d2c79901882e937029904044e4c35e18e8f5e50bc125d8d48f39e565",
+      "representation": "derived-publication",
+      "originArtifact": "SS16.vitest.json",
+      "originBytes": 11093,
+      "originSHA256": "cce1663605f02069db2dfab9bf4e1463148b48880329b1f005a8d3551b255f8a",
+      "transformation": "Path redaction and JSON reserialization; assertion messages/counts/status/timestamps unchanged."
+    },
+    {
+      "path": "SS16.vitest.public.log",
+      "bytes": 5166,
+      "sha256": "29a0af01de40464ddac4201ce40c34eedc83ad26ea76a7bd41e33087c5c1f5ef",
+      "representation": "derived-publication",
+      "originArtifact": "SS16.vitest.log",
+      "originBytes": 5194,
+      "originSHA256": "1753a2e20c724cd9416ef1ad2ae7fbc7342963740dd13852b47d84aac5bb717b",
+      "transformation": "Private cwd/output path labels only. This is the existing merged stdout/stderr, not a reconstructed log."
+    },
+    {
+      "path": "inputs/originalPrompt.utf8.txt",
+      "bytes": 124,
+      "sha256": "6d0c8db213a015636577c23521d4075459f37bcb16284da0e1ad54ebd49b70be",
+      "representation": "derived-publication",
+      "originArtifact": "SS16.fixture-excerpt.json",
+      "originBytes": 4520,
+      "originSHA256": "6b8ec8999656668b252ce536a115a278117170bdfa9ae0903667f443943a5ba2",
+      "transformation": "Extract the originalPrompt string as UTF-8 without newline or normalization; not a provider wire archive."
+    },
+    {
+      "path": "reproduce/SS16-isolated.test.ts",
+      "bytes": 15680,
+      "sha256": "0b9726bad45c4fadefc3ba0bca7fc22ea8874e6568795333c2587a0563137be6",
+      "representation": "derived-publication",
+      "originArtifact": "SS16-isolated.test.ts",
+      "originBytes": 15684,
+      "originSHA256": "9593250d4389dcf7cccc2da7a2c43cfa8e4584ce5c7f95af788b6e82a0efdf17",
+      "transformation": "Only existing afterAll artifact output pathname changed to relative .ss16-offline-output/SS16.observed.json. All test assertions/imports/fixture controls preserved. Derivative not executed."
+    },
+    {
+      "path": "reproduce/run-SS16.sh",
+      "bytes": 232,
+      "sha256": "d14ab00717a2ed20bf050b8080ec3aed277dc97af0c0285644ce582aeefaec21",
+      "representation": "derived-publication",
+      "originArtifact": "run-SS16.sh",
+      "originBytes": 264,
+      "originSHA256": "0249738882d1dc48aeed444f41dd255c37716e97ccd249df4cd507c6e17dbbf3",
+      "transformation": "Remove original private cwd and replace private output directory by relative .ss16-offline-output; caller must use a disposable pinned source root. Not executed during publication."
+    }
+  ],
+  "payloadFileCount": 16,
+  "payloadTotalBytes": 257873
+}

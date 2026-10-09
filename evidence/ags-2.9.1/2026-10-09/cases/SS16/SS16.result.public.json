@@ -1,0 +1,2079 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS16",
+  "status": "FAIL_OFFLINE_BOUNDARIES_HOST_NOTRUN",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "requestedBranch": "codex/skill-classification-2.9.1",
+  "checkout": "detached fixed commit; original worktree preserved",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "oracleDigestRecomputed": "PASS",
+  "originalPrompt": "이 한국어 안내문의 사실·수치·링크·주장 강도를 보존하며 자연스럽게 편집하고 검증해 줘.",
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS16",
+    "fields": {
+      "입력": "“이 한국어 안내문의 사실·수치·링크·주장 강도를 보존하며 자연스럽게 편집하고 검증해 줘.” 전체 inventory의 순서를 세 가지로 바꾸되 K를 끝에 둔 변형을 포함한다.",
+      "필수추천": "R={K}.",
+      "금지추천 또는 행동": "대표 엔지니어링 스킬 몇 개로 후보 축소; K를 top-k 앞부분에 없다는 이유로 누락.",
+      "허용선택": "A={O}. 기존 경로에서 K의 단계 연결을 요구할 때만 허용하며 추천 사유가 필요하다.",
+      "보류조건": "inventory 전부를 전달할 수 없으면 잘림을 알리고 보류한다.",
+      "통과기준": "순서와 무관하게 K를 추천하며 후보 수·digest가 전체 inventory와 일치한다. 승인된 실제 적용 시험에서는 같은 K 하나를 선택했더라도 korean-prose-selection·korean-prose-editing·korean-prose-verification·korean-prose-finalization 네 capability의 필요한 단계·의존성이 빠지지 않는지 별도 확인한다. 단계 수를 서로 다른 스킬 수로 세지 않는다.",
+      "증거": "E0, 후보 수와 순서별 결과. provider 사전 필터가 있으면 전체 후보 평가의 동등성을 입증한다.",
+      "실행종류": "live와 mock."
+    },
+    "bodyDigest": "sha256:88a8abf0330fde67b0fd0f3202371d0a3ce0f59bc5084f21305977c169fa3b8e"
+  },
+  "oracle": {
+    "required": [
+      "korean-prose-editor"
+    ],
+    "allowed": [
+      "orchestrator"
+    ],
+    "allowedConditions": {
+      "orchestrator": "reason must describe linking the four Korean prose capability phases"
+    },
+    "forbidden": [],
+    "notApplicable": [
+      "ponytail",
+      "cs-engineering",
+      "test-engineering",
+      "code-review",
+      "software-security-auditor"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "change-scope-guardian",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      },
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      }
+    ],
+    "boundaryDecision": "O conditional on actual phase linking"
+  },
+  "commands": [
+    {
+      "cwd": "<REPO>",
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/skill-classification/SS16-isolated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE>/SS16.vitest.json"
+      ],
+      "exit": 1,
+      "executionKind": "runner-setup-failure",
+      "testsExecuted": 0,
+      "status": "SPAWN_ERROR",
+      "evidence": "Tool output: pnpm attempted implicit install and failed mkdir <LOCAL_HOME>/.local/share/pnpm (ENOENT). No defect red credit; switched to existing Vitest directly."
+    },
+    {
+      "cwd": "<REPO>",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS16-isolated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE>/SS16.vitest.json"
+      ],
+      "command": "node node_modules/vitest/vitest.mjs run tests/skill-classification/SS16-isolated.test.ts --reporter=verbose --reporter=json --outputFile=<EVIDENCE>/SS16.vitest.json",
+      "exit": 1,
+      "executionKind": "new-offline-variants-and-boundaries",
+      "tests": {
+        "total": 20,
+        "passed": 18,
+        "failed": 2
+      },
+      "evidence": [
+        "SS16.vitest.log",
+        "SS16.vitest.json",
+        "SS16.observed.json"
+      ]
+    },
+    {
+      "cwd": "<REPO>",
+      "argv": [
+        "node",
+        "skills/test-engineering/scripts/run.mjs",
+        "check-plan",
+        "--root",
+        "<REPO>",
+        "--plan",
+        "<EVIDENCE>/SS16.test-plan.json"
+      ],
+      "exit": 2,
+      "executionKind": "plan-cli-input-error",
+      "evidence": "Absolute artifact paths forbidden by CLI; corrected to relative path with evidence root. No test defect credit."
+    },
+    {
+      "cwd": "<REPO>",
+      "argv": [
+        "node",
+        "skills/test-engineering/scripts/run.mjs",
+        "check-plan",
+        "--root",
+        "<EVIDENCE>",
+        "--plan",
+        "SS16.test-plan.json"
+      ],
+      "exit": 0,
+      "executionKind": "plan-json-consistency",
+      "evidence": "SS16.plan-check.json",
+      "scope": "READY validates plan structure only. Retrospective mapping; no independent proof or live pass."
+    },
+    {
+      "cwd": "<REPO>",
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit": 0,
+      "executionKind": "source-change-check",
+      "evidence": "tracked diff empty; only new isolated test and dependency symlink are untracked."
+    }
+  ],
+  "executionKinds": {
+    "existingRegression": {
+      "status": "NOTRUN",
+      "reason": "No existing SS16-specific named regression was found. No unrelated cases, broad evaluator controls or whole suite were rerun."
+    },
+    "newVariants": {
+      "status": "RUN",
+      "result": "18 PASS / 2 assertion FAIL",
+      "mockBoundary": "classification provider availability and classify; real public request/service/validation/planning/evaluator code executes; mocked usage is synthetic, not a real cost"
+    },
+    "providerLive": "NOTRUN",
+    "hostLive": "NOTRUN",
+    "historical21Runs": "NOTRUN"
+  },
+  "API0": true,
+  "apiCalls": {
+    "JEV": 0,
+    "externalVendor": 0,
+    "Claude": 0
+  },
+  "credentialReads": 0,
+  "hostReceiptsCreated": 0,
+  "variants": [
+    {
+      "variantId": "original-order",
+      "status": "OFFLINE_STRUCTURAL_PASS_ONLY",
+      "input": {
+        "originalPrompt": "이 한국어 안내문의 사실·수치·링크·주장 강도를 보존하며 자연스럽게 편집하고 검증해 줘.",
+        "candidateOrder": [
+          "acceptance-evidence-validator",
+          "blocker-diagnostician",
+          "change-scope-guardian",
+          "code-review",
+          "codex-token-usage-analyzer",
+          "context-continuity",
+          "coordinate-subagents",
+          "cs-engineering",
+          "evaluation-validity-auditor",
+          "independent-audit-gate",
+          "independent-deliberation-panel",
+          "instruction-scope-resolver",
+          "iteration-frame-auditor",
+          "korean-prose-editor",
+          "model-effort-advisor",
+          "mutation-risk-preflight",
+          "orchestrator",
+          "ponytail",
+          "recovery-strategy-selector",
+          "session-board",
+          "software-security-auditor",
+          "task-contract",
+          "test-engineering",
+          "workspace-convention-profiler"
+        ],
+        "candidateCount": 24,
+        "requiredPositionOneBased": 14,
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+        "requestDigest": "sha256:be93730e3d654f79ce044369ac451c4106b777751962c4f8031d7f829f53b334"
+      },
+      "expected": {
+        "required": [
+          "korean-prose-editor"
+        ],
+        "allowed": [
+          "orchestrator"
+        ],
+        "allowedConditions": {
+          "orchestrator": "reason must describe linking the four Korean prose capability phases"
+        },
+        "candidateCount": 24,
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82"
+      },
+      "observed": {
+        "projection": {
+          "status": "PASS",
+          "payloadBytes": 124567,
+          "candidateCount": 24,
+          "phases": [
+            {
+              "capability": "korean-prose-selection",
+              "phase": "korean-prose-selection",
+              "phaseOrder": 50,
+              "requiredInputArtifacts": [
+                "korean-prose-request",
+                "korean-prose-glossary-match-set"
+              ],
+              "producedArtifacts": [
+                "edit-decision-set"
+              ],
+              "inputBindings": [
+                {
+                  "targetArtifact": "korean-prose-request",
+                  "sources": [
+                    "caller.koreanProseRequest"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "korean-prose-glossary-match-set",
+                  "sources": [
+                    "caller.koreanProseGlossaryMatchSet"
+                  ],
+                  "operation": "require-external"
+                }
+              ],
+              "gate": {
+                "kind": "none",
+                "policy": "none",
+                "validator": null
+              }
+            },
+            {
+              "capability": "korean-prose-editing",
+              "phase": "korean-prose-editing",
+              "phaseOrder": 55,
+              "requiredInputArtifacts": [
+                "korean-prose-request",
+                "korean-prose-glossary-match-set",
+                "edit-decision-set"
+              ],
+              "producedArtifacts": [
+                "edit-candidate"
+              ],
+              "inputBindings": [
+                {
+                  "targetArtifact": "korean-prose-request",
+                  "sources": [
+                    "caller.koreanProseRequest"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "korean-prose-glossary-match-set",
+                  "sources": [
+                    "caller.koreanProseGlossaryMatchSet"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "edit-decision-set",
+                  "sources": [
+                    "provider:korean-prose-selection.edit-decision-set"
+                  ],
+                  "operation": "select"
+                }
+              ],
+              "gate": {
+                "kind": "none",
+                "policy": "none",
+                "validator": null
+              }
+            },
+            {
+              "capability": "korean-prose-verification",
+              "phase": "korean-prose-verification",
+              "phaseOrder": 60,
+              "requiredInputArtifacts": [
+                "korean-prose-request",
+                "korean-prose-glossary-match-set",
+                "edit-decision-set",
+                "edit-candidate",
+                "korean-prose-rubric"
+              ],
+              "producedArtifacts": [
+                "edit-verification-report"
+              ],
+              "inputBindings": [
+                {
+                  "targetArtifact": "korean-prose-request",
+                  "sources": [
+                    "caller.koreanProseRequest"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "korean-prose-glossary-match-set",
+                  "sources": [
+                    "caller.koreanProseGlossaryMatchSet"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "edit-decision-set",
+                  "sources": [
+                    "provider:korean-prose-selection.edit-decision-set"
+                  ],
+                  "operation": "select"
+                },
+                {
+                  "targetArtifact": "edit-candidate",
+                  "sources": [
+                    "provider:korean-prose-editing.edit-candidate"
+                  ],
+                  "operation": "select"
+                },
+                {
+                  "targetArtifact": "korean-prose-rubric",
+                  "sources": [
+                    "caller.koreanProseRubric"
+                  ],
+                  "operation": "require-external"
+                }
+              ],
+              "gate": {
+                "kind": "none",
+                "policy": "none",
+                "validator": null
+              }
+            },
+            {
+              "capability": "korean-prose-finalization",
+              "phase": "korean-prose-finalization",
+              "phaseOrder": 65,
+              "requiredInputArtifacts": [
+                "korean-prose-request",
+                "korean-prose-glossary-match-set",
+                "edit-decision-set",
+                "edit-candidate",
+                "edit-verification-report"
+              ],
+              "producedArtifacts": [
+                "final-text-receipt"
+              ],
+              "inputBindings": [
+                {
+                  "targetArtifact": "korean-prose-request",
+                  "sources": [
+                    "caller.koreanProseRequest"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "korean-prose-glossary-match-set",
+                  "sources": [
+                    "caller.koreanProseGlossaryMatchSet"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "edit-decision-set",
+                  "sources": [
+                    "provider:korean-prose-selection.edit-decision-set"
+                  ],
+                  "operation": "select"
+                },
+                {
+                  "targetArtifact": "edit-candidate",
+                  "sources": [
+                    "provider:korean-prose-editing.edit-candidate"
+                  ],
+                  "operation": "select"
+                },
+                {
+                  "targetArtifact": "edit-verification-report",
+                  "sources": [
+                    "provider:korean-prose-verification.edit-verification-report"
+                  ],
+                  "operation": "select"
+                }
+              ],
+              "gate": {
+                "kind": "completion",
+                "policy": "conditional",
+                "validator": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json"
+              }
+            }
+          ]
+        },
+        "service": {
+          "status": "PASS",
+          "mockCalls": 1,
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS16-original-order",
+            "operationId": "SS16-original-order",
+            "requestDigest": "sha256:be93730e3d654f79ce044369ac451c4106b777751962c4f8031d7f829f53b334",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "acceptance-evidence-validator",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "blocker-diagnostician",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "change-scope-guardian",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "code-review",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "codex-token-usage-analyzer",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "context-continuity",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "coordinate-subagents",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "cs-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "evaluation-validity-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "independent-audit-gate",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "independent-deliberation-panel",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "instruction-scope-resolver",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "iteration-frame-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "korean-prose-editor",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "model-effort-advisor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "mutation-risk-preflight",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "orchestrator",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "ponytail",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "recovery-strategy-selector",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "session-board",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "task-contract",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "workspace-convention-profiler",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          },
+          "attempts": [
+            {
+              "providerKind": "vendor",
+              "profileId": "SS16-offline",
+              "modelId": "mock-only",
+              "reasoningEffort": "low",
+              "dispatchState": "started",
+              "status": "SUCCESS",
+              "errorCode": null,
+              "timedOut": false,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": 0
+              },
+              "reservedCostUsd": 0.01
+            }
+          ],
+          "semanticQualityClaim": false
+        },
+        "inputLimit": {
+          "status": "PASS",
+          "exactBoundary": 124567,
+          "tooLong": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS16-original-order",
+            "operationId": "SS16-original-order",
+            "requestDigest": "sha256:be93730e3d654f79ce044369ac451c4106b777751962c4f8031d7f829f53b334",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "status": "UNAVAILABLE",
+            "judgments": [],
+            "unresolvedItems": [
+              {
+                "skillId": null,
+                "reasonCode": "INPUT_TOO_LONG"
+              }
+            ],
+            "error": {
+              "code": "INPUT_TOO_LONG",
+              "retryable": false,
+              "dispatchState": "not-started"
+            }
+          },
+          "dispatchCount": 0,
+          "omittedRanges": []
+        },
+        "omittedK": {
+          "status": "PASS",
+          "rejectedResponseErrors": [
+            "MISSING_CANDIDATE_JUDGMENT"
+          ],
+          "missingRecommendationScore": {
+            "caseId": "SS16",
+            "verdict": "FAIL",
+            "missingRequired": [
+              "korean-prose-editor"
+            ],
+            "forbidden": [],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 0,
+            "falsePositives": 0,
+            "requiredHits": 0,
+            "answered": true,
+            "abstained": false,
+            "unnecessaryAbstention": false,
+            "reasons": []
+          }
+        }
+      },
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "selectedSkillIds": null,
+      "hostReceipt": null,
+      "providerSemanticRecommendation": "NOTRUN",
+      "evidence": [
+        "SS16.observed.json",
+        "SS16.vitest.json"
+      ],
+      "executionKind": "offline-mock",
+      "command": "node node_modules/vitest/vitest.mjs run tests/skill-classification/SS16-isolated.test.ts --reporter=verbose --reporter=json --outputFile=<EVIDENCE>/SS16.vitest.json",
+      "exit": 1,
+      "missingInputs": [
+        "qualified actual provider/route and approval",
+        "trusted host AGENT selection observations",
+        "source announcement and actual four-phase artifacts"
+      ]
+    },
+    {
+      "variantId": "reversed-order",
+      "status": "OFFLINE_STRUCTURAL_PASS_ONLY",
+      "input": {
+        "originalPrompt": "이 한국어 안내문의 사실·수치·링크·주장 강도를 보존하며 자연스럽게 편집하고 검증해 줘.",
+        "candidateOrder": [
+          "workspace-convention-profiler",
+          "test-engineering",
+          "task-contract",
+          "software-security-auditor",
+          "session-board",
+          "recovery-strategy-selector",
+          "ponytail",
+          "orchestrator",
+          "mutation-risk-preflight",
+          "model-effort-advisor",
+          "korean-prose-editor",
+          "iteration-frame-auditor",
+          "instruction-scope-resolver",
+          "independent-deliberation-panel",
+          "independent-audit-gate",
+          "evaluation-validity-auditor",
+          "cs-engineering",
+          "coordinate-subagents",
+          "context-continuity",
+          "codex-token-usage-analyzer",
+          "code-review",
+          "change-scope-guardian",
+          "blocker-diagnostician",
+          "acceptance-evidence-validator"
+        ],
+        "candidateCount": 24,
+        "requiredPositionOneBased": 11,
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+        "requestDigest": "sha256:0d89ab3dad00b0eddd5ce5d61c81177e48dea98777867c265fff1da3c32ef374"
+      },
+      "expected": {
+        "required": [
+          "korean-prose-editor"
+        ],
+        "allowed": [
+          "orchestrator"
+        ],
+        "allowedConditions": {
+          "orchestrator": "reason must describe linking the four Korean prose capability phases"
+        },
+        "candidateCount": 24,
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82"
+      },
+      "observed": {
+        "projection": {
+          "status": "PASS",
+          "payloadBytes": 124567,
+          "candidateCount": 24,
+          "phases": [
+            {
+              "capability": "korean-prose-selection",
+              "phase": "korean-prose-selection",
+              "phaseOrder": 50,
+              "requiredInputArtifacts": [
+                "korean-prose-request",
+                "korean-prose-glossary-match-set"
+              ],
+              "producedArtifacts": [
+                "edit-decision-set"
+              ],
+              "inputBindings": [
+                {
+                  "targetArtifact": "korean-prose-request",
+                  "sources": [
+                    "caller.koreanProseRequest"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "korean-prose-glossary-match-set",
+                  "sources": [
+                    "caller.koreanProseGlossaryMatchSet"
+                  ],
+                  "operation": "require-external"
+                }
+              ],
+              "gate": {
+                "kind": "none",
+                "policy": "none",
+                "validator": null
+              }
+            },
+            {
+              "capability": "korean-prose-editing",
+              "phase": "korean-prose-editing",
+              "phaseOrder": 55,
+              "requiredInputArtifacts": [
+                "korean-prose-request",
+                "korean-prose-glossary-match-set",
+                "edit-decision-set"
+              ],
+              "producedArtifacts": [
+                "edit-candidate"
+              ],
+              "inputBindings": [
+                {
+                  "targetArtifact": "korean-prose-request",
+                  "sources": [
+                    "caller.koreanProseRequest"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "korean-prose-glossary-match-set",
+                  "sources": [
+                    "caller.koreanProseGlossaryMatchSet"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "edit-decision-set",
+                  "sources": [
+                    "provider:korean-prose-selection.edit-decision-set"
+                  ],
+                  "operation": "select"
+                }
+              ],
+              "gate": {
+                "kind": "none",
+                "policy": "none",
+                "validator": null
+              }
+            },
+            {
+              "capability": "korean-prose-verification",
+              "phase": "korean-prose-verification",
+              "phaseOrder": 60,
+              "requiredInputArtifacts": [
+                "korean-prose-request",
+                "korean-prose-glossary-match-set",
+                "edit-decision-set",
+                "edit-candidate",
+                "korean-prose-rubric"
+              ],
+              "producedArtifacts": [
+                "edit-verification-report"
+              ],
+              "inputBindings": [
+                {
+                  "targetArtifact": "korean-prose-request",
+                  "sources": [
+                    "caller.koreanProseRequest"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "korean-prose-glossary-match-set",
+                  "sources": [
+                    "caller.koreanProseGlossaryMatchSet"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "edit-decision-set",
+                  "sources": [
+                    "provider:korean-prose-selection.edit-decision-set"
+                  ],
+                  "operation": "select"
+                },
+                {
+                  "targetArtifact": "edit-candidate",
+                  "sources": [
+                    "provider:korean-prose-editing.edit-candidate"
+                  ],
+                  "operation": "select"
+                },
+                {
+                  "targetArtifact": "korean-prose-rubric",
+                  "sources": [
+                    "caller.koreanProseRubric"
+                  ],
+                  "operation": "require-external"
+                }
+              ],
+              "gate": {
+                "kind": "none",
+                "policy": "none",
+                "validator": null
+              }
+            },
+            {
+              "capability": "korean-prose-finalization",
+              "phase": "korean-prose-finalization",
+              "phaseOrder": 65,
+              "requiredInputArtifacts": [
+                "korean-prose-request",
+                "korean-prose-glossary-match-set",
+                "edit-decision-set",
+                "edit-candidate",
+                "edit-verification-report"
+              ],
+              "producedArtifacts": [
+                "final-text-receipt"
+              ],
+              "inputBindings": [
+                {
+                  "targetArtifact": "korean-prose-request",
+                  "sources": [
+                    "caller.koreanProseRequest"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "korean-prose-glossary-match-set",
+                  "sources": [
+                    "caller.koreanProseGlossaryMatchSet"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "edit-decision-set",
+                  "sources": [
+                    "provider:korean-prose-selection.edit-decision-set"
+                  ],
+                  "operation": "select"
+                },
+                {
+                  "targetArtifact": "edit-candidate",
+                  "sources": [
+                    "provider:korean-prose-editing.edit-candidate"
+                  ],
+                  "operation": "select"
+                },
+                {
+                  "targetArtifact": "edit-verification-report",
+                  "sources": [
+                    "provider:korean-prose-verification.edit-verification-report"
+                  ],
+                  "operation": "select"
+                }
+              ],
+              "gate": {
+                "kind": "completion",
+                "policy": "conditional",
+                "validator": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json"
+              }
+            }
+          ]
+        },
+        "service": {
+          "status": "PASS",
+          "mockCalls": 1,
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS16-reversed-order",
+            "operationId": "SS16-reversed-order",
+            "requestDigest": "sha256:0d89ab3dad00b0eddd5ce5d61c81177e48dea98777867c265fff1da3c32ef374",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "workspace-convention-profiler",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "task-contract",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "session-board",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "recovery-strategy-selector",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "ponytail",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "orchestrator",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "mutation-risk-preflight",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "model-effort-advisor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "korean-prose-editor",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "iteration-frame-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "instruction-scope-resolver",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "independent-deliberation-panel",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "independent-audit-gate",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "evaluation-validity-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "cs-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "coordinate-subagents",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "context-continuity",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "codex-token-usage-analyzer",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "code-review",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "change-scope-guardian",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "blocker-diagnostician",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "acceptance-evidence-validator",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          },
+          "attempts": [
+            {
+              "providerKind": "vendor",
+              "profileId": "SS16-offline",
+              "modelId": "mock-only",
+              "reasoningEffort": "low",
+              "dispatchState": "started",
+              "status": "SUCCESS",
+              "errorCode": null,
+              "timedOut": false,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": 0
+              },
+              "reservedCostUsd": 0.01
+            }
+          ],
+          "semanticQualityClaim": false
+        },
+        "inputLimit": {
+          "status": "PASS",
+          "exactBoundary": 124567,
+          "tooLong": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS16-reversed-order",
+            "operationId": "SS16-reversed-order",
+            "requestDigest": "sha256:0d89ab3dad00b0eddd5ce5d61c81177e48dea98777867c265fff1da3c32ef374",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "status": "UNAVAILABLE",
+            "judgments": [],
+            "unresolvedItems": [
+              {
+                "skillId": null,
+                "reasonCode": "INPUT_TOO_LONG"
+              }
+            ],
+            "error": {
+              "code": "INPUT_TOO_LONG",
+              "retryable": false,
+              "dispatchState": "not-started"
+            }
+          },
+          "dispatchCount": 0,
+          "omittedRanges": []
+        },
+        "omittedK": {
+          "status": "PASS",
+          "rejectedResponseErrors": [
+            "MISSING_CANDIDATE_JUDGMENT"
+          ],
+          "missingRecommendationScore": {
+            "caseId": "SS16",
+            "verdict": "FAIL",
+            "missingRequired": [
+              "korean-prose-editor"
+            ],
+            "forbidden": [],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 0,
+            "falsePositives": 0,
+            "requiredHits": 0,
+            "answered": true,
+            "abstained": false,
+            "unnecessaryAbstention": false,
+            "reasons": []
+          }
+        }
+      },
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "selectedSkillIds": null,
+      "hostReceipt": null,
+      "providerSemanticRecommendation": "NOTRUN",
+      "evidence": [
+        "SS16.observed.json",
+        "SS16.vitest.json"
+      ],
+      "executionKind": "offline-mock",
+      "command": "node node_modules/vitest/vitest.mjs run tests/skill-classification/SS16-isolated.test.ts --reporter=verbose --reporter=json --outputFile=<EVIDENCE>/SS16.vitest.json",
+      "exit": 1,
+      "missingInputs": [
+        "qualified actual provider/route and approval",
+        "trusted host AGENT selection observations",
+        "source announcement and actual four-phase artifacts"
+      ]
+    },
+    {
+      "variantId": "required-at-tail",
+      "status": "OFFLINE_STRUCTURAL_PASS_ONLY",
+      "input": {
+        "originalPrompt": "이 한국어 안내문의 사실·수치·링크·주장 강도를 보존하며 자연스럽게 편집하고 검증해 줘.",
+        "candidateOrder": [
+          "acceptance-evidence-validator",
+          "blocker-diagnostician",
+          "change-scope-guardian",
+          "code-review",
+          "codex-token-usage-analyzer",
+          "context-continuity",
+          "coordinate-subagents",
+          "cs-engineering",
+          "evaluation-validity-auditor",
+          "independent-audit-gate",
+          "independent-deliberation-panel",
+          "instruction-scope-resolver",
+          "iteration-frame-auditor",
+          "model-effort-advisor",
+          "mutation-risk-preflight",
+          "orchestrator",
+          "ponytail",
+          "recovery-strategy-selector",
+          "session-board",
+          "software-security-auditor",
+          "task-contract",
+          "test-engineering",
+          "workspace-convention-profiler",
+          "korean-prose-editor"
+        ],
+        "candidateCount": 24,
+        "requiredPositionOneBased": 24,
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+        "requestDigest": "sha256:49749e1ac89b88d112cf36fc9b2338f76c1994e7f7b84d30b6e22335cc29219b"
+      },
+      "expected": {
+        "required": [
+          "korean-prose-editor"
+        ],
+        "allowed": [
+          "orchestrator"
+        ],
+        "allowedConditions": {
+          "orchestrator": "reason must describe linking the four Korean prose capability phases"
+        },
+        "candidateCount": 24,
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82"
+      },
+      "observed": {
+        "projection": {
+          "status": "PASS",
+          "payloadBytes": 124567,
+          "candidateCount": 24,
+          "phases": [
+            {
+              "capability": "korean-prose-selection",
+              "phase": "korean-prose-selection",
+              "phaseOrder": 50,
+              "requiredInputArtifacts": [
+                "korean-prose-request",
+                "korean-prose-glossary-match-set"
+              ],
+              "producedArtifacts": [
+                "edit-decision-set"
+              ],
+              "inputBindings": [
+                {
+                  "targetArtifact": "korean-prose-request",
+                  "sources": [
+                    "caller.koreanProseRequest"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "korean-prose-glossary-match-set",
+                  "sources": [
+                    "caller.koreanProseGlossaryMatchSet"
+                  ],
+                  "operation": "require-external"
+                }
+              ],
+              "gate": {
+                "kind": "none",
+                "policy": "none",
+                "validator": null
+              }
+            },
+            {
+              "capability": "korean-prose-editing",
+              "phase": "korean-prose-editing",
+              "phaseOrder": 55,
+              "requiredInputArtifacts": [
+                "korean-prose-request",
+                "korean-prose-glossary-match-set",
+                "edit-decision-set"
+              ],
+              "producedArtifacts": [
+                "edit-candidate"
+              ],
+              "inputBindings": [
+                {
+                  "targetArtifact": "korean-prose-request",
+                  "sources": [
+                    "caller.koreanProseRequest"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "korean-prose-glossary-match-set",
+                  "sources": [
+                    "caller.koreanProseGlossaryMatchSet"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "edit-decision-set",
+                  "sources": [
+                    "provider:korean-prose-selection.edit-decision-set"
+                  ],
+                  "operation": "select"
+                }
+              ],
+              "gate": {
+                "kind": "none",
+                "policy": "none",
+                "validator": null
+              }
+            },
+            {
+              "capability": "korean-prose-verification",
+              "phase": "korean-prose-verification",
+              "phaseOrder": 60,
+              "requiredInputArtifacts": [
+                "korean-prose-request",
+                "korean-prose-glossary-match-set",
+                "edit-decision-set",
+                "edit-candidate",
+                "korean-prose-rubric"
+              ],
+              "producedArtifacts": [
+                "edit-verification-report"
+              ],
+              "inputBindings": [
+                {
+                  "targetArtifact": "korean-prose-request",
+                  "sources": [
+                    "caller.koreanProseRequest"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "korean-prose-glossary-match-set",
+                  "sources": [
+                    "caller.koreanProseGlossaryMatchSet"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "edit-decision-set",
+                  "sources": [
+                    "provider:korean-prose-selection.edit-decision-set"
+                  ],
+                  "operation": "select"
+                },
+                {
+                  "targetArtifact": "edit-candidate",
+                  "sources": [
+                    "provider:korean-prose-editing.edit-candidate"
+                  ],
+                  "operation": "select"
+                },
+                {
+                  "targetArtifact": "korean-prose-rubric",
+                  "sources": [
+                    "caller.koreanProseRubric"
+                  ],
+                  "operation": "require-external"
+                }
+              ],
+              "gate": {
+                "kind": "none",
+                "policy": "none",
+                "validator": null
+              }
+            },
+            {
+              "capability": "korean-prose-finalization",
+              "phase": "korean-prose-finalization",
+              "phaseOrder": 65,
+              "requiredInputArtifacts": [
+                "korean-prose-request",
+                "korean-prose-glossary-match-set",
+                "edit-decision-set",
+                "edit-candidate",
+                "edit-verification-report"
+              ],
+              "producedArtifacts": [
+                "final-text-receipt"
+              ],
+              "inputBindings": [
+                {
+                  "targetArtifact": "korean-prose-request",
+                  "sources": [
+                    "caller.koreanProseRequest"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "korean-prose-glossary-match-set",
+                  "sources": [
+                    "caller.koreanProseGlossaryMatchSet"
+                  ],
+                  "operation": "require-external"
+                },
+                {
+                  "targetArtifact": "edit-decision-set",
+                  "sources": [
+                    "provider:korean-prose-selection.edit-decision-set"
+                  ],
+                  "operation": "select"
+                },
+                {
+                  "targetArtifact": "edit-candidate",
+                  "sources": [
+                    "provider:korean-prose-editing.edit-candidate"
+                  ],
+                  "operation": "select"
+                },
+                {
+                  "targetArtifact": "edit-verification-report",
+                  "sources": [
+                    "provider:korean-prose-verification.edit-verification-report"
+                  ],
+                  "operation": "select"
+                }
+              ],
+              "gate": {
+                "kind": "completion",
+                "policy": "conditional",
+                "validator": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json"
+              }
+            }
+          ]
+        },
+        "service": {
+          "status": "PASS",
+          "mockCalls": 1,
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS16-required-at-tail",
+            "operationId": "SS16-required-at-tail",
+            "requestDigest": "sha256:49749e1ac89b88d112cf36fc9b2338f76c1994e7f7b84d30b6e22335cc29219b",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "acceptance-evidence-validator",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "blocker-diagnostician",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "change-scope-guardian",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "code-review",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "codex-token-usage-analyzer",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "context-continuity",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "coordinate-subagents",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "cs-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "evaluation-validity-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "independent-audit-gate",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "independent-deliberation-panel",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "instruction-scope-resolver",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "iteration-frame-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "model-effort-advisor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "mutation-risk-preflight",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "orchestrator",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "ponytail",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "recovery-strategy-selector",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "session-board",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "task-contract",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "workspace-convention-profiler",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "korean-prose-editor",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "synthetic-fixture-response"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          },
+          "attempts": [
+            {
+              "providerKind": "vendor",
+              "profileId": "SS16-offline",
+              "modelId": "mock-only",
+              "reasoningEffort": "low",
+              "dispatchState": "started",
+              "status": "SUCCESS",
+              "errorCode": null,
+              "timedOut": false,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": 0
+              },
+              "reservedCostUsd": 0.01
+            }
+          ],
+          "semanticQualityClaim": false
+        },
+        "inputLimit": {
+          "status": "PASS",
+          "exactBoundary": 124567,
+          "tooLong": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS16-required-at-tail",
+            "operationId": "SS16-required-at-tail",
+            "requestDigest": "sha256:49749e1ac89b88d112cf36fc9b2338f76c1994e7f7b84d30b6e22335cc29219b",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "status": "UNAVAILABLE",
+            "judgments": [],
+            "unresolvedItems": [
+              {
+                "skillId": null,
+                "reasonCode": "INPUT_TOO_LONG"
+              }
+            ],
+            "error": {
+              "code": "INPUT_TOO_LONG",
+              "retryable": false,
+              "dispatchState": "not-started"
+            }
+          },
+          "dispatchCount": 0,
+          "omittedRanges": []
+        },
+        "omittedK": {
+          "status": "PASS",
+          "rejectedResponseErrors": [
+            "MISSING_CANDIDATE_JUDGMENT"
+          ],
+          "missingRecommendationScore": {
+            "caseId": "SS16",
+            "verdict": "FAIL",
+            "missingRequired": [
+              "korean-prose-editor"
+            ],
+            "forbidden": [],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 0,
+            "falsePositives": 0,
+            "requiredHits": 0,
+            "answered": true,
+            "abstained": false,
+            "unnecessaryAbstention": false,
+            "reasons": []
+          }
+        }
+      },
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "selectedSkillIds": null,
+      "hostReceipt": null,
+      "providerSemanticRecommendation": "NOTRUN",
+      "evidence": [
+        "SS16.observed.json",
+        "SS16.vitest.json"
+      ],
+      "executionKind": "offline-mock",
+      "command": "node node_modules/vitest/vitest.mjs run tests/skill-classification/SS16-isolated.test.ts --reporter=verbose --reporter=json --outputFile=<EVIDENCE>/SS16.vitest.json",
+      "exit": 1,
+      "missingInputs": [
+        "qualified actual provider/route and approval",
+        "trusted host AGENT selection observations",
+        "source announcement and actual four-phase artifacts"
+      ]
+    }
+  ],
+  "offlinePlans": {
+    "status": "PASS",
+    "requestedCapabilities": [
+      "korean-prose-selection",
+      "korean-prose-editing",
+      "korean-prose-verification",
+      "korean-prose-finalization"
+    ],
+    "observedOrder": [
+      "korean-prose-selection",
+      "korean-prose-editing",
+      "korean-prose-verification",
+      "korean-prose-finalization"
+    ],
+    "phaseOrder": [
+      50,
+      55,
+      60,
+      65
+    ],
+    "uniquePlannedSkills": [
+      "korean-prose-editor"
+    ],
+    "stageCount": 4,
+    "actualApplication": "NOTRUN",
+    "evidence": "SS16.observed.json"
+  },
+  "findings": [
+    {
+      "findingId": "SS16-CONDITIONAL-O-EVALUATOR",
+      "severity": "HIGH_EVALUATION_INTEGRITY",
+      "status": "REPRODUCED",
+      "location": "tests/skill-classification/evaluation.ts:78",
+      "expected": "O permitted only with reason linking four Korean prose phases",
+      "observed": "K+O with unrelated Korean reason scores PASS; absent reason FAIL; four-phase reason PASS",
+      "scope": "offline evaluator false positive; not proof of wrong live AGENT selection",
+      "rootCause": "allowedConditions values never read; only nonempty reason checked",
+      "deduplication": "Shared evaluator conditional-allowance validation gap. Forward to R14 evaluator owner. Known metadata condition duplication not reproduced or counted here.",
+      "evidence": "SS16.observed.json#/boundaries/conditionalReason"
+    },
+    {
+      "findingId": "SS16-INVALID-RESP-KNOWN-COST",
+      "severity": "HIGH_ACCOUNTING",
+      "status": "REPRODUCED_KNOWN_FINDING",
+      "location": "mcp-server/src/skill-classification/service.ts:194",
+      "expected": "Known valid actualCostUsd=0.003 retained even with invalid response missing K judgment",
+      "observed": "INVALID_PROVIDER_RESPONSE, actualCostUsd=null, spentUsd=0, 0.01 reservation remains",
+      "rootCause": "Validation throws before returning ProviderEvaluation; catch overwrites usage with unknownUsage",
+      "deduplication": "Link existing valid-cost-lost-with-invalid-response finding; add SS16 witness, do not count as new root cause.",
+      "evidence": "SS16.observed.json#/boundaries/invalidResponseKnownCost"
+    }
+  ],
+  "otherKnownFindings": {
+    "timeoutOverflow": "NOTRUN",
+    "metadataConditionDuplication": "NOTRUN",
+    "hostActiveStateSupplyGap": "STATIC_RELEVANCE_ONLY_NOT_REPRODUCED",
+    "preConcurrencyRecheckGap": "NOTRUN"
+  },
+  "hostSupport": {
+    "exposedAGSTools": [],
+    "classificationConfigEnvironmentPresent": false,
+    "repoMcpLaunch": ".mcp.json: node mcp-server/dist/server.mjs with AGENT_GOVERNANCE_HOST_ATTESTATION=codex",
+    "supportPath": "get_skill_inventory -> classify_skills -> AGENT judgment -> record_skill_selection with host-signed observation; provider adapters are mcp-server/src/skill-classification/runtime.ts and native-adapters.ts",
+    "requiredInputs": [
+      "Approved AGENT_GOVERNANCE_CLASSIFICATION_CONFIG and central fixed profile registry qualified for current full inventory/taxonomy/model/prompt",
+      "Approved providerRuntimeRef route and budget/allowance; optional nativeAdapterDefinitionsRef with executable, workingDirectory, approvalRef, capabilityEvidenceRef, verified no-retry/isolation args and evidence",
+      "Current vendorContext and exact original prompt/context provenance; explicit/rule IDs; host active inventory discovery",
+      "Trusted host actorId/observationId/task request/config/profile/inventory revisions for actual selection acceptance",
+      "Actual announcement source artifact, protected spans/source-unit manifest, one MCP glossary lookup result, frozen rubric, three distinct canonical actor IDs and digest-linked selection/editing/verification artifacts"
+    ],
+    "status": "NOTRUN",
+    "reason": "No host tools/config/profile; originalPrompt names an announcement but supplies no source text. No approval or missing content inferred."
+  },
+  "developerReads": {
+    "purpose": "test design/source comparison only; not SS16 host skill-read stage",
+    "AGENTS": "AGENTS.md",
+    "skillPaths": [
+      "skills/korean-prose-editor/SKILL.md",
+      "skills/ponytail/SKILL.md",
+      "skills/cs-engineering/SKILL.md",
+      "skills/test-engineering/SKILL.md",
+      "skills/code-review/SKILL.md",
+      "skills/software-security-auditor/SKILL.md",
+      "skills/orchestrator/SKILL.md"
+    ],
+    "references": [
+      "skills/orchestrator/references/skill-classification.md",
+      "skills/test-engineering/SKILL.md",
+      "skills/korean-prose-editor/references/entry-details.md",
+      "skills/orchestrator/references/engineering-practices/test-design.md",
+      "skills/orchestrator/references/engineering-practices/test-proof.md"
+    ],
+    "agentsSkills": {
+      "<HOST_SKILLS>/skills": "ABSENT",
+      "<REPO>/.agents/skills": "ABSENT"
+    }
+  },
+  "sourceSpecExternalFile": "ABSENT; embedded sourceSpec.fields only; no full source-spec bytes claim",
+  "scoring": {
+    "overallAccuracy": null,
+    "providerLiveAccuracy": null,
+    "hostAccuracy": null,
+    "reason": "Mock semantic recommendation predetermined; no all-case/provider/host success claim."
+  },
+  "changes": {
+    "productSourceChanges": 0,
+    "trackedDiff": "empty",
+    "testFile": "tests/skill-classification/SS16-isolated.test.ts",
+    "testSHA256": "sha256:9593250d4389dcf7cccc2da7a2c43cfa8e4584ce5c7f95af788b6e82a0efdf17",
+    "dependencySetup": "untracked symlink to preinstalled <PREINSTALLED_DEPENDENCIES>; no successful package installation",
+    "push": false,
+    "PR": false,
+    "release": false
+  },
+  "evidence": [
+    {
+      "path": "SS16-isolated.test.ts",
+      "SHA256": "sha256:9593250d4389dcf7cccc2da7a2c43cfa8e4584ce5c7f95af788b6e82a0efdf17"
+    },
+    {
+      "path": "SS16.files.json",
+      "SHA256": "sha256:c413dc6904e9932280c03da99ad6c22e6f54a3968dc205038812163e2c710488"
+    },
+    {
+      "path": "SS16.fixture-excerpt.json",
+      "SHA256": "sha256:6b8ec8999656668b252ce536a115a278117170bdfa9ae0903667f443943a5ba2"
+    },
+    {
+      "path": "SS16.observed.json",
+      "SHA256": "sha256:3e39c51f56e92400ae813a4a1a99fde9fa5c673680b0b289a6660a29bdfae60f"
+    },
+    {
+      "path": "SS16.plan-check.json",
+      "SHA256": "sha256:031c1d94d128cb9376568691423bc222e20d270865cafb69edf4bc1ab465fc87"
+    },
+    {
+      "path": "SS16.snapshot.json",
+      "SHA256": "sha256:2265c31954feecfbd8d86a7ede61eab5e5ee1d57a47b4f488cca9ef1c95ddbe8"
+    },
+    {
+      "path": "SS16.test-plan.json",
+      "SHA256": "sha256:92cb3e8fa36935e5a7a25e6821a6076ee8fc380c9615a051f8bbb4dc8b97bda2"
+    },
+    {
+      "path": "SS16.test-proof.json",
+      "SHA256": "sha256:782ef56c94c3da8a55682ed77ddeb406984f20246f2f762d9115368946d6a68e"
+    },
+    {
+      "path": "SS16.vitest.json",
+      "SHA256": "sha256:cce1663605f02069db2dfab9bf4e1463148b48880329b1f005a8d3551b255f8a"
+    },
+    {
+      "path": "SS16.vitest.log",
+      "SHA256": "sha256:1753a2e20c724cd9416ef1ad2ae7fbc7342963740dd13852b47d84aac5bb717b"
+    },
+    {
+      "path": "run-SS16.sh",
+      "SHA256": "sha256:0249738882d1dc48aeed444f41dd255c37716e97ccd249df4cd507c6e17dbbf3"
+    }
+  ],
+  "formalSensitivityProof": {
+    "status": "NOTRUN",
+    "reason": "Product changes prohibited; no repaired green candidate or mutation executed. Two assertion reds are direct negative controls, not a completed red/green pair.",
+    "evidence": [
+      "SS16.test-proof.json",
+      "SS16.snapshot.json"
+    ]
+  },
+  "publication": {
+    "kind": "sanitized-existing-evidence-package",
+    "newTestsExecuted": 0,
+    "historicalRunsReexecuted": 0,
+    "modelAPICalls": {
+      "JEV": 0,
+      "externalVendor": 0,
+      "Claude": 0,
+      "Codex": 0
+    },
+    "historicalFieldsPreserved": "push:false/PR:false/release:false under changes describe the original test task, not this later evidence publication.",
+    "existingRawResult": {
+      "bytes": 71538,
+      "sha256": "5ce9960801245f0c1b2c8d368d59f43db695340ae669e676ab3a51c01ec4097c",
+      "recovery": "RECOVERED"
+    },
+    "missingOriginals": [
+      {
+        "item": "separate stdout and stderr streams for original Vitest command",
+        "status": "MISSING_ORIGINAL",
+        "detail": "Only the merged stdout/stderr SS16.vitest.log exists; stream attribution cannot be recovered."
+      },
+      {
+        "item": "initial pnpm setup-failure stdout/stderr raw file",
+        "status": "MISSING_ORIGINAL",
+        "detail": "Result JSON records exit 1 and a diagnostic excerpt; the original log was overwritten. No log is reconstructed."
+      },
+      {
+        "item": "initial plan-CLI absolute-path error stdout/stderr raw file",
+        "status": "MISSING_ORIGINAL",
+        "detail": "Result JSON records exit 2; original raw output was not archived. No log is reconstructed."
+      },
+      {
+        "item": "complete original serialized classification REQ/provider wire bytes",
+        "status": "MISSING_ORIGINAL",
+        "detail": "Existing observed JSON preserves prompt/order/digests, response and structural measurements, but a complete request/wire byte capture was not archived. It is not reconstructed."
+      },
+      {
+        "item": "TEST-SPEC.seq7.ko.md",
+        "status": "MISSING_ORIGINAL",
+        "detail": "File absent in pinned repository; only original embedded sourceSpec.fields is published."
+      },
+      {
+        "item": "announcement body and host execution/selection evidence",
+        "status": "MISSING_ORIGINAL",
+        "detail": "No announcement body or actual host receipt was provided; selected/read/applied/verified remain NOTRUN."
+      }
+    ],
+    "productPatchStatus": "NO_PATCH",
+    "reproductionFiles": "Portable derivatives of existing test/script; assertions unchanged; not executed during publication.",
+    "redactions": [
+      "private local paths replaced with symbolic labels",
+      "local in-memory workflow plan signatures removed",
+      "no environment values or private conversation content added"
+    ],
+    "hostStages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "inputArchive": "Original prompt UTF-8 bytes extracted from existing fixture excerpt; complete request/wire archive is MISSING_ORIGINAL."
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:c51494c6b8245eb3a3db4a1a98e044004a2095dcdf47da3d2cf9ec295e619eb3",
+  "caseIds": [
+    "SS16-offline"
+  ]
+}

@@ -1,0 +1,115 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-snapshot",
+  "files": [
+    {
+      "path": "mcp-server/src/skill-classification/gateway.ts",
+      "digest": "sha256:80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+      "size": 15017,
+      "lineCount": 156
+    },
+    {
+      "path": "mcp-server/src/skill-classification/inventory.ts",
+      "digest": "sha256:8c7ee54546f17fb1e63368fbfb72668a3c7136570a545ad5f0494f076c91727c",
+      "size": 20714,
+      "lineCount": 259
+    },
+    {
+      "path": "mcp-server/src/skill-classification/request.ts",
+      "digest": "sha256:1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f",
+      "size": 7093,
+      "lineCount": 99
+    },
+    {
+      "path": "mcp-server/src/skill-classification/service.ts",
+      "digest": "sha256:c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb",
+      "size": 19033,
+      "lineCount": 215
+    },
+    {
+      "path": "mcp-server/src/skill-classification/validation.ts",
+      "digest": "sha256:70f988d9e5d49f8eaef55ca0ff378b4819798ff8141bd09119691c2cffb2891f",
+      "size": 8449,
+      "lineCount": 107
+    },
+    {
+      "path": "mcp-server/src/workflow-service.ts",
+      "digest": "sha256:3bf74908a59cfea64d13b249ce669ee611e66e3026f16e285a0fc9e59e057850",
+      "size": 82208,
+      "lineCount": 1898
+    },
+    {
+      "path": "skills/code-review/SKILL.md",
+      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "size": 2841,
+      "lineCount": 29
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+      "size": 5211,
+      "lineCount": 74
+    },
+    {
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "size": 2053,
+      "lineCount": 24
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "size": 5024,
+      "lineCount": 33
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "size": 7274,
+      "lineCount": 126
+    },
+    {
+      "path": "skills/registry.json",
+      "digest": "sha256:395cb7a025a0e1fef81cff8aa509205c170fb9c626591a880466452c0885422c",
+      "size": 80820,
+      "lineCount": 2497
+    },
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "size": 1944,
+      "lineCount": 20
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "size": 2981,
+      "lineCount": 30
+    },
+    {
+      "path": "tests/skill-classification/SS16-isolated.test.ts",
+      "digest": "sha256:9593250d4389dcf7cccc2da7a2c43cfa8e4584ce5c7f95af788b6e82a0efdf17",
+      "size": 15684,
+      "lineCount": 153
+    },
+    {
+      "path": "tests/skill-classification/evaluation.ts",
+      "digest": "sha256:e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+      "size": 16532,
+      "lineCount": 223
+    },
+    {
+      "path": "tests/skill-classification/fixtures.json",
+      "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "size": 142450,
+      "lineCount": 2912
+    },
+    {
+      "path": "vitest.config.mjs",
+      "digest": "sha256:cfcc4d27a36e48897ecd19d376decbb8683fc42c8489babcc89846fe9df98fdb",
+      "size": 374,
+      "lineCount": 11
+    }
+  ],
+  "digest": "sha256:c1684a8c92c071d4bad8fe6bcb3d59dc8721b2131ec3af201a8ec5411c59d122"
+}

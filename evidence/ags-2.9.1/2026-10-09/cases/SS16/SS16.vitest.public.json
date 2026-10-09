@@ -1,0 +1,304 @@
+{
+  "numTotalTestSuites": 2,
+  "numPassedTestSuites": 0,
+  "numFailedTestSuites": 2,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 20,
+  "numPassedTests": 18,
+  "numFailedTests": 2,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514581922,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants pins fixture, oracle, inventory and relevant source bytes",
+          "status": "passed",
+          "title": "pins fixture, oracle, inventory and relevant source bytes",
+          "duration": 4.2467419999999265,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants original-order: preserves every candidate, exact prompt and all four phase dependencies",
+          "status": "passed",
+          "title": "original-order: preserves every candidate, exact prompt and all four phase dependencies",
+          "duration": 7.063507999999956,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants original-order: service sends full inventory and handles synthetic K advice without AGENT selection",
+          "status": "passed",
+          "title": "original-order: service sends full inventory and handles synthetic K advice without AGENT selection",
+          "duration": 16.784348000000023,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants original-order: byte limit refuses the whole request without trimming or dispatch",
+          "status": "passed",
+          "title": "original-order: byte limit refuses the whole request without trimming or dispatch",
+          "duration": 24.68076700000006,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants original-order: rejects top-k judgments missing the tail K",
+          "status": "passed",
+          "title": "original-order: rejects top-k judgments missing the tail K",
+          "duration": 1.0274120000000266,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants reversed-order: preserves every candidate, exact prompt and all four phase dependencies",
+          "status": "passed",
+          "title": "reversed-order: preserves every candidate, exact prompt and all four phase dependencies",
+          "duration": 7.493891000000076,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants reversed-order: service sends full inventory and handles synthetic K advice without AGENT selection",
+          "status": "passed",
+          "title": "reversed-order: service sends full inventory and handles synthetic K advice without AGENT selection",
+          "duration": 13.604737,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants reversed-order: byte limit refuses the whole request without trimming or dispatch",
+          "status": "passed",
+          "title": "reversed-order: byte limit refuses the whole request without trimming or dispatch",
+          "duration": 20.58952099999999,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants reversed-order: rejects top-k judgments missing the tail K",
+          "status": "passed",
+          "title": "reversed-order: rejects top-k judgments missing the tail K",
+          "duration": 0.40746899999999187,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants required-at-tail: preserves every candidate, exact prompt and all four phase dependencies",
+          "status": "passed",
+          "title": "required-at-tail: preserves every candidate, exact prompt and all four phase dependencies",
+          "duration": 6.079224999999951,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants required-at-tail: service sends full inventory and handles synthetic K advice without AGENT selection",
+          "status": "passed",
+          "title": "required-at-tail: service sends full inventory and handles synthetic K advice without AGENT selection",
+          "duration": 10.06383100000005,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants required-at-tail: byte limit refuses the whole request without trimming or dispatch",
+          "status": "passed",
+          "title": "required-at-tail: byte limit refuses the whole request without trimming or dispatch",
+          "duration": 18.650601999999935,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants required-at-tail: rejects top-k judgments missing the tail K",
+          "status": "passed",
+          "title": "required-at-tail: rejects top-k judgments missing the tail K",
+          "duration": 0.2706479999999374,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants preserves null versus [] and refuses to promote unobserved host selection",
+          "status": "passed",
+          "title": "preserves null versus [] and refuses to promote unobserved host selection",
+          "duration": 0.36892200000011144,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants rejects orchestrator with an unrelated conditional reason (expected defect)",
+          "status": "failed",
+          "title": "rejects orchestrator with an unrelated conditional reason (expected defect)",
+          "duration": 5.362452000000076,
+          "failureMessages": [
+            "AssertionError: expected 'PASS' to be 'FAIL' // Object.is equality\n    at <REPO>/tests/skill-classification/SS16-isolated.test.ts:132:103\n    at file://<PREINSTALLED_DEPENDENCIES>/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:1628:35\n    at file://<PREINSTALLED_DEPENDENCIES>/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:26\n    at file://<PREINSTALLED_DEPENDENCIES>/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:3319:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file://<PREINSTALLED_DEPENDENCIES>/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:3314:10)\n    at file://<PREINSTALLED_DEPENDENCIES>/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:3299:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file://<PREINSTALLED_DEPENDENCIES>/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:3257:10)\n    at file://<PREINSTALLED_DEPENDENCIES>/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:3876:64"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants retains valid known usage when SS16 response omits K (known cost-loss defect)",
+          "status": "failed",
+          "title": "retains valid known usage when SS16 response omits K (known cost-loss defect)",
+          "duration": 8.635832999999934,
+          "failureMessages": [
+            "AssertionError: expected null to be 0.003 // Object.is equality\n    at <REPO>/tests/skill-classification/SS16-isolated.test.ts:139:123\n    at file://<PREINSTALLED_DEPENDENCIES>/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants offline plan requested korean-prose-selection: expands to four phases and one unique skill",
+          "status": "passed",
+          "title": "offline plan requested korean-prose-selection: expands to four phases and one unique skill",
+          "duration": 220.05260299999998,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants offline plan requested korean-prose-editing: expands to four phases and one unique skill",
+          "status": "passed",
+          "title": "offline plan requested korean-prose-editing: expands to four phases and one unique skill",
+          "duration": 156.19790899999998,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants offline plan requested korean-prose-verification: expands to four phases and one unique skill",
+          "status": "passed",
+          "title": "offline plan requested korean-prose-verification: expands to four phases and one unique skill",
+          "duration": 107.85706699999992,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS16 only: frozen original and all three variants"
+          ],
+          "fullName": "SS16 only: frozen original and all three variants offline plan requested korean-prose-finalization: expands to four phases and one unique skill",
+          "status": "passed",
+          "title": "offline plan requested korean-prose-finalization: expands to four phases and one unique skill",
+          "duration": 105.09466799999996,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514582499,
+      "endTime": 1791514583235.0947,
+      "status": "failed",
+      "message": "",
+      "name": "<REPO>/tests/skill-classification/SS16-isolated.test.ts"
+    }
+  ]
+}

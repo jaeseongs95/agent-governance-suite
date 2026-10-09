@@ -1,0 +1,3501 @@
+{
+  "caseId": "SS16",
+  "executionKind": "new-offline-variants",
+  "externalAPICalls": {
+    "jev": 0,
+    "vendor": 0,
+    "claude": 0
+  },
+  "variants": {
+    "original-order": {
+      "originalPrompt": "이 한국어 안내문의 사실·수치·링크·주장 강도를 보존하며 자연스럽게 편집하고 검증해 줘.",
+      "expected": {
+        "required": [
+          "korean-prose-editor"
+        ],
+        "allowed": [
+          "orchestrator"
+        ],
+        "allowedConditions": {
+          "orchestrator": "reason must describe linking the four Korean prose capability phases"
+        },
+        "candidateCount": 24,
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82"
+      },
+      "candidateOrder": [
+        "acceptance-evidence-validator",
+        "blocker-diagnostician",
+        "change-scope-guardian",
+        "code-review",
+        "codex-token-usage-analyzer",
+        "context-continuity",
+        "coordinate-subagents",
+        "cs-engineering",
+        "evaluation-validity-auditor",
+        "independent-audit-gate",
+        "independent-deliberation-panel",
+        "instruction-scope-resolver",
+        "iteration-frame-auditor",
+        "korean-prose-editor",
+        "model-effort-advisor",
+        "mutation-risk-preflight",
+        "orchestrator",
+        "ponytail",
+        "recovery-strategy-selector",
+        "session-board",
+        "software-security-auditor",
+        "task-contract",
+        "test-engineering",
+        "workspace-convention-profiler"
+      ],
+      "requiredIndex": 13,
+      "requestDigest": "sha256:be93730e3d654f79ce044369ac451c4106b777751962c4f8031d7f829f53b334",
+      "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+      "selected": "NOTRUN",
+      "selectedSkillIds": null,
+      "hostReceipt": null,
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "modelSemanticRecommendation": "NOTRUN",
+      "projection": {
+        "status": "PASS",
+        "payloadBytes": 124567,
+        "candidateCount": 24,
+        "phases": [
+          {
+            "capability": "korean-prose-selection",
+            "phase": "korean-prose-selection",
+            "phaseOrder": 50,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set"
+            ],
+            "producedArtifacts": [
+              "edit-decision-set"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              }
+            ],
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null
+            }
+          },
+          {
+            "capability": "korean-prose-editing",
+            "phase": "korean-prose-editing",
+            "phaseOrder": 55,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set"
+            ],
+            "producedArtifacts": [
+              "edit-candidate"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              }
+            ],
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null
+            }
+          },
+          {
+            "capability": "korean-prose-verification",
+            "phase": "korean-prose-verification",
+            "phaseOrder": 60,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set",
+              "edit-candidate",
+              "korean-prose-rubric"
+            ],
+            "producedArtifacts": [
+              "edit-verification-report"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-candidate",
+                "sources": [
+                  "provider:korean-prose-editing.edit-candidate"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "korean-prose-rubric",
+                "sources": [
+                  "caller.koreanProseRubric"
+                ],
+                "operation": "require-external"
+              }
+            ],
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null
+            }
+          },
+          {
+            "capability": "korean-prose-finalization",
+            "phase": "korean-prose-finalization",
+            "phaseOrder": 65,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set",
+              "edit-candidate",
+              "edit-verification-report"
+            ],
+            "producedArtifacts": [
+              "final-text-receipt"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-candidate",
+                "sources": [
+                  "provider:korean-prose-editing.edit-candidate"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-verification-report",
+                "sources": [
+                  "provider:korean-prose-verification.edit-verification-report"
+                ],
+                "operation": "select"
+              }
+            ],
+            "gate": {
+              "kind": "completion",
+              "policy": "conditional",
+              "validator": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json"
+            }
+          }
+        ]
+      },
+      "service": {
+        "status": "PASS",
+        "mockCalls": 1,
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS16-original-order",
+          "operationId": "SS16-original-order",
+          "requestDigest": "sha256:be93730e3d654f79ce044369ac451c4106b777751962c4f8031d7f829f53b334",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "acceptance-evidence-validator",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "blocker-diagnostician",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "change-scope-guardian",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "code-review",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "codex-token-usage-analyzer",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "context-continuity",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "coordinate-subagents",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "cs-engineering",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "evaluation-validity-auditor",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "independent-audit-gate",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "independent-deliberation-panel",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "instruction-scope-resolver",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "iteration-frame-auditor",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "korean-prose-editor",
+              "judgment": "needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "model-effort-advisor",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "mutation-risk-preflight",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "orchestrator",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "ponytail",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "recovery-strategy-selector",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "session-board",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "software-security-auditor",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "task-contract",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "test-engineering",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "workspace-convention-profiler",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        },
+        "attempts": [
+          {
+            "providerKind": "vendor",
+            "profileId": "SS16-offline",
+            "modelId": "mock-only",
+            "reasoningEffort": "low",
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0
+            },
+            "reservedCostUsd": 0.01
+          }
+        ],
+        "semanticQualityClaim": false
+      },
+      "inputLimit": {
+        "status": "PASS",
+        "exactBoundary": 124567,
+        "tooLong": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS16-original-order",
+          "operationId": "SS16-original-order",
+          "requestDigest": "sha256:be93730e3d654f79ce044369ac451c4106b777751962c4f8031d7f829f53b334",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "INPUT_TOO_LONG"
+            }
+          ],
+          "error": {
+            "code": "INPUT_TOO_LONG",
+            "retryable": false,
+            "dispatchState": "not-started"
+          }
+        },
+        "dispatchCount": 0,
+        "omittedRanges": []
+      },
+      "omittedK": {
+        "status": "PASS",
+        "rejectedResponseErrors": [
+          "MISSING_CANDIDATE_JUDGMENT"
+        ],
+        "missingRecommendationScore": {
+          "caseId": "SS16",
+          "verdict": "FAIL",
+          "missingRequired": [
+            "korean-prose-editor"
+          ],
+          "forbidden": [],
+          "unnecessary": [],
+          "unadjudicated": [],
+          "truePositives": 0,
+          "falsePositives": 0,
+          "requiredHits": 0,
+          "answered": true,
+          "abstained": false,
+          "unnecessaryAbstention": false,
+          "reasons": []
+        }
+      }
+    },
+    "reversed-order": {
+      "originalPrompt": "이 한국어 안내문의 사실·수치·링크·주장 강도를 보존하며 자연스럽게 편집하고 검증해 줘.",
+      "expected": {
+        "required": [
+          "korean-prose-editor"
+        ],
+        "allowed": [
+          "orchestrator"
+        ],
+        "allowedConditions": {
+          "orchestrator": "reason must describe linking the four Korean prose capability phases"
+        },
+        "candidateCount": 24,
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82"
+      },
+      "candidateOrder": [
+        "workspace-convention-profiler",
+        "test-engineering",
+        "task-contract",
+        "software-security-auditor",
+        "session-board",
+        "recovery-strategy-selector",
+        "ponytail",
+        "orchestrator",
+        "mutation-risk-preflight",
+        "model-effort-advisor",
+        "korean-prose-editor",
+        "iteration-frame-auditor",
+        "instruction-scope-resolver",
+        "independent-deliberation-panel",
+        "independent-audit-gate",
+        "evaluation-validity-auditor",
+        "cs-engineering",
+        "coordinate-subagents",
+        "context-continuity",
+        "codex-token-usage-analyzer",
+        "code-review",
+        "change-scope-guardian",
+        "blocker-diagnostician",
+        "acceptance-evidence-validator"
+      ],
+      "requiredIndex": 10,
+      "requestDigest": "sha256:0d89ab3dad00b0eddd5ce5d61c81177e48dea98777867c265fff1da3c32ef374",
+      "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+      "selected": "NOTRUN",
+      "selectedSkillIds": null,
+      "hostReceipt": null,
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "modelSemanticRecommendation": "NOTRUN",
+      "projection": {
+        "status": "PASS",
+        "payloadBytes": 124567,
+        "candidateCount": 24,
+        "phases": [
+          {
+            "capability": "korean-prose-selection",
+            "phase": "korean-prose-selection",
+            "phaseOrder": 50,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set"
+            ],
+            "producedArtifacts": [
+              "edit-decision-set"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              }
+            ],
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null
+            }
+          },
+          {
+            "capability": "korean-prose-editing",
+            "phase": "korean-prose-editing",
+            "phaseOrder": 55,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set"
+            ],
+            "producedArtifacts": [
+              "edit-candidate"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              }
+            ],
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null
+            }
+          },
+          {
+            "capability": "korean-prose-verification",
+            "phase": "korean-prose-verification",
+            "phaseOrder": 60,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set",
+              "edit-candidate",
+              "korean-prose-rubric"
+            ],
+            "producedArtifacts": [
+              "edit-verification-report"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-candidate",
+                "sources": [
+                  "provider:korean-prose-editing.edit-candidate"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "korean-prose-rubric",
+                "sources": [
+                  "caller.koreanProseRubric"
+                ],
+                "operation": "require-external"
+              }
+            ],
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null
+            }
+          },
+          {
+            "capability": "korean-prose-finalization",
+            "phase": "korean-prose-finalization",
+            "phaseOrder": 65,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set",
+              "edit-candidate",
+              "edit-verification-report"
+            ],
+            "producedArtifacts": [
+              "final-text-receipt"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-candidate",
+                "sources": [
+                  "provider:korean-prose-editing.edit-candidate"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-verification-report",
+                "sources": [
+                  "provider:korean-prose-verification.edit-verification-report"
+                ],
+                "operation": "select"
+              }
+            ],
+            "gate": {
+              "kind": "completion",
+              "policy": "conditional",
+              "validator": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json"
+            }
+          }
+        ]
+      },
+      "service": {
+        "status": "PASS",
+        "mockCalls": 1,
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS16-reversed-order",
+          "operationId": "SS16-reversed-order",
+          "requestDigest": "sha256:0d89ab3dad00b0eddd5ce5d61c81177e48dea98777867c265fff1da3c32ef374",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "workspace-convention-profiler",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "test-engineering",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "task-contract",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "software-security-auditor",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "session-board",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "recovery-strategy-selector",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "ponytail",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "orchestrator",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "mutation-risk-preflight",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "model-effort-advisor",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "korean-prose-editor",
+              "judgment": "needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "iteration-frame-auditor",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "instruction-scope-resolver",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "independent-deliberation-panel",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "independent-audit-gate",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "evaluation-validity-auditor",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "cs-engineering",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "coordinate-subagents",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "context-continuity",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "codex-token-usage-analyzer",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "code-review",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "change-scope-guardian",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "blocker-diagnostician",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "acceptance-evidence-validator",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        },
+        "attempts": [
+          {
+            "providerKind": "vendor",
+            "profileId": "SS16-offline",
+            "modelId": "mock-only",
+            "reasoningEffort": "low",
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0
+            },
+            "reservedCostUsd": 0.01
+          }
+        ],
+        "semanticQualityClaim": false
+      },
+      "inputLimit": {
+        "status": "PASS",
+        "exactBoundary": 124567,
+        "tooLong": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS16-reversed-order",
+          "operationId": "SS16-reversed-order",
+          "requestDigest": "sha256:0d89ab3dad00b0eddd5ce5d61c81177e48dea98777867c265fff1da3c32ef374",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "INPUT_TOO_LONG"
+            }
+          ],
+          "error": {
+            "code": "INPUT_TOO_LONG",
+            "retryable": false,
+            "dispatchState": "not-started"
+          }
+        },
+        "dispatchCount": 0,
+        "omittedRanges": []
+      },
+      "omittedK": {
+        "status": "PASS",
+        "rejectedResponseErrors": [
+          "MISSING_CANDIDATE_JUDGMENT"
+        ],
+        "missingRecommendationScore": {
+          "caseId": "SS16",
+          "verdict": "FAIL",
+          "missingRequired": [
+            "korean-prose-editor"
+          ],
+          "forbidden": [],
+          "unnecessary": [],
+          "unadjudicated": [],
+          "truePositives": 0,
+          "falsePositives": 0,
+          "requiredHits": 0,
+          "answered": true,
+          "abstained": false,
+          "unnecessaryAbstention": false,
+          "reasons": []
+        }
+      }
+    },
+    "required-at-tail": {
+      "originalPrompt": "이 한국어 안내문의 사실·수치·링크·주장 강도를 보존하며 자연스럽게 편집하고 검증해 줘.",
+      "expected": {
+        "required": [
+          "korean-prose-editor"
+        ],
+        "allowed": [
+          "orchestrator"
+        ],
+        "allowedConditions": {
+          "orchestrator": "reason must describe linking the four Korean prose capability phases"
+        },
+        "candidateCount": 24,
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82"
+      },
+      "candidateOrder": [
+        "acceptance-evidence-validator",
+        "blocker-diagnostician",
+        "change-scope-guardian",
+        "code-review",
+        "codex-token-usage-analyzer",
+        "context-continuity",
+        "coordinate-subagents",
+        "cs-engineering",
+        "evaluation-validity-auditor",
+        "independent-audit-gate",
+        "independent-deliberation-panel",
+        "instruction-scope-resolver",
+        "iteration-frame-auditor",
+        "model-effort-advisor",
+        "mutation-risk-preflight",
+        "orchestrator",
+        "ponytail",
+        "recovery-strategy-selector",
+        "session-board",
+        "software-security-auditor",
+        "task-contract",
+        "test-engineering",
+        "workspace-convention-profiler",
+        "korean-prose-editor"
+      ],
+      "requiredIndex": 23,
+      "requestDigest": "sha256:49749e1ac89b88d112cf36fc9b2338f76c1994e7f7b84d30b6e22335cc29219b",
+      "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+      "selected": "NOTRUN",
+      "selectedSkillIds": null,
+      "hostReceipt": null,
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "modelSemanticRecommendation": "NOTRUN",
+      "projection": {
+        "status": "PASS",
+        "payloadBytes": 124567,
+        "candidateCount": 24,
+        "phases": [
+          {
+            "capability": "korean-prose-selection",
+            "phase": "korean-prose-selection",
+            "phaseOrder": 50,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set"
+            ],
+            "producedArtifacts": [
+              "edit-decision-set"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              }
+            ],
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null
+            }
+          },
+          {
+            "capability": "korean-prose-editing",
+            "phase": "korean-prose-editing",
+            "phaseOrder": 55,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set"
+            ],
+            "producedArtifacts": [
+              "edit-candidate"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              }
+            ],
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null
+            }
+          },
+          {
+            "capability": "korean-prose-verification",
+            "phase": "korean-prose-verification",
+            "phaseOrder": 60,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set",
+              "edit-candidate",
+              "korean-prose-rubric"
+            ],
+            "producedArtifacts": [
+              "edit-verification-report"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-candidate",
+                "sources": [
+                  "provider:korean-prose-editing.edit-candidate"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "korean-prose-rubric",
+                "sources": [
+                  "caller.koreanProseRubric"
+                ],
+                "operation": "require-external"
+              }
+            ],
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null
+            }
+          },
+          {
+            "capability": "korean-prose-finalization",
+            "phase": "korean-prose-finalization",
+            "phaseOrder": 65,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set",
+              "edit-candidate",
+              "edit-verification-report"
+            ],
+            "producedArtifacts": [
+              "final-text-receipt"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-candidate",
+                "sources": [
+                  "provider:korean-prose-editing.edit-candidate"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-verification-report",
+                "sources": [
+                  "provider:korean-prose-verification.edit-verification-report"
+                ],
+                "operation": "select"
+              }
+            ],
+            "gate": {
+              "kind": "completion",
+              "policy": "conditional",
+              "validator": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json"
+            }
+          }
+        ]
+      },
+      "service": {
+        "status": "PASS",
+        "mockCalls": 1,
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS16-required-at-tail",
+          "operationId": "SS16-required-at-tail",
+          "requestDigest": "sha256:49749e1ac89b88d112cf36fc9b2338f76c1994e7f7b84d30b6e22335cc29219b",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "acceptance-evidence-validator",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "blocker-diagnostician",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "change-scope-guardian",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "code-review",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "codex-token-usage-analyzer",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "context-continuity",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "coordinate-subagents",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "cs-engineering",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "evaluation-validity-auditor",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "independent-audit-gate",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "independent-deliberation-panel",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "instruction-scope-resolver",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "iteration-frame-auditor",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "model-effort-advisor",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "mutation-risk-preflight",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "orchestrator",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "ponytail",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "recovery-strategy-selector",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "session-board",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "software-security-auditor",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "task-contract",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "test-engineering",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "workspace-convention-profiler",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "korean-prose-editor",
+              "judgment": "needed",
+              "reasonRefs": [
+                "synthetic-fixture-response"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        },
+        "attempts": [
+          {
+            "providerKind": "vendor",
+            "profileId": "SS16-offline",
+            "modelId": "mock-only",
+            "reasoningEffort": "low",
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0
+            },
+            "reservedCostUsd": 0.01
+          }
+        ],
+        "semanticQualityClaim": false
+      },
+      "inputLimit": {
+        "status": "PASS",
+        "exactBoundary": 124567,
+        "tooLong": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS16-required-at-tail",
+          "operationId": "SS16-required-at-tail",
+          "requestDigest": "sha256:49749e1ac89b88d112cf36fc9b2338f76c1994e7f7b84d30b6e22335cc29219b",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "INPUT_TOO_LONG"
+            }
+          ],
+          "error": {
+            "code": "INPUT_TOO_LONG",
+            "retryable": false,
+            "dispatchState": "not-started"
+          }
+        },
+        "dispatchCount": 0,
+        "omittedRanges": []
+      },
+      "omittedK": {
+        "status": "PASS",
+        "rejectedResponseErrors": [
+          "MISSING_CANDIDATE_JUDGMENT"
+        ],
+        "missingRecommendationScore": {
+          "caseId": "SS16",
+          "verdict": "FAIL",
+          "missingRequired": [
+            "korean-prose-editor"
+          ],
+          "forbidden": [],
+          "unnecessary": [],
+          "unadjudicated": [],
+          "truePositives": 0,
+          "falsePositives": 0,
+          "requiredHits": 0,
+          "answered": true,
+          "abstained": false,
+          "unnecessaryAbstention": false,
+          "reasons": []
+        }
+      }
+    }
+  },
+  "boundaries": {
+    "sourceBinding": {
+      "status": "PASS",
+      "checkedSourceRefs": [
+        {
+          "skillId": "korean-prose-editor",
+          "path": "skills/korean-prose-editor/SKILL.md",
+          "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+        },
+        {
+          "skillId": "ponytail",
+          "path": "skills/ponytail/SKILL.md",
+          "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+        },
+        {
+          "skillId": "cs-engineering",
+          "path": "skills/cs-engineering/SKILL.md",
+          "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+        },
+        {
+          "skillId": "test-engineering",
+          "path": "skills/test-engineering/SKILL.md",
+          "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+        },
+        {
+          "skillId": "code-review",
+          "path": "skills/code-review/SKILL.md",
+          "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+        },
+        {
+          "skillId": "software-security-auditor",
+          "path": "skills/software-security-auditor/SKILL.md",
+          "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+        },
+        {
+          "skillId": "orchestrator",
+          "path": "skills/orchestrator/SKILL.md",
+          "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+        }
+      ],
+      "issues": []
+    },
+    "unobservedHost": {
+      "status": "PASS",
+      "observedReceipt": null,
+      "negativeControl": {
+        "caseId": "SS16",
+        "verdict": "FAIL",
+        "missingRequired": [],
+        "forbidden": [],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 1,
+        "falsePositives": 0,
+        "requiredHits": 1,
+        "answered": false,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": [
+          "HOST_SELECTION_RECEIPT_MISSING_OR_MISMATCH"
+        ]
+      },
+      "nullAndEmptyEqual": false
+    },
+    "conditionalReason": {
+      "expected": "FAIL",
+      "observed": {
+        "caseId": "SS16",
+        "verdict": "PASS",
+        "missingRequired": [],
+        "forbidden": [],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 2,
+        "falsePositives": 0,
+        "requiredHits": 1,
+        "answered": true,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": []
+      },
+      "reason": "아무 관계 없는 사유",
+      "noReason": {
+        "caseId": "SS16",
+        "verdict": "FAIL",
+        "missingRequired": [],
+        "forbidden": [],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 2,
+        "falsePositives": 0,
+        "requiredHits": 1,
+        "answered": true,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": [
+          "CONDITIONAL_ALLOWED_REASON_MISSING"
+        ]
+      },
+      "linked": {
+        "caseId": "SS16",
+        "verdict": "PASS",
+        "missingRequired": [],
+        "forbidden": [],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 2,
+        "falsePositives": 0,
+        "requiredHits": 1,
+        "answered": true,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": []
+      },
+      "status": "FAIL"
+    },
+    "invalidResponseKnownCost": {
+      "expectedCostUsd": 0.003,
+      "observed": [
+        {
+          "providerKind": "vendor",
+          "profileId": "SS16-offline",
+          "modelId": "mock-only",
+          "reasoningEffort": "low",
+          "dispatchState": "started",
+          "status": "INVALID",
+          "errorCode": "INVALID_PROVIDER_RESPONSE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.01
+        }
+      ],
+      "budget": {
+        "limits": {
+          "jev": {
+            "limitUsd": null,
+            "spentUsd": null
+          },
+          "vendor:offline-vendor": {
+            "limitUsd": 1,
+            "spentUsd": 0
+          }
+        },
+        "nativeAllowances": {},
+        "invalidCostCeilings": [],
+        "reservations": [
+          {
+            "id": "[\"SS16-required-at-tail\",\"sha256:49749e1ac89b88d112cf36fc9b2338f76c1994e7f7b84d30b6e22335cc29219b\",\"SS16-offline\"]",
+            "bucket": "vendor:offline-vendor",
+            "maximumUsd": 0.01,
+            "profileId": "SS16-offline",
+            "nativeProfileId": null
+          }
+        ]
+      },
+      "status": "FAIL",
+      "knownFinding": "valid-cost-lost-with-invalid-response"
+    }
+  },
+  "plans": {
+    "korean-prose-selection": {
+      "schemaVersion": "1.0.0",
+      "ok": true,
+      "data": {
+        "schemaVersion": "1.0.0",
+        "taskId": "SS16-korean-prose-selection",
+        "taskDigest": "sha256:7d4a0fce270ee9040c4f5e647d3723ad1c89454d70765b548f326d1198077303",
+        "integrityToken": "<LOCAL_PLAN_SIGNATURE_REMOVED>",
+        "executionMode": "orchestrated",
+        "state": "ready",
+        "selectedSkills": [
+          "korean-prose-editor"
+        ],
+        "stages": [
+          {
+            "stageId": "stage-01-korean-prose-selection",
+            "order": 1,
+            "requiredCapability": "korean-prose-selection",
+            "satisfiedCapabilities": [
+              "korean-prose-selection"
+            ],
+            "skillId": "korean-prose-editor",
+            "phase": "korean-prose-selection",
+            "selectionReason": "Selected 'korean-prose-editor' because provider 'korean-prose-editor:korean-prose-selection:1' supplies 'korean-prose-selection' at priority 50.",
+            "state": "ready",
+            "requiredArtifacts": [
+              "edit-decision-set"
+            ],
+            "riskGate": "none",
+            "providerKey": "korean-prose-editor:korean-prose-selection:1",
+            "executionClass": "workflow",
+            "phaseOrder": 50,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              }
+            ],
+            "producedArtifacts": [
+              "edit-decision-set"
+            ],
+            "outputSchema": {
+              "path": "skills/korean-prose-editor/contracts/edit-decision-set.v1.schema.json",
+              "digest": "sha256:db9a283e623df89093c2dcc93f74461e309ef8d952956a5baacd88ff141147ee"
+            },
+            "resultSchema": {
+              "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+              "digest": "sha256:788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08"
+            },
+            "stateMapping": {
+              "selector": "/output/decisions/status",
+              "values": {
+                "ready": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "needs-input": {
+                  "state": "needs-input",
+                  "errorRequired": false
+                },
+                "blocked": {
+                  "state": "blocked",
+                  "errorRequired": true,
+                  "allowedErrorCodes": [
+                    "MISSING_EVIDENCE",
+                    "MCP_UNAVAILABLE"
+                  ]
+                }
+              },
+              "default": "reject",
+              "adapterErrors": [
+                "INVALID_INPUT",
+                "MISSING_EVIDENCE",
+                "MCP_UNAVAILABLE"
+              ]
+            },
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null,
+              "validatorSchema": null
+            },
+            "receiptPolicy": {
+              "mode": "reference-only",
+              "actorIdPointer": "/output/actorId",
+              "uniqueness": "run"
+            }
+          },
+          {
+            "stageId": "stage-02-korean-prose-editing",
+            "order": 2,
+            "requiredCapability": "korean-prose-editing",
+            "satisfiedCapabilities": [
+              "korean-prose-editing"
+            ],
+            "skillId": "korean-prose-editor",
+            "phase": "korean-prose-editing",
+            "selectionReason": "Selected 'korean-prose-editor' because provider 'korean-prose-editor:korean-prose-editing:2' supplies 'korean-prose-editing' at priority 50.",
+            "state": "ready",
+            "requiredArtifacts": [
+              "edit-candidate"
+            ],
+            "riskGate": "none",
+            "providerKey": "korean-prose-editor:korean-prose-editing:2",
+            "executionClass": "workflow",
+            "phaseOrder": 55,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              }
+            ],
+            "producedArtifacts": [
+              "edit-candidate"
+            ],
+            "outputSchema": {
+              "path": "skills/korean-prose-editor/contracts/edit-candidate.v1.schema.json",
+              "digest": "sha256:8026fae9d2597f3cc127e80f9d04b7fade42d1c66d03a23ca8656a4c27708db0"
+            },
+            "resultSchema": {
+              "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+              "digest": "sha256:788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08"
+            },
+            "stateMapping": {
+              "selector": "/output/decisions/status",
+              "values": {
+                "ready": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "needs-input": {
+                  "state": "needs-input",
+                  "errorRequired": false
+                },
+                "blocked": {
+                  "state": "blocked",
+                  "errorRequired": true,
+                  "allowedErrorCodes": [
+                    "MISSING_EVIDENCE",
+                    "MCP_UNAVAILABLE"
+                  ]
+                }
+              },
+              "default": "reject",
+              "adapterErrors": [
+                "INVALID_INPUT",
+                "MISSING_EVIDENCE",
+                "MCP_UNAVAILABLE"
+              ]
+            },
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null,
+              "validatorSchema": null
+            },
+            "receiptPolicy": {
+              "mode": "reference-only",
+              "actorIdPointer": "/output/actorId",
+              "uniqueness": "run"
+            }
+          },
+          {
+            "stageId": "stage-03-korean-prose-verification",
+            "order": 3,
+            "requiredCapability": "korean-prose-verification",
+            "satisfiedCapabilities": [
+              "korean-prose-verification"
+            ],
+            "skillId": "korean-prose-editor",
+            "phase": "korean-prose-verification",
+            "selectionReason": "Selected 'korean-prose-editor' because provider 'korean-prose-editor:korean-prose-verification:3' supplies 'korean-prose-verification' at priority 50.",
+            "state": "ready",
+            "requiredArtifacts": [
+              "edit-verification-report"
+            ],
+            "riskGate": "none",
+            "providerKey": "korean-prose-editor:korean-prose-verification:3",
+            "executionClass": "workflow",
+            "phaseOrder": 60,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set",
+              "edit-candidate",
+              "korean-prose-rubric"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-candidate",
+                "sources": [
+                  "provider:korean-prose-editing.edit-candidate"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "korean-prose-rubric",
+                "sources": [
+                  "caller.koreanProseRubric"
+                ],
+                "operation": "require-external"
+              }
+            ],
+            "producedArtifacts": [
+              "edit-verification-report"
+            ],
+            "outputSchema": {
+              "path": "skills/korean-prose-editor/contracts/edit-verification-report.v1.schema.json",
+              "digest": "sha256:3cee16cadb97f532d1a6416c623510b5d338465fbc0c742c8fe2e3992dc7ef95"
+            },
+            "resultSchema": {
+              "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+              "digest": "sha256:788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08"
+            },
+            "stateMapping": {
+              "selector": "/output/decisions/status",
+              "values": {
+                "verified": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "partial": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "fallback": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "blocked": {
+                  "state": "blocked",
+                  "errorRequired": true,
+                  "allowedErrorCodes": [
+                    "MISSING_EVIDENCE",
+                    "MCP_UNAVAILABLE"
+                  ]
+                }
+              },
+              "default": "reject",
+              "adapterErrors": [
+                "INVALID_INPUT",
+                "MISSING_EVIDENCE",
+                "MCP_UNAVAILABLE"
+              ]
+            },
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null,
+              "validatorSchema": null
+            },
+            "receiptPolicy": {
+              "mode": "reference-only",
+              "actorIdPointer": "/output/actorId",
+              "uniqueness": "run"
+            }
+          },
+          {
+            "stageId": "stage-04-korean-prose-finalization",
+            "order": 4,
+            "requiredCapability": "korean-prose-finalization",
+            "satisfiedCapabilities": [
+              "korean-prose-finalization"
+            ],
+            "skillId": "korean-prose-editor",
+            "phase": "korean-prose-finalization",
+            "selectionReason": "Selected 'korean-prose-editor' because provider 'korean-prose-editor:korean-prose-finalization:4' supplies 'korean-prose-finalization' at priority 50.",
+            "state": "ready",
+            "requiredArtifacts": [
+              "final-text-receipt"
+            ],
+            "riskGate": "conditional",
+            "providerKey": "korean-prose-editor:korean-prose-finalization:4",
+            "executionClass": "workflow",
+            "phaseOrder": 65,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set",
+              "edit-candidate",
+              "edit-verification-report"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-candidate",
+                "sources": [
+                  "provider:korean-prose-editing.edit-candidate"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-verification-report",
+                "sources": [
+                  "provider:korean-prose-verification.edit-verification-report"
+                ],
+                "operation": "select"
+              }
+            ],
+            "producedArtifacts": [
+              "final-text-receipt"
+            ],
+            "outputSchema": {
+              "path": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
+              "digest": "sha256:19c95d9ece81e110b286460253929ed60382786decdf139261baa357b1da89e9"
+            },
+            "resultSchema": {
+              "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+              "digest": "sha256:788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08"
+            },
+            "stateMapping": {
+              "selector": "/output/decisions/status",
+              "values": {
+                "finalized": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "fallback": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "blocked": {
+                  "state": "blocked",
+                  "errorRequired": true,
+                  "allowedErrorCodes": [
+                    "MISSING_EVIDENCE",
+                    "GATE_FAILED",
+                    "MCP_UNAVAILABLE"
+                  ]
+                }
+              },
+              "default": "reject",
+              "adapterErrors": [
+                "INVALID_INPUT",
+                "MISSING_EVIDENCE",
+                "GATE_FAILED",
+                "MCP_UNAVAILABLE"
+              ]
+            },
+            "gate": {
+              "kind": "completion",
+              "policy": "conditional",
+              "validator": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
+              "validatorSchema": {
+                "path": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
+                "digest": "sha256:19c95d9ece81e110b286460253929ed60382786decdf139261baa357b1da89e9"
+              }
+            },
+            "receiptPolicy": {
+              "mode": "reference-only",
+              "actorIdsPointer": "/output/actorIds",
+              "actorIdsMatch": "prior-policy-actors"
+            }
+          }
+        ],
+        "currentStageId": null,
+        "nextStageId": "stage-01-korean-prose-selection",
+        "errors": []
+      },
+      "error": null
+    },
+    "korean-prose-editing": {
+      "schemaVersion": "1.0.0",
+      "ok": true,
+      "data": {
+        "schemaVersion": "1.0.0",
+        "taskId": "SS16-korean-prose-editing",
+        "taskDigest": "sha256:b9e130c4f5932fdd561c15922880154dab7a8de14df8470f08ef0c951cea84e2",
+        "integrityToken": "<LOCAL_PLAN_SIGNATURE_REMOVED>",
+        "executionMode": "orchestrated",
+        "state": "ready",
+        "selectedSkills": [
+          "korean-prose-editor"
+        ],
+        "stages": [
+          {
+            "stageId": "stage-01-korean-prose-selection",
+            "order": 1,
+            "requiredCapability": "korean-prose-selection",
+            "satisfiedCapabilities": [
+              "korean-prose-selection"
+            ],
+            "skillId": "korean-prose-editor",
+            "phase": "korean-prose-selection",
+            "selectionReason": "Selected 'korean-prose-editor' because provider 'korean-prose-editor:korean-prose-selection:1' supplies 'korean-prose-selection' at priority 50.",
+            "state": "ready",
+            "requiredArtifacts": [
+              "edit-decision-set"
+            ],
+            "riskGate": "none",
+            "providerKey": "korean-prose-editor:korean-prose-selection:1",
+            "executionClass": "workflow",
+            "phaseOrder": 50,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              }
+            ],
+            "producedArtifacts": [
+              "edit-decision-set"
+            ],
+            "outputSchema": {
+              "path": "skills/korean-prose-editor/contracts/edit-decision-set.v1.schema.json",
+              "digest": "sha256:db9a283e623df89093c2dcc93f74461e309ef8d952956a5baacd88ff141147ee"
+            },
+            "resultSchema": {
+              "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+              "digest": "sha256:788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08"
+            },
+            "stateMapping": {
+              "selector": "/output/decisions/status",
+              "values": {
+                "ready": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "needs-input": {
+                  "state": "needs-input",
+                  "errorRequired": false
+                },
+                "blocked": {
+                  "state": "blocked",
+                  "errorRequired": true,
+                  "allowedErrorCodes": [
+                    "MISSING_EVIDENCE",
+                    "MCP_UNAVAILABLE"
+                  ]
+                }
+              },
+              "default": "reject",
+              "adapterErrors": [
+                "INVALID_INPUT",
+                "MISSING_EVIDENCE",
+                "MCP_UNAVAILABLE"
+              ]
+            },
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null,
+              "validatorSchema": null
+            },
+            "receiptPolicy": {
+              "mode": "reference-only",
+              "actorIdPointer": "/output/actorId",
+              "uniqueness": "run"
+            }
+          },
+          {
+            "stageId": "stage-02-korean-prose-editing",
+            "order": 2,
+            "requiredCapability": "korean-prose-editing",
+            "satisfiedCapabilities": [
+              "korean-prose-editing"
+            ],
+            "skillId": "korean-prose-editor",
+            "phase": "korean-prose-editing",
+            "selectionReason": "Selected 'korean-prose-editor' because provider 'korean-prose-editor:korean-prose-editing:2' supplies 'korean-prose-editing' at priority 50.",
+            "state": "ready",
+            "requiredArtifacts": [
+              "edit-candidate"
+            ],
+            "riskGate": "none",
+            "providerKey": "korean-prose-editor:korean-prose-editing:2",
+            "executionClass": "workflow",
+            "phaseOrder": 55,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              }
+            ],
+            "producedArtifacts": [
+              "edit-candidate"
+            ],
+            "outputSchema": {
+              "path": "skills/korean-prose-editor/contracts/edit-candidate.v1.schema.json",
+              "digest": "sha256:8026fae9d2597f3cc127e80f9d04b7fade42d1c66d03a23ca8656a4c27708db0"
+            },
+            "resultSchema": {
+              "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+              "digest": "sha256:788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08"
+            },
+            "stateMapping": {
+              "selector": "/output/decisions/status",
+              "values": {
+                "ready": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "needs-input": {
+                  "state": "needs-input",
+                  "errorRequired": false
+                },
+                "blocked": {
+                  "state": "blocked",
+                  "errorRequired": true,
+                  "allowedErrorCodes": [
+                    "MISSING_EVIDENCE",
+                    "MCP_UNAVAILABLE"
+                  ]
+                }
+              },
+              "default": "reject",
+              "adapterErrors": [
+                "INVALID_INPUT",
+                "MISSING_EVIDENCE",
+                "MCP_UNAVAILABLE"
+              ]
+            },
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null,
+              "validatorSchema": null
+            },
+            "receiptPolicy": {
+              "mode": "reference-only",
+              "actorIdPointer": "/output/actorId",
+              "uniqueness": "run"
+            }
+          },
+          {
+            "stageId": "stage-03-korean-prose-verification",
+            "order": 3,
+            "requiredCapability": "korean-prose-verification",
+            "satisfiedCapabilities": [
+              "korean-prose-verification"
+            ],
+            "skillId": "korean-prose-editor",
+            "phase": "korean-prose-verification",
+            "selectionReason": "Selected 'korean-prose-editor' because provider 'korean-prose-editor:korean-prose-verification:3' supplies 'korean-prose-verification' at priority 50.",
+            "state": "ready",
+            "requiredArtifacts": [
+              "edit-verification-report"
+            ],
+            "riskGate": "none",
+            "providerKey": "korean-prose-editor:korean-prose-verification:3",
+            "executionClass": "workflow",
+            "phaseOrder": 60,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set",
+              "edit-candidate",
+              "korean-prose-rubric"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-candidate",
+                "sources": [
+                  "provider:korean-prose-editing.edit-candidate"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "korean-prose-rubric",
+                "sources": [
+                  "caller.koreanProseRubric"
+                ],
+                "operation": "require-external"
+              }
+            ],
+            "producedArtifacts": [
+              "edit-verification-report"
+            ],
+            "outputSchema": {
+              "path": "skills/korean-prose-editor/contracts/edit-verification-report.v1.schema.json",
+              "digest": "sha256:3cee16cadb97f532d1a6416c623510b5d338465fbc0c742c8fe2e3992dc7ef95"
+            },
+            "resultSchema": {
+              "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+              "digest": "sha256:788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08"
+            },
+            "stateMapping": {
+              "selector": "/output/decisions/status",
+              "values": {
+                "verified": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "partial": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "fallback": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "blocked": {
+                  "state": "blocked",
+                  "errorRequired": true,
+                  "allowedErrorCodes": [
+                    "MISSING_EVIDENCE",
+                    "MCP_UNAVAILABLE"
+                  ]
+                }
+              },
+              "default": "reject",
+              "adapterErrors": [
+                "INVALID_INPUT",
+                "MISSING_EVIDENCE",
+                "MCP_UNAVAILABLE"
+              ]
+            },
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null,
+              "validatorSchema": null
+            },
+            "receiptPolicy": {
+              "mode": "reference-only",
+              "actorIdPointer": "/output/actorId",
+              "uniqueness": "run"
+            }
+          },
+          {
+            "stageId": "stage-04-korean-prose-finalization",
+            "order": 4,
+            "requiredCapability": "korean-prose-finalization",
+            "satisfiedCapabilities": [
+              "korean-prose-finalization"
+            ],
+            "skillId": "korean-prose-editor",
+            "phase": "korean-prose-finalization",
+            "selectionReason": "Selected 'korean-prose-editor' because provider 'korean-prose-editor:korean-prose-finalization:4' supplies 'korean-prose-finalization' at priority 50.",
+            "state": "ready",
+            "requiredArtifacts": [
+              "final-text-receipt"
+            ],
+            "riskGate": "conditional",
+            "providerKey": "korean-prose-editor:korean-prose-finalization:4",
+            "executionClass": "workflow",
+            "phaseOrder": 65,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set",
+              "edit-candidate",
+              "edit-verification-report"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-candidate",
+                "sources": [
+                  "provider:korean-prose-editing.edit-candidate"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-verification-report",
+                "sources": [
+                  "provider:korean-prose-verification.edit-verification-report"
+                ],
+                "operation": "select"
+              }
+            ],
+            "producedArtifacts": [
+              "final-text-receipt"
+            ],
+            "outputSchema": {
+              "path": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
+              "digest": "sha256:19c95d9ece81e110b286460253929ed60382786decdf139261baa357b1da89e9"
+            },
+            "resultSchema": {
+              "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+              "digest": "sha256:788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08"
+            },
+            "stateMapping": {
+              "selector": "/output/decisions/status",
+              "values": {
+                "finalized": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "fallback": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "blocked": {
+                  "state": "blocked",
+                  "errorRequired": true,
+                  "allowedErrorCodes": [
+                    "MISSING_EVIDENCE",
+                    "GATE_FAILED",
+                    "MCP_UNAVAILABLE"
+                  ]
+                }
+              },
+              "default": "reject",
+              "adapterErrors": [
+                "INVALID_INPUT",
+                "MISSING_EVIDENCE",
+                "GATE_FAILED",
+                "MCP_UNAVAILABLE"
+              ]
+            },
+            "gate": {
+              "kind": "completion",
+              "policy": "conditional",
+              "validator": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
+              "validatorSchema": {
+                "path": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
+                "digest": "sha256:19c95d9ece81e110b286460253929ed60382786decdf139261baa357b1da89e9"
+              }
+            },
+            "receiptPolicy": {
+              "mode": "reference-only",
+              "actorIdsPointer": "/output/actorIds",
+              "actorIdsMatch": "prior-policy-actors"
+            }
+          }
+        ],
+        "currentStageId": null,
+        "nextStageId": "stage-01-korean-prose-selection",
+        "errors": []
+      },
+      "error": null
+    },
+    "korean-prose-verification": {
+      "schemaVersion": "1.0.0",
+      "ok": true,
+      "data": {
+        "schemaVersion": "1.0.0",
+        "taskId": "SS16-korean-prose-verification",
+        "taskDigest": "sha256:e4f173b63f89bc4965758f0d21fd9dafc2a07a401b54cb840bc6cf857681c862",
+        "integrityToken": "<LOCAL_PLAN_SIGNATURE_REMOVED>",
+        "executionMode": "orchestrated",
+        "state": "ready",
+        "selectedSkills": [
+          "korean-prose-editor"
+        ],
+        "stages": [
+          {
+            "stageId": "stage-01-korean-prose-selection",
+            "order": 1,
+            "requiredCapability": "korean-prose-selection",
+            "satisfiedCapabilities": [
+              "korean-prose-selection"
+            ],
+            "skillId": "korean-prose-editor",
+            "phase": "korean-prose-selection",
+            "selectionReason": "Selected 'korean-prose-editor' because provider 'korean-prose-editor:korean-prose-selection:1' supplies 'korean-prose-selection' at priority 50.",
+            "state": "ready",
+            "requiredArtifacts": [
+              "edit-decision-set"
+            ],
+            "riskGate": "none",
+            "providerKey": "korean-prose-editor:korean-prose-selection:1",
+            "executionClass": "workflow",
+            "phaseOrder": 50,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              }
+            ],
+            "producedArtifacts": [
+              "edit-decision-set"
+            ],
+            "outputSchema": {
+              "path": "skills/korean-prose-editor/contracts/edit-decision-set.v1.schema.json",
+              "digest": "sha256:db9a283e623df89093c2dcc93f74461e309ef8d952956a5baacd88ff141147ee"
+            },
+            "resultSchema": {
+              "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+              "digest": "sha256:788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08"
+            },
+            "stateMapping": {
+              "selector": "/output/decisions/status",
+              "values": {
+                "ready": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "needs-input": {
+                  "state": "needs-input",
+                  "errorRequired": false
+                },
+                "blocked": {
+                  "state": "blocked",
+                  "errorRequired": true,
+                  "allowedErrorCodes": [
+                    "MISSING_EVIDENCE",
+                    "MCP_UNAVAILABLE"
+                  ]
+                }
+              },
+              "default": "reject",
+              "adapterErrors": [
+                "INVALID_INPUT",
+                "MISSING_EVIDENCE",
+                "MCP_UNAVAILABLE"
+              ]
+            },
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null,
+              "validatorSchema": null
+            },
+            "receiptPolicy": {
+              "mode": "reference-only",
+              "actorIdPointer": "/output/actorId",
+              "uniqueness": "run"
+            }
+          },
+          {
+            "stageId": "stage-02-korean-prose-editing",
+            "order": 2,
+            "requiredCapability": "korean-prose-editing",
+            "satisfiedCapabilities": [
+              "korean-prose-editing"
+            ],
+            "skillId": "korean-prose-editor",
+            "phase": "korean-prose-editing",
+            "selectionReason": "Selected 'korean-prose-editor' because provider 'korean-prose-editor:korean-prose-editing:2' supplies 'korean-prose-editing' at priority 50.",
+            "state": "ready",
+            "requiredArtifacts": [
+              "edit-candidate"
+            ],
+            "riskGate": "none",
+            "providerKey": "korean-prose-editor:korean-prose-editing:2",
+            "executionClass": "workflow",
+            "phaseOrder": 55,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              }
+            ],
+            "producedArtifacts": [
+              "edit-candidate"
+            ],
+            "outputSchema": {
+              "path": "skills/korean-prose-editor/contracts/edit-candidate.v1.schema.json",
+              "digest": "sha256:8026fae9d2597f3cc127e80f9d04b7fade42d1c66d03a23ca8656a4c27708db0"
+            },
+            "resultSchema": {
+              "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+              "digest": "sha256:788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08"
+            },
+            "stateMapping": {
+              "selector": "/output/decisions/status",
+              "values": {
+                "ready": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "needs-input": {
+                  "state": "needs-input",
+                  "errorRequired": false
+                },
+                "blocked": {
+                  "state": "blocked",
+                  "errorRequired": true,
+                  "allowedErrorCodes": [
+                    "MISSING_EVIDENCE",
+                    "MCP_UNAVAILABLE"
+                  ]
+                }
+              },
+              "default": "reject",
+              "adapterErrors": [
+                "INVALID_INPUT",
+                "MISSING_EVIDENCE",
+                "MCP_UNAVAILABLE"
+              ]
+            },
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null,
+              "validatorSchema": null
+            },
+            "receiptPolicy": {
+              "mode": "reference-only",
+              "actorIdPointer": "/output/actorId",
+              "uniqueness": "run"
+            }
+          },
+          {
+            "stageId": "stage-03-korean-prose-verification",
+            "order": 3,
+            "requiredCapability": "korean-prose-verification",
+            "satisfiedCapabilities": [
+              "korean-prose-verification"
+            ],
+            "skillId": "korean-prose-editor",
+            "phase": "korean-prose-verification",
+            "selectionReason": "Selected 'korean-prose-editor' because provider 'korean-prose-editor:korean-prose-verification:3' supplies 'korean-prose-verification' at priority 50.",
+            "state": "ready",
+            "requiredArtifacts": [
+              "edit-verification-report"
+            ],
+            "riskGate": "none",
+            "providerKey": "korean-prose-editor:korean-prose-verification:3",
+            "executionClass": "workflow",
+            "phaseOrder": 60,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set",
+              "edit-candidate",
+              "korean-prose-rubric"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-candidate",
+                "sources": [
+                  "provider:korean-prose-editing.edit-candidate"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "korean-prose-rubric",
+                "sources": [
+                  "caller.koreanProseRubric"
+                ],
+                "operation": "require-external"
+              }
+            ],
+            "producedArtifacts": [
+              "edit-verification-report"
+            ],
+            "outputSchema": {
+              "path": "skills/korean-prose-editor/contracts/edit-verification-report.v1.schema.json",
+              "digest": "sha256:3cee16cadb97f532d1a6416c623510b5d338465fbc0c742c8fe2e3992dc7ef95"
+            },
+            "resultSchema": {
+              "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+              "digest": "sha256:788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08"
+            },
+            "stateMapping": {
+              "selector": "/output/decisions/status",
+              "values": {
+                "verified": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "partial": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "fallback": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "blocked": {
+                  "state": "blocked",
+                  "errorRequired": true,
+                  "allowedErrorCodes": [
+                    "MISSING_EVIDENCE",
+                    "MCP_UNAVAILABLE"
+                  ]
+                }
+              },
+              "default": "reject",
+              "adapterErrors": [
+                "INVALID_INPUT",
+                "MISSING_EVIDENCE",
+                "MCP_UNAVAILABLE"
+              ]
+            },
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null,
+              "validatorSchema": null
+            },
+            "receiptPolicy": {
+              "mode": "reference-only",
+              "actorIdPointer": "/output/actorId",
+              "uniqueness": "run"
+            }
+          },
+          {
+            "stageId": "stage-04-korean-prose-finalization",
+            "order": 4,
+            "requiredCapability": "korean-prose-finalization",
+            "satisfiedCapabilities": [
+              "korean-prose-finalization"
+            ],
+            "skillId": "korean-prose-editor",
+            "phase": "korean-prose-finalization",
+            "selectionReason": "Selected 'korean-prose-editor' because provider 'korean-prose-editor:korean-prose-finalization:4' supplies 'korean-prose-finalization' at priority 50.",
+            "state": "ready",
+            "requiredArtifacts": [
+              "final-text-receipt"
+            ],
+            "riskGate": "conditional",
+            "providerKey": "korean-prose-editor:korean-prose-finalization:4",
+            "executionClass": "workflow",
+            "phaseOrder": 65,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set",
+              "edit-candidate",
+              "edit-verification-report"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-candidate",
+                "sources": [
+                  "provider:korean-prose-editing.edit-candidate"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-verification-report",
+                "sources": [
+                  "provider:korean-prose-verification.edit-verification-report"
+                ],
+                "operation": "select"
+              }
+            ],
+            "producedArtifacts": [
+              "final-text-receipt"
+            ],
+            "outputSchema": {
+              "path": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
+              "digest": "sha256:19c95d9ece81e110b286460253929ed60382786decdf139261baa357b1da89e9"
+            },
+            "resultSchema": {
+              "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+              "digest": "sha256:788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08"
+            },
+            "stateMapping": {
+              "selector": "/output/decisions/status",
+              "values": {
+                "finalized": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "fallback": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "blocked": {
+                  "state": "blocked",
+                  "errorRequired": true,
+                  "allowedErrorCodes": [
+                    "MISSING_EVIDENCE",
+                    "GATE_FAILED",
+                    "MCP_UNAVAILABLE"
+                  ]
+                }
+              },
+              "default": "reject",
+              "adapterErrors": [
+                "INVALID_INPUT",
+                "MISSING_EVIDENCE",
+                "GATE_FAILED",
+                "MCP_UNAVAILABLE"
+              ]
+            },
+            "gate": {
+              "kind": "completion",
+              "policy": "conditional",
+              "validator": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
+              "validatorSchema": {
+                "path": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
+                "digest": "sha256:19c95d9ece81e110b286460253929ed60382786decdf139261baa357b1da89e9"
+              }
+            },
+            "receiptPolicy": {
+              "mode": "reference-only",
+              "actorIdsPointer": "/output/actorIds",
+              "actorIdsMatch": "prior-policy-actors"
+            }
+          }
+        ],
+        "currentStageId": null,
+        "nextStageId": "stage-01-korean-prose-selection",
+        "errors": []
+      },
+      "error": null
+    },
+    "korean-prose-finalization": {
+      "schemaVersion": "1.0.0",
+      "ok": true,
+      "data": {
+        "schemaVersion": "1.0.0",
+        "taskId": "SS16-korean-prose-finalization",
+        "taskDigest": "sha256:44e1796c4fbc8861e162b39c5e6030cd49c122bf6573674fd11d63829f4873c1",
+        "integrityToken": "<LOCAL_PLAN_SIGNATURE_REMOVED>",
+        "executionMode": "orchestrated",
+        "state": "ready",
+        "selectedSkills": [
+          "korean-prose-editor"
+        ],
+        "stages": [
+          {
+            "stageId": "stage-01-korean-prose-selection",
+            "order": 1,
+            "requiredCapability": "korean-prose-selection",
+            "satisfiedCapabilities": [
+              "korean-prose-selection"
+            ],
+            "skillId": "korean-prose-editor",
+            "phase": "korean-prose-selection",
+            "selectionReason": "Selected 'korean-prose-editor' because provider 'korean-prose-editor:korean-prose-selection:1' supplies 'korean-prose-selection' at priority 50.",
+            "state": "ready",
+            "requiredArtifacts": [
+              "edit-decision-set"
+            ],
+            "riskGate": "none",
+            "providerKey": "korean-prose-editor:korean-prose-selection:1",
+            "executionClass": "workflow",
+            "phaseOrder": 50,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              }
+            ],
+            "producedArtifacts": [
+              "edit-decision-set"
+            ],
+            "outputSchema": {
+              "path": "skills/korean-prose-editor/contracts/edit-decision-set.v1.schema.json",
+              "digest": "sha256:db9a283e623df89093c2dcc93f74461e309ef8d952956a5baacd88ff141147ee"
+            },
+            "resultSchema": {
+              "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+              "digest": "sha256:788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08"
+            },
+            "stateMapping": {
+              "selector": "/output/decisions/status",
+              "values": {
+                "ready": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "needs-input": {
+                  "state": "needs-input",
+                  "errorRequired": false
+                },
+                "blocked": {
+                  "state": "blocked",
+                  "errorRequired": true,
+                  "allowedErrorCodes": [
+                    "MISSING_EVIDENCE",
+                    "MCP_UNAVAILABLE"
+                  ]
+                }
+              },
+              "default": "reject",
+              "adapterErrors": [
+                "INVALID_INPUT",
+                "MISSING_EVIDENCE",
+                "MCP_UNAVAILABLE"
+              ]
+            },
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null,
+              "validatorSchema": null
+            },
+            "receiptPolicy": {
+              "mode": "reference-only",
+              "actorIdPointer": "/output/actorId",
+              "uniqueness": "run"
+            }
+          },
+          {
+            "stageId": "stage-02-korean-prose-editing",
+            "order": 2,
+            "requiredCapability": "korean-prose-editing",
+            "satisfiedCapabilities": [
+              "korean-prose-editing"
+            ],
+            "skillId": "korean-prose-editor",
+            "phase": "korean-prose-editing",
+            "selectionReason": "Selected 'korean-prose-editor' because provider 'korean-prose-editor:korean-prose-editing:2' supplies 'korean-prose-editing' at priority 50.",
+            "state": "ready",
+            "requiredArtifacts": [
+              "edit-candidate"
+            ],
+            "riskGate": "none",
+            "providerKey": "korean-prose-editor:korean-prose-editing:2",
+            "executionClass": "workflow",
+            "phaseOrder": 55,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              }
+            ],
+            "producedArtifacts": [
+              "edit-candidate"
+            ],
+            "outputSchema": {
+              "path": "skills/korean-prose-editor/contracts/edit-candidate.v1.schema.json",
+              "digest": "sha256:8026fae9d2597f3cc127e80f9d04b7fade42d1c66d03a23ca8656a4c27708db0"
+            },
+            "resultSchema": {
+              "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+              "digest": "sha256:788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08"
+            },
+            "stateMapping": {
+              "selector": "/output/decisions/status",
+              "values": {
+                "ready": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "needs-input": {
+                  "state": "needs-input",
+                  "errorRequired": false
+                },
+                "blocked": {
+                  "state": "blocked",
+                  "errorRequired": true,
+                  "allowedErrorCodes": [
+                    "MISSING_EVIDENCE",
+                    "MCP_UNAVAILABLE"
+                  ]
+                }
+              },
+              "default": "reject",
+              "adapterErrors": [
+                "INVALID_INPUT",
+                "MISSING_EVIDENCE",
+                "MCP_UNAVAILABLE"
+              ]
+            },
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null,
+              "validatorSchema": null
+            },
+            "receiptPolicy": {
+              "mode": "reference-only",
+              "actorIdPointer": "/output/actorId",
+              "uniqueness": "run"
+            }
+          },
+          {
+            "stageId": "stage-03-korean-prose-verification",
+            "order": 3,
+            "requiredCapability": "korean-prose-verification",
+            "satisfiedCapabilities": [
+              "korean-prose-verification"
+            ],
+            "skillId": "korean-prose-editor",
+            "phase": "korean-prose-verification",
+            "selectionReason": "Selected 'korean-prose-editor' because provider 'korean-prose-editor:korean-prose-verification:3' supplies 'korean-prose-verification' at priority 50.",
+            "state": "ready",
+            "requiredArtifacts": [
+              "edit-verification-report"
+            ],
+            "riskGate": "none",
+            "providerKey": "korean-prose-editor:korean-prose-verification:3",
+            "executionClass": "workflow",
+            "phaseOrder": 60,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set",
+              "edit-candidate",
+              "korean-prose-rubric"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-candidate",
+                "sources": [
+                  "provider:korean-prose-editing.edit-candidate"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "korean-prose-rubric",
+                "sources": [
+                  "caller.koreanProseRubric"
+                ],
+                "operation": "require-external"
+              }
+            ],
+            "producedArtifacts": [
+              "edit-verification-report"
+            ],
+            "outputSchema": {
+              "path": "skills/korean-prose-editor/contracts/edit-verification-report.v1.schema.json",
+              "digest": "sha256:3cee16cadb97f532d1a6416c623510b5d338465fbc0c742c8fe2e3992dc7ef95"
+            },
+            "resultSchema": {
+              "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+              "digest": "sha256:788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08"
+            },
+            "stateMapping": {
+              "selector": "/output/decisions/status",
+              "values": {
+                "verified": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "partial": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "fallback": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "blocked": {
+                  "state": "blocked",
+                  "errorRequired": true,
+                  "allowedErrorCodes": [
+                    "MISSING_EVIDENCE",
+                    "MCP_UNAVAILABLE"
+                  ]
+                }
+              },
+              "default": "reject",
+              "adapterErrors": [
+                "INVALID_INPUT",
+                "MISSING_EVIDENCE",
+                "MCP_UNAVAILABLE"
+              ]
+            },
+            "gate": {
+              "kind": "none",
+              "policy": "none",
+              "validator": null,
+              "validatorSchema": null
+            },
+            "receiptPolicy": {
+              "mode": "reference-only",
+              "actorIdPointer": "/output/actorId",
+              "uniqueness": "run"
+            }
+          },
+          {
+            "stageId": "stage-04-korean-prose-finalization",
+            "order": 4,
+            "requiredCapability": "korean-prose-finalization",
+            "satisfiedCapabilities": [
+              "korean-prose-finalization"
+            ],
+            "skillId": "korean-prose-editor",
+            "phase": "korean-prose-finalization",
+            "selectionReason": "Selected 'korean-prose-editor' because provider 'korean-prose-editor:korean-prose-finalization:4' supplies 'korean-prose-finalization' at priority 50.",
+            "state": "ready",
+            "requiredArtifacts": [
+              "final-text-receipt"
+            ],
+            "riskGate": "conditional",
+            "providerKey": "korean-prose-editor:korean-prose-finalization:4",
+            "executionClass": "workflow",
+            "phaseOrder": 65,
+            "requiredInputArtifacts": [
+              "korean-prose-request",
+              "korean-prose-glossary-match-set",
+              "edit-decision-set",
+              "edit-candidate",
+              "edit-verification-report"
+            ],
+            "inputBindings": [
+              {
+                "targetArtifact": "korean-prose-request",
+                "sources": [
+                  "caller.koreanProseRequest"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "korean-prose-glossary-match-set",
+                "sources": [
+                  "caller.koreanProseGlossaryMatchSet"
+                ],
+                "operation": "require-external"
+              },
+              {
+                "targetArtifact": "edit-decision-set",
+                "sources": [
+                  "provider:korean-prose-selection.edit-decision-set"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-candidate",
+                "sources": [
+                  "provider:korean-prose-editing.edit-candidate"
+                ],
+                "operation": "select"
+              },
+              {
+                "targetArtifact": "edit-verification-report",
+                "sources": [
+                  "provider:korean-prose-verification.edit-verification-report"
+                ],
+                "operation": "select"
+              }
+            ],
+            "producedArtifacts": [
+              "final-text-receipt"
+            ],
+            "outputSchema": {
+              "path": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
+              "digest": "sha256:19c95d9ece81e110b286460253929ed60382786decdf139261baa357b1da89e9"
+            },
+            "resultSchema": {
+              "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+              "digest": "sha256:788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08"
+            },
+            "stateMapping": {
+              "selector": "/output/decisions/status",
+              "values": {
+                "finalized": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "fallback": {
+                  "state": "passed",
+                  "errorRequired": false
+                },
+                "blocked": {
+                  "state": "blocked",
+                  "errorRequired": true,
+                  "allowedErrorCodes": [
+                    "MISSING_EVIDENCE",
+                    "GATE_FAILED",
+                    "MCP_UNAVAILABLE"
+                  ]
+                }
+              },
+              "default": "reject",
+              "adapterErrors": [
+                "INVALID_INPUT",
+                "MISSING_EVIDENCE",
+                "GATE_FAILED",
+                "MCP_UNAVAILABLE"
+              ]
+            },
+            "gate": {
+              "kind": "completion",
+              "policy": "conditional",
+              "validator": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
+              "validatorSchema": {
+                "path": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
+                "digest": "sha256:19c95d9ece81e110b286460253929ed60382786decdf139261baa357b1da89e9"
+              }
+            },
+            "receiptPolicy": {
+              "mode": "reference-only",
+              "actorIdsPointer": "/output/actorIds",
+              "actorIdsMatch": "prior-policy-actors"
+            }
+          }
+        ],
+        "currentStageId": null,
+        "nextStageId": "stage-01-korean-prose-selection",
+        "errors": []
+      },
+      "error": null
+    }
+  }
+}

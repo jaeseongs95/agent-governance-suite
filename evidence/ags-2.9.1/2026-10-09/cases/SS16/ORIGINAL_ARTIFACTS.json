@@ -1,0 +1,113 @@
+{
+  "caseId": "SS16",
+  "originalArtifacts": {
+    "SS16-isolated.test.ts": {
+      "bytes": 15684,
+      "sha256": "9593250d4389dcf7cccc2da7a2c43cfa8e4584ce5c7f95af788b6e82a0efdf17",
+      "recovery": "RECOVERED"
+    },
+    "SS16.artifact-manifest.json": {
+      "bytes": 1710,
+      "sha256": "49c02375f4bc54ede0778b590b56026ba8ebd7e02b38f166cfe7ca83772cd3be",
+      "recovery": "RECOVERED"
+    },
+    "SS16.evidence.tar.gz": {
+      "bytes": 26070,
+      "sha256": "4e9e97013397797694fbdb49bcb837c924b0cdb2779beb092f8e5ea9d9313e74",
+      "recovery": "RECOVERED"
+    },
+    "SS16.files.json": {
+      "bytes": 762,
+      "sha256": "c413dc6904e9932280c03da99ad6c22e6f54a3968dc205038812163e2c710488",
+      "recovery": "RECOVERED"
+    },
+    "SS16.fixture-excerpt.json": {
+      "bytes": 4520,
+      "sha256": "6b8ec8999656668b252ce536a115a278117170bdfa9ae0903667f443943a5ba2",
+      "recovery": "RECOVERED"
+    },
+    "SS16.observed.json": {
+      "bytes": 120387,
+      "sha256": "3e39c51f56e92400ae813a4a1a99fde9fa5c673680b0b289a6660a29bdfae60f",
+      "recovery": "RECOVERED"
+    },
+    "SS16.plan-check.json": {
+      "bytes": 220,
+      "sha256": "031c1d94d128cb9376568691423bc222e20d270865cafb69edf4bc1ab465fc87",
+      "recovery": "RECOVERED"
+    },
+    "SS16.result.json": {
+      "bytes": 71538,
+      "sha256": "5ce9960801245f0c1b2c8d368d59f43db695340ae669e676ab3a51c01ec4097c",
+      "recovery": "RECOVERED"
+    },
+    "SS16.snapshot.json": {
+      "bytes": 3793,
+      "sha256": "2265c31954feecfbd8d86a7ede61eab5e5ee1d57a47b4f488cca9ef1c95ddbe8",
+      "recovery": "RECOVERED"
+    },
+    "SS16.test-plan.json": {
+      "bytes": 3671,
+      "sha256": "92cb3e8fa36935e5a7a25e6821a6076ee8fc380c9615a051f8bbb4dc8b97bda2",
+      "recovery": "RECOVERED"
+    },
+    "SS16.test-proof.json": {
+      "bytes": 4964,
+      "sha256": "782ef56c94c3da8a55682ed77ddeb406984f20246f2f762d9115368946d6a68e",
+      "recovery": "RECOVERED"
+    },
+    "SS16.vitest.json": {
+      "bytes": 11093,
+      "sha256": "cce1663605f02069db2dfab9bf4e1463148b48880329b1f005a8d3551b255f8a",
+      "recovery": "RECOVERED"
+    },
+    "SS16.vitest.log": {
+      "bytes": 5194,
+      "sha256": "1753a2e20c724cd9416ef1ad2ae7fbc7342963740dd13852b47d84aac5bb717b",
+      "recovery": "RECOVERED"
+    },
+    "run-SS16.sh": {
+      "bytes": 264,
+      "sha256": "0249738882d1dc48aeed444f41dd255c37716e97ccd249df4cd507c6e17dbbf3",
+      "recovery": "RECOVERED"
+    }
+  },
+  "missingOriginals": [
+    {
+      "item": "separate stdout and stderr streams for original Vitest command",
+      "status": "MISSING_ORIGINAL",
+      "detail": "Only the merged stdout/stderr SS16.vitest.log exists; stream attribution cannot be recovered."
+    },
+    {
+      "item": "initial pnpm setup-failure stdout/stderr raw file",
+      "status": "MISSING_ORIGINAL",
+      "detail": "Result JSON records exit 1 and a diagnostic excerpt; the original log was overwritten. No log is reconstructed."
+    },
+    {
+      "item": "initial plan-CLI absolute-path error stdout/stderr raw file",
+      "status": "MISSING_ORIGINAL",
+      "detail": "Result JSON records exit 2; original raw output was not archived. No log is reconstructed."
+    },
+    {
+      "item": "complete original serialized classification REQ/provider wire bytes",
+      "status": "MISSING_ORIGINAL",
+      "detail": "Existing observed JSON preserves prompt/order/digests, response and structural measurements, but a complete request/wire byte capture was not archived. It is not reconstructed."
+    },
+    {
+      "item": "TEST-SPEC.seq7.ko.md",
+      "status": "MISSING_ORIGINAL",
+      "detail": "File absent in pinned repository; only original embedded sourceSpec.fields is published."
+    },
+    {
+      "item": "announcement body and host execution/selection evidence",
+      "status": "MISSING_ORIGINAL",
+      "detail": "No announcement body or actual host receipt was provided; selected/read/applied/verified remain NOTRUN."
+    }
+  ],
+  "notPublished": [
+    "Original compressed bundle: contains redundant unredacted local paths",
+    "Original result and raw JSON/log bytes: private paths; sanitized public derivatives supplied",
+    "Original artifact manifest/files list: provenance retained in this inventory and public manifest"
+  ],
+  "claim": "This inventory records existing artifact bytes recovered during packaging. It does not represent a new test run."
+}
