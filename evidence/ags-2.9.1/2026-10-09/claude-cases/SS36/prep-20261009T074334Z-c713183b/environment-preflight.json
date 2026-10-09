@@ -1,0 +1,88 @@
+{
+  "caseId": "SS36",
+  "prepared_at": "2026-10-09T07:47:06.402988+00:00",
+  "status": "PREPARATION_COMPLETE_WAITING_FOR_PARENT",
+  "claude_cli": {
+    "path": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+    "version": "2.1.286 (Claude Code)",
+    "version_exit": 0,
+    "help_exit": 0,
+    "on_PATH": false,
+    "local_cli_checks_only": true,
+    "supports_print": true,
+    "supports_plugin_dir": true,
+    "supports_output_json": true,
+    "supports_max_budget_usd": true,
+    "help_sha256": "13dd71866e4b6fde1a11de6fa26bd4f5866308794307ff0fb37804c03db8e0b2"
+  },
+  "node": "v24.19.0",
+  "pnpm": "11.19.0",
+  "credential_check": {
+    "secret_name": "CLAUDE_API_KEY",
+    "present_nonempty": true,
+    "value_read_into_artifacts": false,
+    "authentication_probe": "NOT_RUN",
+    "authentication_verified": false
+  },
+  "instructions_read": [
+    {
+      "path": "AGENTS.md",
+      "read": true,
+      "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827",
+      "context": "existing local product checkout; guidance only, not a test target"
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "read": true,
+      "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "context": "existing local product checkout; guidance only, not a test target"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/test-design.md",
+      "read": true,
+      "sha256": "fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c",
+      "context": "existing local product checkout; guidance only, not a test target"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/SKILL.md",
+      "read": true,
+      "sha256": "eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230",
+      "context": "existing local product checkout; guidance only, not a test target"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/SKILL.md",
+      "read": true,
+      "sha256": "1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109",
+      "context": "existing local product checkout; guidance only, not a test target"
+    }
+  ],
+  "agents_skills_fallback": {
+    "workspace_exists": false,
+    "local_repository_exists": false,
+    "catalog_fallback": "Neither exists; repository skills/ read directly."
+  },
+  "fixed_evidence_has_root_AGENTS": false,
+  "candidate": {
+    "requested_label": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "status": "PARENT_STATED_LOCAL_CANDIDATE_ONLY",
+    "independent_SOURCE_verdict": "WAITING_FOR_PARENT",
+    "remote_publication_verification": "WAITING_FOR_PARENT",
+    "candidate_used_for_any_test": false
+  },
+  "model_effort_auth_settings": "WAITING_FOR_PARENT",
+  "common_preflight_result": "WAITING_FOR_PARENT",
+  "product_tests": 0,
+  "product_code_changes": false,
+  "generated_distribution_changes": false,
+  "permanent_auth_changes": false,
+  "network_or_permission_policy_changes": false,
+  "actual_host_stages": {
+    "selected": "NOT_RUN",
+    "read": "NOT_RUN",
+    "applied": "NOT_RUN",
+    "verified": "NOT_RUN"
+  },
+  "independent_audit": "NOT_RUN"
+}

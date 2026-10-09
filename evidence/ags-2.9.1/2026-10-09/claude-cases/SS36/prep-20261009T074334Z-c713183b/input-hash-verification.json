@@ -1,0 +1,321 @@
+{
+  "commit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "case": "SS36",
+  "sha256sums": [
+    {
+      "path": "README.md",
+      "sha256": "b61ec4fd2def1594d45a128b43ad3a251253cd0a3b4c9fe85f7a1c8058767bb7",
+      "expected": "b61ec4fd2def1594d45a128b43ad3a251253cd0a3b4c9fe85f7a1c8058767bb7",
+      "matches": true,
+      "bytes": 3920
+    },
+    {
+      "path": "SS36.commands.json",
+      "sha256": "2dbbf2835db464cd38a179f5668ac83783f15ef381a8332a56781d2688502bcc",
+      "expected": "2dbbf2835db464cd38a179f5668ac83783f15ef381a8332a56781d2688502bcc",
+      "matches": true,
+      "bytes": 2964
+    },
+    {
+      "path": "SS36.control-oracle.json",
+      "sha256": "fd58d02ba9f0370b0375457980cf86fe184f7b8ff33125d44e2ed815154d135d",
+      "expected": "fd58d02ba9f0370b0375457980cf86fe184f7b8ff33125d44e2ed815154d135d",
+      "matches": true,
+      "bytes": 3436
+    },
+    {
+      "path": "SS36.fixture-extract.json",
+      "sha256": "a00f52469928d8a2d239028e120b8c0b5dcfe524d56768334dc02b4fd97b666c",
+      "expected": "a00f52469928d8a2d239028e120b8c0b5dcfe524d56768334dc02b4fd97b666c",
+      "matches": true,
+      "bytes": 2087
+    },
+    {
+      "path": "SS36.observations.json",
+      "sha256": "6af2cdc4fd37438898b27c327624c737db44a16e61f09c953419f125455b740d",
+      "expected": "6af2cdc4fd37438898b27c327624c737db44a16e61f09c953419f125455b740d",
+      "matches": true,
+      "bytes": 132965
+    },
+    {
+      "path": "SS36.plan.json",
+      "sha256": "dae43e3314acfd7ce1aec562ce18cdad1427a19eb66a28c458309bb38352dd7d",
+      "expected": "dae43e3314acfd7ce1aec562ce18cdad1427a19eb66a28c458309bb38352dd7d",
+      "matches": true,
+      "bytes": 3740
+    },
+    {
+      "path": "SS36.provenance.json",
+      "sha256": "6a5b930ccb6d4dd01a612bc827f42eea42ec6bcad644e89e7753096480113d5e",
+      "expected": "6a5b930ccb6d4dd01a612bc827f42eea42ec6bcad644e89e7753096480113d5e",
+      "matches": true,
+      "bytes": 8198
+    },
+    {
+      "path": "SS36.result.json",
+      "sha256": "331db920046361dd2306b8158d62c8cd388bd642969e11bd728f855cb949f9ef",
+      "expected": "331db920046361dd2306b8158d62c8cd388bd642969e11bd728f855cb949f9ef",
+      "matches": true,
+      "bytes": 145725
+    },
+    {
+      "path": "archive/initial-SS36.control-oracle.json",
+      "sha256": "cb581ef374552442b4c9c209150cc9e31f99385bc23efe5b327b4de0eed509f1",
+      "expected": "cb581ef374552442b4c9c209150cc9e31f99385bc23efe5b327b4de0eed509f1",
+      "matches": true,
+      "bytes": 3378
+    },
+    {
+      "path": "archive/initial-SS36.observations.json",
+      "sha256": "cbcf518cb937f8cb9686e7d07e0fd86cb3640c5b84eaa5ad4ee812c63e91b409",
+      "expected": "cbcf518cb937f8cb9686e7d07e0fd86cb3640c5b84eaa5ad4ee812c63e91b409",
+      "matches": true,
+      "bytes": 86386
+    },
+    {
+      "path": "archive/initial-SS36.plan.json",
+      "sha256": "f72d0fe656888a5f6009c3a1e47e5cb78a1b114f370b547107ab391f5d77464d",
+      "expected": "f72d0fe656888a5f6009c3a1e47e5cb78a1b114f370b547107ab391f5d77464d",
+      "matches": true,
+      "bytes": 3329
+    },
+    {
+      "path": "archive/initial-SS36.test.ts",
+      "sha256": "2ca12dc6be209fb139e4e26b3e72a27d50f68e06ff0059da64766167be9a70e2",
+      "expected": "2ca12dc6be209fb139e4e26b3e72a27d50f68e06ff0059da64766167be9a70e2",
+      "matches": true,
+      "bytes": 11687
+    },
+    {
+      "path": "archive/initial-isolated-vitest.json",
+      "sha256": "a9834fe994fa72b39182bba4b01e37b7daf68705c99d00d906e6bbf9e28ea8a4",
+      "expected": "a9834fe994fa72b39182bba4b01e37b7daf68705c99d00d906e6bbf9e28ea8a4",
+      "matches": true,
+      "bytes": 9509
+    },
+    {
+      "path": "archive/initial-isolated.log",
+      "sha256": "d2c6568dd0ed47ff507af54c0b8927aa481e345806f9b7738566307b62c2e4d3",
+      "expected": "d2c6568dd0ed47ff507af54c0b8927aa481e345806f9b7738566307b62c2e4d3",
+      "matches": true,
+      "bytes": 59
+    },
+    {
+      "path": "archive/original-SHA256SUMS",
+      "sha256": "5829cbe277e6ae6b1fedea226d1dbec6c5017756d2c1c75650bce3ac579cb16d",
+      "expected": "5829cbe277e6ae6b1fedea226d1dbec6c5017756d2c1c75650bce3ac579cb16d",
+      "matches": true,
+      "bytes": 1988
+    },
+    {
+      "path": "archive/verify-provenance.mts.txt",
+      "sha256": "c16f5277d8cd4081234f8a0fb4926404302bd9dbea3012c040fbd79dc8a73469",
+      "expected": "c16f5277d8cd4081234f8a0fb4926404302bd9dbea3012c040fbd79dc8a73469",
+      "matches": true,
+      "bytes": 2167
+    },
+    {
+      "path": "frozen-fixtures.json",
+      "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "expected": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "matches": true,
+      "bytes": 142450
+    },
+    {
+      "path": "logs/existing.log",
+      "sha256": "e2e8e3e83ca7e90d4ecb8150f42682a9505651ea14e57ec50dae0fcc45aef15c",
+      "expected": "e2e8e3e83ca7e90d4ecb8150f42682a9505651ea14e57ec50dae0fcc45aef15c",
+      "matches": true,
+      "bytes": 214
+    },
+    {
+      "path": "logs/install-retry.log",
+      "sha256": "745edcfeeab9687c361ce9fa48948463a01bd556111e38859f532c07d57dbccb",
+      "expected": "745edcfeeab9687c361ce9fa48948463a01bd556111e38859f532c07d57dbccb",
+      "matches": true,
+      "bytes": 1542
+    },
+    {
+      "path": "logs/install.log",
+      "sha256": "4d915f5e8322e15e4f2a2657d257aaacc7b54b5cdcd64c7921a03726d67603aa",
+      "expected": "4d915f5e8322e15e4f2a2657d257aaacc7b54b5cdcd64c7921a03726d67603aa",
+      "matches": true,
+      "bytes": 1186
+    },
+    {
+      "path": "logs/isolated.log",
+      "sha256": "d2c6568dd0ed47ff507af54c0b8927aa481e345806f9b7738566307b62c2e4d3",
+      "expected": "d2c6568dd0ed47ff507af54c0b8927aa481e345806f9b7738566307b62c2e4d3",
+      "matches": true,
+      "bytes": 59
+    },
+    {
+      "path": "logs/provenance.log",
+      "sha256": "686c278e318cc7459708e501d4bda44b0b5785828415239dc6d582f746f2eebe",
+      "expected": "686c278e318cc7459708e501d4bda44b0b5785828415239dc6d582f746f2eebe",
+      "matches": true,
+      "bytes": 190
+    },
+    {
+      "path": "manifest.json",
+      "sha256": "d4262f7cafe18a88c9d41ed0fb6de98e6f41691f8674fd868479991306e4c58b",
+      "expected": "d4262f7cafe18a88c9d41ed0fb6de98e6f41691f8674fd868479991306e4c58b",
+      "matches": true,
+      "bytes": 13245
+    },
+    {
+      "path": "recovery-status.json",
+      "sha256": "d716159a4b9c4e1579c60ea5b71106e989addae89beee62c41b8e192af3ab744",
+      "expected": "d716159a4b9c4e1579c60ea5b71106e989addae89beee62c41b8e192af3ab744",
+      "matches": true,
+      "bytes": 881
+    },
+    {
+      "path": "reports/existing-vitest.json",
+      "sha256": "ab31c2927b3e3376644a2f74958790f0a3b04d05f8fd7fd0479944c98ab56ef5",
+      "expected": "ab31c2927b3e3376644a2f74958790f0a3b04d05f8fd7fd0479944c98ab56ef5",
+      "matches": true,
+      "bytes": 6000
+    },
+    {
+      "path": "reports/isolated-vitest.json",
+      "sha256": "399653d77c5aa87d437c935c4db0174f706e3d73eb832b375899cf18b06302ce",
+      "expected": "399653d77c5aa87d437c935c4db0174f706e3d73eb832b375899cf18b06302ce",
+      "matches": true,
+      "bytes": 5105
+    },
+    {
+      "path": "reproduce/SS36.test.ts",
+      "sha256": "2df634d8f246d312dac1e110d76098fb9a0e627340e0e0c490bd5bd7d1f5db9b",
+      "expected": "2df634d8f246d312dac1e110d76098fb9a0e627340e0e0c490bd5bd7d1f5db9b",
+      "matches": true,
+      "bytes": 13017
+    },
+    {
+      "path": "reproduce/vitest.config.mjs",
+      "sha256": "74a7ab128d4185ed6b929ac2162ec018f0650b7b8b611c0c255124d54d273609",
+      "expected": "74a7ab128d4185ed6b929ac2162ec018f0650b7b8b611c0c255124d54d273609",
+      "matches": true,
+      "bytes": 142
+    }
+  ],
+  "manifest": [
+    {
+      "path": "README.md",
+      "matches": true
+    },
+    {
+      "path": "SS36.commands.json",
+      "matches": true
+    },
+    {
+      "path": "SS36.control-oracle.json",
+      "matches": true
+    },
+    {
+      "path": "SS36.fixture-extract.json",
+      "matches": true
+    },
+    {
+      "path": "SS36.observations.json",
+      "matches": true
+    },
+    {
+      "path": "SS36.plan.json",
+      "matches": true
+    },
+    {
+      "path": "SS36.provenance.json",
+      "matches": true
+    },
+    {
+      "path": "SS36.result.json",
+      "matches": true
+    },
+    {
+      "path": "archive/initial-SS36.control-oracle.json",
+      "matches": true
+    },
+    {
+      "path": "archive/initial-SS36.observations.json",
+      "matches": true
+    },
+    {
+      "path": "archive/initial-SS36.plan.json",
+      "matches": true
+    },
+    {
+      "path": "archive/initial-SS36.test.ts",
+      "matches": true
+    },
+    {
+      "path": "archive/initial-isolated-vitest.json",
+      "matches": true
+    },
+    {
+      "path": "archive/initial-isolated.log",
+      "matches": true
+    },
+    {
+      "path": "archive/original-SHA256SUMS",
+      "matches": true
+    },
+    {
+      "path": "archive/verify-provenance.mts.txt",
+      "matches": true
+    },
+    {
+      "path": "frozen-fixtures.json",
+      "matches": true
+    },
+    {
+      "path": "logs/existing.log",
+      "matches": true
+    },
+    {
+      "path": "logs/install-retry.log",
+      "matches": true
+    },
+    {
+      "path": "logs/install.log",
+      "matches": true
+    },
+    {
+      "path": "logs/isolated.log",
+      "matches": true
+    },
+    {
+      "path": "logs/provenance.log",
+      "matches": true
+    },
+    {
+      "path": "recovery-status.json",
+      "matches": true
+    },
+    {
+      "path": "reports/existing-vitest.json",
+      "matches": true
+    },
+    {
+      "path": "reports/isolated-vitest.json",
+      "matches": true
+    },
+    {
+      "path": "reproduce/SS36.test.ts",
+      "matches": true
+    },
+    {
+      "path": "reproduce/vitest.config.mjs",
+      "matches": true
+    }
+  ],
+  "all_verified": true,
+  "fixture_extract_equals_frozen_ss36": true,
+  "control_oracle_equals_frozen_ss14": true,
+  "inventory_equals_frozen_inventory": true,
+  "declared_frozen_oracle_digest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "declared_oracle_digest_recomputed": false,
+  "source_spec_body_digest": "sha256:d1a2878b839cc876c74d17db65ce403f987de5aa3f90e42ab561bf51c3959c7d",
+  "source_spec_body_digest_recomputed": false,
+  "note": "Package byte hashes and cross-file binding verified; historical declared semantic/oracle digests not independently recomputed with product evaluator while product gate is closed."
+}

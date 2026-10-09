@@ -1,0 +1,24 @@
+{
+  "caseId": "SS36",
+  "currency": "USD",
+  "soft_budget": 2,
+  "total_39_case_reserved_budget": 78,
+  "budget_is_not_spending_target": true,
+  "stage": "PREPARATION_ONLY",
+  "calls": [],
+  "totals": {
+    "claude_api_calls": 0,
+    "jev_calls": 0,
+    "vendor_calls": 0,
+    "retries": 0,
+    "failed_calls": 0,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cost_usd": 0
+  },
+  "remaining_usd": 2,
+  "future_accounting": "Append every attempted paid invocation, including setup, errors and retries; preserve provider modelUsage/usage/cost plus retry counts. Unknown cost or insufficient headroom stops the next invocation. Apply remaining per-case cap using confirmed --max-budget-usd support and stop before exhaustion; cap alone is not cumulative accounting. JEV stays disabled until separately assigned.",
+  "auth": "WAITING_FOR_PARENT_APPROVED_API_PROCEDURE"
+}
