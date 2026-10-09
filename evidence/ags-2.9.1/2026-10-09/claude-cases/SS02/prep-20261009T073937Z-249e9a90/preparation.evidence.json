@@ -1,0 +1,481 @@
+{
+  "schemaVersion": "SS02-Claude-preparation-1",
+  "caseId": "SS02",
+  "title": "영어 단일 코드 수정",
+  "runId": "prep-20261009T073937Z-249e9a90",
+  "observedAt": "2026-10-09T07:39:37.620008+00:00",
+  "publicationBranch": "evidence",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS02/prep-20261009T073937Z-249e9a90",
+  "status": "PREPARED_WAITING_FOR_PARENT",
+  "liveResult": "NOTRUN",
+  "fixedEvidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "input": {
+    "originalPrompt": "Simplify this function so it returns the largest integer using the standard library. No database work or code review.",
+    "promptSha256": "d1471f31cebd10f45bb7deed9d54178683dbb7fc1378d54d321acd7ff1c64374",
+    "bytes": 117,
+    "trailingNewline": false,
+    "familyId": "integer-max",
+    "variants": [
+      "base"
+    ],
+    "sourceSpec": {
+      "path": "TEST-SPEC.seq7.ko.md",
+      "section": "SS02",
+      "fields": {
+        "입력": "“Simplify this function so it returns the largest integer using the standard library. No database work or code review.”",
+        "필수추천": "R={P}.",
+        "금지추천 또는 행동": "CS, CR, SEC, O의 불필요한 추가.",
+        "허용선택": "A={}.",
+        "보류조건": "SS01과 동일하다.",
+        "통과기준": "SS01과 언어만 달라진 입력에서 필수 집합이 같다. 문장 유사도 점수를 확률로 출력하지 않는다.",
+        "증거": "E0, SS01과 같은 familyId, 언어별 결과.",
+        "실행종류": "live. SS01과 SS02를 calibration과 holdout에 나누어 넣지 않는다."
+      },
+      "bodyDigest": "sha256:2b09d8e453d723b01897351cfba4a3f5fdac2fae5505bf8d5d51dc8deea826c6"
+    },
+    "sourceSpecFilePresent": false,
+    "E0Definition": "UNAVAILABLE_NOT_INVENTED",
+    "inheritedHoldCondition": "실제 구현 대상이 없어 실행이 보류되어도, 요청 유형을 P로 분류할 수 있다. 대상 부족을 no-skill로 처리하지 않는다."
+  },
+  "expected": {
+    "required": [
+      "ponytail"
+    ],
+    "allowed": [],
+    "allowedConditions": {},
+    "forbidden": [
+      "cs-engineering",
+      "code-review",
+      "software-security-auditor",
+      "orchestrator"
+    ],
+    "notApplicable": [
+      "test-engineering",
+      "korean-prose-editor",
+      "change-scope-guardian"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      },
+      {
+        "skillId": "change-scope-guardian",
+        "path": "skills/change-scope-guardian/SKILL.md",
+        "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+      }
+    ],
+    "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+  },
+  "fixedPublicFiles": [
+    {
+      "path": "README.md",
+      "bytes": 4506,
+      "sha256": "cc2e19de25ceb7e6379ffdab0c9190093294bb0ad06e581ff500a5f4a2f05911",
+      "gitBlob": "fc3a999f35f73fa7b9a2d329cea57373361e9ead",
+      "sha256sumsMatch": true,
+      "manifestMatch": true
+    },
+    {
+      "path": "SHA256SUMS",
+      "bytes": 1226,
+      "sha256": "7068646b1187c869ed9eb2dfdc89aa6ce8d6058c9caaf3a330fcaebc82b3c909",
+      "gitBlob": "bda1d108a97e31b589c0fa0f54ed9697b5075b50",
+      "sha256sumsMatch": null,
+      "manifestMatch": null
+    },
+    {
+      "path": "SS02.case.json",
+      "bytes": 4471,
+      "sha256": "d97b9e323f8bbb9445bda0029d3f85543bf7b3d75c2e38f7111d4c3c08d3c3ee",
+      "gitBlob": "ceba2e5413988f08a365481b4f9e2104f18a3273",
+      "sha256sumsMatch": true,
+      "manifestMatch": true
+    },
+    {
+      "path": "SS02.checks.public.json",
+      "bytes": 1240327,
+      "sha256": "70c82d690c7000b56178687dbc3dca2d5fe0e105bf3daf1bb5c47de332eb9259",
+      "gitBlob": "cf3c3dc29d1bd3d3d26864a0ab52bb241e0dcfd2",
+      "sha256sumsMatch": true,
+      "manifestMatch": true
+    },
+    {
+      "path": "SS02.independent.public.test.ts",
+      "bytes": 16462,
+      "sha256": "ef26d7adb39dd698673f59b6cb1525ea8e107753abb95654334157f073ee7bc9",
+      "gitBlob": "7eb99baeae3a9bd61a6973981db57dde32d961c2",
+      "sha256sumsMatch": true,
+      "manifestMatch": true
+    },
+    {
+      "path": "SS02.plan-check.json",
+      "bytes": 294,
+      "sha256": "0e523f79a56afe5e9dc8b66044c0ba6be6bb885986a9b35410955c1cc9de2597",
+      "gitBlob": "695938f472ad147574e00405f2dc634d4aecf2db",
+      "sha256sumsMatch": true,
+      "manifestMatch": true
+    },
+    {
+      "path": "SS02.plan-check.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256sumsMatch": true,
+      "manifestMatch": true
+    },
+    {
+      "path": "SS02.plan.public.json",
+      "bytes": 7233,
+      "sha256": "2883464282ab3376bba3efd6b1fe4570ff80055c2938b41aefac32ea4c6510e5",
+      "gitBlob": "85d957612cf22a150968c586d6ebac232b8a885a",
+      "sha256sumsMatch": true,
+      "manifestMatch": true
+    },
+    {
+      "path": "SS02.prompt.txt",
+      "bytes": 117,
+      "sha256": "d1471f31cebd10f45bb7deed9d54178683dbb7fc1378d54d321acd7ff1c64374",
+      "gitBlob": "f61ba3d58bee1c0ee98e1d0b3b675e4a0fd6239a",
+      "sha256sumsMatch": true,
+      "manifestMatch": true
+    },
+    {
+      "path": "SS02.report.public.md",
+      "bytes": 3786,
+      "sha256": "162fe675b78803c2f0404adea80882c79b49473b655bab21102f82b98cfbaf93",
+      "gitBlob": "e781b400d9cc9cdbaad8f761758a04ee75ee6cde",
+      "sha256sumsMatch": true,
+      "manifestMatch": true
+    },
+    {
+      "path": "SS02.request.public.json",
+      "bytes": 254832,
+      "sha256": "da8f07e4eda73e607cfa9dc0230442a1d2ab2669a77db6eb15ed4db9b1380e69",
+      "gitBlob": "87c9f94f1d71ad510099afc3487caae518fbad94",
+      "sha256sumsMatch": true,
+      "manifestMatch": true
+    },
+    {
+      "path": "SS02.result.public.json",
+      "bytes": 15751,
+      "sha256": "5a0d496ba6187865ed6f884a4fc19ee2457abdee14a8501b0a1a7a960ab5fa9e",
+      "gitBlob": "cd87fb10429cbdb05b4c922db793a21e3367e8b4",
+      "sha256sumsMatch": true,
+      "manifestMatch": true
+    },
+    {
+      "path": "SS02.test.combined.public.log",
+      "bytes": 149,
+      "sha256": "55fd149d7be8fc5d6191bb3383a73c3b77ba9b795a53c28d8b4d2decb033f49a",
+      "gitBlob": "2b5bbc97462d5f318d3abcdf2d1d48c24b057474",
+      "sha256sumsMatch": true,
+      "manifestMatch": true
+    },
+    {
+      "path": "SS02.vitest.public.json",
+      "bytes": 8374,
+      "sha256": "b7441827412ac06266d1ee87b9eda6921090eee2cdb815450120e2872a6cb001",
+      "gitBlob": "aa6876b4ddcaa419aecbd60f4b16c2388a0b6adb",
+      "sha256sumsMatch": true,
+      "manifestMatch": true
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 7628,
+      "sha256": "1d04a2e11b42f3b19c35cfa99b065530feb56cf197c1cf4dc551ea6395f02292",
+      "gitBlob": "f5e0ae3d20520b583cca7b0a52c0d56ee572aeb5",
+      "sha256sumsMatch": true,
+      "manifestMatch": null
+    }
+  ],
+  "historicalSourceVerification": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "usage": "READ_ONLY_PROVENANCE; no product tests",
+    "fixtureSha256Observed": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "fixtureSha256Match": true,
+    "oracleSha256Observed": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "oracleAlgorithm": "SHA256 of JS JSON.stringify ordered projection: oracleRevision, sourceSpecDigest, sourceSkills, cases, metadataRoleCases, sourceProvenanceCases, pairedMatrix, split; independently recomputed without importing product evaluator",
+    "oracleSha256Match": true,
+    "skillSources": [
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+        "observedDigest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+        "match": true,
+        "readAs": "historical frozen input provenance; not current candidate or live stage"
+      },
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+        "observedDigest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+        "match": true,
+        "readAs": "historical frozen input provenance; not current candidate or live stage"
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+        "observedDigest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+        "match": true,
+        "readAs": "historical frozen input provenance; not current candidate or live stage"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+        "observedDigest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+        "match": true,
+        "readAs": "historical frozen input provenance; not current candidate or live stage"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+        "observedDigest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+        "match": true,
+        "readAs": "historical frozen input provenance; not current candidate or live stage"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+        "observedDigest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+        "match": true,
+        "readAs": "historical frozen input provenance; not current candidate or live stage"
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+        "observedDigest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+        "match": true,
+        "readAs": "historical frozen input provenance; not current candidate or live stage"
+      },
+      {
+        "skillId": "change-scope-guardian",
+        "path": "skills/change-scope-guardian/SKILL.md",
+        "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e",
+        "observedDigest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e",
+        "match": true,
+        "readAs": "historical frozen input provenance; not current candidate or live stage"
+      }
+    ],
+    "SS01ReadOnlyReference": {
+      "caseId": "SS01",
+      "familyId": "integer-max",
+      "holdCondition": "실제 구현 대상이 없어 실행이 보류되어도, 요청 유형을 P로 분류할 수 있다. 대상 부족을 no-skill로 처리하지 않는다."
+    },
+    "split": {
+      "revision": "public-regression-v1",
+      "independentHoldoutClaim": false,
+      "calibration": [
+        "SS01",
+        "SS02",
+        "SS03",
+        "SS08",
+        "SS15",
+        "SS18"
+      ],
+      "holdout": [
+        "SS04",
+        "SS05",
+        "SS06",
+        "SS07",
+        "SS09",
+        "SS10",
+        "SS11",
+        "SS12",
+        "SS13",
+        "SS14",
+        "SS16",
+        "SS17"
+      ],
+      "note": "Public source-known regression partitions, never claimed as independent unseen model quality evidence"
+    }
+  },
+  "priorResult": {
+    "executionKind": "offline-mock",
+    "tests": 17,
+    "pass": 15,
+    "fail": 2,
+    "exit": 1,
+    "failures": [
+      "known-cost-invalid-response",
+      "host-membership-supply-gap"
+    ],
+    "newRootCauses": 0,
+    "semanticAccuracy": null,
+    "hostStages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "state": "NOT_RUN",
+    "skillIds": null,
+    "hostReceipt": null,
+    "newTestsInPreparation": 0
+  },
+  "candidateGate": {
+    "reportedCandidate": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "reportedTree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "candidateName": "R17",
+    "sourceVerdict": "PENDING_PARENT_VERIFICATION",
+    "remotePublication": "PENDING_PARENT_VERIFICATION",
+    "productExecution": "NOT_STARTED",
+    "historicalCommitNotSubstituted": true
+  },
+  "localEnvironment": {
+    "claudeExecutable": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+    "claudeVersion": "2.1.286 (Claude Code)",
+    "pathLookupPresent": false,
+    "executableSha256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+    "nodeVersion": "v24.19.0",
+    "readOnlyCliCommands": [
+      "--version",
+      "--help"
+    ],
+    "authProbePerformed": false,
+    "persistentAuthPermissionNetworkChanges": false,
+    "cliHelpSupports": {
+      "--plugin-dir": true,
+      "--mcp-config": true,
+      "--output-format": true,
+      "--max-budget-usd": true,
+      "--model": true,
+      "--effort": true
+    },
+    "bareModeCaution": "CLI help says --bare skips installed plugin hooks; do not select it for AGS receipt testing without parent-verified hook setup"
+  },
+  "executionAccounting": {
+    "softBudgetUsd": 2,
+    "preparationCallsIncluded": true,
+    "billedModelCalls": 0,
+    "ClaudeCalls": 0,
+    "JEVCalls": 0,
+    "otherVendorCalls": 0,
+    "hostLiveCalls": 0,
+    "retries": 0,
+    "failedBillableCalls": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "cacheReadTokens": 0,
+    "cacheCreationTokens": 0,
+    "spentUsd": 0,
+    "remainingSoftBudgetUsd": 2,
+    "stopRule": "Before each dispatch reserve a conservative upper bound; stop before next call if spent plus unknown or reserved cost approaches/exceeds 2 USD. Retain costs, tokens, cache, retries and failures; unknown usage is not zero. Await common parent pricing, model and no-retry settings."
+  },
+  "instructions": {
+    "localAGENTSRead": {
+      "path": "AGENTS.md",
+      "localCheckoutCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827"
+    },
+    "evidenceAncestorAGENTS": "ABSENT at fixed source and prepublication evidence head",
+    "agentsSkillsFallback": "/workspace/.agents and repository .agents have no skills directory; source skills read from historical fixed oracle paths",
+    "additionalGuidanceRead": [
+      "evaluation-validity-auditor",
+      "acceptance-evidence-validator",
+      "change-scope-guardian",
+      "mutation-risk-preflight"
+    ],
+    "formalAuditOrPreflightReceiptIssued": false
+  },
+  "resumeRequirements": [
+    "Parent confirms final candidate commit/tree, independent SOURCE verdict, fixed remote availability and predecessor checks",
+    "Parent supplies exact common Claude model/effort settings, successful API authentication procedure and pricing/cost/retry limits",
+    "Isolated authorized candidate installation exposes inventory/classify/record with trusted host hooks, active membership, actor/session/task binding and fixed runtime/profile/route",
+    "Retain original prompt and frozen oracle outside model-visible context; no oracle injection or variant rewrite",
+    "No JEV dispatch without separate assignment",
+    "Original function/code target required for apply/verify; absent target keeps these stages blocked while ponytail classification remains required"
+  ],
+  "futureStagePlan": [
+    {
+      "step": 1,
+      "action": "Sol pins verified candidate and trusted isolated runtime and prepares byte-identical prompt, no oracle in model context",
+      "state": "WAITING_PARENT"
+    },
+    {
+      "step": 2,
+      "action": "Claude Code itself observes inventory and carries original prompt through get_skill_inventory -> classify_skills; ledger accounts every real call",
+      "state": "NOTRUN"
+    },
+    {
+      "step": 3,
+      "action": "Claude itself determines canonical selection; record_skill_selection uses host-owned hook attestation, not caller-made receipt",
+      "state": "NOTRUN"
+    },
+    {
+      "step": 4,
+      "action": "Verify ponytail present; forbidden additions absent; unknown/unadjudicated keep their frozen scoring state; similarity score never treated as probability",
+      "state": "NOTRUN"
+    },
+    {
+      "step": 5,
+      "action": "Claude reads installed ponytail instructions; applies and verifies only with supplied original target in authorized isolated workspace; no AGS product code/generated distribution changes",
+      "state": "BLOCKED_TARGET_ABSENT"
+    },
+    {
+      "step": 6,
+      "action": "Sol sanitizes host-derived evidence and exact costs, publishes only run evidence; cross-language family comparison awaits actual SS01 evidence without running SS01 here",
+      "state": "NOTRUN"
+    }
+  ]
+}
