@@ -2,6 +2,7 @@ import {createHash} from "node:crypto";
 import {readFile, writeFile, mkdir, open, rename} from "node:fs/promises";
 import path from "node:path";
 import {pathToFileURL, fileURLToPath} from "node:url";
+import type {ClassificationObservation} from "../evaluation.js";
 
 type Reference = {path: string; digest: string};
 interface LegacyBootstrapConfig {
@@ -276,7 +277,7 @@ export async function run(config: BootstrapConfig, options: {fetcher?: typeof fe
         return environment[config.credentialEnv] ?? null;
       }, adapter: prepared.api.providers.jevNoulWireAdapter,
     }], transport, {maximumResponseBytes: limits.responseBytes});
-    const observations: unknown[] = [];
+    const observations: ClassificationObservation[] = [];
     for (const {caseId, request} of prepared.requests.slice(0, limits.requests)) {
       if (evidenceExpired()) {stopReason = "BOUND_EVIDENCE_EXPIRED"; break;}
       const spentOrReserved = ledger.entries.reduce((sum, row) => sum + (row.state === "known" ? row.actualCostUsd! : row.state === "not-started" ? 0 : row.reservedUsd), 0);
@@ -319,15 +320,14 @@ export async function run(config: BootstrapConfig, options: {fetcher?: typeof fe
       entry.resultDigest = hash(JSON.stringify(record));
       await writeFile(path.join(output, `${caseId}.raw.json`), JSON.stringify(record, null, 2) + "\n", {flag: "wx", mode: 0o600});
       await atomicJson(ledgerFile, ledger);
-      observations.push({caseId, layer: "jevRaw", state: errorCode || capViolation ? "BLOCKED" : "PASS", skillIds: errorCode || capViolation || evaluation.response.status === "UNCERTAIN" ? null : evaluation.response.judgments.filter((row: {judgment: string}) => row.judgment === "needed").map((row: {skillId: string}) => row.skillId),
-        selectionStatus: errorCode ? "NEEDS_INPUT" : evaluation.response.status === "SUCCESS" ? "SELECTED" : "NEEDS_INPUT", reasonCodes: errorCode ? [errorCode] : evaluation.response.unresolvedItems.map((row: {reasonCode: string}) => row.reasonCode),
-        selectionReasons: evaluation?.response.judgments.map((row: {skillId: string; reasonRefs: string[]}) => ({skillId: row.skillId, reason: row.reasonRefs.join(",")})) ?? [],
-        executionKind: options.executionKind ?? "provider-live", host: null, hostReceipt: null, requestDigest: request.requestDigest, inventoryDigest: request.inventoryDigest,
-        conditionDigest: configDigest, stageEvidence: {read: false, applied: false, verified: false}});
+      observations.push(prepared.api.evaluation.fromClassification(caseId, request, record.response, {
+        state: errorCode || capViolation ? "BLOCKED" : "PASS", executionKind: options.executionKind ?? "provider-live", conditionDigest: configDigest,
+        producerDiagnostics: {errorCode, capViolation, dispatchState: entry.dispatchState, responseValidationErrors: []}}));
       if (errorCode || capViolation) {stopReason = errorCode ?? "OBSERVED_CAP_VIOLATION"; break;} // No automatic timeout resend or alternate provider.
     }
     const raw = prepared.api.evaluation.aggregate(prepared.cases.filter((row: {oracle: unknown}) => row.oracle !== null), observations.filter((row: any) => prepared.cases.find((item: any) => item.caseId === row.caseId)?.oracle !== null), "jevRaw", prepared.inventory.skills.map((skill: {skillId: string}) => skill.skillId));
     const report = {...checked, status: "RAW_EVALUATION_RECORDED" as const, executionKind: options.executionKind ?? "provider-live", raw,
+      observationRevision: prepared.api.evaluation.OBSERVATION_REVISION, scorerRevision: prepared.api.evaluation.OBSERVATION_REVISION, observations,
       transportAttempts: transportInvocations, requestsReserved: ledger.entries.length, ledger, fixtureFileDigest: prepared.fixtureFileDigest,
       stopReason,
       unevaluatedCaseIds: prepared.requests.filter((row: any) => !ledger.entries.some(entry => entry.requestId === row.request.requestId && entry.dispatchState !== "not-started")).map((row: any) => row.caseId),

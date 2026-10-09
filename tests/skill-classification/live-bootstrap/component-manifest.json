@@ -20,15 +20,15 @@
     {
       "path": "tests/skill-classification/live-bootstrap/bootstrap.mts",
       "role": "qualification-bootstrap-runtime",
-      "bytes": 34715,
-      "digest": "sha256:1e258ae50a0e25d9c2a01a1ff186df1cce73c0693995ea7cef2be3cd187e791c",
+      "bytes": 34282,
+      "digest": "sha256:c2062ae97e8657fc5b31cbb2ebf127555bf5d885ae85322407107e74b4314e52",
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
     },
     {
       "path": "tests/skill-classification/live-bootstrap/contract-selfcheck.mts",
       "role": "offline-mock-contract",
-      "bytes": 11021,
-      "digest": "sha256:fb5ac964d31c2dbce0a37d3d593fdeef8ceecf4be3b2661bb4c3b3d17776e751",
+      "bytes": 15515,
+      "digest": "sha256:b9369b65ca5536e9ba7e247c06c970e0c987dad01caf316609b0af6c412b2137",
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
     },
     {
@@ -58,6 +58,20 @@
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
       "bytes": 18419,
       "digest": "sha256:edb60ffa487657cc55e7ee1822fd4a2197f8fa1b0d94819fdaef0c47768509bf"
+    },
+    {
+      "path": "tests/skill-classification/evaluation.ts",
+      "role": "versioned-observation-scorer",
+      "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+      "bytes": 32672,
+      "digest": "sha256:08e309bb3fee27d6d7af3d6e8c7bc13c978f7ea2298a3183292290636947004c"
+    },
+    {
+      "path": "tests/skill-classification/evaluation.test.ts",
+      "role": "offline-observation-boundary-regression",
+      "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+      "bytes": 30312,
+      "digest": "sha256:23f8248adefb690529eb71bf0acc79395b287143bb614aafe9435a88923d7caa"
     }
   ],
   "actualApiCalls": 0,
@@ -74,5 +88,14 @@
     "commit": "5fa35427f4bdfe205b1705c451df1420b635cea5",
     "tree": "1f7d78fda9a4ea18b39fd97bfbd43f352c8e4736",
     "purpose": "R11 local run allocation policy .15; actual API/credentials/qualification/host remain NOT_RUN"
+  },
+  "observationRevision": "2.0.0",
+  "scorerRevision": "2.0.0",
+  "priorObservationCandidate": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "originalHelperDigest": "sha256:1e258ae50a0e25d9c2a01a1ff186df1cce73c0693995ea7cef2be3cd187e791c",
+    "originalScorerDigest": "sha256:e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+    "purpose": "R14 관측·채점 버전의 이전 소스. 원 21run 및 11PASS7FAIL을 새 후보 검증으로 승격하지 않는다."
   }
 }

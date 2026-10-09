@@ -70,12 +70,22 @@ try {
     assert(!Object.hasOwn(body.state, "oracle")); assert(!Object.hasOwn(body.state, "familyId"));
     assert(Object.values(body.questions).every((row: any) => !Object.hasOwn(row.instructions.skill, "sourceRefs")));
     assert(input.cases.some((row: any) => row.originalPrompt === body.state.originalPrompt));
-    return new Response(JSON.stringify({model: "mock-model-revision", answers: Object.fromEntries(Object.keys(body.questions).map(id => [id, {type: "noul", noul: 0}])), usage: {input_tokens: 100, output_tokens: 100}}), {status: 200});
+    return new Response(JSON.stringify({model: "mock-model-revision", answers: Object.fromEntries(Object.keys(body.questions).map((id, index) => [id, {type: "noul", noul: index === 0 ? 0.9 : index === 1 ? 0.5 : 0}])), usage: {input_tokens: 100, output_tokens: 100}}), {status: 200});
   };
   const result = await run(value, {fetcher, env: {AGS_BOOTSTRAP_ENDPOINT: "https://mock.invalid/classify", AGS_BOOTSTRAP_JEV_KEY: "test-only-not-a-real-key"}, executionKind: "offline-mock"});
   if (result.status !== "RAW_EVALUATION_RECORDED") throw new Error("Expected mocked raw evaluation");
   assert.equal(calls, 21); assert.equal(result.transportAttempts, 21); assert.equal(result.qualificationStatus, "NOT_RUN");
   assert.equal(result.selectedReadAppliedVerified, "NOT_RUN"); assert.notEqual(result.raw.verdict, "PASS");
+  assert.equal(result.observationRevision, "2.0.0"); assert.equal(result.observations.length, 21);
+  for (const observation of result.observations as any[]) {
+    const record = JSON.parse(await readFile(path.join(value.outputDirectory, `${observation.caseId}.raw.json`), "utf8"));
+    assert.equal(observation.kind, "classification");
+    assert.deepEqual(observation.classificationResponse, record.response, "R14_PRODUCER_FULL_RESPONSE_PRESERVED");
+    assert.equal(observation.classificationResponse.status, "PARTIAL");
+    assert.equal(observation.classificationResponse.judgments.filter((row: any) => row.judgment === "needed").length, 1);
+    assert.equal(observation.classificationResponse.unresolvedItems.length, 1);
+    assert(!Object.hasOwn(observation, "selectionStatus") && !Object.hasOwn(observation, "agentSelectedSkillIds") && !Object.hasOwn(observation, "hostReceipt"), "R14_RAW_IS_NOT_SELECTION");
+  }
   assert(result.ledger.entries.every((entry: any) => entry.state === "unknown" && entry.actualCostUsd === null && entry.reservedUsd === 0.001), "LEGACY_UNKNOWN_RESERVATION_PRESERVED");
   const text = await readFile(path.join(value.outputDirectory, "report.json"), "utf8"); assert(!text.includes("test-only-not-a-real-key"));
   await assert.rejects(() => run(value, {fetcher, executionKind: "offline-mock"})); assert.equal(calls, 21);
@@ -114,8 +124,49 @@ try {
   assert.equal(timeoutCalls, 1); assert.equal(timeoutResult.transportAttempts, 1);
   assert.equal(timeoutResult.ledger.entries[0].state, "unknown"); assert.equal(timeoutResult.ledger.entries[0].reservedUsd, 0.001);
   assert.equal(timeoutResult.raw.executed, 1); passed.push("timeout stops after one attempt and holds unknown reservation");
+  assert.equal(timeoutResult.observations[0].classificationResponse, null);
+  assert.equal(timeoutResult.observations[0].producerDiagnostics.errorCode, "DISPATCH_TIMEOUT_UNKNOWN");
+  let observationFaultCalls = 0;
+  for (const [id, response, expected] of [["r14-malformed", new Response("{}", {status: 200}), "INVALID_PROVIDER_RESPONSE"],
+    ["r14-http-error", new Response("{}", {status: 503}), "API_UNAVAILABLE"]] as const) {
+    const fault = await readyMock(id);
+    const failed = await run(fault, {fetcher: async () => {observationFaultCalls++; return response;},
+      env: {AGS_BOOTSTRAP_ENDPOINT: "https://mock.invalid/classify", AGS_BOOTSTRAP_JEV_KEY: "test-only-not-a-real-key"}, executionKind: "offline-mock"});
+    if (failed.status !== "RAW_EVALUATION_RECORDED") throw new Error("Expected observation fault record");
+    assert.equal(failed.transportAttempts, 1); assert.equal(failed.stopReason, expected);
+    assert.equal(failed.observations[0].classificationResponse, null);
+    assert.equal(failed.observations[0].producerDiagnostics.errorCode, expected, "R14_PRODUCER_ABSENT_DIAGNOSTIC_PRESERVED");
+    assert.equal(failed.observations[0].producerDiagnostics.dispatchState, "started");
+  }
+  const validFailure = await readyMock("r14-valid-common-error");
+  validFailure.limits!.requests = 1; await mockedEvidence(validFailure);
+  const adapter = input.api.providers.jevNoulWireAdapter;
+  const originalDecode = adapter.decode;
+  try {
+    // Private protocol fixture only; the shared production adapter is restored even on assertion failure.
+    adapter.decode = (...args: Parameters<typeof originalDecode>) => {
+      const decoded = originalDecode(...args);
+      return {...decoded, response: {...decoded.response, status: "UNAVAILABLE", judgments: [], unresolvedItems: [],
+        error: {code: "MOCK_COMMON_UNAVAILABLE", retryable: true, dispatchState: "unknown"}}};
+    };
+    const failure = await run(validFailure, {fetcher: async (_url, init) => {
+      observationFaultCalls++; const body = JSON.parse(String(init?.body));
+      return new Response(JSON.stringify({model: "mock-model-revision", answers: Object.fromEntries(Object.keys(body.questions).map(id => [id, {type: "noul", noul: 0}])),
+        usage: {input_tokens: 100, output_tokens: 100}}), {status: 200});
+    }, env: {AGS_BOOTSTRAP_ENDPOINT: "https://mock.invalid/classify", AGS_BOOTSTRAP_JEV_KEY: "test-only-not-a-real-key"}, executionKind: "offline-mock"});
+    if (failure.status !== "RAW_EVALUATION_RECORDED") throw new Error("Expected valid common error observation");
+    const raw = JSON.parse(await readFile(path.join(validFailure.outputDirectory, `${failure.observations[0].caseId}.raw.json`), "utf8"));
+    assert.deepEqual(failure.observations[0].classificationResponse, raw.response, "R14_PRODUCER_VALID_ERROR_RESPONSE_PRESERVED");
+    const preserved = failure.observations[0].classificationResponse;
+    assert(preserved !== null && preserved.error !== null);
+    assert.equal(preserved.error.dispatchState, "unknown");
+    assert.equal(preserved.judgments.length, 0);
+    assert.equal(failure.observations[0].state, "BLOCKED"); assert.equal(failure.raw.blocked, 1);
+    assert.equal(failure.transportAttempts, 1); assert.equal(failure.ledger.entries[0].state, "unknown");
+  } finally {adapter.decode = originalDecode;}
+  passed.push("R14 actual producer preserves full PARTIAL/common error binding and absent/malformed/timeout diagnostics without selection claims");
   console.log(JSON.stringify({status: "OFFLINE_CONTRACT_PASS", proofKind: "offline-mock", actualApiCalls: 0, actualCredentialLookups: 0,
-    mockTransportCalls: calls + timeoutCalls, publicPrompts: prepared.requests.length, scoredSemanticCases: 18, checks: passed, profileQualification: "NOT_RUN", hostLive: "NOT_RUN"}, null, 2));
+    mockTransportCalls: calls + timeoutCalls, mockObservationFaultCalls: observationFaultCalls, publicPrompts: prepared.requests.length, scoredSemanticCases: 18, checks: passed, profileQualification: "NOT_RUN", hostLive: "NOT_RUN"}, null, 2));
 } finally {
   const resolved = path.resolve(root), temporaryRoot = path.resolve(os.tmpdir());
   assert.equal(path.dirname(resolved), temporaryRoot, "Recursive cleanup must remain in the designated OS temp directory");

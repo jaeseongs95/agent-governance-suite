@@ -1,8 +1,15 @@
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { aggregate, canonicalSet, checkFamilySplit, evaluateLayers, fromSelection, oracleDigest, pairedMatrix, scoreCase, scorePairs, sameSet, type Layer, type Observation, type Oracle, type SemanticCase } from "./evaluation.js";
+import { aggregateLegacy as aggregate, canonicalSet, checkFamilySplit, evaluateLegacyLayers as evaluateLayers, fromLegacySelection as fromSelection, oracleDigest, legacyPairedMatrix as pairedMatrix, scoreLegacyCase as scoreCase, scoreLegacyPairs as scorePairs, sameSet, type Layer, type LegacyObservation as Observation, type Oracle, type SemanticCase } from "./evaluation.js";
 import type { SkillSelectionDecisionV1 } from "../../mcp-server/src/skill-classification/types.js";
+import type { SkillClassificationRequestV1, SkillClassificationResponseV1 } from "../../mcp-server/src/skill-classification/types.js";
+import * as current from "./evaluation.js";
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { resolve, join, dirname, basename } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { spawnSync } from "node:child_process";
 
 const corpus = JSON.parse(readFileSync(new URL("./fixtures.json", import.meta.url), "utf8")) as {
   targetRelease: string; oracleDigest: string; oracleRevision: string; sourceSpecDigest: string;
@@ -197,5 +204,166 @@ describe("family isolation and paired trial controls", () => {
     expect(result.stability[1]!.unstableGroups).toBe(1);
     expect(result.stability[0]!.notRunGroups).toBe(39);
     expect(result.completedPurposeRate).toBeCloseTo(2 / 120);
+  });
+});
+
+const boundDigest = `sha256:${"a".repeat(64)}`;
+function requestMock(id: string): SkillClassificationRequestV1 {
+  // Only fields read by common response validation; never sent as a real request.
+  return {requestId: `mock/${id}`, operationId: `mock/${id}`, requestDigest: boundDigest, inventoryDigest: boundDigest,
+    skills: corpus.inventorySkillIds.map(skillId => ({skillId}))} as unknown as SkillClassificationRequestV1;
+}
+function responseMock(id: string, needed: string[] = [], uncertain: string[] = []): SkillClassificationResponseV1 {
+  return {schemaVersion: "1.0.0", requestId: `mock/${id}`, operationId: `mock/${id}`, requestDigest: boundDigest, inventoryDigest: boundDigest,
+    status: uncertain.length ? "PARTIAL" : "SUCCESS", judgments: corpus.inventorySkillIds.map(skillId => ({skillId,
+      judgment: needed.includes(skillId) ? "needed" : uncertain.includes(skillId) ? "uncertain" : "not-needed", reasonRefs: ["mock-response-not-model-quality"],
+      uncertaintyReason: uncertain.includes(skillId) ? "JEV_JUDGMENT_UNCERTAIN" : null})),
+    unresolvedItems: uncertain.map(skillId => ({skillId, reasonCode: "JEV_JUDGMENT_UNCERTAIN"})), error: null};
+}
+function classificationMock(id: string, response: unknown = responseMock(id)): current.ClassificationObservation {
+  return current.fromClassification(id, requestMock(id), response, {state: "PASS", executionKind: "offline-mock", conditionDigest: boundDigest,
+    producerDiagnostics: {errorCode: null, capViolation: false, dispatchState: "started", responseValidationErrors: []}});
+}
+function selectionMock(id: string, selected: string[] | null): current.SelectionObservation {
+  const decision: SkillSelectionDecisionV1 = {schemaVersion: "1.0.0", classificationResponseRef: boundDigest, requestDigest: boundDigest, inventoryDigest: boundDigest,
+    taskRevision: null, configRevision: "mock", profileRevision: "mock", explicitSkillIds: [], ruleRequiredSkillIds: [], agentSelectedSkillIds: selected,
+    selectionStatus: selected === null ? "NEEDS_INPUT" : "SELECTED", selectionReasons: (selected ?? []).map(skillId => ({skillId, reason: "mock-only"})),
+    applicabilityChecks: [], unresolvedSkillReferences: [], adviceApplied: false,
+    hostReceipt: selected === null ? null : {receiptId: "synthetic-not-host-attestation", host: "codex", requestDigest: boundDigest, inventoryDigest: boundDigest,
+      agentSelectedSkillIds: selected, acceptedAt: "2000-01-01T00:00:00.000Z"}};
+  return current.fromSelection(id, decision, {requestId: `mock/${id}`, operationId: `mock/${id}`, state: "PASS", executionKind: "offline-mock", conditionDigest: boundDigest,
+    host: "codex", stageEvidence: {read: false, applied: false, verified: false}});
+}
+
+describe("R14 versioned observation boundaries", () => {
+  it("type-and-response-boundary preserves full PARTIAL without a selected claim", () => {
+    const response = responseMock("SS07", ["software-security-auditor"], ["task-contract"]);
+    const observation = classificationMock("SS07", response);
+    expect(observation.classificationResponse).toEqual(response);
+    expect(observation.classificationResponse).not.toBe(response);
+    expect(Object.keys(observation)).not.toContain("selectionStatus");
+    expect(Object.keys(observation)).not.toContain("agentSelectedSkillIds");
+    expect(() => current.assertObservation({...observation, selectionStatus: "SELECTED"}, corpus.inventorySkillIds)).toThrow();
+    expect(() => current.assertObservation({...observation, kind: "selection"}, corpus.inventorySkillIds)).toThrow();
+    expect(() => current.assertObservation({...observation, classificationResponse: {...response, judgments: []}}, corpus.inventorySkillIds)).toThrow("INVALID_CLASSIFICATION_OBSERVATION_RESPONSE");
+    expect(() => current.assertObservation({...observation, classificationResponse: {...response, requestDigest: `sha256:${"b".repeat(64)}`}}, corpus.inventorySkillIds)).toThrow();
+    const semanticUncertain = classificationMock("SS07", {...response, status: "UNCERTAIN"});
+    expect(semanticUncertain.classificationResponse).toEqual({...response, status: "UNCERTAIN"});
+    expect(current.scoreCase(fixture("SS07"), semanticUncertain, corpus.inventorySkillIds).requiredHits).toBe(1);
+    expect(current.scoreCase(fixture("SS07"), semanticUncertain, corpus.inventorySkillIds).verdict).toBe("PASS");
+  });
+  it("type-and-response-boundary preserves valid failure RESP and distinguishes absent/rejected", () => {
+    for (const status of ["UNAVAILABLE", "INVALID", "UNCERTAIN"] as const) {
+      const response: SkillClassificationResponseV1 = {...responseMock("SS01"), status, judgments: [],
+        error: {code: "MOCK_PROVIDER_FAILURE", retryable: true, dispatchState: "unknown"}};
+      const observation = classificationMock("SS01", response);
+      expect(observation.classificationResponse).toEqual(response);
+      expect(observation.state).toBe("BLOCKED");
+      expect(current.scoreCase(fixture("SS01"), observation, corpus.inventorySkillIds).verdict).toBe("BLOCKED");
+      expect(() => current.assertObservation({...observation, state: "PASS"}, corpus.inventorySkillIds)).toThrow("FAILURE_RESPONSE_CANNOT_PASS");
+    }
+    const absent = classificationMock("SS01", null);
+    expect(absent.classificationResponse).toBeNull(); expect(absent.state).toBe("BLOCKED");
+    expect(absent.producerDiagnostics.responseValidationErrors).toEqual([]);
+    const rejected = classificationMock("SS01", {status: "SUCCESS"});
+    expect(rejected.classificationResponse).toBeNull();
+    expect(rejected.producerDiagnostics.responseValidationErrors).toEqual(["INVALID_RESPONSE_SCHEMA"]);
+    expect(() => current.assertObservation({...rejected, classificationResponse: {status: "SUCCESS"}}, corpus.inventorySkillIds)).toThrow();
+    const previouslyRejected = current.fromClassification("SS01", requestMock("SS01"), null, {state: "BLOCKED", executionKind: "offline-mock", conditionDigest: boundDigest,
+      producerDiagnostics: {...rejected.producerDiagnostics, dispatchState: "unknown"}});
+    expect(previouslyRejected.producerDiagnostics).toEqual({...rejected.producerDiagnostics, dispatchState: "unknown"});
+  });
+  it("partial-information retains known needed and every original required omission", () => {
+    for (const [id, known, uncertain, missing] of [
+      ["SS03", ["cs-engineering", "test-engineering"], ["ponytail"], ["ponytail", "orchestrator"]],
+      ["SS04", ["cs-engineering", "test-engineering"], ["orchestrator", "ponytail"], ["orchestrator"]],
+      ["SS05", ["code-review", "cs-engineering"], ["independent-deliberation-panel"], ["orchestrator"]],
+      ["SS14", ["cs-engineering", "test-engineering"], ["task-contract"], ["orchestrator"]],
+      ["SS18", ["ponytail"], ["orchestrator"], ["software-security-auditor", "orchestrator"]],
+    ] as const) {
+      const response = responseMock(id, [...known], [...uncertain]);
+      const observation = classificationMock(id, response);
+      const score = current.scoreCase(fixture(id), observation, corpus.inventorySkillIds);
+      expect(observation.classificationResponse).toEqual(response);
+      expect(score.missingRequired).toEqual(missing); expect(score.verdict).toBe("FAIL");
+      expect(score.requiredHits).toBe(known.length);
+    }
+    for (const [id, known, uncertain] of [["SS07", "software-security-auditor", "task-contract"], ["SS10", "code-review", "cs-engineering"],
+      ["SS16", "korean-prose-editor", "orchestrator"], ["SS17", "change-scope-guardian", "session-board"]]) {
+      const observation = classificationMock(id!, responseMock(id!, [known!], [uncertain!]));
+      expect(current.scoreCase(fixture(id!), observation, corpus.inventorySkillIds).verdict).toBe("PASS");
+      expect(observation.classificationResponse!.unresolvedItems).toHaveLength(1);
+    }
+  });
+  it("missing-input-reasons does not pass by an empty needed set or null conversion", () => {
+    for (const [id, response, reportedReasons] of [["SS12", responseMock("SS12"), ["missing-action", "missing-target"]],
+      ["SS15", responseMock("SS15", [], ["code-review", "cs-engineering"]), ["unknown-explicit-skill"]]] as const) {
+      const observation = classificationMock(id, response);
+      expect(current.scoreCase(fixture(id), observation, corpus.inventorySkillIds).verdict).toBe("FAIL");
+      expect(current.scoreCase(fixture(id), observation, corpus.inventorySkillIds).reasons).toContain("CLASSIFICATION_REQUIRED_INPUT_REASON_MISSING");
+      expect(current.scoreCase(fixture(id), classificationMock(id, null), corpus.inventorySkillIds).verdict).toBe("BLOCKED");
+      expect(current.scoreCase(fixture(id), selectionMock(id, null), corpus.inventorySkillIds).verdict).toBe("FAIL");
+      const reported: SkillClassificationResponseV1 = {...response, status: "PARTIAL", unresolvedItems: [
+        ...response.unresolvedItems, ...reportedReasons.map(reasonCode => ({skillId: null, reasonCode}))]};
+      const positive = classificationMock(id, reported);
+      expect(current.scoreCase(fixture(id), positive, corpus.inventorySkillIds).verdict).toBe("PASS");
+      expect(current.scoreCase(fixture(id), positive, corpus.inventorySkillIds).reasons).not.toContain("CLASSIFICATION_REQUIRED_INPUT_REASON_MISSING");
+      expect(current.aggregate([fixture(id)], [positive], "jevRaw", corpus.inventorySkillIds).passes).toBe(1);
+      expect(positive.kind).toBe("classification"); expect(Object.keys(positive)).not.toContain("hostReceipt");
+    }
+    expect(current.scoreCase(fixture("SS11"), classificationMock("SS11"), corpus.inventorySkillIds).verdict).toBe("PASS");
+    const clarification = selectionMock("SS15", null);
+    clarification.decision.unresolvedSkillReferences = [{reference: "$cs-enginering", reason: "unknown-explicit-skill"}];
+    expect(current.scoreCase(fixture("SS15"), clarification, corpus.inventorySkillIds).verdict).toBe("PASS");
+    expect(clarification.decision.agentSelectedSkillIds).toBeNull();
+  });
+  it("selected-runtime-cli rejects receipt/binding absence and nonselected pairs", () => {
+    const selected = selectionMock("SS01", ["ponytail"]);
+    expect(current.scoreCase(fixture("SS01"), selected, corpus.inventorySkillIds).verdict).toBe("PASS");
+    expect(() => current.assertObservation({...selected, decision: {...selected.decision, hostReceipt: null}}, corpus.inventorySkillIds)).toThrow("HOST_SELECTION_RECEIPT_MISSING_OR_MISMATCH");
+    expect(() => current.assertObservation({...selected, requestDigest: `sha256:${"b".repeat(64)}`}, corpus.inventorySkillIds)).toThrow("SELECTION_BINDING_MISMATCH");
+    const pair = current.pairedMatrix()[0]!;
+    const raw = classificationMock(pair.caseId);
+    expect(() => current.scorePairs([{...pair, codex: raw as unknown as current.SelectionObservation, claude: selected}], corpus.cases, corpus.inventorySkillIds)).toThrow("PAIR_REQUIRES_SELECTION_OBSERVATION");
+    const empty = selectionMock("SS11", []);
+    expect(empty.decision.agentSelectedSkillIds).toEqual([]); expect(empty.decision.hostReceipt).not.toBeNull();
+    expect(current.scoreCase(fixture("SS11"), empty, corpus.inventorySkillIds).verdict).toBe("PASS");
+    const combined: current.CombinedObservation = {observationRevision: "2.0.0", kind: "support-combination", layer: "combined", caseId: "SS18", state: "PASS", executionKind: "offline-mock",
+      requestId: "mock/SS18", operationId: "mock/SS18", requestDigest: boundDigest, inventoryDigest: boundDigest, conditionDigest: boundDigest,
+      neededSkillIds: ["ponytail", "software-security-auditor"], unresolvedItems: [], classificationResponseRefs: [boundDigest], explicitSkillIds: [], ruleRequiredSkillIds: ["software-security-auditor"],
+      contributions: [{kind: "classification", skillId: "ponytail", reasonRefs: ["mock-response"]}, {kind: "rule", skillId: "software-security-auditor", reasonRefs: ["mock-rule-not-authority"]}]};
+    expect(current.scoreCase(fixture("SS18"), combined, corpus.inventorySkillIds).missingRequired).toEqual(["orchestrator"]);
+    expect(() => current.assertObservation({...combined, contributions: []}, corpus.inventorySkillIds)).toThrow("COMBINED_CONTRIBUTION_MISSING");
+    expect(() => current.assertObservation({...combined, hostReceipt: selected.decision.hostReceipt}, corpus.inventorySkillIds)).toThrow();
+  });
+  it("explicit-legacy preserves original scoring and rejects silent mode changes", () => {
+    const legacy = mock("SS15", []);
+    const result = current.evaluateInput({observationRevision: "legacy-v1", observations: [legacy], pairs: []}, corpus);
+    expect(result.layers.jevRaw!.scores).toEqual(evaluateLayers(corpus.cases, [legacy], corpus.inventorySkillIds).jevRaw!.scores);
+    expect(result.layers.jevRaw!.scores.find(row => row.caseId === "SS15")!.reasons).toEqual(["UNCERTAINTY_HIDDEN_AS_SELECTION"]);
+    expect(result.scorerRevision).toBe("legacy-v1");
+    expect(() => current.evaluateInput({observations: [legacy], pairs: []}, corpus)).toThrow();
+    expect(() => current.evaluateInput({observationRevision: "2.0.0", observations: [legacy], pairs: []}, corpus)).toThrow();
+    expect(() => current.evaluateInput({observationRevision: "2.0.0", observations: [], pairs: [], credential: "not-allowed"}, corpus)).toThrow();
+  });
+  it("selected-runtime-cli executes the closed JSON boundary", () => {
+    const root = mkdtempSync(join(tmpdir(), "ags-r14-eval-"));
+    try {
+      const argv = ["--import", pathToFileURL(resolve("node_modules/tsx/dist/loader.mjs")).href, fileURLToPath(new URL("./evaluation.ts", import.meta.url)), join(root, "input.json")];
+      const selected = selectionMock("SS01", ["ponytail"]);
+      selected.decision.hostReceipt = null;
+      for (const input of [{observations: [], pairs: []}, {observationRevision: "2.0.0", observations: [selected], pairs: []},
+        {observationRevision: "2.0.0", observations: [{...classificationMock("SS01"), selectionStatus: "SELECTED"}], pairs: []}]) {
+        writeFileSync(argv[3]!, JSON.stringify(input));
+        const failed = spawnSync(process.execPath, argv, {encoding: "utf8", timeout: 15000});
+        expect(failed.error).toBeUndefined(); expect(failed.status).not.toBe(0);
+      }
+      writeFileSync(argv[3]!, JSON.stringify({observationRevision: "legacy-v1", observations: [], pairs: []}));
+      const valid = spawnSync(process.execPath, argv, {encoding: "utf8", timeout: 15000});
+      expect(valid.status).toBe(0); expect(JSON.parse(valid.stdout).archivalDiagnosticOnly).toBe(true);
+    } finally {
+      expect(dirname(resolve(root))).toBe(resolve(tmpdir())); expect(basename(root)).toMatch(/^ags-r14-eval-/u);
+      rmSync(root, {recursive: true, force: true});
+    }
   });
 });
