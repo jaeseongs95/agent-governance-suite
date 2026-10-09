@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:7c26d05c898609bcaa8bcbbeee66870345c9323ccd1d9907b895972f5cef5730",
+  "reportDigest": "sha256:0372eef1d8699125e27c9aed2a3ca9090c148d79cb1fde712c596ffe91699e85",
+  "issues": [
+    "REQUIRED SS39-supplemental-contract: NOT_RUN — Sensitivity red/green pair NOT_RUN: actual failing run is in evidence/supplemental-SS39.vitest.json, but product edits are prohibited and no repaired-candidate green was run. This proof makes no execution or host receipt claims."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

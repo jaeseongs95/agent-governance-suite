@@ -1,0 +1,105 @@
+[
+  {
+    "name": "existing-SS39",
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "tests/mcp/skill-classification-profiles.test.ts",
+      "-t",
+      "SS39",
+      "--reporter=json",
+      "--outputFile=<evidence-output>/existing-SS39.vitest.json"
+    ],
+    "cwd": "<pinned-repository>",
+    "exitCode": 0,
+    "startedAt": "2026-10-09T02:58:46.284786+00:00",
+    "finishedAt": "2026-10-09T02:58:46.935089+00:00",
+    "executionKind": "existing-offline-regression",
+    "API0": true,
+    "stdout": "existing-SS39.stdout.log",
+    "stderr": "existing-SS39.stderr.log"
+  },
+  {
+    "name": "existing-OFF-SS39",
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "tests/mcp/skill-classification-service.test.ts",
+      "-t",
+      "SS19/39 OFF",
+      "--reporter=json",
+      "--outputFile=<evidence-output>/existing-OFF-SS39.vitest.json"
+    ],
+    "cwd": "<pinned-repository>",
+    "exitCode": 0,
+    "startedAt": "2026-10-09T02:58:46.935386+00:00",
+    "finishedAt": "2026-10-09T02:58:47.498964+00:00",
+    "executionKind": "existing-offline-regression",
+    "API0": true,
+    "stdout": "existing-OFF-SS39.stdout.log",
+    "stderr": "existing-OFF-SS39.stderr.log"
+  },
+  {
+    "name": "supplemental-SS39",
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "tests/ss39-independent/SS39.test.ts",
+      "--reporter=json",
+      "--outputFile=<evidence-output>/supplemental-SS39.vitest.json"
+    ],
+    "cwd": "<pinned-repository>",
+    "exitCode": 1,
+    "startedAt": "2026-10-09T02:58:47.499287+00:00",
+    "finishedAt": "2026-10-09T02:58:48.608922+00:00",
+    "executionKind": "new-offline-supplemental",
+    "API0": true,
+    "stdout": "supplemental-SS39.stdout.log",
+    "stderr": "supplemental-SS39.stderr.log"
+  },
+  {
+    "name": "check-plan",
+    "argv": [
+      "node",
+      "skills/test-engineering/scripts/run.mjs",
+      "check-plan",
+      "--root",
+      "<pinned-repository>",
+      "--plan",
+      "ss39-engineering-plan.json"
+    ],
+    "cwd": "<pinned-repository>",
+    "exitCode": 0,
+    "startedAt": "2026-10-09T03:01:39.008Z",
+    "finishedAt": "2026-10-09T03:01:39.119Z",
+    "executionKind": "local-artifact-consistency",
+    "API0": true,
+    "stdout": "check-plan.stdout.log",
+    "stderr": "check-plan.stderr.log"
+  },
+  {
+    "name": "check-proof",
+    "argv": [
+      "node",
+      "skills/test-engineering/scripts/run.mjs",
+      "check-proof",
+      "--root",
+      "<pinned-repository>",
+      "--plan",
+      "ss39-engineering-plan.json",
+      "--proof",
+      "ss39-engineering-proof.json"
+    ],
+    "cwd": "<pinned-repository>",
+    "exitCode": 1,
+    "startedAt": "2026-10-09T03:01:39.119Z",
+    "finishedAt": "2026-10-09T03:01:39.242Z",
+    "executionKind": "local-artifact-consistency",
+    "API0": true,
+    "stdout": "check-proof.stdout.log",
+    "stderr": "check-proof.stderr.log"
+  }
+]

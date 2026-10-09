@@ -1,0 +1,224 @@
+{
+  "caseId": "SS39",
+  "supplementalId": "SS39-DEV-cost",
+  "executionKind": "offline-mock",
+  "originalVariantMapping": null,
+  "input": {
+    "originalPrompt": "session-handoff를 구현해 줘. 수신 전 종료, ACK 뒤 crash, 같은 메시지 재수신에서 인계가 유실되거나 중복 완료되지 않아야 해. 최소 구현과 회귀 테스트를 함께 설계해 줘.",
+    "requestDigest": "sha256:e8fd11bcff6fe6b22af40363a81ccfca0056d3b5524212d0cba7fbd7c2442368",
+    "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+    "goldenReusedForContext": {
+      "required": [
+        "ponytail",
+        "cs-engineering",
+        "test-engineering",
+        "orchestrator"
+      ],
+      "allowed": [],
+      "allowedConditions": {},
+      "forbidden": [],
+      "notApplicable": [
+        "code-review",
+        "software-security-auditor",
+        "korean-prose-editor"
+      ],
+      "unadjudicated": [
+        "acceptance-evidence-validator",
+        "blocker-diagnostician",
+        "change-scope-guardian",
+        "codex-token-usage-analyzer",
+        "context-continuity",
+        "coordinate-subagents",
+        "evaluation-validity-auditor",
+        "independent-audit-gate",
+        "independent-deliberation-panel",
+        "instruction-scope-resolver",
+        "iteration-frame-auditor",
+        "model-effort-advisor",
+        "mutation-risk-preflight",
+        "recovery-strategy-selector",
+        "session-board",
+        "task-contract",
+        "workspace-convention-profiler"
+      ],
+      "expectedSelection": "SELECTED",
+      "explicitSkillIds": [],
+      "ruleRequiredSkillIds": [],
+      "requiredReasons": [],
+      "sourceRefs": [
+        {
+          "skillId": "ponytail",
+          "path": "skills/ponytail/SKILL.md",
+          "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+        },
+        {
+          "skillId": "cs-engineering",
+          "path": "skills/cs-engineering/SKILL.md",
+          "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+        },
+        {
+          "skillId": "test-engineering",
+          "path": "skills/test-engineering/SKILL.md",
+          "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+        },
+        {
+          "skillId": "orchestrator",
+          "path": "skills/orchestrator/SKILL.md",
+          "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+        },
+        {
+          "skillId": "code-review",
+          "path": "skills/code-review/SKILL.md",
+          "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+        },
+        {
+          "skillId": "software-security-auditor",
+          "path": "skills/software-security-auditor/SKILL.md",
+          "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+        },
+        {
+          "skillId": "korean-prose-editor",
+          "path": "skills/korean-prose-editor/SKILL.md",
+          "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+        }
+      ],
+      "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+    },
+    "profiles": {
+      "schemaVersion": "1.0.0",
+      "profileRevision": "registry1",
+      "profiles": [
+        {
+          "profileId": "Vendor-A-profile",
+          "providerKind": "vendor",
+          "vendorId": "Vendor-A",
+          "modelId": "model-a",
+          "modelRevision": "m1",
+          "reasoningEffort": "low",
+          "supportedOptions": {
+            "structuredOutput": true,
+            "reasoningEfforts": [
+              "low"
+            ]
+          },
+          "approvedRouteRef": "Vendor-A-route",
+          "qualificationRevision": "synthetic-q1",
+          "qualification": {
+            "status": "PASS",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "taxonomyRevision": "1.0.0",
+            "modelRevision": "m1",
+            "promptRevision": "p1",
+            "validUntil": "2099-01-01T00:00:00Z",
+            "profileConfigurationDigest": "sha256:58c007d1d81c4911f8705cb7a8b7b30125542ea7827ace7453c087cdca881d1a"
+          },
+          "adapterRevision": "a1",
+          "promptRevision": "p1",
+          "maximumInputBytes": 1000000,
+          "maximumOutputTokens": 1000,
+          "maximumCostUsd": 0.4,
+          "judgmentPolicy": null
+        },
+        {
+          "profileId": "Vendor-B-profile",
+          "providerKind": "vendor",
+          "vendorId": "Vendor-B",
+          "modelId": "model-b",
+          "modelRevision": "m1",
+          "reasoningEffort": null,
+          "supportedOptions": {
+            "structuredOutput": true,
+            "reasoningEfforts": [
+              null
+            ]
+          },
+          "approvedRouteRef": "Vendor-B-route",
+          "qualificationRevision": "synthetic-q1",
+          "qualification": {
+            "status": "PASS",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "taxonomyRevision": "1.0.0",
+            "modelRevision": "m1",
+            "promptRevision": "p1",
+            "validUntil": "2099-01-01T00:00:00Z",
+            "profileConfigurationDigest": "sha256:7e07b72222612388a4e46da3db74ef20f53b590dded7d435b4cc488107db04f4"
+          },
+          "adapterRevision": "a1",
+          "promptRevision": "p1",
+          "maximumInputBytes": 1000000,
+          "maximumOutputTokens": 1000,
+          "maximumCostUsd": 0.4,
+          "judgmentPolicy": null
+        }
+      ]
+    },
+    "config": {
+      "jevEnabled": false,
+      "mode": "select",
+      "providerProfileRegistryRef": "synthetic-central-registry",
+      "externalClassificationAllowed": true,
+      "configRevision": "config1",
+      "timeoutMs": 1000
+    },
+    "currentVendorId": "Vendor-A"
+  },
+  "expected": {
+    "costs": [
+      0.66,
+      1.34,
+      2.1,
+      1.5,
+      null
+    ],
+    "qualificationQuality": "NOTRUN"
+  },
+  "observed": {
+    "result": {
+      "attempts": [],
+      "costs": [
+        0.66,
+        1.34,
+        2.1,
+        1.5,
+        null
+      ]
+    },
+    "wires": [],
+    "credentialCalls": 0,
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": null,
+          "spentUsd": null
+        },
+        "vendor:Vendor-A": {
+          "limitUsd": 2,
+          "spentUsd": 0
+        },
+        "vendor:Vendor-B": {
+          "limitUsd": 2,
+          "spentUsd": 0
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": []
+    }
+  },
+  "API0": {
+    "JEV": 0,
+    "externalVendor": 0,
+    "Claude": 0,
+    "realNative": 0,
+    "runtimeCatalog": 0,
+    "runtimePrice": 0
+  },
+  "stages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "agentSelectedSkillIds": null,
+  "hostReceipt": null
+}

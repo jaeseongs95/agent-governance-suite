@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:ac4f919bfa518b97388e866921e12eb8e1a6429b01f647db090ae5adce696f40",
+  "caseIds": [
+    "SS39-supplemental-contract"
+  ]
+}

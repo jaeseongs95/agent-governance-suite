@@ -1,0 +1,69 @@
+{
+  "kind": "engineering-test-plan",
+  "caseId": "SS39",
+  "runner": "existing Vitest 5.0.0, Node v24.19.0",
+  "entryPoints": [
+    "SkillClassificationService.classify",
+    "ApprovedRouteClassificationProvider.classify",
+    "createNativeClassificationAdapters",
+    "estimateTokenCostUsd"
+  ],
+  "testFile": "tests/ss39-independent/SS39.test.ts",
+  "originalVariants": [
+    "counterexample-01",
+    "counterexample-02",
+    "counterexample-03",
+    "counterexample-04",
+    "counterexample-05",
+    "counterexample-06",
+    "counterexample-07",
+    "counterexample-08",
+    "counterexample-09",
+    "counterexample-10",
+    "counterexample-11",
+    "counterexample-12"
+  ],
+  "originalVariantsState": "NOTRUN: frozen fixture contains IDs only; missing individual inputs/expected outcomes",
+  "supplementalScenarioIds": [
+    "fixed-Vendor-A",
+    "fixed-Vendor-B",
+    "hold-missing",
+    "hold-ambiguous",
+    "hold-unqualified",
+    "hold-expired",
+    "hold-unsupported-effort",
+    "hold-unsupported-structured",
+    "hold-old-fingerprint",
+    "hold-unknown-cost",
+    "hold-route-unapproved",
+    "hold-route-model-unavailable",
+    "hold-egress",
+    "hold-budget",
+    "update",
+    "stale-availability",
+    "freeze",
+    "expiry-race",
+    "stale-credential",
+    "invalid-response-cost",
+    "cost",
+    "native-encode"
+  ],
+  "oracle": "Embedded sourceSpec.fields requirements and hand calculations, not frozen counterexample mapping or semantic oracle",
+  "clock": "2026-10-09T00:00:00Z; explicit expiry advancement",
+  "mockBoundary": [
+    "HTTPS fetch replaced; only synthetic credential",
+    "native runner replaced; no child spawn",
+    "response judgments synthetic all not-needed; no semantic accuracy claim"
+  ],
+  "exclusions": [
+    "product source changes",
+    "full suite",
+    "other cases",
+    "past 21-run replay",
+    "JEV/external vendor/Claude/native host invocation",
+    "real qualification",
+    "host selection receipt"
+  ],
+  "proofStatus": "Behavioral observations and red assertions only; repaired-candidate green NOTRUN because product edits forbidden",
+  "formalSkillCLI": "Final schema-conforming adaptation checked: check-plan READY/exit0; check-proof INCOMPLETE/exit1. Formal plan was generated after behavioral run; original descriptive plan was written before run."
+}

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-proof",
+  "planDigest": "sha256:ac4f919bfa518b97388e866921e12eb8e1a6429b01f647db090ae5adce696f40",
+  "candidate": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-snapshot",
+    "files": [
+      {
+        "path": "mcp-server/src/skill-classification/native-adapters.ts",
+        "digest": "sha256:dc6a0e763b175b077cee401d9020144d49b99f143b34da88059fbf4da5bc39f6",
+        "size": 13788,
+        "lineCount": 192
+      },
+      {
+        "path": "mcp-server/src/skill-classification/profiles.ts",
+        "digest": "sha256:0add9c19bd0c7a8e45a57be64f4a2ecb503e0305dc9777629fba142a8566d5be",
+        "size": 6859,
+        "lineCount": 81
+      },
+      {
+        "path": "mcp-server/src/skill-classification/providers.ts",
+        "digest": "sha256:f191c46db32f38248ebdd23be725b426a0b3020e0bb464b36bcc57521983651c",
+        "size": 12898,
+        "lineCount": 162
+      },
+      {
+        "path": "mcp-server/src/skill-classification/service.ts",
+        "digest": "sha256:c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb",
+        "size": 19033,
+        "lineCount": 215
+      },
+      {
+        "path": "tests/ss39-independent/SS39.test.ts",
+        "digest": "sha256:0c026deadcdcc8d3331eab3b924f036219fdd477c2d0310a5fee2b0dda2242f6",
+        "size": 16267,
+        "lineCount": 170
+      }
+    ],
+    "digest": "sha256:7c26d05c898609bcaa8bcbbeee66870345c9323ccd1d9907b895972f5cef5730"
+  },
+  "proofs": [
+    {
+      "caseId": "SS39-supplemental-contract",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red/green pair NOT_RUN: actual failing run is in evidence/supplemental-SS39.vitest.json, but product edits are prohibited and no repaired-candidate green was run. This proof makes no execution or host receipt claims."
+    }
+  ]
+}

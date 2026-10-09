@@ -1,0 +1,658 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS39",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cases/SS39/",
+  "candidateCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "candidateTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "newTests": 0,
+  "newModelAPICalls": 0,
+  "productPatch": "NONE",
+  "missingOriginals": [
+    {
+      "logicalPath": "TEST-SPEC.seq7.ko.md",
+      "status": "MISSING_ORIGINAL"
+    },
+    {
+      "logicalPath": "counterexample-01..12/input-and-expectation-definitions",
+      "status": "MISSING_ORIGINAL"
+    }
+  ],
+  "omittedOriginals": [
+    {
+      "logicalPath": "evidence/archive-before.json",
+      "bytes": 206339,
+      "sha256": "9f3cdcb5b7480a2637b9eb0b6a6f2d86926e63255947560bf87a30e3e675a77b",
+      "reason": "Unnecessary repository-wide file listing; retain existing archive-integrity summary instead"
+    },
+    {
+      "logicalPath": "SS39-evidence.tar.gz",
+      "bytes": 986552,
+      "sha256": "0ccfc35c37aaf561b208332ecad8329f951866641ef377b650f0f7a86bf9bce3",
+      "reason": "Contains unsanitized private paths and duplicated raw evidence; not published"
+    }
+  ],
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 4488,
+      "sha256": "b2d8019c13473125613f0b735c26099ed1192bcfc8b047858f170217cce8af31",
+      "origin": null,
+      "publicationKind": "new-publication-wrapper-from-existing-evidence",
+      "transformation": "No new test, observation, log or patch"
+    },
+    {
+      "path": "REPORT.redacted.ko.md",
+      "bytes": 6245,
+      "sha256": "598b908a17d5ea5bb03d6bf5312ea39e75575cfa3f0d9da879ef72b225e135d5",
+      "origin": {
+        "logicalPath": "REPORT.ko.md",
+        "bytes": 6248,
+        "sha256": "c5c5e2ee4adc0beabdeee5be2ef1ba00c7b9c8181498589ac4dbe73998a92655",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "Replace private absolute paths with role placeholders; preserve measured states, values, timestamps and digests"
+    },
+    {
+      "path": "SS39.public.result.json",
+      "bytes": 29386,
+      "sha256": "fcec6141fbf2becfd60c7f04433c3ce63cd245742c34eabc048e5f5d562e86a7",
+      "origin": {
+        "logicalPath": "SS39.result.json",
+        "bytes": 29571,
+        "sha256": "1f0406676d22765d4613e93aaf51a9dbabb181b2b7d4fb65f05d30785dbbe7db",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "Replace private absolute paths with role placeholders; preserve measured states, values, timestamps and digests"
+    },
+    {
+      "path": "evidence/SS39-DEV-cost.json",
+      "bytes": 7053,
+      "sha256": "5c6afbf327928d8d2b1805083cee86b1c6154e8a54d0714215e0f8fb0301ca4d",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-cost.json",
+        "bytes": 7053,
+        "sha256": "5c6afbf327928d8d2b1805083cee86b1c6154e8a54d0714215e0f8fb0301ca4d",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-expiry-race.json",
+      "bytes": 479152,
+      "sha256": "7fe56a2b6c1694f732cd8752c2d9f715d5c660aae65c637a8b65079b0724ef0e",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-expiry-race.json",
+        "bytes": 479152,
+        "sha256": "7fe56a2b6c1694f732cd8752c2d9f715d5c660aae65c637a8b65079b0724ef0e",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-fixed-Vendor-A.json",
+      "bytes": 479235,
+      "sha256": "0512e7adf5b0eff865409cb7ac400db063c66f76ea01ecfd19c5bf5a77f8f036",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-fixed-Vendor-A.json",
+        "bytes": 479235,
+        "sha256": "0512e7adf5b0eff865409cb7ac400db063c66f76ea01ecfd19c5bf5a77f8f036",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-fixed-Vendor-B.json",
+      "bytes": 479231,
+      "sha256": "584a34349ad043cfcc5e1225c892ebe7c7586d84ebbe4da221ca1e2f62457413",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-fixed-Vendor-B.json",
+        "bytes": 479231,
+        "sha256": "584a34349ad043cfcc5e1225c892ebe7c7586d84ebbe4da221ca1e2f62457413",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-freeze.json",
+      "bytes": 479105,
+      "sha256": "b62681e4abfbab784a87ffde021369544cce668188f57dcbe5d4cee00674a446",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-freeze.json",
+        "bytes": 479105,
+        "sha256": "b62681e4abfbab784a87ffde021369544cce668188f57dcbe5d4cee00674a446",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-ambiguous.json",
+      "bytes": 294906,
+      "sha256": "9bacb7185edbc289a411caabe65c1275dd0ff3d7e96de6181cda3d237b282bd4",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-hold-ambiguous.json",
+        "bytes": 294906,
+        "sha256": "9bacb7185edbc289a411caabe65c1275dd0ff3d7e96de6181cda3d237b282bd4",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-budget.json",
+      "bytes": 294476,
+      "sha256": "95c9dfe334039d3163f5e84d5b1af412375466c0300e8394405bc90c9355bce5",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-hold-budget.json",
+        "bytes": 294476,
+        "sha256": "95c9dfe334039d3163f5e84d5b1af412375466c0300e8394405bc90c9355bce5",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-egress.json",
+      "bytes": 294317,
+      "sha256": "c1c5deb484b39d0ed5504552fa0dbbbd095d2d7ef1db72b59198124c8fb747e2",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-hold-egress.json",
+        "bytes": 294317,
+        "sha256": "c1c5deb484b39d0ed5504552fa0dbbbd095d2d7ef1db72b59198124c8fb747e2",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-expired.json",
+      "bytes": 293751,
+      "sha256": "8465476e7e1d6120135281b9c9c2c9c00364c153eccfb3403cc9ef16a48349a3",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-hold-expired.json",
+        "bytes": 293751,
+        "sha256": "8465476e7e1d6120135281b9c9c2c9c00364c153eccfb3403cc9ef16a48349a3",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-missing.json",
+      "bytes": 293747,
+      "sha256": "9b3ab35fb556792fe123f161e7b3aed4943ec99520cfa0ee0da3157aacbfdb98",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-hold-missing.json",
+        "bytes": 293747,
+        "sha256": "9b3ab35fb556792fe123f161e7b3aed4943ec99520cfa0ee0da3157aacbfdb98",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-old-fingerprint.json",
+      "bytes": 293832,
+      "sha256": "723747018db6479086ee488fc487bc6e65f8f2f0c81979a11c04627c9476b647",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-hold-old-fingerprint.json",
+        "bytes": 293832,
+        "sha256": "723747018db6479086ee488fc487bc6e65f8f2f0c81979a11c04627c9476b647",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-route-model-unavailable.json",
+      "bytes": 294376,
+      "sha256": "b529db210a3ebfd86c24994ddde1cca980b8c965ea2a27beb1f20dd9daf3e76c",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-hold-route-model-unavailable.json",
+        "bytes": 294376,
+        "sha256": "b529db210a3ebfd86c24994ddde1cca980b8c965ea2a27beb1f20dd9daf3e76c",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-route-unapproved.json",
+      "bytes": 294313,
+      "sha256": "ce05fc5fa6ca1992017dfe0dc8998f3af0f29413ae954507516fd9b0ec50e14a",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-hold-route-unapproved.json",
+        "bytes": 294313,
+        "sha256": "ce05fc5fa6ca1992017dfe0dc8998f3af0f29413ae954507516fd9b0ec50e14a",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-unknown-cost.json",
+      "bytes": 293746,
+      "sha256": "48b6ec4bb1a32b6f30b913d382ad47ecce4172ebe0af2b5b2ee5a04eea8ca0bf",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-hold-unknown-cost.json",
+        "bytes": 293746,
+        "sha256": "48b6ec4bb1a32b6f30b913d382ad47ecce4172ebe0af2b5b2ee5a04eea8ca0bf",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-unqualified.json",
+      "bytes": 293764,
+      "sha256": "c989f4178ac8e0c68371e3b83b521d3107bae722ad642fb028275b562ceb979c",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-hold-unqualified.json",
+        "bytes": 293764,
+        "sha256": "c989f4178ac8e0c68371e3b83b521d3107bae722ad642fb028275b562ceb979c",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-unsupported-effort.json",
+      "bytes": 293797,
+      "sha256": "cf7e726871a98aaa8266495a6c3a4a0f4ec458082a2bb60d6857d7e165207c4c",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-hold-unsupported-effort.json",
+        "bytes": 293797,
+        "sha256": "cf7e726871a98aaa8266495a6c3a4a0f4ec458082a2bb60d6857d7e165207c4c",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-hold-unsupported-structured.json",
+      "bytes": 293817,
+      "sha256": "d214c121e9a1acdc85349393b07d2404e2780237d06b22c25c2169aebf09b168",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-hold-unsupported-structured.json",
+        "bytes": 293817,
+        "sha256": "d214c121e9a1acdc85349393b07d2404e2780237d06b22c25c2169aebf09b168",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-invalid-response-cost.json",
+      "bytes": 474161,
+      "sha256": "b99f23a79a1b5e8c7d78e2dd578fbe37b7c1e5c313656728b89e41644f9a6946",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-invalid-response-cost.json",
+        "bytes": 474161,
+        "sha256": "b99f23a79a1b5e8c7d78e2dd578fbe37b7c1e5c313656728b89e41644f9a6946",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-native-encode.json",
+      "bytes": 155245,
+      "sha256": "077c385eced174f5cfc8d646902e421101e755afd8087c3104e36c83f7e830d7",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-native-encode.json",
+        "bytes": 155248,
+        "sha256": "7b9459e794a3131c9e049fae3f5d94916eb7d55bc3c9f609f063ffc6c9a350ac",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "Replace private absolute paths with role placeholders; preserve measured states, values, timestamps and digests"
+    },
+    {
+      "path": "evidence/SS39-DEV-stale-availability.json",
+      "bytes": 294273,
+      "sha256": "afeed4372987683013371979f466ca6b006103bab1e76605e152f981c616de9b",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-stale-availability.json",
+        "bytes": 294273,
+        "sha256": "afeed4372987683013371979f466ca6b006103bab1e76605e152f981c616de9b",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-stale-credential.json",
+      "bytes": 473699,
+      "sha256": "5a8a7a76f51f080595f23cb37b36c9335517b134208890a902a7a3f15eeea75d",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-stale-credential.json",
+        "bytes": 473699,
+        "sha256": "5a8a7a76f51f080595f23cb37b36c9335517b134208890a902a7a3f15eeea75d",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/SS39-DEV-update.json",
+      "bytes": 658628,
+      "sha256": "d0988455c27b34b6cf6b9ca3935c8c9c427a97e76bfd3bdf11f45780699ea18b",
+      "origin": {
+        "logicalPath": "evidence/SS39-DEV-update.json",
+        "bytes": 658628,
+        "sha256": "d0988455c27b34b6cf6b9ca3935c8c9c427a97e76bfd3bdf11f45780699ea18b",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/archive-integrity.json",
+      "bytes": 95,
+      "sha256": "0573b3aba700f069b720910fb88df5981ae863d1599b17604747efc1a2fb4d10",
+      "origin": {
+        "logicalPath": "evidence/archive-integrity.json",
+        "bytes": 95,
+        "sha256": "0573b3aba700f069b720910fb88df5981ae863d1599b17604747efc1a2fb4d10",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/check-plan.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "origin": {
+        "logicalPath": "evidence/check-plan.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/check-plan.stdout.log",
+      "bytes": 234,
+      "sha256": "7c14f2ed2b3fd99b6d4772d8e2e22ac2d5a4ac5698542ac7dfe12756dd43c235",
+      "origin": {
+        "logicalPath": "evidence/check-plan.stdout.log",
+        "bytes": 234,
+        "sha256": "7c14f2ed2b3fd99b6d4772d8e2e22ac2d5a4ac5698542ac7dfe12756dd43c235",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/check-proof.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "origin": {
+        "logicalPath": "evidence/check-proof.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/check-proof.stdout.log",
+      "bytes": 976,
+      "sha256": "fbd46a9fe35e33ec2081922be4ed3df06dc22576c371fdd5f55e629bff7af288",
+      "origin": {
+        "logicalPath": "evidence/check-proof.stdout.log",
+        "bytes": 976,
+        "sha256": "fbd46a9fe35e33ec2081922be4ed3df06dc22576c371fdd5f55e629bff7af288",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/commands.json",
+      "bytes": 2943,
+      "sha256": "6da68642255b43c01e877b1d260e856adaaa652b43aee15251b5622d5d8f6744",
+      "origin": {
+        "logicalPath": "evidence/commands.json",
+        "bytes": 2971,
+        "sha256": "53a4024e85f5af6bf7ab75a84c1a7c352e892dda3c8e45c33a0f232f3775dc3b",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "Replace private absolute paths with role placeholders; preserve measured states, values, timestamps and digests"
+    },
+    {
+      "path": "evidence/engineering-test-plan.json",
+      "bytes": 2319,
+      "sha256": "9a1d8056e88d65b63ac4828730fb38edec948fa8b3a7c41245ca963edf89f9bb",
+      "origin": {
+        "logicalPath": "evidence/engineering-test-plan.json",
+        "bytes": 2319,
+        "sha256": "9a1d8056e88d65b63ac4828730fb38edec948fa8b3a7c41245ca963edf89f9bb",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/engineering-test-proof.json",
+      "bytes": 2154,
+      "sha256": "b96644f6e06be01fd425c569b6ca9d7198f7eaa654ceb59e15c97e84600e006c",
+      "origin": {
+        "logicalPath": "evidence/engineering-test-proof.json",
+        "bytes": 2154,
+        "sha256": "b96644f6e06be01fd425c569b6ca9d7198f7eaa654ceb59e15c97e84600e006c",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/engineering-test-result.json",
+      "bytes": 975,
+      "sha256": "fe9266a467c26420168ff5aa2c7da94a323795528acab1f027734c3e816bb54f",
+      "origin": {
+        "logicalPath": "evidence/engineering-test-result.json",
+        "bytes": 975,
+        "sha256": "fe9266a467c26420168ff5aa2c7da94a323795528acab1f027734c3e816bb54f",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/existing-OFF-SS39.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "origin": {
+        "logicalPath": "evidence/existing-OFF-SS39.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/existing-OFF-SS39.stdout.log",
+      "bytes": 71,
+      "sha256": "3102e3fdd881aebf7cf166eee4a5197267939a33b4448e8fedfe5ebf2bb688b9",
+      "origin": {
+        "logicalPath": "evidence/existing-OFF-SS39.stdout.log",
+        "bytes": 78,
+        "sha256": "b931c088e1645b4684d95a909258f6a650ed1e24b13910410f33b5a5692c936d",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "Replace private absolute paths with role placeholders; preserve measured states, values, timestamps and digests"
+    },
+    {
+      "path": "evidence/existing-OFF-SS39.vitest.json",
+      "bytes": 14909,
+      "sha256": "6f8c612563e3d8d0caaaac140ad85d994232580327181b11d83815fbff15ab5a",
+      "origin": {
+        "logicalPath": "evidence/existing-OFF-SS39.vitest.json",
+        "bytes": 14910,
+        "sha256": "4a2075a9492e04458911f6cabbb533c337ce645da5429bae95928c66e67641ff",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "Replace private absolute paths with role placeholders; preserve measured states, values, timestamps and digests"
+    },
+    {
+      "path": "evidence/existing-SS39.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "origin": {
+        "logicalPath": "evidence/existing-SS39.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/existing-SS39.stdout.log",
+      "bytes": 67,
+      "sha256": "916a25323f56d5502fe6272b79bb6c5c7ad9c95b975cecf38eac9446416c7ec6",
+      "origin": {
+        "logicalPath": "evidence/existing-SS39.stdout.log",
+        "bytes": 74,
+        "sha256": "51cfbe74bfabfe5f83338e61851596f5dbaa82c8edd950bc3f77d779441ea1c8",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "Replace private absolute paths with role placeholders; preserve measured states, values, timestamps and digests"
+    },
+    {
+      "path": "evidence/existing-SS39.vitest.json",
+      "bytes": 9340,
+      "sha256": "743ff697272630fe3b5ccf27bf3ec817db18327ea18013b0317981f5aa91932b",
+      "origin": {
+        "logicalPath": "evidence/existing-SS39.vitest.json",
+        "bytes": 9341,
+        "sha256": "865f4f97c982c7ccd33ccbacfa14e36ff1b1013db763cd7de2c0e029773c6654",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "Replace private absolute paths with role placeholders; preserve measured states, values, timestamps and digests"
+    },
+    {
+      "path": "evidence/source.json",
+      "bytes": 7845,
+      "sha256": "9a487aa44c658ba543106908c72622904bdf47eb46f885afd9dd30d814daf3a6",
+      "origin": {
+        "logicalPath": "evidence/source.json",
+        "bytes": 7845,
+        "sha256": "9a487aa44c658ba543106908c72622904bdf47eb46f885afd9dd30d814daf3a6",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/supplemental-SS39.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "origin": {
+        "logicalPath": "evidence/supplemental-SS39.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    },
+    {
+      "path": "evidence/supplemental-SS39.stdout.log",
+      "bytes": 71,
+      "sha256": "90f776e14f88529d278485612c828dcf38c0dc5435f8231de731bc584b0034a7",
+      "origin": {
+        "logicalPath": "evidence/supplemental-SS39.stdout.log",
+        "bytes": 78,
+        "sha256": "273351bd247374f18f26663721b73175415dd3e4aae7d4cf7959302a983e9a0d",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "Replace private absolute paths with role placeholders; preserve measured states, values, timestamps and digests"
+    },
+    {
+      "path": "evidence/supplemental-SS39.vitest.json",
+      "bytes": 11679,
+      "sha256": "65961e60a1d72754f519c8c9958bf4f2e201f63e7c7aed3413f50d8c9292b51b",
+      "origin": {
+        "logicalPath": "evidence/supplemental-SS39.vitest.json",
+        "bytes": 11827,
+        "sha256": "d6a25649845a96e5167cb14d248096061ed6fb90e043b6aaa075d8750c9f8f45",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "Replace private absolute paths with role placeholders; preserve measured states, values, timestamps and digests"
+    },
+    {
+      "path": "pinned/fixtures.json",
+      "bytes": 142450,
+      "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "origin": {
+        "logicalPath": "repo/tests/skill-classification/fixtures.json",
+        "bytes": 142450,
+        "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "unchanged-public-pinned-fixture",
+      "transformation": "none"
+    },
+    {
+      "path": "reproduction/SS39.test.ts",
+      "bytes": 16256,
+      "sha256": "39130043dfb7241f989fb7a625c9e76d92acfe72ebd22948144244deb857b049",
+      "origin": {
+        "logicalPath": "repo/tests/ss39-independent/SS39.test.ts",
+        "bytes": 16267,
+        "sha256": "0c026deadcdcc8d3331eab3b924f036219fdd477c2d0310a5fee2b0dda2242f6",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "path-sanitized-reproduction-file",
+      "transformation": "Private evidence-output path becomes repo-relative .ss39-evidence; native mock-only executable becomes synthetic /host/codex. No assertions or scenarios changed. Reproduction not executed during publication."
+    },
+    {
+      "path": "reproduction/ss39-engineering-plan.json",
+      "bytes": 2141,
+      "sha256": "9a0013ee5921482768e4ce70832f5ea056771fa5b503c23881e1bea812a292dc",
+      "origin": {
+        "logicalPath": "repo/ss39-engineering-plan.json",
+        "bytes": 2148,
+        "sha256": "a439cc060c337c808a108e59bd61ab454416bdef4e039207b9609cfa8b2f9d22",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "Replace private absolute paths with role placeholders; preserve measured states, values, timestamps and digests"
+    },
+    {
+      "path": "reproduction/ss39-engineering-proof.json",
+      "bytes": 2154,
+      "sha256": "b96644f6e06be01fd425c569b6ca9d7198f7eaa654ceb59e15c97e84600e006c",
+      "origin": {
+        "logicalPath": "repo/ss39-engineering-proof.json",
+        "bytes": 2154,
+        "sha256": "b96644f6e06be01fd425c569b6ca9d7198f7eaa654ceb59e15c97e84600e006c",
+        "availability": "PRESENT"
+      },
+      "publicationKind": "sanitized-existing-artifact",
+      "transformation": "none"
+    }
+  ],
+  "hashPolicy": "Manifest excludes itself and SHA256SUMS; SHA256SUMS includes all payload and manifest but excludes itself"
+}

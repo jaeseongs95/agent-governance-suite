@@ -1,0 +1,690 @@
+{
+  "caseId": "SS39",
+  "status": "FAIL",
+  "frozenVariantValidation": "BLOCKED",
+  "executionKind": [
+    "existing-offline-regression",
+    "new-offline-supplemental",
+    "local-artifact-consistency"
+  ],
+  "provenance": {
+    "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+    "targetBranch": "codex/skill-classification-2.9.1",
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "checkoutKind": "git archive of pinned commit, isolated read-only product snapshot",
+    "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "testFileSHA256": "0c026deadcdcc8d3331eab3b924f036219fdd477c2d0310a5fee2b0dda2242f6",
+    "originalProductFileIntegrity": "evidence/archive-integrity.json"
+  },
+  "fixture": {
+    "originalPrompt": null,
+    "oracle": null,
+    "sourceSpec": {
+      "path": "TEST-SPEC.seq7.ko.md",
+      "section": "SS39",
+      "fields": {
+        "입력": "합성 ProviderProfileRegistry 한 곳에 Vendor-A→model-a/reasoning=low, Vendor-B→model-b/reasoning=null, supportedOptions, qualificationRevision, approved route와 profile revision을 둔다. 이름과 추론 값은 시험용이며 실제 모델 지원 사실이 아니다. 기본 prompt·golden은 SS03을 재사용한다.",
+        "필수추천": "현재 사용자 vendor의 고정 modelId·reasoningEffort·지원 옵션을 정확하게 adapter로 전달하고 실제 분류에 사용한다. profile 선정·갱신에는 같은 workload의 품질·최소 추정비용 근거가 있어야 한다.",
+        "금지추천 또는 행동": "runtime 가격·catalog 탐색으로 모델 자동 교체; 상위 AGS·VM의 vendor/model별 분기; 여러 곳에 상수 복제; 임의 고급 모델·reasoning 상향; 미지원 옵션 강제; 미승인 타 벤더·새 API 전송; 키 노출.",
+        "허용선택": "중앙 profile의 고정값과 이미 허용된 route만 사용한다. 명시적인 profile 갱신은 revision과 새 qualification·지원 옵션 검증을 거친 뒤 다음 유효 요청에 적용한다.",
+        "보류조건": "profile 없음, 모델 미가용·미검증, effort/옵션 미지원, route 승인·예산 부족, egress 차단. 다른 모델로 몰래 대체하지 않는다.",
+        "통과기준": "아래 반례의 모델·effort·route·revision과 실제 전송이 일치한다. runtime catalog/가격 탐색 호출은 0이다. profile 조회 성공만으로 모델 분류나 AGENT 스킬 선택 완료를 주장하지 않는다.",
+        "증거": "E0·E1·E3·E4, 중앙 registry 위치·digest·revision, adapter 전송의 비밀 제거본, qualification·지원 옵션·선정/갱신 비용 근거, actual model/effort, AGENT 최종 선택, profile 변경·stale 거부 기록.",
+        "실행종류": "mock·정적 경계·오프라인 비용 검증 우선. 다른 vendor의 추가 유료 API는 미승인이므로 별도 허용 전 NOT_RUN이다."
+      },
+      "bodyDigest": "sha256:adae64ff84af2d82d154aea34ee27bbbb6d34beaee628339ead4488706abcb9e"
+    },
+    "reusedPromptSource": "embedded SS03.originalPrompt",
+    "reusedGoldenSource": "embedded SS03.oracle; stored for context only, not scored",
+    "accuracyScore": null
+  },
+  "variants": [
+    {
+      "variantId": "counterexample-01",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "observed": null,
+      "executionKind": "NOTRUN",
+      "API0": true,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "evidence": [
+        "evidence/source.json"
+      ],
+      "missingInputs": [
+        "Individual counterexample input and expected outcome absent from fixture; sourceSpec.path does not exist"
+      ],
+      "reason": "All IDs read; no authoritative scenario mapping supplied. Supplemental scenarios do not substitute invented original definitions."
+    },
+    {
+      "variantId": "counterexample-02",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "observed": null,
+      "executionKind": "NOTRUN",
+      "API0": true,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "evidence": [
+        "evidence/source.json"
+      ],
+      "missingInputs": [
+        "Individual counterexample input and expected outcome absent from fixture; sourceSpec.path does not exist"
+      ],
+      "reason": "All IDs read; no authoritative scenario mapping supplied. Supplemental scenarios do not substitute invented original definitions."
+    },
+    {
+      "variantId": "counterexample-03",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "observed": null,
+      "executionKind": "NOTRUN",
+      "API0": true,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "evidence": [
+        "evidence/source.json"
+      ],
+      "missingInputs": [
+        "Individual counterexample input and expected outcome absent from fixture; sourceSpec.path does not exist"
+      ],
+      "reason": "All IDs read; no authoritative scenario mapping supplied. Supplemental scenarios do not substitute invented original definitions."
+    },
+    {
+      "variantId": "counterexample-04",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "observed": null,
+      "executionKind": "NOTRUN",
+      "API0": true,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "evidence": [
+        "evidence/source.json"
+      ],
+      "missingInputs": [
+        "Individual counterexample input and expected outcome absent from fixture; sourceSpec.path does not exist"
+      ],
+      "reason": "All IDs read; no authoritative scenario mapping supplied. Supplemental scenarios do not substitute invented original definitions."
+    },
+    {
+      "variantId": "counterexample-05",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "observed": null,
+      "executionKind": "NOTRUN",
+      "API0": true,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "evidence": [
+        "evidence/source.json"
+      ],
+      "missingInputs": [
+        "Individual counterexample input and expected outcome absent from fixture; sourceSpec.path does not exist"
+      ],
+      "reason": "All IDs read; no authoritative scenario mapping supplied. Supplemental scenarios do not substitute invented original definitions."
+    },
+    {
+      "variantId": "counterexample-06",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "observed": null,
+      "executionKind": "NOTRUN",
+      "API0": true,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "evidence": [
+        "evidence/source.json"
+      ],
+      "missingInputs": [
+        "Individual counterexample input and expected outcome absent from fixture; sourceSpec.path does not exist"
+      ],
+      "reason": "All IDs read; no authoritative scenario mapping supplied. Supplemental scenarios do not substitute invented original definitions."
+    },
+    {
+      "variantId": "counterexample-07",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "observed": null,
+      "executionKind": "NOTRUN",
+      "API0": true,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "evidence": [
+        "evidence/source.json"
+      ],
+      "missingInputs": [
+        "Individual counterexample input and expected outcome absent from fixture; sourceSpec.path does not exist"
+      ],
+      "reason": "All IDs read; no authoritative scenario mapping supplied. Supplemental scenarios do not substitute invented original definitions."
+    },
+    {
+      "variantId": "counterexample-08",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "observed": null,
+      "executionKind": "NOTRUN",
+      "API0": true,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "evidence": [
+        "evidence/source.json"
+      ],
+      "missingInputs": [
+        "Individual counterexample input and expected outcome absent from fixture; sourceSpec.path does not exist"
+      ],
+      "reason": "All IDs read; no authoritative scenario mapping supplied. Supplemental scenarios do not substitute invented original definitions."
+    },
+    {
+      "variantId": "counterexample-09",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "observed": null,
+      "executionKind": "NOTRUN",
+      "API0": true,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "evidence": [
+        "evidence/source.json"
+      ],
+      "missingInputs": [
+        "Individual counterexample input and expected outcome absent from fixture; sourceSpec.path does not exist"
+      ],
+      "reason": "All IDs read; no authoritative scenario mapping supplied. Supplemental scenarios do not substitute invented original definitions."
+    },
+    {
+      "variantId": "counterexample-10",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "observed": null,
+      "executionKind": "NOTRUN",
+      "API0": true,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "evidence": [
+        "evidence/source.json"
+      ],
+      "missingInputs": [
+        "Individual counterexample input and expected outcome absent from fixture; sourceSpec.path does not exist"
+      ],
+      "reason": "All IDs read; no authoritative scenario mapping supplied. Supplemental scenarios do not substitute invented original definitions."
+    },
+    {
+      "variantId": "counterexample-11",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "observed": null,
+      "executionKind": "NOTRUN",
+      "API0": true,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "evidence": [
+        "evidence/source.json"
+      ],
+      "missingInputs": [
+        "Individual counterexample input and expected outcome absent from fixture; sourceSpec.path does not exist"
+      ],
+      "reason": "All IDs read; no authoritative scenario mapping supplied. Supplemental scenarios do not substitute invented original definitions."
+    },
+    {
+      "variantId": "counterexample-12",
+      "status": "NOTRUN",
+      "input": null,
+      "expected": null,
+      "observed": null,
+      "executionKind": "NOTRUN",
+      "API0": true,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "evidence": [
+        "evidence/source.json"
+      ],
+      "missingInputs": [
+        "Individual counterexample input and expected outcome absent from fixture; sourceSpec.path does not exist"
+      ],
+      "reason": "All IDs read; no authoritative scenario mapping supplied. Supplemental scenarios do not substitute invented original definitions."
+    }
+  ],
+  "existingRegression": [
+    {
+      "name": "existing-SS39",
+      "passed": 8,
+      "failed": 0,
+      "skipped": 16,
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/skill-classification-profiles.test.ts",
+        "-t",
+        "SS39",
+        "--reporter=json",
+        "--outputFile=<evidence-output>/existing-SS39.vitest.json"
+      ],
+      "exit": 0,
+      "evidence": "evidence/existing-SS39.vitest.json",
+      "limitedClaim": "Selected existing tests only; not all original variants PASS"
+    },
+    {
+      "name": "existing-OFF-SS39",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 39,
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/skill-classification-service.test.ts",
+        "-t",
+        "SS19/39 OFF",
+        "--reporter=json",
+        "--outputFile=<evidence-output>/existing-OFF-SS39.vitest.json"
+      ],
+      "exit": 0,
+      "evidence": "evidence/existing-OFF-SS39.vitest.json",
+      "limitedClaim": "Selected existing tests only; not all original variants PASS"
+    }
+  ],
+  "supplemental": {
+    "passed": 19,
+    "failed": 3,
+    "total": 22,
+    "observations": [
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV fixed Vendor-A wire preserves model effort full workload",
+        "status": "PASS",
+        "failureMessages": []
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV fixed Vendor-B wire preserves model effort full workload",
+        "status": "PASS",
+        "failureMessages": []
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV hold missing never sends or substitutes another vendor",
+        "status": "PASS",
+        "failureMessages": []
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV hold ambiguous never sends or substitutes another vendor",
+        "status": "PASS",
+        "failureMessages": []
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV hold unqualified never sends or substitutes another vendor",
+        "status": "PASS",
+        "failureMessages": []
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV hold expired never sends or substitutes another vendor",
+        "status": "PASS",
+        "failureMessages": []
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV hold unsupported-effort never sends or substitutes another vendor",
+        "status": "PASS",
+        "failureMessages": []
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV hold unsupported-structured never sends or substitutes another vendor",
+        "status": "PASS",
+        "failureMessages": []
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV hold old-fingerprint never sends or substitutes another vendor",
+        "status": "PASS",
+        "failureMessages": []
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV hold unknown-cost never sends or substitutes another vendor",
+        "status": "PASS",
+        "failureMessages": []
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV hold route-unapproved never sends or substitutes another vendor",
+        "status": "PASS",
+        "failureMessages": []
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV hold route-model-unavailable never sends or substitutes another vendor",
+        "status": "PASS",
+        "failureMessages": []
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV hold egress never sends or substitutes another vendor",
+        "status": "PASS",
+        "failureMessages": []
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV hold budget never sends or substitutes another vendor",
+        "status": "PASS",
+        "failureMessages": []
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV valid update takes next request after explicit revision and synthetic qualification",
+        "status": "PASS",
+        "failureMessages": []
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV stale revision after availability blocks before transport",
+        "status": "PASS",
+        "failureMessages": []
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV profile freeze prevents caller model mutation during availability",
+        "status": "PASS",
+        "failureMessages": []
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV qualification expires during availability must hold before dispatch",
+        "status": "FAIL",
+        "failureMessages": [
+          "AssertionError: expired qualification must never be transmitted: expected [ { …(3) } ] to have a length of +0 but got 1\n    at Proxy.<anonymous> (file://<dependency-tree>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/index.OVGXnVRj.js:2137:20)\n    at Proxy.<anonymous> (file://<dependency-tree>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/index.OVGXnVRj.js:1934:14)\n    at Proxy.methodWrapper (file://<dependency-tree>/node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)\n    at <pinned-repository>/tests/ss39-independent/SS39.test.ts:133:71\n    at file://<dependency-tree>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+        ]
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV profile revision changes during second credential await must hold before dispatch",
+        "status": "FAIL",
+        "failureMessages": [
+          "AssertionError: response rejection must also prevent obsolete profile transmission: expected [ { …(3) } ] to have a length of +0 but got 1\n    at Proxy.<anonymous> (file://<dependency-tree>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/index.OVGXnVRj.js:2137:20)\n    at Proxy.<anonymous> (file://<dependency-tree>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/index.OVGXnVRj.js:1934:14)\n    at Proxy.methodWrapper (file://<dependency-tree>/node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)\n    at <pinned-repository>/tests/ss39-independent/SS39.test.ts:142:90\n    at file://<dependency-tree>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+        ]
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV invalid response retains valid actual cost and ceiling invalidation",
+        "status": "FAIL",
+        "failureMessages": [
+          "AssertionError: valid cost must survive malformed classification: expected null to be 0.6 // Object.is equality\n    at <pinned-repository>/tests/ss39-independent/SS39.test.ts:149:103\n    at file://<dependency-tree>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+        ]
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV offline workload cost calculation preserves unknown cache and prices",
+        "status": "PASS",
+        "failureMessages": []
+      },
+      {
+        "name": "SS39 supplemental embedded-requirement boundaries SS39-DEV native Codex adapter forwards fixed model effort without spawning host",
+        "status": "PASS",
+        "failureMessages": []
+      }
+    ],
+    "evidence": "evidence/supplemental-SS39.vitest.json",
+    "perScenarioEvidence": "evidence/SS39-DEV-*.json",
+    "originalVariantMapping": null
+  },
+  "findings": [
+    {
+      "findingId": "SS39-dispatch-revalidation-gap",
+      "existingFindingLink": "Known concurrency immediately-before-dispatch recheck gap; expiry is an additional witness, not a duplicate cause count",
+      "severity": "HIGH",
+      "supplementalIds": [
+        "SS39-DEV-expiry-race",
+        "SS39-DEV-stale-credential"
+      ],
+      "expected": "Hold expired qualification or changed profile revision before transmission",
+      "observed": "Expiry: SUCCESS and one mock fetch. Changed revision on second credential await: one mock fetch with obsolete profile then STALE_CLASSIFICATION; response.error dispatchState not-started while attempt started.",
+      "cause": "Qualification validated before asynchronous availability only. Snapshot checked before budget/provider.classify, but provider awaits credential again and dispatches without a current-snapshot or qualification-time check.",
+      "codeRefs": [
+        "mcp-server/src/skill-classification/service.ts:137",
+        "mcp-server/src/skill-classification/service.ts:174",
+        "mcp-server/src/skill-classification/service.ts:181",
+        "mcp-server/src/skill-classification/providers.ts:80",
+        "mcp-server/src/skill-classification/providers.ts:90"
+      ],
+      "evidence": [
+        "evidence/SS39-DEV-expiry-race.json",
+        "evidence/SS39-DEV-stale-credential.json"
+      ]
+    },
+    {
+      "findingId": "SS39-invalid-response-cost-loss",
+      "existingFindingLink": "Known valid cost lost together with invalid RESP; do not count as a new root cause",
+      "severity": "HIGH",
+      "supplementalIds": [
+        "SS39-DEV-invalid-response-cost"
+      ],
+      "expected": "Retain actualCostUsd=0.6, record spentUsd=0.6, invalidate maximumCostUsd=0.4 profile",
+      "observed": "INVALID_PROVIDER_RESPONSE, actualCostUsd=null, spentUsd=0, no invalidCostCeilings, unknown reservation=0.4",
+      "cause": "Response validation throws after valid usage validation. Catch returns unknownUsage and settlement loses known actual charge and ceiling invalidation.",
+      "codeRefs": [
+        "mcp-server/src/skill-classification/service.ts:194",
+        "mcp-server/src/skill-classification/service.ts:204",
+        "mcp-server/src/skill-classification/service.ts:210"
+      ],
+      "evidence": [
+        "evidence/SS39-DEV-invalid-response-cost.json"
+      ]
+    }
+  ],
+  "rootCauseCount": 2,
+  "API0": {
+    "JEV": 0,
+    "externalVendor": 0,
+    "Claude": 0,
+    "realNativeHost": 0,
+    "runtimeCatalog": 0,
+    "runtimePrice": 0,
+    "past21RunReplay": 0
+  },
+  "stages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "agentSelectedSkillIds": null,
+  "hostReceipt": null,
+  "registry": {
+    "location": "Synthetic single registry in tests/ss39-independent/SS39.test.ts rig()",
+    "profileRevision": "registry1",
+    "digest": "sha256:2f797a0f515a39712006e9c13bfdb03068451127fbd2ec37d5612f2b8ff71b81",
+    "profileUpdateRevision": "registry2",
+    "qualificationEvidence": "Synthetic fingerprints only; actual model quality and same-workload minimum-cost selection NOTRUN"
+  },
+  "hostLive": {
+    "status": "NOTRUN",
+    "codexExecutable": "<codex-executable>",
+    "claudeExecutable": null,
+    "classificationConfigConfigured": false,
+    "supportPath": [
+      "mcp-server/src/index.ts -> readClassificationRuntime(AGENT_GOVERNANCE_CLASSIFICATION_CONFIG)",
+      "classification config -> providerProfileRegistryRef, providerRuntimeRef, nativeAdapterDefinitionsRef",
+      "createNativeClassificationAdapters -> approved native route -> runtime gateway classify_skills -> AGENT decision -> record_skill_selection with real verified hook observation"
+    ],
+    "nativeCodexArguments": "exec --json --sandbox read-only --ephemeral --ignore-user-config --skip-git-repo-check --model <qualified-modelId> --config model_reasoning_effort=<qualified-effort> [verified isolationArgs] --output-schema <schema> -",
+    "limitations": [
+      "Executable presence does not establish capabilities, no-retry, isolation, allowance, model support or qualification",
+      "Built-in Codex/Claude native adapter requires non-null supported effort; Vendor-B/null can be tested through a registered approved adapter, no silent native substitution",
+      "No built-in generic remote vendor wire adapter; explicit registered adapter is required"
+    ],
+    "missingInputs": [
+      "Authoritative definitions for counterexample-01..12",
+      "Trusted installed runtime config and central profile registry",
+      "Real current-host vendor/model/reasoning/supported-option evidence, qualification revision/digest/expiry",
+      "Same-workload quality and fixed-price minimum-estimated-cost selection/update evidence",
+      "Approved native route and verified structured capability/no-retry/isolation definition",
+      "Confirmed native allowance and budget/prior-cost/unknown-reservation data",
+      "Real host hook observation for final AGENT selection and source/candidate evidence for read/applied/verified"
+    ]
+  },
+  "workspaceInstructions": {
+    "AGENTS": "repo/AGENTS.md read",
+    "skillsRead": [
+      "skills/test-engineering/SKILL.md",
+      "skills/evaluation-validity-auditor/SKILL.md",
+      "skills/orchestrator/SKILL.md"
+    ],
+    "appliedSkill": "test-engineering",
+    "referencesRead": [
+      "test-design.md",
+      "test-proof.md",
+      "cli.md",
+      "skill-classification.md"
+    ],
+    "agentsSkills": "Absent in repo and <workspace-agent-config>"
+  },
+  "commands": [
+    {
+      "name": "existing-SS39",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/skill-classification-profiles.test.ts",
+        "-t",
+        "SS39",
+        "--reporter=json",
+        "--outputFile=<evidence-output>/existing-SS39.vitest.json"
+      ],
+      "cwd": "<pinned-repository>",
+      "exitCode": 0,
+      "startedAt": "2026-10-09T02:58:46.284786+00:00",
+      "finishedAt": "2026-10-09T02:58:46.935089+00:00",
+      "executionKind": "existing-offline-regression",
+      "API0": true,
+      "stdout": "existing-SS39.stdout.log",
+      "stderr": "existing-SS39.stderr.log"
+    },
+    {
+      "name": "existing-OFF-SS39",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/skill-classification-service.test.ts",
+        "-t",
+        "SS19/39 OFF",
+        "--reporter=json",
+        "--outputFile=<evidence-output>/existing-OFF-SS39.vitest.json"
+      ],
+      "cwd": "<pinned-repository>",
+      "exitCode": 0,
+      "startedAt": "2026-10-09T02:58:46.935386+00:00",
+      "finishedAt": "2026-10-09T02:58:47.498964+00:00",
+      "executionKind": "existing-offline-regression",
+      "API0": true,
+      "stdout": "existing-OFF-SS39.stdout.log",
+      "stderr": "existing-OFF-SS39.stderr.log"
+    },
+    {
+      "name": "supplemental-SS39",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/ss39-independent/SS39.test.ts",
+        "--reporter=json",
+        "--outputFile=<evidence-output>/supplemental-SS39.vitest.json"
+      ],
+      "cwd": "<pinned-repository>",
+      "exitCode": 1,
+      "startedAt": "2026-10-09T02:58:47.499287+00:00",
+      "finishedAt": "2026-10-09T02:58:48.608922+00:00",
+      "executionKind": "new-offline-supplemental",
+      "API0": true,
+      "stdout": "supplemental-SS39.stdout.log",
+      "stderr": "supplemental-SS39.stderr.log"
+    },
+    {
+      "name": "check-plan",
+      "argv": [
+        "node",
+        "skills/test-engineering/scripts/run.mjs",
+        "check-plan",
+        "--root",
+        "<pinned-repository>",
+        "--plan",
+        "ss39-engineering-plan.json"
+      ],
+      "cwd": "<pinned-repository>",
+      "exitCode": 0,
+      "startedAt": "2026-10-09T03:01:39.008Z",
+      "finishedAt": "2026-10-09T03:01:39.119Z",
+      "executionKind": "local-artifact-consistency",
+      "API0": true,
+      "stdout": "check-plan.stdout.log",
+      "stderr": "check-plan.stderr.log"
+    },
+    {
+      "name": "check-proof",
+      "argv": [
+        "node",
+        "skills/test-engineering/scripts/run.mjs",
+        "check-proof",
+        "--root",
+        "<pinned-repository>",
+        "--plan",
+        "ss39-engineering-plan.json",
+        "--proof",
+        "ss39-engineering-proof.json"
+      ],
+      "cwd": "<pinned-repository>",
+      "exitCode": 1,
+      "startedAt": "2026-10-09T03:01:39.119Z",
+      "finishedAt": "2026-10-09T03:01:39.242Z",
+      "executionKind": "local-artifact-consistency",
+      "API0": true,
+      "stdout": "check-proof.stdout.log",
+      "stderr": "check-proof.stderr.log"
+    }
+  ],
+  "remainingBlockers": [
+    "Original twelve variant definitions missing",
+    "3 real assertion failures on pinned candidate (2 root-cause groups)",
+    "Repaired-candidate green NOTRUN; no product edits authorized",
+    "Actual model qualification and host stages NOTRUN; external invocations prohibited in assignment"
+  ],
+  "supportingEvidence": [
+    "evidence/source.json",
+    "evidence/engineering-test-plan.json",
+    "evidence/engineering-test-proof.json",
+    "evidence/engineering-test-result.json",
+    "evidence/archive-integrity.json",
+    "REPORT.ko.md"
+  ],
+  "prohibitionCompliance": {
+    "productSourceModified": false,
+    "push": false,
+    "PR": false,
+    "release": false,
+    "fullSuite": false,
+    "otherOriginalCasesExecuted": false,
+    "selectionReceiptFabricated": false
+  }
+}
