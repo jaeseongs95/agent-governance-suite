@@ -1,0 +1,82 @@
+{
+  "caseId": "SS13",
+  "sourceCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "role": "Historical input/procedure context only; not the final candidate or a product execution",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827"
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/SKILL.md",
+      "sha256": "eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/SKILL.md",
+      "sha256": "1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109"
+    },
+    {
+      "path": "skills/orchestrator/references/skill-classification.md",
+      "sha256": "85cfd39b4c3771669747a9ebf61bc8623b510104c4bd6af40c2168781adc3ef8"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/test-design.md",
+      "sha256": "fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/test-proof.md",
+      "sha256": "7ac0a9d5031d32e5d2b3770a080c1629451903184dac1e38e240812c6fc91e1d"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/cli.md",
+      "sha256": "42d409ec8fd0f39c491dfdeb18da3f3d15d9fb518c82a8d9f69ed0ae87a59f69"
+    },
+    {
+      "path": "skills/change-scope-guardian/SKILL.md",
+      "sha256": "4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+    },
+    {
+      "path": "skills/change-scope-guardian/references/entry-details.md",
+      "sha256": "d164e59584763265a4bd8ccfd6a4ee75560f1df4ef30cd44dee68d814baf185b"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "sha256": "eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/entry-details.md",
+      "sha256": "13dc04ff9d74e17f2d0bb6d69583a2c502dc5c69766d9a4ed91a59c0c5741154"
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "sha256": "f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "sha256": "aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "sha256": "96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+    },
+    {
+      "path": "skills/code-review/SKILL.md",
+      "sha256": "19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+    },
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "sha256": "d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+    },
+    {
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "sha256": "f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+    }
+  ],
+  "formalSkillCLIChecksExecuted": false,
+  "noIndependentAuditClaim": true,
+  "candidateInstructionReadPending": true
+}

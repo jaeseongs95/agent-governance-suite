@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS13",
+  "currency": "USD",
+  "softLimitUsd": 2,
+  "includesPaidPreparation": true,
+  "calls": [],
+  "totals": {
+    "claudeApiCalls": 0,
+    "classificationVendorCalls": 0,
+    "jevCalls": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0,
+    "retries": 0,
+    "failedPaidCalls": 0,
+    "knownSpendUsd": 0,
+    "unknownSpendReservationsUsd": 0,
+    "remainingSoftBudgetUsd": 2
+  },
+  "zeroSpendBasis": "No model/API invocation was attempted; local version/help and git/network evidence operations only. This is not a claim that future failed calls cost zero.",
+  "stopRule": "Record all calls, including failed/retried/cached/preparatory calls. Before each next call compare parent-qualified cost bounds and remaining aggregate allowance; stop and report if approaching/exceeding US$2 or consumption is unknown. No automatic retry/fallback/model escalation.",
+  "globalReservationContext": {
+    "cases": 39,
+    "reservedTotalUsd": 78,
+    "notASpendingTarget": true
+  },
+  "JEV": "NOT_ALLOCATED_DO_NOT_CALL"
+}

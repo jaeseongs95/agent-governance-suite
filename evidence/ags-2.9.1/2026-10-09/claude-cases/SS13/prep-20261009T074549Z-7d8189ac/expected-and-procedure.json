@@ -1,0 +1,202 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS13",
+  "exactTitle": "inventory 안에 해당 전문 스킬이 없음",
+  "variant": "base",
+  "input": {
+    "originalPrompt": "달걀을 쓰지 않는 파스타 레시피 하나 알려 줘.",
+    "promptSha256": "2242c7317cda9aac6a9574d583c377286d29448bb41c524a32dfda2d169f71e4",
+    "inventory": "Whole AGS inventory",
+    "historicalCandidateCount": 24,
+    "historicalCandidateIds": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "change-scope-guardian",
+      "code-review",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "cs-engineering",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "korean-prose-editor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "orchestrator",
+      "ponytail",
+      "recovery-strategy-selector",
+      "session-board",
+      "software-security-auditor",
+      "task-contract",
+      "test-engineering",
+      "workspace-convention-profiler"
+    ],
+    "historicalInventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+    "confirmedContext": {
+      "taskRevision": null,
+      "objective": null,
+      "actions": null,
+      "targets": null,
+      "constraints": null,
+      "prohibitedActions": null,
+      "background": null
+    },
+    "contextPolicy": "Unknown context remains null; preserve original wording and negation; no semantic-summary model."
+  },
+  "frozenSourceSpecFields": {
+    "입력": "“달걀을 쓰지 않는 파스타 레시피 하나 알려 줘.” inventory는 AGS 스킬 전체다.",
+    "필수추천": "R={}.",
+    "금지추천 또는 행동": "가장 가까운 점수의 P·CS·O를 강제 선택; 존재하지 않는 요리 스킬 생성.",
+    "허용선택": "A={}.",
+    "보류조건": "없음. 입력이 명확하고 필수·명시 스킬도 없다.",
+    "통과기준": "공통 RESP는 SUCCESS이며 필요한 후보가 없다는 judgment를 보존하고 AGENT의 실제 agentSelectedSkillIds=[]다. 선택 실패를 뜻하는 null과 구분한다. 전체 후보를 평가한 유효한 결과임을 기록한다.",
+    "증거": "E0, inventoryDigest, no-skill와 provider failure의 구분.",
+    "실행종류": "live."
+  },
+  "frozenOracle": {
+    "required": [],
+    "allowed": [],
+    "allowedConditions": {},
+    "forbidden": [
+      "ponytail",
+      "cs-engineering",
+      "orchestrator"
+    ],
+    "notApplicable": [
+      "test-engineering",
+      "code-review",
+      "software-security-auditor",
+      "korean-prose-editor"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "change-scope-guardian",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      }
+    ],
+    "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+  },
+  "expected": {
+    "commonResponseStatus": "SUCCESS",
+    "requiredSkillIds": [],
+    "allowedSkillIds": [],
+    "actualAgentSelectedSkillIds": [],
+    "selectionStatus": "SELECTED",
+    "allCandidatesEvaluated": true,
+    "providerFailureIsNoSkill": false,
+    "nullEqualsEmpty": false,
+    "inventedCookingSkillAllowed": false,
+    "holdCondition": "none"
+  },
+  "planKind": "Host-live preparation, not an executed test or validated engineering-test-plan schema artifact",
+  "steps": [
+    {
+      "id": "P0",
+      "owner": "Sol",
+      "action": "Receive the parent-verified candidate commit/tree and independent SOURCE result, remote publication verification, common Claude model/revision/effort settings, successful API authentication procedure and preceding checks. No paid smoke test before this handoff."
+    },
+    {
+      "id": "P1",
+      "owner": "Sol",
+      "action": "Prepare a separate immutable candidate checkout and disposable task workspace; verify candidate HEAD/tree and product/generated bytes; read that candidate AGENTS.md, Claude overlay/plugin instructions and applicable SKILL.md. Read .agents/skills if absent from host catalog. Do not use prior main or the historical c6a8019 as the target."
+    },
+    {
+      "id": "P2",
+      "owner": "Sol",
+      "action": "Recheck parent-supplied approved classification configuration, whole AGS inventory/semantic digest and current profile qualification, approved api.anthropic.com route, known budget consumption/reservations, vendor identity and host observation/session binding. JEV remains OFF unless a distinct allocation arrives. Preserve every supplied candidate and source; disclose any changed inventory digest."
+    },
+    {
+      "id": "P3",
+      "owner": "Sol",
+      "action": "Configure only the approved per-process API authentication mapping without logging, storing or copying secret bytes. Use the absolute Claude CLI. Apply the agreed model/effort and hook/MCP/permission settings; do not invent defaults. Preserve host hooks: --bare disables hooks and CLAUDE.md discovery, so it requires explicit common-procedure support before use."
+    },
+    {
+      "id": "P4",
+      "owner": "Claude Code",
+      "action": "Execute exactly the original 62-byte prompt in its own host task, with all AGS candidates available. Claude performs the actual get_skill_inventory/classify_skills/record_skill_selection host work according to the product contract; Sol only manages fixture, environment and evidence. No runner-generated or copied expected selection may replace Claude action."
+    },
+    {
+      "id": "P5",
+      "owner": "Claude Code + observed host",
+      "action": "Obtain the genuine common RESP SUCCESS with complete valid not-needed judgments for the full inventory. Claude supplies its exact chosen IDs [] and reasons to record_skill_selection with hostReceipt=null; the product host observation must validate and accept it. Preserve request/task/inventory/profile/config bindings. A missing classifier, UNAVAILABLE, INVALID, or an unattested [] does not pass."
+    },
+    {
+      "id": "P6",
+      "owner": "Claude Code + Sol evidence capture",
+      "action": "Preserve actual selected/read/applied/verified observations separately. For no-skill, do not force SKILL reads or manufacture executions: represent empty-stage semantics only as supported by the candidate contract and real host trace. Preserve the egg exclusion in the actual task outcome, with no invented cooking skill or forced ponytail/cs-engineering/orchestrator."
+    },
+    {
+      "id": "P7",
+      "owner": "Sol",
+      "action": "Capture sanitized host/tool events and usage/cost/token/cache/retry/failure accounting, exit status, timestamps, candidate and file digests; stop before another call if the remaining US$2 case budget is insufficient or unknown. --max-budget-usd limits the Claude process only and does not replace aggregate accounting for classification subprocess/vendor calls. Unknown failed/timeout spend stays reserved; never treat it as zero."
+    },
+    {
+      "id": "P8",
+      "owner": "Sol",
+      "action": "Judge against the frozen embedded sourceSpec/oracle, keeping real no-skill [] distinct from null/provider failure. Publish only sanitized case evidence and hash manifests under a new SS13 run directory on the existing evidence branch, then independently reread fixed remote files. Preparation readiness and product PASS are separate outcomes."
+    }
+  ],
+  "historicalHarness": {
+    "testSha256": "faeb4c913cc3a6967b945f604f9208e5f9bfbc3243220b0c0092e325388daccf",
+    "scriptSha256": "5a92568fe62adbafdb80b2995176568447296b590fb9f6ce335320b2e5f670eb",
+    "runInPreparation": false,
+    "reason": "Public reproduction script hardcodes c6a8019 and old fixture bindings. Do not execute it unchanged against the final candidate or alter the frozen original oracle. Any permitted future adapter must separately bind the parent-verified candidate and preserve assertions."
+  }
+}

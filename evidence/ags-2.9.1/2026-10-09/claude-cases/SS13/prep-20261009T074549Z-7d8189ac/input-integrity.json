@@ -1,0 +1,292 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS13",
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "sourceDirectory": "evidence/ags-2.9.1/2026-10-09/cases/SS13",
+  "verificationKind": "Raw public bytes read via git show at the pinned commit; no product execution",
+  "publicPayloadFiles": [
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS13/README.md",
+      "bytes": 4410,
+      "sha256": "97daa653591654687b176421c97b0f179c183ee0cfc43a75a2fc2aca54d3e9a2",
+      "expectedSha256": "97daa653591654687b176421c97b0f179c183ee0cfc43a75a2fc2aca54d3e9a2",
+      "matchesManifest": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS13/SHA256SUMS",
+      "bytes": 1555,
+      "sha256": "7d87d379313ff2c17df52d9052d46a2e9f1636914af4fd3f30d60ed17a8ad32e",
+      "expectedSha256": "7d87d379313ff2c17df52d9052d46a2e9f1636914af4fd3f30d60ed17a8ad32e",
+      "matchesManifest": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS13/SS13.observations.json",
+      "bytes": 408187,
+      "sha256": "ab3ea23c221d23ce2db688712d0d3b32cc82f3dc0c5ff54d716b1b24ff850870",
+      "expectedSha256": "ab3ea23c221d23ce2db688712d0d3b32cc82f3dc0c5ff54d716b1b24ff850870",
+      "matchesManifest": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS13/SS13.result.json",
+      "bytes": 30290,
+      "sha256": "ec3868cdb8520585e072dcbbc058baa5d5836e820751c60b802dd710bc2c556d",
+      "expectedSha256": "ec3868cdb8520585e072dcbbc058baa5d5836e820751c60b802dd710bc2c556d",
+      "matchesManifest": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS13/exit-code.txt",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "expectedSha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "matchesManifest": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS13/input.inventory.json",
+      "bytes": 254107,
+      "sha256": "6f58f070c711af7ba7c8905276c8bb6ceadbb984b0b93125b18b9d619bf3e10b",
+      "expectedSha256": "6f58f070c711af7ba7c8905276c8bb6ceadbb984b0b93125b18b9d619bf3e10b",
+      "matchesManifest": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS13/input.prompt.txt",
+      "bytes": 62,
+      "sha256": "2242c7317cda9aac6a9574d583c377286d29448bb41c524a32dfda2d169f71e4",
+      "expectedSha256": "2242c7317cda9aac6a9574d583c377286d29448bb41c524a32dfda2d169f71e4",
+      "matchesManifest": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS13/input.request.json",
+      "bytes": 254765,
+      "sha256": "d6ab20ea15d7dc400fc94053bbde9d672450bf4242aa38da5c0681360f06becf",
+      "expectedSha256": "d6ab20ea15d7dc400fc94053bbde9d672450bf4242aa38da5c0681360f06becf",
+      "matchesManifest": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS13/logs/offline.combined.log",
+      "bytes": 4398,
+      "sha256": "8c05838aad54cbbe3a6ab85ba61486f07a5ea8b904688859b5bd8337c126d258",
+      "expectedSha256": "8c05838aad54cbbe3a6ab85ba61486f07a5ea8b904688859b5bd8337c126d258",
+      "matchesManifest": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS13/reproduce/SS13.test.ts",
+      "bytes": 18474,
+      "sha256": "faeb4c913cc3a6967b945f604f9208e5f9bfbc3243220b0c0092e325388daccf",
+      "expectedSha256": "faeb4c913cc3a6967b945f604f9208e5f9bfbc3243220b0c0092e325388daccf",
+      "matchesManifest": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS13/reproduce/reproduce.sh",
+      "bytes": 1556,
+      "sha256": "5a92568fe62adbafdb80b2995176568447296b590fb9f6ce335320b2e5f670eb",
+      "expectedSha256": "5a92568fe62adbafdb80b2995176568447296b590fb9f6ce335320b2e5f670eb",
+      "matchesManifest": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS13/reproduce/vitest.config.mts",
+      "bytes": 225,
+      "sha256": "580d36c1621232dcf19402b30ecdcd83cea2f8ef2c09ed747947199d7d41d92a",
+      "expectedSha256": "580d36c1621232dcf19402b30ecdcd83cea2f8ef2c09ed747947199d7d41d92a",
+      "matchesManifest": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS13/source.fixture.SS13.json",
+      "bytes": 3837,
+      "sha256": "7a1bb1afba1ac3e54ea75e4f2b8bdbd8e913c0808c8cd8f6b4ebf53c9355c1d8",
+      "expectedSha256": "7a1bb1afba1ac3e54ea75e4f2b8bdbd8e913c0808c8cd8f6b4ebf53c9355c1d8",
+      "matchesManifest": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS13/supporting/engineering-plan-result.json",
+      "bytes": 250,
+      "sha256": "a981444bf679ae84ae755684f5e2837c428b944c2c5d6850330e26662fe192d4",
+      "expectedSha256": "a981444bf679ae84ae755684f5e2837c428b944c2c5d6850330e26662fe192d4",
+      "matchesManifest": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS13/supporting/engineering-test-plan.json",
+      "bytes": 3703,
+      "sha256": "c1383548097a93bff12ff7bf3e62b42822ac5a3760e0fd687e387a4191cea8ac",
+      "expectedSha256": "c1383548097a93bff12ff7bf3e62b42822ac5a3760e0fd687e387a4191cea8ac",
+      "matchesManifest": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS13/supporting/engineering-test-proof.json",
+      "bytes": 1933,
+      "sha256": "fb722cadc8aee7d9b53a1240888b1d0c25b7ed7f1848e7c900aee4935378c570",
+      "expectedSha256": "fb722cadc8aee7d9b53a1240888b1d0c25b7ed7f1848e7c900aee4935378c570",
+      "matchesManifest": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS13/supporting/engineering-test-result.json",
+      "bytes": 1112,
+      "sha256": "41c0c9073ec81c59e05fd2b75a8a7b0160e368dc9724a2584609ad83af80cf04",
+      "expectedSha256": "41c0c9073ec81c59e05fd2b75a8a7b0160e368dc9724a2584609ad83af80cf04",
+      "matchesManifest": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS13/supporting/vitest.result.json",
+      "bytes": 13011,
+      "sha256": "f3cbf6ca2943352c82e161d6570b6826e4edc787a099bf7e4807c28ff77ce095",
+      "expectedSha256": "f3cbf6ca2943352c82e161d6570b6826e4edc787a099bf7e4807c28ff77ce095",
+      "matchesManifest": true
+    }
+  ],
+  "manifest": {
+    "bytes": 12630,
+    "sha256": "ce6b411ab9a995f199a786e1f5ab16a53efca3c1000bf72871e3fd8eda4bdd4e"
+  },
+  "sha256sums": {
+    "checks": [
+      {
+        "path": "README.md",
+        "matches": true
+      },
+      {
+        "path": "SS13.observations.json",
+        "matches": true
+      },
+      {
+        "path": "SS13.result.json",
+        "matches": true
+      },
+      {
+        "path": "exit-code.txt",
+        "matches": true
+      },
+      {
+        "path": "input.inventory.json",
+        "matches": true
+      },
+      {
+        "path": "input.prompt.txt",
+        "matches": true
+      },
+      {
+        "path": "input.request.json",
+        "matches": true
+      },
+      {
+        "path": "logs/offline.combined.log",
+        "matches": true
+      },
+      {
+        "path": "reproduce/SS13.test.ts",
+        "matches": true
+      },
+      {
+        "path": "reproduce/reproduce.sh",
+        "matches": true
+      },
+      {
+        "path": "reproduce/vitest.config.mts",
+        "matches": true
+      },
+      {
+        "path": "source.fixture.SS13.json",
+        "matches": true
+      },
+      {
+        "path": "supporting/engineering-plan-result.json",
+        "matches": true
+      },
+      {
+        "path": "supporting/engineering-test-plan.json",
+        "matches": true
+      },
+      {
+        "path": "supporting/engineering-test-proof.json",
+        "matches": true
+      },
+      {
+        "path": "supporting/engineering-test-result.json",
+        "matches": true
+      },
+      {
+        "path": "supporting/vitest.result.json",
+        "matches": true
+      }
+    ],
+    "allMatch": true
+  },
+  "originalPrompt": {
+    "utf8Bytes": 62,
+    "sha256": "2242c7317cda9aac6a9574d583c377286d29448bb41c524a32dfda2d169f71e4",
+    "noTrailingNewline": true,
+    "equalsEmbeddedFixture": true
+  },
+  "historicalSemanticBindings": {
+    "productCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "productTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixtureCorpusRawSha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "oracleDigestCheck": "historical corpus oracle digest retained as provenance; not recomputed in preparation",
+    "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+    "requestDigest": "sha256:5996438d44f1264556fd4c9190045cf3cef9fa33b711d9a19c22d7d881e5995e",
+    "note": "Public serialization SHA256s and historical semantic/original artifact digests are different bindings; no substitution."
+  },
+  "historicalSkillSourceRefs": [
+    {
+      "skillId": "ponytail",
+      "path": "skills/ponytail/SKILL.md",
+      "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "readFromHistoricalCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "actualDigest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "matches": true
+    },
+    {
+      "skillId": "cs-engineering",
+      "path": "skills/cs-engineering/SKILL.md",
+      "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+      "readFromHistoricalCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "actualDigest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+      "matches": true
+    },
+    {
+      "skillId": "orchestrator",
+      "path": "skills/orchestrator/SKILL.md",
+      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "readFromHistoricalCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "actualDigest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "matches": true
+    },
+    {
+      "skillId": "test-engineering",
+      "path": "skills/test-engineering/SKILL.md",
+      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "readFromHistoricalCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "actualDigest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "matches": true
+    },
+    {
+      "skillId": "code-review",
+      "path": "skills/code-review/SKILL.md",
+      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "readFromHistoricalCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "actualDigest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "matches": true
+    },
+    {
+      "skillId": "software-security-auditor",
+      "path": "skills/software-security-auditor/SKILL.md",
+      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "readFromHistoricalCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "actualDigest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "matches": true
+    },
+    {
+      "skillId": "korean-prose-editor",
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "readFromHistoricalCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "actualDigest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "matches": true
+    }
+  ],
+  "sourceSpec": {
+    "fullDocument": "MISSING_ORIGINAL",
+    "embeddedFieldsRead": true,
+    "bodyDigest": "sha256:5d53595d26fabe4b0736faf7111cc60c2d3417fd62ec6d6a9d8f598c1aacc941",
+    "oracleAltered": false
+  }
+}

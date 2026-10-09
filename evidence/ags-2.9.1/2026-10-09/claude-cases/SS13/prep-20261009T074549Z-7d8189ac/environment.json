@@ -1,0 +1,38 @@
+{
+  "observedAtUtc": "2026-10-09T07:45:49.591865+00:00",
+  "cli": {
+    "path": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+    "resolvedBasename": "claude.exe",
+    "executable": true,
+    "version": "2.1.286 (Claude Code)",
+    "binarySha256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+    "helpSha256": "13dd71866e4b6fde1a11de6fa26bd4f5866308794307ff0fb37804c03db8e0b2",
+    "onPath": false,
+    "localCommands": [
+      "--version",
+      "--help"
+    ],
+    "APIAuthVerified": false
+  },
+  "nodeVersion": "v24.19.0",
+  "secretPresence": {
+    "CLAUDE_API_KEY_nonempty": true,
+    "valuesRecorded": false
+  },
+  "classificationConfigurationPresent": false,
+  "persistentAuthChanged": false,
+  "permissionsChanged": false,
+  "networkPolicyChanged": false,
+  "productCodeOrGeneratedArtifactsChanged": false,
+  "instructionDiscovery": {
+    "workspaceAGENTSSkillsPresent": false,
+    "historicalRepositoryAGENTSSkillsPresent": false,
+    "evidenceCommitHasAGENTS": false,
+    "evidenceOutputAncestorsHaveAGENTS": false,
+    "installedCatalogHasAGSTestEngineering": false,
+    "localProductAGENTSRead": "56fef8bd189377b80f4020f506e717ab292b260a:AGENTS.md",
+    "historicalAGENTSAndSkillsReadFrom": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "candidateAGENTSAndSkills": "PENDING_PARENT_VERIFIED_CANDIDATE"
+  },
+  "limits": "CLI version/help are local checks only; do not prove credentials, API availability, plugin loading or host receipts."
+}
