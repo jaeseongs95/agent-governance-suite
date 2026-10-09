@@ -1,0 +1,208 @@
+{
+  "caseId": "SS20",
+  "exactOriginalTitle": "vendor adapter의 JEV 분리",
+  "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "pathPrefix": "evidence/ags-2.9.1/2026-10-09/cases/SS20",
+  "remoteFetch": "exact commit fetched successfully via origin; no moving ref used for inputs",
+  "publicSHA256Verification": {
+    "status": "PASS",
+    "matchedEntries": 17,
+    "unmatchedEntries": 0
+  },
+  "publicFiles": [
+    {
+      "path": "README.md",
+      "bytes": 4989,
+      "sha256": "31034162d7f835e05ecb6e87c3881a699fc339ffeb15d8b3993d5f8fc827108a"
+    },
+    {
+      "path": "SHA256SUMS",
+      "bytes": 1692,
+      "sha256": "9808bcf8d9258e737d53034d733f0eca9977cb065b2a476669681bb9d41a83f1"
+    },
+    {
+      "path": "SS20.result.public.json",
+      "bytes": 38567,
+      "sha256": "bdfca397f37d0bda6c3c7daec5f38382405475da3631469f9cc48e451d53f3a8"
+    },
+    {
+      "path": "inputs/SS20.embedded-source.json",
+      "bytes": 1886,
+      "sha256": "daa228eb299bdf6e3aeda6a5d27fa84150f7b355b3edcf6420051b487e5096da"
+    },
+    {
+      "path": "inputs/normal.request.public.json",
+      "bytes": 255014,
+      "sha256": "2cad2a14431a8c6e867456de9a35a313ce384bfcdcdc09f1ed90e045fd03c5a6"
+    },
+    {
+      "path": "inputs/original-prompt.utf8.txt",
+      "bytes": 220,
+      "sha256": "3dd99a26ff73a9e8b8a933ec3ac9f67845003f0910fa3c0d56978e0a6d55a972"
+    },
+    {
+      "path": "logs/existing-regression.combined.public.log",
+      "bytes": 637,
+      "sha256": "a4e38c86b32ec5d8508fefba4e6377d12a723ad8b04dd41926600bbda3bf9b37"
+    },
+    {
+      "path": "logs/harness-initial-error.combined.public.log",
+      "bytes": 633,
+      "sha256": "0b11972fec40ff2d12bfb6e2741cd14a3e26c9737461227052f36ea00e449656"
+    },
+    {
+      "path": "logs/isolated-vitest.combined.public.log",
+      "bytes": 826,
+      "sha256": "3ae95bc3369601ecbd666d70bb04768c72fa95efa7f35a1be08287bb9444319d"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 12368,
+      "sha256": "41f2558ae45a6d8dec22f552fe58ac1be32ba728fe81f429a342ed6db5f73bde"
+    },
+    {
+      "path": "observations.public.json",
+      "bytes": 4784706,
+      "sha256": "8464ad1d75c5bf99dbad65f7ba91c4a5828de7ba150a9314b42cfe629eb8fd0b"
+    },
+    {
+      "path": "reproduce/SS20.test.ts",
+      "bytes": 19068,
+      "sha256": "1559cf3e2b157c845e99bf745f880b32d5f16ca019e72f76fb625de2d97da616"
+    },
+    {
+      "path": "results/engineering-plan-result.public.json",
+      "bytes": 594,
+      "sha256": "98478ec64131fdb3d93d3dfeb19e6488454d0f48fafb7ff465199a89fbb7da02"
+    },
+    {
+      "path": "results/engineering-test-result.public.json",
+      "bytes": 1010,
+      "sha256": "5aae022f78a48943981be834779e993b6c722ec453ee85acd4fc3281d537ea8e"
+    },
+    {
+      "path": "results/existing-regression.public.json",
+      "bytes": 1180,
+      "sha256": "7a21279d500761ef057e86e051040975019c660e65bdb78d89b1dcae85cab9fd"
+    },
+    {
+      "path": "results/harness-initial-error.public.json",
+      "bytes": 1361,
+      "sha256": "59b8b8aaed60c1bbe4753ee947d964b8302d925d83dcf7c1ed7e4ca82dfb371f"
+    },
+    {
+      "path": "results/isolated-vitest.public.json",
+      "bytes": 5366,
+      "sha256": "47830ba0e902824a5236d0c6f687da1062bc1fc24b4a70998122b7a003416e87"
+    },
+    {
+      "path": "results/source-snapshot.public.json",
+      "bytes": 2689,
+      "sha256": "4fa3d923cb67c45b89cdd27efe26312d3b403da88472b94a2bd2b86b4aab63f3"
+    }
+  ],
+  "embeddedSourceSpec": {
+    "caseId": "SS20",
+    "title": "vendor adapter의 JEV 분리",
+    "familyId": "mechanical-SS20",
+    "publicSynthetic": true,
+    "status": "NOT_RUN",
+    "executionKind": "mock 필수, 승인된 vendor 경로의 host/provider-live는 별도 수행한다.",
+    "originalPrompt": null,
+    "sourceSpec": {
+      "path": "TEST-SPEC.seq7.ko.md",
+      "section": "SS20",
+      "fields": {
+        "입력": "SS03을 JEV OFF와 승인된 사용자 vendor profile로 실행한다. 정상 vendor 공통 RESP, profile 없음, 모델 미가용, 지원 옵션 불일치를 각각 주입한다.",
+        "필수추천": "정상 응답에서 P·CS·T·O의 분류 지원을 받고 AGENT가 실제 선택한다. 해당 profile의 model·reasoning을 사용한다.",
+        "금지추천 또는 행동": "JEV키 조회·JEV 호출; vendor 실패를 이유로 JEV 재활성화; 다른 모델·벤더·reasoning으로 자동 상향; adapter 응답을 AGENT 선택으로 복사.",
+        "허용선택": "승인된 고정 vendor route의 한 분류 시도와 별도 AGENT 선택. 미지원은 구체적 사유로 보류한다.",
+        "보류조건": "profile·qualification·옵션·승인 route가 없거나 실행 예산이 허용되지 않음.",
+        "통과기준": "정상 vendor 분류 1회·JEV 0회이며 실제 model/effort가 중앙 profile과 같다. 실패 변형도 JEV 0회다. 공통 RESP 구조와 실제 AGENT 최종 선택을 각각 확인한다.",
+        "증거": "E0·E1·E3·E4, profile revision·비밀 제거된 전송 옵션·RESP·실제 선택 receipt.",
+        "실행종류": "mock 필수, 승인된 vendor 경로의 host/provider-live는 별도 수행한다."
+      },
+      "bodyDigest": "sha256:06cc29e74c1cd4c1e4b7c77fc2e82b5339e39d69edb51f8aa6a2103bb2d4c306"
+    },
+    "oracle": null,
+    "variants": [
+      "normal",
+      "missing-profile",
+      "unavailable-model",
+      "unsupported-option"
+    ]
+  },
+  "inputPrompt": {
+    "bytes": 220,
+    "SHA256": "3dd99a26ff73a9e8b8a933ec3ac9f67845003f0910fa3c0d56978e0a6d55a972",
+    "encoding": "UTF-8",
+    "addedNewline": false
+  },
+  "inputReference": {
+    "caseId": "SS03",
+    "purpose": "SS20 specified benchmark input only; no separate SS03 execution",
+    "path": "inputs/original-prompt.utf8.txt"
+  },
+  "frozenFixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "frozenOracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "originalHashLimit": "Full private original fixture/oracle were not independently rehashed in this preparation. Their frozen digests are retained as source declarations; all available public bytes were rehashed. SS20 originalPrompt and semantic oracle remain null. Source-spec bodyDigest is retained without inventing missing TEST-SPEC bytes.",
+  "guidanceCheckoutCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+  "guidanceFiles": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827",
+      "role": "preparation guidance only; not R17 product observation"
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "role": "preparation guidance only; not R17 product observation"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/test-design.md",
+      "sha256": "fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c",
+      "role": "preparation guidance only; not R17 product observation"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/SKILL.md",
+      "sha256": "eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230",
+      "role": "preparation guidance only; not R17 product observation"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/SKILL.md",
+      "sha256": "1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109",
+      "role": "preparation guidance only; not R17 product observation"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "sha256": "eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe",
+      "role": "preparation guidance only; not R17 product observation"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/entry-details.md",
+      "sha256": "13dc04ff9d74e17f2d0bb6d69583a2c502dc5c69766d9a4ed91a59c0c5741154",
+      "role": "preparation guidance only; not R17 product observation"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/risk-matrix.md",
+      "sha256": "0377275e0487f9823bed76cd3541e0caa5f3bf030ea407fee5ad17b0f761c801",
+      "role": "preparation guidance only; not R17 product observation"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/approval-and-authority.md",
+      "sha256": "471afb623db2b67f45465f924eec5426d470dafa0c92bcad14b7bd16d0c16334",
+      "role": "preparation guidance only; not R17 product observation"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/recovery-requirements.md",
+      "sha256": "60a0bded3a1453092e2d02469393e39f3709f0810e0e4c076628854c4d7d54af",
+      "role": "preparation guidance only; not R17 product observation"
+    }
+  ],
+  "fallbackSkillDiscovery": {
+    "/workspace/.agents": "empty; no SKILL.md",
+    "repository .agents/skills": "absent",
+    "repository skills": "relevant SKILL.md read"
+  }
+}

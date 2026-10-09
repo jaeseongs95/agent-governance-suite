@@ -1,0 +1,145 @@
+{
+  "kind": "SS20 future host test procedure; descriptive draft, no runnable paid invocation configured",
+  "caseId": "SS20",
+  "requirementsSource": "source-provenance.json embeddedSourceSpec.sourceSpec.fields",
+  "expectedVariants": [
+    {
+      "id": "normal",
+      "sourceExpectedOffline": {
+        "status": "SUCCESS",
+        "errorCode": null,
+        "vendorTransport": 1,
+        "jevCalls": 0,
+        "model": "SS20-fixed-model",
+        "effort": "low",
+        "selected": null
+      },
+      "futureExpected": "Central approved live profile replaces synthetic model labels only as an approved execution binding; frozen requirements and failure expectations remain unchanged.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "missing-profile",
+      "sourceExpectedOffline": {
+        "status": "UNAVAILABLE",
+        "errorCode": "PROFILE_UNAVAILABLE",
+        "vendorTransport": 0,
+        "jevCalls": 0,
+        "model": "SS20-fixed-model",
+        "effort": "low",
+        "selected": null
+      },
+      "futureExpected": "Central approved live profile replaces synthetic model labels only as an approved execution binding; frozen requirements and failure expectations remain unchanged.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "unavailable-model",
+      "sourceExpectedOffline": {
+        "status": "UNAVAILABLE",
+        "errorCode": "ROUTE_CAPABILITY_MISMATCH",
+        "vendorTransport": 0,
+        "jevCalls": 0,
+        "model": "SS20-fixed-model",
+        "effort": "low",
+        "selected": null
+      },
+      "futureExpected": "Central approved live profile replaces synthetic model labels only as an approved execution binding; frozen requirements and failure expectations remain unchanged.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "unsupported-option",
+      "sourceExpectedOffline": {
+        "status": "UNAVAILABLE",
+        "errorCode": "UNSUPPORTED_OPTIONS",
+        "vendorTransport": 0,
+        "jevCalls": 0,
+        "model": "SS20-fixed-model",
+        "effort": "low",
+        "selected": null
+      },
+      "futureExpected": "Central approved live profile replaces synthetic model labels only as an approved execution binding; frozen requirements and failure expectations remain unchanged.",
+      "status": "NOT_RUN"
+    }
+  ],
+  "normalRequiredAdvice": [
+    "ponytail",
+    "cs-engineering",
+    "test-engineering",
+    "orchestrator"
+  ],
+  "hostSelectionRule": "Separate observed AGENT final selection and signed runtime receipt; injected advice alone cannot prove selection/read/applied/verified.",
+  "knownBoundaryExpected": [
+    {
+      "id": "invalid-resp-known-cost",
+      "expected": "Reject invalid RESP while recording valid 0.70 USD expense and disabling breached 0.40 USD ceiling; old zero spent is a defect, not an oracle.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "timeout-overflow",
+      "expected": "Reject timer 2147483648 before transport or use bounded scheduling; old 1ms overflow and vendor timeout is a defect, not an oracle.",
+      "status": "NOT_RUN"
+    }
+  ],
+  "steps": [
+    {
+      "id": "S0",
+      "owner": "Sol",
+      "action": "Validate parent candidate commit/tree, independent SOURCE report, remote fixed files, preflight and common model/auth configuration. Load applicable candidate AGENTS and Claude SKILL.md without modifying product.",
+      "status": "WAITING_PARENT"
+    },
+    {
+      "id": "S1",
+      "owner": "Sol",
+      "action": "Prepare isolated candidate/plugin and synthetic handoff workspace; bind original 220-byte benchmark prompt; keep receipt/config identifiers and approved digests. Validate CLI flags locally and approved authentication without exposing or copying key values. Permanent auth, permissions and network policy stay unchanged.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "S2",
+      "owner": "Claude Code",
+      "action": "Execute mandatory four frozen mock variants through actual product boundary under the verified candidate, using the public harness as an assertion source. Use artifact/test copies outside product tree if needed. Check fixture/oracle digests first; mismatch blocks execution rather than rewriting fixture/oracle. Capture real command exit/stdout/stderr with secrets removed.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "S3",
+      "owner": "Claude Code",
+      "action": "For separately authorized vendor-live normal variant, use actual get_skill_inventory -> classify_skills -> independent AGENT decision -> record_skill_selection path. Observe exactly one approved vendor classification attempt, zero JEV credential lookup/call and actual model/effort equality to central profile. Host API calls for tool turns are counted separately from the one classification attempt. Never infer deployed remote adapter availability from historical mock registration.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "S4",
+      "owner": "Claude Code",
+      "action": "Read/apply/verify applicable P=ponytail, CS=cs-engineering, T=test-engineering, O=orchestrator skills with real artifacts in isolated handoff workspace. Check pre-receipt exit, post-ACK crash and duplicate reception for no loss or double completion. Selection remains Claude's reasoned decision; provider advice is not copied into receipt. Original benchmark requirements are preserved.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "S5",
+      "owner": "Claude Code",
+      "action": "Observe missing-profile, unavailable-model and unsupported-option deferrals with concrete reasons; no JEV lookup/call, reactivation, retry escalation, different model/vendor/reasoning or invented selection. Empty unavailable judgments are not selected []. No additional paid failure probes unless parent-approved within remaining budget.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "S6",
+      "owner": "Sol",
+      "action": "Collect E0/E1/E3/E4, profile revision, sanitized request options, common RESP, signed actual selection receipt, skill reads/application/verification, costs/tokens/cache/retries/failures and before/after source digests. Report each criterion separately; publish only sanitized report/evidence/hashes and reread pinned remote commit.",
+      "status": "NOT_RUN"
+    }
+  ],
+  "pendingExecutionBindings": [
+    "Claude exact model and effort",
+    "parent successful API auth mechanism",
+    "approved launch argv/permission and isolation settings",
+    "candidate/plugin absolute path",
+    "profile/config/runtime/qualification/receipt observation paths",
+    "remaining budget cap before every call"
+  ],
+  "noPaidCommandPrepared": "Auth/execution settings await parent; no guessed auth, fallback model, persistent settings, or key-bearing shell command.",
+  "budgetStopRule": "Stop before next call if known spent plus reservations plus conservative next-call maximum would reach/exceed USD 2.00, or cost/retry exposure is unknown. Record failed/retried calls and cached tokens. --max-budget-usd exists locally but cannot replace aggregate accounting across invocations/routes.",
+  "scorePolicy": "SS20 semantic/exact-set accuracy remain null because no independent semantic oracle exists. Preparation readiness is distinct from product PASS.",
+  "exclusions": [
+    "No product/generated deployment edits",
+    "No JEV calls before individual allocation",
+    "No old main/c6a8019 final-candidate tests",
+    "No fabricated receipt/qualification/current profile",
+    "No new implementation fix or threshold/oracle changes",
+    "No unredacted raw chats, secrets, private data or raw network headers published"
+  ]
+}

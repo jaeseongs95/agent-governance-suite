@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS20",
+  "title": "vendor adapter의 JEV 분리",
+  "runId": "prep-20261009T074512Z-282ef8795425",
+  "observedAt": "2026-10-09T07:45:12.811933+00:00",
+  "status": "PREPARATION_COMPLETE_AWAITING_PARENT",
+  "productTestStatus": "NOT_RUN",
+  "claudeHostStatus": "NOT_RUN",
+  "acceptanceVerdict": "NOT_EVALUATED",
+  "semanticAccuracy": null,
+  "exactSetAccuracy": null,
+  "candidateReported": {
+    "label": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "independentSourceVerdict": "PENDING_PARENT",
+    "remotePublished": "UNVERIFIED",
+    "tested": false
+  },
+  "cli": {
+    "path": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+    "resolvedPath": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+    "versionCommandExit": 0,
+    "version": "2.1.286 (Claude Code)",
+    "onPATH": false,
+    "localHelpChecked": true,
+    "maxBudgetFlagAvailable": true,
+    "apiAuthenticationTested": false
+  },
+  "nodeVersion": "v24.19.0",
+  "gitVersion": "2.52.0",
+  "completed": [
+    "Exact public evidence fetched and 17 SHA256SUMS entries verified.",
+    "Original title, embedded source requirements, prompt bytes and existing results reviewed.",
+    "Relevant AGENTS.md/SKILL.md and .agents skill fallback inspected.",
+    "Local Claude --version and --help inspected without an API call.",
+    "Resume procedure, expectations, cost ledger and unique evidence publication prepared."
+  ],
+  "existingResults": {
+    "candidate": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "scope": "historical offline mock only; not final candidate",
+    "requiredVariants": "PASS_4_OF_4",
+    "targetedTests": {
+      "passed": 11,
+      "failed": 2,
+      "exit": 1
+    },
+    "existingRegression": {
+      "passed": 2,
+      "skipped": 61,
+      "exit": 0
+    },
+    "initialHarnessError": "HARNESS_ERROR; not product verdict",
+    "overall": "INCOMPLETE_WITH_KNOWN_DEFECT_REPRODUCTIONS",
+    "knownDefects": [
+      {
+        "rootCause": "valid-cost-lost-with-invalid-RESP",
+        "expected": "Reject invalid RESP while preserving known expense and disabling breached ceiling.",
+        "observed": "INVALID_PROVIDER_RESPONSE; usage.actualCostUsd=null, spentUsd=0, reservation=0.40, invalidCostCeilings=[] despite decodedProviderEvaluations cost 0.70."
+      },
+      {
+        "rootCause": "timeout-overflow",
+        "expected": "Reject unsafe timer range before transport or use bounded scheduling.",
+        "observed": "Node TimeoutOverflowWarning resets duration to 1ms; vendor mock sends=1 then UNCERTAIN/PROVIDER_TIMEOUT; 0.40 reservation retained."
+      }
+    ],
+    "hostLifecycle": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null
+    },
+    "noPatchOrRepairedGreen": true
+  },
+  "blockers": [
+    "Parent-verified candidate commit/tree and independent SOURCE verdict, including remote availability; R17 is a reported proposal only.",
+    "Parent common Claude model/reasoning settings and successful API authentication procedure.",
+    "Parent preflight results and isolation/permission/network constraints for actual Claude host execution.",
+    "Approved vendor profile revision, exact model/effort, route registration, supported options and current qualification matching frozen request/inventory/taxonomy/config digests.",
+    "Current vendor classification budget/known cost ceiling; all Claude API preparation and execution calls fit total SS20 USD 2.00.",
+    "Actual Claude plugin/MCP/hook/session/task observation route and signed selection receipt; no fabricated host observations.",
+    "Isolated synthetic session-handoff workload/output workspace so Claude can do real host work while AGS product source and generated deployment files stay untouched."
+  ],
+  "resumeWhen": "Parent provides the verified candidate, common execution/auth configuration, and preflight results; validate all listed live prerequisites before the first paid call. JEV stays OFF and JEV calls remain 0.",
+  "productAndGeneratedFilesModified": false,
+  "newProductTests": 0,
+  "newPaidCalls": 0,
+  "newJevCalls": 0
+}

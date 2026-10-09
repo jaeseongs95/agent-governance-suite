@@ -1,0 +1,58 @@
+{
+  "caseId": "SS20",
+  "phase": "preparation",
+  "currency": "USD",
+  "softBudgetUsd": 2.0,
+  "allocatedSuiteCases": 39,
+  "allocatedSuiteReservedUsd": 78.0,
+  "paidCalls": 0,
+  "failedPaidCalls": 0,
+  "retries": 0,
+  "jevCalls": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadInputTokens": 0,
+  "cacheCreationInputTokens": 0,
+  "knownActualCostUsd": 0.0,
+  "remainingSoftBudgetUsd": 2.0,
+  "apiAuthProbeCalls": 0,
+  "entries": [],
+  "localCliChecks": [
+    {
+      "argv": [
+        "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+        "--version"
+      ],
+      "exit": 0,
+      "apiCalls": 0
+    },
+    {
+      "argv": [
+        "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+        "--help"
+      ],
+      "exit": 0,
+      "apiCalls": 0
+    }
+  ],
+  "futureEntryFields": [
+    "timestamp",
+    "phase",
+    "callId",
+    "provider",
+    "exactModel",
+    "effort",
+    "status",
+    "inputTokens",
+    "outputTokens",
+    "cacheReadInputTokens",
+    "cacheCreationInputTokens",
+    "actualCostUsd",
+    "costSource",
+    "reservationUsd",
+    "retries",
+    "failureReason",
+    "sanitizedEvidenceRef"
+  ],
+  "unknownCostRule": "Unknown is not zero; stop before additional paid calls until settled or conservatively bounded. No API call was made in this run."
+}
