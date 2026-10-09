@@ -1,0 +1,378 @@
+{
+  "recoveredOriginalFiles": 43,
+  "originals": [
+    {
+      "name": "SS12.bootstrap-boundary.test.ts",
+      "bytes": 2781,
+      "sha256": "a91ea166c7f07062fd94183a30e70670963e32e7b4bc915c57ce3f08ba7037b5",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "SS12.controls.json",
+      "bytes": 642987,
+      "sha256": "06ee2a48dcfb5a8f855d23e83e71e3f29f7883358b71f1372ee27b9f24ce7b83",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "SS12.fixture.json",
+      "bytes": 2395,
+      "sha256": "92b9070293a42f8f2811c400b05dc0be32de29ca35ffad4948ebf70aae3fe33a",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "SS12.report.txt",
+      "bytes": 2864,
+      "sha256": "20791e84c0b55fd92da6dcaa8b8f329f2f4e9a84e7d96355e9d6d91ebd68ce21",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "SS12.result.json",
+      "bytes": 18628,
+      "sha256": "a9c7a1f05a53293c7824975067b1291fbf8733be4de814738ce60d05ddce1a22",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "SS12.test.ts",
+      "bytes": 12796,
+      "sha256": "8f6b60e4976886430e30ead4b77b6f915b28826be309ae3acdcbe8b8aa7513f8",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "attempt1.SS12.controls.json",
+      "bytes": 637466,
+      "sha256": "71f85832f1bf066f6033668dc30fc4a47827794d60cdb557e38966b1e410efcf",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "attempt1.vitest.result.json",
+      "bytes": 14705,
+      "sha256": "ab9873148b53b97ea412fb5a17a4a665e48fd6126d5ec110b8e933ca008b12dd",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "attempt1.vitest.stderr.log",
+      "bytes": 155,
+      "sha256": "d59a8ad973a23a492df003d393bf17522b7602b2a931a49768b51f76e2ee3788",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "attempt1.vitest.stdout.log",
+      "bytes": 67,
+      "sha256": "fdb713027f32f8f668a68f9534ce5091535119131a7ee557b6a259c32de2f1bf",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "bootstrap-boundary.result.json",
+      "bytes": 1342,
+      "sha256": "2c448606c4457ca82aea8b75edc83a952a042c869409185fe99833e774e06726",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "bootstrap-boundary.stderr.log",
+      "bytes": 155,
+      "sha256": "b71124d14623b8d1b468ce47cd0ba01431671be440a2c458babf84c0499b4963",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "bootstrap-boundary.stdout.log",
+      "bytes": 79,
+      "sha256": "92464b67a8f55a49b6db8ccecc2bd65f1de115917615ddd9a744983842a383e6",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "candidate-snapshot.json",
+      "bytes": 3800,
+      "sha256": "2e716a81f877d61a83b469e85c672b6f69f8ce928f04a2393c89cecac23753c3",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "engineering-test-plan.json",
+      "bytes": 4819,
+      "sha256": "7c2dc6401d06e0d773fd9b55c2ca5ea89a031c457f4b0628a231cac7cb7a5a84",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "engineering-test-proof.json",
+      "bytes": 5435,
+      "sha256": "04836dfecf1819e5cc70a8f00c184f99f993b45fe602c917006ec919bb6566ff",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "engineering-test-result.json",
+      "bytes": 1160,
+      "sha256": "c2228134300aaa0c32a6b88ac521273489dd1f503e892746bf1bb485e823529e",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "execution-records.json",
+      "bytes": 1890,
+      "sha256": "a08489fc5f6dee40b2cd6cab9e5983e5f0c751bfcdac7aba812711b6f2ed89fb",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "final-evidence-check.json",
+      "bytes": 328,
+      "sha256": "e23ca9b668a84fa16009a332ec3dd7e8d53802e2ff206fd50c79889a8c81eb45",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "node_modules/.vite/vitest/da39a3ee5e6b4b0d3255bfef95601890afd80709/results.json",
+      "bytes": 179,
+      "sha256": "9c663f8b038898dd1526728518695b9c9de0a72a431174e89d154e3713a0d536",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "node_modules/.vitest/.vitest-secret-token",
+      "bytes": 37,
+      "sha256": "ba57ffcb48f71b6fda1aa7e4fd607658e9c45941fab98de7620ea61d8113a3db",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "plan-check.json",
+      "bytes": 269,
+      "sha256": "e379c73c393a50a04b03a4b7e1ed9436db3ee826de376611912fabd575fa3efe",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "snapshot-files.json",
+      "bytes": 933,
+      "sha256": "29b6f585247c15d2444009a81dad1b5ee7db811a1ccbc89be2c384619aae3779",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "source-manifest.json",
+      "bytes": 4376,
+      "sha256": "ee014776d96896afe25d7a85cdd11f5b5d92d2bddfeef920f79127a9ca2b37a2",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "sources/AGENTS.md",
+      "bytes": 9551,
+      "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "sources/mcp-server/src/index.ts",
+      "bytes": 9032,
+      "sha256": "bd2d886cd4ef1bb42c8cd00dd22a0428be899c7e21f1e48afe83c280f0104d46",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "sources/mcp-server/src/skill-classification/gateway.ts",
+      "bytes": 15017,
+      "sha256": "80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "sources/mcp-server/src/skill-classification/request.ts",
+      "bytes": 7093,
+      "sha256": "1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "sources/mcp-server/src/skill-classification/validation.ts",
+      "bytes": 8449,
+      "sha256": "70f988d9e5d49f8eaef55ca0ff378b4819798ff8141bd09119691c2cffb2891f",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "sources/skills/orchestrator/SKILL.md",
+      "bytes": 5024,
+      "sha256": "96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "sources/skills/orchestrator/references/engineering-practices/test-design.md",
+      "bytes": 3944,
+      "sha256": "fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "sources/skills/orchestrator/references/engineering-practices/test-proof.md",
+      "bytes": 4258,
+      "sha256": "7ac0a9d5031d32e5d2b3770a080c1629451903184dac1e38e240812c6fc91e1d",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "sources/skills/orchestrator/references/skill-classification.md",
+      "bytes": 3478,
+      "sha256": "85cfd39b4c3771669747a9ebf61bc8623b510104c4bd6af40c2168781adc3ef8",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "sources/skills/test-engineering/SKILL.md",
+      "bytes": 2981,
+      "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "sources/tests/skill-classification/evaluation.test.ts",
+      "bytes": 15084,
+      "sha256": "0ab579c0eacbb2b0e70e0bcd381f4c8bfc33d9422439768beb49eaf240ad32bf",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "sources/tests/skill-classification/evaluation.ts",
+      "bytes": 16532,
+      "sha256": "e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "sources/tests/skill-classification/fixtures.json",
+      "bytes": 142450,
+      "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "sources/tests/skill-classification/live-bootstrap/bootstrap.mts",
+      "bytes": 34715,
+      "sha256": "1e258ae50a0e25d9c2a01a1ff186df1cce73c0693995ea7cef2be3cd187e791c",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "sources/tests/skill-classification/live-bootstrap/component-manifest.json",
+      "bytes": 3614,
+      "sha256": "b88ed698626c9b6af09c3d1ff11aebd48226a776d00cde4299491dbb0db88429",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "vitest.result.json",
+      "bytes": 7914,
+      "sha256": "4a6ed32e6a042a9540816b5095e0378c516d009fd84f7d052849633cf92261c7",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "vitest.stderr.log",
+      "bytes": 155,
+      "sha256": "a7fafcf225874153a5dbf2114f256b37d8ef033136ab7d5298dfc95caa4b33eb",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "vitest.stdout.log",
+      "bytes": 67,
+      "sha256": "fdb713027f32f8f668a68f9534ce5091535119131a7ee557b6a259c32de2f1bf",
+      "status": "RECOVERED"
+    },
+    {
+      "name": "SHA256SUMS.json",
+      "bytes": 4576,
+      "sha256": "19a49e5e7b68925b1e4a1f9827ee089ef03c071b181031e59a60708fcffc79b0",
+      "status": "RECOVERED"
+    }
+  ],
+  "missingRequiredResultOrLogOriginals": [],
+  "missingExternalSpecification": [
+    {
+      "name": "TEST-SPEC.seq7.ko.md",
+      "status": "MISSING_ORIGINAL",
+      "preexisting": true,
+      "embeddedSourceSpecPreserved": true
+    }
+  ],
+  "patch": {
+    "status": "ABSENT",
+    "created": false
+  },
+  "recoveredButNotPublishedAsFullContent": [
+    {
+      "name": "attempt1.SS12.controls.json",
+      "sha256": "71f85832f1bf066f6033668dc30fc4a47827794d60cdb557e38966b1e410efcf",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    },
+    {
+      "name": "node_modules/.vite/vitest/da39a3ee5e6b4b0d3255bfef95601890afd80709/results.json",
+      "sha256": "9c663f8b038898dd1526728518695b9c9de0a72a431174e89d154e3713a0d536",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    },
+    {
+      "name": "node_modules/.vitest/.vitest-secret-token",
+      "sha256": "ba57ffcb48f71b6fda1aa7e4fd607658e9c45941fab98de7620ea61d8113a3db",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    },
+    {
+      "name": "snapshot-files.json",
+      "sha256": "29b6f585247c15d2444009a81dad1b5ee7db811a1ccbc89be2c384619aae3779",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    },
+    {
+      "name": "sources/AGENTS.md",
+      "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    },
+    {
+      "name": "sources/mcp-server/src/index.ts",
+      "sha256": "bd2d886cd4ef1bb42c8cd00dd22a0428be899c7e21f1e48afe83c280f0104d46",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    },
+    {
+      "name": "sources/mcp-server/src/skill-classification/gateway.ts",
+      "sha256": "80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    },
+    {
+      "name": "sources/mcp-server/src/skill-classification/request.ts",
+      "sha256": "1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    },
+    {
+      "name": "sources/mcp-server/src/skill-classification/validation.ts",
+      "sha256": "70f988d9e5d49f8eaef55ca0ff378b4819798ff8141bd09119691c2cffb2891f",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    },
+    {
+      "name": "sources/skills/orchestrator/SKILL.md",
+      "sha256": "96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    },
+    {
+      "name": "sources/skills/orchestrator/references/engineering-practices/test-design.md",
+      "sha256": "fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    },
+    {
+      "name": "sources/skills/orchestrator/references/engineering-practices/test-proof.md",
+      "sha256": "7ac0a9d5031d32e5d2b3770a080c1629451903184dac1e38e240812c6fc91e1d",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    },
+    {
+      "name": "sources/skills/orchestrator/references/skill-classification.md",
+      "sha256": "85cfd39b4c3771669747a9ebf61bc8623b510104c4bd6af40c2168781adc3ef8",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    },
+    {
+      "name": "sources/skills/test-engineering/SKILL.md",
+      "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    },
+    {
+      "name": "sources/tests/skill-classification/evaluation.test.ts",
+      "sha256": "0ab579c0eacbb2b0e70e0bcd381f4c8bfc33d9422439768beb49eaf240ad32bf",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    },
+    {
+      "name": "sources/tests/skill-classification/evaluation.ts",
+      "sha256": "e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    },
+    {
+      "name": "sources/tests/skill-classification/fixtures.json",
+      "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    },
+    {
+      "name": "sources/tests/skill-classification/live-bootstrap/bootstrap.mts",
+      "sha256": "1e258ae50a0e25d9c2a01a1ff186df1cce73c0693995ea7cef2be3cd187e791c",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    },
+    {
+      "name": "sources/tests/skill-classification/live-bootstrap/component-manifest.json",
+      "sha256": "b88ed698626c9b6af09c3d1ff11aebd48226a776d00cde4299491dbb0db88429",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    },
+    {
+      "name": "SHA256SUMS.json",
+      "sha256": "19a49e5e7b68925b1e4a1f9827ee089ef03c071b181031e59a60708fcffc79b0",
+      "reason": "Duplicate controls or already-public product source snapshot; hashes retained, full unnecessary content omitted"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "candidateAndSourceSnapshotsUnchanged": true,
+  "trackedDiffEmpty": true,
+  "controlCaseIds": [
+    "SS12"
+  ],
+  "controls": 25,
+  "finalVitest": {
+    "passed": 19,
+    "failed": 0
+  },
+  "separateSpecReproduction": {
+    "passed": 0,
+    "failed": 1,
+    "exit": 1
+  },
+  "externalAPI0": true,
+  "hostStages": "NOTRUN"
+}

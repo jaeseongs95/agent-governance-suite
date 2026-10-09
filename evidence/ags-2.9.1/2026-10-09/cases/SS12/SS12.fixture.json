@@ -1,0 +1,69 @@
+{
+  "caseId": "SS12",
+  "title": "대상과 행동이 모호한 요청",
+  "familyId": "missing-action-target",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "live와 mock.",
+  "originalPrompt": "그거 처리해 줘.",
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS12",
+    "fields": {
+      "입력": "“그거 처리해 줘.” task.targets와 이전 참조는 제공하지 않는다.",
+      "필수추천": "R={}이며 추가 입력이 필요하다.",
+      "금지추천 또는 행동": "임의로 코드 구현·배포·보안 감사로 확정; uncertain을 no-skill로 처리.",
+      "허용선택": "A={}. clarification 경로만 허용한다.",
+      "보류조건": "대상과 수행할 행동 중 어느 것도 복원할 수 없음.",
+      "통과기준": "selectionStatus=NEEDS_INPUT, agentSelectedSkillIds=null이며 부족한 행동·대상을 밝힌다. 고확신 추천을 꾸며내지 않는다.",
+      "증거": "E0, 결손 필드와 보류 사유.",
+      "실행종류": "live와 mock."
+    },
+    "bodyDigest": "sha256:be8cee3757c9e0c97ef544a1942dd4f64b52f39357b9d09c54d3ef8f8e97722b"
+  },
+  "oracle": {
+    "required": [],
+    "allowed": [],
+    "allowedConditions": {},
+    "forbidden": [],
+    "notApplicable": [],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "change-scope-guardian",
+      "code-review",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "cs-engineering",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "korean-prose-editor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "orchestrator",
+      "ponytail",
+      "recovery-strategy-selector",
+      "session-board",
+      "software-security-auditor",
+      "task-contract",
+      "test-engineering",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "NEEDS_INPUT",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [
+      "missing-action",
+      "missing-target"
+    ],
+    "sourceRefs": [],
+    "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+  },
+  "variants": [
+    "base"
+  ]
+}

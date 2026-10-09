@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:0d167d5a52669329a2901454aaca8e62ddb031d31ed0c9d6cb1d78d92e1d14a0",
+  "caseIds": [
+    "SS12-base-and-controls",
+    "SS12-bootstrap-PARTIAL-boundary"
+  ]
+}

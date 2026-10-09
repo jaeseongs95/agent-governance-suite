@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS12-delegated-offline",
+  "contractDigest": "sha256:2d5343ccaed968daede424446ac6538aed1586040b02b8565017892df557dfce",
+  "requirements": [
+    "SS12.base.NEEDS_INPUT",
+    "SS12.null-versus-empty",
+    "SS12.missing-action-target",
+    "SS12.no-fabricated-host-evidence"
+  ],
+  "scopeFiles": [
+    "SS12.test.ts",
+    "SS12.bootstrap-boundary.test.ts",
+    "sources/AGENTS.md",
+    "sources/skills/test-engineering/SKILL.md",
+    "sources/skills/orchestrator/SKILL.md",
+    "sources/skills/orchestrator/references/skill-classification.md",
+    "sources/skills/orchestrator/references/engineering-practices/test-design.md",
+    "sources/skills/orchestrator/references/engineering-practices/test-proof.md",
+    "sources/tests/skill-classification/fixtures.json",
+    "sources/tests/skill-classification/evaluation.ts",
+    "sources/tests/skill-classification/evaluation.test.ts",
+    "sources/tests/skill-classification/live-bootstrap/bootstrap.mts",
+    "sources/tests/skill-classification/live-bootstrap/component-manifest.json",
+    "sources/mcp-server/src/skill-classification/request.ts",
+    "sources/mcp-server/src/skill-classification/validation.ts",
+    "sources/mcp-server/src/skill-classification/gateway.ts",
+    "sources/mcp-server/src/index.ts"
+  ],
+  "runner": "Existing repository Vitest through scripts/run-tests.mjs; shared preinstalled node_modules symlink; no build or suite",
+  "environment": "Independent Cloud Linux; Node v24.19.0; pnpm 11.19.0; UTC; fetch guarded; providers absent; no live CLI invocation; no clock/random-dependent provider test",
+  "cases": [
+    {
+      "id": "SS12-base-and-controls",
+      "requirementIds": [
+        "SS12.base.NEEDS_INPUT",
+        "SS12.null-versus-empty",
+        "SS12.missing-action-target",
+        "SS12.no-fabricated-host-evidence"
+      ],
+      "scenario": "Only SS12 frozen base, isolated existing two assertions, new input/observation/response controls and actual unconfigured local gateway",
+      "entryPoint": "scoreCase/fromSelection/validateDecision/createClassificationRequest/projectClassificationRequest/RuntimeSkillClassificationGateway.classify and accept",
+      "level": "integration",
+      "expectedBehavior": "Unknown target/action stay null; missing reasons and [] rejected; invented choices rejected; no host stages credited; no provider attempts with unconfigured profile",
+      "oracle": "Embedded SS12 sourceSpec.fields and frozen oracle only; no missing external TEST-SPEC content inferred",
+      "testFiles": [
+        "SS12.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Frozen-candidate observational validation with explicit positive/negative assertions; no product source modification or repaired candidate authorized; formal plan recorded after controls were run",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "--root",
+        "<EVIDENCE_DIR>",
+        "SS12.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_DIR>/vitest.result.json"
+      ]
+    },
+    {
+      "id": "SS12-bootstrap-PARTIAL-boundary",
+      "requirementIds": [
+        "SS12.null-versus-empty"
+      ],
+      "scenario": "New response variant: all candidates uncertain under schema-valid PARTIAL, with missing-action and missing-target",
+      "entryPoint": "Exact source-extracted bootstrap.mts observations.push mapping, lines 322-326; not full runBootstrap",
+      "level": "unit",
+      "expectedBehavior": "NEEDS_INPUT retains null instead of accepted empty []; fixed candidate currently maps [] and the spec assertion fails",
+      "oracle": "Derived boundary from SS12 embedded pass criterion; not an additional frozen variant or real AGENT observation",
+      "testFiles": [
+        "SS12.bootstrap-boundary.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Direct defect reproduction on frozen candidate; no repaired candidate supplied, no product mutation; red-green completion remains NOT_RUN",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "--root",
+        "<EVIDENCE_DIR>",
+        "SS12.bootstrap-boundary.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_DIR>/bootstrap-boundary.result.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "Other SS cases and whole suite",
+    "Past completed 21-provider runs",
+    "prepare/runBootstrap batch execution",
+    "JEV/vendor/Claude APIs and credential lookup",
+    "Product implementation/build/push/PR/release",
+    "Real host attestation/selection/read/applied/verified",
+    "R14 changed evaluator/bootstrap/selfcheck/manifest candidate not supplied"
+  ]
+}

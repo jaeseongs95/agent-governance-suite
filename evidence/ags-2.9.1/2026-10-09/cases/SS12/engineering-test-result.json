@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:e2fcf582e47a04ef870f940c3bc01a350ed67be47594812bfdda6cff00c535c1",
+  "reportDigest": "sha256:0b3b9c4283c96b2634ae854f1618987c32df8d92315397f2b8c0af7ec7685d75",
+  "issues": [
+    "REQUIRED SS12-base-and-controls: NOT_RUN — 19 direct positive/negative control assertions executed; manual-review sensitivity has no red/green production pair; host behavior and acceptance not executed.",
+    "REQUIRED SS12-bootstrap-PARTIAL-boundary: NOT_RUN — Unmodified frozen source produced a real assertion failure (bootstrap-boundary.result.json), but no repaired candidate or paired production red/green exists; mock mapping is not host attestation."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

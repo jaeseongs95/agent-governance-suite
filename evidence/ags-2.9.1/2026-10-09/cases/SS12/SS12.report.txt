@@ -1,0 +1,21 @@
+SS12 only — frozen candidate c6a8019 / tree 28f2f2e
+
+Official variants: base (1/1). Embedded sourceSpec, originalPrompt, oracle and variants read; missing external TEST-SPEC not invented. Fixture/oracle SHA values verified.
+
+Offline controls: 19/19 Vitest assertions pass, including the two extracted existing SS12 assertions and new uncertainty/null/reason/projection/stage/no-host/unconfigured-gateway boundaries. Initial 4 failures were local it.each parameterization errors, fixed only in separate test code; attempt1 evidence retained. No other original case executed.
+
+A separate spec assertion reproduces schema-valid PARTIAL/all-uncertain bootstrap mapping losing null as [] (bootstrap.mts:322). Expected NEEDS_INPUT/null, observed NEEDS_INPUT/[], evaluator FAIL UNCERTAINTY_HIDDEN_AS_SELECTION. Separate defect command exit=1; successful imports and response validation distinguish it from an execution error. This is source-boundary extraction with synthetic response, not whole bootstrap or actual model behavior. R14 bootstrap-scoring wait is related; exact prior finding identity unconfirmed, count this cause once. No repair/green candidate supplied.
+
+Actual JEV/vendor/Claude calls=0; credentials=0; prior completed 21-run replay=0. selected/read/applied/verified=NOTRUN. Real local unconfigured gateway yields UNAVAILABLE/PROFILE_UNAVAILABLE, no attempts, proposed null; unauthenticated host acceptance rejected. No mock host receipt fabricated.
+
+Reproduce passing controls from <CANDIDATE_REPO>:
+node scripts/run-tests.mjs --root <EVIDENCE_DIR> SS12.test.ts --reporter=json --outputFile=<EVIDENCE_DIR>/vitest.result.json
+
+Reproduce defect (expected exit 1):
+node scripts/run-tests.mjs --root <EVIDENCE_DIR> SS12.bootstrap-boundary.test.ts --reporter=json --outputFile=<EVIDENCE_DIR>/bootstrap-boundary.result.json
+
+Both use the environment-only node_modules symlink to preinstalled repository dependencies. Product tracked source is unchanged; no build/push/PR/release.
+
+Host blockers: AGENT_GOVERNANCE_CLASSIFICATION_CONFIG unset, approved qualified profile/route/runtime/budget absent, signed current host observation and task source absent. Codex CLI exists; Claude CLI absent. Native route requires explicit qualified structured adapter and isolation/retry evidence; CLI presence is insufficient. NEEDS_INPUT/null cannot get accepted-selection hostReceipt through current record_skill_selection (gateway AGENT_SELECTION_MISSING), so authentic clarification transcript evidence must be specified instead of fabricating a selected receipt. Full details and API0 counters are in SS12.result.json.
+
+Engineering plan consistency exit 0; proof consistency INCOMPLETE/exit 1 because no product red/green repair pair or independent/host evidence. This is not full-case live PASS or release acceptance.

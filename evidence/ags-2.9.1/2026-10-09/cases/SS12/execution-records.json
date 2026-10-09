@@ -1,0 +1,72 @@
+[
+  {
+    "kind": "initial-harness-attempt",
+    "command": [
+      "node",
+      "scripts/run-tests.mjs",
+      "--root",
+      "<EVIDENCE_DIR>",
+      "SS12.test.ts",
+      "--reporter=json",
+      "--outputFile=<EVIDENCE_DIR>/vitest.result.json"
+    ],
+    "cwd": "<CANDIDATE_REPO>",
+    "exit": 1,
+    "tests": 19,
+    "passed": 15,
+    "failed": 4,
+    "cause": "New test it.each nested-array parameters were expanded; local harness TypeErrors, not product failures",
+    "evidence": [
+      "attempt1.vitest.result.json",
+      "attempt1.vitest.stdout.log",
+      "attempt1.vitest.stderr.log"
+    ],
+    "countsAsRegressionFailure": false
+  },
+  {
+    "kind": "offline-isolated-regression-and-new-controls",
+    "command": [
+      "node",
+      "scripts/run-tests.mjs",
+      "--root",
+      "<EVIDENCE_DIR>",
+      "SS12.test.ts",
+      "--reporter=json",
+      "--outputFile=<EVIDENCE_DIR>/vitest.result.json"
+    ],
+    "cwd": "<CANDIDATE_REPO>",
+    "exit": 0,
+    "tests": 19,
+    "passed": 19,
+    "failed": 0,
+    "evidence": [
+      "vitest.result.json",
+      "vitest.stdout.log",
+      "vitest.stderr.log",
+      "SS12.controls.json"
+    ]
+  },
+  {
+    "kind": "offline-new-boundary-defect-reproduction",
+    "command": [
+      "node",
+      "scripts/run-tests.mjs",
+      "--root",
+      "<EVIDENCE_DIR>",
+      "SS12.bootstrap-boundary.test.ts",
+      "--reporter=json",
+      "--outputFile=<EVIDENCE_DIR>/bootstrap-boundary.result.json"
+    ],
+    "cwd": "<CANDIDATE_REPO>",
+    "exit": 1,
+    "tests": 1,
+    "passed": 0,
+    "failed": 1,
+    "evidence": [
+      "bootstrap-boundary.result.json",
+      "bootstrap-boundary.stdout.log",
+      "bootstrap-boundary.stderr.log"
+    ],
+    "cause": "Expected null; observed []; assertion failure, schema validation and imports succeeded"
+  }
+]

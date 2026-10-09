@@ -1,0 +1,146 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-proof",
+  "planDigest": "sha256:0d167d5a52669329a2901454aaca8e62ddb031d31ed0c9d6cb1d78d92e1d14a0",
+  "candidate": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-snapshot",
+    "files": [
+      {
+        "path": "SS12.bootstrap-boundary.test.ts",
+        "digest": "sha256:a91ea166c7f07062fd94183a30e70670963e32e7b4bc915c57ce3f08ba7037b5",
+        "size": 2781,
+        "lineCount": 28
+      },
+      {
+        "path": "SS12.test.ts",
+        "digest": "sha256:8f6b60e4976886430e30ead4b77b6f915b28826be309ae3acdcbe8b8aa7513f8",
+        "size": 12796,
+        "lineCount": 87
+      },
+      {
+        "path": "sources/AGENTS.md",
+        "digest": "sha256:d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827",
+        "size": 9551,
+        "lineCount": 81
+      },
+      {
+        "path": "sources/mcp-server/src/index.ts",
+        "digest": "sha256:bd2d886cd4ef1bb42c8cd00dd22a0428be899c7e21f1e48afe83c280f0104d46",
+        "size": 9032,
+        "lineCount": 145
+      },
+      {
+        "path": "sources/mcp-server/src/skill-classification/gateway.ts",
+        "digest": "sha256:80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+        "size": 15017,
+        "lineCount": 156
+      },
+      {
+        "path": "sources/mcp-server/src/skill-classification/request.ts",
+        "digest": "sha256:1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f",
+        "size": 7093,
+        "lineCount": 99
+      },
+      {
+        "path": "sources/mcp-server/src/skill-classification/validation.ts",
+        "digest": "sha256:70f988d9e5d49f8eaef55ca0ff378b4819798ff8141bd09119691c2cffb2891f",
+        "size": 8449,
+        "lineCount": 107
+      },
+      {
+        "path": "sources/skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+        "size": 5024,
+        "lineCount": 33
+      },
+      {
+        "path": "sources/skills/orchestrator/references/engineering-practices/test-design.md",
+        "digest": "sha256:fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c",
+        "size": 3944,
+        "lineCount": 99
+      },
+      {
+        "path": "sources/skills/orchestrator/references/engineering-practices/test-proof.md",
+        "digest": "sha256:7ac0a9d5031d32e5d2b3770a080c1629451903184dac1e38e240812c6fc91e1d",
+        "size": 4258,
+        "lineCount": 99
+      },
+      {
+        "path": "sources/skills/orchestrator/references/skill-classification.md",
+        "digest": "sha256:85cfd39b4c3771669747a9ebf61bc8623b510104c4bd6af40c2168781adc3ef8",
+        "size": 3478,
+        "lineCount": 15
+      },
+      {
+        "path": "sources/skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+        "size": 2981,
+        "lineCount": 30
+      },
+      {
+        "path": "sources/tests/skill-classification/evaluation.test.ts",
+        "digest": "sha256:0ab579c0eacbb2b0e70e0bcd381f4c8bfc33d9422439768beb49eaf240ad32bf",
+        "size": 15084,
+        "lineCount": 201
+      },
+      {
+        "path": "sources/tests/skill-classification/evaluation.ts",
+        "digest": "sha256:e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+        "size": 16532,
+        "lineCount": 223
+      },
+      {
+        "path": "sources/tests/skill-classification/fixtures.json",
+        "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "size": 142450,
+        "lineCount": 2912
+      },
+      {
+        "path": "sources/tests/skill-classification/live-bootstrap/bootstrap.mts",
+        "digest": "sha256:1e258ae50a0e25d9c2a01a1ff186df1cce73c0693995ea7cef2be3cd187e791c",
+        "size": 34715,
+        "lineCount": 358
+      },
+      {
+        "path": "sources/tests/skill-classification/live-bootstrap/component-manifest.json",
+        "digest": "sha256:b88ed698626c9b6af09c3d1ff11aebd48226a776d00cde4299491dbb0db88429",
+        "size": 3614,
+        "lineCount": 78
+      }
+    ],
+    "digest": "sha256:e2fcf582e47a04ef870f940c3bc01a350ed67be47594812bfdda6cff00c535c1"
+  },
+  "proofs": [
+    {
+      "caseId": "SS12-base-and-controls",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "19 direct positive/negative control assertions executed; manual-review sensitivity has no red/green production pair; host behavior and acceptance not executed."
+    },
+    {
+      "caseId": "SS12-bootstrap-PARTIAL-boundary",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Unmodified frozen source produced a real assertion failure (bootstrap-boundary.result.json), but no repaired candidate or paired production red/green exists; mock mapping is not host attestation."
+    }
+  ]
+}

@@ -1,0 +1,354 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS12",
+  "kind": "publication-byte-manifest",
+  "candidate": {
+    "branchIntent": "codex/skill-classification-2.9.1",
+    "checkout": "detached immutable commit",
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "fixtureAndOracleVerified": true
+  },
+  "destination": {
+    "repository": "jaeseongs95/agent-governance-suite",
+    "branch": "evidence",
+    "path": "evidence/ags-2.9.1/2026-10-09/cases/SS12/"
+  },
+  "newTestsExecuted": 0,
+  "newApiCalls": 0,
+  "historicalResultsUnchanged": true,
+  "missingResultLogOrTestOriginals": [],
+  "missingExternalSpecification": [
+    "TEST-SPEC.seq7.ko.md: MISSING_ORIGINAL"
+  ],
+  "patchStatus": "ABSENT",
+  "input": {
+    "originalPromptUtf8Bytes": 21,
+    "originalPromptUtf8SHA256": "5deb6397ac183e6bd2cf53dc2f98221b958183e84047bf793e5f028b12037ef8",
+    "requestOriginalEmbeddedDigest": "sha256:aa806c34177eec82bffbb778bd3a9279d922d809422a1d95bc1cdeb587c8121e",
+    "requestPublicFileBytes": 254737,
+    "requestPublicFileSHA256": "89699233721fd6acb15dd772fccddf7f65b4dcb03c75a4449b98bf3b3bbc5d78",
+    "requestWireSent": false
+  },
+  "hashCoverage": {
+    "manifestFileEntries": "All payload files excluding manifest.json and SHA256SUMS",
+    "SHA256SUMS": "All payload files plus manifest.json; excludes SHA256SUMS itself",
+    "originalReferences": "Hashes of actual recovered private originals; full original content is not implied by sanitized copies"
+  },
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 5483,
+      "sha256": "7f3ba098ff2430ec9af2470079e6de8502613b6305b1b3af0030ae499eba8bf6",
+      "representation": "publication metadata, not trial evidence"
+    },
+    {
+      "path": "SS12.controls.json",
+      "bytes": 642987,
+      "sha256": "06ee2a48dcfb5a8f855d23e83e71e3f29f7883358b71f1372ee27b9f24ce7b83",
+      "representation": "unchanged original bytes",
+      "original": {
+        "name": "SS12.controls.json",
+        "bytes": 642987,
+        "sha256": "06ee2a48dcfb5a8f855d23e83e71e3f29f7883358b71f1372ee27b9f24ce7b83",
+        "publicBytesEqualOriginal": true
+      }
+    },
+    {
+      "path": "SS12.fixture.json",
+      "bytes": 2395,
+      "sha256": "92b9070293a42f8f2811c400b05dc0be32de29ca35ffad4948ebf70aae3fe33a",
+      "representation": "unchanged original bytes",
+      "original": {
+        "name": "SS12.fixture.json",
+        "bytes": 2395,
+        "sha256": "92b9070293a42f8f2811c400b05dc0be32de29ca35ffad4948ebf70aae3fe33a",
+        "publicBytesEqualOriginal": true
+      }
+    },
+    {
+      "path": "SS12.report.txt",
+      "bytes": 2817,
+      "sha256": "26031bbfd85f5980a1ba33eb878d068ff9642f176e49c8fcc0a56d3ff7b94ff2",
+      "representation": "sanitized original; filesystem roots replaced by symbolic placeholders; outcomes unchanged",
+      "original": {
+        "name": "SS12.report.txt",
+        "bytes": 2864,
+        "sha256": "20791e84c0b55fd92da6dcaa8b8f329f2f4e9a84e7d96355e9d6d91ebd68ce21",
+        "publicBytesEqualOriginal": false
+      }
+    },
+    {
+      "path": "SS12.result.json",
+      "bytes": 19539,
+      "sha256": "030410687ed02fab7131df0aa835228d656d920756b642421ca6060cc6a69e73",
+      "representation": "sanitized original result plus explicitly labeled publication metadata; no result recomputation",
+      "original": {
+        "name": "SS12.result.json",
+        "bytes": 18628,
+        "sha256": "a9c7a1f05a53293c7824975067b1291fbf8733be4de814738ce60d05ddce1a22",
+        "publicBytesEqualOriginal": false
+      }
+    },
+    {
+      "path": "candidate-snapshot.json",
+      "bytes": 3800,
+      "sha256": "2e716a81f877d61a83b469e85c672b6f69f8ce928f04a2393c89cecac23753c3",
+      "representation": "unchanged original bytes",
+      "original": {
+        "name": "candidate-snapshot.json",
+        "bytes": 3800,
+        "sha256": "2e716a81f877d61a83b469e85c672b6f69f8ce928f04a2393c89cecac23753c3",
+        "publicBytesEqualOriginal": true
+      }
+    },
+    {
+      "path": "engineering-test-plan.json",
+      "bytes": 4779,
+      "sha256": "48ec7e42f64bc544b15511aaeb354ce80a50d79e36a969ed6fc606bf27cebf55",
+      "representation": "sanitized original; filesystem roots replaced by symbolic placeholders; outcomes unchanged",
+      "original": {
+        "name": "engineering-test-plan.json",
+        "bytes": 4819,
+        "sha256": "7c2dc6401d06e0d773fd9b55c2ca5ea89a031c457f4b0628a231cac7cb7a5a84",
+        "publicBytesEqualOriginal": false
+      }
+    },
+    {
+      "path": "engineering-test-proof.json",
+      "bytes": 5435,
+      "sha256": "04836dfecf1819e5cc70a8f00c184f99f993b45fe602c917006ec919bb6566ff",
+      "representation": "unchanged original bytes",
+      "original": {
+        "name": "engineering-test-proof.json",
+        "bytes": 5435,
+        "sha256": "04836dfecf1819e5cc70a8f00c184f99f993b45fe602c917006ec919bb6566ff",
+        "publicBytesEqualOriginal": true
+      }
+    },
+    {
+      "path": "engineering-test-result.json",
+      "bytes": 1160,
+      "sha256": "c2228134300aaa0c32a6b88ac521273489dd1f503e892746bf1bb485e823529e",
+      "representation": "unchanged original bytes",
+      "original": {
+        "name": "engineering-test-result.json",
+        "bytes": 1160,
+        "sha256": "c2228134300aaa0c32a6b88ac521273489dd1f503e892746bf1bb485e823529e",
+        "publicBytesEqualOriginal": true
+      }
+    },
+    {
+      "path": "execution-records.json",
+      "bytes": 1809,
+      "sha256": "01746928df1a2c7383e66b89d2f120570abf2e169b7604b0e83d201ac1a284df",
+      "representation": "sanitized original; filesystem roots replaced by symbolic placeholders; outcomes unchanged",
+      "original": {
+        "name": "execution-records.json",
+        "bytes": 1890,
+        "sha256": "a08489fc5f6dee40b2cd6cab9e5983e5f0c751bfcdac7aba812711b6f2ed89fb",
+        "publicBytesEqualOriginal": false
+      }
+    },
+    {
+      "path": "final-evidence-check.json",
+      "bytes": 328,
+      "sha256": "e23ca9b668a84fa16009a332ec3dd7e8d53802e2ff206fd50c79889a8c81eb45",
+      "representation": "unchanged original bytes",
+      "original": {
+        "name": "final-evidence-check.json",
+        "bytes": 328,
+        "sha256": "e23ca9b668a84fa16009a332ec3dd7e8d53802e2ff206fd50c79889a8c81eb45",
+        "publicBytesEqualOriginal": true
+      }
+    },
+    {
+      "path": "input/originalPrompt.utf8.txt",
+      "bytes": 21,
+      "sha256": "5deb6397ac183e6bd2cf53dc2f98221b958183e84047bf793e5f028b12037ef8",
+      "representation": "exact UTF-8 bytes of existing fixture originalPrompt field; no trailing newline",
+      "original": {
+        "name": "SS12.fixture.json",
+        "bytes": 2395,
+        "sha256": "92b9070293a42f8f2811c400b05dc0be32de29ca35ffad4948ebf70aae3fe33a",
+        "publicBytesEqualOriginal": false
+      }
+    },
+    {
+      "path": "input/request.json",
+      "bytes": 254737,
+      "sha256": "89699233721fd6acb15dd772fccddf7f65b4dcb03c75a4449b98bf3b3bbc5d78",
+      "representation": "existing controls.request extracted and serialized; no new request or wire dispatch",
+      "original": {
+        "name": "SS12.controls.json",
+        "bytes": 642987,
+        "sha256": "06ee2a48dcfb5a8f855d23e83e71e3f29f7883358b71f1372ee27b9f24ce7b83",
+        "publicBytesEqualOriginal": false
+      }
+    },
+    {
+      "path": "logs/attempt1.vitest.result.json",
+      "bytes": 14207,
+      "sha256": "0be8827641179a2904042a82cb8d5800dd2a597b26e87f244e706f3d34682da9",
+      "representation": "sanitized original; filesystem roots replaced by symbolic placeholders; outcomes unchanged",
+      "original": {
+        "name": "attempt1.vitest.result.json",
+        "bytes": 14705,
+        "sha256": "ab9873148b53b97ea412fb5a17a4a665e48fd6126d5ec110b8e933ca008b12dd",
+        "publicBytesEqualOriginal": false
+      }
+    },
+    {
+      "path": "logs/attempt1.vitest.stderr.log",
+      "bytes": 155,
+      "sha256": "d59a8ad973a23a492df003d393bf17522b7602b2a931a49768b51f76e2ee3788",
+      "representation": "unchanged original bytes",
+      "original": {
+        "name": "attempt1.vitest.stderr.log",
+        "bytes": 155,
+        "sha256": "d59a8ad973a23a492df003d393bf17522b7602b2a931a49768b51f76e2ee3788",
+        "publicBytesEqualOriginal": true
+      }
+    },
+    {
+      "path": "logs/attempt1.vitest.stdout.log",
+      "bytes": 57,
+      "sha256": "212661a75935780d07705914b3684a34a78b97eed73d93dcc6ebc044c6976092",
+      "representation": "sanitized original; filesystem roots replaced by symbolic placeholders; outcomes unchanged",
+      "original": {
+        "name": "attempt1.vitest.stdout.log",
+        "bytes": 67,
+        "sha256": "fdb713027f32f8f668a68f9534ce5091535119131a7ee557b6a259c32de2f1bf",
+        "publicBytesEqualOriginal": false
+      }
+    },
+    {
+      "path": "logs/bootstrap-boundary.result.json",
+      "bytes": 1306,
+      "sha256": "07b805666e88ef4eb49eac02b4c13772ea24499224a30d2076817579efb2ab45",
+      "representation": "sanitized original; filesystem roots replaced by symbolic placeholders; outcomes unchanged",
+      "original": {
+        "name": "bootstrap-boundary.result.json",
+        "bytes": 1342,
+        "sha256": "2c448606c4457ca82aea8b75edc83a952a042c869409185fe99833e774e06726",
+        "publicBytesEqualOriginal": false
+      }
+    },
+    {
+      "path": "logs/bootstrap-boundary.stderr.log",
+      "bytes": 155,
+      "sha256": "b71124d14623b8d1b468ce47cd0ba01431671be440a2c458babf84c0499b4963",
+      "representation": "unchanged original bytes",
+      "original": {
+        "name": "bootstrap-boundary.stderr.log",
+        "bytes": 155,
+        "sha256": "b71124d14623b8d1b468ce47cd0ba01431671be440a2c458babf84c0499b4963",
+        "publicBytesEqualOriginal": true
+      }
+    },
+    {
+      "path": "logs/bootstrap-boundary.stdout.log",
+      "bytes": 69,
+      "sha256": "9076ccf4ede018f7a2eda2b107127be0237c825c3c12ec64d27305b97f6afe8e",
+      "representation": "sanitized original; filesystem roots replaced by symbolic placeholders; outcomes unchanged",
+      "original": {
+        "name": "bootstrap-boundary.stdout.log",
+        "bytes": 79,
+        "sha256": "92464b67a8f55a49b6db8ccecc2bd65f1de115917615ddd9a744983842a383e6",
+        "publicBytesEqualOriginal": false
+      }
+    },
+    {
+      "path": "logs/vitest.result.json",
+      "bytes": 7904,
+      "sha256": "35d05bffab93b652a66ff7d86d7504a3997c12ffa5a1f4a2ac887c8e3fb6a1d8",
+      "representation": "sanitized original; filesystem roots replaced by symbolic placeholders; outcomes unchanged",
+      "original": {
+        "name": "vitest.result.json",
+        "bytes": 7914,
+        "sha256": "4a6ed32e6a042a9540816b5095e0378c516d009fd84f7d052849633cf92261c7",
+        "publicBytesEqualOriginal": false
+      }
+    },
+    {
+      "path": "logs/vitest.stderr.log",
+      "bytes": 155,
+      "sha256": "a7fafcf225874153a5dbf2114f256b37d8ef033136ab7d5298dfc95caa4b33eb",
+      "representation": "unchanged original bytes",
+      "original": {
+        "name": "vitest.stderr.log",
+        "bytes": 155,
+        "sha256": "a7fafcf225874153a5dbf2114f256b37d8ef033136ab7d5298dfc95caa4b33eb",
+        "publicBytesEqualOriginal": true
+      }
+    },
+    {
+      "path": "logs/vitest.stdout.log",
+      "bytes": 57,
+      "sha256": "212661a75935780d07705914b3684a34a78b97eed73d93dcc6ebc044c6976092",
+      "representation": "sanitized original; filesystem roots replaced by symbolic placeholders; outcomes unchanged",
+      "original": {
+        "name": "vitest.stdout.log",
+        "bytes": 67,
+        "sha256": "fdb713027f32f8f668a68f9534ce5091535119131a7ee557b6a259c32de2f1bf",
+        "publicBytesEqualOriginal": false
+      }
+    },
+    {
+      "path": "original-recovery.json",
+      "bytes": 14805,
+      "sha256": "63d2d7f06643426029c32e4fd61fc03c05506d35ff344fb7211bec73c602ce0a",
+      "representation": "publication metadata, not trial evidence"
+    },
+    {
+      "path": "plan-check.json",
+      "bytes": 269,
+      "sha256": "e379c73c393a50a04b03a4b7e1ed9436db3ee826de376611912fabd575fa3efe",
+      "representation": "unchanged original bytes",
+      "original": {
+        "name": "plan-check.json",
+        "bytes": 269,
+        "sha256": "e379c73c393a50a04b03a4b7e1ed9436db3ee826de376611912fabd575fa3efe",
+        "publicBytesEqualOriginal": true
+      }
+    },
+    {
+      "path": "repro/SS12.bootstrap-boundary.test.ts",
+      "bytes": 3175,
+      "sha256": "d31a93eba4d14e589881132a01e496ecf40ed4f876baebc70cb7321e093d4f06",
+      "representation": "portable reproduction derived from original: imports and path constants parameterized only; public version NOT_RUN",
+      "original": {
+        "name": "SS12.bootstrap-boundary.test.ts",
+        "bytes": 2781,
+        "sha256": "a91ea166c7f07062fd94183a30e70670963e32e7b4bc915c57ce3f08ba7037b5",
+        "publicBytesEqualOriginal": false
+      }
+    },
+    {
+      "path": "repro/SS12.test.ts",
+      "bytes": 13218,
+      "sha256": "9ad839393034dc46e71dfd05b5381db5654a85eb5d1605f9b7b0d5eb93241a63",
+      "representation": "portable reproduction derived from original: imports and path constants parameterized only; public version NOT_RUN",
+      "original": {
+        "name": "SS12.test.ts",
+        "bytes": 12796,
+        "sha256": "8f6b60e4976886430e30ead4b77b6f915b28826be309ae3acdcbe8b8aa7513f8",
+        "publicBytesEqualOriginal": false
+      }
+    },
+    {
+      "path": "source-manifest.json",
+      "bytes": 4226,
+      "sha256": "dd911c6d36cb3d37faf60e59a2b7eaef909ad9a4dd364798b3c6ae7a1e2dcd80",
+      "representation": "sanitized original; filesystem roots replaced by symbolic placeholders; outcomes unchanged",
+      "original": {
+        "name": "source-manifest.json",
+        "bytes": 4376,
+        "sha256": "ee014776d96896afe25d7a85cdd11f5b5d92d2bddfeef920f79127a9ca2b37a2",
+        "publicBytesEqualOriginal": false
+      }
+    }
+  ]
+}
