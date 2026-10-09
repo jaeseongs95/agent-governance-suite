@@ -1,0 +1,49 @@
+{
+  "kind": "local-cli-inspection",
+  "startedAt": "2026-10-09T07:44:55.285132+00:00",
+  "finishedAt": "2026-10-09T07:44:55.294834+00:00",
+  "cliPath": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+  "cliResolvedPath": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+  "cliSHA256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+  "versionCommand": {
+    "argv": [
+      "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+      "--version"
+    ],
+    "exitCode": 0,
+    "stdout": "2.1.286 (Claude Code)",
+    "stderr": ""
+  },
+  "helpCommand": {
+    "argv": [
+      "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+      "--help"
+    ],
+    "exitCode": 0,
+    "relevantLines": [
+      "apiKeyHelper via --settings (OAuth and",
+      "(CLAUDE.md dirs), --mcp-config,",
+      "--settings, --agents, --plugin-dir.",
+      "--effort <level>                      Effort level for the current session",
+      "--print and --output-format=stream-json)",
+      "--output-format=stream-json)",
+      "--output-format=stream-json)",
+      "--max-budget-usd <amount>             Maximum dollar amount to spend on API",
+      "--mcp-config <configs...>             Load MCP servers from JSON files or",
+      "--model <model>                       Model for the current session. Provide",
+      "--output-format <format>              Output format (only works with --print):",
+      "--permission-mode <mode>              Permission mode to use for the session",
+      "--plugin-dir <path>                   Load a plugin from a directory or .zip",
+      "--plugin-dir A --plugin-dir B.zip)",
+      "--output-format=stream-json)",
+      "(managed settings and --settings still",
+      "--settings <file-or-json>             Path to a settings JSON file or a JSON",
+      "--strict-mcp-config                   Only use MCP servers from --mcp-config,"
+    ]
+  },
+  "paidAPICalls": 0,
+  "authenticationAttempted": false,
+  "persistentConfigurationChanged": false,
+  "nodeVersion": "v24.19.0",
+  "timezone": "Etc/UTC"
+}
