@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS01",
+  "phase": "PREPARATION_ONLY",
+  "currency": "USD",
+  "softLimitUsd": 2,
+  "spentUsd": 0,
+  "reservedUnknownUsd": 0,
+  "remainingSoftBudgetUsd": 2,
+  "calls": {
+    "ClaudeCodeApi": 0,
+    "JEV": 0,
+    "otherVendor": 0,
+    "productTests": 0,
+    "authProbes": 0
+  },
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadInputTokens": 0,
+  "cacheCreationInputTokens": 0,
+  "retries": 0,
+  "failedCalls": 0,
+  "attempts": [],
+  "resumeAccountingFields": [
+    "attemptId",
+    "route",
+    "modelExact",
+    "effort",
+    "startUtc",
+    "endUtc",
+    "exitCode",
+    "inputTokens",
+    "outputTokens",
+    "cacheReadInputTokens",
+    "cacheCreationInputTokens",
+    "actualCostUsd",
+    "failedCallCostUsd",
+    "retryCount",
+    "unknownCostReservationUsd",
+    "remainingSoftBudgetUsd"
+  ],
+  "stopRule": "Before each paid call reserve its conservative maximum within remaining USD 2; stop before next call if actual plus reservations plus proposed maximum approaches/exceeds USD 2; failed/timeout/automatic retry calls remain chargeable; report unknown cost rather than assume zero",
+  "aggregateContext": {
+    "reservedCases": 39,
+    "reservedTotalUsd": 78,
+    "notConsumptionTarget": true
+  },
+  "JEV": "NOT_ALLOCATED_DO_NOT_CALL"
+}

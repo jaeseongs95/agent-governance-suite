@@ -1,0 +1,235 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS01",
+  "title": "한국어 단일 코드 수정",
+  "runId": "prep-20261009T073831Z-d1a43f5c",
+  "observedAt": "2026-10-09T07:40:42.999805+00:00",
+  "status": "PREPARATION_COMPLETE_WAITING_FOR_PARENT",
+  "hostTrialVerdict": "NOT_RUN",
+  "hostStages": {
+    "selected": "NOT_RUN",
+    "read": "NOT_RUN",
+    "applied": "NOT_RUN",
+    "verified": "NOT_RUN"
+  },
+  "agentSelectedSkillIds": null,
+  "hostReceipt": null,
+  "accuracy": null,
+  "input": {
+    "path": "originalPrompt.utf8.txt",
+    "bytes": 148,
+    "sha256": "c41025f56b16711d241f2b5fd8956da7b23b404aba0225d9b55489da1782c0de",
+    "terminalNewline": false,
+    "officialVariant": "base"
+  },
+  "expected": {
+    "rawRecommendedSkillIds": [
+      "ponytail"
+    ],
+    "agentSelectedSkillIds": [
+      "ponytail"
+    ],
+    "oracle": {
+      "required": [
+        "ponytail"
+      ],
+      "allowed": [],
+      "allowedConditions": {},
+      "forbidden": [
+        "cs-engineering",
+        "code-review",
+        "software-security-auditor",
+        "orchestrator"
+      ],
+      "notApplicable": [
+        "test-engineering",
+        "korean-prose-editor",
+        "change-scope-guardian"
+      ],
+      "unadjudicated": [
+        "acceptance-evidence-validator",
+        "blocker-diagnostician",
+        "codex-token-usage-analyzer",
+        "context-continuity",
+        "coordinate-subagents",
+        "evaluation-validity-auditor",
+        "independent-audit-gate",
+        "independent-deliberation-panel",
+        "instruction-scope-resolver",
+        "iteration-frame-auditor",
+        "model-effort-advisor",
+        "mutation-risk-preflight",
+        "recovery-strategy-selector",
+        "session-board",
+        "task-contract",
+        "workspace-convention-profiler"
+      ],
+      "expectedSelection": "SELECTED",
+      "explicitSkillIds": [],
+      "ruleRequiredSkillIds": [],
+      "requiredReasons": [],
+      "sourceRefs": [
+        {
+          "skillId": "ponytail",
+          "path": "skills/ponytail/SKILL.md",
+          "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+        },
+        {
+          "skillId": "cs-engineering",
+          "path": "skills/cs-engineering/SKILL.md",
+          "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+        },
+        {
+          "skillId": "code-review",
+          "path": "skills/code-review/SKILL.md",
+          "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+        },
+        {
+          "skillId": "software-security-auditor",
+          "path": "skills/software-security-auditor/SKILL.md",
+          "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+        },
+        {
+          "skillId": "orchestrator",
+          "path": "skills/orchestrator/SKILL.md",
+          "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+        },
+        {
+          "skillId": "test-engineering",
+          "path": "skills/test-engineering/SKILL.md",
+          "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+        },
+        {
+          "skillId": "korean-prose-editor",
+          "path": "skills/korean-prose-editor/SKILL.md",
+          "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+        },
+        {
+          "skillId": "change-scope-guardian",
+          "path": "skills/change-scope-guardian/SKILL.md",
+          "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+        }
+      ],
+      "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+    },
+    "sourceFields": {
+      "입력": "“정수 리스트의 최댓값을 반환하는 함수를 표준 라이브러리로 간단히 고쳐 줘. 동시성·DB 변경이나 리뷰는 없어.”",
+      "필수추천": "R={P}.",
+      "금지추천 또는 행동": "CS, CR, SEC와 목적 없는 workflow 추가; prototype이 실제 코드를 수정하는 행위.",
+      "허용선택": "A={}.",
+      "보류조건": "실제 구현 대상이 없어 실행이 보류되어도, 요청 유형을 P로 분류할 수 있다. 대상 부족을 no-skill로 처리하지 않는다.",
+      "통과기준": "raw에 P가 포함되고 불필요한 추천이 없다. select에서 P가 실제 agentSelectedSkillIds에 반영된다. OFF·vendor fallback의 B에도 같은 목적 정답을 적용한다.",
+      "증거": "E0, P 적용 조건과 입력의 코드 수정 행동을 연결한 판정.",
+      "실행종류": "live; 동일 출력의 mock은 전달 계약만 검사한다."
+    },
+    "missingTargetMustNotMeanNoSkill": true,
+    "prototypeProductModificationForbidden": true,
+    "judgeCriteriaAreNotAdditionalModelPrompt": true
+  },
+  "previousEvidence": {
+    "status": "INCOMPLETE_WITH_KNOWN_DEFECTS",
+    "candidate": {
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+      "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+    },
+    "regression": {
+      "PASS": 1,
+      "FAIL": 0,
+      "NOT_RUN": 14,
+      "exit": 0
+    },
+    "finalIsolated": {
+      "PASS": 20,
+      "FAIL": 3,
+      "NOT_RUN": 0,
+      "exit": 1
+    },
+    "hostStages": {
+      "selected": "NOT_RUN",
+      "read": "NOT_RUN",
+      "applied": "NOT_RUN",
+      "verified": "NOT_RUN"
+    },
+    "knownDefects": [
+      "invalid RESP drops separately valid 0.1 cost",
+      "cancellation during acceptance read may permit valid:true",
+      "2147483648ms timer overflows to 1ms"
+    ],
+    "hostInstalledSupportedSupplierGap": "confirmed on old source; current candidate still untested",
+    "priorFailuresAreNotExpectedPassBehavior": true
+  },
+  "environment": {
+    "claudeCli": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+    "resolvedCli": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+    "claudeVersion": "2.1.286 (Claude Code)",
+    "cliOnPath": false,
+    "nodeVersion": "v24.19.0",
+    "pnpmVersion": "11.19.0",
+    "pythonVersion": "Python 3.12.14",
+    "claudeApiKeyPresent": true,
+    "secretValueReadPrintedCopiedPublished": false,
+    "classificationConfigPresent": false,
+    "hostAttestationPresent": false,
+    "helpFlagsVerified": [
+      "--model",
+      "--effort",
+      "--max-budget-usd",
+      "--output-format",
+      "--include-hook-events",
+      "--no-session-persistence",
+      "--plugin-dir",
+      "--mcp-config"
+    ],
+    "authOrNetworkProbePerformed": false,
+    "permanentAuthPermissionsNetworkPoliciesChanged": false
+  },
+  "candidateAwaitingVerification": {
+    "label": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "localReportOnly": true,
+    "independentSOURCEVerdict": "UNCONFIRMED",
+    "remotePublication": "UNCONFIRMED",
+    "fallbackToMainOrC6Forbidden": true
+  },
+  "prepared": [
+    "Pinned public source and all checksums",
+    "Exact prompt bytes",
+    "Frozen criteria and route-stage evidence checklist",
+    "Local CLI version/help and runtime versions",
+    "Zero-call cost ledger",
+    "Sanitized unique evidence-only publication"
+  ],
+  "blockers": [
+    "Parent verified candidate with independent SOURCE evidence and remote immutable commit/tree",
+    "Parent common exact Claude model and effort, approved API auth procedure, preliminary inspection results",
+    "Qualified approved classification config/profile/runtime/route and retry/isolation/budget settings",
+    "Genuine Claude hook exact-call attestation and host-owned current request/session board observations",
+    "Genuine discovered installed/enabled/supported inventory",
+    "No actual source function/language in original input; application must remain deferred without inventing a target",
+    "External TEST-SPEC.seq7.ko.md original remains unavailable; parent must retain embedded-only provenance limitation"
+  ],
+  "stepsAfterResume": [
+    "Receive and verify parent candidate commit/tree and independent SOURCE/preflight artifacts; never silently use main or c6",
+    "Read applicable candidate AGENTS.md, installed Claude plugin SKILL.md/reference files and .agents/skills when uncatalogued",
+    "Prepare separate host scratch and approved transient auth/config; no login/setup-token/global config changes",
+    "Bind approved exact common model/effort and classification config/profile/runtime, capabilities, retry/timeout and USD 2 remaining ceiling; JEV remains disabled until individual allocation",
+    "Deliver originalPrompt.utf8.txt exact 148 bytes without oracle/title/skill hints or invented implementation target",
+    "Have real Claude Code host discover complete inventory; record candidate/plugin/inventory/taxonomy/request/config/profile bindings and actual installed/enabled/supported state",
+    "Capture raw provider recommendation independently; preserve raw omissions/errors even if AGENT later corrects them",
+    "Have Claude AGENT choose exact IDs based on request purpose and real applicability; require ponytail-only purpose result, no unnecessary workflow",
+    "Observe record_skill_selection with genuine exact-call Claude hook and current request/task evidence; hostReceipt caller field null, accepted selected only from verified host observation",
+    "Keep recommendation, selected, read, applied, verified evidence separate; Sol reading skills during prep counts for none",
+    "Have Claude actually load ponytail installed body/references and apply its standard-library minimal-code principle; missing source target may defer implementation, never classify as []",
+    "Do not modify AGS source/generated artifacts or invent a function; report missing target explicitly and leave unobserved stages NOT_RUN/BLOCKED",
+    "For authorized OFF/vendor fallback routes retain same purpose oracle; capture JEV dispatch zero on OFF; do not spend on unallocated ON/key/timeout route trials",
+    "Record all usage, costs, caches, retries/failures/unknown reservations immediately; stop before next call near ceiling",
+    "Sanitize supporting records, preserve null vs [], publish new immutable evidence run only, re-read remote commit files and SHA256SUMS; claim PASS only for directly observed same-candidate stages"
+  ],
+  "preparedBy": "Sol environment/evidence preparation; Claude performs future actual host task",
+  "productAndGeneratedFilesModified": false,
+  "existingFilesOverwritten": false,
+  "paidCallsStarted": false
+}
