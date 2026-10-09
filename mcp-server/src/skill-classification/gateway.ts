@@ -29,10 +29,10 @@ interface StoredOperation extends OperationIdentity {result: ClassificationResul
 interface PendingOperation extends OperationIdentity {result: Promise<ClassificationResult>}
 
 /** The loader owns these references. Canonical virtual bytes are fenced by the actual projection reference. */
-function sourceFence(root: string, request: SkillClassificationRequestV1): () => boolean {
+function sourceFence(root: string, request: SkillClassificationRequestV1, observedSources: ObservedHostInventory["sourceRefs"]): () => boolean {
   try {
     const references = new Map<string, string>();
-    for (const skill of request.skills) for (const source of skill.sourceRefs) {
+    for (const source of [...request.skills.flatMap(skill => skill.sourceRefs), ...observedSources]) {
       if (source.path.startsWith("canonical:")) continue;
       const prior = references.get(source.path);
       if (prior !== undefined && prior !== source.digest) return () => false;
@@ -97,7 +97,7 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
     const input = classificationInputSchema.parse(raw);
     const runtimeObservation = this.options.observeRuntime?.() ?? null;
     const runtime = structuredClone(await this.options.readRuntime());
-    const {inventory, discovery, observationDigest: hostDiscoveryDigest, expiresAt: hostExpiresAt} = await this.loadInventory(runtime);
+    const {inventory, discovery, observationDigest: hostDiscoveryDigest, expiresAt: hostExpiresAt, sourceRefs: hostSourceRefs} = await this.loadInventory(runtime);
     if (inventory.issues.length > 0) return {status: "NEEDS_INPUT", errors: inventory.issues, discovery, response: null, agentSelectedSkillIds: null};
     const request = createClassificationRequest({requestId: input.requestId, operationId: input.operationId, originalPrompt: input.originalPrompt,
       confirmedContext: input.confirmedContext, contextSources: input.contextSources, inventory, classificationCriteriaRef: "skills/orchestrator/references/skill-classification.md"});
@@ -121,7 +121,7 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
       || (reserved.task && (!task || task.cancelled || reserved.task.sourceRef !== task.sourceRef || reserved.task.taskRevision !== task.taskRevision || reserved.task.requestDigest !== task.requestDigest)))) throw new Error("STALE_CLASSIFICATION_OPERATION");
     if (!reserved && this.operations.size + this.pendingOperations.size >= (this.options.maximumOperations ?? 256)) throw new Error("OPERATION_CAPACITY_EXCEEDED");
     const snapshot: ClassificationSnapshot = {taskRevision: request.confirmedContext.taskRevision, requestDigest: request.requestDigest, inventoryDigest: request.inventoryDigest, configRevision: runtime.config.configRevision, profileRevision: runtime.registry.profileRevision, cancelled: task?.cancelled ?? false};
-    const sourcesCurrent = sourceFence(this.options.root, request);
+    const sourcesCurrent = sourceFence(this.options.root, request, hostSourceRefs);
     const invoke = () => this.options.service.classify({request, config: runtime.config, registry: runtime.registry, currentVendorId: input.vendorContext.vendorId,
       getCurrentSnapshot: () => {
         const current = this.options.observeTask?.(request, observation) ?? null;
@@ -191,6 +191,8 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
       const invalid = profile ? validateProviderProfile(profile, operation.result.request, (this.options.now?.() ?? new Date()).getTime()) : "PROFILE_UNAVAILABLE";
       if (invalid) return {valid: false, errors: [invalid], agentSelectedSkillIds: null};
     }
+    // The selection observation must still be live at this synchronous commit boundary.
+    if (!Number.isFinite(Date.parse(observation.expiresAt ?? "")) || Date.parse(observation.expiresAt!) <= (this.options.now?.() ?? new Date()).getTime()) throw new Error("HOST_SELECTION_OBSERVATION_EXPIRED");
     operation.decision ??= decision;
     return {...checked, decision: operation.decision, discovery, admissionStatus: "NOT_EVALUATED", readStatus: "NOT_OBSERVED", appliedStatus: "NOT_OBSERVED", verifiedStatus: "NOT_RUN"};
   }

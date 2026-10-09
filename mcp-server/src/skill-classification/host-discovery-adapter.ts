@@ -1,4 +1,5 @@
 import {readFile} from "node:fs/promises";
+import {createHash} from "node:crypto";
 import path from "node:path";
 import {z} from "zod";
 import {loadSkillInventory} from "./inventory.js";
@@ -25,6 +26,8 @@ export interface ObservedHostInventory {
   discovery: HostInventoryDiscovery;
   observationDigest: string | null;
   expiresAt: string | null;
+  /** Exact loader-read bytes, separate from semantic inventory and host-provided sourceRef. */
+  sourceRefs: {path: string; digest: string}[];
 }
 
 /** Approved installation/host-owned input only, never a classify_skills argument. */
@@ -36,6 +39,7 @@ export async function loadHostObservedInventory(options: {
   now?: () => Date;
 }): Promise<ObservedHostInventory> {
   let snapshot: HostSkillDiscoverySnapshot | null = null;
+  const sourceRefs: ObservedHostInventory["sourceRefs"] = [];
   try {
     let raw: unknown = null;
     if (options.observeHostSkills) raw = await options.observeHostSkills();
@@ -43,6 +47,7 @@ export async function loadHostObservedInventory(options: {
       const bytes = await readFile(options.hostDiscoveryRef);
       if (bytes.length > 1024 * 1024) throw new Error("HOST_DISCOVERY_TOO_LARGE");
       raw = JSON.parse(bytes.toString("utf8"));
+      sourceRefs.push({path: path.resolve(options.hostDiscoveryRef), digest: `sha256:${createHash("sha256").update(bytes).digest("hex")}`});
     }
     if (raw !== null) {
       const parsed = hostSnapshotSchema.parse(raw);
@@ -61,7 +66,7 @@ export async function loadHostObservedInventory(options: {
   if (!snapshot) {
     inventory.issues.push({skillId: null, code: "HOST_DISCOVERY_UNAVAILABLE", field: "hostDiscovery"});
     inventory.inventoryDigest = digestClassificationValue({sourceInventoryDigest: inventory.inventoryDigest, issues: inventory.issues});
-    return {inventory, discovery: {status: "UNAVAILABLE", scope: "local-tree", sourceRef: null, revision: null}, observationDigest: null, expiresAt: null};
+    return {inventory, discovery: {status: "UNAVAILABLE", scope: "local-tree", sourceRef: null, revision: null}, observationDigest: null, expiresAt: null, sourceRefs: []};
   }
   const observed = new Map(snapshot.skills.map(skill => [skill.skillId, skill]));
   // Membership remains in InventoryOptions. Host enablement intersects registry policy;
@@ -74,5 +79,5 @@ export async function loadHostObservedInventory(options: {
   }
   inventory.skills = skills;
   return {inventory, discovery: {status: inventory.issues.length ? "INCOMPLETE" : "COMPLETE", scope: "host", sourceRef: snapshot.sourceRef, revision: snapshot.revision},
-    observationDigest: digestClassificationValue({...snapshot, skills: [...snapshot.skills].sort((a, b) => a.skillId.localeCompare(b.skillId))}), expiresAt: snapshot.expiresAt};
+    observationDigest: digestClassificationValue({...snapshot, skills: [...snapshot.skills].sort((a, b) => a.skillId.localeCompare(b.skillId))}), expiresAt: snapshot.expiresAt, sourceRefs};
 }

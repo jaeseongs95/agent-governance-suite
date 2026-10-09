@@ -32824,11 +32824,12 @@ function compareText(left, right) {
 // mcp-server/src/skill-classification/gateway.ts
 import { readFile as readFile4 } from "node:fs/promises";
 import { readFileSync as readFileSync3, realpathSync as realpathSync2, statSync as statSync2 } from "node:fs";
-import { createHash as createHash8 } from "node:crypto";
+import { createHash as createHash9 } from "node:crypto";
 import path10 from "node:path";
 
 // mcp-server/src/skill-classification/host-discovery-adapter.ts
 import { readFile as readFile2 } from "node:fs/promises";
+import { createHash as createHash8 } from "node:crypto";
 import path9 from "node:path";
 
 // mcp-server/src/skill-classification/inventory.ts
@@ -33271,6 +33272,7 @@ var hostSnapshotSchema = external_exports.strictObject({
 });
 async function loadHostObservedInventory(options) {
   let snapshot = null;
+  const sourceRefs = [];
   try {
     let raw = null;
     if (options.observeHostSkills) raw = await options.observeHostSkills();
@@ -33278,6 +33280,7 @@ async function loadHostObservedInventory(options) {
       const bytes = await readFile2(options.hostDiscoveryRef);
       if (bytes.length > 1024 * 1024) throw new Error("HOST_DISCOVERY_TOO_LARGE");
       raw = JSON.parse(bytes.toString("utf8"));
+      sourceRefs.push({ path: path9.resolve(options.hostDiscoveryRef), digest: `sha256:${createHash8("sha256").update(bytes).digest("hex")}` });
     }
     if (raw !== null) {
       const parsed = hostSnapshotSchema.parse(raw);
@@ -33300,7 +33303,7 @@ async function loadHostObservedInventory(options) {
   if (!snapshot) {
     inventory.issues.push({ skillId: null, code: "HOST_DISCOVERY_UNAVAILABLE", field: "hostDiscovery" });
     inventory.inventoryDigest = digestClassificationValue({ sourceInventoryDigest: inventory.inventoryDigest, issues: inventory.issues });
-    return { inventory, discovery: { status: "UNAVAILABLE", scope: "local-tree", sourceRef: null, revision: null }, observationDigest: null, expiresAt: null };
+    return { inventory, discovery: { status: "UNAVAILABLE", scope: "local-tree", sourceRef: null, revision: null }, observationDigest: null, expiresAt: null, sourceRefs: [] };
   }
   const observed = new Map(snapshot.skills.map((skill) => [skill.skillId, skill]));
   const skills = inventory.skills.map((skill) => ({ ...skill, enabled: skill.enabled && (observed.get(skill.skillId)?.enabled ?? false) }));
@@ -33312,7 +33315,8 @@ async function loadHostObservedInventory(options) {
     inventory,
     discovery: { status: inventory.issues.length ? "INCOMPLETE" : "COMPLETE", scope: "host", sourceRef: snapshot.sourceRef, revision: snapshot.revision },
     observationDigest: digestClassificationValue({ ...snapshot, skills: [...snapshot.skills].sort((a, b2) => a.skillId.localeCompare(b2.skillId)) }),
-    expiresAt: snapshot.expiresAt
+    expiresAt: snapshot.expiresAt,
+    sourceRefs
   };
 }
 
@@ -33990,10 +33994,10 @@ var classificationInputSchema = external_exports.strictObject({
   publicSynthetic: external_exports.boolean()
 });
 var selectionInputSchema = external_exports.strictObject({ schemaVersion: external_exports.literal("1.0.0"), operationId: external_exports.string().min(1), decision: decisionSchema });
-function sourceFence(root, request) {
+function sourceFence(root, request, observedSources) {
   try {
     const references = /* @__PURE__ */ new Map();
-    for (const skill of request.skills) for (const source of skill.sourceRefs) {
+    for (const source of [...request.skills.flatMap((skill) => skill.sourceRefs), ...observedSources]) {
       if (source.path.startsWith("canonical:")) continue;
       const prior = references.get(source.path);
       if (prior !== void 0 && prior !== source.digest) return () => false;
@@ -34011,7 +34015,7 @@ function sourceFence(root, request) {
           if (realpathSync2(pin.file) !== pin.real) return false;
           const status = statSync2(pin.real);
           totalBytes += status.size;
-          return status.isFile() && totalBytes <= 8 * 1024 * 1024 && `sha256:${createHash8("sha256").update(readFileSync3(pin.real)).digest("hex")}` === pin.digest;
+          return status.isFile() && totalBytes <= 8 * 1024 * 1024 && `sha256:${createHash9("sha256").update(readFileSync3(pin.real)).digest("hex")}` === pin.digest;
         });
       } catch {
         return false;
@@ -34053,7 +34057,7 @@ var RuntimeSkillClassificationGateway = class {
     const input2 = classificationInputSchema.parse(raw);
     const runtimeObservation = this.options.observeRuntime?.() ?? null;
     const runtime = structuredClone(await this.options.readRuntime());
-    const { inventory, discovery, observationDigest: hostDiscoveryDigest, expiresAt: hostExpiresAt } = await this.loadInventory(runtime);
+    const { inventory, discovery, observationDigest: hostDiscoveryDigest, expiresAt: hostExpiresAt, sourceRefs: hostSourceRefs } = await this.loadInventory(runtime);
     if (inventory.issues.length > 0) return { status: "NEEDS_INPUT", errors: inventory.issues, discovery, response: null, agentSelectedSkillIds: null };
     const request = createClassificationRequest({
       requestId: input2.requestId,
@@ -34087,7 +34091,7 @@ var RuntimeSkillClassificationGateway = class {
     if (reserved && (reserved.runtimeDigest !== runtimeDigest || reserved.runtimeObservation !== runtimeObservation || reserved.hostDiscoveryDigest !== hostDiscoveryDigest || reserved.task && (!task || task.cancelled || reserved.task.sourceRef !== task.sourceRef || reserved.task.taskRevision !== task.taskRevision || reserved.task.requestDigest !== task.requestDigest))) throw new Error("STALE_CLASSIFICATION_OPERATION");
     if (!reserved && this.operations.size + this.pendingOperations.size >= (this.options.maximumOperations ?? 256)) throw new Error("OPERATION_CAPACITY_EXCEEDED");
     const snapshot = { taskRevision: request.confirmedContext.taskRevision, requestDigest: request.requestDigest, inventoryDigest: request.inventoryDigest, configRevision: runtime.config.configRevision, profileRevision: runtime.registry.profileRevision, cancelled: task?.cancelled ?? false };
-    const sourcesCurrent = sourceFence(this.options.root, request);
+    const sourcesCurrent = sourceFence(this.options.root, request, hostSourceRefs);
     const invoke = () => this.options.service.classify({
       request,
       config: runtime.config,
@@ -34192,6 +34196,7 @@ var RuntimeSkillClassificationGateway = class {
       const invalid2 = profile ? validateProviderProfile(profile, operation.result.request, (this.options.now?.() ?? /* @__PURE__ */ new Date()).getTime()) : "PROFILE_UNAVAILABLE";
       if (invalid2) return { valid: false, errors: [invalid2], agentSelectedSkillIds: null };
     }
+    if (!Number.isFinite(Date.parse(observation.expiresAt ?? "")) || Date.parse(observation.expiresAt) <= (this.options.now?.() ?? /* @__PURE__ */ new Date()).getTime()) throw new Error("HOST_SELECTION_OBSERVATION_EXPIRED");
     operation.decision ??= decision;
     return { ...checked, decision: operation.decision, discovery, admissionStatus: "NOT_EVALUATED", readStatus: "NOT_OBSERVED", appliedStatus: "NOT_OBSERVED", verifiedStatus: "NOT_RUN" };
   }
@@ -36898,13 +36903,13 @@ function validateDecisionRecordSemantics(record4) {
 }
 
 // skills/software-security-auditor/scripts/core.mjs
-import { createHash as createHash9 } from "node:crypto";
+import { createHash as createHash10 } from "node:crypto";
 function canonical(value) {
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
   if (value && typeof value === "object") return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(",")}}`;
   return JSON.stringify(value);
 }
-var digestBytes = (value) => `sha256:${createHash9("sha256").update(value).digest("hex")}`;
+var digestBytes = (value) => `sha256:${createHash10("sha256").update(value).digest("hex")}`;
 var digest3 = (value) => digestBytes(canonical(value));
 var targetDigest = (request) => digest3(request.target);
 function safeRelative(value) {
@@ -37151,7 +37156,7 @@ function assertReceiptPolicy(receipt, stage, result, outputFixedTokens) {
 }
 
 // mcp-server/src/stage-output-file.ts
-import { createHash as createHash10 } from "node:crypto";
+import { createHash as createHash11 } from "node:crypto";
 import { closeSync, fstatSync, openSync, readSync } from "node:fs";
 import path13 from "node:path";
 var MAX_STAGE_OUTPUT_FILE_BYTES = 16 * 1024 * 1024;
@@ -37189,7 +37194,7 @@ function readLocalStageOutputFile(locator) {
 function loadStageOutputFile(reference, read = readLocalStageOutputFile) {
   const bytes = read(reference.locator);
   if (bytes.length > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(reference.locator);
-  const digest5 = `sha256:${createHash10("sha256").update(bytes).digest("hex")}`;
+  const digest5 = `sha256:${createHash11("sha256").update(bytes).digest("hex")}`;
   if (digest5 !== reference.digest) {
     throw new WorkflowContractError("INTEGRITY_FAILED", "outputFile content does not match its digest.", {
       locator: reference.locator,
@@ -38848,7 +38853,7 @@ var WorkflowService = class {
 };
 
 // mcp-server/src/host-attestation.ts
-import { createHash as createHash11, createHmac as createHmac3, randomBytes as randomBytes3, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
+import { createHash as createHash12, createHmac as createHmac3, randomBytes as randomBytes3, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
 var HOST_ATTESTATION_FIELD = "_hostAttestation";
 var HOST_ATTESTATION_TOOLS = /* @__PURE__ */ new Set(["plan_workflow", "record_stage_result", "classify_skills", "record_skill_selection"]);
 var HOST_ATTESTATION_KEY = "host_attestation_key_v1";
@@ -38860,7 +38865,7 @@ function record3(value) {
 function nonEmpty(value) {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
-var hostIdentityDigest = (value) => createHash11("sha256").update(value, "utf8").digest("hex").slice(0, 24);
+var hostIdentityDigest = (value) => createHash12("sha256").update(value, "utf8").digest("hex").slice(0, 24);
 function hostActorId(host, sessionId, agentId = null) {
   return `${host}:session-${hostIdentityDigest(sessionId)}${agentId ? `:agent-${hostIdentityDigest(agentId)}` : ""}`;
 }
@@ -38930,7 +38935,7 @@ function issueHostAttestation(store, adapter, observation) {
     reasoningEffort: observation.reasoningEffort,
     actorId: observation.actorId,
     // Retrying the same host call cannot mint a second consumable observation.
-    observationId: createHash11("sha256").update(JSON.stringify(scope), "utf8").digest("base64url"),
+    observationId: createHash12("sha256").update(JSON.stringify(scope), "utf8").digest("base64url"),
     observedAt: now.toISOString(),
     expiresAt: new Date(now.getTime() + TOKEN_TTL_MS).toISOString()
   };
@@ -39058,7 +39063,7 @@ var codexExecutionAdapter = {
 };
 
 // mcp-server/src/state-cleanup-service.ts
-import { createHash as createHash12, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
+import { createHash as createHash13, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 import { chmodSync as chmodSync3, mkdirSync as mkdirSync4 } from "node:fs";
 import path16 from "node:path";
 var DAY_MS = 24 * 60 * 60 * 1e3;
@@ -39069,7 +39074,7 @@ var POLICY = {
   continuityRecordRetentionDays: 180
 };
 function digest4(value) {
-  return `sha256:${createHash12("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${createHash13("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function protection() {
   return process.platform === "win32" ? "os-managed-unverified" : "filesystem-mode-0600";
