@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS12",
+  "currency": "USD",
+  "softBudgetUsd": 2,
+  "scope": "All case API calls including preparation, failures, retries and cache usage",
+  "calls": [],
+  "totals": {
+    "claudeApiCalls": 0,
+    "jevApiCalls": 0,
+    "vendorApiCalls": 0,
+    "failedApiCalls": 0,
+    "retries": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "cacheCreationInputTokens": 0,
+    "knownCostUsd": 0,
+    "unknownCostCalls": 0
+  },
+  "reservationTotal39CasesUsd": 78,
+  "stopRule": "Record each attempt/model/usage/cache/retry/error/cost; stop before next call when approaching US$2. Unknown usage/cost or timeout remains unresolved; no blind retry. JEV remains unassigned and prohibited."
+}

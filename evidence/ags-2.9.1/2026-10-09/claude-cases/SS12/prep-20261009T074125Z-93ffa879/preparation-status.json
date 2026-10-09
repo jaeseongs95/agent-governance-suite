@@ -1,0 +1,23 @@
+{
+  "caseId": "SS12",
+  "title": "대상과 행동이 모호한 요청",
+  "runId": "prep-20261009T074125Z-93ffa879",
+  "observedAt": "2026-10-09T07:43:09.991095+00:00",
+  "status": "PREPARED_WAITING_PARENT",
+  "claudeHostTrial": "NOT_RUN",
+  "passClaim": false,
+  "paidCalls": 0,
+  "costUsd": 0,
+  "jevCalls": 0,
+  "sourceIntegrity": "All 28 SHA256SUMS entries and all manifest payload entries matched",
+  "candidateStatus": "Reported R17 commit/tree only; independent SOURCE verdict and remote publication not verified here",
+  "blockers": [
+    "Parent confirms independently verified and remotely fixed R17 commit/tree (or explicitly names replacement verified candidate)",
+    "Parent supplies common exact model/effort configuration and existing successful API authentication procedure",
+    "Parent supplies required preflight results and approved route/profile/runtime/accounting/host evidence configuration",
+    "Actual host evidence capture for NEEDS_INPUT/null is supported or an explicit limitation is retained",
+    "US$2 case soft budget available; JEV not invoked"
+  ],
+  "historicalSourceFileCount": 29,
+  "note": "A CLI version check is readiness evidence, not API authentication or host correctness evidence."
+}

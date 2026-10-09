@@ -1,0 +1,93 @@
+{
+  "caseId": "SS12",
+  "title": "대상과 행동이 모호한 요청",
+  "variant": "base",
+  "status": "PREPARED_WAITING_PARENT",
+  "liveTrial": "NOT_RUN",
+  "candidate": {
+    "label": "R17",
+    "reportedCommit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "reportedTree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "verifiedHere": false,
+    "sourceIndependentVerdict": "AWAITED",
+    "remotePublication": "AWAITED"
+  },
+  "input": {
+    "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+    "sourcePath": "evidence/ags-2.9.1/2026-10-09/cases/SS12/input/originalPrompt.utf8.txt",
+    "sha256": "5deb6397ac183e6bd2cf53dc2f98221b958183e84047bf793e5f028b12037ef8",
+    "originalPrompt": "그거 처리해 줘.",
+    "confirmedContext": {
+      "taskRevision": null,
+      "objective": null,
+      "actions": null,
+      "targets": null,
+      "constraints": null,
+      "prohibitedActions": null,
+      "background": null
+    },
+    "contextSources": [],
+    "variants": [
+      "base"
+    ],
+    "doNotSupply": "Any target, requested action, earlier reference, expected answer, historical outcome or evaluator result"
+  },
+  "expected": {
+    "selectionStatus": "NEEDS_INPUT",
+    "agentSelectedSkillIds": null,
+    "requiredReasons": [
+      "missing-action",
+      "missing-target"
+    ],
+    "behavior": "Clarify both missing action and missing target; do not invent confident implementation, deployment or security audit recommendation; uncertain must not become accepted no-skill []"
+  },
+  "steps": [
+    {
+      "id": "1",
+      "actor": "Sol",
+      "action": "Receive parent-verified candidate commit/tree, independent SOURCE verdict, remote fixed candidate proof, common exact Claude model/effort and successful API-only authentication procedure, preflight results and approved usage accounting. No calls until all received."
+    },
+    {
+      "id": "2",
+      "actor": "Sol",
+      "action": "Create separate immutable verified candidate checkout and run artifacts; verify commit/tree, clean source, manifest/generated plugin digests and applicable AGENTS.md/SKILL.md. Never substitute main or c6a8019. Record plugin version and actual loaded plugin/MCP surface."
+    },
+    {
+      "id": "3",
+      "actor": "Sol",
+      "action": "Prepare fresh Claude session/workspace without prior conversation or inferred target; expose only approved candidate plugin and scoped writable evidence paths, per parent approved procedure. Preserve persistent auth, network and permissions. Read exact original prompt bytes; do not provide oracle or historical answer to Claude."
+    },
+    {
+      "id": "4",
+      "actor": "Claude Code",
+      "action": "Process original prompt as the actual host; decide whether action and target are known, perform applicable candidate host workflow/MCP operations and issue real clarification. Sol must not select skills, replace Claude actions, synthesize host receipt or answer on Claude behalf."
+    },
+    {
+      "id": "5",
+      "actor": "Sol",
+      "action": "Capture real Claude process/session/tool observations and output in private run artifacts; bind prompt/candidate/config/model digests. Record actual selectionStatus and ID null/[] distinction, missing-input reasons, actual stage evidence and side effects. For clarification-only null use authentic transcript evidence; do not fabricate accepted-selection receipt or mark irrelevant applied stages complete."
+    },
+    {
+      "id": "6",
+      "actor": "Sol",
+      "action": "Record total cost, input/output/cache tokens, failures and retries from actual provider/CLI records. No JEV; stop additional calls near US$2 or on unresolved cost. Score frozen original oracle without modifying criteria; distinguish PASS/FAIL/BLOCKED/NOT_RUN and sanitized published evidence."
+    }
+  ],
+  "resumeConditions": [
+    "Parent confirms independently verified and remotely fixed R17 commit/tree (or explicitly names replacement verified candidate)",
+    "Parent supplies common exact model/effort configuration and existing successful API authentication procedure",
+    "Parent supplies required preflight results and approved route/profile/runtime/accounting/host evidence configuration",
+    "Actual host evidence capture for NEEDS_INPUT/null is supported or an explicit limitation is retained",
+    "US$2 case soft budget available; JEV not invoked"
+  ],
+  "historicalComparison": {
+    "candidate": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "controls": "19 PASS / 0 FAIL, 25 records; offline only",
+    "boundary": "0 PASS / 1 FAIL, valid PARTIAL/all-uncertain mapped NEEDS_INPUT/[] instead of null",
+    "initialHarness": "15 PASS / 4 FAIL due it.each harness errors; corrected later, not product failures",
+    "host": "NOTRUN, selected/read/applied/verified NOTRUN",
+    "calls": 0,
+    "originalVerdict": "INCOMPLETE_WITH_REPRODUCED_BOOTSTRAP_BOUNDARY",
+    "freshCandidateClaim": "No result inferred for R17; no product tests performed"
+  }
+}

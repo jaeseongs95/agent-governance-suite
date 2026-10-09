@@ -1,0 +1,22 @@
+{
+  "kind": "Preparation evidence publication checks; not product-test or independent SOURCE verdict",
+  "baselineManifestSha256": "e65787bb281adb6feec488de5825553fb7cc805ef8457e240b8e21a34143846e",
+  "baselineArtifactFileSha256": "8f8216885fe6b2e43871a7d05cbcf7a4527c6ddb2d75728f73c91526c5636bec",
+  "scopeVerdict": "PASS",
+  "scopeReportSha256": "7693587bfa87fa46cce919b1a19959c2fadddefb1e88af1cafc5f3a08b27dcb8",
+  "preflightVerdict": "READY",
+  "preflightReportSha256": "9ac07d91ca9aa7b31cd49aaab40de338c637ac6d14500aee041db625d776851b",
+  "parentEvidenceHead": "538bc84781d4b225fe54a02de37921a41d13e3f1",
+  "newRunPath": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS12/prep-20261009T074125Z-93ffa879",
+  "approvalBasis": "Explicit instruction to publish sanitized SS12 evidence on existing evidence branch",
+  "checks": [
+    "new paths only",
+    "no product code or generated deployment changes",
+    "no force push",
+    "no raw chat or private source artifacts",
+    "no credentials read or persisted"
+  ],
+  "recovery": "Additive revert restricted to new SS12 paths; public Git history remains persistent.",
+  "rebasedParentEvidenceHead": "136090eaf033fc889c32e9a546a99a6d026aca02",
+  "latestDiffCheck": "Exactly 10 A entries under this run path relative to rebased remote parent; no other changes"
+}

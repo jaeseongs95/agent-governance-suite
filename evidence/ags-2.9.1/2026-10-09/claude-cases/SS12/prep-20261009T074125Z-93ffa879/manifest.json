@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS12",
+  "runId": "prep-20261009T074125Z-93ffa879",
+  "kind": "CLAUDE_PREPARATION_ONLY",
+  "liveTrial": "NOT_RUN",
+  "files": [
+    {
+      "path": "REPORT.ko.md",
+      "bytes": 3502,
+      "sha256": "99fb028044d101638f75af1ea404447ae6a3cebc9e5792d3af481b1f36677afb"
+    },
+    {
+      "path": "cost-ledger.json",
+      "bytes": 752,
+      "sha256": "0b3470e6cd2a191361c6e35bc5eb93af6384ab2c128513a4acdb55a42d5edac5"
+    },
+    {
+      "path": "environment.json",
+      "bytes": 860,
+      "sha256": "299e83b0d0f33388f3085c9317257e1a99ebdc8515ce18b08798cdf9e89d64d6"
+    },
+    {
+      "path": "execution-plan.json",
+      "bytes": 4974,
+      "sha256": "548026e0af8930c2c4b1399eeee1b01929685d481785f7eeac4532dfbf0088a8"
+    },
+    {
+      "path": "instructions-read.json",
+      "bytes": 2263,
+      "sha256": "59402b9f2b48dda933afd8be86303304eadbeb4f53d46e441637537f676271d0"
+    },
+    {
+      "path": "preparation-status.json",
+      "bytes": 1231,
+      "sha256": "0e01da13e2b09f1d91544a9054164116a5ce75e2f398de8dee05ea976c825d58"
+    },
+    {
+      "path": "publication-checks.json",
+      "bytes": 1312,
+      "sha256": "dc2dc576249dcec2d8735c63260c43b5645f80485c669ba088a000a06766446a"
+    },
+    {
+      "path": "source-integrity.json",
+      "bytes": 20186,
+      "sha256": "5498ca374068493efb1d717f3027a124b105ad6cbadd5c09b2d6220776b1d04f"
+    }
+  ],
+  "hashCoverage": "Manifest excludes itself and SHA256SUMS; SHA256SUMS includes payloads and manifest, excludes itself"
+}

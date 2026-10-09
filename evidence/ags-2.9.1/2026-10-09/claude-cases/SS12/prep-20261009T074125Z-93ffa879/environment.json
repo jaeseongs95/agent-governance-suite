@@ -1,0 +1,22 @@
+{
+  "observedAt": "2026-10-09T07:43:09.991095+00:00",
+  "caseId": "SS12",
+  "cwd": "/workspace",
+  "cli": {
+    "requestedPath": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+    "resolvedPath": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+    "exists": true,
+    "version": "2.1.286 (Claude Code)",
+    "binarySHA256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+    "onPath": false,
+    "versionCheckOnly": true
+  },
+  "node": "v24.19.0",
+  "pnpm": "11.19.0",
+  "authentication": "No authentication attempt; common successful API-only procedure awaited",
+  "secretHandling": "No secret value lookup, output, copy, persistence or publication",
+  "persistentSettingsChanged": false,
+  "networkPolicyChanged": false,
+  "permissionsChanged": false,
+  "productSourcesChanged": false
+}
