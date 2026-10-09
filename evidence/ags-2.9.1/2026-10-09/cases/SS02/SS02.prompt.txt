@@ -1,0 +1,1 @@
+Simplify this function so it returns the largest integer using the standard library. No database work or code review.

@@ -1,0 +1,363 @@
+{
+  "schemaVersion": "SS02-development-result-1",
+  "caseId": "SS02",
+  "assignment": "Single isolated Cloud case; pinned product unchanged",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "branch": "codex/skill-classification-2.9.1",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS02",
+    "fields": {
+      "입력": "“Simplify this function so it returns the largest integer using the standard library. No database work or code review.”",
+      "필수추천": "R={P}.",
+      "금지추천 또는 행동": "CS, CR, SEC, O의 불필요한 추가.",
+      "허용선택": "A={}.",
+      "보류조건": "SS01과 동일하다.",
+      "통과기준": "SS01과 언어만 달라진 입력에서 필수 집합이 같다. 문장 유사도 점수를 확률로 출력하지 않는다.",
+      "증거": "E0, SS01과 같은 familyId, 언어별 결과.",
+      "실행종류": "live. SS01과 SS02를 calibration과 holdout에 나누어 넣지 않는다."
+    },
+    "bodyDigest": "sha256:2b09d8e453d723b01897351cfba4a3f5fdac2fae5505bf8d5d51dc8deea826c6"
+  },
+  "sourcePolicy": "TEST-SPEC.seq7.ko.md absent; use embedded SS02 fields only, plus embedded SS01 hold-condition explicitly inherited by SS02. E0 definition is not embedded and was not invented.",
+  "referencedHoldCondition": "실제 구현 대상이 없어 실행이 보류되어도, 요청 유형을 P로 분류할 수 있다. 대상 부족을 no-skill로 처리하지 않는다.",
+  "variantCount": 1,
+  "variants": [
+    {
+      "variantId": "base",
+      "input": "Simplify this function so it returns the largest integer using the standard library. No database work or code review.",
+      "expected": {
+        "required": [
+          "ponytail"
+        ],
+        "allowed": [],
+        "allowedConditions": {},
+        "forbidden": [
+          "cs-engineering",
+          "code-review",
+          "software-security-auditor",
+          "orchestrator"
+        ],
+        "notApplicable": [
+          "test-engineering",
+          "korean-prose-editor",
+          "change-scope-guardian"
+        ],
+        "unadjudicated": [
+          "acceptance-evidence-validator",
+          "blocker-diagnostician",
+          "codex-token-usage-analyzer",
+          "context-continuity",
+          "coordinate-subagents",
+          "evaluation-validity-auditor",
+          "independent-audit-gate",
+          "independent-deliberation-panel",
+          "instruction-scope-resolver",
+          "iteration-frame-auditor",
+          "model-effort-advisor",
+          "mutation-risk-preflight",
+          "recovery-strategy-selector",
+          "session-board",
+          "task-contract",
+          "workspace-convention-profiler"
+        ],
+        "expectedSelection": "SELECTED",
+        "explicitSkillIds": [],
+        "ruleRequiredSkillIds": [],
+        "requiredReasons": [],
+        "sourceRefs": [
+          {
+            "skillId": "ponytail",
+            "path": "skills/ponytail/SKILL.md",
+            "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+          },
+          {
+            "skillId": "cs-engineering",
+            "path": "skills/cs-engineering/SKILL.md",
+            "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+          },
+          {
+            "skillId": "code-review",
+            "path": "skills/code-review/SKILL.md",
+            "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+          },
+          {
+            "skillId": "software-security-auditor",
+            "path": "skills/software-security-auditor/SKILL.md",
+            "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+          },
+          {
+            "skillId": "orchestrator",
+            "path": "skills/orchestrator/SKILL.md",
+            "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+          },
+          {
+            "skillId": "test-engineering",
+            "path": "skills/test-engineering/SKILL.md",
+            "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+          },
+          {
+            "skillId": "korean-prose-editor",
+            "path": "skills/korean-prose-editor/SKILL.md",
+            "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+          },
+          {
+            "skillId": "change-scope-guardian",
+            "path": "skills/change-scope-guardian/SKILL.md",
+            "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+          }
+        ],
+        "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+      },
+      "frozenVariantCoverage": "COMPLETE_OFFLINE_SCOPE",
+      "offlineStatus": "FAIL",
+      "modelSemanticStatus": "NOTRUN",
+      "hostStatus": "NOTRUN",
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "actualObservation": {
+        "state": "NOT_RUN",
+        "skillIds": null,
+        "host": null,
+        "hostReceipt": null,
+        "stageEvidence": {
+          "read": false,
+          "applied": false,
+          "verified": false
+        }
+      },
+      "missingInputs": [
+        "Configured qualified classification profile/runtime and AGS MCP tools",
+        "Actual trusted host inventory membership/active-state discovery",
+        "Real host hook observation and task/session binding for AGENT acceptance",
+        "Original function/code target for implementation and candidate-bound verification"
+      ],
+      "checksRef": "SS02.checks.public.json"
+    }
+  ],
+  "executionKind": "offline-mock",
+  "commands": [
+    {
+      "cwd": "<PRODUCT_CHECKOUT>",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/SS02.independent.test.ts",
+        "--reporter=json",
+        "--outputFile=./.ss02-evidence/SS02.vitest.json"
+      ],
+      "exit": 1,
+      "executionKind": "offline-mock",
+      "stdoutStderr": "SS02.test.log",
+      "report": "SS02.vitest.json",
+      "counts": {
+        "total": 17,
+        "passed": 15,
+        "failed": 2
+      }
+    },
+    {
+      "cwd": "<PRODUCT_CHECKOUT>",
+      "argv": [
+        "node",
+        "skills/test-engineering/scripts/run.mjs",
+        "check-plan",
+        "--root",
+        "<PRODUCT_CHECKOUT>",
+        "--plan",
+        "tests/skill-classification/SS02.plan.json"
+      ],
+      "exit": 0,
+      "executionKind": "offline-static-contract-check",
+      "report": "SS02.plan-check.json",
+      "meaning": "READY is plan consistency only; not product, model, host or independent audit PASS"
+    },
+    {
+      "cwd": "<PRODUCT_CHECKOUT>",
+      "argv": [
+        "git",
+        "diff",
+        "--exit-code",
+        "HEAD",
+        "--",
+        "."
+      ],
+      "exit": 0,
+      "executionKind": "read-only-integrity",
+      "meaning": "Tracked product files unchanged"
+    },
+    {
+      "cwd": "<PRODUCT_CHECKOUT>",
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit": 0,
+      "executionKind": "read-only-integrity"
+    }
+  ],
+  "existingRegression": {
+    "status": "NOTRUN",
+    "directSS02Tests": 0,
+    "relatedExistingReference": "tests/skill-classification/evaluation.test.ts:154 family-leakage check includes SS01/SS02; not run because case scope is SS02 only",
+    "fullSuiteRun": false
+  },
+  "newBoundaryTests": {
+    "status": "FAIL",
+    "testFile": "SS02.independent.test.ts",
+    "tests": 17,
+    "passed": 15,
+    "failed": 2,
+    "sameFrozenPrompt": true,
+    "mockProviderCalls": 3,
+    "realProviderCalls": 0,
+    "positiveHostReceiptCreated": false,
+    "testGeneratedHostReceipts": 0,
+    "bootstrapRun": false,
+    "past21RunRepeated": false
+  },
+  "hostLive": {
+    "status": "NOTRUN",
+    "availableHostBinary": "<CODEX_EXECUTABLE> (presence only; never launched)",
+    "AGSClassificationToolsExposed": [],
+    "classificationConfigEnvironmentPresent": false,
+    "supportedProductPath": [
+      "mcp-server/src/index.ts:88 loads AGENT_GOVERNANCE_CLASSIFICATION_CONFIG",
+      "mcp-server/src/skill-classification/native-adapters.ts supports approved structured Codex/Claude CLI adapters",
+      "mcp-server/src/server.ts:584 get_skill_inventory -> classify_skills -> record_skill_selection",
+      "mcp-server/src/host-attestation.ts PreToolUse adapter or host-owned HostAttestationProvider.runObserved; caller JSON is not trusted"
+    ],
+    "requiredInputs": [
+      "Trusted AGS plugin/MCP installation exposing the three tools for this host",
+      "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG JSON: config(jevEnabled=false, mode, providerProfileRegistryRef, externalClassificationAllowed, configRevision, timeoutMs), allowRemotePrivateContent, approvedPublicRequestDigests when egress is used, providerRuntimeRef, nativeAdapterDefinitionsRef",
+      "Central fixed vendor profile: real vendor/model/effort, route/adapter revisions, qualified PASS bound to current inventory/taxonomy/model/prompt/configuration digest, unexpired validity and confirmed maximum cost/input/output ceilings",
+      "For Codex native route: approved executable/working directory, isolationArgs and isolationEvidenceRef, capabilityEvidenceRef, verified no-retry evidence, timeout/output ceilings; runtime native route and separate confirmed call allowance",
+      "Trusted full host inventory membership and active/support state; current gateway supply gap must be resolved or kept as limitation",
+      "Host hook attestation for each exact call, actor/session/lastPromptAt/task revision binding; AGENT supplies exact skill selection/reasons/applicability checks and hostReceipt=null",
+      "Actual function/code target and candidate evidence to apply/verify ponytail"
+    ],
+    "constraints": "No JEV, external vendor API or Claude invocation permitted in this phase. Binary presence, mocks and test JSON do not issue qualification or AGENT receipt."
+  },
+  "API0": true,
+  "apiCalls": {
+    "JEV": 0,
+    "externalVendorAPI": 0,
+    "Claude": 0,
+    "CodexCLI": 0,
+    "hostLive": 0
+  },
+  "networkNote": "Only public Git repository clone was used; no classification/LLM provider traffic. Git access is not counted as vendor API.",
+  "findings": [
+    {
+      "id": "SS02-existing-invalid-resp-cost-loss",
+      "status": "REPRODUCED",
+      "deduplicateWith": "Existing finding: valid cost discarded with invalid RESP",
+      "newRootCauseCount": 0,
+      "entryPoint": "SkillClassificationService.classify",
+      "evidenceCheckId": "known-cost-invalid-response",
+      "input": "SS02 exact prompt; all real inventory metadata; synthetic actualCostUsd=0.125; missing ponytail judgment",
+      "expected": "INVALID response retains valid actualCostUsd 0.125 and budget records spentUsd 0.125",
+      "observed": "INVALID_PROVIDER_RESPONSE, actualCostUsd=null, spentUsd=0, outstanding maximumUsd=0.4",
+      "source": [
+        "mcp-server/src/skill-classification/service.ts:194",
+        "mcp-server/src/skill-classification/service.ts:204",
+        "mcp-server/src/skill-classification/service.ts:210"
+      ],
+      "impact": "Known expenditure is underreported and changed to unknown; reservation remains conservative. No external overspend was tested."
+    },
+    {
+      "id": "SS02-existing-host-membership-supply-gap",
+      "status": "REPRODUCED_SUPPORT_BOUNDARY",
+      "deduplicateWith": "Existing finding: host active-state supply gap",
+      "newRootCauseCount": 0,
+      "entryPoint": "RuntimeSkillClassificationGateway.inventory and loadSkillInventory",
+      "evidenceCheckId": "host-membership-supply-gap",
+      "expected": "Gateway can propagate trusted installedSkillIds/hostSupportedSkillIds observations, including empty arrays",
+      "observed": "Direct inventory empty membership yields ponytail installed=false, hostSupported=false; gateway has no membership input and yields true/true from checkout defaults",
+      "source": [
+        "mcp-server/src/skill-classification/gateway.ts:49",
+        "mcp-server/src/skill-classification/gateway.ts:60",
+        "mcp-server/src/skill-classification/inventory.ts:218"
+      ],
+      "impact": "Gateway cannot express the tested known-empty host state. Actual current host installation/enabled/support state remains unknown; no fabricated host acceptance."
+    }
+  ],
+  "newRootCauses": 0,
+  "otherKnownFindings": {
+    "timeoutOverflow": "NOT_TESTED_IN_SS02_SCOPE",
+    "duplicateMetadataConditions": "NOT_TESTED_IN_SS02_SCOPE",
+    "preConcurrencyRecheckGap": "NOT_TESTED_IN_SS02_SCOPE"
+  },
+  "selected": "NOTRUN",
+  "read": "NOTRUN",
+  "applied": "NOTRUN",
+  "verified": "NOTRUN",
+  "stageNote": "Developer reading of SKILL.md/test sources is evidence review, not fulfillment stages of the original SS02 request. No actual AGENT host selection was accepted.",
+  "semanticAccuracy": null,
+  "languageParity": {
+    "status": "NOTRUN_LIVE",
+    "staticFamily": "integer-max",
+    "referenceReadOnly": "SS01/SS02 frozen family and R={P} match; both calibration. SS01 was not executed. No independent holdout claim.",
+    "similarityAsProbability": "No probability field introduced by local request/projection controls; actual model output requirement remains NOTRUN"
+  },
+  "planTiming": "Planning intent described before execution; structured engineering plan and check-plan produced after the single run. No pre-frozen formal proof or red/green completion claim.",
+  "remainingBlockers": [
+    "Live profile/runtime/route/host observation inputs absent",
+    "Code target absent for apply/verify",
+    "Two existing support defects reproduced; pinned source edits prohibited"
+  ],
+  "scopePreserved": {
+    "productEdits": false,
+    "push": false,
+    "PR": false,
+    "release": false,
+    "R14FilesEdited": false,
+    "otherCasesExecuted": false
+  },
+  "overall": "OFFLINE_FAIL_WITH_KNOWN_DEFECTS; ORIGINAL_HOST_LIVE_NOTRUN",
+  "evidenceFiles": [
+    "SS02.case.json",
+    "SS02.prompt.txt",
+    "SS02.request.public.json",
+    "SS02.checks.public.json",
+    "SS02.vitest.public.json",
+    "SS02.test.combined.public.log",
+    "SS02.independent.public.test.ts",
+    "SS02.plan.public.json",
+    "SS02.plan-check.json",
+    "SS02.plan-check.stderr",
+    "SS02.report.public.md",
+    "manifest.json",
+    "SHA256SUMS",
+    "README.md"
+  ],
+  "publication": {
+    "kind": "SANITIZED_DERIVATIVE_OF_EXISTING_RESULT",
+    "originalArtifact": "SS02.result.json",
+    "originalBytes": 1386737,
+    "originalSha256": "ba08ac57796f0c32ba84f03754880b391e177c003b89a2d3f58d3b50e72c5c27",
+    "scope": "evidence/ags-2.9.1/2026-10-09/cases/SS02/",
+    "newTests": 0,
+    "newModelApiCalls": 0,
+    "testExecutionLogExit": 1,
+    "patchStatus": "NO_EXISTING_PATCH",
+    "missingOriginals": [
+      "Separate stdout log: MISSING_ORIGINAL (existing combined stdout/stderr preserved)",
+      "Separate stderr log: MISSING_ORIGINAL (existing combined stdout/stderr preserved)"
+    ],
+    "omissions": [
+      "Redundant nested checks moved to SS02.checks.public.json",
+      "Personal local locator prefixes normalized; test expectations/observations/statuses/digests preserved",
+      "Original artifact manifest not copied as authoritative public manifest; original bytes/hash inventoried separately"
+    ],
+    "publicationStatus": "PREPARED (push and remote verification reported separately; this is not a test rerun)"
+  }
+}

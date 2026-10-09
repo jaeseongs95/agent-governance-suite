@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:c389b175ef70becba31adaba937ee302d16e262189e1fb40418cf98950de434b",
+  "caseIds": [
+    "SS02-binding",
+    "SS02-scoring",
+    "SS02-support",
+    "SS02-cost",
+    "SS02-host"
+  ]
+}

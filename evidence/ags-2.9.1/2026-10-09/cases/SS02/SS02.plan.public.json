@@ -1,0 +1,156 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS02-isolated-development-verification",
+  "contractDigest": "sha256:885c05ba90b310ccc4799f5c1882a75aaa51f5b1db4fff6c3be19fda12ff87ac",
+  "requirements": [
+    "SS02-frozen-source",
+    "SS02-semantic-oracle",
+    "SS02-agent-final",
+    "SS02-existing-cost-loss",
+    "SS02-existing-host-supply-gap"
+  ],
+  "scopeFiles": [
+    "tests/skill-classification/SS02.independent.test.ts",
+    "tests/skill-classification/fixtures.json",
+    "tests/skill-classification/evaluation.ts",
+    "mcp-server/src/skill-classification/request.ts",
+    "mcp-server/src/skill-classification/service.ts",
+    "mcp-server/src/skill-classification/gateway.ts",
+    "mcp-server/src/skill-classification/inventory.ts",
+    "mcp-server/src/skill-classification/providers.ts",
+    "mcp-server/src/skill-classification/validation.ts"
+  ],
+  "runner": "Existing Vitest 5 through scripts/run-tests.mjs; no product build",
+  "environment": "Dedicated Cloud <PRODUCT_CHECKOUT>, Linux x64 Node 24.19.0, pnpm 11.19.0; dependency symlink from identical frozen lockfile; no external provider or host invocation",
+  "cases": [
+    {
+      "id": "SS02-binding",
+      "requirementIds": [
+        "SS02-frozen-source"
+      ],
+      "scenario": "Frozen SS02 source references, embedded fields and source bindings",
+      "entryPoint": "oracleDigest/loadSkillInventory/projectClassificationRequest",
+      "level": "static",
+      "expectedBehavior": "Exact frozen digests; intact original English negation and full inventory; unknown context stays null",
+      "oracle": "Frozen SS02 embedded specification, exact oracle source refs and shared public support contract. Synthetic responses are test inputs, not classifications.",
+      "testFiles": [
+        "tests/skill-classification/SS02.independent.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Pinned product source must not be modified; red defects remain red. No green fix, mutation, host receipt or provider quality claim.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/SS02.independent.test.ts",
+        "--reporter=json",
+        "--outputFile=./.ss02-evidence/SS02.vitest.json"
+      ]
+    },
+    {
+      "id": "SS02-scoring",
+      "requirementIds": [
+        "SS02-semantic-oracle"
+      ],
+      "scenario": "Derived evaluator controls only; synthetic predictions do not assess model quality",
+      "entryPoint": "scoreCase/aggregate",
+      "level": "unit",
+      "expectedBehavior": "R only passes raw controls; forbidden or unnecessary roles fail; null differs from [] and missing target does not erase P",
+      "oracle": "Frozen SS02 embedded specification, exact oracle source refs and shared public support contract. Synthetic responses are test inputs, not classifications.",
+      "testFiles": [
+        "tests/skill-classification/SS02.independent.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Pinned product source must not be modified; red defects remain red. No green fix, mutation, host receipt or provider quality claim.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/SS02.independent.test.ts",
+        "--reporter=json",
+        "--outputFile=./.ss02-evidence/SS02.vitest.json"
+      ]
+    },
+    {
+      "id": "SS02-support",
+      "requirementIds": [
+        "SS02-agent-final"
+      ],
+      "scenario": "Synthetic provider advice and absent host observation",
+      "entryPoint": "SkillClassificationService.classify/RuntimeSkillClassificationGateway.classify/accept",
+      "level": "integration",
+      "expectedBehavior": "Advice never creates AGENT selection, no fabricated host receipts; selected/read/applied/verified stay NOTRUN",
+      "oracle": "Frozen SS02 embedded specification, exact oracle source refs and shared public support contract. Synthetic responses are test inputs, not classifications.",
+      "testFiles": [
+        "tests/skill-classification/SS02.independent.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Pinned product source must not be modified; red defects remain red. No green fix, mutation, host receipt or provider quality claim.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/SS02.independent.test.ts",
+        "--reporter=json",
+        "--outputFile=./.ss02-evidence/SS02.vitest.json"
+      ]
+    },
+    {
+      "id": "SS02-cost",
+      "requirementIds": [
+        "SS02-existing-cost-loss"
+      ],
+      "scenario": "SS02 valid usage plus response missing ponytail judgment",
+      "entryPoint": "SkillClassificationService.classify",
+      "level": "integration",
+      "expectedBehavior": "INVALID response keeps valid actual cost 0.125; ledger spent equals 0.125",
+      "oracle": "Frozen SS02 embedded specification, exact oracle source refs and shared public support contract. Synthetic responses are test inputs, not classifications.",
+      "testFiles": [
+        "tests/skill-classification/SS02.independent.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Pinned product source must not be modified; red defects remain red. No green fix, mutation, host receipt or provider quality claim.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/SS02.independent.test.ts",
+        "--reporter=json",
+        "--outputFile=./.ss02-evidence/SS02.vitest.json"
+      ]
+    },
+    {
+      "id": "SS02-host",
+      "requirementIds": [
+        "SS02-existing-host-supply-gap"
+      ],
+      "scenario": "SS02 ponytail with explicitly observed empty host membership",
+      "entryPoint": "RuntimeSkillClassificationGateway.inventory/loadSkillInventory",
+      "level": "integration",
+      "expectedBehavior": "Gateway must be able to supply host observations; known absent installation/support cannot become true",
+      "oracle": "Frozen SS02 embedded specification, exact oracle source refs and shared public support contract. Synthetic responses are test inputs, not classifications.",
+      "testFiles": [
+        "tests/skill-classification/SS02.independent.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Pinned product source must not be modified; red defects remain red. No green fix, mutation, host receipt or provider quality claim.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/SS02.independent.test.ts",
+        "--reporter=json",
+        "--outputFile=./.ss02-evidence/SS02.vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "Other cases and full suite",
+    "JEV/external vendor APIs and Claude invocations",
+    "Past 21-call runs and bootstrap corpus runs",
+    "Product source edits, push, PR, release",
+    "Live model accuracy, host acceptance and code application",
+    "Formal signed task-contract issuance; contractDigest is local SS02 evidence binding only"
+  ]
+}

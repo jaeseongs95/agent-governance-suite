@@ -1,0 +1,212 @@
+{
+  "schemaVersion": "SS02-publication-manifest-1",
+  "caseId": "SS02",
+  "publicationScope": "evidence/ags-2.9.1/2026-10-09/cases/SS02/",
+  "candidate": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "branch": "codex/skill-classification-2.9.1",
+    "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+  },
+  "input": {
+    "file": "SS02.prompt.txt",
+    "encoding": "UTF-8",
+    "trailingNewline": false,
+    "bytes": 117,
+    "sha256": "d1471f31cebd10f45bb7deed9d54178683dbb7fc1378d54d321acd7ff1c64374",
+    "source": "Existing SS02.case.json case.originalPrompt"
+  },
+  "originalArtifacts": [
+    {
+      "artifact": "SS02.case.json",
+      "bytes": 4471,
+      "sha256": "d97b9e323f8bbb9445bda0029d3f85543bf7b3d75c2e38f7111d4c3c08d3c3ee",
+      "recovery": "RECOVERED"
+    },
+    {
+      "artifact": "SS02.checks.json",
+      "bytes": 1240327,
+      "sha256": "70c82d690c7000b56178687dbc3dca2d5fe0e105bf3daf1bb5c47de332eb9259",
+      "recovery": "RECOVERED"
+    },
+    {
+      "artifact": "SS02.independent.test.ts",
+      "bytes": 16478,
+      "sha256": "85b3abc5bc4f71aed1a49075abc4e8aaf67cdc4ef4d67520a2854f7a0ad37278",
+      "recovery": "RECOVERED"
+    },
+    {
+      "artifact": "SS02.manifest.json",
+      "bytes": 1417,
+      "sha256": "76564f79b9d4f1188088a54dbe957e8cb54eb266e621b0b3d0699c27cb8d5eb3",
+      "recovery": "RECOVERED"
+    },
+    {
+      "artifact": "SS02.plan-check.json",
+      "bytes": 294,
+      "sha256": "0e523f79a56afe5e9dc8b66044c0ba6be6bb885986a9b35410955c1cc9de2597",
+      "recovery": "RECOVERED"
+    },
+    {
+      "artifact": "SS02.plan-check.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "recovery": "RECOVERED"
+    },
+    {
+      "artifact": "SS02.plan.json",
+      "bytes": 7275,
+      "sha256": "f59a545bb6e791928ae79b592bef3c2f6a2f99b4c6a92b0dec0b7d3cfa714939",
+      "recovery": "RECOVERED"
+    },
+    {
+      "artifact": "SS02.report.md",
+      "bytes": 3798,
+      "sha256": "118b752245d1c0602a170b4d2fc282a32f09d645343d5b905b5ebd2f845aa1fe",
+      "recovery": "RECOVERED"
+    },
+    {
+      "artifact": "SS02.request.json",
+      "bytes": 254832,
+      "sha256": "da8f07e4eda73e607cfa9dc0230442a1d2ab2669a77db6eb15ed4db9b1380e69",
+      "recovery": "RECOVERED"
+    },
+    {
+      "artifact": "SS02.result.json",
+      "bytes": 1386737,
+      "sha256": "ba08ac57796f0c32ba84f03754880b391e177c003b89a2d3f58d3b50e72c5c27",
+      "recovery": "RECOVERED"
+    },
+    {
+      "artifact": "SS02.test.log",
+      "bytes": 220,
+      "sha256": "1da0ef7d21b4f2afcb0f1bb3fcf56ef8a7c7b626948e17daad46164940d00db7",
+      "recovery": "RECOVERED"
+    },
+    {
+      "artifact": "SS02.vitest.json",
+      "bytes": 8632,
+      "sha256": "3992167a6df02297cf73b60ad33502e0b735fa516c7562379f3d03766eb05eb3",
+      "recovery": "RECOVERED"
+    }
+  ],
+  "publicFiles": [
+    {
+      "path": "README.md",
+      "bytes": 4506,
+      "sha256": "cc2e19de25ceb7e6379ffdab0c9190093294bb0ad06e581ff500a5f4a2f05911",
+      "originArtifact": null,
+      "transform": "Generated publication metadata, not a new test or observation"
+    },
+    {
+      "path": "SS02.case.json",
+      "bytes": 4471,
+      "sha256": "d97b9e323f8bbb9445bda0029d3f85543bf7b3d75c2e38f7111d4c3c08d3c3ee",
+      "originArtifact": "SS02.case.json",
+      "transform": "Byte-identical to original"
+    },
+    {
+      "path": "SS02.checks.public.json",
+      "bytes": 1240327,
+      "sha256": "70c82d690c7000b56178687dbc3dca2d5fe0e105bf3daf1bb5c47de332eb9259",
+      "originArtifact": "SS02.checks.json",
+      "transform": "Byte-identical to original"
+    },
+    {
+      "path": "SS02.independent.public.test.ts",
+      "bytes": 16462,
+      "sha256": "ef26d7adb39dd698673f59b6cb1525ea8e107753abb95654334157f073ee7bc9",
+      "originArtifact": "SS02.independent.test.ts",
+      "transform": "Same existing test source; hardcoded output directory becomes relative .ss02-evidence; no assertions or test input changed; NOT EXECUTED"
+    },
+    {
+      "path": "SS02.plan-check.json",
+      "bytes": 294,
+      "sha256": "0e523f79a56afe5e9dc8b66044c0ba6be6bb885986a9b35410955c1cc9de2597",
+      "originArtifact": "SS02.plan-check.json",
+      "transform": "Byte-identical to original"
+    },
+    {
+      "path": "SS02.plan-check.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "originArtifact": "SS02.plan-check.stderr",
+      "transform": "Byte-identical to original"
+    },
+    {
+      "path": "SS02.plan.public.json",
+      "bytes": 7233,
+      "sha256": "2883464282ab3376bba3efd6b1fe4570ff80055c2938b41aefac32ea4c6510e5",
+      "originArtifact": "SS02.plan.json",
+      "transform": "Personal locator prefixes normalized only"
+    },
+    {
+      "path": "SS02.prompt.txt",
+      "bytes": 117,
+      "sha256": "d1471f31cebd10f45bb7deed9d54178683dbb7fc1378d54d321acd7ff1c64374",
+      "originArtifact": "SS02.case.json",
+      "transform": "Exact originalPrompt UTF-8 bytes extracted without trailing newline"
+    },
+    {
+      "path": "SS02.report.public.md",
+      "bytes": 3786,
+      "sha256": "162fe675b78803c2f0404adea80882c79b49473b655bab21102f82b98cfbaf93",
+      "originArtifact": "SS02.report.md",
+      "transform": "Personal locator prefixes normalized only"
+    },
+    {
+      "path": "SS02.request.public.json",
+      "bytes": 254832,
+      "sha256": "da8f07e4eda73e607cfa9dc0230442a1d2ab2669a77db6eb15ed4db9b1380e69",
+      "originArtifact": "SS02.request.json",
+      "transform": "Byte-identical to original"
+    },
+    {
+      "path": "SS02.result.public.json",
+      "bytes": 15751,
+      "sha256": "5a0d496ba6187865ed6f884a4fc19ee2457abdee14a8501b0a1a7a960ab5fa9e",
+      "originArtifact": "SS02.result.json",
+      "transform": "Local paths normalized, redundant checks referenced separately, publication provenance appended; all original test/host/API states retained"
+    },
+    {
+      "path": "SS02.test.combined.public.log",
+      "bytes": 149,
+      "sha256": "55fd149d7be8fc5d6191bb3383a73c3b77ba9b795a53c28d8b4d2decb033f49a",
+      "originArtifact": "SS02.test.log",
+      "transform": "Combined original stdout/stderr only; local output locator normalized and irrelevant process IDs removed; exit 1/cancelled/remainingChildren retained"
+    },
+    {
+      "path": "SS02.vitest.public.json",
+      "bytes": 8374,
+      "sha256": "b7441827412ac06266d1ee87b9eda6921090eee2cdb815450120e2872a6cb001",
+      "originArtifact": "SS02.vitest.json",
+      "transform": "Personal locator prefixes normalized only"
+    }
+  ],
+  "originalRun": {
+    "tests": 17,
+    "pass": 15,
+    "fail": 2,
+    "exit": 1,
+    "executionKind": "offline-mock",
+    "actualHostStages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "API0": true
+  },
+  "publication": {
+    "newTests": 0,
+    "newModelOrHostCalls": 0,
+    "existingPatch": "NO_EXISTING_PATCH",
+    "missingOriginals": [
+      "Separate stdout: MISSING_ORIGINAL",
+      "Separate stderr: MISSING_ORIGINAL"
+    ],
+    "selfHashPolicy": "Manifest excludes itself and SHA256SUMS; SHA256SUMS includes manifest and payload, excludes itself. Remote verifier reports their final bytes/hash.",
+    "privatePathPolicy": "Personal locator prefixes normalized; original bytes/digests retained in metadata. Synthetic identifiers and fixed candidate digests are unchanged."
+  }
+}

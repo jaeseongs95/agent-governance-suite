@@ -1,0 +1,2 @@
+JSON report written to ./.ss02-evidence/SS02.vitest.json
+{"harness":"test-subreaper","remainingChildren":false,"runnerExitCode":1,"cancelled":false}
