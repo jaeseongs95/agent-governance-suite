@@ -1,0 +1,1677 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS21",
+  "overallStatus": "FAIL",
+  "operationalContractStatus": "FAIL_KNOWN_DEFECT",
+  "hostLiveStatus": "NOTRUN",
+  "semanticAccuracy": null,
+  "oracle": null,
+  "originalPrompt": null,
+  "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+  "branch": "codex/skill-classification-2.9.1",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "exists": false,
+    "used": "embedded SS21 sourceSpec.fields only",
+    "evidence": "SS21.source.json"
+  },
+  "workspace": "<PINNED_REPO>",
+  "environment": {
+    "node": "v24.19.0",
+    "pnpm": "11.19.0",
+    "vitest": "5.0.0",
+    "timezone": "Etc/UTC"
+  },
+  "executionKinds": {
+    "existingRegression": {
+      "status": "PASS_TARGETED_ONLY",
+      "passed": 8,
+      "skipped": 65,
+      "failed": 0,
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/skill-classification-request.test.ts",
+        "tests/mcp/skill-classification-providers.test.ts",
+        "tests/mcp/skill-classification-runtime.test.ts",
+        "tests/mcp/skill-classification-service.test.ts",
+        "--testNamePattern",
+        "retains exact bytes, negations, quotations and unknown context|preserves confirmed empty values and separate prohibited actions with provenance|rejects non-JSON inputs and tampered prompt/context bindings|rejects unknown request/input fields even when their digest is recomputed|keeps the last prohibition, every candidate, applicability, dependencies and phase gates|SS20/21 transmits one bound TypeSafe|SS21 resolves only the configured credential|SS21 ON uses JEV alone",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=logs/regression.vitest.json"
+      ],
+      "exitCode": 0,
+      "evidence": "logs/regression.vitest.json"
+    },
+    "newIsolatedMock": {
+      "status": "FAIL",
+      "passed": 12,
+      "failed": 1,
+      "baseVariantsPassed": 10,
+      "additionalBoundaryTestsPassed": 2,
+      "additionalBoundaryTestsFailed": 1,
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/ss21-isolated/SS21.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=logs/isolated.vitest.json"
+      ],
+      "exitCode": 1,
+      "evidence": "logs/isolated.vitest.json"
+    },
+    "actualProviderLive": {
+      "status": "NOTRUN",
+      "command": null,
+      "exitCode": null
+    },
+    "actualHost": {
+      "status": "NOTRUN",
+      "command": null,
+      "exitCode": null
+    },
+    "past21Reruns": 0,
+    "otherOriginalCasesExecuted": [],
+    "fullSuite": "NOTRUN",
+    "bootstrap": "NOTRUN"
+  },
+  "API0": true,
+  "apiCalls": {
+    "JEV": 0,
+    "externalVendor": 0,
+    "Claude": 0,
+    "nativeModelCLI": 0,
+    "frontPackagingLLM": 0
+  },
+  "variants": [
+    {
+      "variantId": "multi-needed",
+      "status": "PASS_MOCK",
+      "baseMockStatus": "PASS",
+      "executionKind": "new-isolated-offline-mock",
+      "input": {
+        "originalPrompt": null,
+        "oracle": null,
+        "syntheticInputRef": "SS21.observations.json.gz#/0/input",
+        "requestId": "SS21-multi-needed",
+        "operationId": "SS21-operation-multi-needed",
+        "inventoryCount": 24,
+        "requestDigest": "sha256:7e5f7c111ee47add0782e578d69ea20705ce62d1ace17daaca0a4efea4d116c0",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82"
+      },
+      "expected": {
+        "labels": [
+          {
+            "id": "acceptance-evidence-validator",
+            "label": "needed"
+          },
+          {
+            "id": "blocker-diagnostician",
+            "label": "needed"
+          },
+          {
+            "id": "change-scope-guardian",
+            "label": "not-needed"
+          },
+          {
+            "id": "code-review",
+            "label": "not-needed"
+          },
+          {
+            "id": "codex-token-usage-analyzer",
+            "label": "not-needed"
+          },
+          {
+            "id": "context-continuity",
+            "label": "not-needed"
+          },
+          {
+            "id": "coordinate-subagents",
+            "label": "not-needed"
+          },
+          {
+            "id": "cs-engineering",
+            "label": "not-needed"
+          },
+          {
+            "id": "evaluation-validity-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "independent-audit-gate",
+            "label": "not-needed"
+          },
+          {
+            "id": "independent-deliberation-panel",
+            "label": "not-needed"
+          },
+          {
+            "id": "instruction-scope-resolver",
+            "label": "not-needed"
+          },
+          {
+            "id": "iteration-frame-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "korean-prose-editor",
+            "label": "not-needed"
+          },
+          {
+            "id": "model-effort-advisor",
+            "label": "not-needed"
+          },
+          {
+            "id": "mutation-risk-preflight",
+            "label": "not-needed"
+          },
+          {
+            "id": "orchestrator",
+            "label": "not-needed"
+          },
+          {
+            "id": "ponytail",
+            "label": "not-needed"
+          },
+          {
+            "id": "recovery-strategy-selector",
+            "label": "not-needed"
+          },
+          {
+            "id": "session-board",
+            "label": "not-needed"
+          },
+          {
+            "id": "software-security-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "task-contract",
+            "label": "not-needed"
+          },
+          {
+            "id": "test-engineering",
+            "label": "not-needed"
+          },
+          {
+            "id": "workspace-convention-profiler",
+            "label": "not-needed"
+          }
+        ],
+        "status": "SUCCESS"
+      },
+      "observed": {
+        "jevStatus": "SUCCESS",
+        "vendorStatus": "SUCCESS",
+        "sameSemanticConsumerView": true,
+        "jevJudgmentsCount": 24,
+        "vendorJudgmentsCount": 24,
+        "confirmedActions": [],
+        "unknownTargets": null,
+        "realProviderUsage": null,
+        "mockInputTokens": 321,
+        "packagingMs": 29.831830999999966,
+        "digestAndCountsPreserved": true
+      },
+      "extraBoundaryStatus": null,
+      "semanticQuality": "NOTRUN",
+      "quotedDataInterpretation": null,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null,
+      "API0": true,
+      "commandRef": "logs/isolated.command.json",
+      "exitCode": 1,
+      "evidence": "SS21.observations.json.gz"
+    },
+    {
+      "variantId": "no-skill",
+      "status": "PASS_MOCK",
+      "baseMockStatus": "PASS",
+      "executionKind": "new-isolated-offline-mock",
+      "input": {
+        "originalPrompt": null,
+        "oracle": null,
+        "syntheticInputRef": "SS21.observations.json.gz#/1/input",
+        "requestId": "SS21-no-skill",
+        "operationId": "SS21-operation-no-skill",
+        "inventoryCount": 24,
+        "requestDigest": "sha256:2e61529e57b7dd061e1376cf7c94d91126ff006cfe3819872af1295f78f2ce40",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82"
+      },
+      "expected": {
+        "labels": [
+          {
+            "id": "acceptance-evidence-validator",
+            "label": "not-needed"
+          },
+          {
+            "id": "blocker-diagnostician",
+            "label": "not-needed"
+          },
+          {
+            "id": "change-scope-guardian",
+            "label": "not-needed"
+          },
+          {
+            "id": "code-review",
+            "label": "not-needed"
+          },
+          {
+            "id": "codex-token-usage-analyzer",
+            "label": "not-needed"
+          },
+          {
+            "id": "context-continuity",
+            "label": "not-needed"
+          },
+          {
+            "id": "coordinate-subagents",
+            "label": "not-needed"
+          },
+          {
+            "id": "cs-engineering",
+            "label": "not-needed"
+          },
+          {
+            "id": "evaluation-validity-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "independent-audit-gate",
+            "label": "not-needed"
+          },
+          {
+            "id": "independent-deliberation-panel",
+            "label": "not-needed"
+          },
+          {
+            "id": "instruction-scope-resolver",
+            "label": "not-needed"
+          },
+          {
+            "id": "iteration-frame-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "korean-prose-editor",
+            "label": "not-needed"
+          },
+          {
+            "id": "model-effort-advisor",
+            "label": "not-needed"
+          },
+          {
+            "id": "mutation-risk-preflight",
+            "label": "not-needed"
+          },
+          {
+            "id": "orchestrator",
+            "label": "not-needed"
+          },
+          {
+            "id": "ponytail",
+            "label": "not-needed"
+          },
+          {
+            "id": "recovery-strategy-selector",
+            "label": "not-needed"
+          },
+          {
+            "id": "session-board",
+            "label": "not-needed"
+          },
+          {
+            "id": "software-security-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "task-contract",
+            "label": "not-needed"
+          },
+          {
+            "id": "test-engineering",
+            "label": "not-needed"
+          },
+          {
+            "id": "workspace-convention-profiler",
+            "label": "not-needed"
+          }
+        ],
+        "status": "SUCCESS"
+      },
+      "observed": {
+        "jevStatus": "SUCCESS",
+        "vendorStatus": "SUCCESS",
+        "sameSemanticConsumerView": true,
+        "jevJudgmentsCount": 24,
+        "vendorJudgmentsCount": 24,
+        "confirmedActions": [],
+        "unknownTargets": null,
+        "realProviderUsage": null,
+        "mockInputTokens": 321,
+        "packagingMs": 13.571936999999934,
+        "digestAndCountsPreserved": true
+      },
+      "extraBoundaryStatus": null,
+      "semanticQuality": "NOTRUN",
+      "quotedDataInterpretation": null,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null,
+      "API0": true,
+      "commandRef": "logs/isolated.command.json",
+      "exitCode": 1,
+      "evidence": "SS21.observations.json.gz"
+    },
+    {
+      "variantId": "uncertain",
+      "status": "PASS_MOCK",
+      "baseMockStatus": "PASS",
+      "executionKind": "new-isolated-offline-mock",
+      "input": {
+        "originalPrompt": null,
+        "oracle": null,
+        "syntheticInputRef": "SS21.observations.json.gz#/2/input",
+        "requestId": "SS21-uncertain",
+        "operationId": "SS21-operation-uncertain",
+        "inventoryCount": 24,
+        "requestDigest": "sha256:febaadafd46ffbb91e53fc14ca45ac9858d7836d91d46172dec190449703f544",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82"
+      },
+      "expected": {
+        "labels": [
+          {
+            "id": "acceptance-evidence-validator",
+            "label": "uncertain"
+          },
+          {
+            "id": "blocker-diagnostician",
+            "label": "uncertain"
+          },
+          {
+            "id": "change-scope-guardian",
+            "label": "uncertain"
+          },
+          {
+            "id": "code-review",
+            "label": "uncertain"
+          },
+          {
+            "id": "codex-token-usage-analyzer",
+            "label": "uncertain"
+          },
+          {
+            "id": "context-continuity",
+            "label": "uncertain"
+          },
+          {
+            "id": "coordinate-subagents",
+            "label": "uncertain"
+          },
+          {
+            "id": "cs-engineering",
+            "label": "uncertain"
+          },
+          {
+            "id": "evaluation-validity-auditor",
+            "label": "uncertain"
+          },
+          {
+            "id": "independent-audit-gate",
+            "label": "uncertain"
+          },
+          {
+            "id": "independent-deliberation-panel",
+            "label": "uncertain"
+          },
+          {
+            "id": "instruction-scope-resolver",
+            "label": "uncertain"
+          },
+          {
+            "id": "iteration-frame-auditor",
+            "label": "uncertain"
+          },
+          {
+            "id": "korean-prose-editor",
+            "label": "uncertain"
+          },
+          {
+            "id": "model-effort-advisor",
+            "label": "uncertain"
+          },
+          {
+            "id": "mutation-risk-preflight",
+            "label": "uncertain"
+          },
+          {
+            "id": "orchestrator",
+            "label": "uncertain"
+          },
+          {
+            "id": "ponytail",
+            "label": "uncertain"
+          },
+          {
+            "id": "recovery-strategy-selector",
+            "label": "uncertain"
+          },
+          {
+            "id": "session-board",
+            "label": "uncertain"
+          },
+          {
+            "id": "software-security-auditor",
+            "label": "uncertain"
+          },
+          {
+            "id": "task-contract",
+            "label": "uncertain"
+          },
+          {
+            "id": "test-engineering",
+            "label": "uncertain"
+          },
+          {
+            "id": "workspace-convention-profiler",
+            "label": "uncertain"
+          }
+        ],
+        "status": "UNCERTAIN"
+      },
+      "observed": {
+        "jevStatus": "UNCERTAIN",
+        "vendorStatus": "UNCERTAIN",
+        "sameSemanticConsumerView": true,
+        "jevJudgmentsCount": 24,
+        "vendorJudgmentsCount": 24,
+        "confirmedActions": [],
+        "unknownTargets": null,
+        "realProviderUsage": null,
+        "mockInputTokens": 321,
+        "packagingMs": 10.343108999999913,
+        "digestAndCountsPreserved": true
+      },
+      "extraBoundaryStatus": null,
+      "semanticQuality": "NOTRUN",
+      "quotedDataInterpretation": null,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null,
+      "API0": true,
+      "commandRef": "logs/isolated.command.json",
+      "exitCode": 1,
+      "evidence": "SS21.observations.json.gz"
+    },
+    {
+      "variantId": "invalid",
+      "status": "FAIL",
+      "baseMockStatus": "PASS",
+      "executionKind": "new-isolated-offline-mock",
+      "input": {
+        "originalPrompt": null,
+        "oracle": null,
+        "syntheticInputRef": "SS21.observations.json.gz#/3/input",
+        "requestId": "SS21-invalid",
+        "operationId": "SS21-operation-invalid",
+        "inventoryCount": 24,
+        "requestDigest": "sha256:d640d6224f34c1d337d419792c91d292cce56ea54794ddb4e295bd394e6faa86",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82"
+      },
+      "expected": {
+        "labels": [
+          {
+            "id": "acceptance-evidence-validator",
+            "label": "needed"
+          },
+          {
+            "id": "blocker-diagnostician",
+            "label": "needed"
+          },
+          {
+            "id": "change-scope-guardian",
+            "label": "not-needed"
+          },
+          {
+            "id": "code-review",
+            "label": "not-needed"
+          },
+          {
+            "id": "codex-token-usage-analyzer",
+            "label": "not-needed"
+          },
+          {
+            "id": "context-continuity",
+            "label": "not-needed"
+          },
+          {
+            "id": "coordinate-subagents",
+            "label": "not-needed"
+          },
+          {
+            "id": "cs-engineering",
+            "label": "not-needed"
+          },
+          {
+            "id": "evaluation-validity-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "independent-audit-gate",
+            "label": "not-needed"
+          },
+          {
+            "id": "independent-deliberation-panel",
+            "label": "not-needed"
+          },
+          {
+            "id": "instruction-scope-resolver",
+            "label": "not-needed"
+          },
+          {
+            "id": "iteration-frame-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "korean-prose-editor",
+            "label": "not-needed"
+          },
+          {
+            "id": "model-effort-advisor",
+            "label": "not-needed"
+          },
+          {
+            "id": "mutation-risk-preflight",
+            "label": "not-needed"
+          },
+          {
+            "id": "orchestrator",
+            "label": "not-needed"
+          },
+          {
+            "id": "ponytail",
+            "label": "not-needed"
+          },
+          {
+            "id": "recovery-strategy-selector",
+            "label": "not-needed"
+          },
+          {
+            "id": "session-board",
+            "label": "not-needed"
+          },
+          {
+            "id": "software-security-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "task-contract",
+            "label": "not-needed"
+          },
+          {
+            "id": "test-engineering",
+            "label": "not-needed"
+          },
+          {
+            "id": "workspace-convention-profiler",
+            "label": "not-needed"
+          }
+        ],
+        "status": "INVALID"
+      },
+      "observed": {
+        "jevStatus": "INVALID",
+        "vendorStatus": "INVALID",
+        "sameSemanticConsumerView": true,
+        "jevJudgmentsCount": 0,
+        "vendorJudgmentsCount": 0,
+        "confirmedActions": [],
+        "unknownTargets": null,
+        "realProviderUsage": null,
+        "mockInputTokens": 321,
+        "packagingMs": 11.220227000000023,
+        "digestAndCountsPreserved": true
+      },
+      "extraBoundaryStatus": "FAIL_KNOWN_VALID_COST_LOSS",
+      "semanticQuality": "NOTRUN",
+      "quotedDataInterpretation": null,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null,
+      "API0": true,
+      "commandRef": "logs/isolated.command.json",
+      "exitCode": 1,
+      "evidence": "SS21.observations.json.gz"
+    },
+    {
+      "variantId": "unavailable",
+      "status": "PASS_MOCK",
+      "baseMockStatus": "PASS",
+      "executionKind": "new-isolated-offline-mock",
+      "input": {
+        "originalPrompt": null,
+        "oracle": null,
+        "syntheticInputRef": "SS21.observations.json.gz#/4/input",
+        "requestId": "SS21-unavailable",
+        "operationId": "SS21-operation-unavailable",
+        "inventoryCount": 24,
+        "requestDigest": "sha256:7cc37abe058e70c92349af3ac41e72628be876f17e62aeddd1d2f33b0a9456a7",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82"
+      },
+      "expected": {
+        "labels": [
+          {
+            "id": "acceptance-evidence-validator",
+            "label": "needed"
+          },
+          {
+            "id": "blocker-diagnostician",
+            "label": "needed"
+          },
+          {
+            "id": "change-scope-guardian",
+            "label": "not-needed"
+          },
+          {
+            "id": "code-review",
+            "label": "not-needed"
+          },
+          {
+            "id": "codex-token-usage-analyzer",
+            "label": "not-needed"
+          },
+          {
+            "id": "context-continuity",
+            "label": "not-needed"
+          },
+          {
+            "id": "coordinate-subagents",
+            "label": "not-needed"
+          },
+          {
+            "id": "cs-engineering",
+            "label": "not-needed"
+          },
+          {
+            "id": "evaluation-validity-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "independent-audit-gate",
+            "label": "not-needed"
+          },
+          {
+            "id": "independent-deliberation-panel",
+            "label": "not-needed"
+          },
+          {
+            "id": "instruction-scope-resolver",
+            "label": "not-needed"
+          },
+          {
+            "id": "iteration-frame-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "korean-prose-editor",
+            "label": "not-needed"
+          },
+          {
+            "id": "model-effort-advisor",
+            "label": "not-needed"
+          },
+          {
+            "id": "mutation-risk-preflight",
+            "label": "not-needed"
+          },
+          {
+            "id": "orchestrator",
+            "label": "not-needed"
+          },
+          {
+            "id": "ponytail",
+            "label": "not-needed"
+          },
+          {
+            "id": "recovery-strategy-selector",
+            "label": "not-needed"
+          },
+          {
+            "id": "session-board",
+            "label": "not-needed"
+          },
+          {
+            "id": "software-security-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "task-contract",
+            "label": "not-needed"
+          },
+          {
+            "id": "test-engineering",
+            "label": "not-needed"
+          },
+          {
+            "id": "workspace-convention-profiler",
+            "label": "not-needed"
+          }
+        ],
+        "status": "UNAVAILABLE"
+      },
+      "observed": {
+        "jevStatus": "UNAVAILABLE",
+        "vendorStatus": "UNAVAILABLE",
+        "sameSemanticConsumerView": true,
+        "jevJudgmentsCount": 0,
+        "vendorJudgmentsCount": 0,
+        "confirmedActions": [],
+        "unknownTargets": null,
+        "realProviderUsage": null,
+        "mockInputTokens": 321,
+        "packagingMs": 9.44376699999998,
+        "digestAndCountsPreserved": true
+      },
+      "extraBoundaryStatus": null,
+      "semanticQuality": "NOTRUN",
+      "quotedDataInterpretation": null,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null,
+      "API0": true,
+      "commandRef": "logs/isolated.command.json",
+      "exitCode": 1,
+      "evidence": "SS21.observations.json.gz"
+    },
+    {
+      "variantId": "scores-present",
+      "status": "PASS_MOCK",
+      "baseMockStatus": "PASS",
+      "executionKind": "new-isolated-offline-mock",
+      "input": {
+        "originalPrompt": null,
+        "oracle": null,
+        "syntheticInputRef": "SS21.observations.json.gz#/5/input",
+        "requestId": "SS21-scores-present",
+        "operationId": "SS21-operation-scores-present",
+        "inventoryCount": 24,
+        "requestDigest": "sha256:b2c9797a6cc7b1487b034ea7246720a0e11e007cbe308e212c33944586dacba5",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82"
+      },
+      "expected": {
+        "labels": [
+          {
+            "id": "acceptance-evidence-validator",
+            "label": "needed"
+          },
+          {
+            "id": "blocker-diagnostician",
+            "label": "needed"
+          },
+          {
+            "id": "change-scope-guardian",
+            "label": "not-needed"
+          },
+          {
+            "id": "code-review",
+            "label": "not-needed"
+          },
+          {
+            "id": "codex-token-usage-analyzer",
+            "label": "not-needed"
+          },
+          {
+            "id": "context-continuity",
+            "label": "not-needed"
+          },
+          {
+            "id": "coordinate-subagents",
+            "label": "not-needed"
+          },
+          {
+            "id": "cs-engineering",
+            "label": "not-needed"
+          },
+          {
+            "id": "evaluation-validity-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "independent-audit-gate",
+            "label": "not-needed"
+          },
+          {
+            "id": "independent-deliberation-panel",
+            "label": "not-needed"
+          },
+          {
+            "id": "instruction-scope-resolver",
+            "label": "not-needed"
+          },
+          {
+            "id": "iteration-frame-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "korean-prose-editor",
+            "label": "not-needed"
+          },
+          {
+            "id": "model-effort-advisor",
+            "label": "not-needed"
+          },
+          {
+            "id": "mutation-risk-preflight",
+            "label": "not-needed"
+          },
+          {
+            "id": "orchestrator",
+            "label": "not-needed"
+          },
+          {
+            "id": "ponytail",
+            "label": "not-needed"
+          },
+          {
+            "id": "recovery-strategy-selector",
+            "label": "not-needed"
+          },
+          {
+            "id": "session-board",
+            "label": "not-needed"
+          },
+          {
+            "id": "software-security-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "task-contract",
+            "label": "not-needed"
+          },
+          {
+            "id": "test-engineering",
+            "label": "not-needed"
+          },
+          {
+            "id": "workspace-convention-profiler",
+            "label": "not-needed"
+          }
+        ],
+        "status": "SUCCESS"
+      },
+      "observed": {
+        "jevStatus": "SUCCESS",
+        "vendorStatus": "SUCCESS",
+        "sameSemanticConsumerView": true,
+        "jevJudgmentsCount": 24,
+        "vendorJudgmentsCount": 24,
+        "confirmedActions": [],
+        "unknownTargets": null,
+        "realProviderUsage": null,
+        "mockInputTokens": 321,
+        "packagingMs": 14.436539000000039,
+        "digestAndCountsPreserved": true
+      },
+      "extraBoundaryStatus": null,
+      "semanticQuality": "NOTRUN",
+      "quotedDataInterpretation": null,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null,
+      "API0": true,
+      "commandRef": "logs/isolated.command.json",
+      "exitCode": 1,
+      "evidence": "SS21.observations.json.gz"
+    },
+    {
+      "variantId": "scores-absent",
+      "status": "PASS_MOCK",
+      "baseMockStatus": "PASS",
+      "executionKind": "new-isolated-offline-mock",
+      "input": {
+        "originalPrompt": null,
+        "oracle": null,
+        "syntheticInputRef": "SS21.observations.json.gz#/6/input",
+        "requestId": "SS21-scores-absent",
+        "operationId": "SS21-operation-scores-absent",
+        "inventoryCount": 24,
+        "requestDigest": "sha256:630083d5332aa731a14a72172f41ad55fe739d909c929a81af367515c8e843a7",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82"
+      },
+      "expected": {
+        "labels": [
+          {
+            "id": "acceptance-evidence-validator",
+            "label": "needed"
+          },
+          {
+            "id": "blocker-diagnostician",
+            "label": "needed"
+          },
+          {
+            "id": "change-scope-guardian",
+            "label": "not-needed"
+          },
+          {
+            "id": "code-review",
+            "label": "not-needed"
+          },
+          {
+            "id": "codex-token-usage-analyzer",
+            "label": "not-needed"
+          },
+          {
+            "id": "context-continuity",
+            "label": "not-needed"
+          },
+          {
+            "id": "coordinate-subagents",
+            "label": "not-needed"
+          },
+          {
+            "id": "cs-engineering",
+            "label": "not-needed"
+          },
+          {
+            "id": "evaluation-validity-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "independent-audit-gate",
+            "label": "not-needed"
+          },
+          {
+            "id": "independent-deliberation-panel",
+            "label": "not-needed"
+          },
+          {
+            "id": "instruction-scope-resolver",
+            "label": "not-needed"
+          },
+          {
+            "id": "iteration-frame-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "korean-prose-editor",
+            "label": "not-needed"
+          },
+          {
+            "id": "model-effort-advisor",
+            "label": "not-needed"
+          },
+          {
+            "id": "mutation-risk-preflight",
+            "label": "not-needed"
+          },
+          {
+            "id": "orchestrator",
+            "label": "not-needed"
+          },
+          {
+            "id": "ponytail",
+            "label": "not-needed"
+          },
+          {
+            "id": "recovery-strategy-selector",
+            "label": "not-needed"
+          },
+          {
+            "id": "session-board",
+            "label": "not-needed"
+          },
+          {
+            "id": "software-security-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "task-contract",
+            "label": "not-needed"
+          },
+          {
+            "id": "test-engineering",
+            "label": "not-needed"
+          },
+          {
+            "id": "workspace-convention-profiler",
+            "label": "not-needed"
+          }
+        ],
+        "status": "SUCCESS"
+      },
+      "observed": {
+        "jevStatus": "SUCCESS",
+        "vendorStatus": "SUCCESS",
+        "sameSemanticConsumerView": true,
+        "jevJudgmentsCount": 24,
+        "vendorJudgmentsCount": 24,
+        "confirmedActions": [],
+        "unknownTargets": null,
+        "realProviderUsage": null,
+        "mockInputTokens": 321,
+        "packagingMs": 14.64543900000001,
+        "digestAndCountsPreserved": true
+      },
+      "extraBoundaryStatus": null,
+      "semanticQuality": "NOTRUN",
+      "quotedDataInterpretation": null,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null,
+      "API0": true,
+      "commandRef": "logs/isolated.command.json",
+      "exitCode": 1,
+      "evidence": "SS21.observations.json.gz"
+    },
+    {
+      "variantId": "quoted-provenance",
+      "status": "INCOMPLETE",
+      "baseMockStatus": "PASS",
+      "executionKind": "new-isolated-offline-mock",
+      "input": {
+        "originalPrompt": null,
+        "oracle": null,
+        "syntheticInputRef": "SS21.observations.json.gz#/7/input",
+        "requestId": "SS21-quoted-provenance",
+        "operationId": "SS21-operation-quoted-provenance",
+        "inventoryCount": 24,
+        "requestDigest": "sha256:412608682d5aed9d4aae6495038aead14f451ec716932cb075023d92b4ae73a0",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82"
+      },
+      "expected": {
+        "labels": [
+          {
+            "id": "acceptance-evidence-validator",
+            "label": "needed"
+          },
+          {
+            "id": "blocker-diagnostician",
+            "label": "needed"
+          },
+          {
+            "id": "change-scope-guardian",
+            "label": "not-needed"
+          },
+          {
+            "id": "code-review",
+            "label": "not-needed"
+          },
+          {
+            "id": "codex-token-usage-analyzer",
+            "label": "not-needed"
+          },
+          {
+            "id": "context-continuity",
+            "label": "not-needed"
+          },
+          {
+            "id": "coordinate-subagents",
+            "label": "not-needed"
+          },
+          {
+            "id": "cs-engineering",
+            "label": "not-needed"
+          },
+          {
+            "id": "evaluation-validity-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "independent-audit-gate",
+            "label": "not-needed"
+          },
+          {
+            "id": "independent-deliberation-panel",
+            "label": "not-needed"
+          },
+          {
+            "id": "instruction-scope-resolver",
+            "label": "not-needed"
+          },
+          {
+            "id": "iteration-frame-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "korean-prose-editor",
+            "label": "not-needed"
+          },
+          {
+            "id": "model-effort-advisor",
+            "label": "not-needed"
+          },
+          {
+            "id": "mutation-risk-preflight",
+            "label": "not-needed"
+          },
+          {
+            "id": "orchestrator",
+            "label": "not-needed"
+          },
+          {
+            "id": "ponytail",
+            "label": "not-needed"
+          },
+          {
+            "id": "recovery-strategy-selector",
+            "label": "not-needed"
+          },
+          {
+            "id": "session-board",
+            "label": "not-needed"
+          },
+          {
+            "id": "software-security-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "task-contract",
+            "label": "not-needed"
+          },
+          {
+            "id": "test-engineering",
+            "label": "not-needed"
+          },
+          {
+            "id": "workspace-convention-profiler",
+            "label": "not-needed"
+          }
+        ],
+        "status": "SUCCESS"
+      },
+      "observed": {
+        "jevStatus": "SUCCESS",
+        "vendorStatus": "SUCCESS",
+        "sameSemanticConsumerView": true,
+        "jevJudgmentsCount": 24,
+        "vendorJudgmentsCount": 24,
+        "confirmedActions": [],
+        "unknownTargets": null,
+        "realProviderUsage": null,
+        "mockInputTokens": 321,
+        "packagingMs": 9.791406999999936,
+        "digestAndCountsPreserved": true
+      },
+      "extraBoundaryStatus": null,
+      "semanticQuality": "NOTRUN",
+      "quotedDataInterpretation": "NOTRUN",
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null,
+      "API0": true,
+      "commandRef": "logs/isolated.command.json",
+      "exitCode": 1,
+      "evidence": "SS21.observations.json.gz"
+    },
+    {
+      "variantId": "negation-preserved",
+      "status": "PASS_MOCK",
+      "baseMockStatus": "PASS",
+      "executionKind": "new-isolated-offline-mock",
+      "input": {
+        "originalPrompt": null,
+        "oracle": null,
+        "syntheticInputRef": "SS21.observations.json.gz#/8/input",
+        "requestId": "SS21-negation-preserved",
+        "operationId": "SS21-operation-negation-preserved",
+        "inventoryCount": 24,
+        "requestDigest": "sha256:c894c5aa845cc350b8590cdcd0df8d2ed8d473680125347d19d97a05ffffa135",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82"
+      },
+      "expected": {
+        "labels": [
+          {
+            "id": "acceptance-evidence-validator",
+            "label": "needed"
+          },
+          {
+            "id": "blocker-diagnostician",
+            "label": "needed"
+          },
+          {
+            "id": "change-scope-guardian",
+            "label": "not-needed"
+          },
+          {
+            "id": "code-review",
+            "label": "not-needed"
+          },
+          {
+            "id": "codex-token-usage-analyzer",
+            "label": "not-needed"
+          },
+          {
+            "id": "context-continuity",
+            "label": "not-needed"
+          },
+          {
+            "id": "coordinate-subagents",
+            "label": "not-needed"
+          },
+          {
+            "id": "cs-engineering",
+            "label": "not-needed"
+          },
+          {
+            "id": "evaluation-validity-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "independent-audit-gate",
+            "label": "not-needed"
+          },
+          {
+            "id": "independent-deliberation-panel",
+            "label": "not-needed"
+          },
+          {
+            "id": "instruction-scope-resolver",
+            "label": "not-needed"
+          },
+          {
+            "id": "iteration-frame-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "korean-prose-editor",
+            "label": "not-needed"
+          },
+          {
+            "id": "model-effort-advisor",
+            "label": "not-needed"
+          },
+          {
+            "id": "mutation-risk-preflight",
+            "label": "not-needed"
+          },
+          {
+            "id": "orchestrator",
+            "label": "not-needed"
+          },
+          {
+            "id": "ponytail",
+            "label": "not-needed"
+          },
+          {
+            "id": "recovery-strategy-selector",
+            "label": "not-needed"
+          },
+          {
+            "id": "session-board",
+            "label": "not-needed"
+          },
+          {
+            "id": "software-security-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "task-contract",
+            "label": "not-needed"
+          },
+          {
+            "id": "test-engineering",
+            "label": "not-needed"
+          },
+          {
+            "id": "workspace-convention-profiler",
+            "label": "not-needed"
+          }
+        ],
+        "status": "SUCCESS"
+      },
+      "observed": {
+        "jevStatus": "SUCCESS",
+        "vendorStatus": "SUCCESS",
+        "sameSemanticConsumerView": true,
+        "jevJudgmentsCount": 24,
+        "vendorJudgmentsCount": 24,
+        "confirmedActions": [],
+        "unknownTargets": null,
+        "realProviderUsage": null,
+        "mockInputTokens": 321,
+        "packagingMs": 14.116954999999962,
+        "digestAndCountsPreserved": true
+      },
+      "extraBoundaryStatus": "PASS_BYTE_LIMIT",
+      "semanticQuality": "NOTRUN",
+      "quotedDataInterpretation": null,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null,
+      "API0": true,
+      "commandRef": "logs/isolated.command.json",
+      "exitCode": 1,
+      "evidence": "SS21.observations.json.gz"
+    },
+    {
+      "variantId": "unknown-not-empty",
+      "status": "PASS_MOCK",
+      "baseMockStatus": "PASS",
+      "executionKind": "new-isolated-offline-mock",
+      "input": {
+        "originalPrompt": null,
+        "oracle": null,
+        "syntheticInputRef": "SS21.observations.json.gz#/9/input",
+        "requestId": "SS21-unknown-not-empty",
+        "operationId": "SS21-operation-unknown-not-empty",
+        "inventoryCount": 24,
+        "requestDigest": "sha256:40acf024686809f07a73755de06e51983d855e9432733c039d9d92aba47a6570",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82"
+      },
+      "expected": {
+        "labels": [
+          {
+            "id": "acceptance-evidence-validator",
+            "label": "needed"
+          },
+          {
+            "id": "blocker-diagnostician",
+            "label": "needed"
+          },
+          {
+            "id": "change-scope-guardian",
+            "label": "not-needed"
+          },
+          {
+            "id": "code-review",
+            "label": "not-needed"
+          },
+          {
+            "id": "codex-token-usage-analyzer",
+            "label": "not-needed"
+          },
+          {
+            "id": "context-continuity",
+            "label": "not-needed"
+          },
+          {
+            "id": "coordinate-subagents",
+            "label": "not-needed"
+          },
+          {
+            "id": "cs-engineering",
+            "label": "not-needed"
+          },
+          {
+            "id": "evaluation-validity-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "independent-audit-gate",
+            "label": "not-needed"
+          },
+          {
+            "id": "independent-deliberation-panel",
+            "label": "not-needed"
+          },
+          {
+            "id": "instruction-scope-resolver",
+            "label": "not-needed"
+          },
+          {
+            "id": "iteration-frame-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "korean-prose-editor",
+            "label": "not-needed"
+          },
+          {
+            "id": "model-effort-advisor",
+            "label": "not-needed"
+          },
+          {
+            "id": "mutation-risk-preflight",
+            "label": "not-needed"
+          },
+          {
+            "id": "orchestrator",
+            "label": "not-needed"
+          },
+          {
+            "id": "ponytail",
+            "label": "not-needed"
+          },
+          {
+            "id": "recovery-strategy-selector",
+            "label": "not-needed"
+          },
+          {
+            "id": "session-board",
+            "label": "not-needed"
+          },
+          {
+            "id": "software-security-auditor",
+            "label": "not-needed"
+          },
+          {
+            "id": "task-contract",
+            "label": "not-needed"
+          },
+          {
+            "id": "test-engineering",
+            "label": "not-needed"
+          },
+          {
+            "id": "workspace-convention-profiler",
+            "label": "not-needed"
+          }
+        ],
+        "status": "SUCCESS"
+      },
+      "observed": {
+        "jevStatus": "SUCCESS",
+        "vendorStatus": "SUCCESS",
+        "sameSemanticConsumerView": true,
+        "jevJudgmentsCount": 24,
+        "vendorJudgmentsCount": 24,
+        "confirmedActions": [],
+        "unknownTargets": null,
+        "realProviderUsage": null,
+        "mockInputTokens": 321,
+        "packagingMs": 10.766508000000158,
+        "digestAndCountsPreserved": true
+      },
+      "extraBoundaryStatus": null,
+      "semanticQuality": "NOTRUN",
+      "quotedDataInterpretation": null,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null,
+      "API0": true,
+      "commandRef": "logs/isolated.command.json",
+      "exitCode": 1,
+      "evidence": "SS21.observations.json.gz"
+    }
+  ],
+  "boundaries": {
+    "noulIDsCountTypeBounds": "PASS_MOCK: nine malformed controls rejected inside JEV adapter",
+    "wireBytes": "PASS_MOCK: exact limit dispatches unchanged payload, minus one rejects before mock fetch",
+    "validUsageInvalidRESP": "FAIL"
+  },
+  "findings": [
+    {
+      "id": "SS21-KNOWN-VALID-COST-LOST-INVALID-RESP",
+      "severity": "high",
+      "newRootCause": false,
+      "relatedKnownFinding": "유효비용이 invalid RESP와 함께 유실",
+      "source": {
+        "path": "mcp-server/src/skill-classification/service.ts",
+        "lines": [
+          194,
+          204,
+          210
+        ]
+      },
+      "reproductionInput": {
+        "actualCostUsd": 0.125,
+        "inputTokens": 321,
+        "outputTokens": 42,
+        "malformation": "one candidate judgment missing"
+      },
+      "expected": {
+        "responseStatus": "INVALID",
+        "actualCostUsd": 0.125,
+        "inputTokens": 321,
+        "outputTokens": 42,
+        "spentUsd": 0.125
+      },
+      "observed": {
+        "responseStatus": "INVALID",
+        "errorCode": "INVALID_PROVIDER_RESPONSE",
+        "actualCostUsd": null,
+        "inputTokens": null,
+        "outputTokens": null,
+        "spentUsd": 0,
+        "pendingReservationUsd": 0.4
+      },
+      "cause": "Response validation throws after usage validation, catch replaces evaluation usage with unknownUsage; settlement then receives null.",
+      "evidence": "SS21.observations.json.gz#/21",
+      "testFile": "tests/ss21-isolated/SS21.test.ts",
+      "testName": "SS21 invalid response must retain valid observed cost and token usage (known defect reproduction)"
+    }
+  ],
+  "selected": "NOTRUN",
+  "read": "NOTRUN",
+  "applied": "NOTRUN",
+  "verified": "NOTRUN",
+  "agentSelectedSkillIds": null,
+  "hostReceipt": null,
+  "finalSelector": "AGENT; classifier recommendations are support only; no actual SS21 selection accepted",
+  "measurement": {
+    "packagingMs": [
+      {
+        "variantId": "multi-needed",
+        "value": 29.831830999999966
+      },
+      {
+        "variantId": "no-skill",
+        "value": 13.571936999999934
+      },
+      {
+        "variantId": "uncertain",
+        "value": 10.343108999999913
+      },
+      {
+        "variantId": "invalid",
+        "value": 11.220227000000023
+      },
+      {
+        "variantId": "unavailable",
+        "value": 9.44376699999998
+      },
+      {
+        "variantId": "scores-present",
+        "value": 14.436539000000039
+      },
+      {
+        "variantId": "scores-absent",
+        "value": 14.64543900000001
+      },
+      {
+        "variantId": "quoted-provenance",
+        "value": 9.791406999999936
+      },
+      {
+        "variantId": "negation-preserved",
+        "value": 14.116954999999962
+      },
+      {
+        "variantId": "unknown-not-empty",
+        "value": 10.766508000000158
+      }
+    ],
+    "additionalSummaryTokens": 0,
+    "actualClassificationInputTokens": null,
+    "actualClassificationCostUsd": null,
+    "mockInputTokens": 321,
+    "warning": "Do not treat synthetic mock usage as real input telemetry; real unknown stays null, not zero."
+  },
+  "missingInputs": [
+    "Actual provider raw originalPrompt/common request for SS21 operational input (frozen originalPrompt=null); source-confirmed metadata and provenance, exact request/operation IDs. Do not invent a semantic answer from synthetic labels.",
+    "Trusted AGENT_GOVERNANCE_CLASSIFICATION_CONFIG configuration; currently absent. Needs fixed current-vendor profile registry, qualified configuration fingerprint, valid expiry, exact inventory/taxonomy/model/prompt revisions, explicit mode and external-content policy.",
+    "Approved providerRuntimeRef and known budgets/prior spend/reservations or separate native-call allowance. JEV needs approved HTTPS route/env credential reference; remote vendor needs explicitly registered wire adapter (not built in).",
+    "For available Codex native route (<HOST_CODEX_EXECUTABLE>): nativeAdapterDefinitionsRef with host=codex, executable/cwd, approvalRef, capabilityEvidenceRef, retryPolicyVerified and retry/isolation evidence, exact vetted isolationArgs, bounded timeout/output. CLI availability alone does not qualify a route. Claude executable absent.",
+    "Connected classify_skills/get_skill_inventory/record_skill_selection tools (none in this session) or separately approved instrumented MCP host setup.",
+    "Real host signed selection/call observation bound to current actor, request/inventory/task/config/profile revision, host-prompt task source, expiration, independently reasoned AGENT final selection and same-candidate read/application/verification artifacts.",
+    "Actual classifier input tokens/cost telemetry; mock inputTokens=321 is not real usage. Real values remain null.",
+    "Repair candidate and permission to reverify the same SS21 after valid-cost/invalid-RESP fix. Current commit pinned; no product source edit or green repair performed."
+  ],
+  "testSensitivityProof": {
+    "status": "INCOMPLETE",
+    "redGreen": "NOTRUN",
+    "mutation": "NOTRUN",
+    "reason": "Product mutation prohibited; existing defect red shown but no repair green",
+    "evidence": "engineering-test-result.json"
+  },
+  "acceptanceEvidence": {
+    "verdict": "FAIL",
+    "localConsistencyValidation": true,
+    "independentAudit": "NOTRUN",
+    "report": "acceptance-report.json"
+  },
+  "trackedProductDiff": {
+    "exitCode": 0,
+    "modifiedTrackedFiles": []
+  },
+  "evidenceManifest": "candidate.manifest.json",
+  "skillsInstructionsRead": [
+    "AGENTS.md",
+    "skills/test-engineering/SKILL.md",
+    "skills/orchestrator/SKILL.md",
+    "skills/evaluation-validity-auditor/SKILL.md (read only, not independently applied)",
+    "skills/acceptance-evidence-validator/SKILL.md"
+  ],
+  "agentsSkills": {
+    "workspace": "ABSENT",
+    "repo": "ABSENT"
+  },
+  "testWorkflow": "Test-authoring instructions and local evidence checks executed; these are separate from SS21 selected/read/applied/verified stages.",
+  "publication": {
+    "kind": "sanitized-copy-of-existing-result",
+    "newTests": 0,
+    "newModelApiCalls": 0,
+    "originalResultSHA256": "f71714f3ddea1dd8760a541c8c50437edfd672b39c5c318b848897979583da20",
+    "patchStatus": "NO_EXISTING_PATCH",
+    "artifactReferences": "Sanitized locators are for reading only; embedded historic artifact digests still bind original bytes. Public bytes/digests are in manifest.json."
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/mcp/skill-classification-request.test.ts",
+    "tests/mcp/skill-classification-providers.test.ts",
+    "tests/mcp/skill-classification-runtime.test.ts",
+    "tests/mcp/skill-classification-service.test.ts",
+    "--testNamePattern",
+    "retains exact bytes, negations, quotations and unknown context|preserves confirmed empty values and separate prohibited actions with provenance|rejects non-JSON inputs and tampered prompt/context bindings|rejects unknown request/input fields even when their digest is recomputed|keeps the last prohibition, every candidate, applicability, dependencies and phase gates|SS20/21 transmits one bound TypeSafe|SS21 resolves only the configured credential|SS21 ON uses JEV alone",
+    "--maxWorkers=1",
+    "--reporter=json",
+    "--outputFile=logs/regression.vitest.json"
+  ],
+  "cwd": "<PINNED_REPO>",
+  "exitCode": 0,
+  "startedEpoch": 1791514613.1405294,
+  "durationSeconds": 1.6932251453399658,
+  "executionKind": "existing-targeted-regression",
+  "API0": true
+}

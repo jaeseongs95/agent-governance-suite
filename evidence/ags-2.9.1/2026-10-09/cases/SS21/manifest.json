@@ -1,0 +1,570 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS21",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cases/SS21/",
+  "kind": "existing-artifact-publication",
+  "newTests": 0,
+  "newModelApiCalls": 0,
+  "originalRecoveryMissing": [],
+  "rawWireBytes": "MISSING_ORIGINAL_RAW_WIRE_BYTES; only existing parsed objects captured",
+  "patchStatus": "NO_EXISTING_PATCH",
+  "candidate": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3"
+  },
+  "fixture": {
+    "sourcePath": "tests/skill-classification/fixtures.json",
+    "bytes": 142450,
+    "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "immutableSource": "https://github.com/jaeseongs95/agent-governance-suite/blob/c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6/tests/skill-classification/fixtures.json"
+  },
+  "oracle": {
+    "sha256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "caseOracle": null,
+    "format": "original frozen oracle digest in recovered result; no semantic accuracy manufactured"
+  },
+  "inputIntegrity": {
+    "sourceArtifact": "SS21.observations.json",
+    "originalBytes": 12358656,
+    "originalSHA256": "fbcfd042ac3568162649b4a2c9d5980ac169e5a4265a4147a80d4d6040b1bdae",
+    "publicBytes": 1405129,
+    "publicSHA256": "8b42293077b461737cf2852cba9634721f11773c9a3a0781ac3ed85472fdd588",
+    "commonInputObjectsUnchanged": true,
+    "expectedObjectsUnchanged": true,
+    "variantCount": 10,
+    "serialization": "Recovered original embedded JSON objects; pretty JSON public bytes, not separately captured network transport strings",
+    "publicPath": "SS21.observations.json.gz",
+    "decompressedPublicBytes": 12358656,
+    "decompressedPublicSHA256": "fbcfd042ac3568162649b4a2c9d5980ac169e5a4265a4147a80d4d6040b1bdae"
+  },
+  "originalArtifacts": [
+    {
+      "artifact": "SHA256SUMS.json",
+      "bytes": 3704,
+      "sha256": "7270aa6ce92578d8199ce64c96d4fb31e784bee8169e20561580f25824eb2e80",
+      "publicPath": null,
+      "status": "RECOVERED",
+      "omissionReason": "not needed for this public package; original digest retained"
+    },
+    {
+      "artifact": "SS21.observations.json",
+      "bytes": 12358656,
+      "sha256": "fbcfd042ac3568162649b4a2c9d5980ac169e5a4265a4147a80d4d6040b1bdae",
+      "publicPath": "SS21.observations.json.gz",
+      "status": "RECOVERED",
+      "omissionReason": null
+    },
+    {
+      "artifact": "SS21.report.txt",
+      "bytes": 1772,
+      "sha256": "602d89e551e17fa3177f5b8e414f43859367d31ebe909ee3d812dd256e7b714d",
+      "publicPath": null,
+      "status": "RECOVERED",
+      "omissionReason": "not needed for this public package; original digest retained"
+    },
+    {
+      "artifact": "SS21.result.json",
+      "bytes": 49970,
+      "sha256": "f71714f3ddea1dd8760a541c8c50437edfd672b39c5c318b848897979583da20",
+      "publicPath": "SS21.result.json",
+      "status": "RECOVERED",
+      "omissionReason": null
+    },
+    {
+      "artifact": "SS21.source.json",
+      "bytes": 3222,
+      "sha256": "7dca9fae18c67d3bfcaac211f7809b590b41426e78ced71b8427d9fd33ce937f",
+      "publicPath": "SS21.source.json",
+      "status": "RECOVERED",
+      "omissionReason": null
+    },
+    {
+      "artifact": "SS21.test.ts",
+      "bytes": 18565,
+      "sha256": "03ca715a995673b6c87949fe279b2d6c754c7909c9c4ad2cc5a1efd63702dcf0",
+      "publicPath": "reproduction/SS21.test.ts",
+      "status": "RECOVERED",
+      "omissionReason": null
+    },
+    {
+      "artifact": "acceptance-input.json",
+      "bytes": 4579,
+      "sha256": "833fef78470861171688c0d75d2c24746bda87e6cf279e739bc9b8e1dc435cea",
+      "publicPath": null,
+      "status": "RECOVERED",
+      "omissionReason": "not needed for this public package; original digest retained"
+    },
+    {
+      "artifact": "acceptance-report.json",
+      "bytes": 3875,
+      "sha256": "bce120abcec85fa23ac6020c8905b14b201510a9ab7c8ed296530806156e93ca",
+      "publicPath": "acceptance-report.json",
+      "status": "RECOVERED",
+      "omissionReason": null
+    },
+    {
+      "artifact": "acceptance-request-artifact.json",
+      "bytes": 339,
+      "sha256": "d38e510f6907b9db37af31fbbcfaa34b32c79f379a6b6bde03d6b53f713d860d",
+      "publicPath": null,
+      "status": "RECOVERED",
+      "omissionReason": "not needed for this public package; original digest retained"
+    },
+    {
+      "artifact": "acceptance-validation.command.json",
+      "bytes": 459,
+      "sha256": "cb68c32502bbfc9c2ad195816f29dd8311ca13971f7ddad9b01f0d21e37ae0c3",
+      "publicPath": null,
+      "status": "RECOVERED",
+      "omissionReason": "not needed for this public package; original digest retained"
+    },
+    {
+      "artifact": "acceptance-validation.json",
+      "bytes": 36,
+      "sha256": "655823ac7f996b259837b1279f4757264aac1ab82808d9b562c06a9f640f36af",
+      "publicPath": null,
+      "status": "RECOVERED",
+      "omissionReason": "not needed for this public package; original digest retained"
+    },
+    {
+      "artifact": "acceptance-validation.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publicPath": null,
+      "status": "RECOVERED",
+      "omissionReason": "not needed for this public package; original digest retained"
+    },
+    {
+      "artifact": "acceptance.command.json",
+      "bytes": 271,
+      "sha256": "1231a0682843f5c46a9eeec68d9afb26fef7bbd3ae5eb78fd7b5e04334fc7375",
+      "publicPath": null,
+      "status": "RECOVERED",
+      "omissionReason": "not needed for this public package; original digest retained"
+    },
+    {
+      "artifact": "acceptance.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publicPath": null,
+      "status": "RECOVERED",
+      "omissionReason": "not needed for this public package; original digest retained"
+    },
+    {
+      "artifact": "candidate.manifest.json",
+      "bytes": 2291,
+      "sha256": "d0520764ba5eaa87612a30327d19231cdb1f8a53b1345d0d21c83bd0d8bf0400",
+      "publicPath": "candidate.manifest.json",
+      "status": "RECOVERED",
+      "omissionReason": null
+    },
+    {
+      "artifact": "engineering-test-plan.json",
+      "bytes": 13363,
+      "sha256": "d799fa6f34c57fd0295b48c0e89a7094c0a8a21abcfe2700c425c69953658432",
+      "publicPath": "engineering-test-plan.json",
+      "status": "RECOVERED",
+      "omissionReason": null
+    },
+    {
+      "artifact": "engineering-test-proof.json",
+      "bytes": 6999,
+      "sha256": "9ff62bf8ce3075f8521f89a65eb9ce9309dd13d24872bf4770b4cb9a1ea53d26",
+      "publicPath": "engineering-test-proof.json",
+      "status": "RECOVERED",
+      "omissionReason": null
+    },
+    {
+      "artifact": "engineering-test-result.json",
+      "bytes": 3317,
+      "sha256": "30facabd61c28174e362acb756e7f92e0c60606560022d5bd2fb344f403ed7d1",
+      "publicPath": "engineering-test-result.json",
+      "status": "RECOVERED",
+      "omissionReason": null
+    },
+    {
+      "artifact": "host-availability.json",
+      "bytes": 323,
+      "sha256": "d08495676d8fd7f8b59b64a086d08a8132220ce9fb6542f7319b07968fee5d47",
+      "publicPath": "host-availability.json",
+      "status": "RECOVERED",
+      "omissionReason": null
+    },
+    {
+      "artifact": "isolated.command.json",
+      "bytes": 424,
+      "sha256": "51ffd462c30a6b19344add2be7793c075b179d52b6af560f7b6f2497629c93df",
+      "publicPath": "logs/isolated.command.json",
+      "status": "RECOVERED",
+      "omissionReason": null
+    },
+    {
+      "artifact": "isolated.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publicPath": "logs/isolated.stderr.log",
+      "status": "RECOVERED",
+      "omissionReason": null
+    },
+    {
+      "artifact": "isolated.stdout.log",
+      "bytes": 69,
+      "sha256": "aff1da208d37c9c4e9b00fc1d22e9628e5671dd94a06aedb8008b819718cd3f3",
+      "publicPath": "logs/isolated.stdout.log",
+      "status": "RECOVERED",
+      "omissionReason": null
+    },
+    {
+      "artifact": "isolated.vitest.json",
+      "bytes": 5650,
+      "sha256": "6669d599e4e23aafbf21e7b633e96fa327eae752349439a73ff0b25cc71c6e1d",
+      "publicPath": "logs/isolated.vitest.json",
+      "status": "RECOVERED",
+      "omissionReason": null
+    },
+    {
+      "artifact": "plan-check.command.json",
+      "bytes": 317,
+      "sha256": "71e086e261f0a53aa2a3ba786f8a6cd883dac8fc114a0f0f62744597d9628bd2",
+      "publicPath": null,
+      "status": "RECOVERED",
+      "omissionReason": "not needed for this public package; original digest retained"
+    },
+    {
+      "artifact": "plan-check.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publicPath": null,
+      "status": "RECOVERED",
+      "omissionReason": "not needed for this public package; original digest retained"
+    },
+    {
+      "artifact": "plan-check.stdout.log",
+      "bytes": 456,
+      "sha256": "ed1f4b8eb060585c8c1dd0eabe478717e9f6290831d2e6f00b3163a102a685d4",
+      "publicPath": null,
+      "status": "RECOVERED",
+      "omissionReason": "not needed for this public package; original digest retained"
+    },
+    {
+      "artifact": "proof-check.command.json",
+      "bytes": 388,
+      "sha256": "734db73621a79a108be5e10ba1fcb95f737ec7e9bc376bb599ca89e33d62997a",
+      "publicPath": null,
+      "status": "RECOVERED",
+      "omissionReason": "not needed for this public package; original digest retained"
+    },
+    {
+      "artifact": "proof-check.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publicPath": null,
+      "status": "RECOVERED",
+      "omissionReason": "not needed for this public package; original digest retained"
+    },
+    {
+      "artifact": "proof-check.stdout.log",
+      "bytes": 3317,
+      "sha256": "30facabd61c28174e362acb756e7f92e0c60606560022d5bd2fb344f403ed7d1",
+      "publicPath": null,
+      "status": "RECOVERED",
+      "omissionReason": "not needed for this public package; original digest retained"
+    },
+    {
+      "artifact": "regression.command.json",
+      "bytes": 1112,
+      "sha256": "97931b6923105f1a9d58cf5f91787cdc6d8b43973c836ee8d1d75f0bab1418d3",
+      "publicPath": "logs/regression.command.json",
+      "status": "RECOVERED",
+      "omissionReason": null
+    },
+    {
+      "artifact": "regression.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publicPath": "logs/regression.stderr.log",
+      "status": "RECOVERED",
+      "omissionReason": null
+    },
+    {
+      "artifact": "regression.stdout.log",
+      "bytes": 71,
+      "sha256": "5b33fbabccb80b76ec6219ec82cf5f0879c71c996a6b66bec9512a36e00a8bee",
+      "publicPath": "logs/regression.stdout.log",
+      "status": "RECOVERED",
+      "omissionReason": null
+    },
+    {
+      "artifact": "regression.vitest.json",
+      "bytes": 27382,
+      "sha256": "bf412be3265b342a35bc6096e1bab910fbf1391b0e4c9ffbb10bfd5a66e183cf",
+      "publicPath": "logs/regression.vitest.json",
+      "status": "RECOVERED",
+      "omissionReason": null
+    },
+    {
+      "artifact": "snapshot.command.json",
+      "bytes": 309,
+      "sha256": "bb238ba294c8e728d48030a5ca9b15b63814d2eb9bf7d1c06ea2b1cc339deff4",
+      "publicPath": null,
+      "status": "RECOVERED",
+      "omissionReason": "not needed for this public package; original digest retained"
+    },
+    {
+      "artifact": "snapshot.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publicPath": null,
+      "status": "RECOVERED",
+      "omissionReason": "not needed for this public package; original digest retained"
+    },
+    {
+      "artifact": "snapshot.stdout.log",
+      "bytes": 367,
+      "sha256": "93a555f577184f131583bccac47f750ca39992d49307396648c54f34b79e4862",
+      "publicPath": null,
+      "status": "RECOVERED",
+      "omissionReason": "not needed for this public package; original digest retained"
+    },
+    {
+      "artifact": "task.json",
+      "bytes": 2068,
+      "sha256": "be76c4070ff40eb93c5f06446b877041a6b6cdbc4c3676a20991ae04ab697c9f",
+      "publicPath": null,
+      "status": "RECOVERED",
+      "omissionReason": "not needed for this public package; original digest retained"
+    }
+  ],
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 5157,
+      "sha256": "a149be43992b8730365b7fadeca99ffede2f467f80b8a0b6784ff5e7ae64ae1e",
+      "source": null,
+      "transformation": "New publication/reproduction documentation only; no execution claim"
+    },
+    {
+      "path": "SS21.observations.json.gz",
+      "bytes": 1405129,
+      "sha256": "8b42293077b461737cf2852cba9634721f11773c9a3a0781ac3ed85472fdd588",
+      "source": {
+        "artifact": "SS21.observations.json",
+        "originalBytes": 12358656,
+        "originalSHA256": "fbcfd042ac3568162649b4a2c9d5980ac169e5a4265a4147a80d4d6040b1bdae"
+      },
+      "transformation": "public sanitation of local paths and synthetic markers; historic outcomes/digests unchanged; lossless deterministic gzip, mtime0",
+      "byteIdenticalToOriginal": true,
+      "decompressedPublicBytes": 12358656,
+      "decompressedPublicSHA256": "fbcfd042ac3568162649b4a2c9d5980ac169e5a4265a4147a80d4d6040b1bdae"
+    },
+    {
+      "path": "SS21.result.json",
+      "bytes": 49553,
+      "sha256": "abdca573dff3c9c5f1241d9135972ac0f227e353cdbcf0cd2606a97fd252a326",
+      "source": {
+        "artifact": "SS21.result.json",
+        "originalBytes": 49970,
+        "originalSHA256": "f71714f3ddea1dd8760a541c8c50437edfd672b39c5c318b848897979583da20"
+      },
+      "transformation": "public sanitation of local paths and synthetic markers; historic outcomes/digests unchanged",
+      "byteIdenticalToOriginal": false
+    },
+    {
+      "path": "SS21.source.json",
+      "bytes": 3222,
+      "sha256": "7dca9fae18c67d3bfcaac211f7809b590b41426e78ced71b8427d9fd33ce937f",
+      "source": {
+        "artifact": "SS21.source.json",
+        "originalBytes": 3222,
+        "originalSHA256": "7dca9fae18c67d3bfcaac211f7809b590b41426e78ced71b8427d9fd33ce937f"
+      },
+      "transformation": "public sanitation of local paths and synthetic markers; historic outcomes/digests unchanged",
+      "byteIdenticalToOriginal": true
+    },
+    {
+      "path": "acceptance-report.json",
+      "bytes": 3813,
+      "sha256": "54b81f5f69b2b5d2c303b99fbae066ad8d479bb4a647ed66c3ee4a0eada09ac3",
+      "source": {
+        "artifact": "acceptance-report.json",
+        "originalBytes": 3875,
+        "originalSHA256": "bce120abcec85fa23ac6020c8905b14b201510a9ab7c8ed296530806156e93ca"
+      },
+      "transformation": "public sanitation of local paths and synthetic markers; historic outcomes/digests unchanged",
+      "byteIdenticalToOriginal": false
+    },
+    {
+      "path": "candidate.manifest.json",
+      "bytes": 2291,
+      "sha256": "d0520764ba5eaa87612a30327d19231cdb1f8a53b1345d0d21c83bd0d8bf0400",
+      "source": {
+        "artifact": "candidate.manifest.json",
+        "originalBytes": 2291,
+        "originalSHA256": "d0520764ba5eaa87612a30327d19231cdb1f8a53b1345d0d21c83bd0d8bf0400"
+      },
+      "transformation": "public sanitation of local paths and synthetic markers; historic outcomes/digests unchanged",
+      "byteIdenticalToOriginal": true
+    },
+    {
+      "path": "engineering-test-plan.json",
+      "bytes": 13156,
+      "sha256": "646001790b5008c25b4d2b4ab7297cbe5037b9017cc7d5d20ad3efeae271bd82",
+      "source": {
+        "artifact": "engineering-test-plan.json",
+        "originalBytes": 13363,
+        "originalSHA256": "d799fa6f34c57fd0295b48c0e89a7094c0a8a21abcfe2700c425c69953658432"
+      },
+      "transformation": "public sanitation of local paths and synthetic markers; historic outcomes/digests unchanged",
+      "byteIdenticalToOriginal": false
+    },
+    {
+      "path": "engineering-test-proof.json",
+      "bytes": 6999,
+      "sha256": "9ff62bf8ce3075f8521f89a65eb9ce9309dd13d24872bf4770b4cb9a1ea53d26",
+      "source": {
+        "artifact": "engineering-test-proof.json",
+        "originalBytes": 6999,
+        "originalSHA256": "9ff62bf8ce3075f8521f89a65eb9ce9309dd13d24872bf4770b4cb9a1ea53d26"
+      },
+      "transformation": "public sanitation of local paths and synthetic markers; historic outcomes/digests unchanged",
+      "byteIdenticalToOriginal": true
+    },
+    {
+      "path": "engineering-test-result.json",
+      "bytes": 3317,
+      "sha256": "30facabd61c28174e362acb756e7f92e0c60606560022d5bd2fb344f403ed7d1",
+      "source": {
+        "artifact": "engineering-test-result.json",
+        "originalBytes": 3317,
+        "originalSHA256": "30facabd61c28174e362acb756e7f92e0c60606560022d5bd2fb344f403ed7d1"
+      },
+      "transformation": "public sanitation of local paths and synthetic markers; historic outcomes/digests unchanged",
+      "byteIdenticalToOriginal": true
+    },
+    {
+      "path": "host-availability.json",
+      "bytes": 326,
+      "sha256": "ac6de7755f0853bd6c81b6cd86cf91c335bb23e2e4b132d97ed38f452043590e",
+      "source": {
+        "artifact": "host-availability.json",
+        "originalBytes": 323,
+        "originalSHA256": "d08495676d8fd7f8b59b64a086d08a8132220ce9fb6542f7319b07968fee5d47"
+      },
+      "transformation": "public sanitation of local paths and synthetic markers; historic outcomes/digests unchanged",
+      "byteIdenticalToOriginal": false
+    },
+    {
+      "path": "logs/isolated.command.json",
+      "bytes": 397,
+      "sha256": "3e5acbb347d7acdb64744df48a4716502f6e504906bb5f6dfa5d92fe56806e07",
+      "source": {
+        "artifact": "isolated.command.json",
+        "originalBytes": 424,
+        "originalSHA256": "51ffd462c30a6b19344add2be7793c075b179d52b6af560f7b6f2497629c93df"
+      },
+      "transformation": "public sanitation of local paths and synthetic markers; historic outcomes/digests unchanged",
+      "byteIdenticalToOriginal": false
+    },
+    {
+      "path": "logs/isolated.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source": {
+        "artifact": "isolated.stderr.log",
+        "originalBytes": 0,
+        "originalSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "transformation": "public sanitation of local paths and synthetic markers; historic outcomes/digests unchanged",
+      "byteIdenticalToOriginal": true
+    },
+    {
+      "path": "logs/isolated.stdout.log",
+      "bytes": 49,
+      "sha256": "480cef28d26b18d851051164c30ccc73da10dda78f25211b2caa0bb9180e7460",
+      "source": {
+        "artifact": "isolated.stdout.log",
+        "originalBytes": 69,
+        "originalSHA256": "aff1da208d37c9c4e9b00fc1d22e9628e5671dd94a06aedb8008b819718cd3f3"
+      },
+      "transformation": "public sanitation of local paths and synthetic markers; historic outcomes/digests unchanged",
+      "byteIdenticalToOriginal": false
+    },
+    {
+      "path": "logs/isolated.vitest.json",
+      "bytes": 7803,
+      "sha256": "8941008c0a606232d89d2cc898f399ed08ed09218fee6e762151af8367af6b64",
+      "source": {
+        "artifact": "isolated.vitest.json",
+        "originalBytes": 5650,
+        "originalSHA256": "6669d599e4e23aafbf21e7b633e96fa327eae752349439a73ff0b25cc71c6e1d"
+      },
+      "transformation": "public sanitation of local paths and synthetic markers; historic outcomes/digests unchanged",
+      "byteIdenticalToOriginal": false
+    },
+    {
+      "path": "logs/regression.command.json",
+      "bytes": 1085,
+      "sha256": "09f3e55f9e5291625cd6c9e9fc2818d5b3b431b73b6cd962c2f6a7240233088c",
+      "source": {
+        "artifact": "regression.command.json",
+        "originalBytes": 1112,
+        "originalSHA256": "97931b6923105f1a9d58cf5f91787cdc6d8b43973c836ee8d1d75f0bab1418d3"
+      },
+      "transformation": "public sanitation of local paths and synthetic markers; historic outcomes/digests unchanged",
+      "byteIdenticalToOriginal": false
+    },
+    {
+      "path": "logs/regression.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source": {
+        "artifact": "regression.stderr.log",
+        "originalBytes": 0,
+        "originalSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "transformation": "public sanitation of local paths and synthetic markers; historic outcomes/digests unchanged",
+      "byteIdenticalToOriginal": true
+    },
+    {
+      "path": "logs/regression.stdout.log",
+      "bytes": 51,
+      "sha256": "521f0882a864dbceb8a53c825e474f96c7211a11c33827b9e380b8a12340ce56",
+      "source": {
+        "artifact": "regression.stdout.log",
+        "originalBytes": 71,
+        "originalSHA256": "5b33fbabccb80b76ec6219ec82cf5f0879c71c996a6b66bec9512a36e00a8bee"
+      },
+      "transformation": "public sanitation of local paths and synthetic markers; historic outcomes/digests unchanged",
+      "byteIdenticalToOriginal": false
+    },
+    {
+      "path": "logs/regression.vitest.json",
+      "bytes": 6299,
+      "sha256": "dbe7ce20987d0347c60f42fff098831ac20065604710f1449edf5653b5462672",
+      "source": {
+        "artifact": "regression.vitest.json",
+        "originalBytes": 27382,
+        "originalSHA256": "bf412be3265b342a35bc6096e1bab910fbf1391b0e4c9ffbb10bfd5a66e183cf"
+      },
+      "transformation": "public sanitation of local paths; synthetic credential marker redaction; selected regression assertions only",
+      "byteIdenticalToOriginal": false
+    },
+    {
+      "path": "reproduction/SS21.test.ts",
+      "bytes": 18599,
+      "sha256": "d2343dc6ab1c2600253ac2b58138e5913b3f4bed2274665c462a4ef3ad3d0f2d",
+      "source": {
+        "artifact": "SS21.test.ts",
+        "originalBytes": 18565,
+        "originalSHA256": "03ca715a995673b6c87949fe279b2d6c754c7909c9c4ad2cc5a1efd63702dcf0"
+      },
+      "transformation": "public sanitation; reproduction output path parameterized",
+      "byteIdenticalToOriginal": false
+    }
+  ],
+  "hashPolicy": {
+    "manifest.json": "not listed in itself; hashed by SHA256SUMS",
+    "SHA256SUMS": "not listed in itself or manifest",
+    "allOtherFiles": "bytes/SHA256 in manifest and SHA256SUMS"
+  }
+}

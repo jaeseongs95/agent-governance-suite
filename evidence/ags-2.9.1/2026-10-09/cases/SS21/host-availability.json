@@ -1,0 +1,11 @@
+{
+  "classificationConfigConfigured": false,
+  "classificationRootConfigured": false,
+  "codexExecutable": "<HOST_CODEX_EXECUTABLE>",
+  "claudeExecutable": null,
+  "workspaceAgentsSkillsExists": false,
+  "repoAgentsSkillsExists": false,
+  "sourceSpecExists": false,
+  "externalApiInvocations": 0,
+  "cliModelInvocations": 0
+}

@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/ss21-isolated/SS21.test.ts",
+    "--maxWorkers=1",
+    "--reporter=json",
+    "--outputFile=logs/isolated.vitest.json"
+  ],
+  "cwd": "<PINNED_REPO>",
+  "exitCode": 1,
+  "startedEpoch": 1791514613.1442893,
+  "durationSeconds": 1.8477494716644287,
+  "executionKind": "new-isolated-offline-mock",
+  "API0": true
+}

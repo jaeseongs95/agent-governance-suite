@@ -1,0 +1,49 @@
+{
+  "case": {
+    "caseId": "SS21",
+    "title": "동일 REQ RESP와 코드 포장",
+    "familyId": "mechanical-SS21",
+    "publicSynthetic": true,
+    "status": "NOT_RUN",
+    "executionKind": "mock 필수. 실제 분류·AGENT 선택 검증은 승인된 각 provider/host-live로 별도 수행한다.",
+    "originalPrompt": null,
+    "sourceSpec": {
+      "path": "TEST-SPEC.seq7.ko.md",
+      "section": "SS21",
+      "fields": {
+        "입력": "같은 원문 prompt·확인 metadata·전체 inventory·request/operation ID를 코드로 포장한 공통 요청 하나를 JEV와 vendor LLM adapter에 각각 준다. 정상 복수 추천, no-skill, 불확실, 형식 오류·미가용 응답을 같은 의미의 mock으로 제공한다. provider wire와 원시 score 유무는 다르게 둔다.",
+        "필수추천": "상위 AGS·VM·AGENT가 같은 필드·자료형·의미·오류·불확실 계약을 소비한다. 코드 포장은 입력의 의미를 새로 추출하거나 요약하지 않는다.",
+        "금지추천 또는 행동": "상위에 JEV state/questions나 vendor messages를 노출; adapter 교체 때문에 상위 코드를 변경; 원시 score가 없다고 0/confidence를 발명; 앞단 정형화용 LLM 호출; 부정문·인용·제약·inventory를 조용히 잘라냄.",
+        "허용선택": "adapter 내부 wire 변환과 선택적 진단 score. 동일 계약이어도 실제 모델의 추천 값은 다를 수 있으며 의미 품질은 별도 평가한다.",
+        "보류조건": "필수 공통 필드·정확 ID·응답 완전성·포장 provenance가 확인되지 않음. 입력 한도를 넘으면 INPUT_TOO_LONG 또는 명시된 무손실 처리다.",
+        "통과기준": "상위 소비 코드를 그대로 두고 adapter만 교체한 모든 mock이 같은 schema·상태 의미로 처리된다. 포장 전후 원문·부정·확인 metadata·전체 후보의 digest와 개수가 맞는다. 앞단 LLM 호출 0, 추가 요약 토큰 0이다. 포장 연산 시간과 실제 분류 입력 토큰·비용은 별도이며 입력 토큰을 0으로 보고하지 않는다. 같은 정보로 최종 선택하는 주체는 AGENT다.",
+        "증거": "E0·E1, 원문/metadata/공통REQ/공통RESP digest, 상위 소비 경로 동일성, wire adapter 매핑, 호출 spy, 포장 시간·분류 입력 tokens. JEV는 질문별 Noul의 ID·응답 수·0~1 유효성을 adapter 내부에서 확인한다.",
+        "실행종류": "mock 필수. 실제 분류·AGENT 선택 검증은 승인된 각 provider/host-live로 별도 수행한다."
+      },
+      "bodyDigest": "sha256:781d4b51e5ebf2e2f94e27c1a4e78e645685bed891146b7468314f078be47f69"
+    },
+    "oracle": null,
+    "variants": [
+      "multi-needed",
+      "no-skill",
+      "uncertain",
+      "invalid",
+      "unavailable",
+      "scores-present",
+      "scores-absent",
+      "quoted-provenance",
+      "negation-preserved",
+      "unknown-not-empty"
+    ]
+  },
+  "provenanceCases": [
+    {
+      "variantId": "SS21-quoted-provenance",
+      "expected": "quoted data is not explicit instruction"
+    },
+    {
+      "variantId": "SS21-unknown-not-empty",
+      "expected": "null remains distinct from []"
+    }
+  ]
+}

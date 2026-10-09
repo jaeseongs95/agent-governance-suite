@@ -1,0 +1,175 @@
+{
+  "numTotalTestSuites": 8,
+  "numPassedTestSuites": 8,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 73,
+  "numPassedTests": 8,
+  "numFailedTests": 0,
+  "numPendingTests": 65,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514613679,
+  "success": true,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "approved classification wire adapters"
+          ],
+          "fullName": "approved classification wire adapters SS20/21 transmits one bound TypeSafe state/questions request using the exact profile model",
+          "status": "passed",
+          "title": "SS20/21 transmits one bound TypeSafe state/questions request using the exact profile model",
+          "duration": 36.82388,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514614224,
+      "endTime": 1791514614260.824,
+      "status": "passed",
+      "message": "",
+      "name": "<PINNED_REPO>/tests/mcp/skill-classification-providers.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "deterministic exact request and compact projection (SS21/SS28)"
+          ],
+          "fullName": "deterministic exact request and compact projection (SS21/SS28) retains exact bytes, negations, quotations and unknown context",
+          "status": "passed",
+          "title": "retains exact bytes, negations, quotations and unknown context",
+          "duration": 8.272189999999995,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "deterministic exact request and compact projection (SS21/SS28)"
+          ],
+          "fullName": "deterministic exact request and compact projection (SS21/SS28) preserves confirmed empty values and separate prohibited actions with provenance",
+          "status": "passed",
+          "title": "preserves confirmed empty values and separate prohibited actions with provenance",
+          "duration": 3.2246939999999995,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "deterministic exact request and compact projection (SS21/SS28)"
+          ],
+          "fullName": "deterministic exact request and compact projection (SS21/SS28) rejects non-JSON inputs and tampered prompt/context bindings",
+          "status": "passed",
+          "title": "rejects non-JSON inputs and tampered prompt/context bindings",
+          "duration": 1.7882029999999816,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "deterministic exact request and compact projection (SS21/SS28)"
+          ],
+          "fullName": "deterministic exact request and compact projection (SS21/SS28) rejects unknown request/input fields even when their digest is recomputed",
+          "status": "passed",
+          "title": "rejects unknown request/input fields even when their digest is recomputed",
+          "duration": 1.1513769999999965,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "deterministic exact request and compact projection (SS21/SS28)"
+          ],
+          "fullName": "deterministic exact request and compact projection (SS21/SS28) keeps the last prohibition, every candidate, applicability, dependencies and phase gates",
+          "status": "passed",
+          "title": "keeps the last prohibition, every candidate, applicability, dependencies and phase gates",
+          "duration": 122.50316299999997,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514614680,
+      "endTime": 1791514614817.5032,
+      "status": "passed",
+      "message": "",
+      "name": "<PINNED_REPO>/tests/mcp/skill-classification-request.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "trusted provider runtime composition"
+          ],
+          "fullName": "trusted provider runtime composition SS21 resolves only the configured credential environment name and performs the real adapter transform",
+          "status": "passed",
+          "title": "SS21 resolves only the configured credential environment name and performs the real adapter transform",
+          "duration": 33.51179300000001,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514614459,
+      "endTime": 1791514614492.5117,
+      "status": "passed",
+      "message": "",
+      "name": "<PINNED_REPO>/tests/mcp/skill-classification-runtime.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "fixed-profile classification service"
+          ],
+          "fullName": "fixed-profile classification service SS21 ON uses JEV alone without injecting a final AGENT selection",
+          "status": "passed",
+          "title": "SS21 ON uses JEV alone without injecting a final AGENT selection",
+          "duration": 14.307309000000032,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514614028,
+      "endTime": 1791514614042.3074,
+      "status": "passed",
+      "message": "",
+      "name": "<PINNED_REPO>/tests/mcp/skill-classification-service.test.ts"
+    }
+  ],
+  "publicRedaction": {
+    "omittedSkippedAssertionRecords": 65,
+    "reason": "Unexecuted unrelated-case records removed; original totals and eight executed assertion results preserved."
+  }
+}

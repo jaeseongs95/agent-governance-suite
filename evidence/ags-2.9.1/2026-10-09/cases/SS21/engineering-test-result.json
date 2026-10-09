@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:cadafb6b924ad7d7982016a0911e6f0f3fa1d3680c6cbbd277cb540d5dd057dd",
+  "reportDigest": "sha256:3557ae1d9989f0d7a8b63e0bb90d46583e226b01ebc152a6ba179b8c170df1db",
+  "issues": [
+    "REQUIRED SS21-multi-needed: NOT_RUN — No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json.",
+    "REQUIRED SS21-no-skill: NOT_RUN — No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json.",
+    "REQUIRED SS21-uncertain: NOT_RUN — No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json.",
+    "REQUIRED SS21-invalid: NOT_RUN — No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json.",
+    "REQUIRED SS21-unavailable: NOT_RUN — No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json.",
+    "REQUIRED SS21-scores-present: NOT_RUN — No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json.",
+    "REQUIRED SS21-scores-absent: NOT_RUN — No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json.",
+    "REQUIRED SS21-quoted-provenance: NOT_RUN — No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json.",
+    "REQUIRED SS21-negation-preserved: NOT_RUN — No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json.",
+    "REQUIRED SS21-unknown-not-empty: NOT_RUN — No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

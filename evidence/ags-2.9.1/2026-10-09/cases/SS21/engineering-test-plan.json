@@ -1,0 +1,291 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS21",
+  "contractDigest": "sha256:a9c12ee41bcde2f30308556fb3ebec8e45f93fbafd8c8eb330cc6905dafaba07",
+  "requirements": [
+    "multi-needed",
+    "no-skill",
+    "uncertain",
+    "invalid",
+    "unavailable",
+    "scores-present",
+    "scores-absent",
+    "quoted-provenance",
+    "negation-preserved",
+    "unknown-not-empty"
+  ],
+  "scopeFiles": [
+    "tests/ss21-isolated/SS21.test.ts"
+  ],
+  "runner": "existing Vitest 5.0.0; no build, no suite run",
+  "environment": "independent <PINNED_REPO>; Node24.19.0 pnpm11.19.0 UTC; transport replaced, global fetch forbidden; real host NOTRUN",
+  "cases": [
+    {
+      "id": "SS21-multi-needed",
+      "requirementIds": [
+        "multi-needed"
+      ],
+      "scenario": "Same common REQ, full source inventory, two distinct adapter wires; independently chosen mock meaning",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider / createClassificationRequest / validateClassificationResponse",
+      "level": "integration",
+      "expectedBehavior": "Same schema/state meaning; preserve raw prompt, metadata, every candidate, optional diagnostics; no automatic selection",
+      "oracle": "SS21 embedded sourceSpec.fields only; frozen semantic oracle=null; test labels are synthetic controls",
+      "testFiles": [
+        "tests/ss21-isolated/SS21.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product source mutation authorized. Contract assertions and explicit known-defect red only; green repair and causal sensitivity proof NOTRUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/ss21-isolated/SS21.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=logs/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS21-no-skill",
+      "requirementIds": [
+        "no-skill"
+      ],
+      "scenario": "Same common REQ, full source inventory, two distinct adapter wires; independently chosen mock meaning",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider / createClassificationRequest / validateClassificationResponse",
+      "level": "integration",
+      "expectedBehavior": "Same schema/state meaning; preserve raw prompt, metadata, every candidate, optional diagnostics; no automatic selection",
+      "oracle": "SS21 embedded sourceSpec.fields only; frozen semantic oracle=null; test labels are synthetic controls",
+      "testFiles": [
+        "tests/ss21-isolated/SS21.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product source mutation authorized. Contract assertions and explicit known-defect red only; green repair and causal sensitivity proof NOTRUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/ss21-isolated/SS21.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=logs/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS21-uncertain",
+      "requirementIds": [
+        "uncertain"
+      ],
+      "scenario": "Same common REQ, full source inventory, two distinct adapter wires; independently chosen mock meaning",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider / createClassificationRequest / validateClassificationResponse",
+      "level": "integration",
+      "expectedBehavior": "Same schema/state meaning; preserve raw prompt, metadata, every candidate, optional diagnostics; no automatic selection",
+      "oracle": "SS21 embedded sourceSpec.fields only; frozen semantic oracle=null; test labels are synthetic controls",
+      "testFiles": [
+        "tests/ss21-isolated/SS21.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product source mutation authorized. Contract assertions and explicit known-defect red only; green repair and causal sensitivity proof NOTRUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/ss21-isolated/SS21.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=logs/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS21-invalid",
+      "requirementIds": [
+        "invalid"
+      ],
+      "scenario": "Same common REQ, full source inventory, two distinct adapter wires; independently chosen mock meaning",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider / createClassificationRequest / validateClassificationResponse",
+      "level": "integration",
+      "expectedBehavior": "Reject malformed, incomplete and invalid-score responses; preserve known valid usage",
+      "oracle": "SS21 embedded sourceSpec.fields only; frozen semantic oracle=null; test labels are synthetic controls",
+      "testFiles": [
+        "tests/ss21-isolated/SS21.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product source mutation authorized. Contract assertions and explicit known-defect red only; green repair and causal sensitivity proof NOTRUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/ss21-isolated/SS21.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=logs/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS21-unavailable",
+      "requirementIds": [
+        "unavailable"
+      ],
+      "scenario": "Same common REQ, full source inventory, two distinct adapter wires; independently chosen mock meaning",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider / createClassificationRequest / validateClassificationResponse",
+      "level": "integration",
+      "expectedBehavior": "Explicit UNAVAILABLE; no no-skill fabrication",
+      "oracle": "SS21 embedded sourceSpec.fields only; frozen semantic oracle=null; test labels are synthetic controls",
+      "testFiles": [
+        "tests/ss21-isolated/SS21.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product source mutation authorized. Contract assertions and explicit known-defect red only; green repair and causal sensitivity proof NOTRUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/ss21-isolated/SS21.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=logs/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS21-scores-present",
+      "requirementIds": [
+        "scores-present"
+      ],
+      "scenario": "Same common REQ, full source inventory, two distinct adapter wires; independently chosen mock meaning",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider / createClassificationRequest / validateClassificationResponse",
+      "level": "integration",
+      "expectedBehavior": "Same schema/state meaning; preserve raw prompt, metadata, every candidate, optional diagnostics; no automatic selection",
+      "oracle": "SS21 embedded sourceSpec.fields only; frozen semantic oracle=null; test labels are synthetic controls",
+      "testFiles": [
+        "tests/ss21-isolated/SS21.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product source mutation authorized. Contract assertions and explicit known-defect red only; green repair and causal sensitivity proof NOTRUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/ss21-isolated/SS21.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=logs/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS21-scores-absent",
+      "requirementIds": [
+        "scores-absent"
+      ],
+      "scenario": "Same common REQ, full source inventory, two distinct adapter wires; independently chosen mock meaning",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider / createClassificationRequest / validateClassificationResponse",
+      "level": "integration",
+      "expectedBehavior": "Same schema/state meaning; preserve raw prompt, metadata, every candidate, optional diagnostics; no automatic selection",
+      "oracle": "SS21 embedded sourceSpec.fields only; frozen semantic oracle=null; test labels are synthetic controls",
+      "testFiles": [
+        "tests/ss21-isolated/SS21.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product source mutation authorized. Contract assertions and explicit known-defect red only; green repair and causal sensitivity proof NOTRUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/ss21-isolated/SS21.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=logs/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS21-quoted-provenance",
+      "requirementIds": [
+        "quoted-provenance"
+      ],
+      "scenario": "Same common REQ, full source inventory, two distinct adapter wires; independently chosen mock meaning",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider / createClassificationRequest / validateClassificationResponse",
+      "level": "integration",
+      "expectedBehavior": "Exact quoted data preserved; actual semantic interpretation NOTRUN",
+      "oracle": "SS21 embedded sourceSpec.fields only; frozen semantic oracle=null; test labels are synthetic controls",
+      "testFiles": [
+        "tests/ss21-isolated/SS21.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product source mutation authorized. Contract assertions and explicit known-defect red only; green repair and causal sensitivity proof NOTRUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/ss21-isolated/SS21.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=logs/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS21-negation-preserved",
+      "requirementIds": [
+        "negation-preserved"
+      ],
+      "scenario": "Same common REQ, full source inventory, two distinct adapter wires; independently chosen mock meaning",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider / createClassificationRequest / validateClassificationResponse",
+      "level": "integration",
+      "expectedBehavior": "Same schema/state meaning; preserve raw prompt, metadata, every candidate, optional diagnostics; no automatic selection",
+      "oracle": "SS21 embedded sourceSpec.fields only; frozen semantic oracle=null; test labels are synthetic controls",
+      "testFiles": [
+        "tests/ss21-isolated/SS21.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product source mutation authorized. Contract assertions and explicit known-defect red only; green repair and causal sensitivity proof NOTRUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/ss21-isolated/SS21.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=logs/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS21-unknown-not-empty",
+      "requirementIds": [
+        "unknown-not-empty"
+      ],
+      "scenario": "Same common REQ, full source inventory, two distinct adapter wires; independently chosen mock meaning",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider / createClassificationRequest / validateClassificationResponse",
+      "level": "integration",
+      "expectedBehavior": "Unknown fields stay null, confirmed empty actions stay []",
+      "oracle": "SS21 embedded sourceSpec.fields only; frozen semantic oracle=null; test labels are synthetic controls",
+      "testFiles": [
+        "tests/ss21-isolated/SS21.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product source mutation authorized. Contract assertions and explicit known-defect red only; green repair and causal sensitivity proof NOTRUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/ss21-isolated/SS21.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=logs/isolated.vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "Other original cases and full suite",
+    "External provider API/Claude/JEV/live bootstrap; past21 rerun",
+    "Product source edits/push/PR/release",
+    "Host selection and skill lifecycle receipts; real input tokens/cost; semantic accuracy scoring"
+  ]
+}

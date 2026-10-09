@@ -1,0 +1,211 @@
+{
+  "numTotalTestSuites": 3,
+  "numPassedTestSuites": 1,
+  "numFailedTestSuites": 2,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 13,
+  "numPassedTests": 12,
+  "numFailedTests": 1,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514613679,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "SS21 every assigned variant: same consumer, real packaging and mock adapter swap"
+          ],
+          "fullName": "SS21 every assigned variant: same consumer, real packaging and mock adapter swap SS21 multi-needed",
+          "status": "passed",
+          "title": "SS21 multi-needed",
+          "duration": 127.69640799999996,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS21 every assigned variant: same consumer, real packaging and mock adapter swap"
+          ],
+          "fullName": "SS21 every assigned variant: same consumer, real packaging and mock adapter swap SS21 no-skill",
+          "status": "passed",
+          "title": "SS21 no-skill",
+          "duration": 63.734376999999995,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS21 every assigned variant: same consumer, real packaging and mock adapter swap"
+          ],
+          "fullName": "SS21 every assigned variant: same consumer, real packaging and mock adapter swap SS21 uncertain",
+          "status": "passed",
+          "title": "SS21 uncertain",
+          "duration": 60.102146999999945,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS21 every assigned variant: same consumer, real packaging and mock adapter swap"
+          ],
+          "fullName": "SS21 every assigned variant: same consumer, real packaging and mock adapter swap SS21 invalid",
+          "status": "passed",
+          "title": "SS21 invalid",
+          "duration": 67.77108099999998,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS21 every assigned variant: same consumer, real packaging and mock adapter swap"
+          ],
+          "fullName": "SS21 every assigned variant: same consumer, real packaging and mock adapter swap SS21 unavailable",
+          "status": "passed",
+          "title": "SS21 unavailable",
+          "duration": 35.98823300000004,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS21 every assigned variant: same consumer, real packaging and mock adapter swap"
+          ],
+          "fullName": "SS21 every assigned variant: same consumer, real packaging and mock adapter swap SS21 scores-present",
+          "status": "passed",
+          "title": "SS21 scores-present",
+          "duration": 64.88472100000001,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS21 every assigned variant: same consumer, real packaging and mock adapter swap"
+          ],
+          "fullName": "SS21 every assigned variant: same consumer, real packaging and mock adapter swap SS21 scores-absent",
+          "status": "passed",
+          "title": "SS21 scores-absent",
+          "duration": 55.79689600000006,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS21 every assigned variant: same consumer, real packaging and mock adapter swap"
+          ],
+          "fullName": "SS21 every assigned variant: same consumer, real packaging and mock adapter swap SS21 quoted-provenance",
+          "status": "passed",
+          "title": "SS21 quoted-provenance",
+          "duration": 53.869490999999925,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS21 every assigned variant: same consumer, real packaging and mock adapter swap"
+          ],
+          "fullName": "SS21 every assigned variant: same consumer, real packaging and mock adapter swap SS21 negation-preserved",
+          "status": "passed",
+          "title": "SS21 negation-preserved",
+          "duration": 57.472571000000016,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS21 every assigned variant: same consumer, real packaging and mock adapter swap"
+          ],
+          "fullName": "SS21 every assigned variant: same consumer, real packaging and mock adapter swap SS21 unknown-not-empty",
+          "status": "passed",
+          "title": "SS21 unknown-not-empty",
+          "duration": 59.590914999999995,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS21 missing boundaries"
+          ],
+          "fullName": "SS21 missing boundaries SS21 invalid JEV question IDs, answer count, score types and bounds are rejected inside adapter",
+          "status": "passed",
+          "title": "SS21 invalid JEV question IDs, answer count, score types and bounds are rejected inside adapter",
+          "duration": 6.242647999999917,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS21 missing boundaries"
+          ],
+          "fullName": "SS21 missing boundaries SS21 exact wire byte limit accepts equality and rejects minus one without sending",
+          "status": "passed",
+          "title": "SS21 exact wire byte limit accepts equality and rejects minus one without sending",
+          "duration": 50.77707199999986,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS21 missing boundaries"
+          ],
+          "fullName": "SS21 missing boundaries SS21 invalid response must retain valid observed cost and token usage (known defect reproduction)",
+          "status": "failed",
+          "title": "SS21 invalid response must retain valid observed cost and token usage (known defect reproduction)",
+          "duration": 14.856415999999854,
+          "failureMessages": [
+            "AssertionError: expected null to be 0.125 // Object.is equality\n    at <PINNED_REPO>/tests/ss21-isolated/SS21.test.ts:167:100\n    at file://<DEPENDENCY_REPO>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514614164,
+      "endTime": 1791514614883.8564,
+      "status": "failed",
+      "message": "",
+      "name": "<PINNED_REPO>/tests/ss21-isolated/SS21.test.ts"
+    }
+  ]
+}

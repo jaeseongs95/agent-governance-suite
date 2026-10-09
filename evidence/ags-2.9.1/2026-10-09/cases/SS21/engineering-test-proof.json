@@ -1,0 +1,170 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-proof",
+  "planDigest": "sha256:821db1a88e95b5a293c365b0f7c777df75d2dcac8d8d782c09f55bd4ebebd39d",
+  "candidate": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-snapshot",
+    "files": [
+      {
+        "path": "tests/ss21-isolated/SS21.test.ts",
+        "digest": "sha256:03ca715a995673b6c87949fe279b2d6c754c7909c9c4ad2cc5a1efd63702dcf0",
+        "size": 18565,
+        "lineCount": 169
+      }
+    ],
+    "digest": "sha256:cadafb6b924ad7d7982016a0911e6f0f3fa1d3680c6cbbd277cb540d5dd057dd"
+  },
+  "proofs": [
+    {
+      "caseId": "SS21-multi-needed",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json."
+    },
+    {
+      "caseId": "SS21-no-skill",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json."
+    },
+    {
+      "caseId": "SS21-uncertain",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json."
+    },
+    {
+      "caseId": "SS21-invalid",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json."
+    },
+    {
+      "caseId": "SS21-unavailable",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json."
+    },
+    {
+      "caseId": "SS21-scores-present",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json."
+    },
+    {
+      "caseId": "SS21-scores-absent",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json."
+    },
+    {
+      "caseId": "SS21-quoted-provenance",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json."
+    },
+    {
+      "caseId": "SS21-negation-preserved",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json."
+    },
+    {
+      "caseId": "SS21-unknown-not-empty",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "No product source mutations/repairs authorized; live operational/semantic and causal red-green proof NOTRUN. The actual offline controls and one pre-existing defect FAIL are recorded separately in SS21.result.json."
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "1.0.0",
+  "target": {
+    "kind": "artifact",
+    "identifier": "SS21 frozen commit/tree/source snapshot manifest",
+    "digest": "sha256:d0520764ba5eaa87612a30327d19231cdb1f8a53b1345d0d21c83bd0d8bf0400"
+  },
+  "criteria": [
+    {
+      "criterionId": "AC-001",
+      "statement": "Every assigned SS21 mock variant uses unchanged common consumer and exact full input; wire/state/status parity is tested.",
+      "status": "satisfied",
+      "evidenceRefs": [
+        "SS21-operational-controls"
+      ],
+      "observedResult": "All ten assigned source variants passed adapter/packaging assertions; 24 candidates, mock labels only. Quote interpretation is not proved by preservation.",
+      "rationale": "Verified evidence for the current target supports this criterion."
+    },
+    {
+      "criterionId": "AC-002",
+      "statement": "Valid observed usage and cost remain accounted when common RESP is invalid.",
+      "status": "unsatisfied",
+      "evidenceRefs": [
+        "SS21-known-cost-loss",
+        "command:isolated-red"
+      ],
+      "observedResult": "321 input/42 output tokens and valid actualCostUsd=0.125 became null on INVALID_PROVIDER_RESPONSE. Spent remains0 and maximum0.4 reservation remains. Same known root cause; not new finding.; Verification command exited with code 1.",
+      "rationale": "Current target evidence contradicts this acceptance criterion."
+    },
+    {
+      "criterionId": "AC-003",
+      "statement": "Quoted provenance is interpreted as data and final AGENT selection/read/applied/verified are genuinely observed in live host.",
+      "status": "insufficient-evidence",
+      "evidenceRefs": [],
+      "observedResult": "",
+      "rationale": "No verified evidence for the current target supports or refutes this criterion."
+    },
+    {
+      "criterionId": "AC-004",
+      "statement": "Actual provider input tokens and actual costs are observed separately from packaging time; no invented zero.",
+      "status": "insufficient-evidence",
+      "evidenceRefs": [],
+      "observedResult": "",
+      "rationale": "No verified evidence for the current target supports or refutes this criterion."
+    }
+  ],
+  "verifiedEvidenceIndex": [
+    {
+      "evidenceId": "SS21-operational-controls",
+      "kind": "test",
+      "locator": "logs/isolated.vitest.json",
+      "digest": "sha256:6669d599e4e23aafbf21e7b633e96fa327eae752349439a73ff0b25cc71c6e1d",
+      "targetDigest": "sha256:d0520764ba5eaa87612a30327d19231cdb1f8a53b1345d0d21c83bd0d8bf0400",
+      "criterionIds": [
+        "AC-001"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "SS21-known-cost-loss",
+      "kind": "test",
+      "locator": "SS21.observations.json.gz",
+      "digest": "sha256:fbcfd042ac3568162649b4a2c9d5980ac169e5a4265a4147a80d4d6040b1bdae",
+      "targetDigest": "sha256:d0520764ba5eaa87612a30327d19231cdb1f8a53b1345d0d21c83bd0d8bf0400",
+      "criterionIds": [
+        "AC-002"
+      ],
+      "direction": "refutes"
+    },
+    {
+      "evidenceId": "command:isolated-red",
+      "kind": "verification-command",
+      "locator": "logs/isolated.vitest.json",
+      "digest": "sha256:f8df6f8d17dec6996081f11373975899bcc1ca5693ce96ff79f93106f124d014",
+      "targetDigest": "sha256:d0520764ba5eaa87612a30327d19231cdb1f8a53b1345d0d21c83bd0d8bf0400",
+      "criterionIds": [
+        "AC-002"
+      ],
+      "direction": "refutes"
+    }
+  ],
+  "unresolvedCriteria": [
+    "AC-003",
+    "AC-004"
+  ],
+  "limitations": [
+    "Local evidence consistency only; not independent audit or release approval",
+    "No actual provider/live host; no final selection receipts. Actual provider usage and semantic interpretation NOTRUN.",
+    "Product source unchanged; no repair/green or product mutation sensitivity demonstration."
+  ],
+  "verdict": "FAIL"
+}
