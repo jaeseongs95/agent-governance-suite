@@ -1,0 +1,16 @@
+{
+  "name": "existing-regression",
+  "argv": [
+    "node",
+    "scripts/run-tests.mjs",
+    "tests/mcp/skill-classification-gateway.test.ts",
+    "-t",
+    "preserves original negation, provenance, null and known-empty at the real service boundary"
+  ],
+  "cwd": "REPO_ROOT",
+  "startedAt": "2026-10-09T02:56:17.382808+00:00",
+  "endedAt": "2026-10-09T02:56:18.823437+00:00",
+  "exitCode": 0,
+  "executionKind": "offline-mock",
+  "externalAPI0": true
+}

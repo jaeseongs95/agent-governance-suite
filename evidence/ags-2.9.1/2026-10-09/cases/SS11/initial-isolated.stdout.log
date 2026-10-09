@@ -1,0 +1,19 @@
+
+ RUN  v5.0.0 REPO_ROOT
+
+ ✓ tests/skill-classification/SS11.isolated.test.ts > SS11 isolated offline verification > SS11/base integrity 4ms
+ ✓ tests/skill-classification/SS11.isolated.test.ts > SS11 isolated offline verification > SS11/base preserves quote as background and current translation as action 41ms
+ ✓ tests/skill-classification/SS11.isolated.test.ts > SS11 isolated offline verification > SS11/base gateway keeps injected no-skill advice separate from AGENT selection 68ms
+ ✓ tests/skill-classification/SS11.isolated.test.ts > SS11 isolated offline verification > SS11/hostile-advice never promotes quoted skill from support into final selection 57ms
+ ✓ tests/skill-classification/SS11.isolated.test.ts > SS11 isolated offline verification > SS11/missing-background-source rejects before provider entry 43ms
+ × tests/skill-classification/SS11.isolated.test.ts > SS11 isolated offline verification > SS11/missing-all-provenance must hold before classification (spec boundary) 57ms
+   → SS11 sourceSpec 보류조건: absent quote/current-instruction provenance must hold before provider: expected 1 to be +0 // Object.is equality
+ ✓ tests/skill-classification/SS11.isolated.test.ts > SS11 isolated offline verification > SS11/absent-host refuses unobserved empty selection without creating a receipt 62ms
+ ✓ tests/skill-classification/SS11.isolated.test.ts > SS11 isolated offline verification > SS11/evaluator distinguishes empty, null, forbidden, unadjudicated and unreceived selected 0ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  02:56:19
+   Duration  756ms (tests 66%, transform 21%, import 13%, worker 1%)
+
+JSON report written to CASE_ARTIFACTS/vitest-isolated.json

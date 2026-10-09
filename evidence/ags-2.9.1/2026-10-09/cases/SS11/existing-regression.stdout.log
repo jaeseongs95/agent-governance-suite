@@ -1,0 +1,9 @@
+
+ RUN  v5.0.0 REPO_ROOT
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 37 skipped (38)
+   Start at  02:56:17
+   Duration  1.01s (tests 43%, transform 35%, import 21%)
+

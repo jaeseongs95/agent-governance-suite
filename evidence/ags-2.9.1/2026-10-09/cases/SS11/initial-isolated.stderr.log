@@ -1,0 +1,23 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/skill-classification/SS11.isolated.test.ts > SS11 isolated offline verification > SS11/missing-all-provenance must hold before classification (spec boundary)
+AssertionError: SS11 sourceSpec 보류조건: absent quote/current-instruction provenance must hold before provider: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/skill-classification/SS11.isolated.test.ts:116:137
+    114|     records.push({id: "missing-all-provenance", origin: "new isolated …
+    115|       expected: {hold: true, mockCalls: 0}, observed, mockCalls: h.cla…
+    116|     expect(h.classify.mock.calls.length, "SS11 sourceSpec 보류조건: absent…
+       |                                                                                                                                         ^
+    117|   });
+    118|   it("SS11/absent-host refuses unobserved empty selection without crea…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+{"harness": "test-subreaper", "remainingChildren": false, "runnerExitCode": 1, "cancelled": false}

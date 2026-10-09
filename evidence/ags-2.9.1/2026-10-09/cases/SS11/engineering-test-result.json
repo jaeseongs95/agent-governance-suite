@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:b3e22d9502f4e3d911b534b0202ccc6f04d1a303b5d68a022ba7cd4807580486",
+  "reportDigest": "sha256:ab8e377879b4bc7501c28e35aee4795870fa96f695c738a525da710abf741e05",
+  "issues": [
+    "REQUIRED SS11-offline-1: NOT_RUN — Sensitivity red/green or product mutation NOT_RUN. Offline test observations are in vitest-isolated.json and isolated-observations.json. No corrected candidate or product changes authorized.",
+    "REQUIRED SS11-offline-2: NOT_RUN — Sensitivity red/green or product mutation NOT_RUN. Offline test observations are in vitest-isolated.json and isolated-observations.json. No corrected candidate or product changes authorized.",
+    "REQUIRED SS11-offline-3: NOT_RUN — Sensitivity red/green or product mutation NOT_RUN. Offline test observations are in vitest-isolated.json and isolated-observations.json. No corrected candidate or product changes authorized.",
+    "REQUIRED SS11-offline-4: NOT_RUN — Sensitivity red/green or product mutation NOT_RUN. Offline test observations are in vitest-isolated.json and isolated-observations.json. No corrected candidate or product changes authorized.",
+    "REQUIRED SS11-offline-5: NOT_RUN — Sensitivity red/green or product mutation NOT_RUN. Offline test observations are in vitest-isolated.json and isolated-observations.json. No corrected candidate or product changes authorized.",
+    "REQUIRED SS11-offline-6: NOT_RUN — Sensitivity red/green or product mutation NOT_RUN. Offline test observations are in vitest-isolated.json and isolated-observations.json. No corrected candidate or product changes authorized.",
+    "REQUIRED SS11-offline-7: NOT_RUN — Sensitivity red/green or product mutation NOT_RUN. Offline test observations are in vitest-isolated.json and isolated-observations.json. No corrected candidate or product changes authorized.",
+    "REQUIRED SS11-offline-8: NOT_RUN — Sensitivity red/green or product mutation NOT_RUN. Offline test observations are in vitest-isolated.json and isolated-observations.json. No corrected candidate or product changes authorized."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

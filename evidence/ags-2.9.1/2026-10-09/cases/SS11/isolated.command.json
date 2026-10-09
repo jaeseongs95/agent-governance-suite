@@ -1,0 +1,18 @@
+{
+  "name": "isolated-final",
+  "argv": [
+    "node",
+    "scripts/run-tests.mjs",
+    "tests/skill-classification/SS11.isolated.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile.json=CASE_ARTIFACTS/vitest-isolated.json"
+  ],
+  "cwd": "REPO_ROOT",
+  "startedAt": "2026-10-09T02:57:57.048307+00:00",
+  "endedAt": "2026-10-09T02:57:58.096287+00:00",
+  "exitCode": 1,
+  "executionKind": "offline-mock",
+  "externalAPI0": true,
+  "rerunReason": "Added TypeScript literal narrowing to test-only context field array; no product change"
+}

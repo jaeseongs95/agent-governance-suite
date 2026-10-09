@@ -1,0 +1,17 @@
+{
+  "name": "isolated",
+  "argv": [
+    "node",
+    "scripts/run-tests.mjs",
+    "tests/skill-classification/SS11.isolated.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile.json=CASE_ARTIFACTS/vitest-isolated.json"
+  ],
+  "cwd": "REPO_ROOT",
+  "startedAt": "2026-10-09T02:56:18.823538+00:00",
+  "endedAt": "2026-10-09T02:56:19.958809+00:00",
+  "exitCode": 1,
+  "executionKind": "offline-mock",
+  "externalAPI0": true
+}

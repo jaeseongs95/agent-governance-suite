@@ -1,0 +1,450 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS11",
+  "publicationScope": "evidence/ags-2.9.1/2026-10-09/cases/SS11/",
+  "candidate": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixtureSHA256": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+  },
+  "inputBinding": {
+    "sourceId": "SS11.fixture.json#originalPrompt",
+    "originalInputBytes": {
+      "bytes": 184,
+      "sha256": "88737bc3b03aa7912b0798d4eb12360b164457d7c6a0703d68225099cfc4f5a8"
+    },
+    "publicInputBytes": {
+      "bytes": 184,
+      "sha256": "88737bc3b03aa7912b0798d4eb12360b164457d7c6a0703d68225099cfc4f5a8"
+    },
+    "encoding": "UTF-8, no added newline"
+  },
+  "retainedOutcomes": {
+    "regression": {
+      "PASS": 1,
+      "skipped": 37,
+      "exit": 0
+    },
+    "isolated": {
+      "PASS": 7,
+      "FAIL": 1,
+      "exit": 1
+    },
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "newTests": 0,
+  "newModelAPICalls": 0,
+  "patchStatus": "NO_PATCH",
+  "missingOriginals": [
+    {
+      "sourceId": "TEST-SPEC.seq7.ko.md",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Not in frozen repository; embedded SS11 sourceSpec is the only available text"
+    },
+    {
+      "sourceId": "initial-run exact test source and snapshot",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Initial historical logs/observations exist; no exact initial code snapshot was retained before the final test-only literal-narrowing change"
+    }
+  ],
+  "originalInventory": [
+    {
+      "sourceId": "SS11.fixture.json",
+      "bytes": 4114,
+      "sha256": "e9324b145fef34687dff022cbecb4185fce154c267426ddd9a8d33d22ea99010"
+    },
+    {
+      "sourceId": "SS11.report.md",
+      "bytes": 7350,
+      "sha256": "99fab8ded60a878a3ed0090810b1ee743692f3387726653e54eb8fa3ceeec4ed"
+    },
+    {
+      "sourceId": "SS11.result.json",
+      "bytes": 18499,
+      "sha256": "560b00ae7efa93781610064e101e84749f9863acdc93786943e4391acbf1610c"
+    },
+    {
+      "sourceId": "candidate-snapshot.json",
+      "bytes": 1026,
+      "sha256": "8db237821b73760fd72a2adcd8139a87a897fba9b9ae14c3b021033e3ffe3707"
+    },
+    {
+      "sourceId": "engineering-test-plan.json",
+      "bytes": 9498,
+      "sha256": "c8361b1d70e203cea13fda9e30955b26ee4a3e00e2600314d7cff19086e2382c"
+    },
+    {
+      "sourceId": "engineering-test-proof.json",
+      "bytes": 6190,
+      "sha256": "d370811bb2a7858e221319d68970517e1c5a54a9dbca6feae6af7a5337399c0f"
+    },
+    {
+      "sourceId": "engineering-test-result.json",
+      "bytes": 2571,
+      "sha256": "9babcfceff39bb66097f28758b4c55790f64f135d26809cb9d778a0ec91a4215"
+    },
+    {
+      "sourceId": "evidence-sha256.json",
+      "bytes": 3984,
+      "sha256": "2960c3a03714b3205dae0e3c6003bdae0f6ad335af97ff8a9162d4037a3bca82"
+    },
+    {
+      "sourceId": "existing-regression.command.json",
+      "bytes": 464,
+      "sha256": "9aff633ff0a508fa78e19e5c71738fba711f55ecc6ea81f85b614bbe142c5672"
+    },
+    {
+      "sourceId": "existing-regression.stderr.log",
+      "bytes": 155,
+      "sha256": "c3196397191c8ebcf4a167594f64bf1890dbc9b01d5ec215425e31ceaa6d0575"
+    },
+    {
+      "sourceId": "existing-regression.stdout.log",
+      "bytes": 184,
+      "sha256": "0b459fa52db9dcc8b7826371ba199a129d1aa7441fede754f60da28e3ec936bf"
+    },
+    {
+      "sourceId": "final-repository-state.txt",
+      "bytes": 164,
+      "sha256": "fe7013979afca0b63fc7b9ad0f3bf38e1b90cf46e565cefc8a522a7a623995e4"
+    },
+    {
+      "sourceId": "initial-isolated-observations.json",
+      "bytes": 1866626,
+      "sha256": "25900a10d04401dd78e689dcd91be6229ddcef507a7fe5d94a4f062a114d2185"
+    },
+    {
+      "sourceId": "initial-isolated.command.json",
+      "bytes": 467,
+      "sha256": "a6019c4b356a532895793e8169ad02ac0d958b7542224837f65ebb105d75472d"
+    },
+    {
+      "sourceId": "initial-isolated.stderr.log",
+      "bytes": 1226,
+      "sha256": "a38cec7b5234e9da891c87f06d7affaad0b9dfab6aaebe74aa08631240a696d8"
+    },
+    {
+      "sourceId": "initial-isolated.stdout.log",
+      "bytes": 1754,
+      "sha256": "2fa1e2248c68baa357baf18930565abc28e3cffc93ee907ca0e6cfe9272da3fa"
+    },
+    {
+      "sourceId": "initial-vitest-isolated.json",
+      "bytes": 3990,
+      "sha256": "f16871a145747235b7a642917fb8ce9662153f77b2da78541a3ada9802fe3745"
+    },
+    {
+      "sourceId": "isolated-observations.json",
+      "bytes": 1866626,
+      "sha256": "25900a10d04401dd78e689dcd91be6229ddcef507a7fe5d94a4f062a114d2185"
+    },
+    {
+      "sourceId": "isolated.command.json",
+      "bytes": 580,
+      "sha256": "79f773c1985290b330acc9e69c8ff0893c9fe185867bdc800b6f416a8c4e73b9"
+    },
+    {
+      "sourceId": "isolated.stderr.log",
+      "bytes": 1229,
+      "sha256": "e50dd1a273401b8206ef3fceefcf323a5fa382046208fbd83eeb429c705b7f1e"
+    },
+    {
+      "sourceId": "isolated.stdout.log",
+      "bytes": 1754,
+      "sha256": "99fd7f73906c1ac735182c2298e2cbc97f1d2276dc0b66e18dae1430d2dc0713"
+    },
+    {
+      "sourceId": "mcp-server/src/skill-classification/gateway.ts",
+      "bytes": 15017,
+      "sha256": "80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b"
+    },
+    {
+      "sourceId": "mcp-server/src/skill-classification/request.ts",
+      "bytes": 7093,
+      "sha256": "1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f"
+    },
+    {
+      "sourceId": "plan-check.log",
+      "bytes": 376,
+      "sha256": "2c8e2d3c1d4c44e9b74935216415c39e721e3379d1baf1fd58aa1bdfbf48bbba"
+    },
+    {
+      "sourceId": "tests/skill-classification/SS11.isolated.test.ts",
+      "bytes": 14607,
+      "sha256": "ba986fdd159a71a31028964debd620e0fc8ec1fdd1e764891b34989546cd408d"
+    },
+    {
+      "sourceId": "tests/skill-classification/live-bootstrap/bootstrap.mts",
+      "bytes": 34715,
+      "sha256": "1e258ae50a0e25d9c2a01a1ff186df1cce73c0693995ea7cef2be3cd187e791c"
+    },
+    {
+      "sourceId": "vitest-isolated.json",
+      "bytes": 4015,
+      "sha256": "344875d4bbd83b18cfaac546db14b1ad60c139782fa06480fbce6bb0020c15f1"
+    }
+  ],
+  "files": [
+    {
+      "path": "README.md",
+      "public": {
+        "bytes": 4398,
+        "sha256": "a49235f2e4beebd847e88592a2192979d0d1406efa4990c852f875976c38ca14"
+      },
+      "kind": "new-publication-document",
+      "transformation": "New publication README based on recovered existing outcomes; no new test claims"
+    },
+    {
+      "path": "SS11.fixture.json",
+      "public": {
+        "bytes": 4114,
+        "sha256": "e9324b145fef34687dff022cbecb4185fce154c267426ddd9a8d33d22ea99010"
+      },
+      "kind": "derived-public",
+      "transformation": "unchanged recovered original",
+      "original": {
+        "sourceId": "SS11.fixture.json",
+        "bytes": 4114,
+        "sha256": "e9324b145fef34687dff022cbecb4185fce154c267426ddd9a8d33d22ea99010"
+      }
+    },
+    {
+      "path": "SS11.result.json",
+      "public": {
+        "bytes": 18884,
+        "sha256": "3e5fd666a6020cf7db50ccfc408eaceadb9eb36c35ff95733483e8152b2b7f62"
+      },
+      "kind": "derived-public",
+      "transformation": "Replace private local paths by REPO_ROOT/CASE_ARTIFACTS; omit runtime environment observations; add publication context; existing statuses/exit/API0 unchanged",
+      "original": {
+        "sourceId": "SS11.result.json",
+        "bytes": 18499,
+        "sha256": "560b00ae7efa93781610064e101e84749f9863acdc93786943e4391acbf1610c"
+      }
+    },
+    {
+      "path": "engineering-test-result.json",
+      "public": {
+        "bytes": 2571,
+        "sha256": "9babcfceff39bb66097f28758b4c55790f64f135d26809cb9d778a0ec91a4215"
+      },
+      "kind": "derived-public",
+      "transformation": "Replace private local paths by portable labels; JSON reserialization; original execution/sensitivity statuses unchanged",
+      "original": {
+        "sourceId": "engineering-test-result.json",
+        "bytes": 2571,
+        "sha256": "9babcfceff39bb66097f28758b4c55790f64f135d26809cb9d778a0ec91a4215"
+      }
+    },
+    {
+      "path": "existing-regression.command.json",
+      "public": {
+        "bytes": 453,
+        "sha256": "4ae930f9c79b0b9571483f5ff8a0cfcd68d5ebfe7bc969651fcc228062fb2a97"
+      },
+      "kind": "derived-public",
+      "transformation": "Replace private local paths by portable labels; JSON reserialization; original execution/sensitivity statuses unchanged",
+      "original": {
+        "sourceId": "existing-regression.command.json",
+        "bytes": 464,
+        "sha256": "9aff633ff0a508fa78e19e5c71738fba711f55ecc6ea81f85b614bbe142c5672"
+      }
+    },
+    {
+      "path": "existing-regression.stderr.log",
+      "public": {
+        "bytes": 99,
+        "sha256": "f5c157d48b1fabac4eddfd5b29d430aaa5737bf1d521f1aad9f763cd858ff8f2"
+      },
+      "kind": "derived-public",
+      "transformation": "Private local paths replaced; subreaper process identifiers omitted; original PASS/FAIL/skipped/exit/child-cleanup preserved",
+      "original": {
+        "sourceId": "existing-regression.stderr.log",
+        "bytes": 155,
+        "sha256": "c3196397191c8ebcf4a167594f64bf1890dbc9b01d5ec215425e31ceaa6d0575"
+      }
+    },
+    {
+      "path": "existing-regression.stdout.log",
+      "public": {
+        "bytes": 173,
+        "sha256": "8491752db75f794b3c7a8b62aa4f783aabc8dd9e738183b468fd7bf70553454b"
+      },
+      "kind": "derived-public",
+      "transformation": "Private local paths replaced; subreaper process identifiers omitted; original PASS/FAIL/skipped/exit/child-cleanup preserved",
+      "original": {
+        "sourceId": "existing-regression.stdout.log",
+        "bytes": 184,
+        "sha256": "0b459fa52db9dcc8b7826371ba199a129d1aa7441fede754f60da28e3ec936bf"
+      }
+    },
+    {
+      "path": "initial-isolated.command.json",
+      "public": {
+        "bytes": 446,
+        "sha256": "34a777ac7076b4755850549eeb909a3fd4cc320f7bed8d142ff9b00795a1fffb"
+      },
+      "kind": "derived-public",
+      "transformation": "Replace private local paths by portable labels; JSON reserialization; original execution/sensitivity statuses unchanged",
+      "original": {
+        "sourceId": "initial-isolated.command.json",
+        "bytes": 467,
+        "sha256": "a6019c4b356a532895793e8169ad02ac0d958b7542224837f65ebb105d75472d"
+      }
+    },
+    {
+      "path": "initial-isolated.stderr.log",
+      "public": {
+        "bytes": 1170,
+        "sha256": "afd778a0f7e4b7eb19bf1fd9460857d4c9308f6b254e2f3b33472f65c7026feb"
+      },
+      "kind": "derived-public",
+      "transformation": "Private local paths replaced; subreaper process identifiers omitted; original PASS/FAIL/skipped/exit/child-cleanup preserved",
+      "original": {
+        "sourceId": "initial-isolated.stderr.log",
+        "bytes": 1226,
+        "sha256": "a38cec7b5234e9da891c87f06d7affaad0b9dfab6aaebe74aa08631240a696d8"
+      }
+    },
+    {
+      "path": "initial-isolated.stdout.log",
+      "public": {
+        "bytes": 1733,
+        "sha256": "c78824e543e292423764c02bcc17a95f000e3c6eab8754e3b032dbb5c58ec726"
+      },
+      "kind": "derived-public",
+      "transformation": "Private local paths replaced; subreaper process identifiers omitted; original PASS/FAIL/skipped/exit/child-cleanup preserved",
+      "original": {
+        "sourceId": "initial-isolated.stdout.log",
+        "bytes": 1754,
+        "sha256": "2fa1e2248c68baa357baf18930565abc28e3cffc93ee907ca0e6cfe9272da3fa"
+      }
+    },
+    {
+      "path": "initial-vitest-isolated.json",
+      "public": {
+        "bytes": 5377,
+        "sha256": "fc6ac61a425fb9791b71a079dd8c009b71935ed2e7d1b7c8f3a51e0440fc2620"
+      },
+      "kind": "derived-public",
+      "transformation": "Replace private local paths by portable labels; JSON reserialization; original execution/sensitivity statuses unchanged",
+      "original": {
+        "sourceId": "initial-vitest-isolated.json",
+        "bytes": 3990,
+        "sha256": "f16871a145747235b7a642917fb8ce9662153f77b2da78541a3ada9802fe3745"
+      }
+    },
+    {
+      "path": "input/originalPrompt.utf8.txt",
+      "public": {
+        "bytes": 184,
+        "sha256": "88737bc3b03aa7912b0798d4eb12360b164457d7c6a0703d68225099cfc4f5a8"
+      },
+      "kind": "derived-public",
+      "transformation": "Exact recovered originalPrompt string encoded as UTF-8, no newline; extraction only",
+      "original": {
+        "sourceId": "SS11.fixture.json",
+        "bytes": 4114,
+        "sha256": "e9324b145fef34687dff022cbecb4185fce154c267426ddd9a8d33d22ea99010"
+      }
+    },
+    {
+      "path": "isolated-observations.json",
+      "public": {
+        "bytes": 64482,
+        "sha256": "bbcddc2a6ad304d7efb84026aaf92ab9adeb1879e9b17a8306956ea2b56c1466"
+      },
+      "kind": "derived-public",
+      "transformation": "Portable path labels; repeated public inventory metadata omitted; existing input/expected/observed/exit/null-versus-empty unchanged",
+      "original": {
+        "sourceId": "isolated-observations.json",
+        "bytes": 1866626,
+        "sha256": "25900a10d04401dd78e689dcd91be6229ddcef507a7fe5d94a4f062a114d2185"
+      }
+    },
+    {
+      "path": "isolated.command.json",
+      "public": {
+        "bytes": 559,
+        "sha256": "5a2ee34b8c5d8707af7986a6344183ac4f82aac528dc9ca911fcb260727594ea"
+      },
+      "kind": "derived-public",
+      "transformation": "Replace private local paths by portable labels; JSON reserialization; original execution/sensitivity statuses unchanged",
+      "original": {
+        "sourceId": "isolated.command.json",
+        "bytes": 580,
+        "sha256": "79f773c1985290b330acc9e69c8ff0893c9fe185867bdc800b6f416a8c4e73b9"
+      }
+    },
+    {
+      "path": "isolated.stderr.log",
+      "public": {
+        "bytes": 1170,
+        "sha256": "afd778a0f7e4b7eb19bf1fd9460857d4c9308f6b254e2f3b33472f65c7026feb"
+      },
+      "kind": "derived-public",
+      "transformation": "Private local paths replaced; subreaper process identifiers omitted; original PASS/FAIL/skipped/exit/child-cleanup preserved",
+      "original": {
+        "sourceId": "isolated.stderr.log",
+        "bytes": 1229,
+        "sha256": "e50dd1a273401b8206ef3fceefcf323a5fa382046208fbd83eeb429c705b7f1e"
+      }
+    },
+    {
+      "path": "isolated.stdout.log",
+      "public": {
+        "bytes": 1733,
+        "sha256": "4fb2d58608fc0c2f9f9b0b85dd0bd3ed1d614cef96109e95a977513097384b61"
+      },
+      "kind": "derived-public",
+      "transformation": "Private local paths replaced; subreaper process identifiers omitted; original PASS/FAIL/skipped/exit/child-cleanup preserved",
+      "original": {
+        "sourceId": "isolated.stdout.log",
+        "bytes": 1754,
+        "sha256": "99fd7f73906c1ac735182c2298e2cbc97f1d2276dc0b66e18dae1430d2dc0713"
+      }
+    },
+    {
+      "path": "reproduce/README.md",
+      "public": {
+        "bytes": 1706,
+        "sha256": "9d0098d0b15c68945f473c2507ae8a38a6f25b9449f7f36a49e6a85d5358bc80"
+      },
+      "kind": "new-publication-document",
+      "transformation": "New reproduction instructions derived from recovered command/exit; not executed"
+    },
+    {
+      "path": "reproduce/SS11.isolated.test.ts",
+      "public": {
+        "bytes": 14632,
+        "sha256": "c053b2a3505abbd0ee6a0f52a65be79982fd4a41df72bf147affc5e3b7db6691"
+      },
+      "kind": "derived-public",
+      "transformation": "One output-directory declaration adapted for portability; assertions/mocks/fixtures unchanged; this public derivative has NOT been executed",
+      "original": {
+        "sourceId": "tests/skill-classification/SS11.isolated.test.ts",
+        "bytes": 14607,
+        "sha256": "ba986fdd159a71a31028964debd620e0fc8ec1fdd1e764891b34989546cd408d"
+      }
+    },
+    {
+      "path": "vitest-isolated.json",
+      "public": {
+        "bytes": 5402,
+        "sha256": "8e70d7564dbd85dcec0f1789cfff4eb4276236765c9273c4180558870bbac074"
+      },
+      "kind": "derived-public",
+      "transformation": "Replace private local paths by portable labels; JSON reserialization; original execution/sensitivity statuses unchanged",
+      "original": {
+        "sourceId": "vitest-isolated.json",
+        "bytes": 4015,
+        "sha256": "344875d4bbd83b18cfaac546db14b1ad60c139782fa06480fbce6bb0020c15f1"
+      }
+    }
+  ],
+  "hashPolicy": "files binds all payloads; manifest.json and SHA256SUMS excluded from manifest self-hashing. SHA256SUMS includes payloads and manifest.json, excludes itself."
+}

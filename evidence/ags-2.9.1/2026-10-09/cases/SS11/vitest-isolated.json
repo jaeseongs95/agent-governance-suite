@@ -1,0 +1,146 @@
+{
+  "numTotalTestSuites": 2,
+  "numPassedTestSuites": 0,
+  "numFailedTestSuites": 2,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 8,
+  "numPassedTests": 7,
+  "numFailedTests": 1,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514677352,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "SS11 isolated offline verification"
+          ],
+          "fullName": "SS11 isolated offline verification SS11/base integrity",
+          "status": "passed",
+          "title": "SS11/base integrity",
+          "duration": 3.854612999999972,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS11 isolated offline verification"
+          ],
+          "fullName": "SS11 isolated offline verification SS11/base preserves quote as background and current translation as action",
+          "status": "passed",
+          "title": "SS11/base preserves quote as background and current translation as action",
+          "duration": 37.69931300000002,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS11 isolated offline verification"
+          ],
+          "fullName": "SS11 isolated offline verification SS11/base gateway keeps injected no-skill advice separate from AGENT selection",
+          "status": "passed",
+          "title": "SS11/base gateway keeps injected no-skill advice separate from AGENT selection",
+          "duration": 60.31110100000001,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS11 isolated offline verification"
+          ],
+          "fullName": "SS11 isolated offline verification SS11/hostile-advice never promotes quoted skill from support into final selection",
+          "status": "passed",
+          "title": "SS11/hostile-advice never promotes quoted skill from support into final selection",
+          "duration": 57.54813699999994,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS11 isolated offline verification"
+          ],
+          "fullName": "SS11 isolated offline verification SS11/missing-background-source rejects before provider entry",
+          "status": "passed",
+          "title": "SS11/missing-background-source rejects before provider entry",
+          "duration": 37.05661299999997,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS11 isolated offline verification"
+          ],
+          "fullName": "SS11 isolated offline verification SS11/missing-all-provenance must hold before classification (spec boundary)",
+          "status": "failed",
+          "title": "SS11/missing-all-provenance must hold before classification (spec boundary)",
+          "duration": 56.25668699999994,
+          "failureMessages": [
+            "AssertionError: SS11 sourceSpec 보류조건: absent quote/current-instruction provenance must hold before provider: expected 1 to be +0 // Object.is equality\n    at REPO_ROOT/tests/skill-classification/SS11.isolated.test.ts:116:137\n    at file://REPO_ROOT/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS11 isolated offline verification"
+          ],
+          "fullName": "SS11 isolated offline verification SS11/absent-host refuses unobserved empty selection without creating a receipt",
+          "status": "passed",
+          "title": "SS11/absent-host refuses unobserved empty selection without creating a receipt",
+          "duration": 50.08796399999994,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS11 isolated offline verification"
+          ],
+          "fullName": "SS11 isolated offline verification SS11/evaluator distinguishes empty, null, forbidden, unadjudicated and unreceived selected",
+          "status": "passed",
+          "title": "SS11/evaluator distinguishes empty, null, forbidden, unadjudicated and unreceived selected",
+          "duration": 0.6967509999999493,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514677734,
+      "endTime": 1791514678037.6968,
+      "status": "failed",
+      "message": "",
+      "name": "REPO_ROOT/tests/skill-classification/SS11.isolated.test.ts"
+    }
+  ]
+}
