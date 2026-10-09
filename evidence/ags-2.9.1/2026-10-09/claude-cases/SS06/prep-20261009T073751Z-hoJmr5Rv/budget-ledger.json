@@ -1,0 +1,33 @@
+{
+  "caseId": "SS06",
+  "currency": "USD",
+  "softBudget": 2.0,
+  "overallReserved39Cases": 78.0,
+  "spentByThisRun": 0.0,
+  "remainingSoftBudget": 2.0,
+  "paidCalls": 0,
+  "preparationApiCalls": 0,
+  "jevCalls": 0,
+  "failedApiCalls": 0,
+  "retries": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadTokens": 0,
+  "cacheCreationTokens": 0,
+  "entries": [],
+  "futureRequiredFields": [
+    "provider",
+    "exactModel",
+    "start/end timestamps",
+    "attemptId",
+    "success/failure",
+    "error classification without secrets",
+    "input/output tokens",
+    "cache read/creation tokens",
+    "reported or independently priced cost USD",
+    "cumulative spent",
+    "remaining budget",
+    "retry/failure cost uncertainty"
+  ],
+  "stopRule": "No call before parent gates. Before every future call account for preparation, failed attempts, retries and cache charges. Use a per-call cap within remaining budget where supported; soft cap may not be atomic. Stop before the next call when near US$2 or when cost cannot be bounded; report to parent. Reservation is not a spending target. Do not allocate or call JEV."
+}

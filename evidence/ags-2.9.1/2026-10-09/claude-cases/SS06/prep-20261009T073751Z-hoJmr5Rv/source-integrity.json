@@ -1,0 +1,202 @@
+{
+  "caseId": "SS06",
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "allPublishedPayloadsAndManifestChecksumVerified": true,
+  "fileCount": 20,
+  "files": [
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/README.md",
+      "bytes": 4571,
+      "sha256": "c2d13055a3b782bd30561eccbb189f125c1bbd5f33eb4b80e59b516dece11828",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/SS06.environment.json",
+      "bytes": 1753,
+      "sha256": "811a422f170cfccce576f90b6430310bba9d9c69cf971ee592337818d3cbd335",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/SS06.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/SS06.fixture-extract.json",
+      "bytes": 4047,
+      "sha256": "3a070dc7d533cf8592fcf89301535d3debe088ff2bddcd147d93d59a8ba0ac7d",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/SS06.observations.json",
+      "bytes": 32250,
+      "sha256": "8b4052099a107c97d24ea2c6e40885233e5fe81020a7da3320a429020feae351",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/SS06.originalPrompt.utf8.txt",
+      "bytes": 166,
+      "sha256": "75f0c91c90010fc64d161b265129746b45983a5a4c7c21762dee3e27080a9ecd",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/SS06.plan-check.exit",
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/SS06.plan-check.json",
+      "bytes": 739,
+      "sha256": "d334530dc67122a867f44ced1a9187035e6eb1adc3f66f8df459228dba2ccda7",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/SS06.plan-check.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/SS06.plan.json",
+      "bytes": 28221,
+      "sha256": "d9d90fd4e89a13e9dc39ac33572360f3bcf35feaae91881285b5e3e50961c383",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/SS06.result.public.json",
+      "bytes": 61538,
+      "sha256": "8452ccbcfb5cff87dc485e3d39d435fd45bac573cc89b965c1ddb906ff29746f",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/SS06.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/SS06.stdout.log",
+      "bytes": 64,
+      "sha256": "b4c959fd44d6d9000491d708417d7a0361e619f8ef10440a515d7b3e4f5c51bc",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/SS06.test-contract.json",
+      "bytes": 471,
+      "sha256": "682ea12ca7b986ee9a6b07aa7a67d1fd577a59bc20f04c7961aa457f79f682f6",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/SS06.test.ts",
+      "bytes": 18206,
+      "sha256": "0cdd8df24b33a564fc590fdb093abba64338ffd89d3104e9e77519a259981ca4",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/SS06.vitest.json",
+      "bytes": 7618,
+      "sha256": "606ca9d3e7b2071fd78d10af141f1ff117295ad961b6878261665cb6faa94a83",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/commands.json",
+      "bytes": 816,
+      "sha256": "581de9c7500e1947885f238085a24e024e6bd66f26ffb5a3c45112d14af97ef0",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/vitest.config.mjs",
+      "bytes": 246,
+      "sha256": "eda127a9ad9691e51ef2c547e08c6ebb37132dd55f3e4dda99323318d213cb44",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/manifest.json",
+      "bytes": 14134,
+      "sha256": "09f21efe9adb96bd33b1ce620175be88f899f04dbde5c65282851fab8f0526e0",
+      "manifestMatch": null,
+      "reason": "non-circular metadata"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/SHA256SUMS",
+      "bytes": 1610,
+      "sha256": "ee89cc02f6d6e0645dbae76485f3dd161871bfe187c3d2ec373c75d018eceaa6",
+      "manifestMatch": null,
+      "reason": "non-circular metadata"
+    }
+  ],
+  "promptByteMatch": true,
+  "promptTrailingNewline": false,
+  "historicalSkillSourceRefs": [
+    {
+      "skillId": "test-engineering",
+      "path": "skills/test-engineering/SKILL.md",
+      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "match": true,
+      "role": "historical oracle provenance only; not final product candidate"
+    },
+    {
+      "skillId": "ponytail",
+      "path": "skills/ponytail/SKILL.md",
+      "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "match": true,
+      "role": "historical oracle provenance only; not final product candidate"
+    },
+    {
+      "skillId": "code-review",
+      "path": "skills/code-review/SKILL.md",
+      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "match": true,
+      "role": "historical oracle provenance only; not final product candidate"
+    },
+    {
+      "skillId": "software-security-auditor",
+      "path": "skills/software-security-auditor/SKILL.md",
+      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "match": true,
+      "role": "historical oracle provenance only; not final product candidate"
+    },
+    {
+      "skillId": "orchestrator",
+      "path": "skills/orchestrator/SKILL.md",
+      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "match": true,
+      "role": "historical oracle provenance only; not final product candidate"
+    },
+    {
+      "skillId": "cs-engineering",
+      "path": "skills/cs-engineering/SKILL.md",
+      "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "match": true,
+      "role": "historical oracle provenance only; not final product candidate"
+    },
+    {
+      "skillId": "korean-prose-editor",
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "match": true,
+      "role": "historical oracle provenance only; not final product candidate"
+    },
+    {
+      "skillId": "change-scope-guardian",
+      "path": "skills/change-scope-guardian/SKILL.md",
+      "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e",
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "match": true,
+      "role": "historical oracle provenance only; not final product candidate"
+    }
+  ],
+  "fixtureWholeCorpusSHA256": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleWholeCorpusSHA256": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "wholeCorpusHashesMeaning": "retained original corpus bindings, not hashes of the extracted SS06 file",
+  "standaloneSourceSpec": "TEST-SPEC.seq7.ko.md was absent in prior package; embedded sourceSpec only"
+}

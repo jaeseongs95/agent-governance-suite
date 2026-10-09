@@ -1,0 +1,179 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS06",
+  "title": "테스트 사례 설계만 요청",
+  "runId": "prep-20261009T073751Z-hoJmr5Rv",
+  "status": "PREPARATION_COMPLETE_WAITING_FOR_PARENT",
+  "actualClaudeHostTest": "NOTRUN",
+  "candidate": {
+    "label": "R17",
+    "reportedCommit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "reportedTree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "independentSourceVerdict": "PENDING_PARENT",
+    "remotePublicationVerified": false,
+    "productTestStarted": false
+  },
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "input": {
+    "source": "evidence/ags-2.9.1/2026-10-09/cases/SS06/SS06.originalPrompt.utf8.txt",
+    "bytes": 166,
+    "sha256": "75f0c91c90010fc64d161b265129746b45983a5a4c7c21762dee3e27080a9ecd",
+    "publicSynthetic": true,
+    "variant": "base",
+    "contextPolicy": "unknown parser context remains null; do not invent contract"
+  },
+  "expected": {
+    "required": [
+      "test-engineering"
+    ],
+    "allowed": [],
+    "forbidden": [
+      "ponytail",
+      "code-review",
+      "software-security-auditor",
+      "orchestrator"
+    ],
+    "notApplicable": [
+      "cs-engineering",
+      "korean-prose-editor",
+      "change-scope-guardian"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "sourceSpec": {
+      "path": "TEST-SPEC.seq7.ko.md",
+      "section": "SS06",
+      "fields": {
+        "입력": "“이 순수 날짜 parser의 경계값·잘못된 입력·회귀 테스트 사례를 설계해 줘. 제품 코드와 테스트 코드를 쓰거나 실행하지는 마.”",
+        "필수추천": "R={T}.",
+        "금지추천 또는 행동": "P·CR·SEC를 기본으로 추가; mock 결과를 테스트 실행 근거로 제출.",
+        "허용선택": "A={}.",
+        "보류조건": "요구나 parser 경계가 부족하면 추가 입력을 요청하되 T 적용성은 남긴다.",
+        "통과기준": "단일 전문 스킬로 충분하므로 O를 자동 추가하지 않는다.",
+        "증거": "E0, 사례 설계와 실행의 경계.",
+        "실행종류": "live."
+      },
+      "bodyDigest": "sha256:d57a325fce28d847a18276f780c655a130a13aa6f7fc8714105f6584c192b60b"
+    },
+    "noProductOrTestCodeWritingOrExecution": true
+  },
+  "existingEvidence": {
+    "candidate": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "status": "OFFLINE_COMPLETE_LIVE_NOTRUN",
+    "isolatedChecks": {
+      "passed": 18,
+      "failed": 0,
+      "scope": "historical offline controls only"
+    },
+    "hostStages": {
+      "selected": {
+        "status": "NOTRUN",
+        "evidence": null
+      },
+      "read": {
+        "status": "NOTRUN",
+        "evidence": null
+      },
+      "applied": {
+        "status": "NOTRUN",
+        "evidence": null
+      },
+      "verified": {
+        "status": "NOTRUN",
+        "evidence": null
+      }
+    },
+    "existingRegression": "NOTRUN",
+    "publicPortableDerivative": "NOT_EXECUTED",
+    "initial17RunRawFiles": "MISSING_ORIGINAL",
+    "knownHostActiveStateGap": "historical synthetic reproduction, not new finding or actual host state"
+  },
+  "localChecks": {
+    "claudeVersion": "2.1.286 (Claude Code)",
+    "claudeExecutablePath": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+    "claudeExecutableSHA256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+    "pathLookupFound": false,
+    "node": "v24.19.0",
+    "pnpm": "11.19.0",
+    "cliCommandsExecuted": [
+      "--version",
+      "--help"
+    ],
+    "modelApiCalls": 0,
+    "permanentAuthPermissionNetworkChanges": false,
+    "agsToolsExposedToSol": [],
+    "agentsSkillsSearch": {
+      "workspace": false,
+      "localProductCheckout": false,
+      "fallbackRead": "skills/test-engineering/SKILL.md plus test-design reference"
+    },
+    "instructionsRead": [
+      {
+        "path": "AGENTS.md",
+        "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827",
+        "checkoutCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+        "scope": "preparation reference only; reread verified candidate before live run"
+      },
+      {
+        "path": "skills/test-engineering/SKILL.md",
+        "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+        "checkoutCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+        "scope": "preparation reference only; reread verified candidate before live run"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/test-design.md",
+        "sha256": "fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c",
+        "checkoutCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+        "scope": "preparation reference only; reread verified candidate before live run"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/SKILL.md",
+        "sha256": "eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230",
+        "checkoutCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+        "scope": "preparation reference only; reread verified candidate before live run"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/SKILL.md",
+        "sha256": "1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109",
+        "checkoutCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+        "scope": "preparation reference only; reread verified candidate before live run"
+      },
+      {
+        "path": "skills/session-board/SKILL.md",
+        "sha256": "b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",
+        "checkoutCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+        "scope": "preparation reference only; reread verified candidate before live run"
+      }
+    ]
+  },
+  "resumeConditions": [
+    "Parent confirms remotely published candidate commit/tree and independent SOURCE verdict; do not substitute main or c6a8019",
+    "Parent supplies common exact Claude model/effort/settings and successful API authentication procedure without secret values",
+    "Parent supplies shared preflight result and permitted ephemeral plugin/MCP/hook launch configuration",
+    "Actual Claude host can discover required T installation/support and capture authentic selected/read/applied/verified evidence",
+    "Cost accounting and remaining US$2 soft budget are ready; no JEV without individual allocation"
+  ],
+  "executionOwner": "Claude Code performs actual host work; Sol prepares environment, preserves source/oracle and manages sanitized evidence",
+  "liveStageEvidence": {
+    "selected": null,
+    "read": null,
+    "applied": null,
+    "verified": null
+  }
+}
