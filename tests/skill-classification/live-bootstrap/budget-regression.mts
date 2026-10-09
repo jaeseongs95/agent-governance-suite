@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {createHash} from "node:crypto";
-import {mkdtemp, mkdir, readFile, writeFile, rm} from "node:fs/promises";
+import {mkdtemp, mkdir, readFile, writeFile, rm, cp} from "node:fs/promises";
 import {spawn} from "node:child_process";
 import os from "node:os";
 import path from "node:path";
@@ -8,6 +8,16 @@ import {fileURLToPath, pathToFileURL} from "node:url";
 import type {BootstrapConfig} from "./bootstrap.mts";
 
 type RunConfig = Extract<BootstrapConfig, {schemaVersion: "2.0.0"}>;
+interface OracleRow {caseId: string; requestDigest: string; wireDigest: string; utf8Bytes: number; reservedPicoUsd: string}
+interface OracleBudgetCase {id: string; historicalId: string; capUsd: string; unchangedUnknownUsd: string; historicalConfirmedUsd: string; proposedSyntheticConfirmedUsd: string}
+interface BudgetWireOracle {
+  schemaVersion: string; canonicalRunId: string; modelId: string; inventoryDigest: string;
+  prices: {currency: string; inputUsdPer1000Tokens: string; outputUsdPer1000Tokens: string; fixedCallUsd: string; assumedInputTokensPerUtf8Byte: string; usdPerByteNumerator: string; usdPerByteDenominator: string};
+  rows: OracleRow[]; syntheticOverBudgetCases: OracleBudgetCase[];
+  fractionalRoundingFixture: {inputUsdPer1000Tokens: string; rows: Pick<OracleRow, "caseId" | "reservedPicoUsd">[]; sumOfPerRequestCeilPicoUsd: string; invalidRoundAfterSummingPicoUsd: string};
+}
+type ReservationRow = {caseId: string; reservedUsd: number};
+
 const repo = path.resolve(process.argv[2]!);
 const helper = path.resolve(process.argv[3]!);
 const api = await import(pathToFileURL(helper).href) as typeof import("./bootstrap.mts");
@@ -25,6 +35,45 @@ if (process.argv[4] === "worker") {
     console.log(JSON.stringify({winner: result.status === "RAW_EVALUATION_RECORDED", calls}));
   } catch (error) {console.log(JSON.stringify({winner: false, calls, error: (error as NodeJS.ErrnoException).code ?? "RUN_REJECTED"}));}
 } else {
+  // UNAPPLIED proposal: independent ROOT r2 synthetic wire oracle SHA is fixed; integration/execution still requires approval.
+  // It must come from reviewed wire bytes/order/price, never from preflight requestReservations.
+  const oracleBytes = await readFile(path.join(import.meta.dirname, "budget-wire-oracle.json"));
+  assert.equal(hash(oracleBytes.toString("utf8")), "sha256:f6ea158f65473b5aa08846196bbb54a02ca5db7fffaed39d0ba25c2f61148b56");
+  const oracle = JSON.parse(oracleBytes.toString("utf8")) as BudgetWireOracle;
+  assert.equal(oracle.schemaVersion, "1.0.0"); assert.equal(oracle.canonicalRunId, "full-21-015");
+  assert.equal(oracle.rows.length, 21); assert.equal(new Set(oracle.rows.map((row: OracleRow) => row.caseId)).size, 21);
+  assert.equal(typeof oracle.modelId, "string"); // ROOT r2 oracle explicit model binding; r1 has no model field.
+  assert.equal(oracle.prices.currency, "USD");
+  assert.deepEqual([oracle.prices.inputUsdPer1000Tokens, oracle.prices.outputUsdPer1000Tokens, oracle.prices.fixedCallUsd,
+    oracle.prices.assumedInputTokensPerUtf8Byte, oracle.prices.usdPerByteNumerator, oracle.prices.usdPerByteDenominator], ["0.000042", "0", "0", "1", "42", "1000000000"]);
+  const frozenPrices = {billingMode: "token", inputUsdPer1k: Number(oracle.prices.inputUsdPer1000Tokens), outputUsdPer1k: Number(oracle.prices.outputUsdPer1000Tokens), fixedCallMaxUsd: Number(oracle.prices.fixedCallUsd)};
+  const frozenWireRows = oracle.rows.map(({caseId, wireDigest, utf8Bytes}: Pick<OracleRow, "caseId" | "wireDigest" | "utf8Bytes">) => ({caseId, wireDigest, utf8Bytes}));
+  const assertFrozenReservations = (actualRows: readonly ReservationRow[], expectedRows: readonly Pick<OracleRow, "caseId" | "reservedPicoUsd">[] = oracle.rows) => {
+    assert.equal(actualRows.length, expectedRows.length);
+    let validatedExpectedPicoSum = 0n;
+    for (let index = 0; index < expectedRows.length; index++) {
+      const expected = expectedRows[index]!, actual = actualRows[index]!, pico = BigInt(expected.reservedPicoUsd);
+      assert(pico >= 0n && pico <= BigInt(Number.MAX_SAFE_INTEGER), "Expected picoUSD must be exactly representable before Number conversion");
+      assert.equal(actual.caseId, expected.caseId);
+      assert.equal(actual.reservedUsd, Number(pico) / 1e12, "INDEPENDENT_EXACT_FROZEN_REQUEST_RESERVATION");
+      validatedExpectedPicoSum += pico;
+    }
+    assert(validatedExpectedPicoSum <= BigInt(Number.MAX_SAFE_INTEGER)); return validatedExpectedPicoSum;
+  };
+  // Independent exact rational: USD .000042/1000 = 42000 picoUSD per byte.
+  const frozenFullUsd = Number(oracle.rows.reduce((sum: bigint, row: OracleRow) => {
+    assert(Number.isSafeInteger(row.utf8Bytes) && row.utf8Bytes > 0); return sum + BigInt(row.utf8Bytes) * 42000n;
+  }, 0n)) / 1e12;
+  const historicalUnknownUsd = 0.1204098, historicalPilotUnknownUsd = 0.005734722;
+  const historicalBatchPriorUsd = 0.03, historicalConfirmedBaseUsd = 0.08;
+  const syntheticConfirmedUsd = (historicalId: string, capUsd: number, unknownUsd: number) => {
+    const row = oracle.syntheticOverBudgetCases.find(item => item.historicalId === historicalId);
+    assert(row); assert.equal(row.id, `${historicalId}-current-oracle`);
+    assert.equal(Number(row.capUsd), capUsd); assert.equal(Number(row.unchangedUnknownUsd), unknownUsd);
+    assert.equal(Number(row.historicalConfirmedUsd), historicalId === "confirmed-plus-unknown" ? historicalConfirmedBaseUsd : 0);
+    const fixed = Number(row.proposedSyntheticConfirmedUsd); assert(Number.isFinite(fixed) && fixed >= Number(row.historicalConfirmedUsd));
+    return fixed; // Exact reviewed decimal input, no binary-float boundary subtraction.
+  };
   const root = await mkdtemp(path.join(os.tmpdir(), "ags-budget-regression-"));
   const checks: string[] = [];
   async function bind(config: RunConfig) {
@@ -58,6 +107,12 @@ if (process.argv[4] === "worker") {
       await mkdir(config.outputDirectory, {recursive: true});
       const measurements = prepared.requests.map(({caseId, request}: {caseId: string; request: {requestDigest: string}}) => {const wire = JSON.stringify(prepared.api.providers.jevNoulWireAdapter.encode(request, config.profile));
         return {caseId, requestDigest: request.requestDigest, wireDigest: hash(wire), utf8Bytes: Buffer.byteLength(wire)};});
+      assert.equal(config.profile.modelId, oracle.modelId);
+      assert.equal(prepared.inventory.inventoryDigest, oracle.inventoryDigest);
+      assert.deepEqual(config.prices, frozenPrices);
+      assert.deepEqual(measurements.map(({caseId, wireDigest, utf8Bytes}: Pick<OracleRow, "caseId" | "wireDigest" | "utf8Bytes">) => ({caseId, wireDigest, utf8Bytes})), frozenWireRows,
+        "FROZEN_SYNTHETIC_WIRE_ORDER_DIGEST_BYTES");
+      if (runId === oracle.canonicalRunId) assert.deepEqual(measurements.map(({caseId, requestDigest}: Pick<OracleRow, "caseId" | "requestDigest">) => ({caseId, requestDigest})), oracle.rows.map(({caseId, requestDigest}: Pick<OracleRow, "caseId" | "requestDigest">) => ({caseId, requestDigest})));
       const artifact = JSON.stringify({runId, inventoryDigest: prepared.inventory.inventoryDigest, measurements});
       const source = "offline synthetic price/context source; not tokenization or billing proof";
       await writeFile(path.join(config.outputDirectory, "inputs.json"), artifact); await writeFile(path.join(config.outputDirectory, "source.txt"), source);
@@ -84,22 +139,32 @@ if (process.argv[4] === "worker") {
 
     const full = await ready("full-21-015"); full.limits!.requests = 21; await bind(full);
     const fullChecked = await api.preflight(full, await api.prepare(full)); assert.equal(fullChecked.status, "READY_FOR_OPERATOR_DISPATCH");
-    const fullReservation = fullChecked.requestReservations.reduce((sum, row) => sum + row.reservedUsd, 0);
-    assert(Math.abs(fullReservation - 0.1204098) < 1e-10, "FULL_21_REVIEWED_ESTIMATE_01204098");
+    const fullValidatedPico = assertFrozenReservations(fullChecked.requestReservations);
+    // A mutated reservation return must be rejected by the independent checker, not mislabeled as helper BLOCKED.
+    const corruptReservations = structuredClone(fullChecked.requestReservations); corruptReservations[0]!.reservedUsd += 0.5e-12;
+    assert.throws(() => assertFrozenReservations(corruptReservations), {code: "ERR_ASSERTION"});
+    const fullReservation = Number(fullValidatedPico) / 1e12;
+    assert.equal(fullReservation, frozenFullUsd, "FULL_21_FROZEN_SYNTHETIC_WIRE_RESERVATION");
     let fullCalls = 0;
     const fullResult = await api.run(full, {env, executionKind: "offline-mock", fetcher: async (_url, init) => {fullCalls++; return response(init);}});
     if (fullResult.status !== "RAW_EVALUATION_RECORDED") throw new Error("Expected full mocked run");
     assert.equal(fullCalls, 21); assert.equal(fullResult.transportAttempts, 21); assert.equal(fullResult.qualificationStatus, "NOT_RUN");
     assert.equal(fullResult.selectedReadAppliedVerified, "NOT_RUN");
     assert(fullResult.ledger.entries.every(entry => entry.state === "unknown" && entry.actualCostUsd === null));
-    assert(Math.abs(fullResult.ledger.entries.reduce((sum, entry) => sum + entry.reservedUsd, 0) - 0.1204098) < 1e-10);
-    const aggregate = await ready("pilot-plus-21"); aggregate.limits!.requests = 21; aggregate.budget!.priorRunUnknownReservedUsd = 0.005734722; await bind(aggregate);
+    const fullLedgerPico = assertFrozenReservations(fullResult.ledger.entries.map((entry, index) => {
+      assert.equal(entry.requestDigest, oracle.rows[index]!.requestDigest, "Full canonical run ledger binding");
+      return {caseId: oracle.rows[index]!.caseId, reservedUsd: entry.reservedUsd};
+    }));
+    assert.equal(fullLedgerPico, fullValidatedPico);
+    const aggregate = await ready("pilot-plus-21"); aggregate.limits!.requests = 21; aggregate.budget!.priorRunUnknownReservedUsd = historicalPilotUnknownUsd; await bind(aggregate);
     const aggregateChecked = await api.preflight(aggregate, await api.prepare(aggregate));
     assert.equal(aggregateChecked.status, "READY_FOR_OPERATOR_DISPATCH");
-    const pilotPlusFull = aggregate.budget!.priorRunUnknownReservedUsd + aggregateChecked.requestReservations.reduce((sum, entry) => sum + entry.reservedUsd, 0);
-    assert(Math.abs(pilotPlusFull - 0.126144522) < 1e-10, "PILOT_PLUS_21_REVIEWED_AGGREGATE_0126144522");
+    const aggregatePico = assertFrozenReservations(aggregateChecked.requestReservations), preservedPilotPico = 5734722000n;
+    assert.equal(aggregate.budget!.priorRunUnknownReservedUsd, Number(preservedPilotPico) / 1e12);
+    assert.equal(aggregatePico, fullValidatedPico);
+    const pilotPlusFull = Number(preservedPilotPico + aggregatePico) / 1e12;
     assert(pilotPlusFull <= 0.15); assert.equal(aggregate.budget!.accountBalanceUsd, null);
-    checks.push(".15 local allocation admits full21 mocked reservations .1204098; pilot unknown plus21 .126144522 is a prospective aggregate estimate, not confirmed bill/balance");
+    checks.push(".15 allocation admits frozen synthetic full21; historical pilot unknown is preserved; historical .1204098/.126144522 and original FAIL remain in frozen Git/evidence");
 
     let forbiddenReads = 0, forbiddenCalls = 0;
     const forbiddenEnv = new Proxy({}, {get: () => {forbiddenReads++; assert.fail("R11_NO_ENV_LOOKUP_BEFORE_BOUNDARY_BLOCK");}});
@@ -111,9 +176,13 @@ if (process.argv[4] === "worker") {
       ["over-allocation", (c: RunConfig) => {c.budget!.allocatedUsd = 0.151;}, "RUN_ALLOCATION_UNVERIFIED"],
       ["run-exceeds-allocation", (c: RunConfig) => {c.limits!.runUsd = 0.151;}, "RUN_ALLOCATION_UNVERIFIED"],
       ["prior-unknown", (c: RunConfig) => {c.budget!.priorRunUnknownReservedUsd = 0.149;}, "RUN_BUDGET_INSUFFICIENT"],
-      ["confirmed-plus-unknown", (c: RunConfig) => {c.budget!.priorRunConfirmedSpendUsd = 0.08; c.budget!.priorRunUnknownReservedUsd = 0.06;}, "RUN_BUDGET_INSUFFICIENT"],
-      ["uncovered-batch", (c: RunConfig) => {c.limits!.requests = 21; c.budget!.priorRunUnknownReservedUsd = 0.03;}, "RUN_BUDGET_INSUFFICIENT"],
-      ["pilot-plus-full-121", (c: RunConfig) => {c.limits!.requests = 21; c.budget!.allocatedUsd = 0.121; c.limits!.runUsd = 0.121; c.budget!.priorRunUnknownReservedUsd = 0.005734722;}, "RUN_BUDGET_INSUFFICIENT"],
+      ["confirmed-plus-unknown-current-oracle", (c: RunConfig) => {c.budget!.priorRunUnknownReservedUsd = 0.06; c.budget!.priorRunConfirmedSpendUsd = syntheticConfirmedUsd("confirmed-plus-unknown", 0.15, 0.06);}, "RUN_BUDGET_INSUFFICIENT"],
+      // New synthetic inputs: original unknown/pilot and caps unchanged; add confirmed spend so total exceeds allocation by 1000 picoUSD (>1 picoUSD tolerance).
+      ["uncovered-batch-current-oracle", (c: RunConfig) => {c.limits!.requests = 21; c.budget!.priorRunUnknownReservedUsd = historicalBatchPriorUsd; c.budget!.priorRunConfirmedSpendUsd = syntheticConfirmedUsd("uncovered-batch", 0.15, historicalBatchPriorUsd);}, "RUN_BUDGET_INSUFFICIENT"],
+      ["pilot-plus-full-121-current-oracle", (c: RunConfig) => {c.limits!.requests = 21; c.budget!.allocatedUsd = 0.121; c.limits!.runUsd = 0.121; c.budget!.priorRunUnknownReservedUsd = historicalPilotUnknownUsd; c.budget!.priorRunConfirmedSpendUsd = syntheticConfirmedUsd("pilot-plus-full-121", 0.121, historicalPilotUnknownUsd);}, "RUN_BUDGET_INSUFFICIENT"],
+      ["historical-full-unknown-plus-current", (c: RunConfig) => {c.limits!.requests = 21; c.budget!.priorRunUnknownReservedUsd = historicalUnknownUsd;}, "RUN_BUDGET_INSUFFICIENT"],
+      ["changed-price-old-evidence", (c: RunConfig) => {c.prices!.inputUsdPer1k = 0.000084;}, "EVIDENCE_UNBOUND:price"],
+      ["changed-reservation-cap", (c: RunConfig) => {c.profile!.maximumCostUsd = Number(c.profile!.maximumCostUsd) / 2; (c.profile!.qualification as Record<string, unknown>).profileConfigurationDigest = prepared.api.profiles.digestProviderProfileConfiguration(c.profile);}, "PROFILE_COST_BOUND_MISMATCH"],
       ["old-lower-allocation", (c: RunConfig) => {c.limits!.requests = 21; c.budget!.allocatedUsd = 0.06; c.limits!.runUsd = 0.06;}, "RUN_BUDGET_INSUFFICIENT"],
       ["too-many", (c: RunConfig) => {c.limits!.requests = 22;}, "FINITE_LIMITS_MISSING"],
       ["allocation-six", (c: RunConfig) => {c.budget!.totalAuthorizationUsd = 6;}, "BUDGET_HARD_LIMIT_USD_5"],
@@ -121,11 +190,36 @@ if (process.argv[4] === "worker") {
       ["input-unbound", (c: RunConfig) => {c.estimator!.inputArtifact.digest = hash("wrong");}, "ESTIMATE_SOURCE_OR_INPUT_UNBOUND"],
       ["source-unbound", (c: RunConfig) => {c.estimator!.sources[0]!.digest = hash("wrong source");}, "ESTIMATE_SOURCE_OR_INPUT_UNBOUND"],
     ] as const) {
-      const config = await ready(id); change(config); if (id !== "missing-review") await bind(config);
+      const config = await ready(id); change(config); if (id !== "missing-review" && id !== "changed-price-old-evidence") await bind(config);
       const result = await api.run(config, {env: forbiddenEnv, executionKind: "offline-mock", fetcher: async () => {forbiddenCalls++; throw new Error("Forbidden call");}});
+      await writeFile(path.join(config.outputDirectory, "blocked-return.json"), JSON.stringify(result, null, 2) + "\n", {flag: "wx"});
       assert.equal(result.status, "BLOCKED", `R11_BOUNDARY_BLOCKED:${id}`); assert(result.blocked.includes(code), `${id}:${code}`);
+      if (id === "changed-price-old-evidence") assert(result.blocked.includes("EVIDENCE_UNBOUND:operatorAuthorization"));
     }
     assert.equal(forbiddenReads, 0); assert.equal(forbiddenCalls, 0); checks.push("wrong run / >.15 / prior unknown / insufficient .06 / >USD5 / absent review / changed input artifact block before ENV and dispatch");
+    // Rebind byte hashes/operator evidence so each fault exercises exact semantic input binding, not merely a stale file hash.
+    for (const mode of ["byte-length", "same-length-wire-digest", "case-missing", "case-duplicate", "case-order", "invented-reservation-field"] as const) {
+      const config = await ready(`input-${mode}`);
+      const file = path.join(config.outputDirectory, "inputs.json"), artifact = JSON.parse(await readFile(file, "utf8"));
+      if (mode === "byte-length") artifact.measurements[0].utf8Bytes++;
+      if (mode === "same-length-wire-digest") {
+        const actual = await api.prepare(config);
+        const actualWire = JSON.stringify(actual.api.providers.jevNoulWireAdapter.encode(actual.requests[0].request, config.profile));
+        const differentWire = actualWire.replace('"model":"mock-model"', '"model":"fake-model"');
+        assert.notEqual(differentWire, actualWire); assert.equal(Buffer.byteLength(differentWire), Buffer.byteLength(actualWire));
+        artifact.measurements[0].wireDigest = hash(differentWire); // Profile and actual prepared wire remain unchanged.
+      }
+      if (mode === "case-missing") artifact.measurements.pop();
+      if (mode === "case-duplicate") artifact.measurements[1] = structuredClone(artifact.measurements[0]);
+      if (mode === "case-order") [artifact.measurements[0], artifact.measurements[1]] = [artifact.measurements[1], artifact.measurements[0]];
+      if (mode === "invented-reservation-field") artifact.measurements[0].reservedUsd = 0;
+      const changed = JSON.stringify(artifact); await writeFile(file, changed); config.estimator!.inputArtifact.digest = hash(changed); await bind(config);
+      const result = await api.run(config, {env: forbiddenEnv, executionKind: "offline-mock", fetcher: async () => {forbiddenCalls++; throw new Error("Forbidden call");}});
+      await writeFile(path.join(config.outputDirectory, "blocked-return.json"), JSON.stringify(result, null, 2) + "\n", {flag: "wx"});
+      assert.equal(result.status, "BLOCKED"); assert(result.blocked.includes("ESTIMATE_SOURCE_OR_INPUT_UNBOUND"), mode);
+    }
+    assert.equal(forbiddenReads, 0); assert.equal(forbiddenCalls, 0);
+    checks.push("rebound input artifacts still reject length/content/digest/case omission/duplicate/order/invented reservation before ENV or fetch");
 
     for (const [id, fetcher, expected] of [
       ["auth", async () => new Response("", {status: 401}), "AUTH_UNAVAILABLE"],
@@ -181,6 +275,14 @@ if (process.argv[4] === "worker") {
     console.log(JSON.stringify({status: "OFFLINE_RUN_BUDGET_PASS", checks, claimResults: claims, actualApiCalls: 0, actualCredentialLookups: 0, qualification: "NOT_RUN", linuxLive: "NOT_RUN"}, null, 2));
   } finally {
     const resolved = path.resolve(root); assert.equal(path.dirname(resolved), path.resolve(os.tmpdir())); assert(path.basename(resolved).startsWith("ags-budget-regression-"));
+    const exportBase = process.env.AGS_BOOTSTRAP_TEST_EVIDENCE_DIR;
+    if (exportBase) {
+      assert(path.isAbsolute(exportBase), "Evidence output must be an absolute task-owned directory");
+      const relativeExport = path.relative(resolved, path.resolve(exportBase));
+      assert(relativeExport === ".." || relativeExport.startsWith(`..${path.sep}`) || path.isAbsolute(relativeExport), "Evidence output must stay outside the owned temp source");
+      await mkdir(exportBase, {recursive: true}); const destination = path.join(exportBase, path.basename(resolved));
+      await cp(resolved, destination, {recursive: true, errorOnExist: true, force: false});
+    }
     await rm(resolved, {recursive: true, force: true});
   }
 }

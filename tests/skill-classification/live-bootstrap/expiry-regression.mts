@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {createHash} from "node:crypto";
-import {mkdtemp, mkdir, writeFile, rm} from "node:fs/promises";
+import {mkdtemp, mkdir, writeFile, rm, cp} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {pathToFileURL} from "node:url";
@@ -71,5 +71,11 @@ try {
 } finally {
   const resolved = path.resolve(root), temporaryRoot = path.resolve(os.tmpdir());
   assert.equal(path.dirname(resolved), temporaryRoot); assert(path.basename(resolved).startsWith("ags-bootstrap-expiry-"));
+  if (process.env.AGS_BOOTSTRAP_TEST_EVIDENCE_DIR) {
+    const evidenceRoot = path.resolve(process.env.AGS_BOOTSTRAP_TEST_EVIDENCE_DIR);
+    const relative = path.relative(resolved, evidenceRoot);
+    assert(relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative), "Evidence must stay outside the temporary test directory");
+    await cp(resolved, path.join(evidenceRoot, path.basename(resolved)), {recursive: true, errorOnExist: true, force: false});
+  }
   await rm(resolved, {recursive: true, force: true});
 }

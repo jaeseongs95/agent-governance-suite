@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
+import {getEventListeners} from "node:events";
 import {createHash} from "node:crypto";
-import {mkdtemp, mkdir, readFile, writeFile, rm} from "node:fs/promises";
+import {mkdtemp, mkdir, readFile, writeFile, rm, cp} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {prepare, preflight, run, evidenceValuesDigest, type BootstrapConfig} from "./bootstrap.mts";
@@ -165,11 +166,158 @@ try {
     assert.equal(failure.transportAttempts, 1); assert.equal(failure.ledger.entries[0].state, "unknown");
   } finally {adapter.decode = originalDecode;}
   passed.push("R14 actual producer preserves full PARTIAL/common error binding and absent/malformed/timeout diagnostics without selection claims");
+  const safetyEnv = {AGS_BOOTSTRAP_ENDPOINT: "https://mock.invalid/classify", AGS_BOOTSTRAP_JEV_KEY: "test-only-not-a-real-key"};
+  const safetyAdapter = input.api.providers.jevNoulWireAdapter;
+  let safetyTransportCalls = 0;
+  const savedEncode = safetyAdapter.encode, savedDecode = safetyAdapter.decode;
+  const safetyResponse = (init: RequestInit | undefined) => {
+    const wire = JSON.parse(String(init?.body));
+    return new Response(JSON.stringify({model: "mock-model-revision", answers: Object.fromEntries(Object.keys(wire.questions).map(id => [id, {type: "noul", noul: 0}])),
+      usage: {input_tokens: 100, output_tokens: 100}}), {status: 200});
+  };
+  const safetyReady = async (id: string) => {
+    const value = await readyMock(`r19-${id}`); value.limits!.requests = 1; await mockedEvidence(value); return value;
+  };
+  const assertNotStarted = (record: any, calls: number, code: string) => {
+    assert.equal(calls, 0); assert.equal(record.status, "RAW_EVALUATION_RECORDED");
+    assert.equal(record.stopReason, code); assert.equal(record.transportAttempts, 0);
+    assert.equal(record.ledger.entries[0].dispatchState, "not-started"); assert.equal(record.ledger.entries[0].state, "not-started");
+    assert.equal(record.qualificationStatus, "NOT_RUN"); assert.equal(record.productionProfileWritten, false);
+  };
+  // Original config mutation and codec identity mutation at the actual credential-await boundary.
+  for (const mode of ["original-config", "encode-identity", "decode-identity"] as const) {
+    const value = await safetyReady(mode); let calls = 0;
+    const environment = {...safetyEnv, get AGS_BOOTSTRAP_JEV_KEY() {
+      if (mode === "original-config") value.profile!.modelRevision = "mutated-after-admission";
+      if (mode === "encode-identity") safetyAdapter.encode = (...args: any[]) => (savedEncode as any)(...args);
+      if (mode === "decode-identity") safetyAdapter.decode = (...args: any[]) => (savedDecode as any)(...args);
+      return safetyEnv.AGS_BOOTSTRAP_JEV_KEY;
+    }};
+    try {assertNotStarted(await run(value, {env: environment, executionKind: "offline-mock", fetcher: async () => {calls++; throw new Error("Forbidden dispatch");}}), calls, "STALE_CLASSIFICATION");}
+    finally {safetyAdapter.encode = savedEncode; safetyAdapter.decode = savedDecode;}
+  }
+  // A pre-run codec injection is allowed, but mutating either copied input inside encode is refused.
+  for (const mode of ["copy-request", "copy-profile"] as const) {
+    const value = await safetyReady(mode); let calls = 0, dispatchEncoding = false;
+    try {
+      safetyAdapter.encode = (request: any, profile: any) => {
+        const wire = savedEncode(request, profile);
+        if (dispatchEncoding) {
+          if (mode === "copy-request") request.originalPrompt = "mutated copied request";
+          else profile.modelRevision = "mutated copied profile";
+        }
+        return wire;
+      };
+      const environment = {...safetyEnv, get AGS_BOOTSTRAP_JEV_KEY() {dispatchEncoding = true; return safetyEnv.AGS_BOOTSTRAP_JEV_KEY;}};
+      assertNotStarted(await run(value, {env: environment, executionKind: "offline-mock", fetcher: async () => {calls++; throw new Error("Forbidden dispatch");}}), calls, "STALE_CLASSIFICATION");
+    } finally {safetyAdapter.encode = savedEncode;}
+  }
+  // Preflight also calls encode: it must not redefine the approved corpus before dispatch snapshots.
+  const preflightMutation = await safetyReady("preflight-mutation"); let preflightCalls = 0, preflightEnvReads = 0;
+  try {
+    safetyAdapter.encode = (request: any, profile: any) => {const wire = savedEncode(request, profile); request.originalPrompt = "changed during preflight"; return wire;};
+    await assert.rejects(() => run(preflightMutation, {env: new Proxy({}, {get() {preflightEnvReads++; throw new Error("Forbidden environment access");}}),
+      executionKind: "offline-mock", fetcher: async () => {preflightCalls++; throw new Error("Forbidden dispatch");}}), /STALE_CLASSIFICATION/u);
+    assert.equal(preflightCalls, 0); assert.equal(preflightEnvReads, 0);
+  } finally {safetyAdapter.encode = savedEncode;}
+  // Candidate qualification expiry participates in the same clock/deadline as evidence.
+  const expiringCandidate = await safetyReady("candidate-expiry");
+  const qualificationDeadline = Date.now() + 10_000;
+  (expiringCandidate.profile!.qualification as any).validUntil = new Date(qualificationDeadline).toISOString();
+  await mockedEvidence(expiringCandidate);
+  let candidateClock = qualificationDeadline - 1, expiredCalls = 0;
+  const expired = await run(expiringCandidate, {now: () => candidateClock, executionKind: "offline-mock",
+    env: {...safetyEnv, get AGS_BOOTSTRAP_JEV_KEY() {candidateClock = qualificationDeadline; return safetyEnv.AGS_BOOTSTRAP_JEV_KEY;}},
+    fetcher: async () => {expiredCalls++; throw new Error("Forbidden expired dispatch");}});
+  assertNotStarted(expired, expiredCalls, "BOUND_EVIDENCE_EXPIRED");
+  for (const endpoint of ["http://mock.invalid/classify", "https://user:secret@mock.invalid/classify"]) {
+    const value = await safetyReady(`endpoint-${endpoint.startsWith("http:") ? "http" : "credentials"}`); let calls = 0;
+    value.approvedEndpointDigest = hash(endpoint); await mockedEvidence(value);
+    assertNotStarted(await run(value, {env: {...safetyEnv, AGS_BOOTSTRAP_ENDPOINT: endpoint}, executionKind: "offline-mock",
+      fetcher: async () => {calls++; throw new Error("Forbidden endpoint");}}), calls, "INVALID_APPROVED_ENDPOINT");
+  }
+  // Actual response primitive: stream bytes, fatal UTF8, duplicate wire answer keys; never retry.
+  const validBody = JSON.stringify({model: "mock-model-revision", answers: Object.fromEntries(input.inventory.skills.map((skill: any) => [skill.skillId, {type: "noul", noul: 0}])),
+    usage: {input_tokens: 100, output_tokens: 100}});
+  for (const mode of ["exact-cap", "byte-cap", "fatal-utf8", "duplicate-answers"] as const) {
+    const value = await safetyReady(mode); let calls = 0, response: Response | null = null, signal: AbortSignal | null = null;
+    let cancelled = 0;
+    if (mode === "byte-cap" || mode === "exact-cap") {value.limits!.responseBytes = Buffer.byteLength(validBody); await mockedEvidence(value);}
+    const record = await run(value, {env: safetyEnv, executionKind: "offline-mock", fetcher: async (_url, init) => {
+      calls++; safetyTransportCalls++; signal = init!.signal as AbortSignal;
+      if (mode === "byte-cap") {
+        const bytes = Buffer.from(validBody + " "), midpoint = Math.floor(bytes.length / 2);
+        response = new Response(new ReadableStream({start(controller) {controller.enqueue(bytes.subarray(0, midpoint)); controller.enqueue(bytes.subarray(midpoint));},
+          cancel() {cancelled++;}}), {headers: {"content-length": "1"}});
+      } else response = mode === "fatal-utf8" ? new Response(new Uint8Array([0xc3, 0x28]))
+        : new Response(mode === "duplicate-answers" ? validBody.replace('"answers":', '"answers":{},"answers":') : validBody);
+      return response;
+    }});
+    assert.equal(calls, 1); assert.equal(record.status, "RAW_EVALUATION_RECORDED"); if (record.status !== "RAW_EVALUATION_RECORDED") throw new Error("Expected fault record");
+    assert.equal(record.transportAttempts, 1); assert.equal(record.stopReason, mode === "exact-cap" ? null : mode === "byte-cap" ? "PROVIDER_RESPONSE_TOO_LARGE" : "INVALID_PROVIDER_RESPONSE");
+    if (mode === "byte-cap") assert.equal(cancelled, 1);
+    assert.equal(record.ledger.entries[0].state, "unknown"); assert.equal(record.ledger.entries[0].actualCostUsd, null);
+    assert.equal((response as Response | null)!.body!.locked, false); assert.equal(getEventListeners(signal!, "abort").length, 0);
+  }
+  // A provider's pending cancellation cannot hide the already observed failure behind a timeout.
+  for (const mode of ["http-error", "expired-response"] as const) {
+    const value = await safetyReady(`pending-cancel-${mode}`); value.limits!.timeoutMs = 10; await mockedEvidence(value);
+    let clock = Date.now(), calls = 0, cancellations = 0;
+    const record = await run(value, {env: safetyEnv, now: () => clock, executionKind: "offline-mock", fetcher: async () => {
+      calls++; safetyTransportCalls++;
+      if (mode === "expired-response") clock = Date.parse(value.budget!.validUntil);
+      return new Response(new ReadableStream({cancel() {cancellations++; return new Promise<void>(() => {});}}), {status: mode === "http-error" ? 503 : 200});
+    }});
+    assert.equal(record.status, "RAW_EVALUATION_RECORDED"); if (record.status !== "RAW_EVALUATION_RECORDED") throw new Error("Expected pending-cancel record");
+    assert.equal(calls, 1); assert.equal(cancellations, 1);
+    assert.equal(record.stopReason, mode === "http-error" ? "API_UNAVAILABLE" : "BOUND_EVIDENCE_EXPIRED");
+    assert.equal(record.ledger.entries[0].state, "unknown");
+  }
+  // Allowed pre-admission injection and successful completion leave no abort listeners.
+  const allowedInjection = await safetyReady("allowed-injection"); let allowedCalls = 0, successSignal: AbortSignal | null = null;
+  try {
+    safetyAdapter.encode = (...args: any[]) => (savedEncode as any)(...args);
+    const allowed = await run(allowedInjection, {env: safetyEnv, executionKind: "offline-mock", fetcher: async (_url, init) => {
+      allowedCalls++; safetyTransportCalls++; successSignal = init!.signal as AbortSignal; assert.equal(init!.redirect, "error"); return safetyResponse(init);
+    }});
+    assert.equal(allowed.status, "RAW_EVALUATION_RECORDED"); if (allowed.status !== "RAW_EVALUATION_RECORDED") throw new Error("Expected allowed injection");
+    assert.equal(allowed.stopReason, null); assert.equal(allowedCalls, 1); assert.equal(allowed.qualificationStatus, "NOT_RUN"); assert.equal(allowed.productionProfileWritten, false);
+    assert.equal(getEventListeners(successSignal!, "abort").length, 0);
+  } finally {safetyAdapter.encode = savedEncode;}
+  // Ordinary production provider remains blocked for NOT_RUN; PASS is only an ephemeral unit fixture.
+  const productionValue = await safetyReady("production-pair"); const productionInput = await prepare(productionValue);
+  const ordinaryProfile = structuredClone(productionValue.profile!) as any, ordinaryRequest = productionInput.requests[0].request;
+  let ordinaryCalls = 0;
+  const ordinary = new productionInput.api.providers.ApprovedRouteClassificationProvider([{
+    kind: "remote", routeRef: ordinaryProfile.approvedRouteRef, approvalRef: "synthetic-production-unit-only", approved: true,
+    providerKind: ordinaryProfile.providerKind, vendorId: ordinaryProfile.vendorId, adapterRevision: ordinaryProfile.adapterRevision,
+    modelIds: [ordinaryProfile.modelId], reasoningEfforts: [null], structuredOutput: true, endpoint: safetyEnv.AGS_BOOTSTRAP_ENDPOINT,
+    getCredential: async () => safetyEnv.AGS_BOOTSTRAP_JEV_KEY, adapter: safetyAdapter,
+  }], async (_url: any, init: any) => {ordinaryCalls++; return safetyResponse(init);});
+  await assert.rejects(() => ordinary.classify(ordinaryRequest, ordinaryProfile, new AbortController().signal), (error: any) => error.code === "STALE_CLASSIFICATION" && error.dispatchState === "not-started");
+  assert.equal(ordinaryCalls, 0); assert.equal(productionInput.api.profiles.validateProviderProfile(ordinaryProfile, ordinaryRequest, Date.now()), "PROFILE_UNQUALIFIED");
+  const qualifiedUnit = structuredClone(ordinaryProfile); qualifiedUnit.qualification.status = "PASS"; qualifiedUnit.qualificationRevision = "ephemeral-unit-only-not-live";
+  qualifiedUnit.qualification.profileConfigurationDigest = productionInput.api.profiles.digestProviderProfileConfiguration(qualifiedUnit);
+  assert.equal(productionInput.api.profiles.validateProviderProfile(qualifiedUnit, ordinaryRequest, Date.now()), null);
+  const ordinaryResult = await ordinary.classify(ordinaryRequest, qualifiedUnit, new AbortController().signal);
+  assert.equal(ordinaryCalls, 1); assert.equal(ordinaryResult.dispatchState, "started");
+  assert.equal(productionValue.profile!.qualification && (productionValue.profile!.qualification as any).status, "NOT_RUN");
+  passed.push("R19 immutable evaluation admission, expiry/HTTPS/stream/codec fences, listener cleanup and unchanged production qualification gate (unit mocks only)");
+
   console.log(JSON.stringify({status: "OFFLINE_CONTRACT_PASS", proofKind: "offline-mock", actualApiCalls: 0, actualCredentialLookups: 0,
-    mockTransportCalls: calls + timeoutCalls, mockObservationFaultCalls: observationFaultCalls, publicPrompts: prepared.requests.length, scoredSemanticCases: 18, checks: passed, profileQualification: "NOT_RUN", hostLive: "NOT_RUN"}, null, 2));
+    mockTransportCalls: calls + timeoutCalls, mockObservationFaultCalls: observationFaultCalls,
+    mockSafetyTransportCalls: safetyTransportCalls, mockProductionUnitCalls: ordinaryCalls,
+    totalMockTransportCalls: calls + timeoutCalls + observationFaultCalls + safetyTransportCalls + ordinaryCalls,
+    publicPrompts: prepared.requests.length, scoredSemanticCases: 18, checks: passed, profileQualification: "NOT_RUN", hostLive: "NOT_RUN"}, null, 2));
 } finally {
   const resolved = path.resolve(root), temporaryRoot = path.resolve(os.tmpdir());
   assert.equal(path.dirname(resolved), temporaryRoot, "Recursive cleanup must remain in the designated OS temp directory");
   assert(path.basename(resolved).startsWith("ags-bootstrap-contract-") && resolved !== temporaryRoot, "Cleanup target must be the owned test directory");
+  if (process.env.AGS_BOOTSTRAP_TEST_EVIDENCE_DIR) {
+    const evidenceRoot = path.resolve(process.env.AGS_BOOTSTRAP_TEST_EVIDENCE_DIR);
+    const relative = path.relative(resolved, evidenceRoot);
+    assert(relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative), "Evidence must stay outside the temporary test directory");
+    await cp(resolved, path.join(evidenceRoot, path.basename(resolved)), {recursive: true, errorOnExist: true, force: false});
+  }
   await rm(resolved, {recursive: true, force: true});
 }

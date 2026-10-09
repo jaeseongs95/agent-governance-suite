@@ -3,6 +3,7 @@ import {readFile, writeFile, mkdir, open, rename} from "node:fs/promises";
 import path from "node:path";
 import {pathToFileURL, fileURLToPath} from "node:url";
 import type {ClassificationObservation} from "../evaluation.js";
+import type {ProviderProfile, SkillClassificationRequestV1} from "../../../mcp-server/src/skill-classification/types.js";
 
 type Reference = {path: string; digest: string};
 interface LegacyBootstrapConfig {
@@ -156,6 +157,8 @@ export async function preflight(config: BootstrapConfig, prepared: Awaited<Retur
     fail(q?.status === "NOT_RUN" && q.inventoryDigest === prepared.inventory.inventoryDigest && q.taxonomyRevision === prepared.inventory.taxonomyRevision
       && q.modelRevision === profile.modelRevision && q.promptRevision === profile.promptRevision
       && q.profileConfigurationDigest === prepared.api.profiles.digestProviderProfileConfiguration(profile), "CANDIDATE_BINDING_MISMATCH");
+    fail(typeof q?.validUntil === "string" && Date.parse(q.validUntil) > now, "CANDIDATE_EXPIRED");
+    if (typeof q?.validUntil === "string" && Date.parse(q.validUntil) > now) validatedEvidenceExpiries.push({kind: "candidate", deadlineMs: Date.parse(q.validUntil)});
     fail(profile.reasoningEffort === null && profile.judgmentPolicy !== null, "JEV_OPTIONS_UNSUPPORTED");
     const supported = profile.supportedOptions as {structuredOutput?: boolean; reasoningEfforts?: unknown[]} | undefined;
     fail(supported?.structuredOutput === true && supported.reasoningEfforts?.includes(profile.reasoningEffort), "UNSUPPORTED_PROFILE_CAPABILITY");
@@ -192,8 +195,21 @@ export async function preflight(config: BootstrapConfig, prepared: Awaited<Retur
         for (const ref of estimator!.sources) await readBound(ref);
         requireCondition(prices?.billingMode === "token" && finite(prices.inputUsdPer1k), "ESTIMATE_PRICE_INVALID");
         // Reviewed assumption only: 1 UTF8 byte = 1 charged input token. No provider tokenization/billing guarantee.
+        // Interpret the configured Number's canonical decimal spelling, then ceil each request in picoUSD.
+        // Only reviewed-estimate uses this calculation; old ledger rows are never settled or repriced here.
+        const [priceCoefficient, priceExponent = "0"] = prices!.inputUsdPer1k.toString().toLowerCase().split("e");
+        const [priceWhole, priceFraction = ""] = priceCoefficient!.split(".");
+        const priceUnits = BigInt(priceWhole! + priceFraction);
+        const picoExponent = 9 + Number(priceExponent) - priceFraction.length;
+        const priceNumerator = priceUnits * (picoExponent >= 0 ? 10n ** BigInt(picoExponent) : 1n);
+        const priceDenominator = picoExponent < 0 ? 10n ** BigInt(-picoExponent) : 1n;
+        const reserveUsd = (bytes: number) => {
+          const pico = (BigInt(bytes) * priceNumerator + priceDenominator - 1n) / priceDenominator;
+          requireCondition(pico <= BigInt(Number.MAX_SAFE_INTEGER), "ESTIMATE_RESERVATION_OUT_OF_RANGE");
+          return Number(pico) / 1e12;
+        };
         requestReservations = measurements.map((row: {caseId: string; requestDigest: string; utf8Bytes: number}) => ({caseId: row.caseId, requestDigest: row.requestDigest,
-          reservedUsd: Math.ceil(row.utf8Bytes * prices!.inputUsdPer1k / 1000 * 1e12) / 1e12}));
+          reservedUsd: reserveUsd(row.utf8Bytes)}));
         perRequestReservedUsd = Math.max(...requestReservations.map(row => row.reservedUsd));
       } catch {blocked.push("ESTIMATE_SOURCE_OR_INPUT_UNBOUND");}
       fail(perRequestReservedUsd !== null && profile?.maximumCostUsd === perRequestReservedUsd, "PROFILE_COST_BOUND_MISMATCH");
@@ -230,11 +246,18 @@ async function atomicJson(file: string, value: unknown) {
 
 /** Qualification experiment only. Production profile validation/service are never changed. */
 export async function run(config: BootstrapConfig, options: {fetcher?: typeof fetch; env?: NodeJS.ProcessEnv; executionKind?: "offline-mock" | "provider-live"; now?: () => number} = {}) {
+  const sourceConfig = config, configDigest = hash(JSON.stringify(config));
+  config = structuredClone(config);
   // Clock injection is a test-only function argument; the CLI always uses Date.now.
   const now = options.now ?? Date.now;
+  const fetcher = options.fetcher ?? fetch;
   const prepared = await prepare(config);
+  const requestBindings = new Map<SkillClassificationRequestV1, string>(prepared.requests.map(({request}: {request: SkillClassificationRequestV1}) =>
+    [request, prepared.api.request.digestClassificationValue(request)]));
   const checked = await preflight(config, prepared, now());
   if (checked.status === "BLOCKED") return checked;
+  requireCondition(hash(JSON.stringify(sourceConfig)) === configDigest && hash(JSON.stringify(config)) === configDigest
+    && prepared.requests.every(({request}: {request: SkillClassificationRequestV1}) => requestBindings.get(request) === prepared.api.request.digestClassificationValue(request)), "STALE_CLASSIFICATION");
   requireCondition(checked.validatedEvidenceDeadlineMs !== null, "BOUND_EVIDENCE_DEADLINE_MISSING");
   const evidenceExpired = () => {const current = now(); return !Number.isFinite(current) || current >= checked.validatedEvidenceDeadlineMs!;};
   const limits = config.limits!;
@@ -243,7 +266,6 @@ export async function run(config: BootstrapConfig, options: {fetcher?: typeof fe
   const lock = await open(path.join(output, "bootstrap.lock"), "wx", 0o600);
   // A persistent lock also prevents a crashed/uncertain run from being retried automatically.
   try {
-    const configDigest = hash(JSON.stringify(config));
     const ledgerFile = path.join(output, "ledger.json");
     let ledger: Ledger;
     try {ledger = JSON.parse(await readFile(ledgerFile, "utf8"));}
@@ -264,19 +286,105 @@ export async function run(config: BootstrapConfig, options: {fetcher?: typeof fe
     const transport: typeof fetch = async (...args) => {
       if (evidenceExpired()) {evidenceExpiredBeforeFetch = true; throw new Error("BOUND_EVIDENCE_EXPIRED");}
       transportInvocations++;
-      const response = await (options.fetcher ?? fetch)(...args);
+      const response = await fetcher(...args);
       if (response.status === 402) billingOrBalanceFailure = true;
       return response;
     };
-    const provider = new prepared.api.providers.ApprovedRouteClassificationProvider([{
-      kind: "remote", routeRef: config.approvedRouteRef, approvalRef: config.approvalRef, approved: true,
-      providerKind: "jev", vendorId: profile.vendorId, adapterRevision: profile.adapterRevision, modelIds: [profile.modelId],
-      reasoningEfforts: [profile.reasoningEffort], structuredOutput: true, endpoint,
-      getCredential: async () => {
-        if (evidenceExpired()) {evidenceExpiredBeforeFetch = true; return null;}
-        return environment[config.credentialEnv] ?? null;
-      }, adapter: prepared.api.providers.jevNoulWireAdapter,
-    }], transport, {maximumResponseBytes: limits.responseBytes});
+    // Evaluation admission is the READY preflight for this frozen NOT_RUN corpus.
+    // Keep this transport private: production classification still requires PASS.
+    const {ClassificationProviderError} = prepared.api.providers;
+    const adapter = prepared.api.providers.jevNoulWireAdapter;
+    const {encode, decode, validateRawResponse} = adapter;
+    const discardBody = (response: Response) => {
+      try {void response.body?.cancel().catch(() => {});} catch { /* Cleanup cannot replace the original failure or wait past its deadline. */ }
+    };
+    const endpointUrl = (() => {
+      try {
+        const value = new URL(endpoint!);
+        if (value.protocol === "https:" && !value.username && !value.password) return value;
+      } catch { /* Return only the fixed admission error, never endpoint/credential text. */ }
+      return null;
+    })();
+    const classify = async (request: SkillClassificationRequestV1, signal: AbortSignal) => {
+      const fixedRequest = structuredClone(request), fixedProfile = structuredClone(profile) as unknown as ProviderProfile;
+      const requestBinding = requestBindings.get(request);
+      const profileBinding = prepared.api.request.digestClassificationValue(fixedProfile);
+      let started = false;
+      const assertCurrent = () => {
+        const state = started ? "unknown" : "not-started";
+        if (signal.aborted) throw new ClassificationProviderError(started ? "DISPATCH_TIMEOUT_UNKNOWN" : "CANCELLED", state);
+        if (evidenceExpired()) throw new ClassificationProviderError("BOUND_EVIDENCE_EXPIRED", state);
+        let current = false;
+        try {
+          current = hash(JSON.stringify(sourceConfig)) === configDigest && hash(JSON.stringify(config)) === configDigest
+            && prepared.api.request.digestClassificationValue(request) === requestBinding
+            && prepared.api.request.digestClassificationValue(fixedRequest) === requestBinding
+            && prepared.api.request.digestClassificationValue(profile) === profileBinding
+            && prepared.api.request.digestClassificationValue(fixedProfile) === profileBinding
+            && prepared.api.providers.jevNoulWireAdapter === adapter
+            && adapter.encode === encode && adapter.decode === decode && adapter.validateRawResponse === validateRawResponse
+            && fixedProfile.qualification.status === "NOT_RUN" && Date.parse(fixedProfile.qualification.validUntil) > now();
+        } catch { /* Changes to the approved evaluation inputs fail closed. */ }
+        if (!current) throw new ClassificationProviderError("STALE_CLASSIFICATION", state);
+      };
+      assertCurrent();
+      if (!endpointUrl) throw new ClassificationProviderError("INVALID_APPROVED_ENDPOINT", "not-started");
+      let key: string | null;
+      try {key = await Promise.resolve(environment[config.credentialEnv] ?? null);}
+      catch {throw new ClassificationProviderError("CREDENTIAL_UNAVAILABLE", "not-started");}
+      assertCurrent();
+      if (!key) throw new ClassificationProviderError("CREDENTIAL_UNAVAILABLE", "not-started");
+      let body: string;
+      try {body = JSON.stringify(encode.call(adapter, fixedRequest, fixedProfile));}
+      catch {throw new ClassificationProviderError("INVALID_PROVIDER_REQUEST", "not-started", true);}
+      if (typeof body !== "string") throw new ClassificationProviderError("INVALID_PROVIDER_REQUEST", "not-started", true);
+      if (Buffer.byteLength(body, "utf8") > fixedProfile.maximumInputBytes) throw new ClassificationProviderError("INPUT_TOO_LONG", "not-started");
+      assertCurrent();
+      let response: Response;
+      // The ledger reservation was persisted by the caller; this is the only dispatch.
+      try {
+        started = true;
+        response = await transport(endpointUrl.href, {method: "POST", headers: {authorization: `Bearer ${key}`, "content-type": "application/json"}, body, signal, redirect: "error"});
+      } catch {throw new ClassificationProviderError("TRANSPORT_UNAVAILABLE", "unknown");}
+      try {assertCurrent();}
+      catch (error) {discardBody(response); throw error;}
+      if (!response.ok) {
+        discardBody(response);
+        const code = response.status === 401 || response.status === 403 ? "AUTH_UNAVAILABLE"
+          : response.status === 429 || response.status === 529 ? "RATE_LIMITED" : "API_UNAVAILABLE";
+        throw new ClassificationProviderError(code, "started");
+      }
+      if (!response.body) throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", "started", true);
+      const reader = response.body.getReader(), chunks: Uint8Array[] = [];
+      const cancelReader = () => {void reader.cancel().catch(() => {});};
+      signal.addEventListener("abort", cancelReader, {once: true});
+      let bytes = 0, bodyText: string;
+      try {
+        while (true) {
+          assertCurrent();
+          let item: ReadableStreamReadResult<Uint8Array>;
+          try {item = await reader.read();}
+          catch {throw new ClassificationProviderError("TRANSPORT_UNAVAILABLE", "unknown");}
+          assertCurrent();
+          if (item.done) break;
+          if (item.value.byteLength > limits.responseBytes - bytes) {
+            throw new ClassificationProviderError("PROVIDER_RESPONSE_TOO_LARGE", "unknown", true);
+          }
+          if (item.value.byteLength) {bytes += item.value.byteLength; chunks.push(item.value);}
+        }
+        try {bodyText = new TextDecoder("utf-8", {fatal: true}).decode(Buffer.concat(chunks, bytes));}
+        catch {throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", "started", true);}
+      } catch (error) {cancelReader(); throw error;}
+      finally {signal.removeEventListener("abort", cancelReader); reader.releaseLock();}
+      let evaluation: any;
+      try {
+        const parsed: unknown = JSON.parse(bodyText);
+        validateRawResponse?.call(adapter, bodyText);
+        evaluation = decode.call(adapter, parsed, fixedRequest, fixedProfile);
+      } catch {throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", "started", true);}
+      assertCurrent();
+      return evaluation;
+    };
     const observations: ClassificationObservation[] = [];
     for (const {caseId, request} of prepared.requests.slice(0, limits.requests)) {
       if (evidenceExpired()) {stopReason = "BOUND_EVIDENCE_EXPIRED"; break;}
@@ -290,12 +398,18 @@ export async function run(config: BootstrapConfig, options: {fetcher?: typeof fe
       const timer = setTimeout(() => controller.abort(), limits.timeoutMs);
       let evaluation: any = null;
       let errorCode: string | null = null;
+      let responseValidationErrors: string[] = [];
+      const attemptsBefore = transportInvocations;
       let capViolation = false;
+      let onAbort: (() => void) | undefined;
       try {
-        const abort = new Promise<never>((_resolve, reject) => controller.signal.addEventListener("abort", () => reject(new Error("DISPATCH_TIMEOUT_UNKNOWN")), {once: true}));
-        evaluation = await Promise.race([provider.classify(request, profile, controller.signal), abort]);
-        const errors = prepared.api.validation.validateClassificationResponse(request, evaluation.response);
-        requireCondition(errors.length === 0, "COMMON_RESPONSE_INVALID");
+        const abort = new Promise<never>((_resolve, reject) => {
+          onAbort = () => reject(new Error("DISPATCH_TIMEOUT_UNKNOWN"));
+          controller.signal.addEventListener("abort", onAbort, {once: true});
+        });
+        evaluation = await Promise.race([classify(request, controller.signal), abort]);
+        responseValidationErrors = prepared.api.validation.validateClassificationResponse(request, evaluation.response);
+        requireCondition(responseValidationErrors.length === 0, "COMMON_RESPONSE_INVALID");
         capViolation = !Number.isSafeInteger(evaluation.usage.inputTokens) || evaluation.usage.inputTokens < 0 || !Number.isSafeInteger(evaluation.usage.outputTokens) || evaluation.usage.outputTokens < 0
           || evaluation.usage.inputTokens > limits.inputTokens || evaluation.usage.outputTokens > limits.outputTokens;
         entry.dispatchState = evaluation.dispatchState;
@@ -312,17 +426,18 @@ export async function run(config: BootstrapConfig, options: {fetcher?: typeof fe
         entry.dispatchState = evidenceExpiredBeforeFetch ? "not-started" : providerError ? (error as {dispatchState: string}).dispatchState : "unknown";
         errorCode = evidenceExpiredBeforeFetch ? "BOUND_EVIDENCE_EXPIRED" : billingOrBalanceFailure ? "BILLING_OR_BALANCE_UNAVAILABLE" : providerError ? (error as {code: string}).code : controller.signal.aborted ? "DISPATCH_TIMEOUT_UNKNOWN" : "BOOTSTRAP_RESPONSE_FAILED";
         entry.state = entry.dispatchState === "not-started" ? "not-started" : "unknown";
-      } finally {clearTimeout(timer);}
+      } finally {clearTimeout(timer); if (onAbort) controller.signal.removeEventListener("abort", onAbort);}
       const record = {schemaVersion: "1.0.0", caseId, request, response: evaluation?.response ?? null, usage: evaluation?.usage ?? prepared.api.providers.unknownUsage(),
         costAccounting: {estimatedCostUsd: entry.estimatedCostUsd, confirmedActualCostUsd: entry.actualCostUsd, unknownReservedUsd: entry.state === "unknown" ? entry.reservedUsd : 0},
         diagnostics: evaluation?.diagnostics ?? null, errorCode, capViolation, dispatchState: entry.dispatchState,
+        responseValidationErrors, transportAttempts: transportInvocations - attemptsBefore,
         executionKind: options.executionKind ?? "provider-live", hostSelection: "NOT_RUN", applied: "NOT_RUN", verified: "NOT_RUN"};
       entry.resultDigest = hash(JSON.stringify(record));
       await writeFile(path.join(output, `${caseId}.raw.json`), JSON.stringify(record, null, 2) + "\n", {flag: "wx", mode: 0o600});
       await atomicJson(ledgerFile, ledger);
       observations.push(prepared.api.evaluation.fromClassification(caseId, request, record.response, {
         state: errorCode || capViolation ? "BLOCKED" : "PASS", executionKind: options.executionKind ?? "provider-live", conditionDigest: configDigest,
-        producerDiagnostics: {errorCode, capViolation, dispatchState: entry.dispatchState, responseValidationErrors: []}}));
+        producerDiagnostics: {errorCode, capViolation, dispatchState: entry.dispatchState, responseValidationErrors}}));
       if (errorCode || capViolation) {stopReason = errorCode ?? "OBSERVED_CAP_VIOLATION"; break;} // No automatic timeout resend or alternate provider.
     }
     const raw = prepared.api.evaluation.aggregate(prepared.cases.filter((row: {oracle: unknown}) => row.oracle !== null), observations.filter((row: any) => prepared.cases.find((item: any) => item.caseId === row.caseId)?.oracle !== null), "jevRaw", prepared.inventory.skills.map((skill: {skillId: string}) => skill.skillId));

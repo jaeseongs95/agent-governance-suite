@@ -20,22 +20,22 @@
     {
       "path": "tests/skill-classification/live-bootstrap/bootstrap.mts",
       "role": "qualification-bootstrap-runtime",
-      "bytes": 34282,
-      "digest": "sha256:c2062ae97e8657fc5b31cbb2ebf127555bf5d885ae85322407107e74b4314e52",
+      "bytes": 42078,
+      "digest": "sha256:3ec720c81c1f503f7367292528df12bb6beb2a5536ce9fdd10a09f0498e324d9",
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
     },
     {
       "path": "tests/skill-classification/live-bootstrap/contract-selfcheck.mts",
       "role": "offline-mock-contract",
-      "bytes": 15515,
-      "digest": "sha256:b9369b65ca5536e9ba7e247c06c970e0c987dad01caf316609b0af6c412b2137",
+      "bytes": 28564,
+      "digest": "sha256:8ee78780241cab221e51b146122acccc88e7c2ee2c330427c68e8540bc094c82",
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
     },
     {
       "path": "tests/skill-classification/live-bootstrap/expiry-regression.mts",
       "role": "offline-expiry-regression",
-      "bytes": 6787,
-      "digest": "sha256:bccd024d9aed62fc40edc1d861384622c0d181f653c6101f4fa0ebe392468689",
+      "bytes": 7278,
+      "digest": "sha256:b084ee04549e42fde90b8a0008a5f4fee9ab995b71960c3aad03553c452f1163",
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
     },
     {
@@ -48,16 +48,16 @@
     {
       "path": "tests/skill-classification/live-bootstrap/README.md",
       "role": "public-run-instructions",
-      "bytes": 5394,
-      "digest": "sha256:d293f128634d26a474b6437dc3da2ff81c8c01700b665bf642e22c1dba208a3a",
+      "bytes": 8309,
+      "digest": "sha256:df729f8eb10e7411bd9f7999139be50da37fbac9215cb41249613a7d67e94eed",
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
     },
     {
       "path": "tests/skill-classification/live-bootstrap/budget-regression.mts",
       "role": "offline-run-budget-regression",
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
-      "bytes": 18419,
-      "digest": "sha256:edb60ffa487657cc55e7ee1822fd4a2197f8fa1b0d94819fdaef0c47768509bf"
+      "bytes": 28959,
+      "digest": "sha256:614f5ecca01035b9e54076c6e9452de620a1e27889203fee085f4aea9759f8c4"
     },
     {
       "path": "tests/skill-classification/evaluation.ts",
@@ -79,6 +79,34 @@
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
       "bytes": 12550,
       "digest": "sha256:eb16355737717fe250f5d86ca0eb801633693f9e5f48dc72af5fc318cafd826d"
+    },
+    {
+      "path": "tests/skill-classification/live-bootstrap/bootstrap-contract.test.mjs",
+      "role": "offline-cli-contract-bridge",
+      "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+      "bytes": 1589,
+      "digest": "sha256:559b614dbe3e459d6309b94dcce8bb52558abeeda51cf2ed0f15c059b12d8d15"
+    },
+    {
+      "path": "tests/skill-classification/live-bootstrap/precision-regression.mts",
+      "role": "offline-reviewed-estimate-precision-regression",
+      "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+      "bytes": 17686,
+      "digest": "sha256:0c8902f2608b0280ec5764a7cd8c92ddcf5a9fd8b84749553b7c2fa557df61b5"
+    },
+    {
+      "path": "tests/skill-classification/live-bootstrap/budget-wire-oracle.json",
+      "role": "frozen-offline-budget-wire-oracle",
+      "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+      "bytes": 15579,
+      "digest": "sha256:f6ea158f65473b5aa08846196bbb54a02ca5db7fffaed39d0ba25c2f61148b56"
+    },
+    {
+      "path": "tests/skill-classification/live-bootstrap/precision-boundary-oracle.json",
+      "role": "frozen-offline-precision-boundary-oracle",
+      "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+      "bytes": 19815,
+      "digest": "sha256:618afb36e06a7372656e9a4139bf3f91e45f12d1487bac42e72f0994a7d2f835"
     }
   ],
   "actualApiCalls": 0,
@@ -111,5 +139,13 @@
     "tree": "df8639acd8834faed1c4fc6550da378a376a669b",
     "scorerDigest": "sha256:08e309bb3fee27d6d7af3d6e8c7bc13c978f7ea2298a3183292290636947004c",
     "purpose": "R14 원 후보와 잔여 지표 실패를 보존하며 r15의 별도 교정 근거와 구분한다. 모델·호스트 품질 검증 완료를 뜻하지 않는다."
-  }
+  },
+  "priorBootstrapIntegrationCandidate": {
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "originalHelperDigest": "sha256:c2062ae97e8657fc5b31cbb2ebf127555bf5d885ae85322407107e74b4314e52",
+    "purpose": "R17 Linux 원 bootstrap 실패와 원 기대값은 별도 보존한다. 이 개발 helper는 qualification/host-live PASS를 발급하지 않는다."
+  },
+  "budgetPrecisionRevision": "r20-ab",
+  "budgetOracleStatus": "Offline test input frozen independently of preflight outputs; embedded proposal provenance is preserved. This binding does not assert source acceptance, real spend, or release approval."
 }

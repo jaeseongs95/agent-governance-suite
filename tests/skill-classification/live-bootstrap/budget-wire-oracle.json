@@ -1,0 +1,419 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "proposed-independent-bootstrap-budget-oracle",
+  "status": "UNAPPLIED_NOT_ACCEPTED",
+  "originCommit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+  "canonicalRunId": "full-21-015",
+  "inventoryDigest": "sha256:8aee21bd595317f40336fa4cae46eff4e963e486e7b74ca29200736e9fa09e81",
+  "fixtureDigest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "evidenceRefs": [
+    {
+      "name": "budget-original-prepare.receipt.json",
+      "bytes": 8202,
+      "sha256": "dee00c87e66a65e5ade7f969842d468d8e4d21b16a0341575b96f4cb93866ffc"
+    },
+    {
+      "name": "budget-candidate-prepare.receipt.json",
+      "bytes": 8093,
+      "sha256": "823e46c6e3b9f6ec479b9b668e1fd3f38fad5ada09cada44b931a2bd8ab51c98"
+    },
+    {
+      "name": "budget-candidate-diagnostic.receipt.json",
+      "bytes": 9920,
+      "sha256": "dbdce89de83305515f7b4047d4eb80d065359936b4326206bf0328c2daed9acb"
+    }
+  ],
+  "independence": "Money expectations use only captured input.measurements/wire lengths and independent BigInt rational arithmetic; preflight requestReservations/reservedUsd are never read.",
+  "requestBinding": "requestDigest is fixed for canonicalRunId full-21-015. Other synthetic run IDs must preserve their own requestId/operationId/requestDigest binding; compare their same semantic wires to this fixed ordered wire oracle, never copy canonical request IDs into actual requests.",
+  "wireByteProvenance": "Previously measured encoded wire SHA/lengths, not newly executed encoding and not a claim to have recovered every full wire byte file in this turn.",
+  "prices": {
+    "currency": "USD",
+    "inputUsdPer1000Tokens": "0.000042",
+    "outputUsdPer1000Tokens": "0",
+    "fixedCallUsd": "0",
+    "assumedInputTokensPerUtf8Byte": "1",
+    "usdPerByteNumerator": "42",
+    "usdPerByteDenominator": "1000000000"
+  },
+  "rounding": "ceil each request rational USD * 10^12, then sum integer picoUSD; do not round only the whole batch",
+  "rows": [
+    {
+      "caseId": "SS01",
+      "requestDigest": "sha256:93878ea937228118f5eb29dbd1d64e4cae1609b7ebb37984a825db5bc235d562",
+      "wireDigest": "sha256:7e15579cd66cb28042683599952a30fec848018cf47e162ddd2fb03378b6670f",
+      "utf8Bytes": 108524,
+      "reservedPicoUsd": "4558008000",
+      "reservedUsdDecimal": "0.004558008000"
+    },
+    {
+      "caseId": "SS02",
+      "requestDigest": "sha256:b9a8fe0f17ef9d09ab67801302d634fa4b5904b067eb59d8b7d4fed5c6144c35",
+      "wireDigest": "sha256:07613f7fc48e3dc50f1fd2166eb5afd6207e3621bc93cdb35ffb01b6dc4f1f15",
+      "utf8Bytes": 108493,
+      "reservedPicoUsd": "4556706000",
+      "reservedUsdDecimal": "0.004556706000"
+    },
+    {
+      "caseId": "SS03",
+      "requestDigest": "sha256:e3b38f9378a67daa996682f68ffdfb8e1ef62651b513e3376301c4883195c4ee",
+      "wireDigest": "sha256:bbf714ea6de8ad604edd24cb0e0919113215eaf3551df73973db242db2d6d018",
+      "utf8Bytes": 108596,
+      "reservedPicoUsd": "4561032000",
+      "reservedUsdDecimal": "0.004561032000"
+    },
+    {
+      "caseId": "SS04",
+      "requestDigest": "sha256:538c2d034095f48403f171bcea5ac0334c02b381a2eb159e60eafc7ac3cba8bc",
+      "wireDigest": "sha256:add7cfc52605a29114f2b31603728d66e341468561a7ae79ecf989a733a85341",
+      "utf8Bytes": 108593,
+      "reservedPicoUsd": "4560906000",
+      "reservedUsdDecimal": "0.004560906000"
+    },
+    {
+      "caseId": "SS05",
+      "requestDigest": "sha256:f10f64ab5873eb6fedaf12112dc314767e0e49c2b29025ef755ff6e6949c26d3",
+      "wireDigest": "sha256:ba4d05265906c3c31d5ca2d49473b19fdbcd71c9ce52e728e34e7113c23b45e0",
+      "utf8Bytes": 108528,
+      "reservedPicoUsd": "4558176000",
+      "reservedUsdDecimal": "0.004558176000"
+    },
+    {
+      "caseId": "SS06",
+      "requestDigest": "sha256:7344bfd2ddf9fa9e0fd89a89712ff53d1cd5ca1b3cd668c1180a6dbb88344f3c",
+      "wireDigest": "sha256:123c85afa443a64886dd52fd60c0ed4afc2d93926250b8a5df9122625b8d36a1",
+      "utf8Bytes": 108542,
+      "reservedPicoUsd": "4558764000",
+      "reservedUsdDecimal": "0.004558764000"
+    },
+    {
+      "caseId": "SS07",
+      "requestDigest": "sha256:3fa4d7ac2e57e3fdf0496bf687f0f52613828263ef2e506e79065fc3b0fb85d3",
+      "wireDigest": "sha256:7fa890e60c6605956af2e3512fcb9c8120a0a011c320b196705967d4191012e4",
+      "utf8Bytes": 108558,
+      "reservedPicoUsd": "4559436000",
+      "reservedUsdDecimal": "0.004559436000"
+    },
+    {
+      "caseId": "SS08",
+      "requestDigest": "sha256:08adc83c29db5bef4f155aa5d5c43f2052cf5c2660f6e7a7d72f29e879a5449a",
+      "wireDigest": "sha256:bf98c6c9d6c3f2707a8732de1a468f4c22c6ab15ed85a190af911014b30eef32",
+      "utf8Bytes": 108513,
+      "reservedPicoUsd": "4557546000",
+      "reservedUsdDecimal": "0.004557546000"
+    },
+    {
+      "caseId": "SS09",
+      "requestDigest": "sha256:2546fc7c277653f9aaba70686d4d419a14b28bb936db9ab77462e6c0be0c52e7",
+      "wireDigest": "sha256:3f72052a24506918da0b6af4a26bd0d77e31ad8c564811504c441728066c25e7",
+      "utf8Bytes": 108497,
+      "reservedPicoUsd": "4556874000",
+      "reservedUsdDecimal": "0.004556874000"
+    },
+    {
+      "caseId": "SS10",
+      "requestDigest": "sha256:233b9b2ee7baab7e286716f8596ba4aded0b370c76f2757a4636fd1c0580fa0c",
+      "wireDigest": "sha256:5b6587d67c97bde924db2804efa5fc273a625d4fc10dfe9d19759dec1fe0d48b",
+      "utf8Bytes": 108508,
+      "reservedPicoUsd": "4557336000",
+      "reservedUsdDecimal": "0.004557336000"
+    },
+    {
+      "caseId": "SS11",
+      "requestDigest": "sha256:72fb04c0048829a004244d5c296d1386c718e5b46e42cb989469ecbf9dbeb903",
+      "wireDigest": "sha256:108e1ed6435e1f1fe3a086c11e1530325268996c8765355734f70d85ca915a44",
+      "utf8Bytes": 108560,
+      "reservedPicoUsd": "4559520000",
+      "reservedUsdDecimal": "0.004559520000"
+    },
+    {
+      "caseId": "SS12",
+      "requestDigest": "sha256:f09c542bf67f99aeee6e1fa2c1e4fd74941491ade8286d95ae85abfc42157625",
+      "wireDigest": "sha256:9a0d205c7da8bf86eb39468e930b18e7b31551f3f03c5911d53894ffb682fa60",
+      "utf8Bytes": 108397,
+      "reservedPicoUsd": "4552674000",
+      "reservedUsdDecimal": "0.004552674000"
+    },
+    {
+      "caseId": "SS13",
+      "requestDigest": "sha256:a082b1f7ff604a67e31d44ca33c854150e7f140a475d2c474aa9986e53a4a8b6",
+      "wireDigest": "sha256:f87743f1b6409584a31c94327b41c6c98a66f3a00124088b888adce30db233b7",
+      "utf8Bytes": 108438,
+      "reservedPicoUsd": "4554396000",
+      "reservedUsdDecimal": "0.004554396000"
+    },
+    {
+      "caseId": "SS14",
+      "requestDigest": "sha256:fa3a5cb32e30a7c991b46a0f228286c48648fdbb6857becf00d9a2f0afdf3fd9",
+      "wireDigest": "sha256:dcd1cee17646b84c2b0f111731d71b20bdd2e255d282b5991fa3e4eeb5cb7fb7",
+      "utf8Bytes": 108534,
+      "reservedPicoUsd": "4558428000",
+      "reservedUsdDecimal": "0.004558428000"
+    },
+    {
+      "caseId": "SS15",
+      "requestDigest": "sha256:dde2f0ed5a07a0bd300f3e0ee146d276aed757e12c2183c1953ae19bb2c5c02f",
+      "wireDigest": "sha256:41c0adbe22859b7ab6aa1ba2e99d41f1de32b40989b5c2cd4b6993a48accc61e",
+      "utf8Bytes": 108412,
+      "reservedPicoUsd": "4553304000",
+      "reservedUsdDecimal": "0.004553304000"
+    },
+    {
+      "caseId": "SS16",
+      "requestDigest": "sha256:ebf55ed8954c852770aeea2bbb15be948a656a4bf3b3cbe7bb0b385cc18068ce",
+      "wireDigest": "sha256:f89a97299b95e4fbe7b4a5d0d35ba63238b3d4a5dbbd74e3d7acb3190b8f177b",
+      "utf8Bytes": 108500,
+      "reservedPicoUsd": "4557000000",
+      "reservedUsdDecimal": "0.004557000000"
+    },
+    {
+      "caseId": "SS17",
+      "requestDigest": "sha256:e64ba8e50be7c7a16017d1a85cf8ff6e90a2ae17641ac8e1537ff1084fea351c",
+      "wireDigest": "sha256:93794d90534f2c0128100c42b7f7cb33fead6d2efa162d9bfaaa774afb598b52",
+      "utf8Bytes": 108560,
+      "reservedPicoUsd": "4559520000",
+      "reservedUsdDecimal": "0.004559520000"
+    },
+    {
+      "caseId": "SS18",
+      "requestDigest": "sha256:255c6666b0856e869d76d5535a07167003f5b94f3e466a8ab4eb637fc107f0fa",
+      "wireDigest": "sha256:aac59e8077dc7250e725889ee0ec2418bd9fca2e61da8bae717cb225d7183935",
+      "utf8Bytes": 108471,
+      "reservedPicoUsd": "4555782000",
+      "reservedUsdDecimal": "0.004555782000"
+    },
+    {
+      "caseId": "SS23",
+      "requestDigest": "sha256:7c7d69931f047ca0377847989a832107261ad59b70652a4022b661c198170473",
+      "wireDigest": "sha256:b019574a8529ec72175af446987229506ffb413123b63e225fbfaa2240fa5a93",
+      "utf8Bytes": 108481,
+      "reservedPicoUsd": "4556202000",
+      "reservedUsdDecimal": "0.004556202000"
+    },
+    {
+      "caseId": "SS28",
+      "requestDigest": "sha256:6613f10fe949d3d9a4ce8dedae1c1f7adf940d45e62b58520f2892a8d13f2faa",
+      "wireDigest": "sha256:a39e26deb648b87c0deb6826cd4da96fc7af83524a6c4069326cb105d5855bd8",
+      "utf8Bytes": 108404,
+      "reservedPicoUsd": "4552968000",
+      "reservedUsdDecimal": "0.004552968000"
+    },
+    {
+      "caseId": "SS37",
+      "requestDigest": "sha256:ea776b54dd834eb0054a311297b9ccb58d927c9f3ee12de99d1717922020612b",
+      "wireDigest": "sha256:520ea45e340f9076d3fa748f773482d2343bce5b798e0ed10952146c52ded888",
+      "utf8Bytes": 108434,
+      "reservedPicoUsd": "4554228000",
+      "reservedUsdDecimal": "0.004554228000"
+    }
+  ],
+  "totals": {
+    "utf8Bytes": "2278543",
+    "reservedPicoUsd": "95698806000",
+    "reservedUsdDecimal": "0.095698806000",
+    "firstTwoPicoUsd": "9114714000",
+    "firstTwoUsdDecimal": "0.009114714000"
+  },
+  "displayOnlyObservedBinaryFloatSum": "0.09569880599999998",
+  "historical": {
+    "wireBytes": 2866900,
+    "reservationUsd": "0.120409800000",
+    "pilotUnknownUsd": "0.005734722000",
+    "disposition": "Preserve original source/FAIL/evidence/UNKNOWN; never settle or reduce historical reservations using the current wire oracle"
+  },
+  "syntheticOverBudgetCases": [
+    {
+      "id": "uncovered-batch-current-oracle",
+      "historicalId": "uncovered-batch",
+      "requests": 21,
+      "capUsd": "0.150000000000",
+      "unchangedUnknownUsd": "0.030000000000",
+      "historicalConfirmedUsd": "0.000000000000",
+      "currentRequestReservationUsd": "0.095698806000",
+      "oldInputCurrentTotalUsd": "0.125698806000",
+      "additionalSyntheticConfirmedUsd": "0.024301195000",
+      "proposedSyntheticConfirmedUsd": "0.024301195000",
+      "proposedTotalPicoUsd": "150000001000",
+      "proposedTotalUsd": "0.150000001000",
+      "expectedStatus": "BLOCKED",
+      "expectedReason": "RUN_BUDGET_INSUFFICIENT",
+      "expectedEnvironmentReads": 0,
+      "expectedCredentialReads": 0,
+      "expectedFetches": 0,
+      "authority": "UNAPPLIED_SYNTHETIC_TEST_INPUT_ONLY_NOT_OBSERVED_SPEND_OR_USER_APPROVAL"
+    },
+    {
+      "id": "pilot-plus-full-121-current-oracle",
+      "historicalId": "pilot-plus-full-121",
+      "requests": 21,
+      "capUsd": "0.121000000000",
+      "unchangedUnknownUsd": "0.005734722000",
+      "historicalConfirmedUsd": "0.000000000000",
+      "currentRequestReservationUsd": "0.095698806000",
+      "oldInputCurrentTotalUsd": "0.101433528000",
+      "additionalSyntheticConfirmedUsd": "0.019566473000",
+      "proposedSyntheticConfirmedUsd": "0.019566473000",
+      "proposedTotalPicoUsd": "121000001000",
+      "proposedTotalUsd": "0.121000001000",
+      "expectedStatus": "BLOCKED",
+      "expectedReason": "RUN_BUDGET_INSUFFICIENT",
+      "expectedEnvironmentReads": 0,
+      "expectedCredentialReads": 0,
+      "expectedFetches": 0,
+      "authority": "UNAPPLIED_SYNTHETIC_TEST_INPUT_ONLY_NOT_OBSERVED_SPEND_OR_USER_APPROVAL"
+    },
+    {
+      "id": "confirmed-plus-unknown-current-oracle",
+      "historicalId": "confirmed-plus-unknown",
+      "requests": 2,
+      "capUsd": "0.150000000000",
+      "unchangedUnknownUsd": "0.060000000000",
+      "historicalConfirmedUsd": "0.080000000000",
+      "currentRequestReservationUsd": "0.009114714000",
+      "oldInputCurrentTotalUsd": "0.149114714000",
+      "additionalSyntheticConfirmedUsd": "0.000885287000",
+      "proposedSyntheticConfirmedUsd": "0.080885287000",
+      "proposedTotalPicoUsd": "150000001000",
+      "proposedTotalUsd": "0.150000001000",
+      "expectedStatus": "BLOCKED",
+      "expectedReason": "RUN_BUDGET_INSUFFICIENT",
+      "expectedEnvironmentReads": 0,
+      "expectedCredentialReads": 0,
+      "expectedFetches": 0,
+      "authority": "UNAPPLIED_SYNTHETIC_TEST_INPUT_ONLY_NOT_OBSERVED_SPEND_OR_USER_APPROVAL"
+    }
+  ],
+  "historicalUnknownCase": {
+    "priorUnknownUsd": "0.120409800000",
+    "newBatchUsd": "0.095698806000",
+    "totalUsd": "0.216108606000",
+    "capUsd": "0.150000000000",
+    "expectedStatus": "BLOCKED",
+    "reason": "RUN_BUDGET_INSUFFICIENT",
+    "environmentReads": 0,
+    "credentialReads": 0,
+    "fetches": 0
+  },
+  "fractionalRoundingFixture": {
+    "status": "SYNTHETIC_PRICE_NOT_REAL_ROUTE_OR_BILLING_APPROVAL",
+    "inputUsdPer1000Tokens": "0.0000000005",
+    "picoUsdPerByteNumerator": "1",
+    "picoUsdPerByteDenominator": "2",
+    "rows": [
+      {
+        "caseId": "SS01",
+        "utf8Bytes": 108524,
+        "reservedPicoUsd": "54262"
+      },
+      {
+        "caseId": "SS02",
+        "utf8Bytes": 108493,
+        "reservedPicoUsd": "54247"
+      },
+      {
+        "caseId": "SS03",
+        "utf8Bytes": 108596,
+        "reservedPicoUsd": "54298"
+      },
+      {
+        "caseId": "SS04",
+        "utf8Bytes": 108593,
+        "reservedPicoUsd": "54297"
+      },
+      {
+        "caseId": "SS05",
+        "utf8Bytes": 108528,
+        "reservedPicoUsd": "54264"
+      },
+      {
+        "caseId": "SS06",
+        "utf8Bytes": 108542,
+        "reservedPicoUsd": "54271"
+      },
+      {
+        "caseId": "SS07",
+        "utf8Bytes": 108558,
+        "reservedPicoUsd": "54279"
+      },
+      {
+        "caseId": "SS08",
+        "utf8Bytes": 108513,
+        "reservedPicoUsd": "54257"
+      },
+      {
+        "caseId": "SS09",
+        "utf8Bytes": 108497,
+        "reservedPicoUsd": "54249"
+      },
+      {
+        "caseId": "SS10",
+        "utf8Bytes": 108508,
+        "reservedPicoUsd": "54254"
+      },
+      {
+        "caseId": "SS11",
+        "utf8Bytes": 108560,
+        "reservedPicoUsd": "54280"
+      },
+      {
+        "caseId": "SS12",
+        "utf8Bytes": 108397,
+        "reservedPicoUsd": "54199"
+      },
+      {
+        "caseId": "SS13",
+        "utf8Bytes": 108438,
+        "reservedPicoUsd": "54219"
+      },
+      {
+        "caseId": "SS14",
+        "utf8Bytes": 108534,
+        "reservedPicoUsd": "54267"
+      },
+      {
+        "caseId": "SS15",
+        "utf8Bytes": 108412,
+        "reservedPicoUsd": "54206"
+      },
+      {
+        "caseId": "SS16",
+        "utf8Bytes": 108500,
+        "reservedPicoUsd": "54250"
+      },
+      {
+        "caseId": "SS17",
+        "utf8Bytes": 108560,
+        "reservedPicoUsd": "54280"
+      },
+      {
+        "caseId": "SS18",
+        "utf8Bytes": 108471,
+        "reservedPicoUsd": "54236"
+      },
+      {
+        "caseId": "SS23",
+        "utf8Bytes": 108481,
+        "reservedPicoUsd": "54241"
+      },
+      {
+        "caseId": "SS28",
+        "utf8Bytes": 108404,
+        "reservedPicoUsd": "54202"
+      },
+      {
+        "caseId": "SS37",
+        "utf8Bytes": 108434,
+        "reservedPicoUsd": "54217"
+      }
+    ],
+    "sumOfPerRequestCeilPicoUsd": "1139275",
+    "invalidRoundAfterSummingPicoUsd": "1139272",
+    "differencePicoUsd": "3"
+  },
+  "runtimeTests": "NOT_RUN",
+  "productWrites": 0,
+  "actualModelApiCalls": 0,
+  "proposalRevision": 2,
+  "previousProposalSha256": "09268eeaf1aa04087d8810b96e696160e70e4adea87c736c416c32938e69995c",
+  "modelId": "mock-model"
+}
