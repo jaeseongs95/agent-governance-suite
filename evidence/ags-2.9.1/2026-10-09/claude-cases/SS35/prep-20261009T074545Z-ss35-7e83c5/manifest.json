@@ -1,0 +1,47 @@
+{
+  "caseId": "SS35",
+  "kind": "preparation-only-public-package",
+  "status": "PREPARED_WAITING_PARENT",
+  "claudeProductTest": "NOT_RUN",
+  "apiCalls": 0,
+  "runId": "prep-20261009T074545Z-ss35-7e83c5",
+  "files": [
+    {
+      "path": "REPORT.md",
+      "bytes": 11786,
+      "sha256": "0994ffdf11acfc1f427ee00b66e0e804920d4f3bf7268e6b8bb10cfff4007995"
+    },
+    {
+      "path": "cost-ledger.json",
+      "bytes": 910,
+      "sha256": "cf4771c96281f74ff1df1da382a50b5eb98fbd4cb3b60edd5c25cee92ae8de9e"
+    },
+    {
+      "path": "environment.json",
+      "bytes": 2021,
+      "sha256": "1a45b2098d51c898b45482be287fdf604e710063e785346933e03c77b891827b"
+    },
+    {
+      "path": "historical-results.json",
+      "bytes": 5361,
+      "sha256": "93a1adfe78af8584dab1ba9fcfb421b079fe9d8f3f344822f56b037e9358c0a0"
+    },
+    {
+      "path": "input-verification.json",
+      "bytes": 6230,
+      "sha256": "e7452638a64e83bbc9e4908a03e6dbc39ab02fa093fb4361158182f2e3d678dc"
+    },
+    {
+      "path": "instructions-provenance.json",
+      "bytes": 1835,
+      "sha256": "c95058a3ee40054524c2b58678680c2929dee889f089ca3aa988fbae0ec10640"
+    },
+    {
+      "path": "original-SS35.source.json",
+      "bytes": 1783,
+      "sha256": "1d02ddd4a4c538a5b45ee1fd04809c74486f21cd4df8f26f29a850d4c741aa2c"
+    }
+  ],
+  "hashPolicy": "Manifest excludes itself and SHA256SUMS; SHA256SUMS includes manifest and excludes itself. Remote verification includes every published file.",
+  "sanitization": "Reports derived from public synthetic evidence; no original private chat, secret values, credential files, or private personal paths. CLI path is the task-provided shared environment path."
+}

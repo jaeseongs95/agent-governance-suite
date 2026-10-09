@@ -1,0 +1,22 @@
+{
+  "caseId": "SS35",
+  "currency": "USD",
+  "softBudget": 2,
+  "spentUSD": 0,
+  "reservedUnknownUSD": 0,
+  "remainingKnownUSD": 2,
+  "apiCalls": {
+    "Claude": 0,
+    "JEV": 0,
+    "otherProvider": 0
+  },
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadInputTokens": 0,
+  "cacheCreationInputTokens": 0,
+  "retryCount": 0,
+  "failedCalls": 0,
+  "events": [],
+  "status": "NO_PAID_CALLS_WAITING_PARENT",
+  "policy": "Include all preparation, failed calls, retries and cache usage. Capture actual model, route, timestamps, result/usage and total cost from authentic CLI output. Missing usage/cost remains unknown with a reservation; do not record as zero. Stop the next call when cumulative actual plus unknown reservation approaches US$2. No automatic retry or unallocated JEV call. CLI --max-budget-usd for print is available; select cap only after common settings and remaining budget are confirmed."
+}

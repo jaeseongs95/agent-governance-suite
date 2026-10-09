@@ -1,0 +1,31 @@
+{
+  "caseId": "SS35",
+  "title": "calibration과 holdout 누수 방지",
+  "familyId": "mechanical-SS35",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "mock 또는 오프라인 데이터 검증. 유효한 split 뒤의 live 결과에 적용한다.",
+  "originalPrompt": null,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS35",
+    "fields": {
+      "입력": "SS01·SS02의 번역쌍, SS03의 어순·용어만 바꾼 문장, 독립된 runtime 전환 의미군을 포함한 fixture 목록을 분할한다. 고의로 같은 의미군을 양쪽에 넣은 잘못된 split도 준다.",
+      "필수추천": "새로운 스킬 추천 없음. 평가 분할의 유효성을 판정한다.",
+      "금지추천 또는 행동": "번역·동의미 변형을 독립 holdout으로 계산; holdout 결과를 보고 threshold·프롬프트를 조정한 뒤 같은 holdout 점수를 최종 성능으로 재사용.",
+      "허용선택": "family 단위로 한쪽에만 배치하고, 오염된 holdout은 tuning으로 재분류한 뒤 새로운 holdout을 확보한다.",
+      "보류조건": "family 구분이나 조정 이력이 없어 독립성을 확인할 수 없음.",
+      "통과기준": "의미군 교집합 0, 정답·분할·threshold·프롬프트 revision 고정. 잘못된 split 변형은 반드시 FAIL한다.",
+      "증거": "E4, 중복 의미군 검출과 검토 기록.",
+      "실행종류": "mock 또는 오프라인 데이터 검증. 유효한 split 뒤의 live 결과에 적용한다."
+    },
+    "bodyDigest": "sha256:d5c60637cab6859c66c8253128b0018f4f702ce55778dc8e9be834b34c30884e"
+  },
+  "oracle": null,
+  "variants": [
+    "family-clean",
+    "translation-leak",
+    "paraphrase-leak",
+    "post-holdout-tuning"
+  ]
+}

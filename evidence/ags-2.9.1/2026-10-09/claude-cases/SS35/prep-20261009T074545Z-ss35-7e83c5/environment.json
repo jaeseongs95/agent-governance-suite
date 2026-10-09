@@ -1,0 +1,65 @@
+{
+  "caseId": "SS35",
+  "checkedAtUTC": "2026-10-09T07:46:43.336316+00:00",
+  "cliPath": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+  "cliResolvedPath": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+  "cliSHA256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+  "version": "2.1.286 (Claude Code)",
+  "pathLookup": "No claude entry found; explicit path works",
+  "nodeVersion": "v24.19.0",
+  "pnpmVersion": "11.19.0",
+  "localCommandsOnly": [
+    {
+      "argv": [
+        "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+        "--version"
+      ],
+      "exitCode": 0
+    },
+    {
+      "argv": [
+        "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+        "--help"
+      ],
+      "exitCode": 0
+    }
+  ],
+  "secretConfigured": true,
+  "secretValueInspectedPrintedCopiedOrPublished": false,
+  "apiAuthenticationVerified": false,
+  "permanentAuthPermissionNetworkSettingsChanged": false,
+  "candidate": {
+    "reportedCommit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "reportedTree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "qualification": "REPORTED_LOCAL_ONLY_WAITING_PARENT",
+    "independentSOURCEVerdict": null,
+    "verifiedRemotePublication": null,
+    "checkoutOrProductTestStarted": false
+  },
+  "agentsSkillsLookup": {
+    "workspaceAgentsSkillsPresent": false,
+    "repositoryAgentsSkillsPresent": false,
+    "fallback": "repository skills/ and historical pinned reference files"
+  },
+  "hostStages": {
+    "selected": {
+      "status": "NOT_RUN",
+      "evidence": null
+    },
+    "read": {
+      "status": "NOT_RUN",
+      "evidence": null
+    },
+    "applied": {
+      "status": "NOT_RUN",
+      "evidence": null
+    },
+    "verified": {
+      "status": "NOT_RUN",
+      "evidence": null
+    }
+  },
+  "selectedSkillIds": null,
+  "hostReceipt": null,
+  "workerActivity": "Sol read public evidence and instructions, verified hashes and CLI metadata, prepared reports; no Claude host task."
+}

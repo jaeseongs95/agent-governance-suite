@@ -1,0 +1,193 @@
+{
+  "caseId": "SS35",
+  "title": "calibration과 holdout 누수 방지",
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "packagePath": "evidence/ags-2.9.1/2026-10-09/cases/SS35/",
+  "status": "VERIFIED_INPUT_BYTES_ONLY",
+  "payloadManifestEntries": 27,
+  "payloadManifestSizesAndSHA256": "ALL_MATCH",
+  "SHA256SUMSEntries": 28,
+  "SHA256SUMSVerification": "ALL_MATCH",
+  "totalPackageFiles": 29,
+  "sourceEqualsEmbeddedFixtureCase": true,
+  "oracleProjectionMatchesFrozenDigest": true,
+  "oracleProjectionEqualsPublishedPreimage": true,
+  "sourceSpecBodyDigest": "sha256:d5c60637cab6859c66c8253128b0018f4f702ce55778dc8e9be834b34c30884e",
+  "sourceSpecBodyDigestNote": "Recovered field; full TEST-SPEC.seq7.ko.md is absent, so standalone specification bytes were not verified.",
+  "fixtureRevision": "ags-classification-seq7-oracle-v1",
+  "oracleRevision": "pre-live-source-reviewed-v1",
+  "split": {
+    "revision": "public-regression-v1",
+    "independentHoldoutClaim": false,
+    "calibration": [
+      "SS01",
+      "SS02",
+      "SS03",
+      "SS08",
+      "SS15",
+      "SS18"
+    ],
+    "holdout": [
+      "SS04",
+      "SS05",
+      "SS06",
+      "SS07",
+      "SS09",
+      "SS10",
+      "SS11",
+      "SS12",
+      "SS13",
+      "SS14",
+      "SS16",
+      "SS17"
+    ],
+    "note": "Public source-known regression partitions, never claimed as independent unseen model quality evidence"
+  },
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 5214,
+      "sha256": "f939109ed2e473eac5531b53a6d50c0448d1f527899dcc092c0ebf67e0f8fe12"
+    },
+    {
+      "path": "SHA256SUMS",
+      "bytes": 2751,
+      "sha256": "c29cdcb2a260b6b0914e63bacc502fed838505c27e40656d0894890eed93cd4b"
+    },
+    {
+      "path": "commands/engineering-check-proof.command.json",
+      "bytes": 385,
+      "sha256": "b0066e30d7b7152fa904095fef9649cfb5d1d8aeb80ade7b670383646e303c92"
+    },
+    {
+      "path": "commands/existing-regression.command.json",
+      "bytes": 500,
+      "sha256": "2f3024d3ba923cbd0eee4ac463205cb2abbdbfdf7ac083b1eb8e7f2b569f9962"
+    },
+    {
+      "path": "commands/isolated-specification.command.json",
+      "bytes": 446,
+      "sha256": "0ad2859ddf17ffb4132e846f230b54db36b91a7db214cc971473a5d3f836bd98"
+    },
+    {
+      "path": "fixtures/frozen-fixtures.json",
+      "bytes": 142450,
+      "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9"
+    },
+    {
+      "path": "fixtures/oracle-digest-preimage.json",
+      "bytes": 112149,
+      "sha256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+    },
+    {
+      "path": "logs/engineering-check-proof.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/existing-regression.stderr.log",
+      "bytes": 92,
+      "sha256": "926e47abf45ac67910cdd4aef8bb0d6d1a114d195116463422f806a0fcb4ae01"
+    },
+    {
+      "path": "logs/existing-regression.stdout.log",
+      "bytes": 55,
+      "sha256": "c5d481531e08eaeb33a97d3822fe43a0a7e58c897dc1f542aabedf40df996efd"
+    },
+    {
+      "path": "logs/existing-vitest.json",
+      "bytes": 8167,
+      "sha256": "014eed073f44e8db525e35820db49bf3ca9f29d13c6071d4e0e90f8ca69ac9e6"
+    },
+    {
+      "path": "logs/isolated-specification.stderr.log",
+      "bytes": 92,
+      "sha256": "23ef70c7bfa9b1952becf051f5dc3b8ccaf267c9ccc02d95a2bbe1b26149ec47"
+    },
+    {
+      "path": "logs/isolated-specification.stdout.log",
+      "bytes": 55,
+      "sha256": "d1443bfc43d821def71384fe5783c8c644ea7ba52b19ce7a662e27a178386124"
+    },
+    {
+      "path": "logs/isolated-vitest.json",
+      "bytes": 10974,
+      "sha256": "6d48e03fd8d2b8377562322ec6494961cfca31e0867368cd52c9b267a6bd93d7"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 16210,
+      "sha256": "01ea7addff4b90bb9cb87b462f98de8222c22ffc42b60e957297409d6c0922f1"
+    },
+    {
+      "path": "original-inventory/artifact-sha256.json",
+      "bytes": 2012,
+      "sha256": "67e0c36f7f65a55a16bf4f096d056ddf74dedd0829d2e13b0c1b3b3aff7e4284"
+    },
+    {
+      "path": "patch-status.json",
+      "bytes": 244,
+      "sha256": "75cb99443498f2d6b267475d61157ea512ee663b1308d96ab6b96a7bcd6f546f"
+    },
+    {
+      "path": "records/SS35.report.md",
+      "bytes": 4497,
+      "sha256": "5b8eaae3057bd111794b45427f6d8217622105964636979dd9556d6f016459c9"
+    },
+    {
+      "path": "records/SS35.result.json",
+      "bytes": 129705,
+      "sha256": "dd569fbe2f550f922a4a99c55bd1b2868b2682c0d89b76a9f87fb82966db635e"
+    },
+    {
+      "path": "records/SS35.source.json",
+      "bytes": 1783,
+      "sha256": "1d02ddd4a4c538a5b45ee1fd04809c74486f21cd4df8f26f29a850d4c741aa2c"
+    },
+    {
+      "path": "records/engineering-plan-result.json",
+      "bytes": 233,
+      "sha256": "9ecafec58d1daba30cf5c638eac58dc8753c43aa6cba44267892b61fc5af0bf7"
+    },
+    {
+      "path": "records/engineering-snapshot.json",
+      "bytes": 1040,
+      "sha256": "3b0789a3dac7a0c6c7872e7d2d883d0fc5497e33a1a865012f27c664dfa021f1"
+    },
+    {
+      "path": "records/engineering-test-plan.json",
+      "bytes": 2612,
+      "sha256": "3e00fdf49712f1a9b632629f66d14e828ad92d915f7b6799f2028d52a5aae269"
+    },
+    {
+      "path": "records/engineering-test-proof.json",
+      "bytes": 2029,
+      "sha256": "971676c19e086d36618f15966d2d3ca055cd17d4a5f6dda3f2ca6cff77dcb44e"
+    },
+    {
+      "path": "records/engineering-test-result.json",
+      "bytes": 1049,
+      "sha256": "e65bfb73139bce07fea9bf2e4fc8897581545f0e6b3a381e5379c528a963ee6a"
+    },
+    {
+      "path": "records/final-integrity.json",
+      "bytes": 656,
+      "sha256": "9b0d92952589dbdfb2ebfcff68257af35ba04c5a8149feb18757f7a7d7685321"
+    },
+    {
+      "path": "records/isolated-observations.json",
+      "bytes": 95611,
+      "sha256": "6375a05b867f16f64e1f1bc82c80076cf3b0917b26ac83c92139bfc9f76653d2"
+    },
+    {
+      "path": "reproduction/SS35-isolated.test.ts",
+      "bytes": 3921,
+      "sha256": "3557fca8324357bbfc47fbcbd9d337343a6907d2f8ffe948981dec74d2db39ee"
+    },
+    {
+      "path": "reproduction/SS35-probes.ts",
+      "bytes": 4065,
+      "sha256": "cb85ec162551583e004cb2a6313b048b3ee86f083e2c804d629ce643d4f1221d"
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "caseId": "SS35",
+  "kind": "Historical results preserved as provenance, not expected new behavior",
+  "historicalCandidate": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "requestedBranch": "codex/skill-classification-2.9.1",
+    "checkout": "detached fixed commit worktree; branch not mutated",
+    "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "computedOracleDigestVerified": true,
+    "fixtureRevision": "ags-classification-seq7-oracle-v1",
+    "oracleRevision": "pre-live-source-reviewed-v1",
+    "splitRevision": "public-regression-v1",
+    "thresholdRevision": null,
+    "promptRevision": null
+  },
+  "historicalStatus": "FAIL",
+  "evidence": {
+    "existingRegression": {
+      "testsRun": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 14,
+      "exitCode": 0,
+      "path": "existing-vitest.json"
+    },
+    "newVariants": {
+      "testsRun": 17,
+      "passed": 10,
+      "failed": 7,
+      "skipped": 0,
+      "exitCode": 1,
+      "path": "isolated-vitest.json"
+    },
+    "localEngineeringConsistency": {
+      "plan": "READY",
+      "proofResult": "INCOMPLETE",
+      "exitCode": 1,
+      "path": "engineering-test-result.json",
+      "reason": "No product mutations or fix permitted; paired red/green NOTRUN. Existing actual assertions and observations retained. No forged host receipt."
+    }
+  },
+  "failedAssertions": 7,
+  "rootCauseCount": 3,
+  "findings": [
+    {
+      "id": "SS35-GAP-01",
+      "severity": "HIGH",
+      "kind": "unsupported-requirement-input",
+      "rootCause": "Public checkFamilySplit(cases, calibration, holdout) only examines family membership. No threshold/prompt revision or adjustment-history input or post-holdout gate is present.",
+      "sourceRequirement": "번역·동의미 변형을 독립 holdout으로 계산; holdout 결과를 보고 threshold·프롬프트를 조정한 뒤 같은 holdout 점수를 최종 성능으로 재사용.",
+      "location": "tests/skill-classification/evaluation.ts:142-153",
+      "scenarios": [
+        "post-holdout-tuning/threshold",
+        "post-holdout-tuning/prompt",
+        "boundary-missing-history/base"
+      ],
+      "observed": "Same clean split returns [] with no ability to bind synthetic tuning history or missing history. Context is recorded separately and was not accepted by the public API.",
+      "consequence": "Family-disjointness cannot certify independent final holdout performance; no actual final performance claim or live-score reuse was executed.",
+      "requiredInputs": [
+        "trusted frozen thresholdRevision and promptRevision",
+        "holdout access/tuning history",
+        "new holdout artifact after contaminated holdout is reclassified as tuning"
+      ],
+      "count": 1
+    },
+    {
+      "id": "SS35-GAP-02",
+      "severity": "HIGH",
+      "kind": "invalid-runtime-input-not-rejected",
+      "rootCause": "The runtime entry point does not validate each case familyId. A missing/null/blank calibration-only family maps to a value absent from holdout and returns no issues.",
+      "sourceRequirement": "family 구분이나 조정 이력이 없어 독립성을 확인할 수 없음.",
+      "location": "tests/skill-classification/evaluation.ts:144-149",
+      "scenarios": [
+        "boundary-missing-family/absent",
+        "boundary-missing-family/null",
+        "boundary-missing-family/blank"
+      ],
+      "observed": "Deleting or clearing SS03 familyId produces [] instead of rejection or deferral. These inputs violate the TypeScript string type; no runtime check is provided by this exported helper.",
+      "consequence": "Caller must validate family records before relying on family split check. Frozen baseline fixture is well-formed.",
+      "count": 1
+    },
+    {
+      "id": "SS35-GAP-03",
+      "severity": "HIGH",
+      "kind": "duplicate-runtime-row-overwrite",
+      "rootCause": "new Map(cases.map(...)) overwrites a duplicate caseId with the last familyId; uniqueness is checked only for split IDs, not source rows.",
+      "sourceRequirement": "의미군 교집합 0, 정답·분할·threshold·프롬프트 revision 고정. 잘못된 split 변형은 반드시 FAIL한다.",
+      "location": "tests/skill-classification/evaluation.ts:144-149",
+      "scenarios": [
+        "boundary-conflicting-case-family/base"
+      ],
+      "observed": "SS01 calibration and SS02 holdout returns FAMILY_LEAKAGE. Appending a duplicate SS02 row with conflicting familyId makes the same split return [].",
+      "consequence": "Conflicting duplicate source rows can conceal translation family leakage at the helper boundary. No frozen fixture changes were made.",
+      "count": 1
+    }
+  ],
+  "hostStages": {
+    "selected": {
+      "status": "NOTRUN",
+      "evidence": null
+    },
+    "read": {
+      "status": "NOTRUN",
+      "evidence": null
+    },
+    "applied": {
+      "status": "NOTRUN",
+      "evidence": null
+    },
+    "verified": {
+      "status": "NOTRUN",
+      "evidence": null
+    }
+  },
+  "currentClaudeTestStatus": "NOT_RUN",
+  "originalPrompt": null,
+  "semanticOracle": null,
+  "currentMetrics": {
+    "semanticAccuracy": null,
+    "precision": null,
+    "recall": null
+  }
+}
