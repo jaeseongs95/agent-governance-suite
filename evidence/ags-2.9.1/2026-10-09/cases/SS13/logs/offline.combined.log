@@ -1,0 +1,47 @@
+
+ RUN  v5.0.0 <EVIDENCE_ROOT>
+
+ ✓ SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > binds the single variant and all cited source bytes to the frozen fixture/oracle 3ms
+ ✓ SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > preserves original egg exclusion, unknown context, and every inventory candidate in both provider wires 30ms
+ ✓ SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > accepts explicit all-negative JEV judgments without choosing a nearest skill 3ms
+ ✓ SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > keeps service SUCCESS/all-negative separate from AGENT choice with JEV OFF 16ms
+ ✓ SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > rejects empty response as incomplete or invalid, never valid no-skill 1ms
+ ✓ SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > rejects missing-last response as incomplete or invalid, never valid no-skill 0ms
+ ✓ SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > rejects duplicate response as incomplete or invalid, never valid no-skill 0ms
+ ✓ SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > rejects invented-cooking response as incomplete or invalid, never valid no-skill 0ms
+ ✓ SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > rejects no-reason response as incomplete or invalid, never valid no-skill 0ms
+ ✓ SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > rejects wrong-inventory response as incomplete or invalid, never valid no-skill 0ms
+ ✓ SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > distinguishes provider failure with [] judgments from SUCCESS and keeps evaluator null distinct 11ms
+ ✓ SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > rejects forced nearest or invented ponytail in SS13 oracle controls 0ms
+ ✓ SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > rejects forced nearest or invented cs-engineering in SS13 oracle controls 0ms
+ ✓ SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > rejects forced nearest or invented orchestrator in SS13 oracle controls 0ms
+ ✓ SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > rejects forced nearest or invented cooking in SS13 oracle controls 0ms
+ ✓ SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > rejects purported selected [] and null without manufacturing a host receipt 11ms
+ ✓ SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > gateway SUCCESS leaves selected null and refuses unattested empty acceptance 55ms
+ ✓ SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > unconfigured gateway remains unavailable instead of accepted [] without provider dispatch 42ms
+ × SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > KNOWN DEFECT: invalid RESP must preserve independently valid actual cost 12ms
+   → known valid cost must survive invalid semantic RESP: expected null to be 0.1 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  SS13.test.ts > SS13 base: full-inventory no-skill support and negative controls; never host-live > KNOWN DEFECT: invalid RESP must preserve independently valid actual cost
+AssertionError: known valid cost must survive invalid semantic RESP: expected null to be 0.1 // Object.is equality
+
+- Expected:
+0.1
+
++ Received:
+null
+
+ ❯ SS13.test.ts:153:108
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 passed (19)
+   Start at  02:56:21
+   Duration  597ms (tests 40%, import 33%, transform 26%, worker 1%)
+
+JSON report written to <EVIDENCE_ROOT>/vitest.result.json

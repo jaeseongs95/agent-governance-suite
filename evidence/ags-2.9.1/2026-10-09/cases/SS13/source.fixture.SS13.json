@@ -1,0 +1,104 @@
+{
+  "caseId": "SS13",
+  "title": "inventory 안에 해당 전문 스킬이 없음",
+  "familyId": "recipe-no-skill",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "live.",
+  "originalPrompt": "달걀을 쓰지 않는 파스타 레시피 하나 알려 줘.",
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS13",
+    "fields": {
+      "입력": "“달걀을 쓰지 않는 파스타 레시피 하나 알려 줘.” inventory는 AGS 스킬 전체다.",
+      "필수추천": "R={}.",
+      "금지추천 또는 행동": "가장 가까운 점수의 P·CS·O를 강제 선택; 존재하지 않는 요리 스킬 생성.",
+      "허용선택": "A={}.",
+      "보류조건": "없음. 입력이 명확하고 필수·명시 스킬도 없다.",
+      "통과기준": "공통 RESP는 SUCCESS이며 필요한 후보가 없다는 judgment를 보존하고 AGENT의 실제 agentSelectedSkillIds=[]다. 선택 실패를 뜻하는 null과 구분한다. 전체 후보를 평가한 유효한 결과임을 기록한다.",
+      "증거": "E0, inventoryDigest, no-skill와 provider failure의 구분.",
+      "실행종류": "live."
+    },
+    "bodyDigest": "sha256:5d53595d26fabe4b0736faf7111cc60c2d3417fd62ec6d6a9d8f598c1aacc941"
+  },
+  "oracle": {
+    "required": [],
+    "allowed": [],
+    "allowedConditions": {},
+    "forbidden": [
+      "ponytail",
+      "cs-engineering",
+      "orchestrator"
+    ],
+    "notApplicable": [
+      "test-engineering",
+      "code-review",
+      "software-security-auditor",
+      "korean-prose-editor"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "change-scope-guardian",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      }
+    ],
+    "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+  },
+  "variants": [
+    "base"
+  ]
+}

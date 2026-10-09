@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:3b810782b2450550122489020bd013db93009ef35e77b74c178fdc8882f2136f",
+  "caseIds": [
+    "SS13-base-support",
+    "SS13-invalid-cost"
+  ]
+}

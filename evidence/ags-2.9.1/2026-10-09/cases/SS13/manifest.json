@@ -1,0 +1,338 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS13",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cases/SS13",
+  "productCandidate": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixtureSHA": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+    "requestDigest": "sha256:5996438d44f1264556fd4c9190045cf3cef9fa33b711d9a19c22d7d881e5995e",
+    "promptDigest": "sha256:2242c7317cda9aac6a9574d583c377286d29448bb41c524a32dfda2d169f71e4"
+  },
+  "historicalExecution": {
+    "tests": 19,
+    "PASS": 18,
+    "FAIL": 1,
+    "exit": 1,
+    "caseStatus": "NOTRUN",
+    "realHostStages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "apiCalls": {
+      "JEV": 0,
+      "externalVendor": 0,
+      "Claude": 0
+    }
+  },
+  "publicationExecution": {
+    "newTests": 0,
+    "newModelCalls": 0,
+    "reproductionAdaptations": "NOT_EXECUTED"
+  },
+  "sources": [
+    {
+      "name": "engineering-test-plan.json",
+      "bytes": 3796,
+      "sha256": "f24ad2fe083f514e845298d04fb7c5017c6193730bd1390fccbf8eeac3a0691b",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "supporting/engineering-test-plan.json"
+      ]
+    },
+    {
+      "name": "engineering-test-proof.json",
+      "bytes": 1932,
+      "sha256": "eef1f20b2a17e17ed5e85807153947c4a2239ce283449d3a2dfbde5efdf265df",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "supporting/engineering-test-proof.json"
+      ]
+    },
+    {
+      "name": "offline.log",
+      "bytes": 4416,
+      "sha256": "4557941e4b882ec9eec637df916b50a1d328423cdf5cb09d173f93afd9e2c4a5",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "logs/offline.combined.log"
+      ]
+    },
+    {
+      "name": "vitest.result.json",
+      "bytes": 9975,
+      "sha256": "a89ab2e4b277b390eed2d16bf474281efca99e0d784917d9eb1a85f0707a0897",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "supporting/vitest.result.json"
+      ]
+    },
+    {
+      "name": "exit-code.txt",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "exit-code.txt"
+      ]
+    },
+    {
+      "name": "reproduce.sh",
+      "bytes": 763,
+      "sha256": "3fd86937e70504862835296c61b49fe19410519730c0ad801342be637959e145",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "reproduce/reproduce.sh"
+      ]
+    },
+    {
+      "name": "engineering-plan-result.json",
+      "bytes": 250,
+      "sha256": "a981444bf679ae84ae755684f5e2837c428b944c2c5d6850330e26662fe192d4",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "supporting/engineering-plan-result.json"
+      ]
+    },
+    {
+      "name": "vitest.config.mts",
+      "bytes": 165,
+      "sha256": "a7226b7761da86f3813dba92ff4c5c96ca86627ebaeb04903ab919c42a6746be",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "reproduce/vitest.config.mts"
+      ]
+    },
+    {
+      "name": "SS13.test.ts",
+      "bytes": 18069,
+      "sha256": "cf58891b29ff0561ddba986fddcd91edca8049581d754a19d8a0ce89c1bc6bc8",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "reproduce/SS13.test.ts"
+      ]
+    },
+    {
+      "name": "engineering-test-result.json",
+      "bytes": 1112,
+      "sha256": "41c0c9073ec81c59e05fd2b75a8a7b0160e368dc9724a2584609ad83af80cf04",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "supporting/engineering-test-result.json"
+      ]
+    },
+    {
+      "name": "SS13.result.json",
+      "bytes": 26660,
+      "sha256": "acab2309522cb4f085e63b6cb57324c4c398d5ed59f0c9c278e4ea9ec186deda",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "SS13.result.json"
+      ]
+    },
+    {
+      "name": "SS13.observations.json",
+      "bytes": 2458082,
+      "sha256": "863397c10b395722d8f3770bef880c6d4691b4c8e2658f39afcc0a55cd76117c",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "input.request.json",
+        "input.inventory.json",
+        "input.prompt.txt",
+        "source.fixture.SS13.json",
+        "SS13.observations.json"
+      ]
+    }
+  ],
+  "missingOriginals": [
+    {
+      "name": "separate.stdout.log",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Original run captured stdout+stderr together; combined log exists. No stream separation invented."
+    },
+    {
+      "name": "separate.stderr.log",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Original run captured stdout+stderr together; combined log exists. No stream separation invented."
+    },
+    {
+      "name": "provider-transport-wire.capture",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Mock-only boundary run; no live transport capture was created."
+    },
+    {
+      "name": "host-selected-read-applied-verified.receipts",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Host stages NOTRUN; no real receipt was created."
+    },
+    {
+      "name": "product.patch",
+      "status": "MISSING_ORIGINAL",
+      "reason": "No patch was created; product source remained unchanged."
+    }
+  ],
+  "patchPresent": false,
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 4410,
+      "sha256": "97daa653591654687b176421c97b0f179c183ee0cfc43a75a2fc2aca54d3e9a2",
+      "origin": "PUBLICATION_ONLY_GENERATED",
+      "transformation": "Publication metadata; no test execution"
+    },
+    {
+      "path": "SHA256SUMS",
+      "bytes": 1555,
+      "sha256": "7d87d379313ff2c17df52d9052d46a2e9f1636914af4fd3f30d60ed17a8ad32e",
+      "origin": "PUBLICATION_ONLY_GENERATED",
+      "transformation": "Publication metadata; no test execution"
+    },
+    {
+      "path": "SS13.observations.json",
+      "bytes": 408187,
+      "sha256": "ab3ea23c221d23ce2db688712d0d3b32cc82f3dc0c5ff54d716b1b24ff850870",
+      "origin": "SS13.observations.json",
+      "transformation": "Remove personal local paths; losslessly replace repeated exact request/inventory/fixture objects with public artifact references"
+    },
+    {
+      "path": "SS13.result.json",
+      "bytes": 30290,
+      "sha256": "ec3868cdb8520585e072dcbbc058baa5d5836e820751c60b802dd710bc2c556d",
+      "origin": "SS13.result.json",
+      "transformation": "Sanitize personal local paths; retain all historical statuses/digests, expected/observed boundary data; add publication provenance and missing-original list"
+    },
+    {
+      "path": "exit-code.txt",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "origin": "exit-code.txt",
+      "transformation": "Byte-identical existing exit file"
+    },
+    {
+      "path": "input.inventory.json",
+      "bytes": 254107,
+      "sha256": "6f58f070c711af7ba7c8905276c8bb6ceadbb984b0b93125b18b9d619bf3e10b",
+      "origin": "SS13.observations.json",
+      "transformation": "Extract existing /inventory object; JSON reserialization only"
+    },
+    {
+      "path": "input.prompt.txt",
+      "bytes": 62,
+      "sha256": "2242c7317cda9aac6a9574d583c377286d29448bb41c524a32dfda2d169f71e4",
+      "origin": "SS13.observations.json",
+      "transformation": "Exact UTF-8 originalPrompt bytes, no added newline"
+    },
+    {
+      "path": "input.request.json",
+      "bytes": 254765,
+      "sha256": "d6ab20ea15d7dc400fc94053bbde9d672450bf4242aa38da5c0681360f06becf",
+      "origin": "SS13.observations.json",
+      "transformation": "Extract existing /request object; JSON reserialization only; not an original wire capture"
+    },
+    {
+      "path": "logs/offline.combined.log",
+      "bytes": 4398,
+      "sha256": "8c05838aad54cbbe3a6ab85ba61486f07a5ea8b904688859b5bd8337c126d258",
+      "origin": "offline.log",
+      "transformation": "Original combined stdout+stderr; replace only personal local paths; preserve assertions/timing/exit context"
+    },
+    {
+      "path": "reproduce/SS13.test.ts",
+      "bytes": 18474,
+      "sha256": "faeb4c913cc3a6967b945f604f9208e5f9bfbc3243220b0c0092e325388daccf",
+      "origin": "SS13.test.ts",
+      "transformation": "Mechanically adapt absolute imports to supplied product root, output root, and runtime-erased type aliases; assertions unchanged; NOT_EXECUTED"
+    },
+    {
+      "path": "reproduce/reproduce.sh",
+      "bytes": 1556,
+      "sha256": "5a92568fe62adbafdb80b2995176568447296b590fb9f6ce335320b2e5f670eb",
+      "origin": "reproduce.sh",
+      "transformation": "Portable publication instructions based on original command; copied harness and existing dependencies only; NOT_EXECUTED"
+    },
+    {
+      "path": "reproduce/vitest.config.mts",
+      "bytes": 225,
+      "sha256": "580d36c1621232dcf19402b30ecdcd83cea2f8ef2c09ed747947199d7d41d92a",
+      "origin": "vitest.config.mts",
+      "transformation": "Replace original personal root with the reproduction file directory; NOT_EXECUTED"
+    },
+    {
+      "path": "source.fixture.SS13.json",
+      "bytes": 3837,
+      "sha256": "7a1bb1afba1ac3e54ea75e4f2b8bdbd8e913c0808c8cd8f6b4ebf53c9355c1d8",
+      "origin": "SS13.observations.json",
+      "transformation": "Extract existing /fixture with embedded sourceSpec.fields/oracle/variants; no new oracle"
+    },
+    {
+      "path": "supporting/engineering-plan-result.json",
+      "bytes": 250,
+      "sha256": "a981444bf679ae84ae755684f5e2837c428b944c2c5d6850330e26662fe192d4",
+      "origin": "engineering-plan-result.json",
+      "transformation": "Sanitized historical evidence; original snapshot/plan digests bind original bytes, not adapted public reproduction"
+    },
+    {
+      "path": "supporting/engineering-test-plan.json",
+      "bytes": 3703,
+      "sha256": "c1383548097a93bff12ff7bf3e62b42822ac5a3760e0fd687e387a4191cea8ac",
+      "origin": "engineering-test-plan.json",
+      "transformation": "Sanitized historical evidence; original snapshot/plan digests bind original bytes, not adapted public reproduction"
+    },
+    {
+      "path": "supporting/engineering-test-proof.json",
+      "bytes": 1933,
+      "sha256": "fb722cadc8aee7d9b53a1240888b1d0c25b7ed7f1848e7c900aee4935378c570",
+      "origin": "engineering-test-proof.json",
+      "transformation": "Sanitized historical evidence; original snapshot/plan digests bind original bytes, not adapted public reproduction"
+    },
+    {
+      "path": "supporting/engineering-test-result.json",
+      "bytes": 1112,
+      "sha256": "41c0c9073ec81c59e05fd2b75a8a7b0160e368dc9724a2584609ad83af80cf04",
+      "origin": "engineering-test-result.json",
+      "transformation": "Sanitized historical evidence; original snapshot/plan digests bind original bytes, not adapted public reproduction"
+    },
+    {
+      "path": "supporting/vitest.result.json",
+      "bytes": 13011,
+      "sha256": "f3cbf6ca2943352c82e161d6570b6826e4edc787a099bf7e4807c28ff77ce095",
+      "origin": "vitest.result.json",
+      "transformation": "Sanitized historical evidence; original snapshot/plan digests bind original bytes, not adapted public reproduction"
+    }
+  ],
+  "hashConvention": "Raw bytes SHA256, lowercase hex. files excludes manifest.json itself. SHA256SUMS excludes itself and manifest.json; no circular hashes.",
+  "inputBytes": {
+    "input.prompt.txt": {
+      "path": "input.prompt.txt",
+      "bytes": 62,
+      "sha256": "2242c7317cda9aac6a9574d583c377286d29448bb41c524a32dfda2d169f71e4",
+      "origin": "SS13.observations.json",
+      "transformation": "Exact UTF-8 originalPrompt bytes, no added newline"
+    },
+    "input.request.json": {
+      "path": "input.request.json",
+      "bytes": 254765,
+      "sha256": "d6ab20ea15d7dc400fc94053bbde9d672450bf4242aa38da5c0681360f06becf",
+      "origin": "SS13.observations.json",
+      "transformation": "Extract existing /request object; JSON reserialization only; not an original wire capture"
+    },
+    "input.inventory.json": {
+      "path": "input.inventory.json",
+      "bytes": 254107,
+      "sha256": "6f58f070c711af7ba7c8905276c8bb6ceadbb984b0b93125b18b9d619bf3e10b",
+      "origin": "SS13.observations.json",
+      "transformation": "Extract existing /inventory object; JSON reserialization only"
+    },
+    "source.fixture.SS13.json": {
+      "path": "source.fixture.SS13.json",
+      "bytes": 3837,
+      "sha256": "7a1bb1afba1ac3e54ea75e4f2b8bdbd8e913c0808c8cd8f6b4ebf53c9355c1d8",
+      "origin": "SS13.observations.json",
+      "transformation": "Extract existing /fixture with embedded sourceSpec.fields/oracle/variants; no new oracle"
+    }
+  }
+}

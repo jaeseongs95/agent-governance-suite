@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:eb08b6bffee5cd116cf4a78fdcaca15a89d3672a036fbd199ec6ce3a7b79cf1c",
+  "reportDigest": "sha256:46f01edc0b6a81b1bfa43f1ebef6c4ca2ef5b4b77c07e5d399528ed168bd83c1",
+  "issues": [
+    "REQUIRED SS13-base-support: NOT_RUN — Recorded retrospectively as a scope index, not a pre-run frozen plan. Product mutation prohibited. Actual offline execution exists separately; no paired sensitivity demonstration claimed.",
+    "REQUIRED SS13-invalid-cost: NOT_RUN — Meaningful red assertion observed. Product modifications prohibited; fixed green candidate absent. Paired red/green proof remains NOT_RUN."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

@@ -1,0 +1,289 @@
+{
+  "numTotalTestSuites": 2,
+  "numPassedTestSuites": 0,
+  "numFailedTestSuites": 2,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 19,
+  "numPassedTests": 18,
+  "numFailedTests": 1,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514581857,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "SS13 base: full-inventory no-skill support and negative controls; never host-live"
+          ],
+          "fullName": "SS13 base: full-inventory no-skill support and negative controls; never host-live binds the single variant and all cited source bytes to the frozen fixture/oracle",
+          "status": "passed",
+          "title": "binds the single variant and all cited source bytes to the frozen fixture/oracle",
+          "duration": 3.141838000000007,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS13 base: full-inventory no-skill support and negative controls; never host-live"
+          ],
+          "fullName": "SS13 base: full-inventory no-skill support and negative controls; never host-live preserves original egg exclusion, unknown context, and every inventory candidate in both provider wires",
+          "status": "passed",
+          "title": "preserves original egg exclusion, unknown context, and every inventory candidate in both provider wires",
+          "duration": 30.49359199999998,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS13 base: full-inventory no-skill support and negative controls; never host-live"
+          ],
+          "fullName": "SS13 base: full-inventory no-skill support and negative controls; never host-live accepts explicit all-negative JEV judgments without choosing a nearest skill",
+          "status": "passed",
+          "title": "accepts explicit all-negative JEV judgments without choosing a nearest skill",
+          "duration": 3.096360000000004,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS13 base: full-inventory no-skill support and negative controls; never host-live"
+          ],
+          "fullName": "SS13 base: full-inventory no-skill support and negative controls; never host-live keeps service SUCCESS/all-negative separate from AGENT choice with JEV OFF",
+          "status": "passed",
+          "title": "keeps service SUCCESS/all-negative separate from AGENT choice with JEV OFF",
+          "duration": 15.833291000000031,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS13 base: full-inventory no-skill support and negative controls; never host-live"
+          ],
+          "fullName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects empty response as incomplete or invalid, never valid no-skill",
+          "status": "passed",
+          "title": "rejects empty response as incomplete or invalid, never valid no-skill",
+          "duration": 0.5613670000000184,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS13 base: full-inventory no-skill support and negative controls; never host-live"
+          ],
+          "fullName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects missing-last response as incomplete or invalid, never valid no-skill",
+          "status": "passed",
+          "title": "rejects missing-last response as incomplete or invalid, never valid no-skill",
+          "duration": 0.23934100000002445,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS13 base: full-inventory no-skill support and negative controls; never host-live"
+          ],
+          "fullName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects duplicate response as incomplete or invalid, never valid no-skill",
+          "status": "passed",
+          "title": "rejects duplicate response as incomplete or invalid, never valid no-skill",
+          "duration": 0.1920889999999531,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS13 base: full-inventory no-skill support and negative controls; never host-live"
+          ],
+          "fullName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects invented-cooking response as incomplete or invalid, never valid no-skill",
+          "status": "passed",
+          "title": "rejects invented-cooking response as incomplete or invalid, never valid no-skill",
+          "duration": 0.2103270000000066,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS13 base: full-inventory no-skill support and negative controls; never host-live"
+          ],
+          "fullName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects no-reason response as incomplete or invalid, never valid no-skill",
+          "status": "passed",
+          "title": "rejects no-reason response as incomplete or invalid, never valid no-skill",
+          "duration": 0.31444400000003725,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS13 base: full-inventory no-skill support and negative controls; never host-live"
+          ],
+          "fullName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects wrong-inventory response as incomplete or invalid, never valid no-skill",
+          "status": "passed",
+          "title": "rejects wrong-inventory response as incomplete or invalid, never valid no-skill",
+          "duration": 0.29455500000000256,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS13 base: full-inventory no-skill support and negative controls; never host-live"
+          ],
+          "fullName": "SS13 base: full-inventory no-skill support and negative controls; never host-live distinguishes provider failure with [] judgments from SUCCESS and keeps evaluator null distinct",
+          "status": "passed",
+          "title": "distinguishes provider failure with [] judgments from SUCCESS and keeps evaluator null distinct",
+          "duration": 11.035774000000004,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS13 base: full-inventory no-skill support and negative controls; never host-live"
+          ],
+          "fullName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects forced nearest or invented ponytail in SS13 oracle controls",
+          "status": "passed",
+          "title": "rejects forced nearest or invented ponytail in SS13 oracle controls",
+          "duration": 0.2091649999999845,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS13 base: full-inventory no-skill support and negative controls; never host-live"
+          ],
+          "fullName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects forced nearest or invented cs-engineering in SS13 oracle controls",
+          "status": "passed",
+          "title": "rejects forced nearest or invented cs-engineering in SS13 oracle controls",
+          "duration": 0.06507800000002817,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS13 base: full-inventory no-skill support and negative controls; never host-live"
+          ],
+          "fullName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects forced nearest or invented orchestrator in SS13 oracle controls",
+          "status": "passed",
+          "title": "rejects forced nearest or invented orchestrator in SS13 oracle controls",
+          "duration": 0.049824999999998454,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS13 base: full-inventory no-skill support and negative controls; never host-live"
+          ],
+          "fullName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects forced nearest or invented cooking in SS13 oracle controls",
+          "status": "passed",
+          "title": "rejects forced nearest or invented cooking in SS13 oracle controls",
+          "duration": 0.06952499999999873,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS13 base: full-inventory no-skill support and negative controls; never host-live"
+          ],
+          "fullName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects purported selected [] and null without manufacturing a host receipt",
+          "status": "passed",
+          "title": "rejects purported selected [] and null without manufacturing a host receipt",
+          "duration": 11.007492000000013,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS13 base: full-inventory no-skill support and negative controls; never host-live"
+          ],
+          "fullName": "SS13 base: full-inventory no-skill support and negative controls; never host-live gateway SUCCESS leaves selected null and refuses unattested empty acceptance",
+          "status": "passed",
+          "title": "gateway SUCCESS leaves selected null and refuses unattested empty acceptance",
+          "duration": 54.55341100000004,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS13 base: full-inventory no-skill support and negative controls; never host-live"
+          ],
+          "fullName": "SS13 base: full-inventory no-skill support and negative controls; never host-live unconfigured gateway remains unavailable instead of accepted [] without provider dispatch",
+          "status": "passed",
+          "title": "unconfigured gateway remains unavailable instead of accepted [] without provider dispatch",
+          "duration": 41.837402,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS13 base: full-inventory no-skill support and negative controls; never host-live"
+          ],
+          "fullName": "SS13 base: full-inventory no-skill support and negative controls; never host-live KNOWN DEFECT: invalid RESP must preserve independently valid actual cost",
+          "status": "failed",
+          "title": "KNOWN DEFECT: invalid RESP must preserve independently valid actual cost",
+          "duration": 12.419771999999966,
+          "failureMessages": [
+            "AssertionError: known valid cost must survive invalid semantic RESP: expected null to be 0.1 // Object.is equality\n    at <EVIDENCE_ROOT>/SS13.test.ts:153:108\n    at file://<DEPENDENCY_ROOT>/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514582252,
+      "endTime": 1791514582438.4197,
+      "status": "failed",
+      "message": "",
+      "name": "<EVIDENCE_ROOT>/SS13.test.ts"
+    }
+  ]
+}

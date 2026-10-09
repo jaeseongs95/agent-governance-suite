@@ -1,0 +1,692 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS13",
+  "targetRelease": "2.9.1",
+  "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+  "branch": "codex/skill-classification-2.9.1",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "presentInRepository": false,
+    "sourceUsed": "Embedded originalPrompt/sourceSpec.fields/oracle/variants only",
+    "inventedAnswer": false
+  },
+  "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+  "inventoryCandidateCount": 24,
+  "requestDigest": "sha256:5996438d44f1264556fd4c9190045cf3cef9fa33b711d9a19c22d7d881e5995e",
+  "promptDigest": "sha256:2242c7317cda9aac6a9574d583c377286d29448bb41c524a32dfda2d169f71e4",
+  "command": [
+    "node",
+    "<DEPENDENCY_ROOT>/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "<EVIDENCE_ROOT>/vitest.config.mts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=<EVIDENCE_ROOT>/vitest.result.json"
+  ],
+  "cwd": "<PRODUCT_ROOT>",
+  "exit": 1,
+  "executionKind": "offline-mock",
+  "apiCalls": {
+    "JEV": 0,
+    "externalVendor": 0,
+    "Claude": 0
+  },
+  "credentialLookups": 0,
+  "previous21CaseRunsRerun": false,
+  "scope": "Only SS13 base; 19 new boundary assertions using SS13 prompt and full fixed inventory. No other original case and no full suite executed.",
+  "caseStatus": "NOTRUN",
+  "caseStatusReason": "Frozen source requires live classification plus actual AGENT accepted []; offline support cannot substitute for these observations.",
+  "developmentValidation": "FAIL",
+  "existingRegression": {
+    "status": "NOTRUN",
+    "reason": "No SS13-specific test found. Shared existing generic tests reference other original IDs; inspected only, not rerun."
+  },
+  "newBoundaryTests": {
+    "status": "FAIL",
+    "total": 19,
+    "passed": 18,
+    "failed": 1,
+    "rawReport": "supporting/vitest.result.json",
+    "log": "logs/offline.combined.log"
+  },
+  "hostLive": {
+    "status": "NOTRUN",
+    "actualAgentSelectedSkillIds": null,
+    "expectedAgentSelectedSkillIds": [],
+    "missingInputs": [
+      "Connected AGS MCP get_skill_inventory/classify_skills/record_skill_selection tools (none exposed in this session)",
+      "Approved AGENT_GOVERNANCE_CLASSIFICATION_CONFIG path; currently unset",
+      "Central providerProfileRegistryRef with PASS qualification bound to current full inventory/taxonomy, model/effort/options/adapter/prompt revisions and nonexpired validity",
+      "providerRuntimeRef with approved route, current vendor identity, budget prior consumption and unknown reservations; no unscoped zero/default estimates",
+      "If using native Codex: nativeAdapterDefinitionsRef with absolute executable/workingDirectory, approvalRef, capabilityEvidenceRef, no-retry proof, isolationEvidenceRef/isolationArgs, timeout/output limits, separately verified native allowance; executable exists at <HOST_EXECUTABLE> but route qualification is absent",
+      "Host-signed runtime observation and same actor/task session board lastPromptAt provenance; AGENT supplies exact [] with hostReceipt=null to record_skill_selection; gateway rejects an unattested claim",
+      "Approval outside this task for any real provider/host execution; this assignment authorizes API0 only"
+    ]
+  },
+  "variants": [
+    {
+      "variantId": "base",
+      "status": "NOTRUN",
+      "offlineContractStatus": "PASS",
+      "offlineBoundaryStatus": "FAIL",
+      "providerLive": "NOTRUN",
+      "hostLive": "NOTRUN",
+      "expected": {
+        "originalPrompt": "달걀을 쓰지 않는 파스타 레시피 하나 알려 줘.",
+        "responseStatus": "SUCCESS",
+        "required": [],
+        "allowed": [],
+        "allInventoryCandidatesEvaluated": true,
+        "actualAgentSelectedSkillIds": []
+      },
+      "observed": {
+        "mockResponseStatus": "SUCCESS",
+        "mockCandidateJudgments": 24,
+        "mockAllNotNeeded": true,
+        "gatewayAgentSelectedSkillIds": null,
+        "gatewaySelectionStatus": "PROPOSED",
+        "unattestedAcceptanceError": "HOST_SELECTION_NOT_OBSERVED"
+      },
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "realHostReceipt": null,
+      "evidence": [
+        {
+          "boundaryId": "frozen-bindings",
+          "testName": "SS13 base: full-inventory no-skill support and negative controls; never host-live binds the single variant and all cited source bytes to the frozen fixture/oracle",
+          "status": "PASSED",
+          "executionKind": "offline-mock",
+          "inputLocator": "SS13.observations.json:observations[boundaryId=frozen-bindings].input",
+          "expected": {
+            "fixtureDigest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+            "oracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+            "variants": [
+              "base"
+            ]
+          },
+          "observedLocator": "SS13.observations.json:observations[boundaryId=frozen-bindings].observed",
+          "failureMessages": []
+        },
+        {
+          "boundaryId": "full-inventory-wire",
+          "testName": "SS13 base: full-inventory no-skill support and negative controls; never host-live preserves original egg exclusion, unknown context, and every inventory candidate in both provider wires",
+          "status": "PASSED",
+          "executionKind": "offline-mock",
+          "inputLocator": "SS13.observations.json:observations[boundaryId=full-inventory-wire].input",
+          "expected": {
+            "ids": [
+              "acceptance-evidence-validator",
+              "blocker-diagnostician",
+              "change-scope-guardian",
+              "code-review",
+              "codex-token-usage-analyzer",
+              "context-continuity",
+              "coordinate-subagents",
+              "cs-engineering",
+              "evaluation-validity-auditor",
+              "independent-audit-gate",
+              "independent-deliberation-panel",
+              "instruction-scope-resolver",
+              "iteration-frame-auditor",
+              "korean-prose-editor",
+              "model-effort-advisor",
+              "mutation-risk-preflight",
+              "orchestrator",
+              "ponytail",
+              "recovery-strategy-selector",
+              "session-board",
+              "software-security-auditor",
+              "task-contract",
+              "test-engineering",
+              "workspace-convention-profiler"
+            ],
+            "confirmedContext": "all null",
+            "eggExclusion": "unaltered"
+          },
+          "observedLocator": "SS13.observations.json:observations[boundaryId=full-inventory-wire].observed",
+          "failureMessages": []
+        },
+        {
+          "boundaryId": "all-negative-jev-decode",
+          "testName": "SS13 base: full-inventory no-skill support and negative controls; never host-live accepts explicit all-negative JEV judgments without choosing a nearest skill",
+          "status": "PASSED",
+          "executionKind": "offline-mock",
+          "inputLocator": "SS13.observations.json:observations[boundaryId=all-negative-jev-decode].input",
+          "expected": {
+            "status": "SUCCESS",
+            "neededSkillIds": [],
+            "allCandidatesEvaluated": true
+          },
+          "observedLocator": "SS13.observations.json:observations[boundaryId=all-negative-jev-decode].observed",
+          "failureMessages": []
+        },
+        {
+          "boundaryId": "service-success-no-skill",
+          "testName": "SS13 base: full-inventory no-skill support and negative controls; never host-live keeps service SUCCESS/all-negative separate from AGENT choice with JEV OFF",
+          "status": "PASSED",
+          "executionKind": "offline-mock",
+          "inputLocator": "SS13.observations.json:observations[boundaryId=service-success-no-skill].input",
+          "expected": {
+            "status": "SUCCESS",
+            "neededSkillIds": [],
+            "selected": "not created by classifier",
+            "jevMockInvocations": 0
+          },
+          "observedLocator": "SS13.observations.json:observations[boundaryId=service-success-no-skill].observed",
+          "failureMessages": []
+        },
+        {
+          "boundaryId": "empty",
+          "testName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects empty response as incomplete or invalid, never valid no-skill",
+          "status": "PASSED",
+          "executionKind": "offline-mock",
+          "inputLocator": "SS13.observations.json:observations[boundaryId=empty].input",
+          "expected": {
+            "error": "MISSING_CANDIDATE_JUDGMENT"
+          },
+          "observedLocator": "SS13.observations.json:observations[boundaryId=empty].observed",
+          "failureMessages": []
+        },
+        {
+          "boundaryId": "missing-last",
+          "testName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects missing-last response as incomplete or invalid, never valid no-skill",
+          "status": "PASSED",
+          "executionKind": "offline-mock",
+          "inputLocator": "SS13.observations.json:observations[boundaryId=missing-last].input",
+          "expected": {
+            "error": "MISSING_CANDIDATE_JUDGMENT"
+          },
+          "observedLocator": "SS13.observations.json:observations[boundaryId=missing-last].observed",
+          "failureMessages": []
+        },
+        {
+          "boundaryId": "duplicate",
+          "testName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects duplicate response as incomplete or invalid, never valid no-skill",
+          "status": "PASSED",
+          "executionKind": "offline-mock",
+          "inputLocator": "SS13.observations.json:observations[boundaryId=duplicate].input",
+          "expected": {
+            "error": "DUPLICATE_SKILL_ID"
+          },
+          "observedLocator": "SS13.observations.json:observations[boundaryId=duplicate].observed",
+          "failureMessages": []
+        },
+        {
+          "boundaryId": "invented-cooking",
+          "testName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects invented-cooking response as incomplete or invalid, never valid no-skill",
+          "status": "PASSED",
+          "executionKind": "offline-mock",
+          "inputLocator": "SS13.observations.json:observations[boundaryId=invented-cooking].input",
+          "expected": {
+            "error": "UNKNOWN_SKILL_ID"
+          },
+          "observedLocator": "SS13.observations.json:observations[boundaryId=invented-cooking].observed",
+          "failureMessages": []
+        },
+        {
+          "boundaryId": "no-reason",
+          "testName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects no-reason response as incomplete or invalid, never valid no-skill",
+          "status": "PASSED",
+          "executionKind": "offline-mock",
+          "inputLocator": "SS13.observations.json:observations[boundaryId=no-reason].input",
+          "expected": {
+            "error": "MISSING_JUDGMENT_REASON"
+          },
+          "observedLocator": "SS13.observations.json:observations[boundaryId=no-reason].observed",
+          "failureMessages": []
+        },
+        {
+          "boundaryId": "wrong-inventory",
+          "testName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects wrong-inventory response as incomplete or invalid, never valid no-skill",
+          "status": "PASSED",
+          "executionKind": "offline-mock",
+          "inputLocator": "SS13.observations.json:observations[boundaryId=wrong-inventory].input",
+          "expected": {
+            "error": "RESPONSE_BINDING_inventoryDigest"
+          },
+          "observedLocator": "SS13.observations.json:observations[boundaryId=wrong-inventory].observed",
+          "failureMessages": []
+        },
+        {
+          "boundaryId": "failure-versus-empty",
+          "testName": "SS13 base: full-inventory no-skill support and negative controls; never host-live distinguishes provider failure with [] judgments from SUCCESS and keeps evaluator null distinct",
+          "status": "PASSED",
+          "executionKind": "offline-mock",
+          "inputLocator": "SS13.observations.json:observations[boundaryId=failure-versus-empty].input",
+          "expected": {
+            "failureStatus": "UNAVAILABLE",
+            "emptySupport": "PASS",
+            "nullSupport": "FAIL",
+            "failedEmpty": "FAIL",
+            "nullEqualsEmpty": false
+          },
+          "observedLocator": "SS13.observations.json:observations[boundaryId=failure-versus-empty].observed",
+          "failureMessages": []
+        },
+        {
+          "boundaryId": "forbidden-selection-ponytail",
+          "testName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects forced nearest or invented ponytail in SS13 oracle controls",
+          "status": "PASSED",
+          "executionKind": "offline-mock",
+          "inputLocator": "SS13.observations.json:observations[boundaryId=forbidden-selection-ponytail].input",
+          "expected": {
+            "verdict": "FAIL"
+          },
+          "observedLocator": "SS13.observations.json:observations[boundaryId=forbidden-selection-ponytail].observed",
+          "failureMessages": []
+        },
+        {
+          "boundaryId": "forbidden-selection-cs-engineering",
+          "testName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects forced nearest or invented cs-engineering in SS13 oracle controls",
+          "status": "PASSED",
+          "executionKind": "offline-mock",
+          "inputLocator": "SS13.observations.json:observations[boundaryId=forbidden-selection-cs-engineering].input",
+          "expected": {
+            "verdict": "FAIL"
+          },
+          "observedLocator": "SS13.observations.json:observations[boundaryId=forbidden-selection-cs-engineering].observed",
+          "failureMessages": []
+        },
+        {
+          "boundaryId": "forbidden-selection-orchestrator",
+          "testName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects forced nearest or invented orchestrator in SS13 oracle controls",
+          "status": "PASSED",
+          "executionKind": "offline-mock",
+          "inputLocator": "SS13.observations.json:observations[boundaryId=forbidden-selection-orchestrator].input",
+          "expected": {
+            "verdict": "FAIL"
+          },
+          "observedLocator": "SS13.observations.json:observations[boundaryId=forbidden-selection-orchestrator].observed",
+          "failureMessages": []
+        },
+        {
+          "boundaryId": "forbidden-selection-cooking",
+          "testName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects forced nearest or invented cooking in SS13 oracle controls",
+          "status": "PASSED",
+          "executionKind": "offline-mock",
+          "inputLocator": "SS13.observations.json:observations[boundaryId=forbidden-selection-cooking].input",
+          "expected": {
+            "verdict": "FAIL"
+          },
+          "observedLocator": "SS13.observations.json:observations[boundaryId=forbidden-selection-cooking].observed",
+          "failureMessages": []
+        },
+        {
+          "boundaryId": "no-receipt-no-selection",
+          "testName": "SS13 base: full-inventory no-skill support and negative controls; never host-live rejects purported selected [] and null without manufacturing a host receipt",
+          "status": "PASSED",
+          "executionKind": "offline-mock",
+          "inputLocator": "SS13.observations.json:observations[boundaryId=no-receipt-no-selection].input",
+          "expected": {
+            "emptyError": "HOST_RECEIPT_MISMATCH",
+            "nullError": "SELECTION_NOT_OBSERVED",
+            "selectedScore": "FAIL"
+          },
+          "observedLocator": "SS13.observations.json:observations[boundaryId=no-receipt-no-selection].observed",
+          "failureMessages": []
+        },
+        {
+          "boundaryId": "gateway-unattested",
+          "testName": "SS13 base: full-inventory no-skill support and negative controls; never host-live gateway SUCCESS leaves selected null and refuses unattested empty acceptance",
+          "status": "PASSED",
+          "executionKind": "offline-mock",
+          "inputLocator": "SS13.observations.json:observations[boundaryId=gateway-unattested].input",
+          "expected": {
+            "response": "SUCCESS",
+            "agentSelectedSkillIds": null,
+            "acceptanceError": "HOST_SELECTION_NOT_OBSERVED"
+          },
+          "observedLocator": "SS13.observations.json:observations[boundaryId=gateway-unattested].observed",
+          "failureMessages": []
+        },
+        {
+          "boundaryId": "unconfigured",
+          "testName": "SS13 base: full-inventory no-skill support and negative controls; never host-live unconfigured gateway remains unavailable instead of accepted [] without provider dispatch",
+          "status": "PASSED",
+          "executionKind": "offline-mock",
+          "inputLocator": "SS13.observations.json:observations[boundaryId=unconfigured].input",
+          "expected": {
+            "status": "UNAVAILABLE",
+            "agentSelectedSkillIds": null,
+            "mockDispatches": 0
+          },
+          "observedLocator": "SS13.observations.json:observations[boundaryId=unconfigured].observed",
+          "failureMessages": []
+        },
+        {
+          "boundaryId": "known-defect-valid-cost-lost",
+          "testName": "SS13 base: full-inventory no-skill support and negative controls; never host-live KNOWN DEFECT: invalid RESP must preserve independently valid actual cost",
+          "status": "FAILED",
+          "executionKind": "offline-mock",
+          "inputLocator": "SS13.observations.json:observations[boundaryId=known-defect-valid-cost-lost].input",
+          "expected": {
+            "status": "INVALID",
+            "errorCode": "INVALID_PROVIDER_RESPONSE",
+            "attemptCostUsd": 0.1,
+            "spentUsd": 0.1,
+            "reservations": []
+          },
+          "observedLocator": "SS13.observations.json:observations[boundaryId=known-defect-valid-cost-lost].observed",
+          "failureMessages": [
+            "AssertionError: known valid cost must survive invalid semantic RESP: expected null to be 0.1 // Object.is equality\n    at <EVIDENCE_ROOT>/SS13.test.ts:153:108\n    at file://<DEPENDENCY_ROOT>/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+          ]
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "SS13-KNOWN-INVALID-RESP-VALID-COST-LOSS",
+      "existingFinding": true,
+      "deduplicationKey": "valid-cost-lost-with-invalid-RESP",
+      "newRootCauseCount": 0,
+      "status": "REPRODUCED",
+      "boundaryId": "known-defect-valid-cost-lost",
+      "source": "mcp-server/src/skill-classification/service.ts:194,204,210",
+      "cause": "Semantic response validation throws after usage was independently validated; catch replaces evaluation usage with unknownUsage(); settlement therefore receives null.",
+      "expected": {
+        "status": "INVALID",
+        "errorCode": "INVALID_PROVIDER_RESPONSE",
+        "attemptCostUsd": 0.1,
+        "spentUsd": 0.1,
+        "reservations": []
+      },
+      "observed": {
+        "status": "INVALID",
+        "errorCode": "INVALID_PROVIDER_RESPONSE",
+        "actualCostUsd": null,
+        "spentUsd": 0,
+        "reservationMaximumUsd": 0.4
+      },
+      "effect": "Valid observed spend is lost; accounting retains an unknown reservation instead. No real charge was incurred in this mock.",
+      "repairPerformed": false
+    }
+  ],
+  "stageEvidenceNote": "Reads of SKILL.md and test source belong to this development investigation, not the original pasta-request host execution. All original-request stages remain NOTRUN. No acceptance receipt was manufactured.",
+  "semanticAccuracy": null,
+  "semanticAccuracyReason": "Only mocked semantic responses; no model quality or actual AGENT success claimed.",
+  "sensitivityProof": {
+    "status": "NOTRUN",
+    "redAssertionObserved": true,
+    "pairedGreen": false,
+    "reason": "No fixed product candidate; product changes prohibited. Retrospective scope index is explicitly marked, not a pre-run frozen plan.",
+    "planCheck": {
+      "command": [
+        "node",
+        "skills/test-engineering/scripts/run.mjs",
+        "check-plan",
+        "--root",
+        "<EVIDENCE_ROOT>",
+        "--plan",
+        "engineering-test-plan.json"
+      ],
+      "exit": 0,
+      "verdict": "READY"
+    },
+    "proofCheck": {
+      "command": [
+        "node",
+        "skills/test-engineering/scripts/run.mjs",
+        "check-proof",
+        "--root",
+        "<EVIDENCE_ROOT>",
+        "--plan",
+        "engineering-test-plan.json",
+        "--proof",
+        "engineering-test-proof.json"
+      ],
+      "exit": 1,
+      "verdict": "INCOMPLETE"
+    }
+  },
+  "instructions": {
+    "read": [
+      "AGENTS.md",
+      "skills/test-engineering/SKILL.md",
+      "skills/orchestrator/SKILL.md",
+      "skills/orchestrator/references/skill-classification.md",
+      "skills/evaluation-validity-auditor/SKILL.md",
+      "skills/acceptance-evidence-validator/SKILL.md",
+      "skills/orchestrator/references/engineering-practices/test-design.md",
+      "skills/orchestrator/references/engineering-practices/test-proof.md",
+      "skills/orchestrator/references/engineering-practices/cli.md",
+      "skills/ponytail/SKILL.md",
+      "skills/cs-engineering/SKILL.md",
+      "skills/orchestrator/SKILL.md",
+      "skills/test-engineering/SKILL.md",
+      "skills/code-review/SKILL.md",
+      "skills/software-security-auditor/SKILL.md",
+      "skills/korean-prose-editor/SKILL.md"
+    ],
+    "workspaceAgentsSkillsPresent": false,
+    "repositoryAgentsSkillsPresent": false,
+    "repositoryAgentsContains": [
+      "plugins/marketplace.json"
+    ],
+    "testEngineeringApplied": true,
+    "independentAuditClaim": false
+  },
+  "productIntegrity": {
+    "trackedDiff": 0,
+    "status": "",
+    "productModified": false,
+    "push": false,
+    "PR": false,
+    "release": false
+  },
+  "sourceDigests": [
+    {
+      "path": "AGENTS.md",
+      "digest": "sha256:d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/inventory.ts",
+      "digest": "sha256:8c7ee54546f17fb1e63368fbfb72668a3c7136570a545ad5f0494f076c91727c"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/request.ts",
+      "digest": "sha256:1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/providers.ts",
+      "digest": "sha256:f191c46db32f38248ebdd23be725b426a0b3020e0bb464b36bcc57521983651c"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/service.ts",
+      "digest": "sha256:c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/validation.ts",
+      "digest": "sha256:70f988d9e5d49f8eaef55ca0ff378b4819798ff8141bd09119691c2cffb2891f"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/gateway.ts",
+      "digest": "sha256:80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/runtime.ts",
+      "digest": "sha256:33c14b3597a9ed5d3a6103fc52c41ea9ed18c57c96856257b1dc407e3d6e6eea"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/native-adapters.ts",
+      "digest": "sha256:dc6a0e763b175b077cee401d9020144d49b99f143b34da88059fbf4da5bc39f6"
+    },
+    {
+      "path": "mcp-server/src/index.ts",
+      "digest": "sha256:bd2d886cd4ef1bb42c8cd00dd22a0428be899c7e21f1e48afe83c280f0104d46"
+    },
+    {
+      "path": "mcp-server/src/server.ts",
+      "digest": "sha256:073ba501a64af9a7996f64e953446834c93baf2a093dd673e761dc9b45ca99d4"
+    },
+    {
+      "path": "tests/skill-classification/evaluation.ts",
+      "digest": "sha256:e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9"
+    }
+  ],
+  "originalArtifactInventory": {
+    "engineering-test-plan.json": {
+      "name": "engineering-test-plan.json",
+      "bytes": 3796,
+      "sha256": "f24ad2fe083f514e845298d04fb7c5017c6193730bd1390fccbf8eeac3a0691b",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "supporting/engineering-test-plan.json"
+      ]
+    },
+    "engineering-test-proof.json": {
+      "name": "engineering-test-proof.json",
+      "bytes": 1932,
+      "sha256": "eef1f20b2a17e17ed5e85807153947c4a2239ce283449d3a2dfbde5efdf265df",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "supporting/engineering-test-proof.json"
+      ]
+    },
+    "offline.log": {
+      "name": "offline.log",
+      "bytes": 4416,
+      "sha256": "4557941e4b882ec9eec637df916b50a1d328423cdf5cb09d173f93afd9e2c4a5",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "logs/offline.combined.log"
+      ]
+    },
+    "vitest.result.json": {
+      "name": "vitest.result.json",
+      "bytes": 9975,
+      "sha256": "a89ab2e4b277b390eed2d16bf474281efca99e0d784917d9eb1a85f0707a0897",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "supporting/vitest.result.json"
+      ]
+    },
+    "exit-code.txt": {
+      "name": "exit-code.txt",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "exit-code.txt"
+      ]
+    },
+    "reproduce.sh": {
+      "name": "reproduce.sh",
+      "bytes": 763,
+      "sha256": "3fd86937e70504862835296c61b49fe19410519730c0ad801342be637959e145",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "reproduce/reproduce.sh"
+      ]
+    },
+    "engineering-plan-result.json": {
+      "name": "engineering-plan-result.json",
+      "bytes": 250,
+      "sha256": "a981444bf679ae84ae755684f5e2837c428b944c2c5d6850330e26662fe192d4",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "supporting/engineering-plan-result.json"
+      ]
+    },
+    "vitest.config.mts": {
+      "name": "vitest.config.mts",
+      "bytes": 165,
+      "sha256": "a7226b7761da86f3813dba92ff4c5c96ca86627ebaeb04903ab919c42a6746be",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "reproduce/vitest.config.mts"
+      ]
+    },
+    "SS13.test.ts": {
+      "name": "SS13.test.ts",
+      "bytes": 18069,
+      "sha256": "cf58891b29ff0561ddba986fddcd91edca8049581d754a19d8a0ce89c1bc6bc8",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "reproduce/SS13.test.ts"
+      ]
+    },
+    "engineering-test-result.json": {
+      "name": "engineering-test-result.json",
+      "bytes": 1112,
+      "sha256": "41c0c9073ec81c59e05fd2b75a8a7b0160e368dc9724a2584609ad83af80cf04",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "supporting/engineering-test-result.json"
+      ]
+    },
+    "SS13.result.json": {
+      "name": "SS13.result.json",
+      "bytes": 26660,
+      "sha256": "acab2309522cb4f085e63b6cb57324c4c398d5ed59f0c9c278e4ea9ec186deda",
+      "status": "AVAILABLE",
+      "publishedAs": []
+    },
+    "SS13.observations.json": {
+      "name": "SS13.observations.json",
+      "bytes": 2458082,
+      "sha256": "863397c10b395722d8f3770bef880c6d4691b4c8e2658f39afcc0a55cd76117c",
+      "status": "AVAILABLE",
+      "publishedAs": [
+        "input.request.json",
+        "input.inventory.json",
+        "input.prompt.txt",
+        "source.fixture.SS13.json",
+        "SS13.observations.json"
+      ]
+    }
+  },
+  "publication": {
+    "kind": "sanitized-copy-of-existing-evidence",
+    "newTests": 0,
+    "newModelOrVendorCalls": 0,
+    "reproductionAdaptationStatus": "NOT_EXECUTED",
+    "historicalCommandNote": "Historical argv/cwd are path-redacted. Use reproduce/reproduce.sh only for a future authorized offline recheck; this publication did not run it.",
+    "publicObservedStatusUnchanged": true,
+    "stdoutStderrCapture": "combined",
+    "missingOriginals": [
+      {
+        "name": "separate.stdout.log",
+        "status": "MISSING_ORIGINAL",
+        "reason": "Original run captured stdout+stderr together; combined log exists. No stream separation invented."
+      },
+      {
+        "name": "separate.stderr.log",
+        "status": "MISSING_ORIGINAL",
+        "reason": "Original run captured stdout+stderr together; combined log exists. No stream separation invented."
+      },
+      {
+        "name": "provider-transport-wire.capture",
+        "status": "MISSING_ORIGINAL",
+        "reason": "Mock-only boundary run; no live transport capture was created."
+      },
+      {
+        "name": "host-selected-read-applied-verified.receipts",
+        "status": "MISSING_ORIGINAL",
+        "reason": "Host stages NOTRUN; no real receipt was created."
+      },
+      {
+        "name": "product.patch",
+        "status": "MISSING_ORIGINAL",
+        "reason": "No patch was created; product source remained unchanged."
+      }
+    ],
+    "patchPresent": false,
+    "originalResult": {
+      "name": "SS13.result.json",
+      "bytes": 26660,
+      "sha256": "acab2309522cb4f085e63b6cb57324c4c398d5ed59f0c9c278e4ea9ec186deda",
+      "status": "AVAILABLE",
+      "publishedAs": []
+    },
+    "sourceInputNote": "Published input files are extracted from the existing observations artifact; no standalone original provider wire capture exists. Request object, prompt bytes, and context nulls are preserved.",
+    "publicSupportingDigestNote": "Historical plan/proof digests reference original artifacts; they do not attest the mechanically adapted public reproduction."
+  }
+}

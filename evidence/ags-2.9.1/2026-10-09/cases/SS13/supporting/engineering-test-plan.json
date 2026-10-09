@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS13-only-offline-development-verification",
+  "contractDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "requirements": [
+    "SS13-full-inventory-no-skill-support",
+    "SS13-null-empty-and-provider-failure-distinction",
+    "KNOWN-valid-cost-survives-invalid-response"
+  ],
+  "scopeFiles": [
+    "SS13.test.ts",
+    "vitest.config.mts"
+  ],
+  "runner": "Existing Vitest 5.0.0; external isolated SS13-only test/config",
+  "environment": "Node 24.19.0, pnpm 11.19.0, Linux; mock provider ports only; fixed public repository; API0",
+  "cases": [
+    {
+      "id": "SS13-base-support",
+      "requirementIds": [
+        "SS13-full-inventory-no-skill-support",
+        "SS13-null-empty-and-provider-failure-distinction"
+      ],
+      "scenario": "SS13 base and negative controls for incomplete, forced, invented, unauthenticated and failed outputs",
+      "entryPoint": "loadSkillInventory/createClassificationRequest/provider wire adapters/SkillClassificationService/RuntimeSkillClassificationGateway/scoreCase",
+      "level": "integration",
+      "expectedBehavior": "Entire 24-skill inventory evaluated; SUCCESS/all not-needed; no provider-generated selection; null remains without host acceptance; invalid/failure does not pass as no-skill",
+      "oracle": "Embedded SS13 sourceSpec fields and frozen oracle; implementation-independent negative controls",
+      "testFiles": [
+        "SS13.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Recorded retrospectively as a scope index, not a pre-run frozen plan. Product mutation prohibited. Actual offline execution exists separately; no paired sensitivity demonstration claimed.",
+      "argv": [
+        "node",
+        "<DEPENDENCY_ROOT>/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "<EVIDENCE_ROOT>/vitest.config.mts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/vitest.result.json"
+      ]
+    },
+    {
+      "id": "SS13-invalid-cost",
+      "requirementIds": [
+        "KNOWN-valid-cost-survives-invalid-response"
+      ],
+      "scenario": "Known valid usage 0.1 with SUCCESS/empty judgments for nonempty inventory",
+      "entryPoint": "SkillClassificationService.classify/InMemoryClassificationBudget.settle",
+      "level": "integration",
+      "expectedBehavior": "INVALID semantic response with actualCostUsd 0.1 retained and spentUsd 0.1; reservation settled",
+      "oracle": "User-declared existing defect plus independently valid cost/dispatch data; separate from frozen semantic SS13 labels",
+      "testFiles": [
+        "SS13.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "red-green",
+      "sensitivityReason": "Meaningful red assertion observed. Product modifications prohibited; fixed green candidate absent. Paired red/green proof remains NOT_RUN.",
+      "argv": [
+        "node",
+        "<DEPENDENCY_ROOT>/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "<EVIDENCE_ROOT>/vitest.config.mts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/vitest.result.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "Other original IDs and full suites; all past 21-case runs; JEV/vendor/Claude live calls; product writes/push/PR/release",
+    "Actual host acceptance and stages are outside this offline subplan and remain SS13 case blockers",
+    "Dependencies and actual product source are bound separately by fixed Git commit/tree and file hashes in SS13.result.json; this snapshot covers test artifacts only"
+  ]
+}

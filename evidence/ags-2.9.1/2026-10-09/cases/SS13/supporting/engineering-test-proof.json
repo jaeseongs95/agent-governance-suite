@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-proof",
+  "planDigest": "sha256:3b810782b2450550122489020bd013db93009ef35e77b74c178fdc8882f2136f",
+  "candidate": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-snapshot",
+    "files": [
+      {
+        "path": "SS13.test.ts",
+        "digest": "sha256:cf58891b29ff0561ddba986fddcd91edca8049581d754a19d8a0ce89c1bc6bc8",
+        "size": 18069,
+        "lineCount": 156
+      },
+      {
+        "path": "vitest.config.mts",
+        "digest": "sha256:a7226b7761da86f3813dba92ff4c5c96ca86627ebaeb04903ab919c42a6746be",
+        "size": 165,
+        "lineCount": 2
+      }
+    ],
+    "digest": "sha256:eb08b6bffee5cd116cf4a78fdcaca15a89d3672a036fbd199ec6ce3a7b79cf1c"
+  },
+  "proofs": [
+    {
+      "caseId": "SS13-base-support",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Recorded retrospectively as a scope index, not a pre-run frozen plan. Product mutation prohibited. Actual offline execution exists separately; no paired sensitivity demonstration claimed."
+    },
+    {
+      "caseId": "SS13-invalid-cost",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Meaningful red assertion observed. Product modifications prohibited; fixed green candidate absent. Paired red/green proof remains NOT_RUN."
+    }
+  ]
+}
