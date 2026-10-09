@@ -1,0 +1,23 @@
+{
+  "caseId": "SS21",
+  "currency": "USD",
+  "softBudget": 2,
+  "includes": [
+    "preparatory calls",
+    "successful calls",
+    "failed calls",
+    "retry calls",
+    "cache cost"
+  ],
+  "spentKnownUsd": 0,
+  "pendingReservationUsd": 0,
+  "modelApiCalls": 0,
+  "JEVApiCalls": 0,
+  "callRecords": [],
+  "actualClassificationInputTokens": null,
+  "actualClassificationOutputTokens": null,
+  "actualClassificationCachedTokens": null,
+  "actualClassificationCostUsd": null,
+  "note": "No model API invocation has occurred. Null live telemetry is not zero input/cost telemetry. Claude --version and --help were local commands. Budget is a cap, not a spending target; total parent reservations stated as 39*2=78 USD.",
+  "stopBeforeNextCall": "Stop when known spend plus pending reservations plus conservative next-call bound approaches/exceeds USD 2, or when failed-call/retry usage cannot be bounded. Apply parent common per-call limits; --max-budget-usd alone does not replace cross-process ledger."
+}

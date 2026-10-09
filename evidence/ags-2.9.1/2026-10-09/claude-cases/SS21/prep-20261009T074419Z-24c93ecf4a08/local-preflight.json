@@ -1,0 +1,53 @@
+{
+  "caseId": "SS21",
+  "observedAtUtc": "2026-10-09T07:44:19.402478+00:00",
+  "claudeExecutable": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+  "claudeRealPath": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+  "version": "2.1.286 (Claude Code)",
+  "cliBytesSHA256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+  "localCommands": [
+    {
+      "argv": [
+        "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+        "--version"
+      ],
+      "exitCode": 0
+    },
+    {
+      "argv": [
+        "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+        "--help"
+      ],
+      "exitCode": 0
+    }
+  ],
+  "helpOptionsPresent": {
+    "--plugin-dir": true,
+    "--mcp-config": true,
+    "--strict-mcp-config": true,
+    "--max-budget-usd": true,
+    "--output-format": true,
+    "--no-session-persistence": true,
+    "--model": true,
+    "--effort": true
+  },
+  "node": "v24.19.0",
+  "pnpm": "11.19.0",
+  "apiAuthentication": "NOT_TESTED; awaiting parent procedure; no auth/settings/permissions/network policy mutation",
+  "modelCalls": 0,
+  "productTests": 0,
+  "productEdits": 0,
+  "generatedArtifactEdits": 0,
+  "candidate": {
+    "label": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "verification": "WAITING_FOR_PARENT; locally reported only; independent SOURCE and remote publication unconfirmed"
+  },
+  "selected": "NOTRUN",
+  "read": "NOTRUN",
+  "applied": "NOTRUN",
+  "verified": "NOTRUN",
+  "hostTestStatus": "NOTRUN",
+  "preparationStatus": "READY_WAITING_FOR_PARENT"
+}

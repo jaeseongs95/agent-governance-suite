@@ -1,0 +1,90 @@
+{
+  "caseId": "SS21",
+  "title": "동일 REQ RESP와 코드 포장",
+  "kind": "preparation-only-not-executed",
+  "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "immutableAcceptance": {
+    "입력": "같은 원문 prompt·확인 metadata·전체 inventory·request/operation ID를 코드로 포장한 공통 요청 하나를 JEV와 vendor LLM adapter에 각각 준다. 정상 복수 추천, no-skill, 불확실, 형식 오류·미가용 응답을 같은 의미의 mock으로 제공한다. provider wire와 원시 score 유무는 다르게 둔다.",
+    "필수추천": "상위 AGS·VM·AGENT가 같은 필드·자료형·의미·오류·불확실 계약을 소비한다. 코드 포장은 입력의 의미를 새로 추출하거나 요약하지 않는다.",
+    "금지추천 또는 행동": "상위에 JEV state/questions나 vendor messages를 노출; adapter 교체 때문에 상위 코드를 변경; 원시 score가 없다고 0/confidence를 발명; 앞단 정형화용 LLM 호출; 부정문·인용·제약·inventory를 조용히 잘라냄.",
+    "허용선택": "adapter 내부 wire 변환과 선택적 진단 score. 동일 계약이어도 실제 모델의 추천 값은 다를 수 있으며 의미 품질은 별도 평가한다.",
+    "보류조건": "필수 공통 필드·정확 ID·응답 완전성·포장 provenance가 확인되지 않음. 입력 한도를 넘으면 INPUT_TOO_LONG 또는 명시된 무손실 처리다.",
+    "통과기준": "상위 소비 코드를 그대로 두고 adapter만 교체한 모든 mock이 같은 schema·상태 의미로 처리된다. 포장 전후 원문·부정·확인 metadata·전체 후보의 digest와 개수가 맞는다. 앞단 LLM 호출 0, 추가 요약 토큰 0이다. 포장 연산 시간과 실제 분류 입력 토큰·비용은 별도이며 입력 토큰을 0으로 보고하지 않는다. 같은 정보로 최종 선택하는 주체는 AGENT다.",
+    "증거": "E0·E1, 원문/metadata/공통REQ/공통RESP digest, 상위 소비 경로 동일성, wire adapter 매핑, 호출 spy, 포장 시간·분류 입력 tokens. JEV는 질문별 Noul의 ID·응답 수·0~1 유효성을 adapter 내부에서 확인한다.",
+    "실행종류": "mock 필수. 실제 분류·AGENT 선택 검증은 승인된 각 provider/host-live로 별도 수행한다."
+  },
+  "variants": [
+    "multi-needed",
+    "no-skill",
+    "uncertain",
+    "invalid",
+    "unavailable",
+    "scores-present",
+    "scores-absent",
+    "quoted-provenance",
+    "negation-preserved",
+    "unknown-not-empty"
+  ],
+  "steps": [
+    {
+      "criterionId": "SS21-C01",
+      "step": "Pin candidate and host",
+      "expected": "Parent-confirmed R17 commit/tree, independent SOURCE verdict, remote immutable files, shared Claude model/effort/auth and preceding-check outcomes; read candidate AGENTS and Claude plugin skills; inspect installation tree and connected MCP capabilities. No substitution of main or historical c6a8019.",
+      "status": "NOTRUN"
+    },
+    {
+      "criterionId": "SS21-C02",
+      "step": "Bind original input",
+      "expected": "Reuse embedded sourceSpec.fields unchanged and label synthetic operational data as synthetic. Bind exact prompt bytes, CRLF, combining accent, negation, quotes, confirmed metadata provenance, all candidates, request/operation IDs and common request digest. originalPrompt/oracle remain null; live semantic task/source and verdict method must come from confirmed provenance, never inferred from mock labels.",
+      "status": "NOTRUN"
+    },
+    {
+      "criterionId": "SS21-C03",
+      "step": "Claude executes required offline mock",
+      "expected": "Claude Code must perform host Bash/read operations in an isolated authorized candidate checkout. Copy public reproduction SS21.test.ts into separate test overlay only after candidate fixture hash/provenance compatibility is verified; do not overwrite existing files. Run SS21 isolated test only, capture actual command/exit/stdout/stderr/test JSON and artifacts; no Sol execution on behalf of Claude. Ten base variants and nine Noul malformed controls plus exact wire byte boundaries must be evaluated with unchanged requirements.",
+      "status": "NOTRUN"
+    },
+    {
+      "criterionId": "SS21-C04",
+      "step": "Common contract and lossless packaging",
+      "expected": "For multi-needed/no-skill/uncertain/invalid/unavailable/scores-present/scores-absent/quoted-provenance/negation-preserved/unknown-not-empty, keep consumer fixed and swap mock adapters only. Require common schema/status/error/uncertainty semantics, all candidate IDs/counts/digests, no upstream JEV state/questions or vendor messages, no invented 0/confidence, no front packaging LLM or added summary tokens, input-too-long no dispatch or explicit lossless handling. null and [] remain distinct. Mock values must not certify actual semantic correctness.",
+      "status": "NOTRUN"
+    },
+    {
+      "criterionId": "SS21-C05",
+      "step": "Valid cost despite invalid response",
+      "expected": "Malformed RESP missing one candidate must be INVALID while preserving valid input=321/output=42/cost=0.125 and settled spent=0.125. The historical null usage/spent=0/pending=0.4 is a defect, not oracle. Verify candidate fixed behavior without product mutation; do not claim red/green or mutation proof without execution.",
+      "status": "NOTRUN"
+    },
+    {
+      "criterionId": "SS21-C06",
+      "step": "Actual provider/selection stage",
+      "expected": "Only after approved provider/profile/runtime/route, budget and native retry/isolation prerequisites are confirmed, Claude executes real provider/host task and observes classify_skills/get_skill_inventory/record_skill_selection or verified equivalent. Bind signed host observations to actor/task/request/inventory/config/profile/expiration and record selected/read/applied/verified evidence. AGENT chooses final skills independently. Actual vendor values may differ with same contract. No JEV API call until separately allocated.",
+      "status": "NOTRUN"
+    },
+    {
+      "criterionId": "SS21-C07",
+      "step": "Account and publish",
+      "expected": "Capture each actual call including retries/failures/preparatory calls, actual input/output/cache tokens and cost; packaging time separate. Unknown usage stays null and blocks budget certainty. Independently assess semantic/source evidence; publish only sanitized summaries/receipts/hashes in new unique SS21 run and reread immutable remote bytes. Preparation or mock PASS cannot imply host-live PASS.",
+      "status": "NOTRUN"
+    }
+  ],
+  "existingRegression": {
+    "passed": 8,
+    "skipped": 65,
+    "failed": 0,
+    "exitCode": 0
+  },
+  "existingIsolated": {
+    "passed": 12,
+    "failed": 1,
+    "baseVariantsPassed": 10,
+    "exitCode": 1
+  },
+  "existingOverall": "FAIL_KNOWN_DEFECT",
+  "existingHostLive": "NOTRUN",
+  "legacyTestCodePublicSHA256": "d2343dc6ab1c2600253ac2b58138e5913b3f4bed2274665c462a4ef3ad3d0f2d",
+  "tentativeClaudeTask": "Execute the fixed SS21 operational contract in the parent-verified R17 checkout using real Claude host tools; capture results and preserve source input/criteria. This is a task outline, not an original semantic prompt and not launch authorization.",
+  "finalInvocation": null,
+  "launchGate": "WAIT_FOR_PARENT_CANDIDATE_COMMON_SETTINGS_PRECEDING_CHECKS"
+}

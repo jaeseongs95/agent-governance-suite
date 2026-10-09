@@ -1,0 +1,383 @@
+{
+  "caseId": "SS21",
+  "title": "동일 REQ RESP와 코드 포장",
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "source": {
+    "case": {
+      "caseId": "SS21",
+      "title": "동일 REQ RESP와 코드 포장",
+      "familyId": "mechanical-SS21",
+      "publicSynthetic": true,
+      "status": "NOT_RUN",
+      "executionKind": "mock 필수. 실제 분류·AGENT 선택 검증은 승인된 각 provider/host-live로 별도 수행한다.",
+      "originalPrompt": null,
+      "sourceSpec": {
+        "path": "TEST-SPEC.seq7.ko.md",
+        "section": "SS21",
+        "fields": {
+          "입력": "같은 원문 prompt·확인 metadata·전체 inventory·request/operation ID를 코드로 포장한 공통 요청 하나를 JEV와 vendor LLM adapter에 각각 준다. 정상 복수 추천, no-skill, 불확실, 형식 오류·미가용 응답을 같은 의미의 mock으로 제공한다. provider wire와 원시 score 유무는 다르게 둔다.",
+          "필수추천": "상위 AGS·VM·AGENT가 같은 필드·자료형·의미·오류·불확실 계약을 소비한다. 코드 포장은 입력의 의미를 새로 추출하거나 요약하지 않는다.",
+          "금지추천 또는 행동": "상위에 JEV state/questions나 vendor messages를 노출; adapter 교체 때문에 상위 코드를 변경; 원시 score가 없다고 0/confidence를 발명; 앞단 정형화용 LLM 호출; 부정문·인용·제약·inventory를 조용히 잘라냄.",
+          "허용선택": "adapter 내부 wire 변환과 선택적 진단 score. 동일 계약이어도 실제 모델의 추천 값은 다를 수 있으며 의미 품질은 별도 평가한다.",
+          "보류조건": "필수 공통 필드·정확 ID·응답 완전성·포장 provenance가 확인되지 않음. 입력 한도를 넘으면 INPUT_TOO_LONG 또는 명시된 무손실 처리다.",
+          "통과기준": "상위 소비 코드를 그대로 두고 adapter만 교체한 모든 mock이 같은 schema·상태 의미로 처리된다. 포장 전후 원문·부정·확인 metadata·전체 후보의 digest와 개수가 맞는다. 앞단 LLM 호출 0, 추가 요약 토큰 0이다. 포장 연산 시간과 실제 분류 입력 토큰·비용은 별도이며 입력 토큰을 0으로 보고하지 않는다. 같은 정보로 최종 선택하는 주체는 AGENT다.",
+          "증거": "E0·E1, 원문/metadata/공통REQ/공통RESP digest, 상위 소비 경로 동일성, wire adapter 매핑, 호출 spy, 포장 시간·분류 입력 tokens. JEV는 질문별 Noul의 ID·응답 수·0~1 유효성을 adapter 내부에서 확인한다.",
+          "실행종류": "mock 필수. 실제 분류·AGENT 선택 검증은 승인된 각 provider/host-live로 별도 수행한다."
+        },
+        "bodyDigest": "sha256:781d4b51e5ebf2e2f94e27c1a4e78e645685bed891146b7468314f078be47f69"
+      },
+      "oracle": null,
+      "variants": [
+        "multi-needed",
+        "no-skill",
+        "uncertain",
+        "invalid",
+        "unavailable",
+        "scores-present",
+        "scores-absent",
+        "quoted-provenance",
+        "negation-preserved",
+        "unknown-not-empty"
+      ]
+    },
+    "provenanceCases": [
+      {
+        "variantId": "SS21-quoted-provenance",
+        "expected": "quoted data is not explicit instruction"
+      },
+      {
+        "variantId": "SS21-unknown-not-empty",
+        "expected": "null remains distinct from []"
+      }
+    ]
+  },
+  "sourceFiles": [
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/README.md",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 5157,
+      "sha256": "a149be43992b8730365b7fadeca99ffede2f467f80b8a0b6784ff5e7ae64ae1e",
+      "gitBlob": "6c7adca59c8c65a234bf17633c0c17a53834df98"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/SHA256SUMS",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 1798,
+      "sha256": "491c1ab0bfdb80797122b90fb93da0f61c0dc2beb4415c0e65cacb45af73a099",
+      "gitBlob": "d3a146bd10e8a73e76b58c63b04cdc55143b1385"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/SS21.observations.json.gz",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 1405129,
+      "sha256": "8b42293077b461737cf2852cba9634721f11773c9a3a0781ac3ed85472fdd588",
+      "gitBlob": "bc06470c75e045345bd231691992afd8c47c9258"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/SS21.result.json",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 49553,
+      "sha256": "abdca573dff3c9c5f1241d9135972ac0f227e353cdbcf0cd2606a97fd252a326",
+      "gitBlob": "7aba31df5cbc4608a29de1b415b20253d11fe6fc"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/SS21.source.json",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 3222,
+      "sha256": "7dca9fae18c67d3bfcaac211f7809b590b41426e78ced71b8427d9fd33ce937f",
+      "gitBlob": "f12d2f84040068efaea22c09ff51989dc6f332f1"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/acceptance-report.json",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 3813,
+      "sha256": "54b81f5f69b2b5d2c303b99fbae066ad8d479bb4a647ed66c3ee4a0eada09ac3",
+      "gitBlob": "8f25489df0c71fbdacc7221e2f06754d1543c8ea"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/candidate.manifest.json",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 2291,
+      "sha256": "d0520764ba5eaa87612a30327d19231cdb1f8a53b1345d0d21c83bd0d8bf0400",
+      "gitBlob": "e8f54d10e224c798e0206943e94fc4158cd94a59"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/engineering-test-plan.json",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 13156,
+      "sha256": "646001790b5008c25b4d2b4ab7297cbe5037b9017cc7d5d20ad3efeae271bd82",
+      "gitBlob": "89d0a26114df39c06e58708b40adeac4866b0378"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/engineering-test-proof.json",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 6999,
+      "sha256": "9ff62bf8ce3075f8521f89a65eb9ce9309dd13d24872bf4770b4cb9a1ea53d26",
+      "gitBlob": "42e995c40021e0dc12113b87271ccc26807efcb9"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/engineering-test-result.json",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 3317,
+      "sha256": "30facabd61c28174e362acb756e7f92e0c60606560022d5bd2fb344f403ed7d1",
+      "gitBlob": "83cd969370d2fbff6c2ccb3c39fd286d8cf1a249"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/host-availability.json",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 326,
+      "sha256": "ac6de7755f0853bd6c81b6cd86cf91c335bb23e2e4b132d97ed38f452043590e",
+      "gitBlob": "c16fbdf6106fb97862a62ca339e5bb8d7ff7bb8a"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/logs/isolated.command.json",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 397,
+      "sha256": "3e5acbb347d7acdb64744df48a4716502f6e504906bb5f6dfa5d92fe56806e07",
+      "gitBlob": "23cb60273ab91ca69adecbb17d4b76d68171156b"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/logs/isolated.stderr.log",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/logs/isolated.stdout.log",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 49,
+      "sha256": "480cef28d26b18d851051164c30ccc73da10dda78f25211b2caa0bb9180e7460",
+      "gitBlob": "84a0d7afba0818390ac5bd77c7c224bac2e71a6f"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/logs/isolated.vitest.json",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 7803,
+      "sha256": "8941008c0a606232d89d2cc898f399ed08ed09218fee6e762151af8367af6b64",
+      "gitBlob": "cf648964f0ab41156d42b786bb7cd5dd2e9a6ea9"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/logs/regression.command.json",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 1085,
+      "sha256": "09f3e55f9e5291625cd6c9e9fc2818d5b3b431b73b6cd962c2f6a7240233088c",
+      "gitBlob": "617d9771b9cf51e844aec8d9f2dd7dc5d8a636bd"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/logs/regression.stderr.log",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/logs/regression.stdout.log",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 51,
+      "sha256": "521f0882a864dbceb8a53c825e474f96c7211a11c33827b9e380b8a12340ce56",
+      "gitBlob": "2f9da6db8dafdadc7157bfaae0c47e1f8aae15db"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/logs/regression.vitest.json",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 6299,
+      "sha256": "dbe7ce20987d0347c60f42fff098831ac20065604710f1449edf5653b5462672",
+      "gitBlob": "1264d8d2bf779e7813845151ec5218b7a407f5f5"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/manifest.json",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 22302,
+      "sha256": "b13084583a8f92e2bdc92cf472a8759e70eb532bed47420cb30885f80fa8d6b8",
+      "gitBlob": "5859b597c0967625a2567fecb40624e23b5ddbb6"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS21/reproduction/SS21.test.ts",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+      "bytes": 18599,
+      "sha256": "d2343dc6ab1c2600253ac2b58138e5913b3f4bed2274665c462a4ef3ad3d0f2d",
+      "gitBlob": "a46ae1c91fd6a55fbb28885f7b4fbbfb621508aa"
+    }
+  ],
+  "publicSHA256SUMSChecks": [
+    {
+      "path": "README.md",
+      "expected": "a149be43992b8730365b7fadeca99ffede2f467f80b8a0b6784ff5e7ae64ae1e",
+      "actual": "a149be43992b8730365b7fadeca99ffede2f467f80b8a0b6784ff5e7ae64ae1e",
+      "match": true
+    },
+    {
+      "path": "SS21.observations.json.gz",
+      "expected": "8b42293077b461737cf2852cba9634721f11773c9a3a0781ac3ed85472fdd588",
+      "actual": "8b42293077b461737cf2852cba9634721f11773c9a3a0781ac3ed85472fdd588",
+      "match": true
+    },
+    {
+      "path": "SS21.result.json",
+      "expected": "abdca573dff3c9c5f1241d9135972ac0f227e353cdbcf0cd2606a97fd252a326",
+      "actual": "abdca573dff3c9c5f1241d9135972ac0f227e353cdbcf0cd2606a97fd252a326",
+      "match": true
+    },
+    {
+      "path": "SS21.source.json",
+      "expected": "7dca9fae18c67d3bfcaac211f7809b590b41426e78ced71b8427d9fd33ce937f",
+      "actual": "7dca9fae18c67d3bfcaac211f7809b590b41426e78ced71b8427d9fd33ce937f",
+      "match": true
+    },
+    {
+      "path": "acceptance-report.json",
+      "expected": "54b81f5f69b2b5d2c303b99fbae066ad8d479bb4a647ed66c3ee4a0eada09ac3",
+      "actual": "54b81f5f69b2b5d2c303b99fbae066ad8d479bb4a647ed66c3ee4a0eada09ac3",
+      "match": true
+    },
+    {
+      "path": "candidate.manifest.json",
+      "expected": "d0520764ba5eaa87612a30327d19231cdb1f8a53b1345d0d21c83bd0d8bf0400",
+      "actual": "d0520764ba5eaa87612a30327d19231cdb1f8a53b1345d0d21c83bd0d8bf0400",
+      "match": true
+    },
+    {
+      "path": "engineering-test-plan.json",
+      "expected": "646001790b5008c25b4d2b4ab7297cbe5037b9017cc7d5d20ad3efeae271bd82",
+      "actual": "646001790b5008c25b4d2b4ab7297cbe5037b9017cc7d5d20ad3efeae271bd82",
+      "match": true
+    },
+    {
+      "path": "engineering-test-proof.json",
+      "expected": "9ff62bf8ce3075f8521f89a65eb9ce9309dd13d24872bf4770b4cb9a1ea53d26",
+      "actual": "9ff62bf8ce3075f8521f89a65eb9ce9309dd13d24872bf4770b4cb9a1ea53d26",
+      "match": true
+    },
+    {
+      "path": "engineering-test-result.json",
+      "expected": "30facabd61c28174e362acb756e7f92e0c60606560022d5bd2fb344f403ed7d1",
+      "actual": "30facabd61c28174e362acb756e7f92e0c60606560022d5bd2fb344f403ed7d1",
+      "match": true
+    },
+    {
+      "path": "host-availability.json",
+      "expected": "ac6de7755f0853bd6c81b6cd86cf91c335bb23e2e4b132d97ed38f452043590e",
+      "actual": "ac6de7755f0853bd6c81b6cd86cf91c335bb23e2e4b132d97ed38f452043590e",
+      "match": true
+    },
+    {
+      "path": "logs/isolated.command.json",
+      "expected": "3e5acbb347d7acdb64744df48a4716502f6e504906bb5f6dfa5d92fe56806e07",
+      "actual": "3e5acbb347d7acdb64744df48a4716502f6e504906bb5f6dfa5d92fe56806e07",
+      "match": true
+    },
+    {
+      "path": "logs/isolated.stderr.log",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "logs/isolated.stdout.log",
+      "expected": "480cef28d26b18d851051164c30ccc73da10dda78f25211b2caa0bb9180e7460",
+      "actual": "480cef28d26b18d851051164c30ccc73da10dda78f25211b2caa0bb9180e7460",
+      "match": true
+    },
+    {
+      "path": "logs/isolated.vitest.json",
+      "expected": "8941008c0a606232d89d2cc898f399ed08ed09218fee6e762151af8367af6b64",
+      "actual": "8941008c0a606232d89d2cc898f399ed08ed09218fee6e762151af8367af6b64",
+      "match": true
+    },
+    {
+      "path": "logs/regression.command.json",
+      "expected": "09f3e55f9e5291625cd6c9e9fc2818d5b3b431b73b6cd962c2f6a7240233088c",
+      "actual": "09f3e55f9e5291625cd6c9e9fc2818d5b3b431b73b6cd962c2f6a7240233088c",
+      "match": true
+    },
+    {
+      "path": "logs/regression.stderr.log",
+      "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "path": "logs/regression.stdout.log",
+      "expected": "521f0882a864dbceb8a53c825e474f96c7211a11c33827b9e380b8a12340ce56",
+      "actual": "521f0882a864dbceb8a53c825e474f96c7211a11c33827b9e380b8a12340ce56",
+      "match": true
+    },
+    {
+      "path": "logs/regression.vitest.json",
+      "expected": "dbe7ce20987d0347c60f42fff098831ac20065604710f1449edf5653b5462672",
+      "actual": "dbe7ce20987d0347c60f42fff098831ac20065604710f1449edf5653b5462672",
+      "match": true
+    },
+    {
+      "path": "manifest.json",
+      "expected": "b13084583a8f92e2bdc92cf472a8759e70eb532bed47420cb30885f80fa8d6b8",
+      "actual": "b13084583a8f92e2bdc92cf472a8759e70eb532bed47420cb30885f80fa8d6b8",
+      "match": true
+    },
+    {
+      "path": "reproduction/SS21.test.ts",
+      "expected": "d2343dc6ab1c2600253ac2b58138e5913b3f4bed2274665c462a4ef3ad3d0f2d",
+      "actual": "d2343dc6ab1c2600253ac2b58138e5913b3f4bed2274665c462a4ef3ad3d0f2d",
+      "match": true
+    },
+    {
+      "path": "SS21.observations.json.gz#decompressed",
+      "expected": "fbcfd042ac3568162649b4a2c9d5980ac169e5a4265a4147a80d4d6040b1bdae",
+      "actual": "fbcfd042ac3568162649b4a2c9d5980ac169e5a4265a4147a80d4d6040b1bdae",
+      "match": true
+    }
+  ],
+  "manifestChecks": {
+    "entries": 19,
+    "allBytesAndHashesMatch": true
+  },
+  "historicalFixture": {
+    "sourcePath": "tests/skill-classification/fixtures.json",
+    "bytes": 142450,
+    "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "immutableSource": "https://github.com/jaeseongs95/agent-governance-suite/blob/c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6/tests/skill-classification/fixtures.json"
+  },
+  "historicalFixtureHashRecomputed": true,
+  "frozenOracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "frozenOracleHashRecomputed": true,
+  "sourceSpecFilePresent": false,
+  "sourceSpecBodyDigest": "declared in embedded fields; original full source text absent, not independently recomputed",
+  "instructionReads": [
+    {
+      "path": "AGENTS.md",
+      "readAtCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827"
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "readAtCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/SKILL.md",
+      "readAtCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "sha256": "1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/SKILL.md",
+      "readAtCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "sha256": "eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/references/entry-details.md",
+      "readAtCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "sha256": "7d31114e9200454d084dd7df04db34f1afc4c3ac23f3feb09c5eef6a85be8950"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/test-design.md",
+      "readAtCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "sha256": "fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c"
+    }
+  ],
+  "agentsSkillsSearch": {
+    "workspace": false,
+    "repository": false
+  },
+  "independentValidityAudit": "NOTRUN; guidance read only; preparer is not independent auditor"
+}
