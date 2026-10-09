@@ -1,0 +1,8 @@
+{
+  "caseId": "SS29",
+  "status": "ABSENT_NO_PRODUCT_PATCH",
+  "existingPatchFiles": [],
+  "historicalProductSourceModified": false,
+  "evidence": "Original SS29.result.json workspaceEvidence.trackedProductSourceModified=false, gitDiffExit=0, gitDiffCachedExit=0",
+  "newPatchCreated": false
+}

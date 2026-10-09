@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-proof",
+  "planDigest": "sha256:73a5b051833838afb3102a3d845cd1f954e01f9aea2a9abaef3957cbeaed43df",
+  "candidate": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-snapshot",
+    "files": [
+      {
+        "path": "mcp-server/src/skill-classification/gateway.ts",
+        "digest": "sha256:80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+        "size": 15017,
+        "lineCount": 156
+      },
+      {
+        "path": "mcp-server/src/skill-classification/profiles.ts",
+        "digest": "sha256:0add9c19bd0c7a8e45a57be64f4a2ecb503e0305dc9777629fba142a8566d5be",
+        "size": 6859,
+        "lineCount": 81
+      },
+      {
+        "path": "mcp-server/src/skill-classification/providers.ts",
+        "digest": "sha256:f191c46db32f38248ebdd23be725b426a0b3020e0bb464b36bcc57521983651c",
+        "size": 12898,
+        "lineCount": 162
+      },
+      {
+        "path": "mcp-server/src/skill-classification/service.ts",
+        "digest": "sha256:c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb",
+        "size": 19033,
+        "lineCount": 215
+      },
+      {
+        "path": "mcp-server/src/skill-classification/types.ts",
+        "digest": "sha256:a5a238741eb34d5af50eb2e67e1d20f97dfebc30cdfc29c77ec7ae618f1319b5",
+        "size": 5949,
+        "lineCount": 173
+      },
+      {
+        "path": "mcp-server/src/skill-classification/validation.ts",
+        "digest": "sha256:70f988d9e5d49f8eaef55ca0ff378b4819798ff8141bd09119691c2cffb2891f",
+        "size": 8449,
+        "lineCount": 107
+      },
+      {
+        "path": "tests/SS29.development.test.ts",
+        "digest": "sha256:5a3020692e76498bfafa73c11b49ab723378c72e5a9492aca9b104011b5d7169",
+        "size": 13374,
+        "lineCount": 132
+      },
+      {
+        "path": "tests/skill-classification/fixtures.json",
+        "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "size": 142450,
+        "lineCount": 2912
+      }
+    ],
+    "digest": "sha256:00f6b218ba6e3c26c0b7ba965a15f1a40f26a89c869e42a01a92d422af89074a"
+  },
+  "proofs": [
+    {
+      "caseId": "SS29_ALL_FIVE_AND_BOUNDARIES",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red/green proof NOTRUN: product changes prohibited and no corrected candidate supplied; actual development repro failures are recorded separately and are not host receipts."
+    }
+  ]
+}

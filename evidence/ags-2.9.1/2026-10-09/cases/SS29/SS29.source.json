@@ -1,0 +1,32 @@
+{
+  "caseId": "SS29",
+  "title": "점수와 불확실성 표현",
+  "familyId": "mechanical-SS29",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "mock.",
+  "originalPrompt": null,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS29",
+    "fields": {
+      "입력": "local cosine_similarity=0.82, classifier_score logit=2.4, JEV noul_probability=0.82, 점수 없는 응답, 전부 threshold 미달인 응답을 각각 준다.",
+      "필수추천": "점수 종류·없음·미보정을 정확히 전달한다.",
+      "금지추천 또는 행동": "local 점수에 82% 성공 확률 또는 confidence 표기; JEV Noul을 AGS 정확도·안전 확률로 확대하거나 별도 confidence 생성; 서로 다른 kind를 같은 threshold로 비교; 낮은 점수만으로 no-skill 확정.",
+      "허용선택": "score.value=null, calibrated=false, abstained와 baseline fallback. baseline도 해결하지 못한 항목만 NEEDS_INPUT 또는 PARTIAL. JEV의 원시 yes 확률 의미는 유지한다.",
+      "보류조건": "calibration 근거가 없거나 추천/제외를 구분할 정보가 부족함.",
+      "통과기준": "출력·UI·보고서 어디에도 확률 오표기가 없고 provider별 threshold 정책 revision이 추적된다.",
+      "증거": "E0, 직렬화 출력·사용자용 문구·threshold 설정.",
+      "실행종류": "mock."
+    },
+    "bodyDigest": "sha256:f40407281ed73799b6a10d1723031e8e347d761657839d4e7be28957286cd016"
+  },
+  "oracle": null,
+  "variants": [
+    "cosine",
+    "logit",
+    "noul",
+    "score-absent",
+    "threshold-uncertain"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "node",
+    "scripts/run-tests.mjs",
+    "tests/SS29.development.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=SS29_OUTPUT_DIRECTORY/development.vitest.json"
+  ],
+  "cwd": "CANDIDATE_CHECKOUT",
+  "exitCode": 1,
+  "startedAt": "2026-10-09T02:58:06.152948+00:00",
+  "completedAt": "2026-10-09T02:58:09.138031+00:00",
+  "executionKind": "offline-mock",
+  "actualApiCalls": 0
+}

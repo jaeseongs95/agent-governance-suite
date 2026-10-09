@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "node",
+    "skills/test-engineering/scripts/run.mjs",
+    "check-proof",
+    "--root",
+    "CANDIDATE_CHECKOUT",
+    "--plan",
+    "SS29.plan.json",
+    "--proof",
+    "SS29.proof.json"
+  ],
+  "exitCode": 1,
+  "stderr": ""
+}

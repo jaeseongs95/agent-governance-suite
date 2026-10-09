@@ -1,0 +1,212 @@
+{
+  "input": {
+    "scores": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "policy": {
+      "neededAt": 0.8,
+      "notNeededAt": 0.2
+    }
+  },
+  "result": {
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS29-mock-request",
+      "operationId": "SS29-mock-operation",
+      "originalPrompt": "local cosine_similarity=0.82, classifier_score logit=2.4, JEV noul_probability=0.82, 점수 없는 응답, 전부 threshold 미달인 응답을 각각 준다.",
+      "promptDigest": "sha256:0c10e88371424625d6127701fa89e77cb7b1f0b3436a9157d3891b29217e39cb",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "review",
+          "version": "synthetic-1",
+          "description": "synthetic review",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "review"
+          ],
+          "actions": [
+            "review"
+          ],
+          "targets": [
+            "diff"
+          ],
+          "constraints": [],
+          "applicability": [
+            "fixed diff"
+          ],
+          "exclusions": [
+            "implementation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "tests",
+          "version": "synthetic-1",
+          "description": "synthetic review",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "review"
+          ],
+          "actions": [
+            "review"
+          ],
+          "targets": [
+            "diff"
+          ],
+          "constraints": [],
+          "applicability": [
+            "fixed diff"
+          ],
+          "exclusions": [
+            "implementation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "audit",
+          "version": "synthetic-1",
+          "description": "synthetic review",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "review"
+          ],
+          "actions": [
+            "review"
+          ],
+          "targets": [
+            "diff"
+          ],
+          "constraints": [],
+          "applicability": [
+            "fixed diff"
+          ],
+          "exclusions": [
+            "implementation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS29-synthetic-taxonomy",
+      "classificationCriteriaRef": "SS29:embedded-spec",
+      "requestDigest": "sha256:111943e312b24fd1c332c054c4ff325746d616118de89b16a9ffdc9ebc452225"
+    },
+    "config": {
+      "jevEnabled": true,
+      "mode": "shadow",
+      "providerProfileRegistryRef": "SS29-mock-registry",
+      "externalClassificationAllowed": false,
+      "configRevision": "SS29-mock-c1",
+      "timeoutMs": 1000
+    },
+    "profileRevision": "SS29-mock-pr1",
+    "snapshot": {
+      "taskRevision": null,
+      "configRevision": "SS29-mock-c1",
+      "profileRevision": "SS29-mock-pr1",
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "requestDigest": "sha256:111943e312b24fd1c332c054c4ff325746d616118de89b16a9ffdc9ebc452225",
+      "cancelled": false
+    },
+    "attempts": [
+      {
+        "providerKind": "jev",
+        "profileId": "SS29-mock-jev",
+        "modelId": "SS29-mock-model",
+        "reasoningEffort": null,
+        "dispatchState": "started",
+        "status": "UNCERTAIN",
+        "errorCode": null,
+        "timedOut": false,
+        "usage": {
+          "inputTokens": null,
+          "outputTokens": null,
+          "cachedInputTokens": null,
+          "actualCostUsd": null
+        },
+        "reservedCostUsd": 0
+      }
+    ],
+    "response": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS29-mock-request",
+      "operationId": "SS29-mock-operation",
+      "requestDigest": "sha256:111943e312b24fd1c332c054c4ff325746d616118de89b16a9ffdc9ebc452225",
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status": "UNCERTAIN",
+      "judgments": [
+        {
+          "skillId": "review",
+          "judgment": "uncertain",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": "JEV_JUDGMENT_UNCERTAIN"
+        },
+        {
+          "skillId": "tests",
+          "judgment": "uncertain",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": "JEV_JUDGMENT_UNCERTAIN"
+        },
+        {
+          "skillId": "audit",
+          "judgment": "uncertain",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": "JEV_JUDGMENT_UNCERTAIN"
+        }
+      ],
+      "unresolvedItems": [
+        {
+          "skillId": "review",
+          "reasonCode": "JEV_JUDGMENT_UNCERTAIN"
+        },
+        {
+          "skillId": "tests",
+          "reasonCode": "JEV_JUDGMENT_UNCERTAIN"
+        },
+        {
+          "skillId": "audit",
+          "reasonCode": "JEV_JUDGMENT_UNCERTAIN"
+        }
+      ],
+      "error": null
+    }
+  },
+  "baselineFallback": "NOTRUN: AGENT baseline is not invoked by this offline service test",
+  "apiCalls": 0,
+  "selected": "NOTRUN",
+  "read": "NOTRUN",
+  "applied": "NOTRUN",
+  "verified": "NOTRUN",
+  "agentSelectedSkillIds": null,
+  "hostReceipt": null
+}

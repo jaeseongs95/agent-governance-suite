@@ -1,0 +1,9 @@
+{
+  "sourceArtifact": "SS29.source.json",
+  "sourceArtifactSHA256": "6392a49f8254973e5dc8b3029d7912c6de1ad54d49b8b5551b874ea2bca9a508",
+  "field": "sourceSpec.fields.입력",
+  "extraction": "decoded JSON field UTF-8 bytes, no trailing newline, no normalization",
+  "inputBytes": 158,
+  "inputSHA256": "0c10e88371424625d6127701fa89e77cb7b1f0b3436a9157d3891b29217e39cb",
+  "originalPrompt": null
+}

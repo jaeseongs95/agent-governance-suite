@@ -1,0 +1,17 @@
+{
+  "caseId": "SS29",
+  "comparison": "cosine vs score-absent",
+  "serializedServiceOutputsEquivalent": true,
+  "cosineProviderDiagnostics": {
+    "scoreKind": "cosine_similarity",
+    "scores": [
+      {
+        "skillId": "review",
+        "value": 0.82
+      }
+    ]
+  },
+  "scoreAbsentProviderDiagnostics": null,
+  "rootCause": "same SS29-SCORE-DIAGNOSTICS-DROPPED finding",
+  "apiCalls": 0
+}

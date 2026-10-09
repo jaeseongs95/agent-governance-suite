@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "node",
+    "scripts/run-tests.mjs",
+    "tests/mcp/skill-classification-providers.test.ts",
+    "-t",
+    "SS29 intermediate Noul",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=SS29_OUTPUT_DIRECTORY/regression.vitest.json"
+  ],
+  "cwd": "CANDIDATE_CHECKOUT",
+  "exitCode": 0,
+  "startedAt": "2026-10-09T02:58:40.481332+00:00",
+  "completedAt": "2026-10-09T02:58:42.481128+00:00",
+  "executionKind": "offline-existing-regression",
+  "actualApiCalls": 0,
+  "scope": "Exactly SS29 named test, not full variant PASS"
+}

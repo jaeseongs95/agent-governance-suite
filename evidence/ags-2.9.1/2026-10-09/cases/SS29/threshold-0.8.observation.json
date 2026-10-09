@@ -1,0 +1,49 @@
+{
+  "value": 0.8,
+  "expectedJudgment": "needed",
+  "observed": {
+    "response": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS29-mock-request",
+      "operationId": "SS29-mock-operation",
+      "requestDigest": "sha256:f0a10aab98f6298b11be19b1d3470bc1a39e62abec3901dd4fdc9c1cf146ce19",
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status": "SUCCESS",
+      "judgments": [
+        {
+          "skillId": "review",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        }
+      ],
+      "unresolvedItems": [],
+      "error": null
+    },
+    "dispatchState": "started",
+    "usage": {
+      "inputTokens": null,
+      "outputTokens": null,
+      "cachedInputTokens": null,
+      "actualCostUsd": null
+    },
+    "diagnostics": {
+      "scoreKind": "noul_probability",
+      "scores": [
+        {
+          "skillId": "review",
+          "value": 0.8
+        }
+      ]
+    }
+  },
+  "apiCalls": 0,
+  "selected": "NOTRUN",
+  "read": "NOTRUN",
+  "applied": "NOTRUN",
+  "verified": "NOTRUN",
+  "agentSelectedSkillIds": null,
+  "hostReceipt": null
+}

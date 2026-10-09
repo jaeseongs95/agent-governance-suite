@@ -1,0 +1,32 @@
+
+ RUN  v5.0.0 CANDIDATE_CHECKOUT
+
+ ✓ tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 binding and null semantic oracle are preserved 10ms
+ × tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 variant cosine preserves score meaning through serialized service output 50ms
+   → SS29_SCORE_KIND_LOST_AT_PUBLIC_SERVICE_BOUNDARY: expected '{"response":{"schemaVersion":"1.0.0",…' to contain 'cosine_similarity'
+ × tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 variant logit preserves score meaning through serialized service output 7ms
+   → SS29_SCORE_KIND_LOST_AT_PUBLIC_SERVICE_BOUNDARY: expected '{"response":{"schemaVersion":"1.0.0",…' to contain 'classifier_score'
+ × tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 variant noul preserves score meaning through serialized service output 7ms
+   → SS29_SCORE_KIND_LOST_AT_PUBLIC_SERVICE_BOUNDARY: expected '{"response":{"schemaVersion":"1.0.0",…' to contain 'noul_probability'
+ ✓ tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 variant score-absent preserves score meaning through serialized service output 7ms
+ × tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 variant threshold-uncertain preserves score meaning through serialized service output 5ms
+   → SS29_SCORE_KIND_LOST_AT_PUBLIC_SERVICE_BOUNDARY: expected '{"response":{"schemaVersion":"1.0.0",…' to contain 'noul_probability'
+ ✓ tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 Noul threshold boundary 0 stays not-needed without fabricated confidence 3ms
+ ✓ tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 Noul threshold boundary 0.2 stays not-needed without fabricated confidence 2ms
+ ✓ tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 Noul threshold boundary 0.20000000000000004 stays uncertain without fabricated confidence 1ms
+ ✓ tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 Noul threshold boundary 0.5 stays uncertain without fabricated confidence 1ms
+ ✓ tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 Noul threshold boundary 0.7999999999999999 stays uncertain without fabricated confidence 2ms
+ ✓ tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 Noul threshold boundary 0.8 stays needed without fabricated confidence 2ms
+ ✓ tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 Noul threshold boundary 1 stays needed without fabricated confidence 1ms
+ ✓ tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 all candidates below positive threshold remain unresolved and never select no-skill 3ms
+ ✓ tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 policy change is digest-bound and stale qualification is refused 1ms
+ ✓ tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 RESP refuses invented confidence field 4ms
+ × tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 gateway with complete real inventory must preserve actual Noul score meaning 420ms
+   → SS29_SCORE_KIND_LOST_AT_GATEWAY_BOUNDARY: expected '{"result":{"config":{"jevEnabled":tru…' to contain 'noul_probability'
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 12 passed (17)
+   Start at  02:58:07
+   Duration  1.54s (tests 44%, transform 33%, import 22%, worker 1%)
+
+JSON report written to SS29_OUTPUT_DIRECTORY/development.vitest.json

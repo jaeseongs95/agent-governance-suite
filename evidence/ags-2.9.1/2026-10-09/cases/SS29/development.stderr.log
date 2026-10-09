@@ -1,0 +1,82 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 variant cosine preserves score meaning through serialized service output
+AssertionError: SS29_SCORE_KIND_LOST_AT_PUBLIC_SERVICE_BOUNDARY: expected '{"response":{"schemaVersion":"1.0.0",…' to contain 'cosine_similarity'
+
+Expected: "cosine_similarity"
+Received: "{"response":{"schemaVersion":"1.0.0","requestId":"SS29-mock-request","operationId":"SS29-mock-operation","requestDigest":"sha256:f0a10aab98f6298b11be19b1d3470bc1a39e62abec3901dd4fdc9c1cf146ce19","inventoryDigest":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"SUCCESS","judgments":[{"skillId":"review","judgment":"needed","reasonRefs":["SS29:synthetic-purpose"],"uncertaintyReason":null}],"unresolvedItems":[],"error":null},"attempts":[{"providerKind":"vendor","profileId":"SS29-mock-vendor","modelId":"SS29-mock-model","reasoningEffort":"low","dispatchState":"started","status":"SUCCESS","errorCode":null,"timedOut":false,"usage":{"inputTokens":null,"outputTokens":null,"cachedInputTokens":null,"actualCostUsd":0},"reservedCostUsd":0}],"profileRevision":"SS29-mock-pr1","snapshot":{"taskRevision":null,"configRevision":"SS29-mock-c1","profileRevision":"SS29-mock-pr1","inventoryDigest":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","requestDigest":"sha256:f0a10aab98f6298b11be19b1d3470bc1a39e62abec3901dd4fdc9c1cf146ce19","cancelled":false}}"
+
+ ❯ tests/SS29.development.test.ts:85:90
+     83|       // Contract assertion is shape-independent: the serialized resul…
+     84|       // retain the provider's score kind, not an invented output fiel…
+     85|       expect(JSON.stringify(outward), 'SS29_SCORE_KIND_LOST_AT_PUBLIC_…
+       |                                                                                          ^
+     86|       expect(JSON.stringify(outward)).toContain(String(value));
+     87|     } else {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 variant logit preserves score meaning through serialized service output
+AssertionError: SS29_SCORE_KIND_LOST_AT_PUBLIC_SERVICE_BOUNDARY: expected '{"response":{"schemaVersion":"1.0.0",…' to contain 'classifier_score'
+
+Expected: "classifier_score"
+Received: "{"response":{"schemaVersion":"1.0.0","requestId":"SS29-mock-request","operationId":"SS29-mock-operation","requestDigest":"sha256:f0a10aab98f6298b11be19b1d3470bc1a39e62abec3901dd4fdc9c1cf146ce19","inventoryDigest":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"SUCCESS","judgments":[{"skillId":"review","judgment":"needed","reasonRefs":["SS29:synthetic-purpose"],"uncertaintyReason":null}],"unresolvedItems":[],"error":null},"attempts":[{"providerKind":"vendor","profileId":"SS29-mock-vendor","modelId":"SS29-mock-model","reasoningEffort":"low","dispatchState":"started","status":"SUCCESS","errorCode":null,"timedOut":false,"usage":{"inputTokens":null,"outputTokens":null,"cachedInputTokens":null,"actualCostUsd":0},"reservedCostUsd":0}],"profileRevision":"SS29-mock-pr1","snapshot":{"taskRevision":null,"configRevision":"SS29-mock-c1","profileRevision":"SS29-mock-pr1","inventoryDigest":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","requestDigest":"sha256:f0a10aab98f6298b11be19b1d3470bc1a39e62abec3901dd4fdc9c1cf146ce19","cancelled":false}}"
+
+ ❯ tests/SS29.development.test.ts:85:90
+     83|       // Contract assertion is shape-independent: the serialized resul…
+     84|       // retain the provider's score kind, not an invented output fiel…
+     85|       expect(JSON.stringify(outward), 'SS29_SCORE_KIND_LOST_AT_PUBLIC_…
+       |                                                                                          ^
+     86|       expect(JSON.stringify(outward)).toContain(String(value));
+     87|     } else {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 variant noul preserves score meaning through serialized service output
+AssertionError: SS29_SCORE_KIND_LOST_AT_PUBLIC_SERVICE_BOUNDARY: expected '{"response":{"schemaVersion":"1.0.0",…' to contain 'noul_probability'
+
+Expected: "noul_probability"
+Received: "{"response":{"schemaVersion":"1.0.0","requestId":"SS29-mock-request","operationId":"SS29-mock-operation","requestDigest":"sha256:f0a10aab98f6298b11be19b1d3470bc1a39e62abec3901dd4fdc9c1cf146ce19","inventoryDigest":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"SUCCESS","judgments":[{"skillId":"review","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null}],"unresolvedItems":[],"error":null},"attempts":[{"providerKind":"jev","profileId":"SS29-mock-jev","modelId":"SS29-mock-model","reasoningEffort":null,"dispatchState":"started","status":"SUCCESS","errorCode":null,"timedOut":false,"usage":{"inputTokens":null,"outputTokens":null,"cachedInputTokens":null,"actualCostUsd":null},"reservedCostUsd":0}],"profileRevision":"SS29-mock-pr1","snapshot":{"taskRevision":null,"configRevision":"SS29-mock-c1","profileRevision":"SS29-mock-pr1","inventoryDigest":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","requestDigest":"sha256:f0a10aab98f6298b11be19b1d3470bc1a39e62abec3901dd4fdc9c1cf146ce19","cancelled":false}}"
+
+ ❯ tests/SS29.development.test.ts:85:90
+     83|       // Contract assertion is shape-independent: the serialized resul…
+     84|       // retain the provider's score kind, not an invented output fiel…
+     85|       expect(JSON.stringify(outward), 'SS29_SCORE_KIND_LOST_AT_PUBLIC_…
+       |                                                                                          ^
+     86|       expect(JSON.stringify(outward)).toContain(String(value));
+     87|     } else {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 variant threshold-uncertain preserves score meaning through serialized service output
+AssertionError: SS29_SCORE_KIND_LOST_AT_PUBLIC_SERVICE_BOUNDARY: expected '{"response":{"schemaVersion":"1.0.0",…' to contain 'noul_probability'
+
+Expected: "noul_probability"
+Received: "{"response":{"schemaVersion":"1.0.0","requestId":"SS29-mock-request","operationId":"SS29-mock-operation","requestDigest":"sha256:f0a10aab98f6298b11be19b1d3470bc1a39e62abec3901dd4fdc9c1cf146ce19","inventoryDigest":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"UNCERTAIN","judgments":[{"skillId":"review","judgment":"uncertain","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":"JEV_JUDGMENT_UNCERTAIN"}],"unresolvedItems":[{"skillId":"review","reasonCode":"JEV_JUDGMENT_UNCERTAIN"}],"error":null},"attempts":[{"providerKind":"jev","profileId":"SS29-mock-jev","modelId":"SS29-mock-model","reasoningEffort":null,"dispatchState":"started","status":"UNCERTAIN","errorCode":null,"timedOut":false,"usage":{"inputTokens":null,"outputTokens":null,"cachedInputTokens":null,"actualCostUsd":null},"reservedCostUsd":0}],"profileRevision":"SS29-mock-pr1","snapshot":{"taskRevision":null,"configRevision":"SS29-mock-c1","profileRevision":"SS29-mock-pr1","inventoryDigest":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","requestDigest":"sha256:f0a10aab98f6298b11be19b1d3470bc1a39e62abec3901dd4fdc9c1cf146ce19","cancelled":false}}"
+
+ ❯ tests/SS29.development.test.ts:85:90
+     83|       // Contract assertion is shape-independent: the serialized resul…
+     84|       // retain the provider's score kind, not an invented output fiel…
+     85|       expect(JSON.stringify(outward), 'SS29_SCORE_KIND_LOST_AT_PUBLIC_…
+       |                                                                                          ^
+     86|       expect(JSON.stringify(outward)).toContain(String(value));
+     87|     } else {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/SS29.development.test.ts > SS29 frozen operational score contract only > SS29 gateway with complete real inventory must preserve actual Noul score meaning
+AssertionError: SS29_SCORE_KIND_LOST_AT_GATEWAY_BOUNDARY: expected '{"result":{"config":{"jevEnabled":tru…' to contain 'noul_probability'
+
+Expected: "noul_probability"
+Received: "{"result":{"config":{"jevEnabled":true,"mode":"shadow","providerProfileRegistryRef":"SS29-mock-registry","externalClassificationAllowed":false,"configRevision":"SS29-mock-c1","timeoutMs":1000},"profileRevision":"SS29-mock-pr1","snapshot":{"taskRevision":null,"configRevision":"SS29-mock-c1","profileRevision":"SS29-mock-pr1","inventoryDigest":"sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82","requestDigest":"sha256:f71f4084f822b7f72b530f5b528f1225bc8bccba537f672feb67afc38325c51b","cancelled":false},"attempts":[{"providerKind":"jev","profileId":"SS29-mock-jev","modelId":"SS29-mock-model","reasoningEffort":null,"dispatchState":"started","status":"SUCCESS","errorCode":null,"timedOut":false,"usage":{"inputTokens":null,"outputTokens":null,"cachedInputTokens":null,"actualCostUsd":null},"reservedCostUsd":0}],"response":{"schemaVersion":"1.0.0","requestId":"SS29-gateway","operationId":"SS29-gateway","requestDigest":"sha256:f71f4084f822b7f72b530f5b528f1225bc8bccba537f672feb67afc38325c51b","inventoryDigest":"sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82","status":"SUCCESS","judgments":[{"skillId":"acceptance-evidence-validator","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"blocker-diagnostician","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"change-scope-guardian","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"code-review","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"codex-token-usage-analyzer","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"context-continuity","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"coordinate-subagents","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"cs-engineering","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"evaluation-validity-auditor","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"independent-audit-gate","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"independent-deliberation-panel","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"instruction-scope-resolver","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"iteration-frame-auditor","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"korean-prose-editor","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"model-effort-advisor","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"mutation-risk-preflight","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"orchestrator","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"ponytail","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"recovery-strategy-selector","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"session-board","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"software-security-auditor","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"task-contract","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"test-engineering","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null},{"skillId":"workspace-convention-profiler","judgment":"needed","reasonRefs":["profile:SS29-mock-jev:SS29-mock-p1"],"uncertaintyReason":null}],"unresolvedItems":[],"error":null}},"classificationResponseRef":"sha256:779e2e5f5f958c823815b8d1ea9dc4b874f26d738598fe779782bdac9e2ba702","agentSelectedSkillIds":null,"selectionStatus":"PROPOSED","adviceApplied":false}"
+
+ ❯ tests/SS29.development.test.ts:130:81
+    128|     expect(result.agentSelectedSkillIds).toBeNull(); expect(result.sel…
+    129|     const outward = {...result, result: {...result.result, request: un…
+    130|     expect(JSON.stringify(outward), 'SS29_SCORE_KIND_LOST_AT_GATEWAY_B…
+       |                                                                                 ^
+    131|   });
+    132| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯

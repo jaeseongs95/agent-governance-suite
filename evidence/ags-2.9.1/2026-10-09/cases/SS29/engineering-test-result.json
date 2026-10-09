@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:00f6b218ba6e3c26c0b7ba965a15f1a40f26a89c869e42a01a92d422af89074a",
+  "reportDigest": "sha256:b9ffb583e310fef953e05e378066aa276dfb25aefd3ee79e102c968984e888f6",
+  "issues": [
+    "REQUIRED SS29_ALL_FIVE_AND_BOUNDARIES: NOT_RUN — Sensitivity red/green proof NOTRUN: product changes prohibited and no corrected candidate supplied; actual development repro failures are recorded separately and are not host receipts."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

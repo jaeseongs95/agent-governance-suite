@@ -1,0 +1,183 @@
+{
+  "caseId": "SS29",
+  "variant": "logit",
+  "input": {
+    "originalPrompt": null,
+    "derivedMechanicalPrompt": "local cosine_similarity=0.82, classifier_score logit=2.4, JEV noul_probability=0.82, 점수 없는 응답, 전부 threshold 미달인 응답을 각각 준다.",
+    "providerKind": "vendor",
+    "scoreKind": "classifier_score",
+    "value": 2.4,
+    "semantics": "raw logit; no calibration evidence",
+    "policy": null
+  },
+  "expected": {
+    "scoreKind": "classifier_score",
+    "value": 2.4,
+    "probabilityRebranding": false,
+    "finalSelectionObserved": false
+  },
+  "providerEvaluation": {
+    "response": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS29-mock-request",
+      "operationId": "SS29-mock-operation",
+      "requestDigest": "sha256:f0a10aab98f6298b11be19b1d3470bc1a39e62abec3901dd4fdc9c1cf146ce19",
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status": "SUCCESS",
+      "judgments": [
+        {
+          "skillId": "review",
+          "judgment": "needed",
+          "reasonRefs": [
+            "SS29:synthetic-purpose"
+          ],
+          "uncertaintyReason": null
+        }
+      ],
+      "unresolvedItems": [],
+      "error": null
+    },
+    "usage": {
+      "inputTokens": null,
+      "outputTokens": null,
+      "cachedInputTokens": null,
+      "actualCostUsd": 0
+    },
+    "dispatchState": "started",
+    "diagnostics": {
+      "scoreKind": "classifier_score",
+      "scores": [
+        {
+          "skillId": "review",
+          "value": 2.4
+        }
+      ]
+    }
+  },
+  "serviceOutput": {
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS29-mock-request",
+      "operationId": "SS29-mock-operation",
+      "originalPrompt": "local cosine_similarity=0.82, classifier_score logit=2.4, JEV noul_probability=0.82, 점수 없는 응답, 전부 threshold 미달인 응답을 각각 준다.",
+      "promptDigest": "sha256:0c10e88371424625d6127701fa89e77cb7b1f0b3436a9157d3891b29217e39cb",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "review",
+          "version": "synthetic-1",
+          "description": "synthetic review",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "review"
+          ],
+          "actions": [
+            "review"
+          ],
+          "targets": [
+            "diff"
+          ],
+          "constraints": [],
+          "applicability": [
+            "fixed diff"
+          ],
+          "exclusions": [
+            "implementation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS29-synthetic-taxonomy",
+      "classificationCriteriaRef": "SS29:embedded-spec",
+      "requestDigest": "sha256:f0a10aab98f6298b11be19b1d3470bc1a39e62abec3901dd4fdc9c1cf146ce19"
+    },
+    "config": {
+      "jevEnabled": false,
+      "mode": "shadow",
+      "providerProfileRegistryRef": "SS29-mock-registry",
+      "externalClassificationAllowed": false,
+      "configRevision": "SS29-mock-c1",
+      "timeoutMs": 1000
+    },
+    "profileRevision": "SS29-mock-pr1",
+    "snapshot": {
+      "taskRevision": null,
+      "configRevision": "SS29-mock-c1",
+      "profileRevision": "SS29-mock-pr1",
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "requestDigest": "sha256:f0a10aab98f6298b11be19b1d3470bc1a39e62abec3901dd4fdc9c1cf146ce19",
+      "cancelled": false
+    },
+    "attempts": [
+      {
+        "providerKind": "vendor",
+        "profileId": "SS29-mock-vendor",
+        "modelId": "SS29-mock-model",
+        "reasoningEffort": "low",
+        "dispatchState": "started",
+        "status": "SUCCESS",
+        "errorCode": null,
+        "timedOut": false,
+        "usage": {
+          "inputTokens": null,
+          "outputTokens": null,
+          "cachedInputTokens": null,
+          "actualCostUsd": 0
+        },
+        "reservedCostUsd": 0
+      }
+    ],
+    "response": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS29-mock-request",
+      "operationId": "SS29-mock-operation",
+      "requestDigest": "sha256:f0a10aab98f6298b11be19b1d3470bc1a39e62abec3901dd4fdc9c1cf146ce19",
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status": "SUCCESS",
+      "judgments": [
+        {
+          "skillId": "review",
+          "judgment": "needed",
+          "reasonRefs": [
+            "SS29:synthetic-purpose"
+          ],
+          "uncertaintyReason": null
+        }
+      ],
+      "unresolvedItems": [],
+      "error": null
+    }
+  },
+  "observed": {
+    "diagnosticsPresentInServiceOutput": false,
+    "finalSelection": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null
+    }
+  },
+  "apiCalls": 0,
+  "selected": "NOTRUN",
+  "read": "NOTRUN",
+  "applied": "NOTRUN",
+  "verified": "NOTRUN",
+  "agentSelectedSkillIds": null,
+  "hostReceipt": null
+}

@@ -1,0 +1,593 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS29",
+  "status": "FAIL",
+  "scope": "Operational contract reproduction, not semantic accuracy, final AGENT selection or release gate",
+  "targetBranch": "codex/skill-classification-2.9.1",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixturePath": "tests/skill-classification/fixtures.json",
+  "fixtureSHA": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "oracle": null,
+  "originalPrompt": null,
+  "semanticAccuracy": null,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS29",
+    "fields": {
+      "입력": "local cosine_similarity=0.82, classifier_score logit=2.4, JEV noul_probability=0.82, 점수 없는 응답, 전부 threshold 미달인 응답을 각각 준다.",
+      "필수추천": "점수 종류·없음·미보정을 정확히 전달한다.",
+      "금지추천 또는 행동": "local 점수에 82% 성공 확률 또는 confidence 표기; JEV Noul을 AGS 정확도·안전 확률로 확대하거나 별도 confidence 생성; 서로 다른 kind를 같은 threshold로 비교; 낮은 점수만으로 no-skill 확정.",
+      "허용선택": "score.value=null, calibrated=false, abstained와 baseline fallback. baseline도 해결하지 못한 항목만 NEEDS_INPUT 또는 PARTIAL. JEV의 원시 yes 확률 의미는 유지한다.",
+      "보류조건": "calibration 근거가 없거나 추천/제외를 구분할 정보가 부족함.",
+      "통과기준": "출력·UI·보고서 어디에도 확률 오표기가 없고 provider별 threshold 정책 revision이 추적된다.",
+      "증거": "E0, 직렬화 출력·사용자용 문구·threshold 설정.",
+      "실행종류": "mock."
+    },
+    "bodyDigest": "sha256:f40407281ed73799b6a10d1723031e8e347d761657839d4e7be28957286cd016"
+  },
+  "sourceUse": "Embedded fields only; sourceSpec.path absent, derived mock prompt explicitly labeled",
+  "allVariantsExecuted": true,
+  "variants": [
+    {
+      "variant": "cosine",
+      "status": "FAIL",
+      "testRunnerStatus": "FAILED",
+      "executionKind": "offline-mock-new-development",
+      "input": {
+        "originalPrompt": null,
+        "derivedMechanicalPrompt": "local cosine_similarity=0.82, classifier_score logit=2.4, JEV noul_probability=0.82, 점수 없는 응답, 전부 threshold 미달인 응답을 각각 준다.",
+        "providerKind": "vendor",
+        "scoreKind": "cosine_similarity",
+        "value": 0.82,
+        "semantics": "cosine similarity; no calibration evidence",
+        "policy": null
+      },
+      "expected": {
+        "scoreKind": "cosine_similarity",
+        "value": 0.82,
+        "probabilityRebranding": false,
+        "finalSelectionObserved": false
+      },
+      "observed": {
+        "providerDiagnostics": {
+          "scoreKind": "cosine_similarity",
+          "scores": [
+            {
+              "skillId": "review",
+              "value": 0.82
+            }
+          ]
+        },
+        "serviceDiagnostics": "ABSENT",
+        "responseStatus": "SUCCESS",
+        "responseJudgments": [
+          {
+            "skillId": "review",
+            "judgment": "needed",
+            "reasonRefs": [
+              "SS29:synthetic-purpose"
+            ],
+            "uncertaintyReason": null
+          }
+        ],
+        "unresolvedItems": [],
+        "probabilityOrConfidenceInvented": false,
+        "agentSelectedSkillIds": null,
+        "hostReceipt": null
+      },
+      "commandRef": "development.command.json",
+      "exitCode": 1,
+      "API0": true,
+      "apiCalls": {
+        "jev": 0,
+        "externalVendor": 0,
+        "claude": 0
+      },
+      "evidence": [
+        "cosine.observation.json",
+        "development.vitest.json",
+        "development.stderr.log"
+      ],
+      "missingInputs": [
+        "actual host acceptance and stage observations",
+        "actual UI wording",
+        "calibration provenance"
+      ],
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    {
+      "variant": "logit",
+      "status": "FAIL",
+      "testRunnerStatus": "FAILED",
+      "executionKind": "offline-mock-new-development",
+      "input": {
+        "originalPrompt": null,
+        "derivedMechanicalPrompt": "local cosine_similarity=0.82, classifier_score logit=2.4, JEV noul_probability=0.82, 점수 없는 응답, 전부 threshold 미달인 응답을 각각 준다.",
+        "providerKind": "vendor",
+        "scoreKind": "classifier_score",
+        "value": 2.4,
+        "semantics": "raw logit; no calibration evidence",
+        "policy": null
+      },
+      "expected": {
+        "scoreKind": "classifier_score",
+        "value": 2.4,
+        "probabilityRebranding": false,
+        "finalSelectionObserved": false
+      },
+      "observed": {
+        "providerDiagnostics": {
+          "scoreKind": "classifier_score",
+          "scores": [
+            {
+              "skillId": "review",
+              "value": 2.4
+            }
+          ]
+        },
+        "serviceDiagnostics": "ABSENT",
+        "responseStatus": "SUCCESS",
+        "responseJudgments": [
+          {
+            "skillId": "review",
+            "judgment": "needed",
+            "reasonRefs": [
+              "SS29:synthetic-purpose"
+            ],
+            "uncertaintyReason": null
+          }
+        ],
+        "unresolvedItems": [],
+        "probabilityOrConfidenceInvented": false,
+        "agentSelectedSkillIds": null,
+        "hostReceipt": null
+      },
+      "commandRef": "development.command.json",
+      "exitCode": 1,
+      "API0": true,
+      "apiCalls": {
+        "jev": 0,
+        "externalVendor": 0,
+        "claude": 0
+      },
+      "evidence": [
+        "logit.observation.json",
+        "development.vitest.json",
+        "development.stderr.log"
+      ],
+      "missingInputs": [
+        "actual host acceptance and stage observations",
+        "actual UI wording",
+        "calibration provenance"
+      ],
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    {
+      "variant": "noul",
+      "status": "FAIL",
+      "testRunnerStatus": "FAILED",
+      "executionKind": "offline-mock-new-development",
+      "input": {
+        "originalPrompt": null,
+        "derivedMechanicalPrompt": "local cosine_similarity=0.82, classifier_score logit=2.4, JEV noul_probability=0.82, 점수 없는 응답, 전부 threshold 미달인 응답을 각각 준다.",
+        "providerKind": "jev",
+        "scoreKind": "noul_probability",
+        "value": 0.82,
+        "semantics": "raw yes probability or absent score",
+        "policy": {
+          "neededAt": 0.8,
+          "notNeededAt": 0.2
+        }
+      },
+      "expected": {
+        "scoreKind": "noul_probability",
+        "value": 0.82,
+        "probabilityRebranding": false,
+        "finalSelectionObserved": false
+      },
+      "observed": {
+        "providerDiagnostics": {
+          "scoreKind": "noul_probability",
+          "scores": [
+            {
+              "skillId": "review",
+              "value": 0.82
+            }
+          ]
+        },
+        "serviceDiagnostics": "ABSENT",
+        "responseStatus": "SUCCESS",
+        "responseJudgments": [
+          {
+            "skillId": "review",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          }
+        ],
+        "unresolvedItems": [],
+        "probabilityOrConfidenceInvented": false,
+        "agentSelectedSkillIds": null,
+        "hostReceipt": null
+      },
+      "commandRef": "development.command.json",
+      "exitCode": 1,
+      "API0": true,
+      "apiCalls": {
+        "jev": 0,
+        "externalVendor": 0,
+        "claude": 0
+      },
+      "evidence": [
+        "noul.observation.json",
+        "development.vitest.json",
+        "development.stderr.log"
+      ],
+      "missingInputs": [
+        "actual host acceptance and stage observations",
+        "actual UI wording",
+        "calibration provenance"
+      ],
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    {
+      "variant": "score-absent",
+      "status": "PARTIAL",
+      "testRunnerStatus": "PASSED",
+      "executionKind": "offline-mock-new-development",
+      "input": {
+        "originalPrompt": null,
+        "derivedMechanicalPrompt": "local cosine_similarity=0.82, classifier_score logit=2.4, JEV noul_probability=0.82, 점수 없는 응답, 전부 threshold 미달인 응답을 각각 준다.",
+        "providerKind": "vendor",
+        "scoreKind": null,
+        "value": null,
+        "semantics": "raw yes probability or absent score",
+        "policy": null
+      },
+      "expected": {
+        "scoreKind": null,
+        "value": null,
+        "probabilityRebranding": false,
+        "finalSelectionObserved": false
+      },
+      "observed": {
+        "providerDiagnostics": null,
+        "serviceDiagnostics": "ABSENT",
+        "responseStatus": "SUCCESS",
+        "responseJudgments": [
+          {
+            "skillId": "review",
+            "judgment": "needed",
+            "reasonRefs": [
+              "SS29:synthetic-purpose"
+            ],
+            "uncertaintyReason": null
+          }
+        ],
+        "unresolvedItems": [],
+        "probabilityOrConfidenceInvented": false,
+        "agentSelectedSkillIds": null,
+        "hostReceipt": null
+      },
+      "commandRef": "development.command.json",
+      "exitCode": 1,
+      "API0": true,
+      "apiCalls": {
+        "jev": 0,
+        "externalVendor": 0,
+        "claude": 0
+      },
+      "evidence": [
+        "score-absent.observation.json",
+        "development.vitest.json",
+        "development.stderr.log"
+      ],
+      "missingInputs": [
+        "actual host acceptance and stage observations",
+        "actual UI wording",
+        "calibration provenance"
+      ],
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    {
+      "variant": "threshold-uncertain",
+      "status": "FAIL",
+      "testRunnerStatus": "FAILED",
+      "executionKind": "offline-mock-new-development",
+      "input": {
+        "originalPrompt": null,
+        "derivedMechanicalPrompt": "local cosine_similarity=0.82, classifier_score logit=2.4, JEV noul_probability=0.82, 점수 없는 응답, 전부 threshold 미달인 응답을 각각 준다.",
+        "providerKind": "jev",
+        "scoreKind": "noul_probability",
+        "value": 0.5,
+        "semantics": "raw yes probability or absent score",
+        "policy": {
+          "neededAt": 0.8,
+          "notNeededAt": 0.2
+        }
+      },
+      "expected": {
+        "scoreKind": "noul_probability",
+        "value": 0.5,
+        "probabilityRebranding": false,
+        "finalSelectionObserved": false
+      },
+      "observed": {
+        "providerDiagnostics": {
+          "scoreKind": "noul_probability",
+          "scores": [
+            {
+              "skillId": "review",
+              "value": 0.5
+            }
+          ]
+        },
+        "serviceDiagnostics": "ABSENT",
+        "responseStatus": "UNCERTAIN",
+        "responseJudgments": [
+          {
+            "skillId": "review",
+            "judgment": "uncertain",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": "JEV_JUDGMENT_UNCERTAIN"
+          }
+        ],
+        "unresolvedItems": [
+          {
+            "skillId": "review",
+            "reasonCode": "JEV_JUDGMENT_UNCERTAIN"
+          }
+        ],
+        "probabilityOrConfidenceInvented": false,
+        "agentSelectedSkillIds": null,
+        "hostReceipt": null
+      },
+      "commandRef": "development.command.json",
+      "exitCode": 1,
+      "API0": true,
+      "apiCalls": {
+        "jev": 0,
+        "externalVendor": 0,
+        "claude": 0
+      },
+      "evidence": [
+        "threshold-uncertain.observation.json",
+        "development.vitest.json",
+        "development.stderr.log"
+      ],
+      "missingInputs": [
+        "actual host acceptance and stage observations",
+        "actual UI wording",
+        "calibration provenance",
+        "AGENT baseline result for unresolved scores"
+      ],
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    }
+  ],
+  "executions": {
+    "development": {
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/SS29.development.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=SS29_OUTPUT_DIRECTORY/development.vitest.json"
+      ],
+      "cwd": "CANDIDATE_CHECKOUT",
+      "exitCode": 1,
+      "startedAt": "2026-10-09T02:58:06.152948+00:00",
+      "completedAt": "2026-10-09T02:58:09.138031+00:00",
+      "executionKind": "offline-mock",
+      "actualApiCalls": 0
+    },
+    "regression": {
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/mcp/skill-classification-providers.test.ts",
+        "-t",
+        "SS29 intermediate Noul",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=SS29_OUTPUT_DIRECTORY/regression.vitest.json"
+      ],
+      "cwd": "CANDIDATE_CHECKOUT",
+      "exitCode": 0,
+      "startedAt": "2026-10-09T02:58:40.481332+00:00",
+      "completedAt": "2026-10-09T02:58:42.481128+00:00",
+      "executionKind": "offline-existing-regression",
+      "actualApiCalls": 0,
+      "scope": "Exactly SS29 named test, not full variant PASS"
+    },
+    "sensitivityConsistency": {
+      "argv": [
+        "node",
+        "skills/test-engineering/scripts/run.mjs",
+        "check-proof",
+        "--root",
+        "CANDIDATE_CHECKOUT",
+        "--plan",
+        "SS29.plan.json",
+        "--proof",
+        "SS29.proof.json"
+      ],
+      "exitCode": 1,
+      "stderr": ""
+    }
+  },
+  "executionKind": "offline-mock",
+  "API0": true,
+  "actualApiCalls": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0
+  },
+  "actualCredentialLookups": 0,
+  "nativeCliInvocations": 0,
+  "previous21RunReruns": 0,
+  "commandsSummary": {
+    "newDevelopment": {
+      "exitCode": 1,
+      "passed": 12,
+      "failed": 5,
+      "total": 17
+    },
+    "existingRegression": {
+      "exitCode": 0,
+      "passed": 1,
+      "skipped": 22,
+      "scope": "one named SS29 test, not full-case PASS"
+    },
+    "sensitivityProof": {
+      "exitCode": 1,
+      "verdict": "INCOMPLETE",
+      "reason": "No corrected candidate supplied; product mutations prohibited; NOT_RUN proof, not a host receipt"
+    }
+  },
+  "findings": [
+    {
+      "id": "SS29-SCORE-DIAGNOSTICS-DROPPED",
+      "severity": "HIGH",
+      "status": "REPRODUCED",
+      "uniqueRootCauseCount": 1,
+      "summary": "Provider score kind and value are lost constructing ClassificationResult; scored vs absent vendor response becomes identical; gateway inherits loss. Calibration/no-score reporting cannot be confirmed from public output.",
+      "locations": [
+        "mcp-server/src/skill-classification/service.ts:149",
+        "mcp-server/src/skill-classification/service.ts:211",
+        "mcp-server/src/skill-classification/types.ts:140",
+        "mcp-server/src/skill-classification/gateway.ts:107"
+      ],
+      "providerEvidence": "mcp-server/src/skill-classification/providers.ts:160 preserves noul_probability and raw value at decoder boundary",
+      "variantIds": [
+        "cosine",
+        "logit",
+        "noul",
+        "score-absent",
+        "threshold-uncertain"
+      ],
+      "assertionFailures": 5,
+      "deduplication": "Four variant failures plus full-inventory gateway failure and absent-score collision are one cause. No duplicate count with valid-cost-loss/invalid-RESP: this repro uses valid RESP and no charged API. Other known timeout/metadata/host-active/concurrency defects were not rerun or counted.",
+      "evidence": [
+        "development.stderr.log",
+        "development.vitest.json",
+        "gateway.observation.json",
+        "score-presence-collision.observation.json"
+      ]
+    }
+  ],
+  "supportingChecks": {
+    "noFabricatedProbabilityInMockSerialization": "PASS",
+    "noulRawProbabilityAtAdapterBoundary": "PASS",
+    "sevenThresholdBoundaries": "PASS",
+    "allThreeMidrangeCandidatesRemainUncertain": "PASS",
+    "profilePolicyChangeInvalidatesQualificationDigest": "PASS",
+    "inventedConfidenceInRESPRejected": "PASS",
+    "nullOracleAccuracyRefused": "PASS",
+    "gatewayInventoryCount": 24,
+    "scoreAbsentAcceptsNullDiagnosticsNoFakeNumber": "PASS",
+    "scoreAbsentMeaningDistinguishableAtPublicBoundary": "FAIL"
+  },
+  "notRun": {
+    "hostLive": "NOTRUN",
+    "UI": "NOTRUN",
+    "agentBaselineFallback": "NOTRUN",
+    "liveCalibration": "NOTRUN",
+    "redGreenSensitivity": "NOTRUN",
+    "independentAudit": "NOTRUN"
+  },
+  "selected": "NOTRUN",
+  "read": "NOTRUN",
+  "applied": "NOTRUN",
+  "verified": "NOTRUN",
+  "agentSelectedSkillIds": null,
+  "hostReceipt": null,
+  "stageEvidence": {
+    "read": false,
+    "applied": false,
+    "verified": false,
+    "readRefs": null,
+    "obligations": null,
+    "verification": null
+  },
+  "missingInputs": [
+    "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG is UNSET",
+    "approved providerProfileRegistryRef file, real PASS qualification binding inventory/taxonomy/model/prompt/full profile digest and validUntil",
+    "providerRuntimeRef approved route, budget/current consumption and native allowance",
+    "nativeAdapterDefinitionsRef for Codex: OBSERVED_CODEX_EXECUTABLE exists, but definition with approval/capability/retry-policy/isolation evidence, absolute working directory, isolation args, timeout/output ceiling is absent",
+    "real runtime task/actor host attestation and host acceptance; current installed/enabled/hostSupported inventory observations",
+    "UI/report wording and AGENT baseline resolution of uncertain candidates",
+    "SS29 originalPrompt is null; approved operational host input must be supplied without inventing an original prompt",
+    "calibration provenance; synthetic qualification PASS is not calibration or live qualification"
+  ],
+  "workspaceEvidence": {
+    "repoAgentsRead": "AGENTS.md",
+    "relevantSkillRead": [
+      "skills/test-engineering/SKILL.md",
+      "skills/evaluation-validity-auditor/SKILL.md",
+      "skills/orchestrator/SKILL.md",
+      "skills/orchestrator/references/skill-classification.md",
+      "skills/orchestrator/references/engineering-practices/test-design.md",
+      "skills/orchestrator/references/engineering-practices/test-proof.md",
+      "skills/orchestrator/references/engineering-practices/cli.md"
+    ],
+    "skillAppliedForDevelopment": "test-engineering; development activity, not SS29 host stage evidence",
+    "agentsSkillsAtWorkspaceExists": false,
+    "agentsSkillsAtCheckoutExists": false,
+    "sourceSpecFileExists": false,
+    "codexExecutablePath": "OBSERVED_CODEX_EXECUTABLE",
+    "classificationConfigEnvPresent": false,
+    "nodeVersion": "v24.19.0",
+    "pnpmVersion": "11.19.0",
+    "dependencies": "Existing PREEXISTING_DEPENDENCIES symlink; Vitest 5.0.0; no installs/build",
+    "trackedProductSourceModified": false,
+    "gitDiffExit": 0,
+    "gitDiffCachedExit": 0,
+    "push": false,
+    "PR": false,
+    "release": false
+  },
+  "deliverables": [
+    "SS29.result.json",
+    "SS29.report.md",
+    "SS29.development.test.ts",
+    "SS29.plan.json",
+    "SS29.proof.json",
+    "engineering-test-result.json",
+    "development.command.json",
+    "regression.command.json",
+    "development.vitest.json",
+    "regression.vitest.json"
+  ],
+  "publication": {
+    "artifactKind": "sanitized-existing-result",
+    "historicalResultSHA256": "bad822a61175fefb22b0213003c0b03e44db4523ac4019a4605c71e47a83f805",
+    "newTests": 0,
+    "newProviderOrHostApiCalls": 0,
+    "pathPlaceholdersAreHistoricalRedactions": true,
+    "missingOriginals": [],
+    "patchStatus": "ABSENT_NO_PRODUCT_PATCH",
+    "redGreenSensitivityStill": "NOT_RUN"
+  }
+}

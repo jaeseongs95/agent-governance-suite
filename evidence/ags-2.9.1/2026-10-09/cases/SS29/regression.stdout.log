@@ -1,0 +1,11 @@
+
+ RUN  v5.0.0 CANDIDATE_CHECKOUT
+
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS29 intermediate Noul is UNCERTAIN; low calibrated not-needed remains explicit 24ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 22 skipped (23)
+   Start at  02:58:41
+   Duration  778ms (transform 50%, import 43%, tests 5%, worker 1%)
+
+JSON report written to SS29_OUTPUT_DIRECTORY/regression.vitest.json

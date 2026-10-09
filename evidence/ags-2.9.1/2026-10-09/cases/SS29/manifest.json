@@ -1,0 +1,577 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS29",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cases/SS29/",
+  "candidateCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "candidateTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "input": {
+    "sourceArtifact": "SS29.source.json",
+    "sourceArtifactSHA256": "6392a49f8254973e5dc8b3029d7912c6de1ad54d49b8b5551b874ea2bca9a508",
+    "field": "sourceSpec.fields.입력",
+    "extraction": "decoded JSON field UTF-8 bytes, no trailing newline, no normalization",
+    "inputBytes": 158,
+    "inputSHA256": "0c10e88371424625d6127701fa89e77cb7b1f0b3436a9157d3891b29217e39cb",
+    "originalPrompt": null
+  },
+  "originalRecoveryMissing": [],
+  "patchStatus": "ABSENT_NO_PRODUCT_PATCH",
+  "historicalStatus": "FAIL",
+  "historicalHostStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "actualApiCalls": 0,
+  "newTests": 0,
+  "hashPolicy": {
+    "manifestExcludes": [
+      "manifest.json",
+      "SHA256SUMS"
+    ],
+    "SHA256SUMSExcludes": [
+      "SHA256SUMS"
+    ]
+  },
+  "payloadFileCount": 40,
+  "payloadTotalBytes": 157864,
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 5125,
+      "sha256": "61e2699561cb825a87b774cfe06b29767d1f15c5cada45e854f12843a5a9d313",
+      "kind": "publication-only-metadata",
+      "original": null,
+      "transformations": []
+    },
+    {
+      "path": "SS29.development.test.ts",
+      "bytes": 13398,
+      "sha256": "e20d48142ddf1ac0f1095588f6c436a2c198338750ceb47ea66d923ff6d1ed61",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "name": "SS29.development.test.ts",
+        "bytes": 13374,
+        "sha256": "5a3020692e76498bfafa73c11b49ab723378c72e5a9492aca9b104011b5d7169",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": [
+        "replace fixed output directory with optional SS29_OUTPUT_DIRECTORY; assertions and mock inputs unchanged; NOT reexecuted"
+      ]
+    },
+    {
+      "path": "SS29.plan.json",
+      "bytes": 2814,
+      "sha256": "2619d739e752f25d2147b0145bf592a7652d0697149e5c79cb45516029959aac",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "name": "SS29.plan.json",
+        "bytes": 2817,
+        "sha256": "660bac1ba04342da8d745685c4cdcfe1fd62e2c5758558598ab0f6b4b2e39150",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": [
+        "replace private absolute paths with descriptive public placeholders"
+      ]
+    },
+    {
+      "path": "SS29.proof.json",
+      "bytes": 2767,
+      "sha256": "f9b6d903e542729e5ed90dbc152b2db761b31b3fc8a52fa2367e765f139085cc",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "SS29.proof.json",
+        "bytes": 2767,
+        "sha256": "f9b6d903e542729e5ed90dbc152b2db761b31b3fc8a52fa2367e765f139085cc",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "SS29.report.md",
+      "bytes": 6962,
+      "sha256": "021d2b24fb904e7511fd027e6be90cfbaf2a12cc9f640d761953dd5e44fdd749",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "name": "SS29.report.md",
+        "bytes": 6971,
+        "sha256": "b8ad097bb6c09847d06870b00dedc4e9e573a821fe0db5d5cb99a41fefcf9ae6",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": [
+        "replace private absolute paths with descriptive public placeholders"
+      ]
+    },
+    {
+      "path": "SS29.result.json",
+      "bytes": 20182,
+      "sha256": "50e4d4e4d1bc2ecd53944c0d96c6eaadbfba2a69b3ac5dd359712747e9ef940a",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "name": "SS29.result.json",
+        "bytes": 19823,
+        "sha256": "bad822a61175fefb22b0213003c0b03e44db4523ac4019a4605c71e47a83f805",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": [
+        "replace private absolute paths with descriptive public placeholders",
+        "add publication provenance; retain all historical verdicts, commands, exits and stage statuses"
+      ]
+    },
+    {
+      "path": "SS29.scope-files.json",
+      "bytes": 383,
+      "sha256": "8b17e76877409cf7b232b47a3ba1bbca5d5d825fe908f9a01a6e5dc9d944641b",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "SS29.scope-files.json",
+        "bytes": 383,
+        "sha256": "8b17e76877409cf7b232b47a3ba1bbca5d5d825fe908f9a01a6e5dc9d944641b",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "SS29.source.json",
+      "bytes": 1632,
+      "sha256": "6392a49f8254973e5dc8b3029d7912c6de1ad54d49b8b5551b874ea2bca9a508",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "SS29.source.json",
+        "bytes": 1632,
+        "sha256": "6392a49f8254973e5dc8b3029d7912c6de1ad54d49b8b5551b874ea2bca9a508",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "all-threshold-uncertain.observation.json",
+      "bytes": 5936,
+      "sha256": "c8ac1d8b56c40dac0a38d3241ce14209a373f639bf4beb6912b2ca4453aa7f48",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "all-threshold-uncertain.observation.json",
+        "bytes": 5936,
+        "sha256": "c8ac1d8b56c40dac0a38d3241ce14209a373f639bf4beb6912b2ca4453aa7f48",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "cosine.observation.json",
+      "bytes": 5503,
+      "sha256": "5c19c7104094cc950df30ee650732277ff4f46737b7965e282bbd2ca770bd151",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "cosine.observation.json",
+        "bytes": 5503,
+        "sha256": "5c19c7104094cc950df30ee650732277ff4f46737b7965e282bbd2ca770bd151",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "development.command.json",
+      "bytes": 423,
+      "sha256": "5f72ae641e8aa235ed6d391a4ee6e3c952ada570c5db8501cb8e90a8cef45b81",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "name": "development.command.json",
+        "bytes": 432,
+        "sha256": "a150fe78c295fad2c023153de621c044c16e622a483e8c6b00d2fe430d2f7b3b",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": [
+        "replace private absolute paths with descriptive public placeholders"
+      ]
+    },
+    {
+      "path": "development.stderr.log",
+      "bytes": 13683,
+      "sha256": "083d2da3800b1f4c7a0ab2dad23d965dd28f279dccc40c4b375d79a6fc027b88",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "name": "development.stderr.log",
+        "bytes": 13839,
+        "sha256": "c4351fe093e05acd02844a4c101ea462d743bf52efa6cecd084e353fe69d7137",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": [
+        "remove unnecessary process IDs and subreaper diagnostic; exit preserved in historical command records",
+        "trim surplus blank lines at EOF"
+      ]
+    },
+    {
+      "path": "development.stdout.log",
+      "bytes": 3759,
+      "sha256": "76a0e021b76c7bed2f7c26ba91efd3c6c386776438f3deb44ea56f33f7440179",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "name": "development.stdout.log",
+        "bytes": 3768,
+        "sha256": "764f0192f2a37fd72495ed1edf648a9a596ba03ce84d5bb30ebe40b721259d11",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": [
+        "replace private absolute paths with descriptive public placeholders"
+      ]
+    },
+    {
+      "path": "development.vitest.json",
+      "bytes": 9689,
+      "sha256": "ff76a19a5690bd654392356b3ef0f4dd1b7858e967a31342b5db0562ebd5468d",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "name": "development.vitest.json",
+        "bytes": 9835,
+        "sha256": "4258c72cc471ec58ca31e4e037efa6c30c729cc937527e17a4a9031310198c3d",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": [
+        "replace private absolute paths with descriptive public placeholders"
+      ]
+    },
+    {
+      "path": "engineering-test-result.json",
+      "bytes": 934,
+      "sha256": "ffb70ad7bb2e487760f725105982d36f4ebc158fc46b42de9c6b85d5f96ea999",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "engineering-test-result.json",
+        "bytes": 934,
+        "sha256": "ffb70ad7bb2e487760f725105982d36f4ebc158fc46b42de9c6b85d5f96ea999",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "gateway.observation.json",
+      "bytes": 18000,
+      "sha256": "3ff049f44d4f285776ba6dfe657f8ee65743e2bf54ef9cf53900ea0d355ecc38",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "name": "gateway.observation.json",
+        "bytes": 302101,
+        "sha256": "28a58923ea9419f70a2dc54dea4631b758aa25adac4cc1ead895fdda0a9f0ddf",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": [
+        "remove redundant echoed full inventory metadata"
+      ]
+    },
+    {
+      "path": "input-provenance.json",
+      "bytes": 397,
+      "sha256": "381ccd36bdd174b09ffd0ccebf1a48c93505e417856ea51b7efa2c313ce31f0b",
+      "kind": "publication-only-metadata",
+      "original": null,
+      "transformations": []
+    },
+    {
+      "path": "inputs/embedded-mechanical-prompt.utf8",
+      "bytes": 158,
+      "sha256": "0c10e88371424625d6127701fa89e77cb7b1f0b3436a9157d3891b29217e39cb",
+      "kind": "verbatim-derived-input",
+      "original": {
+        "sourceArtifact": "SS29.source.json",
+        "sourceArtifactSHA256": "6392a49f8254973e5dc8b3029d7912c6de1ad54d49b8b5551b874ea2bca9a508",
+        "field": "sourceSpec.fields.입력",
+        "extraction": "decoded JSON field UTF-8 bytes, no trailing newline, no normalization",
+        "inputBytes": 158,
+        "inputSHA256": "0c10e88371424625d6127701fa89e77cb7b1f0b3436a9157d3891b29217e39cb",
+        "originalPrompt": null
+      },
+      "transformations": []
+    },
+    {
+      "path": "logit.observation.json",
+      "bytes": 5488,
+      "sha256": "6d4172fd1378c4f9b62360d3a161ce5e6bc1a4dd160a813417636a92b110c5f1",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "logit.observation.json",
+        "bytes": 5488,
+        "sha256": "6d4172fd1378c4f9b62360d3a161ce5e6bc1a4dd160a813417636a92b110c5f1",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "noul.observation.json",
+      "bytes": 5561,
+      "sha256": "1886d9422e800260c1f9afa9493d66a28471935f58fbc9125b1d82da65d7a8a4",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "noul.observation.json",
+        "bytes": 5561,
+        "sha256": "1886d9422e800260c1f9afa9493d66a28471935f58fbc9125b1d82da65d7a8a4",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "patch-status.json",
+      "bytes": 294,
+      "sha256": "36726f661c7dc9abaf667031f18f9a07834867735b33312d185a882bc3cd4af9",
+      "kind": "publication-only-metadata",
+      "original": null,
+      "transformations": []
+    },
+    {
+      "path": "plan-check.json",
+      "bytes": 236,
+      "sha256": "6e116af3a389ea5c54affa01ba20299c7dbc8096913a0dd1c9d104e8d13c1eaf",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "plan-check.json",
+        "bytes": 236,
+        "sha256": "6e116af3a389ea5c54affa01ba20299c7dbc8096913a0dd1c9d104e8d13c1eaf",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "policy-binding.observation.json",
+      "bytes": 265,
+      "sha256": "7a2abcca72f5b3c1dd9a274e0bd3e02404c9215be86a597e274ac4b9e56739ba",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "policy-binding.observation.json",
+        "bytes": 265,
+        "sha256": "7a2abcca72f5b3c1dd9a274e0bd3e02404c9215be86a597e274ac4b9e56739ba",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "proof-check.command.json",
+      "bytes": 244,
+      "sha256": "c72dee5b2e377a055fde6834085e3ddbce743a6f75848b56272f90c19958bb0a",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "name": "proof-check.command.json",
+        "bytes": 250,
+        "sha256": "159ffc1e44a64f3575e4d614c92c473bc322d4c22c569135c3c3cf6cc3d71894",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": [
+        "replace private absolute paths with descriptive public placeholders"
+      ]
+    },
+    {
+      "path": "publication-provenance.json",
+      "bytes": 9045,
+      "sha256": "0e711958c7d379f8933fc4cf5fea07646423e9b06d58611f66c1825212e6b46a",
+      "kind": "publication-only-metadata",
+      "original": null,
+      "transformations": []
+    },
+    {
+      "path": "regression.command.json",
+      "bytes": 556,
+      "sha256": "6fa98e7ae3b4e6bac752407cb3109a972633184fb760b7ba61291a8202f161c2",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "name": "regression.command.json",
+        "bytes": 565,
+        "sha256": "f702fb2a5f5949121e8f466a412d1a8a115841e7036a97d212093d3298ed1a44",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": [
+        "replace private absolute paths with descriptive public placeholders"
+      ]
+    },
+    {
+      "path": "regression.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "name": "regression.stderr.log",
+        "bytes": 155,
+        "sha256": "5b19362468f5e0cfb307d1146b1bc8ae142eeedee6331b08f3f7c40501ce826e",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": [
+        "remove unnecessary process IDs and subreaper diagnostic; exit preserved in historical command records"
+      ]
+    },
+    {
+      "path": "regression.stdout.log",
+      "bytes": 441,
+      "sha256": "4f2a6bb65653903368641c04a0efd6aaa1d7f026052d0e4506d2932669f1b23f",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "name": "regression.stdout.log",
+        "bytes": 4141,
+        "sha256": "f47411b9b2a6fd9a035932324d43bbd3f09806327e454875a3c65e5793ab08df",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": [
+        "remove unexecuted other-case test titles; summary skipped count retained",
+        "replace private absolute paths with descriptive public placeholders"
+      ]
+    },
+    {
+      "path": "regression.vitest.json",
+      "bytes": 1537,
+      "sha256": "15485d6fcad309582b03a49134d1e6ef5476781de4b4860e0e5484c439e4d283",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "name": "regression.vitest.json",
+        "bytes": 8575,
+        "sha256": "841c8ed6fd63be7fc17f828376cf01b1da9515abb77b180cf3ded477f7ef53a9",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": [
+        "remove unexecuted other-case assertion entries",
+        "replace private absolute paths with descriptive public placeholders"
+      ]
+    },
+    {
+      "path": "score-absent.observation.json",
+      "bytes": 5328,
+      "sha256": "5dc667f73e7580dd6c3beb82511561d154334930e902aeab0d3ec950115eb359",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "score-absent.observation.json",
+        "bytes": 5328,
+        "sha256": "5dc667f73e7580dd6c3beb82511561d154334930e902aeab0d3ec950115eb359",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "score-presence-collision.observation.json",
+      "bytes": 397,
+      "sha256": "6696847d23e1e5e9c0ac2ea827021dd260b2f6a7f1a35d9edee7c71794b6792d",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "score-presence-collision.observation.json",
+        "bytes": 397,
+        "sha256": "6696847d23e1e5e9c0ac2ea827021dd260b2f6a7f1a35d9edee7c71794b6792d",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "snapshot.json",
+      "bytes": 1845,
+      "sha256": "9020a9b8d2a8d75afcc5e1818a046f68c034140998feed1a2f2347fffb2eadd4",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "snapshot.json",
+        "bytes": 1845,
+        "sha256": "9020a9b8d2a8d75afcc5e1818a046f68c034140998feed1a2f2347fffb2eadd4",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "threshold-0.2.observation.json",
+      "bytes": 1232,
+      "sha256": "1a3e361dbb8e23458585df0ba179d74622de0d80e07cff2b1e672aad19d87776",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "threshold-0.2.observation.json",
+        "bytes": 1232,
+        "sha256": "1a3e361dbb8e23458585df0ba179d74622de0d80e07cff2b1e672aad19d87776",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "threshold-0.20000000000000004.observation.json",
+      "bytes": 1391,
+      "sha256": "6673a5b431a036a2711c083d2ba9efefb791c37a36f6a36994d5a6566d6ec9e1",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "threshold-0.20000000000000004.observation.json",
+        "bytes": 1391,
+        "sha256": "6673a5b431a036a2711c083d2ba9efefb791c37a36f6a36994d5a6566d6ec9e1",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "threshold-0.5.observation.json",
+      "bytes": 1359,
+      "sha256": "1905f2b87e9e2f7282baf2e160b9bc7c7ce7165d64fd25d62b31b1a60192b8cd",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "threshold-0.5.observation.json",
+        "bytes": 1359,
+        "sha256": "1905f2b87e9e2f7282baf2e160b9bc7c7ce7165d64fd25d62b31b1a60192b8cd",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "threshold-0.7999999999999999.observation.json",
+      "bytes": 1389,
+      "sha256": "2e21ddec58a1014d1f45a36d8525e933247dbc8b3eb01c327fb8c7b6244ac837",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "threshold-0.7999999999999999.observation.json",
+        "bytes": 1389,
+        "sha256": "2e21ddec58a1014d1f45a36d8525e933247dbc8b3eb01c327fb8c7b6244ac837",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "threshold-0.8.observation.json",
+      "bytes": 1224,
+      "sha256": "f370f315891e9723cf8a913934549d961d18cbf56ce131502c0f05a942fbb2f6",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "threshold-0.8.observation.json",
+        "bytes": 1224,
+        "sha256": "f370f315891e9723cf8a913934549d961d18cbf56ce131502c0f05a942fbb2f6",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "threshold-0.observation.json",
+      "bytes": 1228,
+      "sha256": "b6688aabca4c2da01dfd36c08454b3fed305420a4e7aacaf3a4cebda903b020b",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "threshold-0.observation.json",
+        "bytes": 1228,
+        "sha256": "b6688aabca4c2da01dfd36c08454b3fed305420a4e7aacaf3a4cebda903b020b",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "threshold-1.observation.json",
+      "bytes": 1220,
+      "sha256": "41b0e5849fa7a699026ed1c57330a08b3d182e56ee613767121c3e5fe10804a5",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "threshold-1.observation.json",
+        "bytes": 1220,
+        "sha256": "41b0e5849fa7a699026ed1c57330a08b3d182e56ee613767121c3e5fe10804a5",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    },
+    {
+      "path": "threshold-uncertain.observation.json",
+      "bytes": 5839,
+      "sha256": "51f80b0a237767ff39f65dded932333b04ebdeecccff0394e72eda27fe609e48",
+      "kind": "byte-identical-existing-evidence",
+      "original": {
+        "name": "threshold-uncertain.observation.json",
+        "bytes": 5839,
+        "sha256": "51f80b0a237767ff39f65dded932333b04ebdeecccff0394e72eda27fe609e48",
+        "recoveryStatus": "RECOVERED"
+      },
+      "transformations": []
+    }
+  ]
+}

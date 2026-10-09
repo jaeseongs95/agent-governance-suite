@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS29",
+  "contractDigest": "sha256:1abade665797da002f8fd576fb673d81d9d40552d6e34865de543ee6feb343b6",
+  "requirements": [
+    "SS29_SCORE_MEANING",
+    "SS29_NO_PROBABILITY_REBRANDING",
+    "SS29_UNCERTAINTY",
+    "SS29_POLICY_TRACE",
+    "SS29_NO_INVENTED_ORACLE"
+  ],
+  "scopeFiles": [
+    "tests/SS29.development.test.ts",
+    "mcp-server/src/skill-classification/service.ts",
+    "mcp-server/src/skill-classification/providers.ts",
+    "mcp-server/src/skill-classification/gateway.ts",
+    "mcp-server/src/skill-classification/validation.ts",
+    "mcp-server/src/skill-classification/types.ts",
+    "mcp-server/src/skill-classification/profiles.ts",
+    "tests/skill-classification/fixtures.json"
+  ],
+  "runner": "Existing Vitest 5 through scripts/run-tests.mjs; no build or full-suite run",
+  "environment": "Independent Cloud environment; Node 24.19.0, pnpm 11.19.0; Linux; UTC; mock provider; no fetch/credential/native CLI invocation",
+  "cases": [
+    {
+      "id": "SS29_ALL_FIVE_AND_BOUNDARIES",
+      "requirementIds": [
+        "SS29_SCORE_MEANING",
+        "SS29_NO_PROBABILITY_REBRANDING",
+        "SS29_UNCERTAINTY",
+        "SS29_POLICY_TRACE",
+        "SS29_NO_INVENTED_ORACLE"
+      ],
+      "scenario": "All five embedded variants plus score preservation at full-inventory gateway, seven Noul thresholds, absent score, all uncertain, policy binding, invented confidence rejection",
+      "entryPoint": "SkillClassificationService.classify, RuntimeSkillClassificationGateway.classify, jevNoulWireAdapter.decode, validateClassificationResponse, validateProviderProfile",
+      "level": "integration",
+      "expectedBehavior": "Preserve kind/value and uncalibrated meaning; no fabricated confidence/selection; retain semantic uncertainty and threshold policy binding",
+      "oracle": "Only embedded SS29.sourceSpec.fields; semantic oracle=null; no accuracy scoring",
+      "testFiles": [
+        "tests/SS29.development.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read raw operational failures; product mutations and fixes prohibited; red/green sensitivity proof NOTRUN, no claim of final acceptance",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/SS29.development.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=SS29_OUTPUT_DIRECTORY/development.vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "Other SS cases and full suite",
+    "Existing 21-run bootstrap rerun",
+    "JEV/vendor/Claude live calls",
+    "Actual host selection/read/applied/verified",
+    "UI rendering and AGENT baseline fallback without host inputs",
+    "Product source edits/push/PR/release"
+  ]
+}

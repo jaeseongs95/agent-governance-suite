@@ -1,0 +1,57 @@
+{
+  "numTotalTestSuites": 2,
+  "numPassedTestSuites": 2,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 23,
+  "numPassedTests": 1,
+  "numFailedTests": 0,
+  "numPendingTests": 22,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514721516,
+  "success": true,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "approved classification wire adapters"
+          ],
+          "fullName": "approved classification wire adapters SS29 intermediate Noul is UNCERTAIN; low calibrated not-needed remains explicit",
+          "status": "passed",
+          "title": "SS29 intermediate Noul is UNCERTAIN; low calibrated not-needed remains explicit",
+          "duration": 23.99931600000002,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514722328,
+      "endTime": 1791514722351.9993,
+      "status": "passed",
+      "message": "",
+      "name": "CANDIDATE_CHECKOUT/tests/mcp/skill-classification-providers.test.ts"
+    }
+  ],
+  "publicationRedactions": {
+    "omitted": "unexecuted other-case assertion entries",
+    "originalSkippedCount": 22
+  }
+}

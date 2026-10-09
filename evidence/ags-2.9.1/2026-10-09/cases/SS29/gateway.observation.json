@@ -1,0 +1,622 @@
+{
+  "inventorySkillIds": [
+    "acceptance-evidence-validator",
+    "blocker-diagnostician",
+    "change-scope-guardian",
+    "code-review",
+    "codex-token-usage-analyzer",
+    "context-continuity",
+    "coordinate-subagents",
+    "cs-engineering",
+    "evaluation-validity-auditor",
+    "independent-audit-gate",
+    "independent-deliberation-panel",
+    "instruction-scope-resolver",
+    "iteration-frame-auditor",
+    "korean-prose-editor",
+    "model-effort-advisor",
+    "mutation-risk-preflight",
+    "orchestrator",
+    "ponytail",
+    "recovery-strategy-selector",
+    "session-board",
+    "software-security-auditor",
+    "task-contract",
+    "test-engineering",
+    "workspace-convention-profiler"
+  ],
+  "providerEvaluation": {
+    "response": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS29-gateway",
+      "operationId": "SS29-gateway",
+      "requestDigest": "sha256:f71f4084f822b7f72b530f5b528f1225bc8bccba537f672feb67afc38325c51b",
+      "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+      "status": "SUCCESS",
+      "judgments": [
+        {
+          "skillId": "acceptance-evidence-validator",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "blocker-diagnostician",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "change-scope-guardian",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "code-review",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "codex-token-usage-analyzer",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "context-continuity",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "coordinate-subagents",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "cs-engineering",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "evaluation-validity-auditor",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "independent-audit-gate",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "independent-deliberation-panel",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "instruction-scope-resolver",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "iteration-frame-auditor",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "korean-prose-editor",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "model-effort-advisor",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "mutation-risk-preflight",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "orchestrator",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "ponytail",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "recovery-strategy-selector",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "session-board",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "software-security-auditor",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "task-contract",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "test-engineering",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        },
+        {
+          "skillId": "workspace-convention-profiler",
+          "judgment": "needed",
+          "reasonRefs": [
+            "profile:SS29-mock-jev:SS29-mock-p1"
+          ],
+          "uncertaintyReason": null
+        }
+      ],
+      "unresolvedItems": [],
+      "error": null
+    },
+    "dispatchState": "started",
+    "usage": {
+      "inputTokens": null,
+      "outputTokens": null,
+      "cachedInputTokens": null,
+      "actualCostUsd": null
+    },
+    "diagnostics": {
+      "scoreKind": "noul_probability",
+      "scores": [
+        {
+          "skillId": "acceptance-evidence-validator",
+          "value": 0.82
+        },
+        {
+          "skillId": "blocker-diagnostician",
+          "value": 0.82
+        },
+        {
+          "skillId": "change-scope-guardian",
+          "value": 0.82
+        },
+        {
+          "skillId": "code-review",
+          "value": 0.82
+        },
+        {
+          "skillId": "codex-token-usage-analyzer",
+          "value": 0.82
+        },
+        {
+          "skillId": "context-continuity",
+          "value": 0.82
+        },
+        {
+          "skillId": "coordinate-subagents",
+          "value": 0.82
+        },
+        {
+          "skillId": "cs-engineering",
+          "value": 0.82
+        },
+        {
+          "skillId": "evaluation-validity-auditor",
+          "value": 0.82
+        },
+        {
+          "skillId": "independent-audit-gate",
+          "value": 0.82
+        },
+        {
+          "skillId": "independent-deliberation-panel",
+          "value": 0.82
+        },
+        {
+          "skillId": "instruction-scope-resolver",
+          "value": 0.82
+        },
+        {
+          "skillId": "iteration-frame-auditor",
+          "value": 0.82
+        },
+        {
+          "skillId": "korean-prose-editor",
+          "value": 0.82
+        },
+        {
+          "skillId": "model-effort-advisor",
+          "value": 0.82
+        },
+        {
+          "skillId": "mutation-risk-preflight",
+          "value": 0.82
+        },
+        {
+          "skillId": "orchestrator",
+          "value": 0.82
+        },
+        {
+          "skillId": "ponytail",
+          "value": 0.82
+        },
+        {
+          "skillId": "recovery-strategy-selector",
+          "value": 0.82
+        },
+        {
+          "skillId": "session-board",
+          "value": 0.82
+        },
+        {
+          "skillId": "software-security-auditor",
+          "value": 0.82
+        },
+        {
+          "skillId": "task-contract",
+          "value": 0.82
+        },
+        {
+          "skillId": "test-engineering",
+          "value": 0.82
+        },
+        {
+          "skillId": "workspace-convention-profiler",
+          "value": 0.82
+        }
+      ]
+    }
+  },
+  "gatewayOutput": {
+    "result": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS29-gateway",
+        "operationId": "SS29-gateway",
+        "originalPrompt": "local cosine_similarity=0.82, classifier_score logit=2.4, JEV noul_probability=0.82, 점수 없는 응답, 전부 threshold 미달인 응답을 각각 준다.",
+        "promptDigest": "sha256:0c10e88371424625d6127701fa89e77cb7b1f0b3436a9157d3891b29217e39cb",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+        "taxonomyRevision": "1.0.0",
+        "classificationCriteriaRef": "skills/orchestrator/references/skill-classification.md",
+        "requestDigest": "sha256:f71f4084f822b7f72b530f5b528f1225bc8bccba537f672feb67afc38325c51b"
+      },
+      "config": {
+        "jevEnabled": true,
+        "mode": "shadow",
+        "providerProfileRegistryRef": "SS29-mock-registry",
+        "externalClassificationAllowed": false,
+        "configRevision": "SS29-mock-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "SS29-mock-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS29-mock-c1",
+        "profileRevision": "SS29-mock-pr1",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+        "requestDigest": "sha256:f71f4084f822b7f72b530f5b528f1225bc8bccba537f672feb67afc38325c51b",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "jev",
+          "profileId": "SS29-mock-jev",
+          "modelId": "SS29-mock-model",
+          "reasoningEffort": null,
+          "dispatchState": "started",
+          "status": "SUCCESS",
+          "errorCode": null,
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS29-gateway",
+        "operationId": "SS29-gateway",
+        "requestDigest": "sha256:f71f4084f822b7f72b530f5b528f1225bc8bccba537f672feb67afc38325c51b",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+        "status": "SUCCESS",
+        "judgments": [
+          {
+            "skillId": "acceptance-evidence-validator",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "blocker-diagnostician",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "change-scope-guardian",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "code-review",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "codex-token-usage-analyzer",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "context-continuity",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "coordinate-subagents",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "cs-engineering",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "evaluation-validity-auditor",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "independent-audit-gate",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "independent-deliberation-panel",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "instruction-scope-resolver",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "iteration-frame-auditor",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "korean-prose-editor",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "model-effort-advisor",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "mutation-risk-preflight",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "orchestrator",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "ponytail",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "recovery-strategy-selector",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "session-board",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "software-security-auditor",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "task-contract",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "test-engineering",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "workspace-convention-profiler",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:SS29-mock-jev:SS29-mock-p1"
+            ],
+            "uncertaintyReason": null
+          }
+        ],
+        "unresolvedItems": [],
+        "error": null
+      }
+    },
+    "classificationResponseRef": "sha256:779e2e5f5f958c823815b8d1ea9dc4b874f26d738598fe779782bdac9e2ba702",
+    "agentSelectedSkillIds": null,
+    "selectionStatus": "PROPOSED",
+    "adviceApplied": false
+  },
+  "apiCalls": 0,
+  "selected": "NOTRUN",
+  "read": "NOTRUN",
+  "applied": "NOTRUN",
+  "verified": "NOTRUN",
+  "agentSelectedSkillIds": null,
+  "hostReceipt": null,
+  "publicationRedactions": {
+    "omitted": "echoed full request skill metadata; inventorySkillIds, request/inventory digests, provider judgments and scores retained",
+    "originalEchoedSkillCount": 24
+  }
+}
