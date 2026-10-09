@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/mcp/SS24-isolated.test.ts",
+    "tests/mcp/SS24-cost-boundary.test.ts",
+    "--reporter=json",
+    "--outputFile=logs/final-isolated.vitest.json"
+  ],
+  "cwd": "<SOURCE_CHECKOUT>",
+  "exit": 1,
+  "startedAt": "2026-10-09T02:57:24.525248+00:00",
+  "finishedAt": "2026-10-09T02:57:27.053513+00:00",
+  "executionKind": "new-offline-mock",
+  "externalApiCalls": 0,
+  "testDigests": {
+    "tests/mcp/SS24-isolated.test.ts": "b77e19bf8eeb58708a5c8dee680f99a259b4e107ab744c081d5bc6c269df7760",
+    "tests/mcp/SS24-cost-boundary.test.ts": "a6d005dc7eb13dbb6d0e38a94a0e7b3184e61af290ea984f24f68c43539b01df"
+  }
+}

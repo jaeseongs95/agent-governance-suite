@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:04d032b28e5dc7bd82566e0fdf2bdc409f66e15dda4cc173c11c0ddaca4c8701",
+  "caseIds": [
+    "on-to-off",
+    "profile-ref-change",
+    "profile-revision-change",
+    "before-selection-race",
+    "boundary-cancellation-race",
+    "boundary-invalid-late-cost"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/mcp/skill-classification-service.test.ts",
+    "-t",
+    "SS24/25 fences changed (configRevision|profileRevision)|SS24 snapshots|SS24 cancellation",
+    "--reporter=json",
+    "--outputFile=logs/existing-service.vitest.json"
+  ],
+  "cwd": "<SOURCE_CHECKOUT>",
+  "exit": 0,
+  "startedAt": "2026-10-09T02:56:28.677599+00:00",
+  "finishedAt": "2026-10-09T02:56:29.381310+00:00",
+  "executionKind": "existing-regression-offline-mock",
+  "externalApiCalls": 0
+}

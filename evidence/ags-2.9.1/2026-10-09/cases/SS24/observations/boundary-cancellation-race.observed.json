@@ -1,0 +1,78 @@
+{
+  "kind": "new-offline-mock",
+  "expected": {
+    "valid": false,
+    "agentSelectedSkillIds": null
+  },
+  "observed": {
+    "valid": true,
+    "errors": [],
+    "neededSkillIds": [
+      "code-review"
+    ],
+    "runnableSkillIds": [
+      "code-review"
+    ],
+    "blockedItems": [],
+    "decision": {
+      "schemaVersion": "1.0.0",
+      "classificationResponseRef": "sha256:160325eeadc1e7a22a42f93e0f6cbd040ad83b6f9eb4d9903a1bdf4e775bb85b",
+      "requestDigest": "sha256:3a9382e6677e3421b2f6d42831103ba577779efba5f14fb00c745d80a2a84f64",
+      "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+      "taskRevision": null,
+      "configRevision": "config-1",
+      "profileRevision": "profile-1",
+      "explicitSkillIds": [],
+      "ruleRequiredSkillIds": [],
+      "agentSelectedSkillIds": [
+        "code-review"
+      ],
+      "selectionReasons": [
+        {
+          "skillId": "code-review",
+          "reason": "synthetic AGENT reviewed the request independently of advice"
+        }
+      ],
+      "applicabilityChecks": [
+        {
+          "skillId": "code-review",
+          "applies": true,
+          "excluded": false,
+          "reasonRefs": [
+            "fixture:purpose"
+          ]
+        }
+      ],
+      "unresolvedSkillReferences": [],
+      "selectionStatus": "SELECTED",
+      "adviceApplied": true,
+      "hostReceipt": {
+        "receiptId": "gUdVAUxJPNJBrLiV8W7G5TMs3sghVADl2S8TL9Vg9S8",
+        "host": "codex",
+        "requestDigest": "sha256:3a9382e6677e3421b2f6d42831103ba577779efba5f14fb00c745d80a2a84f64",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+        "agentSelectedSkillIds": [
+          "code-review"
+        ],
+        "acceptedAt": "2026-10-09T02:57:26.996Z"
+      }
+    },
+    "admissionStatus": "NOT_EVALUATED",
+    "readStatus": "NOT_OBSERVED",
+    "appliedStatus": "NOT_OBSERVED",
+    "verifiedStatus": "NOT_RUN"
+  },
+  "currentTask": {
+    "taskRevision": null,
+    "requestDigest": "sha256:3a9382e6677e3421b2f6d42831103ba577779efba5f14fb00c745d80a2a84f64",
+    "cancelled": true,
+    "sourceRef": "fixture:host-owned-task-source"
+  },
+  "linkedKnownDefect": "동시성 직전 재검사 공백",
+  "realAgentStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  }
+}

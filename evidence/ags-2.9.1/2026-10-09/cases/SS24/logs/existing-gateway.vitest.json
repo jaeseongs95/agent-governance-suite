@@ -1,0 +1,500 @@
+{
+  "numTotalTestSuites": 2,
+  "numPassedTestSuites": 2,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 38,
+  "numPassedTests": 4,
+  "numFailedTests": 0,
+  "numPendingTests": 34,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514589623,
+  "success": true,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport joins only identical concurrent intake while availability is pending",
+          "status": "skipped",
+          "title": "joins only identical concurrent intake while availability is pending",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport joins only identical concurrent intake while classification is pending",
+          "status": "skipped",
+          "title": "joins only identical concurrent intake while classification is pending",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects overlapping explicit intake during availability without replacing the first obligations",
+          "status": "skipped",
+          "title": "rejects overlapping explicit intake during availability without replacing the first obligations",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects overlapping rule intake during availability without replacing the first obligations",
+          "status": "skipped",
+          "title": "rejects overlapping rule intake during availability without replacing the first obligations",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects overlapping actor intake during availability without replacing the first obligations",
+          "status": "skipped",
+          "title": "rejects overlapping actor intake during availability without replacing the first obligations",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects overlapping vendor intake during availability without replacing the first obligations",
+          "status": "skipped",
+          "title": "rejects overlapping vendor intake during availability without replacing the first obligations",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects overlapping explicit intake during classification without replacing the first obligations",
+          "status": "skipped",
+          "title": "rejects overlapping explicit intake during classification without replacing the first obligations",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects overlapping rule intake during classification without replacing the first obligations",
+          "status": "skipped",
+          "title": "rejects overlapping rule intake during classification without replacing the first obligations",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects overlapping actor intake during classification without replacing the first obligations",
+          "status": "skipped",
+          "title": "rejects overlapping actor intake during classification without replacing the first obligations",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects overlapping vendor intake during classification without replacing the first obligations",
+          "status": "skipped",
+          "title": "rejects overlapping vendor intake during classification without replacing the first obligations",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects cached actor mismatch even with the same logical request",
+          "status": "skipped",
+          "title": "rejects cached actor mismatch even with the same logical request",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects cached vendor mismatch even with the same logical request",
+          "status": "skipped",
+          "title": "rejects cached vendor mismatch even with the same logical request",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport advertises the three tools and exposes healthy full inventory including non-registry roles",
+          "status": "skipped",
+          "title": "advertises the three tools and exposes healthy full inventory including non-registry roles",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport preserves original negation, provenance, null and known-empty at the real service boundary",
+          "status": "skipped",
+          "title": "preserves original negation, provenance, null and known-empty at the real service boundary",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport requires signed exact-call host observation and never trusts a caller selection receipt",
+          "status": "skipped",
+          "title": "requires signed exact-call host observation and never trusts a caller selection receipt",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects changed-argument signatures and expired observations",
+          "status": "skipped",
+          "title": "rejects changed-argument signatures and expired observations",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport does not create selected status when host attestation is unavailable",
+          "status": "skipped",
+          "title": "does not create selected status when host attestation is unavailable",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport keeps AGENT choices independent of the same advice and handles accepted no-skill distinctly",
+          "status": "skipped",
+          "title": "keeps AGENT choices independent of the same advice and handles accepted no-skill distinctly",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects required omissions, treats repeated same decision idempotently and rejects replacement",
+          "status": "skipped",
+          "title": "rejects required omissions, treats repeated same decision idempotently and rejects replacement",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects config revision changes between classification and acceptance",
+          "status": "passed",
+          "title": "rejects config revision changes between classification and acceptance",
+          "duration": 430.354427,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects profile revision changes between classification and acceptance",
+          "status": "passed",
+          "title": "rejects profile revision changes between classification and acceptance",
+          "duration": 285.678315,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects runtime profile source changes even if revision strings are unchanged",
+          "status": "passed",
+          "title": "rejects runtime profile source changes even if revision strings are unchanged",
+          "duration": 287.479112,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport fences OFF changes during JEV availability before any old-snapshot provider dispatch",
+          "status": "passed",
+          "title": "fences OFF changes during JEV availability before any old-snapshot provider dispatch",
+          "duration": 194.69291500000008,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects changed runtime bytes during async read before availability or classification",
+          "status": "skipped",
+          "title": "rejects changed runtime bytes during async read before availability or classification",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport does not reuse a completed selected operation after model content changes without revision",
+          "status": "skipped",
+          "title": "does not reuse a completed selected operation after model content changes without revision",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport does not reuse old selected after native route source bytes change with identical parsed runtime",
+          "status": "skipped",
+          "title": "does not reuse old selected after native route source bytes change with identical parsed runtime",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects acceptance after native route source bytes changed even when parsed runtime matches",
+          "status": "skipped",
+          "title": "rejects acceptance after native route source bytes changed even when parsed runtime matches",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport exposes configured discovery failure instead of claiming complete healthy host inventory",
+          "status": "skipped",
+          "title": "exposes configured discovery failure instead of claiming complete healthy host inventory",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport does not treat caller publicSynthetic=true as remote content approval",
+          "status": "skipped",
+          "title": "does not treat caller publicSynthetic=true as remote content approval",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport does not approve changed confirmed context merely because the original prompt was approved",
+          "status": "skipped",
+          "title": "does not approve changed confirmed context merely because the original prompt was approved",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport does not approve changed inventory or source metadata despite an eligible fixed profile",
+          "status": "skipped",
+          "title": "does not approve changed inventory or source metadata despite an eligible fixed profile",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects missing host task observations between classify and accept",
+          "status": "skipped",
+          "title": "rejects missing host task observations between classify and accept",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects taskRevision host task observations between classify and accept",
+          "status": "skipped",
+          "title": "rejects taskRevision host task observations between classify and accept",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects requestDigest host task observations between classify and accept",
+          "status": "skipped",
+          "title": "rejects requestDigest host task observations between classify and accept",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects cancelled host task observations between classify and accept",
+          "status": "skipped",
+          "title": "rejects cancelled host task observations between classify and accept",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects sourceRef host task observations between classify and accept",
+          "status": "skipped",
+          "title": "rejects sourceRef host task observations between classify and accept",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport accepts settled independent PARTIAL work and enforces shadow adviceApplied=false",
+          "status": "skipped",
+          "title": "accepts settled independent PARTIAL work and enforces shadow adviceApplied=false",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "offline classification through actual MCP Client/Server transport"
+          ],
+          "fullName": "offline classification through actual MCP Client/Server transport rejects fresh-source inventory changes at acceptance without changing production files",
+          "status": "skipped",
+          "title": "rejects fresh-source inventory changes at acceptance without changing production files",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514590219,
+      "endTime": 1791514591416.6929,
+      "status": "passed",
+      "message": "",
+      "name": "tests/mcp/skill-classification-gateway.test.ts"
+    }
+  ]
+}

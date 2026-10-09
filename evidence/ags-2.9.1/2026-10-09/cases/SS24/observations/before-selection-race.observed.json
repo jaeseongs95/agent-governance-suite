@@ -1,0 +1,191 @@
+{
+  "kind": "new-offline-mock",
+  "acceptanceRuntimeSnapshot": {
+    "config": {
+      "jevEnabled": true,
+      "mode": "select",
+      "providerProfileRegistryRef": "fixture:profiles",
+      "externalClassificationAllowed": false,
+      "configRevision": "config-1",
+      "timeoutMs": 2000
+    },
+    "registry": {
+      "schemaVersion": "1.0.0",
+      "profileRevision": "profile-1",
+      "profiles": [
+        {
+          "profileId": "jev-mock",
+          "providerKind": "jev",
+          "vendorId": "typesafe",
+          "modelId": "mock-fixed",
+          "modelRevision": "mock-fixed-v1",
+          "reasoningEffort": null,
+          "supportedOptions": {
+            "reasoningEfforts": [
+              null
+            ],
+            "structuredOutput": true
+          },
+          "approvedRouteRef": "fixture:approved-native-route",
+          "qualificationRevision": "mock-quality-only",
+          "qualification": {
+            "status": "PASS",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "taxonomyRevision": "1.0.0",
+            "modelRevision": "mock-fixed-v1",
+            "promptRevision": "prompt-1",
+            "validUntil": "2099-01-01T00:00:00Z",
+            "profileConfigurationDigest": "sha256:e90b94e9b0425ca0842c59635e07723a5c57f09455031a0bc10f557af02d9dce"
+          },
+          "adapterRevision": "adapter-1",
+          "promptRevision": "prompt-1",
+          "maximumInputBytes": 2000000,
+          "maximumOutputTokens": 1000,
+          "maximumCostUsd": 0.4,
+          "judgmentPolicy": {
+            "neededAt": 0.8,
+            "notNeededAt": 0.2
+          }
+        },
+        {
+          "profileId": "vendor-mock",
+          "providerKind": "vendor",
+          "vendorId": "mock-vendor",
+          "modelId": "mock-fixed",
+          "modelRevision": "mock-fixed-v1",
+          "reasoningEffort": "low",
+          "supportedOptions": {
+            "reasoningEfforts": [
+              "low"
+            ],
+            "structuredOutput": true
+          },
+          "approvedRouteRef": "fixture:approved-native-route",
+          "qualificationRevision": "mock-quality-only",
+          "qualification": {
+            "status": "PASS",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "taxonomyRevision": "1.0.0",
+            "modelRevision": "mock-fixed-v1",
+            "promptRevision": "prompt-1",
+            "validUntil": "2099-01-01T00:00:00Z",
+            "profileConfigurationDigest": "sha256:2c1786de07e2793053853ec2a0bb320cffcc7cdca0a0d8e7e0dc42e7c6340702"
+          },
+          "adapterRevision": "adapter-1",
+          "promptRevision": "prompt-1",
+          "maximumInputBytes": 2000000,
+          "maximumOutputTokens": 1000,
+          "maximumCostUsd": 0.4,
+          "judgmentPolicy": null
+        }
+      ]
+    },
+    "allowRemotePrivateContent": false
+  },
+  "currentRuntime": {
+    "config": {
+      "jevEnabled": false,
+      "mode": "select",
+      "providerProfileRegistryRef": "fixture:profiles",
+      "externalClassificationAllowed": false,
+      "configRevision": "config-2",
+      "timeoutMs": 2000
+    },
+    "registry": {
+      "schemaVersion": "1.0.0",
+      "profileRevision": "profile-1",
+      "profiles": [
+        {
+          "profileId": "jev-mock",
+          "providerKind": "jev",
+          "vendorId": "typesafe",
+          "modelId": "mock-fixed",
+          "modelRevision": "mock-fixed-v1",
+          "reasoningEffort": null,
+          "supportedOptions": {
+            "reasoningEfforts": [
+              null
+            ],
+            "structuredOutput": true
+          },
+          "approvedRouteRef": "fixture:approved-native-route",
+          "qualificationRevision": "mock-quality-only",
+          "qualification": {
+            "status": "PASS",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "taxonomyRevision": "1.0.0",
+            "modelRevision": "mock-fixed-v1",
+            "promptRevision": "prompt-1",
+            "validUntil": "2099-01-01T00:00:00Z",
+            "profileConfigurationDigest": "sha256:e90b94e9b0425ca0842c59635e07723a5c57f09455031a0bc10f557af02d9dce"
+          },
+          "adapterRevision": "adapter-1",
+          "promptRevision": "prompt-1",
+          "maximumInputBytes": 2000000,
+          "maximumOutputTokens": 1000,
+          "maximumCostUsd": 0.4,
+          "judgmentPolicy": {
+            "neededAt": 0.8,
+            "notNeededAt": 0.2
+          }
+        },
+        {
+          "profileId": "vendor-mock",
+          "providerKind": "vendor",
+          "vendorId": "mock-vendor",
+          "modelId": "mock-fixed",
+          "modelRevision": "mock-fixed-v1",
+          "reasoningEffort": "low",
+          "supportedOptions": {
+            "reasoningEfforts": [
+              "low"
+            ],
+            "structuredOutput": true
+          },
+          "approvedRouteRef": "fixture:approved-native-route",
+          "qualificationRevision": "mock-quality-only",
+          "qualification": {
+            "status": "PASS",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "taxonomyRevision": "1.0.0",
+            "modelRevision": "mock-fixed-v1",
+            "promptRevision": "prompt-1",
+            "validUntil": "2099-01-01T00:00:00Z",
+            "profileConfigurationDigest": "sha256:2c1786de07e2793053853ec2a0bb320cffcc7cdca0a0d8e7e0dc42e7c6340702"
+          },
+          "adapterRevision": "adapter-1",
+          "promptRevision": "prompt-1",
+          "maximumInputBytes": 2000000,
+          "maximumOutputTokens": 1000,
+          "maximumCostUsd": 0.4,
+          "judgmentPolicy": null
+        }
+      ]
+    },
+    "allowRemotePrivateContent": false
+  },
+  "accepted": {
+    "valid": false,
+    "errors": [
+      "RUNTIME_SOURCE_CHANGED"
+    ],
+    "neededSkillIds": [
+      "code-review"
+    ],
+    "runnableSkillIds": [
+      "code-review"
+    ],
+    "blockedItems": [],
+    "agentSelectedSkillIds": null
+  },
+  "callCounts": {
+    "jev": 1,
+    "vendor": 0
+  },
+  "realAgentStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  }
+}

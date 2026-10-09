@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:854c27d95d4150c607b53151b24ca77797e7dd7284cc9286aba64892b4771659",
+  "reportDigest": "sha256:f4d84b935acdef12c4c4a02150685b7deaf4875be2a5a03f4157ce5ba7d62e28",
+  "issues": [
+    "REQUIRED on-to-off: NOT_RUN — No product mutation/fix authorized. Raw Vitest assertions are separately recorded; no red-green pair or sensitivity completion is claimed.",
+    "REQUIRED profile-ref-change: NOT_RUN — No product mutation/fix authorized. Raw Vitest assertions are separately recorded; no red-green pair or sensitivity completion is claimed.",
+    "REQUIRED profile-revision-change: NOT_RUN — No product mutation/fix authorized. Raw Vitest assertions are separately recorded; no red-green pair or sensitivity completion is claimed.",
+    "REQUIRED before-selection-race: NOT_RUN — No product mutation/fix authorized. Raw Vitest assertions are separately recorded; no red-green pair or sensitivity completion is claimed.",
+    "REQUIRED boundary-cancellation-race: NOT_RUN — No product mutation/fix authorized. Raw Vitest assertions are separately recorded; no red-green pair or sensitivity completion is claimed.",
+    "REQUIRED boundary-invalid-late-cost: NOT_RUN — No product mutation/fix authorized. Raw Vitest assertions are separately recorded; no red-green pair or sensitivity completion is claimed."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

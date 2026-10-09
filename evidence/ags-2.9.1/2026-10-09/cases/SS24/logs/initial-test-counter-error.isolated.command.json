@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/mcp/SS24-isolated.test.ts",
+    "--reporter=json",
+    "--outputFile=logs/isolated.vitest.json"
+  ],
+  "cwd": "<SOURCE_CHECKOUT>",
+  "exit": 1,
+  "startedAt": "2026-10-09T02:55:51.012247+00:00",
+  "finishedAt": "2026-10-09T02:55:53.688935+00:00",
+  "executionKind": "new-offline-mock",
+  "externalApiCalls": 0
+}

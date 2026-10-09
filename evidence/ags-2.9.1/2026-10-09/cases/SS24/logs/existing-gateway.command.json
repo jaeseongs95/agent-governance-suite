@@ -1,0 +1,18 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/mcp/skill-classification-gateway.test.ts",
+    "-t",
+    "rejects (config|profile) revision changes between classification and acceptance|fences OFF changes during JEV availability|rejects runtime profile source changes",
+    "--reporter=json",
+    "--outputFile=logs/existing-gateway.vitest.json"
+  ],
+  "cwd": "<SOURCE_CHECKOUT>",
+  "exit": 0,
+  "startedAt": "2026-10-09T02:56:29.381526+00:00",
+  "finishedAt": "2026-10-09T02:56:31.438710+00:00",
+  "executionKind": "existing-regression-offline-mock",
+  "externalApiCalls": 0
+}

@@ -1,0 +1,649 @@
+{
+  "schemaVersion": "SS24-development-result-1",
+  "caseId": "SS24",
+  "overallStatus": "FAIL",
+  "completedScope": "All four embedded-spec variants plus two relevant boundary assertions; independent offline checks complete",
+  "caseSource": {
+    "caseId": "SS24",
+    "title": "요청 중 ON OFF 및 provider 설정 변경",
+    "familyId": "mechanical-SS24",
+    "publicSynthetic": true,
+    "status": "NOT_RUN",
+    "executionKind": "mock.",
+    "originalPrompt": null,
+    "sourceSpec": {
+      "path": "TEST-SPEC.seq7.ko.md",
+      "section": "SS24",
+      "fields": {
+        "입력": "revision 1의 ON·JEV 요청을 지연시킨 뒤 revision 2를 JEV OFF로 바꾸는 변형, providerProfileRegistryRef·profile revision을 바꾸는 변형을 실행하고 이전 응답을 도착시킨다. select 모드에서 OFF 변경 뒤 선택 반영 직전 경쟁도 포함한다.",
+        "필수추천": "구 revision 응답은 해당 요청의 관측 기록으로만 남기며 최신 선택을 덮지 않는다. 새로운 설정은 다음 요청부터 사용하며, 실제 선택 반영 전 현행 revision을 재검사한다.",
+        "금지추천 또는 행동": "같은 JEV 시도를 중복 전송; 늦은 JEV 응답으로 새 vendor 선택 덮어쓰기; OFF 뒤 새 JEV 호출 시작; 변경된 revision에 옛 모델·비용 snapshot을 사용.",
+        "허용선택": "취소 요청 또는 응답 폐기·stale 표시. 이미 전송된 호출의 발생 비용은 지우지 않는다.",
+        "보류조건": "취소 성공이나 비용이 확인되지 않으면 unknown으로 남긴다.",
+        "통과기준": "request/configRevision 연결이 유지되고, revision이 다른 결과가 현재 후보·agentSelectedSkillIds를 교체하지 않는다. 다음 OFF 요청의 jevCallCount=0이고 허용된 vendor 분류는 가능하다. 현행 작업이 유효하면 현재 유효 profile로 분류 경로를 다시 결정하고, 취소·목적 변경이면 옛 선택을 중단한다.",
+        "증거": "E0·E1·E2, 설정 변경 전후 순서와 호출수.",
+        "실행종류": "mock."
+      },
+      "bodyDigest": "sha256:7eaa91dc1dbd2c5e65a53bc89b6878ec633f4a17320f93ff7d5a993bbf40c6b5"
+    },
+    "oracle": null,
+    "variants": [
+      "on-to-off",
+      "profile-ref-change",
+      "profile-revision-change",
+      "before-selection-race"
+    ]
+  },
+  "binding": {
+    "branchRequested": "codex/skill-classification-2.9.1",
+    "checkout": "detached exact commit in independent worktree",
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "oracleCheck": "Computed using frozen evaluation.ts oracleDigest, matches stored and requested digest",
+    "sourceSpecFilePresent": false,
+    "sourceSpecPolicy": "Only embedded sourceSpec.fields; no invented missing original prompt or semantic answer"
+  },
+  "variantResults": [
+    {
+      "variant": "on-to-off",
+      "status": "PASS",
+      "executionKind": "new-offline-mock",
+      "input": {
+        "sourceOriginalPrompt": null,
+        "sourceSpecRef": "inputs/SS24.fixture.json#/sourceSpec/fields",
+        "syntheticTransportPrompt": "  인용: ‘구현하라’\r\n현재 요청은 읽기 전용 검토, 수정 금지. é  ",
+        "sourceOracle": null
+      },
+      "expected": "revision 1 ON JEV delayed; revision 2 OFF next request sends 0 JEV and permits vendor; old response/choice cannot overwrite fresh result; known cost remains observable",
+      "observed": {
+        "errors": [
+          "CLASSIFICATION_UNAVAILABLE_CANNOT_COMPLETE_SELECTION",
+          "STALE_configRevision",
+          "RUNTIME_SOURCE_CHANGED",
+          "RUNTIME_SOURCE_CHANGED"
+        ],
+        "mockProviderCounts": {
+          "jev": 1,
+          "vendor": 1
+        },
+        "actualAgentSelectedSkillIds": null,
+        "oldResponse": {
+          "schemaVersion": "1.0.0",
+          "requestId": "request-SS24-on-to-off-old",
+          "operationId": "SS24-on-to-off-old",
+          "requestDigest": "sha256:8eaee94fb5413ec00114b9a3ba9e85fe26016f54eb2ee08ada9c96314a879bcb",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "STALE_CLASSIFICATION"
+            }
+          ],
+          "error": {
+            "code": "STALE_CLASSIFICATION",
+            "retryable": false,
+            "dispatchState": "not-started"
+          }
+        },
+        "oldAttemptUsage": {
+          "inputTokens": null,
+          "outputTokens": null,
+          "cachedInputTokens": null,
+          "actualCostUsd": 0.1
+        },
+        "oldConfigRevision": "config-1",
+        "oldProfileRevision": "profile-1",
+        "freshAttempts": [
+          {
+            "providerKind": "vendor",
+            "profileId": "vendor-mock",
+            "modelId": "mock-fixed",
+            "reasoningEffort": "low",
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0.1
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "mockLatestChoicePreserved": true
+      },
+      "evidence": "observations/on-to-off.observed.json",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/SS24-isolated.test.ts",
+        "tests/mcp/SS24-cost-boundary.test.ts",
+        "--reporter=json",
+        "--outputFile=logs/final-isolated.vitest.json"
+      ],
+      "processExit": 1,
+      "note": "Combined process exit 1 is caused by separately listed boundary defects; this variant assertion passed. Mock host signatures and choices are not real AGENT evidence.",
+      "API0": true,
+      "externalApiCalls": {
+        "jev": 0,
+        "vendor": 0,
+        "claude": 0
+      },
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "missingInputs": [
+        "Actual approved host runtime/provider profiles and independent current-task observation",
+        "Real host final AGENT choice and matching read/application/verification evidence"
+      ]
+    },
+    {
+      "variant": "profile-ref-change",
+      "status": "PASS",
+      "executionKind": "new-offline-mock",
+      "input": {
+        "sourceOriginalPrompt": null,
+        "sourceSpecRef": "inputs/SS24.fixture.json#/sourceSpec/fields",
+        "syntheticTransportPrompt": "  인용: ‘구현하라’\r\n현재 요청은 읽기 전용 검토, 수정 금지. é  ",
+        "sourceOracle": null
+      },
+      "expected": "registry reference changes with same config/profile revision strings; next request uses new model and cost snapshot; old result rejected by runtime bytes binding",
+      "observed": {
+        "errors": [
+          "CLASSIFICATION_UNAVAILABLE_CANNOT_COMPLETE_SELECTION",
+          "RUNTIME_SOURCE_CHANGED",
+          "RUNTIME_SOURCE_CHANGED"
+        ],
+        "mockProviderCounts": {
+          "jev": 2,
+          "vendor": 0
+        },
+        "actualAgentSelectedSkillIds": null,
+        "oldResponse": {
+          "schemaVersion": "1.0.0",
+          "requestId": "request-SS24-profile-ref-change-old",
+          "operationId": "SS24-profile-ref-change-old",
+          "requestDigest": "sha256:4dd610ff7da8db2cb330b26dae798dcfbad4cd14caf93e6b08c13f036b79db9b",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "STALE_CLASSIFICATION"
+            }
+          ],
+          "error": {
+            "code": "STALE_CLASSIFICATION",
+            "retryable": false,
+            "dispatchState": "not-started"
+          }
+        },
+        "oldAttemptUsage": {
+          "inputTokens": null,
+          "outputTokens": null,
+          "cachedInputTokens": null,
+          "actualCostUsd": 0.1
+        },
+        "oldConfigRevision": "config-1",
+        "oldProfileRevision": "profile-1",
+        "freshAttempts": [
+          {
+            "providerKind": "jev",
+            "profileId": "jev-mock",
+            "modelId": "mock-updated",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0.1
+            },
+            "reservedCostUsd": 0.3
+          }
+        ],
+        "mockLatestChoicePreserved": true
+      },
+      "evidence": "observations/profile-ref-change.observed.json",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/SS24-isolated.test.ts",
+        "tests/mcp/SS24-cost-boundary.test.ts",
+        "--reporter=json",
+        "--outputFile=logs/final-isolated.vitest.json"
+      ],
+      "processExit": 1,
+      "note": "Combined process exit 1 is caused by separately listed boundary defects; this variant assertion passed. Mock host signatures and choices are not real AGENT evidence.",
+      "API0": true,
+      "externalApiCalls": {
+        "jev": 0,
+        "vendor": 0,
+        "claude": 0
+      },
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "missingInputs": [
+        "Actual approved host runtime/provider profiles and independent current-task observation",
+        "Real host final AGENT choice and matching read/application/verification evidence"
+      ]
+    },
+    {
+      "variant": "profile-revision-change",
+      "status": "PASS",
+      "executionKind": "new-offline-mock",
+      "input": {
+        "sourceOriginalPrompt": null,
+        "sourceSpecRef": "inputs/SS24.fixture.json#/sourceSpec/fields",
+        "syntheticTransportPrompt": "  인용: ‘구현하라’\r\n현재 요청은 읽기 전용 검토, 수정 금지. é  ",
+        "sourceOracle": null
+      },
+      "expected": "profile revision changes; next request uses updated qualified synthetic model and maximum cost 0.3; old response remains bound to profile-1",
+      "observed": {
+        "errors": [
+          "CLASSIFICATION_UNAVAILABLE_CANNOT_COMPLETE_SELECTION",
+          "STALE_profileRevision",
+          "RUNTIME_SOURCE_CHANGED",
+          "RUNTIME_SOURCE_CHANGED"
+        ],
+        "mockProviderCounts": {
+          "jev": 2,
+          "vendor": 0
+        },
+        "actualAgentSelectedSkillIds": null,
+        "oldResponse": {
+          "schemaVersion": "1.0.0",
+          "requestId": "request-SS24-profile-revision-change-old",
+          "operationId": "SS24-profile-revision-change-old",
+          "requestDigest": "sha256:ed694412304643726a96b7e99506b8d029eb6631b0a3b0eede188c7f91f20a3e",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "STALE_CLASSIFICATION"
+            }
+          ],
+          "error": {
+            "code": "STALE_CLASSIFICATION",
+            "retryable": false,
+            "dispatchState": "not-started"
+          }
+        },
+        "oldAttemptUsage": {
+          "inputTokens": null,
+          "outputTokens": null,
+          "cachedInputTokens": null,
+          "actualCostUsd": 0.1
+        },
+        "oldConfigRevision": "config-1",
+        "oldProfileRevision": "profile-1",
+        "freshAttempts": [
+          {
+            "providerKind": "jev",
+            "profileId": "jev-mock",
+            "modelId": "mock-updated",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0.1
+            },
+            "reservedCostUsd": 0.3
+          }
+        ],
+        "mockLatestChoicePreserved": true
+      },
+      "evidence": "observations/profile-revision-change.observed.json",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/SS24-isolated.test.ts",
+        "tests/mcp/SS24-cost-boundary.test.ts",
+        "--reporter=json",
+        "--outputFile=logs/final-isolated.vitest.json"
+      ],
+      "processExit": 1,
+      "note": "Combined process exit 1 is caused by separately listed boundary defects; this variant assertion passed. Mock host signatures and choices are not real AGENT evidence.",
+      "API0": true,
+      "externalApiCalls": {
+        "jev": 0,
+        "vendor": 0,
+        "claude": 0
+      },
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "missingInputs": [
+        "Actual approved host runtime/provider profiles and independent current-task observation",
+        "Real host final AGENT choice and matching read/application/verification evidence"
+      ]
+    },
+    {
+      "variant": "before-selection-race",
+      "status": "PASS",
+      "executionKind": "new-offline-mock",
+      "input": {
+        "sourceOriginalPrompt": null,
+        "sourceSpecRef": "inputs/SS24.fixture.json#/sourceSpec/fields",
+        "syntheticTransportPrompt": null,
+        "sourceOracle": null
+      },
+      "expected": "OFF during asynchronous selection acceptance rejects old decision before storage",
+      "observed": {
+        "errors": [
+          "RUNTIME_SOURCE_CHANGED"
+        ],
+        "mockProviderCounts": {
+          "jev": 1,
+          "vendor": 0
+        },
+        "actualAgentSelectedSkillIds": null,
+        "mockAcceptance": {
+          "valid": false,
+          "errors": [
+            "RUNTIME_SOURCE_CHANGED"
+          ],
+          "neededSkillIds": [
+            "code-review"
+          ],
+          "runnableSkillIds": [
+            "code-review"
+          ],
+          "blockedItems": [],
+          "agentSelectedSkillIds": null
+        }
+      },
+      "evidence": "observations/before-selection-race.observed.json",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/SS24-isolated.test.ts",
+        "tests/mcp/SS24-cost-boundary.test.ts",
+        "--reporter=json",
+        "--outputFile=logs/final-isolated.vitest.json"
+      ],
+      "processExit": 1,
+      "note": "Combined process exit 1 is caused by separately listed boundary defects; this variant assertion passed. Mock host signatures and choices are not real AGENT evidence.",
+      "API0": true,
+      "externalApiCalls": {
+        "jev": 0,
+        "vendor": 0,
+        "claude": 0
+      },
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "missingInputs": [
+        "Actual approved host runtime/provider profiles and independent current-task observation",
+        "Real host final AGENT choice and matching read/application/verification evidence"
+      ]
+    }
+  ],
+  "boundaryResults": [
+    {
+      "variant": "on-to-off",
+      "boundary": "cancellation-during-acceptance",
+      "status": "FAIL",
+      "severity": "HIGH",
+      "expected": "Recheck current task after async reads; reject cancelled operation before selection storage",
+      "observed": "Current task cancelled=true, but valid=true and mock choice [code-review] accepted",
+      "knownDefectLink": "동시성 직전 재검사 공백",
+      "rootCause": "observeTask checked at gateway.ts:117-118 only before awaits at 123-124; operation.decision stored at 136 without a fresh task observation",
+      "source": "mcp-server/src/skill-classification/gateway.ts:117",
+      "evidence": "observations/boundary-cancellation-race.observed.json",
+      "executionKind": "new-offline-mock",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/SS24-isolated.test.ts",
+        "tests/mcp/SS24-cost-boundary.test.ts",
+        "--reporter=json",
+        "--outputFile=logs/final-isolated.vitest.json"
+      ],
+      "exit": 1,
+      "API0": true,
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      }
+    },
+    {
+      "variant": "on-to-off",
+      "boundary": "known-cost-with-invalid-late-response",
+      "status": "FAIL",
+      "severity": "HIGH",
+      "expected": "Dispatched known cost 0.1 remains known and settled despite malformed/stale response",
+      "observed": "response is correctly stale, but attempt actualCostUsd=null, jev ledger spentUsd=0 and reservation 0.4 remains unknown",
+      "knownDefectLink": "유효 비용이 invalid RESP와 함께 유실",
+      "rootCause": "Response validation throws after receiving valid usage; catch rebuilds unknownUsage at service.ts:204; settle at 210 receives null",
+      "source": "mcp-server/src/skill-classification/service.ts:192",
+      "evidence": "observations/boundary-invalid-late-cost.observed.json",
+      "executionKind": "new-offline-mock",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/SS24-isolated.test.ts",
+        "tests/mcp/SS24-cost-boundary.test.ts",
+        "--reporter=json",
+        "--outputFile=logs/final-isolated.vitest.json"
+      ],
+      "exit": 1,
+      "API0": true,
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      }
+    }
+  ],
+  "knownDefectDeduplication": {
+    "existingRootCausesReproduced": 2,
+    "newRootCausesClaimed": 0,
+    "notes": "Link these witnesses to existing cost-loss and pre-selection concurrency findings; do not count duplicates."
+  },
+  "existingRegression": [
+    {
+      "kind": "existing-regression-offline-mock",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/skill-classification-service.test.ts",
+        "-t",
+        "SS24/25 fences changed (configRevision|profileRevision)|SS24 snapshots|SS24 cancellation",
+        "--reporter=json",
+        "--outputFile=logs/existing-service.vitest.json"
+      ],
+      "exit": 0,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 36,
+      "executedAssertions": [
+        "SS24/25 fences changed configRevision before accepting delayed responses",
+        "SS24/25 fences changed profileRevision before accepting delayed responses",
+        "SS24 snapshots freeze profile mutation before transmission",
+        "SS24 cancellation stops fallback without claiming unknown call was uncharged"
+      ],
+      "evidence": "logs/existing-service.vitest.json",
+      "API0": true
+    },
+    {
+      "kind": "existing-regression-offline-mock",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/skill-classification-gateway.test.ts",
+        "-t",
+        "rejects (config|profile) revision changes between classification and acceptance|fences OFF changes during JEV availability|rejects runtime profile source changes",
+        "--reporter=json",
+        "--outputFile=logs/existing-gateway.vitest.json"
+      ],
+      "exit": 0,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 34,
+      "executedAssertions": [
+        "rejects config revision changes between classification and acceptance",
+        "rejects profile revision changes between classification and acceptance",
+        "rejects runtime profile source changes even if revision strings are unchanged",
+        "fences OFF changes during JEV availability before any old-snapshot provider dispatch"
+      ],
+      "evidence": "logs/existing-gateway.vitest.json",
+      "API0": true
+    }
+  ],
+  "finalIsolatedRun": {
+    "command": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "tests/mcp/SS24-isolated.test.ts",
+      "tests/mcp/SS24-cost-boundary.test.ts",
+      "--reporter=json",
+      "--outputFile=logs/final-isolated.vitest.json"
+    ],
+    "exit": 1,
+    "passed": 4,
+    "failed": 2,
+    "evidence": "logs/final-isolated.vitest.json",
+    "testDigests": {
+      "tests/mcp/SS24-isolated.test.ts": "b77e19bf8eeb58708a5c8dee680f99a259b4e107ab744c081d5bc6c269df7760",
+      "tests/mcp/SS24-cost-boundary.test.ts": "a6d005dc7eb13dbb6d0e38a94a0e7b3184e61af290ea984f24f68c43539b01df"
+    }
+  },
+  "executionKinds": {
+    "existingRegression": "offline-mock",
+    "newVariants": "offline-mock with actual MCP in-memory Client/Server and synthetic signed host observations",
+    "providerLive": "NOTRUN",
+    "hostLive": "NOTRUN"
+  },
+  "API0": true,
+  "externalApiCalls": {
+    "jev": 0,
+    "vendor": 0,
+    "claude": 0
+  },
+  "mockTransportCountsAreNotApiCalls": true,
+  "prior21CallRunsReexecuted": 0,
+  "agentStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "actualAgentSelectedSkillIds": null,
+  "semanticOracle": null,
+  "accuracy": null,
+  "semanticScore": null,
+  "nullVsEmptyPreserved": "Source prompt/oracle and actual selection stay null. Mock accepted [code-review] appears only as labelled test data; [] unresolved/context fields remain [] in raw evidence.",
+  "hostSupport": {
+    "state": "NOTRUN",
+    "codexExecutableObserved": "<NATIVE_CLI_EXECUTABLE>",
+    "classificationToolsAvailableInCurrentSession": [],
+    "classificationConfigEnvironmentPresent": false,
+    "supportedEntrypoint": "Trusted AGENT_GOVERNANCE_CLASSIFICATION_CONFIG -> node mcp-server/dist/server.mjs (.mcp.json); get_skill_inventory/classify_skills/record_skill_selection",
+    "nativePath": "Approved providerRuntimeRef native route and nativeAdapterDefinitionsRef; createNativeClassificationAdapters with Codex exec --json --sandbox read-only --ephemeral --ignore-user-config; not invoked",
+    "missingInputs": [
+      "Trusted config/profile registry files with current revision/model/cost and matching PASS qualification/inventory digest",
+      "Approved provider runtime route and confirmed vendor budget/native allowance",
+      "Vetted native definition executable, workingDirectory, isolationArgs and capability/retry/isolation evidence; remote path additionally needs authorized route/credential and budget",
+      "Real exact-call host attestation and session-board prompt source; authoritative cancellation/purpose/current task state is not supplied by index.ts observeTask (cancelled=false)",
+      "Actual AGENT final decision and separate read/applied/verified artifacts"
+    ],
+    "activeStateGap": "Static limitation only: index.ts:121-126; no host-live reproduction and no new root cause count"
+  },
+  "guidanceRead": [
+    "AGENTS.md",
+    "skills/test-engineering/SKILL.md",
+    "skills/orchestrator/SKILL.md",
+    "skills/orchestrator/references/engineering-practices/test-design.md",
+    "skills/orchestrator/references/engineering-practices/test-proof.md",
+    "skills/orchestrator/references/engineering-practices/cli.md",
+    "skills/orchestrator/references/skill-classification.md",
+    "tests/skill-classification/live-bootstrap/README.md"
+  ],
+  ".agentsSkillsCheck": {
+    "repository": "absent; only .agents/plugins/marketplace.json",
+    "workspace": "<WORKSPACE>/.agents/skills absent"
+  },
+  "changes": {
+    "productSourceModified": false,
+    "push": false,
+    "pr": false,
+    "release": false,
+    "trackedGitDiffExit": 0,
+    "newTestFiles": [
+      "tests/mcp/SS24-isolated.test.ts",
+      "tests/mcp/SS24-cost-boundary.test.ts"
+    ],
+    "dependencySetup": "Symlink to preinstalled <PREINSTALLED_DEPENDENCIES>; no build/install/suite run"
+  },
+  "engineeringSkillArtifacts": {
+    "plan": "engineering/engineering-test-plan.json",
+    "planResult": "READY",
+    "proof": "engineering/engineering-test-proof.json",
+    "computedResult": "engineering/engineering-test-result.json",
+    "computedVerdict": "INCOMPLETE",
+    "reason": "Tests run and failures evidenced; product changes forbidden, so no fixed-candidate green or mutation sensitivity proof fabricated. Planning record assembled for handoff after run; no pre-run frozen-plan claim."
+  },
+  "testHarnessCorrection": {
+    "initialCounterFailureWasProductDefect": false,
+    "reason": "Inherited jev vi.fn wrapped vendor spy, double-counting providers. Isolated helper now uses underlying implementation for independent counters. Initial raw logs retained; final counts use final-isolated only."
+  },
+  "handoff": "Supporting tests, assertion logs, inputs and expected/observed records ready for parent developer; no independent acceptance audit claimed.",
+  "publication": {
+    "kind": "sanitized-existing-evidence",
+    "newTestExecutions": 0,
+    "newProviderApiCalls": 0,
+    "originalResultArtifact": "SS24.result.json",
+    "originalResultBytes": 25546,
+    "originalResultSHA256": "305391b9ec69af7330cce25566196acc44658f4bd7a34155fda7e7e81422f2c7",
+    "productPatch": "NONE_EXISTS",
+    "hostStagesPreserved": true,
+    "reproductionFiles": "Portable path-redacted copies; not executed after transformation",
+    "sourceSpecExternalOriginal": "MISSING_ORIGINAL",
+    "exactSerializedProviderWire": "MISSING_ORIGINAL_NOT_CAPTURED; offline provider mock ports, no network wire",
+    "originalFullFixture": "Available at fixed Git commit with preserved SHA256; not republished in case scope",
+    "inputSerialization": "Extracted mock request objects and inventory snapshot, reserialized for publication. Not claimed as original wire bytes."
+  }
+}

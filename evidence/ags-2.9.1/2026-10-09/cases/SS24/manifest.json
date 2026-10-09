@@ -1,0 +1,812 @@
+{
+  "schemaVersion": "SS24-public-evidence-manifest-1",
+  "caseId": "SS24",
+  "publicationScope": "evidence/ags-2.9.1/2026-10-09/cases/SS24/",
+  "candidate": {
+    "branchRequested": "codex/skill-classification-2.9.1",
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "oracleCheck": "Computed using frozen evaluation.ts oracleDigest, matches stored and requested digest",
+    "sourceSpecFilePresent": false,
+    "sourceSpecPolicy": "Only embedded sourceSpec.fields; no invented missing original prompt or semantic answer"
+  },
+  "historicalResult": "FAIL",
+  "hostStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "publicationNewTests": 0,
+  "publicationProviderApiCalls": {
+    "jev": 0,
+    "vendor": 0,
+    "claude": 0,
+    "codex": 0
+  },
+  "newPatches": 0,
+  "patchStatus": "NONE_EXISTS",
+  "missingOriginals": [
+    "TEST-SPEC.seq7.ko.md",
+    "Exact serialized provider wire: NOT_CAPTURED in offline mocks"
+  ],
+  "recoveredOriginalArtifacts": [
+    {
+      "artifact": "SS24-cost-boundary.test.ts",
+      "bytes": 6143,
+      "sha256": "a6d005dc7eb13dbb6d0e38a94a0e7b3184e61af290ea984f24f68c43539b01df",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "SS24-isolated.test.ts",
+      "bytes": 19297,
+      "sha256": "b77e19bf8eeb58708a5c8dee680f99a259b4e107ab744c081d5bc6c269df7760",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "SS24.fixture.json",
+      "bytes": 2077,
+      "sha256": "e8b47493a0defabdda67b0b9aedcdd147b3efb6e99dd29a674ea011618508b41",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "SS24.result.json",
+      "bytes": 25546,
+      "sha256": "305391b9ec69af7330cce25566196acc44658f4bd7a34155fda7e7e81422f2c7",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "before-selection-race.observed.json",
+      "bytes": 6311,
+      "sha256": "3d466d5c1e778e6b411f1da34fa123399306cbb7920b0730d9353ca612f9f419",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "boundary-cancellation-race.observed.json",
+      "bytes": 2383,
+      "sha256": "a9d953c1ed3ec939ae6464013b2d32a18d7f2b992d5f83f022f421f5a2e3bd30",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "boundary-invalid-late-cost.observed.json",
+      "bytes": 5525,
+      "sha256": "f673f7a0811ce6eba7f678a123dd06689cf9ce49628f7af044852888ee2eaf75",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "build-result.py",
+      "bytes": 10635,
+      "sha256": "6704558b01ca85e2f09fa71c1c080c431c7333d7be0ad3528332271a1ac1b77b",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": false
+    },
+    {
+      "artifact": "engineering-plan-result.json",
+      "bytes": 371,
+      "sha256": "a99e7cc5f3eb1a9dad2d9dedf0132d16e419e9aec6bc04d6750e22dfc42a79a7",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "engineering-records.mjs",
+      "bytes": 3824,
+      "sha256": "dfd19834c7469d2268a122f845fa8e471fb4b6361ab44e079727fff5f35eebe2",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": false
+    },
+    {
+      "artifact": "engineering-test-plan.json",
+      "bytes": 8599,
+      "sha256": "4063ecacfcf897c9c6b5298566ba4cc1fa4a41ea8e1d244a630d726c992918b3",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "engineering-test-proof.json",
+      "bytes": 5970,
+      "sha256": "b9544c025eebd0f20b45d57fd97b29b7addb11b133b8a4e534c23fa9e2e5b69c",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "engineering-test-result.json",
+      "bytes": 1828,
+      "sha256": "abdd963734102e281b123015b68edf40f880b3ceb236fc0a527cd8498825a1a3",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "evidence.sha256.json",
+      "bytes": 3692,
+      "sha256": "538e599189c8c3435c910238165b958760d3bce861abb86b71e4461ebd2e4a14",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": false
+    },
+    {
+      "artifact": "existing-gateway.command.json",
+      "bytes": 641,
+      "sha256": "8fbb25aa6c5233d8b7ed05849b038af0045413910ba18ac30fd62309049579f0",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "existing-gateway.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "existing-gateway.stdout.txt",
+      "bytes": 77,
+      "sha256": "09d2288def4cceb58cc062f09cea3d4da23248cb7fe48935b24d5f6d144e9e26",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "existing-gateway.vitest.json",
+      "bytes": 16699,
+      "sha256": "e3d00494e8ffcb3b0a6f7e46612a1f2b3719cdef95568e6613390b406ad7c2c7",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "existing-service.command.json",
+      "bytes": 568,
+      "sha256": "9fc1317cc361c45bff1a0cbca8b10ef01858a4da0c05face69ea3ac091ee7048",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "existing-service.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "existing-service.stdout.txt",
+      "bytes": 77,
+      "sha256": "58ec1ab3eb150c78b68d3e78d723304ca9de9be7421e268ffbbc632c5c223a05",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "existing-service.vitest.json",
+      "bytes": 14988,
+      "sha256": "0e6082aaa48390d66f28b39af6d7df1b9289aabe72c075b2adbe8c56f6c46d8d",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "final-isolated.command.json",
+      "bytes": 715,
+      "sha256": "966bb3a39bcd2528fc6933eee8a6528250d3e002ee7e6a65fd72048b5ee7a434",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "final-isolated.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "final-isolated.stdout.txt",
+      "bytes": 75,
+      "sha256": "4b03e86a2196561f26ea6ac2e120baf8db9ab30c2984e925ed55a5feb1472d45",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "final-isolated.vitest.json",
+      "bytes": 3772,
+      "sha256": "81d9a04606aee533798a70e618fa7ba4f47d772fac0f166721a26d687fb07848",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "initial-test-counter-error.isolated.command.json",
+      "bytes": 423,
+      "sha256": "a427da0d76cf8678a9b39d5b3c5bd5a089a9fd58f5535b7c5468789f084d86e0",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "initial-test-counter-error.isolated.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "initial-test-counter-error.isolated.stdout.txt",
+      "bytes": 69,
+      "sha256": "9679fa1afaa58670f8a9498c90aeb15e68319ac891aea9938044e8275d41f3c7",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "initial-test-counter-error.isolated.vitest.json",
+      "bytes": 3838,
+      "sha256": "c31cd3bdba3e79c14359728f3e4c8e0b77d1d88329254c6bb70744dfbaa5f466",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "isolated.command.json",
+      "bytes": 423,
+      "sha256": "efa15ecb088adf1fa54e89bc9e4502c089bf6ccd3a406c374a971282da141cc0",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "isolated.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "isolated.stdout.txt",
+      "bytes": 69,
+      "sha256": "9679fa1afaa58670f8a9498c90aeb15e68319ac891aea9938044e8275d41f3c7",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "isolated.vitest.json",
+      "bytes": 2803,
+      "sha256": "557b21e7cc8e2fad3539b0ce5a7ae3651bdfe78163952af3d3d6b6c3dc09cefc",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "on-to-off.observed.json",
+      "bytes": 883071,
+      "sha256": "1e109fba23f0afcc13d67f96a39fc524414a19a6440bdb586cbe38422ddf910a",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "profile-ref-change.observed.json",
+      "bytes": 883302,
+      "sha256": "7356fa786be6e898545c946c0efd39cd7e5666f865f303dfa84c064901daf27f",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    },
+    {
+      "artifact": "profile-revision-change.observed.json",
+      "bytes": 883391,
+      "sha256": "c03cc69974730c9e5697abacfaac1981a61414b03470b882606cb074f426ad1e",
+      "recoveryStatus": "RECOVERED",
+      "publicContentPublished": true
+    }
+  ],
+  "fileCount": 38,
+  "payloadBytes": 493676,
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 5131,
+      "sha256": "9756afa7c668b6f57627ead8b4e9ab908a1b783ca5274b2ef1bddae7a01ecc1e",
+      "originals": [
+        {
+          "artifact": "SS24.result.json",
+          "bytes": 25546,
+          "sha256": "305391b9ec69af7330cce25566196acc44658f4bd7a34155fda7e7e81422f2c7"
+        }
+      ],
+      "transformation": "Publication explanation assembled from existing results only; reproduction commands were not run"
+    },
+    {
+      "path": "SS24.result.json",
+      "bytes": 26404,
+      "sha256": "6b46a7a1ad5c6d4d52c6303cbefb8dd043fbfd2b90256273580ae73f3b9dd844",
+      "originals": [
+        {
+          "artifact": "SS24.result.json",
+          "bytes": 25546,
+          "sha256": "305391b9ec69af7330cce25566196acc44658f4bd7a34155fda7e7e81422f2c7"
+        }
+      ],
+      "transformation": "Local path redaction; JSON reserialization; no status or observed value promotion"
+    },
+    {
+      "path": "engineering/engineering-plan-result.json",
+      "bytes": 371,
+      "sha256": "a99e7cc5f3eb1a9dad2d9dedf0132d16e419e9aec6bc04d6750e22dfc42a79a7",
+      "originals": [
+        {
+          "artifact": "engineering-plan-result.json",
+          "bytes": 371,
+          "sha256": "a99e7cc5f3eb1a9dad2d9dedf0132d16e419e9aec6bc04d6750e22dfc42a79a7"
+        }
+      ],
+      "transformation": "Path-redacted historical engineering record. Original plan/proof candidate digests retained for original objects; public copies have different byte digests and were not rechecked or promoted"
+    },
+    {
+      "path": "engineering/engineering-test-plan.json",
+      "bytes": 8479,
+      "sha256": "cc944c219fd43e534902bfb9e43d303825531382b7a96c2e1f92a8b43879334e",
+      "originals": [
+        {
+          "artifact": "engineering-test-plan.json",
+          "bytes": 8599,
+          "sha256": "4063ecacfcf897c9c6b5298566ba4cc1fa4a41ea8e1d244a630d726c992918b3"
+        }
+      ],
+      "transformation": "Path-redacted historical engineering record. Original plan/proof candidate digests retained for original objects; public copies have different byte digests and were not rechecked or promoted"
+    },
+    {
+      "path": "engineering/engineering-test-proof.json",
+      "bytes": 5970,
+      "sha256": "b9544c025eebd0f20b45d57fd97b29b7addb11b133b8a4e534c23fa9e2e5b69c",
+      "originals": [
+        {
+          "artifact": "engineering-test-proof.json",
+          "bytes": 5970,
+          "sha256": "b9544c025eebd0f20b45d57fd97b29b7addb11b133b8a4e534c23fa9e2e5b69c"
+        }
+      ],
+      "transformation": "Path-redacted historical engineering record. Original plan/proof candidate digests retained for original objects; public copies have different byte digests and were not rechecked or promoted"
+    },
+    {
+      "path": "engineering/engineering-test-result.json",
+      "bytes": 1828,
+      "sha256": "abdd963734102e281b123015b68edf40f880b3ceb236fc0a527cd8498825a1a3",
+      "originals": [
+        {
+          "artifact": "engineering-test-result.json",
+          "bytes": 1828,
+          "sha256": "abdd963734102e281b123015b68edf40f880b3ceb236fc0a527cd8498825a1a3"
+        }
+      ],
+      "transformation": "Path-redacted historical engineering record. Original plan/proof candidate digests retained for original objects; public copies have different byte digests and were not rechecked or promoted"
+    },
+    {
+      "path": "inputs/SS24.fixture.json",
+      "bytes": 2077,
+      "sha256": "e8b47493a0defabdda67b0b9aedcdd147b3efb6e99dd29a674ea011618508b41",
+      "originals": [
+        {
+          "artifact": "SS24.fixture.json",
+          "bytes": 2077,
+          "sha256": "e8b47493a0defabdda67b0b9aedcdd147b3efb6e99dd29a674ea011618508b41"
+        }
+      ],
+      "transformation": "BYTE_IDENTICAL SS24 extract already present in original evidence"
+    },
+    {
+      "path": "inputs/mock-inventory.json",
+      "bytes": 243849,
+      "sha256": "71e285a7cb5e91c8969e477fee797c8cd37f484e38652c3a770f42445a790bb8",
+      "originals": [
+        {
+          "artifact": "on-to-off.observed.json",
+          "bytes": 883071,
+          "sha256": "1e109fba23f0afcc13d67f96a39fc524414a19a6440bdb586cbe38422ddf910a"
+        }
+      ],
+      "transformation": "Extract existing old.result.request.skills subtree; sanitize local paths; serialize once to avoid repeated inventory bodies"
+    },
+    {
+      "path": "inputs/mock-requests.json",
+      "bytes": 9888,
+      "sha256": "36ad4f00e0b4f93dbf66cfab59c70f0aca28dfa2a1861362f3f00fc8dd53846a",
+      "originals": [
+        {
+          "artifact": "on-to-off.observed.json",
+          "bytes": 883071,
+          "sha256": "1e109fba23f0afcc13d67f96a39fc524414a19a6440bdb586cbe38422ddf910a"
+        },
+        {
+          "artifact": "profile-ref-change.observed.json",
+          "bytes": 883302,
+          "sha256": "7356fa786be6e898545c946c0efd39cd7e5666f865f303dfa84c064901daf27f"
+        },
+        {
+          "artifact": "profile-revision-change.observed.json",
+          "bytes": 883391,
+          "sha256": "c03cc69974730c9e5697abacfaac1981a61414b03470b882606cb074f426ad1e"
+        }
+      ],
+      "transformation": "Extract existing mock request input subtrees; reference common inventory; reserialized and path-redacted; not original network wire"
+    },
+    {
+      "path": "logs/existing-gateway.command.json",
+      "bytes": 616,
+      "sha256": "273f424f2c7dbe1e131647f5e11d8043aaa426d3424458658cba7762c28855c6",
+      "originals": [
+        {
+          "artifact": "existing-gateway.command.json",
+          "bytes": 641,
+          "sha256": "8fbb25aa6c5233d8b7ed05849b038af0045413910ba18ac30fd62309049579f0"
+        }
+      ],
+      "transformation": "Local path redaction; JSON reserialization; no status or observed value promotion"
+    },
+    {
+      "path": "logs/existing-gateway.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "originals": [
+        {
+          "artifact": "existing-gateway.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "transformation": "Existing log bytes with local report path redaction only; empty stderr remains zero bytes"
+    },
+    {
+      "path": "logs/existing-gateway.stdout.txt",
+      "bytes": 57,
+      "sha256": "d9a6355a18df7387b72019e1b1c7dadeaa6566f179ee16df53bd30827781ef45",
+      "originals": [
+        {
+          "artifact": "existing-gateway.stdout.txt",
+          "bytes": 77,
+          "sha256": "09d2288def4cceb58cc062f09cea3d4da23248cb7fe48935b24d5f6d144e9e26"
+        }
+      ],
+      "transformation": "Existing log bytes with local report path redaction only; empty stderr remains zero bytes"
+    },
+    {
+      "path": "logs/existing-gateway.vitest.json",
+      "bytes": 22177,
+      "sha256": "0cb1c75934f53d2100348e14bba39cd23e6440c95569c6d23c1b382155cba315",
+      "originals": [
+        {
+          "artifact": "existing-gateway.vitest.json",
+          "bytes": 16699,
+          "sha256": "e3d00494e8ffcb3b0a6f7e46612a1f2b3719cdef95568e6613390b406ad7c2c7"
+        }
+      ],
+      "transformation": "Local path redaction; JSON reserialization; no status or observed value promotion"
+    },
+    {
+      "path": "logs/existing-service.command.json",
+      "bytes": 543,
+      "sha256": "bbee0ab0f473e629df5a9a29890bbc98e1484427c87f066c2a49a41ef7210d04",
+      "originals": [
+        {
+          "artifact": "existing-service.command.json",
+          "bytes": 568,
+          "sha256": "9fc1317cc361c45bff1a0cbca8b10ef01858a4da0c05face69ea3ac091ee7048"
+        }
+      ],
+      "transformation": "Local path redaction; JSON reserialization; no status or observed value promotion"
+    },
+    {
+      "path": "logs/existing-service.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "originals": [
+        {
+          "artifact": "existing-service.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "transformation": "Existing log bytes with local report path redaction only; empty stderr remains zero bytes"
+    },
+    {
+      "path": "logs/existing-service.stdout.txt",
+      "bytes": 57,
+      "sha256": "092fb5d065736499baead8b1b9f3af1cba54cb664b1a0a2e2f8b2c898ccd0987",
+      "originals": [
+        {
+          "artifact": "existing-service.stdout.txt",
+          "bytes": 77,
+          "sha256": "58ec1ab3eb150c78b68d3e78d723304ca9de9be7421e268ffbbc632c5c223a05"
+        }
+      ],
+      "transformation": "Existing log bytes with local report path redaction only; empty stderr remains zero bytes"
+    },
+    {
+      "path": "logs/existing-service.vitest.json",
+      "bytes": 20742,
+      "sha256": "1426a6abef347eb76d75f9112ec937b9b600b5856aff26d1475b220f2b125c85",
+      "originals": [
+        {
+          "artifact": "existing-service.vitest.json",
+          "bytes": 14988,
+          "sha256": "0e6082aaa48390d66f28b39af6d7df1b9289aabe72c075b2adbe8c56f6c46d8d"
+        }
+      ],
+      "transformation": "Local path redaction; JSON reserialization; no status or observed value promotion"
+    },
+    {
+      "path": "logs/final-isolated.command.json",
+      "bytes": 690,
+      "sha256": "83aa224e6740b678f70d71ed8a7f6a5610e44bf180c89060210985395a9c5a39",
+      "originals": [
+        {
+          "artifact": "final-isolated.command.json",
+          "bytes": 715,
+          "sha256": "966bb3a39bcd2528fc6933eee8a6528250d3e002ee7e6a65fd72048b5ee7a434"
+        }
+      ],
+      "transformation": "Local path redaction; JSON reserialization; no status or observed value promotion"
+    },
+    {
+      "path": "logs/final-isolated.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "originals": [
+        {
+          "artifact": "final-isolated.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "transformation": "Existing log bytes with local report path redaction only; empty stderr remains zero bytes"
+    },
+    {
+      "path": "logs/final-isolated.stdout.txt",
+      "bytes": 55,
+      "sha256": "b47566594630aecf9e1f58088352dbd7a265853265b7ca9e7d0a3206d2fe13d2",
+      "originals": [
+        {
+          "artifact": "final-isolated.stdout.txt",
+          "bytes": 75,
+          "sha256": "4b03e86a2196561f26ea6ac2e120baf8db9ab30c2984e925ed55a5feb1472d45"
+        }
+      ],
+      "transformation": "Existing log bytes with local report path redaction only; empty stderr remains zero bytes"
+    },
+    {
+      "path": "logs/final-isolated.vitest.json",
+      "bytes": 4534,
+      "sha256": "493e20c99f17d9773e4475003280c57ec682cb6f175eaca6672739de429902cb",
+      "originals": [
+        {
+          "artifact": "final-isolated.vitest.json",
+          "bytes": 3772,
+          "sha256": "81d9a04606aee533798a70e618fa7ba4f47d772fac0f166721a26d687fb07848"
+        }
+      ],
+      "transformation": "Local path redaction; JSON reserialization; no status or observed value promotion"
+    },
+    {
+      "path": "logs/initial-test-counter-error.isolated.command.json",
+      "bytes": 398,
+      "sha256": "d910e7e1e38e139ee9a6c956e071f7d2c8b13fd3b3e6922d32a651706b458d35",
+      "originals": [
+        {
+          "artifact": "initial-test-counter-error.isolated.command.json",
+          "bytes": 423,
+          "sha256": "a427da0d76cf8678a9b39d5b3c5bd5a089a9fd58f5535b7c5468789f084d86e0"
+        }
+      ],
+      "transformation": "Local path redaction; JSON reserialization; no status or observed value promotion"
+    },
+    {
+      "path": "logs/initial-test-counter-error.isolated.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "originals": [
+        {
+          "artifact": "initial-test-counter-error.isolated.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "transformation": "Existing log bytes with local report path redaction only; empty stderr remains zero bytes"
+    },
+    {
+      "path": "logs/initial-test-counter-error.isolated.stdout.txt",
+      "bytes": 49,
+      "sha256": "480cef28d26b18d851051164c30ccc73da10dda78f25211b2caa0bb9180e7460",
+      "originals": [
+        {
+          "artifact": "initial-test-counter-error.isolated.stdout.txt",
+          "bytes": 69,
+          "sha256": "9679fa1afaa58670f8a9498c90aeb15e68319ac891aea9938044e8275d41f3c7"
+        }
+      ],
+      "transformation": "Existing log bytes with local report path redaction only; empty stderr remains zero bytes"
+    },
+    {
+      "path": "logs/initial-test-counter-error.isolated.vitest.json",
+      "bytes": 4042,
+      "sha256": "2b917d7f88f3df43ee701b6d59dabdd9be7274da89f3617a2499df383c9b7da1",
+      "originals": [
+        {
+          "artifact": "initial-test-counter-error.isolated.vitest.json",
+          "bytes": 3838,
+          "sha256": "c31cd3bdba3e79c14359728f3e4c8e0b77d1d88329254c6bb70744dfbaa5f466"
+        }
+      ],
+      "transformation": "Local path redaction; JSON reserialization; no status or observed value promotion"
+    },
+    {
+      "path": "logs/isolated.command.json",
+      "bytes": 398,
+      "sha256": "175dcd1a49eab6ba5c1400224f44b4eaa5d7e6a5b1bda9b870a84a58b32711e3",
+      "originals": [
+        {
+          "artifact": "isolated.command.json",
+          "bytes": 423,
+          "sha256": "efa15ecb088adf1fa54e89bc9e4502c089bf6ccd3a406c374a971282da141cc0"
+        }
+      ],
+      "transformation": "Local path redaction; JSON reserialization; no status or observed value promotion"
+    },
+    {
+      "path": "logs/isolated.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "originals": [
+        {
+          "artifact": "isolated.stderr.txt",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "transformation": "Existing log bytes with local report path redaction only; empty stderr remains zero bytes"
+    },
+    {
+      "path": "logs/isolated.stdout.txt",
+      "bytes": 49,
+      "sha256": "480cef28d26b18d851051164c30ccc73da10dda78f25211b2caa0bb9180e7460",
+      "originals": [
+        {
+          "artifact": "isolated.stdout.txt",
+          "bytes": 69,
+          "sha256": "9679fa1afaa58670f8a9498c90aeb15e68319ac891aea9938044e8275d41f3c7"
+        }
+      ],
+      "transformation": "Existing log bytes with local report path redaction only; empty stderr remains zero bytes"
+    },
+    {
+      "path": "logs/isolated.vitest.json",
+      "bytes": 3556,
+      "sha256": "d1b1c281291b36b68b0dc995f3f0234055b969355b9fef4cf01b608a30583a4e",
+      "originals": [
+        {
+          "artifact": "isolated.vitest.json",
+          "bytes": 2803,
+          "sha256": "557b21e7cc8e2fad3539b0ce5a7ae3651bdfe78163952af3d3d6b6c3dc09cefc"
+        }
+      ],
+      "transformation": "Local path redaction; JSON reserialization; no status or observed value promotion"
+    },
+    {
+      "path": "observations/before-selection-race.observed.json",
+      "bytes": 6311,
+      "sha256": "3d466d5c1e778e6b411f1da34fa123399306cbb7920b0730d9353ca612f9f419",
+      "originals": [
+        {
+          "artifact": "before-selection-race.observed.json",
+          "bytes": 6311,
+          "sha256": "3d466d5c1e778e6b411f1da34fa123399306cbb7920b0730d9353ca612f9f419"
+        }
+      ],
+      "transformation": "Local path redaction; JSON reserialization; no status or observed value promotion"
+    },
+    {
+      "path": "observations/boundary-cancellation-race.observed.json",
+      "bytes": 2383,
+      "sha256": "a9d953c1ed3ec939ae6464013b2d32a18d7f2b992d5f83f022f421f5a2e3bd30",
+      "originals": [
+        {
+          "artifact": "boundary-cancellation-race.observed.json",
+          "bytes": 2383,
+          "sha256": "a9d953c1ed3ec939ae6464013b2d32a18d7f2b992d5f83f022f421f5a2e3bd30"
+        }
+      ],
+      "transformation": "Local path redaction; JSON reserialization; no status or observed value promotion"
+    },
+    {
+      "path": "observations/boundary-invalid-late-cost.observed.json",
+      "bytes": 5525,
+      "sha256": "f673f7a0811ce6eba7f678a123dd06689cf9ce49628f7af044852888ee2eaf75",
+      "originals": [
+        {
+          "artifact": "boundary-invalid-late-cost.observed.json",
+          "bytes": 5525,
+          "sha256": "f673f7a0811ce6eba7f678a123dd06689cf9ce49628f7af044852888ee2eaf75"
+        }
+      ],
+      "transformation": "Local path redaction; JSON reserialization; no status or observed value promotion"
+    },
+    {
+      "path": "observations/on-to-off.observed.json",
+      "bytes": 30411,
+      "sha256": "8f28e583ae0717550cf985fc40463c8bc63301b9eab62ac58f53f10285224ed4",
+      "originals": [
+        {
+          "artifact": "on-to-off.observed.json",
+          "bytes": 883071,
+          "sha256": "1e109fba23f0afcc13d67f96a39fc524414a19a6440bdb586cbe38422ddf910a"
+        }
+      ],
+      "transformation": "Source projection: repeated request.skills arrays replaced with inventory reference/count; local paths sanitized; original bytes/hash bound; not raw original bytes"
+    },
+    {
+      "path": "observations/profile-ref-change.observed.json",
+      "bytes": 30642,
+      "sha256": "eaabe73a7fe9f857ab7824edb0d990e3e2663fcdac2aaab89516fa97aef0434d",
+      "originals": [
+        {
+          "artifact": "profile-ref-change.observed.json",
+          "bytes": 883302,
+          "sha256": "7356fa786be6e898545c946c0efd39cd7e5666f865f303dfa84c064901daf27f"
+        }
+      ],
+      "transformation": "Source projection: repeated request.skills arrays replaced with inventory reference/count; local paths sanitized; original bytes/hash bound; not raw original bytes"
+    },
+    {
+      "path": "observations/profile-revision-change.observed.json",
+      "bytes": 30731,
+      "sha256": "e4009c9ed6b8b6a55d59ed2268a6683b048b960351aa98cdd43daea9f8c28e1a",
+      "originals": [
+        {
+          "artifact": "profile-revision-change.observed.json",
+          "bytes": 883391,
+          "sha256": "c03cc69974730c9e5697abacfaac1981a61414b03470b882606cb074f426ad1e"
+        }
+      ],
+      "transformation": "Source projection: repeated request.skills arrays replaced with inventory reference/count; local paths sanitized; original bytes/hash bound; not raw original bytes"
+    },
+    {
+      "path": "patch-status.json",
+      "bytes": 295,
+      "sha256": "4dec48e15349bbb093facbeef3fbf1756970782ede46379693a9158227ae6f13",
+      "originals": [],
+      "transformation": "Local path redaction; JSON reserialization; no status or observed value promotion"
+    },
+    {
+      "path": "reproduce/SS24-cost-boundary.test.ts",
+      "bytes": 6132,
+      "sha256": "80cfa4992649cb1004ec48b9f0b1f81558b989fa2852ae10f858272c4be1cf84",
+      "originals": [
+        {
+          "artifact": "SS24-cost-boundary.test.ts",
+          "bytes": 6143,
+          "sha256": "a6d005dc7eb13dbb6d0e38a94a0e7b3184e61af290ea984f24f68c43539b01df"
+        }
+      ],
+      "transformation": "Only hardcoded artifact output directory replaced by portable SS24-evidence; assertions and provider/host mocks unchanged; copy NOT executed"
+    },
+    {
+      "path": "reproduce/SS24-isolated.test.ts",
+      "bytes": 19286,
+      "sha256": "e39df4e08dabf16be919b5c22756f58536715931e2dd90844dd684a5c511732b",
+      "originals": [
+        {
+          "artifact": "SS24-isolated.test.ts",
+          "bytes": 19297,
+          "sha256": "b77e19bf8eeb58708a5c8dee680f99a259b4e107ab744c081d5bc6c269df7760"
+        }
+      ],
+      "transformation": "Only hardcoded artifact output directory replaced by portable SS24-evidence; assertions and provider/host mocks unchanged; copy NOT executed"
+    }
+  ],
+  "checksumPolicy": {
+    "manifest": "Inventories payload only; excludes manifest.json and SHA256SUMS",
+    "SHA256SUMS": "Covers payload and manifest.json, excludes SHA256SUMS itself",
+    "remoteVerification": "All published files including manifest.json and SHA256SUMS must match local bytes/SHA256"
+  },
+  "sanitization": {
+    "localPaths": "Redacted or converted to repository-relative paths",
+    "privateConversations": "Not included",
+    "environmentValues": "Not included",
+    "credentials": "Not included; synthetic mock observation identifiers remain labelled synthetic",
+    "largeRepeatedInventory": "Single extracted input snapshot, refs replace repeated bodies",
+    "statuses": "Preserved; null and [] remain distinct",
+    "contentCopiesAreRawOriginal": false
+  }
+}

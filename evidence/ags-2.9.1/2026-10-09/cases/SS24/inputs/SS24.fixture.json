@@ -1,0 +1,31 @@
+{
+  "caseId": "SS24",
+  "title": "요청 중 ON OFF 및 provider 설정 변경",
+  "familyId": "mechanical-SS24",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "mock.",
+  "originalPrompt": null,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS24",
+    "fields": {
+      "입력": "revision 1의 ON·JEV 요청을 지연시킨 뒤 revision 2를 JEV OFF로 바꾸는 변형, providerProfileRegistryRef·profile revision을 바꾸는 변형을 실행하고 이전 응답을 도착시킨다. select 모드에서 OFF 변경 뒤 선택 반영 직전 경쟁도 포함한다.",
+      "필수추천": "구 revision 응답은 해당 요청의 관측 기록으로만 남기며 최신 선택을 덮지 않는다. 새로운 설정은 다음 요청부터 사용하며, 실제 선택 반영 전 현행 revision을 재검사한다.",
+      "금지추천 또는 행동": "같은 JEV 시도를 중복 전송; 늦은 JEV 응답으로 새 vendor 선택 덮어쓰기; OFF 뒤 새 JEV 호출 시작; 변경된 revision에 옛 모델·비용 snapshot을 사용.",
+      "허용선택": "취소 요청 또는 응답 폐기·stale 표시. 이미 전송된 호출의 발생 비용은 지우지 않는다.",
+      "보류조건": "취소 성공이나 비용이 확인되지 않으면 unknown으로 남긴다.",
+      "통과기준": "request/configRevision 연결이 유지되고, revision이 다른 결과가 현재 후보·agentSelectedSkillIds를 교체하지 않는다. 다음 OFF 요청의 jevCallCount=0이고 허용된 vendor 분류는 가능하다. 현행 작업이 유효하면 현재 유효 profile로 분류 경로를 다시 결정하고, 취소·목적 변경이면 옛 선택을 중단한다.",
+      "증거": "E0·E1·E2, 설정 변경 전후 순서와 호출수.",
+      "실행종류": "mock."
+    },
+    "bodyDigest": "sha256:7eaa91dc1dbd2c5e65a53bc89b6878ec633f4a17320f93ff7d5a993bbf40c6b5"
+  },
+  "oracle": null,
+  "variants": [
+    "on-to-off",
+    "profile-ref-change",
+    "profile-revision-change",
+    "before-selection-race"
+  ]
+}

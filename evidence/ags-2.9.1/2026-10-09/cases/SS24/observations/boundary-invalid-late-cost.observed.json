@@ -1,0 +1,187 @@
+{
+  "executionKind": "new-offline-mock",
+  "input": {
+    "response": {
+      "schemaVersion": "1.0.0",
+      "requestId": "request",
+      "operationId": "operation",
+      "requestDigest": "sha256:6b2d1077f982dbca90e1ad61dc2f96e4e72f533acf52be1ae0694d1e7e505ac7",
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status": "SUCCESS",
+      "judgments": [],
+      "unresolvedItems": [],
+      "error": null
+    },
+    "usage": {
+      "inputTokens": null,
+      "outputTokens": null,
+      "cachedInputTokens": null,
+      "actualCostUsd": 0.1
+    },
+    "dispatchState": "started",
+    "diagnostics": null
+  },
+  "currentSnapshot": {
+    "taskRevision": null,
+    "configRevision": "c2",
+    "profileRevision": "pr1",
+    "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "requestDigest": "sha256:6b2d1077f982dbca90e1ad61dc2f96e4e72f533acf52be1ae0694d1e7e505ac7",
+    "cancelled": false
+  },
+  "expected": {
+    "jevSpentUsd": 0.1,
+    "reportedPaidUsage": 0.1
+  },
+  "observed": {
+    "result": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "request",
+        "operationId": "operation",
+        "originalPrompt": "읽기 전용, 수정 금지. 검토만 해라.",
+        "promptDigest": "sha256:90eba8b5f0a871f1fa50c18096a01815c00592ed29ba9a36ad7b1d510dbb81c9",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "review",
+            "version": "1",
+            "description": "고정 변경분 검토",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "diff"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "fixed diff"
+            ],
+            "exclusions": [
+              "implementation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "taxonomy",
+        "classificationCriteriaRef": "criteria",
+        "requestDigest": "sha256:6b2d1077f982dbca90e1ad61dc2f96e4e72f533acf52be1ae0694d1e7e505ac7"
+      },
+      "config": {
+        "jevEnabled": true,
+        "mode": "select",
+        "providerProfileRegistryRef": "profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "c1",
+        "timeoutMs": 50
+      },
+      "profileRevision": "pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "c1",
+        "profileRevision": "pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:6b2d1077f982dbca90e1ad61dc2f96e4e72f533acf52be1ae0694d1e7e505ac7",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "jev",
+          "profileId": "jev",
+          "modelId": "jev-fixed",
+          "reasoningEffort": null,
+          "dispatchState": "started",
+          "status": "INVALID",
+          "errorCode": "INVALID_PROVIDER_RESPONSE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "request",
+        "operationId": "operation",
+        "requestDigest": "sha256:6b2d1077f982dbca90e1ad61dc2f96e4e72f533acf52be1ae0694d1e7e505ac7",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "UNAVAILABLE",
+        "judgments": [],
+        "unresolvedItems": [
+          {
+            "skillId": null,
+            "reasonCode": "STALE_CLASSIFICATION"
+          }
+        ],
+        "error": {
+          "code": "STALE_CLASSIFICATION",
+          "retryable": false,
+          "dispatchState": "not-started"
+        }
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0
+        }
+      },
+      "nativeAllowances": {
+        "vendor": {
+          "approvalRef": "fixture-quota",
+          "remainingCalls": 2
+        }
+      },
+      "invalidCostCeilings": [],
+      "reservations": [
+        {
+          "id": "[\"operation\",\"sha256:6b2d1077f982dbca90e1ad61dc2f96e4e72f533acf52be1ae0694d1e7e505ac7\",\"jev\"]",
+          "bucket": "jev",
+          "maximumUsd": 0.4,
+          "profileId": "jev",
+          "nativeProfileId": null
+        }
+      ]
+    }
+  },
+  "callCounts": {
+    "jev": 1,
+    "vendor": 0
+  },
+  "linkedKnownDefect": "유효 비용이 invalid RESP와 함께 유실",
+  "realAgentStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  }
+}

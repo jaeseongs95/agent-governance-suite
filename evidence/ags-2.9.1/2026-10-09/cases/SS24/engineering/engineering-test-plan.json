@@ -1,0 +1,194 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS24",
+  "contractDigest": "sha256:5fe261ca0168c1ac09153c60807034f3a14a35a0ff700ffd401f0677e4ee7b79",
+  "requirements": [
+    "SS24:on-to-off",
+    "SS24:profile-ref-change",
+    "SS24:profile-revision-change",
+    "SS24:before-selection-race",
+    "SS24:boundary-cancellation-race",
+    "SS24:boundary-invalid-late-cost"
+  ],
+  "scopeFiles": [
+    "tests/mcp/SS24-isolated.test.ts",
+    "tests/mcp/SS24-cost-boundary.test.ts",
+    "tests/skill-classification/fixtures.json",
+    "mcp-server/src/skill-classification/gateway.ts",
+    "mcp-server/src/skill-classification/service.ts",
+    "mcp-server/src/skill-classification/validation.ts",
+    "mcp-server/src/skill-classification/profiles.ts",
+    "mcp-server/src/skill-classification/request.ts",
+    "mcp-server/src/skill-classification/inventory.ts",
+    "mcp-server/src/index.ts"
+  ],
+  "runner": "Existing Vitest 5.0.0, pinned worktree with preinstalled dependency symlink; two SS24-only files",
+  "environment": "Independent Cloud environment, Linux, Node 24.19.0, UTC; provider and host signature/task sources synthetic; barriers control order; no paid requests",
+  "cases": [
+    {
+      "id": "on-to-off",
+      "requirementIds": [
+        "SS24:on-to-off"
+      ],
+      "scenario": "on-to-off",
+      "entryPoint": "MCP classify_skills / record_skill_selection through RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Old response stale, bound to old request and profile; fresh request uses current profile, OFF sends no JEV; latest mock choice survives",
+      "oracle": "Embedded SS24 sourceSpec.fields only; originalPrompt=null and semantic oracle=null. Synthetic prompts are transport inputs, not invented semantic answers.",
+      "testFiles": [
+        "tests/mcp/SS24-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "red-green",
+      "sensitivityReason": "Product changes/mutations are forbidden; assertion runs exist but fixed-candidate green/mutation proof remains NOT_RUN",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/SS24-isolated.test.ts",
+        "tests/mcp/SS24-cost-boundary.test.ts",
+        "--reporter=json",
+        "--outputFile=logs/final-isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "profile-ref-change",
+      "requirementIds": [
+        "SS24:profile-ref-change"
+      ],
+      "scenario": "profile-ref-change",
+      "entryPoint": "MCP classify_skills / record_skill_selection through RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Old response stale, bound to old request and profile; fresh request uses current profile, OFF sends no JEV; latest mock choice survives",
+      "oracle": "Embedded SS24 sourceSpec.fields only; originalPrompt=null and semantic oracle=null. Synthetic prompts are transport inputs, not invented semantic answers.",
+      "testFiles": [
+        "tests/mcp/SS24-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "red-green",
+      "sensitivityReason": "Product changes/mutations are forbidden; assertion runs exist but fixed-candidate green/mutation proof remains NOT_RUN",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/SS24-isolated.test.ts",
+        "tests/mcp/SS24-cost-boundary.test.ts",
+        "--reporter=json",
+        "--outputFile=logs/final-isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "profile-revision-change",
+      "requirementIds": [
+        "SS24:profile-revision-change"
+      ],
+      "scenario": "profile-revision-change",
+      "entryPoint": "MCP classify_skills / record_skill_selection through RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Old response stale, bound to old request and profile; fresh request uses current profile, OFF sends no JEV; latest mock choice survives",
+      "oracle": "Embedded SS24 sourceSpec.fields only; originalPrompt=null and semantic oracle=null. Synthetic prompts are transport inputs, not invented semantic answers.",
+      "testFiles": [
+        "tests/mcp/SS24-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "red-green",
+      "sensitivityReason": "Product changes/mutations are forbidden; assertion runs exist but fixed-candidate green/mutation proof remains NOT_RUN",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/SS24-isolated.test.ts",
+        "tests/mcp/SS24-cost-boundary.test.ts",
+        "--reporter=json",
+        "--outputFile=logs/final-isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "before-selection-race",
+      "requirementIds": [
+        "SS24:before-selection-race"
+      ],
+      "scenario": "before-selection-race",
+      "entryPoint": "MCP classify_skills / record_skill_selection through RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "OFF during acceptance rejects old result before storing selection",
+      "oracle": "Embedded SS24 sourceSpec.fields only; originalPrompt=null and semantic oracle=null. Synthetic prompts are transport inputs, not invented semantic answers.",
+      "testFiles": [
+        "tests/mcp/SS24-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "red-green",
+      "sensitivityReason": "Product changes/mutations are forbidden; assertion runs exist but fixed-candidate green/mutation proof remains NOT_RUN",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/SS24-isolated.test.ts",
+        "tests/mcp/SS24-cost-boundary.test.ts",
+        "--reporter=json",
+        "--outputFile=logs/final-isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "boundary-cancellation-race",
+      "requirementIds": [
+        "SS24:boundary-cancellation-race"
+      ],
+      "scenario": "boundary-cancellation-race",
+      "entryPoint": "MCP classify_skills / record_skill_selection through RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Cancelled task while accepting must be checked after asynchronous waits and rejected",
+      "oracle": "Embedded SS24 sourceSpec.fields only; originalPrompt=null and semantic oracle=null. Synthetic prompts are transport inputs, not invented semantic answers.",
+      "testFiles": [
+        "tests/mcp/SS24-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "red-green",
+      "sensitivityReason": "Product changes/mutations are forbidden; assertion runs exist but fixed-candidate green/mutation proof remains NOT_RUN",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/SS24-isolated.test.ts",
+        "tests/mcp/SS24-cost-boundary.test.ts",
+        "--reporter=json",
+        "--outputFile=logs/final-isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "boundary-invalid-late-cost",
+      "requirementIds": [
+        "SS24:boundary-invalid-late-cost"
+      ],
+      "scenario": "boundary-invalid-late-cost",
+      "entryPoint": "SkillClassificationService.classify and InMemoryClassificationBudget.snapshot",
+      "level": "integration",
+      "expectedBehavior": "Known dispatched cost 0.1 survives malformed stale response; no fallback",
+      "oracle": "Embedded SS24 sourceSpec.fields only; originalPrompt=null and semantic oracle=null. Synthetic prompts are transport inputs, not invented semantic answers.",
+      "testFiles": [
+        "tests/mcp/SS24-cost-boundary.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "red-green",
+      "sensitivityReason": "Product changes/mutations are forbidden; assertion runs exist but fixed-candidate green/mutation proof remains NOT_RUN",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/SS24-isolated.test.ts",
+        "tests/mcp/SS24-cost-boundary.test.ts",
+        "--reporter=json",
+        "--outputFile=logs/final-isolated.vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "All other case IDs and full suites",
+    "Replaying prior 21-call run",
+    "JEV/vendor/Claude external calls",
+    "Real host/AGENT selected/read/applied/verified evidence",
+    "Product source changes, push, PR, release",
+    "Independent audit and release acceptance"
+  ]
+}

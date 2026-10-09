@@ -1,0 +1,12 @@
+{
+  "caseId": "SS24",
+  "productPatch": "NONE_EXISTS",
+  "existingPatchFiles": [],
+  "patchGeneratedForPublication": false,
+  "newTestRuns": 0,
+  "providerApiCalls": 0,
+  "missingOriginals": [
+    "TEST-SPEC.seq7.ko.md",
+    "Exact serialized provider wire: never captured, offline mocks"
+  ]
+}

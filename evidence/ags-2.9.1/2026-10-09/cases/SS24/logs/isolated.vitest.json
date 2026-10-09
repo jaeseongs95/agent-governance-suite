@@ -1,0 +1,107 @@
+{
+  "numTotalTestSuites": 2,
+  "numPassedTestSuites": 0,
+  "numFailedTestSuites": 2,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 5,
+  "numPassedTests": 4,
+  "numFailedTests": 1,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514586165,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "SS24 isolated embedded-spec variants"
+          ],
+          "fullName": "SS24 isolated embedded-spec variants SS24 on-to-off delayed old reply and next request",
+          "status": "passed",
+          "title": "SS24 on-to-off delayed old reply and next request",
+          "duration": 616.200607,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS24 isolated embedded-spec variants"
+          ],
+          "fullName": "SS24 isolated embedded-spec variants SS24 profile-ref-change delayed old reply and next request",
+          "status": "passed",
+          "title": "SS24 profile-ref-change delayed old reply and next request",
+          "duration": 411.8578400000001,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS24 isolated embedded-spec variants"
+          ],
+          "fullName": "SS24 isolated embedded-spec variants SS24 profile-revision-change delayed old reply and next request",
+          "status": "passed",
+          "title": "SS24 profile-revision-change delayed old reply and next request",
+          "duration": 352.41501800000015,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS24 isolated embedded-spec variants"
+          ],
+          "fullName": "SS24 isolated embedded-spec variants SS24 before-selection-race OFF during asynchronous acceptance read",
+          "status": "passed",
+          "title": "SS24 before-selection-race OFF during asynchronous acceptance read",
+          "duration": 225.073396,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS24 isolated embedded-spec variants"
+          ],
+          "fullName": "SS24 isolated embedded-spec variants SS24 boundary cancellation during acceptance must stop old selection",
+          "status": "failed",
+          "title": "SS24 boundary cancellation during acceptance must stop old selection",
+          "duration": 235.26083400000016,
+          "failureMessages": [
+            "AssertionError: cancelled task during await must be rechecked before storing selection: expected true to be false // Object.is equality\n    at tests/mcp/SS24-isolated.test.ts:205:101\n    at <VITEST_RUNNER_STACK>"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514586810,
+      "endTime": 1791514588651.2607,
+      "status": "failed",
+      "message": "",
+      "name": "tests/mcp/SS24-isolated.test.ts"
+    }
+  ]
+}

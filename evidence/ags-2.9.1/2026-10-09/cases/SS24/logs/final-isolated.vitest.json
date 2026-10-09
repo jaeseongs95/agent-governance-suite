@@ -1,0 +1,131 @@
+{
+  "numTotalTestSuites": 4,
+  "numPassedTestSuites": 0,
+  "numFailedTestSuites": 4,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 6,
+  "numPassedTests": 4,
+  "numFailedTests": 2,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514644770,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "SS24 late malformed response cost retention"
+          ],
+          "fullName": "SS24 late malformed response cost retention SS24 boundary valid paid usage must survive malformed late response",
+          "status": "failed",
+          "title": "SS24 boundary valid paid usage must survive malformed late response",
+          "duration": 68.46461800000003,
+          "failureMessages": [
+            "AssertionError: known cost must not be erased when late response is invalid: expected +0 to be 0.1 // Object.is equality\n    at tests/mcp/SS24-cost-boundary.test.ts:48:114\n    at <VITEST_RUNNER_STACK>"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514645088,
+      "endTime": 1791514645156.4646,
+      "status": "failed",
+      "message": "",
+      "name": "tests/mcp/SS24-cost-boundary.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "SS24 isolated embedded-spec variants"
+          ],
+          "fullName": "SS24 isolated embedded-spec variants SS24 on-to-off delayed old reply and next request",
+          "status": "passed",
+          "title": "SS24 on-to-off delayed old reply and next request",
+          "duration": 501.1980030000001,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS24 isolated embedded-spec variants"
+          ],
+          "fullName": "SS24 isolated embedded-spec variants SS24 profile-ref-change delayed old reply and next request",
+          "status": "passed",
+          "title": "SS24 profile-ref-change delayed old reply and next request",
+          "duration": 393.252532,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS24 isolated embedded-spec variants"
+          ],
+          "fullName": "SS24 isolated embedded-spec variants SS24 profile-revision-change delayed old reply and next request",
+          "status": "passed",
+          "title": "SS24 profile-revision-change delayed old reply and next request",
+          "duration": 380.6468140000002,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS24 isolated embedded-spec variants"
+          ],
+          "fullName": "SS24 isolated embedded-spec variants SS24 before-selection-race OFF during asynchronous acceptance read",
+          "status": "passed",
+          "title": "SS24 before-selection-race OFF during asynchronous acceptance read",
+          "duration": 217.59467100000006,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS24 isolated embedded-spec variants"
+          ],
+          "fullName": "SS24 isolated embedded-spec variants SS24 boundary cancellation during acceptance must stop old selection",
+          "status": "failed",
+          "title": "SS24 boundary cancellation during acceptance must stop old selection",
+          "duration": 215.38699199999996,
+          "failureMessages": [
+            "AssertionError: cancelled task during await must be rechecked before storing selection: expected true to be false // Object.is equality\n    at tests/mcp/SS24-isolated.test.ts:205:101\n    at <VITEST_RUNNER_STACK>"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514645324,
+      "endTime": 1791514647031.387,
+      "status": "failed",
+      "message": "",
+      "name": "tests/mcp/SS24-isolated.test.ts"
+    }
+  ]
+}
