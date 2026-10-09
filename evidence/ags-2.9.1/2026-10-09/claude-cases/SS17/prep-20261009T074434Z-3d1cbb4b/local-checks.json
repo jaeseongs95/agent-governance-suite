@@ -1,0 +1,33 @@
+{
+  "observedAt": "2026-10-09T07:44:34.430741+00:00",
+  "cliPath": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+  "version": "2.1.286 (Claude Code)",
+  "onPATH": false,
+  "localOnlyCommands": [
+    "claude --version",
+    "claude --help"
+  ],
+  "helpCapabilitiesObserved": [
+    "--print",
+    "--output-format",
+    "--verbose",
+    "--model",
+    "--effort",
+    "--max-budget-usd",
+    "--plugin-dir",
+    "--settings",
+    "--setting-sources",
+    "--no-session-persistence",
+    "--allowedTools",
+    "--disallowedTools",
+    "--permission-mode"
+  ],
+  "nodeVersion": "v24.19.0",
+  "secretCheck": "CLAUDE_API_KEY nonempty presence confirmed; value neither copied nor emitted",
+  "authentication": "NOT_TESTED; await common verified API-auth procedure",
+  "networkOrPersistentAuthSettingsChanged": false,
+  "generatedProductArtifactsChanged": false,
+  "productSourceEdits": 0,
+  "claudeModelCalls": 0,
+  "jevCalls": 0
+}

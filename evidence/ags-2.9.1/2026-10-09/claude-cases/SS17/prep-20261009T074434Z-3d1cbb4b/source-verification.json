@@ -1,0 +1,291 @@
+{
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "files": [
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS17/README.md",
+      "bytes": 4999,
+      "sha256": "934a1fa033e659b02eb9c7f3f1d08ca9e1c03fa61874bb1b6c59da8baa8607f8",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS17/SS17-isolated-offline.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS17/SS17-isolated-offline.stdout.log",
+      "bytes": 1553,
+      "sha256": "27a00bd0a767673be1940ff338a0df1a597da5470f9b0afcad09af7b164fade6",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS17/SS17.offline.node.mjs",
+      "bytes": 23500,
+      "sha256": "b3ead3c63af42779f643d55aae0af2185046d3b96270c9032846b9bdf09d6f59",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS17/SS17.result.public.json",
+      "bytes": 19718,
+      "sha256": "744ecab37af0ca36965021f0505c7ec5eff707274f683e3f3c12528b1c7e334b",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS17/commands.public.json",
+      "bytes": 1317,
+      "sha256": "a268972f8a283101b39d6091fba6fdbc2100ca88117944487d983756a7b3d8a4",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS17/existing-scope-regressions.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS17/existing-scope-regressions.stdout.log",
+      "bytes": 586,
+      "sha256": "b8b755926c3f68513df0cd43f8e01dc8442873265700ae4a3d85940c32e7a51a",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS17/fixture.SS17.json",
+      "bytes": 4132,
+      "sha256": "ee62e35e82e5e5861df770df10c127640e880cf77aa86ac7e33c483c6a1483be",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS17/git-readonly-trace.public.jsonl",
+      "bytes": 4916,
+      "sha256": "65204c72988370e9a86bbae724f63331a50db38ba247ff541342eae294e3f9d1",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS17/input.originalPrompt.txt",
+      "bytes": 184,
+      "sha256": "c7b41247e26d7e18de50acacf0bf1f2e3bd03e38f0b100c899598f957f3d6279",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS17/observations.public.json",
+      "bytes": 89129,
+      "sha256": "94afda1cef5a8364229f1f5f9d2339c2a0afb9593d553ae7717ddddffb05e031",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS17/request.public.json",
+      "bytes": 254900,
+      "sha256": "3c2059fa4158c44c3276f0ac0ec3b4ac7a4ef04c8b0947aab9f2985529486d3a",
+      "manifestMatch": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS17/manifest.json",
+      "bytes": 11171,
+      "sha256": "72304b059910d5b5e079ef3d52883a4f13d4aafeab966545202b1026baf03780",
+      "manifestMatch": null
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS17/SHA256SUMS",
+      "bytes": 1277,
+      "sha256": "819da558d538784a49fda0890905e12440a2119a87df8cb9e52801e51ef71525",
+      "manifestMatch": null
+    }
+  ],
+  "sha256sumsChecks": [
+    {
+      "path": "README.md",
+      "expectedSHA256": "934a1fa033e659b02eb9c7f3f1d08ca9e1c03fa61874bb1b6c59da8baa8607f8",
+      "actualSHA256": "934a1fa033e659b02eb9c7f3f1d08ca9e1c03fa61874bb1b6c59da8baa8607f8",
+      "matches": true
+    },
+    {
+      "path": "SS17-isolated-offline.stderr.log",
+      "expectedSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actualSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matches": true
+    },
+    {
+      "path": "SS17-isolated-offline.stdout.log",
+      "expectedSHA256": "27a00bd0a767673be1940ff338a0df1a597da5470f9b0afcad09af7b164fade6",
+      "actualSHA256": "27a00bd0a767673be1940ff338a0df1a597da5470f9b0afcad09af7b164fade6",
+      "matches": true
+    },
+    {
+      "path": "SS17.offline.node.mjs",
+      "expectedSHA256": "b3ead3c63af42779f643d55aae0af2185046d3b96270c9032846b9bdf09d6f59",
+      "actualSHA256": "b3ead3c63af42779f643d55aae0af2185046d3b96270c9032846b9bdf09d6f59",
+      "matches": true
+    },
+    {
+      "path": "SS17.result.public.json",
+      "expectedSHA256": "744ecab37af0ca36965021f0505c7ec5eff707274f683e3f3c12528b1c7e334b",
+      "actualSHA256": "744ecab37af0ca36965021f0505c7ec5eff707274f683e3f3c12528b1c7e334b",
+      "matches": true
+    },
+    {
+      "path": "commands.public.json",
+      "expectedSHA256": "a268972f8a283101b39d6091fba6fdbc2100ca88117944487d983756a7b3d8a4",
+      "actualSHA256": "a268972f8a283101b39d6091fba6fdbc2100ca88117944487d983756a7b3d8a4",
+      "matches": true
+    },
+    {
+      "path": "existing-scope-regressions.stderr.log",
+      "expectedSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actualSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matches": true
+    },
+    {
+      "path": "existing-scope-regressions.stdout.log",
+      "expectedSHA256": "b8b755926c3f68513df0cd43f8e01dc8442873265700ae4a3d85940c32e7a51a",
+      "actualSHA256": "b8b755926c3f68513df0cd43f8e01dc8442873265700ae4a3d85940c32e7a51a",
+      "matches": true
+    },
+    {
+      "path": "fixture.SS17.json",
+      "expectedSHA256": "ee62e35e82e5e5861df770df10c127640e880cf77aa86ac7e33c483c6a1483be",
+      "actualSHA256": "ee62e35e82e5e5861df770df10c127640e880cf77aa86ac7e33c483c6a1483be",
+      "matches": true
+    },
+    {
+      "path": "git-readonly-trace.public.jsonl",
+      "expectedSHA256": "65204c72988370e9a86bbae724f63331a50db38ba247ff541342eae294e3f9d1",
+      "actualSHA256": "65204c72988370e9a86bbae724f63331a50db38ba247ff541342eae294e3f9d1",
+      "matches": true
+    },
+    {
+      "path": "input.originalPrompt.txt",
+      "expectedSHA256": "c7b41247e26d7e18de50acacf0bf1f2e3bd03e38f0b100c899598f957f3d6279",
+      "actualSHA256": "c7b41247e26d7e18de50acacf0bf1f2e3bd03e38f0b100c899598f957f3d6279",
+      "matches": true
+    },
+    {
+      "path": "manifest.json",
+      "expectedSHA256": "72304b059910d5b5e079ef3d52883a4f13d4aafeab966545202b1026baf03780",
+      "actualSHA256": "72304b059910d5b5e079ef3d52883a4f13d4aafeab966545202b1026baf03780",
+      "matches": true
+    },
+    {
+      "path": "observations.public.json",
+      "expectedSHA256": "94afda1cef5a8364229f1f5f9d2339c2a0afb9593d553ae7717ddddffb05e031",
+      "actualSHA256": "94afda1cef5a8364229f1f5f9d2339c2a0afb9593d553ae7717ddddffb05e031",
+      "matches": true
+    },
+    {
+      "path": "request.public.json",
+      "expectedSHA256": "3c2059fa4158c44c3276f0ac0ec3b4ac7a4ef04c8b0947aab9f2985529486d3a",
+      "actualSHA256": "3c2059fa4158c44c3276f0ac0ec3b4ac7a4ef04c8b0947aab9f2985529486d3a",
+      "matches": true
+    }
+  ],
+  "manifestPayloadChecks": {
+    "checked": 13,
+    "mismatches": []
+  },
+  "sha256sumsCoverage": {
+    "checked": 14,
+    "mismatches": []
+  },
+  "originalPrompt": {
+    "bytes": 184,
+    "sha256": "c7b41247e26d7e18de50acacf0bf1f2e3bd03e38f0b100c899598f957f3d6279",
+    "equalsFrozenCasePromptBytes": true
+  },
+  "oldSourceProvenanceOnly": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "fullFixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "extractedCaseEqualsOriginal": true,
+    "sourceReferences": [
+      {
+        "skillId": "change-scope-guardian",
+        "path": "skills/change-scope-guardian/SKILL.md",
+        "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e",
+        "observedSHA256": "4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e",
+        "matches": true
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+        "observedSHA256": "19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+        "matches": true
+      },
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+        "observedSHA256": "f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+        "matches": true
+      },
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+        "observedSHA256": "aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+        "matches": true
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+        "observedSHA256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+        "matches": true
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+        "observedSHA256": "d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+        "matches": true
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+        "observedSHA256": "96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+        "matches": true
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+        "observedSHA256": "f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+        "matches": true
+      }
+    ],
+    "notAProductTestCandidate": true
+  },
+  "oracleSHA256": {
+    "value": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "status": "Recorded full-corpus oracle digest in fixed public manifest; not recomputed in this preparation"
+  },
+  "instructionsRead": [
+    {
+      "path": "/workspace/agent-governance-suite/AGENTS.md",
+      "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827",
+      "purpose": "Preparation instruction/source reading only; no actual Claude skill-read credit"
+    },
+    {
+      "path": "/workspace/agent-governance-suite/skills/change-scope-guardian/SKILL.md",
+      "sha256": "4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e",
+      "purpose": "Preparation instruction/source reading only; no actual Claude skill-read credit"
+    },
+    {
+      "path": "/workspace/agent-governance-suite/claude-plugin/skills/change-scope-guardian/SKILL.md",
+      "sha256": "05afc12d62688396698afbefad4bb9ef7e27869e960996eeb39c858606e5513a",
+      "purpose": "Preparation instruction/source reading only; no actual Claude skill-read credit"
+    },
+    {
+      "path": "/workspace/agent-governance-suite/skills/change-scope-guardian/references/entry-details.md",
+      "sha256": "d164e59584763265a4bd8ccfd6a4ee75560f1df4ef30cd44dee68d814baf185b",
+      "purpose": "Preparation instruction/source reading only; no actual Claude skill-read credit"
+    }
+  ],
+  "fallbackCatalogSearch": {
+    "workspaceDotAgentsSkillsFound": false,
+    "repositoryDotAgentsSkillsFound": false,
+    "repositoryDotAgentsFile": "plugins/marketplace.json",
+    "selectedSources": "Repository skills/ and claude-plugin/ skills read as test source material"
+  },
+  "currentCandidateObjectAvailableInFreshRemoteClone": false
+}

@@ -1,0 +1,18 @@
+{
+  "caseId": "SS17",
+  "phase": "PREPARATION_ONLY",
+  "softBudgetUsd": 2,
+  "reservationIsNotConsumptionTarget": true,
+  "parentGlobalReservationUsd": 78,
+  "parentReservedCaseCount": 39,
+  "spentUsd": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadInputTokens": 0,
+  "cacheCreationInputTokens": 0,
+  "paidAttempts": 0,
+  "failedPaidAttempts": 0,
+  "retries": 0,
+  "calls": [],
+  "resumeAccounting": "Include every preparatory and test API call, failures, retries, model-specific costs, cache reads/writes and any hidden retry observed. Stop before another call when remaining allowance cannot bound it; report unknown cost as unknown and halt, never as zero."
+}

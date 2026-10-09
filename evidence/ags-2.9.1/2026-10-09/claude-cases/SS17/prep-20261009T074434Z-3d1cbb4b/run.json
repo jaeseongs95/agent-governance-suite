@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "claude-case-preparation/1.0",
+  "caseId": "SS17",
+  "title": "변경 범위만 확인",
+  "runId": "prep-20261009T074434Z-3d1cbb4b",
+  "createdAt": "2026-10-09T07:44:34.430741+00:00",
+  "state": "PREPARED_WAITING_FOR_VERIFIED_CANDIDATE_AND_COMMON_CLAUDE_SETTINGS",
+  "actualTestStatus": "NOTRUN",
+  "stages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "actualSelectedSkillIds": null,
+  "actualHostReceipt": null,
+  "casePassClaim": false,
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS17/prep-20261009T074434Z-3d1cbb4b",
+  "candidateRequested": {
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "status": "Parent reports local fixed R17 only; independent SOURCE judgment and remote publication await parent. Object absent from fresh remote clone."
+  },
+  "originalPromptSHA256": "c7b41247e26d7e18de50acacf0bf1f2e3bd03e38f0b100c899598f957f3d6279",
+  "expected": {
+    "required": [
+      "change-scope-guardian"
+    ],
+    "allowed": [],
+    "forbidden": [
+      "code-review",
+      "ponytail"
+    ],
+    "notApplicable": [
+      "cs-engineering",
+      "test-engineering",
+      "software-security-auditor",
+      "orchestrator",
+      "korean-prose-editor"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "unofficialIdsForbidden": [
+      "scope guardian"
+    ],
+    "prohibitedActions": [
+      "reset",
+      "restore",
+      "stash",
+      "clean",
+      "quality-review",
+      "recovery",
+      "commit"
+    ],
+    "hold": "Absent or mismatched saved baseline / repository identity: abstain from comparison and ownership attribution. Independently frozen digest and task envelope must bind the baseline."
+  },
+  "existingResultSummary": {
+    "status": "NOTRUN_HOST_WITH_OFFLINE_EVIDENCE_AND_KNOWN_FINDING",
+    "existingRegressions": 6,
+    "existingOfflineTests": 21,
+    "realHostAttempts": 0,
+    "knownFinding": "host-active-state-supply-gap: REPRODUCED_OFFLINE; not new, not repaired, not a conforming host PASS",
+    "replayedInThisRun": false
+  },
+  "resumeConditions": [
+    "Parent supplies verified fixed candidate commit/tree, independent SOURCE judgment and immutable remote locator; verify exact bytes and generated plugin consistency without editing product.",
+    "Parent supplies exact common Claude model/revision/effort, successful API-auth procedure, prior-check results and session-specific runtime/plugin/hooks/MCP configuration. No model default or guessed auth substitution.",
+    "Parent confirms read-only tool policy and sanitized host evidence collection tied to this original input, current candidate and session.",
+    "For actual apply/verify, provide target dirty repository, saved WorkspaceBaseline.v1, externally frozen baselineArtifactDigest and matching TaskEnvelope.v1. Otherwise preserve null context and hold without guessing.",
+    "Account for all prior calls and remaining case allowance before each dispatch. JEV remains disabled until individually assigned."
+  ],
+  "productTestCalls": 0,
+  "jevCalls": 0
+}
