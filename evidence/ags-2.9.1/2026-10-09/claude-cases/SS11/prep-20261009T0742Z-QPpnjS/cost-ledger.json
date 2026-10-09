@@ -1,0 +1,25 @@
+{
+  "caseId": "SS11",
+  "runId": "prep-20261009T0742Z-QPpnjS",
+  "softBudgetUsd": 2,
+  "sharedReservation": {
+    "cases": 39,
+    "totalUsd": 78,
+    "notSpendingTarget": true
+  },
+  "calls": [],
+  "totals": {
+    "claudeAPICalls": 0,
+    "JEVCalls": 0,
+    "otherModelCalls": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "cacheCreationInputTokens": 0,
+    "retryCalls": 0,
+    "failedCalls": 0,
+    "actualCostUsd": 0,
+    "remainingSoftBudgetUsd": 2
+  },
+  "rule": "Include every preparation, successful, failed and retried call. Use authoritative usage and billed cost, record unknowns explicitly, stop next call if unknown cost or approaching USD 2. CLI max-budget-usd only applies to a print invocation and is not an aggregate case ledger. No automatic retries or fallback until common policy is supplied."
+}

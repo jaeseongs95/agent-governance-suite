@@ -1,0 +1,231 @@
+{
+  "caseId": "SS11",
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "remote": "https://github.com/jaeseongs95/agent-governance-suite",
+  "sourcePackageSHA256SUMS": "2e673cb26799ff8c0360d9e4a049c3c8d20fc4693223beedc2153913f0996f88",
+  "payloadCheckCount": 20,
+  "allMatch": true,
+  "checks": [
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/README.md",
+      "bytes": 4398,
+      "expectedSHA256": "a49235f2e4beebd847e88592a2192979d0d1406efa4990c852f875976c38ca14",
+      "actualSHA256": "a49235f2e4beebd847e88592a2192979d0d1406efa4990c852f875976c38ca14",
+      "match": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/SS11.fixture.json",
+      "bytes": 4114,
+      "expectedSHA256": "e9324b145fef34687dff022cbecb4185fce154c267426ddd9a8d33d22ea99010",
+      "actualSHA256": "e9324b145fef34687dff022cbecb4185fce154c267426ddd9a8d33d22ea99010",
+      "match": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/SS11.result.json",
+      "bytes": 18884,
+      "expectedSHA256": "3e5fd666a6020cf7db50ccfc408eaceadb9eb36c35ff95733483e8152b2b7f62",
+      "actualSHA256": "3e5fd666a6020cf7db50ccfc408eaceadb9eb36c35ff95733483e8152b2b7f62",
+      "match": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/engineering-test-result.json",
+      "bytes": 2571,
+      "expectedSHA256": "9babcfceff39bb66097f28758b4c55790f64f135d26809cb9d778a0ec91a4215",
+      "actualSHA256": "9babcfceff39bb66097f28758b4c55790f64f135d26809cb9d778a0ec91a4215",
+      "match": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/existing-regression.command.json",
+      "bytes": 453,
+      "expectedSHA256": "4ae930f9c79b0b9571483f5ff8a0cfcd68d5ebfe7bc969651fcc228062fb2a97",
+      "actualSHA256": "4ae930f9c79b0b9571483f5ff8a0cfcd68d5ebfe7bc969651fcc228062fb2a97",
+      "match": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/existing-regression.stderr.log",
+      "bytes": 99,
+      "expectedSHA256": "f5c157d48b1fabac4eddfd5b29d430aaa5737bf1d521f1aad9f763cd858ff8f2",
+      "actualSHA256": "f5c157d48b1fabac4eddfd5b29d430aaa5737bf1d521f1aad9f763cd858ff8f2",
+      "match": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/existing-regression.stdout.log",
+      "bytes": 173,
+      "expectedSHA256": "8491752db75f794b3c7a8b62aa4f783aabc8dd9e738183b468fd7bf70553454b",
+      "actualSHA256": "8491752db75f794b3c7a8b62aa4f783aabc8dd9e738183b468fd7bf70553454b",
+      "match": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/initial-isolated.command.json",
+      "bytes": 446,
+      "expectedSHA256": "34a777ac7076b4755850549eeb909a3fd4cc320f7bed8d142ff9b00795a1fffb",
+      "actualSHA256": "34a777ac7076b4755850549eeb909a3fd4cc320f7bed8d142ff9b00795a1fffb",
+      "match": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/initial-isolated.stderr.log",
+      "bytes": 1170,
+      "expectedSHA256": "afd778a0f7e4b7eb19bf1fd9460857d4c9308f6b254e2f3b33472f65c7026feb",
+      "actualSHA256": "afd778a0f7e4b7eb19bf1fd9460857d4c9308f6b254e2f3b33472f65c7026feb",
+      "match": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/initial-isolated.stdout.log",
+      "bytes": 1733,
+      "expectedSHA256": "c78824e543e292423764c02bcc17a95f000e3c6eab8754e3b032dbb5c58ec726",
+      "actualSHA256": "c78824e543e292423764c02bcc17a95f000e3c6eab8754e3b032dbb5c58ec726",
+      "match": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/initial-vitest-isolated.json",
+      "bytes": 5377,
+      "expectedSHA256": "fc6ac61a425fb9791b71a079dd8c009b71935ed2e7d1b7c8f3a51e0440fc2620",
+      "actualSHA256": "fc6ac61a425fb9791b71a079dd8c009b71935ed2e7d1b7c8f3a51e0440fc2620",
+      "match": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/input/originalPrompt.utf8.txt",
+      "bytes": 184,
+      "expectedSHA256": "88737bc3b03aa7912b0798d4eb12360b164457d7c6a0703d68225099cfc4f5a8",
+      "actualSHA256": "88737bc3b03aa7912b0798d4eb12360b164457d7c6a0703d68225099cfc4f5a8",
+      "match": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/isolated-observations.json",
+      "bytes": 64482,
+      "expectedSHA256": "bbcddc2a6ad304d7efb84026aaf92ab9adeb1879e9b17a8306956ea2b56c1466",
+      "actualSHA256": "bbcddc2a6ad304d7efb84026aaf92ab9adeb1879e9b17a8306956ea2b56c1466",
+      "match": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/isolated.command.json",
+      "bytes": 559,
+      "expectedSHA256": "5a2ee34b8c5d8707af7986a6344183ac4f82aac528dc9ca911fcb260727594ea",
+      "actualSHA256": "5a2ee34b8c5d8707af7986a6344183ac4f82aac528dc9ca911fcb260727594ea",
+      "match": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/isolated.stderr.log",
+      "bytes": 1170,
+      "expectedSHA256": "afd778a0f7e4b7eb19bf1fd9460857d4c9308f6b254e2f3b33472f65c7026feb",
+      "actualSHA256": "afd778a0f7e4b7eb19bf1fd9460857d4c9308f6b254e2f3b33472f65c7026feb",
+      "match": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/isolated.stdout.log",
+      "bytes": 1733,
+      "expectedSHA256": "4fb2d58608fc0c2f9f9b0b85dd0bd3ed1d614cef96109e95a977513097384b61",
+      "actualSHA256": "4fb2d58608fc0c2f9f9b0b85dd0bd3ed1d614cef96109e95a977513097384b61",
+      "match": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/manifest.json",
+      "bytes": 16477,
+      "expectedSHA256": "91701cb575ad00ce915dd20b37fe605670034b5f14545f75259a6c85c62e23c6",
+      "actualSHA256": "91701cb575ad00ce915dd20b37fe605670034b5f14545f75259a6c85c62e23c6",
+      "match": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/reproduce/README.md",
+      "bytes": 1706,
+      "expectedSHA256": "9d0098d0b15c68945f473c2507ae8a38a6f25b9449f7f36a49e6a85d5358bc80",
+      "actualSHA256": "9d0098d0b15c68945f473c2507ae8a38a6f25b9449f7f36a49e6a85d5358bc80",
+      "match": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/reproduce/SS11.isolated.test.ts",
+      "bytes": 14632,
+      "expectedSHA256": "c053b2a3505abbd0ee6a0f52a65be79982fd4a41df72bf147affc5e3b7db6691",
+      "actualSHA256": "c053b2a3505abbd0ee6a0f52a65be79982fd4a41df72bf147affc5e3b7db6691",
+      "match": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS11/vitest-isolated.json",
+      "bytes": 5402,
+      "expectedSHA256": "8e70d7564dbd85dcec0f1789cfff4eb4276236765c9273c4180558870bbac074",
+      "actualSHA256": "8e70d7564dbd85dcec0f1789cfff4eb4276236765c9273c4180558870bbac074",
+      "match": true
+    }
+  ],
+  "exactPromptMatchesFixture": true,
+  "corpusFile": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "path": "tests/skill-classification/fixtures.json",
+    "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "caseMatchesPublishedFixture": true
+  },
+  "frozenCorpusOracle": {
+    "sha256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "serialization": "JSON.stringify-equivalent ordered oracle fields; historical evaluation.ts oracleDigest field order"
+  },
+  "historicalInstructions": [
+    {
+      "path": "AGENTS.md",
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "sha256": "sha256:d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827",
+      "matchesHistoricalReference": true,
+      "purpose": "historical source evidence; not a product test target"
+    },
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "sha256": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "matchesHistoricalReference": true,
+      "purpose": "historical source evidence; not a product test target"
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "sha256": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "matchesHistoricalReference": true,
+      "purpose": "historical source evidence; not a product test target"
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "sha256": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+      "matchesHistoricalReference": true,
+      "purpose": "historical source evidence; not a product test target"
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "sha256": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "matchesHistoricalReference": true,
+      "purpose": "historical source evidence; not a product test target"
+    },
+    {
+      "path": "skills/code-review/SKILL.md",
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "sha256": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "matchesHistoricalReference": true,
+      "purpose": "historical source evidence; not a product test target"
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "sha256": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "matchesHistoricalReference": true,
+      "purpose": "historical source evidence; not a product test target"
+    },
+    {
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "sha256": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "matchesHistoricalReference": true,
+      "purpose": "historical source evidence; not a product test target"
+    }
+  ],
+  "missingOriginals": [
+    {
+      "sourceId": "TEST-SPEC.seq7.ko.md",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Not in frozen repository; embedded SS11 sourceSpec is the only available text"
+    },
+    {
+      "sourceId": "initial-run exact test source and snapshot",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Initial historical logs/observations exist; no exact initial code snapshot was retained before the final test-only literal-narrowing change"
+    }
+  ]
+}
