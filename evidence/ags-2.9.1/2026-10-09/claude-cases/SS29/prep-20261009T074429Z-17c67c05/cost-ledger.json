@@ -1,0 +1,26 @@
+{
+  "caseId": "SS29",
+  "runId": "prep-20261009T074429Z-17c67c05",
+  "softBudgetUsd": 2,
+  "includesPreparationCalls": true,
+  "reservedAll39CasesUsd": 78,
+  "spendTarget": false,
+  "actualApiCalls": {
+    "claude": 0,
+    "jev": 0,
+    "vendor": 0
+  },
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cacheRead": 0,
+    "cacheCreation": 0
+  },
+  "retries": 0,
+  "failedPaidCalls": 0,
+  "actualCostUsd": 0,
+  "remainingSoftBudgetUsd": 2,
+  "entries": [],
+  "accountingRule": "Before each API dispatch estimate maximum cost against remaining case budget; record actual model, input/output/cache tokens, reported USD, retries and failed dispatches. Unknown cost is unknown, not zero. Stop before the next call near limit or when its worst-case cost cannot fit. CLI max-budget-usd supplements external accounting. No automatic retry; all retry attempts remain in budget.",
+  "JEVAllocation": "NOT_ASSIGNED_DO_NOT_CALL"
+}

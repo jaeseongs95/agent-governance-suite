@@ -1,0 +1,42 @@
+{
+  "caseId": "SS29",
+  "title": "점수와 불확실성 표현",
+  "runId": "prep-20261009T074429Z-17c67c05",
+  "phase": "PREPARATION_COMPLETE_WAITING_PARENT",
+  "productVerdict": "NOT_RUN",
+  "historicalVerdict": "FAIL",
+  "candidateFromDelegation": {
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "name": "R17",
+    "independentSOURCEVerified": false,
+    "remotePublicationVerified": false,
+    "tested": false
+  },
+  "commonModel": null,
+  "commonEffort": null,
+  "authenticationProcedure": null,
+  "selected": "NOTRUN",
+  "read": "NOTRUN",
+  "applied": "NOTRUN",
+  "verified": "NOTRUN",
+  "agentSelectedSkillIds": null,
+  "hostReceipt": null,
+  "semanticAccuracy": null,
+  "blockers": [
+    "Parent verified candidate/SOURCE verdict and fixed remote R17 evidence not received",
+    "Parent shared exact Claude model/effort and successful process-only API authentication procedure not received",
+    "Parent preflight results and approved host/plugin/provider runtime setup not received",
+    "originalPrompt and semanticOracle are null: do not invent original request; parent must define operational host input framing",
+    "Actual runtime inventory/host acceptance, UI wording and baseline fallback evidence missing",
+    "Live qualification and calibration provenance missing; synthetic profile PASS must not substitute"
+  ],
+  "resumeConditions": [
+    "Receive parent verified candidate and tree plus independent SOURCE verdict and remote references",
+    "Receive shared Claude API authentication/model/effort and preflight receipts without secret values",
+    "Bind original five variants and all source criteria to approved host input framing and isolated work/output directories",
+    "Confirm allowed mock provider configuration, real inventory/plugin load and read-only product policy",
+    "Budget remaining and per-call cap verified; JEV remains disabled absent separate allocation"
+  ],
+  "preparationIsProductPass": false
+}

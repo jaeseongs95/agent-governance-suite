@@ -1,0 +1,75 @@
+{
+  "observedAt": "2026-10-09T07:46:34.473567+00:00",
+  "cliPath": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+  "resolvedPath": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+  "onPATH": false,
+  "receipts": [
+    {
+      "argv": [
+        "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+        "--version"
+      ],
+      "exitCode": 0,
+      "stdout": "2.1.286 (Claude Code)",
+      "stderr": "",
+      "apiCalls": 0
+    },
+    {
+      "argv": [
+        "node",
+        "--version"
+      ],
+      "exitCode": 0,
+      "stdout": "v24.19.0",
+      "stderr": "",
+      "apiCalls": 0
+    },
+    {
+      "argv": [
+        "pnpm",
+        "--version"
+      ],
+      "exitCode": 0,
+      "stdout": "11.19.0",
+      "stderr": "",
+      "apiCalls": 0
+    }
+  ],
+  "helpExitCode": 0,
+  "helpFlagsPresent": {
+    "--model": true,
+    "--effort": true,
+    "--plugin-dir": true,
+    "--mcp-config": true,
+    "--strict-mcp-config": true,
+    "--max-budget-usd": true,
+    "--output-format": true,
+    "--no-session-persistence": true,
+    "--permission-mode": true
+  },
+  "authenticationValidated": false,
+  "CLAUDE_API_KEYPresent": true,
+  "credentialValuesPrintedCopiedOrPublished": false,
+  "classificationConfigEnvPresent": false,
+  "agentsSkillsPathsExist": {
+    "/workspace/.agents/skills": false,
+    "/workspace/agent-governance-suite/.agents/skills": false,
+    "/workspace/ss29-prep-20261009/repo/.agents/skills": false
+  },
+  "evidenceCommitContainsProductAGENTS": false,
+  "guidelinesRepositoryCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+  "guidelinesRead": [
+    "AGENTS.md",
+    "skills/test-engineering/SKILL.md",
+    "skills/evaluation-validity-auditor/SKILL.md",
+    "skills/orchestrator/SKILL.md",
+    "skills/orchestrator/references/engineering-practices/test-design.md",
+    "skills/orchestrator/references/engineering-practices/test-proof.md",
+    "skills/orchestrator/references/engineering-practices/cli.md",
+    "skills/change-scope-guardian/SKILL.md",
+    "skills/mutation-risk-preflight/SKILL.md"
+  ],
+  "guidelineNote": "Existing workspace product is AGS 2.9.0; reading it is preparation, not R17 validation. Historical classification reference is absent here; reread verified R17 instructions after handoff.",
+  "productCodeOrGeneratedArtifactsModified": false,
+  "permanentAuthenticationPermissionsNetworkPolicyChanged": false
+}

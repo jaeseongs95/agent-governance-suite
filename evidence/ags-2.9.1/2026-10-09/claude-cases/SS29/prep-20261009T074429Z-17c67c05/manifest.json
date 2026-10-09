@@ -1,0 +1,46 @@
+{
+  "kind": "SS29-claude-preparation-only",
+  "runId": "prep-20261009T074429Z-17c67c05",
+  "productVerdict": "NOT_RUN",
+  "files": [
+    {
+      "path": "cost-ledger.json",
+      "bytes": 922,
+      "sha256": "74f6db533c9acb6bc4115fe326aadb4fddd4e601cd016384ff881c3a6aba816d"
+    },
+    {
+      "path": "environment-receipt.json",
+      "bytes": 2423,
+      "sha256": "4c45b06f3ed2dd25cf3da000bbf6240537a3c733428d2cae5394e21940804769"
+    },
+    {
+      "path": "execution-plan.md",
+      "bytes": 4815,
+      "sha256": "0ad0755699cc2c694eff52922317b98db4cfe719bf5b3110bd0a7a8135227355"
+    },
+    {
+      "path": "input-evidence.json",
+      "bytes": 2260,
+      "sha256": "0eacfaf66ac34b3f5482f658447bec60f029a62c1c5032efd6f8e362032ac680"
+    },
+    {
+      "path": "readiness.json",
+      "bytes": 2017,
+      "sha256": "a2fe1c50c5c9b43cdf2ecf93abe29b182439ce08bae80c218de2c39f1172142d"
+    },
+    {
+      "path": "report.md",
+      "bytes": 3696,
+      "sha256": "7ea63e0a36176814063f040989784ddb56b68b6ac172e2a5765c9c0a75ddd79e"
+    },
+    {
+      "path": "source-integrity.json",
+      "bytes": 11874,
+      "sha256": "daccacc7c55c60e3c5754083249120f5b3287dd2a2c0fb9351563e86b6e68351"
+    }
+  ],
+  "excludes": [
+    "manifest.json",
+    "SHA256SUMS"
+  ]
+}

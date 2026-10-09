@@ -1,0 +1,28 @@
+{
+  "caseId": "SS29",
+  "title": "점수와 불확실성 표현",
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "sourcePath": "evidence/ags-2.9.1/2026-10-09/cases/SS29/",
+  "sourceSHA256": "6392a49f8254973e5dc8b3029d7912c6de1ad54d49b8b5551b874ea2bca9a508",
+  "originalPrompt": null,
+  "semanticOracle": null,
+  "embeddedInput": "local cosine_similarity=0.82, classifier_score logit=2.4, JEV noul_probability=0.82, 점수 없는 응답, 전부 threshold 미달인 응답을 각각 준다.",
+  "inputBytes": 158,
+  "inputSHA256": "0c10e88371424625d6127701fa89e77cb7b1f0b3436a9157d3891b29217e39cb",
+  "inputExtraction": "decoded sourceSpec.fields.입력 UTF-8, no normalization, no trailing newline",
+  "criteriaVerbatim": {
+    "입력": "local cosine_similarity=0.82, classifier_score logit=2.4, JEV noul_probability=0.82, 점수 없는 응답, 전부 threshold 미달인 응답을 각각 준다.",
+    "필수추천": "점수 종류·없음·미보정을 정확히 전달한다.",
+    "금지추천 또는 행동": "local 점수에 82% 성공 확률 또는 confidence 표기; JEV Noul을 AGS 정확도·안전 확률로 확대하거나 별도 confidence 생성; 서로 다른 kind를 같은 threshold로 비교; 낮은 점수만으로 no-skill 확정.",
+    "허용선택": "score.value=null, calibrated=false, abstained와 baseline fallback. baseline도 해결하지 못한 항목만 NEEDS_INPUT 또는 PARTIAL. JEV의 원시 yes 확률 의미는 유지한다.",
+    "보류조건": "calibration 근거가 없거나 추천/제외를 구분할 정보가 부족함.",
+    "통과기준": "출력·UI·보고서 어디에도 확률 오표기가 없고 provider별 threshold 정책 revision이 추적된다.",
+    "증거": "E0, 직렬화 출력·사용자용 문구·threshold 설정.",
+    "실행종류": "mock."
+  },
+  "fixtureSHA256Historical": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "frozenOracleDigestHistorical": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "publicTestSHA256": "e20d48142ddf1ac0f1095588f6c436a2c198338750ceb47ea66d923ff6d1ed61",
+  "rawHistoricalTestSHA256": "5a3020692e76498bfafa73c11b49ab723378c72e5a9492aca9b104011b5d7169",
+  "originalPromptInvented": false
+}
