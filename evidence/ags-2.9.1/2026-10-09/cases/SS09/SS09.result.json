@@ -1,0 +1,725 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS09",
+  "title": "기술 키워드가 있는 일반 설명",
+  "targetRelease": "2.9.1",
+  "requestedBranch": "codex/skill-classification-2.9.1",
+  "checkoutMode": "isolated detached worktree at requested fixed commit",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA256": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "status": "NOTRUN",
+  "statusReason": "Frozen execution kind is live. Only independent offline verification completed; no actual provider or host AGENT selection was executed. Development defects remain FAIL.",
+  "developmentStatus": "FAIL",
+  "executionKind": [
+    "static",
+    "isolated-existing-regression",
+    "offline-mock-MCP",
+    "new-offline-boundary",
+    "new-offline-real-clock"
+  ],
+  "API0": true,
+  "apiCalls": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0
+  },
+  "past21RunReexecuted": false,
+  "productTrackedFilesChanged": [],
+  "selected": "NOTRUN",
+  "read": "NOTRUN",
+  "applied": "NOTRUN",
+  "verified": "NOTRUN",
+  "agentSelectedSkillIds": null,
+  "hostReceipt": null,
+  "semanticAccuracy": null,
+  "semanticAccuracyReason": "No real model semantic observations or accepted live host selection; no synthetic model accuracy is invented.",
+  "variants": [
+    {
+      "variantId": "base",
+      "status": "NOTRUN",
+      "offlineStatus": "PASS",
+      "providerLive": "NOTRUN",
+      "hostLive": "NOTRUN",
+      "input": {
+        "originalPrompt": "SQLite WAL이 무엇인지 초보자에게 두 문장으로 설명해 줘. 설계·구현·감사는 요청하지 않아.",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "explicitSkillIds": [],
+        "ruleRequiredSkillIds": []
+      },
+      "expected": {
+        "requiredSkillIds": [],
+        "allowedSkillIds": [],
+        "forbidden": [
+          "cs-engineering",
+          "ponytail",
+          "orchestrator",
+          "software-security-auditor",
+          "code-review",
+          "test-engineering"
+        ],
+        "validAcceptedNoSkill": [],
+        "noSkillReason": "General beginner explanation only; request explicitly excludes design, implementation and audits. WAL/SQLite words alone do not activate specialists.",
+        "providerOutcome": "SUCCESS for a valid no-skill response; failures retain error/status instead of being treated as successful empty selection"
+      },
+      "observed": {
+        "providerOutcome": "SUCCESS",
+        "providerResponseSource": "synthetic provider fixture; not model semantic inference",
+        "judgmentCounts": {
+          "notNeeded": 24,
+          "needed": 0,
+          "uncertain": 0
+        },
+        "mockAdviceNeededSkillIds": [],
+        "agentSelectedSkillIds": null,
+        "selectionStatus": "PROPOSED",
+        "adviceApplied": false,
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+        "promptAndAll24SkillsPreserved": true,
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "command": {
+        "argv": [
+          "node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "tests/ss09-development/SS09.test.ts",
+          "--maxWorkers=1",
+          "--no-file-parallelism",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile=<EVIDENCE_ROOT>/SS09.vitest.json"
+        ],
+        "cwd": "<CANDIDATE_ROOT>",
+        "startedAt": "2026-10-09T03:00:15.269265+00:00",
+        "finishedAt": "2026-10-09T03:00:17.139580+00:00",
+        "exitCode": 1,
+        "executionKind": "offline-mock",
+        "API0": true
+      },
+      "evidence": [
+        "SS09.fixture.json",
+        "SS09.observed.json#traces/base",
+        "SS09.vitest.json"
+      ],
+      "missingInputs": [
+        {
+          "input": "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG",
+          "observed": "UNSET",
+          "needed": "Approved installation config parsed by readClassificationRuntime with config, allowRemotePrivateContent, providerProfileRegistryRef and route references; current approved profile/qualification bytes."
+        },
+        {
+          "input": "Production profile qualification",
+          "observed": "NOT_PROVIDED; test profile is explicitly synthetic",
+          "needed": "Qualified fixed current-vendor model/revision/effort, prompt/adapter/profile revisions, inventory/taxonomy/configuration digests, unexpired qualification PASS, input/output/cost limits."
+        },
+        {
+          "input": "Approved native route and allowance",
+          "observed": "No approved runtime file or evidence supplied; executable availability is not capability/approval proof",
+          "needed": "providerRuntimeRef native route with approvalRef, model/options/structured capability and adapter binding; nativeAdapterDefinitionsRef with executable/cwd, host, actual capability/retry/isolation evidence, exact isolationArgs, bounded timeout/output; verified no-retry policy, current native allowance and cash budget if any. No assumed free subscription."
+        },
+        {
+          "input": "Actual host observation and current task",
+          "observed": "Session does not expose installed AGS MCP selection tools; host-attestation env UNSET",
+          "needed": "Fixed installation .mcp.json/server; AGENT_GOVERNANCE_HOST_ATTESTATION=codex or claude, actual PreToolUse/execution-wrapper exact-call observation and host session-board prompt state. Agent must independently choose IDs and record decision with hostReceipt=null; receipt only from real host observation."
+        },
+        {
+          "input": "Host discovery active/support state",
+          "observed": "Only repository default inventory was loaded; no live enabled/installed/hostSupported supply",
+          "needed": "Observed installed/enabled/host-supported skill state tied to same inventory. Known supply gap is not repaired by this test."
+        },
+        {
+          "input": "Claude host for host comparison",
+          "observed": "claude executable absent",
+          "needed": "Actual configured Claude environment if later paired-host testing is authorized; outside SS09 offline assignment."
+        }
+      ]
+    }
+  ],
+  "existingRegression": {
+    "command": {
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/skill-classification-gateway.test.ts",
+        "--maxWorkers=1",
+        "--no-file-parallelism",
+        "-t",
+        "keeps AGENT choices independent of the same advice and handles accepted no-skill distinctly",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/SS09.existing-regression.vitest.json"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-09T02:58:04.835770+00:00",
+      "finishedAt": "2026-10-09T02:58:06.382213+00:00",
+      "exitCode": 0,
+      "executionKind": "offline-mock",
+      "API0": true
+    },
+    "passed": 1,
+    "skipped": 37,
+    "failed": 0,
+    "scope": "One existing generic no-skill gateway regression only; no other SSxx fixture or suite executed. Its synthetic host receipts are test data and excluded from all actual stage evidence. This pass alone does not establish SS09 PASS.",
+    "evidence": "SS09.existing-regression.vitest.json"
+  },
+  "newAndAdaptedTests": {
+    "file": "<CANDIDATE_ROOT>/tests/ss09-development/SS09.test.ts",
+    "sha256": "sha256:c48180ca4f5a9d84c2035f70526b6e0e853c6459fe6ba9c82e82fb43476d1598",
+    "total": 22,
+    "passed": 18,
+    "failed": 4,
+    "exitCode": 1,
+    "assertions": [
+      {
+        "title": "SS09/base frozen commit fixture oracle and skill sources remain bound",
+        "status": "passed",
+        "failureMessages": []
+      },
+      {
+        "title": "SS09/base actual MCP preserves full prompt, negation, inventory and unknown context; advice is not selection",
+        "status": "passed",
+        "failureMessages": []
+      },
+      {
+        "title": "SS09/regression empty and null retain different oracle outcomes without a invented receipt",
+        "status": "passed",
+        "failureMessages": []
+      },
+      {
+        "title": "SS09/new keyword-only advice cs-engineering is detected by the frozen oracle",
+        "status": "passed",
+        "failureMessages": []
+      },
+      {
+        "title": "SS09/new keyword-only advice ponytail is detected by the frozen oracle",
+        "status": "passed",
+        "failureMessages": []
+      },
+      {
+        "title": "SS09/new keyword-only advice orchestrator is detected by the frozen oracle",
+        "status": "passed",
+        "failureMessages": []
+      },
+      {
+        "title": "SS09/new keyword-only advice software-security-auditor is detected by the frozen oracle",
+        "status": "passed",
+        "failureMessages": []
+      },
+      {
+        "title": "SS09/new keyword-only advice code-review is detected by the frozen oracle",
+        "status": "passed",
+        "failureMessages": []
+      },
+      {
+        "title": "SS09/new keyword-only advice test-engineering is detected by the frozen oracle",
+        "status": "passed",
+        "failureMessages": []
+      },
+      {
+        "title": "SS09/evaluator overlap must count a single selected skill as one false positive",
+        "status": "failed",
+        "failureMessages": [
+          "AssertionError: expected 2 to be 1 // Object.is equality\n    at <CANDIDATE_ROOT>/tests/ss09-development/SS09.test.ts:156:76\n    at file://<CANDIDATE_ROOT>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:1628:35\n    at file://<CANDIDATE_ROOT>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:26\n    at file://<CANDIDATE_ROOT>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:3319:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file://<CANDIDATE_ROOT>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:3314:10)\n    at file://<CANDIDATE_ROOT>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:3299:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file://<CANDIDATE_ROOT>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:3257:10)\n    at file://<CANDIDATE_ROOT>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:3876:64"
+        ]
+      },
+      {
+        "title": "SS09/new compact vendor payload preserves negation and null versus confirmed empty",
+        "status": "passed",
+        "failureMessages": []
+      },
+      {
+        "title": "SS09/new AUTH_UNAVAILABLE remains failure and never valid empty advice",
+        "status": "passed",
+        "failureMessages": []
+      },
+      {
+        "title": "SS09/new API_UNAVAILABLE remains failure and never valid empty advice",
+        "status": "passed",
+        "failureMessages": []
+      },
+      {
+        "title": "SS09/new malformed empty-success is INVALID, never no-skill",
+        "status": "passed",
+        "failureMessages": []
+      },
+      {
+        "title": "SS09/new malformed wrong-binding is INVALID, never no-skill",
+        "status": "passed",
+        "failureMessages": []
+      },
+      {
+        "title": "SS09/new malformed reason-missing is INVALID, never no-skill",
+        "status": "passed",
+        "failureMessages": []
+      },
+      {
+        "title": "SS09/new semantic uncertainty is not converted to no-skill",
+        "status": "passed",
+        "failureMessages": []
+      },
+      {
+        "title": "SS09/new unset installation config is UNAVAILABLE; no arbitrary default model",
+        "status": "passed",
+        "failureMessages": []
+      },
+      {
+        "title": "SS09/new unsigned empty AGENT decision is rejected; selected remains null",
+        "status": "passed",
+        "failureMessages": []
+      },
+      {
+        "title": "SS09/known-defect invalid RESP must retain independently valid charged cost",
+        "status": "failed",
+        "failureMessages": [
+          "AssertionError: expected null to be 0.1 // Object.is equality\n    at <CANDIDATE_ROOT>/tests/ss09-development/SS09.test.ts:214:53\n    at file://<CANDIDATE_ROOT>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20",
+          "AssertionError: expected +0 to be 0.1 // Object.is equality\n    at <CANDIDATE_ROOT>/tests/ss09-development/SS09.test.ts:215:81\n    at file://<CANDIDATE_ROOT>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20",
+          "AssertionError: expected [ { …(5) } ] to have a length of +0 but got 1\n    at Proxy.<anonymous> (file://<CANDIDATE_ROOT>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/index.OVGXnVRj.js:2137:20)\n    at Proxy.<anonymous> (file://<CANDIDATE_ROOT>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/index.OVGXnVRj.js:1939:22)\n    at Proxy.methodWrapper (file://<CANDIDATE_ROOT>/node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)\n    at <CANDIDATE_ROOT>/tests/ss09-development/SS09.test.ts:216:51\n    at file://<CANDIDATE_ROOT>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+        ]
+      },
+      {
+        "title": "SS09/known-defect accepted large timeout must not expire after one millisecond",
+        "status": "failed",
+        "failureMessages": [
+          "AssertionError: expected 'UNCERTAIN' to be 'SUCCESS' // Object.is equality\n    at <CANDIDATE_ROOT>/tests/ss09-development/SS09.test.ts:224:31\n    at file://<CANDIDATE_ROOT>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+        ]
+      },
+      {
+        "title": "SS09/known-defect real Node timer independently confirms timeout overflow",
+        "status": "failed",
+        "failureMessages": [
+          "AssertionError: expected 'UNCERTAIN' to be 'SUCCESS' // Object.is equality\n    at <CANDIDATE_ROOT>/tests/ss09-development/SS09.test.ts:235:33\n    at file://<CANDIDATE_ROOT>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+        ]
+      }
+    ],
+    "note": "Null/empty regression assertions adapted to SS09 only; no fabricated accepted selection receipt. Six forbidden IDs are negative controls, not observed provider recommendations."
+  },
+  "findings": [
+    {
+      "dedupKey": "existing-invalid-resp-valid-usage-loss",
+      "status": "REPRODUCED_EXISTING",
+      "severity": "HIGH",
+      "rootCause": "Response validation throws after valid usage is available; catch discards usage via unknownUsage; settle conservatively retains the 0.4 reservation instead of accounting confirmed 0.1. No extra cause counted for the three failed assertions.",
+      "source": [
+        "mcp-server/src/skill-classification/service.ts:194",
+        "mcp-server/src/skill-classification/service.ts:204",
+        "mcp-server/src/skill-classification/service.ts:210"
+      ],
+      "expected": {
+        "status": "INVALID",
+        "actualCostUsd": 0.1,
+        "spentUsd": 0.1,
+        "outstandingReservations": 0
+      },
+      "observed": {
+        "rawMockUsage": {
+          "inputTokens": null,
+          "outputTokens": null,
+          "cachedInputTokens": null,
+          "actualCostUsd": 0.1
+        },
+        "attemptUsage": {
+          "inputTokens": null,
+          "outputTokens": null,
+          "cachedInputTokens": null,
+          "actualCostUsd": null
+        },
+        "budget": {
+          "limits": {
+            "jev": {
+              "limitUsd": 0,
+              "spentUsd": 0
+            },
+            "vendor:offline-fixture": {
+              "limitUsd": 2,
+              "spentUsd": 0
+            }
+          },
+          "nativeAllowances": {
+            "SS09-offline-only": {
+              "approvalRef": "fixture:synthetic-quota",
+              "remainingCalls": 20
+            }
+          },
+          "invalidCostCeilings": [],
+          "reservations": [
+            {
+              "id": "[\"SS09-cost-loss\",\"sha256:9801089755e8c12bf788491e6a318218c6744e42956b513ce246832315c9c988\",\"SS09-offline-only\"]",
+              "bucket": "vendor:offline-fixture",
+              "maximumUsd": 0.4,
+              "profileId": "SS09-offline-only",
+              "nativeProfileId": "SS09-offline-only"
+            }
+          ]
+        }
+      },
+      "traceId": "cost-loss",
+      "failureAssertionTitles": [
+        "SS09/known-defect invalid RESP must retain independently valid charged cost"
+      ]
+    },
+    {
+      "dedupKey": "existing-timeout-overflow",
+      "status": "REPRODUCED_EXISTING",
+      "severity": "HIGH",
+      "rootCause": "Validation accepts any positive safe integer timeout and passes it directly to setTimeout. 2147483648 is clamped to 1ms by Node. Fake/real timer failures are one cause.",
+      "source": [
+        "mcp-server/src/skill-classification/service.ts:127",
+        "mcp-server/src/skill-classification/service.ts:166"
+      ],
+      "expected": {
+        "status": "SUCCESS",
+        "error": null,
+        "timeoutMs": 2147483648,
+        "providerDelayMs": 25,
+        "timer": "real Node"
+      },
+      "observed": {
+        "status": "UNCERTAIN",
+        "error": {
+          "code": "PROVIDER_TIMEOUT",
+          "retryable": false,
+          "dispatchState": "unknown"
+        },
+        "warning": [
+          {
+            "name": "TimeoutOverflowWarning",
+            "message": "2147483648 does not fit into a 32-bit signed integer.\nTimeout duration was set to 1."
+          }
+        ],
+        "budget": {
+          "limits": {
+            "jev": {
+              "limitUsd": 0,
+              "spentUsd": 0
+            },
+            "vendor:offline-fixture": {
+              "limitUsd": 2,
+              "spentUsd": 0
+            }
+          },
+          "nativeAllowances": {
+            "SS09-offline-only": {
+              "approvalRef": "fixture:synthetic-quota",
+              "remainingCalls": 20
+            }
+          },
+          "invalidCostCeilings": [],
+          "reservations": [
+            {
+              "id": "[\"SS09-timeout-overflow-real-node\",\"sha256:ba3d589a1bc8a53e28dda04205ad6fce67b6967aec036fe534b8abbe15bfab56\",\"SS09-offline-only\"]",
+              "bucket": "vendor:offline-fixture",
+              "maximumUsd": 0.4,
+              "profileId": "SS09-offline-only",
+              "nativeProfileId": "SS09-offline-only"
+            }
+          ]
+        }
+      },
+      "traceIds": [
+        "timeout-overflow",
+        "timeout-overflow-real-node",
+        "real-node-overflow-warning"
+      ]
+    },
+    {
+      "dedupKey": "evaluator-overlapping-fp-categories",
+      "status": "REPRODUCED_EVALUATOR_FINDING_PARENT_DEDUP_PENDING",
+      "severity": "MEDIUM",
+      "rootCause": "Frozen SS09 puts test-engineering in both forbidden and notApplicable; scoreCase sums category lengths rather than distinct false-positive IDs. A single synthetic bad recommendation yields 2 false positives. This is scorer arithmetic evidence, not a live recommendation or accuracy result; keep separate from the known metadata-condition duplication unless parent confirms same cause.",
+      "source": [
+        "tests/skill-classification/evaluation.ts:71",
+        "tests/skill-classification/evaluation.ts:72",
+        "tests/skill-classification/evaluation.ts:89"
+      ],
+      "expected": {
+        "verdict": "FAIL",
+        "falsePositives": 1
+      },
+      "observed": {
+        "caseId": "SS09",
+        "verdict": "FAIL",
+        "missingRequired": [],
+        "forbidden": [
+          "test-engineering"
+        ],
+        "unnecessary": [
+          "test-engineering"
+        ],
+        "unadjudicated": [],
+        "truePositives": 0,
+        "falsePositives": 2,
+        "requiredHits": 0,
+        "answered": true,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": []
+      },
+      "traceId": "evaluator-overlap",
+      "handoff": "R14 evaluator developer; no local evaluator/bootstrap/selfcheck/manifest edits"
+    }
+  ],
+  "knownFindingsNotDynamicallyReproduced": [
+    {
+      "key": "metadata-condition-duplication",
+      "status": "NOTRUN",
+      "reason": "No SS09 conditional-allowed metadata; not treated as same cause as evaluator overlapping-category arithmetic without parent confirmation."
+    },
+    {
+      "key": "host-active-state-supply-gap",
+      "status": "NOTRUN",
+      "staticEvidence": [
+        "mcp-server/src/skill-classification/gateway.ts:61",
+        "mcp-server/src/skill-classification/inventory.ts:218",
+        "mcp-server/src/skill-classification/inventory.ts:219"
+      ],
+      "reason": "Defaults observed in repository inventory; actual host state not supplied or exercised."
+    },
+    {
+      "key": "immediate-concurrency-recheck-gap",
+      "status": "NOTRUN",
+      "reason": "No actual host acceptance observation supplied; SS09 empty selection does not exercise skill execution concurrency."
+    }
+  ],
+  "localConsistency": {
+    "planCheck": "READY",
+    "pairedRedGreenProof": "NOT_RUN",
+    "proofCheck": "INCOMPLETE",
+    "proofCheckExit": 1,
+    "reason": "Product mutation and corrected green candidate excluded by assignment; red-green sensitivity not fabricated. Integration assertions executed independently.",
+    "typecheck": "PASS",
+    "typecheckExit": 0
+  },
+  "commands": [
+    {
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/skill-classification-gateway.test.ts",
+        "--maxWorkers=1",
+        "--no-file-parallelism",
+        "-t",
+        "keeps AGENT choices independent of the same advice and handles accepted no-skill distinctly",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/SS09.existing-regression.vitest.json"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-09T02:58:04.835770+00:00",
+      "finishedAt": "2026-10-09T02:58:06.382213+00:00",
+      "exitCode": 0,
+      "executionKind": "offline-mock",
+      "API0": true
+    },
+    {
+      "argv": [
+        "node",
+        "skills/test-engineering/scripts/run.mjs",
+        "check-plan",
+        "--root",
+        "<CANDIDATE_ROOT>",
+        "--plan",
+        "tests/ss09-development/plan.json"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-09T02:58:02.638409+00:00",
+      "finishedAt": "2026-10-09T02:58:02.779458+00:00",
+      "exitCode": 0,
+      "executionKind": "local-consistency",
+      "API0": true
+    },
+    {
+      "argv": [
+        "node",
+        "skills/test-engineering/scripts/run.mjs",
+        "check-proof",
+        "--root",
+        "<CANDIDATE_ROOT>",
+        "--plan",
+        "tests/ss09-development/plan.json",
+        "--proof",
+        "tests/ss09-development/proof.json"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-09T03:00:17.206158+00:00",
+      "finishedAt": "2026-10-09T03:00:17.326886+00:00",
+      "exitCode": 1,
+      "executionKind": "local-consistency",
+      "API0": true
+    },
+    {
+      "argv": [
+        "node",
+        "runtime/engineering-practices/cli.mjs",
+        "snapshot",
+        "--root",
+        "<CANDIDATE_ROOT>",
+        "--files",
+        "tests/ss09-development/scope-files.json"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-09T03:00:17.139846+00:00",
+      "finishedAt": "2026-10-09T03:00:17.205438+00:00",
+      "exitCode": 0,
+      "executionKind": "local-consistency",
+      "API0": true
+    },
+    {
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/ss09-development/SS09.test.ts",
+        "--maxWorkers=1",
+        "--no-file-parallelism",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/SS09.vitest.json"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "startedAt": "2026-10-09T03:00:15.269265+00:00",
+      "finishedAt": "2026-10-09T03:00:17.139580+00:00",
+      "exitCode": 1,
+      "executionKind": "offline-mock",
+      "API0": true
+    },
+    {
+      "argv": [
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "--ignoreConfig",
+        "--noEmit",
+        "--module",
+        "NodeNext",
+        "--moduleResolution",
+        "NodeNext",
+        "--target",
+        "ES2022",
+        "--strict",
+        "--skipLibCheck",
+        "--noUncheckedIndexedAccess",
+        "--exactOptionalPropertyTypes",
+        "--types",
+        "node,vitest/globals",
+        "tests/ss09-development/SS09.test.ts"
+      ],
+      "cwd": "<CANDIDATE_ROOT>",
+      "exitCode": 0,
+      "executionKind": "static-tests-and-import-graph",
+      "API0": true,
+      "finishedAt": "2026-10-09T02:58:59.501156+00:00"
+    }
+  ],
+  "hostSupportPath": {
+    "publicTools": [
+      "get_skill_inventory",
+      "classify_skills",
+      "record_skill_selection"
+    ],
+    "entry": "mcp-server/src/index.ts:88-138; .mcp.json uses mcp-server/dist/server.mjs",
+    "configuration": "mcp-server/src/skill-classification/gateway.ts:157 readClassificationRuntime",
+    "approvedRoute": "mcp-server/src/skill-classification/runtime.ts createClassificationProviderRuntime",
+    "nativeCapability": "mcp-server/src/skill-classification/native-adapters.ts NativeClassificationAdapterDefinition/createNativeClassificationAdapters; codex and claude definitions supported by code",
+    "hostObservation": "hooks/hooks.json PreToolUse and UserPromptSubmit; mcp-server/src/host-attestation.ts; index.ts observeTask uses session-board lastPromptAt",
+    "installedBundleHostLiveVerification": "NOTRUN; tests exercised source modules, not installed cache/dist host process",
+    "missingInputs": [
+      {
+        "input": "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG",
+        "observed": "UNSET",
+        "needed": "Approved installation config parsed by readClassificationRuntime with config, allowRemotePrivateContent, providerProfileRegistryRef and route references; current approved profile/qualification bytes."
+      },
+      {
+        "input": "Production profile qualification",
+        "observed": "NOT_PROVIDED; test profile is explicitly synthetic",
+        "needed": "Qualified fixed current-vendor model/revision/effort, prompt/adapter/profile revisions, inventory/taxonomy/configuration digests, unexpired qualification PASS, input/output/cost limits."
+      },
+      {
+        "input": "Approved native route and allowance",
+        "observed": "No approved runtime file or evidence supplied; executable availability is not capability/approval proof",
+        "needed": "providerRuntimeRef native route with approvalRef, model/options/structured capability and adapter binding; nativeAdapterDefinitionsRef with executable/cwd, host, actual capability/retry/isolation evidence, exact isolationArgs, bounded timeout/output; verified no-retry policy, current native allowance and cash budget if any. No assumed free subscription."
+      },
+      {
+        "input": "Actual host observation and current task",
+        "observed": "Session does not expose installed AGS MCP selection tools; host-attestation env UNSET",
+        "needed": "Fixed installation .mcp.json/server; AGENT_GOVERNANCE_HOST_ATTESTATION=codex or claude, actual PreToolUse/execution-wrapper exact-call observation and host session-board prompt state. Agent must independently choose IDs and record decision with hostReceipt=null; receipt only from real host observation."
+      },
+      {
+        "input": "Host discovery active/support state",
+        "observed": "Only repository default inventory was loaded; no live enabled/installed/hostSupported supply",
+        "needed": "Observed installed/enabled/host-supported skill state tied to same inventory. Known supply gap is not repaired by this test."
+      },
+      {
+        "input": "Claude host for host comparison",
+        "observed": "claude executable absent",
+        "needed": "Actual configured Claude environment if later paired-host testing is authorized; outside SS09 offline assignment."
+      }
+    ]
+  },
+  "evidenceFiles": [
+    "SS09.provenance.json",
+    "SS09.environment.json",
+    "SS09.fixture.json",
+    "SS09.observed.json",
+    "SS09.vitest.json",
+    "SS09.tests.stdout.log",
+    "SS09.tests.stderr.log",
+    "SS09.tests.command.json",
+    "SS09.existing-regression.vitest.json",
+    "SS09.typecheck.command.json",
+    "SS09.snapshot.json",
+    "SS09.plan.json",
+    "SS09.proof.json",
+    "SS09.proof-check.stdout.log",
+    "SS09.engineering-test-result.json"
+  ],
+  "excludedActions": [
+    "product edits",
+    "push",
+    "PR",
+    "release",
+    "full suite",
+    "other SSxx cases",
+    "past 21 completed live run replay"
+  ],
+  "supersededDevelopmentRuns": [
+    "initial-run/",
+    "expanded-run-before-type-annotations/"
+  ],
+  "completedAt": "2026-10-09T03:02:00.226191+00:00",
+  "publication": {
+    "kind": "sanitized-existing-evidence",
+    "newTests": 0,
+    "inferenceApiCalls": {
+      "jev": 0,
+      "vendor": 0,
+      "claude": 0,
+      "codex": 0
+    },
+    "patchStatus": "NOT_PRESENT",
+    "missingOriginals": [
+      {
+        "artifact": "TEST-SPEC.seq7.ko.md",
+        "status": "MISSING_ORIGINAL",
+        "reason": "Absent from original fixed repository; only embedded SS09 sourceSpec.fields exists. Not reconstructed."
+      }
+    ],
+    "historicalOutcomePromotion": false,
+    "originalArtifacts": "See SS09.original-recovery.json",
+    "publicHashBinding": "See manifest.json and SHA256SUMS; original historical digests are retained, not recomputed over sanitized copies."
+  }
+}

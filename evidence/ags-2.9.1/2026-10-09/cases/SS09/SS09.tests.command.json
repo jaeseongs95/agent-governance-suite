@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/ss09-development/SS09.test.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=<EVIDENCE_ROOT>/SS09.vitest.json"
+  ],
+  "cwd": "<CANDIDATE_ROOT>",
+  "startedAt": "2026-10-09T03:00:15.269265+00:00",
+  "finishedAt": "2026-10-09T03:00:17.139580+00:00",
+  "exitCode": 1,
+  "executionKind": "offline-mock",
+  "API0": true
+}

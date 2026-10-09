@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "node",
+    "runtime/engineering-practices/cli.mjs",
+    "snapshot",
+    "--root",
+    "<CANDIDATE_ROOT>",
+    "--files",
+    "tests/ss09-development/scope-files.json"
+  ],
+  "cwd": "<CANDIDATE_ROOT>",
+  "startedAt": "2026-10-09T03:00:17.139846+00:00",
+  "finishedAt": "2026-10-09T03:00:17.205438+00:00",
+  "exitCode": 0,
+  "executionKind": "local-consistency",
+  "API0": true
+}

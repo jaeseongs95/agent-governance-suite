@@ -1,0 +1,619 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS09",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cases/SS09/",
+  "candidateCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "candidateTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "frozenFixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "frozenOracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "originalInputBytes": 121,
+  "originalInputSHA256": "0050dc40116897b0a27139bf29a4f1731ad2a267564866ffac866e4c762de73c",
+  "publicInputBytes": 121,
+  "publicInputSHA256": "0050dc40116897b0a27139bf29a4f1731ad2a267564866ffac866e4c762de73c",
+  "missingOriginals": [
+    {
+      "artifact": "TEST-SPEC.seq7.ko.md",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Absent from original fixed repository; only embedded SS09 sourceSpec.fields exists. Not reconstructed."
+    }
+  ],
+  "patchStatus": "NOT_PRESENT",
+  "newTests": 0,
+  "newInferenceApiCalls": 0,
+  "hashCoverage": {
+    "manifest": "Payload entries only; excludes manifest.json and SHA256SUMS",
+    "SHA256SUMS": "Payload files plus manifest.json; excludes SHA256SUMS",
+    "metadataHashes": "Recorded separately in final publication report"
+  },
+  "payloadFileCount": 36,
+  "payloadTotalBytes": 7926570,
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 5259,
+      "sha256": "8dc41f49055494ec23c95292cfc3e826592eff20d40e55f18c4521f02f886355",
+      "kind": "publication-documentation",
+      "originals": [],
+      "transformations": [
+        "New publication documentation derived only from existing records; reproduction instructions not executed"
+      ]
+    },
+    {
+      "path": "SS09.engineering-test-result.json",
+      "bytes": 1702,
+      "sha256": "a059dca119014d3740a2d4ed0579161845ef63ea28d9f687c691d232a0f97c60",
+      "kind": "byte-identical-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.engineering-test-result.json",
+          "bytes": 1702,
+          "sha256": "a059dca119014d3740a2d4ed0579161845ef63ea28d9f687c691d232a0f97c60"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.environment.json",
+      "bytes": 448,
+      "sha256": "32fac846de61afe65955073d234fc986aedf5709a8d3b321bdf0323d76f9d5e7",
+      "kind": "sanitized-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.environment.json",
+          "bytes": 342,
+          "sha256": "e91f6e8c92b7a5f199223b5afad6ee0c18cff623ac4d6f7119fd6bef258e9278"
+        }
+      ],
+      "transformations": [
+        "Omit executable paths; preserve availability/presence only"
+      ]
+    },
+    {
+      "path": "SS09.existing-no-skill-regression.command.json",
+      "bytes": 616,
+      "sha256": "1ecea195be1f978e4ba46634eba6e904015bb3fe5c66d0c80bcbdf4c6cf955c7",
+      "kind": "sanitized-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.existing-no-skill-regression.command.json",
+          "bytes": 629,
+          "sha256": "32683c82265a31b080c0c0f32617beccfeae63e468dcfca93d26198c762af518"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.existing-no-skill-regression.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "byte-identical-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.existing-no-skill-regression.stderr.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.existing-no-skill-regression.stdout.log",
+      "bytes": 476,
+      "sha256": "e16e0264c66887e132478658338d525319cb4de7aa8e9b88ed10af89a9e4a055",
+      "kind": "sanitized-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.existing-no-skill-regression.stdout.log",
+          "bytes": 8053,
+          "sha256": "419b1789ab38eb115335f9472395f974209dde4b47a7c6a25cf99825c695e7ff"
+        }
+      ],
+      "transformations": [
+        "Remove unrelated skipped test titles; preserve executed existing regression and counts",
+        "Replace local paths with documented placeholders"
+      ]
+    },
+    {
+      "path": "SS09.existing-regression.vitest.json",
+      "bytes": 16621,
+      "sha256": "24928911f1441591a20d41ba4d788bdc45eb23180a0fb6fbdb58e845789fd734",
+      "kind": "sanitized-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.existing-regression.vitest.json",
+          "bytes": 16625,
+          "sha256": "3a239f023bd75eb00ed64b9034310251c13b225363d3b593d9e91f46817f35fc"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.fixture.json",
+      "bytes": 3957,
+      "sha256": "47fd1c1618259fd3b120aa0bca58dee6d55425d763562ad212ec20dc6d2ee89f",
+      "kind": "byte-identical-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.fixture.json",
+          "bytes": 3957,
+          "sha256": "47fd1c1618259fd3b120aa0bca58dee6d55425d763562ad212ec20dc6d2ee89f"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.input-binding.json",
+      "bytes": 2340,
+      "sha256": "13fed3960dc8d2ba3633f183ab4ca195b119c338178ce20de9ce4913c27871d9",
+      "kind": "derived-existing-observation",
+      "originals": [
+        {
+          "artifact": "SS09.fixture.json",
+          "bytes": 3957,
+          "sha256": "47fd1c1618259fd3b120aa0bca58dee6d55425d763562ad212ec20dc6d2ee89f"
+        },
+        {
+          "artifact": "SS09.observed.json",
+          "bytes": 7787771,
+          "sha256": "fec7f54734d04b79aabcaad532c135a6da37397e91f3d2a05277fedcb47240bb"
+        },
+        {
+          "artifact": "SS09.result.json",
+          "bytes": 30623,
+          "sha256": "0d7ed4fbae270044872e47c1e1e962669a47934342e797b57561cf0aa6a03bf3"
+        }
+      ],
+      "transformations": [
+        "Extract existing base input/expected/observed; no new observation or result"
+      ]
+    },
+    {
+      "path": "SS09.input.utf8.txt",
+      "bytes": 121,
+      "sha256": "0050dc40116897b0a27139bf29a4f1731ad2a267564866ffac866e4c762de73c",
+      "kind": "derived-existing-input-bytes",
+      "originals": [
+        {
+          "artifact": "SS09.fixture.json",
+          "bytes": 3957,
+          "sha256": "47fd1c1618259fd3b120aa0bca58dee6d55425d763562ad212ec20dc6d2ee89f"
+        },
+        {
+          "artifact": "SS09.observed.json",
+          "bytes": 7787771,
+          "sha256": "fec7f54734d04b79aabcaad532c135a6da37397e91f3d2a05277fedcb47240bb"
+        }
+      ],
+      "transformations": [
+        "Extract existing publicSynthetic originalPrompt UTF-8 bytes without newline; exact string equality checked"
+      ]
+    },
+    {
+      "path": "SS09.observed.json",
+      "bytes": 7787771,
+      "sha256": "fec7f54734d04b79aabcaad532c135a6da37397e91f3d2a05277fedcb47240bb",
+      "kind": "byte-identical-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.observed.json",
+          "bytes": 7787771,
+          "sha256": "fec7f54734d04b79aabcaad532c135a6da37397e91f3d2a05277fedcb47240bb"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.original-recovery.json",
+      "bytes": 6356,
+      "sha256": "04adabaa7cba8e87c4bbb561a9aeefa3a810d89d6f1937c36a2aea9c4b30a653",
+      "kind": "publication-provenance",
+      "originals": [
+        {
+          "artifact": "SS09.evidence-manifest.json",
+          "bytes": 5345,
+          "sha256": "c28b9c91b68410e5006a1f35994b29e0f7fe6e83b790de49409b8b1afe743efc"
+        }
+      ],
+      "transformations": [
+        "Record original manifest verification and absence of patch/source spec; do not publish private paths"
+      ]
+    },
+    {
+      "path": "SS09.plan-check.command.json",
+      "bytes": 393,
+      "sha256": "fb9fc94bfd69471e4e6f2e8d4e134ccc18b69e192be1c2a2fc352b5bb9e72c6b",
+      "kind": "sanitized-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.plan-check.command.json",
+          "bytes": 401,
+          "sha256": "df49c3110fc3d7e8b11446451a9bfecde8ca22564ba9520ae6196d5efbafd126"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.plan-check.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "byte-identical-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.plan-check.stderr.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.plan-check.stdout.log",
+      "bytes": 283,
+      "sha256": "bd0d996b2a164736d598da8b70771bbd11b8dac17291b85cc4126787eb07868d",
+      "kind": "byte-identical-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.plan-check.stdout.log",
+          "bytes": 283,
+          "sha256": "bd0d996b2a164736d598da8b70771bbd11b8dac17291b85cc4126787eb07868d"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.plan.json",
+      "bytes": 6334,
+      "sha256": "0f7d0aa2c6decfb191bc50d2f0d6a17e9b80e9d1293f48e5a6d7e9b3530de0c7",
+      "kind": "sanitized-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.plan.json",
+          "bytes": 6370,
+          "sha256": "1a011bc1682155875b7d4869f3ba46b4088eb9b9321a32a76191e7d8c4343a4f"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.proof-check.command.json",
+      "bytes": 450,
+      "sha256": "fac99157e6b7b6a12221357ad678e51fdbfffceb80eaff74e05fa2bdd4e9d33a",
+      "kind": "sanitized-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.proof-check.command.json",
+          "bytes": 458,
+          "sha256": "b0304c970cdcc68d43e046e592fe1381afdedf1511bc67aa6a5442f249ace71f"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.proof-check.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "byte-identical-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.proof-check.stderr.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.proof-check.stdout.log",
+      "bytes": 1702,
+      "sha256": "a059dca119014d3740a2d4ed0579161845ef63ea28d9f687c691d232a0f97c60",
+      "kind": "byte-identical-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.proof-check.stdout.log",
+          "bytes": 1702,
+          "sha256": "a059dca119014d3740a2d4ed0579161845ef63ea28d9f687c691d232a0f97c60"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.proof.json",
+      "bytes": 5122,
+      "sha256": "8b0f39abc6b9dd63840735965e2c2367875352791f18e14af8d2932b5fb14ce3",
+      "kind": "byte-identical-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.proof.json",
+          "bytes": 5122,
+          "sha256": "8b0f39abc6b9dd63840735965e2c2367875352791f18e14af8d2932b5fb14ce3"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.provenance.json",
+      "bytes": 4083,
+      "sha256": "120fd63fecbb267577eda5ea57c66ad4c1bc5599d18efd21cc4aafd0b81f17eb",
+      "kind": "sanitized-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.provenance.json",
+          "bytes": 4086,
+          "sha256": "e79b7a98f0a41a51a73a61fe0cef7ca2fca65578381ed5dcbf6f6040bd4ee6ea"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.reproduce.sh",
+      "bytes": 310,
+      "sha256": "28bf86e3ab82ade5bed1f81a7d8eb6ccbc5d46b70842beca30629e518a3bd1f4",
+      "kind": "sanitized-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.reproduce.sh",
+          "bytes": 338,
+          "sha256": "101f2f542fe1d4cd41298f97e3d09ef6d48ae4b4fa8b995da5b6ad6a51c3a301"
+        }
+      ],
+      "transformations": [
+        "Relocate cwd/output paths; run only from fixed candidate checkout; not executed during publication"
+      ]
+    },
+    {
+      "path": "SS09.result.json",
+      "bytes": 31176,
+      "sha256": "a6f8408b8c8a38dca307004b0b6c6a210b3ddf70a77fae26ce93cb19cf13e8af",
+      "kind": "sanitized-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.result.json",
+          "bytes": 30623,
+          "sha256": "0d7ed4fbae270044872e47c1e1e962669a47934342e797b57561cf0aa6a03bf3"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only",
+        "Add explicitly separate publication metadata; no test outcome changes"
+      ]
+    },
+    {
+      "path": "SS09.snapshot.command.json",
+      "bytes": 397,
+      "sha256": "c533481a0e2c381026d21a4a327693112073a2160657119b3bac363352bdd8f2",
+      "kind": "sanitized-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.snapshot.command.json",
+          "bytes": 405,
+          "sha256": "d27cea25f7dc258d9dc2553b2aa8e06ac9f2f915ef29254b002fb4c720aaf059"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.snapshot.json",
+      "bytes": 2271,
+      "sha256": "eae33047aaae7eec0cc573ee388006306a6b3bd199631fe069237e888d89c1d7",
+      "kind": "byte-identical-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.snapshot.json",
+          "bytes": 2271,
+          "sha256": "eae33047aaae7eec0cc573ee388006306a6b3bd199631fe069237e888d89c1d7"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.snapshot.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "byte-identical-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.snapshot.stderr.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.snapshot.stdout.log",
+      "bytes": 2271,
+      "sha256": "eae33047aaae7eec0cc573ee388006306a6b3bd199631fe069237e888d89c1d7",
+      "kind": "byte-identical-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.snapshot.stdout.log",
+          "bytes": 2271,
+          "sha256": "eae33047aaae7eec0cc573ee388006306a6b3bd199631fe069237e888d89c1d7"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.test.ts",
+      "bytes": 20727,
+      "sha256": "b787e066105daa8fc8c29ee913329dd2caff4e44fdc13f819ba75ec23ed19e37",
+      "kind": "sanitized-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.test.ts",
+          "bytes": 20755,
+          "sha256": "c48180ca4f5a9d84c2035f70526b6e0e853c6459fe6ba9c82e82fb43476d1598"
+        }
+      ],
+      "transformations": [
+        "Relocate only root/output literals to candidate checkout current directory; no assertion or case changes; not executed during publication"
+      ]
+    },
+    {
+      "path": "SS09.tests.command.json",
+      "bytes": 476,
+      "sha256": "eea5d215d08bb5997c028abbc27bb6888b1d3ae7c2f6ecab98f42a67d6571d50",
+      "kind": "sanitized-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.tests.command.json",
+          "bytes": 489,
+          "sha256": "dc9ce39894cf8322e311aa85e4e21a9bf21fe2bdc15c71ab74909d47bb6e678f"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.tests.stderr.log",
+      "bytes": 5175,
+      "sha256": "e0db63cab155b69d336cdef0cd340b60d0138e3c72e1979c3be717787c254f71",
+      "kind": "sanitized-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.tests.stderr.log",
+          "bytes": 5174,
+          "sha256": "9bc3aaec41cfddd9a32ef3357a78768491d3fe7ae2f640858a23e9c000be12ec"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.tests.stdout.log",
+      "bytes": 4738,
+      "sha256": "4ada94081102c2b32dcb1c9dc372279cd11fce16f0b22ddb64d70e9fa5e54428",
+      "kind": "sanitized-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.tests.stdout.log",
+          "bytes": 4751,
+          "sha256": "4a5fc6d66ed341d45c8f170458d341f28fd22fab3e9f9d988f1be865afb3ee8c"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.typecheck.command.json",
+      "bytes": 571,
+      "sha256": "898085e9c5ca73f2e586612f4cee759274f11f4b89c9baad8abccb8dae6a8d92",
+      "kind": "sanitized-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.typecheck.command.json",
+          "bytes": 575,
+          "sha256": "b26d1c6fcede2d08b550905b241f262f5034988001c25cfb61c10e277b09365e"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.typecheck.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "byte-identical-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.typecheck.stderr.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.typecheck.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "byte-identical-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.typecheck.stdout.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "SS09.vitest.json",
+      "bytes": 13939,
+      "sha256": "5527a4d9f889a1ba0f3f003ea9d19f5aebd89324bcfb369f8112336192d25a5f",
+      "kind": "sanitized-existing-artifact",
+      "originals": [
+        {
+          "artifact": "SS09.vitest.json",
+          "bytes": 14027,
+          "sha256": "f827afa92d4489763ad3a0006093805d26b40555445b4ad602bc924da3eaa4ba"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    },
+    {
+      "path": "scope-files.json",
+      "bytes": 485,
+      "sha256": "2424913adcedb53b12e92d06e105c6625d3a12f79067b3e4af4620e3ab2c27ca",
+      "kind": "byte-identical-existing-artifact",
+      "originals": [
+        {
+          "artifact": "scope-files.json",
+          "bytes": 485,
+          "sha256": "2424913adcedb53b12e92d06e105c6625d3a12f79067b3e4af4620e3ab2c27ca"
+        }
+      ],
+      "transformations": [
+        "Replace local paths with documented placeholders; anonymize process PID only"
+      ]
+    }
+  ]
+}

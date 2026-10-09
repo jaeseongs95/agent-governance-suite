@@ -1,0 +1,73 @@
+{
+  "caseId": "SS09",
+  "variantId": "base",
+  "originalPrompt": {
+    "path": "SS09.input.utf8.txt",
+    "encoding": "UTF-8",
+    "bytes": 121,
+    "sha256": "0050dc40116897b0a27139bf29a4f1731ad2a267564866ffac866e4c762de73c",
+    "addedNewline": false
+  },
+  "storedInput": {
+    "schemaVersion": "1.0.0",
+    "requestId": "SS09-base",
+    "operationId": "SS09-base",
+    "originalPrompt": "SQLite WAL이 무엇인지 초보자에게 두 문장으로 설명해 줘. 설계·구현·감사는 요청하지 않아.",
+    "confirmedContext": {
+      "taskRevision": null,
+      "objective": null,
+      "actions": null,
+      "targets": null,
+      "constraints": null,
+      "prohibitedActions": null,
+      "background": null
+    },
+    "contextSources": [],
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "vendorContext": {
+      "vendorId": "offline-fixture",
+      "reference": "fixture:offline-only"
+    },
+    "publicSynthetic": true
+  },
+  "expected": {
+    "requiredSkillIds": [],
+    "allowedSkillIds": [],
+    "forbidden": [
+      "cs-engineering",
+      "ponytail",
+      "orchestrator",
+      "software-security-auditor",
+      "code-review",
+      "test-engineering"
+    ],
+    "validAcceptedNoSkill": [],
+    "noSkillReason": "General beginner explanation only; request explicitly excludes design, implementation and audits. WAL/SQLite words alone do not activate specialists.",
+    "providerOutcome": "SUCCESS for a valid no-skill response; failures retain error/status instead of being treated as successful empty selection"
+  },
+  "observed": {
+    "providerOutcome": "SUCCESS",
+    "providerResponseSource": "synthetic provider fixture; not model semantic inference",
+    "judgmentCounts": {
+      "notNeeded": 24,
+      "needed": 0,
+      "uncertain": 0
+    },
+    "mockAdviceNeededSkillIds": [],
+    "agentSelectedSkillIds": null,
+    "selectionStatus": "PROPOSED",
+    "adviceApplied": false,
+    "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+    "promptAndAll24SkillsPreserved": true,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "inputReference": "SS09.observed.json#traces/base/input",
+  "status": "NOTRUN",
+  "offlineStatus": "PASS",
+  "publicationNewTests": 0,
+  "publicationApiCalls": 0
+}

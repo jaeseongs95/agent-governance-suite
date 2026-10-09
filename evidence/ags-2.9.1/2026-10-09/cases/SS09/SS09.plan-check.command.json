@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "node",
+    "skills/test-engineering/scripts/run.mjs",
+    "check-plan",
+    "--root",
+    "<CANDIDATE_ROOT>",
+    "--plan",
+    "tests/ss09-development/plan.json"
+  ],
+  "cwd": "<CANDIDATE_ROOT>",
+  "startedAt": "2026-10-09T02:58:02.638409+00:00",
+  "finishedAt": "2026-10-09T02:58:02.779458+00:00",
+  "exitCode": 0,
+  "executionKind": "local-consistency",
+  "API0": true
+}

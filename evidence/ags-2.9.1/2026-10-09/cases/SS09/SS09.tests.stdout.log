@@ -1,0 +1,38 @@
+
+ RUN  v5.0.0 <CANDIDATE_ROOT>
+
+ ✓ tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/base frozen commit fixture oracle and skill sources remain bound 8ms
+ ✓ tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/base actual MCP preserves full prompt, negation, inventory and unknown context; advice is not selection 296ms
+ ✓ tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/regression empty and null retain different oracle outcomes without a invented receipt 1ms
+ ✓ tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/new keyword-only advice cs-engineering is detected by the frozen oracle 0ms
+ ✓ tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/new keyword-only advice ponytail is detected by the frozen oracle 0ms
+ ✓ tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/new keyword-only advice orchestrator is detected by the frozen oracle 0ms
+ ✓ tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/new keyword-only advice software-security-auditor is detected by the frozen oracle 0ms
+ ✓ tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/new keyword-only advice code-review is detected by the frozen oracle 0ms
+ ✓ tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/new keyword-only advice test-engineering is detected by the frozen oracle 0ms
+ × tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/evaluator overlap must count a single selected skill as one false positive 5ms
+   → expected 2 to be 1 // Object.is equality
+ ✓ tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/new compact vendor payload preserves negation and null versus confirmed empty 32ms
+ ✓ tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/new AUTH_UNAVAILABLE remains failure and never valid empty advice 22ms
+ ✓ tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/new API_UNAVAILABLE remains failure and never valid empty advice 19ms
+ ✓ tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/new malformed empty-success is INVALID, never no-skill 22ms
+ ✓ tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/new malformed wrong-binding is INVALID, never no-skill 22ms
+ ✓ tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/new malformed reason-missing is INVALID, never no-skill 14ms
+ ✓ tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/new semantic uncertainty is not converted to no-skill 17ms
+ ✓ tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/new unset installation config is UNAVAILABLE; no arbitrary default model 9ms
+ ✓ tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/new unsigned empty AGENT decision is rejected; selected remains null 205ms
+ × tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/known-defect invalid RESP must retain independently valid charged cost 19ms
+   → expected null to be 0.1 // Object.is equality
+   → expected +0 to be 0.1 // Object.is equality
+   → expected [ { …(5) } ] to have a length of +0 but got 1
+ × tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/known-defect accepted large timeout must not expire after one millisecond 17ms
+   → expected 'UNCERTAIN' to be 'SUCCESS' // Object.is equality
+ × tests/ss09-development/SS09.test.ts > SS09 frozen base and isolated boundaries; API zero; host NOTRUN > SS09/known-defect real Node timer independently confirms timeout overflow 72ms
+   → expected 'UNCERTAIN' to be 'SUCCESS' // Object.is equality
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 18 passed (22)
+   Start at  03:00:15
+   Duration  1.51s (tests 65%, transform 23%, import 12%)
+
+JSON report written to <EVIDENCE_ROOT>/SS09.vitest.json

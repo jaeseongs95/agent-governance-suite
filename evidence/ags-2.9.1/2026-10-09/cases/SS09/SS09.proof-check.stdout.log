@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:28443117a993f1c79f08611c79993201539ea435ac12530a7c8f65716792cb8c",
+  "reportDigest": "sha256:36ec57cca4bd2957d3f2092813a0d8be98c17570ae8eb56f024b8cf171d0f6f2",
+  "issues": [
+    "REQUIRED SS09/base: NOT_RUN — No product source mutation or corrected green candidate was permitted. Actual integration assertions and observed defects are in SS09.vitest.json; no paired red/green sensitivity or host-live proof is claimed.",
+    "REQUIRED SS09/failures: NOT_RUN — No product source mutation or corrected green candidate was permitted. Actual integration assertions and observed defects are in SS09.vitest.json; no paired red/green sensitivity or host-live proof is claimed.",
+    "REQUIRED SS09/stages: NOT_RUN — No product source mutation or corrected green candidate was permitted. Actual integration assertions and observed defects are in SS09.vitest.json; no paired red/green sensitivity or host-live proof is claimed.",
+    "REQUIRED SS09/known-defects: NOT_RUN — No product source mutation or corrected green candidate was permitted. Actual integration assertions and observed defects are in SS09.vitest.json; no paired red/green sensitivity or host-live proof is claimed."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

@@ -1,0 +1,190 @@
+{
+  "caseId": "SS09",
+  "existingArtifactRecovery": "COMPLETE",
+  "missingOriginals": [
+    {
+      "artifact": "TEST-SPEC.seq7.ko.md",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Absent from original fixed repository; only embedded SS09 sourceSpec.fields exists. Not reconstructed."
+    }
+  ],
+  "patch": {
+    "status": "NOT_PRESENT",
+    "published": false,
+    "reason": "No original patch file existed; no patch was generated."
+  },
+  "existingOriginalManifest": {
+    "artifact": "SS09.evidence-manifest.json",
+    "bytes": 5345,
+    "sha256": "c28b9c91b68410e5006a1f35994b29e0f7fe6e83b790de49409b8b1afe743efc"
+  },
+  "retrievedOriginalFiles": [
+    {
+      "artifact": "SS09.engineering-test-result.json",
+      "bytes": 1702,
+      "sha256": "a059dca119014d3740a2d4ed0579161845ef63ea28d9f687c691d232a0f97c60"
+    },
+    {
+      "artifact": "SS09.environment.json",
+      "bytes": 342,
+      "sha256": "e91f6e8c92b7a5f199223b5afad6ee0c18cff623ac4d6f7119fd6bef258e9278"
+    },
+    {
+      "artifact": "SS09.existing-no-skill-regression.command.json",
+      "bytes": 629,
+      "sha256": "32683c82265a31b080c0c0f32617beccfeae63e468dcfca93d26198c762af518"
+    },
+    {
+      "artifact": "SS09.existing-no-skill-regression.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "artifact": "SS09.existing-no-skill-regression.stdout.log",
+      "bytes": 8053,
+      "sha256": "419b1789ab38eb115335f9472395f974209dde4b47a7c6a25cf99825c695e7ff"
+    },
+    {
+      "artifact": "SS09.existing-regression.vitest.json",
+      "bytes": 16625,
+      "sha256": "3a239f023bd75eb00ed64b9034310251c13b225363d3b593d9e91f46817f35fc"
+    },
+    {
+      "artifact": "SS09.fixture.json",
+      "bytes": 3957,
+      "sha256": "47fd1c1618259fd3b120aa0bca58dee6d55425d763562ad212ec20dc6d2ee89f"
+    },
+    {
+      "artifact": "SS09.observed.json",
+      "bytes": 7787771,
+      "sha256": "fec7f54734d04b79aabcaad532c135a6da37397e91f3d2a05277fedcb47240bb"
+    },
+    {
+      "artifact": "SS09.plan-check.command.json",
+      "bytes": 401,
+      "sha256": "df49c3110fc3d7e8b11446451a9bfecde8ca22564ba9520ae6196d5efbafd126"
+    },
+    {
+      "artifact": "SS09.plan-check.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "artifact": "SS09.plan-check.stdout.log",
+      "bytes": 283,
+      "sha256": "bd0d996b2a164736d598da8b70771bbd11b8dac17291b85cc4126787eb07868d"
+    },
+    {
+      "artifact": "SS09.plan.json",
+      "bytes": 6370,
+      "sha256": "1a011bc1682155875b7d4869f3ba46b4088eb9b9321a32a76191e7d8c4343a4f"
+    },
+    {
+      "artifact": "SS09.proof-check.command.json",
+      "bytes": 458,
+      "sha256": "b0304c970cdcc68d43e046e592fe1381afdedf1511bc67aa6a5442f249ace71f"
+    },
+    {
+      "artifact": "SS09.proof-check.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "artifact": "SS09.proof-check.stdout.log",
+      "bytes": 1702,
+      "sha256": "a059dca119014d3740a2d4ed0579161845ef63ea28d9f687c691d232a0f97c60"
+    },
+    {
+      "artifact": "SS09.proof.json",
+      "bytes": 5122,
+      "sha256": "8b0f39abc6b9dd63840735965e2c2367875352791f18e14af8d2932b5fb14ce3"
+    },
+    {
+      "artifact": "SS09.provenance.json",
+      "bytes": 4086,
+      "sha256": "e79b7a98f0a41a51a73a61fe0cef7ca2fca65578381ed5dcbf6f6040bd4ee6ea"
+    },
+    {
+      "artifact": "SS09.reproduce.sh",
+      "bytes": 338,
+      "sha256": "101f2f542fe1d4cd41298f97e3d09ef6d48ae4b4fa8b995da5b6ad6a51c3a301"
+    },
+    {
+      "artifact": "SS09.result.json",
+      "bytes": 30623,
+      "sha256": "0d7ed4fbae270044872e47c1e1e962669a47934342e797b57561cf0aa6a03bf3"
+    },
+    {
+      "artifact": "SS09.snapshot.command.json",
+      "bytes": 405,
+      "sha256": "d27cea25f7dc258d9dc2553b2aa8e06ac9f2f915ef29254b002fb4c720aaf059"
+    },
+    {
+      "artifact": "SS09.snapshot.json",
+      "bytes": 2271,
+      "sha256": "eae33047aaae7eec0cc573ee388006306a6b3bd199631fe069237e888d89c1d7"
+    },
+    {
+      "artifact": "SS09.snapshot.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "artifact": "SS09.snapshot.stdout.log",
+      "bytes": 2271,
+      "sha256": "eae33047aaae7eec0cc573ee388006306a6b3bd199631fe069237e888d89c1d7"
+    },
+    {
+      "artifact": "SS09.test.ts",
+      "bytes": 20755,
+      "sha256": "c48180ca4f5a9d84c2035f70526b6e0e853c6459fe6ba9c82e82fb43476d1598"
+    },
+    {
+      "artifact": "SS09.tests.command.json",
+      "bytes": 489,
+      "sha256": "dc9ce39894cf8322e311aa85e4e21a9bf21fe2bdc15c71ab74909d47bb6e678f"
+    },
+    {
+      "artifact": "SS09.tests.stderr.log",
+      "bytes": 5174,
+      "sha256": "9bc3aaec41cfddd9a32ef3357a78768491d3fe7ae2f640858a23e9c000be12ec"
+    },
+    {
+      "artifact": "SS09.tests.stdout.log",
+      "bytes": 4751,
+      "sha256": "4a5fc6d66ed341d45c8f170458d341f28fd22fab3e9f9d988f1be865afb3ee8c"
+    },
+    {
+      "artifact": "SS09.typecheck.command.json",
+      "bytes": 575,
+      "sha256": "b26d1c6fcede2d08b550905b241f262f5034988001c25cfb61c10e277b09365e"
+    },
+    {
+      "artifact": "SS09.typecheck.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "artifact": "SS09.typecheck.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "artifact": "SS09.vitest.json",
+      "bytes": 14027,
+      "sha256": "f827afa92d4489763ad3a0006093805d26b40555445b4ad602bc924da3eaa4ba"
+    },
+    {
+      "artifact": "scope-files.json",
+      "bytes": 485,
+      "sha256": "2424913adcedb53b12e92d06e105c6625d3a12f79067b3e4af4620e3ab2c27ca"
+    }
+  ],
+  "intentionallyNotPublished": [
+    "initial-run/: superseded intermediate local diagnostics",
+    "expanded-run-before-type-annotations/: superseded intermediate local diagnostics",
+    "Raw private local paths and executable path values",
+    "Unrelated skipped-test title lines from the existing regression stdout"
+  ],
+  "originalIntegrity": "All 32 files listed in existing original manifest exist and match recorded bytes/SHA256. No tests were re-run for this comparison."
+}

@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/mcp/skill-classification-gateway.test.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "-t",
+    "keeps AGENT choices independent of the same advice and handles accepted no-skill distinctly",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=<EVIDENCE_ROOT>/SS09.existing-regression.vitest.json"
+  ],
+  "cwd": "<CANDIDATE_ROOT>",
+  "startedAt": "2026-10-09T02:58:04.835770+00:00",
+  "finishedAt": "2026-10-09T02:58:06.382213+00:00",
+  "exitCode": 0,
+  "executionKind": "offline-mock",
+  "API0": true
+}

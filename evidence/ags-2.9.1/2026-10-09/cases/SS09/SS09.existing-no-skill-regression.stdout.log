@@ -1,0 +1,11 @@
+
+ RUN  v5.0.0 <CANDIDATE_ROOT>
+
+ ✓ tests/mcp/skill-classification-gateway.test.ts > offline classification through actual MCP Client/Server transport > keeps AGENT choices independent of the same advice and handles accepted no-skill distinctly 672ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 37 skipped (38)
+   Start at  02:58:05
+   Duration  1.27s (tests 58%, transform 28%, import 13%)
+
+JSON report written to <EVIDENCE_ROOT>/SS09.existing-regression.vitest.json

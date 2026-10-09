@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:234de51e51ad9c57df730bc5384214fb97b6e226d8771fbcf000f811d28c7187",
+  "caseIds": [
+    "SS09/base",
+    "SS09/failures",
+    "SS09/stages",
+    "SS09/known-defects"
+  ]
+}

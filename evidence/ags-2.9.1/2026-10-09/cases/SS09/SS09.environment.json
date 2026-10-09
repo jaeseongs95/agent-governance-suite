@@ -1,0 +1,15 @@
+{
+  "classificationConfig": "UNSET",
+  "hostAttestation": "UNSET",
+  "agentsSkillsExists": false,
+  "workspaceAgentsSkillsExists": false,
+  "availableHostClassificationToolsInSession": false,
+  "apiCalls": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0
+  },
+  "codexExecutablePresent": true,
+  "claudeExecutablePresent": false,
+  "publicSanitization": "Executable path values omitted; presence and missing configuration statuses only."
+}

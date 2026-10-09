@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-snapshot",
+  "files": [
+    {
+      "path": "mcp-server/src/skill-classification/gateway.ts",
+      "digest": "sha256:80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+      "size": 15017,
+      "lineCount": 156
+    },
+    {
+      "path": "mcp-server/src/skill-classification/inventory.ts",
+      "digest": "sha256:8c7ee54546f17fb1e63368fbfb72668a3c7136570a545ad5f0494f076c91727c",
+      "size": 20714,
+      "lineCount": 259
+    },
+    {
+      "path": "mcp-server/src/skill-classification/profiles.ts",
+      "digest": "sha256:0add9c19bd0c7a8e45a57be64f4a2ecb503e0305dc9777629fba142a8566d5be",
+      "size": 6859,
+      "lineCount": 81
+    },
+    {
+      "path": "mcp-server/src/skill-classification/providers.ts",
+      "digest": "sha256:f191c46db32f38248ebdd23be725b426a0b3020e0bb464b36bcc57521983651c",
+      "size": 12898,
+      "lineCount": 162
+    },
+    {
+      "path": "mcp-server/src/skill-classification/request.ts",
+      "digest": "sha256:1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f",
+      "size": 7093,
+      "lineCount": 99
+    },
+    {
+      "path": "mcp-server/src/skill-classification/service.ts",
+      "digest": "sha256:c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb",
+      "size": 19033,
+      "lineCount": 215
+    },
+    {
+      "path": "mcp-server/src/skill-classification/validation.ts",
+      "digest": "sha256:70f988d9e5d49f8eaef55ca0ff378b4819798ff8141bd09119691c2cffb2891f",
+      "size": 8449,
+      "lineCount": 107
+    },
+    {
+      "path": "tests/skill-classification/evaluation.ts",
+      "digest": "sha256:e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+      "size": 16532,
+      "lineCount": 223
+    },
+    {
+      "path": "tests/skill-classification/fixtures.json",
+      "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "size": 142450,
+      "lineCount": 2912
+    },
+    {
+      "path": "tests/ss09-development/SS09.test.ts",
+      "digest": "sha256:c48180ca4f5a9d84c2035f70526b6e0e853c6459fe6ba9c82e82fb43476d1598",
+      "size": 20755,
+      "lineCount": 242
+    }
+  ],
+  "digest": "sha256:28443117a993f1c79f08611c79993201539ea435ac12530a7c8f65716792cb8c"
+}

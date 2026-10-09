@@ -1,0 +1,26 @@
+{
+  "argv": [
+    "node",
+    "node_modules/typescript/bin/tsc",
+    "--ignoreConfig",
+    "--noEmit",
+    "--module",
+    "NodeNext",
+    "--moduleResolution",
+    "NodeNext",
+    "--target",
+    "ES2022",
+    "--strict",
+    "--skipLibCheck",
+    "--noUncheckedIndexedAccess",
+    "--exactOptionalPropertyTypes",
+    "--types",
+    "node,vitest/globals",
+    "tests/ss09-development/SS09.test.ts"
+  ],
+  "cwd": "<CANDIDATE_ROOT>",
+  "exitCode": 0,
+  "executionKind": "static-tests-and-import-graph",
+  "API0": true,
+  "finishedAt": "2026-10-09T02:58:59.501156+00:00"
+}

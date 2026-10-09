@@ -1,0 +1,149 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS09-independent-cloud",
+  "contractDigest": "sha256:af37b07ef1eb512994939b0f1bc2e5e6162a5f4e3791e974d8091e9bb16f3b95",
+  "requirements": [
+    "SS09-base-no-skill",
+    "SS09-provider-failure-distinction",
+    "SS09-unobserved-selection",
+    "SS09-known-defect-boundaries",
+    "SS09-evaluator-unique-FP"
+  ],
+  "scopeFiles": [
+    "tests/ss09-development/SS09.test.ts",
+    "tests/skill-classification/fixtures.json",
+    "tests/skill-classification/evaluation.ts",
+    "mcp-server/src/skill-classification/request.ts",
+    "mcp-server/src/skill-classification/service.ts",
+    "mcp-server/src/skill-classification/gateway.ts",
+    "mcp-server/src/skill-classification/inventory.ts",
+    "mcp-server/src/skill-classification/providers.ts",
+    "mcp-server/src/skill-classification/validation.ts",
+    "mcp-server/src/skill-classification/profiles.ts"
+  ],
+  "runner": "existing Vitest 5.0.0; no build or whole suite",
+  "environment": "Node 24.19.0 / Linux / independent Cloud / UTC; synthetic provider and no host receipt; external APIs zero",
+  "cases": [
+    {
+      "id": "SS09/base",
+      "requirementIds": [
+        "SS09-base-no-skill"
+      ],
+      "scenario": "Frozen SS09/base exact prompt and full inventory",
+      "entryPoint": "MCP classify_skills",
+      "level": "integration",
+      "expectedBehavior": "SUCCESS plus all 24 synthetic not-needed judgments; real selected null",
+      "oracle": "Frozen embedded SS09 sourceSpec/oracle; request and classification contracts; independent budget arithmetic 0+0.1=0.1; Node timer bound 2^31-1",
+      "testFiles": [
+        "tests/ss09-development/SS09.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read-only product assignment; no product mutations or corrected green candidate authorized. Negative response inputs and defect reproduction are observed separately; paired red/green proof remains NOT_RUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/ss09-development/SS09.test.ts",
+        "--maxWorkers=1",
+        "--no-file-parallelism",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/SS09.vitest.json"
+      ]
+    },
+    {
+      "id": "SS09/failures",
+      "requirementIds": [
+        "SS09-provider-failure-distinction"
+      ],
+      "scenario": "Malformed/auth/unavailable/uncertain results",
+      "entryPoint": "SkillClassificationService.classify",
+      "level": "integration",
+      "expectedBehavior": "Failure statuses retained; not successful no-skill",
+      "oracle": "Frozen embedded SS09 sourceSpec/oracle; request and classification contracts; independent budget arithmetic 0+0.1=0.1; Node timer bound 2^31-1",
+      "testFiles": [
+        "tests/ss09-development/SS09.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read-only product assignment; no product mutations or corrected green candidate authorized. Negative response inputs and defect reproduction are observed separately; paired red/green proof remains NOT_RUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/ss09-development/SS09.test.ts",
+        "--maxWorkers=1",
+        "--no-file-parallelism",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/SS09.vitest.json"
+      ]
+    },
+    {
+      "id": "SS09/stages",
+      "requirementIds": [
+        "SS09-unobserved-selection"
+      ],
+      "scenario": "Unsigned [] and selected null",
+      "entryPoint": "MCP record_skill_selection and scoreCase",
+      "level": "integration",
+      "expectedBehavior": "Unsigned selection rejected; no fabricated receipt",
+      "oracle": "Frozen embedded SS09 sourceSpec/oracle; request and classification contracts; independent budget arithmetic 0+0.1=0.1; Node timer bound 2^31-1",
+      "testFiles": [
+        "tests/ss09-development/SS09.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read-only product assignment; no product mutations or corrected green candidate authorized. Negative response inputs and defect reproduction are observed separately; paired red/green proof remains NOT_RUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/ss09-development/SS09.test.ts",
+        "--maxWorkers=1",
+        "--no-file-parallelism",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/SS09.vitest.json"
+      ]
+    },
+    {
+      "id": "SS09/known-defects",
+      "requirementIds": [
+        "SS09-known-defect-boundaries",
+        "SS09-evaluator-unique-FP"
+      ],
+      "scenario": "Valid cost plus invalid RESP, large positive timeout; frozen forbidden/notApplicable overlap",
+      "entryPoint": "SkillClassificationService.classify",
+      "level": "integration",
+      "expectedBehavior": "Cost remains accounted; accepted timeout does not collapse to 1ms; one unique false positive for one selected ID",
+      "oracle": "Frozen embedded SS09 sourceSpec/oracle; request and classification contracts; independent budget arithmetic 0+0.1=0.1; Node timer bound 2^31-1",
+      "testFiles": [
+        "tests/ss09-development/SS09.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read-only product assignment; no product mutations or corrected green candidate authorized. Negative response inputs and defect reproduction are observed separately; paired red/green proof remains NOT_RUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/ss09-development/SS09.test.ts",
+        "--maxWorkers=1",
+        "--no-file-parallelism",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/SS09.vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "all other SS cases and entire suites",
+    "JEV/vendor/Claude live calls",
+    "past 21-run replay",
+    "product source edits/push/PR/release",
+    "provider model semantic quality and actual host AGENT selection"
+  ]
+}
