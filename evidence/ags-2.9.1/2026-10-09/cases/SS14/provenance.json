@@ -1,0 +1,278 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS14",
+  "kind": "public-packaging-provenance",
+  "notNewExecutionEvidence": true,
+  "newTests": 0,
+  "newJevCalls": 0,
+  "newVendorCalls": 0,
+  "newClaudeCalls": 0,
+  "newCodexModelCalls": 0,
+  "recoveredOriginalArtifacts": [
+    {
+      "artifact": "SS14.cost-repro.command.json",
+      "bytes": 351,
+      "sha256": "e77a3997d8dc71958e622af03d8cf6bb38a6bf0bcdd1e5c653991bdee1d9f4b5",
+      "recovered": true
+    },
+    {
+      "artifact": "SS14.cost-repro.log",
+      "bytes": 2063,
+      "sha256": "95a73ded0339bc77ef7cd865f551bf7b3ef12d974b4296b0b36f8afaad2f0e82",
+      "recovered": true
+    },
+    {
+      "artifact": "SS14.cost-repro.observations.json",
+      "bytes": 2645,
+      "sha256": "b373cf12a02253e953b8bee2e3848cccea6a06f204d38fb5bdbb6fc44f58ad98",
+      "recovered": true
+    },
+    {
+      "artifact": "SS14.cost-repro.test.ts",
+      "bytes": 4903,
+      "sha256": "71920b50e62b158e9c52e9350eb4c41a259976e38a4493d2144f407bba70fa33",
+      "recovered": true
+    },
+    {
+      "artifact": "SS14.cost-repro.vitest.json",
+      "bytes": 1463,
+      "sha256": "c236e4520aa20279223fa422dda789a4340eb814b5e6968c01bf54ae4205bf21",
+      "recovered": true
+    },
+    {
+      "artifact": "SS14.engineering-test-plan.json",
+      "bytes": 3793,
+      "sha256": "a42a17c81af516bc52b8d5d060511cec3658d6be6f9e8bde6cabd7d508486aed",
+      "recovered": true
+    },
+    {
+      "artifact": "SS14.final-check.json",
+      "bytes": 1172,
+      "sha256": "6d5fdd34d80caac06f834eabead7c3cf05521df9011c905cd503328bb20cb477",
+      "recovered": true
+    },
+    {
+      "artifact": "SS14.offline.command.json",
+      "bytes": 345,
+      "sha256": "8279a29ae8535a9df53396b5935028b8af53ddf3cee31be685b25fac6ce7ae4b",
+      "recovered": true
+    },
+    {
+      "artifact": "SS14.offline.log",
+      "bytes": 3468,
+      "sha256": "c7fa13dc9e77986c16914905ed2b7e2b75c3444f2c5fba5da04e22942e8834ce",
+      "recovered": true
+    },
+    {
+      "artifact": "SS14.offline.observations.json",
+      "bytes": 610602,
+      "sha256": "a9dd51f110cba86728a751242a23a569eb8ff059bc259ce20ba1f5528198d1c8",
+      "recovered": true
+    },
+    {
+      "artifact": "SS14.offline.test.ts",
+      "bytes": 12713,
+      "sha256": "9828f2287d6716b8c98dd1a91cd12ff6732a4cd48791dc7a16d4e20d2868e8d7",
+      "recovered": true
+    },
+    {
+      "artifact": "SS14.offline.vitest.json",
+      "bytes": 6407,
+      "sha256": "20ce083f3e15679ae4ebf4489b12ca630e03057fe41f62ae2c80f5931c1a52d1",
+      "recovered": true
+    },
+    {
+      "artifact": "SS14.plan-check.log",
+      "bytes": 265,
+      "sha256": "c2c561e08d02dfce1e89978210c9be2132106b27a479cfa46abe2ac9b8db23bb",
+      "recovered": true
+    },
+    {
+      "artifact": "SS14.result.json",
+      "bytes": 22600,
+      "sha256": "537cc609170b7054ff03fb7b820d1797ff4c964460336ec67353112ab407e73c",
+      "recovered": true
+    },
+    {
+      "artifact": "write-result.py",
+      "bytes": 10325,
+      "sha256": "f0ae27ecc195e58b5485d68671c6b56d26a91b04973b89e6a3c44bde04de0647",
+      "recovered": true
+    }
+  ],
+  "publicationFileMappings": [
+    {
+      "publicPath": "observations/SS14.offline.observations.json",
+      "publicBytes": 610602,
+      "publicSHA256": "a9dd51f110cba86728a751242a23a569eb8ff059bc259ce20ba1f5528198d1c8",
+      "transformation": "Existing original observations; local path substitution only; no new observed values",
+      "originalArtifact": "SS14.offline.observations.json",
+      "originalBytes": 610602,
+      "originalSHA256": "a9dd51f110cba86728a751242a23a569eb8ff059bc259ce20ba1f5528198d1c8"
+    },
+    {
+      "publicPath": "observations/SS14.cost-repro.observations.json",
+      "publicBytes": 2645,
+      "publicSHA256": "b373cf12a02253e953b8bee2e3848cccea6a06f204d38fb5bdbb6fc44f58ad98",
+      "transformation": "Existing original observations; local path substitution only; no new observed values",
+      "originalArtifact": "SS14.cost-repro.observations.json",
+      "originalBytes": 2645,
+      "originalSHA256": "b373cf12a02253e953b8bee2e3848cccea6a06f204d38fb5bdbb6fc44f58ad98"
+    },
+    {
+      "publicPath": "logs/SS14.offline.log",
+      "publicBytes": 3433,
+      "publicSHA256": "b6f97c778d830f7de18dc3cfea44e0897ab6e3ab4af2b04b1494db438419614c",
+      "transformation": "Existing combined stdout/stderr; local paths substituted; test results and exit unchanged",
+      "originalArtifact": "SS14.offline.log",
+      "originalBytes": 3468,
+      "originalSHA256": "c7fa13dc9e77986c16914905ed2b7e2b75c3444f2c5fba5da04e22942e8834ce"
+    },
+    {
+      "publicPath": "logs/SS14.cost-repro.log",
+      "publicBytes": 2028,
+      "publicSHA256": "17b0b7b3e2dc5b6676c16114a7b00da7c74c0fa7f4135418d21f16e97b87720c",
+      "transformation": "Existing combined stdout/stderr; local paths substituted; test results and exit unchanged",
+      "originalArtifact": "SS14.cost-repro.log",
+      "originalBytes": 2063,
+      "originalSHA256": "95a73ded0339bc77ef7cd865f551bf7b3ef12d974b4296b0b36f8afaad2f0e82"
+    },
+    {
+      "publicPath": "logs/SS14.plan-check.log",
+      "publicBytes": 265,
+      "publicSHA256": "c2c561e08d02dfce1e89978210c9be2132106b27a479cfa46abe2ac9b8db23bb",
+      "transformation": "Existing combined stdout/stderr; local paths substituted; test results and exit unchanged",
+      "originalArtifact": "SS14.plan-check.log",
+      "originalBytes": 265,
+      "originalSHA256": "c2c561e08d02dfce1e89978210c9be2132106b27a479cfa46abe2ac9b8db23bb"
+    },
+    {
+      "publicPath": "reports/SS14.offline.vitest.json",
+      "publicBytes": 6397,
+      "publicSHA256": "35eb67dc1c28bae567bbb7b25ae84b18af439a7177d1b44886f1f68ab5d64175",
+      "transformation": "Existing Vitest report; local paths substituted; original failure and counts unchanged",
+      "originalArtifact": "SS14.offline.vitest.json",
+      "originalBytes": 6407,
+      "originalSHA256": "20ce083f3e15679ae4ebf4489b12ca630e03057fe41f62ae2c80f5931c1a52d1"
+    },
+    {
+      "publicPath": "reports/SS14.cost-repro.vitest.json",
+      "publicBytes": 1433,
+      "publicSHA256": "657d516a8de94cd85a9caddced32410bcb7e3149030ea27d40196431d2f7c5eb",
+      "transformation": "Existing Vitest report; local paths substituted; original failure and counts unchanged",
+      "originalArtifact": "SS14.cost-repro.vitest.json",
+      "originalBytes": 1463,
+      "originalSHA256": "c236e4520aa20279223fa422dda789a4340eb814b5e6968c01bf54ae4205bf21"
+    },
+    {
+      "publicPath": "commands/SS14.offline.command.json",
+      "publicBytes": 310,
+      "publicSHA256": "1fd7bcf9b49c86cf780c8a38250b028dd49526b11b71a52aebca7283d726bce0",
+      "transformation": "Existing command/exit or final check; local paths substituted; not newly executed",
+      "originalArtifact": "SS14.offline.command.json",
+      "originalBytes": 345,
+      "originalSHA256": "8279a29ae8535a9df53396b5935028b8af53ddf3cee31be685b25fac6ce7ae4b"
+    },
+    {
+      "publicPath": "commands/SS14.cost-repro.command.json",
+      "publicBytes": 316,
+      "publicSHA256": "21bd11bf5b7c9b53ff5c2dfcc1b0ba9958796b65da2ea5a25127d4a7b85fd6e4",
+      "transformation": "Existing command/exit or final check; local paths substituted; not newly executed",
+      "originalArtifact": "SS14.cost-repro.command.json",
+      "originalBytes": 351,
+      "originalSHA256": "e77a3997d8dc71958e622af03d8cf6bb38a6bf0bcdd1e5c653991bdee1d9f4b5"
+    },
+    {
+      "publicPath": "commands/SS14.final-check.json",
+      "publicBytes": 1163,
+      "publicSHA256": "ad42efa20121b0fdbded13bde2234bbb49ff35ca0b65331516499537781f2a20",
+      "transformation": "Existing command/exit or final check; local paths substituted; not newly executed",
+      "originalArtifact": "SS14.final-check.json",
+      "originalBytes": 1172,
+      "originalSHA256": "6d5fdd34d80caac06f834eabead7c3cf05521df9011c905cd503328bb20cb477"
+    },
+    {
+      "publicPath": "repro/SS14.offline.test.ts",
+      "publicBytes": 12706,
+      "publicSHA256": "8da878294a9cee335923acd56fc1999aba03c9c3a913a9d5d4c9d312ff0311bd",
+      "transformation": "Existing reproduction source copied; absolute output directory replaced with ss14-repro-output; NOT executed during publication",
+      "originalArtifact": "SS14.offline.test.ts",
+      "originalBytes": 12713,
+      "originalSHA256": "9828f2287d6716b8c98dd1a91cd12ff6732a4cd48791dc7a16d4e20d2868e8d7"
+    },
+    {
+      "publicPath": "repro/SS14.cost-repro.test.ts",
+      "publicBytes": 4896,
+      "publicSHA256": "05df365a986c6582a49ead341a3bbf842ad787081dd426dc3477633bd4f6f97f",
+      "transformation": "Existing reproduction source copied; absolute output directory replaced with ss14-repro-output; NOT executed during publication",
+      "originalArtifact": "SS14.cost-repro.test.ts",
+      "originalBytes": 4903,
+      "originalSHA256": "71920b50e62b158e9c52e9350eb4c41a259976e38a4493d2144f407bba70fa33"
+    },
+    {
+      "publicPath": "SS14.engineering-test-plan.json",
+      "publicBytes": 3743,
+      "publicSHA256": "9b311f1091dcecd50ef8726a62cd3e64c55bcb4243f92992a267232388bfecc8",
+      "transformation": "Existing plan; local output paths substituted; original plan digest remains historical",
+      "originalArtifact": "SS14.engineering-test-plan.json",
+      "originalBytes": 3793,
+      "originalSHA256": "a42a17c81af516bc52b8d5d060511cec3658d6be6f9e8bde6cabd7d508486aed"
+    },
+    {
+      "publicPath": "SS14.result.json",
+      "publicBytes": 22853,
+      "publicSHA256": "a22fd1a3c4435784c2b5dfc731a4269b799b195152aa0033f59f452de5e40a81",
+      "transformation": "Original result reserialized with publication provenance; existing PASS/FAIL/NOT_RUN and input retained; local paths replaced; old file hashes explicitly original",
+      "originalArtifact": "SS14.result.json",
+      "originalBytes": 22600,
+      "originalSHA256": "537cc609170b7054ff03fb7b820d1797ff4c964460336ec67353112ab407e73c"
+    },
+    {
+      "publicPath": "input.original.txt",
+      "publicBytes": 158,
+      "publicSHA256": "7ecb7226d4cea9f67b85ef8d1deaf5bbb192d25f3c1b06367ca0f4624b2c526a",
+      "transformation": "Exact UTF8 originalPrompt extracted from existing observed request; no BOM and no trailing newline; source is whole observation artifact",
+      "originalArtifact": "SS14.offline.observations.json",
+      "originalBytes": 610602,
+      "originalSHA256": "a9dd51f110cba86728a751242a23a569eb8ff059bc259ce20ba1f5528198d1c8"
+    },
+    {
+      "publicPath": "SS14.fixture.extract.json",
+      "publicBytes": 3865,
+      "publicSHA256": "a5b76b3c2ea7c11de228f25151cade9216c7cb9618fff6d4a397b4e5d135e56a",
+      "transformation": "SS14 fixture object extracted from already existing frozen-source-binding observation; embedded source fields only",
+      "originalArtifact": "SS14.offline.observations.json",
+      "originalBytes": 610602,
+      "originalSHA256": "a9dd51f110cba86728a751242a23a569eb8ff059bc259ce20ba1f5528198d1c8"
+    },
+    {
+      "publicPath": "README.md",
+      "publicBytes": 3988,
+      "publicSHA256": "5e6e41b27e1c2ddadc3aaeb73d7da8b184808fddc65df36d4738f21f1eaae6f8",
+      "transformation": "publication metadata; not a test result"
+    }
+  ],
+  "notPublished": [
+    {
+      "artifact": "write-result.py",
+      "reason": "Local historical result assembly utility; unnecessary for reproducing existing checks; digest retained in original inventory"
+    }
+  ],
+  "missingOriginal": {
+    "retainedArtifactRecovery": [],
+    "separateStdout": "MISSING_ORIGINAL",
+    "separateStderr": "MISSING_ORIGINAL"
+  },
+  "existingLogCapture": "subprocess PIPE stdout with stderr redirected to STDOUT; only combined original stream retained",
+  "patch": {
+    "status": "NONE_EXISTED",
+    "productSourceModified": false,
+    "newPatchGenerated": false
+  },
+  "privacy": "Only public synthetic case, public candidate code metadata and required test evidence included; no credentials, personal conversation or local absolute paths published.",
+  "fullFixtureSource": {
+    "path": "tests/skill-classification/fixtures.json",
+    "originalBytes": 142450,
+    "originalSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9"
+  }
+}

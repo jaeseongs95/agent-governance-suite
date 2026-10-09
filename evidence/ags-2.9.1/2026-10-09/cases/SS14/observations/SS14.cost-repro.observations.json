@@ -1,0 +1,102 @@
+[
+  {
+    "caseId": "SS14",
+    "boundary": "valid-control",
+    "executionKind": "offline-mock",
+    "API0": true,
+    "requestDigest": "sha256:c7a16892d712b6c70a3fa684a066f02af6c027dd7a6bec2f22398a150829141b",
+    "suppliedUsage": {
+      "inputTokens": 100,
+      "outputTokens": 10,
+      "cachedInputTokens": 0,
+      "actualCostUsd": 0.1
+    },
+    "expectedCostUsd": 0.1,
+    "observedAttempt": {
+      "providerKind": "vendor",
+      "profileId": "SS14-mock-vendor",
+      "modelId": "offline-model",
+      "reasoningEffort": null,
+      "dispatchState": "started",
+      "status": "SUCCESS",
+      "errorCode": null,
+      "timedOut": false,
+      "usage": {
+        "inputTokens": 100,
+        "outputTokens": 10,
+        "cachedInputTokens": 0,
+        "actualCostUsd": 0.1
+      },
+      "reservedCostUsd": 0.4
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 0,
+          "spentUsd": 0
+        },
+        "vendor:offline-mock": {
+          "limitUsd": 2,
+          "spentUsd": 0.1
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": []
+    }
+  },
+  {
+    "caseId": "SS14",
+    "boundary": "missing-test-engineering-judgment",
+    "executionKind": "offline-mock",
+    "API0": true,
+    "requestDigest": "sha256:fa8dc5f57e27fe857ac6ac6beb041718ff96d2927969510b13a4a7cf29983c83",
+    "suppliedUsage": {
+      "inputTokens": 100,
+      "outputTokens": 10,
+      "cachedInputTokens": 0,
+      "actualCostUsd": 0.1
+    },
+    "expectedCostUsd": 0.1,
+    "observedAttempt": {
+      "providerKind": "vendor",
+      "profileId": "SS14-mock-vendor",
+      "modelId": "offline-model",
+      "reasoningEffort": null,
+      "dispatchState": "started",
+      "status": "INVALID",
+      "errorCode": "INVALID_PROVIDER_RESPONSE",
+      "timedOut": false,
+      "usage": {
+        "inputTokens": null,
+        "outputTokens": null,
+        "cachedInputTokens": null,
+        "actualCostUsd": null
+      },
+      "reservedCostUsd": 0.4
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 0,
+          "spentUsd": 0
+        },
+        "vendor:offline-mock": {
+          "limitUsd": 2,
+          "spentUsd": 0
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": [
+        {
+          "id": "[\"SS14-cost-true\",\"sha256:fa8dc5f57e27fe857ac6ac6beb041718ff96d2927969510b13a4a7cf29983c83\",\"SS14-mock-vendor\"]",
+          "bucket": "vendor:offline-mock",
+          "maximumUsd": 0.4,
+          "profileId": "SS14-mock-vendor",
+          "nativeProfileId": null
+        }
+      ]
+    }
+  }
+]

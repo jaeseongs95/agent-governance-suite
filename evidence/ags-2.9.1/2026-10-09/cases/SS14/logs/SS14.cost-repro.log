@@ -1,0 +1,45 @@
+Already up to date
+Done in 436ms using pnpm v11.19.0
+
+   ╭──────────────────────────────────────────╮
+   │                                          │
+   │   Update available! 11.19.0 → 12.10.1.   │
+   │   Changelog: https://pnpm.io/v/12.10.1   │
+   │     To update, run: pnpm add -g pnpm     │
+   │                                          │
+   ╰──────────────────────────────────────────╯
+
+
+ RUN  v5.0.0 <candidate-root>
+
+ × tests/ss14-evidence/SS14.cost-repro.test.ts > SS14 known-defect reproduction: invalid RESP with valid usage > retains validated cost even when SS14 full-inventory response is missing a candidate 158ms
+   → expected null to be 0.1 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/ss14-evidence/SS14.cost-repro.test.ts > SS14 known-defect reproduction: invalid RESP with valid usage > retains validated cost even when SS14 full-inventory response is missing a candidate
+AssertionError: expected null to be 0.1 // Object.is equality
+
+- Expected:
+0.1
+
++ Received:
+null
+
+ ❯ tests/ss14-evidence/SS14.cost-repro.test.ts:48:57
+     46|     expect(invalid.observedAttempt.errorCode).toBe("INVALID_PROVIDER_R…
+     47|     // This assertion is expected RED at the frozen candidate; preserv…
+     48|     expect(invalid.observedAttempt.usage.actualCostUsd).toBe(0.1);
+       |                                                         ^
+     49|     expect(invalid.budget.limits["vendor:offline-mock"].spentUsd).toBe…
+     50|     expect(invalid.budget.reservations).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  02:55:49
+   Duration  471ms (tests 45%, transform 33%, import 22%, worker 1%)
+
+JSON report written to SS14.cost-repro.vitest.json

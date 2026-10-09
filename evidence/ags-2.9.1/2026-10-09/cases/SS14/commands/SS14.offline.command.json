@@ -1,0 +1,16 @@
+{
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "tests/ss14-evidence/SS14.offline.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile.json=SS14.offline.vitest.json"
+  ],
+  "cwd": "<candidate-root>",
+  "exit": 0,
+  "executionKind": "offline-mock",
+  "API0": true
+}

@@ -1,0 +1,16 @@
+{
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "tests/ss14-evidence/SS14.cost-repro.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile.json=SS14.cost-repro.vitest.json"
+  ],
+  "cwd": "<candidate-root>",
+  "exit": 1,
+  "executionKind": "offline-mock",
+  "API0": true
+}

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:a0771e2e886e592888e2748c54d9d55d8fedf499856322eb48515c0e626627cf",
+  "caseIds": [
+    "SS14-base-offline",
+    "SS14-invalid-response-valid-cost"
+  ]
+}

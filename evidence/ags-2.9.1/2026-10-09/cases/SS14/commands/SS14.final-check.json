@@ -1,0 +1,40 @@
+{
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "trackedDiff": [],
+  "status": "?? tests/ss14-evidence/\n",
+  "diffCheckExit": 0,
+  "planCheck": {
+    "command": [
+      "node",
+      "skills/test-engineering/scripts/run.mjs",
+      "check-plan",
+      "--root",
+      "<evidence-root>",
+      "--plan",
+      "SS14.engineering-test-plan.json"
+    ],
+    "exit": 0,
+    "result": {
+      "schemaVersion": "1.0.0",
+      "kind": "engineering-plan-result",
+      "verdict": "READY",
+      "planDigest": "sha256:a0771e2e886e592888e2748c54d9d55d8fedf499856322eb48515c0e626627cf",
+      "caseIds": [
+        "SS14-base-offline",
+        "SS14-invalid-response-valid-cost"
+      ]
+    }
+  },
+  "developerReadSources": [
+    "AGENTS.md",
+    "skills/test-engineering/SKILL.md",
+    "skills/orchestrator/SKILL.md",
+    "skills/cs-engineering/SKILL.md",
+    "skills/orchestrator/references/skill-classification.md",
+    "skills/orchestrator/references/engineering-practices/test-design.md",
+    "skills/orchestrator/references/engineering-practices/test-proof.md"
+  ],
+  "API0": true,
+  "liveRun": false
+}

@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS14",
+  "algorithm": "SHA256",
+  "path": "evidence/ags-2.9.1/2026-10-09/cases/SS14/",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 3988,
+      "sha256": "5e6e41b27e1c2ddadc3aaeb73d7da8b184808fddc65df36d4738f21f1eaae6f8"
+    },
+    {
+      "path": "SS14.engineering-test-plan.json",
+      "bytes": 3743,
+      "sha256": "9b311f1091dcecd50ef8726a62cd3e64c55bcb4243f92992a267232388bfecc8"
+    },
+    {
+      "path": "SS14.fixture.extract.json",
+      "bytes": 3865,
+      "sha256": "a5b76b3c2ea7c11de228f25151cade9216c7cb9618fff6d4a397b4e5d135e56a"
+    },
+    {
+      "path": "SS14.result.json",
+      "bytes": 22853,
+      "sha256": "a22fd1a3c4435784c2b5dfc731a4269b799b195152aa0033f59f452de5e40a81"
+    },
+    {
+      "path": "commands/SS14.cost-repro.command.json",
+      "bytes": 316,
+      "sha256": "21bd11bf5b7c9b53ff5c2dfcc1b0ba9958796b65da2ea5a25127d4a7b85fd6e4"
+    },
+    {
+      "path": "commands/SS14.final-check.json",
+      "bytes": 1163,
+      "sha256": "ad42efa20121b0fdbded13bde2234bbb49ff35ca0b65331516499537781f2a20"
+    },
+    {
+      "path": "commands/SS14.offline.command.json",
+      "bytes": 310,
+      "sha256": "1fd7bcf9b49c86cf780c8a38250b028dd49526b11b71a52aebca7283d726bce0"
+    },
+    {
+      "path": "input.original.txt",
+      "bytes": 158,
+      "sha256": "7ecb7226d4cea9f67b85ef8d1deaf5bbb192d25f3c1b06367ca0f4624b2c526a"
+    },
+    {
+      "path": "logs/SS14.cost-repro.log",
+      "bytes": 2028,
+      "sha256": "17b0b7b3e2dc5b6676c16114a7b00da7c74c0fa7f4135418d21f16e97b87720c"
+    },
+    {
+      "path": "logs/SS14.offline.log",
+      "bytes": 3433,
+      "sha256": "b6f97c778d830f7de18dc3cfea44e0897ab6e3ab4af2b04b1494db438419614c"
+    },
+    {
+      "path": "logs/SS14.plan-check.log",
+      "bytes": 265,
+      "sha256": "c2c561e08d02dfce1e89978210c9be2132106b27a479cfa46abe2ac9b8db23bb"
+    },
+    {
+      "path": "observations/SS14.cost-repro.observations.json",
+      "bytes": 2645,
+      "sha256": "b373cf12a02253e953b8bee2e3848cccea6a06f204d38fb5bdbb6fc44f58ad98"
+    },
+    {
+      "path": "observations/SS14.offline.observations.json",
+      "bytes": 610602,
+      "sha256": "a9dd51f110cba86728a751242a23a569eb8ff059bc259ce20ba1f5528198d1c8"
+    },
+    {
+      "path": "provenance.json",
+      "bytes": 12121,
+      "sha256": "cf4c4aa8987843a52a08f7808c05f3eeece3d16972f76717ddd680384599b49c"
+    },
+    {
+      "path": "reports/SS14.cost-repro.vitest.json",
+      "bytes": 1433,
+      "sha256": "657d516a8de94cd85a9caddced32410bcb7e3149030ea27d40196431d2f7c5eb"
+    },
+    {
+      "path": "reports/SS14.offline.vitest.json",
+      "bytes": 6397,
+      "sha256": "35eb67dc1c28bae567bbb7b25ae84b18af439a7177d1b44886f1f68ab5d64175"
+    },
+    {
+      "path": "repro/SS14.cost-repro.test.ts",
+      "bytes": 4896,
+      "sha256": "05df365a986c6582a49ead341a3bbf842ad787081dd426dc3477633bd4f6f97f"
+    },
+    {
+      "path": "repro/SS14.offline.test.ts",
+      "bytes": 12706,
+      "sha256": "8da878294a9cee335923acd56fc1999aba03c9c3a913a9d5d4c9d312ff0311bd"
+    }
+  ],
+  "payloadFileCount": 18,
+  "payloadTotalBytes": 692922,
+  "excludes": [
+    "manifest.json",
+    "SHA256SUMS"
+  ],
+  "manifestSelfDigest": "Reported externally after publication; deliberately excluded to prevent a cycle",
+  "SHA256SUMSCoverage": "All payload files and manifest.json; SHA256SUMS itself excluded; digest reported externally"
+}

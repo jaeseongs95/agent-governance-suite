@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS14",
+  "contractDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "requirements": [
+    "SS14:exact-mixed-language-read-only-input",
+    "SS14:R-CS-T-O-and-no-P",
+    "SS14:missing-target-does-not-erase-role-need",
+    "SS14:recommendation-not-host-selection",
+    "SS14:independent-stage-evidence",
+    "SS14:valid-usage-survives-invalid-response"
+  ],
+  "scopeFiles": [
+    "tests/ss14-evidence/SS14.offline.test.ts",
+    "tests/ss14-evidence/SS14.cost-repro.test.ts"
+  ],
+  "runner": "Existing Vitest 5.0.0; exact SS14 file paths only",
+  "environment": "Independent Cloud; Node 24.19.0, pnpm 11.19.0, UTC; fixed commit; provider ports mocked, host receipts absent",
+  "cases": [
+    {
+      "id": "SS14-base-offline",
+      "requirementIds": [
+        "SS14:exact-mixed-language-read-only-input",
+        "SS14:R-CS-T-O-and-no-P",
+        "SS14:missing-target-does-not-erase-role-need",
+        "SS14:recommendation-not-host-selection",
+        "SS14:independent-stage-evidence"
+      ],
+      "scenario": "Only frozen base variant; request, response, scorer, unconfigured gateway and omission controls",
+      "entryPoint": "loadSkillInventory/createClassificationRequest/projectClassificationRequest/validateClassificationResponse/scoreCase/RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Exact input and 24 candidates survive, omissions and prohibited roles fail controls, null differs from [], no host means selected/read/applied/verified NOT_RUN",
+      "oracle": "Embedded SS14 sourceSpec.fields and frozen oracle; hand-written negative controls",
+      "testFiles": [
+        "tests/ss14-evidence/SS14.offline.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Positive/negative controls executed against frozen source; no product mutation or host receipt fabrication",
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/ss14-evidence/SS14.offline.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=SS14.offline.vitest.json"
+      ]
+    },
+    {
+      "id": "SS14-invalid-response-valid-cost",
+      "requirementIds": [
+        "SS14:valid-usage-survives-invalid-response"
+      ],
+      "scenario": "SS14 full inventory missing test-engineering judgment, with separately valid actualCostUsd=0.1",
+      "entryPoint": "SkillClassificationService.classify/InMemoryClassificationBudget.snapshot",
+      "level": "integration",
+      "expectedBehavior": "Reject malformed RESP, preserve known cost 0.1, settle spentUsd=0.1 and release reservation",
+      "oracle": "Separate validated usage and existing known defect; valid response control uses same 0.1 cost",
+      "testFiles": [
+        "tests/ss14-evidence/SS14.cost-repro.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Red reproduction on fixed product source; product source changes forbidden; green remediation NOT_RUN",
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/ss14-evidence/SS14.cost-repro.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=SS14.cost-repro.vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "All other SS cases and full suite",
+    "Past 21-call runs and bootstrap batch execution",
+    "External JEV/vendor/Claude calls",
+    "Product source edits, push, PR, release",
+    "Actual queue execution without queue inputs",
+    "Live host selection, stage execution and signed receipts"
+  ]
+}

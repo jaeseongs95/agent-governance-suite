@@ -1,0 +1,1 @@
+Read-only로 queue의 duplicate delivery와 retry invariant를 분석하고, 누락을 잡는 test cases를 설계해 줘. No implementation, no code changes.

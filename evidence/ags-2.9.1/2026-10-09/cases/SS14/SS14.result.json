@@ -1,0 +1,646 @@
+{
+  "caseId": "SS14",
+  "generatedAt": "2026-10-09T02:57:52.934327+00:00",
+  "overallStatus": "OFFLINE_DEFECT_REPRODUCED_HOST_NOT_RUN",
+  "variantCoverage": {
+    "declared": [
+      "base"
+    ],
+    "offlineCompared": [
+      "base"
+    ],
+    "hostExecuted": []
+  },
+  "binding": {
+    "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+    "targetBranch": "codex/skill-classification-2.9.1",
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixturePath": "tests/skill-classification/fixtures.json",
+    "fixtureSHA": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "oracleRecomputedVerified": true,
+    "sourceSpecPath": "TEST-SPEC.seq7.ko.md",
+    "sourceSpecPathExists": false,
+    "sourceSpecMode": "embedded fields only",
+    "SS14SourceRefsVerified": [
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      },
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      }
+    ]
+  },
+  "variants": [
+    {
+      "variant": "base",
+      "status": "NOT_RUN",
+      "executionKindRequired": "live.",
+      "input": "Read-only로 queue의 duplicate delivery와 retry invariant를 분석하고, 누락을 잡는 test cases를 설계해 줘. No implementation, no code changes.",
+      "sourceSpec": {
+        "path": "TEST-SPEC.seq7.ko.md",
+        "section": "SS14",
+        "fields": {
+          "입력": "“Read-only로 queue의 duplicate delivery와 retry invariant를 분석하고, 누락을 잡는 test cases를 설계해 줘. No implementation, no code changes.”",
+          "필수추천": "R={CS, T, O}.",
+          "금지추천 또는 행동": "언어 전환 때문에 한 스킬만 추천; P로 자동 수정; test cases 요청을 테스트 실행 완료로 표현.",
+          "허용선택": "A={}.",
+          "보류조건": "분석 대상이 부족하면 입력 요청을 남기고 실행은 보류한다.",
+          "통과기준": "세 스킬을 동시에 추천하고 역할·입출력 연결을 구분한다.",
+          "증거": "E0, 복수 label별 누락 및 불필요 추천.",
+          "실행종류": "live."
+        },
+        "bodyDigest": "sha256:d5aad9891ee6be178d30507888c970659c1b0a1fccf1f7b00ee21e74219ba78d"
+      },
+      "oracle": {
+        "required": [
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "allowed": [],
+        "allowedConditions": {},
+        "forbidden": [
+          "ponytail"
+        ],
+        "notApplicable": [
+          "code-review",
+          "software-security-auditor",
+          "korean-prose-editor"
+        ],
+        "unadjudicated": [
+          "acceptance-evidence-validator",
+          "blocker-diagnostician",
+          "change-scope-guardian",
+          "codex-token-usage-analyzer",
+          "context-continuity",
+          "coordinate-subagents",
+          "evaluation-validity-auditor",
+          "independent-audit-gate",
+          "independent-deliberation-panel",
+          "instruction-scope-resolver",
+          "iteration-frame-auditor",
+          "model-effort-advisor",
+          "mutation-risk-preflight",
+          "recovery-strategy-selector",
+          "session-board",
+          "task-contract",
+          "workspace-convention-profiler"
+        ],
+        "expectedSelection": "SELECTED",
+        "explicitSkillIds": [],
+        "ruleRequiredSkillIds": [],
+        "requiredReasons": [],
+        "sourceRefs": [
+          {
+            "skillId": "cs-engineering",
+            "path": "skills/cs-engineering/SKILL.md",
+            "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+          },
+          {
+            "skillId": "test-engineering",
+            "path": "skills/test-engineering/SKILL.md",
+            "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+          },
+          {
+            "skillId": "orchestrator",
+            "path": "skills/orchestrator/SKILL.md",
+            "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+          },
+          {
+            "skillId": "ponytail",
+            "path": "skills/ponytail/SKILL.md",
+            "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+          },
+          {
+            "skillId": "code-review",
+            "path": "skills/code-review/SKILL.md",
+            "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+          },
+          {
+            "skillId": "software-security-auditor",
+            "path": "skills/software-security-auditor/SKILL.md",
+            "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+          },
+          {
+            "skillId": "korean-prose-editor",
+            "path": "skills/korean-prose-editor/SKILL.md",
+            "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+          }
+        ],
+        "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+      },
+      "expected": {
+        "recommendedSkillIds": [
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "allowed": [],
+        "forbidden": [
+          "ponytail"
+        ],
+        "roleConnection": [
+          {
+            "skillId": "cs-engineering",
+            "input": "queue behavior and retry/duplicate-delivery semantics",
+            "output": "invariants and verification obligations"
+          },
+          {
+            "skillId": "test-engineering",
+            "input": "same queue boundary and CS obligations",
+            "output": "test case designs; execution status remains unrun"
+          },
+          {
+            "skillId": "orchestrator",
+            "input": "CS and T roles and artifacts",
+            "output": "order and handoff CS -> T, integrated read-only result"
+          }
+        ],
+        "missingTargetBehavior": "Retain CS/T/O need; request queue source/specification and defer concrete execution"
+      },
+      "observed": {
+        "originalPrompt": "Read-only로 queue의 duplicate delivery와 retry invariant를 분석하고, 누락을 잡는 test cases를 설계해 줘. No implementation, no code changes.",
+        "promptDigest": "sha256:7ecb7226d4cea9f67b85ef8d1deaf5bbb192d25f3c1b06367ca0f4624b2c526a",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+        "inventoryCount": 24,
+        "inventoryIssues": [],
+        "wirePayloadBytes": 124601,
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "jevRaw": null,
+        "vendorRaw": null,
+        "combinedRecommendation": null,
+        "agentSelectedSkillIds": null,
+        "hostReceipt": null,
+        "selected": "NOT_RUN",
+        "read": "NOT_RUN",
+        "applied": "NOT_RUN",
+        "verified": "NOT_RUN",
+        "note": "Developer reading/analysis and oracle-derived mock recommendations are not SS14 host stage evidence."
+      },
+      "comparison": {
+        "offlineContract": "PASS",
+        "offlineSemanticQuality": "NOT_RUN",
+        "liveRecommendation": "NOT_RUN",
+        "roleInputOutputExecution": "NOT_RUN",
+        "noImplementationHostBehavior": "NOT_RUN",
+        "testDesignVersusExecutionHostClaim": "NOT_RUN",
+        "providerRuntimeUnconfigured": "UNAVAILABLE/PROFILE_UNAVAILABLE; attempts=[]",
+        "receiptlessSelection": "HOST_SELECTION_NOT_OBSERVED; selected=null"
+      },
+      "missingInputs": [
+        "Concrete queue implementation or architecture/specification",
+        "Consumer identity and dedup persistence/transaction boundary",
+        "Delivery/ACK and retry/failure policy",
+        "Host-owned real selection and per-stage artifact observations",
+        "Approved configured and qualified classification route/profile"
+      ]
+    }
+  ],
+  "executionClasses": {
+    "existingRegression": {
+      "status": "NOT_RUN",
+      "count": 0,
+      "reason": "No SS14-specific existing test; generic other-case tests not executed"
+    },
+    "newIsolatedControls": {
+      "status": "PASS",
+      "tests": 12,
+      "command": {
+        "command": [
+          "pnpm",
+          "exec",
+          "vitest",
+          "run",
+          "tests/ss14-evidence/SS14.offline.test.ts",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile.json=SS14.offline.vitest.json"
+        ],
+        "cwd": "<candidate-root>",
+        "exit": 0,
+        "executionKind": "offline-mock",
+        "API0": true
+      },
+      "evidence": "SS14.offline.observations.json"
+    },
+    "knownDefectReproduction": {
+      "status": "FAIL",
+      "tests": 1,
+      "command": {
+        "command": [
+          "pnpm",
+          "exec",
+          "vitest",
+          "run",
+          "tests/ss14-evidence/SS14.cost-repro.test.ts",
+          "--reporter=verbose",
+          "--reporter=json",
+          "--outputFile.json=SS14.cost-repro.vitest.json"
+        ],
+        "cwd": "<candidate-root>",
+        "exit": 1,
+        "executionKind": "offline-mock",
+        "API0": true
+      },
+      "evidence": "SS14.cost-repro.observations.json"
+    },
+    "actualHost": {
+      "status": "NOT_RUN",
+      "trials": 0
+    },
+    "past21RunReplay": {
+      "status": "NOT_RUN",
+      "calls": 0
+    }
+  },
+  "API0": true,
+  "calls": {
+    "JEV": 0,
+    "externalVendorAPI": 0,
+    "Claude": 0,
+    "nativeHostCLI": 0,
+    "bootstrapBatch": 0
+  },
+  "findings": [
+    {
+      "id": "SS14-known-valid-cost-lost-invalid-RESP",
+      "severity": "HIGH",
+      "status": "REPRODUCED",
+      "existingFinding": "valid cost lost with invalid RESP",
+      "newRootCauseCount": 0,
+      "expected": {
+        "actualCostUsd": 0.1,
+        "spentUsd": 0.1,
+        "reservations": []
+      },
+      "observed": {
+        "caseId": "SS14",
+        "boundary": "missing-test-engineering-judgment",
+        "executionKind": "offline-mock",
+        "API0": true,
+        "requestDigest": "sha256:fa8dc5f57e27fe857ac6ac6beb041718ff96d2927969510b13a4a7cf29983c83",
+        "suppliedUsage": {
+          "inputTokens": 100,
+          "outputTokens": 10,
+          "cachedInputTokens": 0,
+          "actualCostUsd": 0.1
+        },
+        "expectedCostUsd": 0.1,
+        "observedAttempt": {
+          "providerKind": "vendor",
+          "profileId": "SS14-mock-vendor",
+          "modelId": "offline-model",
+          "reasoningEffort": null,
+          "dispatchState": "started",
+          "status": "INVALID",
+          "errorCode": "INVALID_PROVIDER_RESPONSE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        },
+        "budget": {
+          "limits": {
+            "jev": {
+              "limitUsd": 0,
+              "spentUsd": 0
+            },
+            "vendor:offline-mock": {
+              "limitUsd": 2,
+              "spentUsd": 0
+            }
+          },
+          "nativeAllowances": {},
+          "invalidCostCeilings": [],
+          "reservations": [
+            {
+              "id": "[\"SS14-cost-true\",\"sha256:fa8dc5f57e27fe857ac6ac6beb041718ff96d2927969510b13a4a7cf29983c83\",\"SS14-mock-vendor\"]",
+              "bucket": "vendor:offline-mock",
+              "maximumUsd": 0.4,
+              "profileId": "SS14-mock-vendor",
+              "nativeProfileId": null
+            }
+          ]
+        }
+      },
+      "positiveControl": {
+        "caseId": "SS14",
+        "boundary": "valid-control",
+        "executionKind": "offline-mock",
+        "API0": true,
+        "requestDigest": "sha256:c7a16892d712b6c70a3fa684a066f02af6c027dd7a6bec2f22398a150829141b",
+        "suppliedUsage": {
+          "inputTokens": 100,
+          "outputTokens": 10,
+          "cachedInputTokens": 0,
+          "actualCostUsd": 0.1
+        },
+        "expectedCostUsd": 0.1,
+        "observedAttempt": {
+          "providerKind": "vendor",
+          "profileId": "SS14-mock-vendor",
+          "modelId": "offline-model",
+          "reasoningEffort": null,
+          "dispatchState": "started",
+          "status": "SUCCESS",
+          "errorCode": null,
+          "timedOut": false,
+          "usage": {
+            "inputTokens": 100,
+            "outputTokens": 10,
+            "cachedInputTokens": 0,
+            "actualCostUsd": 0.1
+          },
+          "reservedCostUsd": 0.4
+        },
+        "budget": {
+          "limits": {
+            "jev": {
+              "limitUsd": 0,
+              "spentUsd": 0
+            },
+            "vendor:offline-mock": {
+              "limitUsd": 2,
+              "spentUsd": 0.1
+            }
+          },
+          "nativeAllowances": {},
+          "invalidCostCeilings": [],
+          "reservations": []
+        }
+      },
+      "cause": "service.ts:194 rejects response after usage validation; catch at :204 replaces valid usage with unknownUsage; :210 settles null, retaining reservation",
+      "evidence": [
+        "SS14.cost-repro.log",
+        "SS14.cost-repro.observations.json"
+      ],
+      "greenAfterFix": "NOT_RUN"
+    }
+  ],
+  "relatedKnownGaps": [
+    {
+      "name": "host active-state supply gap",
+      "status": "STATIC_CONNECTION_ONLY",
+      "evidence": "gateway inventory/classify/accept pass root and externalSkillRoots, omit installedSkillIds/hostSupportedSkillIds; inventory.ts:218-219 defaults true. Offline source inventory is not host active-state evidence.",
+      "newRootCauseCount": 0
+    },
+    {
+      "name": "timeout overflow",
+      "status": "NOT_RUN",
+      "reason": "No timer overflow variant in SS14; not executing other-case tests"
+    },
+    {
+      "name": "metadata conditions duplicated",
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "concurrency pre-action recheck gap",
+      "status": "NOT_RUN"
+    }
+  ],
+  "hostSupport": {
+    "toolsExposed": [],
+    "classificationConfigEnv": "UNSET",
+    "codexExecutable": "<executable-path-redacted>",
+    "claudeExecutable": null,
+    "agentsSkills": {
+      "<host-skill-directory>": "ABSENT",
+      "<candidate-root>/.agents/skills": "ABSENT"
+    },
+    "supportedCodePath": [
+      ".mcp.json -> node mcp-server/dist/server.mjs (Codex host attestation)",
+      "get_skill_inventory -> classify_skills -> AGENT independently selects -> record_skill_selection with hostReceipt=null",
+      "hooks/hooks.json actual host hook signs invocation; server checks runtime actor/prompt snapshot and observations",
+      "skills/orchestrator/references/skill-classification.md stage distinction"
+    ],
+    "requiredInputs": [
+      "Approved AGENT_GOVERNANCE_CLASSIFICATION_CONFIG and central qualified profile registry for current inventory/taxonomy/model/prompt/config revisions",
+      "Approved remote providerRuntimeRef route/authorization/credential reference and confirmed budget OR approved nativeAdapterDefinitionsRef with capability, no-retry, isolation, allowance and timeout/output-limit evidence",
+      "Connected AGS MCP tools, real host-owned hook attestation and session-board prompt identity",
+      "Same originalPrompt and full inventory; context=null unless confirmed sources; independent AGENT reasons/applicability checks; hostReceipt=null",
+      "ReadRefs, obligation/artifact refs, candidate digest and actual verification evidence from SS14 execution"
+    ],
+    "blocker": "No approved configured classification profile or exposed AGS host tools. CLI executable alone establishes neither approval nor host selection."
+  },
+  "sourceMutation": {
+    "trackedProductDiff": [],
+    "status": "UNCHANGED",
+    "push": false,
+    "PR": false,
+    "release": false
+  },
+  "commands": [
+    {
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/ss14-evidence/SS14.offline.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=SS14.offline.vitest.json"
+      ],
+      "cwd": "<candidate-root>",
+      "exit": 0,
+      "executionKind": "offline-mock",
+      "API0": true
+    },
+    {
+      "command": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/ss14-evidence/SS14.cost-repro.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=SS14.cost-repro.vitest.json"
+      ],
+      "cwd": "<candidate-root>",
+      "exit": 1,
+      "executionKind": "offline-mock",
+      "API0": true
+    },
+    {
+      "command": [
+        "node",
+        "skills/test-engineering/scripts/run.mjs",
+        "check-plan",
+        "--root",
+        "<evidence-root>",
+        "--plan",
+        "SS14.engineering-test-plan.json"
+      ],
+      "exit": 0,
+      "result": {
+        "schemaVersion": "1.0.0",
+        "kind": "engineering-plan-result",
+        "verdict": "READY",
+        "planDigest": "sha256:a0771e2e886e592888e2748c54d9d55d8fedf499856322eb48515c0e626627cf",
+        "caseIds": [
+          "SS14-base-offline",
+          "SS14-invalid-response-valid-cost"
+        ]
+      }
+    }
+  ],
+  "semanticAccuracy": null,
+  "finalCheck": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "trackedDiff": [],
+    "status": "?? tests/ss14-evidence/\n",
+    "diffCheckExit": 0,
+    "planCheck": {
+      "command": [
+        "node",
+        "skills/test-engineering/scripts/run.mjs",
+        "check-plan",
+        "--root",
+        "<evidence-root>",
+        "--plan",
+        "SS14.engineering-test-plan.json"
+      ],
+      "exit": 0,
+      "result": {
+        "schemaVersion": "1.0.0",
+        "kind": "engineering-plan-result",
+        "verdict": "READY",
+        "planDigest": "sha256:a0771e2e886e592888e2748c54d9d55d8fedf499856322eb48515c0e626627cf",
+        "caseIds": [
+          "SS14-base-offline",
+          "SS14-invalid-response-valid-cost"
+        ]
+      }
+    },
+    "developerReadSources": [
+      "AGENTS.md",
+      "skills/test-engineering/SKILL.md",
+      "skills/orchestrator/SKILL.md",
+      "skills/cs-engineering/SKILL.md",
+      "skills/orchestrator/references/skill-classification.md",
+      "skills/orchestrator/references/engineering-practices/test-design.md",
+      "skills/orchestrator/references/engineering-practices/test-proof.md"
+    ],
+    "API0": true,
+    "liveRun": false
+  },
+  "originalEvidenceInventory": [
+    {
+      "path": "SS14.cost-repro.command.json",
+      "sha256": "sha256:e77a3997d8dc71958e622af03d8cf6bb38a6bf0bcdd1e5c653991bdee1d9f4b5"
+    },
+    {
+      "path": "SS14.cost-repro.log",
+      "sha256": "sha256:95a73ded0339bc77ef7cd865f551bf7b3ef12d974b4296b0b36f8afaad2f0e82"
+    },
+    {
+      "path": "SS14.cost-repro.observations.json",
+      "sha256": "sha256:b373cf12a02253e953b8bee2e3848cccea6a06f204d38fb5bdbb6fc44f58ad98"
+    },
+    {
+      "path": "SS14.cost-repro.test.ts",
+      "sha256": "sha256:71920b50e62b158e9c52e9350eb4c41a259976e38a4493d2144f407bba70fa33"
+    },
+    {
+      "path": "SS14.cost-repro.vitest.json",
+      "sha256": "sha256:c236e4520aa20279223fa422dda789a4340eb814b5e6968c01bf54ae4205bf21"
+    },
+    {
+      "path": "SS14.engineering-test-plan.json",
+      "sha256": "sha256:a42a17c81af516bc52b8d5d060511cec3658d6be6f9e8bde6cabd7d508486aed"
+    },
+    {
+      "path": "SS14.offline.command.json",
+      "sha256": "sha256:8279a29ae8535a9df53396b5935028b8af53ddf3cee31be685b25fac6ce7ae4b"
+    },
+    {
+      "path": "SS14.offline.log",
+      "sha256": "sha256:c7fa13dc9e77986c16914905ed2b7e2b75c3444f2c5fba5da04e22942e8834ce"
+    },
+    {
+      "path": "SS14.offline.observations.json",
+      "sha256": "sha256:a9dd51f110cba86728a751242a23a569eb8ff059bc259ce20ba1f5528198d1c8"
+    },
+    {
+      "path": "SS14.offline.test.ts",
+      "sha256": "sha256:9828f2287d6716b8c98dd1a91cd12ff6732a4cd48791dc7a16d4e20d2868e8d7"
+    },
+    {
+      "path": "SS14.offline.vitest.json",
+      "sha256": "sha256:20ce083f3e15679ae4ebf4489b12ca630e03057fe41f62ae2c80f5931c1a52d1"
+    },
+    {
+      "path": "write-result.py",
+      "sha256": "sha256:f0ae27ecc195e58b5485d68671c6b56d26a91b04973b89e6a3c44bde04de0647"
+    },
+    {
+      "path": "SS14.plan-check.log",
+      "sha256": "sha256:c2c561e08d02dfce1e89978210c9be2132106b27a479cfa46abe2ac9b8db23bb"
+    },
+    {
+      "path": "SS14.final-check.json",
+      "sha256": "sha256:6d5fdd34d80caac06f834eabead7c3cf05521df9011c905cd503328bb20cb477"
+    }
+  ],
+  "publication": {
+    "status": "PREPARED_PUBLIC_PACKAGE",
+    "isOriginalResultBytes": false,
+    "originalResultSHA256": "537cc609170b7054ff03fb7b820d1797ff4c964460336ec67353112ab407e73c",
+    "originalResultBytes": 22600,
+    "newTests": 0,
+    "newModelAPICalls": 0,
+    "patchStatus": "NONE_EXISTED",
+    "missingOriginalArtifacts": [
+      "separate stdout stream",
+      "separate stderr stream"
+    ],
+    "logStreamStatus": "Existing combined stdout+stderr log is recovered. Separate streams were never retained; MISSING_ORIGINAL, no stream reconstruction.",
+    "priorSourceMutationStatus": "UNCHANGED at previous execution; publishing evidence only does not imply product changes.",
+    "path": "evidence/ags-2.9.1/2026-10-09/cases/SS14/"
+  }
+}

@@ -1,0 +1,33 @@
+Already up to date
+Done in 418ms using pnpm v11.19.0
+
+   ╭──────────────────────────────────────────╮
+   │                                          │
+   │   Update available! 11.19.0 → 12.10.1.   │
+   │   Changelog: https://pnpm.io/v/12.10.1   │
+   │     To update, run: pnpm add -g pnpm     │
+   │                                          │
+   ╰──────────────────────────────────────────╯
+
+
+ RUN  v5.0.0 <candidate-root>
+
+ ✓ tests/ss14-evidence/SS14.offline.test.ts > SS14 only: base plus isolated boundary controls; no live selection receipts > binds fixed fixture, computed oracle, all embedded fields and SS14 sourceRefs 5ms
+ ✓ tests/ss14-evidence/SS14.offline.test.ts > SS14 only: base plus isolated boundary controls; no live selection receipts > base preserves mixed-language original bytes, negations, unknown context and full 24-role inventory 18ms
+ ✓ tests/ss14-evidence/SS14.offline.test.ts > SS14 only: base plus isolated boundary controls; no live selection receipts > boundary: missing queue context stays null, confirmed empty targets stays [] with source 26ms
+ ✓ tests/ss14-evidence/SS14.offline.test.ts > SS14 only: base plus isolated boundary controls; no live selection receipts > boundary: exact UTF8 limit accepts complete input; one byte less rejects without omitted ranges 20ms
+ ✓ tests/ss14-evidence/SS14.offline.test.ts > SS14 only: base plus isolated boundary controls; no live selection receipts > boundary: complete mock RESP is transport-valid but omitting any required candidate is invalid 2ms
+ ✓ tests/ss14-evidence/SS14.offline.test.ts > SS14 only: base plus isolated boundary controls; no live selection receipts > boundary: a structurally valid single-label recommendation remains an SS14 semantic failure 1ms
+ ✓ tests/ss14-evidence/SS14.offline.test.ts > SS14 only: base plus isolated boundary controls; no live selection receipts > boundary: scorer rejects required role omission cs-engineering 0ms
+ ✓ tests/ss14-evidence/SS14.offline.test.ts > SS14 only: base plus isolated boundary controls; no live selection receipts > boundary: scorer rejects required role omission test-engineering 0ms
+ ✓ tests/ss14-evidence/SS14.offline.test.ts > SS14 only: base plus isolated boundary controls; no live selection receipts > boundary: scorer rejects required role omission orchestrator 0ms
+ ✓ tests/ss14-evidence/SS14.offline.test.ts > SS14 only: base plus isolated boundary controls; no live selection receipts > boundary: scorer rejects implementation and incompatible roles; leaves unadjudicated extras under review 0ms
+ ✓ tests/ss14-evidence/SS14.offline.test.ts > SS14 only: base plus isolated boundary controls; no live selection receipts > boundary: correct mock advice cannot become selected/read/applied/verified without a real host receipt 1ms
+ ✓ tests/ss14-evidence/SS14.offline.test.ts > SS14 only: base plus isolated boundary controls; no live selection receipts > boundary: actual unconfigured runtime makes zero provider attempts and gateway accepts no unobserved host 88ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  02:55:13
+   Duration  642ms (tests 54%, transform 29%, import 16%, worker 1%)
+
+JSON report written to SS14.offline.vitest.json
