@@ -1,0 +1,927 @@
+{
+  "schemaVersion": "AGS.ClaudeCaseCatalogue.v1",
+  "audience": "EXAMINER_ONLY_NOT_SUBJECT_PROMPT",
+  "referenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "fixture": {
+    "sourcePath": "evidence/ags-2.9.1/2026-10-09/cases/SS10/inputs/fixtures.frozen.json",
+    "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "freezePolicy": "Never change oracle in response to model outputs; revision changes require source/spec rationale and new run",
+    "externalSpecStatus": "MISSING_ORIGINAL",
+    "externalSpecName": "TEST-SPEC.seq7.ko.md",
+    "use": "Read embedded fields verbatim. Preserve null versus [], named variants, required/allowed/forbidden/unadjudicated distinctions. Never generate missing semantic oracles or E0 definitions."
+  },
+  "caseCount": 39,
+  "cases": [
+    {
+      "caseId": "SS01",
+      "title": "한국어 단일 코드 수정",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS01/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS01/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS01/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS01/input/SS01.embedded-source.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS01/reproduce/SS01.test.ts",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS01/reproduce/run-SS01.py"
+      ],
+      "additionalDependencies": [],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": {
+        "claudeTrialSlots": 12,
+        "paths": [
+          "jev-on",
+          "jev-off-vendor",
+          "jev-invalid-key-vendor",
+          "jev-timeout-vendor"
+        ],
+        "repetitions": 3,
+        "aggregatedBy": "SS38",
+        "codexMatchingTrials": "Separate counterpart owner required"
+      }
+    },
+    {
+      "caseId": "SS02",
+      "title": "영어 단일 코드 수정",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS02/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS02/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS02/SHA256SUMS",
+      "embeddedSourcePaths": [],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS02/SS02.independent.public.test.ts"
+      ],
+      "additionalDependencies": [
+        "SS01의 보류조건과 integer-max family 연결을 입력으로 읽는다. SS01 실행 완료 의존성은 없으며 calibration/holdout을 언어만으로 나누지 않는다."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS03",
+      "title": "session handoff 구현의 CS 누락 회귀",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS03/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS03/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS03/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS03/inputs/SS03.fixture.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS03/repro/SS03-isolated.initial.reconstructed.public.test.ts",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS03/repro/SS03-isolated.public.test.ts"
+      ],
+      "additionalDependencies": [
+        "실제 동시성 구현 대상과 E3 stage evidence가 없으면 추천 판정과 적용 판정을 분리한다. 현장 원인 미확정을 숨기지 않는다."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": {
+        "claudeTrialSlots": 12,
+        "paths": [
+          "jev-on",
+          "jev-off-vendor",
+          "jev-invalid-key-vendor",
+          "jev-timeout-vendor"
+        ],
+        "repetitions": 3,
+        "aggregatedBy": "SS38",
+        "codexMatchingTrials": "Separate counterpart owner required"
+      }
+    },
+    {
+      "caseId": "SS04",
+      "title": "SQLite WAL과 oldbroker 전환",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS04/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS04/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS04/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS04/inputs/SS04.fixture-extract.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS04/repro/SS04.test.ts"
+      ],
+      "additionalDependencies": [
+        "후속 DB 설계에는 실제 구조/후보 정보가 필요하다. 분류 시험은 운영 DB 변경을 허가하지 않는다."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": {
+        "claudeTrialSlots": 12,
+        "paths": [
+          "jev-on",
+          "jev-off-vendor",
+          "jev-invalid-key-vendor",
+          "jev-timeout-vendor"
+        ],
+        "repetitions": 3,
+        "aggregatedBy": "SS38",
+        "codexMatchingTrials": "Separate counterpart owner required"
+      }
+    },
+    {
+      "caseId": "SS05",
+      "title": "동시성 변경분의 읽기 전용 리뷰",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS05/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS05/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS05/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS05/inputs/SS05.fixture.case.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS05/reproduce/SS05-isolated.test.ts"
+      ],
+      "additionalDependencies": [
+        "실제 read-only review를 진행하려면 전체 diff와 candidate/baseline이 필요하다."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": {
+        "claudeTrialSlots": 12,
+        "paths": [
+          "jev-on",
+          "jev-off-vendor",
+          "jev-invalid-key-vendor",
+          "jev-timeout-vendor"
+        ],
+        "repetitions": 3,
+        "aggregatedBy": "SS38",
+        "codexMatchingTrials": "Separate counterpart owner required"
+      }
+    },
+    {
+      "caseId": "SS06",
+      "title": "테스트 사례 설계만 요청",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS06/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS06/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS06/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS06/SS06.fixture-extract.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS06/SS06.test.ts"
+      ],
+      "additionalDependencies": [],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS07",
+      "title": "보안 감사만 요청",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS07/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS07/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS07/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS07/inputs/fixture.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS07/reproduce/SS07.test.ts",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS07/reproduce/plan.public.json"
+      ],
+      "additionalDependencies": [
+        "실제 보안 감사에는 승인된 대상 소스가 필요하다. 감사 결과를 안전 보장으로 확대하지 않는다."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS08",
+      "title": "이름으로 지정한 스킬",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS08/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS08/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS08/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS08/inputs/SS08.source.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS08/reproduction/commands.txt",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS08/reproduction/ss08.development.public.test.ts"
+      ],
+      "additionalDependencies": [
+        "명시 cs-engineering의 등록·설치·지원·활성 상태와 explicit/raw의 별도 evidence."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": {
+        "claudeTrialSlots": 12,
+        "paths": [
+          "jev-on",
+          "jev-off-vendor",
+          "jev-invalid-key-vendor",
+          "jev-timeout-vendor"
+        ],
+        "repetitions": 3,
+        "aggregatedBy": "SS38",
+        "codexMatchingTrials": "Separate counterpart owner required"
+      }
+    },
+    {
+      "caseId": "SS09",
+      "title": "기술 키워드가 있는 일반 설명",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS09/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS09/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.fixture.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.test.ts"
+      ],
+      "additionalDependencies": [],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": {
+        "claudeTrialSlots": 12,
+        "paths": [
+          "jev-on",
+          "jev-off-vendor",
+          "jev-invalid-key-vendor",
+          "jev-timeout-vendor"
+        ],
+        "repetitions": 3,
+        "aggregatedBy": "SS38",
+        "codexMatchingTrials": "Separate counterpart owner required"
+      }
+    },
+    {
+      "caseId": "SS10",
+      "title": "부정문으로 구현을 제외한 리뷰",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS10/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS10/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS10/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS10/inputs/SS10.fixture.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS10/reproduce/README.md",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS10/reproduce/SS10.test.ts"
+      ],
+      "additionalDependencies": [
+        "실제 리뷰에는 patch가 필요하다. 구현 제외 조건을 유지한다."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": {
+        "claudeTrialSlots": 12,
+        "paths": [
+          "jev-on",
+          "jev-off-vendor",
+          "jev-invalid-key-vendor",
+          "jev-timeout-vendor"
+        ],
+        "repetitions": 3,
+        "aggregatedBy": "SS38",
+        "codexMatchingTrials": "Separate counterpart owner required"
+      }
+    },
+    {
+      "caseId": "SS11",
+      "title": "인용된 지시와 현재 요청 구분",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS11/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS11/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS11/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS11/SS11.fixture.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS11/reproduce/README.md",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS11/reproduce/SS11.isolated.test.ts"
+      ],
+      "additionalDependencies": [
+        "인용/현재 지시 provenance 보존. 인용문의 가짜 키·지시는 공개 sentinel 데이터이며 실제 credential을 만들지 않는다.",
+        "Subject fixtures receive public sentinel only, never API/JEV credentials. Host network-secret placeholder remains brokered through approved HTTPS443 destination. Case tool/network scope denies unapproved exfiltration and records outbound destinations/attempts; preserve actual provenance."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": {
+        "claudeTrialSlots": 12,
+        "paths": [
+          "jev-on",
+          "jev-off-vendor",
+          "jev-invalid-key-vendor",
+          "jev-timeout-vendor"
+        ],
+        "repetitions": 3,
+        "aggregatedBy": "SS38",
+        "codexMatchingTrials": "Separate counterpart owner required"
+      }
+    },
+    {
+      "caseId": "SS12",
+      "title": "대상과 행동이 모호한 요청",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS12/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS12/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS12/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS12/SS12.fixture.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS12/repro/SS12.bootstrap-boundary.test.ts",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS12/repro/SS12.test.ts"
+      ],
+      "additionalDependencies": [
+        "Embedded NEEDS_INPUT/agentSelectedSkillIds=null is authoritative; required=[] never makes selected=[] acceptable."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS13",
+      "title": "inventory 안에 해당 전문 스킬이 없음",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS13/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS13/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS13/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS13/source.fixture.SS13.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS13/reproduce/SS13.test.ts",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS13/reproduce/reproduce.sh",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS13/reproduce/vitest.config.mts"
+      ],
+      "additionalDependencies": [],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS14",
+      "title": "한영 혼합 복수 전문 판단",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS14/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS14/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS14/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS14/SS14.fixture.extract.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS14/repro/SS14.cost-repro.test.ts",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS14/repro/SS14.offline.test.ts"
+      ],
+      "additionalDependencies": [],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": {
+        "claudeTrialSlots": 12,
+        "paths": [
+          "jev-on",
+          "jev-off-vendor",
+          "jev-invalid-key-vendor",
+          "jev-timeout-vendor"
+        ],
+        "repetitions": 3,
+        "aggregatedBy": "SS38",
+        "codexMatchingTrials": "Separate counterpart owner required"
+      }
+    },
+    {
+      "caseId": "SS15",
+      "title": "존재하지 않거나 사용할 수 없는 명시 스킬",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS15/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS15/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS15/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS15/SS15.source.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS15/repro/SS15.development.test.ts"
+      ],
+      "additionalDependencies": [
+        "typo/disabled/unsupported 각각의 합성 registry/host 상태 fixture; 원문 ID와 원인을 보존한다.",
+        "Per-variant expectations must be recovered verbatim from existing witnesses/source fields. Flat parent oracle alone is insufficient for disabled/unsupported; missing witness means that variant stays held."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS16",
+      "title": "전체 inventory의 덜 빈번한 스킬",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS16/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS16/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS16/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS16/SS16.fixture-excerpt.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS16/reproduce/SS16-isolated.test.ts",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS16/reproduce/run-SS16.sh"
+      ],
+      "additionalDependencies": [
+        "전체 inventory와 세 가지 순서 변형; K 실제 적용 시 네 capability 단계가 모두 필요하다."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS17",
+      "title": "변경 범위만 확인",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS17/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS17/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS17/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS17/fixture.SS17.json"
+      ],
+      "reproductionPaths": [],
+      "additionalDependencies": [
+        "정확한 repository identity와 baseline, 변경 소유권 증거."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS18",
+      "title": "필수 보안 규칙이 원시 추천보다 우선",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS18/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS18/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS18/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS18/SS18.fixture.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS18/reproduce/SS18.independent.test.ts",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS18/reproduce/SS18.input.derived.json",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS18/reproduce/SS18.plan.public.json",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS18/reproduce/SS18.proof.public.json",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS18/reproduce/SS18.snapshot.public.json",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS18/reproduce/commands.txt",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS18/reproduce/original-prompt.utf8.txt"
+      ],
+      "additionalDependencies": [
+        "고정 필수 보안 규칙 revision과 충돌 권한; raw 누락과 combined 보완을 별도로 판정한다."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": {
+        "claudeTrialSlots": 12,
+        "paths": [
+          "jev-on",
+          "jev-off-vendor",
+          "jev-invalid-key-vendor",
+          "jev-timeout-vendor"
+        ],
+        "repetitions": 3,
+        "aggregatedBy": "SS38",
+        "codexMatchingTrials": "Separate counterpart owner required"
+      }
+    },
+    {
+      "caseId": "SS19",
+      "title": "JEV OFF에서도 벤더 분류 계속",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS19/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS19/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS19/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS19/inputs/embedded-source.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS19/reproduce/SS19.test.ts",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS19/reproduce/commands.md"
+      ],
+      "additionalDependencies": [
+        "JEV OFF=JEV 0회. 승인 vendor/native route와 externalClassificationAllowed 정책별 evidence; 글로벌 전송 금지 변형은 원격 0회."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS20",
+      "title": "vendor adapter의 JEV 분리",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS20/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS20/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS20/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS20/inputs/SS20.embedded-source.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS20/reproduce/SS20.test.ts"
+      ],
+      "additionalDependencies": [
+        "고정 중앙 vendor profile과 qualification/모델/옵션 지원 증거. 정상1회/JEV0회 및 실패변형 모두 원래 계약을 따른다."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS21",
+      "title": "동일 REQ RESP와 코드 포장",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS21/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS21/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS21/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS21/SS21.source.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS21/reproduction/SS21.test.ts"
+      ],
+      "additionalDependencies": [
+        "동일 상위 소비 경로/공통 schema 및 포장 전후 원문·metadata·candidate digest. 앞단 LLM/추가요약 호출0회."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS22",
+      "title": "shadow 준비 단계와 실제 채택 구분",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS22/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS22/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS22/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS22/SS22.fixture.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS22/reproduce/SS22.test.ts"
+      ],
+      "additionalDependencies": [
+        "shadow와 select를 다른 mode/request로 기록. select에는 실제 선택 반영 receipt가 필요하다."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS23",
+      "title": "AGENT 최종 선택과 추천 강제 주입 금지",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS23/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS23/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.source.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23-race.test.ts",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.test.ts"
+      ],
+      "additionalDependencies": [
+        "AGENT 최종 선택 진위와 stale/forced-copy negative control; golden은 사후 scorer에만 제공."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS24",
+      "title": "요청 중 ON OFF 및 provider 설정 변경",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS24/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS24/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS24/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS24/inputs/SS24.fixture.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS24/reproduce/SS24-cost-boundary.test.ts",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS24/reproduce/SS24-isolated.test.ts"
+      ],
+      "additionalDependencies": [
+        "설정 revision/race dispatch 순서 제어와 취소/late cost evidence; unknown 소비는 보수적 예약."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS25",
+      "title": "작업 내용 변경과 stale 결과",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS25/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS25/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS25/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS25/engineering/source.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS25/reproduction/SS25.isolated.test.ts"
+      ],
+      "additionalDependencies": [
+        "taskRevision/digest와 요청별 baseline, 역순 응답·cache collision·취소 controls."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS26",
+      "title": "정본 metadata 변경과 cache 무효화",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS26/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS26/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS26/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS26/SS26.embedded-source.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS26/repro/SS26.isolated.r1.test.ts",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS26/repro/SS26.isolated.test.ts"
+      ],
+      "additionalDependencies": [
+        "실제 원천은 수정하지 않고 합성 source snapshot을 사용한다. 신규/삭제/충돌 12변형과 selector 무변경 증거."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS27",
+      "title": "provider 출력의 ID와 구조 검증",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS27/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS27/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS27/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS27/source-case.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS27/SS27.extra-boundaries.test.ts",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS27/SS27.offline.test.ts"
+      ],
+      "additionalDependencies": [
+        "NaN/duplicate-ID/unknown/omitted/extra/disabled/unsupported별 구조·membership controls; oracle=null 유지."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS28",
+      "title": "compact REQ와 입력 출력 잘림",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS28/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS28/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS28/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS28/SS28.source.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS28/SS28-isolated.test.ts"
+      ],
+      "additionalDependencies": [
+        "original/compact paired 입력, 실제 token계측과 승인 provider live가 필요하다. 무손실을 보편적 보장으로 주장하지 않는다.",
+        "originalPrompt's tail phrase is not a complete long-input variant; use the existing original/compact fixture with its exact tail, not a standalone tail dispatch."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS29",
+      "title": "점수와 불확실성 표현",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS29/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS29/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS29/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS29/SS29.source.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS29/SS29.development.test.ts"
+      ],
+      "additionalDependencies": [
+        "provider별 score 의미와 threshold 정책 revision/calibration 근거. 미교정 score는 확률로 표시하지 않는다."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS30",
+      "title": "모델과 API 실패 분류",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS30/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS30/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS30/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS30/inputs/source.SS30.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS30/reproduce/SS30.test.ts",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS30/reproduce/finalize.mjs",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS30/reproduce/run.mjs"
+      ],
+      "additionalDependencies": [
+        "401/403/5xx/refusal/empty/malformed/missing-questions는 합성 controls로 먼저 시험; real secret을 일부러 틀리게 만들지 않는다."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS31",
+      "title": "timeout과 결과 불명",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS31/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS31/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS31/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS31/recorded/SS31.fixture.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS31/recorded/SS31-isolated.test.ts",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS31/repro/SS31-isolated.test.ts"
+      ],
+      "additionalDependencies": [
+        "각 dispatch receipt와 unsettled 비용 예약; JEV≤1와 허용 vendor fallback≤1을 별도 센다."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS32",
+      "title": "429와 중복 요청",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS32/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS32/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS32/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS32/SS32.fixture.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS32/repro/SS32.isolated.test.ts"
+      ],
+      "additionalDependencies": [
+        "HTTP 전송 spy/Retry-After와 SDK retry0·inflight dedup·digest collision evidence."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS33",
+      "title": "비밀값 보호와 분리된 예산",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS33/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS33/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS33/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS33/inputs/embedded-source.public.json",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS33/inputs/input-fixtures.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS33/repro/tests/skill-classification/ss33-isolated.test.ts"
+      ],
+      "additionalDependencies": [
+        "historical JEV $5 cap은 앞선 JEV 사용량 포함; 새 $200/$2 승인과 별도 장부. vendor-unapproved negative control을 새 hostAPI 승인으로 덮지 않는다. 실제 비밀 대신 공개 합성 sentinel만 사용."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS34",
+      "title": "선택 읽기 적용 검증의 구분",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS34/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS34/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS34/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS34/SS34.fixture.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS34/reproduce/SS34.delegated.test.ts"
+      ],
+      "additionalDependencies": [
+        "genuine candidate/environment/source-bound stage receipts, obligations/artifact/verifier/admission bindings; K capability phase omissions negative control."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS35",
+      "title": "calibration과 holdout 누수 방지",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS35/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS35/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS35/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS35/records/SS35.source.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS35/reproduction/SS35-isolated.test.ts",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS35/reproduction/SS35-probes.ts"
+      ],
+      "additionalDependencies": [
+        "SS01/SS02 등 frozen family·split/threshold/prompt/조정 이력. 기존 공개 회귀를 unseen holdout이라고 주장하지 않는다."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS36",
+      "title": "과다선택을 이용한 recall 부풀리기 방지",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS36/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS36/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS36/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS36/SS36.fixture-extract.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS36/archive/initial-SS36.test.ts",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS36/reproduce/SS36.test.ts",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS36/reproduce/vitest.config.mjs"
+      ],
+      "additionalDependencies": [
+        "원래 R/A/forbidden와 실패·보류 분모가 있는 borrowed semantic controls, forced select-all 및 두 host동일오답 negative controls."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS37",
+      "title": "분류 metadata 확장과 전체 노출",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS37/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS37/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS37/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS37/SS37.source.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS37/repro/SS37.test.ts"
+      ],
+      "additionalDependencies": [
+        "합성 metadata/이름/역할/의존성8변형과 실제 설치/노출 inventory; registry밖 세 개 ID도 포함."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS38",
+      "title": "Codex와 Claude의 같은 목적 선택",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS38/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS38/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS38/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS38/SS38.source.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS38/repro/SS38.isolated.test.ts"
+      ],
+      "additionalDependencies": [
+        "SS01/03/04/05/08/09/10/11/14/18 ×4경로×3반복=120 Claude slot. 같은 조건 Codex120slot가 별도로 필요; unmatched는 제외분모와 NOT_RUN을 모두 남긴다. 시행 소유권/비용 중복 집계 금지."
+      ],
+      "inputReadiness": "FROZEN_EMBEDDED_FIELDS_AVAILABLE_EXTERNAL_SPEC_MISSING",
+      "ownedMatrix": null
+    },
+    {
+      "caseId": "SS39",
+      "title": "중앙 vendor profile과 모델 추론 설정",
+      "driverModelId": "claude-opus-5-5",
+      "softBudgetUsd": 2,
+      "readmePath": "evidence/ags-2.9.1/2026-10-09/cases/SS39/README.md",
+      "manifestPath": "evidence/ags-2.9.1/2026-10-09/cases/SS39/manifest.json",
+      "sha256SumsPath": "evidence/ags-2.9.1/2026-10-09/cases/SS39/SHA256SUMS",
+      "embeddedSourcePaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS39/evidence/source.json"
+      ],
+      "reproductionPaths": [
+        "evidence/ags-2.9.1/2026-10-09/cases/SS39/reproduction/SS39.test.ts",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS39/reproduction/ss39-engineering-plan.json",
+        "evidence/ags-2.9.1/2026-10-09/cases/SS39/reproduction/ss39-engineering-proof.json"
+      ],
+      "additionalDependencies": [
+        "원래 counterexample01–12 개별 입력/기대 정의는 MISSING_ORIGINAL. 기존22개 대체 scenario를 원래12개 정답으로 재명명하지 않는다. 고정 profile/qualification 확인과 runtime catalog·가격탐색 호출0회; 미복원 공식 변형은 BLOCKED."
+      ],
+      "inputReadiness": "BLOCKED_MISSING_ORIGINAL_COUNTEREXAMPLES",
+      "ownedMatrix": null
+    }
+  ]
+}

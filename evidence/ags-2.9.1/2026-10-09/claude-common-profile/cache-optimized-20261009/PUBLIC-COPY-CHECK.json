@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "AGS.PublicCopyInspection.v1",
+  "method": "Explicit field allowlist plus structured/text scan of prepared public copies; no environment or credential values read.",
+  "excluded": [
+    "credential values and network-secret placeholders",
+    "personal information and original chat transcripts",
+    "private artifact identifiers",
+    "individual session addresses",
+    "full request/response bodies"
+  ],
+  "results": {
+    "secretValueMarkers": 0,
+    "privateArtifactIdentifiers": 0,
+    "individualSessionAddresses": 0,
+    "emailAddresses": 0,
+    "localHostPrivatePaths": 0
+  },
+  "originalsPreserved": true,
+  "oracleCorpusRewritten": false,
+  "subjectLeakageBoundary": "Public examiner documentation is never staged as subject input. Original answer files remain examiner-only during trial execution.",
+  "paidCallsForInspection": 0
+}

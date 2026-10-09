@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "AGS.ClaudePublicCommonProfileManifest.v1",
+  "repository": "jaeseongs95/agent-governance-suite",
+  "branch": "evidence",
+  "repositoryDirectory": "evidence/ags-2.9.1/2026-10-09/claude-common-profile/cache-optimized-20261009/",
+  "audience": "EXAMINER_ONLY",
+  "sourceReferenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "files": [
+    {
+      "path": "PUBLIC-COPY-CHECK.json",
+      "bytes": 867,
+      "sha256": "fbb785d39be25af91cce150e07f332da3936fa9a7db89dde3b561505338ebc3e"
+    },
+    {
+      "path": "README.ko.md",
+      "bytes": 7703,
+      "sha256": "94fa3832d07527c7dabb3cb0cdc2448028f4227f67911a476cfef7c9aad44040"
+    },
+    {
+      "path": "case-catalogue.json",
+      "bytes": 42073,
+      "sha256": "b462ca1c0fd8e4d06f1e83e4ce4d4bb52e1a3d0da35399b2ca04100a904ad363"
+    },
+    {
+      "path": "common-protocol.json",
+      "bytes": 22751,
+      "sha256": "9326a8947fe1c9f3cb64910ba8a5e62363bd4ac4f3bdf7ded99482655d36b730"
+    },
+    {
+      "path": "cost-summary.json",
+      "bytes": 5451,
+      "sha256": "37fea9fe31398b3a25029d036879649b16bda2e629076d53910f48d6479cb43d"
+    },
+    {
+      "path": "prompt-cache-profile.json",
+      "bytes": 13185,
+      "sha256": "9da125753db9905c2d799b20ce1bd2f4be2829e92a0524bcd605f822e8bf6994"
+    }
+  ],
+  "originalCaseCount": 39,
+  "sourceFixtureSha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "newPaidCalls": 0,
+  "productChanges": 0,
+  "runtimeSettingChanges": 0,
+  "originalAnswersPreserved": true
+}

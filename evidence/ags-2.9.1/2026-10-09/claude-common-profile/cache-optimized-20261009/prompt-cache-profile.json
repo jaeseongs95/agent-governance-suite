@@ -1,0 +1,224 @@
+{
+  "schemaVersion": "AGS.ClaudeCloudPromptCacheProfile.v1",
+  "status": "PUBLIC_DOCUMENTED_PROFILE_NOT_RUNTIME_QUALIFIED",
+  "checkedAtUtc": "2026-10-09T08:01:08.054431+00:00",
+  "officialCachingFacts": {
+    "source": "https://platform.claude.com/docs/ko/build-with-claude/prompt-caching",
+    "prefixOrder": [
+      "tools",
+      "system",
+      "messages"
+    ],
+    "match": "Entire prefix through a previously written breakpoint must match exactly.",
+    "availableAfter": "First response begins; parallel cold requests can each write.",
+    "ttl": {
+      "default": "5m",
+      "optional": "1h",
+      "refresh": "A cache hit refreshes lifetime without an extra refresh fee.",
+      "clock": "Measured from request start, not response completion."
+    },
+    "isolation": "Direct Claude API caches are isolated by Anthropic organization and workspace.",
+    "minimumCacheablePrefixTokens": {
+      "claude-opus-5-5": 512,
+      "claude-sonnet-5-5": 512,
+      "claude-haiku-5-5": 512
+    },
+    "belowMinimum": "No cache/error solely for short prefix; zero creation/read fields are not proof of one specific cause.",
+    "usageFields": {
+      "input_tokens": "Uncached input",
+      "cache_creation_input_tokens": "New cache writes",
+      "cache_read_input_tokens": "Cache reads"
+    },
+    "totalInputFormula": "input_tokens + cache_creation_input_tokens + cache_read_input_tokens",
+    "cacheCreationTtlBreakdown": [
+      "cache_creation.ephemeral_5m_input_tokens",
+      "cache_creation.ephemeral_1h_input_tokens"
+    ],
+    "limits": {
+      "maximumExplicitBreakpoints": 4,
+      "lookbackPositionsPerBreakpoint": 20
+    },
+    "thinking": "Prior thinking can be cached in tool continuations; mode/budget/effort changes can invalidate prefix."
+  },
+  "officialCliFacts": {
+    "sources": [
+      "https://code.claude.com/docs/en/costs",
+      "https://code.claude.com/docs/en/env-vars"
+    ],
+    "construction": "Claude Code constructs its own requests and automatically caches repeated context. Raw Messages API cache_control is not a documented arbitrary CLI option.",
+    "mainTtlControl": {
+      "name": "CLAUDE_CODE_PROMPT_CACHE_TTL",
+      "values": [
+        "5m",
+        "1h"
+      ],
+      "minimumCliVersion": "2.1.242",
+      "scope": "Main interactive/-p/SDK conversation and inline helpers"
+    },
+    "outsideMainTtlControl": {
+      "name": "CLAUDE_CODE_SUBAGENT_PROMPT_CACHE_TTL",
+      "values": [
+        "5m",
+        "1h"
+      ],
+      "minimumCliVersion": "2.1.242",
+      "scope": "Subagents/workflows/background requests"
+    },
+    "precedence": "FORCE_PROMPT_CACHING_5M overrides bucket TTL; bucket TTL overrides settings and ENABLE_PROMPT_CACHING_1H.",
+    "disableControls": [
+      "DISABLE_PROMPT_CACHING",
+      "DISABLE_PROMPT_CACHING_OPUS"
+    ],
+    "apiKeyDefault": "5m; subscription behavior does not establish this API-key profile.",
+    "installedVersionAlreadyObserved": "2.1.286",
+    "usageDisplay": "/usage and status-line prompt_cache cover main conversation, not all subagents.",
+    "backgroundPluginRefresh": "A plugin refresh can change system content and invalidate cache; keep accepted inventory fixed outside explicit mutation cases."
+  },
+  "priceCorrection": {
+    "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+    "modelId": "claude-opus-5-5",
+    "ratesUsdPerMillion": {
+      "input": 4,
+      "output": 20,
+      "cacheWrite5m": 5,
+      "cacheWrite1h": 8,
+      "cacheRead": 0.2
+    },
+    "baselineCacheReadRate": 0.4,
+    "correction": "Current Opus 5.5 cache reads use 0.05x base input, not generic 0.1x.",
+    "exceptions": {
+      "sonnet55ReadMultiplier": 0.05,
+      "fable51Mythos51ReadMultiplier": 0.025,
+      "otherModelsStandardReadMultiplier": 0.1,
+      "haiku55": "Price tier changes above 100000 total input tokens; never substitute this host driver silently.",
+      "usOnlyInferenceMultiplier": 1.1,
+      "opus55FastMode": "Premium input/output rates $8/$40 per million; cache and geography multipliers also apply.",
+      "batch": "Separate discounted transport; do not assume ordinary Claude Code -p requests are Batch API."
+    },
+    "policy": "Reconcile actual model/route/geography/speed/TTL/service pricing and token counts. No subscription credit, $200 credit application, or invoice amount is inferred."
+  },
+  "executionPolicy": {
+    "scope": "SS01–SS39 driver profile only; classifier/JEV uses its separately qualified provider profile and separate ledger.",
+    "qualityAndHost": "Keep claude-opus-5-5/high and ordinary -p with accepted AGS hooks, skills, MCP and actual tools. Caching does not waive any acceptance gate or change permissions.",
+    "futureChildTtlProposal": {
+      "CLAUDE_CODE_PROMPT_CACHE_TTL": "5m",
+      "CLAUDE_CODE_SUBAGENT_PROMPT_CACHE_TTL": "5m"
+    },
+    "ttlProposalStatus": "DOCUMENTED_ONLY_NOT_APPLIED. Inspect named non-secret cache-control settings in approved child scope, detect conflicting disable/force controls, and record effective TTL. Do not dump the environment.",
+    "oneHourDecision": "Consider a declared 1h bucket only when useful subsequent requests will likely occur after 5m and within 1h, and incremental write cost fits the remaining ledger. Freeze before the applicable trial; no mid-trial opportunistic profile change.",
+    "noPadding": "Do not add answer-bearing examples, irrelevant filler, or extra inventory to reach the minimum. Short valid prefixes may remain uncached.",
+    "noWarmup": "Use the first legitimate authorized product trial as the write opportunity. This update authorizes no paid request. Do not add warm-ups, keep-alive calls, price/catalog probes or synthetic repetitions solely for cache savings.",
+    "parallelFirstRequest": "Parent may release other already-authorized Clouds after the first valid response starts if latency/evidence independence allows. Do not wait for completion solely for API availability; without response-start visibility do not fabricate readiness. All-39 simultaneous cold dispatch remains permissible only under existing execution gates/budget and must reserve duplicate writes.",
+    "budget": "Reserve each Cloud as cold, with unknown-TTL creation conservatively at $8/MTok before applicable speed/geography modifiers, plus all uncached/output/thinking/tool/classifier/hidden continuation exposure. Do not finance another case from expected cache savings.",
+    "noPassInference": "Cache hit proves reused input work, not task correctness, source qualification, actual AGS stages, Claude host PASS or credit eligibility.",
+    "separateSessions": "Never resume/copy another case conversation, assistant output, tool result, memory or writable state merely to reuse cache. Preserve per-case checkout, state DB, session ID and oracle isolation.",
+    "immutableContracts": "Do not reorder necessary tools, suppress required metadata or move instruction precedence merely to improve cache. Deliberate SS24–SS26/SS28/SS39 configuration variants must remain genuine and may miss cache.",
+    "promptOwnership": "Only normal approved host/plugin/tool content may repeat. Entire frozen manifest, oracle, expected selection, evaluator rubric, independent review, holdout labels and prior results stay outside subject context; do not upload them as a shared prefix."
+  },
+  "reuseAnalysis": {
+    "status": "INFERENCE_FROM_DOCUMENTATION_NO_39_CLOUD_USAGE_OBSERVED",
+    "workspaceDistinction": "Codex Cloud environment and its /workspace filesystem are not the Anthropic API workspace. Thirty-nine independent Clouds can potentially reuse a provider cache only if routing resolves to the same Anthropic workspace and the same model/exact prefix/TTL conditions hold. Same credential source is not proof of resolved workspace.",
+    "crossCloudPotential": [
+      "Identical genuine tool definitions and ordering within the same accepted tool profile",
+      "Identical candidate plugin/system instructions and actual normal inventory metadata",
+      "An exact earlier common message prefix only when genuinely identical and already cached"
+    ],
+    "withinSessionPotential": "Subsequent legitimate tool turns can read unchanged history while writing appended context. Session-local task/history prefix is not a campaign-shared conversation.",
+    "likelyDivergence": [
+      "Per-case CWD and plugin installation paths rendered into prompt",
+      "Session/date/timestamp/task identifiers if rendered before a cache boundary",
+      "Tool permissions, schemas/order, dynamic MCP tool discovery and accepted inventory changes",
+      "Different original prompts, quotations, variants, selected/read skills, tool results and message histories",
+      "Effort/thinking/model/compaction or expected configuration mutation"
+    ],
+    "admission": "Unknown common prefix identity/workspace/TTL => UNKNOWN, not a guaranteed warm launch. Do not clone state or alter original prompts to remove legitimate divergence.",
+    "measurement": "Record effective profile and non-secret metadata/digests only where already available through approved runtime observations. Do not log request headers, full prompt bodies or credentials; never derive workspace identity by decoding credentials."
+  },
+  "receiptContract": {
+    "identity": [
+      "cloudId",
+      "caseId",
+      "variantId",
+      "matrixPath",
+      "repetition",
+      "host",
+      "taskId",
+      "sessionId",
+      "attemptId",
+      "candidateCommit",
+      "candidateTree",
+      "cliVersion",
+      "modelId",
+      "effectiveEffort",
+      "providerRoute"
+    ],
+    "cacheMetadata": [
+      "effectiveMainTtl",
+      "effectiveOutsideMainTtl",
+      "workspaceScopeStatus",
+      "prefixIdentityStatus",
+      "requestStartedAtUtc",
+      "firstResponseStartedAtUtc",
+      "previousRelevantRequestStartedAtUtc",
+      "compactionOrConfigChange"
+    ],
+    "tokens": [
+      "input_tokens",
+      "cache_creation_input_tokens",
+      "cache_read_input_tokens",
+      "output_tokens",
+      "cache_creation.ephemeral_5m_input_tokens",
+      "cache_creation.ephemeral_1h_input_tokens"
+    ],
+    "costFormula": "(4*input + 5*write5m + 8*write1h + 0.20*read + 20*output)/1000000 before applicable pricing modifiers, plus other separately billable work.",
+    "unknownTtl": "Keep TTL breakdown null if absent; do not invent zero/5m. Reserve aggregate creation at the higher applicable write rate until settled.",
+    "settlement": "Record CLI estimated cost and independently known provider/invoice cost separately. Preserve every helper/retry/continuation/subagent/classifier/JEV attempt; aggregate tokens must not be counted twice with per-request rows.",
+    "hitEvidence": "cache_read_input_tokens > 0 demonstrates some cached input was used; alone it cannot identify another Cloud as writer, shared segment, effective TTL or workspace.",
+    "missingUsage": "Absent fields remain null with exposure reserve; not zero. Cache performance remains unqualified.",
+    "latency": "Capture actual request/API/CLI latency where available; do not claim latency reduction from one cached invocation without a comparable measurement.",
+    "diagnosticsSource": "https://platform.claude.com/docs/en/build-with-claude/cache-diagnostics",
+    "diagnosticsPolicy": "Official diagnostics compares model/tools/system/messages fingerprints, whereas usage confirms hits. Do not add raw diagnostics to CLI arguments or turn on content-bearing tracing. This update makes no API diagnostic call."
+  },
+  "preservedObservedUsage": {
+    "sourceLocalFile": "preparation-review-cost.json",
+    "scope": "PREPARATION_INDEPENDENT_REVIEW_ONLY",
+    "invocations": 1,
+    "reportedTurns": 3,
+    "wireCallCount": null,
+    "wireCallCountStatus": "NOT_OBSERVED",
+    "cliVersion": "2.1.286",
+    "model": "claude-opus-5-5",
+    "effort": "high",
+    "usage": {
+      "input_tokens": 8,
+      "cache_creation_input_tokens": 151814,
+      "cache_read_input_tokens": 73655,
+      "output_tokens": 11603
+    },
+    "totalInputTokens": 225477,
+    "cacheReadShareOfAggregateInput": 0.3266630299320995,
+    "cliEstimatedCostUsdPreserved": 1.005893,
+    "elapsedMs": 123886,
+    "apiMs": 122811,
+    "creationTtlBreakdown": null,
+    "creationTtlStatus": "NOT_PRESERVED",
+    "actualWorkspaceStatus": "NOT_OBSERVED",
+    "crossCloudSharedPrefixStatus": "NOT_OBSERVED",
+    "limitations": "Aggregate review usage proves cache writes and reads in that one invocation. It does not identify request count, TTL, segment, origin session or savings for 39 product Clouds. No additional call was made; original CLI estimate is not repriced or relabeled as an invoice."
+  },
+  "validation": {
+    "frozenCasesAndOraclesUnchanged": true,
+    "caseCount": 39,
+    "caseReservationsUsd": 78,
+    "newPaidCalls": 0,
+    "newWarmups": 0,
+    "productRuns": 0,
+    "productEdits": 0,
+    "publicWrites": 0
+  },
+  "provenance": {
+    "sourceLaunchPlanSha256": "e997649505a365d5d1a8435a3ad59489623989ebc5d056e6efd8fab03442e1d7",
+    "originalLaunchPlanSha256": "039b10c8caa72f47943283083c319670d3a595c36c51f6c5717cc8ee553e3de1",
+    "scope": "Examiner-only common protocol; no answer corpus or subject input bundle is embedded."
+  }
+}

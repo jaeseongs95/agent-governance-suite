@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "AGS.ClaudeCostSummary.v1",
+  "scope": "PREPARATION_ONLY_NOT_PRODUCT_TRIAL_SPEND",
+  "budget": {
+    "monthlyApprovedEnvelopeUsd": 200,
+    "knownMonthlySpendUsd": null,
+    "caseSoftBudgetUsd": 2,
+    "caseCount": 39,
+    "caseReservationsTotalUsd": 78,
+    "preparationReviewSeparateSoftBudgetUsd": 2,
+    "knownPreparationAndReservationCeilingUsd": 80,
+    "softLimitDisclosure": "--max-budget-usd is estimated-spend software control, may overshoot and differ from invoiced spend.",
+    "beforeNextCall": "Parent-owned ledger settles all CLI/provider attempts and reserves unknown/in-flight exposure. Set each CLI invocation --max-budget-usd to min(case $2 - settled spend - unknown/inflight reserves - $0.25 headroom, remaining monthly envelope), never a fresh fixed $2 on every invocation. Require positive remaining allowance and reserve estimated full next call including thinking/caching/hidden continuations/classifier/subagents. If not sufficient, stop before dispatch.",
+    "operatingHeadroom": "Keep $0.25 of each $2 case budget for one in-flight request and unknown settlement. At $1.75 projected exposure pause before another call. Lower planned call token limits if the next-call reserve exceeds headroom.",
+    "exhaustion": "Stop and report BUDGET_BLOCKED/INCOMPLETE, never weaken the oracle, substitute a cheaper unqualified model, or label partial execution PASS.",
+    "retry": "CLAUDE_CODE_MAX_RETRIES=0 by default; explicit approved retries are separate ledger attempts and never erase failed attempts.",
+    "allocation": "Preparation review is separate from the 39 case reservations. Check actual month-to-date balance before starting the 39 Clouds; $200 credit application is not assumed.",
+    "monthlyBalanceGate": "knownMonthlySpendUsd=null blocks paid product dispatch until parent records month-to-date paid/unknown exposure and sufficient unreserved balance. Preparation review spends are separately included in the monthly ledger.",
+    "separateJevLedger": "Case ledger records JEV exposure, but any historical JEV-specific $5 cap remains independently enforced including prior JEV usage. Do not merge, replace, or erase that limit with hostAPI monthly approval.",
+    "cliLimitObservation": "Preparation review: one CLI invocation requested --max-turns 1/output 4500 and reported num_turns=3/output_tokens=11603. These limits must not be treated as an exact total HTTP-call/output cap. Record all reported turns/cache use; actual wire call count is unknown unless independently observed."
+  },
+  "preparationReviewReceipt": {
+    "scope": "PREPARATION_INDEPENDENT_REVIEW_ONLY",
+    "cli_version": "2.1.286",
+    "model": "claude-opus-5-5",
+    "effort": "high",
+    "exit_code": 0,
+    "elapsed_ms": 123886,
+    "timeout": false,
+    "attempts": 1,
+    "max_turns": 1,
+    "max_retries": 0,
+    "soft_budget_usd": 2,
+    "preflight_token_cost_bound_usd": 1.532496,
+    "result_success": true,
+    "tool_count": 0,
+    "mcp_count": 0,
+    "usage": {
+      "input_tokens": 8,
+      "cache_creation_input_tokens": 151814,
+      "cache_read_input_tokens": 73655,
+      "output_tokens": 11603
+    },
+    "total_cost_usd": 1.005893,
+    "duration_api_ms": 122811,
+    "num_turns": 3,
+    "actual_wire_call_count": null,
+    "actual_wire_call_count_status": "NOT_OBSERVED",
+    "requested_output_limit": 4500,
+    "observed_aggregate_output_tokens": 11603,
+    "review_report_status": "PARTIAL_FINAL_SEGMENT_JSON_BEGINNING_MISSING",
+    "total_cost_usd_kind": "CLI_ESTIMATE_NOT_PROVIDER_INVOICE"
+  },
+  "preparationReview": {
+    "provider": "Claude Code 2.1.286 API",
+    "model": "claude-opus-5-5",
+    "effort": "high",
+    "invocations": 1,
+    "reportedTurns": 3,
+    "wireCallCount": null,
+    "wireCallCountStatus": "NOT_OBSERVED",
+    "cliEstimatedCostUsd": 1.005893,
+    "separateSoftBudgetUsd": 2,
+    "status": "PARTIAL_REVIEW_FINDINGS_APPLIED_NO_INDEPENDENT_PASS_CLAIM",
+    "limitation": "CLI succeeded but final result contained only the last JSON segment; original beginning is unavailable. Recovered concrete findings were reviewed and corrected by the preparation owner. No additional reviewer/model call was made.",
+    "productCalls": 0,
+    "sourcePassClaim": false,
+    "hostPassClaim": false
+  },
+  "earlierAuthenticationEvidence": {
+    "apiGet": {
+      "httpStatus": 200,
+      "latencyMs": 379,
+      "estimatedCostUsd": 0
+    },
+    "apiMessages": {
+      "httpStatus": 200,
+      "model": "claude-haiku-5-5",
+      "inputTokens": 23,
+      "outputTokens": 9,
+      "latencyMs": 834,
+      "estimatedCostUsd": 6.8e-06
+    },
+    "claudeCodeSmoke": {
+      "cliVersion": "2.1.286",
+      "model": "claude-haiku-5-5",
+      "reportedTurns": 1,
+      "inputTokens": 2,
+      "cacheCreationInputTokens": 537,
+      "outputTokens": 4,
+      "elapsedMs": 1300,
+      "apiMs": 638,
+      "cliEstimatedCostUsd": 0.002773
+    },
+    "scope": "Synthetic API/CLI authentication checks; not AGS product host PASS. No credentials, requests, response bodies or session addresses included."
+  },
+  "thisPublication": {
+    "paidCalls": 0,
+    "reviewReruns": 0,
+    "warmups": 0,
+    "productRuns": 0
+  },
+  "knownEarlierPreparationEstimateUsd": 1.0086728,
+  "knownEstimateLimitation": "Sum of retained estimates only, not month-to-date total or invoice. Review estimate remains historically preserved; unknown exposure remains separately reserved.",
+  "creditApplicationEvidence": false
+}

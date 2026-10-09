@@ -1,0 +1,274 @@
+{
+  "referenceRepository": "jaeseongs95/agent-governance-suite",
+  "referencePublicationCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "referenceProductCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "referenceProductTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "requestedCandidate": {
+    "revision": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "sourceStatus": "LIMITED_LOCAL_SOURCE_PASS_AC001_AC003_REPORTED_WITH_AUDIT_BY_PARENT",
+    "publicationStatus": "REMOTE_PUBLICATION_UNCONFIRMED",
+    "userInstruction": "Hold product dispatch until exact remote publication and required Linux/host/profile observations are independently confirmed for the approved scope.",
+    "sourceLimitations": "Parent reports F16 resolved and limited local SOURCE AC001–003 PASS. This is not Linux qualification or real host stage PASS."
+  },
+  "fixture": {
+    "sourcePath": "evidence/ags-2.9.1/2026-10-09/cases/SS10/inputs/fixtures.frozen.json",
+    "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "freezePolicy": "Never change oracle in response to model outputs; revision changes require source/spec rationale and new run",
+    "externalSpecStatus": "MISSING_ORIGINAL",
+    "externalSpecName": "TEST-SPEC.seq7.ko.md",
+    "use": "Read embedded fields verbatim. Preserve null versus [], named variants, required/allowed/forbidden/unadjudicated distinctions. Never generate missing semantic oracles or E0 definitions."
+  },
+  "model": {
+    "driverModelId": "claude-opus-5-5",
+    "effort": "high",
+    "availableObserved": true,
+    "availabilityEvidence": "Authenticated Models GET HTTP 200; active opus/sonnet/haiku 5.5 in this environment.",
+    "availabilityAtNewCloud": "Use this separately recorded preparation catalog (GET200 active Opus5.5) and fixed profile before product dispatch. Any refreshed availability check is a separate preparation event, outside SS39 runtime. No silent model substitution; unknown/unavailable capability blocks dispatch.",
+    "rationale": "Quality-oriented general reasoning, coding and review driver; Haiku smoke success is connectivity evidence only.",
+    "classificationProviderModel": "Separately qualified fixed vendor/JEV profile; host driver model is not automatically the classifier model.",
+    "ratesUsdPerMillion": {
+      "input": 4,
+      "output": 20,
+      "cacheWrite5m": 5,
+      "cacheWrite1h": 8,
+      "cacheRead": 0.2
+    },
+    "pricingSource": "https://platform.claude.com/docs/en/about-claude/pricing",
+    "pricingCorrection": "Opus 5.5 cache read updated from $0.40 to current official $0.20/MTok; preserved historical CLI estimates remain unchanged."
+  },
+  "budget": {
+    "monthlyApprovedEnvelopeUsd": 200,
+    "knownMonthlySpendUsd": null,
+    "caseSoftBudgetUsd": 2,
+    "caseCount": 39,
+    "caseReservationsTotalUsd": 78,
+    "preparationReviewSeparateSoftBudgetUsd": 2,
+    "knownPreparationAndReservationCeilingUsd": 80,
+    "softLimitDisclosure": "--max-budget-usd is estimated-spend software control, may overshoot and differ from invoiced spend.",
+    "beforeNextCall": "Parent-owned ledger settles all CLI/provider attempts and reserves unknown/in-flight exposure. Set each CLI invocation --max-budget-usd to min(case $2 - settled spend - unknown/inflight reserves - $0.25 headroom, remaining monthly envelope), never a fresh fixed $2 on every invocation. Require positive remaining allowance and reserve estimated full next call including thinking/caching/hidden continuations/classifier/subagents. If not sufficient, stop before dispatch.",
+    "operatingHeadroom": "Keep $0.25 of each $2 case budget for one in-flight request and unknown settlement. At $1.75 projected exposure pause before another call. Lower planned call token limits if the next-call reserve exceeds headroom.",
+    "exhaustion": "Stop and report BUDGET_BLOCKED/INCOMPLETE, never weaken the oracle, substitute a cheaper unqualified model, or label partial execution PASS.",
+    "retry": "CLAUDE_CODE_MAX_RETRIES=0 by default; explicit approved retries are separate ledger attempts and never erase failed attempts.",
+    "allocation": "Preparation review is separate from the 39 case reservations. Check actual month-to-date balance before starting the 39 Clouds; $200 credit application is not assumed.",
+    "monthlyBalanceGate": "knownMonthlySpendUsd=null blocks paid product dispatch until parent records month-to-date paid/unknown exposure and sufficient unreserved balance. Preparation review spends are separately included in the monthly ledger.",
+    "separateJevLedger": "Case ledger records JEV exposure, but any historical JEV-specific $5 cap remains independently enforced including prior JEV usage. Do not merge, replace, or erase that limit with hostAPI monthly approval.",
+    "cliLimitObservation": "Preparation review: one CLI invocation requested --max-turns 1/output 4500 and reported num_turns=3/output_tokens=11603. These limits must not be treated as an exact total HTTP-call/output cap. Record all reported turns/cache use; actual wire call count is unknown unless independently observed."
+  },
+  "commonPrerequisites": [
+    {
+      "gate": "SOURCE",
+      "required": "Respect parent-confirmed limited local SOURCE AC001–003 and resolved F16 scope; do not expand this into Linux/host/release PASS. Candidate changes require renewed source evidence.",
+      "current": "LIMITED_LOCAL_PASS_AC001_AC003_PARENT_AUDIT"
+    },
+    {
+      "gate": "REMOTE",
+      "required": "Parent confirms exact source-approved candidate is published and each new Cloud fetches that commit/tree; do not substitute main or old c6a8019.",
+      "current": "UNCONFIRMED"
+    },
+    {
+      "gate": "FIXTURE",
+      "required": "Verify frozen fixture and case README/manifest/SHA256SUMS at af579 publication; verify per-case variants/input bytes. Do not treat historical outcomes/receipts as new candidate evidence.",
+      "current": "READABLE_PREPARATION"
+    },
+    {
+      "gate": "HOST",
+      "required": "Claude Code 2.1.286 absolute executable, Node 24.19.0, pnpm 11.19.0, actual installed AGS inventory and supported/active state; installation/version alone is not host PASS.",
+      "current": "PER_CLOUD_NOT_RUN"
+    },
+    {
+      "gate": "PROVIDER",
+      "required": "Approved qualified profile, exact vendor/model/effort/route/capabilities/retry/isolation and price basis. JEV on/off and vendor fallback variants follow original source policy.",
+      "current": "PER_CLOUD_NOT_RUN"
+    },
+    {
+      "gate": "RECEIPTS",
+      "required": "Authentic AGENT chosen/read/applied/verified evidence, signed exact-call hook/session/task/config/source/environment/candidate bindings and admission evidence where required. Mock signers and API smoke cannot supply these.",
+      "current": "PER_CLOUD_NOT_RUN"
+    },
+    {
+      "gate": "INPUT_AND_AUTHORITY",
+      "required": "Use exact synthetic originalPrompt or mechanical source fields. A missing real diff/code/DB/permission remains case hold condition. Cases requesting explanation/classification/read-only action never authorize real destructive actions.",
+      "current": "PER_CASE"
+    },
+    {
+      "gate": "BUDGET",
+      "required": "Case reservation and monthly remaining balance confirmed; all separate classifier, child, retry, hidden and uncertain charges recorded.",
+      "current": "PARENT_LEDGER_REQUIRED"
+    },
+    {
+      "gate": "SOURCE_BINDING",
+      "required": "At the accepted candidate's declared authoritative fixture path, verify fixture bytes against 17ade7... and recompute oracle digest with the original corpus method (not file SHA). If fixture/source meaning changed, report source incompatibility and await justified revised-source contract; no post-output tuning.",
+      "current": "PER_CANDIDATE_NOT_RUN"
+    },
+    {
+      "gate": "LINUX",
+      "required": "Candidate-bound Linux runtime/dependencies/qualification evidence matching the requested execution scope; local SOURCE results do not supply this.",
+      "current": "UNCONFIRMED"
+    }
+  ],
+  "newCloudProcedure": [
+    "One SS ID per newly created Codex Cloud; parent records Cloud/session/environment-version IDs and assigns one artifact writer. Separate working checkout, state DB, task/session IDs and evidence directory; no cross-case writable sharing.",
+    "During pending SOURCE/REMOTE gates only read inputs, hashes, public test plans and prepare CLI. Do not run R17 product tests, install/activate the pending product, claim host PASS or publish product changes.",
+    "Read applicable repository AGENTS.md and actual relevant skills. Verify the CLI by /workspace/cloud-tools/claude/node_modules/.bin/claude --version; this custom bin may not be on PATH. No reinstall is needed when present.",
+    "Pass declared Network-secret placeholder unchanged as child-process ANTHROPIC_API_KEY; exclude CLAUDE_CODE_OAUTH_TOKEN only in that child. Preserve existing HTTPS proxy and api.anthropic.com:443 destination. Never dump or store placeholder/raw credentials. No login/setup-token/logout or permanent auth change.",
+    "After SOURCE/REMOTE gates pass, use an isolated checkout of the exact accepted candidate and verify tree. Load that candidate's ordinary Claude Code AGS plugin, hooks, skills and MCP using actual installation procedure; ordinary -p, never --bare or CLAUDE_CODE_SIMPLE. The earlier tools-empty/no-MCP smoke isolation is not a product host test. Model catalog/price checks belong to separately recorded preparation, not runtime case dispatch. SS39 runtime catalog and price-discovery calls must remain zero.",
+    "Freeze and hash per-case input/oracle/variants before model outputs. For model-quality trials the subject classifier/host receives only authorized task and normal public inventory, never a golden answer, reviewer's answer or previous result. Scoring happens outside the subject.",
+    "Use ordinary -p --model claude-opus-5-5 with a per-invocation remaining allowance computed from the case ledger (not fixed 2 each time), stream-json --verbose, retry0 and explicit output/turn limits. CLI cap is soft and can generate continuations; reserve those and record actual aggregate tokens/turns. Tool/turn settings must allow the case's real required stages, never constrict them solely to obtain PASS.",
+    "Apply documented promptCaching policy only after existing gates permit execution: keep authentic fixed host configuration, default proposed child TTL 5m, no answer-bearing shared prefix or extra warm-up; assume each Cloud cold in the budget and record actual creation/read/uncached tokens and unknown TTL separately. API workspace and Codex filesystem workspace are distinct.",
+    "Run only the assigned original variant matrix, separate offline mocks, live provider semantics and live host stages. Adapt artifact output paths/candidate bindings transparently; do not silently alter assertions or expected semantic sets. No whole-suite replay or historical 21-run rerun unless explicitly part of approved case contract.",
+    "Record each attempt before dispatch and settlement after completion: case/variant/path/repetition/host, exact model/effort/profile/route, call and parent IDs, status/exit, input/output/thinking/cache tokens, CLI estimate, provider actual-cost if independently known, price formula, latency, retry/hidden calls, unknown charge reserves. Unknown remains null with reserve, never zero.",
+    "Stop before projected next call exceeds case or monthly exposure; return observed failure/BLOCKED/NOT_RUN separately. Parent owns aggregate $78 reservation and monthly reconciliation. No cross-case automatic budget borrowing.",
+    "Return candidate/input/oracle digests; raw/combined recommendation versus actual AGENT final choice, needed/runnable/admission; selected/read/applied/verified stage receipts and failures; checks/exits/statuses; per-attempt cost ledger and limits. API success, static SOURCE PASS, offline test PASS and product host PASS are distinct claims.",
+    "Old candidate/skill sourceRef digests are reference provenance, not receipts for R17. Detect changed semantic source roles/criteria and report incompatibility for explicit source-based adjudication; do not rewrite oracle after seeing outcomes. Bind new observations to accepted candidate while preserving old reference expectations and fixture bytes.",
+    "Use --permission-mode default with explicit per-case tool permissions and sandbox/write scope; never bypassPermissions or --dangerously-skip-permissions. Read-only cases deny Write/Edit, destructive git commands and operating changes. Allowed reads/MCP calls are limited to accepted candidate and assigned artifacts; mutation probes use scratch synthetic fixtures only. Record rejected forbidden action attempts."
+  ],
+  "matrixAndSplit": {
+    "pairedMatrix": {
+      "caseIds": [
+        "SS01",
+        "SS03",
+        "SS04",
+        "SS05",
+        "SS08",
+        "SS09",
+        "SS10",
+        "SS11",
+        "SS14",
+        "SS18"
+      ],
+      "paths": [
+        "jev-on",
+        "jev-off-vendor",
+        "jev-invalid-key-vendor",
+        "jev-timeout-vendor"
+      ],
+      "repetitions": 3,
+      "hosts": [
+        "codex",
+        "claude"
+      ],
+      "expectedPairs": 120,
+      "expectedHostTrials": 240,
+      "status": "NOT_RUN"
+    },
+    "split": {
+      "revision": "public-regression-v1",
+      "independentHoldoutClaim": false,
+      "calibration": [
+        "SS01",
+        "SS02",
+        "SS03",
+        "SS08",
+        "SS15",
+        "SS18"
+      ],
+      "holdout": [
+        "SS04",
+        "SS05",
+        "SS06",
+        "SS07",
+        "SS09",
+        "SS10",
+        "SS11",
+        "SS12",
+        "SS13",
+        "SS14",
+        "SS16",
+        "SS17"
+      ],
+      "note": "Public source-known regression partitions, never claimed as independent unseen model quality evidence"
+    },
+    "claudeOnlyInterpretation": "Original 120 paired protocol conditions × 2 hosts = 240 host slots. This Claude campaign owns 120 Claude slots across the 10 listed cases. Codex counterparts need matching accepted candidate, inputs, inventory, profile/config, path/repetition and genuine evidence; historical unmatched Codex outcomes are not interchangeable.",
+    "aggregateCases": "SS35/SS36/SS38 consume assigned trials and source controls with explicit ownership. Do not regenerate every trial inside an aggregate case or double-charge/double-count it. Missing counterpart slots remain NOT_RUN.",
+    "all39Dependencies": "SS02 inherits SS01 conditions; SS35/SS36/SS38 use frozen cross-case material but do not require serial execution of all other case Clouds. Aggregate live pairing requires genuine matching receipts.",
+    "slotOwnership": "Canonical slot key: semanticCaseId:path:repetition:host:candidateTree:fixtureDigest:profileRevision:configRevision:inventoryDigest. The semantic case Cloud owns its 12 Claude slots and pays its own $2 ledger; SS38 aggregates receipts by reference. SS19 OFF controls borrow matching owned receipts or execute distinct explicitly budgeted controls, never duplicate canonical slots. Each Codex counterpart has a separate explicit owner.",
+    "feasibility": "Before dispatch each owner estimates all 12 slots plus classifier/hidden calls. If its $2 cannot cover complete original matrix, keep remaining slots BUDGET_BLOCKED/NOT_RUN and report; no reduced oracle or automatic budget borrowing.",
+    "faultPaths": "jev-on additionally requires separately approved JEV route, declared credential handling and verified separate $5 balance. Vendor fallback requires a specifically qualified approved vendor profile. Invalid-key/timeout conditions use controlled public synthetic fault injection (never edit a real key); distinguish injected-transport trials from real provider/live classification. Unavailable prerequisites block the relevant slots."
+  },
+  "subjectExaminerSeparation": {
+    "examinerOnly": [
+      "frozen fixtures/oracles/expected required, allowed, forbidden sets",
+      "reference READMEs/manifests/prior results",
+      "independent review and scoring harness",
+      "API cost ledger and SOURCE/REMOTE decisions"
+    ],
+    "subjectInputOnly": [
+      "exact authorised original user prompt or the exact designated mechanical request",
+      "normal full inventory descriptors and genuine public source metadata needed by AGS",
+      "explicit user/rule/task provenance authorised by that original case",
+      "neutral task/session/profile/config IDs and runtime limits"
+    ],
+    "prohibitedSubjectLeakage": [
+      "case ID/title when it labels the answer or outcome",
+      "golden required/forbidden sets or hints",
+      "previous outputs/results or reviewer corrections",
+      "test code/assertions or fixture answer arrays",
+      "MCP arguments, tools or filesystem paths exposing evaluator expectations"
+    ],
+    "layout": "Test examiner remains outside the subject's tool-visible filesystem and MCP scope. Stage only a separate subject workspace with the authorised prompt and accepted product/source inventory. Capture outputs and signed receipts externally, then score offline; no answer file mounted in the subject.",
+    "scope": "Mechanical mock tests may inspect expected controls in examiner process, but are labelled offline-mock and never become actual automatic host selection success.",
+    "passRule": "A model that reads the answer fixture and copies the expected set is evaluator contamination; mark INVALID_EVALUATION, never automatic skill-selection PASS."
+  },
+  "reasoningSupport": {
+    "mode": "adaptive",
+    "defaultModelEffort": "medium",
+    "requestedEffort": "high",
+    "cliEnvironmentVariable": "CLAUDE_CODE_EFFORT_LEVEL=high",
+    "support": "Official Claude Code environment/model documentation supports effort configuration; preparation Opus5.5 review succeeded with this setting. Exact wire effort must be separately observed per trial, not inferred from a local env setting alone.",
+    "thinking": "Do not use MAX_THINKING_TOKENS=0 as proof that Opus5.5 thinking is disabled. Adaptive reasoning has its own limits; record thinking/output usage.",
+    "documentation": "https://code.claude.com/docs/en/model-config#adjust-effort-level",
+    "supportedLevels": [
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max"
+    ]
+  },
+  "productHostProfile": {
+    "cliAbsolutePath": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+    "cliVersion": "2.1.286",
+    "mode": "ordinary -p",
+    "bare": false,
+    "apiKeySource": "ANTHROPIC_API_KEY child-bound from declared Network secret, raw secret stays proxy-side",
+    "oauth": "Exclude CLAUDE_CODE_OAUTH_TOKEN only from subject child process; no global/auth-file modification",
+    "proxy": "Preserve existing HTTPS proxy and approved api.anthropic.com:443 destination",
+    "settings": "Use scoped settings matching accepted candidate installation. Validate actual sources/MCP/plugin paths and genuine runtime tools; capture names/versions/digests, never credentials.",
+    "smokeNotProduct": "Do not carry the auth smoke's --tools empty/--disable-slash-commands/--strict-mcp-config empty/system-prompt override into a product host trial that requires AGS discovery and obligations. Auth smoke showed plugins reported, so names/source bindings must be inspected rather than plugin-count inference.",
+    "hostPrerequisiteEvidence": "Verify actual AGS plugin version/source digest, named MCP server handshake and inventory tools, installed/supported/active state, source skills read/digests and exact-call hooks with candidate/task/session binding before claiming host stages."
+  },
+  "preparationReview": {
+    "provider": "Claude Code 2.1.286 API",
+    "model": "claude-opus-5-5",
+    "effort": "high",
+    "invocations": 1,
+    "reportedTurns": 3,
+    "wireCallCount": null,
+    "wireCallCountStatus": "NOT_OBSERVED",
+    "cliEstimatedCostUsd": 1.005893,
+    "separateSoftBudgetUsd": 2,
+    "status": "PARTIAL_REVIEW_FINDINGS_APPLIED_NO_INDEPENDENT_PASS_CLAIM",
+    "limitation": "CLI succeeded but final result contained only the last JSON segment; original beginning is unavailable. Recovered concrete findings were reviewed and corrected by the preparation owner. No additional reviewer/model call was made.",
+    "productCalls": 0,
+    "sourcePassClaim": false,
+    "hostPassClaim": false
+  },
+  "schemaVersion": "AGS.ClaudeCommonProtocol.v1.1.public",
+  "audience": "EXAMINER_ONLY_NOT_SUBJECT_INPUT",
+  "cacheProfile": "prompt-cache-profile.json",
+  "caseCatalogue": "case-catalogue.json",
+  "costSummary": "cost-summary.json",
+  "productExecutionStatus": "GATED_NOT_AUTHORIZED_BY_DOCUMENT_PUBLICATION",
+  "oracleIsolation": {
+    "examiner": "Keep frozen fixtures, oracle values, historical evidence, tests/assertions, catalogues, this common protocol, reviewer material and ledgers in an examiner-only filesystem and tool scope outside the subject executor.",
+    "subject": "Stage only the original approved case request and genuine accepted AGS product/plugin/inventory required by that case in a separate subject executor workspace. Use per-case working/state/session/artifact identities. No examiner volume or path is mounted.",
+    "sourceExport": "Verify accepted commit/tree in the examiner, then create an allowlisted subject export. Exclude evidence directories, answer-bearing fixtures/test assertions, scorer/review artifacts and Git object/history access exposing them. Preserve required genuine product components and their digests; excluding examiner material must not fake missing product inventory.",
+    "toolsAndNetwork": "Verify actual runtime file/tool/MCP access boundaries before dispatch, including links, parent directories, shell reads, Git history and remote evidence retrieval. Subject tools must not retrieve examiner files or historical public answer pages. Do not call a same-user sibling folder isolated without proving the subject cannot access it.",
+    "inputManifest": "Examiner records which exact original prompt bytes and normal inventory descriptors were staged; subject prompt does not include catalogue titles, case labels that hint at answers, expected skill sets or scoring criteria.",
+    "scoring": "Capture genuine AGENT/host outputs and signed receipts outside subject scope, then score against unchanged frozen values. Observed forbidden answer access invalidates the trial as INVALID_EVALUATION.",
+    "implementationStatus": "Documented required structure; enforcement has not been demonstrated in 39 Clouds by this publication."
+  }
+}
