@@ -1,0 +1,80 @@
+{
+  "caseId": "SS35",
+  "kind": "fixed-commit-remote-byte-readback",
+  "status": "VERIFIED_PUBLICATION_BYTES_ONLY",
+  "productTest": "NOT_RUN",
+  "publishedCommit": "3b25ae39c0e231bd27beec5e09c15cdff31afc12",
+  "checkedAtUTC": "2026-10-09T07:49:40.647775+00:00",
+  "method": "HTTPS GET raw.githubusercontent.com at full publication commit for every run file including SHA256SUMS",
+  "files": [
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS35/prep-20261009T074545Z-ss35-7e83c5/REPORT.md",
+      "remoteURL": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/3b25ae39c0e231bd27beec5e09c15cdff31afc12/evidence/ags-2.9.1/2026-10-09/claude-cases/SS35/prep-20261009T074545Z-ss35-7e83c5/REPORT.md",
+      "bytes": 11786,
+      "sha256": "0994ffdf11acfc1f427ee00b66e0e804920d4f3bf7268e6b8bb10cfff4007995",
+      "matchesLocalBytes": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS35/prep-20261009T074545Z-ss35-7e83c5/SHA256SUMS",
+      "remoteURL": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/3b25ae39c0e231bd27beec5e09c15cdff31afc12/evidence/ags-2.9.1/2026-10-09/claude-cases/SS35/prep-20261009T074545Z-ss35-7e83c5/SHA256SUMS",
+      "bytes": 689,
+      "sha256": "e90c2f861056dc6ebb781e50dee80fd6472515411657d6d3b4deba870f153ea8",
+      "matchesLocalBytes": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS35/prep-20261009T074545Z-ss35-7e83c5/cost-ledger.json",
+      "remoteURL": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/3b25ae39c0e231bd27beec5e09c15cdff31afc12/evidence/ags-2.9.1/2026-10-09/claude-cases/SS35/prep-20261009T074545Z-ss35-7e83c5/cost-ledger.json",
+      "bytes": 910,
+      "sha256": "cf4771c96281f74ff1df1da382a50b5eb98fbd4cb3b60edd5c25cee92ae8de9e",
+      "matchesLocalBytes": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS35/prep-20261009T074545Z-ss35-7e83c5/environment.json",
+      "remoteURL": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/3b25ae39c0e231bd27beec5e09c15cdff31afc12/evidence/ags-2.9.1/2026-10-09/claude-cases/SS35/prep-20261009T074545Z-ss35-7e83c5/environment.json",
+      "bytes": 2021,
+      "sha256": "1a45b2098d51c898b45482be287fdf604e710063e785346933e03c77b891827b",
+      "matchesLocalBytes": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS35/prep-20261009T074545Z-ss35-7e83c5/historical-results.json",
+      "remoteURL": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/3b25ae39c0e231bd27beec5e09c15cdff31afc12/evidence/ags-2.9.1/2026-10-09/claude-cases/SS35/prep-20261009T074545Z-ss35-7e83c5/historical-results.json",
+      "bytes": 5361,
+      "sha256": "93a1adfe78af8584dab1ba9fcfb421b079fe9d8f3f344822f56b037e9358c0a0",
+      "matchesLocalBytes": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS35/prep-20261009T074545Z-ss35-7e83c5/input-verification.json",
+      "remoteURL": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/3b25ae39c0e231bd27beec5e09c15cdff31afc12/evidence/ags-2.9.1/2026-10-09/claude-cases/SS35/prep-20261009T074545Z-ss35-7e83c5/input-verification.json",
+      "bytes": 6230,
+      "sha256": "e7452638a64e83bbc9e4908a03e6dbc39ab02fa093fb4361158182f2e3d678dc",
+      "matchesLocalBytes": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS35/prep-20261009T074545Z-ss35-7e83c5/instructions-provenance.json",
+      "remoteURL": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/3b25ae39c0e231bd27beec5e09c15cdff31afc12/evidence/ags-2.9.1/2026-10-09/claude-cases/SS35/prep-20261009T074545Z-ss35-7e83c5/instructions-provenance.json",
+      "bytes": 1835,
+      "sha256": "c95058a3ee40054524c2b58678680c2929dee889f089ca3aa988fbae0ec10640",
+      "matchesLocalBytes": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS35/prep-20261009T074545Z-ss35-7e83c5/manifest.json",
+      "remoteURL": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/3b25ae39c0e231bd27beec5e09c15cdff31afc12/evidence/ags-2.9.1/2026-10-09/claude-cases/SS35/prep-20261009T074545Z-ss35-7e83c5/manifest.json",
+      "bytes": 1679,
+      "sha256": "d2935cb5339418a1781e14c753b29d3bdca81ac32a12d9c3adf7548f3e333dec",
+      "matchesLocalBytes": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS35/prep-20261009T074545Z-ss35-7e83c5/original-SS35.source.json",
+      "remoteURL": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/3b25ae39c0e231bd27beec5e09c15cdff31afc12/evidence/ags-2.9.1/2026-10-09/claude-cases/SS35/prep-20261009T074545Z-ss35-7e83c5/original-SS35.source.json",
+      "bytes": 1783,
+      "sha256": "1d02ddd4a4c538a5b45ee1fd04809c74486f21cd4df8f26f29a850d4c741aa2c",
+      "matchesLocalBytes": true
+    }
+  ],
+  "allMatch": true,
+  "publicationPushRetries": 1,
+  "publicationPushRetryReason": "Non-fast-forward concurrent evidence update; fetched/rebased without force, then push succeeded. No API paid retries.",
+  "newClaudeCalls": 0,
+  "newJEVCalls": 0,
+  "costUSD": 0
+}
