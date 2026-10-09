@@ -1,0 +1,26 @@
+{
+  "caseId": "SS18",
+  "runId": "20261009T074602Z-prep-66077aa62dc2",
+  "softBudgetUsd": 2,
+  "total39CaseReservedBudgetUsd": 78,
+  "reservationIsSpendingTarget": false,
+  "preparatoryModelAPICalls": 0,
+  "claudeModelAPICalls": 0,
+  "jevCalls": 0,
+  "otherVendorModelCalls": 0,
+  "attempts": [],
+  "failedCalls": 0,
+  "retries": 0,
+  "usage": {
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0
+  },
+  "knownActualCostUsdThisRun": 0,
+  "unknownCostReservationUsdThisRun": 0,
+  "priorSS18SpendingAcrossOtherRuns": "NOT_SUPPLIED; reconcile with parent before any paid call",
+  "jEVAllocation": "NOT_ASSIGNED; do not dispatch",
+  "stopRule": "Count preparation, cache, retries and failed/unknown-cost calls. Do not start another paid call near USD 2 or without enough remaining allowance including outstanding reservations. Report measured and unknown cost separately. CLI --max-budget-usd applies to one --print invocation and does not replace the cumulative ledger.",
+  "apiAuthentication": "NOT_ATTEMPTED; await parent successful shared procedure; no key or placeholder values inspected/copied/published"
+}

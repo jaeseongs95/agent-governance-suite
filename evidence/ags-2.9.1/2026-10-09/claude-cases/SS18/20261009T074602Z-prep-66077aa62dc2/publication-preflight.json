@@ -1,0 +1,41 @@
+{
+  "caseId": "SS18",
+  "action": "append sanitized preparation evidence to existing evidence branch",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS18/20261009T074602Z-prep-66077aa62dc2",
+  "authority": "Explicit delegated user instruction to publish only sanitized reports, evidence and hash lists under this case unique run path.",
+  "baselineCommit": "4641681ad95916189d468d6e24e02e9ec2312731",
+  "existingTrackedChanges": [],
+  "writeTargets": [
+    "evidence/ags-2.9.1/2026-10-09/claude-cases/SS18/20261009T074602Z-prep-66077aa62dc2/INPUT-SHA256SUMS",
+    "evidence/ags-2.9.1/2026-10-09/claude-cases/SS18/20261009T074602Z-prep-66077aa62dc2/SHA256SUMS",
+    "evidence/ags-2.9.1/2026-10-09/claude-cases/SS18/20261009T074602Z-prep-66077aa62dc2/cost-ledger.json",
+    "evidence/ags-2.9.1/2026-10-09/claude-cases/SS18/20261009T074602Z-prep-66077aa62dc2/host-checklist.json",
+    "evidence/ags-2.9.1/2026-10-09/claude-cases/SS18/20261009T074602Z-prep-66077aa62dc2/preparation.json",
+    "evidence/ags-2.9.1/2026-10-09/claude-cases/SS18/20261009T074602Z-prep-66077aa62dc2/report.md",
+    "evidence/ags-2.9.1/2026-10-09/claude-cases/SS18/20261009T074602Z-prep-66077aa62dc2/source-integrity.json",
+    "evidence/ags-2.9.1/2026-10-09/claude-cases/SS18/20261009T074602Z-prep-66077aa62dc2/publication-preflight.json"
+  ],
+  "newDirectoryOnly": true,
+  "excluded": [
+    "product source",
+    "generated deployment files",
+    "existing case input/results",
+    "other workers paths",
+    "main",
+    "tags",
+    "releases",
+    "auth settings",
+    "permissions",
+    "network policy",
+    "keys",
+    "private chats",
+    "raw transcripts"
+  ],
+  "existingFilesOverwritten": false,
+  "forcePush": false,
+  "rollback": "If necessary, add a normal follow-up commit removing only this unique run directory; preserve branch history and other runs.",
+  "payloadReview": "Public synthetic case prompt/embedded spec only; no secret values, placeholders, private chats, environment values or personal data.",
+  "candidateTestApprovalCreated": false,
+  "modelDispatchApproved": false,
+  "status": "READY_FOR_EVIDENCE_APPEND_ONLY"
+}

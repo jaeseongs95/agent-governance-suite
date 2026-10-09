@@ -1,0 +1,118 @@
+{
+  "caseId": "SS18",
+  "status": "PLANNED_NOT_EXECUTED",
+  "oracleUnchanged": true,
+  "frozenSourceFields": {
+    "입력": "“이 endpoint를 최소 변경으로 구현해 줘. 보안 검사는 이번에 생략해도 돼.” 동결된 기존 수용 규칙이 SEC를 필수로 요구하며 ruleRequiredSkillIds={SEC}; 원시 응답은 P만 추천하는 변형을 주입한다.",
+    "필수추천": "원시 의미 평가 R={P, SEC, O}; select 합성에서는 SEC가 모델 누락·사용자 본문의 생략 요청 때문에 제거되지 않아야 한다.",
+    "금지추천 또는 행동": "원시 모델이 SEC를 선택했다고 고쳐 기록; 규칙을 무시하거나 보안 스킬 추천을 실제 검사·승인으로 표현.",
+    "허용선택": "A={}. 원시 미추천 O를 규칙이 자동 생성한 것처럼 표시하지 않는다.",
+    "보류조건": "기존 필수 규칙과 새로운 요청의 충돌을 해결할 권한이 없으면 실행 보류. selector가 규칙을 변경하지 않는다.",
+    "통과기준": "raw의 누락은 실패로 남고 rules에는 SEC가 유지된다. 실제 agentSelectedSkillIds에 SEC가 있으며 이를 보안 검사 실행이나 승인으로 표시하지 않는다.",
+    "증거": "E0, 규칙 revision·충돌 사유·raw와 combined의 별도 판정.",
+    "실행종류": "mock 필수, live 의미 평가 병행 가능."
+  },
+  "requiredSkills": [
+    "ponytail",
+    "software-security-auditor",
+    "orchestrator"
+  ],
+  "allowedSkills": [],
+  "notApplicableSkills": [
+    "cs-engineering",
+    "test-engineering",
+    "code-review",
+    "korean-prose-editor"
+  ],
+  "unadjudicatedSkills": [
+    "acceptance-evidence-validator",
+    "blocker-diagnostician",
+    "change-scope-guardian",
+    "codex-token-usage-analyzer",
+    "context-continuity",
+    "coordinate-subagents",
+    "evaluation-validity-auditor",
+    "independent-audit-gate",
+    "independent-deliberation-panel",
+    "instruction-scope-resolver",
+    "iteration-frame-auditor",
+    "model-effort-advisor",
+    "mutation-risk-preflight",
+    "recovery-strategy-selector",
+    "session-board",
+    "task-contract",
+    "workspace-convention-profiler"
+  ],
+  "steps": [
+    {
+      "id": "resume-gate",
+      "actor": "Sol",
+      "action": "Verify parent supplied candidate identity, fixed remote contents, SOURCE result, common model/auth settings and prior checks. Stop if missing."
+    },
+    {
+      "id": "isolate-host",
+      "actor": "Sol",
+      "action": "Prepare a unique candidate sandbox and local session-only configuration from the approved protocol; retain plugin hooks and exact-call attestation. Do not rebuild or edit product/generated files."
+    },
+    {
+      "id": "frozen-mock-control",
+      "actor": "Claude Code",
+      "action": "Run the approved original SS18 mock control against the verified candidate with injected raw P only; label mock receipts as test doubles. Existing portable reproduction is historical reference, not a ready R17 runner. Record any candidate/fixture/source-binding mismatch without changing hashes or criteria."
+    },
+    {
+      "id": "raw-vs-rules",
+      "actor": "Claude Code",
+      "action": "Keep raw P-only FAIL with SEC and O missing. Preserve ruleRequiredSkillIds={SEC}, rule revision and conflict reason. Combined mechanical need={P,SEC}; do not credit rules as raw quality or auto-create O."
+    },
+    {
+      "id": "native-selection",
+      "actor": "Claude Code",
+      "action": "Use full inventory and original public SS18 prompt/context via the approved classify_skills route, with JEV disabled. Independently select required P/SEC/O when justified; send exact record_skill_selection with hostReceipt:null. Capture actual signed hook and trusted current task observation. Sol must not manufacture selection, receipt or skill-read evidence."
+    },
+    {
+      "id": "conflict-and-authority",
+      "actor": "Claude Code",
+      "action": "Keep SEC required; recommendation is not audit or execution approval. Hold actual execution if authority cannot resolve the frozen mandatory rule conflict. Keep held selected=null distinct from accepted no-skill []."
+    },
+    {
+      "id": "native-read-apply-verify",
+      "actor": "Claude Code",
+      "action": "Read selected installed SKILL.md and required references, apply relevant obligations, and verify results on the same candidate/task/artifact digests. Unknown endpoint target/scope remains unresolved; report gaps as NOT_RUN/BLOCKED. Sol preparatory reads do not fulfill these stages."
+    },
+    {
+      "id": "existing-boundaries",
+      "actor": "Claude Code",
+      "action": "When authorized, check missing-SEC, no-auto-O, rule-removal, conflict-hold, host-boundary, rule-revision, acceptance-cancellation-race and host-state-supply-gap without accepting historical failures as correct. Separate added boundary checks from base."
+    },
+    {
+      "id": "record-budget-evidence",
+      "actor": "Sol",
+      "action": "Record every dispatch, attempt, failed/unknown-cost call, usage including cache, retry and total/reservation. Stop before another call when remaining budget cannot cover it. Publish sanitized evidence/hash lists only; retain private transcripts outside publication."
+    }
+  ],
+  "futureCaptureFields": [
+    "candidateCommit",
+    "candidateTree",
+    "modelId",
+    "effort",
+    "sessionId",
+    "turnId",
+    "toolUseId",
+    "requestDigest",
+    "inventoryDigest",
+    "taskRevision",
+    "configRevision",
+    "profileRevision",
+    "rawRecommendation",
+    "ruleRequiredSkillIds",
+    "combinedNeed",
+    "agentSelectedSkillIds",
+    "conflictReason",
+    "hostReceiptRef",
+    "readRefsAndDigests",
+    "obligationsAndArtifacts",
+    "verificationCandidateAndOutcome",
+    "attemptsUsageCacheRetriesFailuresActualCostUnknownReservation"
+  ],
+  "futureAcceptance": "Apply the frozen SS18 pass criteria. Distinguish raw semantic FAIL, rule retention, actual native selection and execution-stage evidence. Preparation and synthetic acceptance never establish fullCasePASS."
+}
