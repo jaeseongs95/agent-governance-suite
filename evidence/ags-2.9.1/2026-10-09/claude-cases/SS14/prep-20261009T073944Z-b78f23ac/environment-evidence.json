@@ -1,0 +1,25 @@
+{
+  "observedAt": "2026-10-09T07:45:04.157160+00:00",
+  "cliPath": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+  "resolvedCliPath": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+  "version": "2.1.286 (Claude Code)",
+  "versionExit": 0,
+  "node": "v24.19.0",
+  "pnpm": "11.19.0",
+  "cliEntrySHA256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+  "helpSHA256": "13dd71866e4b6fde1a11de6fa26bd4f5866308794307ff0fb37804c03db8e0b2",
+  "confirmedOptions": [
+    "--max-budget-usd",
+    "--model",
+    "--plugin-dir",
+    "--output-format",
+    "--strict-mcp-config",
+    "--settings"
+  ],
+  "authProbe": "NOT_RUN; no login/status/doctor/model invocation",
+  "directGithubHTTPS": "Proxy tunnel 403 for api.github.com; GitHub connector reads and github.com git transport work",
+  "networkPolicyChanged": false,
+  "persistentAuthChanged": false,
+  "claudeApiKeyLocalProcessPresent": true,
+  "credentialValuesCaptured": false
+}

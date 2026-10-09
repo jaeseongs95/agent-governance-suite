@@ -1,0 +1,184 @@
+{
+  "caseId": "SS14",
+  "title": "한영 혼합 복수 전문 판단",
+  "status": "PREPARATION_READY_WAITING_FOR_PARENT",
+  "actualClaudeTest": "NOT_RUN",
+  "runId": "prep-20261009T073944Z-b78f23ac",
+  "input": {
+    "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+    "path": "evidence/ags-2.9.1/2026-10-09/cases/SS14/input.original.txt",
+    "bytes": 158,
+    "sha256": "7ecb7226d4cea9f67b85ef8d1deaf5bbb192d25f3c1b06367ca0f4624b2c526a",
+    "variants": [
+      "base"
+    ],
+    "modification": "none; UTF8 exact bytes without BOM or trailing newline"
+  },
+  "frozenOracle": {
+    "required": [
+      "cs-engineering",
+      "test-engineering",
+      "orchestrator"
+    ],
+    "allowed": [],
+    "allowedConditions": {},
+    "forbidden": [
+      "ponytail"
+    ],
+    "notApplicable": [
+      "code-review",
+      "software-security-auditor",
+      "korean-prose-editor"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "change-scope-guardian",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      },
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      }
+    ],
+    "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+  },
+  "sourceSpecFields": {
+    "입력": "“Read-only로 queue의 duplicate delivery와 retry invariant를 분석하고, 누락을 잡는 test cases를 설계해 줘. No implementation, no code changes.”",
+    "필수추천": "R={CS, T, O}.",
+    "금지추천 또는 행동": "언어 전환 때문에 한 스킬만 추천; P로 자동 수정; test cases 요청을 테스트 실행 완료로 표현.",
+    "허용선택": "A={}.",
+    "보류조건": "분석 대상이 부족하면 입력 요청을 남기고 실행은 보류한다.",
+    "통과기준": "세 스킬을 동시에 추천하고 역할·입출력 연결을 구분한다.",
+    "증거": "E0, 복수 label별 누락 및 불필요 추천.",
+    "실행종류": "live."
+  },
+  "candidatePending": {
+    "id": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "independentSourceVerdict": "PENDING_PARENT",
+    "remotePublication": "PENDING_PARENT",
+    "tested": false
+  },
+  "steps": [
+    {
+      "id": "G0",
+      "actor": "Sol",
+      "action": "Receive parent-verified candidate publication, independent SOURCE verdict, common model/reasoning/API auth launch procedure and successful preflight evidence; stop if missing or inconsistent."
+    },
+    {
+      "id": "G1",
+      "actor": "Sol",
+      "action": "Prepare isolated exact candidate plugin and session-specific data paths; verify candidate commit/tree, plugin inventory and skills hashes. Do not build or modify product/generated output. Keep frozen oracle and historical outputs outside Claude accessible work directory."
+    },
+    {
+      "id": "E0",
+      "actor": "Claude Code",
+      "action": "Run exact base input with complete installed skill inventory and parent-approved model/auth/permissions. Capture actual host recommendation and AGENT selection independently; do not inject expected labels into prompt or substitute a mock/provider-only response."
+    },
+    {
+      "id": "E1",
+      "actor": "Claude Code",
+      "action": "Actually read selected CS, T and O skill bodies and applicable references through host tools. Record tool events and resolved file digests; Sol reading is not Claude read evidence."
+    },
+    {
+      "id": "E2",
+      "actor": "Claude Code",
+      "action": "Explain role handoff: CS analyzes duplicate/retry invariants and verification obligations; T uses these to design tests; O orders CS -> T and integrates read-only result. With absent queue target, ask for queue implementation/spec, ACK/retry policy and dedup identity/persistence boundary and defer concrete execution."
+    },
+    {
+      "id": "E3",
+      "actor": "Sol",
+      "action": "Compare each recommendation label, forbidden/notApplicable and unadjudicated scope against frozen oracle; retain omission/over-recommendation evidence. Verify no ponytail automatic implementation, no product/code changes, and no completed-test claim for designed test cases."
+    },
+    {
+      "id": "E4",
+      "actor": "Sol",
+      "action": "Record selected/read/applied/verified independently. Missing queue inputs can block concrete application/verification without erasing CS/T/O need. Keep recommendation assessment separate from end-to-end PASS; missing host evidence stays NOT_RUN or BLOCKED."
+    },
+    {
+      "id": "E5",
+      "actor": "Sol",
+      "action": "Account every paid attempt/cache/token/retry/failure, stop near budget, sanitize host evidence, hash and publish only SS14 unique run artifacts; reread immutable remote commit files."
+    }
+  ],
+  "historicalResults": {
+    "sourceCandidate": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "overallStatus": "OFFLINE_DEFECT_REPRODUCED_HOST_NOT_RUN",
+    "offlineControls": {
+      "tests": 12,
+      "status": "PASS",
+      "exit": 0
+    },
+    "costConservationReproduction": {
+      "tests": 1,
+      "status": "FAIL",
+      "exit": 1,
+      "expected": "Reject malformed RESP; preserve known actual cost 0.1, settle spentUsd=0.1 and release reservation",
+      "observed": "actualCostUsd=null; spentUsd=0; reservation=0.4",
+      "useAsOracle": false
+    },
+    "planConsistency": "READY; not product PASS",
+    "actualHost": "NOT_RUN",
+    "selectedReadAppliedVerified": "NOT_RUN; selected=null; hostReceipt=null",
+    "replayed": false
+  },
+  "blockers": [
+    "Verified candidate and independent SOURCE/remote publication evidence not received",
+    "Common explicit Claude model/reasoning and proven API authentication procedure not received",
+    "Common preflight/profile qualification and usage accounting settings not received",
+    "Concrete queue target/policy absent; frozen SS14 requires input request/defer behavior, not invented queue implementation",
+    "JEV allocation absent; JEV remains disabled"
+  ],
+  "resumeOnlyWhen": "Parent supplies verified candidate, common launch settings and preflight results; verify all G0 bindings before first paid call."
+}

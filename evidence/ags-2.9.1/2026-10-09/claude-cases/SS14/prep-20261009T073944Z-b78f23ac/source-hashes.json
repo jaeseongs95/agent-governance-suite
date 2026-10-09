@@ -1,0 +1,147 @@
+{
+  "caseId": "SS14",
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "verification": "PASS: 18 payload files plus manifest against SHA256SUMS; all 20 Git blob identities recomputed",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 3988,
+      "sha256": "5e6e41b27e1c2ddadc3aaeb73d7da8b184808fddc65df36d4738f21f1eaae6f8",
+      "gitBlobSha": "e6dca556233ae75a3d61318d1b37e898b90c7e87",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/README.md"
+    },
+    {
+      "path": "SS14.engineering-test-plan.json",
+      "bytes": 3743,
+      "sha256": "9b311f1091dcecd50ef8726a62cd3e64c55bcb4243f92992a267232388bfecc8",
+      "gitBlobSha": "9a1ca1b0f8c4cf2a5e10cd90f745b354152a55dd",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/SS14.engineering-test-plan.json"
+    },
+    {
+      "path": "SS14.fixture.extract.json",
+      "bytes": 3865,
+      "sha256": "a5b76b3c2ea7c11de228f25151cade9216c7cb9618fff6d4a397b4e5d135e56a",
+      "gitBlobSha": "df8d3b868fb62bb9fbd74c5a0b4f6b934f8b5048",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/SS14.fixture.extract.json"
+    },
+    {
+      "path": "SS14.result.json",
+      "bytes": 22853,
+      "sha256": "a22fd1a3c4435784c2b5dfc731a4269b799b195152aa0033f59f452de5e40a81",
+      "gitBlobSha": "47200161417a778b03629c0c8610b9611ab60bd1",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/SS14.result.json"
+    },
+    {
+      "path": "commands/SS14.cost-repro.command.json",
+      "bytes": 316,
+      "sha256": "21bd11bf5b7c9b53ff5c2dfcc1b0ba9958796b65da2ea5a25127d4a7b85fd6e4",
+      "gitBlobSha": "6468db9fcb8d2ca411f7b6af9b8bbc089c2bb0e7",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/commands/SS14.cost-repro.command.json"
+    },
+    {
+      "path": "commands/SS14.final-check.json",
+      "bytes": 1163,
+      "sha256": "ad42efa20121b0fdbded13bde2234bbb49ff35ca0b65331516499537781f2a20",
+      "gitBlobSha": "158535179392ae99d73d011c9c37100871495235",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/commands/SS14.final-check.json"
+    },
+    {
+      "path": "commands/SS14.offline.command.json",
+      "bytes": 310,
+      "sha256": "1fd7bcf9b49c86cf780c8a38250b028dd49526b11b71a52aebca7283d726bce0",
+      "gitBlobSha": "66cbe46396aea90f6b40e6ef9cb9f37d10ee41ae",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/commands/SS14.offline.command.json"
+    },
+    {
+      "path": "input.original.txt",
+      "bytes": 158,
+      "sha256": "7ecb7226d4cea9f67b85ef8d1deaf5bbb192d25f3c1b06367ca0f4624b2c526a",
+      "gitBlobSha": "d8c41256a5e17f9104cc1a816dd4118d6c016cd6",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/input.original.txt"
+    },
+    {
+      "path": "logs/SS14.cost-repro.log",
+      "bytes": 2028,
+      "sha256": "17b0b7b3e2dc5b6676c16114a7b00da7c74c0fa7f4135418d21f16e97b87720c",
+      "gitBlobSha": "99d19ab6015b27df5fe147ef3c2c50c57fd66a82",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/logs/SS14.cost-repro.log"
+    },
+    {
+      "path": "logs/SS14.offline.log",
+      "bytes": 3433,
+      "sha256": "b6f97c778d830f7de18dc3cfea44e0897ab6e3ab4af2b04b1494db438419614c",
+      "gitBlobSha": "34970b608ab89bafe5363629acbcc0d23d23677e",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/logs/SS14.offline.log"
+    },
+    {
+      "path": "logs/SS14.plan-check.log",
+      "bytes": 265,
+      "sha256": "c2c561e08d02dfce1e89978210c9be2132106b27a479cfa46abe2ac9b8db23bb",
+      "gitBlobSha": "ee02f231d018fe784d51a7bc64e2896dc6e8a3e5",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/logs/SS14.plan-check.log"
+    },
+    {
+      "path": "observations/SS14.cost-repro.observations.json",
+      "bytes": 2645,
+      "sha256": "b373cf12a02253e953b8bee2e3848cccea6a06f204d38fb5bdbb6fc44f58ad98",
+      "gitBlobSha": "81a2d571f6f0e48f7c97b937d3b538bb79e7ea66",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/observations/SS14.cost-repro.observations.json"
+    },
+    {
+      "path": "observations/SS14.offline.observations.json",
+      "bytes": 610602,
+      "sha256": "a9dd51f110cba86728a751242a23a569eb8ff059bc259ce20ba1f5528198d1c8",
+      "gitBlobSha": "c0c7776a35848a8dedab45bf476d539be4887027",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/observations/SS14.offline.observations.json"
+    },
+    {
+      "path": "provenance.json",
+      "bytes": 12121,
+      "sha256": "cf4c4aa8987843a52a08f7808c05f3eeece3d16972f76717ddd680384599b49c",
+      "gitBlobSha": "a6da728f7d713d96a072b6c47fb693e09ddb66f1",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/provenance.json"
+    },
+    {
+      "path": "reports/SS14.cost-repro.vitest.json",
+      "bytes": 1433,
+      "sha256": "657d516a8de94cd85a9caddced32410bcb7e3149030ea27d40196431d2f7c5eb",
+      "gitBlobSha": "1c29a8873e1790f7efaeca073a5dd5e0ad9ff682",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/reports/SS14.cost-repro.vitest.json"
+    },
+    {
+      "path": "reports/SS14.offline.vitest.json",
+      "bytes": 6397,
+      "sha256": "35eb67dc1c28bae567bbb7b25ae84b18af439a7177d1b44886f1f68ab5d64175",
+      "gitBlobSha": "bc8f238d243174abefeb00ddc37de0a610b9956d",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/reports/SS14.offline.vitest.json"
+    },
+    {
+      "path": "repro/SS14.cost-repro.test.ts",
+      "bytes": 4896,
+      "sha256": "05df365a986c6582a49ead341a3bbf842ad787081dd426dc3477633bd4f6f97f",
+      "gitBlobSha": "787d8fd8b11bca5a6705e1f79e0a7282c875aa09",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/repro/SS14.cost-repro.test.ts"
+    },
+    {
+      "path": "repro/SS14.offline.test.ts",
+      "bytes": 12706,
+      "sha256": "8da878294a9cee335923acd56fc1999aba03c9c3a913a9d5d4c9d312ff0311bd",
+      "gitBlobSha": "72d2abee146130d8d6ceb52ca1a87b7b50d8ecc0",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/repro/SS14.offline.test.ts"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 3416,
+      "sha256": "e6aaae3b83492cdf8f036dd2c51907fb17a749823afb2ac7516d78a9925f525a",
+      "gitBlobSha": "7987b4c71dff9e6409fef3e12a8e38873989728e",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/manifest.json"
+    },
+    {
+      "path": "SHA256SUMS",
+      "bytes": 1781,
+      "sha256": "c457a283ef3006355fe643c1e24282c784caf1a770b2d215474e0f03e76ecfcc",
+      "gitBlobSha": "13581845a20fd2da869cd9f0c8d72c16fe14b873",
+      "url": "https://github.com/jaeseongs95/agent-governance-suite/blob/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS14/SHA256SUMS"
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "catalogFallback": {
+    "workspaceDotAgentsSkillsFound": 0,
+    "repositoryDotAgentsSkillsFound": 0,
+    "repositorySkillsRead": true
+  },
+  "evidenceCommitInstructions": "AGENTS.md and product skills absent at evidence-only commit; no scoped AGENTS.md in inspected evidence ancestor directories",
+  "currentWorkspaceInstructions": [
+    {
+      "path": "AGENTS.md",
+      "sourceCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827",
+      "purpose": "Preparation workspace instructions; not R17 installation evidence"
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "sourceCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "sha256": "aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+      "purpose": "Preparation workspace instructions; not R17 installation evidence"
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "sourceCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "purpose": "Preparation workspace instructions; not R17 installation evidence"
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "sourceCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "sha256": "0bd44e1a780bb930c69f6880102ac3b4d662de3ecdcd16116a48d870aa971d87",
+      "purpose": "Preparation workspace instructions; not R17 installation evidence"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/SKILL.md",
+      "sourceCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "sha256": "eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230",
+      "purpose": "Preparation workspace instructions; not R17 installation evidence"
+    },
+    {
+      "path": "skills/change-scope-guardian/SKILL.md",
+      "sourceCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "sha256": "4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e",
+      "purpose": "Preparation workspace instructions; not R17 installation evidence"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "sourceCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "sha256": "eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe",
+      "purpose": "Preparation workspace instructions; not R17 installation evidence"
+    }
+  ],
+  "verifiedHistoricalOracleSkillRefs": [
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "sha256": "aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+      "gitBlobSha": "ed9106e30ef448eecc890d6d133e0dfb9266db75",
+      "purpose": "Historical source comparison only; not the final candidate or a product test"
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "gitBlobSha": "65f86d8c09292f2d48eb4df90f656670f2ca09f3",
+      "purpose": "Historical source comparison only; not the final candidate or a product test"
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "sha256": "96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "gitBlobSha": "4733ba26dff9cbb49550033e67a9336ced315a9d",
+      "purpose": "Historical source comparison only; not the final candidate or a product test"
+    }
+  ],
+  "resumeRequirement": "Read and hash verified final candidate instructions and generated Claude plugin skills before execution"
+}

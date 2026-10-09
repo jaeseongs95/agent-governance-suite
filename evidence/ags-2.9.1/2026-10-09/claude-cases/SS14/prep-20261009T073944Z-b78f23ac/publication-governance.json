@@ -1,0 +1,43 @@
+{
+  "caseId": "SS14",
+  "preparationOnly": true,
+  "scope": {
+    "verdict": "PASS",
+    "baselineManifestSha256": "16523629c045f4f4c35fe09a687eb6579f26ef9bc5f9dc1ab7b92bbcc261bb10",
+    "summary": {
+      "in-scope": 6,
+      "excluded": 0,
+      "unplanned": 0,
+      "preexisting-untouched": 13658,
+      "preexisting-overlap": 0,
+      "ownership-unknown": 0
+    },
+    "allowedPrefix": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS14/prep-20261009T073944Z-b78f23ac/",
+    "baselineCommit": "970862daade811a42a297256fbe32f79b98f5ada",
+    "baselineTree": "1c4ca2e128796c8abf7ae6c38943d2de0b071a94"
+  },
+  "publicationPreflight": {
+    "verdict": "READY",
+    "actionDigest": "sha256:7b49d6610e1a38d8c7967605db6bda486e02cb8110cf78314029f4df6e45be26",
+    "targetDigest": "sha256:5b3a1e9ab2b6abc94c47556018cb49417e364b60b4de8af3a5c5c6fbd8912eb4",
+    "observedAt": "2026-10-09T07:49:56.366Z",
+    "validUntil": "2026-10-09T08:04:56.366Z",
+    "approvalSource": "Explicit delegated instruction to publish only sanitized SS14 evidence in existing evidence branch; private chat omitted",
+    "currentTargetAbsent": true,
+    "verifiedImmediatelyBeforePush": true,
+    "currentBranchBaseCommit": "f775c962d919a768715d1214fec134a979dcaba4",
+    "currentBranchBaseTree": "d9a478c3a51566cd1ef0722fb1c7ea800a9b0a5f"
+  },
+  "recovery": {
+    "method": "Additive revert only of this preparation commit; retain unrelated concurrent evidence; never reset/force push",
+    "originalBaseCommit": "f775c962d919a768715d1214fec134a979dcaba4",
+    "originalBaseTree": "d9a478c3a51566cd1ef0722fb1c7ea800a9b0a5f",
+    "restoredTree": "d9a478c3a51566cd1ef0722fb1c7ea800a9b0a5f",
+    "offlineReversePatchIndexTest": "PASS"
+  },
+  "productOrGeneratedOutputsChanged": false,
+  "sourceRepositoryWorktreeChanged": false,
+  "forcePush": false,
+  "scopeLimitation": "Sparse checkout omitted preexisting files appear missing to working-tree helper. Exact included prefix is unchanged; excluded case-prefix rule removed in publication-only scope revision to avoid treating omission as deletion. Final staged diff must contain only additions in unique run prefix. Test oracle unchanged.",
+  "independentProductAudit": "NOT_RUN; preparation governance is not product audit"
+}

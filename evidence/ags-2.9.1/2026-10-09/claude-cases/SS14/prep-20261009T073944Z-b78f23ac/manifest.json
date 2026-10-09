@@ -1,0 +1,46 @@
+{
+  "caseId": "SS14",
+  "runId": "prep-20261009T073944Z-b78f23ac",
+  "phase": "preparation",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 5291,
+      "sha256": "6a65b536ac2dcb0072ebbff4d6cc156c23289407732f29da7fb3e17e21061d92"
+    },
+    {
+      "path": "budget-ledger.json",
+      "bytes": 780,
+      "sha256": "9362ece378061ee59ab09f38d34db41ffa96255117ad6a676d4d3cfc9dcba55b"
+    },
+    {
+      "path": "environment-evidence.json",
+      "bytes": 996,
+      "sha256": "be2dcf754c26d082509ada17942aafe5302f90f38b4f5ad48bfa1f89ee6689c8"
+    },
+    {
+      "path": "execution-plan.json",
+      "bytes": 8064,
+      "sha256": "f0348c661df0bcf1cd8414ccc270372615c0d8333736a2183f69f428b068132b"
+    },
+    {
+      "path": "instruction-evidence.json",
+      "bytes": 3694,
+      "sha256": "83828ed96d41e441f52d9ccb942395d178931f834db435b2b8f7cbfdb1d87e86"
+    },
+    {
+      "path": "publication-governance.json",
+      "bytes": 2247,
+      "sha256": "78d9fc64fcd7a34e73e81fe17edc2628b696f988d062a51eea04df883e63bba2"
+    },
+    {
+      "path": "source-hashes.json",
+      "bytes": 8397,
+      "sha256": "da6c5da694ea730d82d9814b5ec21b75ef08a7f2362454b49c45e90d73eefabd"
+    }
+  ],
+  "excludes": [
+    "manifest.json",
+    "SHA256SUMS"
+  ]
+}

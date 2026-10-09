@@ -1,0 +1,23 @@
+{
+  "caseId": "SS14",
+  "phase": "preparation",
+  "softLimitUsd": 2,
+  "globalReservationUsd": 78,
+  "globalReservedCases": 39,
+  "paidAttempts": [],
+  "actualCostUsd": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cachedInputTokens": 0,
+  "cacheCreationTokens": 0,
+  "retries": 0,
+  "failedPaidAttempts": 0,
+  "claudePaidCalls": 0,
+  "jevCalls": 0,
+  "metadataCliInvocations": 5,
+  "metadataKinds": [
+    "version:2",
+    "help:3"
+  ],
+  "resumePolicy": "Include preparation, input/output/cache tokens, all retries and failed paid attempts in cumulative actual cost. Set max-budget-usd to remaining case budget using parent-approved launch method. Stop before next call near US$2. Unknown usage/cost is unresolved, never zero. Do not invoke JEV before individual allocation."
+}
