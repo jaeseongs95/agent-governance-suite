@@ -1,0 +1,1 @@
+{"harness": "test-subreaper", "ownerPid": 1129, "runnerPid": 1130, "reapedPids": [1130], "remainingChildren": false, "runnerExitCode": 0, "cancelled": false}

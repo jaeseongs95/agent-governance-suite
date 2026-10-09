@@ -1,0 +1,128 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "public-existing-run-receipt-derivative",
+  "argv": [
+    "node",
+    "scripts/run-tests.mjs",
+    "tests/ss23/SS23-race.test.ts",
+    "--maxWorkers=1"
+  ],
+  "snapshot": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-snapshot",
+    "files": [
+      {
+        "path": "contracts/skill-selection-decision.v1.schema.json",
+        "digest": "sha256:d9076e94c6447ab9597778bbcee73cfe5c07a505b194ca3258ea1bacbb3166c5",
+        "size": 5233,
+        "lineCount": 230
+      },
+      {
+        "path": "mcp-server/src/host-attestation.ts",
+        "digest": "sha256:334b17dd635daeb19d7b5401bf6a167fde860e0df3edfa71c16a698ec5bef1b7",
+        "size": 12930,
+        "lineCount": 302
+      },
+      {
+        "path": "mcp-server/src/server.ts",
+        "digest": "sha256:073ba501a64af9a7996f64e953446834c93baf2a093dd673e761dc9b45ca99d4",
+        "size": 39213,
+        "lineCount": 767
+      },
+      {
+        "path": "mcp-server/src/skill-classification/gateway.ts",
+        "digest": "sha256:80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+        "size": 15017,
+        "lineCount": 156
+      },
+      {
+        "path": "mcp-server/src/skill-classification/inventory.ts",
+        "digest": "sha256:8c7ee54546f17fb1e63368fbfb72668a3c7136570a545ad5f0494f076c91727c",
+        "size": 20714,
+        "lineCount": 259
+      },
+      {
+        "path": "mcp-server/src/skill-classification/service.ts",
+        "digest": "sha256:c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb",
+        "size": 19033,
+        "lineCount": 215
+      },
+      {
+        "path": "mcp-server/src/skill-classification/validation.ts",
+        "digest": "sha256:70f988d9e5d49f8eaef55ca0ff378b4819798ff8141bd09119691c2cffb2891f",
+        "size": 8449,
+        "lineCount": 107
+      },
+      {
+        "path": "package.json",
+        "digest": "sha256:27195e3424ff65b449c7d4efd198734195b56ae2f2651fc26f1e8904f46675d5",
+        "size": 2590,
+        "lineCount": 56
+      },
+      {
+        "path": "pnpm-lock.yaml",
+        "digest": "sha256:00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e",
+        "size": 79392,
+        "lineCount": 2482
+      },
+      {
+        "path": "tests/skill-classification/evaluation.ts",
+        "digest": "sha256:e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+        "size": 16532,
+        "lineCount": 223
+      },
+      {
+        "path": "tests/skill-classification/fixtures.json",
+        "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "size": 142450,
+        "lineCount": 2912
+      },
+      {
+        "path": "tests/ss23/SS23-harness.ts",
+        "digest": "sha256:cf296c62c45d5de947a590fd47502423f204ef5fc602e2de7e186df27b950960",
+        "size": 13058,
+        "lineCount": 130
+      },
+      {
+        "path": "tests/ss23/SS23-race.test.ts",
+        "digest": "sha256:c1216a7cc1b8a54f8036241b9af7b9dc36d4bb1e855c50331efae1188ad48641",
+        "size": 2038,
+        "lineCount": 16
+      },
+      {
+        "path": "tests/ss23/SS23.test.ts",
+        "digest": "sha256:64984ce4c23df54a01e86cc02b01744e056e8cd316244983ae0761bd4587dd98",
+        "size": 10121,
+        "lineCount": 89
+      }
+    ],
+    "digest": "sha256:b221b7089abf6c0a63a2fb74fe58bb23e42930bfed1065011d95284c2f08dc90"
+  },
+  "afterDigest": "sha256:b221b7089abf6c0a63a2fb74fe58bb23e42930bfed1065011d95284c2f08dc90",
+  "startedAt": "2026-10-09T02:57:51.629Z",
+  "finishedAt": "2026-10-09T02:57:53.022Z",
+  "status": "FAIL",
+  "exitCode": 1,
+  "signal": null,
+  "timeoutMs": 30000,
+  "executable": "node",
+  "nodeVersion": "24.19.0",
+  "platform": "linux",
+  "environmentNote": "Inherited process environment; undeclared environmental inputs are not captured. Child NODE_TEST_CONTEXT is cleared to avoid nested-runner suppression.",
+  "originalReceiptSHA256": "2f714fa49b002b66269d1b15e26829f4ea454b20b2384a48d778f16420d4be89",
+  "originalUnsignedReceiptDigest": "sha256:74e37ed7ffcf8a75227c27cea1531c26b4b37750886181025b3e046fd077bcc8",
+  "originalStdoutDigest": "sha256:193364681a0316a09924a4389c72339482952a7a9e2ee01079620a99cb5a1eb5",
+  "originalStderrDigest": "sha256:16ece5770a37bd179d06b38c3212733a2589f8f3f5eaac456ccc85d77c0031e6",
+  "logs": {
+    "stdout": {
+      "path": "SS23.race.stdout.txt",
+      "bytes": 319,
+      "sha256": "ec3c1c1dc0d45169641777471a1fee10f055aaf5d5446ff3f4170758f08eb611"
+    },
+    "stderr": {
+      "path": "SS23.race.stderr.txt",
+      "bytes": 622,
+      "sha256": "16ece5770a37bd179d06b38c3212733a2589f8f3f5eaac456ccc85d77c0031e6"
+    }
+  }
+}

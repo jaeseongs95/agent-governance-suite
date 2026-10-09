@@ -1,0 +1,2498 @@
+{
+  "caseId": "SS23",
+  "overallStatus": "FAIL_BOUNDARY_AND_HOST_NOTRUN",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "oracle": null,
+  "semanticAccuracyScore": null,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "pathPresent": false,
+    "authority": "fixture embedded originalPrompt/sourceSpec.fields/oracle/variants only; no invented external answers",
+    "evidence": "SS23.source.json"
+  },
+  "fixtureExpectedSkillIds": [
+    "ponytail",
+    "cs-engineering",
+    "software-security-auditor",
+    "test-engineering",
+    "orchestrator"
+  ],
+  "excludedBaselineSkillId": "korean-prose-editor",
+  "API0": true,
+  "externalApiCalls": {
+    "jev": 0,
+    "vendor": 0,
+    "claude": 0
+  },
+  "past21RunsReexecuted": false,
+  "executionKinds": [
+    "existing-targeted-regression/offline-mock",
+    "new-variant/offline-mock",
+    "new-boundary-reproduction/offline-mock"
+  ],
+  "actualStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "actualObservation": {
+    "agentSelectedSkillIds": null,
+    "hostReceipt": null,
+    "acceptedNoSkill": false,
+    "explanation": "null means actual selection not observed; never replaced with [] or test-produced synthetic receipt"
+  },
+  "variants": [
+    {
+      "variantId": "normal",
+      "status": "PASS_OFFLINE_CONTRACT_ONLY",
+      "agentBehaviorStatus": "NOTRUN",
+      "input": {
+        "originalPrompt": "endpoint 최소 구현과 회귀 테스트 설계, 보안 감사, CS 불변조건 검토를 연결해 줘",
+        "explicitSkillIds": [
+          "cs-engineering"
+        ],
+        "ruleRequiredSkillIds": [
+          "software-security-auditor"
+        ],
+        "mode": "select",
+        "jevEnabled": true,
+        "provider": "synthetic qualified JEV port; actual JEV API 0",
+        "baseline": [
+          "korean-prose-editor"
+        ],
+        "rawNeededSkillIds": [
+          "ponytail",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "optionalUncertainSkillIds": []
+      },
+      "expected": {
+        "syntheticSelected": [
+          "ponytail",
+          "cs-engineering",
+          "software-security-auditor",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "excluded": [
+          "korean-prose-editor"
+        ],
+        "stages": {
+          "admissionStatus": "NOT_EVALUATED",
+          "readStatus": "NOT_OBSERVED",
+          "appliedStatus": "NOT_OBSERVED",
+          "verifiedStatus": "NOT_RUN"
+        }
+      },
+      "observed": {
+        "advice": {
+          "result": {
+            "request": {
+              "schemaVersion": "1.0.0",
+              "requestId": "SS23-normal",
+              "operationId": "SS23-normal",
+              "originalPrompt": "endpoint 최소 구현과 회귀 테스트 설계, 보안 감사, CS 불변조건 검토를 연결해 줘",
+              "promptDigest": "sha256:b390c3ba30b1f1cb30bd35fda0d2e0e7220aa0aa61332f0eba927e1e7e98737a",
+              "confirmedContext": {
+                "taskRevision": null,
+                "objective": null,
+                "actions": null,
+                "targets": null,
+                "constraints": null,
+                "prohibitedActions": null,
+                "background": null
+              },
+              "contextSources": [],
+              "inventoryProjection": {
+                "canonicalSkillIds": [
+                  "acceptance-evidence-validator",
+                  "blocker-diagnostician",
+                  "change-scope-guardian",
+                  "code-review",
+                  "codex-token-usage-analyzer",
+                  "context-continuity",
+                  "coordinate-subagents",
+                  "cs-engineering",
+                  "evaluation-validity-auditor",
+                  "independent-audit-gate",
+                  "independent-deliberation-panel",
+                  "instruction-scope-resolver",
+                  "iteration-frame-auditor",
+                  "korean-prose-editor",
+                  "model-effort-advisor",
+                  "mutation-risk-preflight",
+                  "orchestrator",
+                  "ponytail",
+                  "recovery-strategy-selector",
+                  "session-board",
+                  "software-security-auditor",
+                  "task-contract",
+                  "test-engineering",
+                  "workspace-convention-profiler"
+                ],
+                "candidateCount": 24,
+                "omitted": "Full public source metadata omitted; inventoryDigest retained. Original input unchanged."
+              },
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "taxonomyRevision": "1.0.0",
+              "classificationCriteriaRef": "skills/orchestrator/references/skill-classification.md",
+              "requestDigest": "sha256:8b06d1c6491b1731781f6b877a9f3f9b9e543be30f0add92f99f3c0ae389532e"
+            },
+            "config": {
+              "jevEnabled": true,
+              "mode": "select",
+              "providerProfileRegistryRef": "fixture:profiles",
+              "externalClassificationAllowed": false,
+              "configRevision": "config-1",
+              "timeoutMs": 2000
+            },
+            "profileRevision": "profile-1",
+            "snapshot": {
+              "taskRevision": null,
+              "configRevision": "config-1",
+              "profileRevision": "profile-1",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "requestDigest": "sha256:8b06d1c6491b1731781f6b877a9f3f9b9e543be30f0add92f99f3c0ae389532e",
+              "cancelled": false
+            },
+            "attempts": [
+              {
+                "providerKind": "jev",
+                "profileId": "jev-mock",
+                "modelId": "mock-fixed",
+                "reasoningEffort": null,
+                "dispatchState": "started",
+                "status": "SUCCESS",
+                "errorCode": null,
+                "timedOut": false,
+                "usage": {
+                  "inputTokens": null,
+                  "outputTokens": null,
+                  "cachedInputTokens": null,
+                  "actualCostUsd": 0
+                },
+                "reservedCostUsd": 0
+              }
+            ],
+            "response": {
+              "schemaVersion": "1.0.0",
+              "requestId": "SS23-normal",
+              "operationId": "SS23-normal",
+              "requestDigest": "sha256:8b06d1c6491b1731781f6b877a9f3f9b9e543be30f0add92f99f3c0ae389532e",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "status": "SUCCESS",
+              "judgments": [
+                {
+                  "skillId": "acceptance-evidence-validator",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "blocker-diagnostician",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "change-scope-guardian",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "code-review",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "codex-token-usage-analyzer",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "context-continuity",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "coordinate-subagents",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "cs-engineering",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "evaluation-validity-auditor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "independent-audit-gate",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "independent-deliberation-panel",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "instruction-scope-resolver",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "iteration-frame-auditor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "model-effort-advisor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "mutation-risk-preflight",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "orchestrator",
+                  "judgment": "needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "ponytail",
+                  "judgment": "needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "recovery-strategy-selector",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "session-board",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "task-contract",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "test-engineering",
+                  "judgment": "needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "workspace-convention-profiler",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                }
+              ],
+              "unresolvedItems": [],
+              "error": null
+            }
+          },
+          "classificationResponseRef": "sha256:b4b29755dfaefe4bf8c4660ed959d2fba774c7f2972950f78ad98bafcb85e6f2",
+          "agentSelectedSkillIds": null,
+          "selectionStatus": "PROPOSED",
+          "adviceApplied": false
+        },
+        "acceptance": {
+          "valid": true,
+          "errors": [],
+          "neededSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "software-security-auditor",
+            "test-engineering"
+          ],
+          "runnableSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "software-security-auditor",
+            "test-engineering"
+          ],
+          "blockedItems": [],
+          "decision": {
+            "schemaVersion": "1.0.0",
+            "classificationResponseRef": "sha256:b4b29755dfaefe4bf8c4660ed959d2fba774c7f2972950f78ad98bafcb85e6f2",
+            "requestDigest": "sha256:8b06d1c6491b1731781f6b877a9f3f9b9e543be30f0add92f99f3c0ae389532e",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "taskRevision": null,
+            "configRevision": "config-1",
+            "profileRevision": "profile-1",
+            "explicitSkillIds": [
+              "cs-engineering"
+            ],
+            "ruleRequiredSkillIds": [
+              "software-security-auditor"
+            ],
+            "agentSelectedSkillIds": [
+              "ponytail",
+              "cs-engineering",
+              "software-security-auditor",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "selectionReasons": [
+              {
+                "skillId": "ponytail",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "cs-engineering",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "software-security-auditor",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "test-engineering",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "orchestrator",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              }
+            ],
+            "applicabilityChecks": [
+              {
+                "skillId": "ponytail",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "cs-engineering",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "software-security-auditor",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "test-engineering",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "orchestrator",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              }
+            ],
+            "unresolvedSkillReferences": [],
+            "selectionStatus": "SELECTED",
+            "adviceApplied": true,
+            "hostReceipt": {
+              "receiptId": "gUdVAUxJPNJBrLiV8W7G5TMs3sghVADl2S8TL9Vg9S8",
+              "host": "codex",
+              "requestDigest": "sha256:8b06d1c6491b1731781f6b877a9f3f9b9e543be30f0add92f99f3c0ae389532e",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "agentSelectedSkillIds": [
+                "ponytail",
+                "cs-engineering",
+                "software-security-auditor",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "acceptedAt": "2026-10-09T02:57:42.417Z"
+            }
+          },
+          "admissionStatus": "NOT_EVALUATED",
+          "readStatus": "NOT_OBSERVED",
+          "appliedStatus": "NOT_OBSERVED",
+          "verifiedStatus": "NOT_RUN"
+        }
+      },
+      "evidence": "SS23.observed.json",
+      "command": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss23/SS23.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exit": 0,
+      "executionKind": "offline-mock",
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null,
+      "semanticAccuracyScore": null,
+      "missingInputs": [
+        "Actual host AGENT judgment and exact-call signed receipt",
+        "Matching actual skill read/apply/verify observations"
+      ]
+    },
+    {
+      "variantId": "irrelevant-baseline",
+      "status": "PASS_OFFLINE_CONTRACT_ONLY",
+      "agentBehaviorStatus": "NOTRUN",
+      "input": {
+        "originalPrompt": "endpoint 최소 구현과 회귀 테스트 설계, 보안 감사, CS 불변조건 검토를 연결해 줘",
+        "explicitSkillIds": [
+          "cs-engineering"
+        ],
+        "ruleRequiredSkillIds": [
+          "software-security-auditor"
+        ],
+        "mode": "select",
+        "jevEnabled": true,
+        "provider": "synthetic qualified JEV port; actual JEV API 0",
+        "baseline": [
+          "korean-prose-editor"
+        ],
+        "rawNeededSkillIds": [
+          "ponytail",
+          "test-engineering",
+          "orchestrator",
+          "korean-prose-editor"
+        ],
+        "optionalUncertainSkillIds": []
+      },
+      "expected": {
+        "syntheticSelected": [
+          "ponytail",
+          "cs-engineering",
+          "software-security-auditor",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "excluded": [
+          "korean-prose-editor"
+        ]
+      },
+      "observed": {
+        "baseline": [
+          "korean-prose-editor"
+        ],
+        "advice": {
+          "result": {
+            "request": {
+              "schemaVersion": "1.0.0",
+              "requestId": "SS23-irrelevant-baseline",
+              "operationId": "SS23-irrelevant-baseline",
+              "originalPrompt": "endpoint 최소 구현과 회귀 테스트 설계, 보안 감사, CS 불변조건 검토를 연결해 줘",
+              "promptDigest": "sha256:b390c3ba30b1f1cb30bd35fda0d2e0e7220aa0aa61332f0eba927e1e7e98737a",
+              "confirmedContext": {
+                "taskRevision": null,
+                "objective": null,
+                "actions": null,
+                "targets": null,
+                "constraints": null,
+                "prohibitedActions": null,
+                "background": null
+              },
+              "contextSources": [],
+              "inventoryProjection": {
+                "canonicalSkillIds": [
+                  "acceptance-evidence-validator",
+                  "blocker-diagnostician",
+                  "change-scope-guardian",
+                  "code-review",
+                  "codex-token-usage-analyzer",
+                  "context-continuity",
+                  "coordinate-subagents",
+                  "cs-engineering",
+                  "evaluation-validity-auditor",
+                  "independent-audit-gate",
+                  "independent-deliberation-panel",
+                  "instruction-scope-resolver",
+                  "iteration-frame-auditor",
+                  "korean-prose-editor",
+                  "model-effort-advisor",
+                  "mutation-risk-preflight",
+                  "orchestrator",
+                  "ponytail",
+                  "recovery-strategy-selector",
+                  "session-board",
+                  "software-security-auditor",
+                  "task-contract",
+                  "test-engineering",
+                  "workspace-convention-profiler"
+                ],
+                "candidateCount": 24,
+                "omitted": "Full public source metadata omitted; inventoryDigest retained. Original input unchanged."
+              },
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "taxonomyRevision": "1.0.0",
+              "classificationCriteriaRef": "skills/orchestrator/references/skill-classification.md",
+              "requestDigest": "sha256:027d1bbb459a1722d5b8b800db263ab71cd9df92394e21434871483e819baf3f"
+            },
+            "config": {
+              "jevEnabled": true,
+              "mode": "select",
+              "providerProfileRegistryRef": "fixture:profiles",
+              "externalClassificationAllowed": false,
+              "configRevision": "config-1",
+              "timeoutMs": 2000
+            },
+            "profileRevision": "profile-1",
+            "snapshot": {
+              "taskRevision": null,
+              "configRevision": "config-1",
+              "profileRevision": "profile-1",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "requestDigest": "sha256:027d1bbb459a1722d5b8b800db263ab71cd9df92394e21434871483e819baf3f",
+              "cancelled": false
+            },
+            "attempts": [
+              {
+                "providerKind": "jev",
+                "profileId": "jev-mock",
+                "modelId": "mock-fixed",
+                "reasoningEffort": null,
+                "dispatchState": "started",
+                "status": "SUCCESS",
+                "errorCode": null,
+                "timedOut": false,
+                "usage": {
+                  "inputTokens": null,
+                  "outputTokens": null,
+                  "cachedInputTokens": null,
+                  "actualCostUsd": 0
+                },
+                "reservedCostUsd": 0
+              }
+            ],
+            "response": {
+              "schemaVersion": "1.0.0",
+              "requestId": "SS23-irrelevant-baseline",
+              "operationId": "SS23-irrelevant-baseline",
+              "requestDigest": "sha256:027d1bbb459a1722d5b8b800db263ab71cd9df92394e21434871483e819baf3f",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "status": "SUCCESS",
+              "judgments": [
+                {
+                  "skillId": "acceptance-evidence-validator",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "blocker-diagnostician",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "change-scope-guardian",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "code-review",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "codex-token-usage-analyzer",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "context-continuity",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "coordinate-subagents",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "cs-engineering",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "evaluation-validity-auditor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "independent-audit-gate",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "independent-deliberation-panel",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "instruction-scope-resolver",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "iteration-frame-auditor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "judgment": "needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "model-effort-advisor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "mutation-risk-preflight",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "orchestrator",
+                  "judgment": "needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "ponytail",
+                  "judgment": "needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "recovery-strategy-selector",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "session-board",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "task-contract",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "test-engineering",
+                  "judgment": "needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "workspace-convention-profiler",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                }
+              ],
+              "unresolvedItems": [],
+              "error": null
+            }
+          },
+          "classificationResponseRef": "sha256:8c31a7519a2786023a2bef06d69c4f1a2287085b2957aabcaea9d201615fd37b",
+          "agentSelectedSkillIds": null,
+          "selectionStatus": "PROPOSED",
+          "adviceApplied": false
+        },
+        "acceptance": {
+          "valid": true,
+          "errors": [],
+          "neededSkillIds": [
+            "cs-engineering",
+            "korean-prose-editor",
+            "orchestrator",
+            "ponytail",
+            "software-security-auditor",
+            "test-engineering"
+          ],
+          "runnableSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "software-security-auditor",
+            "test-engineering"
+          ],
+          "blockedItems": [],
+          "decision": {
+            "schemaVersion": "1.0.0",
+            "classificationResponseRef": "sha256:8c31a7519a2786023a2bef06d69c4f1a2287085b2957aabcaea9d201615fd37b",
+            "requestDigest": "sha256:027d1bbb459a1722d5b8b800db263ab71cd9df92394e21434871483e819baf3f",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "taskRevision": null,
+            "configRevision": "config-1",
+            "profileRevision": "profile-1",
+            "explicitSkillIds": [
+              "cs-engineering"
+            ],
+            "ruleRequiredSkillIds": [
+              "software-security-auditor"
+            ],
+            "agentSelectedSkillIds": [
+              "ponytail",
+              "cs-engineering",
+              "software-security-auditor",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "selectionReasons": [
+              {
+                "skillId": "ponytail",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "cs-engineering",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "software-security-auditor",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "test-engineering",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "orchestrator",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              }
+            ],
+            "applicabilityChecks": [
+              {
+                "skillId": "ponytail",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "cs-engineering",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "software-security-auditor",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "test-engineering",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "orchestrator",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              }
+            ],
+            "unresolvedSkillReferences": [],
+            "selectionStatus": "SELECTED",
+            "adviceApplied": true,
+            "hostReceipt": {
+              "receiptId": "gUdVAUxJPNJBrLiV8W7G5TMs3sghVADl2S8TL9Vg9S8",
+              "host": "codex",
+              "requestDigest": "sha256:027d1bbb459a1722d5b8b800db263ab71cd9df92394e21434871483e819baf3f",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "agentSelectedSkillIds": [
+                "ponytail",
+                "cs-engineering",
+                "software-security-auditor",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "acceptedAt": "2026-10-09T02:57:42.991Z"
+            }
+          },
+          "admissionStatus": "NOT_EVALUATED",
+          "readStatus": "NOT_OBSERVED",
+          "appliedStatus": "NOT_OBSERVED",
+          "verifiedStatus": "NOT_RUN"
+        }
+      },
+      "evidence": "SS23.observed.json",
+      "command": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss23/SS23.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exit": 0,
+      "executionKind": "offline-mock",
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null,
+      "semanticAccuracyScore": null,
+      "missingInputs": [
+        "Actual host AGENT judgment and exact-call signed receipt",
+        "Matching actual skill read/apply/verify observations"
+      ]
+    },
+    {
+      "variantId": "missing-raw-cs",
+      "status": "PASS_OFFLINE_CONTRACT_ONLY",
+      "agentBehaviorStatus": "NOTRUN",
+      "input": {
+        "originalPrompt": "endpoint 최소 구현과 회귀 테스트 설계, 보안 감사, CS 불변조건 검토를 연결해 줘",
+        "explicitSkillIds": [
+          "cs-engineering"
+        ],
+        "ruleRequiredSkillIds": [
+          "software-security-auditor"
+        ],
+        "mode": "select",
+        "jevEnabled": true,
+        "provider": "synthetic qualified JEV port; actual JEV API 0",
+        "baseline": [
+          "korean-prose-editor"
+        ],
+        "rawNeededSkillIds": [
+          "ponytail",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "optionalUncertainSkillIds": []
+      },
+      "expected": {
+        "rawMissingPreserved": true,
+        "syntheticSelected": [
+          "ponytail",
+          "cs-engineering",
+          "software-security-auditor",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "forcedRawRejected": true
+      },
+      "observed": {
+        "advice": {
+          "result": {
+            "request": {
+              "schemaVersion": "1.0.0",
+              "requestId": "SS23-missing-raw-cs",
+              "operationId": "SS23-missing-raw-cs",
+              "originalPrompt": "endpoint 최소 구현과 회귀 테스트 설계, 보안 감사, CS 불변조건 검토를 연결해 줘",
+              "promptDigest": "sha256:b390c3ba30b1f1cb30bd35fda0d2e0e7220aa0aa61332f0eba927e1e7e98737a",
+              "confirmedContext": {
+                "taskRevision": null,
+                "objective": null,
+                "actions": null,
+                "targets": null,
+                "constraints": null,
+                "prohibitedActions": null,
+                "background": null
+              },
+              "contextSources": [],
+              "inventoryProjection": {
+                "canonicalSkillIds": [
+                  "acceptance-evidence-validator",
+                  "blocker-diagnostician",
+                  "change-scope-guardian",
+                  "code-review",
+                  "codex-token-usage-analyzer",
+                  "context-continuity",
+                  "coordinate-subagents",
+                  "cs-engineering",
+                  "evaluation-validity-auditor",
+                  "independent-audit-gate",
+                  "independent-deliberation-panel",
+                  "instruction-scope-resolver",
+                  "iteration-frame-auditor",
+                  "korean-prose-editor",
+                  "model-effort-advisor",
+                  "mutation-risk-preflight",
+                  "orchestrator",
+                  "ponytail",
+                  "recovery-strategy-selector",
+                  "session-board",
+                  "software-security-auditor",
+                  "task-contract",
+                  "test-engineering",
+                  "workspace-convention-profiler"
+                ],
+                "candidateCount": 24,
+                "omitted": "Full public source metadata omitted; inventoryDigest retained. Original input unchanged."
+              },
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "taxonomyRevision": "1.0.0",
+              "classificationCriteriaRef": "skills/orchestrator/references/skill-classification.md",
+              "requestDigest": "sha256:cf614dbbc43cab05f0716f5d6380ba95028c06b9a847e39f44be7d0e57d2da0b"
+            },
+            "config": {
+              "jevEnabled": true,
+              "mode": "select",
+              "providerProfileRegistryRef": "fixture:profiles",
+              "externalClassificationAllowed": false,
+              "configRevision": "config-1",
+              "timeoutMs": 2000
+            },
+            "profileRevision": "profile-1",
+            "snapshot": {
+              "taskRevision": null,
+              "configRevision": "config-1",
+              "profileRevision": "profile-1",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "requestDigest": "sha256:cf614dbbc43cab05f0716f5d6380ba95028c06b9a847e39f44be7d0e57d2da0b",
+              "cancelled": false
+            },
+            "attempts": [
+              {
+                "providerKind": "jev",
+                "profileId": "jev-mock",
+                "modelId": "mock-fixed",
+                "reasoningEffort": null,
+                "dispatchState": "started",
+                "status": "SUCCESS",
+                "errorCode": null,
+                "timedOut": false,
+                "usage": {
+                  "inputTokens": null,
+                  "outputTokens": null,
+                  "cachedInputTokens": null,
+                  "actualCostUsd": 0
+                },
+                "reservedCostUsd": 0
+              }
+            ],
+            "response": {
+              "schemaVersion": "1.0.0",
+              "requestId": "SS23-missing-raw-cs",
+              "operationId": "SS23-missing-raw-cs",
+              "requestDigest": "sha256:cf614dbbc43cab05f0716f5d6380ba95028c06b9a847e39f44be7d0e57d2da0b",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "status": "SUCCESS",
+              "judgments": [
+                {
+                  "skillId": "acceptance-evidence-validator",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "blocker-diagnostician",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "change-scope-guardian",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "code-review",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "codex-token-usage-analyzer",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "context-continuity",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "coordinate-subagents",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "cs-engineering",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "evaluation-validity-auditor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "independent-audit-gate",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "independent-deliberation-panel",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "instruction-scope-resolver",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "iteration-frame-auditor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "model-effort-advisor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "mutation-risk-preflight",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "orchestrator",
+                  "judgment": "needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "ponytail",
+                  "judgment": "needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "recovery-strategy-selector",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "session-board",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "task-contract",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "test-engineering",
+                  "judgment": "needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "workspace-convention-profiler",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                }
+              ],
+              "unresolvedItems": [],
+              "error": null
+            }
+          },
+          "classificationResponseRef": "sha256:7f5c253962b8776c7cea02f5570105488c0f66e391b7483c7fb2fa465ab83211",
+          "agentSelectedSkillIds": null,
+          "selectionStatus": "PROPOSED",
+          "adviceApplied": false
+        },
+        "rawMissingCS": true,
+        "forcedRaw": {
+          "valid": false,
+          "errors": [
+            "REQUIRED_SKILL_OMITTED:cs-engineering",
+            "REQUIRED_SKILL_OMITTED:software-security-auditor"
+          ],
+          "neededSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "software-security-auditor",
+            "test-engineering"
+          ],
+          "runnableSkillIds": [
+            "orchestrator",
+            "ponytail",
+            "test-engineering"
+          ],
+          "blockedItems": [],
+          "agentSelectedSkillIds": null
+        },
+        "acceptance": {
+          "valid": true,
+          "errors": [],
+          "neededSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "software-security-auditor",
+            "test-engineering"
+          ],
+          "runnableSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "software-security-auditor",
+            "test-engineering"
+          ],
+          "blockedItems": [],
+          "decision": {
+            "schemaVersion": "1.0.0",
+            "classificationResponseRef": "sha256:7f5c253962b8776c7cea02f5570105488c0f66e391b7483c7fb2fa465ab83211",
+            "requestDigest": "sha256:cf614dbbc43cab05f0716f5d6380ba95028c06b9a847e39f44be7d0e57d2da0b",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "taskRevision": null,
+            "configRevision": "config-1",
+            "profileRevision": "profile-1",
+            "explicitSkillIds": [
+              "cs-engineering"
+            ],
+            "ruleRequiredSkillIds": [
+              "software-security-auditor"
+            ],
+            "agentSelectedSkillIds": [
+              "ponytail",
+              "cs-engineering",
+              "software-security-auditor",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "selectionReasons": [
+              {
+                "skillId": "ponytail",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "cs-engineering",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "software-security-auditor",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "test-engineering",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "orchestrator",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              }
+            ],
+            "applicabilityChecks": [
+              {
+                "skillId": "ponytail",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "cs-engineering",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "software-security-auditor",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "test-engineering",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "orchestrator",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              }
+            ],
+            "unresolvedSkillReferences": [],
+            "selectionStatus": "SELECTED",
+            "adviceApplied": true,
+            "hostReceipt": {
+              "receiptId": "FNVv-hYNCYa76vyHiI0nNzMoWKXHaJ2mmD_RVRasS00",
+              "host": "codex",
+              "requestDigest": "sha256:cf614dbbc43cab05f0716f5d6380ba95028c06b9a847e39f44be7d0e57d2da0b",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "agentSelectedSkillIds": [
+                "ponytail",
+                "cs-engineering",
+                "software-security-auditor",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "acceptedAt": "2026-10-09T02:57:43.702Z"
+            }
+          },
+          "admissionStatus": "NOT_EVALUATED",
+          "readStatus": "NOT_OBSERVED",
+          "appliedStatus": "NOT_OBSERVED",
+          "verifiedStatus": "NOT_RUN"
+        }
+      },
+      "evidence": "SS23.observed.json",
+      "command": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss23/SS23.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exit": 0,
+      "executionKind": "offline-mock",
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null,
+      "semanticAccuracyScore": null,
+      "missingInputs": [
+        "Actual host AGENT judgment and exact-call signed receipt",
+        "Matching actual skill read/apply/verify observations"
+      ]
+    },
+    {
+      "variantId": "force-copy-negative",
+      "status": "PARTIAL",
+      "agentBehaviorStatus": "NOTRUN",
+      "input": {
+        "originalPrompt": "endpoint 최소 구현과 회귀 테스트 설계, 보안 감사, CS 불변조건 검토를 연결해 줘",
+        "explicitSkillIds": [
+          "cs-engineering"
+        ],
+        "ruleRequiredSkillIds": [
+          "software-security-auditor"
+        ],
+        "mode": "select",
+        "jevEnabled": true,
+        "provider": "synthetic qualified JEV port; actual JEV API 0",
+        "baseline": [
+          "korean-prose-editor"
+        ],
+        "rawNeededSkillIds": [
+          "ponytail",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "optionalUncertainSkillIds": []
+      },
+      "expected": {
+        "forcedBehavioralVerdict": "FAIL",
+        "unsignedRejected": true,
+        "requiredOmissionsRejected": true,
+        "callerReceiptRejected": true
+      },
+      "observed": {
+        "unsigned": {
+          "valid": false,
+          "errors": [
+            "HOST_SELECTION_NOT_OBSERVED"
+          ],
+          "agentSelectedSkillIds": null
+        },
+        "forced": {
+          "valid": false,
+          "errors": [
+            "REQUIRED_SKILL_OMITTED:cs-engineering",
+            "REQUIRED_SKILL_OMITTED:software-security-auditor"
+          ],
+          "neededSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "software-security-auditor",
+            "test-engineering"
+          ],
+          "runnableSkillIds": [
+            "korean-prose-editor",
+            "orchestrator",
+            "ponytail",
+            "test-engineering"
+          ],
+          "blockedItems": [],
+          "agentSelectedSkillIds": null
+        },
+        "callerRejected": {
+          "schemaVersion": "1.0.0",
+          "ok": false,
+          "data": null,
+          "error": {
+            "code": "INVALID_INPUT",
+            "message": "Skill classification input, configuration or host observation is invalid; no selection was accepted.",
+            "details": null
+          }
+        },
+        "exactCopied": {
+          "valid": true,
+          "errors": [],
+          "neededSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "software-security-auditor",
+            "test-engineering"
+          ],
+          "runnableSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "software-security-auditor",
+            "test-engineering"
+          ],
+          "blockedItems": [],
+          "decision": {
+            "schemaVersion": "1.0.0",
+            "classificationResponseRef": "sha256:4d726a935124b8263ab9caffda135b5aebbb0ac688d5f1d35b2c05459a73b4ea",
+            "requestDigest": "sha256:f88a1d09484cb22a08df4b9f5ad5258c71ba4c4fe2ebd2052546c84d9e76e4a8",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "taskRevision": null,
+            "configRevision": "config-1",
+            "profileRevision": "profile-1",
+            "explicitSkillIds": [
+              "cs-engineering"
+            ],
+            "ruleRequiredSkillIds": [
+              "software-security-auditor"
+            ],
+            "agentSelectedSkillIds": [
+              "ponytail",
+              "cs-engineering",
+              "software-security-auditor",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "selectionReasons": [
+              {
+                "skillId": "ponytail",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "cs-engineering",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "software-security-auditor",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "test-engineering",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "orchestrator",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              }
+            ],
+            "applicabilityChecks": [
+              {
+                "skillId": "ponytail",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "cs-engineering",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "software-security-auditor",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "test-engineering",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "orchestrator",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              }
+            ],
+            "unresolvedSkillReferences": [],
+            "selectionStatus": "SELECTED",
+            "adviceApplied": true,
+            "hostReceipt": {
+              "receiptId": "FiiUJScmgzQ2TbDGev-S2aHgB4eOxT29FLohYaR0SCc",
+              "host": "codex",
+              "requestDigest": "sha256:f88a1d09484cb22a08df4b9f5ad5258c71ba4c4fe2ebd2052546c84d9e76e4a8",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "agentSelectedSkillIds": [
+                "ponytail",
+                "cs-engineering",
+                "software-security-auditor",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "acceptedAt": "2026-10-09T02:57:44.230Z"
+            }
+          },
+          "admissionStatus": "NOT_EVALUATED",
+          "readStatus": "NOT_OBSERVED",
+          "appliedStatus": "NOT_OBSERVED",
+          "verifiedStatus": "NOT_RUN"
+        }
+      },
+      "evidence": "SS23.observed.json",
+      "command": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss23/SS23.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exit": 0,
+      "executionKind": "offline-mock",
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null,
+      "semanticAccuracyScore": null,
+      "missingInputs": [
+        "Actual host AGENT judgment and exact-call signed receipt",
+        "Matching actual skill read/apply/verify observations",
+        "Behavioral independence evidence: complete forced copy S is structurally accepted; cannot claim real AGENT selection"
+      ]
+    },
+    {
+      "variantId": "optional-uncertain-independent-partial",
+      "status": "PASS_OFFLINE_CONTRACT_ONLY",
+      "agentBehaviorStatus": "NOTRUN",
+      "input": {
+        "originalPrompt": "endpoint 최소 구현과 회귀 테스트 설계, 보안 감사, CS 불변조건 검토를 연결해 줘",
+        "explicitSkillIds": [
+          "cs-engineering"
+        ],
+        "ruleRequiredSkillIds": [
+          "software-security-auditor"
+        ],
+        "mode": "select",
+        "jevEnabled": true,
+        "provider": "synthetic qualified JEV port; actual JEV API 0",
+        "baseline": [
+          "korean-prose-editor"
+        ],
+        "rawNeededSkillIds": [
+          "ponytail",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "optionalUncertainSkillIds": [
+          "korean-prose-editor"
+        ]
+      },
+      "expected": {
+        "responseStatus": "PARTIAL",
+        "syntheticSelectionStatus": "PARTIAL",
+        "syntheticSelected": [
+          "ponytail",
+          "cs-engineering",
+          "software-security-auditor",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "optionalUncertainty": "korean-prose-editor"
+      },
+      "observed": {
+        "advice": {
+          "result": {
+            "request": {
+              "schemaVersion": "1.0.0",
+              "requestId": "SS23-optional-uncertain-independent-partial",
+              "operationId": "SS23-optional-uncertain-independent-partial",
+              "originalPrompt": "endpoint 최소 구현과 회귀 테스트 설계, 보안 감사, CS 불변조건 검토를 연결해 줘",
+              "promptDigest": "sha256:b390c3ba30b1f1cb30bd35fda0d2e0e7220aa0aa61332f0eba927e1e7e98737a",
+              "confirmedContext": {
+                "taskRevision": null,
+                "objective": null,
+                "actions": null,
+                "targets": null,
+                "constraints": null,
+                "prohibitedActions": null,
+                "background": null
+              },
+              "contextSources": [],
+              "inventoryProjection": {
+                "canonicalSkillIds": [
+                  "acceptance-evidence-validator",
+                  "blocker-diagnostician",
+                  "change-scope-guardian",
+                  "code-review",
+                  "codex-token-usage-analyzer",
+                  "context-continuity",
+                  "coordinate-subagents",
+                  "cs-engineering",
+                  "evaluation-validity-auditor",
+                  "independent-audit-gate",
+                  "independent-deliberation-panel",
+                  "instruction-scope-resolver",
+                  "iteration-frame-auditor",
+                  "korean-prose-editor",
+                  "model-effort-advisor",
+                  "mutation-risk-preflight",
+                  "orchestrator",
+                  "ponytail",
+                  "recovery-strategy-selector",
+                  "session-board",
+                  "software-security-auditor",
+                  "task-contract",
+                  "test-engineering",
+                  "workspace-convention-profiler"
+                ],
+                "candidateCount": 24,
+                "omitted": "Full public source metadata omitted; inventoryDigest retained. Original input unchanged."
+              },
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "taxonomyRevision": "1.0.0",
+              "classificationCriteriaRef": "skills/orchestrator/references/skill-classification.md",
+              "requestDigest": "sha256:6cbab1787654118441d30d9e5c8536499c0b4febcf17d6f9b313dac987733dc2"
+            },
+            "config": {
+              "jevEnabled": true,
+              "mode": "select",
+              "providerProfileRegistryRef": "fixture:profiles",
+              "externalClassificationAllowed": false,
+              "configRevision": "config-1",
+              "timeoutMs": 2000
+            },
+            "profileRevision": "profile-1",
+            "snapshot": {
+              "taskRevision": null,
+              "configRevision": "config-1",
+              "profileRevision": "profile-1",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "requestDigest": "sha256:6cbab1787654118441d30d9e5c8536499c0b4febcf17d6f9b313dac987733dc2",
+              "cancelled": false
+            },
+            "attempts": [
+              {
+                "providerKind": "jev",
+                "profileId": "jev-mock",
+                "modelId": "mock-fixed",
+                "reasoningEffort": null,
+                "dispatchState": "started",
+                "status": "PARTIAL",
+                "errorCode": null,
+                "timedOut": false,
+                "usage": {
+                  "inputTokens": null,
+                  "outputTokens": null,
+                  "cachedInputTokens": null,
+                  "actualCostUsd": 0
+                },
+                "reservedCostUsd": 0
+              }
+            ],
+            "response": {
+              "schemaVersion": "1.0.0",
+              "requestId": "SS23-optional-uncertain-independent-partial",
+              "operationId": "SS23-optional-uncertain-independent-partial",
+              "requestDigest": "sha256:6cbab1787654118441d30d9e5c8536499c0b4febcf17d6f9b313dac987733dc2",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "status": "PARTIAL",
+              "judgments": [
+                {
+                  "skillId": "acceptance-evidence-validator",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "blocker-diagnostician",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "change-scope-guardian",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "code-review",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "codex-token-usage-analyzer",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "context-continuity",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "coordinate-subagents",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "cs-engineering",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "evaluation-validity-auditor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "independent-audit-gate",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "independent-deliberation-panel",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "instruction-scope-resolver",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "iteration-frame-auditor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "judgment": "uncertain",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": "optional synthetic uncertainty"
+                },
+                {
+                  "skillId": "model-effort-advisor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "mutation-risk-preflight",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "orchestrator",
+                  "judgment": "needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "ponytail",
+                  "judgment": "needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "recovery-strategy-selector",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "session-board",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "task-contract",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "test-engineering",
+                  "judgment": "needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "workspace-convention-profiler",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "fixture:mock-source-role"
+                  ],
+                  "uncertaintyReason": null
+                }
+              ],
+              "unresolvedItems": [
+                {
+                  "skillId": "korean-prose-editor",
+                  "reasonCode": "OPTIONAL_UNCERTAIN"
+                }
+              ],
+              "error": null
+            }
+          },
+          "classificationResponseRef": "sha256:cad99ae3743898567ea292bdc2cd5a1666b320f4adff566e39f3ca8c66543c44",
+          "agentSelectedSkillIds": null,
+          "selectionStatus": "PROPOSED",
+          "adviceApplied": false
+        },
+        "acceptance": {
+          "valid": true,
+          "errors": [],
+          "neededSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "software-security-auditor",
+            "test-engineering"
+          ],
+          "runnableSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "software-security-auditor",
+            "test-engineering"
+          ],
+          "blockedItems": [],
+          "decision": {
+            "schemaVersion": "1.0.0",
+            "classificationResponseRef": "sha256:cad99ae3743898567ea292bdc2cd5a1666b320f4adff566e39f3ca8c66543c44",
+            "requestDigest": "sha256:6cbab1787654118441d30d9e5c8536499c0b4febcf17d6f9b313dac987733dc2",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "taskRevision": null,
+            "configRevision": "config-1",
+            "profileRevision": "profile-1",
+            "explicitSkillIds": [
+              "cs-engineering"
+            ],
+            "ruleRequiredSkillIds": [
+              "software-security-auditor"
+            ],
+            "agentSelectedSkillIds": [
+              "ponytail",
+              "cs-engineering",
+              "software-security-auditor",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "selectionReasons": [
+              {
+                "skillId": "ponytail",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "cs-engineering",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "software-security-auditor",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "test-engineering",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              },
+              {
+                "skillId": "orchestrator",
+                "reason": "synthetic AGENT reviewed the request independently of advice"
+              }
+            ],
+            "applicabilityChecks": [
+              {
+                "skillId": "ponytail",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "cs-engineering",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "software-security-auditor",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "test-engineering",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              },
+              {
+                "skillId": "orchestrator",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:purpose"
+                ]
+              }
+            ],
+            "unresolvedSkillReferences": [
+              {
+                "reference": "korean-prose-editor",
+                "reason": "independent optional candidate unclear; settled implementation/audit work proceeds"
+              }
+            ],
+            "selectionStatus": "PARTIAL",
+            "adviceApplied": true,
+            "hostReceipt": {
+              "receiptId": "gUdVAUxJPNJBrLiV8W7G5TMs3sghVADl2S8TL9Vg9S8",
+              "host": "codex",
+              "requestDigest": "sha256:6cbab1787654118441d30d9e5c8536499c0b4febcf17d6f9b313dac987733dc2",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "agentSelectedSkillIds": [
+                "ponytail",
+                "cs-engineering",
+                "software-security-auditor",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "acceptedAt": "2026-10-09T02:57:44.772Z"
+            }
+          },
+          "admissionStatus": "NOT_EVALUATED",
+          "readStatus": "NOT_OBSERVED",
+          "appliedStatus": "NOT_OBSERVED",
+          "verifiedStatus": "NOT_RUN"
+        }
+      },
+      "evidence": "SS23.observed.json",
+      "command": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss23/SS23.test.ts",
+        "--maxWorkers=1"
+      ],
+      "exit": 0,
+      "executionKind": "offline-mock",
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null,
+      "semanticAccuracyScore": null,
+      "missingInputs": [
+        "Actual host AGENT judgment and exact-call signed receipt",
+        "Matching actual skill read/apply/verify observations"
+      ]
+    }
+  ],
+  "commands": [
+    {
+      "kind": "new-variant",
+      "command": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss23/SS23.test.ts",
+        "--maxWorkers=1"
+      ],
+      "cwd": "<CANDIDATE_CHECKOUT>",
+      "exit": 0,
+      "status": "PASS",
+      "receipt": "SS23.variants-receipt.json",
+      "receiptSHA256": "sha256:1a5987232ecc3d7529410e3531ea6292d7f020f1750b0c5b33a48879f857a58a",
+      "startedAt": "2026-10-09T02:57:40.684Z",
+      "finishedAt": "2026-10-09T02:57:45.362Z",
+      "executedTests": 7,
+      "skippedTests": 0
+    },
+    {
+      "kind": "new-boundary-reproduction",
+      "command": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss23/SS23-race.test.ts",
+        "--maxWorkers=1"
+      ],
+      "cwd": "<CANDIDATE_CHECKOUT>",
+      "exit": 1,
+      "status": "FAIL",
+      "receipt": "SS23.race-receipt.json",
+      "receiptSHA256": "sha256:2f714fa49b002b66269d1b15e26829f4ea454b20b2384a48d778f16420d4be89",
+      "startedAt": "2026-10-09T02:57:51.629Z",
+      "finishedAt": "2026-10-09T02:57:53.022Z",
+      "executedTests": 1,
+      "skippedTests": 0
+    },
+    {
+      "kind": "existing-targeted-regression",
+      "command": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/mcp/skill-classification-validation.test.ts",
+        "tests/mcp/skill-classification-gateway.test.ts",
+        "--testNamePattern",
+        "accepts independently reasoned final sets|reports explicit, mandatory and dependency omissions|allows settled independent work despite optional uncertainty|requires signed exact-call host observation|keeps AGENT choices independent of the same advice|accepts settled independent PARTIAL work",
+        "--maxWorkers=1"
+      ],
+      "cwd": "<CANDIDATE_CHECKOUT>",
+      "exit": 0,
+      "status": "PASS",
+      "receipt": "SS23.regression-receipt.json",
+      "receiptSHA256": "sha256:aa825a592d6c8963e30c58bc7a1e36c85bfdac0cfe17c516602667ba7cb607dd",
+      "startedAt": "2026-10-09T02:58:24.351Z",
+      "finishedAt": "2026-10-09T02:58:27.754Z",
+      "executedTests": 6,
+      "skippedTests": 58
+    }
+  ],
+  "findings": [
+    {
+      "id": "SS23-known-acceptance-recheck-gap",
+      "severity": "HIGH",
+      "status": "REPRODUCED",
+      "dedupRootCause": "existing concurrency immediate recheck gap",
+      "newRootCauseCount": 0,
+      "expected": "Cancellation during async acceptance must reject with no accepted selection",
+      "observed": "Task cancelled=true during readRuntime await; record_skill_selection valid=true and complete S receipt returned",
+      "source": "mcp-server/src/skill-classification/gateway.ts:117-136; stale task and expiry checked before awaits, current snapshot cancellation retained from old operation",
+      "evidence": [
+        "SS23.race-observed.json",
+        "SS23.race-receipt.json"
+      ],
+      "reproduction": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss23/SS23-race.test.ts",
+        "--maxWorkers=1"
+      ]
+    },
+    {
+      "id": "SS23-full-force-copy-observation-limit",
+      "severity": "EVIDENCE_LIMITATION",
+      "status": "OBSERVED_OFFLINE",
+      "expected": "Forced-copy negative is behavioral FAIL and must never count as independent AGENT selection",
+      "observed": "Unsigned/caller-made/raw-required-omission copies rejected; full S copy with synthetic reasons and synthetic signed exact-call observation structurally accepted",
+      "source": "validation.ts:95-97 checks declared applicability and reason presence; cannot prove independent choice",
+      "evidence": "SS23.observed.json",
+      "newDefectClaim": false,
+      "behavioralIndependenceDetector": "NOTRUN"
+    }
+  ],
+  "boundaries": {
+    "dedupSources": "PASS_OFFLINE: selected/needed unique; raw+explicit+rule arrays/reasons retained",
+    "disabledSEC": "PASS_OFFLINE: needed retained, runnable excluded with DISABLED; admission remains NOT_EVALUATED",
+    "permissions": "No execution permission grant/removal assumed; permission admission remains NOT_EVALUATED",
+    "optionalUncertainty": "PARTIAL independent settled S structurally accepted; actual over-abstention behavior NOTRUN",
+    "rawMissingCS": "raw remains not-needed after explicit correction; no model-hit credit fabricated"
+  },
+  "sourceSkillChecks": [
+    {
+      "skillId": "cs-engineering",
+      "path": "skills/cs-engineering/SKILL.md",
+      "expectedDigest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+      "actualDigest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+      "matches": true
+    },
+    {
+      "skillId": "korean-prose-editor",
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "expectedDigest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "actualDigest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "matches": true
+    },
+    {
+      "skillId": "orchestrator",
+      "path": "skills/orchestrator/SKILL.md",
+      "expectedDigest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "actualDigest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "matches": true
+    },
+    {
+      "skillId": "ponytail",
+      "path": "skills/ponytail/SKILL.md",
+      "expectedDigest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "actualDigest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "matches": true
+    },
+    {
+      "skillId": "software-security-auditor",
+      "path": "skills/software-security-auditor/SKILL.md",
+      "expectedDigest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "actualDigest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "matches": true
+    },
+    {
+      "skillId": "test-engineering",
+      "path": "skills/test-engineering/SKILL.md",
+      "expectedDigest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "actualDigest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "matches": true
+    }
+  ],
+  "instructions": {
+    "read": [
+      "AGENTS.md",
+      "skills/test-engineering/SKILL.md",
+      "skills/ponytail/SKILL.md",
+      "skills/orchestrator/SKILL.md",
+      "skills/cs-engineering/SKILL.md",
+      "skills/software-security-auditor/SKILL.md",
+      "skills/korean-prose-editor/SKILL.md",
+      "skills/orchestrator/references/skill-classification.md",
+      "test-design.md",
+      "test-proof.md",
+      "cli.md"
+    ],
+    "workspaceAgentsSkillsPresent": false,
+    "repoAgentsSkillsPresent": false
+  },
+  "hostLive": {
+    "executionKind": "host-live",
+    "status": "NOTRUN",
+    "classificationConfigPresent": false,
+    "hostAttestationEnvironmentPresent": false,
+    "currentCallableAGSClassificationTools": [],
+    "nativeHostCalls": 0,
+    "supportedPath": {
+      "mcpConfig": ".mcp.json: node mcp-server/dist/server.mjs; AGENT_GOVERNANCE_HOST_ATTESTATION=codex",
+      "hook": "hooks/hooks.json PreToolUse classify_skills/record_skill_selection => mcp-server/dist/host-attestation-hook.mjs --host=codex",
+      "gateway": [
+        "get_skill_inventory",
+        "classify_skills",
+        "record_skill_selection"
+      ],
+      "config": "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG -> approved runtime snapshot, central profiles, providerRuntimeRef/nativeAdapterDefinitionsRef",
+      "taskObservation": "mcp-server/src/index.ts:121 host session board lastPromptAt/sourceRef",
+      "nativeAdapterDefinitionFields": [
+        "adapterId",
+        "host",
+        "executable",
+        "workingDirectory",
+        "approvalRef",
+        "capabilityEvidenceRef",
+        "retryPolicyVerified",
+        "retryPolicyEvidenceRef",
+        "isolationEvidenceRef",
+        "isolationArgs",
+        "timeoutMs",
+        "maximumOutputBytes"
+      ]
+    },
+    "missingInputs": [
+      "Connected authorized AGS tools and genuine exact-call host hook observations",
+      "Approved classification config and inventory/taxonomy bound qualified central profile",
+      "For real native/provider route: approved route + capability/no-retry/isolation evidence + budget/allowance and prior/unknown consumption",
+      "Current host-owned task revision/cancellation source and real installed/enabled/supported skills",
+      "SS23 actual AGENT reasoning independent of recommendations, source-specific reasons, read/apply/verify artifact bindings"
+    ],
+    "notes": [
+      "An executable alone proves no approved subscription/API/free-cost/qualified route.",
+      "Host-live mock advice could verify agent behavior separately; no real JEV is required for that mock path. Provider-live integration remains NOTRUN by API0 constraint.",
+      "Current production gateway does not supply InventoryOptions installedSkillIds/hostSupportedSkillIds; known host-active supply gap statically confirmed only, no new live finding."
+    ],
+    "codexExecutablePresent": true,
+    "claudeExecutablePresent": false
+  },
+  "engineeringPlan": "<CANDIDATE_CHECKOUT>/tests/ss23/SS23.plan.json",
+  "engineeringProof": "<CANDIDATE_CHECKOUT>/tests/ss23/SS23.proof.json",
+  "engineeringTestResult": "SS23.engineering-test-result.json",
+  "proofMeaning": "INCOMPLETE: red/green product mutation and actual host behavior NOTRUN; does not erase executed offline PASS or reproduced FAIL",
+  "remainingBlockers": [
+    "Connected authorized AGS tools and genuine exact-call host hook observations",
+    "Approved classification config and inventory/taxonomy bound qualified central profile",
+    "For real native/provider route: approved route + capability/no-retry/isolation evidence + budget/allowance and prior/unknown consumption",
+    "Current host-owned task revision/cancellation source and real installed/enabled/supported skills",
+    "SS23 actual AGENT reasoning independent of recommendations, source-specific reasons, read/apply/verify artifact bindings",
+    "Cancellation acceptance gap not repaired: product source modifications forbidden",
+    "Host behavioral evidence including force-copy-negative remains NOTRUN"
+  ],
+  "originalRunMetadata": {
+    "productSourceModified": false,
+    "pushed": false,
+    "PRCreated": false,
+    "released": false
+  },
+  "publicationPreparation": {
+    "newTestsExecuted": 0,
+    "newEnvironmentCreated": false,
+    "modelApiCalls": {
+      "jev": 0,
+      "vendor": 0,
+      "claude": 0,
+      "codex": 0
+    },
+    "patchStatus": "NOT_PRESENT",
+    "originalResultSHA256": "b6ae0d63f7232b4a0f84da781cfb7c0afea9a2146330476d863f43afdd775a67",
+    "notes": "Existing outputs only; no rerun and no PASS promotion. This public derivative is not a newly issued engineering or host receipt."
+  },
+  "missingOriginal": [
+    "MISSING_ORIGINAL: standalone raw provider wire bytes were not captured (offline synthetic provider only)",
+    "MISSING_ORIGINAL: force-copy-negative full classification request object was not present in the saved observed row; declared input remains in result/test/source",
+    "MISSING_ORIGINAL: actual host selected/read/applied/verified evidence never existed (NOTRUN)"
+  ]
+}

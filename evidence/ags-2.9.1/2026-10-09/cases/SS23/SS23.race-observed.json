@@ -1,0 +1,152 @@
+{
+  "caseId": "SS23",
+  "executionKind": "offline-mock",
+  "expected": {
+    "valid": false,
+    "agentSelectedSkillIds": null
+  },
+  "observed": {
+    "valid": true,
+    "errors": [],
+    "neededSkillIds": [
+      "cs-engineering",
+      "orchestrator",
+      "ponytail",
+      "software-security-auditor",
+      "test-engineering"
+    ],
+    "runnableSkillIds": [
+      "cs-engineering",
+      "orchestrator",
+      "ponytail",
+      "software-security-auditor",
+      "test-engineering"
+    ],
+    "blockedItems": [],
+    "decision": {
+      "schemaVersion": "1.0.0",
+      "classificationResponseRef": "sha256:9605d1a97c042acc322341a73c178c9d173421e6cf28b1d90453e2232cf10283",
+      "requestDigest": "sha256:18a5a6d3be19936f508e837400269897460cd7a1f578b4d8e61e0296bed3c370",
+      "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+      "taskRevision": null,
+      "configRevision": "config-1",
+      "profileRevision": "profile-1",
+      "explicitSkillIds": [
+        "cs-engineering"
+      ],
+      "ruleRequiredSkillIds": [
+        "software-security-auditor"
+      ],
+      "agentSelectedSkillIds": [
+        "ponytail",
+        "cs-engineering",
+        "software-security-auditor",
+        "test-engineering",
+        "orchestrator"
+      ],
+      "selectionReasons": [
+        {
+          "skillId": "ponytail",
+          "reason": "synthetic AGENT reviewed the request independently of advice"
+        },
+        {
+          "skillId": "cs-engineering",
+          "reason": "synthetic AGENT reviewed the request independently of advice"
+        },
+        {
+          "skillId": "software-security-auditor",
+          "reason": "synthetic AGENT reviewed the request independently of advice"
+        },
+        {
+          "skillId": "test-engineering",
+          "reason": "synthetic AGENT reviewed the request independently of advice"
+        },
+        {
+          "skillId": "orchestrator",
+          "reason": "synthetic AGENT reviewed the request independently of advice"
+        }
+      ],
+      "applicabilityChecks": [
+        {
+          "skillId": "ponytail",
+          "applies": true,
+          "excluded": false,
+          "reasonRefs": [
+            "fixture:purpose"
+          ]
+        },
+        {
+          "skillId": "cs-engineering",
+          "applies": true,
+          "excluded": false,
+          "reasonRefs": [
+            "fixture:purpose"
+          ]
+        },
+        {
+          "skillId": "software-security-auditor",
+          "applies": true,
+          "excluded": false,
+          "reasonRefs": [
+            "fixture:purpose"
+          ]
+        },
+        {
+          "skillId": "test-engineering",
+          "applies": true,
+          "excluded": false,
+          "reasonRefs": [
+            "fixture:purpose"
+          ]
+        },
+        {
+          "skillId": "orchestrator",
+          "applies": true,
+          "excluded": false,
+          "reasonRefs": [
+            "fixture:purpose"
+          ]
+        }
+      ],
+      "unresolvedSkillReferences": [],
+      "selectionStatus": "SELECTED",
+      "adviceApplied": true,
+      "hostReceipt": {
+        "receiptId": "gUdVAUxJPNJBrLiV8W7G5TMs3sghVADl2S8TL9Vg9S8",
+        "host": "codex",
+        "requestDigest": "sha256:18a5a6d3be19936f508e837400269897460cd7a1f578b4d8e61e0296bed3c370",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+        "agentSelectedSkillIds": [
+          "ponytail",
+          "cs-engineering",
+          "software-security-auditor",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "acceptedAt": "2026-10-09T02:57:52.924Z"
+      }
+    },
+    "admissionStatus": "NOT_EVALUATED",
+    "readStatus": "NOT_OBSERVED",
+    "appliedStatus": "NOT_OBSERVED",
+    "verifiedStatus": "NOT_RUN"
+  },
+  "taskAfterRead": {
+    "taskRevision": null,
+    "requestDigest": "sha256:18a5a6d3be19936f508e837400269897460cd7a1f578b4d8e61e0296bed3c370",
+    "cancelled": true,
+    "sourceRef": "fixture:host-owned-task-source"
+  },
+  "knownFinding": "concurrency immediate recheck gap",
+  "externalApiCalls": {
+    "jev": 0,
+    "vendor": 0,
+    "claude": 0
+  },
+  "actualAgentStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  }
+}

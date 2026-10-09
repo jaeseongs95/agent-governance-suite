@@ -1,0 +1,18 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/ss23/SS23-race.test.ts > SS23 cancellation during acceptance asynchronous read must prevent selection
+AssertionError: cancelled task accepted after async runtime/inventory read: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/ss23/SS23-race.test.ts:15:81
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+{"harness": "test-subreaper", "ownerPid": 1058, "runnerPid": 1059, "reapedPids": [1059], "remainingChildren": false, "runnerExitCode": 1, "cancelled": false}

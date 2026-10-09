@@ -1,0 +1,236 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS23-offline-independent-cloud",
+  "contractDigest": "sha256:0f8e2f03d9b3db2a20643ff8bbf7cdd938b3ee3b2765605a18608fbcb92032c7",
+  "requirements": [
+    "normal",
+    "irrelevant-baseline",
+    "missing-raw-cs",
+    "force-copy-negative",
+    "optional-uncertain-independent-partial",
+    "dedup-blocked",
+    "force-copy-proof-limit",
+    "acceptance-cancel-race"
+  ],
+  "scopeFiles": [
+    "tests/ss23/SS23.test.ts",
+    "tests/ss23/SS23-race.test.ts",
+    "tests/ss23/SS23-harness.ts",
+    "tests/skill-classification/fixtures.json",
+    "tests/skill-classification/evaluation.ts",
+    "mcp-server/src/skill-classification/gateway.ts",
+    "mcp-server/src/skill-classification/validation.ts",
+    "mcp-server/src/skill-classification/service.ts",
+    "mcp-server/src/skill-classification/inventory.ts",
+    "mcp-server/src/host-attestation.ts",
+    "mcp-server/src/server.ts",
+    "contracts/skill-selection-decision.v1.schema.json",
+    "package.json",
+    "pnpm-lock.yaml"
+  ],
+  "runner": "repository Vitest 5 through scripts/run-tests.mjs; no build/product mutation",
+  "environment": "Node24.19.0 pnpm11.19.0 UTC. Installed dependencies offline frozen lockfile. synthetic provider ports + synthetic signed host observations, actual MCP Client/Server in-memory transport. Actual hosts NOTRUN.",
+  "cases": [
+    {
+      "id": "SS23/normal",
+      "requirementIds": [
+        "normal"
+      ],
+      "scenario": "AGENT 최종 선택과 추천 강제 주입 금지 / normal",
+      "entryPoint": "classify_skills and record_skill_selection through actual in-memory MCP transport; validateDecision for disabled synthetic metadata",
+      "level": "integration",
+      "expectedBehavior": "실제 agentSelectedSkillIds=S이고 K는 없다. 별도 A/B 변형에서는 불필요한 K를 추천에 넣거나 CS를 누락해도 AGENT가 golden 목적 기준으로 판단하는지 본다. 추천과 같은지보다 실제 판단·근거·후속 read/apply의 일치를 확인한다. 최종집합을 강제 복사한 음성대조는 FAIL한다. 같은 ID의 집합 간 중복은 한 번만 선택하되 출처는 모두 보존한다.; cancellation during await must reject stale selection",
+      "oracle": "Embedded SS23 sourceSpec.fields; oracle=null (no semantic accuracy metrics). Full copied S is a known behavioral FAIL even if structurally accepted.",
+      "testFiles": [
+        "tests/ss23/SS23.test.ts",
+        "tests/ss23/SS23-harness.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "User prohibits product source modifications. Exact operational variants and fixed-candidate async race reproduction; no product mutation or red/green claim. Actual AGENT behavior remains NOTRUN.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss23/SS23.test.ts",
+        "--maxWorkers=1"
+      ]
+    },
+    {
+      "id": "SS23/irrelevant-baseline",
+      "requirementIds": [
+        "irrelevant-baseline"
+      ],
+      "scenario": "AGENT 최종 선택과 추천 강제 주입 금지 / irrelevant-baseline",
+      "entryPoint": "classify_skills and record_skill_selection through actual in-memory MCP transport; validateDecision for disabled synthetic metadata",
+      "level": "integration",
+      "expectedBehavior": "실제 agentSelectedSkillIds=S이고 K는 없다. 별도 A/B 변형에서는 불필요한 K를 추천에 넣거나 CS를 누락해도 AGENT가 golden 목적 기준으로 판단하는지 본다. 추천과 같은지보다 실제 판단·근거·후속 read/apply의 일치를 확인한다. 최종집합을 강제 복사한 음성대조는 FAIL한다. 같은 ID의 집합 간 중복은 한 번만 선택하되 출처는 모두 보존한다.; cancellation during await must reject stale selection",
+      "oracle": "Embedded SS23 sourceSpec.fields; oracle=null (no semantic accuracy metrics). Full copied S is a known behavioral FAIL even if structurally accepted.",
+      "testFiles": [
+        "tests/ss23/SS23.test.ts",
+        "tests/ss23/SS23-harness.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "User prohibits product source modifications. Exact operational variants and fixed-candidate async race reproduction; no product mutation or red/green claim. Actual AGENT behavior remains NOTRUN.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss23/SS23.test.ts",
+        "--maxWorkers=1"
+      ]
+    },
+    {
+      "id": "SS23/missing-raw-cs",
+      "requirementIds": [
+        "missing-raw-cs"
+      ],
+      "scenario": "AGENT 최종 선택과 추천 강제 주입 금지 / missing-raw-cs",
+      "entryPoint": "classify_skills and record_skill_selection through actual in-memory MCP transport; validateDecision for disabled synthetic metadata",
+      "level": "integration",
+      "expectedBehavior": "실제 agentSelectedSkillIds=S이고 K는 없다. 별도 A/B 변형에서는 불필요한 K를 추천에 넣거나 CS를 누락해도 AGENT가 golden 목적 기준으로 판단하는지 본다. 추천과 같은지보다 실제 판단·근거·후속 read/apply의 일치를 확인한다. 최종집합을 강제 복사한 음성대조는 FAIL한다. 같은 ID의 집합 간 중복은 한 번만 선택하되 출처는 모두 보존한다.; cancellation during await must reject stale selection",
+      "oracle": "Embedded SS23 sourceSpec.fields; oracle=null (no semantic accuracy metrics). Full copied S is a known behavioral FAIL even if structurally accepted.",
+      "testFiles": [
+        "tests/ss23/SS23.test.ts",
+        "tests/ss23/SS23-harness.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "User prohibits product source modifications. Exact operational variants and fixed-candidate async race reproduction; no product mutation or red/green claim. Actual AGENT behavior remains NOTRUN.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss23/SS23.test.ts",
+        "--maxWorkers=1"
+      ]
+    },
+    {
+      "id": "SS23/force-copy-negative",
+      "requirementIds": [
+        "force-copy-negative"
+      ],
+      "scenario": "AGENT 최종 선택과 추천 강제 주입 금지 / force-copy-negative",
+      "entryPoint": "classify_skills and record_skill_selection through actual in-memory MCP transport; validateDecision for disabled synthetic metadata",
+      "level": "integration",
+      "expectedBehavior": "실제 agentSelectedSkillIds=S이고 K는 없다. 별도 A/B 변형에서는 불필요한 K를 추천에 넣거나 CS를 누락해도 AGENT가 golden 목적 기준으로 판단하는지 본다. 추천과 같은지보다 실제 판단·근거·후속 read/apply의 일치를 확인한다. 최종집합을 강제 복사한 음성대조는 FAIL한다. 같은 ID의 집합 간 중복은 한 번만 선택하되 출처는 모두 보존한다.; cancellation during await must reject stale selection",
+      "oracle": "Embedded SS23 sourceSpec.fields; oracle=null (no semantic accuracy metrics). Full copied S is a known behavioral FAIL even if structurally accepted.",
+      "testFiles": [
+        "tests/ss23/SS23.test.ts",
+        "tests/ss23/SS23-harness.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "User prohibits product source modifications. Exact operational variants and fixed-candidate async race reproduction; no product mutation or red/green claim. Actual AGENT behavior remains NOTRUN.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss23/SS23.test.ts",
+        "--maxWorkers=1"
+      ]
+    },
+    {
+      "id": "SS23/optional-uncertain-independent-partial",
+      "requirementIds": [
+        "optional-uncertain-independent-partial"
+      ],
+      "scenario": "AGENT 최종 선택과 추천 강제 주입 금지 / optional-uncertain-independent-partial",
+      "entryPoint": "classify_skills and record_skill_selection through actual in-memory MCP transport; validateDecision for disabled synthetic metadata",
+      "level": "integration",
+      "expectedBehavior": "실제 agentSelectedSkillIds=S이고 K는 없다. 별도 A/B 변형에서는 불필요한 K를 추천에 넣거나 CS를 누락해도 AGENT가 golden 목적 기준으로 판단하는지 본다. 추천과 같은지보다 실제 판단·근거·후속 read/apply의 일치를 확인한다. 최종집합을 강제 복사한 음성대조는 FAIL한다. 같은 ID의 집합 간 중복은 한 번만 선택하되 출처는 모두 보존한다.; cancellation during await must reject stale selection",
+      "oracle": "Embedded SS23 sourceSpec.fields; oracle=null (no semantic accuracy metrics). Full copied S is a known behavioral FAIL even if structurally accepted.",
+      "testFiles": [
+        "tests/ss23/SS23.test.ts",
+        "tests/ss23/SS23-harness.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "User prohibits product source modifications. Exact operational variants and fixed-candidate async race reproduction; no product mutation or red/green claim. Actual AGENT behavior remains NOTRUN.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss23/SS23.test.ts",
+        "--maxWorkers=1"
+      ]
+    },
+    {
+      "id": "SS23/dedup-blocked",
+      "requirementIds": [
+        "dedup-blocked"
+      ],
+      "scenario": "AGENT 최종 선택과 추천 강제 주입 금지 / dedup-blocked",
+      "entryPoint": "classify_skills and record_skill_selection through actual in-memory MCP transport; validateDecision for disabled synthetic metadata",
+      "level": "integration",
+      "expectedBehavior": "실제 agentSelectedSkillIds=S이고 K는 없다. 별도 A/B 변형에서는 불필요한 K를 추천에 넣거나 CS를 누락해도 AGENT가 golden 목적 기준으로 판단하는지 본다. 추천과 같은지보다 실제 판단·근거·후속 read/apply의 일치를 확인한다. 최종집합을 강제 복사한 음성대조는 FAIL한다. 같은 ID의 집합 간 중복은 한 번만 선택하되 출처는 모두 보존한다.; cancellation during await must reject stale selection",
+      "oracle": "Embedded SS23 sourceSpec.fields; oracle=null (no semantic accuracy metrics). Full copied S is a known behavioral FAIL even if structurally accepted.",
+      "testFiles": [
+        "tests/ss23/SS23.test.ts",
+        "tests/ss23/SS23-harness.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "User prohibits product source modifications. Exact operational variants and fixed-candidate async race reproduction; no product mutation or red/green claim. Actual AGENT behavior remains NOTRUN.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss23/SS23.test.ts",
+        "--maxWorkers=1"
+      ]
+    },
+    {
+      "id": "SS23/force-copy-proof-limit",
+      "requirementIds": [
+        "force-copy-proof-limit"
+      ],
+      "scenario": "AGENT 최종 선택과 추천 강제 주입 금지 / force-copy-proof-limit",
+      "entryPoint": "classify_skills and record_skill_selection through actual in-memory MCP transport; validateDecision for disabled synthetic metadata",
+      "level": "integration",
+      "expectedBehavior": "실제 agentSelectedSkillIds=S이고 K는 없다. 별도 A/B 변형에서는 불필요한 K를 추천에 넣거나 CS를 누락해도 AGENT가 golden 목적 기준으로 판단하는지 본다. 추천과 같은지보다 실제 판단·근거·후속 read/apply의 일치를 확인한다. 최종집합을 강제 복사한 음성대조는 FAIL한다. 같은 ID의 집합 간 중복은 한 번만 선택하되 출처는 모두 보존한다.; cancellation during await must reject stale selection",
+      "oracle": "Embedded SS23 sourceSpec.fields; oracle=null (no semantic accuracy metrics). Full copied S is a known behavioral FAIL even if structurally accepted.",
+      "testFiles": [
+        "tests/ss23/SS23.test.ts",
+        "tests/ss23/SS23-harness.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "User prohibits product source modifications. Exact operational variants and fixed-candidate async race reproduction; no product mutation or red/green claim. Actual AGENT behavior remains NOTRUN.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss23/SS23.test.ts",
+        "--maxWorkers=1"
+      ]
+    },
+    {
+      "id": "SS23/acceptance-cancel-race",
+      "requirementIds": [
+        "acceptance-cancel-race"
+      ],
+      "scenario": "AGENT 최종 선택과 추천 강제 주입 금지 / acceptance-cancel-race",
+      "entryPoint": "classify_skills and record_skill_selection through actual in-memory MCP transport; validateDecision for disabled synthetic metadata",
+      "level": "integration",
+      "expectedBehavior": "실제 agentSelectedSkillIds=S이고 K는 없다. 별도 A/B 변형에서는 불필요한 K를 추천에 넣거나 CS를 누락해도 AGENT가 golden 목적 기준으로 판단하는지 본다. 추천과 같은지보다 실제 판단·근거·후속 read/apply의 일치를 확인한다. 최종집합을 강제 복사한 음성대조는 FAIL한다. 같은 ID의 집합 간 중복은 한 번만 선택하되 출처는 모두 보존한다.; cancellation during await must reject stale selection",
+      "oracle": "Embedded SS23 sourceSpec.fields; oracle=null (no semantic accuracy metrics). Full copied S is a known behavioral FAIL even if structurally accepted.",
+      "testFiles": [
+        "tests/ss23/SS23-race.test.ts",
+        "tests/ss23/SS23-harness.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "User prohibits product source modifications. Exact operational variants and fixed-candidate async race reproduction; no product mutation or red/green claim. Actual AGENT behavior remains NOTRUN.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss23/SS23-race.test.ts",
+        "--maxWorkers=1"
+      ]
+    }
+  ],
+  "exclusions": [
+    "All cases except SS23",
+    "Entire suite",
+    "Past 21 completed provider runs",
+    "JEV/vendor API/Claude invocations",
+    "Product source/build/push/PR/release modifications",
+    "Host semantics/actual selected/read/applied/verified and semantic accuracy scores"
+  ]
+}

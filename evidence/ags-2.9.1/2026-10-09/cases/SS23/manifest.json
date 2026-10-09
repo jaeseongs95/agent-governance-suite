@@ -1,0 +1,398 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS23",
+  "publishPath": "evidence/ags-2.9.1/2026-10-09/cases/SS23/",
+  "sourceCandidate": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+  },
+  "input": {
+    "path": "SS23.input.txt",
+    "bytes": 105,
+    "sha256": "b390c3ba30b1f1cb30bd35fda0d2e0e7220aa0aa61332f0eba927e1e7e98737a",
+    "source": "SS23.source.json originalPrompt field",
+    "capturedOriginalWireStatus": "MISSING_ORIGINAL"
+  },
+  "files": [
+    {
+      "path": "ORIGINALS.json",
+      "bytes": 3758,
+      "sha256": "86908e35bc7d5ed9671c2bb03eeec1aab6745bf62065ed5d97b97bee41bd7159",
+      "kind": "publication-metadata"
+    },
+    {
+      "path": "README.md",
+      "bytes": 5182,
+      "sha256": "ebb21db433fe53ba2d43710e0d1ef5ec9cccec5946622be41770505e28c75cb8",
+      "kind": "publication-metadata"
+    },
+    {
+      "path": "SS23-harness.ts",
+      "bytes": 13058,
+      "sha256": "cf296c62c45d5de947a590fd47502423f204ef5fc602e2de7e186df27b950960",
+      "kind": "unchanged-original",
+      "original": {
+        "file": "SS23-harness.ts",
+        "bytes": 13058,
+        "sha256": "cf296c62c45d5de947a590fd47502423f204ef5fc602e2de7e186df27b950960",
+        "status": "RECOVERED"
+      }
+    },
+    {
+      "path": "SS23-race.test.ts",
+      "bytes": 2015,
+      "sha256": "b32b729202454609cfb6803674823ab8eafcc16a54d989ddf8cf8ea473da816a",
+      "kind": "portable-reproduction-derivative",
+      "original": {
+        "file": "SS23-race.test.ts",
+        "bytes": 2038,
+        "sha256": "c1216a7cc1b8a54f8036241b9af7b9dc36d4bb1e855c50331efae1188ad48641",
+        "status": "RECOVERED"
+      },
+      "derivation": "Only observation output directory changed to current checkout directory for portable reproduction; not executed. Original test digest retained in snapshot/manifest."
+    },
+    {
+      "path": "SS23.engineering-test-result.json",
+      "bytes": 3292,
+      "sha256": "922da388abd67f3ff82cdf1775ead5b84b3cc01bc173bc46a414f23eb32b8725",
+      "kind": "unchanged-original",
+      "original": {
+        "file": "SS23.engineering-test-result.json",
+        "bytes": 3292,
+        "sha256": "922da388abd67f3ff82cdf1775ead5b84b3cc01bc173bc46a414f23eb32b8725",
+        "status": "RECOVERED"
+      }
+    },
+    {
+      "path": "SS23.host-support.json",
+      "bytes": 2290,
+      "sha256": "53ca0e56801c7601c930aff0bec2b7003da38a9a74484ef8c4c2495320472d1d",
+      "kind": "sanitized-derivative",
+      "original": {
+        "file": "SS23.host-support.json",
+        "bytes": 2293,
+        "sha256": "c4f61373642e39b1feb4578a1e47cc2472f0449f12bae601e33218a299bee45e",
+        "status": "RECOVERED"
+      },
+      "derivation": "Executable paths reduced to presence observations; no environmental variable values exposed."
+    },
+    {
+      "path": "SS23.input.txt",
+      "bytes": 105,
+      "sha256": "b390c3ba30b1f1cb30bd35fda0d2e0e7220aa0aa61332f0eba927e1e7e98737a",
+      "kind": "extracted-existing-input",
+      "original": {
+        "file": "SS23.source.json",
+        "bytes": 2812,
+        "sha256": "ddeb1e6fa691ae5eeeb0ab2c55ce4056ef4983dcdb6931bfc9512039d2faa20f",
+        "status": "RECOVERED"
+      },
+      "derivation": {
+        "sourceField": "originalPrompt",
+        "encoding": "UTF-8",
+        "trailingNewlineAdded": false,
+        "originalPromptUTF8Bytes": 105,
+        "originalPromptUTF8SHA256": "b390c3ba30b1f1cb30bd35fda0d2e0e7220aa0aa61332f0eba927e1e7e98737a",
+        "note": "Extracted existing field, not a captured provider wire."
+      }
+    },
+    {
+      "path": "SS23.observed.json",
+      "bytes": 75535,
+      "sha256": "1ddfa8dea61e4a81f4ceb486e485938c9b536b8cc1f29c40a1973eeb41364f18",
+      "kind": "sanitized-derivative",
+      "original": {
+        "file": "SS23.observed.json",
+        "bytes": 1288783,
+        "sha256": "3dc9b7528cd048dc8159fb9b8efd5adbb914bf1bb37b6e12852964672d1ef59f",
+        "status": "RECOVERED"
+      },
+      "derivation": "Same projection as public result; original rows preserved including known forced-copy control."
+    },
+    {
+      "path": "SS23.plan-check.json",
+      "bytes": 457,
+      "sha256": "a3e3b9d2a4326d1ecbdacdbbd7afad661d62d497cfadfcf70bffcc7cfe4b6edf",
+      "kind": "unchanged-original",
+      "original": {
+        "file": "SS23.plan-check.json",
+        "bytes": 457,
+        "sha256": "a3e3b9d2a4326d1ecbdacdbbd7afad661d62d497cfadfcf70bffcc7cfe4b6edf",
+        "status": "RECOVERED"
+      }
+    },
+    {
+      "path": "SS23.plan.json",
+      "bytes": 14580,
+      "sha256": "96f434ebb68100630f13623f4258d4dafb934030fd13d228ae5bd9b42696959e",
+      "kind": "sanitized-derivative",
+      "original": {
+        "file": "SS23.plan.json",
+        "bytes": 14580,
+        "sha256": "96f434ebb68100630f13623f4258d4dafb934030fd13d228ae5bd9b42696959e",
+        "status": "RECOVERED"
+      },
+      "derivation": "Only private path replacement; original proof/plan digests refer to original bytes, not this public derivative."
+    },
+    {
+      "path": "SS23.proof.json",
+      "bytes": 8973,
+      "sha256": "f8b3c18e4afbbee0dd5869e81148ced226b8bbabca22608f601889fe99d89ad3",
+      "kind": "sanitized-derivative",
+      "original": {
+        "file": "SS23.proof.json",
+        "bytes": 8973,
+        "sha256": "f8b3c18e4afbbee0dd5869e81148ced226b8bbabca22608f601889fe99d89ad3",
+        "status": "RECOVERED"
+      },
+      "derivation": "Only private path replacement; original proof/plan digests refer to original bytes, not this public derivative."
+    },
+    {
+      "path": "SS23.race-observed.json",
+      "bytes": 4322,
+      "sha256": "9c30a7b072e8bb4bae2d787b6b872b66ba3a8d128bc3a477d670eba355ed7f29",
+      "kind": "sanitized-derivative",
+      "original": {
+        "file": "SS23.race-observed.json",
+        "bytes": 4322,
+        "sha256": "9c30a7b072e8bb4bae2d787b6b872b66ba3a8d128bc3a477d670eba355ed7f29",
+        "status": "RECOVERED"
+      },
+      "derivation": "Local paths sanitized only; same cancelled task and observed acceptance."
+    },
+    {
+      "path": "SS23.race-receipt.json",
+      "bytes": 4619,
+      "sha256": "f119216fd6b04b510c08a1a8b68a6f4856c28c36e08bb7de0159e3a10d71d123",
+      "kind": "sanitized-derivative",
+      "original": {
+        "file": "SS23.race-receipt.json",
+        "bytes": 5144,
+        "sha256": "2f714fa49b002b66269d1b15e26829f4ea454b20b2384a48d778f16420d4be89",
+        "status": "RECOVERED"
+      },
+      "derivation": "Existing argv/exit/status/times/snapshot retained; remove original self digest and move original stream hashes to explicitly original fields. Logs extracted separately, not re-executed."
+    },
+    {
+      "path": "SS23.race.stderr.txt",
+      "bytes": 622,
+      "sha256": "16ece5770a37bd179d06b38c3212733a2589f8f3f5eaac456ccc85d77c0031e6",
+      "kind": "extracted-existing-log",
+      "original": {
+        "file": "SS23.race-receipt.json",
+        "bytes": 5144,
+        "sha256": "2f714fa49b002b66269d1b15e26829f4ea454b20b2384a48d778f16420d4be89",
+        "status": "RECOVERED"
+      },
+      "derivation": {
+        "sourceField": "stderr",
+        "originalFieldUTF8Bytes": 622,
+        "originalFieldSHA256": "16ece5770a37bd179d06b38c3212733a2589f8f3f5eaac456ccc85d77c0031e6",
+        "redaction": "Candidate checkout absolute path replaced with <CANDIDATE_CHECKOUT>; no log generated by execution."
+      }
+    },
+    {
+      "path": "SS23.race.stdout.txt",
+      "bytes": 319,
+      "sha256": "ec3c1c1dc0d45169641777471a1fee10f055aaf5d5446ff3f4170758f08eb611",
+      "kind": "extracted-existing-log",
+      "original": {
+        "file": "SS23.race-receipt.json",
+        "bytes": 5144,
+        "sha256": "2f714fa49b002b66269d1b15e26829f4ea454b20b2384a48d778f16420d4be89",
+        "status": "RECOVERED"
+      },
+      "derivation": {
+        "sourceField": "stdout",
+        "originalFieldUTF8Bytes": 319,
+        "originalFieldSHA256": "193364681a0316a09924a4389c72339482952a7a9e2ee01079620a99cb5a1eb5",
+        "redaction": "Candidate checkout absolute path replaced with <CANDIDATE_CHECKOUT>; no log generated by execution."
+      }
+    },
+    {
+      "path": "SS23.regression-receipt.json",
+      "bytes": 5030,
+      "sha256": "a063a09bcc005139735014ec2519c0366c1d950f2be91c6b5513c621e55c2d15",
+      "kind": "sanitized-derivative",
+      "original": {
+        "file": "SS23.regression-receipt.json",
+        "bytes": 4925,
+        "sha256": "aa825a592d6c8963e30c58bc7a1e36c85bfdac0cfe17c516602667ba7cb607dd",
+        "status": "RECOVERED"
+      },
+      "derivation": "Existing argv/exit/status/times/snapshot retained; remove original self digest and move original stream hashes to explicitly original fields. Logs extracted separately, not re-executed."
+    },
+    {
+      "path": "SS23.regression.stderr.txt",
+      "bytes": 158,
+      "sha256": "1b4ae0d67530327540c1a2cbbf7b9b3727f527d93c22d7946489a8fb01ecbacf",
+      "kind": "extracted-existing-log",
+      "original": {
+        "file": "SS23.regression-receipt.json",
+        "bytes": 4925,
+        "sha256": "aa825a592d6c8963e30c58bc7a1e36c85bfdac0cfe17c516602667ba7cb607dd",
+        "status": "RECOVERED"
+      },
+      "derivation": {
+        "sourceField": "stderr",
+        "originalFieldUTF8Bytes": 158,
+        "originalFieldSHA256": "1b4ae0d67530327540c1a2cbbf7b9b3727f527d93c22d7946489a8fb01ecbacf",
+        "redaction": "Candidate checkout absolute path replaced with <CANDIDATE_CHECKOUT>; no log generated by execution."
+      }
+    },
+    {
+      "path": "SS23.regression.stdout.txt",
+      "bytes": 184,
+      "sha256": "e9ce73df0f2ed72275bcdbe1e234d55d9db41aad5cd2d5557997fd705d022dc9",
+      "kind": "extracted-existing-log",
+      "original": {
+        "file": "SS23.regression-receipt.json",
+        "bytes": 4925,
+        "sha256": "aa825a592d6c8963e30c58bc7a1e36c85bfdac0cfe17c516602667ba7cb607dd",
+        "status": "RECOVERED"
+      },
+      "derivation": {
+        "sourceField": "stdout",
+        "originalFieldUTF8Bytes": 184,
+        "originalFieldSHA256": "2b7f351f2ffe542d5f33a4be397bd8d77a133464433d11691fd3fb036a557210",
+        "redaction": "Candidate checkout absolute path replaced with <CANDIDATE_CHECKOUT>; no log generated by execution."
+      }
+    },
+    {
+      "path": "SS23.result.json",
+      "bytes": 91820,
+      "sha256": "d086f49ae2da5f71681a85f3868632586ae60b4e1ef88f70176dea5ecf5c2cce",
+      "kind": "sanitized-derivative",
+      "original": {
+        "file": "SS23.result.json",
+        "bytes": 1344701,
+        "sha256": "b6ae0d63f7232b4a0f84da781cfb7c0afea9a2146330476d863f43afdd775a67",
+        "status": "RECOVERED"
+      },
+      "derivation": "Remove private local paths; replace repeated full skill metadata with digest-bound canonical ID/count projection; preserve observed outcomes and all response judgments. Original validation-time pushed=false moved to originalRunMetadata."
+    },
+    {
+      "path": "SS23.snapshot.json",
+      "bytes": 2968,
+      "sha256": "2b1d05d365cf1c5c9a2fa7917589e33c9bdb9245f824044169b6453cc7837ea9",
+      "kind": "unchanged-original",
+      "original": {
+        "file": "SS23.snapshot.json",
+        "bytes": 2968,
+        "sha256": "2b1d05d365cf1c5c9a2fa7917589e33c9bdb9245f824044169b6453cc7837ea9",
+        "status": "RECOVERED"
+      }
+    },
+    {
+      "path": "SS23.source.json",
+      "bytes": 2812,
+      "sha256": "ddeb1e6fa691ae5eeeb0ab2c55ce4056ef4983dcdb6931bfc9512039d2faa20f",
+      "kind": "unchanged-original",
+      "original": {
+        "file": "SS23.source.json",
+        "bytes": 2812,
+        "sha256": "ddeb1e6fa691ae5eeeb0ab2c55ce4056ef4983dcdb6931bfc9512039d2faa20f",
+        "status": "RECOVERED"
+      }
+    },
+    {
+      "path": "SS23.test.ts",
+      "bytes": 10098,
+      "sha256": "e9d3fe6b06ce886c86da753b0e10061bf94b28e4b6ee0ca2a5c7e89697c74407",
+      "kind": "portable-reproduction-derivative",
+      "original": {
+        "file": "SS23.test.ts",
+        "bytes": 10121,
+        "sha256": "64984ce4c23df54a01e86cc02b01744e056e8cd316244983ae0761bd4587dd98",
+        "status": "RECOVERED"
+      },
+      "derivation": "Only observation output directory changed to current checkout directory for portable reproduction; not executed. Original test digest retained in snapshot/manifest."
+    },
+    {
+      "path": "SS23.variants-receipt.json",
+      "bytes": 4622,
+      "sha256": "34af193409e57c315d131afb7bfa70215991ce534651974da3e1caaa702fbbee",
+      "kind": "sanitized-derivative",
+      "original": {
+        "file": "SS23.variants-receipt.json",
+        "bytes": 4503,
+        "sha256": "1a5987232ecc3d7529410e3531ea6292d7f020f1750b0c5b33a48879f857a58a",
+        "status": "RECOVERED"
+      },
+      "derivation": "Existing argv/exit/status/times/snapshot retained; remove original self digest and move original stream hashes to explicitly original fields. Logs extracted separately, not re-executed."
+    },
+    {
+      "path": "SS23.variants.stderr.txt",
+      "bytes": 155,
+      "sha256": "edbfb9027de9f60e4cdbc0cf4c7bed1aa1e083449a8dfa98c91b9ab204d6eb40",
+      "kind": "extracted-existing-log",
+      "original": {
+        "file": "SS23.variants-receipt.json",
+        "bytes": 4503,
+        "sha256": "1a5987232ecc3d7529410e3531ea6292d7f020f1750b0c5b33a48879f857a58a",
+        "status": "RECOVERED"
+      },
+      "derivation": {
+        "sourceField": "stderr",
+        "originalFieldUTF8Bytes": 155,
+        "originalFieldSHA256": "edbfb9027de9f60e4cdbc0cf4c7bed1aa1e083449a8dfa98c91b9ab204d6eb40",
+        "redaction": "Candidate checkout absolute path replaced with <CANDIDATE_CHECKOUT>; no log generated by execution."
+      }
+    },
+    {
+      "path": "SS23.variants.stdout.txt",
+      "bytes": 169,
+      "sha256": "9c2e67cd83d35d23b97892b5bcc4f57fe7289bbd70008587f25e592dc74f25b1",
+      "kind": "extracted-existing-log",
+      "original": {
+        "file": "SS23.variants-receipt.json",
+        "bytes": 4503,
+        "sha256": "1a5987232ecc3d7529410e3531ea6292d7f020f1750b0c5b33a48879f857a58a",
+        "status": "RECOVERED"
+      },
+      "derivation": {
+        "sourceField": "stdout",
+        "originalFieldUTF8Bytes": 169,
+        "originalFieldSHA256": "23becf788ad24ae3b3c63bd91d8e3d515d01f4e2141a918b690ba1c3f954e50f",
+        "redaction": "Candidate checkout absolute path replaced with <CANDIDATE_CHECKOUT>; no log generated by execution."
+      }
+    }
+  ],
+  "hashCoverage": {
+    "manifest": "all payload files; excludes manifest.json and SHA256SUMS",
+    "SHA256SUMS": "all payload files plus manifest.json; excludes itself"
+  },
+  "missingOriginal": [
+    "MISSING_ORIGINAL: standalone raw provider wire bytes were not captured (offline synthetic provider only)",
+    "MISSING_ORIGINAL: force-copy-negative full classification request object was not present in the saved observed row; declared input remains in result/test/source",
+    "MISSING_ORIGINAL: actual host selected/read/applied/verified evidence never existed (NOTRUN)"
+  ],
+  "patchStatus": "NOT_PRESENT",
+  "newTestsExecuted": 0,
+  "newEnvironmentsCreated": 0,
+  "modelApiCalls": {
+    "jev": 0,
+    "vendor": 0,
+    "claude": 0,
+    "codex": 0
+  },
+  "originalApiCalls": {
+    "jev": 0,
+    "vendor": 0,
+    "claude": 0
+  },
+  "actualStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "sanitization": [
+    "Remove private local paths",
+    "Omit repeated full inventory metadata",
+    "Preserve original status/null/[] and source-specific recommendation/selection distinctions",
+    "No credentials, secret/environment values, personal conversations or unrelated original logs included"
+  ]
+}

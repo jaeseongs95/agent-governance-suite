@@ -1,0 +1,116 @@
+{
+  "caseId": "SS23",
+  "recovered": [
+    {
+      "file": "SS23-harness.ts",
+      "bytes": 13058,
+      "sha256": "cf296c62c45d5de947a590fd47502423f204ef5fc602e2de7e186df27b950960",
+      "status": "RECOVERED"
+    },
+    {
+      "file": "SS23-race.test.ts",
+      "bytes": 2038,
+      "sha256": "c1216a7cc1b8a54f8036241b9af7b9dc36d4bb1e855c50331efae1188ad48641",
+      "status": "RECOVERED"
+    },
+    {
+      "file": "SS23.REPRO.md",
+      "bytes": 3802,
+      "sha256": "c2d07c205217caeeddcd486bda3dcda744fae70ddae141d377595da0d437b9b3",
+      "status": "RECOVERED"
+    },
+    {
+      "file": "SS23.engineering-test-result.json",
+      "bytes": 3292,
+      "sha256": "922da388abd67f3ff82cdf1775ead5b84b3cc01bc173bc46a414f23eb32b8725",
+      "status": "RECOVERED"
+    },
+    {
+      "file": "SS23.host-support.json",
+      "bytes": 2293,
+      "sha256": "c4f61373642e39b1feb4578a1e47cc2472f0449f12bae601e33218a299bee45e",
+      "status": "RECOVERED"
+    },
+    {
+      "file": "SS23.observed.json",
+      "bytes": 1288783,
+      "sha256": "3dc9b7528cd048dc8159fb9b8efd5adbb914bf1bb37b6e12852964672d1ef59f",
+      "status": "RECOVERED"
+    },
+    {
+      "file": "SS23.plan-check.json",
+      "bytes": 457,
+      "sha256": "a3e3b9d2a4326d1ecbdacdbbd7afad661d62d497cfadfcf70bffcc7cfe4b6edf",
+      "status": "RECOVERED"
+    },
+    {
+      "file": "SS23.plan.json",
+      "bytes": 14580,
+      "sha256": "96f434ebb68100630f13623f4258d4dafb934030fd13d228ae5bd9b42696959e",
+      "status": "RECOVERED"
+    },
+    {
+      "file": "SS23.proof.json",
+      "bytes": 8973,
+      "sha256": "f8b3c18e4afbbee0dd5869e81148ced226b8bbabca22608f601889fe99d89ad3",
+      "status": "RECOVERED"
+    },
+    {
+      "file": "SS23.race-observed.json",
+      "bytes": 4322,
+      "sha256": "9c30a7b072e8bb4bae2d787b6b872b66ba3a8d128bc3a477d670eba355ed7f29",
+      "status": "RECOVERED"
+    },
+    {
+      "file": "SS23.race-receipt.json",
+      "bytes": 5144,
+      "sha256": "2f714fa49b002b66269d1b15e26829f4ea454b20b2384a48d778f16420d4be89",
+      "status": "RECOVERED"
+    },
+    {
+      "file": "SS23.regression-receipt.json",
+      "bytes": 4925,
+      "sha256": "aa825a592d6c8963e30c58bc7a1e36c85bfdac0cfe17c516602667ba7cb607dd",
+      "status": "RECOVERED"
+    },
+    {
+      "file": "SS23.result.json",
+      "bytes": 1344701,
+      "sha256": "b6ae0d63f7232b4a0f84da781cfb7c0afea9a2146330476d863f43afdd775a67",
+      "status": "RECOVERED"
+    },
+    {
+      "file": "SS23.snapshot.json",
+      "bytes": 2968,
+      "sha256": "2b1d05d365cf1c5c9a2fa7917589e33c9bdb9245f824044169b6453cc7837ea9",
+      "status": "RECOVERED"
+    },
+    {
+      "file": "SS23.source.json",
+      "bytes": 2812,
+      "sha256": "ddeb1e6fa691ae5eeeb0ab2c55ce4056ef4983dcdb6931bfc9512039d2faa20f",
+      "status": "RECOVERED"
+    },
+    {
+      "file": "SS23.test.ts",
+      "bytes": 10121,
+      "sha256": "64984ce4c23df54a01e86cc02b01744e056e8cd316244983ae0761bd4587dd98",
+      "status": "RECOVERED"
+    },
+    {
+      "file": "SS23.variants-receipt.json",
+      "bytes": 4503,
+      "sha256": "1a5987232ecc3d7529410e3531ea6292d7f020f1750b0c5b33a48879f857a58a",
+      "status": "RECOVERED"
+    }
+  ],
+  "missingOriginal": [
+    "MISSING_ORIGINAL: standalone raw provider wire bytes were not captured (offline synthetic provider only)",
+    "MISSING_ORIGINAL: force-copy-negative full classification request object was not present in the saved observed row; declared input remains in result/test/source",
+    "MISSING_ORIGINAL: actual host selected/read/applied/verified evidence never existed (NOTRUN)"
+  ],
+  "patch": {
+    "status": "NOT_PRESENT",
+    "reason": "No product modification or patch was created in the original authorized test task; no patch fabricated for publication."
+  }
+}

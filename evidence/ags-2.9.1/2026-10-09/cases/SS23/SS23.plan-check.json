@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:7a296425c9ce910c26b35108443207e91baf956b1fbbef7199f1783f3d248b88",
+  "caseIds": [
+    "SS23/normal",
+    "SS23/irrelevant-baseline",
+    "SS23/missing-raw-cs",
+    "SS23/force-copy-negative",
+    "SS23/optional-uncertain-independent-partial",
+    "SS23/dedup-blocked",
+    "SS23/force-copy-proof-limit",
+    "SS23/acceptance-cancel-race"
+  ]
+}

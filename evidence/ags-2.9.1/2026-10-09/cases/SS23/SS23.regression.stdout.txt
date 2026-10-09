@@ -1,0 +1,9 @@
+
+ RUN  v5.0.0 <CANDIDATE_CHECKOUT>
+
+
+ Test Files  2 passed (2)
+      Tests  6 passed | 58 skipped (64)
+   Start at  02:58:24
+   Duration  3.01s (tests 74%, transform 15%, import 11%)
+

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:b221b7089abf6c0a63a2fb74fe58bb23e42930bfed1065011d95284c2f08dc90",
+  "reportDigest": "sha256:16ec97f795bd11bad59fdc948e9934b6c2449a3d3a30c32d20abfd7fd54e92fa",
+  "issues": [
+    "REQUIRED SS23/normal: NOT_RUN — Fixed-candidate contract tests ran; product source modification prohibited, so red/green sensitivity was NOTRUN. Actual AGENT choice/host-live also NOTRUN. See SS23.variants-receipt.json and SS23.race-receipt.json for actual PASS/FAIL evidence; no repaired green exists.",
+    "REQUIRED SS23/irrelevant-baseline: NOT_RUN — Fixed-candidate contract tests ran; product source modification prohibited, so red/green sensitivity was NOTRUN. Actual AGENT choice/host-live also NOTRUN. See SS23.variants-receipt.json and SS23.race-receipt.json for actual PASS/FAIL evidence; no repaired green exists.",
+    "REQUIRED SS23/missing-raw-cs: NOT_RUN — Fixed-candidate contract tests ran; product source modification prohibited, so red/green sensitivity was NOTRUN. Actual AGENT choice/host-live also NOTRUN. See SS23.variants-receipt.json and SS23.race-receipt.json for actual PASS/FAIL evidence; no repaired green exists.",
+    "REQUIRED SS23/force-copy-negative: NOT_RUN — Fixed-candidate contract tests ran; product source modification prohibited, so red/green sensitivity was NOTRUN. Actual AGENT choice/host-live also NOTRUN. See SS23.variants-receipt.json and SS23.race-receipt.json for actual PASS/FAIL evidence; no repaired green exists.",
+    "REQUIRED SS23/optional-uncertain-independent-partial: NOT_RUN — Fixed-candidate contract tests ran; product source modification prohibited, so red/green sensitivity was NOTRUN. Actual AGENT choice/host-live also NOTRUN. See SS23.variants-receipt.json and SS23.race-receipt.json for actual PASS/FAIL evidence; no repaired green exists.",
+    "REQUIRED SS23/dedup-blocked: NOT_RUN — Fixed-candidate contract tests ran; product source modification prohibited, so red/green sensitivity was NOTRUN. Actual AGENT choice/host-live also NOTRUN. See SS23.variants-receipt.json and SS23.race-receipt.json for actual PASS/FAIL evidence; no repaired green exists.",
+    "REQUIRED SS23/force-copy-proof-limit: NOT_RUN — Fixed-candidate contract tests ran; product source modification prohibited, so red/green sensitivity was NOTRUN. Actual AGENT choice/host-live also NOTRUN. See SS23.variants-receipt.json and SS23.race-receipt.json for actual PASS/FAIL evidence; no repaired green exists.",
+    "REQUIRED SS23/acceptance-cancel-race: NOT_RUN — Fixed-candidate contract tests ran; product source modification prohibited, so red/green sensitivity was NOTRUN. Actual AGENT choice/host-live also NOTRUN. See SS23.variants-receipt.json and SS23.race-receipt.json for actual PASS/FAIL evidence; no repaired green exists."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

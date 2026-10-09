@@ -1,0 +1,47 @@
+{
+  "executionKind": "host-live",
+  "status": "NOTRUN",
+  "classificationConfigPresent": false,
+  "hostAttestationEnvironmentPresent": false,
+  "currentCallableAGSClassificationTools": [],
+  "nativeHostCalls": 0,
+  "supportedPath": {
+    "mcpConfig": ".mcp.json: node mcp-server/dist/server.mjs; AGENT_GOVERNANCE_HOST_ATTESTATION=codex",
+    "hook": "hooks/hooks.json PreToolUse classify_skills/record_skill_selection => mcp-server/dist/host-attestation-hook.mjs --host=codex",
+    "gateway": [
+      "get_skill_inventory",
+      "classify_skills",
+      "record_skill_selection"
+    ],
+    "config": "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG -> approved runtime snapshot, central profiles, providerRuntimeRef/nativeAdapterDefinitionsRef",
+    "taskObservation": "mcp-server/src/index.ts:121 host session board lastPromptAt/sourceRef",
+    "nativeAdapterDefinitionFields": [
+      "adapterId",
+      "host",
+      "executable",
+      "workingDirectory",
+      "approvalRef",
+      "capabilityEvidenceRef",
+      "retryPolicyVerified",
+      "retryPolicyEvidenceRef",
+      "isolationEvidenceRef",
+      "isolationArgs",
+      "timeoutMs",
+      "maximumOutputBytes"
+    ]
+  },
+  "missingInputs": [
+    "Connected authorized AGS tools and genuine exact-call host hook observations",
+    "Approved classification config and inventory/taxonomy bound qualified central profile",
+    "For real native/provider route: approved route + capability/no-retry/isolation evidence + budget/allowance and prior/unknown consumption",
+    "Current host-owned task revision/cancellation source and real installed/enabled/supported skills",
+    "SS23 actual AGENT reasoning independent of recommendations, source-specific reasons, read/apply/verify artifact bindings"
+  ],
+  "notes": [
+    "An executable alone proves no approved subscription/API/free-cost/qualified route.",
+    "Host-live mock advice could verify agent behavior separately; no real JEV is required for that mock path. Provider-live integration remains NOTRUN by API0 constraint.",
+    "Current production gateway does not supply InventoryOptions installedSkillIds/hostSupportedSkillIds; known host-active supply gap statically confirmed only, no new live finding."
+  ],
+  "codexExecutablePresent": true,
+  "claudeExecutablePresent": false
+}
