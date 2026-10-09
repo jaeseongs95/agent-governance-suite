@@ -1,0 +1,182 @@
+{
+  "caseId": "SS26",
+  "title": "정본 metadata 변경과 cache 무효화",
+  "runId": "run-20261009T074426Z-iwxQGQST-preparation",
+  "state": "PREPARATION_COMPLETE_WAITING_FOR_PARENT",
+  "productTest": "NOT_RUN",
+  "actualClaudeAPITest": "NOT_RUN",
+  "hostStages": {
+    "selected": "NOT_RUN",
+    "read": "NOT_RUN",
+    "applied": "NOT_RUN",
+    "verified": "NOT_RUN"
+  },
+  "targetCandidateReportedOnly": {
+    "label": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "independentSourceVerdict": "NOT_RECEIVED",
+    "remotePublicationVerification": "NOT_RECEIVED",
+    "tested": false
+  },
+  "claudeCLI": {
+    "path": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+    "exists": true,
+    "version": "2.1.286 (Claude Code)",
+    "onDefaultPATH": false,
+    "executableSHA256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+    "localCommandsOnly": [
+      "--version",
+      "--help"
+    ],
+    "observedHelpFlags": [
+      "--bare",
+      "--model",
+      "--max-budget-usd",
+      "--output-format",
+      "--plugin-dir",
+      "--mcp-config",
+      "--settings",
+      "--print"
+    ],
+    "authSecretPresent": true,
+    "apiAuthValidated": false,
+    "persistentAuthChanges": false,
+    "authSecretValueDisclosed": false
+  },
+  "environment": {
+    "node": "v24.19.0",
+    "git": "git version 2.52.0",
+    "timezone": "Etc/UTC",
+    "networkPolicyChanged": false,
+    "permissionsChanged": false
+  },
+  "instructions": {
+    "readSourceCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+    "purpose": "Local preparation and evidence publication instructions only. This source checkout is not the product candidate tested. Re-read instructions on parent-verified candidate before execution.",
+    "files": [
+      {
+        "path": "AGENTS.md",
+        "SHA256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827"
+      },
+      {
+        "path": "skills/test-engineering/SKILL.md",
+        "SHA256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/SKILL.md",
+        "SHA256": "eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/SKILL.md",
+        "SHA256": "1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109"
+      },
+      {
+        "path": "skills/orchestrator/SKILL.md",
+        "SHA256": "0bd44e1a780bb930c69f6880102ac3b4d662de3ecdcd16116a48d870aa971d87"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/test-design.md",
+        "SHA256": "fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/test-proof.md",
+        "SHA256": "7ac0a9d5031d32e5d2b3770a080c1629451903184dac1e38e240812c6fc91e1d"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/cli.md",
+        "SHA256": "42d409ec8fd0f39c491dfdeb18da3f3d15d9fb518c82a8d9f69ed0ae87a59f69"
+      },
+      {
+        "path": "skills/change-scope-guardian/SKILL.md",
+        "SHA256": "4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+      },
+      {
+        "path": "skills/change-scope-guardian/references/entry-details.md",
+        "SHA256": "d164e59584763265a4bd8ccfd6a4ee75560f1df4ef30cd44dee68d814baf185b"
+      },
+      {
+        "path": "skills/change-scope-guardian/references/path-policy.md",
+        "SHA256": "8165defb0cb02f683718f8c6c927b0455f30d2120f3d4d6e0a971247c912a56d"
+      },
+      {
+        "path": "skills/change-scope-guardian/references/verdict-rules.md",
+        "SHA256": "71d8e964c03874b8bdcaef4e21487a56d672d59553da0c01276e4896a8fc1c28"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/SKILL.md",
+        "SHA256": "eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/references/entry-details.md",
+        "SHA256": "13dc04ff9d74e17f2d0bb6d69583a2c502dc5c69766d9a4ed91a59c0c5741154"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/references/risk-matrix.md",
+        "SHA256": "0377275e0487f9823bed76cd3541e0caa5f3bf030ea407fee5ad17b0f761c801"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/references/approval-and-authority.md",
+        "SHA256": "471afb623db2b67f45465f924eec5426d470dafa0c92bcad14b7bd16d0c16334"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/references/recovery-requirements.md",
+        "SHA256": "60a0bded3a1453092e2d02469393e39f3709f0810e0e4c076628854c4d7d54af"
+      }
+    ],
+    "workspaceAgentsSkillsPresent": false,
+    "repositoryAgentsSkillsPresent": false,
+    "evidenceBranchProductInstructionsPresent": false,
+    "requestedReferenceMissingInInstructionCheckout": "skills/orchestrator/references/skill-classification.md"
+  },
+  "resumeConditions": [
+    "Parent supplies verified final candidate commit/tree with independent SOURCE verdict and fixed remote verification; replace reported-only R17 if parent selects a different verified candidate.",
+    "Parent supplies common fixed Claude model/revision, reasoning/options, successful API authentication procedure, explicit paid-call go-ahead, permitted tool/permission settings and relevant prerequisite results.",
+    "Re-read final candidate AGENTS.md and applicable SKILL.md and classification reference; confirm fixture/oracle bindings and test imports without changing criteria.",
+    "Confirm isolated host/plugin/MCP configuration, state storage ownership, current task/revision binding, host observation/receipt method and runner dependencies. No persistent auth, permission or network changes.",
+    "Confirm case allocation includes every preparatory call, token, cache, failed call and retry within USD 2; JEV remains disabled unless separately allocated."
+  ],
+  "claudeExecutionSteps": [
+    {
+      "step": 1,
+      "actor": "Sol",
+      "action": "Prepare isolated verified candidate and per-run fixture/artifact directories; hash candidate tree, original public test, input bytes and allowed immutable source paths. Stop on mismatch. Do not run product test."
+    },
+    {
+      "step": 2,
+      "actor": "Claude Code via parent-approved API authentication",
+      "action": "Start actual fixed-model Claude Code session using common settings. Read applicable instructions and frozen SS26 specification; originalPrompt/oracle remain null. Record actual invocation and usage without key values."
+    },
+    {
+      "step": 3,
+      "actor": "Claude Code",
+      "action": "Read real loader/request/service/gateway boundaries and preserved test source. Perform the mechanical case through host tools in an isolated disposable copy using original synthetic input bytes; run frozen-binding plus all 12 variants and six generated-field conflicts, field ownership/missing-condition probes and delete/disable in-flight checks. No product source edits or generated distribution changes."
+    },
+    {
+      "step": 4,
+      "actor": "Claude Code",
+      "action": "Capture actual host selection, body reads, application and verification with supported current-task/host receipts only where those stages actually occur. Mock provider judgments are not Claude semantic accuracy or host selection receipts. Null/unobserved stages remain NOT_RUN."
+    },
+    {
+      "step": 5,
+      "actor": "Sol",
+      "action": "Inspect raw receipts, candidate/test/input digests, exit/signal, per-variant assertions and host stage evidence. Keep failures, infrastructure blocks, timeouts, retries and mock boundaries explicit. Verify protected product paths unchanged and reconcile cost before any next call."
+    },
+    {
+      "step": 6,
+      "actor": "Sol",
+      "action": "Publish sanitized report/evidence/hash list only under a new SS26 run on existing evidence branch using fast-forward update; fetch fixed remote commit and compare all posted bytes."
+    }
+  ],
+  "preparedMechanicalArgv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/skill-classification/SS26.isolated.test.ts",
+    "--reporter=json",
+    "--outputFile=SS26-output/isolated.vitest.json"
+  ],
+  "argvStatus": "NOT_RUN; preserved public test copies are prepared inputs, not an instruction to test c6a8019. Runner path/API flags must be confirmed on parent-verified candidate.",
+  "productChanges": false,
+  "distributionChanges": false
+}

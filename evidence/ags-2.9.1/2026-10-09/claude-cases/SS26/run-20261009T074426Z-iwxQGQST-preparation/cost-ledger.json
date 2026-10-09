@@ -1,0 +1,24 @@
+{
+  "caseId": "SS26",
+  "runId": "run-20261009T074426Z-iwxQGQST-preparation",
+  "currency": "USD",
+  "softLimitUsd": 2,
+  "totalReservedAcross39CasesUsd": 78,
+  "consumptionTarget": false,
+  "calls": [],
+  "totals": {
+    "claudeCalls": 0,
+    "jevCalls": 0,
+    "otherPaidModelCalls": 0,
+    "preparatoryPaidCalls": 0,
+    "failedCalls": 0,
+    "retries": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "cacheCreationInputTokens": 0,
+    "actualCostUsd": 0
+  },
+  "modelConfiguration": "WAITING_FOR_PARENT",
+  "stopRule": "Before each paid invocation reconcile all recorded and uncertain costs plus next-call bound. Stop and report when near USD 2, cost accounting is incomplete or next call may exceed allocation. No automatic retries; failures and cache usage count. JEV is not allocated."
+}

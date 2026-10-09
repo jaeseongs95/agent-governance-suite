@@ -1,0 +1,786 @@
+{
+  "caseId": "SS26",
+  "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "sourceTree": "9c49cc011a10c23ed135b1c020e7577ff12a2370",
+  "hashAlgorithm": "SHA256 raw bytes",
+  "checkedAt": "2026-10-09T07:46:37.061033+00:00",
+  "manifestPayloadCount": 107,
+  "sha256sumEntryCount": 108,
+  "fixedCommitFilesCount": 109,
+  "manifestMismatches": [],
+  "sha256sumMismatches": [],
+  "fixedBlobMismatches": [],
+  "embeddedBaselineCurrentSourceCount": 121,
+  "embeddedSourceDigestMismatches": [],
+  "files": [
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/README.md",
+      "bytes": 3133,
+      "SHA256": "395059e5e0fce49086a4ddc824f58ef38d8dbb82cdccc8926f7499030c610deb",
+      "gitBlob": "0fb37ff3d5982c8ef371fbb3cd07c8b1110d2a03",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/SHA256SUMS",
+      "bytes": 11743,
+      "SHA256": "fe183bfef80eeccc1ba8ca8dc58dbc6be1945c3305fc8680466faae5f8bf41fa",
+      "gitBlob": "909cbe815fc93b0e6dd649f6a9027e9da6cf0668",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/SS26.embedded-source.json",
+      "bytes": 2670,
+      "SHA256": "bab77eb04da7f60ecd1b179b86e5744218505ccac7a7456767a5b4d999eca3db",
+      "gitBlob": "ace47a8bda018b26d2b7eb74854537bf25240a68",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/SS26.observations.json",
+      "bytes": 798402,
+      "SHA256": "a1d06f49ffdb5aa19f059cdaea7b7cd8f39c060e06573c8f89ac4661f28a53fb",
+      "gitBlob": "e01beacaf49833f1483f3a225059ff181d53bf63",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/SS26.r1.observations.json",
+      "bytes": 601097,
+      "SHA256": "2c233ad67655bd23b11d61c0657f88ff57101f55bd951f90e1b2dcfb83e82e76",
+      "gitBlob": "af863b389253d041eda244f936b4bad4bcf534f0",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/applicability.observation.json",
+      "bytes": 72348,
+      "SHA256": "9e0ce10f48cae8b7d9e430b66975bb746c912d9ba8a5f44f08990b22cf9fbcf8",
+      "gitBlob": "3cca7c25353a6dc423013381b033d2d2abf06d1c",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/candidate.snapshot.json",
+      "bytes": 2061,
+      "SHA256": "c9677e9428d94987eb4ded86959da03f1931ca80558bc0a861d02f596ff33192",
+      "gitBlob": "0a22a1694da641b1fcba2a723439bad4548385c6",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/delete.observation.json",
+      "bytes": 63675,
+      "SHA256": "cf5309c7201a08e7c7c30db673ccac1b5c5e51056fe64b095d6ee99d9e412e58",
+      "gitBlob": "c487578ee51df9efcac849d4923d95f4ff27c6c4",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/description.observation.json",
+      "bytes": 67443,
+      "SHA256": "19a4ae8218fa8d3b46f5e35cd554b35c83087655ea672c95b22809b01045bd9f",
+      "gitBlob": "c7946107210304d796bc39195584e0ec3a3dfa1b",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/disable.observation.json",
+      "bytes": 82527,
+      "SHA256": "d6c2142d73f0adbf501b374633287e6a8ceb47e2f2776df716389a63f351d73c",
+      "gitBlob": "5f1a2397491ec56d8bd609cf08eec2455ebc1197",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/duplicate-id.observation.json",
+      "bytes": 48596,
+      "SHA256": "d6f82402e0f9dde4e3d208f9f62b5c54d9d331d41cd658616967f053b8318bad",
+      "gitBlob": "2ea1fedc2edb5cadddb23e007b7d5e227e11f2c6",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/engineering-plan-result.json",
+      "bytes": 511,
+      "SHA256": "bf1d273a0ed0ffd57cc145259eb952763deecb51c6ca3589a1820f7a067cbde9",
+      "gitBlob": "2d9e5e601562f7e20108d74d236ac3aea47702e3",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/engineering-test-plan.json",
+      "bytes": 20594,
+      "SHA256": "273afcfb93212f5a20d2c169a5c256a2a9a916af486443711e189114492d7446",
+      "gitBlob": "5d709798ab06e9b64f286df4a13d3e0ccd002ce7",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/engineering-test-proof.json",
+      "bytes": 10448,
+      "SHA256": "5a4743f1037a637fae14324a6f93ac2a5d2b1bb7c4dcfc5431289f3a8366ffc6",
+      "gitBlob": "4fe8e7090acdfa80ac54e4bea8a23e599e958f04",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/engineering-test-result.json",
+      "bytes": 4218,
+      "SHA256": "c35776dbe06c6bbed5d4590120a6916bef1aefaf0c72e27ce93df6c70d7a5718",
+      "gitBlob": "3ebd61b6e521a79c2020a2b52f918dc95f9d3c8e",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/exclusion.observation.json",
+      "bytes": 72315,
+      "SHA256": "99600fc241959ede4018f9a18dd6b61c7ed9af2786a967d9b4dfe5dd711b54e6",
+      "gitBlob": "6c409a732c0a96573dd7d33fde468dec627ce4f8",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/existing.command.json",
+      "bytes": 685,
+      "SHA256": "360d8359e5704fd07fc1333482d2d5b9bcaa7f93a133fec97cba88457347bae2",
+      "gitBlob": "822873b9cffb497fae68fbd6ddc49b3a0208f967",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/existing.stderr.log",
+      "bytes": 0,
+      "SHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/existing.stdout.log",
+      "bytes": 60,
+      "SHA256": "f7ac12d3c46fa63ba676df854a88fc82f9d10707c03d619ad77f905dbbbdaa39",
+      "gitBlob": "2589a18663e389c0a492bee8f3acbf24a905b37a",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/existing.vitest.json",
+      "bytes": 3052,
+      "SHA256": "8664f2ed4c6e9721fe1252637200e7c845303bd6a44011019c21e68cae3fcebe",
+      "gitBlob": "d8cecd6e50b61b38d9a903934fa00a1042f3455c",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/host-readiness.json",
+      "bytes": 1478,
+      "SHA256": "83a8b24e72eb435e50492e0f550f6fcce4f22559112f28e2746ff57ad3f8471a",
+      "gitBlob": "e3de835531014582f030ce911b05ec64a3157acd",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/id-conflict.observation.json",
+      "bytes": 47817,
+      "SHA256": "c433b06682e4c75284b6702e144ab02908cde23b30bec526ae13cd81ea8a04b1",
+      "gitBlob": "4d6ff685cd3e5603a024438ef49c10d7873b553e",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/isolated.command.json",
+      "bytes": 670,
+      "SHA256": "c85f775ef40ded0b79757c246722126ae10951530827a3bc63f5426324315280",
+      "gitBlob": "d0d07b03bdc726daedc627f9455fdb41c9e6a309",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/isolated.r1.vitest.json",
+      "bytes": 9547,
+      "SHA256": "5ccb1edd8df81dbe8e94fcd5649262b3de499e38ce78e62808b60c5c862246f2",
+      "gitBlob": "c4f101175ddb18c7f928d12d5cbe8d25d217ff40",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/isolated.stderr.log",
+      "bytes": 0,
+      "SHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/isolated.stdout.log",
+      "bytes": 60,
+      "SHA256": "705a59b663a7f75c9ddbddc8ee335cbdfcace09b984adc51ed38702a97bac051",
+      "gitBlob": "d1eefd4dc77196a811b6017fa7a8eda07f9f094d",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/isolated.vitest.json",
+      "bytes": 9543,
+      "SHA256": "6cdd7a67c7bc6ab15f85383961fdefe9fa01f3c3c36c2cdc6ccf633bb2269162",
+      "gitBlob": "08f76f469ac469f50e04f6b0ab444ed7b03aa435",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/manifest.json",
+      "bytes": 58356,
+      "SHA256": "e4187dd90c12a78aeb41e93d9a5d22cd78eca3957ae03db3f77219856aaa258c",
+      "gitBlob": "23595190db338127d7486b7a096c2c6f166da14f",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/missing-description.observation.json",
+      "bytes": 47619,
+      "SHA256": "cff3b46b04a7fc3966ccd4329e5db238ffbeec9857ea98b6f34e29281587a35e",
+      "gitBlob": "80b29861329e42a818860a15f81adfd126b20117",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/new-skill.observation.json",
+      "bytes": 71011,
+      "SHA256": "cf34080b67e2754f74de1b484dd6301942b2958abd9f9c979f600cb32009ffe1",
+      "gitBlob": "b36296faac860567af77b0f543e6b37e7ae0f660",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/public.result.json",
+      "bytes": 822712,
+      "SHA256": "48879c9e1b3e93cdea4ad951740296a7786d0c251c8e661c20c9bc9ff876bc3e",
+      "gitBlob": "f7e5d7ce86ea95c2337aeddb5f118697ce2d520f",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/publication-provenance.json",
+      "bytes": 2269,
+      "SHA256": "99c924e0427fc4337ab97c6b2aa103a8685fa4aeebe1b3d51060ecbe2497d358",
+      "gitBlob": "fa23039bea9e7a9f835427ca05159a64e93c8b8b",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/repro/COMMANDS.txt",
+      "bytes": 1385,
+      "SHA256": "eca01975759f5e7141004f29479a7c0971fbf5c9dcaf976667f674ada4613007",
+      "gitBlob": "8c427715853a07a445a363af7ddb9821a8873038",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/repro/SS26.isolated.r1.test.ts",
+      "bytes": 19179,
+      "SHA256": "d732ce757d0ea1d8882d80f1715650646b605de425eed4a2eac5c873d12c6369",
+      "gitBlob": "1c58c62ff3c1126d8886999aec1a786b319502bf",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/repro/SS26.isolated.test.ts",
+      "bytes": 21675,
+      "SHA256": "9df6c7da1675704d954deffac77560d1a3bf021059c6564f2f09d07d25e25597",
+      "gitBlob": "080be35919a87f619a8e28b7b38c6cb621ddc264",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/scope-files.json",
+      "bytes": 458,
+      "SHA256": "ffc4db5cf4988fc546e25f17173342bcfa623a91b70b3d2151b875e77fece4e8",
+      "gitBlob": "4998c9d61ac0a99230dcacd4fb58a4eb2ca3ee77",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/applicability/skills/complete/SKILL.md",
+      "bytes": 171,
+      "SHA256": "7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a",
+      "gitBlob": "ebe0bae20e20b6f8d25b32046c2b5575c6978e6c",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/applicability/skills/complete/classification.json",
+      "bytes": 635,
+      "SHA256": "7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf",
+      "gitBlob": "6b7ee5a14ad3dc8c315a40f7d22e8a0f7a474d14",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/applicability/skills/registry.json",
+      "bytes": 1217,
+      "SHA256": "139779b4646f69d3b2c07e0de1c1699eea2f9bdf3470373ec4d404511c438218",
+      "gitBlob": "543a6d3630bfec6ab00fff516d5cea3eef23934e",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/applicability/skills/subject/SKILL.md",
+      "bytes": 184,
+      "SHA256": "56815e06903ab7e87d45be82de33dcf87ea3bfe1b0823d34f14c2b06eb0dbc7f",
+      "gitBlob": "efcee80727f46dfc3a9b455f9f0a78ea04de9e7b",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/applicability/skills/subject/classification.json",
+      "bytes": 445,
+      "SHA256": "1f20e9ac00e8fd0f468196692c49af27c56cb54a135db208255488743849bb65",
+      "gitBlob": "73a0622e8fa1c6f7989198a56d5af0b99ebe1522",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/delete/skills/complete/SKILL.md",
+      "bytes": 171,
+      "SHA256": "7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a",
+      "gitBlob": "ebe0bae20e20b6f8d25b32046c2b5575c6978e6c",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/delete/skills/complete/classification.json",
+      "bytes": 635,
+      "SHA256": "7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf",
+      "gitBlob": "6b7ee5a14ad3dc8c315a40f7d22e8a0f7a474d14",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/delete/skills/registry.json",
+      "bytes": 539,
+      "SHA256": "60123caf0d3ebc820608c1d63b9644133a228d5fa79780d8a151aa24afc8f50e",
+      "gitBlob": "ac8d6c383a2a59c2b25845891170311a98ff5d24",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/delete-flight/skills/complete/SKILL.md",
+      "bytes": 171,
+      "SHA256": "7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a",
+      "gitBlob": "ebe0bae20e20b6f8d25b32046c2b5575c6978e6c",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/delete-flight/skills/complete/classification.json",
+      "bytes": 635,
+      "SHA256": "7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf",
+      "gitBlob": "6b7ee5a14ad3dc8c315a40f7d22e8a0f7a474d14",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/delete-flight/skills/registry.json",
+      "bytes": 539,
+      "SHA256": "60123caf0d3ebc820608c1d63b9644133a228d5fa79780d8a151aa24afc8f50e",
+      "gitBlob": "ac8d6c383a2a59c2b25845891170311a98ff5d24",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/description/skills/complete/SKILL.md",
+      "bytes": 171,
+      "SHA256": "7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a",
+      "gitBlob": "ebe0bae20e20b6f8d25b32046c2b5575c6978e6c",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/description/skills/complete/classification.json",
+      "bytes": 635,
+      "SHA256": "7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf",
+      "gitBlob": "6b7ee5a14ad3dc8c315a40f7d22e8a0f7a474d14",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/description/skills/registry.json",
+      "bytes": 1217,
+      "SHA256": "139779b4646f69d3b2c07e0de1c1699eea2f9bdf3470373ec4d404511c438218",
+      "gitBlob": "543a6d3630bfec6ab00fff516d5cea3eef23934e",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/description/skills/subject/SKILL.md",
+      "bytes": 191,
+      "SHA256": "e1513e20d48ffee2acc54b8a552f7e476aa1c2df8b8630d262684db1b75814d8",
+      "gitBlob": "98978c52d2f0f0236c79181032f7dce586062cb4",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/description/skills/subject/classification.json",
+      "bytes": 633,
+      "SHA256": "56d6b44d4fdad102dcdc11d1a2dedeab03462a1662485ddcbe3b8384e6924ad6",
+      "gitBlob": "71c80e9ab3ac3fffa8c3fe0d9e320166d25a298b",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/disable/skills/complete/SKILL.md",
+      "bytes": 171,
+      "SHA256": "7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a",
+      "gitBlob": "ebe0bae20e20b6f8d25b32046c2b5575c6978e6c",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/disable/skills/complete/classification.json",
+      "bytes": 635,
+      "SHA256": "7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf",
+      "gitBlob": "6b7ee5a14ad3dc8c315a40f7d22e8a0f7a474d14",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/disable/skills/registry.json",
+      "bytes": 1028,
+      "SHA256": "b2309b30060001a00bf95a3793d6f5f090739b9e7986ffe7ca89ccee04c3212d",
+      "gitBlob": "e1d90a8086eaaa90be9cc03f7ad7d61e0c9949f1",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/disable/skills/subject/SKILL.md",
+      "bytes": 170,
+      "SHA256": "4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30",
+      "gitBlob": "9520888a41a283001be179a7fb628c8215e04b06",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/disable/skills/subject/classification.json",
+      "bytes": 633,
+      "SHA256": "d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d",
+      "gitBlob": "2b8d107ceae90fe7c1ae69702754713fb23e21e9",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/disable-flight/skills/complete/SKILL.md",
+      "bytes": 171,
+      "SHA256": "7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a",
+      "gitBlob": "ebe0bae20e20b6f8d25b32046c2b5575c6978e6c",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/disable-flight/skills/complete/classification.json",
+      "bytes": 635,
+      "SHA256": "7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf",
+      "gitBlob": "6b7ee5a14ad3dc8c315a40f7d22e8a0f7a474d14",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/disable-flight/skills/registry.json",
+      "bytes": 1028,
+      "SHA256": "b2309b30060001a00bf95a3793d6f5f090739b9e7986ffe7ca89ccee04c3212d",
+      "gitBlob": "e1d90a8086eaaa90be9cc03f7ad7d61e0c9949f1",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/disable-flight/skills/subject/SKILL.md",
+      "bytes": 170,
+      "SHA256": "4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30",
+      "gitBlob": "9520888a41a283001be179a7fb628c8215e04b06",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/disable-flight/skills/subject/classification.json",
+      "bytes": 633,
+      "SHA256": "d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d",
+      "gitBlob": "2b8d107ceae90fe7c1ae69702754713fb23e21e9",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/duplicate-id/skills/complete/SKILL.md",
+      "bytes": 171,
+      "SHA256": "7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a",
+      "gitBlob": "ebe0bae20e20b6f8d25b32046c2b5575c6978e6c",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/duplicate-id/skills/complete/classification.json",
+      "bytes": 635,
+      "SHA256": "7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf",
+      "gitBlob": "6b7ee5a14ad3dc8c315a40f7d22e8a0f7a474d14",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/duplicate-id/skills/registry.json",
+      "bytes": 1515,
+      "SHA256": "7fbfed13ac5db35075ed8f351ce5c9fdd147a4b1bb06e25497534e6f30a10a67",
+      "gitBlob": "33379e9305f00fd61d5d4058fc8cf2e889d75fed",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/duplicate-id/skills/subject/SKILL.md",
+      "bytes": 170,
+      "SHA256": "4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30",
+      "gitBlob": "9520888a41a283001be179a7fb628c8215e04b06",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/duplicate-id/skills/subject/classification.json",
+      "bytes": 633,
+      "SHA256": "d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d",
+      "gitBlob": "2b8d107ceae90fe7c1ae69702754713fb23e21e9",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/exclusion/skills/complete/SKILL.md",
+      "bytes": 171,
+      "SHA256": "7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a",
+      "gitBlob": "ebe0bae20e20b6f8d25b32046c2b5575c6978e6c",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/exclusion/skills/complete/classification.json",
+      "bytes": 635,
+      "SHA256": "7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf",
+      "gitBlob": "6b7ee5a14ad3dc8c315a40f7d22e8a0f7a474d14",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/exclusion/skills/registry.json",
+      "bytes": 1217,
+      "SHA256": "139779b4646f69d3b2c07e0de1c1699eea2f9bdf3470373ec4d404511c438218",
+      "gitBlob": "543a6d3630bfec6ab00fff516d5cea3eef23934e",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/exclusion/skills/subject/SKILL.md",
+      "bytes": 178,
+      "SHA256": "f0410aebd96d73450cec0175ca180a04ec7e9cea2662c447233eb3d4fb006262",
+      "gitBlob": "9946b37fb6e1b17fb9237d1e676a758171e128a6",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/exclusion/skills/subject/classification.json",
+      "bytes": 445,
+      "SHA256": "3d036791a3f2cc91af869f924d9c8f7a2b8403754152c72a7ac3a897f70adafc",
+      "gitBlob": "30e34d14abd42de530e77a7982662dbc70d92f65",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/id-conflict/skills/complete/SKILL.md",
+      "bytes": 171,
+      "SHA256": "7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a",
+      "gitBlob": "ebe0bae20e20b6f8d25b32046c2b5575c6978e6c",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/id-conflict/skills/complete/classification.json",
+      "bytes": 635,
+      "SHA256": "7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf",
+      "gitBlob": "6b7ee5a14ad3dc8c315a40f7d22e8a0f7a474d14",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/id-conflict/skills/registry.json",
+      "bytes": 1027,
+      "SHA256": "9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf",
+      "gitBlob": "4b6ef42c2189f409054dc4f052c41124b1b6ed51",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/id-conflict/skills/subject/SKILL.md",
+      "bytes": 175,
+      "SHA256": "2a0c926ef6414ae201459f633129cc40e3a49b3efa776174179071bafcba9ca3",
+      "gitBlob": "72f38b75186df04bb3fd76b148724bb841352922",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/id-conflict/skills/subject/classification.json",
+      "bytes": 633,
+      "SHA256": "9996c031cac27a2a3fcb30bd438e8bce41864387e969418a657ec9198faf7bc9",
+      "gitBlob": "89cbd2ee75220bc2ce3bca5d800dfe1c6a45cf09",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/missing-description/skills/complete/SKILL.md",
+      "bytes": 171,
+      "SHA256": "7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a",
+      "gitBlob": "ebe0bae20e20b6f8d25b32046c2b5575c6978e6c",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/missing-description/skills/complete/classification.json",
+      "bytes": 635,
+      "SHA256": "7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf",
+      "gitBlob": "6b7ee5a14ad3dc8c315a40f7d22e8a0f7a474d14",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/missing-description/skills/registry.json",
+      "bytes": 1027,
+      "SHA256": "9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf",
+      "gitBlob": "4b6ef42c2189f409054dc4f052c41124b1b6ed51",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/missing-description/skills/subject/SKILL.md",
+      "bytes": 95,
+      "SHA256": "9150dac1fdad2475ec1e9f500d1ee90c29e6c3bcbc4fcf38e011ac524f989c03",
+      "gitBlob": "dd5cade27d60a75a520424604ad06a6d9b21c37f",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/missing-description/skills/subject/classification.json",
+      "bytes": 633,
+      "SHA256": "d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d",
+      "gitBlob": "2b8d107ceae90fe7c1ae69702754713fb23e21e9",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/new-skill/skills/complete/SKILL.md",
+      "bytes": 171,
+      "SHA256": "7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a",
+      "gitBlob": "ebe0bae20e20b6f8d25b32046c2b5575c6978e6c",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/new-skill/skills/complete/classification.json",
+      "bytes": 635,
+      "SHA256": "7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf",
+      "gitBlob": "6b7ee5a14ad3dc8c315a40f7d22e8a0f7a474d14",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/new-skill/skills/neutral-added/SKILL.md",
+      "bytes": 176,
+      "SHA256": "eb9bd9be33a8cc1986cd550bed795ae50d433c4bd80ef894c7f6db7495834c48",
+      "gitBlob": "f25ad937bb0813d154da45eef081e840102547f1",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/new-skill/skills/neutral-added/classification.json",
+      "bytes": 645,
+      "SHA256": "f9e5a1a7d589cfbc1aca0ff584c8c0d67a442bed10ffd20b72c72920faa3f0e6",
+      "gitBlob": "d68a0cf74997322d25e23df8dcca56e013e0e999",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/new-skill/skills/registry.json",
+      "bytes": 1527,
+      "SHA256": "a6187bef6a921bf41c33b8a98a93ac0a8371eda2f46bcb4e0e0f887aefcb972d",
+      "gitBlob": "157f9739a6d91f045ac90b2cee273be9c381711c",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/new-skill/skills/subject/SKILL.md",
+      "bytes": 170,
+      "SHA256": "4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30",
+      "gitBlob": "9520888a41a283001be179a7fb628c8215e04b06",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/new-skill/skills/subject/classification.json",
+      "bytes": 633,
+      "SHA256": "d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d",
+      "gitBlob": "2b8d107ceae90fe7c1ae69702754713fb23e21e9",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/source-generated-conflict/skills/classification-projection.json",
+      "bytes": 4744,
+      "SHA256": "623e4588aa70d8e95a2952030377434f0f81030616fb8d0f472e8a77530c3c07",
+      "gitBlob": "c0792b956621c956c49199040dbd6b0b9d6fd682",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/source-generated-conflict/skills/complete/SKILL.md",
+      "bytes": 171,
+      "SHA256": "7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a",
+      "gitBlob": "ebe0bae20e20b6f8d25b32046c2b5575c6978e6c",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/source-generated-conflict/skills/complete/classification.json",
+      "bytes": 635,
+      "SHA256": "7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf",
+      "gitBlob": "6b7ee5a14ad3dc8c315a40f7d22e8a0f7a474d14",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/source-generated-conflict/skills/registry.json",
+      "bytes": 1027,
+      "SHA256": "9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf",
+      "gitBlob": "4b6ef42c2189f409054dc4f052c41124b1b6ed51",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/source-generated-conflict/skills/subject/SKILL.md",
+      "bytes": 21,
+      "SHA256": "f0e4b16e3d88058bb98b3fb8e567d382ceac21803e6df25faf0789522e18da0f",
+      "gitBlob": "6104206ed4321d7dc04376dcc6bda89a4313e92b",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/source-generated-conflict/skills/subject/classification.json",
+      "bytes": 633,
+      "SHA256": "d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d",
+      "gitBlob": "2b8d107ceae90fe7c1ae69702754713fb23e21e9",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/taxonomy-conflict/skills/complete/SKILL.md",
+      "bytes": 171,
+      "SHA256": "7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a",
+      "gitBlob": "ebe0bae20e20b6f8d25b32046c2b5575c6978e6c",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/taxonomy-conflict/skills/complete/classification.json",
+      "bytes": 635,
+      "SHA256": "7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf",
+      "gitBlob": "6b7ee5a14ad3dc8c315a40f7d22e8a0f7a474d14",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/taxonomy-conflict/skills/registry.json",
+      "bytes": 1027,
+      "SHA256": "9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf",
+      "gitBlob": "4b6ef42c2189f409054dc4f052c41124b1b6ed51",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/taxonomy-conflict/skills/subject/SKILL.md",
+      "bytes": 170,
+      "SHA256": "4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30",
+      "gitBlob": "9520888a41a283001be179a7fb628c8215e04b06",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/taxonomy-conflict/skills/subject/classification.json",
+      "bytes": 633,
+      "SHA256": "72eaf62f21886d9eed42fc359c15a77a6fbdedfc0cdfebaf3402b299ea74629b",
+      "gitBlob": "3e247ce51049fa7f97054c0d7cfc443d23969dd9",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/version-conflict/skills/complete/SKILL.md",
+      "bytes": 171,
+      "SHA256": "7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a",
+      "gitBlob": "ebe0bae20e20b6f8d25b32046c2b5575c6978e6c",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/version-conflict/skills/complete/classification.json",
+      "bytes": 635,
+      "SHA256": "7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf",
+      "gitBlob": "6b7ee5a14ad3dc8c315a40f7d22e8a0f7a474d14",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/version-conflict/skills/registry.json",
+      "bytes": 1027,
+      "SHA256": "9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf",
+      "gitBlob": "4b6ef42c2189f409054dc4f052c41124b1b6ed51",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/version-conflict/skills/subject/SKILL.md",
+      "bytes": 170,
+      "SHA256": "72cb25a0368c2e43a6e8c7eaa6c2689008067ae92ffdc36ad9073b3cfcede15e",
+      "gitBlob": "ca0ff3c1bfa96e461a261d72060d1354b758d045",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/snapshots/version-conflict/skills/subject/classification.json",
+      "bytes": 633,
+      "SHA256": "0daebe94d6c0b9565b27f3ab6ab1eea542520c70985c111c3685c99b7f21a0d5",
+      "gitBlob": "fa8263bd1bd9bd8b7033da2b74a950361daf8c0e",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/source-generated-conflict.observation.json",
+      "bytes": 53382,
+      "SHA256": "bc5b42afd97efd4c96ec389a60a00198e761377177c395d9a42a8d7fcff2bfb5",
+      "gitBlob": "dc84799a0203b1347c384248a05ca3cae9c06ee8",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/taxonomy-conflict.observation.json",
+      "bytes": 57324,
+      "SHA256": "0dfe0626c28b000751a8ca5b2ec300171eff42f2e280d108e0cbf04649312c8a",
+      "gitBlob": "c18756a089c25890a2143709f2987d60a54e2e2b",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/tracked-diff.txt",
+      "bytes": 0,
+      "SHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "fixedCommitBlobEqual": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS26/version-conflict.observation.json",
+      "bytes": 47563,
+      "SHA256": "ca6d915d99cbc3d7d28e0bfdb939681330ff2c2482d3b7767404462135c81913",
+      "gitBlob": "3cd4e6467b5d906e86cd0d8f1fbcb6f10dfb5e20",
+      "fixedCommitBlobEqual": true
+    }
+  ],
+  "historicalBindings": {
+    "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "frozenOracleDigest": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "sourceSpecBodyDigest": "sha256:4f38a388d9db17c442cf2e89be304ead0782730424a53b2dcfb64181fc3160a7",
+    "meaning": "Recorded historical/canonical digests retained; complete corpus and original standalone source specification are not present in this public case package. Recheck corpus bindings on verified final candidate before execution."
+  }
+}

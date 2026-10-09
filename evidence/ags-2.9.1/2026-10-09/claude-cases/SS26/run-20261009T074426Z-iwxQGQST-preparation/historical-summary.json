@@ -1,0 +1,167 @@
+{
+  "caseId": "SS26",
+  "title": "정본 metadata 변경과 cache 무효화",
+  "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "historicalCandidate": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "executionKind": "offline-mock synthetic source snapshots; actual product loader/request/service/gateway; mock provider transport only",
+    "useAsFinalCandidate": false
+  },
+  "summary": {
+    "variantsExecuted": 12,
+    "variantsPass": 4,
+    "variantsFail": 8,
+    "bindingTestPass": 1,
+    "existingRegressionPassed": 2,
+    "existingRegressionSkipped": 4,
+    "fullSuiteRun": false,
+    "semanticAccuracy": null
+  },
+  "variants": [
+    {
+      "variant": "description",
+      "state": "PASS",
+      "failureLabels": []
+    },
+    {
+      "variant": "applicability",
+      "state": "PASS",
+      "failureLabels": []
+    },
+    {
+      "variant": "exclusion",
+      "state": "PASS",
+      "failureLabels": []
+    },
+    {
+      "variant": "new-skill",
+      "state": "PASS",
+      "failureLabels": []
+    },
+    {
+      "variant": "duplicate-id",
+      "state": "FAIL",
+      "failureLabels": [
+        "incomplete subject must not hide independent complete candidate at gateway"
+      ]
+    },
+    {
+      "variant": "missing-description",
+      "state": "FAIL",
+      "failureLabels": [
+        "incomplete subject must not hide independent complete candidate at gateway"
+      ]
+    },
+    {
+      "variant": "id-conflict",
+      "state": "FAIL",
+      "failureLabels": [
+        "incomplete subject must not hide independent complete candidate at gateway"
+      ]
+    },
+    {
+      "variant": "version-conflict",
+      "state": "FAIL",
+      "failureLabels": [
+        "incomplete subject must not hide independent complete candidate at gateway"
+      ]
+    },
+    {
+      "variant": "taxonomy-conflict",
+      "state": "FAIL",
+      "failureLabels": [
+        "incomplete subject must not hide independent complete candidate at gateway"
+      ]
+    },
+    {
+      "variant": "source-generated-conflict",
+      "state": "FAIL",
+      "failureLabels": [
+        "loader preserves complete candidate",
+        "incomplete subject must not hide independent complete candidate at gateway"
+      ]
+    },
+    {
+      "variant": "delete",
+      "state": "FAIL",
+      "failureLabels": [
+        "gateway rejects late advice after source deletion/disable"
+      ]
+    },
+    {
+      "variant": "disable",
+      "state": "FAIL",
+      "failureLabels": [
+        "gateway rejects late advice after source deletion/disable"
+      ]
+    }
+  ],
+  "exitCode": 1,
+  "hostStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "agentSelectedSkillIds": null,
+  "hostReceipt": null,
+  "findings": [
+    {
+      "id": "SS26-F1",
+      "severity": "HIGH",
+      "obligation": "Independent complete candidates must remain exposed when another description/source is incomplete or conflicting",
+      "variantIds": [
+        "duplicate-id",
+        "missing-description",
+        "id-conflict",
+        "version-conflict",
+        "taxonomy-conflict",
+        "source-generated-conflict"
+      ],
+      "cause": "Gateway returns NEEDS_INPUT for any inventory issue (gateway.ts:61), even when loader retains complete candidate. Projected-source loader also drops every candidate on a single HOST_SOURCE_STALE (inventory.ts:141).",
+      "actual": "5 canonical variants retain complete in loader, all six produce response:null and mock providerCalls:0 in gateway; generated mismatch returns skills:[] earlier.",
+      "evidence": [
+        "duplicate-id.observation.json",
+        "missing-description.observation.json",
+        "id-conflict.observation.json",
+        "version-conflict.observation.json",
+        "taxonomy-conflict.observation.json",
+        "source-generated-conflict.observation.json"
+      ],
+      "dedup": "One candidate-isolation obligation failure group, with gateway and projected-loader locations; do not count per variant. Not the previously reported duplicated metadata-condition parsing bug."
+    },
+    {
+      "id": "SS26-F2",
+      "severity": "MEDIUM",
+      "obligation": "Late source revision results must not remain current; final AGENT overwrite separately unobserved",
+      "variantIds": [
+        "delete",
+        "disable"
+      ],
+      "cause": "Gateway getCurrentSnapshot returns spread of initial inventoryDigest and checks task/runtime only (gateway.ts:85-88); index observeRuntime excludes skill metadata source bytes.",
+      "actual": "After subject removal/disable, delayed mock returns SUCCESS with old inventory and subject needed. agentSelectedSkillIds remains null; validateDecision with current digest returns STALE_inventoryDigest.",
+      "evidence": [
+        "delete.observation.json",
+        "disable.observation.json"
+      ],
+      "dedup": "Connect to previously known current-state/concurrency recheck gap; this is the source-metadata in-flight manifestation, not an extra duplicated race root. Host active membership supply gap was not reproduced: synthetic registry.enabled explicitly supplies the state."
+    }
+  ],
+  "missingOriginals": [
+    {
+      "artifact": "TEST-SPEC.seq7.ko.md",
+      "state": "MISSING_ORIGINAL",
+      "reason": "Source file absent at original test; embedded SS26 sourceSpec preserved. No reconstruction."
+    },
+    {
+      "artifact": "r1 version-specific stdout/stderr/command receipt",
+      "state": "MISSING_ORIGINAL",
+      "reason": "Only r1 Vitest JSON, observations, and test source were retained. Final-run logs are not relabeled as r1 logs."
+    }
+  ],
+  "originalPrompt": null,
+  "semanticOracle": null,
+  "semanticAccuracy": null,
+  "note": "Historical observations are evidence of prior behavior, not expected answers. No historical FAIL or NOT_RUN promoted to PASS."
+}
