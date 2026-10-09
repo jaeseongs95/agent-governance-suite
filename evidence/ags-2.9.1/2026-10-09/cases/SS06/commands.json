@@ -1,0 +1,32 @@
+{
+  "publicationRunsNoTests": true,
+  "originalCommand": [
+    "node",
+    "<existing-dependency-root>/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.mjs",
+    "--reporter=json",
+    "--outputFile=SS06.vitest.json"
+  ],
+  "originalCwd": "<original-evidence-dir>",
+  "originalExit": 0,
+  "reproductionCommandNotExecuted": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "--config",
+    "evidence/ags-2.9.1/2026-10-09/cases/SS06/vitest.config.mjs"
+  ],
+  "publicTestDerivativeStatus": "NOT_EXECUTED",
+  "patchStatus": "NONE_EXISTS",
+  "inputBytes": {
+    "encoding": "UTF-8",
+    "newlineAdded": false,
+    "bytes": 166,
+    "sha256": "75f0c91c90010fc64d161b265129746b45983a5a4c7c21762dee3e27080a9ecd",
+    "sourceFile": "SS06.fixture-extract.json",
+    "sourceField": "originalPrompt"
+  }
+}

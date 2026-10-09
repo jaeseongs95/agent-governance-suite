@@ -1,0 +1,18 @@
+{
+  "caseId": "SS06",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "scope": "Offline classification support/evaluator boundaries only; sourceSpec live outcome remains NOTRUN",
+  "prohibitions": [
+    "other-case execution",
+    "entire-suite execution",
+    "product-source modification",
+    "push",
+    "PR",
+    "release",
+    "JEV call",
+    "external vendor API call",
+    "Claude call",
+    "previous 21-run rerun",
+    "fabricated host receipt"
+  ]
+}

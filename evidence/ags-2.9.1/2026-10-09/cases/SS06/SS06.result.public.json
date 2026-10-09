@@ -1,0 +1,1782 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS06",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixturePath": "tests/skill-classification/fixtures.json",
+  "fixtureSHA256": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "requestedBranch": "codex/skill-classification-2.9.1",
+  "checkoutMode": "isolated detached worktree at fixed commit",
+  "overallStatus": "OFFLINE_COMPLETE_LIVE_NOTRUN",
+  "releaseAcceptance": "NOT_ASSESSED",
+  "API0": true,
+  "apiCalls": {
+    "JEV": 0,
+    "externalVendorAPI": 0,
+    "Claude": 0
+  },
+  "priorCompleted21RequestRunRerun": false,
+  "productSourceModified": false,
+  "pushPRRelease": false,
+  "originalPrompt": "이 순수 날짜 parser의 경계값·잘못된 입력·회귀 테스트 사례를 설계해 줘. 제품 코드와 테스트 코드를 쓰거나 실행하지는 마.",
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS06",
+    "fields": {
+      "입력": "“이 순수 날짜 parser의 경계값·잘못된 입력·회귀 테스트 사례를 설계해 줘. 제품 코드와 테스트 코드를 쓰거나 실행하지는 마.”",
+      "필수추천": "R={T}.",
+      "금지추천 또는 행동": "P·CR·SEC를 기본으로 추가; mock 결과를 테스트 실행 근거로 제출.",
+      "허용선택": "A={}.",
+      "보류조건": "요구나 parser 경계가 부족하면 추가 입력을 요청하되 T 적용성은 남긴다.",
+      "통과기준": "단일 전문 스킬로 충분하므로 O를 자동 추가하지 않는다.",
+      "증거": "E0, 사례 설계와 실행의 경계.",
+      "실행종류": "live."
+    },
+    "bodyDigest": "sha256:d57a325fce28d847a18276f780c655a130a13aa6f7fc8714105f6584c192b60b"
+  },
+  "oracle": {
+    "required": [
+      "test-engineering"
+    ],
+    "allowed": [],
+    "allowedConditions": {},
+    "forbidden": [
+      "ponytail",
+      "code-review",
+      "software-security-auditor",
+      "orchestrator"
+    ],
+    "notApplicable": [
+      "cs-engineering",
+      "korean-prose-editor",
+      "change-scope-guardian"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      },
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      },
+      {
+        "skillId": "change-scope-guardian",
+        "path": "skills/change-scope-guardian/SKILL.md",
+        "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+      }
+    ],
+    "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+  },
+  "frozenVariants": [
+    {
+      "variantId": "base",
+      "offlineStatus": "PASS",
+      "liveStatus": "NOTRUN",
+      "overallStatus": "NOTRUN",
+      "input": "이 순수 날짜 parser의 경계값·잘못된 입력·회귀 테스트 사례를 설계해 줘. 제품 코드와 테스트 코드를 쓰거나 실행하지는 마.",
+      "expected": {
+        "required": [
+          "test-engineering"
+        ],
+        "allowed": [],
+        "forbidden": [
+          "ponytail",
+          "code-review",
+          "software-security-auditor",
+          "orchestrator"
+        ],
+        "noProductOrTestCodeWritingOrExecution": true
+      },
+      "observed": {
+        "jevRaw": {
+          "state": "NOT_RUN",
+          "skillIds": null,
+          "selectionStatus": "NOT_RUN",
+          "hostReceipt": null
+        },
+        "vendorRaw": {
+          "state": "NOT_RUN",
+          "skillIds": null,
+          "selectionStatus": "NOT_RUN",
+          "hostReceipt": null
+        },
+        "combinedLive": {
+          "state": "NOT_RUN",
+          "skillIds": null,
+          "selectionStatus": "NOT_RUN",
+          "hostReceipt": null
+        },
+        "selectedLive": {
+          "state": "NOT_RUN",
+          "skillIds": null,
+          "selectionStatus": "NOT_RUN",
+          "hostReceipt": null
+        },
+        "syntheticAdviceStatus": "SUCCESS",
+        "syntheticAdviceNeeded": [
+          "test-engineering"
+        ],
+        "gatewayAgentSelectedSkillIds": null,
+        "selectionStatus": "PROPOSED",
+        "callerSelectionWithoutObservation": "HOST_SELECTION_NOT_OBSERVED"
+      },
+      "stages": {
+        "selected": {
+          "status": "NOTRUN",
+          "evidence": null
+        },
+        "read": {
+          "status": "NOTRUN",
+          "evidence": null
+        },
+        "applied": {
+          "status": "NOTRUN",
+          "evidence": null
+        },
+        "verified": {
+          "status": "NOTRUN",
+          "evidence": null
+        }
+      },
+      "evidence": [
+        "SS06.observations.json#base",
+        "SS06.observations.json#base-gateway-synthetic"
+      ],
+      "missingInputs": [
+        "Connected AGS MCP tools get_skill_inventory/classify_skills/record_skill_selection on the pinned installation",
+        "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG and its central fixed qualified profile registry, providerRuntimeRef, approved route/adapter and current budget or native allowance",
+        "Actual Codex host PreToolUse attestation hook, matching active session prompt/task observation and actor identity; caller hostReceipt must stay null",
+        "Host-discovered installed/enabled/supported inventory state for T (known supply gap)",
+        "Parser API/source or behavior contract, input grammar, supported year/date range, invalid-input policy and prior regression examples; absent in base, so do not invent exact expected date results",
+        "Actual AGENT reasons, selected IDs and design-only artifact plus later evidence tied to that artifact; parser product/test code execution remains prohibited by SS06 prompt"
+      ]
+    }
+  ],
+  "existingRegression": {
+    "status": "NOTRUN",
+    "reason": "Existing SS06 assertion is inside evaluation.test.ts test binds oracle to actual source bytes and preserves O boundaries, which also executes SS04/SS05 assertions. No SS06-exclusive original regression found; other-case execution forbidden. No name-filter PASS used."
+  },
+  "isolatedNewTests": {
+    "status": "PASS",
+    "total": 18,
+    "passed": 18,
+    "failed": 0,
+    "command": [
+      "node",
+      "<existing-dependency-root>/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "vitest.config.mjs",
+      "--reporter=json",
+      "--outputFile=SS06.vitest.json"
+    ],
+    "cwd": "<original-evidence-dir>",
+    "exit": 0,
+    "executionKind": "offline-isolated-unit/integration with synthetic in-process provider port",
+    "mockPortCalls": 1,
+    "providerCalls": 0,
+    "hostReceiptGenerated": false,
+    "records": [
+      {
+        "caseId": "SS06",
+        "variantId": "base-provenance",
+        "frozenVariant": false,
+        "status": "PASS",
+        "checkKind": "OFFLINE_DEVELOPER_CONTROL",
+        "input": {
+          "sourceSpec": {
+            "path": "TEST-SPEC.seq7.ko.md",
+            "section": "SS06",
+            "fields": {
+              "입력": "“이 순수 날짜 parser의 경계값·잘못된 입력·회귀 테스트 사례를 설계해 줘. 제품 코드와 테스트 코드를 쓰거나 실행하지는 마.”",
+              "필수추천": "R={T}.",
+              "금지추천 또는 행동": "P·CR·SEC를 기본으로 추가; mock 결과를 테스트 실행 근거로 제출.",
+              "허용선택": "A={}.",
+              "보류조건": "요구나 parser 경계가 부족하면 추가 입력을 요청하되 T 적용성은 남긴다.",
+              "통과기준": "단일 전문 스킬로 충분하므로 O를 자동 추가하지 않는다.",
+              "증거": "E0, 사례 설계와 실행의 경계.",
+              "실행종류": "live."
+            },
+            "bodyDigest": "sha256:d57a325fce28d847a18276f780c655a130a13aa6f7fc8714105f6584c192b60b"
+          },
+          "originalPrompt": "이 순수 날짜 parser의 경계값·잘못된 입력·회귀 테스트 사례를 설계해 줘. 제품 코드와 테스트 코드를 쓰거나 실행하지는 마.",
+          "oracle": {
+            "required": [
+              "test-engineering"
+            ],
+            "allowed": [],
+            "allowedConditions": {},
+            "forbidden": [
+              "ponytail",
+              "code-review",
+              "software-security-auditor",
+              "orchestrator"
+            ],
+            "notApplicable": [
+              "cs-engineering",
+              "korean-prose-editor",
+              "change-scope-guardian"
+            ],
+            "unadjudicated": [
+              "acceptance-evidence-validator",
+              "blocker-diagnostician",
+              "codex-token-usage-analyzer",
+              "context-continuity",
+              "coordinate-subagents",
+              "evaluation-validity-auditor",
+              "independent-audit-gate",
+              "independent-deliberation-panel",
+              "instruction-scope-resolver",
+              "iteration-frame-auditor",
+              "model-effort-advisor",
+              "mutation-risk-preflight",
+              "recovery-strategy-selector",
+              "session-board",
+              "task-contract",
+              "workspace-convention-profiler"
+            ],
+            "expectedSelection": "SELECTED",
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "requiredReasons": [],
+            "sourceRefs": [
+              {
+                "skillId": "test-engineering",
+                "path": "skills/test-engineering/SKILL.md",
+                "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+              },
+              {
+                "skillId": "ponytail",
+                "path": "skills/ponytail/SKILL.md",
+                "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+              },
+              {
+                "skillId": "code-review",
+                "path": "skills/code-review/SKILL.md",
+                "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+              },
+              {
+                "skillId": "software-security-auditor",
+                "path": "skills/software-security-auditor/SKILL.md",
+                "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+              },
+              {
+                "skillId": "orchestrator",
+                "path": "skills/orchestrator/SKILL.md",
+                "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+              },
+              {
+                "skillId": "cs-engineering",
+                "path": "skills/cs-engineering/SKILL.md",
+                "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+              },
+              {
+                "skillId": "korean-prose-editor",
+                "path": "skills/korean-prose-editor/SKILL.md",
+                "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+              },
+              {
+                "skillId": "change-scope-guardian",
+                "path": "skills/change-scope-guardian/SKILL.md",
+                "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+              }
+            ],
+            "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+          },
+          "variants": [
+            "base"
+          ]
+        },
+        "expected": "fixed commit/tree/fixture/oracle + all SS06 source bytes match",
+        "observed": {
+          "sourceRefsChecked": 8,
+          "status": "PASS"
+        },
+        "command": [
+          "node",
+          "<existing-dependency-root>/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.mjs",
+          "--reporter=json",
+          "--outputFile=SS06.vitest.json"
+        ],
+        "exit": 0,
+        "executionKind": "offline-isolated-test",
+        "API0": true,
+        "evidence": "SS06.observations.json#base-provenance"
+      },
+      {
+        "caseId": "SS06",
+        "variantId": "base",
+        "frozenVariant": true,
+        "status": "PASS",
+        "checkKind": "OFFLINE_DEVELOPER_CONTROL",
+        "input": {
+          "originalPrompt": "이 순수 날짜 parser의 경계값·잘못된 입력·회귀 테스트 사례를 설계해 줘. 제품 코드와 테스트 코드를 쓰거나 실행하지는 마.",
+          "context": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          }
+        },
+        "expected": {
+          "promptUnchanged": true,
+          "allCandidates": 24,
+          "parserContext": null,
+          "autoOrchestratorDependency": false
+        },
+        "observed": {
+          "prompt": "이 순수 날짜 parser의 경계값·잘못된 입력·회귀 테스트 사례를 설계해 줘. 제품 코드와 테스트 코드를 쓰거나 실행하지는 마.",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "candidateCount": 24,
+          "payloadBytes": 124609
+        },
+        "command": [
+          "node",
+          "<existing-dependency-root>/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.mjs",
+          "--reporter=json",
+          "--outputFile=SS06.vitest.json"
+        ],
+        "exit": 0,
+        "executionKind": "offline-isolated-test",
+        "API0": true,
+        "evidence": "SS06.observations.json#base"
+      },
+      {
+        "caseId": "SS06",
+        "variantId": "byte-boundary",
+        "frozenVariant": false,
+        "status": "PASS",
+        "checkKind": "OFFLINE_DEVELOPER_CONTROL",
+        "input": {
+          "bytes": 124609,
+          "lowerLimit": 124608
+        },
+        "expected": "exact limit preserved; lower limit rejects without truncation",
+        "observed": {
+          "exactLimit": "PASS",
+          "lowerLimitError": "INPUT_TOO_LONG",
+          "omittedRanges": []
+        },
+        "command": [
+          "node",
+          "<existing-dependency-root>/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.mjs",
+          "--reporter=json",
+          "--outputFile=SS06.vitest.json"
+        ],
+        "exit": 0,
+        "executionKind": "offline-isolated-test",
+        "API0": true,
+        "evidence": "SS06.observations.json#byte-boundary"
+      },
+      {
+        "caseId": "SS06",
+        "variantId": "context-null-empty",
+        "frozenVariant": false,
+        "status": "PASS",
+        "checkKind": "OFFLINE_DEVELOPER_CONTROL",
+        "input": {
+          "unknown": null,
+          "syntheticConfirmedEmpty": []
+        },
+        "expected": "preserve null/[] and reject invented parser context",
+        "observed": {
+          "unknown": null,
+          "confirmedEmpty": [],
+          "unsourcedError": "CONTEXT_SOURCE_MISSING"
+        },
+        "command": [
+          "node",
+          "<existing-dependency-root>/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.mjs",
+          "--reporter=json",
+          "--outputFile=SS06.vitest.json"
+        ],
+        "exit": 0,
+        "executionKind": "offline-isolated-test",
+        "API0": true,
+        "evidence": "SS06.observations.json#context-null-empty"
+      },
+      {
+        "caseId": "SS06",
+        "variantId": "base-positive-control",
+        "frozenVariant": false,
+        "status": "PASS",
+        "checkKind": "OFFLINE_DEVELOPER_CONTROL",
+        "input": [
+          "test-engineering"
+        ],
+        "expected": "PASS in synthetic combined layer only",
+        "observed": {
+          "caseId": "SS06",
+          "verdict": "PASS",
+          "missingRequired": [],
+          "forbidden": [],
+          "unnecessary": [],
+          "unadjudicated": [],
+          "truePositives": 1,
+          "falsePositives": 0,
+          "requiredHits": 1,
+          "answered": true,
+          "abstained": false,
+          "unnecessaryAbstention": false,
+          "reasons": []
+        },
+        "command": [
+          "node",
+          "<existing-dependency-root>/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.mjs",
+          "--reporter=json",
+          "--outputFile=SS06.vitest.json"
+        ],
+        "exit": 0,
+        "executionKind": "offline-isolated-test",
+        "API0": true,
+        "evidence": "SS06.observations.json#base-positive-control"
+      },
+      {
+        "caseId": "SS06",
+        "variantId": "forbidden-ponytail",
+        "frozenVariant": false,
+        "status": "PASS",
+        "checkKind": "OFFLINE_DEVELOPER_CONTROL",
+        "input": [
+          "test-engineering",
+          "ponytail"
+        ],
+        "expected": {
+          "verdict": "FAIL",
+          "forbidden": [
+            "ponytail"
+          ]
+        },
+        "observed": {
+          "caseId": "SS06",
+          "verdict": "FAIL",
+          "missingRequired": [],
+          "forbidden": [
+            "ponytail"
+          ],
+          "unnecessary": [],
+          "unadjudicated": [],
+          "truePositives": 1,
+          "falsePositives": 1,
+          "requiredHits": 1,
+          "answered": true,
+          "abstained": false,
+          "unnecessaryAbstention": false,
+          "reasons": []
+        },
+        "command": [
+          "node",
+          "<existing-dependency-root>/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.mjs",
+          "--reporter=json",
+          "--outputFile=SS06.vitest.json"
+        ],
+        "exit": 0,
+        "executionKind": "offline-isolated-test",
+        "API0": true,
+        "evidence": "SS06.observations.json#forbidden-ponytail"
+      },
+      {
+        "caseId": "SS06",
+        "variantId": "forbidden-code-review",
+        "frozenVariant": false,
+        "status": "PASS",
+        "checkKind": "OFFLINE_DEVELOPER_CONTROL",
+        "input": [
+          "test-engineering",
+          "code-review"
+        ],
+        "expected": {
+          "verdict": "FAIL",
+          "forbidden": [
+            "code-review"
+          ]
+        },
+        "observed": {
+          "caseId": "SS06",
+          "verdict": "FAIL",
+          "missingRequired": [],
+          "forbidden": [
+            "code-review"
+          ],
+          "unnecessary": [],
+          "unadjudicated": [],
+          "truePositives": 1,
+          "falsePositives": 1,
+          "requiredHits": 1,
+          "answered": true,
+          "abstained": false,
+          "unnecessaryAbstention": false,
+          "reasons": []
+        },
+        "command": [
+          "node",
+          "<existing-dependency-root>/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.mjs",
+          "--reporter=json",
+          "--outputFile=SS06.vitest.json"
+        ],
+        "exit": 0,
+        "executionKind": "offline-isolated-test",
+        "API0": true,
+        "evidence": "SS06.observations.json#forbidden-code-review"
+      },
+      {
+        "caseId": "SS06",
+        "variantId": "forbidden-software-security-auditor",
+        "frozenVariant": false,
+        "status": "PASS",
+        "checkKind": "OFFLINE_DEVELOPER_CONTROL",
+        "input": [
+          "test-engineering",
+          "software-security-auditor"
+        ],
+        "expected": {
+          "verdict": "FAIL",
+          "forbidden": [
+            "software-security-auditor"
+          ]
+        },
+        "observed": {
+          "caseId": "SS06",
+          "verdict": "FAIL",
+          "missingRequired": [],
+          "forbidden": [
+            "software-security-auditor"
+          ],
+          "unnecessary": [],
+          "unadjudicated": [],
+          "truePositives": 1,
+          "falsePositives": 1,
+          "requiredHits": 1,
+          "answered": true,
+          "abstained": false,
+          "unnecessaryAbstention": false,
+          "reasons": []
+        },
+        "command": [
+          "node",
+          "<existing-dependency-root>/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.mjs",
+          "--reporter=json",
+          "--outputFile=SS06.vitest.json"
+        ],
+        "exit": 0,
+        "executionKind": "offline-isolated-test",
+        "API0": true,
+        "evidence": "SS06.observations.json#forbidden-software-security-auditor"
+      },
+      {
+        "caseId": "SS06",
+        "variantId": "forbidden-orchestrator",
+        "frozenVariant": false,
+        "status": "PASS",
+        "checkKind": "OFFLINE_DEVELOPER_CONTROL",
+        "input": [
+          "test-engineering",
+          "orchestrator"
+        ],
+        "expected": {
+          "verdict": "FAIL",
+          "forbidden": [
+            "orchestrator"
+          ]
+        },
+        "observed": {
+          "caseId": "SS06",
+          "verdict": "FAIL",
+          "missingRequired": [],
+          "forbidden": [
+            "orchestrator"
+          ],
+          "unnecessary": [],
+          "unadjudicated": [],
+          "truePositives": 1,
+          "falsePositives": 1,
+          "requiredHits": 1,
+          "answered": true,
+          "abstained": false,
+          "unnecessaryAbstention": false,
+          "reasons": []
+        },
+        "command": [
+          "node",
+          "<existing-dependency-root>/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.mjs",
+          "--reporter=json",
+          "--outputFile=SS06.vitest.json"
+        ],
+        "exit": 0,
+        "executionKind": "offline-isolated-test",
+        "API0": true,
+        "evidence": "SS06.observations.json#forbidden-orchestrator"
+      },
+      {
+        "caseId": "SS06",
+        "variantId": "not-applicable-cs-engineering",
+        "frozenVariant": false,
+        "status": "PASS",
+        "checkKind": "OFFLINE_DEVELOPER_CONTROL",
+        "input": [
+          "test-engineering",
+          "cs-engineering"
+        ],
+        "expected": {
+          "verdict": "FAIL",
+          "unnecessary": [
+            "cs-engineering"
+          ]
+        },
+        "observed": {
+          "caseId": "SS06",
+          "verdict": "FAIL",
+          "missingRequired": [],
+          "forbidden": [],
+          "unnecessary": [
+            "cs-engineering"
+          ],
+          "unadjudicated": [],
+          "truePositives": 1,
+          "falsePositives": 1,
+          "requiredHits": 1,
+          "answered": true,
+          "abstained": false,
+          "unnecessaryAbstention": false,
+          "reasons": []
+        },
+        "command": [
+          "node",
+          "<existing-dependency-root>/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.mjs",
+          "--reporter=json",
+          "--outputFile=SS06.vitest.json"
+        ],
+        "exit": 0,
+        "executionKind": "offline-isolated-test",
+        "API0": true,
+        "evidence": "SS06.observations.json#not-applicable-cs-engineering"
+      },
+      {
+        "caseId": "SS06",
+        "variantId": "not-applicable-korean-prose-editor",
+        "frozenVariant": false,
+        "status": "PASS",
+        "checkKind": "OFFLINE_DEVELOPER_CONTROL",
+        "input": [
+          "test-engineering",
+          "korean-prose-editor"
+        ],
+        "expected": {
+          "verdict": "FAIL",
+          "unnecessary": [
+            "korean-prose-editor"
+          ]
+        },
+        "observed": {
+          "caseId": "SS06",
+          "verdict": "FAIL",
+          "missingRequired": [],
+          "forbidden": [],
+          "unnecessary": [
+            "korean-prose-editor"
+          ],
+          "unadjudicated": [],
+          "truePositives": 1,
+          "falsePositives": 1,
+          "requiredHits": 1,
+          "answered": true,
+          "abstained": false,
+          "unnecessaryAbstention": false,
+          "reasons": []
+        },
+        "command": [
+          "node",
+          "<existing-dependency-root>/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.mjs",
+          "--reporter=json",
+          "--outputFile=SS06.vitest.json"
+        ],
+        "exit": 0,
+        "executionKind": "offline-isolated-test",
+        "API0": true,
+        "evidence": "SS06.observations.json#not-applicable-korean-prose-editor"
+      },
+      {
+        "caseId": "SS06",
+        "variantId": "not-applicable-change-scope-guardian",
+        "frozenVariant": false,
+        "status": "PASS",
+        "checkKind": "OFFLINE_DEVELOPER_CONTROL",
+        "input": [
+          "test-engineering",
+          "change-scope-guardian"
+        ],
+        "expected": {
+          "verdict": "FAIL",
+          "unnecessary": [
+            "change-scope-guardian"
+          ]
+        },
+        "observed": {
+          "caseId": "SS06",
+          "verdict": "FAIL",
+          "missingRequired": [],
+          "forbidden": [],
+          "unnecessary": [
+            "change-scope-guardian"
+          ],
+          "unadjudicated": [],
+          "truePositives": 1,
+          "falsePositives": 1,
+          "requiredHits": 1,
+          "answered": true,
+          "abstained": false,
+          "unnecessaryAbstention": false,
+          "reasons": []
+        },
+        "command": [
+          "node",
+          "<existing-dependency-root>/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.mjs",
+          "--reporter=json",
+          "--outputFile=SS06.vitest.json"
+        ],
+        "exit": 0,
+        "executionKind": "offline-isolated-test",
+        "API0": true,
+        "evidence": "SS06.observations.json#not-applicable-change-scope-guardian"
+      },
+      {
+        "caseId": "SS06",
+        "variantId": "missing-parser-boundary",
+        "frozenVariant": false,
+        "status": "PASS",
+        "checkKind": "OFFLINE_DEVELOPER_CONTROL",
+        "input": {
+          "baseContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "inputs": [
+            [],
+            null
+          ]
+        },
+        "expected": "T applicability survives absent parser; [] and null each fail for distinct reasons",
+        "observed": {
+          "empty": {
+            "caseId": "SS06",
+            "verdict": "FAIL",
+            "missingRequired": [
+              "test-engineering"
+            ],
+            "forbidden": [],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 0,
+            "falsePositives": 0,
+            "requiredHits": 0,
+            "answered": true,
+            "abstained": false,
+            "unnecessaryAbstention": false,
+            "reasons": []
+          },
+          "abstain": {
+            "caseId": "SS06",
+            "verdict": "FAIL",
+            "missingRequired": [
+              "test-engineering"
+            ],
+            "forbidden": [],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 0,
+            "falsePositives": 0,
+            "requiredHits": 0,
+            "answered": false,
+            "abstained": true,
+            "unnecessaryAbstention": true,
+            "reasons": [
+              "UNEXPECTED_OR_UNEXPLAINED_ABSTENTION"
+            ]
+          },
+          "notObserved": "NOT_RUN"
+        },
+        "command": [
+          "node",
+          "<existing-dependency-root>/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.mjs",
+          "--reporter=json",
+          "--outputFile=SS06.vitest.json"
+        ],
+        "exit": 0,
+        "executionKind": "offline-isolated-test",
+        "API0": true,
+        "evidence": "SS06.observations.json#missing-parser-boundary"
+      },
+      {
+        "caseId": "SS06",
+        "variantId": "advice-over-selection",
+        "frozenVariant": false,
+        "status": "PASS",
+        "checkKind": "OFFLINE_DEVELOPER_CONTROL",
+        "input": {
+          "syntheticResponse": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS06-base-request",
+            "operationId": "SS06-base-operation",
+            "requestDigest": "sha256:0758c5fcbbf6fcd33c0067d7095891432e3e14d9529f70163d87fdeef6b5d418",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "acceptance-evidence-validator",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "blocker-diagnostician",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "change-scope-guardian",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "code-review",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "codex-token-usage-analyzer",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "context-continuity",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "coordinate-subagents",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "cs-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "evaluation-validity-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "independent-audit-gate",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "independent-deliberation-panel",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "instruction-scope-resolver",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "iteration-frame-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "korean-prose-editor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "model-effort-advisor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "mutation-risk-preflight",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "orchestrator",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "ponytail",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "recovery-strategy-selector",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "session-board",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "task-contract",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "workspace-convention-profiler",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          }
+        },
+        "expected": "schema can accept bad semantic advice; oracle rejects O",
+        "observed": {
+          "schemaErrors": [],
+          "score": {
+            "caseId": "SS06",
+            "verdict": "FAIL",
+            "missingRequired": [],
+            "forbidden": [
+              "orchestrator"
+            ],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 1,
+            "falsePositives": 1,
+            "requiredHits": 1,
+            "answered": true,
+            "abstained": false,
+            "unnecessaryAbstention": false,
+            "reasons": []
+          }
+        },
+        "command": [
+          "node",
+          "<existing-dependency-root>/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.mjs",
+          "--reporter=json",
+          "--outputFile=SS06.vitest.json"
+        ],
+        "exit": 0,
+        "executionKind": "offline-isolated-test",
+        "API0": true,
+        "evidence": "SS06.observations.json#advice-over-selection"
+      },
+      {
+        "caseId": "SS06",
+        "variantId": "unobserved-stages",
+        "frozenVariant": false,
+        "status": "PASS",
+        "checkKind": "OFFLINE_DEVELOPER_CONTROL",
+        "input": {
+          "caseId": "SS06",
+          "layer": "selected",
+          "state": "PASS",
+          "skillIds": [
+            "test-engineering"
+          ],
+          "selectionStatus": "SELECTED",
+          "reasonCodes": [],
+          "selectionReasons": [],
+          "executionKind": "offline-mock",
+          "host": null,
+          "hostReceipt": null,
+          "requestDigest": "sha256:0758c5fcbbf6fcd33c0067d7095891432e3e14d9529f70163d87fdeef6b5d418",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "conditionDigest": "offline-only",
+          "stageEvidence": {
+            "read": true,
+            "applied": true,
+            "verified": true
+          }
+        },
+        "expected": "no promotion without actual host receipt and phase evidence",
+        "observed": {
+          "score": {
+            "caseId": "SS06",
+            "verdict": "FAIL",
+            "missingRequired": [],
+            "forbidden": [],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 1,
+            "falsePositives": 0,
+            "requiredHits": 1,
+            "answered": false,
+            "abstained": false,
+            "unnecessaryAbstention": false,
+            "reasons": [
+              "HOST_SELECTION_RECEIPT_MISSING_OR_MISMATCH"
+            ]
+          },
+          "stageCoverage": {
+            "read": 0,
+            "applied": 0,
+            "verified": 0
+          }
+        },
+        "command": [
+          "node",
+          "<existing-dependency-root>/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.mjs",
+          "--reporter=json",
+          "--outputFile=SS06.vitest.json"
+        ],
+        "exit": 0,
+        "executionKind": "offline-isolated-test",
+        "API0": true,
+        "evidence": "SS06.observations.json#unobserved-stages"
+      },
+      {
+        "caseId": "SS06",
+        "variantId": "base-gateway-synthetic",
+        "frozenVariant": false,
+        "status": "PASS",
+        "checkKind": "OFFLINE_DEVELOPER_CONTROL",
+        "input": {
+          "originalPrompt": "이 순수 날짜 parser의 경계값·잘못된 입력·회귀 테스트 사례를 설계해 줘. 제품 코드와 테스트 코드를 쓰거나 실행하지는 마.",
+          "providerBoundary": "synthetic in-process port"
+        },
+        "expected": "mock advice SUCCESS; selected null; caller selection rejected without actual observation",
+        "observed": {
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS06-base-request",
+            "operationId": "SS06-base-operation",
+            "requestDigest": "sha256:0758c5fcbbf6fcd33c0067d7095891432e3e14d9529f70163d87fdeef6b5d418",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "acceptance-evidence-validator",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "blocker-diagnostician",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "change-scope-guardian",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "code-review",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "codex-token-usage-analyzer",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "context-continuity",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "coordinate-subagents",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "cs-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "evaluation-validity-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "independent-audit-gate",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "independent-deliberation-panel",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "instruction-scope-resolver",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "iteration-frame-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "korean-prose-editor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "model-effort-advisor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "mutation-risk-preflight",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "orchestrator",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "ponytail",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "recovery-strategy-selector",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "session-board",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "task-contract",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "workspace-convention-profiler",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic:SS06-purpose-control"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          },
+          "mockPortCalls": 1,
+          "agentSelectedSkillIds": null,
+          "selectionStatus": "PROPOSED",
+          "accepted": {
+            "valid": false,
+            "errors": [
+              "HOST_SELECTION_NOT_OBSERVED"
+            ],
+            "agentSelectedSkillIds": null
+          }
+        },
+        "command": [
+          "node",
+          "<existing-dependency-root>/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.mjs",
+          "--reporter=json",
+          "--outputFile=SS06.vitest.json"
+        ],
+        "exit": 0,
+        "executionKind": "offline-isolated-test",
+        "API0": true,
+        "evidence": "SS06.observations.json#base-gateway-synthetic"
+      },
+      {
+        "caseId": "SS06",
+        "variantId": "host-config-missing",
+        "frozenVariant": false,
+        "status": "PASS",
+        "checkKind": "OFFLINE_DEVELOPER_CONTROL",
+        "input": {
+          "runtimeConfig": "unset"
+        },
+        "expected": "UNAVAILABLE; no inferred model/profile; 0 dispatch",
+        "observed": {
+          "status": "UNAVAILABLE",
+          "error": {
+            "code": "PROFILE_UNAVAILABLE",
+            "retryable": false,
+            "dispatchState": "not-started"
+          },
+          "attempts": []
+        },
+        "command": [
+          "node",
+          "<existing-dependency-root>/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.mjs",
+          "--reporter=json",
+          "--outputFile=SS06.vitest.json"
+        ],
+        "exit": 0,
+        "executionKind": "offline-isolated-test",
+        "API0": true,
+        "evidence": "SS06.observations.json#host-config-missing"
+      },
+      {
+        "caseId": "SS06",
+        "variantId": "known-host-state-supply-gap",
+        "frozenVariant": false,
+        "status": "PASS",
+        "checkKind": "KNOWN_DEFECT_REPRODUCTION",
+        "input": {
+          "hostDiscoveryControl": {
+            "installedSkillIds": [],
+            "hostSupportedSkillIds": []
+          },
+          "required": [
+            "test-engineering"
+          ]
+        },
+        "expected": "known defect reproduction: loader can represent missing T; gateway has no host-state input and defaults to installed/supported",
+        "observed": {
+          "loaderObservedT": {
+            "installed": false,
+            "hostSupported": false
+          },
+          "gatewayAssumedT": {
+            "installed": true,
+            "hostSupported": true
+          },
+          "knownFinding": "host 활성상태 공급 공백",
+          "status": "REPRODUCED_KNOWN_GAP",
+          "actualHostState": null
+        },
+        "command": [
+          "node",
+          "<existing-dependency-root>/vitest/vitest.mjs",
+          "run",
+          "--config",
+          "vitest.config.mjs",
+          "--reporter=json",
+          "--outputFile=SS06.vitest.json"
+        ],
+        "exit": 0,
+        "executionKind": "offline-isolated-test",
+        "API0": true,
+        "evidence": "SS06.observations.json#known-host-state-supply-gap"
+      }
+    ]
+  },
+  "actualHost": {
+    "status": "NOTRUN",
+    "supportedPath": {
+      "launch": "Pinned .mcp.json: node mcp-server/dist/server.mjs in repository root with AGENT_GOVERNANCE_HOST_ATTESTATION=codex",
+      "hook": "hooks/hooks.json PreToolUse calls mcp-server/dist/host-attestation-hook.mjs --host=codex for classify_skills/record_skill_selection",
+      "config": "mcp-server/src/index.ts:87-137 reads AGENT_GOVERNANCE_CLASSIFICATION_CONFIG; gateway.ts readClassificationRuntime; runtime.ts classificationProviderRuntimeSchema",
+      "flow": "get_skill_inventory -> classify_skills(originalPrompt exact, confirmedContext unknown=null, contextSources=[], explicitSkillIds=[], ruleRequiredSkillIds=[], trusted vendorContext, publicSynthetic=true) -> AGENT independent purpose decision -> record_skill_selection(operationId, decision with hostReceipt=null) via actual hooked invocation",
+      "rules": "Classification is support; final selection is AGENT. Do not use qualification bootstrap for this single case: its frozen batch contains 21 requests.",
+      "budgetRestriction": "This task authorizes zero JEV/external vendor/Claude calls. No live execution or new paid run was attempted."
+    },
+    "missingInputs": [
+      "Connected AGS MCP tools get_skill_inventory/classify_skills/record_skill_selection on the pinned installation",
+      "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG and its central fixed qualified profile registry, providerRuntimeRef, approved route/adapter and current budget or native allowance",
+      "Actual Codex host PreToolUse attestation hook, matching active session prompt/task observation and actor identity; caller hostReceipt must stay null",
+      "Host-discovered installed/enabled/supported inventory state for T (known supply gap)",
+      "Parser API/source or behavior contract, input grammar, supported year/date range, invalid-input policy and prior regression examples; absent in base, so do not invent exact expected date results",
+      "Actual AGENT reasons, selected IDs and design-only artifact plus later evidence tied to that artifact; parser product/test code execution remains prohibited by SS06 prompt"
+    ],
+    "stages": {
+      "selected": {
+        "status": "NOTRUN",
+        "evidence": null
+      },
+      "read": {
+        "status": "NOTRUN",
+        "evidence": null
+      },
+      "applied": {
+        "status": "NOTRUN",
+        "evidence": null
+      },
+      "verified": {
+        "status": "NOTRUN",
+        "evidence": null
+      }
+    },
+    "agentSelectedSkillIds": null,
+    "hostReceipt": null
+  },
+  "findings": [
+    {
+      "findingId": "KNOWN-HOST-ACTIVE-STATE-SUPPLY-GAP",
+      "status": "REPRODUCED",
+      "caseId": "SS06",
+      "duplicateOf": "Previously confirmed host 활성상태 공급 공백",
+      "countAsNewRootCause": false,
+      "impact": "Gateway inventory cannot incorporate host discovery showing required T missing/unsupported; defaults can overstate runnable availability. Actual host state was not observed.",
+      "reproduction": "SS06.test.ts test: reproduces the known missing host-state supply for required T",
+      "evidence": "SS06.observations.json records[variantId=known-host-state-supply-gap]",
+      "locations": [
+        {
+          "path": "mcp-server/src/skill-classification/inventory.ts",
+          "line": 218
+        },
+        {
+          "path": "mcp-server/src/skill-classification/gateway.ts",
+          "line": 48
+        },
+        {
+          "path": "mcp-server/src/skill-classification/gateway.ts",
+          "line": 60
+        }
+      ],
+      "limit": "Synthetic empty installed/supported arrays were passed to the loader, not a real host. Gateway API has no corresponding supply option. Enabled state remains registry-derived."
+    }
+  ],
+  "newDistinctRootCauseCount": 0,
+  "knownDefectsOutsideThisReproduction": {
+    "status": "NOTRUN",
+    "items": [
+      "valid cost lost with invalid RESP",
+      "timeout overflow",
+      "duplicate metadata conditions",
+      "concurrency pre-commit recheck gap"
+    ],
+    "reason": "SS06-purpose boundary tests did not exercise these separate operational paths; absence of reproduction is not absence of defect."
+  },
+  "planConsistencyCheck": {
+    "command": [
+      "node",
+      "<candidate-checkout>/skills/test-engineering/scripts/run.mjs",
+      "check-plan",
+      "--root",
+      "<original-evidence-dir>",
+      "--plan",
+      "SS06.plan.json"
+    ],
+    "exit": 0,
+    "observed": {
+      "schemaVersion": "1.0.0",
+      "kind": "engineering-plan-result",
+      "verdict": "READY",
+      "planDigest": "sha256:c68fd2d6e52babb04a34dc3edc2e196e24fb0bf48d8edd578b6e894c7935ad65",
+      "caseIds": [
+        "base-provenance",
+        "base",
+        "byte-boundary",
+        "context-null-empty",
+        "base-positive-control",
+        "forbidden-ponytail",
+        "forbidden-code-review",
+        "forbidden-software-security-auditor",
+        "forbidden-orchestrator",
+        "not-applicable-cs-engineering",
+        "not-applicable-korean-prose-editor",
+        "not-applicable-change-scope-guardian",
+        "missing-parser-boundary",
+        "advice-over-selection",
+        "unobserved-stages",
+        "base-gateway-synthetic",
+        "host-config-missing",
+        "known-host-state-supply-gap"
+      ]
+    },
+    "scope": "Plan/reference consistency only, not host behavior, semantic accuracy or independent acceptance"
+  },
+  "limitations": [
+    "Passing negative-control tests mean detection worked, not that forbidden input was accepted.",
+    "Skill-ID evaluator does not independently inspect generated parser code or design artifacts; SS06 behavior prohibition still requires actual host/artifact evidence.",
+    "Synthetic full inventory response was explicitly authored by the test; it is not JEV/vendor semantic accuracy.",
+    "Developer source reads do not prove SS06 live selected/read/applied/verified stages.",
+    "Test plan JSON was materialized after the initial development run; no pre-run machine freeze or product mutation proof is claimed."
+  ],
+  "executionHistory": [
+    {
+      "run": 1,
+      "tests": 17,
+      "passed": 17,
+      "exit": 0,
+      "reason": "Initial isolated boundaries; summary preserved in tool transcript, files superseded by final run."
+    },
+    {
+      "run": 2,
+      "tests": 18,
+      "passed": 18,
+      "exit": 0,
+      "reason": "Added SS06 known host-state-supply-gap control; final raw report saved."
+    }
+  ],
+  "supportingFiles": [
+    {
+      "path": "SS06.environment.json",
+      "SHA256": "sha256:0bb46cce3805e33877e47489b7c7c302069eb2edf57df43f54959fba8ccba190"
+    },
+    {
+      "path": "SS06.exit",
+      "SHA256": "sha256:9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "SS06.fixture-extract.json",
+      "SHA256": "sha256:3a070dc7d533cf8592fcf89301535d3debe088ff2bddcd147d93d59a8ba0ac7d"
+    },
+    {
+      "path": "SS06.observations.json",
+      "SHA256": "sha256:8b4052099a107c97d24ea2c6e40885233e5fe81020a7da3320a429020feae351"
+    },
+    {
+      "path": "SS06.plan-check.exit",
+      "SHA256": "sha256:9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "SS06.plan-check.json",
+      "SHA256": "sha256:d334530dc67122a867f44ced1a9187035e6eb1adc3f66f8df459228dba2ccda7"
+    },
+    {
+      "path": "SS06.plan-check.stderr",
+      "SHA256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "SS06.plan.json",
+      "SHA256": "sha256:c30c1277cd802884187f828900dc4de6437b44bf320ec40d2d0c22de2a06871f"
+    },
+    {
+      "path": "SS06.stderr.log",
+      "SHA256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "SS06.stdout.log",
+      "SHA256": "sha256:d0ffe0966c51df5a8bc53e35d5a81ab2d0d665de73a5667ed2511113f5c6c1f1"
+    },
+    {
+      "path": "SS06.test-contract.json",
+      "SHA256": "sha256:682ea12ca7b986ee9a6b07aa7a67d1fd577a59bc20f04c7961aa457f79f682f6"
+    },
+    {
+      "path": "SS06.test.ts",
+      "SHA256": "sha256:d591209a6ad34d2c37e8df5760a131fcdc927afab9d6052cf818f4ad9ac6d959"
+    },
+    {
+      "path": "SS06.vitest.json",
+      "SHA256": "sha256:c94ee3be3936fe4a9b0df592c024c0832c36b34c2d6b30efb8adecd656d2b9be"
+    },
+    {
+      "path": "build-result.py",
+      "SHA256": "sha256:26844600e590d11c2992a0792cf3973fa6dba87b6e71c0e57d89ddb341a050f8"
+    },
+    {
+      "path": "vitest.config.mjs",
+      "SHA256": "sha256:0e574fd32e76ad1479b93c83adda6fc4d56e2e0113fef9ffc61114e63009c0e5"
+    }
+  ],
+  "publication": {
+    "caseId": "SS06",
+    "targetBranch": "evidence",
+    "path": "evidence/ags-2.9.1/2026-10-09/cases/SS06/",
+    "kind": "sanitized derivative of existing development evidence",
+    "originalResultBytes": 60119,
+    "originalResultSHA256": "e8dd117338d34337a4a857f46279ee6f8f0e7a357368890eed25f6359f8d33e9",
+    "originalResultSupportingFilesNote": "supportingFiles retains ORIGINAL artifact digests; manifest.json describes public bytes/digests",
+    "newTestsExecuted": 0,
+    "apiCallsDuringPublication": {
+      "JEV": 0,
+      "externalVendor": 0,
+      "Claude": 0,
+      "Codex": 0
+    },
+    "patchStatus": "NONE_EXISTS",
+    "missingOriginals": [
+      {
+        "item": "initial-17-test-run stdout",
+        "status": "MISSING_ORIGINAL",
+        "reason": "Original file superseded by final development run before publication"
+      },
+      {
+        "item": "initial-17-test-run stderr",
+        "status": "MISSING_ORIGINAL",
+        "reason": "Original file superseded by final development run before publication"
+      },
+      {
+        "item": "initial-17-test-run Vitest JSON report",
+        "status": "MISSING_ORIGINAL",
+        "reason": "Original file superseded by final development run before publication"
+      },
+      {
+        "item": "initial-17-test-run exit file",
+        "status": "MISSING_ORIGINAL",
+        "reason": "Original file superseded by final development run before publication"
+      }
+    ],
+    "historyNote": "Initial 17/17 summary is retained as a historical claim from the existing result, not newly verified raw evidence. Final 18/18 raw evidence is available.",
+    "redaction": "Only personal local path substrings replaced with symbolic placeholders; statuses, null/[], prompts, candidate and oracle bindings preserved."
+  }
+}

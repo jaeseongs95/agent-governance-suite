@@ -1,0 +1,79 @@
+{
+  "checks": [
+    {
+      "command": [
+        "git",
+        "rev-parse",
+        "HEAD",
+        "HEAD^{tree}"
+      ],
+      "cwd": "<candidate-checkout>",
+      "exit": 0,
+      "stdout": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6\n28f2f2ed8a864405320f6d20e7bc5004e8466ad3\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--exit-code"
+      ],
+      "cwd": "<candidate-checkout>",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "cwd": "<candidate-checkout>",
+      "exit": 0,
+      "stdout": "?? node_modules\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--version"
+      ],
+      "cwd": "<candidate-checkout>",
+      "exit": 0,
+      "stdout": "v24.19.0\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "pnpm",
+        "--version"
+      ],
+      "cwd": "<candidate-checkout>",
+      "exit": 0,
+      "stdout": "11.19.0\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "cwd": "<candidate-checkout>",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+  "classificationConfigConfigured": false,
+  "agentsSkillsExists": false,
+  "workspaceAgentsSkillsExists": false,
+  "sourceSpecFileExists": false,
+  "agsToolsAvailable": [],
+  "toolAvailabilityEvidence": "ALL_TOOLS filtered by classify_skills|get_skill_inventory|record_skill_selection|governance returned []",
+  "dependencyRoot": "<existing-dependency-root>",
+  "dependenciesInstalledByThisTask": false,
+  "nodeModulesLinkIsTestInfrastructureOnly": true
+}

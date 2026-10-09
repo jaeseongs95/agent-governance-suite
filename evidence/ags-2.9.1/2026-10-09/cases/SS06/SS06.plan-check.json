@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:c68fd2d6e52babb04a34dc3edc2e196e24fb0bf48d8edd578b6e894c7935ad65",
+  "caseIds": [
+    "base-provenance",
+    "base",
+    "byte-boundary",
+    "context-null-empty",
+    "base-positive-control",
+    "forbidden-ponytail",
+    "forbidden-code-review",
+    "forbidden-software-security-auditor",
+    "forbidden-orchestrator",
+    "not-applicable-cs-engineering",
+    "not-applicable-korean-prose-editor",
+    "not-applicable-change-scope-guardian",
+    "missing-parser-boundary",
+    "advice-over-selection",
+    "unobserved-stages",
+    "base-gateway-synthetic",
+    "host-config-missing",
+    "known-host-state-supply-gap"
+  ]
+}

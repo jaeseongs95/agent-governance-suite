@@ -1,0 +1,110 @@
+{
+  "caseId": "SS06",
+  "title": "테스트 사례 설계만 요청",
+  "familyId": "parser-test-design",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "live.",
+  "originalPrompt": "이 순수 날짜 parser의 경계값·잘못된 입력·회귀 테스트 사례를 설계해 줘. 제품 코드와 테스트 코드를 쓰거나 실행하지는 마.",
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS06",
+    "fields": {
+      "입력": "“이 순수 날짜 parser의 경계값·잘못된 입력·회귀 테스트 사례를 설계해 줘. 제품 코드와 테스트 코드를 쓰거나 실행하지는 마.”",
+      "필수추천": "R={T}.",
+      "금지추천 또는 행동": "P·CR·SEC를 기본으로 추가; mock 결과를 테스트 실행 근거로 제출.",
+      "허용선택": "A={}.",
+      "보류조건": "요구나 parser 경계가 부족하면 추가 입력을 요청하되 T 적용성은 남긴다.",
+      "통과기준": "단일 전문 스킬로 충분하므로 O를 자동 추가하지 않는다.",
+      "증거": "E0, 사례 설계와 실행의 경계.",
+      "실행종류": "live."
+    },
+    "bodyDigest": "sha256:d57a325fce28d847a18276f780c655a130a13aa6f7fc8714105f6584c192b60b"
+  },
+  "oracle": {
+    "required": [
+      "test-engineering"
+    ],
+    "allowed": [],
+    "allowedConditions": {},
+    "forbidden": [
+      "ponytail",
+      "code-review",
+      "software-security-auditor",
+      "orchestrator"
+    ],
+    "notApplicable": [
+      "cs-engineering",
+      "korean-prose-editor",
+      "change-scope-guardian"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      },
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      },
+      {
+        "skillId": "change-scope-guardian",
+        "path": "skills/change-scope-guardian/SKILL.md",
+        "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+      }
+    ],
+    "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+  },
+  "variants": [
+    "base"
+  ]
+}
