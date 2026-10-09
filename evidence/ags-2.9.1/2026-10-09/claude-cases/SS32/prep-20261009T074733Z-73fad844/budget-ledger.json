@@ -1,0 +1,21 @@
+{
+  "caseId": "SS32",
+  "currency": "USD",
+  "softBudgetUsd": 2,
+  "scope": "All SS32 Claude API calls including preparation, failures, retries, input/output/cache charges; separate JEV allocation not granted",
+  "reservedSuiteBudgetUsd": 78,
+  "suiteCases": 39,
+  "status": "NO_PAID_CALLS",
+  "calls": [],
+  "totalApiCostUsd": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadInputTokens": 0,
+  "cacheCreationInputTokens": 0,
+  "retries": 0,
+  "failedCalls": 0,
+  "claudeApiCalls": 0,
+  "jevApiCalls": 0,
+  "externalClassificationApiCalls": 0,
+  "stopRule": "Before each call, subtract observed charges and unresolved cost reservations from USD2; if near limit or next-call cost cannot be bounded, stop and report. Record failure/retry/cache usage and unknown charges; never reissue an unknown-completion call. The budget is not a consumption target."
+}

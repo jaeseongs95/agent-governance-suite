@@ -1,0 +1,264 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS32",
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "method": "git show at exact public evidence commit; SHA256 on raw bytes; no test execution",
+  "publicPayloadsVerified": 35,
+  "publicSHA256SUMS": {
+    "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/SHA256SUMS",
+    "sha256": "b47079ed0dcc96428e9486ed991856c6d8540c57fd19548604c42723a256851e"
+  },
+  "files": [
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/PATCH_STATUS.json",
+      "bytes": 248,
+      "sha256": "8611d90bd76612fa304acacf7a727141f15a0b876f3df00458a866b94508c8a1",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/README.md",
+      "bytes": 6406,
+      "sha256": "b0a8ab33917ceb1d3ce8e33197eca8910fa8c53f7ea39c07482cfe871a0f12f1",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/SS32.fixture.json",
+      "bytes": 1958,
+      "sha256": "4ebfbc312fe2bd35334ecbe3f949676212c5261393f522ccd5642bb8901fcc6a",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/SS32.result.public.json",
+      "bytes": 197043,
+      "sha256": "d0f1862d56a6af3fe9fa8cf864c94877a607067ba7c980c10ed7158b921e4750",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/input-bytes-manifest.json",
+      "bytes": 8089,
+      "sha256": "0c7e1f333aedd20f23beb02cc9b0f0be791b626a7b871a451379303d93fa253e",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/inputs/both-rate-limited.json",
+      "bytes": 1059,
+      "sha256": "a59793204036dc7f5557fa7a93b4bba6be78efffd8d808f790dd55cc6d548a5c",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/inputs/cancelled-before-shared-dispatch.json",
+      "bytes": 1167,
+      "sha256": "f440bbe64e47ed8034dbf988fbad8fcbbd35356e01227abc00de298a18ada91a",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/inputs/collision-different-operation.json",
+      "bytes": 2054,
+      "sha256": "7aa50b9bab3962d200aea863c7e66ea0bde98313a9182ab3852e3ec243f6848c",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/inputs/collision-same-operation.json",
+      "bytes": 2048,
+      "sha256": "c090b317a70fad36fc48f0a319fdf7a263e56da733f82cdecaf6d8e1b86e8e6d",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/inputs/delayed-fallback-identical-submissions.json",
+      "bytes": 1086,
+      "sha256": "e3cda1dbbf246610e14ab2a0c198ec52a1a13fddf006f5e41ea3ef7c64f0542e",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/inputs/delayed-identical-submissions.json",
+      "bytes": 1093,
+      "sha256": "4fa7b736535bb7254d52658fff3777701c64702ba96e1e332bc9e34b4ce7ea6a",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/inputs/fallback-429.json",
+      "bytes": 1074,
+      "sha256": "4ab5355c1aa0470b3d98ade83104a00c3c035923c0b069b1e953cc0ea588c7b2",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/inputs/fallback-529.json",
+      "bytes": 1074,
+      "sha256": "313d6a93c72a1fe83969a7a261a1b448bee8c7550a0a4653da2c9b9ac4a6699f",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/inputs/no-retry-429.json",
+      "bytes": 1081,
+      "sha256": "487f155e128d38745f559d028bc7666a1db93992f27525bc3b5caffbbc414696",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/inputs/no-retry-529.json",
+      "bytes": 1081,
+      "sha256": "c1fa2d0fb644c1c10b8aab74d64a7f00ba53cee11741ae85d5c59f489e11c7d4",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/inputs/retry-after-429.json",
+      "bytes": 1074,
+      "sha256": "4ab5355c1aa0470b3d98ade83104a00c3c035923c0b069b1e953cc0ea588c7b2",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/inputs/retry-after-529.json",
+      "bytes": 1100,
+      "sha256": "56caa09194774fb276c4b3dd2ee0298414ea229f58e5dabf8c54da9126a808aa",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/inputs/unknown-cost-identical-resubmit.json",
+      "bytes": 1080,
+      "sha256": "432eac36f61eacaa2a7a468fbdf58ac2b9d472b648b4e777fe23c700104b6165",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/inputs/unverified-native-retry-policy.json",
+      "bytes": 30,
+      "sha256": "448eacafcdb6e76c8e9180240f7666be9dd370834ab6cbd98915d670c2ff110d",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/logs/existing-regression.command.public.json",
+      "bytes": 932,
+      "sha256": "8419a8d671267d4d2d5323e7747742e77f52054ea26528a3dc0e07c9882ea58d",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/logs/existing.vitest.public.json",
+      "bytes": 4475,
+      "sha256": "2263df4d07af44653827436cc2d39382862e444056a2d8ba07d32d8cbe910fdc",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/logs/isolated.vitest.public.json",
+      "bytes": 9016,
+      "sha256": "03e40bdd06eee9bf41c0e89ee031294b439bc177bcb9ec85bb482076c35180af",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/logs/new-isolated.command.public.json",
+      "bytes": 773,
+      "sha256": "5d745789e785801f3904ac660a7f6c137f1ad5ae46a0fa00ef2904b35034b9d0",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/logs/proof-check.command.public.json",
+      "bytes": 2229,
+      "sha256": "23a610e13a9aef05e41b58c509e9a5677831ee9393d10562d16640af775976db",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/logs/typecheck.command.public.json",
+      "bytes": 6589,
+      "sha256": "3f8b3b82cfd48097f5db4076d9712186f2a99b25f8c551e4719d4723f84785e4",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/manifest.json",
+      "bytes": 27695,
+      "sha256": "99b190c06445d3e35b6c7cf42fa218a908483e59a53ce95bff72bb4fa9edc81c",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/observations.public.json",
+      "bytes": 135702,
+      "sha256": "58be25b6513d71d46427cc96c6183d793da5da0d0225d237cd2d356666150d4d",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/repro/SS32.isolated.test.ts",
+      "bytes": 17891,
+      "sha256": "3ec3c6082f47ac942167d18b87e3342bd2c219e8705fe00db08060f92feec9c8",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/support/acceptance-report.public.json",
+      "bytes": 8367,
+      "sha256": "8e6390c1b2c7b506ff87ca18887c423b16ef7dcdc36dcca2e4faa466347b95ee",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/support/acceptance-validation.public.json",
+      "bytes": 36,
+      "sha256": "655823ac7f996b259837b1279f4757264aac1ab82808d9b562c06a9f640f36af",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/support/candidate.snapshot.public.json",
+      "bytes": 1019,
+      "sha256": "30f83edd64750886f9b32a41035533bfb7721bc1615505c01ed220325b7c3adb",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/support/engineering-plan-result.public.json",
+      "bytes": 287,
+      "sha256": "f04069941079b2bb20b8ec183f2ed9c7a4459f7a596375e5bf82c479db7e7dbd",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/support/engineering-test-plan.public.json",
+      "bytes": 6423,
+      "sha256": "ade8df6cc8ef426e31f35046a404951d678f9da67c73f001ed5a587612133a9b",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/support/engineering-test-proof.public.json",
+      "bytes": 3974,
+      "sha256": "ce62117f67903ed1ed49acc6186ca574a54ab22ae24c0bd314865f6b7c8594be",
+      "status": "MATCH"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS32/support/engineering-test-result.public.json",
+      "bytes": 1878,
+      "sha256": "3533ebc0a1f68e303f0d5464d7573657c4a4582c6b5bf6e02fa3819149af917b",
+      "status": "MATCH"
+    }
+  ],
+  "derivedInputFilesVerified": 14,
+  "source": {
+    "caseId": "SS32",
+    "title": "429와 중복 요청",
+    "familyId": "mechanical-SS32",
+    "publicSynthetic": true,
+    "status": "NOT_RUN",
+    "executionKind": "mock. rate limit을 만들려고 실제 API를 대량 호출하지 않는다.",
+    "originalPrompt": null,
+    "sourceSpec": {
+      "path": "TEST-SPEC.seq7.ko.md",
+      "section": "SS32",
+      "fields": {
+        "입력": "429 또는 529와 Retry-After를 반환하는 provider, 동일 operationId·requestId·digest의 동시 제출 두 개, 동일 requestId지만 다른 digest를 각각 주입한다.",
+        "필수추천": "429·529는 UNAVAILABLE/unavailable로 드러내고 기존 B와 목적 적합성 판정을 보존한다.",
+        "금지추천 또는 행동": "무제한 재시도; prototype과 SDK의 자동 429·529 재시도; 같은 논리 요청의 이중 전송·과금·결과 합성; 다른 digest를 같은 요청으로 합침.",
+        "허용선택": "Retry-After는 관측만 보존하고 JEV 재시도는 하지 않는다. 현재 정책의 vendor fallback이 허용되면 별도 attempt로 한 번 분류한다. 진행 중 동일 요청은 공유 결과 또는 중복 거부 중 고정 정책을 따른다.",
+        "보류조건": "이전 요청의 처리 상태를 알 수 없으면 새 요청으로 재발급하지 않는다.",
+        "통과기준": "같은 JEV 시도 최대 1회와 정책상 허용된 vendor fallback 최대 1회를 각각 검사한다. SDK 은닉 재시도·중복 완료는 0이며, digest 충돌은 invalid이며 다른 결과를 오염시키지 않는다.",
+        "증거": "E0·E1·E2, requestId·digest와 전송 계수.",
+        "실행종류": "mock. rate limit을 만들려고 실제 API를 대량 호출하지 않는다."
+      },
+      "bodyDigest": "sha256:dee715910ed387f22cc669849ecd9eef3645de57c4e9c1bdaf7355b48ddb331a"
+    },
+    "oracle": null,
+    "variants": [
+      "429",
+      "sdk-retry-negative",
+      "duplicate-inflight",
+      "digest-collision"
+    ]
+  },
+  "historicalFrozenReferences": {
+    "fixtureSHA256": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "status": "RECORDED_IN_FIXED_PUBLIC_RESULT; original frozen source bytes/projection algorithm not independently recovered in this preparation",
+    "publicFixtureRawBytesSHA256": "4ebfbc312fe2bd35334ecbe3f949676212c5261393f522ccd5642bb8901fcc6a"
+  },
+  "originalWireCaptureStatus": "MISSING_ORIGINAL",
+  "originalPrompt": null,
+  "semanticOracle": null
+}

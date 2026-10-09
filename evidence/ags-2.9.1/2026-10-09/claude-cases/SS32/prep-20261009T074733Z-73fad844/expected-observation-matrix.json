@@ -1,0 +1,296 @@
+{
+  "caseId": "SS32",
+  "title": "429와 중복 요청",
+  "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "sourcePath": "evidence/ags-2.9.1/2026-10-09/cases/SS32/observations.public.json",
+  "sourceSHA256": "58be25b6513d71d46427cc96c6183d793da5da0d0225d237cd2d356666150d4d",
+  "scope": "Original 14 mechanical mock expectations, preserved; historical outcomes are not expected correct behavior",
+  "cases": [
+    {
+      "id": "fallback-429",
+      "variant": "429",
+      "expected": {
+        "attemptKinds": [
+          "jev",
+          "vendor"
+        ],
+        "jevStatus": "UNAVAILABLE",
+        "error": "RATE_LIMITED",
+        "transports": 2,
+        "inputUnchanged": true
+      },
+      "input": {
+        "id": "fallback-429",
+        "variant": "429",
+        "path": "inputs/fallback-429.json",
+        "bytes": 1074,
+        "sha256": "4ab5355c1aa0470b3d98ade83104a00c3c035923c0b069b1e953cc0ea588c7b2",
+        "byteKind": "derived-encoding-of-existing-observed-input",
+        "originalWireBytes": "MISSING_ORIGINAL",
+        "originalWireExplanation": "Existing observation stores parsed wire requestId/operationId/digest and count, but no original serialized transport byte dump was saved. No wire bytes invented."
+      }
+    },
+    {
+      "id": "fallback-529",
+      "variant": "429",
+      "expected": {
+        "attemptKinds": [
+          "jev",
+          "vendor"
+        ],
+        "jevStatus": "UNAVAILABLE",
+        "error": "RATE_LIMITED",
+        "transports": 2,
+        "inputUnchanged": true
+      },
+      "input": {
+        "id": "fallback-529",
+        "variant": "429",
+        "path": "inputs/fallback-529.json",
+        "bytes": 1074,
+        "sha256": "313d6a93c72a1fe83969a7a261a1b448bee8c7550a0a4653da2c9b9ac4a6699f",
+        "byteKind": "derived-encoding-of-existing-observed-input",
+        "originalWireBytes": "MISSING_ORIGINAL",
+        "originalWireExplanation": "Existing observation stores parsed wire requestId/operationId/digest and count, but no original serialized transport byte dump was saved. No wire bytes invented."
+      }
+    },
+    {
+      "id": "both-rate-limited",
+      "variant": "429",
+      "expected": {
+        "status": "UNAVAILABLE",
+        "transports": 2,
+        "unknownCostReservations": 2
+      },
+      "input": {
+        "id": "both-rate-limited",
+        "variant": "429",
+        "path": "inputs/both-rate-limited.json",
+        "bytes": 1059,
+        "sha256": "a59793204036dc7f5557fa7a93b4bba6be78efffd8d808f790dd55cc6d548a5c",
+        "byteKind": "derived-encoding-of-existing-observed-input",
+        "originalWireBytes": "MISSING_ORIGINAL",
+        "originalWireExplanation": "Existing observation stores parsed wire requestId/operationId/digest and count, but no original serialized transport byte dump was saved. No wire bytes invented."
+      }
+    },
+    {
+      "id": "retry-after-429",
+      "variant": "429",
+      "expected": {
+        "retryAfterObservation": "120",
+        "transportCount": 1
+      },
+      "input": {
+        "id": "retry-after-429",
+        "variant": "429",
+        "path": "inputs/retry-after-429.json",
+        "bytes": 1074,
+        "sha256": "4ab5355c1aa0470b3d98ade83104a00c3c035923c0b069b1e953cc0ea588c7b2",
+        "byteKind": "derived-encoding-of-existing-observed-input",
+        "originalWireBytes": "MISSING_ORIGINAL",
+        "originalWireExplanation": "Existing observation stores parsed wire requestId/operationId/digest and count, but no original serialized transport byte dump was saved. No wire bytes invented."
+      }
+    },
+    {
+      "id": "retry-after-529",
+      "variant": "429",
+      "expected": {
+        "retryAfterObservation": "Fri, 09 Oct 2026 03:00:00 GMT",
+        "transportCount": 1
+      },
+      "input": {
+        "id": "retry-after-529",
+        "variant": "429",
+        "path": "inputs/retry-after-529.json",
+        "bytes": 1100,
+        "sha256": "56caa09194774fb276c4b3dd2ee0298414ea229f58e5dabf8c54da9126a808aa",
+        "byteKind": "derived-encoding-of-existing-observed-input",
+        "originalWireBytes": "MISSING_ORIGINAL",
+        "originalWireExplanation": "Existing observation stores parsed wire requestId/operationId/digest and count, but no original serialized transport byte dump was saved. No wire bytes invented."
+      }
+    },
+    {
+      "id": "no-retry-429",
+      "variant": "sdk-retry-negative",
+      "expected": {
+        "status": "UNAVAILABLE",
+        "transportCount": 1,
+        "completedResubmitSharesResult": true
+      },
+      "input": {
+        "id": "no-retry-429",
+        "variant": "sdk-retry-negative",
+        "path": "inputs/no-retry-429.json",
+        "bytes": 1081,
+        "sha256": "487f155e128d38745f559d028bc7666a1db93992f27525bc3b5caffbbc414696",
+        "byteKind": "derived-encoding-of-existing-observed-input",
+        "originalWireBytes": "MISSING_ORIGINAL",
+        "originalWireExplanation": "Existing observation stores parsed wire requestId/operationId/digest and count, but no original serialized transport byte dump was saved. No wire bytes invented."
+      }
+    },
+    {
+      "id": "no-retry-529",
+      "variant": "sdk-retry-negative",
+      "expected": {
+        "status": "UNAVAILABLE",
+        "transportCount": 1,
+        "completedResubmitSharesResult": true
+      },
+      "input": {
+        "id": "no-retry-529",
+        "variant": "sdk-retry-negative",
+        "path": "inputs/no-retry-529.json",
+        "bytes": 1081,
+        "sha256": "c1fa2d0fb644c1c10b8aab74d64a7f00ba53cee11741ae85d5c59f489e11c7d4",
+        "byteKind": "derived-encoding-of-existing-observed-input",
+        "originalWireBytes": "MISSING_ORIGINAL",
+        "originalWireExplanation": "Existing observation stores parsed wire requestId/operationId/digest and count, but no original serialized transport byte dump was saved. No wire bytes invented."
+      }
+    },
+    {
+      "id": "unverified-native-retry-policy",
+      "variant": "sdk-retry-negative",
+      "expected": {
+        "available": false,
+        "nativeInvocations": 0
+      },
+      "input": {
+        "id": "unverified-native-retry-policy",
+        "variant": "sdk-retry-negative",
+        "path": "inputs/unverified-native-retry-policy.json",
+        "bytes": 30,
+        "sha256": "448eacafcdb6e76c8e9180240f7666be9dd370834ab6cbd98915d670c2ff110d",
+        "byteKind": "derived-encoding-of-existing-observed-input",
+        "originalWireBytes": "MISSING_ORIGINAL",
+        "originalWireExplanation": "Existing observation stores parsed wire requestId/operationId/digest and count, but no original serialized transport byte dump was saved. No wire bytes invented."
+      }
+    },
+    {
+      "id": "delayed-identical-submissions",
+      "variant": "duplicate-inflight",
+      "expected": {
+        "transportCount": 1,
+        "sameResult": true,
+        "settledCostUsd": 0.1
+      },
+      "input": {
+        "id": "delayed-identical-submissions",
+        "variant": "duplicate-inflight",
+        "path": "inputs/delayed-identical-submissions.json",
+        "bytes": 1093,
+        "sha256": "4fa7b736535bb7254d52658fff3777701c64702ba96e1e332bc9e34b4ce7ea6a",
+        "byteKind": "derived-encoding-of-existing-observed-input",
+        "originalWireBytes": "MISSING_ORIGINAL",
+        "originalWireExplanation": "Existing observation stores parsed wire requestId/operationId/digest and count, but no original serialized transport byte dump was saved. No wire bytes invented."
+      }
+    },
+    {
+      "id": "delayed-fallback-identical-submissions",
+      "variant": "duplicate-inflight",
+      "expected": {
+        "attemptKinds": [
+          "jev",
+          "vendor"
+        ],
+        "sameResult": true,
+        "settledVendorCostUsd": 0.1
+      },
+      "input": {
+        "id": "delayed-fallback-identical-submissions",
+        "variant": "duplicate-inflight",
+        "path": "inputs/delayed-fallback-identical-submissions.json",
+        "bytes": 1086,
+        "sha256": "e3cda1dbbf246610e14ab2a0c198ec52a1a13fddf006f5e41ea3ef7c64f0542e",
+        "byteKind": "derived-encoding-of-existing-observed-input",
+        "originalWireBytes": "MISSING_ORIGINAL",
+        "originalWireExplanation": "Existing observation stores parsed wire requestId/operationId/digest and count, but no original serialized transport byte dump was saved. No wire bytes invented."
+      }
+    },
+    {
+      "id": "unknown-cost-identical-resubmit",
+      "variant": "duplicate-inflight",
+      "expected": {
+        "transports": 1,
+        "status": "UNCERTAIN",
+        "error": "PROVIDER_TIMEOUT",
+        "unknownCostReservations": 1,
+        "lateCompletionIgnored": true
+      },
+      "input": {
+        "id": "unknown-cost-identical-resubmit",
+        "variant": "duplicate-inflight",
+        "path": "inputs/unknown-cost-identical-resubmit.json",
+        "bytes": 1080,
+        "sha256": "432eac36f61eacaa2a7a468fbdf58ac2b9d472b648b4e777fe23c700104b6165",
+        "byteKind": "derived-encoding-of-existing-observed-input",
+        "originalWireBytes": "MISSING_ORIGINAL",
+        "originalWireExplanation": "Existing observation stores parsed wire requestId/operationId/digest and count, but no original serialized transport byte dump was saved. No wire bytes invented."
+      }
+    },
+    {
+      "id": "cancelled-before-shared-dispatch",
+      "variant": "duplicate-inflight",
+      "expected": {
+        "transports": 0,
+        "error": "STALE_CLASSIFICATION"
+      },
+      "input": {
+        "id": "cancelled-before-shared-dispatch",
+        "variant": "duplicate-inflight",
+        "path": "inputs/cancelled-before-shared-dispatch.json",
+        "bytes": 1167,
+        "sha256": "f440bbe64e47ed8034dbf988fbad8fcbbd35356e01227abc00de298a18ada91a",
+        "byteKind": "derived-encoding-of-existing-observed-input",
+        "originalWireBytes": "MISSING_ORIGINAL",
+        "originalWireExplanation": "Existing observation stores parsed wire requestId/operationId/digest and count, but no original serialized transport byte dump was saved. No wire bytes invented."
+      }
+    },
+    {
+      "id": "collision-same-operation",
+      "variant": "digest-collision",
+      "expected": {
+        "status": "INVALID",
+        "error": "OPERATION_DIGEST_CONFLICT",
+        "transports": 1,
+        "originalUncontaminated": true
+      },
+      "input": {
+        "id": "collision-same-operation",
+        "variant": "digest-collision",
+        "path": "inputs/collision-same-operation.json",
+        "bytes": 2048,
+        "sha256": "c090b317a70fad36fc48f0a319fdf7a263e56da733f82cdecaf6d8e1b86e8e6d",
+        "byteKind": "derived-encoding-of-existing-observed-input",
+        "originalWireBytes": "MISSING_ORIGINAL",
+        "originalWireExplanation": "Existing observation stores parsed wire requestId/operationId/digest and count, but no original serialized transport byte dump was saved. No wire bytes invented."
+      }
+    },
+    {
+      "id": "collision-different-operation",
+      "variant": "digest-collision",
+      "expected": {
+        "status": "INVALID",
+        "error": "REQUEST_ID_CONFLICT",
+        "transports": 1,
+        "originalUncontaminated": true
+      },
+      "input": {
+        "id": "collision-different-operation",
+        "variant": "digest-collision",
+        "path": "inputs/collision-different-operation.json",
+        "bytes": 2054,
+        "sha256": "7aa50b9bab3962d200aea863c7e66ea0bde98313a9182ab3852e3ec243f6848c",
+        "byteKind": "derived-encoding-of-existing-observed-input",
+        "originalWireBytes": "MISSING_ORIGINAL",
+        "originalWireExplanation": "Existing observation stores parsed wire requestId/operationId/digest and count, but no original serialized transport byte dump was saved. No wire bytes invented."
+      }
+    }
+  ],
+  "mechanicalVariants": [
+    "429",
+    "sdk-retry-negative",
+    "duplicate-inflight",
+    "digest-collision"
+  ],
+  "semanticAccuracy": null
+}

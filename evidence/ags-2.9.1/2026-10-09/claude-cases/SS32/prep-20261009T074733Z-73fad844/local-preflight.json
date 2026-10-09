@@ -1,0 +1,61 @@
+{
+  "caseId": "SS32",
+  "phase": "PREPARATION_ONLY",
+  "claudeCLI": {
+    "path": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+    "version": "2.1.286 (Claude Code)",
+    "checkedCommands": [
+      "--version",
+      "--help"
+    ],
+    "inference": "Local executable presence/version only; API authentication and host work untested"
+  },
+  "nodeVersion": "v24.19.0",
+  "pnpmVersion": "11.19.0",
+  "localDependencyTreeExists": true,
+  "localLockSHA256": "00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e",
+  "dependencyCompatibilityWithFinalCandidate": "UNVERIFIED",
+  "apiKeyEnvironmentPresent": true,
+  "apiAuthVerified": false,
+  "secretHandling": "No secret value inspected, printed, copied or published; no persistent auth/config/permission/network-policy change",
+  "instructionsRead": {
+    "localSourceCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+    "purpose": "Preparation guidance only; this local source is not the test candidate",
+    "files": [
+      {
+        "path": "AGENTS.md",
+        "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827"
+      },
+      {
+        "path": "skills/test-engineering/SKILL.md",
+        "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/SKILL.md",
+        "sha256": "1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/test-design.md",
+        "sha256": "fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/cli.md",
+        "sha256": "42d409ec8fd0f39c491dfdeb18da3f3d15d9fb518c82a8d9f69ed0ae87a59f69"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/references/entry-details.md",
+        "sha256": "2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/references/evidence-protocol.md",
+        "sha256": "229d6f16a1b560b8482d3283f5a46f74f86a405d47c0bdf592d18f3f3e3897d0"
+      }
+    ]
+  },
+  "catalogFallback": {
+    ".agents/skills in environment": "ABSENT",
+    ".agents/skills in local source repository": "ABSENT",
+    "relevantRepositorySkills": "READ from skills/; not in host skill catalog"
+  },
+  "productCommandsRun": []
+}

@@ -1,0 +1,33 @@
+{
+  "caseId": "SS32",
+  "readiness": "PREPARED_WAITING_FOR_PARENT",
+  "actualClaudeCodeTest": "NOTRUN",
+  "productVerdict": "NOTRUN",
+  "hostStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "agentSelectedSkillIds": null,
+  "hostReceipt": null,
+  "candidateReported": {
+    "label": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "source": "Parent-reported local fixed candidate only",
+    "independentSourceJudgment": "AWAITING_PARENT",
+    "remotePublicationVerification": "AWAITING_PARENT",
+    "checkedOutOrTested": false
+  },
+  "requiredBeforeAnyProductTestOrPaidCall": [
+    "Parent supplies independently verified exact final commit/tree and fixed remote source evidence",
+    "Parent supplies common Claude model ID, effort, validated API authentication procedure and launch/MCP/plugin settings",
+    "Parent supplies preceding check results and any per-case limits/timeout/retry policy",
+    "Candidate-scoped AGENTS.md, Claude overlay/SKILL.md, MCP/hooks and deployment bytes are read and hashed in isolated final-candidate checkout",
+    "Parent-approved local mock harness can be used without modifying tracked product code or generated deployments; final candidate dependencies checked",
+    "Any actual host acceptance claim has trusted task/session and exact-call evidence; missing baseline B/purpose or native SDK evidence stays unresolved"
+  ],
+  "jevCallsAllowed": false,
+  "historicalCandidateNotAReplacement": "c6a8019 is historical reference only; existing local main is not final candidate"
+}
