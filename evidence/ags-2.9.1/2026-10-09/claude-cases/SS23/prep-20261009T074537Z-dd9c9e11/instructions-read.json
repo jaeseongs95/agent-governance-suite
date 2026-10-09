@@ -1,0 +1,150 @@
+{
+  "sourceRoot": "/workspace/agent-governance-suite",
+  "sourceCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+  "sourcePurpose": "Available workspace preparation instructions only. This is not the final product candidate. Re-read candidate instructions on resume.",
+  "evidenceCheckoutInstructionFiles": [],
+  "workspaceAGENTSExists": false,
+  "workspaceAgentsSkillsExists": false,
+  "sourceAgentsSkillsExists": false,
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "status": "READ",
+      "bytes": 9551,
+      "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827"
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "status": "READ",
+      "bytes": 2981,
+      "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "status": "READ",
+      "bytes": 6975,
+      "sha256": "bbae09429c185f5841311832d5a49ec88e2b7fa6c14a341f96aea6e7ae008944"
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "status": "READ",
+      "bytes": 4583,
+      "sha256": "0bd44e1a780bb930c69f6880102ac3b4d662de3ecdcd16116a48d870aa971d87"
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "status": "READ",
+      "bytes": 5211,
+      "sha256": "aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+    },
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "status": "READ",
+      "bytes": 1944,
+      "sha256": "d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+    },
+    {
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "status": "READ",
+      "bytes": 2053,
+      "sha256": "f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/SKILL.md",
+      "status": "READ",
+      "bytes": 1585,
+      "sha256": "eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/SKILL.md",
+      "status": "READ",
+      "bytes": 1795,
+      "sha256": "1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109"
+    },
+    {
+      "path": "skills/instruction-scope-resolver/SKILL.md",
+      "status": "READ",
+      "bytes": 2068,
+      "sha256": "5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb"
+    },
+    {
+      "path": "skills/change-scope-guardian/SKILL.md",
+      "status": "READ",
+      "bytes": 2184,
+      "sha256": "4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "status": "READ",
+      "bytes": 2140,
+      "sha256": "eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe"
+    },
+    {
+      "path": "skills/orchestrator/references/skill-classification.md",
+      "status": "MISSING_IN_PREPARATION_CHECKOUT",
+      "bytes": null,
+      "sha256": null
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/test-design.md",
+      "status": "READ",
+      "bytes": 3944,
+      "sha256": "fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/test-proof.md",
+      "status": "READ",
+      "bytes": 4258,
+      "sha256": "7ac0a9d5031d32e5d2b3770a080c1629451903184dac1e38e240812c6fc91e1d"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/cli.md",
+      "status": "READ",
+      "bytes": 8992,
+      "sha256": "42d409ec8fd0f39c491dfdeb18da3f3d15d9fb518c82a8d9f69ed0ae87a59f69"
+    },
+    {
+      "path": "skills/change-scope-guardian/references/entry-details.md",
+      "status": "READ",
+      "bytes": 723,
+      "sha256": "d164e59584763265a4bd8ccfd6a4ee75560f1df4ef30cd44dee68d814baf185b"
+    },
+    {
+      "path": "skills/change-scope-guardian/references/path-policy.md",
+      "status": "READ",
+      "bytes": 1163,
+      "sha256": "8165defb0cb02f683718f8c6c927b0455f30d2120f3d4d6e0a971247c912a56d"
+    },
+    {
+      "path": "skills/change-scope-guardian/references/verdict-rules.md",
+      "status": "READ",
+      "bytes": 1184,
+      "sha256": "71d8e964c03874b8bdcaef4e21487a56d672d59553da0c01276e4896a8fc1c28"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/entry-details.md",
+      "status": "READ",
+      "bytes": 1516,
+      "sha256": "13dc04ff9d74e17f2d0bb6d69583a2c502dc5c69766d9a4ed91a59c0c5741154"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/risk-matrix.md",
+      "status": "READ",
+      "bytes": 832,
+      "sha256": "0377275e0487f9823bed76cd3541e0caa5f3bf030ea407fee5ad17b0f761c801"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/approval-and-authority.md",
+      "status": "READ",
+      "bytes": 617,
+      "sha256": "471afb623db2b67f45465f924eec5426d470dafa0c92bcad14b7bd16d0c16334"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/recovery-requirements.md",
+      "status": "READ",
+      "bytes": 604,
+      "sha256": "60a0bded3a1453092e2d02469393e39f3709f0810e0e4c076628854c4d7d54af"
+    }
+  ],
+  "skillsReadIsNotActualClaudeSkillApplication": true
+}

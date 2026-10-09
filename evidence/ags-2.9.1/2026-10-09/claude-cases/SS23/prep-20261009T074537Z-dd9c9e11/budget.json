@@ -1,0 +1,24 @@
+{
+  "caseId": "SS23",
+  "currency": "USD",
+  "softBudget": 2,
+  "includesPreparationCalls": true,
+  "paidCalls": 0,
+  "attempts": [],
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadInputTokens": 0,
+  "cacheCreationInputTokens": 0,
+  "retryCalls": 0,
+  "failedCalls": 0,
+  "costUsd": 0,
+  "remainingSoftBudgetUsd": 2,
+  "jevCalls": 0,
+  "jevAllocation": "NOT_ASSIGNED",
+  "sharedReservation": {
+    "cases": 39,
+    "totalUsd": 78,
+    "meaning": "reservation, not spending target"
+  },
+  "stopPolicy": "No first call until parent resume gate. Set each later print run max-budget-usd no higher than remaining case budget; it is not a replacement for cross-run accounting. Stop before next call when approaching cap or failed/retry/unknown usage is unaccounted."
+}

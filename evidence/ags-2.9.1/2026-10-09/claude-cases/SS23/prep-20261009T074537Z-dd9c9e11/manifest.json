@@ -1,0 +1,39 @@
+{
+  "caseId": "SS23",
+  "run": "prep-20261009T074537Z-dd9c9e11",
+  "status": "PREPARED_WAITING_PARENT",
+  "productTestStatus": "NOTRUN",
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 5318,
+      "sha256": "c0a3eb8bc34557d89fc53f449b275ace106bb8a6f65f3004e3086793d5f30d3f"
+    },
+    {
+      "path": "budget.json",
+      "bytes": 769,
+      "sha256": "1cbdfe32ebef3ea0ff6c0daa0b3c9242551adfa862a18309c177b56fa5dff870"
+    },
+    {
+      "path": "environment.json",
+      "bytes": 1372,
+      "sha256": "a3f1b2cf3d3c72ee4a0d7f201886fa098c3288a8ebba90839406c62b33ec585a"
+    },
+    {
+      "path": "input-evidence.json",
+      "bytes": 15189,
+      "sha256": "2cf64e5e1e7030a392b69de96490b6fdee8bc44a4f065146c2d00aa6468216f2"
+    },
+    {
+      "path": "instructions-read.json",
+      "bytes": 5181,
+      "sha256": "03d3082c1370e1eff7e93c1001617eee73d75ad9903d13027df8ae5c625f9de7"
+    },
+    {
+      "path": "resume-plan.json",
+      "bytes": 5804,
+      "sha256": "701cb9a88810c915bd203c30195cc6fa0da2245aec933847aebd76d05816f3e1"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "observedAt": "2026-10-09T07:45:37.989843+00:00",
+  "claudeCLI": {
+    "requestedPath": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+    "resolvedPath": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+    "version": "2.1.286 (Claude Code)",
+    "pathLookupFound": false,
+    "versionCommandExit": 0,
+    "helpCommandExit": 0,
+    "helpSHA256": "13dd71866e4b6fde1a11de6fa26bd4f5866308794307ff0fb37804c03db8e0b2",
+    "supportedFlagsObserved": [
+      "--model",
+      "--effort",
+      "--print",
+      "--max-budget-usd",
+      "--plugin-dir",
+      "--mcp-config",
+      "--settings",
+      "--strict-mcp-config",
+      "--output-format",
+      "--no-session-persistence"
+    ]
+  },
+  "nodeVersion": "v24.19.0",
+  "pnpmVersion": "11.19.0",
+  "environmentPresenceOnly": {
+    "CLAUDE_API_KEY": true,
+    "ANTHROPIC_API_KEY": false,
+    "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG": false,
+    "AGENT_GOVERNANCE_HOST_ATTESTATION": false
+  },
+  "authenticationValidated": false,
+  "paidAPICalls": 0,
+  "notes": [
+    "Version/help commands only; no auth status, model prompt or API request.",
+    "CLI existence does not establish route approval or actual host attestation.",
+    "API secret values were not inspected, printed, copied or published.",
+    "No persistent auth, permissions or network policy changes."
+  ]
+}

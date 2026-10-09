@@ -1,0 +1,434 @@
+{
+  "caseId": "SS23",
+  "title": "AGENT 최종 선택과 추천 강제 주입 금지",
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "casePath": "evidence/ags-2.9.1/2026-10-09/cases/SS23/",
+  "input": {
+    "path": "SS23.input.txt",
+    "bytes": 105,
+    "sha256": "b390c3ba30b1f1cb30bd35fda0d2e0e7220aa0aa61332f0eba927e1e7e98737a",
+    "source": "SS23.source.json originalPrompt field",
+    "capturedOriginalWireStatus": "MISSING_ORIGINAL"
+  },
+  "sourceSpecAuthority": "SS23.source.json embedded fields; TEST-SPEC.seq7.ko.md was absent in historical package",
+  "sourceSpecFields": {
+    "입력": "“endpoint 최소 구현과 회귀 테스트 설계, 보안 감사, CS 불변조건 검토를 연결해 줘”라는 고정 요청에 explicit={CS}, rules={SEC}, 검증된 JEV={P,T,O}를 둔다. B에는 무관한 K를 고의로 넣는다. mode=select, ON+JEV 정상이다.",
+    "필수추천": "동결 golden의 기대 S={P,CS,SEC,T,O}. AGENT가 추천과 명시·필수 근거를 검토해 실제 고른 집합을 기록한다.",
+    "금지추천 또는 행동": "추천을 AGENT 선택으로 강제 주입해 parity를 만듦; B의 K를 무조건 union; 명시·규칙 추가를 모델 적중으로 기록; 선택 반영을 파일 읽기·실행·승인으로 해석. 필요한 SEC의 실행 권한이 없다는 이유만으로 needed에서 제거.",
+    "허용선택": "AGENT의 실제 결정 receipt를 확인한 뒤 선택·지원 사용 여부를 기록한다. 추천 receipt를 AGENT 결정으로 복사하지 않는다.",
+    "보류조건": "명시·필수의 가용성·권한·제외 충돌이 있으면 미해결 항목을 NEEDS_INPUT으로 남기고, 수락된 독립 부분이 있으면 PARTIAL로 구분한다. 필요한 스킬의 선택과 runnable·admission은 분리한다. 독립적인 optional 후보 한 개의 불확실성만으로 확정 가능한 전체 선택을 막는 과잉 보류도 음성대조로 검사한다.",
+    "통과기준": "실제 agentSelectedSkillIds=S이고 K는 없다. 별도 A/B 변형에서는 불필요한 K를 추천에 넣거나 CS를 누락해도 AGENT가 golden 목적 기준으로 판단하는지 본다. 추천과 같은지보다 실제 판단·근거·후속 read/apply의 일치를 확인한다. 최종집합을 강제 복사한 음성대조는 FAIL한다. 같은 ID의 집합 간 중복은 한 번만 선택하되 출처는 모두 보존한다.",
+    "증거": "E0·E3, raw·규칙·명시·합성·실제 선택 기록과 stale B 음성대조.",
+    "실행종류": "mock과 host-live. JEV 실제 통합은 provider-live로 별도 확인한다."
+  },
+  "sourceSpecBodyDigest": "sha256:af9251139a6dbee16a3a706be5dff2c51e1428c319d9da7117a674ecf99f7ea6",
+  "oracle": null,
+  "semanticAccuracyScore": null,
+  "files": [
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/ORIGINALS.json",
+      "bytes": 3758,
+      "sha256": "86908e35bc7d5ed9671c2bb03eeec1aab6745bf62065ed5d97b97bee41bd7159",
+      "gitBlob": "4db90d7553ac63d427ec9c554085db6032115d05"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/README.md",
+      "bytes": 5182,
+      "sha256": "ebb21db433fe53ba2d43710e0d1ef5ec9cccec5946622be41770505e28c75cb8",
+      "gitBlob": "61f8b63aec79d87b8896ede2cbeecd5e769337d4"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SHA256SUMS",
+      "bytes": 2247,
+      "sha256": "18af5e3a3fab802043f22a8f76222d8811fe8454587cae43ddada93a31b2309e",
+      "gitBlob": "595e54c6a5a94ef8d16d47be63bb9714b35fb1c5"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23-harness.ts",
+      "bytes": 13058,
+      "sha256": "cf296c62c45d5de947a590fd47502423f204ef5fc602e2de7e186df27b950960",
+      "gitBlob": "331ccefaa520ff2fd2814dd4dc14c999b49a0792"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23-race.test.ts",
+      "bytes": 2015,
+      "sha256": "b32b729202454609cfb6803674823ab8eafcc16a54d989ddf8cf8ea473da816a",
+      "gitBlob": "d307588f39da81904802dba600781f7b62284229"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.engineering-test-result.json",
+      "bytes": 3292,
+      "sha256": "922da388abd67f3ff82cdf1775ead5b84b3cc01bc173bc46a414f23eb32b8725",
+      "gitBlob": "83434cc2d9a8c75cdc2b772e45afcb42a9ff01ca"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.host-support.json",
+      "bytes": 2290,
+      "sha256": "53ca0e56801c7601c930aff0bec2b7003da38a9a74484ef8c4c2495320472d1d",
+      "gitBlob": "63fd9124904c85f8744d0645d7ca5478831ef3b1"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.input.txt",
+      "bytes": 105,
+      "sha256": "b390c3ba30b1f1cb30bd35fda0d2e0e7220aa0aa61332f0eba927e1e7e98737a",
+      "gitBlob": "5ccc9e1378720a2142a7749e474ba3a8a5554783"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.observed.json",
+      "bytes": 75535,
+      "sha256": "1ddfa8dea61e4a81f4ceb486e485938c9b536b8cc1f29c40a1973eeb41364f18",
+      "gitBlob": "e0ca32a10f75e40d2c1c2411cdb1a093cadf7a96"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.plan-check.json",
+      "bytes": 457,
+      "sha256": "a3e3b9d2a4326d1ecbdacdbbd7afad661d62d497cfadfcf70bffcc7cfe4b6edf",
+      "gitBlob": "0b7def25f08b35e08414a098f02aa7a253629f5e"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.plan.json",
+      "bytes": 14580,
+      "sha256": "96f434ebb68100630f13623f4258d4dafb934030fd13d228ae5bd9b42696959e",
+      "gitBlob": "c790596d3def8cc7b9df38d880f61db068e482a5"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.proof.json",
+      "bytes": 8973,
+      "sha256": "f8b3c18e4afbbee0dd5869e81148ced226b8bbabca22608f601889fe99d89ad3",
+      "gitBlob": "ed761f20151e82441ffd732bc30b0453290123cb"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.race-observed.json",
+      "bytes": 4322,
+      "sha256": "9c30a7b072e8bb4bae2d787b6b872b66ba3a8d128bc3a477d670eba355ed7f29",
+      "gitBlob": "748958e84cb99a0e5fbf13c7348414bf557959ea"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.race-receipt.json",
+      "bytes": 4619,
+      "sha256": "f119216fd6b04b510c08a1a8b68a6f4856c28c36e08bb7de0159e3a10d71d123",
+      "gitBlob": "e562cf6c426b2bcf71a47e2527f9c527d32b5c24"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.race.stderr.txt",
+      "bytes": 622,
+      "sha256": "16ece5770a37bd179d06b38c3212733a2589f8f3f5eaac456ccc85d77c0031e6",
+      "gitBlob": "67c950e9ffcda7a6c5b713cc2ccf7052404f35fe"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.race.stdout.txt",
+      "bytes": 319,
+      "sha256": "ec3c1c1dc0d45169641777471a1fee10f055aaf5d5446ff3f4170758f08eb611",
+      "gitBlob": "88afdd1d597b6c8acdf830980e50de1b9ed8e09a"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.regression-receipt.json",
+      "bytes": 5030,
+      "sha256": "a063a09bcc005139735014ec2519c0366c1d950f2be91c6b5513c621e55c2d15",
+      "gitBlob": "174d4ec92ec2926c907fe37d09118f576f1591db"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.regression.stderr.txt",
+      "bytes": 158,
+      "sha256": "1b4ae0d67530327540c1a2cbbf7b9b3727f527d93c22d7946489a8fb01ecbacf",
+      "gitBlob": "cd7b7ca8cea0f3d94d4522036b49b0f88904a7a4"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.regression.stdout.txt",
+      "bytes": 184,
+      "sha256": "e9ce73df0f2ed72275bcdbe1e234d55d9db41aad5cd2d5557997fd705d022dc9",
+      "gitBlob": "7bb9dec58b1a67e5dce7bb48db1838ebd3592715"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.result.json",
+      "bytes": 91820,
+      "sha256": "d086f49ae2da5f71681a85f3868632586ae60b4e1ef88f70176dea5ecf5c2cce",
+      "gitBlob": "17ddb4839e59e4c4eee5dc79a875d63a2430a82b"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.snapshot.json",
+      "bytes": 2968,
+      "sha256": "2b1d05d365cf1c5c9a2fa7917589e33c9bdb9245f824044169b6453cc7837ea9",
+      "gitBlob": "0b3842a82b5e2bda0ce7b323421b1574fc3c283f"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.source.json",
+      "bytes": 2812,
+      "sha256": "ddeb1e6fa691ae5eeeb0ab2c55ce4056ef4983dcdb6931bfc9512039d2faa20f",
+      "gitBlob": "acfe395e00b34da97ff88bbfb80f89f6c3c68e2c"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.test.ts",
+      "bytes": 10098,
+      "sha256": "e9d3fe6b06ce886c86da753b0e10061bf94b28e4b6ee0ca2a5c7e89697c74407",
+      "gitBlob": "3c08dd04b110deb3947c25326b8fe175f08702c9"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.variants-receipt.json",
+      "bytes": 4622,
+      "sha256": "34af193409e57c315d131afb7bfa70215991ce534651974da3e1caaa702fbbee",
+      "gitBlob": "df0f1a5a38183172c99cb79e6dee8768d893edca"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.variants.stderr.txt",
+      "bytes": 155,
+      "sha256": "edbfb9027de9f60e4cdbc0cf4c7bed1aa1e083449a8dfa98c91b9ab204d6eb40",
+      "gitBlob": "1d7838dca043aa4e22fae65f508d233710fd41f3"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.variants.stdout.txt",
+      "bytes": 169,
+      "sha256": "9c2e67cd83d35d23b97892b5bcc4f57fe7289bbd70008587f25e592dc74f25b1",
+      "gitBlob": "7d89aeac0142cc2d8bbbbf5419acedd2bd2a848c"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS23/manifest.json",
+      "bytes": 15802,
+      "sha256": "460b54bcfda9198b20913a4115269c9a92c1c78b6b568bfba90e938c89bfca7d",
+      "gitBlob": "81dcd5f5d91a69123425af0eb97748436f179702"
+    }
+  ],
+  "verification": {
+    "manifestPayloadsChecked": 25,
+    "manifestChecks": [
+      {
+        "path": "ORIGINALS.json",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "README.md",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23-harness.ts",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23-race.test.ts",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.engineering-test-result.json",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.host-support.json",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.input.txt",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.observed.json",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.plan-check.json",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.plan.json",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.proof.json",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.race-observed.json",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.race-receipt.json",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.race.stderr.txt",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.race.stdout.txt",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.regression-receipt.json",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.regression.stderr.txt",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.regression.stdout.txt",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.result.json",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.snapshot.json",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.source.json",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.test.ts",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.variants-receipt.json",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.variants.stderr.txt",
+        "bytesMatch": true,
+        "sha256Match": true
+      },
+      {
+        "path": "SS23.variants.stdout.txt",
+        "bytesMatch": true,
+        "sha256Match": true
+      }
+    ],
+    "sha256sumsEntriesChecked": 26,
+    "sha256sumsChecks": [
+      {
+        "path": "ORIGINALS.json",
+        "match": true
+      },
+      {
+        "path": "README.md",
+        "match": true
+      },
+      {
+        "path": "SS23-harness.ts",
+        "match": true
+      },
+      {
+        "path": "SS23-race.test.ts",
+        "match": true
+      },
+      {
+        "path": "SS23.engineering-test-result.json",
+        "match": true
+      },
+      {
+        "path": "SS23.host-support.json",
+        "match": true
+      },
+      {
+        "path": "SS23.input.txt",
+        "match": true
+      },
+      {
+        "path": "SS23.observed.json",
+        "match": true
+      },
+      {
+        "path": "SS23.plan-check.json",
+        "match": true
+      },
+      {
+        "path": "SS23.plan.json",
+        "match": true
+      },
+      {
+        "path": "SS23.proof.json",
+        "match": true
+      },
+      {
+        "path": "SS23.race-observed.json",
+        "match": true
+      },
+      {
+        "path": "SS23.race-receipt.json",
+        "match": true
+      },
+      {
+        "path": "SS23.race.stderr.txt",
+        "match": true
+      },
+      {
+        "path": "SS23.race.stdout.txt",
+        "match": true
+      },
+      {
+        "path": "SS23.regression-receipt.json",
+        "match": true
+      },
+      {
+        "path": "SS23.regression.stderr.txt",
+        "match": true
+      },
+      {
+        "path": "SS23.regression.stdout.txt",
+        "match": true
+      },
+      {
+        "path": "SS23.result.json",
+        "match": true
+      },
+      {
+        "path": "SS23.snapshot.json",
+        "match": true
+      },
+      {
+        "path": "SS23.source.json",
+        "match": true
+      },
+      {
+        "path": "SS23.test.ts",
+        "match": true
+      },
+      {
+        "path": "SS23.variants-receipt.json",
+        "match": true
+      },
+      {
+        "path": "SS23.variants.stderr.txt",
+        "match": true
+      },
+      {
+        "path": "SS23.variants.stdout.txt",
+        "match": true
+      },
+      {
+        "path": "manifest.json",
+        "match": true
+      }
+    ],
+    "inputEqualsEmbeddedOriginalPromptUTF8": true
+  },
+  "missingOriginal": [
+    "MISSING_ORIGINAL: standalone raw provider wire bytes were not captured (offline synthetic provider only)",
+    "MISSING_ORIGINAL: force-copy-negative full classification request object was not present in the saved observed row; declared input remains in result/test/source",
+    "MISSING_ORIGINAL: actual host selected/read/applied/verified evidence never existed (NOTRUN)"
+  ]
+}

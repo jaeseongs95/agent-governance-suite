@@ -1,0 +1,101 @@
+{
+  "kind": "preparation-plan-not-an-execution-receipt",
+  "caseId": "SS23",
+  "title": "AGENT 최종 선택과 추천 강제 주입 금지",
+  "status": "PREPARED_WAITING_PARENT",
+  "productTestStatus": "NOTRUN",
+  "expectedCandidate": {
+    "label": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "authority": "delegated expectation only; independent SOURCE and fixed remote publication not confirmed here"
+  },
+  "forbiddenCandidateSubstitution": [
+    "previous main",
+    "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6"
+  ],
+  "inputRef": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68:evidence/ags-2.9.1/2026-10-09/cases/SS23/SS23.input.txt",
+  "mode": "select",
+  "explicitSkillIds": [
+    "cs-engineering"
+  ],
+  "ruleRequiredSkillIds": [
+    "software-security-auditor"
+  ],
+  "expectedSelected": [
+    "ponytail",
+    "cs-engineering",
+    "software-security-auditor",
+    "test-engineering",
+    "orchestrator"
+  ],
+  "excludedBaselineSkillId": "korean-prose-editor",
+  "oracle": null,
+  "semanticAccuracyScore": null,
+  "variants": [
+    {
+      "id": "normal",
+      "advice": [
+        "ponytail",
+        "test-engineering",
+        "orchestrator"
+      ],
+      "expectation": "Actual Claude independently selects S, excludes K, binds reasons and actual later stages."
+    },
+    {
+      "id": "irrelevant-baseline",
+      "expectation": "Deliberately irrelevant K in baseline B or advice is excluded by purpose/applicability judgment; B must be identified as fixture-owned when gateway does not accept it."
+    },
+    {
+      "id": "missing-raw-cs",
+      "expectation": "Missing raw CS remains visible; explicit CS and mandatory SEC are added with source-specific reasons, never credited as raw model hits."
+    },
+    {
+      "id": "force-copy-negative",
+      "expectation": "A final S copied by the test is behavioral FAIL even if structural validation accepts it. Reject unsigned, caller-made, and required-omission controls; synthetic receipts cannot prove actual independence."
+    },
+    {
+      "id": "optional-uncertain-independent-partial",
+      "expectation": "Uncertain optional K alone does not stop independently settled S; record PARTIAL and unresolved optional item."
+    },
+    {
+      "id": "dedup-blocked",
+      "expectation": "Same IDs selected once while raw/explicit/rule sources retained. Disabled or unavailable SEC remains needed, leaves runnable and is recorded blocked. Admission separately observed."
+    },
+    {
+      "id": "acceptance-cancel-race",
+      "expectation": "Cancellation during async acceptance recheck rejects stale decision, no accepted selection. Historical FAIL is not assumed on R17; run only after resume gate."
+    }
+  ],
+  "steps": [
+    "Receive parent verified candidate commit/tree, independent SOURCE judgment, immutable remote source reference, common Claude exact model/effort and prior-check results.",
+    "Create isolated candidate checkout, verify commit/tree and clean status; read its AGENTS, Claude overlay/plugin instructions and relevant SKILL references. Hash source and generated plugin separately without changing product files.",
+    "Receive successful API-auth recipe; use only transient process-scoped authentication to api.anthropic.com. Do not store or print key. No auth experiments before approval gate.",
+    "Confirm approved classification config/profile/route, task-revision source, installed/enabled/supported inventory and genuine Claude exact-call hooks. Parent must supply approved mock advice path for host-live; real JEV remains unallocated and must not run.",
+    "Bind exact 105 UTF-8 input bytes and manifest digest. Keep expectations evaluator-side; never inject selected S as Claude decision. Set explicit CS, rule SEC and variant advice as separately identified input sources.",
+    "Invoke actual Claude Code with parent common settings, scoped plugin and MCP configuration. Claude itself must perform host tools and skill reads/actions in approved isolated test fixtures. Sol only manages environment, capture and evidence. No product source/generated distribution writes.",
+    "Capture actual tool call references, raw advice, explicit/rule sources, independently stated selection reasons, applicability/exclusion checks, genuine acceptance receipt, selected/needed/runnable/admission and actual read/apply/verify artifacts. Missing stages stay NOTRUN; selection null never replaced with [].",
+    "Use fixed input variants and host evidence to judge original requirements. Run portable historical reproduction only as separate offline checks after authorization and R17 binding; do not change assertions/hashes to make them green.",
+    "Track every actual API attempt, tokens/cache/cost/failures/retries; stop near US$2 total including preparation, or immediately if unknown billing/retry consumption prevents safe remaining-budget calculation.",
+    "Publish only sanitized evidence/report/hashes under a new SS23 run directory on existing evidence branch, then fetch and verify immutable remote bytes. Keep host-live, provider-live and offline results distinct."
+  ],
+  "resumeConditions": [
+    "verified candidate and remote fixed source",
+    "independent SOURCE decision",
+    "common exact Claude model/effort/settings",
+    "prior-check results",
+    "successful shared API-auth procedure",
+    "approved per-case host-live fixture and classification configuration",
+    "genuine hooks/task/inventory observations",
+    "recorded remaining budget and retry/failure accounting"
+  ],
+  "actualStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "actualAgentSelectedSkillIds": null,
+  "genuineHostReceipt": null,
+  "expectedResultsFrozen": true
+}
