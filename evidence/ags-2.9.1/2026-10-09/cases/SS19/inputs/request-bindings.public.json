@@ -1,0 +1,787 @@
+{
+  "caseId": "SS19",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "inputs": [
+    {
+      "inputId": "SS03",
+      "promptFile": "inputs/SS03.prompt.txt",
+      "promptBytes": 220,
+      "promptSHA256": "3dd99a26ff73a9e8b8a933ec3ac9f67845003f0910fa3c0d56978e0a6d55a972",
+      "originalPrompt": "session-handoff를 구현해 줘. 수신 전 종료, ACK 뒤 crash, 같은 메시지 재수신에서 인계가 유실되거나 중복 완료되지 않아야 해. 최소 구현과 회귀 테스트를 함께 설계해 줘.",
+      "goldenOracle": {
+        "required": [
+          "ponytail",
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "allowed": [],
+        "allowedConditions": {},
+        "forbidden": [],
+        "notApplicable": [
+          "code-review",
+          "software-security-auditor",
+          "korean-prose-editor"
+        ],
+        "unadjudicated": [
+          "acceptance-evidence-validator",
+          "blocker-diagnostician",
+          "change-scope-guardian",
+          "codex-token-usage-analyzer",
+          "context-continuity",
+          "coordinate-subagents",
+          "evaluation-validity-auditor",
+          "independent-audit-gate",
+          "independent-deliberation-panel",
+          "instruction-scope-resolver",
+          "iteration-frame-auditor",
+          "model-effort-advisor",
+          "mutation-risk-preflight",
+          "recovery-strategy-selector",
+          "session-board",
+          "task-contract",
+          "workspace-convention-profiler"
+        ],
+        "expectedSelection": "SELECTED",
+        "explicitSkillIds": [],
+        "ruleRequiredSkillIds": [],
+        "requiredReasons": [],
+        "sourceRefs": [
+          {
+            "skillId": "ponytail",
+            "path": "skills/ponytail/SKILL.md",
+            "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+          },
+          {
+            "skillId": "cs-engineering",
+            "path": "skills/cs-engineering/SKILL.md",
+            "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+          },
+          {
+            "skillId": "test-engineering",
+            "path": "skills/test-engineering/SKILL.md",
+            "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+          },
+          {
+            "skillId": "orchestrator",
+            "path": "skills/orchestrator/SKILL.md",
+            "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+          },
+          {
+            "skillId": "code-review",
+            "path": "skills/code-review/SKILL.md",
+            "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+          },
+          {
+            "skillId": "software-security-auditor",
+            "path": "skills/software-security-auditor/SKILL.md",
+            "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+          },
+          {
+            "skillId": "korean-prose-editor",
+            "path": "skills/korean-prose-editor/SKILL.md",
+            "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+          }
+        ],
+        "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+      },
+      "usage": "SS19 subinput only; no other case task rerun"
+    },
+    {
+      "inputId": "SS04",
+      "promptFile": "inputs/SS04.prompt.txt",
+      "promptBytes": 217,
+      "promptSHA256": "2288c3c42196e715d437359c2b064d16c18d87c68e989b47b708084df5f2bd5b",
+      "originalPrompt": "Design a minimal transition from oldbroker to the SQLite WAL-backed runtime. Account for concurrent writers, crash recovery and duplicate delivery, and specify regression tests. Do not migrate the production database.",
+      "goldenOracle": {
+        "required": [
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "allowed": [
+          "ponytail"
+        ],
+        "allowedConditions": {},
+        "forbidden": [],
+        "notApplicable": [
+          "code-review",
+          "software-security-auditor",
+          "korean-prose-editor"
+        ],
+        "unadjudicated": [
+          "acceptance-evidence-validator",
+          "blocker-diagnostician",
+          "change-scope-guardian",
+          "codex-token-usage-analyzer",
+          "context-continuity",
+          "coordinate-subagents",
+          "evaluation-validity-auditor",
+          "independent-audit-gate",
+          "independent-deliberation-panel",
+          "instruction-scope-resolver",
+          "iteration-frame-auditor",
+          "model-effort-advisor",
+          "mutation-risk-preflight",
+          "recovery-strategy-selector",
+          "session-board",
+          "task-contract",
+          "workspace-convention-profiler"
+        ],
+        "expectedSelection": "SELECTED",
+        "explicitSkillIds": [],
+        "ruleRequiredSkillIds": [],
+        "requiredReasons": [],
+        "sourceRefs": [
+          {
+            "skillId": "cs-engineering",
+            "path": "skills/cs-engineering/SKILL.md",
+            "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+          },
+          {
+            "skillId": "test-engineering",
+            "path": "skills/test-engineering/SKILL.md",
+            "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+          },
+          {
+            "skillId": "orchestrator",
+            "path": "skills/orchestrator/SKILL.md",
+            "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+          },
+          {
+            "skillId": "code-review",
+            "path": "skills/code-review/SKILL.md",
+            "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+          },
+          {
+            "skillId": "software-security-auditor",
+            "path": "skills/software-security-auditor/SKILL.md",
+            "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+          },
+          {
+            "skillId": "korean-prose-editor",
+            "path": "skills/korean-prose-editor/SKILL.md",
+            "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+          },
+          {
+            "skillId": "ponytail",
+            "path": "skills/ponytail/SKILL.md",
+            "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+          }
+        ],
+        "boundaryDecision": "P is allowed for concrete transition code design; not required"
+      },
+      "usage": "SS19 subinput only; no other case task rerun"
+    },
+    {
+      "inputId": "SS09",
+      "promptFile": "inputs/SS09.prompt.txt",
+      "promptBytes": 121,
+      "promptSHA256": "0050dc40116897b0a27139bf29a4f1731ad2a267564866ffac866e4c762de73c",
+      "originalPrompt": "SQLite WAL이 무엇인지 초보자에게 두 문장으로 설명해 줘. 설계·구현·감사는 요청하지 않아.",
+      "goldenOracle": {
+        "required": [],
+        "allowed": [],
+        "allowedConditions": {},
+        "forbidden": [
+          "cs-engineering",
+          "ponytail",
+          "orchestrator",
+          "software-security-auditor",
+          "code-review",
+          "test-engineering"
+        ],
+        "notApplicable": [
+          "test-engineering",
+          "korean-prose-editor",
+          "change-scope-guardian"
+        ],
+        "unadjudicated": [
+          "acceptance-evidence-validator",
+          "blocker-diagnostician",
+          "codex-token-usage-analyzer",
+          "context-continuity",
+          "coordinate-subagents",
+          "evaluation-validity-auditor",
+          "independent-audit-gate",
+          "independent-deliberation-panel",
+          "instruction-scope-resolver",
+          "iteration-frame-auditor",
+          "model-effort-advisor",
+          "mutation-risk-preflight",
+          "recovery-strategy-selector",
+          "session-board",
+          "task-contract",
+          "workspace-convention-profiler"
+        ],
+        "expectedSelection": "SELECTED",
+        "explicitSkillIds": [],
+        "ruleRequiredSkillIds": [],
+        "requiredReasons": [],
+        "sourceRefs": [
+          {
+            "skillId": "cs-engineering",
+            "path": "skills/cs-engineering/SKILL.md",
+            "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+          },
+          {
+            "skillId": "ponytail",
+            "path": "skills/ponytail/SKILL.md",
+            "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+          },
+          {
+            "skillId": "orchestrator",
+            "path": "skills/orchestrator/SKILL.md",
+            "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+          },
+          {
+            "skillId": "software-security-auditor",
+            "path": "skills/software-security-auditor/SKILL.md",
+            "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+          },
+          {
+            "skillId": "code-review",
+            "path": "skills/code-review/SKILL.md",
+            "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+          },
+          {
+            "skillId": "test-engineering",
+            "path": "skills/test-engineering/SKILL.md",
+            "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+          },
+          {
+            "skillId": "korean-prose-editor",
+            "path": "skills/korean-prose-editor/SKILL.md",
+            "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+          },
+          {
+            "skillId": "change-scope-guardian",
+            "path": "skills/change-scope-guardian/SKILL.md",
+            "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+          }
+        ],
+        "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+      },
+      "usage": "SS19 subinput only; no other case task rerun"
+    },
+    {
+      "inputId": "SS10",
+      "promptFile": "inputs/SS10.prompt.txt",
+      "promptBytes": 132,
+      "promptSHA256": "9e5d14a624e580e2bf40fcbbb0ecce4abad9e74f204384f79d20246e62ff8875",
+      "originalPrompt": "Do not implement or refactor anything. Review only this fixed patch for incorrect return values. There is no security audit request.",
+      "goldenOracle": {
+        "required": [
+          "code-review"
+        ],
+        "allowed": [],
+        "allowedConditions": {},
+        "forbidden": [
+          "ponytail",
+          "software-security-auditor"
+        ],
+        "notApplicable": [
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator",
+          "korean-prose-editor"
+        ],
+        "unadjudicated": [
+          "acceptance-evidence-validator",
+          "blocker-diagnostician",
+          "change-scope-guardian",
+          "codex-token-usage-analyzer",
+          "context-continuity",
+          "coordinate-subagents",
+          "evaluation-validity-auditor",
+          "independent-audit-gate",
+          "independent-deliberation-panel",
+          "instruction-scope-resolver",
+          "iteration-frame-auditor",
+          "model-effort-advisor",
+          "mutation-risk-preflight",
+          "recovery-strategy-selector",
+          "session-board",
+          "task-contract",
+          "workspace-convention-profiler"
+        ],
+        "expectedSelection": "SELECTED",
+        "explicitSkillIds": [],
+        "ruleRequiredSkillIds": [],
+        "requiredReasons": [],
+        "sourceRefs": [
+          {
+            "skillId": "code-review",
+            "path": "skills/code-review/SKILL.md",
+            "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+          },
+          {
+            "skillId": "ponytail",
+            "path": "skills/ponytail/SKILL.md",
+            "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+          },
+          {
+            "skillId": "software-security-auditor",
+            "path": "skills/software-security-auditor/SKILL.md",
+            "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+          },
+          {
+            "skillId": "cs-engineering",
+            "path": "skills/cs-engineering/SKILL.md",
+            "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+          },
+          {
+            "skillId": "test-engineering",
+            "path": "skills/test-engineering/SKILL.md",
+            "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+          },
+          {
+            "skillId": "orchestrator",
+            "path": "skills/orchestrator/SKILL.md",
+            "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+          },
+          {
+            "skillId": "korean-prose-editor",
+            "path": "skills/korean-prose-editor/SKILL.md",
+            "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+          }
+        ],
+        "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+      },
+      "usage": "SS19 subinput only; no other case task rerun"
+    }
+  ],
+  "variants": [
+    {
+      "variant": "off-allowed",
+      "rows": [
+        {
+          "sourceInputId": "SS03",
+          "requestDigest": "sha256:1908db8b82c3dbd4cfa85dadd4ac21fbf521d56e480d50cb4162f1762984b3ef",
+          "promptDigest": "sha256:3dd99a26ff73a9e8b8a933ec3ac9f67845003f0910fa3c0d56978e0a6d55a972",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "config": {
+            "jevEnabled": false,
+            "mode": "select",
+            "providerProfileRegistryRef": "synthetic",
+            "externalClassificationAllowed": true,
+            "configRevision": "SS19-c1",
+            "timeoutMs": 1000
+          },
+          "expected": {
+            "status": "SUCCESS",
+            "errorCode": null,
+            "jevCallCount": 0,
+            "jevCredentialReadCount": 0,
+            "vendorClassifierCallCount": 1,
+            "mockFetchCount": 1,
+            "rawMockIds": [
+              "ponytail",
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "agentSelectedSkillIds": null
+          },
+          "observedCounts": {
+            "budget": {
+              "limits": {
+                "jev": {
+                  "limitUsd": null,
+                  "spentUsd": null
+                },
+                "vendor:synthetic-vendor": {
+                  "limitUsd": 2,
+                  "spentUsd": 0.1
+                }
+              },
+              "nativeAllowances": {},
+              "invalidCostCeilings": [],
+              "reservations": []
+            },
+            "jevAvailabilityCount": 0,
+            "jevCallCount": 0,
+            "jevCredentialReadCount": 0,
+            "vendorClassifierCallCount": 1,
+            "vendorCredentialReadCount": 2,
+            "mockFetchCount": 1,
+            "nativeCalls": 0,
+            "agentSelectedSkillIds": null,
+            "hostReceipt": null
+          },
+          "status": "PASS"
+        },
+        {
+          "sourceInputId": "SS04",
+          "requestDigest": "sha256:1586faff85f3ec7f8c0de4c937bbf2cc773f1e8284470609c1d6942edd81ec13",
+          "promptDigest": "sha256:2288c3c42196e715d437359c2b064d16c18d87c68e989b47b708084df5f2bd5b",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "config": {
+            "jevEnabled": false,
+            "mode": "select",
+            "providerProfileRegistryRef": "synthetic",
+            "externalClassificationAllowed": true,
+            "configRevision": "SS19-c1",
+            "timeoutMs": 1000
+          },
+          "expected": {
+            "status": "SUCCESS",
+            "errorCode": null,
+            "jevCallCount": 0,
+            "jevCredentialReadCount": 0,
+            "vendorClassifierCallCount": 1,
+            "mockFetchCount": 1,
+            "rawMockIds": [
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "agentSelectedSkillIds": null
+          },
+          "observedCounts": {
+            "budget": {
+              "limits": {
+                "jev": {
+                  "limitUsd": null,
+                  "spentUsd": null
+                },
+                "vendor:synthetic-vendor": {
+                  "limitUsd": 2,
+                  "spentUsd": 0.1
+                }
+              },
+              "nativeAllowances": {},
+              "invalidCostCeilings": [],
+              "reservations": []
+            },
+            "jevAvailabilityCount": 0,
+            "jevCallCount": 0,
+            "jevCredentialReadCount": 0,
+            "vendorClassifierCallCount": 1,
+            "vendorCredentialReadCount": 2,
+            "mockFetchCount": 1,
+            "nativeCalls": 0,
+            "agentSelectedSkillIds": null,
+            "hostReceipt": null
+          },
+          "status": "PASS"
+        },
+        {
+          "sourceInputId": "SS09",
+          "requestDigest": "sha256:7a62abec116e0d7b19347e2daa910ee46f6aaf75c490b9d81fcf2baed293c37c",
+          "promptDigest": "sha256:0050dc40116897b0a27139bf29a4f1731ad2a267564866ffac866e4c762de73c",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "config": {
+            "jevEnabled": false,
+            "mode": "select",
+            "providerProfileRegistryRef": "synthetic",
+            "externalClassificationAllowed": true,
+            "configRevision": "SS19-c1",
+            "timeoutMs": 1000
+          },
+          "expected": {
+            "status": "SUCCESS",
+            "errorCode": null,
+            "jevCallCount": 0,
+            "jevCredentialReadCount": 0,
+            "vendorClassifierCallCount": 1,
+            "mockFetchCount": 1,
+            "rawMockIds": [],
+            "agentSelectedSkillIds": null
+          },
+          "observedCounts": {
+            "budget": {
+              "limits": {
+                "jev": {
+                  "limitUsd": null,
+                  "spentUsd": null
+                },
+                "vendor:synthetic-vendor": {
+                  "limitUsd": 2,
+                  "spentUsd": 0.1
+                }
+              },
+              "nativeAllowances": {},
+              "invalidCostCeilings": [],
+              "reservations": []
+            },
+            "jevAvailabilityCount": 0,
+            "jevCallCount": 0,
+            "jevCredentialReadCount": 0,
+            "vendorClassifierCallCount": 1,
+            "vendorCredentialReadCount": 2,
+            "mockFetchCount": 1,
+            "nativeCalls": 0,
+            "agentSelectedSkillIds": null,
+            "hostReceipt": null
+          },
+          "status": "PASS"
+        },
+        {
+          "sourceInputId": "SS10",
+          "requestDigest": "sha256:3d8dd09ca554f1f0a36d5290e8a5845b453f86025cd8d312b75aff672ee66de9",
+          "promptDigest": "sha256:9e5d14a624e580e2bf40fcbbb0ecce4abad9e74f204384f79d20246e62ff8875",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "config": {
+            "jevEnabled": false,
+            "mode": "select",
+            "providerProfileRegistryRef": "synthetic",
+            "externalClassificationAllowed": true,
+            "configRevision": "SS19-c1",
+            "timeoutMs": 1000
+          },
+          "expected": {
+            "status": "SUCCESS",
+            "errorCode": null,
+            "jevCallCount": 0,
+            "jevCredentialReadCount": 0,
+            "vendorClassifierCallCount": 1,
+            "mockFetchCount": 1,
+            "rawMockIds": [
+              "code-review"
+            ],
+            "agentSelectedSkillIds": null
+          },
+          "observedCounts": {
+            "budget": {
+              "limits": {
+                "jev": {
+                  "limitUsd": null,
+                  "spentUsd": null
+                },
+                "vendor:synthetic-vendor": {
+                  "limitUsd": 2,
+                  "spentUsd": 0.1
+                }
+              },
+              "nativeAllowances": {},
+              "invalidCostCeilings": [],
+              "reservations": []
+            },
+            "jevAvailabilityCount": 0,
+            "jevCallCount": 0,
+            "jevCredentialReadCount": 0,
+            "vendorClassifierCallCount": 1,
+            "vendorCredentialReadCount": 2,
+            "mockFetchCount": 1,
+            "nativeCalls": 0,
+            "agentSelectedSkillIds": null,
+            "hostReceipt": null
+          },
+          "status": "PASS"
+        }
+      ]
+    },
+    {
+      "variant": "off-egress-denied-no-native",
+      "rows": [
+        {
+          "sourceInputId": "SS03",
+          "requestDigest": "sha256:1908db8b82c3dbd4cfa85dadd4ac21fbf521d56e480d50cb4162f1762984b3ef",
+          "promptDigest": "sha256:3dd99a26ff73a9e8b8a933ec3ac9f67845003f0910fa3c0d56978e0a6d55a972",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "config": {
+            "jevEnabled": false,
+            "mode": "select",
+            "providerProfileRegistryRef": "synthetic",
+            "externalClassificationAllowed": false,
+            "configRevision": "SS19-c1",
+            "timeoutMs": 1000
+          },
+          "expected": {
+            "status": "UNAVAILABLE",
+            "errorCode": "EXTERNAL_CLASSIFICATION_BLOCKED",
+            "jevCallCount": 0,
+            "jevCredentialReadCount": 0,
+            "vendorClassifierCallCount": 0,
+            "mockFetchCount": 0,
+            "rawMockIds": null,
+            "agentSelectedSkillIds": null
+          },
+          "observedCounts": {
+            "budget": {
+              "limits": {
+                "jev": {
+                  "limitUsd": null,
+                  "spentUsd": null
+                },
+                "vendor:synthetic-vendor": {
+                  "limitUsd": 2,
+                  "spentUsd": 0
+                }
+              },
+              "nativeAllowances": {},
+              "invalidCostCeilings": [],
+              "reservations": []
+            },
+            "jevAvailabilityCount": 0,
+            "jevCallCount": 0,
+            "jevCredentialReadCount": 0,
+            "vendorClassifierCallCount": 0,
+            "vendorCredentialReadCount": 1,
+            "mockFetchCount": 0,
+            "nativeCalls": 0,
+            "agentSelectedSkillIds": null,
+            "hostReceipt": null
+          },
+          "status": "PASS"
+        },
+        {
+          "sourceInputId": "SS04",
+          "requestDigest": "sha256:1586faff85f3ec7f8c0de4c937bbf2cc773f1e8284470609c1d6942edd81ec13",
+          "promptDigest": "sha256:2288c3c42196e715d437359c2b064d16c18d87c68e989b47b708084df5f2bd5b",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "config": {
+            "jevEnabled": false,
+            "mode": "select",
+            "providerProfileRegistryRef": "synthetic",
+            "externalClassificationAllowed": false,
+            "configRevision": "SS19-c1",
+            "timeoutMs": 1000
+          },
+          "expected": {
+            "status": "UNAVAILABLE",
+            "errorCode": "EXTERNAL_CLASSIFICATION_BLOCKED",
+            "jevCallCount": 0,
+            "jevCredentialReadCount": 0,
+            "vendorClassifierCallCount": 0,
+            "mockFetchCount": 0,
+            "rawMockIds": null,
+            "agentSelectedSkillIds": null
+          },
+          "observedCounts": {
+            "budget": {
+              "limits": {
+                "jev": {
+                  "limitUsd": null,
+                  "spentUsd": null
+                },
+                "vendor:synthetic-vendor": {
+                  "limitUsd": 2,
+                  "spentUsd": 0
+                }
+              },
+              "nativeAllowances": {},
+              "invalidCostCeilings": [],
+              "reservations": []
+            },
+            "jevAvailabilityCount": 0,
+            "jevCallCount": 0,
+            "jevCredentialReadCount": 0,
+            "vendorClassifierCallCount": 0,
+            "vendorCredentialReadCount": 1,
+            "mockFetchCount": 0,
+            "nativeCalls": 0,
+            "agentSelectedSkillIds": null,
+            "hostReceipt": null
+          },
+          "status": "PASS"
+        },
+        {
+          "sourceInputId": "SS09",
+          "requestDigest": "sha256:7a62abec116e0d7b19347e2daa910ee46f6aaf75c490b9d81fcf2baed293c37c",
+          "promptDigest": "sha256:0050dc40116897b0a27139bf29a4f1731ad2a267564866ffac866e4c762de73c",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "config": {
+            "jevEnabled": false,
+            "mode": "select",
+            "providerProfileRegistryRef": "synthetic",
+            "externalClassificationAllowed": false,
+            "configRevision": "SS19-c1",
+            "timeoutMs": 1000
+          },
+          "expected": {
+            "status": "UNAVAILABLE",
+            "errorCode": "EXTERNAL_CLASSIFICATION_BLOCKED",
+            "jevCallCount": 0,
+            "jevCredentialReadCount": 0,
+            "vendorClassifierCallCount": 0,
+            "mockFetchCount": 0,
+            "rawMockIds": null,
+            "agentSelectedSkillIds": null
+          },
+          "observedCounts": {
+            "budget": {
+              "limits": {
+                "jev": {
+                  "limitUsd": null,
+                  "spentUsd": null
+                },
+                "vendor:synthetic-vendor": {
+                  "limitUsd": 2,
+                  "spentUsd": 0
+                }
+              },
+              "nativeAllowances": {},
+              "invalidCostCeilings": [],
+              "reservations": []
+            },
+            "jevAvailabilityCount": 0,
+            "jevCallCount": 0,
+            "jevCredentialReadCount": 0,
+            "vendorClassifierCallCount": 0,
+            "vendorCredentialReadCount": 1,
+            "mockFetchCount": 0,
+            "nativeCalls": 0,
+            "agentSelectedSkillIds": null,
+            "hostReceipt": null
+          },
+          "status": "PASS"
+        },
+        {
+          "sourceInputId": "SS10",
+          "requestDigest": "sha256:3d8dd09ca554f1f0a36d5290e8a5845b453f86025cd8d312b75aff672ee66de9",
+          "promptDigest": "sha256:9e5d14a624e580e2bf40fcbbb0ecce4abad9e74f204384f79d20246e62ff8875",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "config": {
+            "jevEnabled": false,
+            "mode": "select",
+            "providerProfileRegistryRef": "synthetic",
+            "externalClassificationAllowed": false,
+            "configRevision": "SS19-c1",
+            "timeoutMs": 1000
+          },
+          "expected": {
+            "status": "UNAVAILABLE",
+            "errorCode": "EXTERNAL_CLASSIFICATION_BLOCKED",
+            "jevCallCount": 0,
+            "jevCredentialReadCount": 0,
+            "vendorClassifierCallCount": 0,
+            "mockFetchCount": 0,
+            "rawMockIds": null,
+            "agentSelectedSkillIds": null
+          },
+          "observedCounts": {
+            "budget": {
+              "limits": {
+                "jev": {
+                  "limitUsd": null,
+                  "spentUsd": null
+                },
+                "vendor:synthetic-vendor": {
+                  "limitUsd": 2,
+                  "spentUsd": 0
+                }
+              },
+              "nativeAllowances": {},
+              "invalidCostCeilings": [],
+              "reservations": []
+            },
+            "jevAvailabilityCount": 0,
+            "jevCallCount": 0,
+            "jevCredentialReadCount": 0,
+            "vendorClassifierCallCount": 0,
+            "vendorCredentialReadCount": 1,
+            "mockFetchCount": 0,
+            "nativeCalls": 0,
+            "agentSelectedSkillIds": null,
+            "hostReceipt": null
+          },
+          "status": "PASS"
+        }
+      ]
+    }
+  ],
+  "wireCapture": "MISSING_ORIGINAL"
+}

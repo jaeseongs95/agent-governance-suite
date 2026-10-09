@@ -1,0 +1,123 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS19-c6a8019-offline",
+  "contractDigest": "sha256:93c26f47ecd661ca62a45f06cb86c7166d1045a4636009a4c5c29f4a4a7e4e77",
+  "requirements": [
+    "SS19-OFF",
+    "SS19-EGRESS",
+    "SS19-HOLD",
+    "SS19-COST",
+    "SS19-TIMEOUT",
+    "SS19-PREDISPATCH"
+  ],
+  "scopeFiles": [
+    "tests/ss19-dev/SS19.test.ts",
+    "tests/skill-classification/fixtures.json",
+    "tests/skill-classification/evaluation.ts",
+    "tests/mcp/skill-classification-service.test.ts",
+    "scripts/run-tests.mjs",
+    "scripts/test-subreaper.py",
+    "mcp-server/src/skill-classification/inventory.ts",
+    "mcp-server/src/skill-classification/request.ts",
+    "mcp-server/src/skill-classification/profiles.ts",
+    "mcp-server/src/skill-classification/runtime.ts",
+    "mcp-server/src/skill-classification/providers.ts",
+    "mcp-server/src/skill-classification/service.ts",
+    "mcp-server/src/skill-classification/gateway.ts",
+    "mcp-server/src/skill-classification/validation.ts",
+    "mcp-server/src/skill-classification/types.ts",
+    "mcp-server/src/skill-classification/digest.ts",
+    "mcp-server/src/skill-classification/native-adapters.ts"
+  ],
+  "runner": "Existing Vitest 5 via scripts/run-tests.mjs; one new SS19-only file",
+  "environment": "Cloud Linux, Node v24.19.0, pnpm 11.19.0; dependencies reused via node_modules symlink with identical pnpm-lock SHA256; synthetic credential callbacks/fetch and qualification; no vendor calls",
+  "cases": [
+    {
+      "id": "SS19-frozen-variants",
+      "requirementIds": [
+        "SS19-OFF",
+        "SS19-EGRESS"
+      ],
+      "scenario": "off-allowed and off-egress-denied-no-native each using SS03/SS04/SS09/SS10 embedded prompts",
+      "entryPoint": "RuntimeSkillClassificationGateway.classify -> real runtime/route/service",
+      "level": "integration",
+      "expectedBehavior": "8 assertions: OFF JEV availability/classify/credential 0; allowed vendor 1/fixed profile/no implicit selection; egress denied remote 0/no native/no fabricated successful classification; null selection differs from raw no-skill []",
+      "oracle": "SS19 embedded sourceSpec fields and referenced frozen input/oracle; synthetic golden-shaped RESP verifies plumbing only",
+      "testFiles": [
+        "tests/ss19-dev/SS19.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product source changes are authorized. Actual assertion outcomes retained; no corrected candidate or product mutation/red-green sensitivity evidence is claimed.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss19-dev/SS19.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_DIR>/vitest.json"
+      ]
+    },
+    {
+      "id": "SS19-hold-boundaries",
+      "requirementIds": [
+        "SS19-HOLD"
+      ],
+      "scenario": "Unqualified, unknown cost, unsupported effort, unapproved route, unknown prior spending, no registered vendor adapter",
+      "entryPoint": "SkillClassificationService.classify + createClassificationProviderRuntime",
+      "level": "integration",
+      "expectedBehavior": "6 hold assertions before vendor classify, JEV 0, safe UNAVAILABLE error codes",
+      "oracle": "SS19 hold conditions and fixed-profile/approved-route/budget contracts",
+      "testFiles": [
+        "tests/ss19-dev/SS19.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product source changes are authorized. Actual assertion outcomes retained; no corrected candidate or product mutation/red-green sensitivity evidence is claimed.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss19-dev/SS19.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_DIR>/vitest.json"
+      ]
+    },
+    {
+      "id": "SS19-known-defect-probes",
+      "requirementIds": [
+        "SS19-COST",
+        "SS19-TIMEOUT",
+        "SS19-PREDISPATCH"
+      ],
+      "scenario": "Known valid-cost loss, 2^31 timeout overflow, cancellation in reserve before dispatch",
+      "entryPoint": "SkillClassificationService.classify",
+      "level": "integration",
+      "expectedBehavior": "Preserve known 0.1 cost despite invalid RESP; reject overflow; do not dispatch after stale task cancellation",
+      "oracle": "Existing findings listed in delegation and classification usage/budget/cancellation contracts; failures are linked reproductions, no new root causes",
+      "testFiles": [
+        "tests/ss19-dev/SS19.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product source changes are authorized. Actual assertion outcomes retained; no corrected candidate or product mutation/red-green sensitivity evidence is claimed.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss19-dev/SS19.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_DIR>/vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "All other original case tasks/full suite",
+    "JEV/external vendor API/Claude/native child calls",
+    "Historical 21-case completed runs",
+    "Product source modification/push/PR/release",
+    "Semantic model quality and AGENT final choice or skill read/application/verification",
+    "Independent audit or release acceptance"
+  ]
+}

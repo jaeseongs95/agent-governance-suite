@@ -1,0 +1,419 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS19",
+  "publicationKind": "existing-evidence-sanitized",
+  "candidateCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "candidateTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "newTests": 0,
+  "newModelAPICalls": 0,
+  "patch": "NONE",
+  "missingOriginals": [
+    {
+      "artifact": "TEST-SPEC.seq7.ko.md",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Not in fixed candidate; embedded sourceSpec used originally."
+    },
+    {
+      "artifact": "separate stdout and stderr streams",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Existing executions were captured as merged stdout/stderr logs, not separate streams."
+    },
+    {
+      "artifact": "unmatched-name-filter first-attempt log",
+      "status": "MISSING_ORIGINAL",
+      "reason": "First capture overwritten; original result records exit=0, executed=0, skipped=40, NOTRUN. Conversation is not published."
+    },
+    {
+      "artifact": "TypeScript TS5112 invocation-attempt log",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Not retained as file; original result records invocation error exit=1."
+    },
+    {
+      "artifact": "initial and intermediate test source versions",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Not frozen as files; only final source is retained. Prior logs are not evidence for final-source sensitivity."
+    },
+    {
+      "artifact": "exact mock HTTP request wire capture",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Wire preservation was asserted but raw transmitted wire bytes were not saved. Frozen input prompts, full inventory, normalized REQ and binding digests are retained."
+    }
+  ],
+  "files": [
+    {
+      "path": "SS19.result.public.json",
+      "publicBytes": 211103,
+      "publicSHA256": "c9cf3f9cb91a9b071209de1e7365d90228a17f0e397ace0bf68245980e645c62",
+      "kind": "public-derived",
+      "transformations": [
+        "local-path redaction",
+        "remove environment instance identifier",
+        "append publication metadata; preserve existing outcomes"
+      ],
+      "original": {
+        "artifact": "SS19.result.json",
+        "bytes": 207446,
+        "SHA256": "8cfea2481b774c2fc81cd97968f3c7560be27444af7517711d51b3610e23771a"
+      }
+    },
+    {
+      "path": "observations.public.json",
+      "publicBytes": 445765,
+      "publicSHA256": "d5efb5e32003d27d8e83f9411d5bd6bf864a4adc84bbe58dbeb03e1dc4ccb0ea",
+      "kind": "public-derived",
+      "transformations": [
+        "local-path redaction",
+        "deduplicate identical inventory via reference; preserve responses/attempts/counts/null/[]"
+      ],
+      "original": {
+        "artifact": "observations.json",
+        "bytes": 10706399,
+        "SHA256": "64f207bf381cb6da938439c3fee68137e3091bdd6a2babe9229353ee40617c85"
+      }
+    },
+    {
+      "path": "inputs/embedded-source.json",
+      "publicBytes": 20668,
+      "publicSHA256": "e363d916d5e6f06f4f014fa2cb8a1816eb218fbfbb73656c443139f22f24c463",
+      "kind": "exact-original",
+      "transformations": [
+        "local-path redaction if present"
+      ],
+      "original": {
+        "artifact": "embedded-source.json",
+        "bytes": 20668,
+        "SHA256": "e363d916d5e6f06f4f014fa2cb8a1816eb218fbfbb73656c443139f22f24c463"
+      }
+    },
+    {
+      "path": "provenance/candidate-snapshot.json",
+      "publicBytes": 3698,
+      "publicSHA256": "a865704f280ccebb683249b877f52d6c16ebdf28156e835be60453b8090d8308",
+      "kind": "exact-original",
+      "transformations": [
+        "local-path redaction if present"
+      ],
+      "original": {
+        "artifact": "candidate-snapshot.json",
+        "bytes": 3698,
+        "SHA256": "a865704f280ccebb683249b877f52d6c16ebdf28156e835be60453b8090d8308"
+      }
+    },
+    {
+      "path": "provenance/engineering-test-result.json",
+      "publicBytes": 1451,
+      "publicSHA256": "979d0a4379a73bcc93a14d746b5113209ce860c476ec61160d0aab400b8972c8",
+      "kind": "exact-original",
+      "transformations": [
+        "local-path redaction if present"
+      ],
+      "original": {
+        "artifact": "engineering-test-result.json",
+        "bytes": 1451,
+        "SHA256": "979d0a4379a73bcc93a14d746b5113209ce860c476ec61160d0aab400b8972c8"
+      }
+    },
+    {
+      "path": "provenance/engineering-test-plan.json",
+      "publicBytes": 5501,
+      "publicSHA256": "46d2c165414e6aebf91d1b087d405dd33358239542cbdb2b7cb9c3f07256a4aa",
+      "kind": "public-derived",
+      "transformations": [
+        "local-path redaction if present"
+      ],
+      "original": {
+        "artifact": "engineering-test-plan.json",
+        "bytes": 5531,
+        "SHA256": "c323064b75a692374eb6426c05d2177ea274bbb5c46246b52e3ef6514ebe7205"
+      }
+    },
+    {
+      "path": "provenance/engineering-test-proof.json",
+      "publicBytes": 6003,
+      "publicSHA256": "b88ec1e5a870fab01515a1dc23c07b7f88301ff58a6f0e37205b76f019fe1fcb",
+      "kind": "exact-original",
+      "transformations": [
+        "local-path redaction if present"
+      ],
+      "original": {
+        "artifact": "engineering-test-proof.json",
+        "bytes": 6003,
+        "SHA256": "b88ec1e5a870fab01515a1dc23c07b7f88301ff58a6f0e37205b76f019fe1fcb"
+      }
+    },
+    {
+      "path": "inputs/fixtures.original.json",
+      "publicBytes": 142450,
+      "publicSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "kind": "exact-original",
+      "transformations": [],
+      "original": {
+        "artifact": "fixtures.json",
+        "bytes": 142450,
+        "SHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9"
+      }
+    },
+    {
+      "path": "inputs/SS03.prompt.txt",
+      "publicBytes": 220,
+      "publicSHA256": "3dd99a26ff73a9e8b8a933ec3ac9f67845003f0910fa3c0d56978e0a6d55a972",
+      "kind": "public-derived",
+      "transformations": [
+        "exact originalPrompt UTF-8 field bytes, no appended newline; parent fixture digest recorded"
+      ],
+      "original": {
+        "artifact": "fixtures.json",
+        "bytes": 142450,
+        "SHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9"
+      }
+    },
+    {
+      "path": "inputs/SS04.prompt.txt",
+      "publicBytes": 217,
+      "publicSHA256": "2288c3c42196e715d437359c2b064d16c18d87c68e989b47b708084df5f2bd5b",
+      "kind": "public-derived",
+      "transformations": [
+        "exact originalPrompt UTF-8 field bytes, no appended newline; parent fixture digest recorded"
+      ],
+      "original": {
+        "artifact": "fixtures.json",
+        "bytes": 142450,
+        "SHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9"
+      }
+    },
+    {
+      "path": "inputs/SS09.prompt.txt",
+      "publicBytes": 121,
+      "publicSHA256": "0050dc40116897b0a27139bf29a4f1731ad2a267564866ffac866e4c762de73c",
+      "kind": "public-derived",
+      "transformations": [
+        "exact originalPrompt UTF-8 field bytes, no appended newline; parent fixture digest recorded"
+      ],
+      "original": {
+        "artifact": "fixtures.json",
+        "bytes": 142450,
+        "SHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9"
+      }
+    },
+    {
+      "path": "inputs/SS10.prompt.txt",
+      "publicBytes": 132,
+      "publicSHA256": "9e5d14a624e580e2bf40fcbbb0ecce4abad9e74f204384f79d20246e62ff8875",
+      "kind": "public-derived",
+      "transformations": [
+        "exact originalPrompt UTF-8 field bytes, no appended newline; parent fixture digest recorded"
+      ],
+      "original": {
+        "artifact": "fixtures.json",
+        "bytes": 142450,
+        "SHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9"
+      }
+    },
+    {
+      "path": "inputs/request-bindings.public.json",
+      "publicBytes": 28819,
+      "publicSHA256": "cf5ca33d523e37729d64b7393b0b28c81ca9556d5b3f197699d59b2df09651b8",
+      "kind": "public-derived",
+      "transformations": [
+        "project already-recorded input/expected/counts; prompts sourced from frozen fixture"
+      ],
+      "original": {
+        "artifact": "observations.json",
+        "bytes": 10706399,
+        "SHA256": "64f207bf381cb6da938439c3fee68137e3091bdd6a2babe9229353ee40617c85"
+      }
+    },
+    {
+      "path": "reproduce/SS19.test.ts",
+      "publicBytes": 14390,
+      "publicSHA256": "69aab0fa915229b2dd38fbacf1fff868c2e22af54df35d05470d845d7921875f",
+      "kind": "public-derived",
+      "transformations": [
+        "default evidence output directory changed from private absolute path to ./ss19-evidence; code not executed during publication"
+      ],
+      "original": {
+        "artifact": "SS19.test.ts",
+        "bytes": 14399,
+        "SHA256": "15b6b7b85c1419bbd159863929be0ec47c05f134d477c00b7a5f83234df92d4e"
+      }
+    },
+    {
+      "path": "logs/offline.public.log",
+      "publicBytes": 8678,
+      "publicSHA256": "d37cfb29302fa2c191a6c077495563bb672fbdfde53d4bebc3fb0a83fb27ddb9",
+      "kind": "public-derived",
+      "transformations": [
+        "local-path redaction; existing merged stdout/stderr or reporter content, not newly executed"
+      ],
+      "original": {
+        "artifact": "offline.log",
+        "bytes": 8695,
+        "SHA256": "25aa81207156eb56854269a5858626492ed3fd1ed8da3372da587190e8f2b21d"
+      }
+    },
+    {
+      "path": "logs/offline-initial.public.log",
+      "publicBytes": 8673,
+      "publicSHA256": "7f0da0ee5b372853b5054f05dbd52cd9605661bc3cb3134fc1f708aab6f23ab7",
+      "kind": "public-derived",
+      "transformations": [
+        "local-path redaction; existing merged stdout/stderr or reporter content, not newly executed"
+      ],
+      "original": {
+        "artifact": "offline-initial.log",
+        "bytes": 8690,
+        "SHA256": "f74bcf64838df184f639571878ac19c6b50eaa6265c2c8c65e559d080161feb4"
+      }
+    },
+    {
+      "path": "logs/offline-pre-typecheck.public.log",
+      "publicBytes": 8676,
+      "publicSHA256": "1ac8923dc5ce98af7e5cc013b886c09273d6301ca471739d648460e9b21d5603",
+      "kind": "public-derived",
+      "transformations": [
+        "local-path redaction; existing merged stdout/stderr or reporter content, not newly executed"
+      ],
+      "original": {
+        "artifact": "offline-pre-typecheck.log",
+        "bytes": 8693,
+        "SHA256": "cdbfcf4d5a98afa7ce97614565ebbd66959b24fab0312a7f3f0fd1dda58d78fc"
+      }
+    },
+    {
+      "path": "logs/existing-regression.public.log",
+      "publicBytes": 345,
+      "publicSHA256": "03c7b7b3e517dc78c5d0fdbacb7dc033ae3bb9d5bb9348da69d0970bc0792df0",
+      "kind": "public-derived",
+      "transformations": [
+        "local-path redaction; existing merged stdout/stderr or reporter content, not newly executed"
+      ],
+      "original": {
+        "artifact": "existing-regression.log",
+        "bytes": 352,
+        "SHA256": "8d655b2b4528bd0a2c5497cd2062d5c64364b5b70f8501be3e8ca55be17b6229"
+      }
+    },
+    {
+      "path": "logs/test-typecheck.public.log",
+      "publicBytes": 0,
+      "publicSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "exact-original",
+      "transformations": [
+        "local-path redaction; existing merged stdout/stderr or reporter content, not newly executed"
+      ],
+      "original": {
+        "artifact": "test-typecheck.log",
+        "bytes": 0,
+        "SHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "path": "logs/test-typecheck-initial.public.log",
+      "publicBytes": 13004,
+      "publicSHA256": "e4b83e8081693fe6c34d77e0f0309302e55bb270ec57eedf8693290645c66ceb",
+      "kind": "exact-original",
+      "transformations": [
+        "local-path redaction; existing merged stdout/stderr or reporter content, not newly executed"
+      ],
+      "original": {
+        "artifact": "test-typecheck-initial.log",
+        "bytes": 13004,
+        "SHA256": "e4b83e8081693fe6c34d77e0f0309302e55bb270ec57eedf8693290645c66ceb"
+      }
+    },
+    {
+      "path": "logs/plan-check.public.log",
+      "publicBytes": 288,
+      "publicSHA256": "d24a64394397f6921a0741d00d8fd7a79f457d17640e306b0fd5c87ca2171f3d",
+      "kind": "exact-original",
+      "transformations": [
+        "local-path redaction; existing merged stdout/stderr or reporter content, not newly executed"
+      ],
+      "original": {
+        "artifact": "plan-check.log",
+        "bytes": 288,
+        "SHA256": "d24a64394397f6921a0741d00d8fd7a79f457d17640e306b0fd5c87ca2171f3d"
+      }
+    },
+    {
+      "path": "logs/preservation.public.log",
+      "publicBytes": 35,
+      "publicSHA256": "fe7dd0551f1a4d068e099f7ee5e0646058c5e6ace32a478f035fdc74220fc39c",
+      "kind": "exact-original",
+      "transformations": [
+        "local-path redaction; existing merged stdout/stderr or reporter content, not newly executed"
+      ],
+      "original": {
+        "artifact": "preservation.log",
+        "bytes": 35,
+        "SHA256": "fe7dd0551f1a4d068e099f7ee5e0646058c5e6ace32a478f035fdc74220fc39c"
+      }
+    },
+    {
+      "path": "logs/vitest.public.json",
+      "publicBytes": 8777,
+      "publicSHA256": "bf8603942393e34c80a72b2f701d0b7a80c20140d32ff67eaf6ebe52ab488c51",
+      "kind": "public-derived",
+      "transformations": [
+        "local-path redaction; existing merged stdout/stderr or reporter content, not newly executed"
+      ],
+      "original": {
+        "artifact": "vitest.json",
+        "bytes": 8925,
+        "SHA256": "cabbc1582a332ecc72080507784e72df183c3f94293ce48729ce953471628b5f"
+      }
+    },
+    {
+      "path": "logs/vitest-initial.public.json",
+      "publicBytes": 8773,
+      "publicSHA256": "7f2029ab7292d63d2ecdfa14c26315f431d421d12530404c8fdef96be5314da3",
+      "kind": "public-derived",
+      "transformations": [
+        "local-path redaction; existing merged stdout/stderr or reporter content, not newly executed"
+      ],
+      "original": {
+        "artifact": "vitest-initial.json",
+        "bytes": 8921,
+        "SHA256": "a169c49525ce7610acbc58f88981db81bff3ddfc384fdf765bb660b22a39745f"
+      }
+    },
+    {
+      "path": "logs/vitest-pre-typecheck.public.json",
+      "publicBytes": 8772,
+      "publicSHA256": "30fb9641b8d95e9a12f2cf30c927f928c7b0ba968b16f733d9e1b090dee9bce2",
+      "kind": "public-derived",
+      "transformations": [
+        "local-path redaction; existing merged stdout/stderr or reporter content, not newly executed"
+      ],
+      "original": {
+        "artifact": "vitest-pre-typecheck.json",
+        "bytes": 8920,
+        "SHA256": "fa10f96703b8e9cf3c9e364fa054030b12b5cf71bce5433f972092677693deb0"
+      }
+    },
+    {
+      "path": "provenance/missing-originals.json",
+      "publicBytes": 1306,
+      "publicSHA256": "3b795caf78fd08d7957f7de627bbf100d85e13f1d4380f0d617fc7f5c8b7f53c",
+      "kind": "publication-document",
+      "transformations": []
+    },
+    {
+      "path": "reproduce/commands.md",
+      "publicBytes": 1339,
+      "publicSHA256": "56b3816e6769a66606aad65325902c0581afdf8674981d03ecdaff116e13915b",
+      "kind": "publication-document",
+      "transformations": []
+    },
+    {
+      "path": "README.md",
+      "publicBytes": 3607,
+      "publicSHA256": "ac05e2fda81ed3c7da1145242991f4d0f2960785a0cfbb30e961b72439c614a6",
+      "kind": "publication-document",
+      "transformations": []
+    }
+  ],
+  "hashPolicy": "Payload files only; excludes manifest.json and SHA256SUMS. SHA256SUMS includes manifest.json but excludes itself."
+}

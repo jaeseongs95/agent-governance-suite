@@ -1,0 +1,161 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-proof",
+  "planDigest": "sha256:9e864188214fd5d179968c7c8fadf3a5be3aaff6d65a7f834beb12e69384a4e1",
+  "candidate": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-snapshot",
+    "files": [
+      {
+        "path": "mcp-server/src/skill-classification/digest.ts",
+        "digest": "sha256:90854882601154432f4e3ceea2ca9dca46802a496fe21e7d07bded713a3bcb01",
+        "size": 902,
+        "lineCount": 15
+      },
+      {
+        "path": "mcp-server/src/skill-classification/gateway.ts",
+        "digest": "sha256:80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+        "size": 15017,
+        "lineCount": 156
+      },
+      {
+        "path": "mcp-server/src/skill-classification/inventory.ts",
+        "digest": "sha256:8c7ee54546f17fb1e63368fbfb72668a3c7136570a545ad5f0494f076c91727c",
+        "size": 20714,
+        "lineCount": 259
+      },
+      {
+        "path": "mcp-server/src/skill-classification/native-adapters.ts",
+        "digest": "sha256:dc6a0e763b175b077cee401d9020144d49b99f143b34da88059fbf4da5bc39f6",
+        "size": 13788,
+        "lineCount": 192
+      },
+      {
+        "path": "mcp-server/src/skill-classification/profiles.ts",
+        "digest": "sha256:0add9c19bd0c7a8e45a57be64f4a2ecb503e0305dc9777629fba142a8566d5be",
+        "size": 6859,
+        "lineCount": 81
+      },
+      {
+        "path": "mcp-server/src/skill-classification/providers.ts",
+        "digest": "sha256:f191c46db32f38248ebdd23be725b426a0b3020e0bb464b36bcc57521983651c",
+        "size": 12898,
+        "lineCount": 162
+      },
+      {
+        "path": "mcp-server/src/skill-classification/request.ts",
+        "digest": "sha256:1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f",
+        "size": 7093,
+        "lineCount": 99
+      },
+      {
+        "path": "mcp-server/src/skill-classification/runtime.ts",
+        "digest": "sha256:33c14b3597a9ed5d3a6103fc52c41ea9ed18c57c96856257b1dc407e3d6e6eea",
+        "size": 4336,
+        "lineCount": 60
+      },
+      {
+        "path": "mcp-server/src/skill-classification/service.ts",
+        "digest": "sha256:c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb",
+        "size": 19033,
+        "lineCount": 215
+      },
+      {
+        "path": "mcp-server/src/skill-classification/types.ts",
+        "digest": "sha256:a5a238741eb34d5af50eb2e67e1d20f97dfebc30cdfc29c77ec7ae618f1319b5",
+        "size": 5949,
+        "lineCount": 173
+      },
+      {
+        "path": "mcp-server/src/skill-classification/validation.ts",
+        "digest": "sha256:70f988d9e5d49f8eaef55ca0ff378b4819798ff8141bd09119691c2cffb2891f",
+        "size": 8449,
+        "lineCount": 107
+      },
+      {
+        "path": "scripts/run-tests.mjs",
+        "digest": "sha256:1da67c219b54d39a7106425f52e2bdd8abe7ab90081cafc111fd6d40d4516140",
+        "size": 3045,
+        "lineCount": 71
+      },
+      {
+        "path": "scripts/test-subreaper.py",
+        "digest": "sha256:808cd0c131866af24b0e3759403018e909a89617baa7ab72edead0ae4c543ca7",
+        "size": 10177,
+        "lineCount": 282
+      },
+      {
+        "path": "tests/mcp/skill-classification-service.test.ts",
+        "digest": "sha256:01457f8c9d3391297eb1a025aa73c811d00dd61b6a5cc351f2f0ecb9b6aacbc7",
+        "size": 23233,
+        "lineCount": 217
+      },
+      {
+        "path": "tests/skill-classification/evaluation.ts",
+        "digest": "sha256:e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+        "size": 16532,
+        "lineCount": 223
+      },
+      {
+        "path": "tests/skill-classification/fixtures.json",
+        "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "size": 142450,
+        "lineCount": 2912
+      },
+      {
+        "path": "tests/ss19-dev/SS19.test.ts",
+        "digest": "sha256:15b6b7b85c1419bbd159863929be0ec47c05f134d477c00b7a5f83234df92d4e",
+        "size": 14399,
+        "lineCount": 158
+      }
+    ],
+    "digest": "sha256:4ec78d66a2a16924265a8cb50817ae31ad7b0f87c825c7c076bcb5de993b46b5"
+  },
+  "proofs": [
+    {
+      "caseId": "SS19-frozen-variants",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red-green/mutation NOT_RUN: no product modification or corrected candidate. Direct current-candidate test outputs are offline.log/vitest.json/observations.json; these are not host receipts."
+    },
+    {
+      "caseId": "SS19-hold-boundaries",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red-green/mutation NOT_RUN: no product modification or corrected candidate. Direct current-candidate test outputs are offline.log/vitest.json/observations.json; these are not host receipts."
+    },
+    {
+      "caseId": "SS19-known-defect-probes",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red-green/mutation NOT_RUN: no product modification or corrected candidate. Direct current-candidate test outputs are offline.log/vitest.json/observations.json; these are not host receipts."
+    }
+  ]
+}

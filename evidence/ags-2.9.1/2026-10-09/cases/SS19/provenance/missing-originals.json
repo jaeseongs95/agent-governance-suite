@@ -1,0 +1,32 @@
+[
+  {
+    "artifact": "TEST-SPEC.seq7.ko.md",
+    "status": "MISSING_ORIGINAL",
+    "reason": "Not in fixed candidate; embedded sourceSpec used originally."
+  },
+  {
+    "artifact": "separate stdout and stderr streams",
+    "status": "MISSING_ORIGINAL",
+    "reason": "Existing executions were captured as merged stdout/stderr logs, not separate streams."
+  },
+  {
+    "artifact": "unmatched-name-filter first-attempt log",
+    "status": "MISSING_ORIGINAL",
+    "reason": "First capture overwritten; original result records exit=0, executed=0, skipped=40, NOTRUN. Conversation is not published."
+  },
+  {
+    "artifact": "TypeScript TS5112 invocation-attempt log",
+    "status": "MISSING_ORIGINAL",
+    "reason": "Not retained as file; original result records invocation error exit=1."
+  },
+  {
+    "artifact": "initial and intermediate test source versions",
+    "status": "MISSING_ORIGINAL",
+    "reason": "Not frozen as files; only final source is retained. Prior logs are not evidence for final-source sensitivity."
+  },
+  {
+    "artifact": "exact mock HTTP request wire capture",
+    "status": "MISSING_ORIGINAL",
+    "reason": "Wire preservation was asserted but raw transmitted wire bytes were not saved. Frozen input prompts, full inventory, normalized REQ and binding digests are retained."
+  }
+]

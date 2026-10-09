@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:4ec78d66a2a16924265a8cb50817ae31ad7b0f87c825c7c076bcb5de993b46b5",
+  "reportDigest": "sha256:38a3daa7901c65bdf548d45bdd068d664e0fb4f64ddacb94f33a5624465ffbfa",
+  "issues": [
+    "REQUIRED SS19-frozen-variants: NOT_RUN — Sensitivity red-green/mutation NOT_RUN: no product modification or corrected candidate. Direct current-candidate test outputs are offline.log/vitest.json/observations.json; these are not host receipts.",
+    "REQUIRED SS19-hold-boundaries: NOT_RUN — Sensitivity red-green/mutation NOT_RUN: no product modification or corrected candidate. Direct current-candidate test outputs are offline.log/vitest.json/observations.json; these are not host receipts.",
+    "REQUIRED SS19-known-defect-probes: NOT_RUN — Sensitivity red-green/mutation NOT_RUN: no product modification or corrected candidate. Direct current-candidate test outputs are offline.log/vitest.json/observations.json; these are not host receipts."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

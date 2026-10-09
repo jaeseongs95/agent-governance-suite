@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:9e864188214fd5d179968c7c8fadf3a5be3aaff6d65a7f834beb12e69384a4e1",
+  "caseIds": [
+    "SS19-frozen-variants",
+    "SS19-hold-boundaries",
+    "SS19-known-defect-probes"
+  ]
+}
