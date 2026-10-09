@@ -1,0 +1,499 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS34-offline-delegated",
+  "contractDigest": "sha256:5669378bfed494a628c0864ebc61dd7b0efa984605785febd8c7fd10f4a47c1c",
+  "requirements": [
+    "SS34-stage-separation",
+    "SS34-candidate-environment-source-binding",
+    "SS34-mandatory-capability-completion",
+    "SS34-admission-separation",
+    "SS34-null-oracle-preservation"
+  ],
+  "scopeFiles": [
+    "tests/skill-classification/SS34.delegated.test.ts",
+    "tests/skill-classification/evaluation.ts",
+    "mcp-server/src/skill-classification/gateway.ts",
+    "mcp-server/src/skill-classification/validation.ts",
+    "skills/korean-prose-editor/integration/skill-descriptor.json"
+  ],
+  "runner": "Repository Vitest 5; only SS34 delegated file",
+  "environment": "Independent Cloud REPOSITORY_ROOT; Node v24.19.0; pnpm 11.19.0; no external API; frozen commit c6a8019",
+  "cases": [
+    {
+      "id": "recommend-only",
+      "requirementIds": [
+        "SS34-stage-separation"
+      ],
+      "scenario": "recommend-only",
+      "entryPoint": "aggregate/scoreCase; gateway.classify/accept for integration",
+      "level": "unit",
+      "expectedBehavior": "Direct evidence only; reject missing/mismatching source/candidate/environment/phases or execution without admission; preserve null oracle",
+      "oracle": "Embedded SS34 sourceSpec.fields.통과기준, 허용선택, 금지추천 또는 행동; no semantic oracle invented",
+      "testFiles": [
+        "tests/skill-classification/SS34.delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observational verification of fixed candidate; no product modification permitted. Failing assertions are bug reproductions, not a fabricated red/green demonstration.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS34.delegated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+      ]
+    },
+    {
+      "id": "selected",
+      "requirementIds": [
+        "SS34-stage-separation"
+      ],
+      "scenario": "selected",
+      "entryPoint": "aggregate/scoreCase; gateway.classify/accept for integration",
+      "level": "unit",
+      "expectedBehavior": "Direct evidence only; reject missing/mismatching source/candidate/environment/phases or execution without admission; preserve null oracle",
+      "oracle": "Embedded SS34 sourceSpec.fields.통과기준, 허용선택, 금지추천 또는 행동; no semantic oracle invented",
+      "testFiles": [
+        "tests/skill-classification/SS34.delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observational verification of fixed candidate; no product modification permitted. Failing assertions are bug reproductions, not a fabricated red/green demonstration.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS34.delegated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+      ]
+    },
+    {
+      "id": "read",
+      "requirementIds": [
+        "SS34-stage-separation"
+      ],
+      "scenario": "read",
+      "entryPoint": "aggregate/scoreCase; gateway.classify/accept for integration",
+      "level": "unit",
+      "expectedBehavior": "Direct evidence only; reject missing/mismatching source/candidate/environment/phases or execution without admission; preserve null oracle",
+      "oracle": "Embedded SS34 sourceSpec.fields.통과기준, 허용선택, 금지추천 또는 행동; no semantic oracle invented",
+      "testFiles": [
+        "tests/skill-classification/SS34.delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observational verification of fixed candidate; no product modification permitted. Failing assertions are bug reproductions, not a fabricated red/green demonstration.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS34.delegated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+      ]
+    },
+    {
+      "id": "applied",
+      "requirementIds": [
+        "SS34-stage-separation"
+      ],
+      "scenario": "applied",
+      "entryPoint": "aggregate/scoreCase; gateway.classify/accept for integration",
+      "level": "unit",
+      "expectedBehavior": "Direct evidence only; reject missing/mismatching source/candidate/environment/phases or execution without admission; preserve null oracle",
+      "oracle": "Embedded SS34 sourceSpec.fields.통과기준, 허용선택, 금지추천 또는 행동; no semantic oracle invented",
+      "testFiles": [
+        "tests/skill-classification/SS34.delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observational verification of fixed candidate; no product modification permitted. Failing assertions are bug reproductions, not a fabricated red/green demonstration.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS34.delegated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+      ]
+    },
+    {
+      "id": "verified",
+      "requirementIds": [
+        "SS34-stage-separation"
+      ],
+      "scenario": "verified",
+      "entryPoint": "aggregate/scoreCase; gateway.classify/accept for integration",
+      "level": "unit",
+      "expectedBehavior": "Direct evidence only; reject missing/mismatching source/candidate/environment/phases or execution without admission; preserve null oracle",
+      "oracle": "Embedded SS34 sourceSpec.fields.통과기준, 허용선택, 금지추천 또는 행동; no semantic oracle invented",
+      "testFiles": [
+        "tests/skill-classification/SS34.delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observational verification of fixed candidate; no product modification permitted. Failing assertions are bug reproductions, not a fabricated red/green demonstration.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS34.delegated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+      ]
+    },
+    {
+      "id": "wrong-candidate",
+      "requirementIds": [
+        "SS34-candidate-environment-source-binding"
+      ],
+      "scenario": "wrong-candidate",
+      "entryPoint": "aggregate/scoreCase; gateway.classify/accept for integration",
+      "level": "unit",
+      "expectedBehavior": "Direct evidence only; reject missing/mismatching source/candidate/environment/phases or execution without admission; preserve null oracle",
+      "oracle": "Embedded SS34 sourceSpec.fields.통과기준, 허용선택, 금지추천 또는 행동; no semantic oracle invented",
+      "testFiles": [
+        "tests/skill-classification/SS34.delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observational verification of fixed candidate; no product modification permitted. Failing assertions are bug reproductions, not a fabricated red/green demonstration.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS34.delegated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+      ]
+    },
+    {
+      "id": "missing-k-phase",
+      "requirementIds": [
+        "SS34-mandatory-capability-completion"
+      ],
+      "scenario": "missing-k-phase",
+      "entryPoint": "aggregate/scoreCase; gateway.classify/accept for integration",
+      "level": "unit",
+      "expectedBehavior": "Direct evidence only; reject missing/mismatching source/candidate/environment/phases or execution without admission; preserve null oracle",
+      "oracle": "Embedded SS34 sourceSpec.fields.통과기준, 허용선택, 금지추천 또는 행동; no semantic oracle invented",
+      "testFiles": [
+        "tests/skill-classification/SS34.delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observational verification of fixed candidate; no product modification permitted. Failing assertions are bug reproductions, not a fabricated red/green demonstration.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS34.delegated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+      ]
+    },
+    {
+      "id": "no-admission-negative",
+      "requirementIds": [
+        "SS34-admission-separation"
+      ],
+      "scenario": "no-admission-negative",
+      "entryPoint": "aggregate/scoreCase; gateway.classify/accept for integration",
+      "level": "unit",
+      "expectedBehavior": "Direct evidence only; reject missing/mismatching source/candidate/environment/phases or execution without admission; preserve null oracle",
+      "oracle": "Embedded SS34 sourceSpec.fields.통과기준, 허용선택, 금지추천 또는 행동; no semantic oracle invented",
+      "testFiles": [
+        "tests/skill-classification/SS34.delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observational verification of fixed candidate; no product modification permitted. Failing assertions are bug reproductions, not a fabricated red/green demonstration.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS34.delegated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+      ]
+    },
+    {
+      "id": "labels-only",
+      "requirementIds": [
+        "SS34-stage-separation"
+      ],
+      "scenario": "labels-only",
+      "entryPoint": "aggregate/scoreCase; gateway.classify/accept for integration",
+      "level": "unit",
+      "expectedBehavior": "Direct evidence only; reject missing/mismatching source/candidate/environment/phases or execution without admission; preserve null oracle",
+      "oracle": "Embedded SS34 sourceSpec.fields.통과기준, 허용선택, 금지추천 또는 행동; no semantic oracle invented",
+      "testFiles": [
+        "tests/skill-classification/SS34.delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observational verification of fixed candidate; no product modification permitted. Failing assertions are bug reproductions, not a fabricated red/green demonstration.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS34.delegated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+      ]
+    },
+    {
+      "id": "wrong-environment",
+      "requirementIds": [
+        "SS34-candidate-environment-source-binding"
+      ],
+      "scenario": "wrong-environment",
+      "entryPoint": "aggregate/scoreCase; gateway.classify/accept for integration",
+      "level": "unit",
+      "expectedBehavior": "Direct evidence only; reject missing/mismatching source/candidate/environment/phases or execution without admission; preserve null oracle",
+      "oracle": "Embedded SS34 sourceSpec.fields.통과기준, 허용선택, 금지추천 또는 행동; no semantic oracle invented",
+      "testFiles": [
+        "tests/skill-classification/SS34.delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observational verification of fixed candidate; no product modification permitted. Failing assertions are bug reproductions, not a fabricated red/green demonstration.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS34.delegated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+      ]
+    },
+    {
+      "id": "wrong-source-digest",
+      "requirementIds": [
+        "SS34-candidate-environment-source-binding"
+      ],
+      "scenario": "wrong-source-digest",
+      "entryPoint": "aggregate/scoreCase; gateway.classify/accept for integration",
+      "level": "unit",
+      "expectedBehavior": "Direct evidence only; reject missing/mismatching source/candidate/environment/phases or execution without admission; preserve null oracle",
+      "oracle": "Embedded SS34 sourceSpec.fields.통과기준, 허용선택, 금지추천 또는 행동; no semantic oracle invented",
+      "testFiles": [
+        "tests/skill-classification/SS34.delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observational verification of fixed candidate; no product modification permitted. Failing assertions are bug reproductions, not a fabricated red/green demonstration.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS34.delegated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+      ]
+    },
+    {
+      "id": "unplanned-missing-evidence",
+      "requirementIds": [
+        "SS34-candidate-environment-source-binding"
+      ],
+      "scenario": "unplanned-missing-evidence",
+      "entryPoint": "aggregate/scoreCase; gateway.classify/accept for integration",
+      "level": "unit",
+      "expectedBehavior": "Direct evidence only; reject missing/mismatching source/candidate/environment/phases or execution without admission; preserve null oracle",
+      "oracle": "Embedded SS34 sourceSpec.fields.통과기준, 허용선택, 금지추천 또는 행동; no semantic oracle invented",
+      "testFiles": [
+        "tests/skill-classification/SS34.delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observational verification of fixed candidate; no product modification permitted. Failing assertions are bug reproductions, not a fabricated red/green demonstration.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS34.delegated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+      ]
+    },
+    {
+      "id": "wrong-obligation-artifact",
+      "requirementIds": [
+        "SS34-candidate-environment-source-binding"
+      ],
+      "scenario": "wrong-obligation-artifact",
+      "entryPoint": "aggregate/scoreCase; gateway.classify/accept for integration",
+      "level": "unit",
+      "expectedBehavior": "Direct evidence only; reject missing/mismatching source/candidate/environment/phases or execution without admission; preserve null oracle",
+      "oracle": "Embedded SS34 sourceSpec.fields.통과기준, 허용선택, 금지추천 또는 행동; no semantic oracle invented",
+      "testFiles": [
+        "tests/skill-classification/SS34.delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observational verification of fixed candidate; no product modification permitted. Failing assertions are bug reproductions, not a fabricated red/green demonstration.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS34.delegated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+      ]
+    },
+    {
+      "id": "omitted-required-k-phase-list",
+      "requirementIds": [
+        "SS34-mandatory-capability-completion"
+      ],
+      "scenario": "omitted-required-k-phase-list",
+      "entryPoint": "aggregate/scoreCase; gateway.classify/accept for integration",
+      "level": "unit",
+      "expectedBehavior": "Direct evidence only; reject missing/mismatching source/candidate/environment/phases or execution without admission; preserve null oracle",
+      "oracle": "Embedded SS34 sourceSpec.fields.통과기준, 허용선택, 금지추천 또는 행동; no semantic oracle invented",
+      "testFiles": [
+        "tests/skill-classification/SS34.delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observational verification of fixed candidate; no product modification permitted. Failing assertions are bug reproductions, not a fabricated red/green demonstration.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS34.delegated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+      ]
+    },
+    {
+      "id": "verification-fail",
+      "requirementIds": [
+        "SS34-stage-separation"
+      ],
+      "scenario": "verification-fail",
+      "entryPoint": "aggregate/scoreCase; gateway.classify/accept for integration",
+      "level": "unit",
+      "expectedBehavior": "Direct evidence only; reject missing/mismatching source/candidate/environment/phases or execution without admission; preserve null oracle",
+      "oracle": "Embedded SS34 sourceSpec.fields.통과기준, 허용선택, 금지추천 또는 행동; no semantic oracle invented",
+      "testFiles": [
+        "tests/skill-classification/SS34.delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observational verification of fixed candidate; no product modification permitted. Failing assertions are bug reproductions, not a fabricated red/green demonstration.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS34.delegated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+      ]
+    },
+    {
+      "id": "verification-not-run",
+      "requirementIds": [
+        "SS34-stage-separation"
+      ],
+      "scenario": "verification-not-run",
+      "entryPoint": "aggregate/scoreCase; gateway.classify/accept for integration",
+      "level": "unit",
+      "expectedBehavior": "Direct evidence only; reject missing/mismatching source/candidate/environment/phases or execution without admission; preserve null oracle",
+      "oracle": "Embedded SS34 sourceSpec.fields.통과기준, 허용선택, 금지추천 또는 행동; no semantic oracle invented",
+      "testFiles": [
+        "tests/skill-classification/SS34.delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observational verification of fixed candidate; no product modification permitted. Failing assertions are bug reproductions, not a fabricated red/green demonstration.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS34.delegated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+      ]
+    },
+    {
+      "id": "gateway-separation",
+      "requirementIds": [
+        "SS34-admission-separation"
+      ],
+      "scenario": "gateway-separation",
+      "entryPoint": "aggregate/scoreCase; gateway.classify/accept for integration",
+      "level": "integration",
+      "expectedBehavior": "Direct evidence only; reject missing/mismatching source/candidate/environment/phases or execution without admission; preserve null oracle",
+      "oracle": "Embedded SS34 sourceSpec.fields.통과기준, 허용선택, 금지추천 또는 행동; no semantic oracle invented",
+      "testFiles": [
+        "tests/skill-classification/SS34.delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observational verification of fixed candidate; no product modification permitted. Failing assertions are bug reproductions, not a fabricated red/green demonstration.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS34.delegated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+      ]
+    },
+    {
+      "id": "operational-evaluator-support",
+      "requirementIds": [
+        "SS34-null-oracle-preservation"
+      ],
+      "scenario": "operational-evaluator-support",
+      "entryPoint": "aggregate/scoreCase; gateway.classify/accept for integration",
+      "level": "unit",
+      "expectedBehavior": "Direct evidence only; reject missing/mismatching source/candidate/environment/phases or execution without admission; preserve null oracle",
+      "oracle": "Embedded SS34 sourceSpec.fields.통과기준, 허용선택, 금지추천 또는 행동; no semantic oracle invented",
+      "testFiles": [
+        "tests/skill-classification/SS34.delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observational verification of fixed candidate; no product modification permitted. Failing assertions are bug reproductions, not a fabricated red/green demonstration.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS34.delegated.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "Other case IDs and whole suite",
+    "Past 21-call provider run",
+    "Actual host selection/read/application/verification",
+    "Product edits, push, PR, release",
+    "Semantic accuracy for SS34 oracle=null"
+  ]
+}

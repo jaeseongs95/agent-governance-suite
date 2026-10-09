@@ -1,0 +1,655 @@
+{
+  "caseId": "SS34",
+  "targetRelease": "2.9.1",
+  "status": "FAIL",
+  "scope": "Complete offline comparison of eight frozen variants plus isolated SS34 boundaries; not whole suite or real host",
+  "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+  "targetBranch": "codex/skill-classification-2.9.1",
+  "checkoutKind": "detached fixed commit independent worktree",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "hashBindingsVerified": true,
+  "sourceSpecExistsInRepo": false,
+  "specEvidence": "SS34.fixture.json includes all embedded sourceSpec.fields; external absent TEST-SPEC.seq7.ko.md not invented",
+  "originalPrompt": null,
+  "oracle": null,
+  "semanticAccuracy": null,
+  "semanticScores": null,
+  "variants": [
+    {
+      "variant": "recommend-only",
+      "status": "PASS",
+      "executionKind": "offline-mock",
+      "testCategory": "existing-regression-adaptation",
+      "expected": {
+        "selected": false,
+        "read": false,
+        "applied": false,
+        "verified": false
+      },
+      "observed": {
+        "selected": false,
+        "read": false,
+        "applied": false,
+        "verified": false
+      },
+      "inputRef": "SS34.observations.json#rows/recommend-only",
+      "actualHostStages": {
+        "selected": "NOT_RUN",
+        "read": "NOT_RUN",
+        "applied": "NOT_RUN",
+        "verified": "NOT_RUN"
+      },
+      "actualRecommendations": null,
+      "actualAgentSelectedSkillIds": null,
+      "neededSkillIds": null,
+      "runnableSkillIds": null,
+      "admissionStatus": "NOT_EVALUATED",
+      "mockChannels": {
+        "rawRecommendationSkillIds": [
+          "cs-engineering"
+        ],
+        "mockHostSelectedSkillIds": null,
+        "stageCredit": {
+          "selected": false,
+          "read": false,
+          "applied": false,
+          "verified": false
+        },
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "admissionStatus": "NOT_EVALUATED"
+      },
+      "commandRef": "SS34.command.json",
+      "exit": 1,
+      "API0": {
+        "JEV": 0,
+        "externalVendor": 0,
+        "Claude": 0
+      },
+      "missingInputs": [
+        "Actual host trace/receipt/admission and stage artifacts are absent; synthetic trace establishes evaluator behavior only"
+      ]
+    },
+    {
+      "variant": "selected",
+      "status": "PASS",
+      "executionKind": "offline-mock",
+      "testCategory": "existing-regression-adaptation",
+      "expected": {
+        "selected": true,
+        "read": false,
+        "applied": false,
+        "verified": false
+      },
+      "observed": {
+        "selected": true,
+        "read": false,
+        "applied": false,
+        "verified": false
+      },
+      "inputRef": "SS34.observations.json#rows/selected",
+      "actualHostStages": {
+        "selected": "NOT_RUN",
+        "read": "NOT_RUN",
+        "applied": "NOT_RUN",
+        "verified": "NOT_RUN"
+      },
+      "actualRecommendations": null,
+      "actualAgentSelectedSkillIds": null,
+      "neededSkillIds": null,
+      "runnableSkillIds": null,
+      "admissionStatus": "NOT_EVALUATED",
+      "mockChannels": {
+        "rawRecommendationSkillIds": null,
+        "mockHostSelectedSkillIds": [
+          "cs-engineering"
+        ],
+        "stageCredit": {
+          "selected": true,
+          "read": false,
+          "applied": false,
+          "verified": false
+        },
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "admissionStatus": "NOT_EVALUATED"
+      },
+      "commandRef": "SS34.command.json",
+      "exit": 1,
+      "API0": {
+        "JEV": 0,
+        "externalVendor": 0,
+        "Claude": 0
+      },
+      "missingInputs": [
+        "Actual host trace/receipt/admission and stage artifacts are absent; synthetic trace establishes evaluator behavior only"
+      ]
+    },
+    {
+      "variant": "read",
+      "status": "PASS",
+      "executionKind": "offline-mock",
+      "testCategory": "new-variant",
+      "expected": {
+        "selected": true,
+        "read": true,
+        "applied": false,
+        "verified": false
+      },
+      "observed": {
+        "selected": true,
+        "read": true,
+        "applied": false,
+        "verified": false
+      },
+      "inputRef": "SS34.observations.json#rows/read",
+      "actualHostStages": {
+        "selected": "NOT_RUN",
+        "read": "NOT_RUN",
+        "applied": "NOT_RUN",
+        "verified": "NOT_RUN"
+      },
+      "actualRecommendations": null,
+      "actualAgentSelectedSkillIds": null,
+      "neededSkillIds": null,
+      "runnableSkillIds": null,
+      "admissionStatus": "NOT_EVALUATED",
+      "mockChannels": {
+        "rawRecommendationSkillIds": null,
+        "mockHostSelectedSkillIds": [
+          "cs-engineering"
+        ],
+        "stageCredit": {
+          "selected": true,
+          "read": true,
+          "applied": false,
+          "verified": false
+        },
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "admissionStatus": "NOT_EVALUATED"
+      },
+      "commandRef": "SS34.command.json",
+      "exit": 1,
+      "API0": {
+        "JEV": 0,
+        "externalVendor": 0,
+        "Claude": 0
+      },
+      "missingInputs": [
+        "Actual host trace/receipt/admission and stage artifacts are absent; synthetic trace establishes evaluator behavior only"
+      ]
+    },
+    {
+      "variant": "applied",
+      "status": "PASS",
+      "executionKind": "offline-mock",
+      "testCategory": "new-variant",
+      "expected": {
+        "selected": true,
+        "read": true,
+        "applied": true,
+        "verified": false
+      },
+      "observed": {
+        "selected": true,
+        "read": true,
+        "applied": true,
+        "verified": false
+      },
+      "inputRef": "SS34.observations.json#rows/applied",
+      "actualHostStages": {
+        "selected": "NOT_RUN",
+        "read": "NOT_RUN",
+        "applied": "NOT_RUN",
+        "verified": "NOT_RUN"
+      },
+      "actualRecommendations": null,
+      "actualAgentSelectedSkillIds": null,
+      "neededSkillIds": null,
+      "runnableSkillIds": null,
+      "admissionStatus": "NOT_EVALUATED",
+      "mockChannels": {
+        "rawRecommendationSkillIds": null,
+        "mockHostSelectedSkillIds": [
+          "cs-engineering"
+        ],
+        "stageCredit": {
+          "selected": true,
+          "read": true,
+          "applied": true,
+          "verified": false
+        },
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "admissionStatus": "NOT_EVALUATED"
+      },
+      "commandRef": "SS34.command.json",
+      "exit": 1,
+      "API0": {
+        "JEV": 0,
+        "externalVendor": 0,
+        "Claude": 0
+      },
+      "missingInputs": [
+        "Actual host trace/receipt/admission and stage artifacts are absent; synthetic trace establishes evaluator behavior only"
+      ]
+    },
+    {
+      "variant": "verified",
+      "status": "PASS",
+      "executionKind": "offline-mock",
+      "testCategory": "existing-regression-adaptation",
+      "expected": {
+        "selected": true,
+        "read": true,
+        "applied": true,
+        "verified": true
+      },
+      "observed": {
+        "selected": true,
+        "read": true,
+        "applied": true,
+        "verified": true
+      },
+      "inputRef": "SS34.observations.json#rows/verified",
+      "actualHostStages": {
+        "selected": "NOT_RUN",
+        "read": "NOT_RUN",
+        "applied": "NOT_RUN",
+        "verified": "NOT_RUN"
+      },
+      "actualRecommendations": null,
+      "actualAgentSelectedSkillIds": null,
+      "neededSkillIds": null,
+      "runnableSkillIds": null,
+      "admissionStatus": "NOT_EVALUATED",
+      "mockChannels": {
+        "rawRecommendationSkillIds": null,
+        "mockHostSelectedSkillIds": [
+          "cs-engineering"
+        ],
+        "stageCredit": {
+          "selected": true,
+          "read": true,
+          "applied": true,
+          "verified": true
+        },
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "admissionStatus": "NOT_EVALUATED"
+      },
+      "commandRef": "SS34.command.json",
+      "exit": 1,
+      "API0": {
+        "JEV": 0,
+        "externalVendor": 0,
+        "Claude": 0
+      },
+      "missingInputs": [
+        "Actual host trace/receipt/admission and stage artifacts are absent; synthetic trace establishes evaluator behavior only"
+      ]
+    },
+    {
+      "variant": "wrong-candidate",
+      "status": "PASS",
+      "executionKind": "offline-mock",
+      "testCategory": "existing-regression-adaptation",
+      "expected": {
+        "selected": true,
+        "read": true,
+        "applied": true,
+        "verified": false
+      },
+      "observed": {
+        "selected": true,
+        "read": true,
+        "applied": true,
+        "verified": false
+      },
+      "inputRef": "SS34.observations.json#rows/wrong-candidate",
+      "actualHostStages": {
+        "selected": "NOT_RUN",
+        "read": "NOT_RUN",
+        "applied": "NOT_RUN",
+        "verified": "NOT_RUN"
+      },
+      "actualRecommendations": null,
+      "actualAgentSelectedSkillIds": null,
+      "neededSkillIds": null,
+      "runnableSkillIds": null,
+      "admissionStatus": "NOT_EVALUATED",
+      "mockChannels": {
+        "rawRecommendationSkillIds": null,
+        "mockHostSelectedSkillIds": [
+          "cs-engineering"
+        ],
+        "stageCredit": {
+          "selected": true,
+          "read": true,
+          "applied": true,
+          "verified": false
+        },
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "admissionStatus": "NOT_EVALUATED"
+      },
+      "commandRef": "SS34.command.json",
+      "exit": 1,
+      "API0": {
+        "JEV": 0,
+        "externalVendor": 0,
+        "Claude": 0
+      },
+      "missingInputs": [
+        "Actual host trace/receipt/admission and stage artifacts are absent; synthetic trace establishes evaluator behavior only"
+      ]
+    },
+    {
+      "variant": "missing-k-phase",
+      "status": "PASS",
+      "executionKind": "offline-mock",
+      "testCategory": "existing-regression-adaptation",
+      "expected": {
+        "selected": true,
+        "read": true,
+        "applied": false,
+        "verified": false
+      },
+      "observed": {
+        "selected": true,
+        "read": true,
+        "applied": false,
+        "verified": false
+      },
+      "inputRef": "SS34.observations.json#rows/missing-k-phase",
+      "actualHostStages": {
+        "selected": "NOT_RUN",
+        "read": "NOT_RUN",
+        "applied": "NOT_RUN",
+        "verified": "NOT_RUN"
+      },
+      "actualRecommendations": null,
+      "actualAgentSelectedSkillIds": null,
+      "neededSkillIds": null,
+      "runnableSkillIds": null,
+      "admissionStatus": "NOT_EVALUATED",
+      "mockChannels": {
+        "rawRecommendationSkillIds": null,
+        "mockHostSelectedSkillIds": [
+          "korean-prose-editor"
+        ],
+        "stageCredit": {
+          "selected": true,
+          "read": true,
+          "applied": false,
+          "verified": false
+        },
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "admissionStatus": "NOT_EVALUATED"
+      },
+      "commandRef": "SS34.command.json",
+      "exit": 1,
+      "API0": {
+        "JEV": 0,
+        "externalVendor": 0,
+        "Claude": 0
+      },
+      "missingInputs": [
+        "Actual host trace/receipt/admission and stage artifacts are absent; synthetic trace establishes evaluator behavior only"
+      ]
+    },
+    {
+      "variant": "no-admission-negative",
+      "status": "FAIL",
+      "executionKind": "offline-mock",
+      "testCategory": "new-variant",
+      "expected": "FAIL",
+      "observed": "PASS",
+      "inputRef": "SS34.observations.json#rows/no-admission-negative",
+      "actualHostStages": {
+        "selected": "NOT_RUN",
+        "read": "NOT_RUN",
+        "applied": "NOT_RUN",
+        "verified": "NOT_RUN"
+      },
+      "actualRecommendations": null,
+      "actualAgentSelectedSkillIds": null,
+      "neededSkillIds": null,
+      "runnableSkillIds": null,
+      "admissionStatus": "NOT_EVALUATED",
+      "mockChannels": {
+        "rawRecommendationSkillIds": null,
+        "mockHostSelectedSkillIds": [
+          "cs-engineering"
+        ],
+        "stageCredit": "PASS",
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "admissionStatus": null
+      },
+      "commandRef": "SS34.command.json",
+      "exit": 1,
+      "API0": {
+        "JEV": 0,
+        "externalVendor": 0,
+        "Claude": 0
+      },
+      "missingInputs": [
+        "Actual host trace/receipt/admission and stage artifacts are absent; synthetic trace establishes evaluator behavior only"
+      ]
+    }
+  ],
+  "summary": {
+    "frozenVariants": {
+      "executed": 8,
+      "PASS": 7,
+      "FAIL": 1
+    },
+    "vitestAssertions": {
+      "executed": 19,
+      "PASS": 13,
+      "FAIL": 6
+    },
+    "additionalBoundaryFindings": 5,
+    "rootCauses": 3,
+    "operationalEvaluatorDirectPath": "BLOCKED",
+    "gatewaySeparation": "PASS_OFFLINE_MOCK",
+    "independentAudit": "NOT_RUN",
+    "redGreenSensitivity": "NOT_RUN",
+    "engineeringProofVerdict": "INCOMPLETE"
+  },
+  "executionKinds": {
+    "existingOriginalTests": "NOT_RUN (read only; original uses other case IDs; duplicated case execution prohibited)",
+    "existingRegressionAdaptations": "offline-mock, isolated SS34 file; same stage/public evaluator logic",
+    "newVariantsAndBoundaries": "offline-mock, stage sentinel only",
+    "actualGatewayCode": "offline integration with mocked service and unsigned synthetic observation, not actual host",
+    "hostLive": "NOT_RUN",
+    "replay": "NOT_RUN",
+    "providerLive": "NOT_RUN"
+  },
+  "actualStages": {
+    "selected": "NOT_RUN",
+    "read": "NOT_RUN",
+    "applied": "NOT_RUN",
+    "verified": "NOT_RUN"
+  },
+  "actualAgentSelectedSkillIds": null,
+  "neededSkillIds": null,
+  "runnableSkillIds": null,
+  "admissionStatus": "NOT_EVALUATED",
+  "API0": {
+    "JEV": 0,
+    "externalVendor": 0,
+    "Claude": 0
+  },
+  "past21CallRunReexecuted": false,
+  "command": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/skill-classification/SS34.delegated.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+  ],
+  "exit": 1,
+  "wrapperCaptureExit": 0,
+  "findings": [
+    {
+      "id": "SS34-F1",
+      "severity": "HIGH_EVALUATION_VALIDITY",
+      "rootCause": "Operational admission contract is not represented or enforced by evaluator",
+      "evidence": [
+        "no-admission-negative: expected FAIL, observed PASS",
+        "operational-evaluator-support: direct scoreCase SS34 throws NO_SEMANTIC_ORACLE:SS34; aggregate throws UNKNOWN_CASE_OBSERVATION"
+      ],
+      "location": "tests/skill-classification/evaluation.ts:54,95-98,79-91",
+      "limit": "Sentinel stage probe, no semantic oracle for SS34 and no demonstrated workflow admission bypass; gateway returns NOT_EVALUATED"
+    },
+    {
+      "id": "SS34-F2",
+      "severity": "HIGH_EVALUATION_VALIDITY",
+      "rootCause": "Stage promotion trusts shallow declaration/reference strings instead of binding source bytes, obligations, candidate artifacts, planned evidence and environment",
+      "evidence": [
+        "wrong-environment",
+        "wrong-source-digest",
+        "unplanned-missing-evidence",
+        "wrong-obligation-artifact"
+      ],
+      "location": "tests/skill-classification/evaluation.ts:112-118",
+      "limit": "Four reproducers of one evaluator binding weakness; mock artifacts and verification are not actual host proof"
+    },
+    {
+      "id": "SS34-F3",
+      "severity": "HIGH_EVALUATION_VALIDITY",
+      "rootCause": "requiredPhases is caller supplied; mandatory phases are not independently derived from descriptor",
+      "evidence": [
+        "missing-k-phase rejects omission with complete required list (PASS)",
+        "omitted-required-k-phase-list admits omitted mandatory phase when required list is also shortened (FAIL)"
+      ],
+      "location": "tests/skill-classification/evaluation.ts:114-115",
+      "limit": "Offline evaluator phase coverage; actual K workflow gate execution is NOT_RUN"
+    }
+  ],
+  "knownDefectConnections": {
+    "validCostLostWithInvalidRESP": "NOT_EXERCISED",
+    "timeoutOverflow": "NOT_EXERCISED",
+    "duplicateMetadataConditions": "NOT_EXERCISED",
+    "hostActiveStateSupplyGap": "Known host-input limitation retained; no additional root-cause count or live reproduction",
+    "concurrencyPreDispatchRecheckGap": "NOT_EXERCISED"
+  },
+  "hostLive": {
+    "status": "NOT_RUN",
+    "availablePath": {
+      "serverConfig": "REPOSITORY_ROOT/.mcp.json",
+      "serverCommand": [
+        "node",
+        "mcp-server/dist/server.mjs"
+      ],
+      "hookConfig": "REPOSITORY_ROOT/hooks/hooks.json PreToolUse classify_skills/record_skill_selection",
+      "hookCommand": [
+        "node",
+        "mcp-server/dist/host-attestation-hook.mjs",
+        "--host=codex"
+      ],
+      "codexExecutable": "codex (executable presence only)",
+      "tools": [
+        "get_skill_inventory",
+        "classify_skills",
+        "record_skill_selection"
+      ]
+    },
+    "requiredMissingInputs": [
+      "AGS MCP installation/tool exposure and real current-session PreToolUse hook payload",
+      "Current-session main-thread metadata: session_id,turn_id,tool_use_id,model,transcript_path; matching session_meta/turn_context with supported effort/model; no parent/subagent metadata substitution",
+      "Current host session-board lastPromptAt and actor source binding",
+      "Approved classification config via AGENT_GOVERNANCE_CLASSIFICATION_CONFIG and qualified same-vendor route/profile/quota if classification is used; this task authorizes zero external calls",
+      "Operator-owned actual trace source (SS34 originalPrompt remains null), complete inventory and host active state",
+      "Real accepted AGENT decision with caller hostReceipt=null, independent execution admission",
+      "Exact skill/body/reference digests, mandatory capability list, obligation-to-artifact binding, current candidate/environment, verification plan and actual evidence files"
+    ],
+    "notRunReason": "No AGS connector tool exposure or classification config; no real attestation payload, admission or artifacts were supplied. Codex executable presence is not host execution proof. Claude executable absent. No bootstrap 21-call run or external provider invoked."
+  },
+  "missingInputs": [
+    "AGS MCP installation/tool exposure and real current-session PreToolUse hook payload",
+    "Current-session main-thread metadata: session_id,turn_id,tool_use_id,model,transcript_path; matching session_meta/turn_context with supported effort/model; no parent/subagent metadata substitution",
+    "Current host session-board lastPromptAt and actor source binding",
+    "Approved classification config via AGENT_GOVERNANCE_CLASSIFICATION_CONFIG and qualified same-vendor route/profile/quota if classification is used; this task authorizes zero external calls",
+    "Operator-owned actual trace source (SS34 originalPrompt remains null), complete inventory and host active state",
+    "Real accepted AGENT decision with caller hostReceipt=null, independent execution admission",
+    "Exact skill/body/reference digests, mandatory capability list, obligation-to-artifact binding, current candidate/environment, verification plan and actual evidence files"
+  ],
+  "productChanges": false,
+  "pushPRRelease": false,
+  "evidenceFiles": [
+    "SS34.fixture.json",
+    "SS34.observations.json",
+    "SS34.stderr.log",
+    "SS34.snapshot.json",
+    "SS34.proof.json",
+    "SS34.engineering-test-result.json",
+    "SS34.proof-check.stderr.log",
+    "SS34.snapshot.stderr.log",
+    "SS34.command.json",
+    "SS34.plan.json",
+    "SS34.vitest.json",
+    "SS34.stdout.log",
+    "SS34.evidence-check-commands.json",
+    "reproduce/SS34.delegated.test.ts",
+    "SS34.original-manifest.json",
+    "SS34.result.json",
+    "README.md",
+    "manifest.json",
+    "SHA256SUMS"
+  ],
+  "limitations": [
+    "Synthetic sentinel oracle belongs only to mechanical stage adapter; SS34 frozen oracle remains null; no accuracy/precision/recall reported",
+    "Synthetic receipts are explicitly labeled MOCK and are not actual AGENT selection",
+    "compare helper reports stage credits of unmodified aggregate, not independently attested stages",
+    "Gateway direct integration bypasses actual transport/host hooks with synthetic observation, no host-live claim",
+    "Artifacts/evidence paths in stage input are synthetic; positive probes characterize current shallow evaluator without proving real CS/K application",
+    "No fix candidate exists; failed assertion evidence is not a red/green or independent audit PASS"
+  ],
+  "createdAt": "2026-10-09T03:01:07.601523+00:00",
+  "instructionsRead": [
+    "AGENTS.md",
+    "skills/test-engineering/SKILL.md",
+    "skills/orchestrator/SKILL.md",
+    "skills/cs-engineering/SKILL.md",
+    "skills/korean-prose-editor/SKILL.md",
+    "skills/orchestrator/references/skill-classification.md",
+    "skills/orchestrator/references/engineering-practices/test-design.md",
+    "skills/orchestrator/references/engineering-practices/test-proof.md",
+    "skills/orchestrator/references/engineering-practices/cli.md",
+    "tests/skill-classification/live-bootstrap/README.md"
+  ],
+  "trackedProductIntegrity": {
+    "diffExit": 0,
+    "diffCheckExit": 0
+  },
+  "publication": {
+    "kind": "public sanitized derivative of existing evidence",
+    "newTests": 0,
+    "modelApiCalls": {
+      "JEV": 0,
+      "externalVendor": 0,
+      "Claude": 0,
+      "Codex": 0
+    },
+    "patchStatus": "NOT_PRESENT: no original patch, no product fix, no patch generated",
+    "missingOriginals": [
+      "TEST-SPEC.seq7.ko.md: MISSING_ORIGINAL (already absent at original execution)"
+    ],
+    "withheldOriginals": [
+      "SS34.environment.json: unnecessary environment identifier, executable paths and local dependency paths; hash retained in manifest"
+    ],
+    "originalResultStatusUnchanged": true,
+    "originalTestBytesPreservedByDigestOnly": true,
+    "noOriginalLogSynthesized": true
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:b8f3a733ddad1e21d7ef1cd3aa996c701aa70aa5ef0776f12980cc090a4394bb",
+  "reportDigest": "sha256:8c67bba250e2ea005988fa450912af2356be18ccaff2042fc26e7a594202bddf",
+  "issues": [
+    "REQUIRED recommend-only: NOT_RUN — No product fix/mutation authorized or performed; offline assertions were executed separately and failed where documented. No matching red/green pair, regression sensitivity guarantee, host receipt, or independent audit is claimed.",
+    "REQUIRED selected: NOT_RUN — No product fix/mutation authorized or performed; offline assertions were executed separately and failed where documented. No matching red/green pair, regression sensitivity guarantee, host receipt, or independent audit is claimed.",
+    "REQUIRED read: NOT_RUN — No product fix/mutation authorized or performed; offline assertions were executed separately and failed where documented. No matching red/green pair, regression sensitivity guarantee, host receipt, or independent audit is claimed.",
+    "REQUIRED applied: NOT_RUN — No product fix/mutation authorized or performed; offline assertions were executed separately and failed where documented. No matching red/green pair, regression sensitivity guarantee, host receipt, or independent audit is claimed.",
+    "REQUIRED verified: NOT_RUN — No product fix/mutation authorized or performed; offline assertions were executed separately and failed where documented. No matching red/green pair, regression sensitivity guarantee, host receipt, or independent audit is claimed.",
+    "REQUIRED wrong-candidate: NOT_RUN — No product fix/mutation authorized or performed; offline assertions were executed separately and failed where documented. No matching red/green pair, regression sensitivity guarantee, host receipt, or independent audit is claimed.",
+    "REQUIRED missing-k-phase: NOT_RUN — No product fix/mutation authorized or performed; offline assertions were executed separately and failed where documented. No matching red/green pair, regression sensitivity guarantee, host receipt, or independent audit is claimed.",
+    "REQUIRED no-admission-negative: NOT_RUN — No product fix/mutation authorized or performed; offline assertions were executed separately and failed where documented. No matching red/green pair, regression sensitivity guarantee, host receipt, or independent audit is claimed.",
+    "REQUIRED labels-only: NOT_RUN — No product fix/mutation authorized or performed; offline assertions were executed separately and failed where documented. No matching red/green pair, regression sensitivity guarantee, host receipt, or independent audit is claimed.",
+    "REQUIRED wrong-environment: NOT_RUN — No product fix/mutation authorized or performed; offline assertions were executed separately and failed where documented. No matching red/green pair, regression sensitivity guarantee, host receipt, or independent audit is claimed.",
+    "REQUIRED wrong-source-digest: NOT_RUN — No product fix/mutation authorized or performed; offline assertions were executed separately and failed where documented. No matching red/green pair, regression sensitivity guarantee, host receipt, or independent audit is claimed.",
+    "REQUIRED unplanned-missing-evidence: NOT_RUN — No product fix/mutation authorized or performed; offline assertions were executed separately and failed where documented. No matching red/green pair, regression sensitivity guarantee, host receipt, or independent audit is claimed.",
+    "REQUIRED wrong-obligation-artifact: NOT_RUN — No product fix/mutation authorized or performed; offline assertions were executed separately and failed where documented. No matching red/green pair, regression sensitivity guarantee, host receipt, or independent audit is claimed.",
+    "REQUIRED omitted-required-k-phase-list: NOT_RUN — No product fix/mutation authorized or performed; offline assertions were executed separately and failed where documented. No matching red/green pair, regression sensitivity guarantee, host receipt, or independent audit is claimed.",
+    "REQUIRED verification-fail: NOT_RUN — No product fix/mutation authorized or performed; offline assertions were executed separately and failed where documented. No matching red/green pair, regression sensitivity guarantee, host receipt, or independent audit is claimed.",
+    "REQUIRED verification-not-run: NOT_RUN — No product fix/mutation authorized or performed; offline assertions were executed separately and failed where documented. No matching red/green pair, regression sensitivity guarantee, host receipt, or independent audit is claimed.",
+    "REQUIRED gateway-separation: NOT_RUN — No product fix/mutation authorized or performed; offline assertions were executed separately and failed where documented. No matching red/green pair, regression sensitivity guarantee, host receipt, or independent audit is claimed.",
+    "REQUIRED operational-evaluator-support: NOT_RUN — No product fix/mutation authorized or performed; offline assertions were executed separately and failed where documented. No matching red/green pair, regression sensitivity guarantee, host receipt, or independent audit is claimed."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

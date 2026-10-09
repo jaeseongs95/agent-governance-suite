@@ -1,0 +1,35 @@
+{
+  "caseId": "SS34",
+  "title": "선택 읽기 적용 검증의 구분",
+  "familyId": "mechanical-SS34",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "mock trace 계약. 실제 호스트의 live 단계 관측은 개발자가 해당 환경에서 별도 실행하며 selector live 성공과 합산하지 않는다.",
+  "originalPrompt": null,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS34",
+    "fields": {
+      "입력": "CS 추천·선택만 있는 trace, CS SKILL.md 읽기만 추가된 trace, 의무를 실제 산출물에 연결한 trace, 같은 후보에서 검증된 trace를 순서대로 제공한다. 다른 후보의 검증 결과를 섞은 변형과, 같은 K를 선택했지만 필수 capability 단계 하나를 생략한 변형도 둔다.",
+      "필수추천": "원시 추천·호스트 선택 반영·실제 selected/read/applied/verified 상태와 needed/runnable/admission을 각각 표시한다.",
+      "금지추천 또는 행동": "스킬 이름·HTTP 성공·파일 읽기만으로 적용 완료 판정; 다른 후보·환경의 근거를 verified로 재사용.",
+      "허용선택": "각 상태는 직접 관측된 범위까지만 진전하며 나머지는 NOT_OBSERVED/NOT_RUN.",
+      "보류조건": "파일 digest·의무·산출물·검증 대상의 연결이 없음.",
+      "통과기준": "provider 추천만 있는 trace는 selected도 인정하지 않는다. host 선택 receipt가 있는 첫 trace는 selected까지만, 두 번째는 read까지만 인정한다. applied에는 의무와 산출물 연결, verified에는 동일 후보의 계획된 검증 결과가 필요하다. 별도 독립 감사 PASS는 자동 생성하지 않는다. 같은 skillId 집합이어도 필요한 capability 단계가 빠지면 applied/verified의 실패를 남긴다. 선택 receipt만 있고 admission이 없는 상태에서 실행을 시작한 음성대조는 FAIL한다.",
+      "증거": "E0·E3, 상태별 근거와 불일치 변형의 거부 기록.",
+      "실행종류": "mock trace 계약. 실제 호스트의 live 단계 관측은 개발자가 해당 환경에서 별도 실행하며 selector live 성공과 합산하지 않는다."
+    },
+    "bodyDigest": "sha256:b9d55045d0a5a82ff8a622e2cd9891cf7230dee0340ef06cb23fd2ba41a58cd8"
+  },
+  "oracle": null,
+  "variants": [
+    "recommend-only",
+    "selected",
+    "read",
+    "applied",
+    "verified",
+    "wrong-candidate",
+    "missing-k-phase",
+    "no-admission-negative"
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "caseId": "SS34",
+  "fixedCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "fixedTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "files": [
+    {
+      "path": "SS34.command.json",
+      "SHA256": "71958e94218b2f2f5de28224ebf34c02c1897a4c2f75c8fe29ea52fa9237631b",
+      "bytes": 512
+    },
+    {
+      "path": "SS34.delegated.test.ts",
+      "SHA256": "b9fc7ef88c06de0cef948ac7d47f289ad51fccc1bf37097b81f76ef22614a1c1",
+      "bytes": 16133
+    },
+    {
+      "path": "SS34.engineering-test-result.json",
+      "SHA256": "cdb62b99760a414897ca4bde8a5e6ac0856710eb4b59f44e3a93783af1b0c2c4",
+      "bytes": 5692
+    },
+    {
+      "path": "SS34.environment.json",
+      "SHA256": "629beb0f50689c59541f72311e575167ca2e78e803c3d32e349fedc82f5a7658",
+      "bytes": 832
+    },
+    {
+      "path": "SS34.evidence-check-commands.json",
+      "SHA256": "bea81dbc56ca4c1cdcc77507b30b3bf14ee0c160dc49dd12955c229fdc4aa0dc",
+      "bytes": 482
+    },
+    {
+      "path": "SS34.fixture.json",
+      "SHA256": "a544c140804ffcb7bc06971c3b16020cbee64ca8cdf4a1a343e0e3f40b426e1d",
+      "bytes": 2517
+    },
+    {
+      "path": "SS34.observations.json",
+      "SHA256": "726254312c89127854395671a460a6df2fb45d100b04956a822aea5f46e78b86",
+      "bytes": 46942
+    },
+    {
+      "path": "SS34.plan.json",
+      "SHA256": "3e8218fd1ce51b6ba1e005fbba3c04a56a1b4b30fc9bc4347ddfbdf47df46c09",
+      "bytes": 22804
+    },
+    {
+      "path": "SS34.proof-check.stderr.log",
+      "SHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "SS34.proof.json",
+      "SHA256": "e38fe50320928b3dcc079f43d4c9305192d534faf10f7821fa7f4e9257d11c4d",
+      "bytes": 13328
+    },
+    {
+      "path": "SS34.result.json",
+      "SHA256": "34f7dc2a797d71e8f55ab5c814a1866891724e353f480949d8537d0d71216bfd",
+      "bytes": 21756
+    },
+    {
+      "path": "SS34.snapshot.json",
+      "SHA256": "bd09f291e4a073204cf1f1965a2de02bf903cf2b50f2c72a943323292d49d618",
+      "bytes": 1241
+    },
+    {
+      "path": "SS34.snapshot.stderr.log",
+      "SHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "SS34.stderr.log",
+      "SHA256": "243273aa04e84ec38a6848ec71000eecd6095d2642a7cf5846da1115b41a9f18",
+      "bytes": 5975
+    },
+    {
+      "path": "SS34.stdout.log",
+      "SHA256": "c0381d2edf41fa1ad45ba1d971ba33295af462f7879068219b5e2ea09cfb6287",
+      "bytes": 3656
+    },
+    {
+      "path": "SS34.vitest.json",
+      "SHA256": "2bb722da8b80b18ea5c7cb33e741e35a75319242cc20c77dab80f62437b5e8a7",
+      "bytes": 16479
+    }
+  ]
+}

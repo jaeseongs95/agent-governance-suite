@@ -1,0 +1,21 @@
+{
+  "command": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/skill-classification/SS34.delegated.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile.json=PUBLIC_REPRO_OUTPUT/SS34.vitest.json"
+  ],
+  "cwd": "REPOSITORY_ROOT",
+  "startedAt": "2026-10-09T02:58:26.474764+00:00",
+  "finishedAt": "2026-10-09T02:58:27.349103+00:00",
+  "exit": 1,
+  "executionKind": "offline-mock",
+  "API0": {
+    "JEV": 0,
+    "externalVendor": 0,
+    "Claude": 0
+  }
+}

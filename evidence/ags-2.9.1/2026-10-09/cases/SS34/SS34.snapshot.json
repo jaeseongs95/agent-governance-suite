@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-snapshot",
+  "files": [
+    {
+      "path": "mcp-server/src/skill-classification/gateway.ts",
+      "digest": "sha256:80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+      "size": 15017,
+      "lineCount": 156
+    },
+    {
+      "path": "mcp-server/src/skill-classification/validation.ts",
+      "digest": "sha256:70f988d9e5d49f8eaef55ca0ff378b4819798ff8141bd09119691c2cffb2891f",
+      "size": 8449,
+      "lineCount": 107
+    },
+    {
+      "path": "skills/korean-prose-editor/integration/skill-descriptor.json",
+      "digest": "sha256:ae35d2f59c286315e9b6615dffeb19f6e09ace1542f4dd802c8159c92b101bb8",
+      "size": 8696,
+      "lineCount": 134
+    },
+    {
+      "path": "tests/skill-classification/SS34.delegated.test.ts",
+      "digest": "sha256:b9fc7ef88c06de0cef948ac7d47f289ad51fccc1bf37097b81f76ef22614a1c1",
+      "size": 16133,
+      "lineCount": 197
+    },
+    {
+      "path": "tests/skill-classification/evaluation.ts",
+      "digest": "sha256:e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+      "size": 16532,
+      "lineCount": 223
+    }
+  ],
+  "digest": "sha256:b8f3a733ddad1e21d7ef1cd3aa996c701aa70aa5ef0776f12980cc090a4394bb"
+}

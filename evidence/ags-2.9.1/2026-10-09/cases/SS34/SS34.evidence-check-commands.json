@@ -1,0 +1,28 @@
+[
+  {
+    "command": [
+      "node",
+      "skills/test-engineering/scripts/run.mjs",
+      "snapshot",
+      "--root",
+      "REPOSITORY_ROOT",
+      "--files",
+      "SS34.scope-files.json"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "node",
+      "skills/test-engineering/scripts/run.mjs",
+      "check-proof",
+      "--root",
+      "REPOSITORY_ROOT",
+      "--plan",
+      "SS34.plan.json",
+      "--proof",
+      "SS34.proof.json"
+    ],
+    "exit": 1
+  }
+]

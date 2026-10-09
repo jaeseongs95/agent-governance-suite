@@ -1,0 +1,120 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/skill-classification/SS34.delegated.test.ts > SS34 all frozen variants > no-admission-negative
+AssertionError: no-admission-negative: SS34-F1: evaluator has no admission/execution check; this does not demonstrate a workflow admission bypass: expected 'PASS' to deeply equal 'FAIL'
+
+Expected: "FAIL"
+Received: "PASS"
+
+ ❯ compare tests/skill-classification/SS34.delegated.test.ts:62:79
+     60|   rows.push({ id, kind, input, expected, observed, status: matches ? "…
+     61|     executionKind: "offline-mock", actualHostStages: {selected: "NOT_R…
+     62|   expect(observed, `${id}: ${finding ?? "SS34 embedded source expectat…
+       |                                                                               ^
+     63| }
+     64| const stages = (selected: boolean, read: boolean, applied: boolean, ve…
+ ❯ tests/skill-classification/SS34.delegated.test.ts:112:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/skill-classification/SS34.delegated.test.ts > SS34 omitted binding boundaries > rejects wrong-environment verification on the same candidate
+AssertionError: wrong-environment: SS34-F2: verification candidate matches, but environment binding is ignored: expected true to deeply equal false
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ compare tests/skill-classification/SS34.delegated.test.ts:62:79
+     60|   rows.push({ id, kind, input, expected, observed, status: matches ? "…
+     61|     executionKind: "offline-mock", actualHostStages: {selected: "NOT_R…
+     62|   expect(observed, `${id}: ${finding ?? "SS34 embedded source expectat…
+       |                                                                               ^
+     63| }
+     64| const stages = (selected: boolean, read: boolean, applied: boolean, ve…
+ ❯ tests/skill-classification/SS34.delegated.test.ts:125:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/skill-classification/SS34.delegated.test.ts > SS34 omitted binding boundaries > does not credit a mismatching source-file digest
+AssertionError: wrong-source-digest: SS34-F2: digest syntax is checked but source bytes are not linked: expected true to deeply equal false
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ compare tests/skill-classification/SS34.delegated.test.ts:62:79
+     60|   rows.push({ id, kind, input, expected, observed, status: matches ? "…
+     61|     executionKind: "offline-mock", actualHostStages: {selected: "NOT_R…
+     62|   expect(observed, `${id}: ${finding ?? "SS34 embedded source expectat…
+       |                                                                               ^
+     63| }
+     64| const stages = (selected: boolean, read: boolean, applied: boolean, ve…
+ ❯ tests/skill-classification/SS34.delegated.test.ts:130:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/skill-classification/SS34.delegated.test.ts > SS34 omitted binding boundaries > requires a planned verification evidence artifact
+AssertionError: unplanned-missing-evidence: SS34-F2: any nonempty evidenceRef is credited; no plan or artifact binding: expected true to deeply equal false
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ compare tests/skill-classification/SS34.delegated.test.ts:62:79
+     60|   rows.push({ id, kind, input, expected, observed, status: matches ? "…
+     61|     executionKind: "offline-mock", actualHostStages: {selected: "NOT_R…
+     62|   expect(observed, `${id}: ${finding ?? "SS34 embedded source expectat…
+       |                                                                               ^
+     63| }
+     64| const stages = (selected: boolean, read: boolean, applied: boolean, ve…
+ ❯ tests/skill-classification/SS34.delegated.test.ts:135:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/skill-classification/SS34.delegated.test.ts > SS34 omitted binding boundaries > requires obligations bound to the candidate artifact
+AssertionError: wrong-obligation-artifact: SS34-F2: obligation and artifact strings are nonempty, but candidate linkage is unchecked: expected true to deeply equal false
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ compare tests/skill-classification/SS34.delegated.test.ts:62:79
+     60|   rows.push({ id, kind, input, expected, observed, status: matches ? "…
+     61|     executionKind: "offline-mock", actualHostStages: {selected: "NOT_R…
+     62|   expect(observed, `${id}: ${finding ?? "SS34 embedded source expectat…
+       |                                                                               ^
+     63| }
+     64| const stages = (selected: boolean, read: boolean, applied: boolean, ve…
+ ❯ tests/skill-classification/SS34.delegated.test.ts:140:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/skill-classification/SS34.delegated.test.ts > SS34 omitted binding boundaries > derives required K phases rather than trusting a shortened list
+AssertionError: omitted-required-k-phase-list: SS34-F3: caller-controlled requiredPhases can omit a mandatory capability: expected true to deeply equal false
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ compare tests/skill-classification/SS34.delegated.test.ts:62:79
+     60|   rows.push({ id, kind, input, expected, observed, status: matches ? "…
+     61|     executionKind: "offline-mock", actualHostStages: {selected: "NOT_R…
+     62|   expect(observed, `${id}: ${finding ?? "SS34 embedded source expectat…
+       |                                                                               ^
+     63| }
+     64| const stages = (selected: boolean, read: boolean, applied: boolean, ve…
+ ❯ tests/skill-classification/SS34.delegated.test.ts:147:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+

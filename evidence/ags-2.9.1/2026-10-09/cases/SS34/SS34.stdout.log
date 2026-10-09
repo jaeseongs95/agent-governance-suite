@@ -1,0 +1,35 @@
+
+ RUN  v5.0.0 REPOSITORY_ROOT
+
+ ✓ tests/skill-classification/SS34.delegated.test.ts > SS34 binding and evaluator support > keeps frozen SS34 nulls and exact eight variants 3ms
+ ✓ tests/skill-classification/SS34.delegated.test.ts > SS34 binding and evaluator support > documents direct operational evaluator rejection without inventing an oracle 1ms
+ ✓ tests/skill-classification/SS34.delegated.test.ts > SS34 all frozen variants > recommend-only 1ms
+ ✓ tests/skill-classification/SS34.delegated.test.ts > SS34 all frozen variants > selected 0ms
+ ✓ tests/skill-classification/SS34.delegated.test.ts > SS34 all frozen variants > read 1ms
+ ✓ tests/skill-classification/SS34.delegated.test.ts > SS34 all frozen variants > applied 0ms
+ ✓ tests/skill-classification/SS34.delegated.test.ts > SS34 all frozen variants > verified 0ms
+ ✓ tests/skill-classification/SS34.delegated.test.ts > SS34 all frozen variants > wrong-candidate 0ms
+ ✓ tests/skill-classification/SS34.delegated.test.ts > SS34 all frozen variants > missing-k-phase 1ms
+ × tests/skill-classification/SS34.delegated.test.ts > SS34 all frozen variants > no-admission-negative 6ms
+   → no-admission-negative: SS34-F1: evaluator has no admission/execution check; this does not demonstrate a workflow admission bypass: expected 'PASS' to deeply equal 'FAIL'
+ ✓ tests/skill-classification/SS34.delegated.test.ts > SS34 omitted binding boundaries > rejects plain stage declarations 0ms
+ × tests/skill-classification/SS34.delegated.test.ts > SS34 omitted binding boundaries > rejects wrong-environment verification on the same candidate 2ms
+   → wrong-environment: SS34-F2: verification candidate matches, but environment binding is ignored: expected true to deeply equal false
+ × tests/skill-classification/SS34.delegated.test.ts > SS34 omitted binding boundaries > does not credit a mismatching source-file digest 1ms
+   → wrong-source-digest: SS34-F2: digest syntax is checked but source bytes are not linked: expected true to deeply equal false
+ × tests/skill-classification/SS34.delegated.test.ts > SS34 omitted binding boundaries > requires a planned verification evidence artifact 1ms
+   → unplanned-missing-evidence: SS34-F2: any nonempty evidenceRef is credited; no plan or artifact binding: expected true to deeply equal false
+ × tests/skill-classification/SS34.delegated.test.ts > SS34 omitted binding boundaries > requires obligations bound to the candidate artifact 1ms
+   → wrong-obligation-artifact: SS34-F2: obligation and artifact strings are nonempty, but candidate linkage is unchecked: expected true to deeply equal false
+ × tests/skill-classification/SS34.delegated.test.ts > SS34 omitted binding boundaries > derives required K phases rather than trusting a shortened list 1ms
+   → omitted-required-k-phase-list: SS34-F3: caller-controlled requiredPhases can omit a mandatory capability: expected true to deeply equal false
+ ✓ tests/skill-classification/SS34.delegated.test.ts > SS34 omitted binding boundaries > does not credit an explicitly failing verification 0ms
+ ✓ tests/skill-classification/SS34.delegated.test.ts > SS34 omitted binding boundaries > does not credit verification marked NOT_RUN 0ms
+ ✓ tests/skill-classification/SS34.delegated.test.ts > SS34 actual gateway code with synthetic observation; not host-live > keeps provider advice, mocked acceptance, admission and completion separate 197ms
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 13 passed (19)
+   Start at  02:58:26
+   Duration  538ms (tests 53%, transform 26%, import 19%, worker 1%)
+
+JSON report written to PUBLIC_REPRO_OUTPUT/SS34.vitest.json

@@ -1,0 +1,439 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS34",
+  "publicationScope": "evidence/ags-2.9.1/2026-10-09/cases/SS34/",
+  "candidate": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixture": {
+      "repositoryPath": "tests/skill-classification/fixtures.json",
+      "bytes": 142450,
+      "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9"
+    },
+    "oracleDigest": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+  },
+  "originalInputs": [
+    {
+      "artifact": "SS34.fixture.json",
+      "status": "RECOVERED",
+      "bytes": 2517,
+      "sha256": "a544c140804ffcb7bc06971c3b16020cbee64ca8cdf4a1a343e0e3f40b426e1d",
+      "publicFiles": [
+        "SS34.fixture.json"
+      ]
+    },
+    {
+      "artifact": "SS34.observations.json",
+      "status": "RECOVERED",
+      "bytes": 46942,
+      "sha256": "726254312c89127854395671a460a6df2fb45d100b04956a822aea5f46e78b86",
+      "publicFiles": [
+        "SS34.observations.json"
+      ]
+    }
+  ],
+  "originalArtifactInventory": [
+    {
+      "artifact": "SS34.command.json",
+      "status": "RECOVERED",
+      "bytes": 512,
+      "sha256": "71958e94218b2f2f5de28224ebf34c02c1897a4c2f75c8fe29ea52fa9237631b",
+      "publicFiles": [
+        "SS34.command.json"
+      ]
+    },
+    {
+      "artifact": "SS34.delegated.test.ts",
+      "status": "RECOVERED",
+      "bytes": 16133,
+      "sha256": "b9fc7ef88c06de0cef948ac7d47f289ad51fccc1bf37097b81f76ef22614a1c1",
+      "publicFiles": [
+        "reproduce/SS34.delegated.test.ts"
+      ]
+    },
+    {
+      "artifact": "SS34.engineering-test-result.json",
+      "status": "RECOVERED",
+      "bytes": 5692,
+      "sha256": "cdb62b99760a414897ca4bde8a5e6ac0856710eb4b59f44e3a93783af1b0c2c4",
+      "publicFiles": [
+        "SS34.engineering-test-result.json"
+      ]
+    },
+    {
+      "artifact": "SS34.environment.json",
+      "status": "RECOVERED",
+      "bytes": 832,
+      "sha256": "629beb0f50689c59541f72311e575167ca2e78e803c3d32e349fedc82f5a7658",
+      "publicFiles": []
+    },
+    {
+      "artifact": "SS34.evidence-check-commands.json",
+      "status": "RECOVERED",
+      "bytes": 482,
+      "sha256": "bea81dbc56ca4c1cdcc77507b30b3bf14ee0c160dc49dd12955c229fdc4aa0dc",
+      "publicFiles": [
+        "SS34.evidence-check-commands.json"
+      ]
+    },
+    {
+      "artifact": "SS34.fixture.json",
+      "status": "RECOVERED",
+      "bytes": 2517,
+      "sha256": "a544c140804ffcb7bc06971c3b16020cbee64ca8cdf4a1a343e0e3f40b426e1d",
+      "publicFiles": [
+        "SS34.fixture.json"
+      ]
+    },
+    {
+      "artifact": "SS34.manifest.json",
+      "status": "RECOVERED",
+      "bytes": 2642,
+      "sha256": "ca11e66405213f013d0cc1f557a787c540d6e6f8482f5e82dc696fb1ce8fb06b",
+      "publicFiles": [
+        "SS34.original-manifest.json"
+      ]
+    },
+    {
+      "artifact": "SS34.observations.json",
+      "status": "RECOVERED",
+      "bytes": 46942,
+      "sha256": "726254312c89127854395671a460a6df2fb45d100b04956a822aea5f46e78b86",
+      "publicFiles": [
+        "SS34.observations.json"
+      ]
+    },
+    {
+      "artifact": "SS34.plan.json",
+      "status": "RECOVERED",
+      "bytes": 22804,
+      "sha256": "3e8218fd1ce51b6ba1e005fbba3c04a56a1b4b30fc9bc4347ddfbdf47df46c09",
+      "publicFiles": [
+        "SS34.plan.json"
+      ]
+    },
+    {
+      "artifact": "SS34.proof-check.stderr.log",
+      "status": "RECOVERED",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publicFiles": [
+        "SS34.proof-check.stderr.log"
+      ]
+    },
+    {
+      "artifact": "SS34.proof.json",
+      "status": "RECOVERED",
+      "bytes": 13328,
+      "sha256": "e38fe50320928b3dcc079f43d4c9305192d534faf10f7821fa7f4e9257d11c4d",
+      "publicFiles": [
+        "SS34.proof.json"
+      ]
+    },
+    {
+      "artifact": "SS34.result.json",
+      "status": "RECOVERED",
+      "bytes": 21756,
+      "sha256": "34f7dc2a797d71e8f55ab5c814a1866891724e353f480949d8537d0d71216bfd",
+      "publicFiles": [
+        "SS34.result.json"
+      ]
+    },
+    {
+      "artifact": "SS34.snapshot.json",
+      "status": "RECOVERED",
+      "bytes": 1241,
+      "sha256": "bd09f291e4a073204cf1f1965a2de02bf903cf2b50f2c72a943323292d49d618",
+      "publicFiles": [
+        "SS34.snapshot.json"
+      ]
+    },
+    {
+      "artifact": "SS34.snapshot.stderr.log",
+      "status": "RECOVERED",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publicFiles": [
+        "SS34.snapshot.stderr.log"
+      ]
+    },
+    {
+      "artifact": "SS34.stderr.log",
+      "status": "RECOVERED",
+      "bytes": 5975,
+      "sha256": "243273aa04e84ec38a6848ec71000eecd6095d2642a7cf5846da1115b41a9f18",
+      "publicFiles": [
+        "SS34.stderr.log"
+      ]
+    },
+    {
+      "artifact": "SS34.stdout.log",
+      "status": "RECOVERED",
+      "bytes": 3656,
+      "sha256": "c0381d2edf41fa1ad45ba1d971ba33295af462f7879068219b5e2ea09cfb6287",
+      "publicFiles": [
+        "SS34.stdout.log"
+      ]
+    },
+    {
+      "artifact": "SS34.vitest.json",
+      "status": "RECOVERED",
+      "bytes": 16479,
+      "sha256": "2bb722da8b80b18ea5c7cb33e741e35a75319242cc20c77dab80f62437b5e8a7",
+      "publicFiles": [
+        "SS34.vitest.json"
+      ]
+    }
+  ],
+  "missingOriginals": [
+    {
+      "artifact": "TEST-SPEC.seq7.ko.md",
+      "status": "MISSING_ORIGINAL",
+      "note": "Already absent during original run; embedded source only"
+    }
+  ],
+  "patch": {
+    "status": "NOT_PRESENT",
+    "note": "No existing patch found; no patch generated"
+  },
+  "publicationOnly": {
+    "newTests": 0,
+    "JEV": 0,
+    "externalVendor": 0,
+    "Claude": 0,
+    "Codex": 0
+  },
+  "files": [
+    {
+      "path": "SS34.fixture.json",
+      "bytes": 2517,
+      "sha256": "a544c140804ffcb7bc06971c3b16020cbee64ca8cdf4a1a343e0e3f40b426e1d",
+      "origin": {
+        "artifact": "SS34.fixture.json",
+        "status": "RECOVERED",
+        "bytes": 2517,
+        "sha256": "a544c140804ffcb7bc06971c3b16020cbee64ca8cdf4a1a343e0e3f40b426e1d"
+      },
+      "treatment": "EXACT_ORIGINAL_BYTES",
+      "sanitization": []
+    },
+    {
+      "path": "SS34.observations.json",
+      "bytes": 46942,
+      "sha256": "726254312c89127854395671a460a6df2fb45d100b04956a822aea5f46e78b86",
+      "origin": {
+        "artifact": "SS34.observations.json",
+        "status": "RECOVERED",
+        "bytes": 46942,
+        "sha256": "726254312c89127854395671a460a6df2fb45d100b04956a822aea5f46e78b86"
+      },
+      "treatment": "EXACT_ORIGINAL_BYTES",
+      "sanitization": []
+    },
+    {
+      "path": "SS34.stderr.log",
+      "bytes": 5975,
+      "sha256": "243273aa04e84ec38a6848ec71000eecd6095d2642a7cf5846da1115b41a9f18",
+      "origin": {
+        "artifact": "SS34.stderr.log",
+        "status": "RECOVERED",
+        "bytes": 5975,
+        "sha256": "243273aa04e84ec38a6848ec71000eecd6095d2642a7cf5846da1115b41a9f18"
+      },
+      "treatment": "EXACT_ORIGINAL_BYTES",
+      "sanitization": []
+    },
+    {
+      "path": "SS34.snapshot.json",
+      "bytes": 1241,
+      "sha256": "bd09f291e4a073204cf1f1965a2de02bf903cf2b50f2c72a943323292d49d618",
+      "origin": {
+        "artifact": "SS34.snapshot.json",
+        "status": "RECOVERED",
+        "bytes": 1241,
+        "sha256": "bd09f291e4a073204cf1f1965a2de02bf903cf2b50f2c72a943323292d49d618"
+      },
+      "treatment": "EXACT_ORIGINAL_BYTES",
+      "sanitization": []
+    },
+    {
+      "path": "SS34.proof.json",
+      "bytes": 13328,
+      "sha256": "e38fe50320928b3dcc079f43d4c9305192d534faf10f7821fa7f4e9257d11c4d",
+      "origin": {
+        "artifact": "SS34.proof.json",
+        "status": "RECOVERED",
+        "bytes": 13328,
+        "sha256": "e38fe50320928b3dcc079f43d4c9305192d534faf10f7821fa7f4e9257d11c4d"
+      },
+      "treatment": "EXACT_ORIGINAL_BYTES",
+      "sanitization": []
+    },
+    {
+      "path": "SS34.engineering-test-result.json",
+      "bytes": 5692,
+      "sha256": "cdb62b99760a414897ca4bde8a5e6ac0856710eb4b59f44e3a93783af1b0c2c4",
+      "origin": {
+        "artifact": "SS34.engineering-test-result.json",
+        "status": "RECOVERED",
+        "bytes": 5692,
+        "sha256": "cdb62b99760a414897ca4bde8a5e6ac0856710eb4b59f44e3a93783af1b0c2c4"
+      },
+      "treatment": "EXACT_ORIGINAL_BYTES",
+      "sanitization": []
+    },
+    {
+      "path": "SS34.proof-check.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "origin": {
+        "artifact": "SS34.proof-check.stderr.log",
+        "status": "RECOVERED",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "treatment": "EXACT_ORIGINAL_BYTES",
+      "sanitization": []
+    },
+    {
+      "path": "SS34.snapshot.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "origin": {
+        "artifact": "SS34.snapshot.stderr.log",
+        "status": "RECOVERED",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "treatment": "EXACT_ORIGINAL_BYTES",
+      "sanitization": []
+    },
+    {
+      "path": "SS34.command.json",
+      "bytes": 502,
+      "sha256": "dbac8f17dcfa19a15ac4f46cddaad4416d4f4866f86dea5fe637f41fff4a5d31",
+      "origin": {
+        "artifact": "SS34.command.json",
+        "status": "RECOVERED",
+        "bytes": 512,
+        "sha256": "71958e94218b2f2f5de28224ebf34c02c1897a4c2f75c8fe29ea52fa9237631b"
+      },
+      "treatment": "SANITIZED_DERIVATIVE",
+      "sanitization": [
+        "Replace private repository/output absolute path prefixes with documented symbolic locations; status, timings, exit and input/expected/observed values preserved"
+      ]
+    },
+    {
+      "path": "SS34.plan.json",
+      "bytes": 22709,
+      "sha256": "286ab5a13ad6f4f407a335afc91bfff6e7830da8633afaff41e126e413082edf",
+      "origin": {
+        "artifact": "SS34.plan.json",
+        "status": "RECOVERED",
+        "bytes": 22804,
+        "sha256": "3e8218fd1ce51b6ba1e005fbba3c04a56a1b4b30fc9bc4347ddfbdf47df46c09"
+      },
+      "treatment": "SANITIZED_DERIVATIVE",
+      "sanitization": [
+        "Replace private repository/output absolute path prefixes with documented symbolic locations; status, timings, exit and input/expected/observed values preserved"
+      ]
+    },
+    {
+      "path": "SS34.vitest.json",
+      "bytes": 15586,
+      "sha256": "9c63819498536b89eb54a8fd9826dfa3430933d0bc3040dcfe243fcc69b19a75",
+      "origin": {
+        "artifact": "SS34.vitest.json",
+        "status": "RECOVERED",
+        "bytes": 16479,
+        "sha256": "2bb722da8b80b18ea5c7cb33e741e35a75319242cc20c77dab80f62437b5e8a7"
+      },
+      "treatment": "SANITIZED_DERIVATIVE",
+      "sanitization": [
+        "Replace private repository/output absolute path prefixes with documented symbolic locations; status, timings, exit and input/expected/observed values preserved",
+        "Replace shared dependency absolute prefix with REPOSITORY_DEPENDENCIES; preserve stack locations and failed assertion text"
+      ]
+    },
+    {
+      "path": "SS34.stdout.log",
+      "bytes": 3646,
+      "sha256": "23bf70bf6fc71f3d95a2fdc71cbaeaa4ec8ce1865b32e2e99667a1bcca95069b",
+      "origin": {
+        "artifact": "SS34.stdout.log",
+        "status": "RECOVERED",
+        "bytes": 3656,
+        "sha256": "c0381d2edf41fa1ad45ba1d971ba33295af462f7879068219b5e2ea09cfb6287"
+      },
+      "treatment": "SANITIZED_DERIVATIVE",
+      "sanitization": [
+        "Replace private repository/output absolute path prefixes with documented symbolic locations; status, timings, exit and input/expected/observed values preserved"
+      ]
+    },
+    {
+      "path": "SS34.evidence-check-commands.json",
+      "bytes": 472,
+      "sha256": "0d7e1d310619bb5ac3313066e55c9bf6774b6b0a3d4853d15f8804ee2b3c1951",
+      "origin": {
+        "artifact": "SS34.evidence-check-commands.json",
+        "status": "RECOVERED",
+        "bytes": 482,
+        "sha256": "bea81dbc56ca4c1cdcc77507b30b3bf14ee0c160dc49dd12955c229fdc4aa0dc"
+      },
+      "treatment": "SANITIZED_DERIVATIVE",
+      "sanitization": [
+        "Replace private repository/output absolute path prefixes with documented symbolic locations; status, timings, exit and input/expected/observed values preserved"
+      ]
+    },
+    {
+      "path": "reproduce/SS34.delegated.test.ts",
+      "bytes": 16146,
+      "sha256": "7b2027888e0b9a60f1f9dd2e340a13e89d63364968042d758a1cda9e372af233",
+      "origin": {
+        "artifact": "SS34.delegated.test.ts",
+        "status": "RECOVERED",
+        "bytes": 16133,
+        "sha256": "b9fc7ef88c06de0cef948ac7d47f289ad51fccc1bf37097b81f76ef22614a1c1"
+      },
+      "treatment": "SANITIZED_DERIVATIVE",
+      "sanitization": [
+        "Replace private hardcoded output directory with optional SS34_EVIDENCE_OUTPUT or current directory; not executed; public source digest differs from original"
+      ]
+    },
+    {
+      "path": "SS34.original-manifest.json",
+      "bytes": 2642,
+      "sha256": "ca11e66405213f013d0cc1f557a787c540d6e6f8482f5e82dc696fb1ce8fb06b",
+      "origin": {
+        "artifact": "SS34.manifest.json",
+        "status": "RECOVERED",
+        "bytes": 2642,
+        "sha256": "ca11e66405213f013d0cc1f557a787c540d6e6f8482f5e82dc696fb1ce8fb06b"
+      },
+      "treatment": "EXACT_ORIGINAL_BYTES",
+      "sanitization": []
+    },
+    {
+      "path": "SS34.result.json",
+      "bytes": 22426,
+      "sha256": "8cfa5bae7d5f40baa058ac6eb8f2d9dafd25945475dd3105fb144a1b9f39809f",
+      "origin": {
+        "artifact": "SS34.result.json",
+        "status": "RECOVERED",
+        "bytes": 21756,
+        "sha256": "34f7dc2a797d71e8f55ab5c814a1866891724e353f480949d8537d0d71216bfd"
+      },
+      "treatment": "SANITIZED_DERIVATIVE",
+      "sanitization": [
+        "Replace private path prefixes; omit private cwd and redundant working-tree listing; update public artifact references; add packaging-only metadata. Preserve all existing PASS/FAIL/NOT_RUN/null/[]/exit/binding values"
+      ]
+    },
+    {
+      "path": "README.md",
+      "bytes": 5459,
+      "sha256": "153a4a457953e48c8e70f0b34deac879d4154f3f8b620df5939ce933aad81a0c",
+      "origin": null,
+      "treatment": "GENERATED_PUBLICATION_METADATA"
+    }
+  ],
+  "hashPolicy": "Files list covers payloads only; manifest excludes itself and SHA256SUMS. SHA256SUMS covers payloads plus manifest, excluding itself."
+}
