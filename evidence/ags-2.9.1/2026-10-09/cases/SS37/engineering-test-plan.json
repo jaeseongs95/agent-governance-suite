@@ -1,0 +1,466 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS37-c6a8019-offline",
+  "contractDigest": "sha256:fa9bc288b70ef6f374168c350f74b25a7580ad78402a8ba88464c7039634475c",
+  "requirements": [
+    "SS37-metadata-exposure",
+    "SS37-host-completeness",
+    "SS37-dependency-completeness",
+    "SS37-observation-integrity"
+  ],
+  "scopeFiles": [
+    "tests/skill-classification/ss37-delegated.test.ts",
+    "tests/skill-classification/fixtures.json",
+    "mcp-server/src/skill-classification/inventory.ts",
+    "mcp-server/src/skill-classification/gateway.ts",
+    "mcp-server/src/skill-classification/request.ts"
+  ],
+  "runner": "Existing Vitest, targeted SS37 file only; no build",
+  "environment": "Independent Cloud workspace; Linux; Node v24.19.0; frozen detached worktree; synthetic tmp fixtures; no external providers or CLI",
+  "cases": [
+    {
+      "id": "frozen-bindings",
+      "requirementIds": [
+        "SS37-metadata-exposure",
+        "SS37-host-completeness",
+        "SS37-dependency-completeness",
+        "SS37-observation-integrity"
+      ],
+      "scenario": "frozen-bindings",
+      "entryPoint": "loadSkillInventory/createClassificationRequest/projectClassificationRequest/RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Compare SS37 embedded source and frozen metadata-role inputs with loader/gateway observations; missing host exposure remains NEEDS_INPUT. Semantic selection and host stages remain NOTRUN.",
+      "oracle": "SS37 sourceSpec.fields + matching metadataRoleCases; parent oracle is null. No numeric semantic accuracy.",
+      "testFiles": [
+        "tests/skill-classification/ss37-delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Product source edits/mutation forbidden by delegation; independent fixture boundary assertions plus raw observations. No green fix or independent audit claim.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/ss37-delegated.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/isolated-vitest.json"
+      ]
+    },
+    {
+      "id": "new-neutral-id",
+      "requirementIds": [
+        "SS37-metadata-exposure",
+        "SS37-host-completeness",
+        "SS37-dependency-completeness",
+        "SS37-observation-integrity"
+      ],
+      "scenario": "new-neutral-id",
+      "entryPoint": "loadSkillInventory/createClassificationRequest/projectClassificationRequest/RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Compare SS37 embedded source and frozen metadata-role inputs with loader/gateway observations; missing host exposure remains NEEDS_INPUT. Semantic selection and host stages remain NOTRUN.",
+      "oracle": "SS37 sourceSpec.fields + matching metadataRoleCases; parent oracle is null. No numeric semantic accuracy.",
+      "testFiles": [
+        "tests/skill-classification/ss37-delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Product source edits/mutation forbidden by delegation; independent fixture boundary assertions plus raw observations. No green fix or independent audit claim.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/ss37-delegated.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/isolated-vitest.json"
+      ]
+    },
+    {
+      "id": "roles-swapped",
+      "requirementIds": [
+        "SS37-metadata-exposure",
+        "SS37-host-completeness",
+        "SS37-dependency-completeness",
+        "SS37-observation-integrity"
+      ],
+      "scenario": "roles-swapped",
+      "entryPoint": "loadSkillInventory/createClassificationRequest/projectClassificationRequest/RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Compare SS37 embedded source and frozen metadata-role inputs with loader/gateway observations; missing host exposure remains NEEDS_INPUT. Semantic selection and host stages remain NOTRUN.",
+      "oracle": "SS37 sourceSpec.fields + matching metadataRoleCases; parent oracle is null. No numeric semantic accuracy.",
+      "testFiles": [
+        "tests/skill-classification/ss37-delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Product source edits/mutation forbidden by delegation; independent fixture boundary assertions plus raw observations. No green fix or independent audit claim.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/ss37-delegated.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/isolated-vitest.json"
+      ]
+    },
+    {
+      "id": "id-renamed",
+      "requirementIds": [
+        "SS37-metadata-exposure",
+        "SS37-host-completeness",
+        "SS37-dependency-completeness",
+        "SS37-observation-integrity"
+      ],
+      "scenario": "id-renamed",
+      "entryPoint": "loadSkillInventory/createClassificationRequest/projectClassificationRequest/RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Compare SS37 embedded source and frozen metadata-role inputs with loader/gateway observations; missing host exposure remains NEEDS_INPUT. Semantic selection and host stages remain NOTRUN.",
+      "oracle": "SS37 sourceSpec.fields + matching metadataRoleCases; parent oracle is null. No numeric semantic accuracy.",
+      "testFiles": [
+        "tests/skill-classification/ss37-delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Product source edits/mutation forbidden by delegation; independent fixture boundary assertions plus raw observations. No green fix or independent audit claim.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/ss37-delegated.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/isolated-vitest.json"
+      ]
+    },
+    {
+      "id": "dependency-hidden",
+      "requirementIds": [
+        "SS37-metadata-exposure",
+        "SS37-host-completeness",
+        "SS37-dependency-completeness",
+        "SS37-observation-integrity"
+      ],
+      "scenario": "dependency-hidden",
+      "entryPoint": "loadSkillInventory/createClassificationRequest/projectClassificationRequest/RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Compare SS37 embedded source and frozen metadata-role inputs with loader/gateway observations; missing host exposure remains NEEDS_INPUT. Semantic selection and host stages remain NOTRUN.",
+      "oracle": "SS37 sourceSpec.fields + matching metadataRoleCases; parent oracle is null. No numeric semantic accuracy.",
+      "testFiles": [
+        "tests/skill-classification/ss37-delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Product source edits/mutation forbidden by delegation; independent fixture boundary assertions plus raw observations. No green fix or independent audit claim.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/ss37-delegated.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/isolated-vitest.json"
+      ]
+    },
+    {
+      "id": "orchestrator-hidden",
+      "requirementIds": [
+        "SS37-metadata-exposure",
+        "SS37-host-completeness",
+        "SS37-dependency-completeness",
+        "SS37-observation-integrity"
+      ],
+      "scenario": "orchestrator-hidden",
+      "entryPoint": "loadSkillInventory/createClassificationRequest/projectClassificationRequest/RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Compare SS37 embedded source and frozen metadata-role inputs with loader/gateway observations; missing host exposure remains NEEDS_INPUT. Semantic selection and host stages remain NOTRUN.",
+      "oracle": "SS37 sourceSpec.fields + matching metadataRoleCases; parent oracle is null. No numeric semantic accuracy.",
+      "testFiles": [
+        "tests/skill-classification/ss37-delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Product source edits/mutation forbidden by delegation; independent fixture boundary assertions plus raw observations. No green fix or independent audit claim.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/ss37-delegated.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/isolated-vitest.json"
+      ]
+    },
+    {
+      "id": "continuity-hidden",
+      "requirementIds": [
+        "SS37-metadata-exposure",
+        "SS37-host-completeness",
+        "SS37-dependency-completeness",
+        "SS37-observation-integrity"
+      ],
+      "scenario": "continuity-hidden",
+      "entryPoint": "loadSkillInventory/createClassificationRequest/projectClassificationRequest/RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Compare SS37 embedded source and frozen metadata-role inputs with loader/gateway observations; missing host exposure remains NEEDS_INPUT. Semantic selection and host stages remain NOTRUN.",
+      "oracle": "SS37 sourceSpec.fields + matching metadataRoleCases; parent oracle is null. No numeric semantic accuracy.",
+      "testFiles": [
+        "tests/skill-classification/ss37-delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Product source edits/mutation forbidden by delegation; independent fixture boundary assertions plus raw observations. No green fix or independent audit claim.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/ss37-delegated.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/isolated-vitest.json"
+      ]
+    },
+    {
+      "id": "session-board-hidden",
+      "requirementIds": [
+        "SS37-metadata-exposure",
+        "SS37-host-completeness",
+        "SS37-dependency-completeness",
+        "SS37-observation-integrity"
+      ],
+      "scenario": "session-board-hidden",
+      "entryPoint": "loadSkillInventory/createClassificationRequest/projectClassificationRequest/RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Compare SS37 embedded source and frozen metadata-role inputs with loader/gateway observations; missing host exposure remains NEEDS_INPUT. Semantic selection and host stages remain NOTRUN.",
+      "oracle": "SS37 sourceSpec.fields + matching metadataRoleCases; parent oracle is null. No numeric semantic accuracy.",
+      "testFiles": [
+        "tests/skill-classification/ss37-delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Product source edits/mutation forbidden by delegation; independent fixture boundary assertions plus raw observations. No green fix or independent audit claim.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/ss37-delegated.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/isolated-vitest.json"
+      ]
+    },
+    {
+      "id": "metadata-missing",
+      "requirementIds": [
+        "SS37-metadata-exposure",
+        "SS37-host-completeness",
+        "SS37-dependency-completeness",
+        "SS37-observation-integrity"
+      ],
+      "scenario": "metadata-missing",
+      "entryPoint": "loadSkillInventory/createClassificationRequest/projectClassificationRequest/RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Compare SS37 embedded source and frozen metadata-role inputs with loader/gateway observations; missing host exposure remains NEEDS_INPUT. Semantic selection and host stages remain NOTRUN.",
+      "oracle": "SS37 sourceSpec.fields + matching metadataRoleCases; parent oracle is null. No numeric semantic accuracy.",
+      "testFiles": [
+        "tests/skill-classification/ss37-delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Product source edits/mutation forbidden by delegation; independent fixture boundary assertions plus raw observations. No green fix or independent audit claim.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/ss37-delegated.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/isolated-vitest.json"
+      ]
+    },
+    {
+      "id": "boundary-role-refresh",
+      "requirementIds": [
+        "SS37-metadata-exposure",
+        "SS37-host-completeness",
+        "SS37-dependency-completeness",
+        "SS37-observation-integrity"
+      ],
+      "scenario": "boundary-role-refresh",
+      "entryPoint": "loadSkillInventory/createClassificationRequest/projectClassificationRequest/RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Compare SS37 embedded source and frozen metadata-role inputs with loader/gateway observations; missing host exposure remains NEEDS_INPUT. Semantic selection and host stages remain NOTRUN.",
+      "oracle": "SS37 sourceSpec.fields + matching metadataRoleCases; parent oracle is null. No numeric semantic accuracy.",
+      "testFiles": [
+        "tests/skill-classification/ss37-delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Product source edits/mutation forbidden by delegation; independent fixture boundary assertions plus raw observations. No green fix or independent audit claim.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/ss37-delegated.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/isolated-vitest.json"
+      ]
+    },
+    {
+      "id": "boundary-four-local-lists",
+      "requirementIds": [
+        "SS37-metadata-exposure",
+        "SS37-host-completeness",
+        "SS37-dependency-completeness",
+        "SS37-observation-integrity"
+      ],
+      "scenario": "boundary-four-local-lists",
+      "entryPoint": "loadSkillInventory/createClassificationRequest/projectClassificationRequest/RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Compare SS37 embedded source and frozen metadata-role inputs with loader/gateway observations; missing host exposure remains NEEDS_INPUT. Semantic selection and host stages remain NOTRUN.",
+      "oracle": "SS37 sourceSpec.fields + matching metadataRoleCases; parent oracle is null. No numeric semantic accuracy.",
+      "testFiles": [
+        "tests/skill-classification/ss37-delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Product source edits/mutation forbidden by delegation; independent fixture boundary assertions plus raw observations. No green fix or independent audit claim.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/ss37-delegated.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/isolated-vitest.json"
+      ]
+    },
+    {
+      "id": "boundary-host-membership-supply",
+      "requirementIds": [
+        "SS37-metadata-exposure",
+        "SS37-host-completeness",
+        "SS37-dependency-completeness",
+        "SS37-observation-integrity"
+      ],
+      "scenario": "boundary-host-membership-supply",
+      "entryPoint": "loadSkillInventory/createClassificationRequest/projectClassificationRequest/RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Compare SS37 embedded source and frozen metadata-role inputs with loader/gateway observations; missing host exposure remains NEEDS_INPUT. Semantic selection and host stages remain NOTRUN.",
+      "oracle": "SS37 sourceSpec.fields + matching metadataRoleCases; parent oracle is null. No numeric semantic accuracy.",
+      "testFiles": [
+        "tests/skill-classification/ss37-delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Product source edits/mutation forbidden by delegation; independent fixture boundary assertions plus raw observations. No green fix or independent audit claim.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/ss37-delegated.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/isolated-vitest.json"
+      ]
+    },
+    {
+      "id": "boundary-dependency-not-runnable",
+      "requirementIds": [
+        "SS37-metadata-exposure",
+        "SS37-host-completeness",
+        "SS37-dependency-completeness",
+        "SS37-observation-integrity"
+      ],
+      "scenario": "boundary-dependency-not-runnable",
+      "entryPoint": "loadSkillInventory/createClassificationRequest/projectClassificationRequest/RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Compare SS37 embedded source and frozen metadata-role inputs with loader/gateway observations; missing host exposure remains NEEDS_INPUT. Semantic selection and host stages remain NOTRUN.",
+      "oracle": "SS37 sourceSpec.fields + matching metadataRoleCases; parent oracle is null. No numeric semantic accuracy.",
+      "testFiles": [
+        "tests/skill-classification/ss37-delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Product source edits/mutation forbidden by delegation; independent fixture boundary assertions plus raw observations. No green fix or independent audit claim.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/ss37-delegated.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/isolated-vitest.json"
+      ]
+    },
+    {
+      "id": "boundary-source-role-duplication",
+      "requirementIds": [
+        "SS37-metadata-exposure",
+        "SS37-host-completeness",
+        "SS37-dependency-completeness",
+        "SS37-observation-integrity"
+      ],
+      "scenario": "boundary-source-role-duplication",
+      "entryPoint": "loadSkillInventory/createClassificationRequest/projectClassificationRequest/RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Compare SS37 embedded source and frozen metadata-role inputs with loader/gateway observations; missing host exposure remains NEEDS_INPUT. Semantic selection and host stages remain NOTRUN.",
+      "oracle": "SS37 sourceSpec.fields + matching metadataRoleCases; parent oracle is null. No numeric semantic accuracy.",
+      "testFiles": [
+        "tests/skill-classification/ss37-delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Product source edits/mutation forbidden by delegation; independent fixture boundary assertions plus raw observations. No green fix or independent audit claim.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/ss37-delegated.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/isolated-vitest.json"
+      ]
+    },
+    {
+      "id": "boundary-no-auto-select-all-and-null-empty",
+      "requirementIds": [
+        "SS37-metadata-exposure",
+        "SS37-host-completeness",
+        "SS37-dependency-completeness",
+        "SS37-observation-integrity"
+      ],
+      "scenario": "boundary-no-auto-select-all-and-null-empty",
+      "entryPoint": "loadSkillInventory/createClassificationRequest/projectClassificationRequest/RuntimeSkillClassificationGateway",
+      "level": "integration",
+      "expectedBehavior": "Compare SS37 embedded source and frozen metadata-role inputs with loader/gateway observations; missing host exposure remains NEEDS_INPUT. Semantic selection and host stages remain NOTRUN.",
+      "oracle": "SS37 sourceSpec.fields + matching metadataRoleCases; parent oracle is null. No numeric semantic accuracy.",
+      "testFiles": [
+        "tests/skill-classification/ss37-delegated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Product source edits/mutation forbidden by delegation; independent fixture boundary assertions plus raw observations. No green fix or independent audit claim.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/ss37-delegated.test.ts",
+        "--maxWorkers=1",
+        "--reporter=json",
+        "--outputFile=<ARTIFACTS>/isolated-vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "Other SS cases and entire suite",
+    "Past 21-run qualification batch/bootstrap execution",
+    "Product edits, push, PR, release",
+    "External JEV/vendor/Claude calls",
+    "Actual host receipt/skill application, unavailable in this task",
+    "Product mutation and green fixes forbidden; failures retained for owner"
+  ]
+}

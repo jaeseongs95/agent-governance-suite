@@ -1,0 +1,30 @@
+{
+  "name": "supplement-SS37-public-boundaries",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/skill-classification/ss37-delegated.test.ts",
+    "--maxWorkers=1",
+    "--testNamePattern=boundary-registry-neutral-addition|boundary-local-stdio-inventory",
+    "--reporter=json",
+    "--outputFile=<ARTIFACTS>/supplement-vitest.json"
+  ],
+  "cwd": "<REPO>",
+  "environmentOverride": {
+    "names": [
+      "SS37_OBSERVATIONS_FILENAME"
+    ],
+    "values": "REDACTED_FOR_PUBLICATION"
+  },
+  "testSHA": "sha256:db49ef76231d2f51a6c6f08752b163916eb6bfb57bf8da5088193130f40045b9",
+  "exit": 0,
+  "start": "2026-10-09T03:01:24.940686+00:00",
+  "end": "2026-10-09T03:01:27.049836+00:00",
+  "executionKind": "isolated-offline-and-local-source-MCP",
+  "API": {
+    "JEV": 0,
+    "externalVendor": 0,
+    "Claude": 0
+  }
+}

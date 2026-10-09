@@ -1,0 +1,62 @@
+{
+  "numTotalTestSuites": 1,
+  "numPassedTestSuites": 1,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 17,
+  "numPassedTests": 2,
+  "numFailedTests": 0,
+  "numPendingTests": 15,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514885256,
+  "success": true,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [],
+          "fullName": "SS37 boundary-registry-neutral-addition",
+          "status": "passed",
+          "title": "SS37 boundary-registry-neutral-addition",
+          "duration": 28.880047999999988,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "SS37 boundary-local-stdio-inventory",
+          "status": "passed",
+          "title": "SS37 boundary-local-stdio-inventory",
+          "duration": 1171.897293,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514885824,
+      "endTime": 1791514887024.8972,
+      "status": "passed",
+      "message": "",
+      "name": "<REPO>/tests/skill-classification/ss37-delegated.test.ts"
+    }
+  ]
+}

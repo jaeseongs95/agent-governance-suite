@@ -1,0 +1,215 @@
+{
+  "numTotalTestSuites": 1,
+  "numPassedTestSuites": 0,
+  "numFailedTestSuites": 1,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 15,
+  "numPassedTests": 10,
+  "numFailedTests": 5,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514767899,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [],
+          "fullName": "SS37 frozen-bindings",
+          "status": "passed",
+          "title": "SS37 frozen-bindings",
+          "duration": 3.384665000000041,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "SS37 new-neutral-id",
+          "status": "passed",
+          "title": "SS37 new-neutral-id",
+          "duration": 81.15577300000001,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "SS37 roles-swapped",
+          "status": "passed",
+          "title": "SS37 roles-swapped",
+          "duration": 10.411695000000009,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "SS37 id-renamed",
+          "status": "passed",
+          "title": "SS37 id-renamed",
+          "duration": 7.512608,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "SS37 dependency-hidden",
+          "status": "passed",
+          "title": "SS37 dependency-hidden",
+          "duration": 6.628692000000001,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "SS37 orchestrator-hidden",
+          "status": "failed",
+          "title": "SS37 orchestrator-hidden",
+          "duration": 328.65663000000006,
+          "failureMessages": [
+            "AssertionError: Missing orchestrator must be detected at MCP-facing gateway: expected undefined to be 'NEEDS_INPUT' // Object.is equality\n    at <REPO>/tests/skill-classification/ss37-delegated.test.ts:128:91\n    at <REPO>/tests/skill-classification/ss37-delegated.test.ts:42:11\n    at <DEPENDENCIES>/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "SS37 continuity-hidden",
+          "status": "failed",
+          "title": "SS37 continuity-hidden",
+          "duration": 247.03124000000003,
+          "failureMessages": [
+            "AssertionError: Missing context-continuity must be detected at MCP-facing gateway: expected undefined to be 'NEEDS_INPUT' // Object.is equality\n    at <REPO>/tests/skill-classification/ss37-delegated.test.ts:128:91\n    at <REPO>/tests/skill-classification/ss37-delegated.test.ts:42:11\n    at <DEPENDENCIES>/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "SS37 session-board-hidden",
+          "status": "failed",
+          "title": "SS37 session-board-hidden",
+          "duration": 190.35264199999983,
+          "failureMessages": [
+            "AssertionError: Missing session-board must be detected at MCP-facing gateway: expected undefined to be 'NEEDS_INPUT' // Object.is equality\n    at <REPO>/tests/skill-classification/ss37-delegated.test.ts:128:91\n    at <REPO>/tests/skill-classification/ss37-delegated.test.ts:42:11\n    at <DEPENDENCIES>/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "SS37 metadata-missing",
+          "status": "passed",
+          "title": "SS37 metadata-missing",
+          "duration": 3.166973999999982,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "SS37 boundary-role-refresh",
+          "status": "passed",
+          "title": "SS37 boundary-role-refresh",
+          "duration": 2.5661320000001524,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "SS37 boundary-four-local-lists",
+          "status": "passed",
+          "title": "SS37 boundary-four-local-lists",
+          "duration": 50.64028099999996,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "SS37 boundary-host-membership-supply",
+          "status": "failed",
+          "title": "SS37 boundary-host-membership-supply",
+          "duration": 5.521749,
+          "failureMessages": [
+            "AssertionError: Gateway must preserve host-reported membership rather than defaulting true: expected { skillId: 'skill-z17', …(15) } to match object { installed: false, …(1) }\n(14 matching properties omitted from actual)\n    at Proxy.<anonymous> (<DEPENDENCIES>/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/index.OVGXnVRj.js:2040:10)\n    at Proxy.<anonymous> (<DEPENDENCIES>/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/index.OVGXnVRj.js:1934:14)\n    at Proxy.methodWrapper (<DEPENDENCIES>/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)\n    at <REPO>/tests/skill-classification/ss37-delegated.test.ts:166:107\n    at <REPO>/tests/skill-classification/ss37-delegated.test.ts:42:11\n    at <DEPENDENCIES>/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "SS37 boundary-dependency-not-runnable",
+          "status": "passed",
+          "title": "SS37 boundary-dependency-not-runnable",
+          "duration": 6.306520000000091,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "SS37 boundary-source-role-duplication",
+          "status": "failed",
+          "title": "SS37 boundary-source-role-duplication",
+          "duration": 21.706480000000056,
+          "failureMessages": [
+            "AssertionError: Applicable and excluded conditions are identical in canonical metadata: expected [ …(23) ] to deeply equal []\n    at <REPO>/tests/skill-classification/ss37-delegated.test.ts:184:116\n    at <REPO>/tests/skill-classification/ss37-delegated.test.ts:42:11\n    at <DEPENDENCIES>/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [],
+          "fullName": "SS37 boundary-no-auto-select-all-and-null-empty",
+          "status": "passed",
+          "title": "SS37 boundary-no-auto-select-all-and-null-empty",
+          "duration": 7.090102000000115,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514768318,
+      "endTime": 1791514769290.09,
+      "status": "failed",
+      "message": "",
+      "name": "<REPO>/tests/skill-classification/ss37-delegated.test.ts"
+    }
+  ]
+}

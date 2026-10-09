@@ -1,0 +1,22 @@
+{
+  "name": "isolated-SS37-all-variants",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/skill-classification/ss37-delegated.test.ts",
+    "--maxWorkers=1",
+    "--reporter=json",
+    "--outputFile=<ARTIFACTS>/isolated-vitest.json"
+  ],
+  "cwd": "<REPO>",
+  "exit": 1,
+  "start": "2026-10-09T02:59:27.524229+00:00",
+  "end": "2026-10-09T02:59:29.372702+00:00",
+  "executionKind": "isolated-offline",
+  "API": {
+    "JEV": 0,
+    "externalVendor": 0,
+    "Claude": 0
+  }
+}

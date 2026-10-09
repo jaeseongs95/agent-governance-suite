@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "node",
+    "skills/test-engineering/scripts/run.mjs",
+    "check-proof",
+    "--root",
+    "<PROOF_ROOT>",
+    "--plan",
+    "plan.json",
+    "--proof",
+    "proof.json"
+  ],
+  "cwd": "<REPO>",
+  "exit": 1,
+  "executionKind": "local-sensitivity-proof-consistency-only",
+  "API0": true
+}

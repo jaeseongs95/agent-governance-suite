@@ -1,0 +1,8 @@
+{
+  "caseId": "SS37",
+  "status": "NO_ORIGINAL_PATCH",
+  "originalPatchFiles": [],
+  "newPatchCreated": false,
+  "productSourceModifiedInOriginalRun": false,
+  "note": "Existing standalone test snapshots are included. No patch existed in the original evidence; none was synthesized."
+}

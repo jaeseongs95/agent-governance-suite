@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:1aa27c13acaeeef2dda767901f37e0f619b7628fec90836d47af467387a38b2b",
+  "reportDigest": "sha256:2b574a61c4f88413efae1d93b5af017e49c3ea698c9ff09e87c1c6d735397faf",
+  "issues": [
+    "REQUIRED frozen-bindings: NOT_RUN — Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt.",
+    "REQUIRED new-neutral-id: NOT_RUN — Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt.",
+    "REQUIRED roles-swapped: NOT_RUN — Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt.",
+    "REQUIRED id-renamed: NOT_RUN — Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt.",
+    "REQUIRED dependency-hidden: NOT_RUN — Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt.",
+    "REQUIRED orchestrator-hidden: NOT_RUN — Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt.",
+    "REQUIRED continuity-hidden: NOT_RUN — Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt.",
+    "REQUIRED session-board-hidden: NOT_RUN — Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt.",
+    "REQUIRED metadata-missing: NOT_RUN — Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt.",
+    "REQUIRED boundary-role-refresh: NOT_RUN — Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt.",
+    "REQUIRED boundary-four-local-lists: NOT_RUN — Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt.",
+    "REQUIRED boundary-host-membership-supply: NOT_RUN — Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt.",
+    "REQUIRED boundary-dependency-not-runnable: NOT_RUN — Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt.",
+    "REQUIRED boundary-source-role-duplication: NOT_RUN — Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt.",
+    "REQUIRED boundary-no-auto-select-all-and-null-empty: NOT_RUN — Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

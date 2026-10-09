@@ -1,0 +1,431 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS37",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cases/SS37/",
+  "artifactPolicy": "Existing artifacts only; sanitized derivatives explicitly marked; no new tests or outcome promotion",
+  "productCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "productTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixture": {
+    "path": "tests/skill-classification/fixtures.json",
+    "originalBytes": 142450,
+    "originalSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "retrieval": "Fixed product commit, already public in repository; full multi-case corpus is not duplicated here"
+  },
+  "frozenOracleDigest": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "input": {
+    "originalPromptUTF8Bytes": 58,
+    "originalPromptUTF8SHA256": "f24bf139711e4d311ddcf82528b97be91e9fd6349a4319c915a8cb036bc2075e",
+    "publicPromptUTF8Bytes": 58,
+    "publicPromptUTF8SHA256": "f24bf139711e4d311ddcf82528b97be91e9fd6349a4319c915a8cb036bc2075e",
+    "source": "Existing frozen SS37 originalPrompt; exact prompt preserved",
+    "modelWire": "NOT_RUN_NO_MODEL_WIRE"
+  },
+  "historicalVerdict": "FAIL",
+  "hostStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "agentSelectedSkillIds": null,
+    "hostReceipt": null
+  },
+  "originalRecovery": {
+    "status": "RECOVERED",
+    "missingOriginals": [],
+    "patch": "NO_ORIGINAL_PATCH",
+    "notCreatedBecauseNotRun": [
+      "model wire",
+      "real host receipt",
+      "green fixed candidate"
+    ]
+  },
+  "publicationNewTests": 0,
+  "publicationModelApiCalls": {
+    "JEV": 0,
+    "vendor": 0,
+    "Claude": 0,
+    "Codex": 0
+  },
+  "originalModelApiCalls": {
+    "JEV": 0,
+    "vendor": 0,
+    "Claude": 0
+  },
+  "hashPolicy": {
+    "manifestExcludes": [
+      "manifest.json",
+      "SHA256SUMS"
+    ],
+    "SHA256SUMSIncludes": "all payload files and manifest.json, excluding SHA256SUMS",
+    "originalAndPublicHashes": "SHA256 of actual bytes; existing semantic/binding digests are separately preserved"
+  },
+  "intentionalOmissions": [
+    "Original archive, proof-tree source copies, packaging scripts, local integrity report, and redundant report text are not published",
+    "Skipped assertion details omitted from runner reports",
+    "Private local paths and environment override values redacted"
+  ],
+  "payloadFileCount": 28,
+  "payloadTotalBytes": 4678084,
+  "files": [
+    {
+      "path": "PATCH_STATUS.json",
+      "publicBytes": 286,
+      "publicSHA256": "75bdfda8d8dfd29d1a5040db7bf22eef3c00ec325ec67e56107c0c18eb957379",
+      "artifactForm": "publication-metadata",
+      "originalArtifact": null,
+      "originalBytes": null,
+      "originalSHA256": null,
+      "transformations": [
+        "Publication inventory statement only"
+      ]
+    },
+    {
+      "path": "README.md",
+      "publicBytes": 5484,
+      "publicSHA256": "e38553ba94f13d87325c2dc08f543b605777873429e824ebadde1294b1ad5617",
+      "artifactForm": "publication-metadata",
+      "originalArtifact": null,
+      "originalBytes": null,
+      "originalSHA256": null,
+      "transformations": [
+        "Publication summary and unexecuted reproduction guidance derived from existing artifacts"
+      ]
+    },
+    {
+      "path": "SS37.observations.json",
+      "publicBytes": 3314245,
+      "publicSHA256": "4a31e07b65b25608c733042196339333bb42471292cda656b4f225536817d76a",
+      "artifactForm": "sanitized-existing-artifact",
+      "originalArtifact": "SS37.observations.json",
+      "originalBytes": 3314244,
+      "originalSHA256": "7a125ed8497de3428ac5bab4560328e37e44323daac74d4e780f3a7c539b8547",
+      "transformations": [
+        "Local absolute paths replaced by scope placeholders",
+        "Environment override values removed, retaining names",
+        "Existing digest fields refer to historical original bytes and were not recomputed"
+      ]
+    },
+    {
+      "path": "SS37.result.json",
+      "publicBytes": 929465,
+      "publicSHA256": "8f74cd0575cade70be9dd55be1c7552ff421b5b37134fb2a8daceae32161a856",
+      "artifactForm": "sanitized-existing-artifact",
+      "originalArtifact": "SS37.result.json",
+      "originalBytes": 929077,
+      "originalSHA256": "f4050302298938bf2861b1e6d08758a7cd0aba33c4c1afd6cad72b28431577c5",
+      "transformations": [
+        "Local absolute paths replaced by scope placeholders",
+        "Environment override values removed, retaining names",
+        "Existing digest fields refer to historical original bytes and were not recomputed",
+        "Publication-only provenance added, without updating historic outcomes"
+      ]
+    },
+    {
+      "path": "SS37.source.json",
+      "publicBytes": 6209,
+      "publicSHA256": "665d32c1332d896ea3ed0a7d6efb432bec47a0f810d5b4252035b9ab65bafb9f",
+      "artifactForm": "byte-identical-public-synthetic-source",
+      "originalArtifact": "SS37.source.json",
+      "originalBytes": 6209,
+      "originalSHA256": "665d32c1332d896ea3ed0a7d6efb432bec47a0f810d5b4252035b9ab65bafb9f",
+      "transformations": []
+    },
+    {
+      "path": "SS37.supplement.observations.json",
+      "publicBytes": 322516,
+      "publicSHA256": "c779bb0d632e32804b102222f288702f35101089a2e92d17c8a40fcf9fe4d057",
+      "artifactForm": "sanitized-existing-artifact",
+      "originalArtifact": "SS37.supplement.observations.json",
+      "originalBytes": 322563,
+      "originalSHA256": "6805aa394f4d883210afa364ac1b043b35d154c08b31db1fd76b9c1f03c64b9f",
+      "transformations": [
+        "Local absolute paths replaced by scope placeholders",
+        "Environment override values removed, retaining names",
+        "Existing digest fields refer to historical original bytes and were not recomputed"
+      ]
+    },
+    {
+      "path": "engineering-plan-result.json",
+      "publicBytes": 644,
+      "publicSHA256": "9f682efbc5651020a5add99f1cb2222cade4c0d31d3a6dca27b2cb536da798a1",
+      "artifactForm": "sanitized-existing-artifact",
+      "originalArtifact": "engineering-plan-result.json",
+      "originalBytes": 643,
+      "originalSHA256": "0ff5f1455f2fb0d3dba0bf6595038b04bb533605cab1438e1b9771d1162261e9",
+      "transformations": [
+        "Local absolute paths replaced by scope placeholders",
+        "Environment override values removed, retaining names",
+        "Existing digest fields refer to historical original bytes and were not recomputed"
+      ]
+    },
+    {
+      "path": "engineering-test-plan.json",
+      "publicBytes": 22033,
+      "publicSHA256": "ce50ebeb890e5d85e75b6076733630c3cd182efd300eaf69fb5c55528900ab13",
+      "artifactForm": "sanitized-existing-artifact",
+      "originalArtifact": "engineering-test-plan.json",
+      "originalBytes": 22228,
+      "originalSHA256": "e239bf81943db05f8afdd14272d2697d98f38af423e391a2c3b7895c3235f47a",
+      "transformations": [
+        "Local absolute paths replaced by scope placeholders",
+        "Environment override values removed, retaining names",
+        "Existing digest fields refer to historical original bytes and were not recomputed"
+      ]
+    },
+    {
+      "path": "engineering-test-plan.supplement.json",
+      "publicBytes": 4152,
+      "publicSHA256": "0ea4af5f8c73b1797d06bf96808223d127ff48af3750ecf86fda7dfa551f3e22",
+      "artifactForm": "sanitized-existing-artifact",
+      "originalArtifact": "engineering-test-plan.supplement.json",
+      "originalBytes": 4178,
+      "originalSHA256": "ee9497d7ca20f075692d8e391881a19d264540a7929778bfd0909e29ec57d948",
+      "transformations": [
+        "Local absolute paths replaced by scope placeholders",
+        "Environment override values removed, retaining names",
+        "Existing digest fields refer to historical original bytes and were not recomputed"
+      ]
+    },
+    {
+      "path": "engineering-test-proof.json",
+      "publicBytes": 11356,
+      "publicSHA256": "868108f75b2fbf177b7f3c08c91d6fd3da550517e40b8bf967af789c14edfabe",
+      "artifactForm": "sanitized-existing-artifact",
+      "originalArtifact": "engineering-test-proof.json",
+      "originalBytes": 11355,
+      "originalSHA256": "3cd8492a564570c64f13b04a2f9ebbd0692a0dfc8f32168cdb96cfbeda8548e1",
+      "transformations": [
+        "Local absolute paths replaced by scope placeholders",
+        "Environment override values removed, retaining names",
+        "Existing digest fields refer to historical original bytes and were not recomputed"
+      ]
+    },
+    {
+      "path": "engineering-test-result.json",
+      "publicBytes": 4870,
+      "publicSHA256": "8fda868c0f58f8020ec79aad6813d7316fe9c76f7ab088e2ffddde6f65fda912",
+      "artifactForm": "sanitized-existing-artifact",
+      "originalArtifact": "engineering-test-result.json",
+      "originalBytes": 4870,
+      "originalSHA256": "8fda868c0f58f8020ec79aad6813d7316fe9c76f7ab088e2ffddde6f65fda912",
+      "transformations": [
+        "Local absolute paths replaced by scope placeholders",
+        "Environment override values removed, retaining names",
+        "Existing digest fields refer to historical original bytes and were not recomputed"
+      ]
+    },
+    {
+      "path": "existing-SS37-regression.command.json",
+      "publicBytes": 724,
+      "publicSHA256": "c304dd5cfe24e6680172b23eaafcebfbdd99b7262385e057d5c8527452c299ef",
+      "artifactForm": "sanitized-existing-artifact",
+      "originalArtifact": "existing-SS37-regression.command.json",
+      "originalBytes": 750,
+      "originalSHA256": "da6b21053b456e5d0eb30828f7eae8314938fdf49af57b2b91f2fe43bd5b8e58",
+      "transformations": [
+        "Local absolute paths replaced by scope placeholders",
+        "Environment override values removed, retaining names",
+        "Existing digest fields refer to historical original bytes and were not recomputed"
+      ]
+    },
+    {
+      "path": "existing-SS37-regression.stderr.log",
+      "publicBytes": 0,
+      "publicSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "artifactForm": "byte-identical-empty-existing-log",
+      "originalArtifact": "existing-SS37-regression.stderr.log",
+      "originalBytes": 0,
+      "originalSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformations": []
+    },
+    {
+      "path": "existing-SS37-regression.stdout.log",
+      "publicBytes": 56,
+      "publicSHA256": "39df3a5a2304f231edafc7388bf1215debab659bd541df84be6a7a5a08db387c",
+      "artifactForm": "sanitized-existing-log",
+      "originalArtifact": "existing-SS37-regression.stdout.log",
+      "originalBytes": 69,
+      "originalSHA256": "438899adba58efd23b499c36c64a15e9d4376bcaa46bcfa19c9f8c7ab940a49d",
+      "transformations": [
+        "Local paths replaced; no log statements or outcomes added"
+      ]
+    },
+    {
+      "path": "existing-vitest.json",
+      "publicBytes": 3326,
+      "publicSHA256": "03439b5e605d212389ada3d5958422d47f6bb5c4d170125cb6aed4558a081a20",
+      "artifactForm": "sanitized-existing-artifact",
+      "originalArtifact": "existing-vitest.json",
+      "originalBytes": 8490,
+      "originalSHA256": "a4d21951c5a22d93f2730eea738c62e9d214cb4c9566999ea0b9b7c6f1798f04",
+      "transformations": [
+        "Local absolute paths replaced by scope placeholders",
+        "Environment override values removed, retaining names",
+        "Existing digest fields refer to historical original bytes and were not recomputed",
+        "Skipped assertion details omitted; original pass/fail/skipped totals retained"
+      ]
+    },
+    {
+      "path": "input/original-prompt.utf8.txt",
+      "publicBytes": 58,
+      "publicSHA256": "f24bf139711e4d311ddcf82528b97be91e9fd6349a4319c915a8cb036bc2075e",
+      "artifactForm": "exact-existing-prompt-string",
+      "originalArtifact": "fixtures.json#/cases/caseId=SS37/originalPrompt",
+      "originalBytes": 58,
+      "originalSHA256": "f24bf139711e4d311ddcf82528b97be91e9fd6349a4319c915a8cb036bc2075e",
+      "transformations": [
+        "UTF-8 string extracted for packaging with no trailing newline; not a model wire capture"
+      ]
+    },
+    {
+      "path": "isolated-SS37-all-variants.command.json",
+      "publicBytes": 509,
+      "publicSHA256": "c59ca147e264ce00449c673cd7ff5f7a9d4c56ac4e97110aa583ed0ec2a7a423",
+      "artifactForm": "sanitized-existing-artifact",
+      "originalArtifact": "isolated-SS37-all-variants.command.json",
+      "originalBytes": 535,
+      "originalSHA256": "2781581724c3c4b09f5b17a58cc04d0afc0d92c47aef04f81fd01483f8c1f41b",
+      "transformations": [
+        "Local absolute paths replaced by scope placeholders",
+        "Environment override values removed, retaining names",
+        "Existing digest fields refer to historical original bytes and were not recomputed"
+      ]
+    },
+    {
+      "path": "isolated-SS37-all-variants.stderr.log",
+      "publicBytes": 0,
+      "publicSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "artifactForm": "byte-identical-empty-existing-log",
+      "originalArtifact": "isolated-SS37-all-variants.stderr.log",
+      "originalBytes": 0,
+      "originalSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformations": []
+    },
+    {
+      "path": "isolated-SS37-all-variants.stdout.log",
+      "publicBytes": 56,
+      "publicSHA256": "950e73e235185899a7db23b798089a07e9b50f6bc22db2ae73a006cf2b9434a6",
+      "artifactForm": "sanitized-existing-log",
+      "originalArtifact": "isolated-SS37-all-variants.stdout.log",
+      "originalBytes": 69,
+      "originalSHA256": "3c520d519a2933ab1f6e05282d3aa8b09dfee41ea9a068fab57a6ebc11c1ad3d",
+      "transformations": [
+        "Local paths replaced; no log statements or outcomes added"
+      ]
+    },
+    {
+      "path": "isolated-vitest.json",
+      "publicBytes": 8790,
+      "publicSHA256": "1fbc800b51d30d58e5935ae91f82cc574ad0c2daba52c7ef6181ec6ea7255782",
+      "artifactForm": "sanitized-existing-artifact",
+      "originalArtifact": "isolated-vitest.json",
+      "originalBytes": 7037,
+      "originalSHA256": "5a2c014a73d586037546c2e90584f036bf43ad6abe498fc075dba66375fdd44f",
+      "transformations": [
+        "Local absolute paths replaced by scope placeholders",
+        "Environment override values removed, retaining names",
+        "Existing digest fields refer to historical original bytes and were not recomputed",
+        "Skipped assertion details omitted; original pass/fail/skipped totals retained"
+      ]
+    },
+    {
+      "path": "proof.command.json",
+      "publicBytes": 306,
+      "publicSHA256": "ef2428e284a6415b1ac61328a3f76b6529c65924a39f3c7c1147305dc227b5e5",
+      "artifactForm": "sanitized-existing-artifact",
+      "originalArtifact": "proof.command.json",
+      "originalBytes": 342,
+      "originalSHA256": "095394df6258039c7d11557ddbe021571d911cb7bc4cbefd463399a6fed75e0b",
+      "transformations": [
+        "Local absolute paths replaced by scope placeholders",
+        "Environment override values removed, retaining names",
+        "Existing digest fields refer to historical original bytes and were not recomputed"
+      ]
+    },
+    {
+      "path": "proof.stderr.log",
+      "publicBytes": 0,
+      "publicSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "artifactForm": "byte-identical-empty-existing-log",
+      "originalArtifact": "proof.stderr.log",
+      "originalBytes": 0,
+      "originalSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformations": []
+    },
+    {
+      "path": "repro/SS37.test.ts",
+      "publicBytes": 22094,
+      "publicSHA256": "a3b93c1dbe78d571c27a94485ee07a8df94228c882033c90cc1cc716e3073e1b",
+      "artifactForm": "sanitized-portable-existing-test",
+      "originalArtifact": "SS37.test.ts",
+      "originalBytes": 22086,
+      "originalSHA256": "db49ef76231d2f51a6c6f08752b163916eb6bfb57bf8da5088193130f40045b9",
+      "transformations": [
+        "Only the hard-coded private output-directory literal is made repository-relative; test assertions unchanged; reproduction copy NOT_RUN"
+      ]
+    },
+    {
+      "path": "repro/SS37.test.v1.ts",
+      "publicBytes": 18435,
+      "publicSHA256": "3d8674a948e7efb9e52fddbe8b9d60a81f4548833e17b13ea3798f2d81386151",
+      "artifactForm": "sanitized-portable-existing-test",
+      "originalArtifact": "SS37.test.v1.ts",
+      "originalBytes": 18427,
+      "originalSHA256": "53e2d1ed81ef8e27d690c0c0686a32dac450e0ac7c2311a986fb5ca8ee1dafec",
+      "transformations": [
+        "Only the hard-coded private output-directory literal is made repository-relative; test assertions unchanged; reproduction copy NOT_RUN"
+      ]
+    },
+    {
+      "path": "supplement-vitest.json",
+      "publicBytes": 1564,
+      "publicSHA256": "f66f767962e4c647ba658b62fc73fc8e153e00566bce3c01b82087fc569c53ad",
+      "artifactForm": "sanitized-existing-artifact",
+      "originalArtifact": "supplement-vitest.json",
+      "originalBytes": 3760,
+      "originalSHA256": "20e71c89873b82a531b1c7c680664f91e8eff07bfc68406e438cb4931cd1e0e9",
+      "transformations": [
+        "Local absolute paths replaced by scope placeholders",
+        "Environment override values removed, retaining names",
+        "Existing digest fields refer to historical original bytes and were not recomputed",
+        "Skipped assertion details omitted; original pass/fail/skipped totals retained"
+      ]
+    },
+    {
+      "path": "supplement.command.json",
+      "publicBytes": 848,
+      "publicSHA256": "f28f9f9f1f0c20cce21e620178e8a4a7d196e912bfdfd033a3f6bc88da0f0509",
+      "artifactForm": "sanitized-existing-artifact",
+      "originalArtifact": "supplement.command.json",
+      "originalBytes": 846,
+      "originalSHA256": "689bb38260ac09edc6c6ef7c9068f42ff9f0c5398c95c06e53595828a2a617e8",
+      "transformations": [
+        "Local absolute paths replaced by scope placeholders",
+        "Environment override values removed, retaining names",
+        "Existing digest fields refer to historical original bytes and were not recomputed"
+      ]
+    },
+    {
+      "path": "supplement.stderr.log",
+      "publicBytes": 0,
+      "publicSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "artifactForm": "byte-identical-empty-existing-log",
+      "originalArtifact": "supplement.stderr.log",
+      "originalBytes": 0,
+      "originalSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformations": []
+    },
+    {
+      "path": "supplement.stdout.log",
+      "publicBytes": 58,
+      "publicSHA256": "4e2bbfe800cc55c4acec27b6e8ba2c68b1e104cdf43703e49039fe115396f99e",
+      "artifactForm": "sanitized-existing-log",
+      "originalArtifact": "supplement.stdout.log",
+      "originalBytes": 71,
+      "originalSHA256": "b48567e78e76a6f1dae35998eb818f0a03df516638785bde0db67eebb01119b8",
+      "transformations": [
+        "Local paths replaced; no log statements or outcomes added"
+      ]
+    }
+  ]
+}

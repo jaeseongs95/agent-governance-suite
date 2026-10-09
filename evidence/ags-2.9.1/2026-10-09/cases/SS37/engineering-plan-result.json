@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:f1dd7ba7eb7069949bd29b96b88c1c5682cb91536c67249cf8e37e3d2ad5826a",
+  "caseIds": [
+    "frozen-bindings",
+    "new-neutral-id",
+    "roles-swapped",
+    "id-renamed",
+    "dependency-hidden",
+    "orchestrator-hidden",
+    "continuity-hidden",
+    "session-board-hidden",
+    "metadata-missing",
+    "boundary-role-refresh",
+    "boundary-four-local-lists",
+    "boundary-host-membership-supply",
+    "boundary-dependency-not-runnable",
+    "boundary-source-role-duplication",
+    "boundary-no-auto-select-all-and-null-empty"
+  ]
+}

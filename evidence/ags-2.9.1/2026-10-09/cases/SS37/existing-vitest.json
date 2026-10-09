@@ -1,0 +1,101 @@
+{
+  "numTotalTestSuites": 6,
+  "numPassedTestSuites": 6,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 21,
+  "numPassedTests": 4,
+  "numFailedTests": 0,
+  "numPendingTests": 17,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514767899,
+  "success": true,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "classification inventory source authority (SS26/SS37)"
+          ],
+          "fullName": "classification inventory source authority (SS26/SS37) reads every actual directory including infrastructure and all capability stages",
+          "status": "passed",
+          "title": "reads every actual directory including infrastructure and all capability stages",
+          "duration": 145.80885300000003,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "classification inventory source authority (SS26/SS37)"
+          ],
+          "fullName": "classification inventory source authority (SS26/SS37) discovers a neutral new ID, re-reads roles and honors actual host membership",
+          "status": "passed",
+          "title": "discovers a neutral new ID, re-reads roles and honors actual host membership",
+          "duration": 10.703193999999996,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "classification inventory source authority (SS26/SS37)"
+          ],
+          "fullName": "classification inventory source authority (SS26/SS37) reports missing metadata, description, dependencies and invalid source ranges",
+          "status": "passed",
+          "title": "reports missing metadata, description, dependencies and invalid source ranges",
+          "duration": 8.617575999999985,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514768416,
+      "endTime": 1791514768580.6177,
+      "status": "passed",
+      "message": "",
+      "name": "<REPO>/tests/mcp/skill-classification-inventory.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "pre-live frozen specification mapping"
+          ],
+          "fullName": "pre-live frozen specification mapping maps neutral IDs and role-swapped expected results without product fixed IDs",
+          "status": "passed",
+          "title": "maps neutral IDs and role-swapped expected results without product fixed IDs",
+          "duration": 2.070012999999989,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514768171,
+      "endTime": 1791514768173.07,
+      "status": "passed",
+      "message": "",
+      "name": "<REPO>/tests/skill-classification/evaluation.test.ts"
+    }
+  ]
+}

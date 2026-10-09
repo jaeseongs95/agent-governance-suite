@@ -1,0 +1,269 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-proof",
+  "planDigest": "sha256:f1dd7ba7eb7069949bd29b96b88c1c5682cb91536c67249cf8e37e3d2ad5826a",
+  "candidate": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-snapshot",
+    "files": [
+      {
+        "path": "mcp-server/src/skill-classification/gateway.ts",
+        "digest": "sha256:80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+        "size": 15017,
+        "lineCount": 156
+      },
+      {
+        "path": "mcp-server/src/skill-classification/inventory.ts",
+        "digest": "sha256:8c7ee54546f17fb1e63368fbfb72668a3c7136570a545ad5f0494f076c91727c",
+        "size": 20714,
+        "lineCount": 259
+      },
+      {
+        "path": "mcp-server/src/skill-classification/request.ts",
+        "digest": "sha256:1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f",
+        "size": 7093,
+        "lineCount": 99
+      },
+      {
+        "path": "tests/skill-classification/fixtures.json",
+        "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "size": 142450,
+        "lineCount": 2912
+      },
+      {
+        "path": "tests/skill-classification/ss37-delegated.test.ts",
+        "digest": "sha256:db49ef76231d2f51a6c6f08752b163916eb6bfb57bf8da5088193130f40045b9",
+        "size": 22086,
+        "lineCount": 230
+      }
+    ],
+    "digest": "sha256:1aa27c13acaeeef2dda767901f37e0f619b7628fec90836d47af467387a38b2b"
+  },
+  "proofs": [
+    {
+      "caseId": "frozen-bindings",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt."
+    },
+    {
+      "caseId": "new-neutral-id",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt."
+    },
+    {
+      "caseId": "roles-swapped",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt."
+    },
+    {
+      "caseId": "id-renamed",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt."
+    },
+    {
+      "caseId": "dependency-hidden",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt."
+    },
+    {
+      "caseId": "orchestrator-hidden",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt."
+    },
+    {
+      "caseId": "continuity-hidden",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt."
+    },
+    {
+      "caseId": "session-board-hidden",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt."
+    },
+    {
+      "caseId": "metadata-missing",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt."
+    },
+    {
+      "caseId": "boundary-role-refresh",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt."
+    },
+    {
+      "caseId": "boundary-four-local-lists",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt."
+    },
+    {
+      "caseId": "boundary-host-membership-supply",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt."
+    },
+    {
+      "caseId": "boundary-dependency-not-runnable",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt."
+    },
+    {
+      "caseId": "boundary-source-role-duplication",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt."
+    },
+    {
+      "caseId": "boundary-no-auto-select-all-and-null-empty",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Sensitivity red/green NOTRUN: delegation forbids product edits/mutation; no corrected green candidate is available. Actual offline observations and failing assertions are in separate Vitest evidence. No host selection receipt."
+    }
+  ]
+}
