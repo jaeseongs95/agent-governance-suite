@@ -1,0 +1,26 @@
+{
+  "caseId": "SS08",
+  "status": "PARTIAL_ORIGINAL_RECOVERY",
+  "recovered": "All packaged original result/commands/combined logs/input and final test source exist",
+  "MISSING_ORIGINAL": [
+    "stdout captured separately from stderr",
+    "stderr captured separately from stdout",
+    "exact executed v1 test source snapshot",
+    "external sourceSpec.path TEST-SPEC.seq7.ko.md"
+  ],
+  "notMissingButAbsent": {
+    "productPatch": "NONE; no product source changed",
+    "patchFile": "NONE; no original patch file exists"
+  },
+  "intentionallyNotPublished": [
+    "private conversation sourceThreadId",
+    "local absolute paths",
+    "redundant v1 full probe JSON",
+    "original environment-probe source tied to private filesystem; existing output and command retained",
+    "original archive with private paths",
+    "original SHA256SUMS: originals recorded individually in public manifest"
+  ],
+  "fabricatedLogsResultsPatches": false,
+  "newTests": 0,
+  "newModelAPICalls": 0
+}

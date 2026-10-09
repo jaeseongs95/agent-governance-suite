@@ -1,0 +1,47 @@
+Already up to date
+Done in 412ms using pnpm v11.19.0
+
+   ╭──────────────────────────────────────────╮
+   │                                          │
+   │   Update available! 11.19.0 → 12.10.1.   │
+   │   Changelog: https://pnpm.io/v/12.10.1   │
+   │     To update, run: pnpm add -g pnpm     │
+   │                                          │
+   ╰──────────────────────────────────────────╯
+
+
+ RUN  v5.0.0 <REPO>
+
+ ↓ tests/mcp/skill-classification-validation.test.ts > classification response public validation (SS21/27/29/30) > rejects empty or omitted judgments in error-free SUCCESS responses
+ ↓ tests/mcp/skill-classification-validation.test.ts > classification response public validation (SS21/27/29/30) > rejects empty or omitted judgments in error-free PARTIAL responses
+ ↓ tests/mcp/skill-classification-validation.test.ts > classification response public validation (SS21/27/29/30) > rejects empty or omitted judgments in error-free UNCERTAIN responses
+ ↓ tests/mcp/skill-classification-validation.test.ts > classification response public validation (SS21/27/29/30) > allows complete all-uncertain judgments with reasons but rejects fabricated UNCERTAIN status
+ ↓ tests/mcp/skill-classification-validation.test.ts > classification response public validation (SS21/27/29/30) > preserves global UNAVAILABLE failure without inventing judgments for 24 unobserved candidates
+ ↓ tests/mcp/skill-classification-validation.test.ts > classification response public validation (SS21/27/29/30) > preserves global INVALID failure without inventing judgments for 24 unobserved candidates
+ ↓ tests/mcp/skill-classification-validation.test.ts > classification response public validation (SS21/27/29/30) > preserves global UNCERTAIN failure without inventing judgments for 24 unobserved candidates
+ ↓ tests/mcp/skill-classification-validation.test.ts > classification response public validation (SS21/27/29/30) > validates complete multi-candidate judgments with exact digest bindings
+ ↓ tests/mcp/skill-classification-validation.test.ts > classification response public validation (SS21/27/29/30) > rejects unknown, duplicate and invalid output without creating negative judgments
+ ↓ tests/mcp/skill-classification-validation.test.ts > classification response public validation (SS21/27/29/30) > preserves optional uncertainty as PARTIAL and forbids SUCCESS disguising it
+ ↓ tests/mcp/skill-classification-validation.test.ts > AGENT selection public validation (SS08/15/18/23/34/38) > cannot disguise an unknown-dispatch UNCERTAIN failure as completed SELECTED
+ ↓ tests/mcp/skill-classification-validation.test.ts > AGENT selection public validation (SS08/15/18/23/34/38) > cannot mark UNAVAILABLE classification as completed SELECTED
+ ↓ tests/mcp/skill-classification-validation.test.ts > AGENT selection public validation (SS08/15/18/23/34/38) > cannot mark INVALID classification as completed SELECTED
+ ↓ tests/mcp/skill-classification-validation.test.ts > AGENT selection public validation (SS08/15/18/23/34/38) > accepts independently reasoned final sets without copying provider advice
+ ↓ tests/mcp/skill-classification-validation.test.ts > AGENT selection public validation (SS08/15/18/23/34/38) > reports explicit, mandatory and dependency omissions without rewriting selected
+ ✓ tests/mcp/skill-classification-validation.test.ts > AGENT selection public validation (SS08/15/18/23/34/38) > keeps needed skill while { field: 'enabled', reason: 'DISABLED' } blocks runnable with PARTIAL 13ms
+ ✓ tests/mcp/skill-classification-validation.test.ts > AGENT selection public validation (SS08/15/18/23/34/38) > keeps needed skill while { field: 'installed', …(1) } blocks runnable with PARTIAL 2ms
+ ✓ tests/mcp/skill-classification-validation.test.ts > AGENT selection public validation (SS08/15/18/23/34/38) > keeps needed skill while { field: 'hostSupported', …(1) } blocks runnable with PARTIAL 1ms
+ ↓ tests/mcp/skill-classification-validation.test.ts > AGENT selection public validation (SS08/15/18/23/34/38) > distinguishes unresolved null from accepted empty and rejects missing acceptance
+ ✓ tests/mcp/skill-classification-validation.test.ts > AGENT selection public validation (SS08/15/18/23/34/38) > requires applicability and selection reasons, detects alias and duplicate IDs 3ms
+ ↓ tests/mcp/skill-classification-validation.test.ts > AGENT selection public validation (SS08/15/18/23/34/38) > rejects stale taskRevision
+ ↓ tests/mcp/skill-classification-validation.test.ts > AGENT selection public validation (SS08/15/18/23/34/38) > rejects stale configRevision
+ ↓ tests/mcp/skill-classification-validation.test.ts > AGENT selection public validation (SS08/15/18/23/34/38) > rejects stale profileRevision
+ ↓ tests/mcp/skill-classification-validation.test.ts > AGENT selection public validation (SS08/15/18/23/34/38) > rejects stale inventoryDigest
+ ↓ tests/mcp/skill-classification-validation.test.ts > AGENT selection public validation (SS08/15/18/23/34/38) > rejects stale requestDigest
+ ↓ tests/mcp/skill-classification-validation.test.ts > AGENT selection public validation (SS08/15/18/23/34/38) > allows settled independent work despite optional uncertainty, and shadow cannot claim advice applied
+
+ Test Files  1 passed (1)
+      Tests  4 passed | 22 skipped (26)
+   Start at  02:57:02
+   Duration  283ms (transform 44%, import 41%, tests 12%, worker 2%)
+
+JSON report written to <ARTIFACTS>/existing-vitest.json

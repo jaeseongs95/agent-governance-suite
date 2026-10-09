@@ -1,0 +1,142 @@
+mcp-server/src/skill-classification/gateway.ts
+45:   }) {}
+46:   async inventory() {
+47:     try {
+48:       const runtime = structuredClone(await this.options.readRuntime());
+49:       return await loadSkillInventory({root: this.options.root, ...(runtime.externalSkillRoots ? {externalSkillRoots: runtime.externalSkillRoots} : {})});
+50:     } catch {
+51:       const inventory = await loadSkillInventory({root: this.options.root});
+52:       inventory.issues.push({skillId: null, code: "CONFIGURED_DISCOVERY_UNAVAILABLE", field: "classificationConfig"});
+53:       return inventory;
+54:     }
+55:   }
+56:   async classify(raw: unknown, observation: ExecutionContextV1 | null = null) {
+57:     const input = classificationInputSchema.parse(raw);
+58:     const runtimeObservation = this.options.observeRuntime?.() ?? null;
+59:     const runtime = structuredClone(await this.options.readRuntime());
+60:     const inventory = await loadSkillInventory({root: this.options.root, ...(runtime.externalSkillRoots ? {externalSkillRoots: runtime.externalSkillRoots} : {})});
+61:     if (inventory.issues.length > 0) return {status: "NEEDS_INPUT", errors: inventory.issues, response: null, agentSelectedSkillIds: null};
+62:     const request = createClassificationRequest({requestId: input.requestId, operationId: input.operationId, originalPrompt: input.originalPrompt,
+63:       confirmedContext: input.confirmedContext, contextSources: input.contextSources, inventory, classificationCriteriaRef: "skills/orchestrator/references/skill-classification.md"});
+64:     // Approval binds every transmitted context and inventory byte, not just the prompt.
+110:   async accept(raw: unknown, observation: ExecutionContextV1 | null) {
+111:     const input = selectionInputSchema.parse(raw);
+112:     const operation = this.operations.get(input.operationId);
+113:     if (!operation) throw new Error("UNKNOWN_CLASSIFICATION_OPERATION");
+114:     if (!observation || observation.taskId !== input.decision.requestDigest || observation.source !== "runtime" || !observation.observationId || !observation.actorId) {
+115:       return {valid: false, errors: ["HOST_SELECTION_NOT_OBSERVED"], agentSelectedSkillIds: null};
+116:     }
+117:     const observedTask = this.options.observeTask?.(operation.result.request, observation) ?? null;
+118:     if (!operation.task || !observedTask || observedTask.cancelled || observedTask.taskRevision !== operation.task.taskRevision || observedTask.requestDigest !== operation.task.requestDigest || observedTask.sourceRef !== operation.task.sourceRef || operation.actorId !== observation.actorId) return {valid: false, errors: ["HOST_TASK_CHANGED_OR_NOT_OBSERVED"], agentSelectedSkillIds: null};
+119:     if (!Number.isFinite(Date.parse(observation.expiresAt ?? "")) || Date.parse(observation.expiresAt!) <= (this.options.now?.() ?? new Date()).getTime()) throw new Error("HOST_SELECTION_OBSERVATION_EXPIRED");
+120:     if (input.decision.hostReceipt !== null) throw new Error("CALLER_SELECTION_RECEIPT_REJECTED");
+121:     if (input.decision.agentSelectedSkillIds === null) throw new Error("AGENT_SELECTION_MISSING");
+122:     if (JSON.stringify(operation.explicit) !== JSON.stringify(input.decision.explicitSkillIds) || JSON.stringify(operation.required) !== JSON.stringify(input.decision.ruleRequiredSkillIds)) throw new Error("REQUIRED_SKILL_SNAPSHOT_CHANGED");
+123:     const runtime = await this.options.readRuntime();
+124:     const inventory = await loadSkillInventory({root: this.options.root, ...(runtime.externalSkillRoots ? {externalSkillRoots: runtime.externalSkillRoots} : {})});
+125:     const current: ClassificationSnapshot = {...operation.result.snapshot, inventoryDigest: inventory.inventoryDigest, configRevision: runtime.config.configRevision, profileRevision: runtime.registry.profileRevision};
+126:     const decision: SkillSelectionDecisionV1 = {...input.decision, hostReceipt: {
+127:       receiptId: observation.observationId, host: observation.actorId.split(":")[0]!, requestDigest: input.decision.requestDigest,
+128:       inventoryDigest: inventory.inventoryDigest, agentSelectedSkillIds: [...input.decision.agentSelectedSkillIds], acceptedAt: observation.observedAt,
+129:     }};
+130:     const checked = validateDecision(operation.result, decision, current);
+131:     if (this.options.observeRuntime && operation.runtimeObservation !== this.options.observeRuntime()) {checked.valid = false; checked.errors.push("RUNTIME_SOURCE_CHANGED");}
+132:     if (operation.runtimeDigest !== digestClassificationValue(runtime)) {checked.valid = false; checked.errors.push("RUNTIME_SOURCE_CHANGED");}
+133:     if (inventory.issues.length > 0) {checked.valid = false; checked.errors.push("CURRENT_INVENTORY_INVALID");}
+134:     if (!checked.valid) return {...checked, agentSelectedSkillIds: null};
+135:     if (operation.decision !== null && digestClassificationValue({...operation.decision, hostReceipt: null}) !== digestClassificationValue(input.decision)) throw new Error("SELECTION_ALREADY_RECORDED");
+136:     operation.decision ??= decision;
+137:     return {...checked, decision: operation.decision, admissionStatus: "NOT_EVALUATED", readStatus: "NOT_OBSERVED", appliedStatus: "NOT_OBSERVED", verifiedStatus: "NOT_RUN"};
+138:   }
+mcp-server/src/skill-classification/service.ts
+124:     const attempts: ClassificationAttempt[] = [];
+125:     if (snapshot.cancelled) return this.failure(input, snapshot, "CANCELLED");
+126:     if (input.config.mode !== "shadow" && input.config.mode !== "select") return this.failure(input, snapshot, "UNSUPPORTED_MODE");
+127:     if (!Number.isSafeInteger(input.config.timeoutMs) || input.config.timeoutMs < 1) return this.failure(input, snapshot, "INVALID_TIMEOUT");
+128:     if (!isProviderProfileRegistry(input.registry)) return this.failure(input, snapshot, "INVALID_PROFILE_REGISTRY");
+129:     for (const kind of input.config.jevEnabled ? ["jev", "vendor"] as const : ["vendor"] as const) {
+130:       if (input.signal?.aborted || (input.getCurrentSnapshot && stale(snapshot, input.getCurrentSnapshot()))) return this.failure(input, snapshot, "STALE_CLASSIFICATION", attempts);
+131:       const profile = selectFixedProfile(input.registry, kind, input.currentVendorId);
+132:       const provider = this.options.providers[kind];
+133:       if (!profile || !provider) {
+134:         if (kind === "jev") continue;
+135:         return this.failure(input, snapshot, !profile ? "PROFILE_UNAVAILABLE" : "PROVIDER_UNAVAILABLE", attempts);
+157:   private async attempt(input: ClassificationServiceInput, snapshot: ClassificationSnapshot, provider: SkillClassificationProviderPort, profile: ProviderProfile) {
+158:     const controller = new AbortController();
+159:     let dispatchState: DispatchState = "not-started";
+160:     let reserved = false;
+161:     let timedOut = false;
+162:     let timer: ReturnType<typeof setTimeout> | undefined;
+163:     const reservationId = JSON.stringify([input.request.operationId, input.request.requestDigest, profile.profileId]);
+164:     const stopped = new Promise<ProviderEvaluation>((resolve) => {
+165:       const stop = (code: string) => {controller.abort(); resolve({response: unavailableResponse(input.request, code, dispatchState, dispatchState === "not-started" ? "UNAVAILABLE" : "UNCERTAIN"), usage: unknownUsage(), dispatchState, diagnostics: null});};
+166:       timer = setTimeout(() => {timedOut = true; stop("PROVIDER_TIMEOUT");}, input.config.timeoutMs);
+167:       controller.signal.addEventListener("abort", () => stop(timedOut ? "PROVIDER_TIMEOUT" : "CANCELLED"), {once: true});
+168:     });
+186:         if (controller.signal.aborted) return evaluation; // only the already-settled race may publish
+187:         const usage = evaluation.usage;
+188:         if (!["not-started", "started", "unknown"].includes(evaluation.dispatchState) || !usage
+189:           || ![usage.inputTokens, usage.outputTokens, usage.cachedInputTokens].every((n) => n === null || (Number.isSafeInteger(n) && n >= 0))
+190:           || (usage.actualCostUsd !== null && (!Number.isFinite(usage.actualCostUsd) || usage.actualCostUsd < 0))
+191:           || (usage.inputTokens !== null && usage.cachedInputTokens !== null && usage.cachedInputTokens > usage.inputTokens)
+192:           || (evaluation.diagnostics !== null && (!evaluation.diagnostics || typeof evaluation.diagnostics.scoreKind !== "string" || !Array.isArray(evaluation.diagnostics.scores)
+193:             || evaluation.diagnostics.scores.some((score) => typeof score.skillId !== "string" || !Number.isFinite(score.value))))) throw new ClassificationProviderError("INVALID_PROVIDER_USAGE", "unknown", true);
+194:         if (validateClassificationResponse(input.request, evaluation.response).length > 0) throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", evaluation.dispatchState, true);
+195:         if (usage.actualCostUsd !== null && usage.actualCostUsd > profile.maximumCostUsd!) return {...evaluation,
+196:           response: unavailableResponse(input.request, "COST_CEILING_EXCEEDED", evaluation.dispatchState)};
+197:         if (usage.outputTokens !== null && usage.outputTokens > profile.maximumOutputTokens) return {...evaluation,
+198:           response: unavailableResponse(input.request, "OUTPUT_TOO_LONG", evaluation.dispatchState, "INVALID")};
+199:         return evaluation;
+200:       } catch (error) {
+201:         const safe = error instanceof ClassificationProviderError ? new ClassificationProviderError(providerFailureCodes.has(error.code) ? error.code : "PROVIDER_UNAVAILABLE",
+202:           ["not-started", "started", "unknown"].includes(error.dispatchState) ? error.dispatchState : "unknown", error.invalid === true) : new ClassificationProviderError("PROVIDER_UNAVAILABLE", dispatchState);
+203:         if (safe.code === "NATIVE_TIMEOUT" || safe.code === "PROVIDER_TIMEOUT") timedOut = true;
+204:         return {response: unavailableResponse(input.request, safe.code, safe.dispatchState, safe.invalid ? "INVALID" : timedOut && safe.dispatchState !== "not-started" ? "UNCERTAIN" : "UNAVAILABLE"), usage: unknownUsage(), dispatchState: safe.dispatchState, diagnostics: null};
+205:       }
+206:     };
+207:     let evaluation: ProviderEvaluation;
+208:     try { evaluation = await Promise.race([work(), stopped]); }
+209:     finally { if (timer !== undefined) clearTimeout(timer); input.signal?.removeEventListener("abort", cancel); }
+210:     if (reserved) this.options.budget.settle(reservationId, evaluation.usage.actualCostUsd, evaluation.dispatchState);
+211:     const attempt: ClassificationAttempt = {providerKind: profile.providerKind, profileId: profile.profileId, modelId: profile.modelId, reasoningEffort: profile.reasoningEffort,
+212:       dispatchState: evaluation.dispatchState, status: evaluation.response.status, errorCode: evaluation.response.error?.code ?? null, timedOut, usage: evaluation.usage, reservedCostUsd: reserved ? profile.maximumCostUsd! : 0};
+213:     return {evaluation, attempt};
+mcp-server/src/skill-classification/inventory.ts
+214:       if (entry && metadata.capabilities && digestClassificationValue(capabilities) !== digestClassificationValue(metadata.capabilities)) throw new Error("SOURCE_CONFLICT");
+215:       if (entry?.dependencies && digestClassificationValue(entry.dependencies) !== digestClassificationValue(metadata.dependencies)) throw new Error("SOURCE_CONFLICT");
+216:       skills.push({
+217:         skillId: directory, version: entry?.version ?? head.version!, description: head.description,
+218:         enabled: entry?.enabled ?? true, installed: (options.installedSkillIds?.includes(directory) ?? true) && (projection?.installedSkillIds.includes(directory) ?? true),
+219:         hostSupported: (options.hostSupportedSkillIds?.includes(directory) ?? true) && (projection?.installedSkillIds.includes(directory) ?? true),
+220:         capabilities, actions: metadata.actions, targets: metadata.targets, constraints: metadata.constraints,
+mcp-server/src/index.ts
+108:   const classification = new RuntimeSkillClassificationGateway({root: classificationRoot,
+109:     observeRuntime: () => {
+110:       try {
+111:         if (!classificationConfig) return "unconfigured";
+112:         const absolute = path.resolve(classificationRoot, classificationConfig);
+113:         const read = (file: string) => {const bytes = readFileSync(file); if (bytes.length > 1024 * 1024) throw new Error("CONFIG_TOO_LARGE"); return bytes.toString("utf8");};
+114:         const configBytes = read(absolute);
+115:         const data = JSON.parse(configBytes) as {config: {providerProfileRegistryRef: string}; providerRuntimeRef?: string | null; nativeAdapterDefinitionsRef?: string | null};
+116:         return digestClassificationValue([configBytes, read(path.resolve(path.dirname(absolute), data.config.providerProfileRegistryRef)),
+117:           data.providerRuntimeRef ? read(path.resolve(path.dirname(absolute), data.providerRuntimeRef)) : null,
+118:           data.nativeAdapterDefinitionsRef ? read(path.resolve(path.dirname(absolute), data.nativeAdapterDefinitionsRef)) : null]);
+119:       } catch {return null;}
+120:     },
+121:     observeTask: (request, observation) => {
+122:       if (!observation) return null;
+123:       const board = openBoard(resolveSessionBoardDatabasePath(), {busyTimeoutMs: 500});
+124:       try {
+125:         const session = listSessions(board, new Date().toISOString()).find(candidate => observation.actorId === hostActorId(candidate.host, candidate.sessionId));
+126:         return session?.lastPromptAt ? {taskRevision: request.confirmedContext.taskRevision, requestDigest: request.requestDigest, cancelled: false, sourceRef: `host-prompt:${observation.actorId}:${session.lastPromptAt}`} : null;
+127:       } finally {board.close();}
+128:     },
+129:     readRuntime: async () => {
+130:       if (initializationFailed) throw new Error("CLASSIFICATION_CONFIGURATION_UNAVAILABLE");
+131:       const runtime = await readClassificationRuntime(classificationConfig, classificationRoot);
+132:       if (runtime.providerRuntimeRef !== providerRuntimeRef || (providerRuntimeRef && digestClassificationValue((await readFile(providerRuntimeRef)).toString("utf8")) !== providerBytesDigest)) throw new Error("APPROVED_PROVIDER_RUNTIME_CHANGED");
+133:       if (runtime.nativeAdapterDefinitionsRef !== nativeDefinitionsRef || (nativeDefinitionsRef && digestClassificationValue((await readFile(nativeDefinitionsRef)).toString("utf8")) !== nativeDefinitionDigest)) throw new Error("APPROVED_NATIVE_ADAPTERS_CHANGED");
+134:       return runtime;
+135:     },
+136:     service: new SkillClassificationService(providerRuntime),
+137:   });

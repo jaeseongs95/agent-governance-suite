@@ -1,0 +1,108 @@
+Already up to date
+Done in 415ms using pnpm v11.19.0
+
+   ╭──────────────────────────────────────────╮
+   │                                          │
+   │   Update available! 11.19.0 → 12.10.1.   │
+   │   Changelog: https://pnpm.io/v/12.10.1   │
+   │     To update, run: pnpm add -g pnpm     │
+   │                                          │
+   ╰──────────────────────────────────────────╯
+
+
+ RUN  v5.0.0 <REPO>
+
+ ✓ tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base frozen provenance and exact prompt/full inventory projection 30ms
+ ✓ tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base raw-CS retains separate raw score and explicit choice 141ms
+ ✓ tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base raw-misses-CS retains separate raw score and explicit choice 98ms
+ ✓ tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base rejects explicit CS replacement [] 94ms
+ ✓ tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base rejects explicit CS replacement [ 'ponytail' ] 87ms
+ ✓ tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base rejects explicit CS replacement [ 'orchestrator' ] 89ms
+ ✓ tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base actual selection remains null without host observation, caller receipt rejected 63ms
+ ✓ tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base enabled unavailable preserves needed CS and blocks completion 20ms
+ ✓ tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base installed unavailable preserves needed CS and blocks completion 26ms
+ ✓ tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base hostSupported unavailable preserves needed CS and blocks completion 28ms
+ ✓ tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base CS absent from inventory never substitutes another ID 20ms
+ ✓ tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base failed raw proposal CS remains oracle failure after separate correction 62ms
+ ✓ tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base failed raw proposal orchestrator remains oracle failure after separate correction 57ms
+ × tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base gateway cannot consume host discovery absence (known host-state supply gap) 78ms
+   → expected true to be false // Object.is equality
+ × tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base cancellation during acceptance async read must prevent recorded selection (known recheck gap) 89ms
+   → expected true to be false // Object.is equality
+(node:1132) TimeoutOverflowWarning: 2147483648 does not fit into a 32-bit signed integer.
+Timeout duration was set to 1.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ × tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base invalid RESP retains valid usage (known cost-loss defect) 16ms
+   → expected null to be 0.1 // Object.is equality
+ × tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base large safe-integer timeout must not become an immediate timeout (known overflow) 28ms
+   → expected { code: 'PROVIDER_TIMEOUT', …(2) } to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base gateway cannot consume host discovery absence (known host-state supply gap)
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/skill-classification/ss08.development.test.ts:141:32
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base cancellation during acceptance async read must prevent recorded selection (known recheck gap)
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/skill-classification/ss08.development.test.ts:150:28
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base invalid RESP retains valid usage (known cost-loss defect)
+AssertionError: expected null to be 0.1 // Object.is equality
+
+- Expected:
+0.1
+
++ Received:
+null
+
+ ❯ tests/skill-classification/ss08.development.test.ts:159:113
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/skill-classification/ss08.development.test.ts > SS08 isolated development > base large safe-integer timeout must not become an immediate timeout (known overflow)
+AssertionError: expected { code: 'PROVIDER_TIMEOUT', …(2) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "code": "PROVIDER_TIMEOUT",
+  "dispatchState": "not-started",
+  "retryable": false,
+}
+
+ ❯ tests/skill-classification/ss08.development.test.ts:168:30
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 13 passed (17)
+   Start at  02:57:49
+   Duration  1.63s (tests 75%, transform 18%, import 6%)
+
+JSON report written to <ARTIFACTS>/isolated-vitest.json

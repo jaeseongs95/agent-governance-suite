@@ -1,0 +1,61 @@
+{
+  "caseId": "SS08",
+  "variants": [
+    "base"
+  ],
+  "scope": "SS08 only; frozen originalPrompt, sourceSpec.fields and oracle; extra boundary probes are not new corpus variants",
+  "entryPoints": [
+    "createClassificationRequest",
+    "projectClassificationRequest",
+    "SkillClassificationService.classify",
+    "RuntimeSkillClassificationGateway.classify/accept/inventory",
+    "validateDecision",
+    "scoreCase"
+  ],
+  "runner": "existing Vitest 5 via pnpm exec vitest run explicit file lists and narrow names",
+  "requirements": [
+    {
+      "id": "SS08-explicit",
+      "expected": "preserve explicit cs-engineering even when raw marks it not-needed; raw oracle failure remains visible"
+    },
+    {
+      "id": "SS08-prohibition",
+      "expected": "no replacement with ponytail/orchestrator; no coding/delegation/workflow; component tests cannot prove actual AGENT behavior"
+    },
+    {
+      "id": "SS08-availability",
+      "expected": "retain needed CS, expose non-runnable and incomplete selection for missing/disabled/unsupported CS"
+    },
+    {
+      "id": "SS08-evidence",
+      "expected": "no observed host acceptance: selected=null, actual selected/read/applied/verified=NOTRUN; [] is an explicitly observed empty proposal only"
+    },
+    {
+      "id": "SS08-concurrency",
+      "expected": "current host-owned cancellation must prevent acceptance even if it occurs during async runtime/inventory reads"
+    },
+    {
+      "id": "SS08-cost",
+      "expected": "valid observed usage must survive invalid RESP (known existing root cause)"
+    },
+    {
+      "id": "SS08-timeout",
+      "expected": "safe-integer timeout must not overflow to 1ms (known existing root cause)"
+    }
+  ],
+  "level": "public component/integration boundary with actual pinned source and full source inventory; transport/profile/host observations mocked",
+  "mockBoundary": "in-process provider port and synthetic execution observation, no vendor/JEV/Claude/network model transport",
+  "redGreenException": "product mutation/fix forbidden by user; unmet requirements remain failing assertions on pinned source, no green fix claim",
+  "excluded": "all other case inputs; whole suite; past 21 completed runs; live bootstrap; actual host selection; product source edits, push, PR and release",
+  "API0": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0
+  },
+  "actualHostStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  }
+}

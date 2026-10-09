@@ -1,0 +1,39 @@
+{
+  "caseId": "SS08",
+  "status": "NOTRUN",
+  "executionKind": "host-live",
+  "availableAGSHostTools": [],
+  "discoveryEvidence": "ALL_TOOLS exact-name check for get_skill_inventory/classify_skills/record_skill_selection returned []",
+  "supportedRepositoryPaths": [
+    ".mcp.json -> node mcp-server/dist/server.mjs with AGENT_GOVERNANCE_HOST_ATTESTATION=codex",
+    "hooks/hooks.json PreToolUse matcher -> host-attestation-hook --host=codex",
+    "mcp-server/dist/host-attestation-api.mjs openHostAttestation/runObserved for host-owned wrapper",
+    "mcp-server/src/skill-classification/native-adapters.ts qualified Codex exec JSON structured classifier adapter (support only, not AGENT selection)"
+  ],
+  "currentEnvironment": {
+    "node": "v24.19.0",
+    "pnpm": "11.19.0",
+    "classificationConfigPresent": false,
+    "hostAttestationModePresent": false,
+    "codexExecutable": "<LOCAL_EXECUTABLE>",
+    "codexExecutableExists": true,
+    "workspaceAgentsSkillsExists": false,
+    "repoAgentsSkillsExists": false
+  },
+  "missingInputs": [
+    "AGS plugin/MCP and Codex PreToolUse hook connected in this selected host; current supported model mapping confirmed",
+    "host-owned sessionId/turnId/toolUseId/actorId/model and same-turn reasoningEffort/transcript; matching unexpired exact-call observation",
+    "same workflow/session board store; current host prompt/task source and cancellation",
+    "approved AGENT_GOVERNANCE_CLASSIFICATION_CONFIG; fixed PASS-qualified profiles bound to inventory/taxonomy/model/prompt/config digests",
+    "provider runtime/native adapter definitions with retry/isolation/capability/approval evidence; native allowance or known budget and approved payload digest",
+    "actual retry design reference/content if CS application and verification are to be tested",
+    "real readRefs, CS constraint/obligation artifacts and candidate-bound verification evidence"
+  ],
+  "API0": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0
+  },
+  "liveExecutionAllowedThisAssignment": false,
+  "historical21RunsRepeated": 0
+}

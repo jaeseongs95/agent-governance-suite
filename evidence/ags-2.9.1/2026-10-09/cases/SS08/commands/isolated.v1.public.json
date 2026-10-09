@@ -1,0 +1,21 @@
+{
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "tests/skill-classification/ss08.development.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile.json=<ARTIFACTS>/isolated-vitest.json"
+  ],
+  "cwd": "<REPO>",
+  "exitCode": 1,
+  "durationSeconds": 4.1757330894470215,
+  "executionKind": "offline-mock",
+  "API0": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0
+  }
+}

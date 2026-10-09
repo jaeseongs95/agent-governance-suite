@@ -1,0 +1,107 @@
+{
+  "caseId": "SS08",
+  "title": "이름으로 지정한 스킬",
+  "familyId": "explicit-cs",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "live와 mock.",
+  "originalPrompt": "$cs-engineering 으로 이 retry 설계의 멱등성과 자원 수명만 분석해 줘. 코드 작성과 타 스킬 호출은 하지 마.",
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS08",
+    "fields": {
+      "입력": "“$cs-engineering 으로 이 retry 설계의 멱등성과 자원 수명만 분석해 줘. 코드 작성과 타 스킬 호출은 하지 마.” explicitSkillIds={CS}.",
+      "필수추천": "R={CS}; 명시 스킬 계층에서 반드시 보존한다.",
+      "금지추천 또는 행동": "CS를 P나 O로 대체; 자동 위임·코딩·새 workflow 생성.",
+      "허용선택": "A={}.",
+      "보류조건": "CS가 설치·지원되지 않으면 needed에 목적상 필요를 보존하고 runnable/admission의 막힘을 드러낸다. 다른 이름으로 몰래 대체하지 않는다.",
+      "통과기준": "raw가 CS를 놓치더라도 그 실패를 남기며 select 결과는 유효한 명시 CS를 보존한다. 원시 모델의 성공으로 계산하지 않는다.",
+      "증거": "E0, explicit과 raw의 별도 결과.",
+      "실행종류": "live와 mock."
+    },
+    "bodyDigest": "sha256:b606bd9d145582259d2cd1dc6612dfff3345d95d27e144bfa1b82a7775e8efbc"
+  },
+  "oracle": {
+    "required": [
+      "cs-engineering"
+    ],
+    "allowed": [],
+    "allowedConditions": {},
+    "forbidden": [
+      "ponytail",
+      "orchestrator"
+    ],
+    "notApplicable": [
+      "test-engineering",
+      "code-review",
+      "software-security-auditor",
+      "korean-prose-editor"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "change-scope-guardian",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [
+      "cs-engineering"
+    ],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      }
+    ],
+    "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+  },
+  "variants": [
+    "base"
+  ]
+}

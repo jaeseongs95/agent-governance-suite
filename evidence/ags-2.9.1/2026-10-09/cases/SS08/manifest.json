@@ -1,0 +1,319 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS08",
+  "publicationKind": "existing-evidence-only",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cases/SS08/",
+  "candidate": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "inputPromptBytes": 137,
+    "inputPromptSHA256": "92b030041d6deb5424cb8e9f4dc1c8a531b05814fec7e85d6839c4f4be07c1c7"
+  },
+  "newTests": 0,
+  "API0": {
+    "jev": 0,
+    "vendor": 0,
+    "claude": 0,
+    "codex": 0
+  },
+  "actualHostStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "hashPolicy": "files contains payloads only; manifest.json excludes itself and SHA256SUMS; SHA256SUMS covers payloads plus manifest.json and excludes itself",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 4280,
+      "sha256": "e0e24f61720629298f282140a45aeb86f41abb8fd9840c44196b7bd61819bbc6",
+      "treatment": "derived-publication-document",
+      "original": null,
+      "transformation": null
+    },
+    {
+      "path": "SS08.result.public.json",
+      "bytes": 3196618,
+      "sha256": "f04335700dcf0158c7a602f620ef280921e9395a0b8a0ed24d30ef7ab7e1cdc6",
+      "treatment": "sanitized-existing-JSON",
+      "original": {
+        "artifact": "SS08.result.json",
+        "bytes": 3196169,
+        "sha256": "aa7da32a187d89dae59d906fb6ce9eda217291cce9a700b39aa24cf12c4691ff",
+        "status": "RECOVERED"
+      },
+      "transformation": "local paths replaced; sourceThreadId removed; original expected/observed values and null/[] preserved"
+    },
+    {
+      "path": "commands/environment.public.json",
+      "bytes": 309,
+      "sha256": "20170d5baf54eda5ae584ec688818ba529acad2e372e6a032e9c5d95eddf5418",
+      "treatment": "sanitized-existing-JSON",
+      "original": {
+        "artifact": "environment-command.json",
+        "bytes": 347,
+        "sha256": "55455e5b37dd68cd0b8e87d70a5f28aaf1732fd704a0cb95edb98f8ba34fdecd",
+        "status": "RECOVERED"
+      },
+      "transformation": "local paths replaced; sourceThreadId removed; original expected/observed values and null/[] preserved"
+    },
+    {
+      "path": "commands/existing.public.json",
+      "bytes": 529,
+      "sha256": "4db784caaf7a155e7267ab5706d76a9440bc7063edba4fe085bf06df05166d06",
+      "treatment": "sanitized-existing-JSON",
+      "original": {
+        "artifact": "existing-command.json",
+        "bytes": 567,
+        "sha256": "30d21f52251fb0664bfd3de7911a6ed0b774daea4ce94f83b316325d700a61a0",
+        "status": "RECOVERED"
+      },
+      "transformation": "local paths replaced; sourceThreadId removed; original expected/observed values and null/[] preserved"
+    },
+    {
+      "path": "commands/isolated.public.json",
+      "bytes": 515,
+      "sha256": "c5ebbea87e7c828d3d9f08e60e31ac4f85fad65963236e2c7b0f43f325e4ba94",
+      "treatment": "sanitized-existing-JSON",
+      "original": {
+        "artifact": "isolated-command.json",
+        "bytes": 553,
+        "sha256": "1d0b4f5391432678b4632a3563453b0734e9af0c5a1d26f98c659b15c2022fa5",
+        "status": "RECOVERED"
+      },
+      "transformation": "local paths replaced; sourceThreadId removed; original expected/observed values and null/[] preserved"
+    },
+    {
+      "path": "commands/isolated.v1.public.json",
+      "bytes": 421,
+      "sha256": "ad09556b73de8bb5ef295d8db9b6ad4f55539833f91868124fac738293c0fd71",
+      "treatment": "sanitized-existing-JSON",
+      "original": {
+        "artifact": "isolated-command.v1.json",
+        "bytes": 459,
+        "sha256": "556237d654a6d240621c1be1c4816752add676c8443120aae56f571595128ecf",
+        "status": "RECOVERED"
+      },
+      "transformation": "local paths replaced; sourceThreadId removed; original expected/observed values and null/[] preserved"
+    },
+    {
+      "path": "host-readiness.public.json",
+      "bytes": 2061,
+      "sha256": "cf67289ecb76946d4caaa029403c8385b0b3caee4d806f34fd9007fe9f279246",
+      "treatment": "sanitized-existing-JSON",
+      "original": {
+        "artifact": "host-readiness.json",
+        "bytes": 2063,
+        "sha256": "28d614d4e15c998c081810b159b33f65891e87f53ed38abded6f8bf02a7d94c6",
+        "status": "RECOVERED"
+      },
+      "transformation": "local paths replaced; sourceThreadId removed; original expected/observed values and null/[] preserved"
+    },
+    {
+      "path": "inputs/SS08.originalPrompt.utf8.txt",
+      "bytes": 137,
+      "sha256": "92b030041d6deb5424cb8e9f4dc1c8a531b05814fec7e85d6839c4f4be07c1c7",
+      "treatment": "derived-existing-input-bytes",
+      "original": {
+        "artifact": "SS08.source.json",
+        "bytes": 4035,
+        "sha256": "b06da7e4ff34fb68a01ffa979e5290c2ac5efcace295511df5169009f77cf26d",
+        "status": "RECOVERED"
+      },
+      "transformation": "UTF-8 encoding of existing originalPrompt; no newline appended; no new prompt or inference"
+    },
+    {
+      "path": "inputs/SS08.source.json",
+      "bytes": 4035,
+      "sha256": "b06da7e4ff34fb68a01ffa979e5290c2ac5efcace295511df5169009f77cf26d",
+      "treatment": "byte-identical-existing-source",
+      "original": {
+        "artifact": "SS08.source.json",
+        "bytes": 4035,
+        "sha256": "b06da7e4ff34fb68a01ffa979e5290c2ac5efcace295511df5169009f77cf26d",
+        "status": "RECOVERED"
+      },
+      "transformation": null
+    },
+    {
+      "path": "logs/environment-probe.combined.public.log",
+      "bytes": 443,
+      "sha256": "4e3476994801388d191258cc3e0d6055647c2dd05782af0c1b93a47a64ca69e4",
+      "treatment": "sanitized-existing-combined-log",
+      "original": {
+        "artifact": "environment-probe.log",
+        "bytes": 445,
+        "sha256": "1454748b824f891722bd68f79f19aee435eddef327f4208b3473ea584007b6ea",
+        "status": "RECOVERED"
+      },
+      "transformation": "local paths replaced; existing log content retained; no new execution output"
+    },
+    {
+      "path": "logs/existing-vitest.combined.public.log",
+      "bytes": 5676,
+      "sha256": "9ff179b8b0a13b81bfcbaf2c61c70f9e5e720d757670fc96c34c88f0189e7e78",
+      "treatment": "sanitized-existing-combined-log",
+      "original": {
+        "artifact": "existing-vitest.log",
+        "bytes": 5714,
+        "sha256": "8991472071a0b06616c87fa9af40e3c486df75aa71ec01945f98f869b61aacb3",
+        "status": "RECOVERED"
+      },
+      "transformation": "local paths replaced; existing log content retained; no new execution output"
+    },
+    {
+      "path": "logs/existing-vitest.public.json",
+      "bytes": 14378,
+      "sha256": "05c4df0c671116bf00ce177673817c9daee88f2c9b063ec30b7e99a17e0f4b6b",
+      "treatment": "sanitized-existing-JSON",
+      "original": {
+        "artifact": "existing-vitest.json",
+        "bytes": 10558,
+        "sha256": "b28f016a7ea10f12e550ac8f54549a916c478315f286dda2306740ed8efc1261",
+        "status": "RECOVERED"
+      },
+      "transformation": "local paths replaced; sourceThreadId removed; original expected/observed values and null/[] preserved"
+    },
+    {
+      "path": "logs/isolated-vitest.combined.public.log",
+      "bytes": 5819,
+      "sha256": "3706ffba543b0d7bff7acb27449c5686a3fd641d65a28d9782d92638477d6c6f",
+      "treatment": "sanitized-existing-combined-log",
+      "original": {
+        "artifact": "isolated-vitest.log",
+        "bytes": 5857,
+        "sha256": "072a8163649f353f5c34cf577c2c1e0969eb826da4cb041f96b5a2b453b21dcf",
+        "status": "RECOVERED"
+      },
+      "transformation": "local paths replaced; existing log content retained; no new execution output"
+    },
+    {
+      "path": "logs/isolated-vitest.public.json",
+      "bytes": 10627,
+      "sha256": "c36ba68776821c0eafb05a47af347516814ed2ef5e7933176898ad976a71421f",
+      "treatment": "sanitized-existing-JSON",
+      "original": {
+        "artifact": "isolated-vitest.json",
+        "bytes": 7997,
+        "sha256": "413300b94b7c9ae158d8128ac35538e20e39bbdbeb42add8261cbf61d5570595",
+        "status": "RECOVERED"
+      },
+      "transformation": "local paths replaced; sourceThreadId removed; original expected/observed values and null/[] preserved"
+    },
+    {
+      "path": "logs/isolated-vitest.v1.combined.public.log",
+      "bytes": 4873,
+      "sha256": "b378adae9ea760d9c484b423c52abcaf30a6ca0a6b78212929bd82e35dd133f9",
+      "treatment": "sanitized-existing-combined-log",
+      "original": {
+        "artifact": "isolated-vitest.v1.log",
+        "bytes": 4911,
+        "sha256": "73a853884269ad9a698b4ab305d69875628e77434b9a08186b78336b3f363261",
+        "status": "RECOVERED"
+      },
+      "transformation": "local paths replaced; existing log content retained; no new execution output"
+    },
+    {
+      "path": "logs/isolated-vitest.v1.public.json",
+      "bytes": 9728,
+      "sha256": "fdf1e53de73f79948df1d43e2f36b45c20fd87280a7029b490c64f32b0fb20e3",
+      "treatment": "sanitized-existing-JSON",
+      "original": {
+        "artifact": "isolated-vitest.v1.json",
+        "bytes": 7222,
+        "sha256": "2d43e70a8ce0f90cd6bafc5545f1a1193f97750b9ea9726dd4ae731bda3f05e7",
+        "status": "RECOVERED"
+      },
+      "transformation": "local paths replaced; sourceThreadId removed; original expected/observed values and null/[] preserved"
+    },
+    {
+      "path": "observations/environment.public.json",
+      "bytes": 287756,
+      "sha256": "444dd83e445fb078de666ede5c8bd9f7e6990643963c4c1576fe59705dff2d6b",
+      "treatment": "sanitized-existing-JSON",
+      "original": {
+        "artifact": "environment-observation.json",
+        "bytes": 287758,
+        "sha256": "5e873acb91faf636ec7330e70cc04cbbc61f2d387e5a70097429c0a84c797294",
+        "status": "RECOVERED"
+      },
+      "transformation": "local paths replaced; sourceThreadId removed; original expected/observed values and null/[] preserved"
+    },
+    {
+      "path": "observations/probe-observations.public.json",
+      "bytes": 2878004,
+      "sha256": "266ced7db4877c5413f7f2b4d848bfda5eefc6a9857291b7f7a434f6b2c890b9",
+      "treatment": "sanitized-existing-JSON",
+      "original": {
+        "artifact": "probe-observations.json",
+        "bytes": 2878004,
+        "sha256": "266ced7db4877c5413f7f2b4d848bfda5eefc6a9857291b7f7a434f6b2c890b9",
+        "status": "RECOVERED"
+      },
+      "transformation": "local paths replaced; sourceThreadId removed; original expected/observed values and null/[] preserved"
+    },
+    {
+      "path": "original-recovery.json",
+      "bytes": 984,
+      "sha256": "72ffeb4e842c30e017128c9172812a8d6b697c72227b48e5e26da3933dcfbfe1",
+      "treatment": "derived-publication-document",
+      "original": null,
+      "transformation": null
+    },
+    {
+      "path": "plan.public.json",
+      "bytes": 2494,
+      "sha256": "65a849b9ac5415dd0dd935b2bbba581f5e396af182ca4b7edf58a662d0718fbc",
+      "treatment": "sanitized-existing-JSON",
+      "original": {
+        "artifact": "plan.json",
+        "bytes": 2494,
+        "sha256": "65a849b9ac5415dd0dd935b2bbba581f5e396af182ca4b7edf58a662d0718fbc",
+        "status": "RECOVERED"
+      },
+      "transformation": "local paths replaced; sourceThreadId removed; original expected/observed values and null/[] preserved"
+    },
+    {
+      "path": "reproduction/commands.txt",
+      "bytes": 378,
+      "sha256": "1b6167ceec46861e4c0bae1ae19be54ada4d5c9848b76a88335c9a630c6a6b13",
+      "treatment": "derived-publication-document",
+      "original": null,
+      "transformation": null
+    },
+    {
+      "path": "reproduction/ss08.development.public.test.ts",
+      "bytes": 18739,
+      "sha256": "d0da334d7cef1b6d9e0086e8bcfc05bf62ec360edfd30efbc9fcf321683a25b7",
+      "treatment": "sanitized-existing-reproduction-code",
+      "original": {
+        "artifact": "ss08.development.test.ts",
+        "bytes": 18749,
+        "sha256": "2674e32b249d98e58e6ac64ca1eb981d9aa4a32069c7150a96c8c51d07b3654c",
+        "status": "RECOVERED"
+      },
+      "transformation": "Only original artifact output directory changed to relative ss08-artifacts; this public copy was NOT_RUN"
+    },
+    {
+      "path": "source-evidence.txt",
+      "bytes": 14700,
+      "sha256": "a82a4ff4640acdc7b4e27fbb3d2455a6f4f6f1f3aebb492d643ec8026a5e667f",
+      "treatment": "sanitized-existing-text",
+      "original": {
+        "artifact": "source-evidence.txt",
+        "bytes": 14700,
+        "sha256": "a82a4ff4640acdc7b4e27fbb3d2455a6f4f6f1f3aebb492d643ec8026a5e667f",
+        "status": "RECOVERED"
+      },
+      "transformation": "local paths replaced; existing log content retained; no new execution output"
+    }
+  ],
+  "payloadFileCount": 23,
+  "payloadBytes": 6463504,
+  "originalRecoveryRef": "original-recovery.json",
+  "patch": "NONE",
+  "originalsUnchanged": true
+}

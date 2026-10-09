@@ -1,0 +1,22 @@
+{
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "tests/mcp/skill-classification-validation.test.ts",
+    "--testNamePattern=keeps needed skill while|requires applicability and selection reasons",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile.json=<ARTIFACTS>/existing-vitest.json"
+  ],
+  "cwd": "<REPO>",
+  "exitCode": 0,
+  "durationSeconds": 1.9118342399597168,
+  "executionKind": "existing-offline-regression",
+  "API0": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0
+  }
+}
