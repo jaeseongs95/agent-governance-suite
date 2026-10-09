@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:5f3a477090b027b39c5a32f437293c0a49c7c5ca14c826fb15f7534502259935",
+  "caseIds": [
+    "SS15-offline-contract",
+    "SS15-host-live"
+  ]
+}

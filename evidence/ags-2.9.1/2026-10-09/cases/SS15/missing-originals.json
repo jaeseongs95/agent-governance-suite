@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS15",
+  "status": "MISSING_ORIGINAL",
+  "missingOriginals": [
+    {
+      "item": "Complete terminal stdout/stderr files for Vitest filtered regression and isolated development commands",
+      "status": "MISSING_ORIGINAL",
+      "retained": "Existing Vitest JSON reports, recorded argv/exit and witnesses only; no terminal transcript recreated."
+    },
+    {
+      "item": "Initial exploratory development JSON before two witness descriptions were corrected",
+      "status": "MISSING_ORIGINAL",
+      "retained": "Final rerun JSON and original result note; previous JSON was superseded, never reconstructed."
+    },
+    {
+      "item": "Complete pnpm setup stderr/stdout file",
+      "status": "MISSING_ORIGINAL",
+      "retained": "Existing result records exit 254 and summarized ENOENT only."
+    },
+    {
+      "item": "Complete help/version command stderr file",
+      "status": "MISSING_ORIGINAL",
+      "retained": "Previously saved stdout help/version files only."
+    },
+    {
+      "item": "Old test bytes from exploratory first run",
+      "status": "MISSING_ORIGINAL",
+      "retained": "Only final existing test file; no reverse reconstruction or patch invented."
+    }
+  ],
+  "patch": {
+    "status": "NOT_PRESENT",
+    "explanation": "No original patch exists. Product sources were not changed. Existing supplementary test source is published directly, without manufacturing a patch."
+  },
+  "transportInputBytes": {
+    "status": "NOT_RUN",
+    "explanation": "No provider/native inference transport was dispatched. Existing in-memory request objects are retained in witnesses; no wire bytes are invented."
+  },
+  "deliberatelyExcludedOriginals": [
+    {
+      "item": "build-report.mjs",
+      "reason": "Historical local-only result generator is unnecessary to reproduce assertions and contains local paths. Original hash retained in original-artifact-digests.json."
+    }
+  ],
+  "newTests": 0,
+  "newInferenceCalls": 0
+}

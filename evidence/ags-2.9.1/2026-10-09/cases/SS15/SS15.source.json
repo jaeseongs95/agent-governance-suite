@@ -1,0 +1,70 @@
+{
+  "caseId": "SS15",
+  "title": "존재하지 않거나 사용할 수 없는 명시 스킬",
+  "familyId": "unknown-explicit",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "mock과 live. live는 공개·합성 inventory 변형만 쓴다.",
+  "originalPrompt": "$cs-enginering 으로 검토해 줘.",
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS15",
+    "fields": {
+      "입력": "“$cs-enginering 으로 검토해 줘.”를 첫 변형으로, 정확한 CS를 명시했지만 enabled=false 또는 hostSupported=false인 입력을 추가 변형으로 둔다.",
+      "필수추천": "미등록 오타는 unresolvedSkillReferences로 남긴다. 등록된 CS의 목적상 필요는 needed에 보존하고 비활성·미지원은 실행 불가 사유에 보존한다.",
+      "금지추천 또는 행동": "오타를 조용히 정상 ID로 고침; 비활성화 무시; host 지원을 꾸며냄.",
+      "허용선택": "교정 후보 CS를 확인 질문에 제시할 수 있으나 채택하지 않는다.",
+      "보류조건": "정확한 ID 또는 설치·지원 조건이 해결되지 않음.",
+      "통과기준": "미등록 오타는 selectionStatus=NEEDS_INPUT/agentSelectedSkillIds=null이며 unresolvedSkillReferences에 원문과 사유가 있다. 등록됐지만 사용할 수 없는 스킬은 필요를 지우지 않고 runnableSkillIds에서 제외하고 blockedItems·admissionStatus로 드러낸다. 어떤 변형도 실행 승인이나 완료를 주장하지 않는다.",
+      "증거": "E0, 원문 ID·registry 대조·host 조건.",
+      "실행종류": "mock과 live. live는 공개·합성 inventory 변형만 쓴다."
+    },
+    "bodyDigest": "sha256:3b5d853564598d442f7b0ceb1ee2fc35830b31b18988faec15ef93a48bc83041"
+  },
+  "oracle": {
+    "required": [],
+    "allowed": [],
+    "allowedConditions": {},
+    "forbidden": [],
+    "notApplicable": [],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "change-scope-guardian",
+      "code-review",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "cs-engineering",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "korean-prose-editor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "orchestrator",
+      "ponytail",
+      "recovery-strategy-selector",
+      "session-board",
+      "software-security-auditor",
+      "task-contract",
+      "test-engineering",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "NEEDS_INPUT",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [
+      "unknown-explicit-skill"
+    ],
+    "sourceRefs": [],
+    "boundaryDecision": "Base variant is typo; disabled/unsupported variants separately preserve needed CS"
+  },
+  "variants": [
+    "typo",
+    "disabled",
+    "unsupported"
+  ]
+}

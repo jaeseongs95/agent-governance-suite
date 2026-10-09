@@ -1,0 +1,348 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS15",
+  "publicationScope": "evidence/ags-2.9.1/2026-10-09/cases/SS15/",
+  "candidateCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "candidateTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSha256": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSha256": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "originalOutcome": "FAIL",
+  "actualStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "actualAgentSelectedSkillIds": null,
+  "actualHostReceipt": null,
+  "apiCalls": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0,
+    "actualNativeInference": 0
+  },
+  "publicationNewTests": 0,
+  "publicationNewInferenceCalls": 0,
+  "payloadFileCount": 23,
+  "payloadTotalBytes": 5553422,
+  "files": [
+    {
+      "path": "README.md",
+      "publicBytes": 5540,
+      "publicSha256": "ef6f57676115e67e67ca2e6b4538288f49fe9ac3180a6d8645712bbee9827e43",
+      "provenance": {
+        "kind": "PUBLIC_PACKAGING_DOCUMENTATION",
+        "sourceArtifacts": [
+          "SS15.result.json",
+          "SS15.source.json",
+          "SS15.witnesses.json"
+        ]
+      },
+      "transformations": [
+        "Existing facts summarized; no new test/host/inference evidence."
+      ]
+    },
+    {
+      "path": "SS15.result.json",
+      "publicBytes": 926816,
+      "publicSha256": "1c1722f1f51ee1ec9959cffba49b64e3a8a43afe2af9d42153f9695d246ab160",
+      "provenance": {
+        "kind": "EXISTING_ORIGINAL_FILE",
+        "originalArtifact": "SS15.result.json",
+        "originalBytes": 926877,
+        "originalSha256": "17a43766984579b7967334c9f52646f56dd20fb0a7cff21cf1912ee028a26861"
+      },
+      "transformations": [
+        "Local paths replaced with symbolic root/executable placeholders.",
+        "Framework-only assertion stack frames removed where present; assertion and source location preserved."
+      ]
+    },
+    {
+      "path": "SS15.source.json",
+      "publicBytes": 3052,
+      "publicSha256": "f56261cbee940e3594bde520fa6d3baaf8519779a443bb06c73657cb7ed8ea7a",
+      "provenance": {
+        "kind": "EXISTING_ORIGINAL_FILE",
+        "originalArtifact": "SS15.source.json",
+        "originalBytes": 3052,
+        "originalSha256": "f56261cbee940e3594bde520fa6d3baaf8519779a443bb06c73657cb7ed8ea7a"
+      },
+      "transformations": []
+    },
+    {
+      "path": "SS15.witnesses.json",
+      "publicBytes": 4535414,
+      "publicSha256": "08d18716feea4d288d023c68675a850523a21d2d46200d2187314038f6aeb3e4",
+      "provenance": {
+        "kind": "EXISTING_ORIGINAL_FILE",
+        "originalArtifact": "SS15.witnesses.json",
+        "originalBytes": 4535414,
+        "originalSha256": "08d18716feea4d288d023c68675a850523a21d2d46200d2187314038f6aeb3e4"
+      },
+      "transformations": []
+    },
+    {
+      "path": "candidate.snapshot.json",
+      "publicBytes": 4263,
+      "publicSha256": "bdf134ded625003cc83543bf66b306329253832b441e56099d73a306e99d7762",
+      "provenance": {
+        "kind": "EXISTING_ORIGINAL_FILE",
+        "originalArtifact": "candidate.snapshot.json",
+        "originalBytes": 4263,
+        "originalSha256": "bdf134ded625003cc83543bf66b306329253832b441e56099d73a306e99d7762"
+      },
+      "transformations": []
+    },
+    {
+      "path": "engineering-test-plan.json",
+      "publicBytes": 4318,
+      "publicSha256": "217d34587f141ed328dbb3c2df842c0f47f4caa9232887a97a923fe40ca7b810",
+      "provenance": {
+        "kind": "EXISTING_ORIGINAL_FILE",
+        "originalArtifact": "engineering-test-plan.json",
+        "originalBytes": 4336,
+        "originalSha256": "1121c8b7d35e560f0c2c684bde2155de627dd2ea1dc60fe26badbae2b75e5593"
+      },
+      "transformations": [
+        "Local paths replaced with symbolic root/executable placeholders.",
+        "Framework-only assertion stack frames removed where present; assertion and source location preserved."
+      ]
+    },
+    {
+      "path": "engineering-test-proof.json",
+      "publicBytes": 5802,
+      "publicSha256": "b0a29265e81bad7f675ee5539de65f4eca4ae0ccabb9757c9120140faedb337f",
+      "provenance": {
+        "kind": "EXISTING_ORIGINAL_FILE",
+        "originalArtifact": "engineering-test-proof.json",
+        "originalBytes": 5802,
+        "originalSha256": "b0a29265e81bad7f675ee5539de65f4eca4ae0ccabb9757c9120140faedb337f"
+      },
+      "transformations": []
+    },
+    {
+      "path": "host-readiness.json",
+      "publicBytes": 1514,
+      "publicSha256": "adbafab63b67df41cefff8dac9217a3259f5740c425c510fe66ec5a0f492d963",
+      "provenance": {
+        "kind": "EXISTING_ORIGINAL_FILE",
+        "originalArtifact": "host-readiness.json",
+        "originalBytes": 1516,
+        "originalSha256": "73842033f9f8e647dbbdcfbab9343174f17b318d9989eb4db5dcc204df2b4244"
+      },
+      "transformations": [
+        "Local paths replaced with symbolic root/executable placeholders.",
+        "Framework-only assertion stack frames removed where present; assertion and source location preserved."
+      ]
+    },
+    {
+      "path": "inputs/SS15.disabled.prompt.txt",
+      "publicBytes": 37,
+      "publicSha256": "621dadbf2fd3593b116726b9667ed1bba49e611c51609406614b64cd4180595f",
+      "provenance": {
+        "kind": "DERIVED_EXACT_UTF8_STRING_FROM_EXISTING_RECORD",
+        "originalArtifact": "SS15.result.json",
+        "originalArtifactBytes": 926877,
+        "originalArtifactSha256": "17a43766984579b7967334c9f52646f56dd20fb0a7cff21cf1912ee028a26861",
+        "jsonPointer": "/variants/1/inputPrompt",
+        "recordedStringUtf8Bytes": 37,
+        "recordedStringUtf8Sha256": "621dadbf2fd3593b116726b9667ed1bba49e611c51609406614b64cd4180595f"
+      },
+      "transformations": [
+        "UTF-8 encoding of existing recorded prompt without trailing newline; no new model/test input."
+      ]
+    },
+    {
+      "path": "inputs/SS15.typo.prompt.txt",
+      "publicBytes": 36,
+      "publicSha256": "1d799abe590417947862c67e9120a3092834ab47d5ae90136ead95777514b612",
+      "provenance": {
+        "kind": "DERIVED_EXACT_UTF8_STRING_FROM_EXISTING_RECORD",
+        "originalArtifact": "SS15.result.json",
+        "originalArtifactBytes": 926877,
+        "originalArtifactSha256": "17a43766984579b7967334c9f52646f56dd20fb0a7cff21cf1912ee028a26861",
+        "jsonPointer": "/variants/0/inputPrompt",
+        "recordedStringUtf8Bytes": 36,
+        "recordedStringUtf8Sha256": "1d799abe590417947862c67e9120a3092834ab47d5ae90136ead95777514b612"
+      },
+      "transformations": [
+        "UTF-8 encoding of existing recorded prompt without trailing newline; no new model/test input."
+      ]
+    },
+    {
+      "path": "inputs/SS15.unsupported.prompt.txt",
+      "publicBytes": 37,
+      "publicSha256": "621dadbf2fd3593b116726b9667ed1bba49e611c51609406614b64cd4180595f",
+      "provenance": {
+        "kind": "DERIVED_EXACT_UTF8_STRING_FROM_EXISTING_RECORD",
+        "originalArtifact": "SS15.result.json",
+        "originalArtifactBytes": 926877,
+        "originalArtifactSha256": "17a43766984579b7967334c9f52646f56dd20fb0a7cff21cf1912ee028a26861",
+        "jsonPointer": "/variants/2/inputPrompt",
+        "recordedStringUtf8Bytes": 37,
+        "recordedStringUtf8Sha256": "621dadbf2fd3593b116726b9667ed1bba49e611c51609406614b64cd4180595f"
+      },
+      "transformations": [
+        "UTF-8 encoding of existing recorded prompt without trailing newline; no new model/test input."
+      ]
+    },
+    {
+      "path": "logs/codex-exec-help.txt",
+      "publicBytes": 4031,
+      "publicSha256": "0e82cfde0122715250e93dc65866caa956b2ac5b9d0b20ec4ad4f9e81486509e",
+      "provenance": {
+        "kind": "EXISTING_ORIGINAL_FILE",
+        "originalArtifact": "codex-exec-help.txt",
+        "originalBytes": 4031,
+        "originalSha256": "0e82cfde0122715250e93dc65866caa956b2ac5b9d0b20ec4ad4f9e81486509e"
+      },
+      "transformations": []
+    },
+    {
+      "path": "logs/codex-version.txt",
+      "publicBytes": 26,
+      "publicSha256": "158f4415765f804622953bb1c3fff91172fa05c5885eec0478773fb97bdee883",
+      "provenance": {
+        "kind": "EXISTING_ORIGINAL_FILE",
+        "originalArtifact": "codex-version.txt",
+        "originalBytes": 26,
+        "originalSha256": "158f4415765f804622953bb1c3fff91172fa05c5885eec0478773fb97bdee883"
+      },
+      "transformations": []
+    },
+    {
+      "path": "logs/development-tests.json",
+      "publicBytes": 11010,
+      "publicSha256": "d1b9f65c31f24a6a5e64bd7298e91175fb4b0a9268ef8274093a4def612f4993",
+      "provenance": {
+        "kind": "EXISTING_ORIGINAL_FILE",
+        "originalArtifact": "development-tests.json",
+        "originalBytes": 14795,
+        "originalSha256": "3f71932b2e1d7d93cada7c57e06ef7c06ef228a6c75a145e810a4684f457bb52"
+      },
+      "transformations": [
+        "Local paths replaced with symbolic root/executable placeholders.",
+        "Framework-only assertion stack frames removed where present; assertion and source location preserved."
+      ]
+    },
+    {
+      "path": "logs/engineering-plan-result.json",
+      "publicBytes": 251,
+      "publicSha256": "15f104ef7f21395ec34759722991f43673391aeadb194d38cd2a5ee25e2a4d00",
+      "provenance": {
+        "kind": "EXISTING_ORIGINAL_FILE",
+        "originalArtifact": "engineering-plan-result.json",
+        "originalBytes": 251,
+        "originalSha256": "15f104ef7f21395ec34759722991f43673391aeadb194d38cd2a5ee25e2a4d00"
+      },
+      "transformations": []
+    },
+    {
+      "path": "logs/engineering-test-result.json",
+      "publicBytes": 1028,
+      "publicSha256": "1edd2fc429987d184a74c774b6d3172cbe4273801af3f122d84bc2e5b81e4714",
+      "provenance": {
+        "kind": "EXISTING_ORIGINAL_FILE",
+        "originalArtifact": "engineering-test-result.json",
+        "originalBytes": 1028,
+        "originalSha256": "1edd2fc429987d184a74c774b6d3172cbe4273801af3f122d84bc2e5b81e4714"
+      },
+      "transformations": []
+    },
+    {
+      "path": "logs/existing-regression-corrected.json",
+      "publicBytes": 14312,
+      "publicSha256": "8ec32a17d597deeced90c10ac33d99f44e2109b38a10bd93be807de1f04bcd5a",
+      "provenance": {
+        "kind": "EXISTING_ORIGINAL_FILE",
+        "originalArtifact": "existing-regression-corrected.json",
+        "originalBytes": 10500,
+        "originalSha256": "e9b1b9feb2058b82461d4bd6fcb9615dd4d3fc26c8c5d36d1c416320e414cc4b"
+      },
+      "transformations": [
+        "Local paths replaced with symbolic root/executable placeholders.",
+        "Framework-only assertion stack frames removed where present; assertion and source location preserved."
+      ]
+    },
+    {
+      "path": "logs/existing-regression.json",
+      "publicBytes": 14225,
+      "publicSha256": "eb31c7d9266c5f64ac0b5684acfd9d6a3882fe674ca1a89449d5495b8a8ab205",
+      "provenance": {
+        "kind": "EXISTING_ORIGINAL_FILE",
+        "originalArtifact": "existing-regression.json",
+        "originalBytes": 10437,
+        "originalSha256": "3b8be7b293062c7a0ac19b07af13b383b0be4a81c033427b9c8287a1ee81bfe3"
+      },
+      "transformations": [
+        "Local paths replaced with symbolic root/executable placeholders.",
+        "Framework-only assertion stack frames removed where present; assertion and source location preserved."
+      ]
+    },
+    {
+      "path": "logs/original-integrity-check.json",
+      "publicBytes": 438,
+      "publicSha256": "946fe529066f41d928ef9db0dfa32973182044bdcc80c821841315d869580b0b",
+      "provenance": {
+        "kind": "EXISTING_ORIGINAL_FILE",
+        "originalArtifact": "integrity-check.json",
+        "originalBytes": 438,
+        "originalSha256": "946fe529066f41d928ef9db0dfa32973182044bdcc80c821841315d869580b0b"
+      },
+      "transformations": []
+    },
+    {
+      "path": "missing-originals.json",
+      "publicBytes": 1985,
+      "publicSha256": "197be8da0142af4b7a704837bd7be97c54b99e08825f5de38347f43c2e3bd5bc",
+      "provenance": {
+        "kind": "PUBLIC_PACKAGING_METADATA"
+      },
+      "transformations": [
+        "Documents absence; never substitutes fabricated logs/results."
+      ]
+    },
+    {
+      "path": "original-artifact-digests.json",
+      "publicBytes": 1758,
+      "publicSha256": "0f6b69d5d4061cc5bbbe7d08030d9144f07fbe5365c5193deaedbcd983b596cc",
+      "provenance": {
+        "kind": "EXISTING_ORIGINAL_FILE",
+        "originalArtifact": "artifact-sha256.json",
+        "originalBytes": 1758,
+        "originalSha256": "0f6b69d5d4061cc5bbbe7d08030d9144f07fbe5365c5193deaedbcd983b596cc"
+      },
+      "transformations": []
+    },
+    {
+      "path": "repro/SS15.development.test.ts",
+      "publicBytes": 16156,
+      "publicSha256": "7bf340341f47a0034b44c3705ea560227dab6e18a2c52a156a92ee427f6ba4cd",
+      "provenance": {
+        "kind": "EXISTING_ORIGINAL_FILE",
+        "originalArtifact": "SS15.development.test.ts",
+        "originalBytes": 16133,
+        "originalSha256": "9205902893b61e65b5cb73bf651dcac429d630e08d9d54d4e42b60a2bcae897e"
+      },
+      "transformations": [
+        "Only artifact output directory changed from original local literal to portable SS15_EVIDENCE_OUTPUT/default; test logic/assertions unchanged. Public copy was not executed."
+      ]
+    },
+    {
+      "path": "repro/reproduce.sh",
+      "publicBytes": 1373,
+      "publicSha256": "7c18b665144b77042445a0a4d02f23c6a1734f8ee3ca507e142731c1d44254f9",
+      "provenance": {
+        "kind": "DERIVED_COMMAND_GUIDE_FROM_EXISTING_ARGV",
+        "originalArtifact": "SS15.result.json",
+        "originalSha256": "17a43766984579b7967334c9f52646f56dd20fb0a7cff21cf1912ee028a26861"
+      },
+      "transformations": [
+        "Portable original runner commands; output paths adjusted. Script not executed."
+      ]
+    }
+  ],
+  "selfHashPolicy": "manifest excludes itself and SHA256SUMS; SHA256SUMS covers payload plus manifest, excludes itself",
+  "missingOriginalsReference": "missing-originals.json",
+  "patchStatus": "NOT_PRESENT"
+}

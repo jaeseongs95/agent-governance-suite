@@ -1,0 +1,164 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-proof",
+  "planDigest": "sha256:5f3a477090b027b39c5a32f437293c0a49c7c5ca14c826fb15f7534502259935",
+  "candidate": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-snapshot",
+    "files": [
+      {
+        "path": "AGENTS.md",
+        "digest": "sha256:d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827",
+        "size": 9551,
+        "lineCount": 81
+      },
+      {
+        "path": "mcp-server/src/index.ts",
+        "digest": "sha256:bd2d886cd4ef1bb42c8cd00dd22a0428be899c7e21f1e48afe83c280f0104d46",
+        "size": 9032,
+        "lineCount": 145
+      },
+      {
+        "path": "mcp-server/src/skill-classification/gateway.ts",
+        "digest": "sha256:80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+        "size": 15017,
+        "lineCount": 156
+      },
+      {
+        "path": "mcp-server/src/skill-classification/inventory.ts",
+        "digest": "sha256:8c7ee54546f17fb1e63368fbfb72668a3c7136570a545ad5f0494f076c91727c",
+        "size": 20714,
+        "lineCount": 259
+      },
+      {
+        "path": "mcp-server/src/skill-classification/native-adapters.ts",
+        "digest": "sha256:dc6a0e763b175b077cee401d9020144d49b99f143b34da88059fbf4da5bc39f6",
+        "size": 13788,
+        "lineCount": 192
+      },
+      {
+        "path": "mcp-server/src/skill-classification/request.ts",
+        "digest": "sha256:1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f",
+        "size": 7093,
+        "lineCount": 99
+      },
+      {
+        "path": "mcp-server/src/skill-classification/runtime.ts",
+        "digest": "sha256:33c14b3597a9ed5d3a6103fc52c41ea9ed18c57c96856257b1dc407e3d6e6eea",
+        "size": 4336,
+        "lineCount": 60
+      },
+      {
+        "path": "mcp-server/src/skill-classification/validation.ts",
+        "digest": "sha256:70f988d9e5d49f8eaef55ca0ff378b4819798ff8141bd09119691c2cffb2891f",
+        "size": 8449,
+        "lineCount": 107
+      },
+      {
+        "path": "package.json",
+        "digest": "sha256:27195e3424ff65b449c7d4efd198734195b56ae2f2651fc26f1e8904f46675d5",
+        "size": 2590,
+        "lineCount": 56
+      },
+      {
+        "path": "pnpm-lock.yaml",
+        "digest": "sha256:00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e",
+        "size": 79392,
+        "lineCount": 2482
+      },
+      {
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+        "size": 5211,
+        "lineCount": 74
+      },
+      {
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+        "size": 5024,
+        "lineCount": 33
+      },
+      {
+        "path": "skills/orchestrator/references/skill-classification.md",
+        "digest": "sha256:85cfd39b4c3771669747a9ebf61bc8623b510104c4bd6af40c2168781adc3ef8",
+        "size": 3478,
+        "lineCount": 15
+      },
+      {
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+        "size": 2981,
+        "lineCount": 30
+      },
+      {
+        "path": "tests/mcp/skill-classification-validation.test.ts",
+        "digest": "sha256:d9b3221cfac0d23e6745b43429b086d706099bb656415a609214d956f6d30411",
+        "size": 15195,
+        "lineCount": 160
+      },
+      {
+        "path": "tests/skill-classification/SS15.development.test.ts",
+        "digest": "sha256:9205902893b61e65b5cb73bf651dcac429d630e08d9d54d4e42b60a2bcae897e",
+        "size": 16133,
+        "lineCount": 183
+      },
+      {
+        "path": "tests/skill-classification/evaluation.ts",
+        "digest": "sha256:e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+        "size": 16532,
+        "lineCount": 223
+      },
+      {
+        "path": "tests/skill-classification/fixtures.json",
+        "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "size": 142450,
+        "lineCount": 2912
+      },
+      {
+        "path": "tests/skill-classification/live-bootstrap/bootstrap.mts",
+        "digest": "sha256:1e258ae50a0e25d9c2a01a1ff186df1cce73c0693995ea7cef2be3cd187e791c",
+        "size": 34715,
+        "lineCount": 358
+      },
+      {
+        "path": "tests/skill-classification/live-bootstrap/component-manifest.json",
+        "digest": "sha256:b88ed698626c9b6af09c3d1ff11aebd48226a776d00cde4299491dbb0db88429",
+        "size": 3614,
+        "lineCount": 78
+      }
+    ],
+    "digest": "sha256:468f23a7f3e8101741d45abf581cda259578bd8e7a86977f9d7470f85a134698"
+  },
+  "proofs": [
+    {
+      "caseId": "SS15-offline-contract",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Exploratory assertions did run (12 PASS, 5 FAIL); no product mutation or green revision, hence no red-green sensitivity demonstration."
+    },
+    {
+      "caseId": "SS15-host-live",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "No real host inference or selection ran. Missing approved native route/profile/allowance/task attestation."
+    }
+  ]
+}

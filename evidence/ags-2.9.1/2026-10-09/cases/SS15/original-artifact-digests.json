@@ -1,0 +1,19 @@
+{
+  "SS15.development.test.ts": "sha256:9205902893b61e65b5cb73bf651dcac429d630e08d9d54d4e42b60a2bcae897e",
+  "SS15.result.json": "sha256:17a43766984579b7967334c9f52646f56dd20fb0a7cff21cf1912ee028a26861",
+  "SS15.source.json": "sha256:f56261cbee940e3594bde520fa6d3baaf8519779a443bb06c73657cb7ed8ea7a",
+  "SS15.witnesses.json": "sha256:08d18716feea4d288d023c68675a850523a21d2d46200d2187314038f6aeb3e4",
+  "build-report.mjs": "sha256:b49c5cf89372b6806bc40234eb568d63a8cc0c0ce45395374ca776db9f23c558",
+  "candidate.snapshot.json": "sha256:bdf134ded625003cc83543bf66b306329253832b441e56099d73a306e99d7762",
+  "codex-exec-help.txt": "sha256:0e82cfde0122715250e93dc65866caa956b2ac5b9d0b20ec4ad4f9e81486509e",
+  "codex-version.txt": "sha256:158f4415765f804622953bb1c3fff91172fa05c5885eec0478773fb97bdee883",
+  "development-tests.json": "sha256:3f71932b2e1d7d93cada7c57e06ef7c06ef228a6c75a145e810a4684f457bb52",
+  "engineering-plan-result.json": "sha256:15f104ef7f21395ec34759722991f43673391aeadb194d38cd2a5ee25e2a4d00",
+  "engineering-test-plan.json": "sha256:1121c8b7d35e560f0c2c684bde2155de627dd2ea1dc60fe26badbae2b75e5593",
+  "engineering-test-proof.json": "sha256:b0a29265e81bad7f675ee5539de65f4eca4ae0ccabb9757c9120140faedb337f",
+  "engineering-test-result.json": "sha256:1edd2fc429987d184a74c774b6d3172cbe4273801af3f122d84bc2e5b81e4714",
+  "existing-regression-corrected.json": "sha256:e9b1b9feb2058b82461d4bd6fcb9615dd4d3fc26c8c5d36d1c416320e414cc4b",
+  "existing-regression.json": "sha256:3b8be7b293062c7a0ac19b07af13b383b0be4a81c033427b9c8287a1ee81bfe3",
+  "host-readiness.json": "sha256:73842033f9f8e647dbbdcfbab9343174f17b318d9989eb4db5dcc204df2b4244",
+  "integrity-check.json": "sha256:946fe529066f41d928ef9db0dfa32973182044bdcc80c821841315d869580b0b"
+}

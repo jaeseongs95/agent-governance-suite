@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:468f23a7f3e8101741d45abf581cda259578bd8e7a86977f9d7470f85a134698",
+  "reportDigest": "sha256:2d79b9188cc30ab3cf0919729e47d74b0b109cc1b9a009cae7c2a1e5bfd944df",
+  "issues": [
+    "REQUIRED SS15-offline-contract: NOT_RUN — Exploratory assertions did run (12 PASS, 5 FAIL); no product mutation or green revision, hence no red-green sensitivity demonstration.",
+    "REQUIRED SS15-host-live: NOT_RUN — No real host inference or selection ran. Missing approved native route/profile/allowance/task attestation."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

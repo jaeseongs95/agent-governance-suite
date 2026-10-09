@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS15-independent-offline-verification",
+  "contractDigest": "sha256:7583f6279b466dc3a58450e11740893eafffd1902c6a0478745afab97b3c85c7",
+  "requirements": [
+    "SS15-typo",
+    "SS15-disabled",
+    "SS15-unsupported",
+    "SS15-real-host-evidence"
+  ],
+  "scopeFiles": [
+    "AGENTS.md",
+    "package.json",
+    "pnpm-lock.yaml",
+    "tests/skill-classification/SS15.development.test.ts",
+    "tests/mcp/skill-classification-validation.test.ts",
+    "tests/skill-classification/fixtures.json",
+    "tests/skill-classification/evaluation.ts",
+    "tests/skill-classification/live-bootstrap/bootstrap.mts",
+    "tests/skill-classification/live-bootstrap/component-manifest.json",
+    "mcp-server/src/skill-classification/validation.ts",
+    "mcp-server/src/skill-classification/request.ts",
+    "mcp-server/src/skill-classification/inventory.ts",
+    "mcp-server/src/skill-classification/gateway.ts",
+    "mcp-server/src/skill-classification/native-adapters.ts",
+    "mcp-server/src/skill-classification/runtime.ts",
+    "mcp-server/src/index.ts",
+    "skills/cs-engineering/SKILL.md",
+    "skills/orchestrator/SKILL.md",
+    "skills/orchestrator/references/skill-classification.md",
+    "skills/test-engineering/SKILL.md"
+  ],
+  "runner": "Existing Vitest 5 through scripts/run-tests.mjs; no whole suite, no build",
+  "environment": "Independent Cloud <REPO_ROOT>; Node v24.19.0, pnpm 11.19.0, Linux, Etc/UTC; dependencies reused read-only from identical lockfile checkout",
+  "cases": [
+    {
+      "id": "SS15-offline-contract",
+      "requirementIds": [
+        "SS15-typo",
+        "SS15-disabled",
+        "SS15-unsupported"
+      ],
+      "scenario": "Three full synthetic inventory/request variants plus rejection boundaries and gateway host-support supply comparison",
+      "entryPoint": "createClassificationRequest/projectClassificationRequest/validateClassificationResponse/validateDecision/RuntimeSkillClassificationGateway/scoreCase",
+      "level": "integration",
+      "expectedBehavior": "Typo is unresolved null; exact unavailable CS remains needed, never runnable, with reason; no completed execution",
+      "oracle": "Only frozen SS15 embedded sourceSpec.fields and base oracle; disabled/unsupported assertions derive from embedded fields, not cloned base accuracy labels",
+      "testFiles": [
+        "tests/skill-classification/SS15.development.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "red-green",
+      "sensitivityReason": "Current failing boundary assertions are observed. Product modifications forbidden; no corrected candidate/green exists, so sensitivity proof remains NOT_RUN.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/SS15.development.test.ts",
+        "--reporter=json",
+        "--outputFile=<ARTIFACT_ROOT>/development-tests.json"
+      ]
+    },
+    {
+      "id": "SS15-host-live",
+      "requirementIds": [
+        "SS15-real-host-evidence"
+      ],
+      "scenario": "Real AGENT final choice, read/applied/verified evidence",
+      "entryPoint": "Real installation get_skill_inventory/classify_skills/record_skill_selection and host-owned signed task observation",
+      "level": "e2e",
+      "expectedBehavior": "Actual AGENT preserves original typo/unavailable state without correction, approval or completion claims",
+      "oracle": "Frozen SS15 embedded fields; actual source/digest/artifact evidence for each observed stage",
+      "testFiles": [
+        "tests/skill-classification/SS15.development.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Native capability/profile/route/allowance/host attestation inputs missing, and this phase permits zero external/provider/native inference calls.",
+      "argv": [
+        "NOTRUN",
+        "SS15-host-live-awaiting-approved-inputs"
+      ]
+    }
+  ],
+  "exclusions": [
+    "All other case IDs and whole suite",
+    "Product source edits, commits/push/PR/release",
+    "Past completed 21-request runs",
+    "JEV/external vendor/Claude and actual native model inference",
+    "Frozen bootstrap SS15 typo scoring: waiting for R14 candidate",
+    "No accuracy score for operational cases with null oracle"
+  ]
+}

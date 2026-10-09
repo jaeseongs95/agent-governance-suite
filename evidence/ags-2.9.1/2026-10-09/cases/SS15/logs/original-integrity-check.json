@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "scope": "Local artifact bindings and preservation only; not SS15 semantic/host PASS",
+  "command": "python local artifact/assertion integrity check",
+  "exit": 0,
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "apiCalls": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0,
+    "actualNativeInference": 0
+  },
+  "productTrackedDiff": false
+}

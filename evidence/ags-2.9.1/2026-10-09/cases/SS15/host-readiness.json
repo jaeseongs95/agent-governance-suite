@@ -1,0 +1,22 @@
+{
+  "status": "NOTRUN",
+  "classificationConfigPresent": false,
+  "codexExecutable": "<CODEX_EXECUTABLE>",
+  "codexVersion": "codex-cli 0.159.0-alpha.3",
+  "helpOnlyExit": 0,
+  "helpSupportsRequiredFlags": true,
+  "claudeExecutablePresent": false,
+  "configurationPath": "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG -> config.providerProfileRegistryRef + providerRuntimeRef + nativeAdapterDefinitionsRef",
+  "supportedNativeImplementation": "createNativeClassificationAdapters with approved Codex CLI definition; native classification emits provider advice only, never AGENT receipt",
+  "missingInputs": [
+    "Approved installed plugin/cache source matching pinned commit/tree",
+    "Trusted SS15-only native adapter definition with capabilityEvidenceRef, retryPolicyEvidenceRef, isolationEvidenceRef, approvalRef and vetted disable flags",
+    "Qualified fixed vendor model/effort profile with inventory/taxonomy/profile configuration digests and validity",
+    "Matching approved native route and finite confirmed nativeAllowances.remainingCalls; subscription is insufficient",
+    "Host-observed installed/enabled/supported inventory states for each SS15 variant (gateway currently lacks support injection)",
+    "Genuine host hook attestation and session-board current prompt/task binding; final AGENT decision independent from advice",
+    "New R14 bootstrap/evaluator candidate manifest for typo scoring only; no reuse/rerun of past 21-case run"
+  ],
+  "nativeInferenceCalls": 0,
+  "realHostSelectionCalls": 0
+}

@@ -1,0 +1,271 @@
+{
+  "numTotalTestSuites": 2,
+  "numPassedTestSuites": 0,
+  "numFailedTestSuites": 2,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 17,
+  "numPassedTests": 12,
+  "numFailedTests": 5,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514800280,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "SS15 isolated offline development"
+          ],
+          "fullName": "SS15 isolated offline development SS15 binding: exact frozen bytes and embedded-only specification",
+          "status": "passed",
+          "title": "SS15 binding: exact frozen bytes and embedded-only specification",
+          "duration": 3.341867000000036,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS15 isolated offline development"
+          ],
+          "fullName": "SS15 isolated offline development SS15 typo: full request/projection preserve original prompt, state, unknown null",
+          "status": "passed",
+          "title": "SS15 typo: full request/projection preserve original prompt, state, unknown null",
+          "duration": 26.641644999999983,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS15 isolated offline development"
+          ],
+          "fullName": "SS15 isolated offline development SS15 disabled: full request/projection preserve original prompt, state, unknown null",
+          "status": "passed",
+          "title": "SS15 disabled: full request/projection preserve original prompt, state, unknown null",
+          "duration": 18.725504,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS15 isolated offline development"
+          ],
+          "fullName": "SS15 isolated offline development SS15 unsupported: full request/projection preserve original prompt, state, unknown null",
+          "status": "passed",
+          "title": "SS15 unsupported: full request/projection preserve original prompt, state, unknown null",
+          "duration": 18.592112999999983,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS15 isolated offline development"
+          ],
+          "fullName": "SS15 isolated offline development SS15 typo: correct unresolved null is supported without receipt or completion",
+          "status": "passed",
+          "title": "SS15 typo: correct unresolved null is supported without receipt or completion",
+          "duration": 12.561732999999947,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS15 isolated offline development"
+          ],
+          "fullName": "SS15 isolated offline development SS15 typo: exact unregistered ID cannot become runnable",
+          "status": "passed",
+          "title": "SS15 typo: exact unregistered ID cannot become runnable",
+          "duration": 13.682461999999987,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS15 isolated offline development"
+          ],
+          "fullName": "SS15 isolated offline development SS15 typo boundary: silently corrected canonical selection must be rejected",
+          "status": "failed",
+          "title": "SS15 typo boundary: silently corrected canonical selection must be rejected",
+          "duration": 16.113186999999982,
+          "failureMessages": [
+            "AssertionError: SS15 forbids silent adoption of corrected ID; validator currently trusts AGENT-supplied unresolved list: expected true to be false // Object.is equality\n    at <REPO_ROOT>/tests/skill-classification/SS15.development.test.ts:103:134"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS15 isolated offline development"
+          ],
+          "fullName": "SS15 isolated offline development SS15 typo boundary: unresolved correction candidate must not become runnable through PARTIAL",
+          "status": "failed",
+          "title": "SS15 typo boundary: unresolved correction candidate must not become runnable through PARTIAL",
+          "duration": 12.229673000000048,
+          "failureMessages": [
+            "AssertionError: Correction candidate is allowed only as a question, without adoption: expected true to be false // Object.is equality\n    at <REPO_ROOT>/tests/skill-classification/SS15.development.test.ts:109:99"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS15 isolated offline development"
+          ],
+          "fullName": "SS15 isolated offline development SS15 disabled: PARTIAL preserves needed and reports blocked runnable",
+          "status": "passed",
+          "title": "SS15 disabled: PARTIAL preserves needed and reports blocked runnable",
+          "duration": 11.321382999999969,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS15 isolated offline development"
+          ],
+          "fullName": "SS15 isolated offline development SS15 disabled: explicit need survives negative provider advice",
+          "status": "passed",
+          "title": "SS15 disabled: explicit need survives negative provider advice",
+          "duration": 11.408395000000041,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS15 isolated offline development"
+          ],
+          "fullName": "SS15 isolated offline development SS15 disabled boundary: null NEEDS_INPUT must preserve unavailable reason",
+          "status": "failed",
+          "title": "SS15 disabled boundary: null NEEDS_INPUT must preserve unavailable reason",
+          "duration": 12.843659000000002,
+          "failureMessages": [
+            "AssertionError: Availability reporting currently loops only over selected IDs: expected [] to deep equally contain { skillId: 'cs-engineering', …(1) }\n    at <REPO_ROOT>/tests/skill-classification/SS15.development.test.ts:132:101"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS15 isolated offline development"
+          ],
+          "fullName": "SS15 isolated offline development SS15 unsupported: PARTIAL preserves needed and reports blocked runnable",
+          "status": "passed",
+          "title": "SS15 unsupported: PARTIAL preserves needed and reports blocked runnable",
+          "duration": 10.118391000000031,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS15 isolated offline development"
+          ],
+          "fullName": "SS15 isolated offline development SS15 unsupported: explicit need survives negative provider advice",
+          "status": "passed",
+          "title": "SS15 unsupported: explicit need survives negative provider advice",
+          "duration": 8.319590000000005,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS15 isolated offline development"
+          ],
+          "fullName": "SS15 isolated offline development SS15 unsupported boundary: null NEEDS_INPUT must preserve unavailable reason",
+          "status": "failed",
+          "title": "SS15 unsupported boundary: null NEEDS_INPUT must preserve unavailable reason",
+          "duration": 9.792218999999989,
+          "failureMessages": [
+            "AssertionError: Availability reporting currently loops only over selected IDs: expected [] to deep equally contain { skillId: 'cs-engineering', …(1) }\n    at <REPO_ROOT>/tests/skill-classification/SS15.development.test.ts:132:101"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS15 isolated offline development"
+          ],
+          "fullName": "SS15 isolated offline development SS15 unsupported boundary: gateway inventory must receive host-supported IDs",
+          "status": "failed",
+          "title": "SS15 unsupported boundary: gateway inventory must receive host-supported IDs",
+          "duration": 75.36482300000006,
+          "failureMessages": [
+            "AssertionError: Known host-active-state supply gap: gateway has no hostSupportedSkillIds input: expected true to be false // Object.is equality\n    at <REPO_ROOT>/tests/skill-classification/SS15.development.test.ts:147:89"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS15 isolated offline development"
+          ],
+          "fullName": "SS15 isolated offline development SS15 gateway: classification is PROPOSED; missing real host cannot accept; no admission claimed",
+          "status": "passed",
+          "title": "SS15 gateway: classification is PROPOSED; missing real host cannot accept; no admission claimed",
+          "duration": 69.279721,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS15 isolated offline development"
+          ],
+          "fullName": "SS15 isolated offline development SS15 evaluator local control: typo null versus empty and missing reason remain distinct",
+          "status": "passed",
+          "title": "SS15 evaluator local control: typo null versus empty and missing reason remain distinct",
+          "duration": 10.093373000000042,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514800627,
+      "endTime": 1791514800968.0933,
+      "status": "failed",
+      "message": "",
+      "name": "<REPO_ROOT>/tests/skill-classification/SS15.development.test.ts"
+    }
+  ]
+}
