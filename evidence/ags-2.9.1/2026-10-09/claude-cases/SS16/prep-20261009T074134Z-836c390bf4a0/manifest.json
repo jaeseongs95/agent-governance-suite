@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS16",
+  "title": "전체 inventory의 덜 빈번한 스킬",
+  "kind": "claude-input-and-environment-preparation",
+  "status": "PREPARED_WAITING_PARENT_NOT_PRODUCT_PASS",
+  "runPath": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS16/prep-20261009T074134Z-836c390bf4a0",
+  "frozenEvidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "candidate": {
+    "label": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "status": "PENDING_PARENT_VERIFIED_CANDIDATE_SOURCE_JUDGMENT_AND_REMOTE_PUBLICATION",
+    "tested": false
+  },
+  "newTests": 0,
+  "modelAPICalls": 0,
+  "files": [
+    {
+      "path": "SS16.fixture-excerpt.json",
+      "bytes": 4520,
+      "sha256": "6b8ec8999656668b252ce536a115a278117170bdfa9ae0903667f443943a5ba2"
+    },
+    {
+      "path": "budget-ledger.json",
+      "bytes": 1269,
+      "sha256": "a0163d362a078e1159161c920541fe811fd6929f5a79ee54f0ff9395188d8075"
+    },
+    {
+      "path": "claude-version.txt",
+      "bytes": 22,
+      "sha256": "137c91ab68b8a7a011de6f45c0bdbb962abd1fa261daafa7f7fe4dbac82ba604"
+    },
+    {
+      "path": "cli-preflight.json",
+      "bytes": 1059,
+      "sha256": "6552f444a546a2111dea34ffd4ae681e20347fe440b27f977b2e358b6e4e7226"
+    },
+    {
+      "path": "execution-plan.prepared.json",
+      "bytes": 9822,
+      "sha256": "650aa9b98b6be89f3f343a99ae7c31effec1e0c3ff807ccce0fccc29dc559071"
+    },
+    {
+      "path": "historical-guidance-read.json",
+      "bytes": 1379,
+      "sha256": "a0d33278b069945dab603d0db8d577850ecbc07db62f6d4e079371d7222ade9d"
+    },
+    {
+      "path": "input-hash-verification.json",
+      "bytes": 10006,
+      "sha256": "1943f519337dd8e5e0f1fc7287e830c5b09a654acb2d737c11771c6d1a3731fb"
+    },
+    {
+      "path": "inputs/originalPrompt.utf8.txt",
+      "bytes": 124,
+      "sha256": "6d0c8db213a015636577c23521d4075459f37bcb16284da0e1ad54ebd49b70be"
+    },
+    {
+      "path": "instructions-read.json",
+      "bytes": 1672,
+      "sha256": "68bdca854a5e4a4280903b8018736c997a78715112dfa02c759d4804a775d45d"
+    },
+    {
+      "path": "publication-baseline.json",
+      "bytes": 456,
+      "sha256": "f9effcbceb9db9924f6e58909b23d54b7ba5fdb2eec25abbe341dbe2fa48dfbc"
+    },
+    {
+      "path": "report.md",
+      "bytes": 7518,
+      "sha256": "53382ca558c6ccc7b6d34c87da85c121efc606a04279628cc11ccbbe0ecf4370"
+    },
+    {
+      "path": "resume-gates.json",
+      "bytes": 1359,
+      "sha256": "ba4a5ddd93b7bf79ea872a34510f3ad742f4083f0e23ff59827f267a89ba15be"
+    },
+    {
+      "path": "variants-prepared.json",
+      "bytes": 4664,
+      "sha256": "9379e16724286ac58dea04778f7c30c5fa75f9c36c445b4d114dae47b7f415d2"
+    }
+  ],
+  "hashPolicy": "manifest hashes payload only; SHA256SUMS hashes payload and manifest; neither metadata file hashes itself"
+}

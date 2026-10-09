@@ -1,0 +1,109 @@
+{
+  "caseId": "SS16",
+  "title": "전체 inventory의 덜 빈번한 스킬",
+  "familyId": "korean-edit",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "live와 mock.",
+  "originalPrompt": "이 한국어 안내문의 사실·수치·링크·주장 강도를 보존하며 자연스럽게 편집하고 검증해 줘.",
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS16",
+    "fields": {
+      "입력": "“이 한국어 안내문의 사실·수치·링크·주장 강도를 보존하며 자연스럽게 편집하고 검증해 줘.” 전체 inventory의 순서를 세 가지로 바꾸되 K를 끝에 둔 변형을 포함한다.",
+      "필수추천": "R={K}.",
+      "금지추천 또는 행동": "대표 엔지니어링 스킬 몇 개로 후보 축소; K를 top-k 앞부분에 없다는 이유로 누락.",
+      "허용선택": "A={O}. 기존 경로에서 K의 단계 연결을 요구할 때만 허용하며 추천 사유가 필요하다.",
+      "보류조건": "inventory 전부를 전달할 수 없으면 잘림을 알리고 보류한다.",
+      "통과기준": "순서와 무관하게 K를 추천하며 후보 수·digest가 전체 inventory와 일치한다. 승인된 실제 적용 시험에서는 같은 K 하나를 선택했더라도 korean-prose-selection·korean-prose-editing·korean-prose-verification·korean-prose-finalization 네 capability의 필요한 단계·의존성이 빠지지 않는지 별도 확인한다. 단계 수를 서로 다른 스킬 수로 세지 않는다.",
+      "증거": "E0, 후보 수와 순서별 결과. provider 사전 필터가 있으면 전체 후보 평가의 동등성을 입증한다.",
+      "실행종류": "live와 mock."
+    },
+    "bodyDigest": "sha256:88a8abf0330fde67b0fd0f3202371d0a3ce0f59bc5084f21305977c169fa3b8e"
+  },
+  "oracle": {
+    "required": [
+      "korean-prose-editor"
+    ],
+    "allowed": [
+      "orchestrator"
+    ],
+    "allowedConditions": {
+      "orchestrator": "reason must describe linking the four Korean prose capability phases"
+    },
+    "forbidden": [],
+    "notApplicable": [
+      "ponytail",
+      "cs-engineering",
+      "test-engineering",
+      "code-review",
+      "software-security-auditor"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "change-scope-guardian",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      },
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      }
+    ],
+    "boundaryDecision": "O conditional on actual phase linking"
+  },
+  "variants": [
+    "original-order",
+    "reversed-order",
+    "required-at-tail"
+  ]
+}

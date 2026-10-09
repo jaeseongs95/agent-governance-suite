@@ -1,0 +1,38 @@
+[
+  {
+    "path": "AGENTS.md",
+    "sourceCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+    "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827",
+    "role": "local preparation guidance only; not verified product candidate"
+  },
+  {
+    "path": "skills/test-engineering/SKILL.md",
+    "sourceCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+    "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+    "role": "local preparation guidance only; not verified product candidate"
+  },
+  {
+    "path": "skills/orchestrator/references/engineering-practices/test-design.md",
+    "sourceCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+    "sha256": "fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c",
+    "role": "local preparation guidance only; not verified product candidate"
+  },
+  {
+    "path": "skills/korean-prose-editor/SKILL.md",
+    "sourceCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+    "sha256": "f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+    "role": "local preparation guidance only; not verified product candidate"
+  },
+  {
+    "path": "skills/acceptance-evidence-validator/SKILL.md",
+    "sourceCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+    "sha256": "1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109",
+    "role": "local preparation guidance only; not verified product candidate"
+  },
+  {
+    "path": ".agents/skills",
+    "source": "workspace and local product checkout",
+    "present": false,
+    "fallback": "related skills found at repository skills/<name>/SKILL.md; verified candidate must be reread on resume"
+  }
+]

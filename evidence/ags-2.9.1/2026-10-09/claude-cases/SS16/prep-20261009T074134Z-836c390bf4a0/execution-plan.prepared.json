@@ -1,0 +1,171 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "claude-case-preparation-plan",
+  "caseId": "SS16",
+  "title": "전체 inventory의 덜 빈번한 스킬",
+  "status": "PREPARED_WAITING_PARENT_NOT_PRODUCT_PASS",
+  "productCandidate": {
+    "label": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "status": "PENDING_PARENT_VERIFIED_CANDIDATE_SOURCE_JUDGMENT_AND_REMOTE_PUBLICATION",
+    "tested": false
+  },
+  "frozenEvidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "oracleUnchanged": {
+    "required": [
+      "korean-prose-editor"
+    ],
+    "allowed": [
+      "orchestrator"
+    ],
+    "allowedConditions": {
+      "orchestrator": "reason must describe linking the four Korean prose capability phases"
+    },
+    "forbidden": [],
+    "notApplicable": [
+      "ponytail",
+      "cs-engineering",
+      "test-engineering",
+      "code-review",
+      "software-security-auditor"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "change-scope-guardian",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      },
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      }
+    ],
+    "boundaryDecision": "O conditional on actual phase linking"
+  },
+  "sourceSpecUnchanged": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS16",
+    "fields": {
+      "입력": "“이 한국어 안내문의 사실·수치·링크·주장 강도를 보존하며 자연스럽게 편집하고 검증해 줘.” 전체 inventory의 순서를 세 가지로 바꾸되 K를 끝에 둔 변형을 포함한다.",
+      "필수추천": "R={K}.",
+      "금지추천 또는 행동": "대표 엔지니어링 스킬 몇 개로 후보 축소; K를 top-k 앞부분에 없다는 이유로 누락.",
+      "허용선택": "A={O}. 기존 경로에서 K의 단계 연결을 요구할 때만 허용하며 추천 사유가 필요하다.",
+      "보류조건": "inventory 전부를 전달할 수 없으면 잘림을 알리고 보류한다.",
+      "통과기준": "순서와 무관하게 K를 추천하며 후보 수·digest가 전체 inventory와 일치한다. 승인된 실제 적용 시험에서는 같은 K 하나를 선택했더라도 korean-prose-selection·korean-prose-editing·korean-prose-verification·korean-prose-finalization 네 capability의 필요한 단계·의존성이 빠지지 않는지 별도 확인한다. 단계 수를 서로 다른 스킬 수로 세지 않는다.",
+      "증거": "E0, 후보 수와 순서별 결과. provider 사전 필터가 있으면 전체 후보 평가의 동등성을 입증한다.",
+      "실행종류": "live와 mock."
+    },
+    "bodyDigest": "sha256:88a8abf0330fde67b0fd0f3202371d0a3ce0f59bc5084f21305977c169fa3b8e"
+  },
+  "requirements": [
+    {
+      "id": "SS16-FULL-INVENTORY-THREE-ORDERS",
+      "provenance": "Original sourceSpec input/pass/evidence",
+      "expectedBehavior": "All three orders carry the full inventory and exact original prompt. K is recommended regardless of position. Candidate count and inventory digest match full inventory; no engineering shortlist or top-k truncation.",
+      "neededEvidence": "Actual request capture, inventory source digest, candidate order/count, Claude recommendation per variant.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "SS16-INPUT-TOO-LONG-HOLD",
+      "provenance": "Original sourceSpec hold condition",
+      "expectedBehavior": "If full inventory cannot fit, disclose truncation and hold before dispatch; never trim candidates to continue.",
+      "neededEvidence": "Request-size/limit and zero-dispatch evidence for hold.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "SS16-K-AND-CONDITIONAL-O",
+      "provenance": "Original required/allowed conditions",
+      "expectedBehavior": "K=korean-prose-editor required. O=orchestrator allowed only with an actual reason linking four Korean prose capability phases. Unrelated nonempty reasons fail. Unadjudicated skills remain unadjudicated.",
+      "neededEvidence": "Actual recommendation and selected IDs, O reason if used, frozen oracle comparison.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "SS16-FOUR-PHASES-ONE-SKILL",
+      "provenance": "Original sourceSpec approved actual application criterion",
+      "expectedBehavior": "Selection, editing, verification, finalization retain artifact dependencies and required phases. Count K as one distinct skill, not four.",
+      "neededEvidence": "Claude tool-use/SKILL read evidence and linked stage artifacts/receipts with candidate/plugin binding.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "SS16-UNOBSERVED-STAGES",
+      "provenance": "Existing public test plan and host boundary",
+      "expectedBehavior": "Recommendation, selection, read, application and verification are separate. Missing observations are NOT_RUN, null is not []. Sol cannot fabricate Claude actions or trusted host receipts.",
+      "neededEvidence": "Authentic host actor/selection receipt and read/applied/verified evidence.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "SS16-INVALID-RESPONSE-KNOWN-COST",
+      "provenance": "Existing public negative control; known shared finding",
+      "expectedBehavior": "Valid known usage/cost survives invalid response such as missing K judgment. Failed/retried/cache usage is retained. Historical synthetic 0.003 is not current real spend.",
+      "neededEvidence": "Per-attempt real cost/token/cache/error records, and separate offline negative control if parent authorizes.",
+      "status": "NOT_RUN"
+    }
+  ],
+  "actualClaudeSteps": [
+    "Receive parent verified commit/tree, independent SOURCE judgment, immutable remote publication evidence and common predecessor checks. Reject prior main or c6a8019 as final candidate.",
+    "Prepare a new isolated source/plugin checkout pinned to parent verified candidate. Read its AGENTS.md, relevant SKILL.md and Claude overlay details; inspect .agents/skills if absent from catalog. Verify committed plugin/runtime bytes without regeneration.",
+    "Receive common exact Claude model/effort, temporary API authentication procedure, no-retry/fallback policy, approved plugin/MCP/profile/host receipt route and cost instrumentation. Verify remaining case budget before every call.",
+    "Capture full verified inventory and exact 124-byte prompt. Build original, reverse and K-at-tail variants using complete membership. Record request bytes/hash/count/order and invariant inventory digest. Do not include frozen expected K/O verdicts in model-facing input.",
+    "Execute actual Claude Code in this Cloud environment through the approved API-auth route only after parent release. Claude performs host work; Sol captures and compares evidence. No JEV calls without separate allocation.",
+    "Compare all three authentic recommendations against frozen oracle. If O is present, inspect its phase-linking reason. Record selected/read/applied/verified separately using real evidence, not model self-report alone.",
+    "For approved actual editing, use parent-provided announcement, protected spans/source-unit manifest, glossary result and frozen rubric. Observe four capability dependencies and one K skill. Respect candidate role isolation requirements; do not substitute fabricated source text.",
+    "Stop before further calls on missing/unknown cost, unaffordable next call or budget approach. Record complete attempts including failed/retried/cache usage. Publish partial/blocked results without promoting incomplete criteria to PASS."
+  ],
+  "productTestsExecuted": 0,
+  "paidAPICalls": 0,
+  "historicalReproductions": 0,
+  "candidateCodeModified": false,
+  "generatedDistributionModified": false,
+  "launchCommandFinalized": false,
+  "reason": "Common model/auth/configuration and verified candidate have not been supplied; no runnable paid-launch command or guessed authentication configuration is supplied."
+}

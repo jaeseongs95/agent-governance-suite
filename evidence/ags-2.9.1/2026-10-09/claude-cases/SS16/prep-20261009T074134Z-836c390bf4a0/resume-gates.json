@@ -1,0 +1,38 @@
+{
+  "status": "WAITING_PARENT",
+  "gates": [
+    {
+      "id": "candidate",
+      "status": "PENDING",
+      "need": "Verified final candidate commit/tree, SOURCE judgment, immutable remote publication and common predecessor check evidence."
+    },
+    {
+      "id": "claude-model",
+      "status": "PENDING",
+      "need": "Exact shared model/effort and temporary API-auth procedure proven successful; no key value in artifacts."
+    },
+    {
+      "id": "host-route",
+      "status": "PENDING",
+      "need": "Approved Claude plugin/MCP/profile/host observation route, valid qualification for full inventory and model, and no JEV unless allocated."
+    },
+    {
+      "id": "host-source-text",
+      "status": "MISSING_ORIGINAL",
+      "need": "Approved announcement body and associated protected spans/rubric/glossary inputs for applied/verified stages. Original prompt alone supports classification intake, not completed editing."
+    },
+    {
+      "id": "accounting",
+      "status": "PENDING",
+      "need": "Shared per-attempt cost/token/cache/failure/retry capture and safe budget headroom policy for three full-inventory variants."
+    }
+  ],
+  "cliPresence": "CONFIRMED_2.1.286",
+  "inputHashes": "ALL_MATCH",
+  "actualClaudeHostStages": {
+    "selected": "NOT_RUN",
+    "read": "NOT_RUN",
+    "applied": "NOT_RUN",
+    "verified": "NOT_RUN"
+  }
+}

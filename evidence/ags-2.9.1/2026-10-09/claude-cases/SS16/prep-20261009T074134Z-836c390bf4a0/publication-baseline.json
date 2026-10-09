@@ -1,0 +1,10 @@
+{
+  "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+  "branch": "evidence",
+  "baseCommit": "4641681ad95916189d468d6e24e02e9ec2312731",
+  "statusPorcelain": "",
+  "targetPath": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS16/prep-20261009T074134Z-836c390bf4a0",
+  "targetExisted": false,
+  "allowedChange": "add sanitized preparation artifacts under exact unique run path only",
+  "observedAt": "2026-10-09T07:48:20.207139+00:00"
+}

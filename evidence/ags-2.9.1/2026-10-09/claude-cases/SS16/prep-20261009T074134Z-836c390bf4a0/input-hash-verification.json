@@ -1,0 +1,302 @@
+{
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "casePath": "evidence/ags-2.9.1/2026-10-09/cases/SS16/",
+  "files": [
+    {
+      "path": "MISSING_ORIGINAL.json",
+      "bytes": 1713,
+      "sha256": "0f708664a1d0c889b4b77e23aaf6a6235a98f1b957e60865c7fe4d7078c778d1",
+      "gitBlobSHA": "61ce2bc5f9723e03f2f051f602a5909ed785076a"
+    },
+    {
+      "path": "ORIGINAL_ARTIFACTS.json",
+      "bytes": 4393,
+      "sha256": "51f90b817950d035833a0ad579421a016c7497f5d07c298e288ce3655f496fcb",
+      "gitBlobSHA": "537e34bfc055c6040d5229e325a2538b03015ba1"
+    },
+    {
+      "path": "PATCHES.md",
+      "bytes": 213,
+      "sha256": "257ead01e15921c785b72e49d83378bf92f7154af6d896177943b709a5a31a07",
+      "gitBlobSHA": "786e957f733b8858c2993a98e601314c35775dbe"
+    },
+    {
+      "path": "README.md",
+      "bytes": 4611,
+      "sha256": "0f7656bffde644f073fcb8c3e9f1d470c555a79b58cf194f4b244232028c5664",
+      "gitBlobSHA": "b9d75c3a909b82554e74c69a0090f38ac96581d4"
+    },
+    {
+      "path": "SHA256SUMS",
+      "bytes": 1499,
+      "sha256": "c9ed10a060612a72342a45c1284c24fd54bb4d1a1a665a7fa660640fc2379d48",
+      "gitBlobSHA": "dec9630375ef074727b474f73ab5b97afe78f081"
+    },
+    {
+      "path": "SS16.fixture-excerpt.json",
+      "bytes": 4520,
+      "sha256": "6b8ec8999656668b252ce536a115a278117170bdfa9ae0903667f443943a5ba2",
+      "gitBlobSHA": "ef38cc7978809ccc8ea15cfc48da4c4ecc7d99e2"
+    },
+    {
+      "path": "SS16.observed.public.json",
+      "bytes": 120335,
+      "sha256": "74bf5cca398a2e912f594a7fb82dcb320ef6c4899dd188f091e677f40dfa1e83",
+      "gitBlobSHA": "9cd4707e9312f0751f5889d301cd10af7e532906"
+    },
+    {
+      "path": "SS16.plan-check.json",
+      "bytes": 220,
+      "sha256": "031c1d94d128cb9376568691423bc222e20d270865cafb69edf4bc1ab465fc87",
+      "gitBlobSHA": "11be499386a9fbda38299ae68d80daf36233bf40"
+    },
+    {
+      "path": "SS16.result.public.json",
+      "bytes": 74110,
+      "sha256": "3d2b0b1cdb9fcb45c3696994d215a77e8bdb74c221d3942c6a5d66f8e3d3d4de",
+      "gitBlobSHA": "1dde901711209e7f3337aaa19ac7f7c73c2ce9fa"
+    },
+    {
+      "path": "SS16.snapshot.json",
+      "bytes": 3793,
+      "sha256": "2265c31954feecfbd8d86a7ede61eab5e5ee1d57a47b4f488cca9ef1c95ddbe8",
+      "gitBlobSHA": "5e0c1618a50f0f6f4ab957215276ca42cd2d50ee"
+    },
+    {
+      "path": "SS16.test-plan.public.json",
+      "bytes": 3643,
+      "sha256": "42724f720d14f86c077581c1445b3bd21e55ee44c454da756b40620fc55d9bcb",
+      "gitBlobSHA": "7710acb47ae14173a20ae9a6d271054868728989"
+    },
+    {
+      "path": "SS16.test-proof.json",
+      "bytes": 4964,
+      "sha256": "782ef56c94c3da8a55682ed77ddeb406984f20246f2f762d9115368946d6a68e",
+      "gitBlobSHA": "564a6c690d5fae06f813f270ea57770941d66561"
+    },
+    {
+      "path": "SS16.vitest.public.json",
+      "bytes": 14156,
+      "sha256": "1ed5cd03d2c79901882e937029904044e4c35e18e8f5e50bc125d8d48f39e565",
+      "gitBlobSHA": "18b0fa92c6572e05cc74e8558e251ed7c0eb50cc"
+    },
+    {
+      "path": "SS16.vitest.public.log",
+      "bytes": 5166,
+      "sha256": "29a0af01de40464ddac4201ce40c34eedc83ad26ea76a7bd41e33087c5c1f5ef",
+      "gitBlobSHA": "53c0e02702c5fa15005a8acf633c88ff12fd6f2d"
+    },
+    {
+      "path": "inputs/originalPrompt.utf8.txt",
+      "bytes": 124,
+      "sha256": "6d0c8db213a015636577c23521d4075459f37bcb16284da0e1ad54ebd49b70be",
+      "gitBlobSHA": "c100c2970c63a8b95b101e932fe6980bddcc6288"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 10698,
+      "sha256": "3e30a7f55a5db1d41787ecb7004b8f5c6d3d77c43d700b7be2bbb757c8116171",
+      "gitBlobSHA": "0a1d2eb2de03f306011489a34a65d59a478c8339"
+    },
+    {
+      "path": "reproduce/SS16-isolated.test.ts",
+      "bytes": 15680,
+      "sha256": "0b9726bad45c4fadefc3ba0bca7fc22ea8874e6568795333c2587a0563137be6",
+      "gitBlobSHA": "d06c1e40feadf16d9ea2ca976b3b7839c4a3ce2f"
+    },
+    {
+      "path": "reproduce/run-SS16.sh",
+      "bytes": 232,
+      "sha256": "d14ab00717a2ed20bf050b8080ec3aed277dc97af0c0285644ce582aeefaec21",
+      "gitBlobSHA": "7d943b34e8c084275239686a9d022187f7f189fc"
+    }
+  ],
+  "sha256SumsChecks": [
+    {
+      "path": "MISSING_ORIGINAL.json",
+      "expected": "0f708664a1d0c889b4b77e23aaf6a6235a98f1b957e60865c7fe4d7078c778d1",
+      "actual": "0f708664a1d0c889b4b77e23aaf6a6235a98f1b957e60865c7fe4d7078c778d1",
+      "match": true
+    },
+    {
+      "path": "ORIGINAL_ARTIFACTS.json",
+      "expected": "51f90b817950d035833a0ad579421a016c7497f5d07c298e288ce3655f496fcb",
+      "actual": "51f90b817950d035833a0ad579421a016c7497f5d07c298e288ce3655f496fcb",
+      "match": true
+    },
+    {
+      "path": "PATCHES.md",
+      "expected": "257ead01e15921c785b72e49d83378bf92f7154af6d896177943b709a5a31a07",
+      "actual": "257ead01e15921c785b72e49d83378bf92f7154af6d896177943b709a5a31a07",
+      "match": true
+    },
+    {
+      "path": "README.md",
+      "expected": "0f7656bffde644f073fcb8c3e9f1d470c555a79b58cf194f4b244232028c5664",
+      "actual": "0f7656bffde644f073fcb8c3e9f1d470c555a79b58cf194f4b244232028c5664",
+      "match": true
+    },
+    {
+      "path": "SS16.fixture-excerpt.json",
+      "expected": "6b8ec8999656668b252ce536a115a278117170bdfa9ae0903667f443943a5ba2",
+      "actual": "6b8ec8999656668b252ce536a115a278117170bdfa9ae0903667f443943a5ba2",
+      "match": true
+    },
+    {
+      "path": "SS16.observed.public.json",
+      "expected": "74bf5cca398a2e912f594a7fb82dcb320ef6c4899dd188f091e677f40dfa1e83",
+      "actual": "74bf5cca398a2e912f594a7fb82dcb320ef6c4899dd188f091e677f40dfa1e83",
+      "match": true
+    },
+    {
+      "path": "SS16.plan-check.json",
+      "expected": "031c1d94d128cb9376568691423bc222e20d270865cafb69edf4bc1ab465fc87",
+      "actual": "031c1d94d128cb9376568691423bc222e20d270865cafb69edf4bc1ab465fc87",
+      "match": true
+    },
+    {
+      "path": "SS16.result.public.json",
+      "expected": "3d2b0b1cdb9fcb45c3696994d215a77e8bdb74c221d3942c6a5d66f8e3d3d4de",
+      "actual": "3d2b0b1cdb9fcb45c3696994d215a77e8bdb74c221d3942c6a5d66f8e3d3d4de",
+      "match": true
+    },
+    {
+      "path": "SS16.snapshot.json",
+      "expected": "2265c31954feecfbd8d86a7ede61eab5e5ee1d57a47b4f488cca9ef1c95ddbe8",
+      "actual": "2265c31954feecfbd8d86a7ede61eab5e5ee1d57a47b4f488cca9ef1c95ddbe8",
+      "match": true
+    },
+    {
+      "path": "SS16.test-plan.public.json",
+      "expected": "42724f720d14f86c077581c1445b3bd21e55ee44c454da756b40620fc55d9bcb",
+      "actual": "42724f720d14f86c077581c1445b3bd21e55ee44c454da756b40620fc55d9bcb",
+      "match": true
+    },
+    {
+      "path": "SS16.test-proof.json",
+      "expected": "782ef56c94c3da8a55682ed77ddeb406984f20246f2f762d9115368946d6a68e",
+      "actual": "782ef56c94c3da8a55682ed77ddeb406984f20246f2f762d9115368946d6a68e",
+      "match": true
+    },
+    {
+      "path": "SS16.vitest.public.json",
+      "expected": "1ed5cd03d2c79901882e937029904044e4c35e18e8f5e50bc125d8d48f39e565",
+      "actual": "1ed5cd03d2c79901882e937029904044e4c35e18e8f5e50bc125d8d48f39e565",
+      "match": true
+    },
+    {
+      "path": "SS16.vitest.public.log",
+      "expected": "29a0af01de40464ddac4201ce40c34eedc83ad26ea76a7bd41e33087c5c1f5ef",
+      "actual": "29a0af01de40464ddac4201ce40c34eedc83ad26ea76a7bd41e33087c5c1f5ef",
+      "match": true
+    },
+    {
+      "path": "inputs/originalPrompt.utf8.txt",
+      "expected": "6d0c8db213a015636577c23521d4075459f37bcb16284da0e1ad54ebd49b70be",
+      "actual": "6d0c8db213a015636577c23521d4075459f37bcb16284da0e1ad54ebd49b70be",
+      "match": true
+    },
+    {
+      "path": "manifest.json",
+      "expected": "3e30a7f55a5db1d41787ecb7004b8f5c6d3d77c43d700b7be2bbb757c8116171",
+      "actual": "3e30a7f55a5db1d41787ecb7004b8f5c6d3d77c43d700b7be2bbb757c8116171",
+      "match": true
+    },
+    {
+      "path": "reproduce/SS16-isolated.test.ts",
+      "expected": "0b9726bad45c4fadefc3ba0bca7fc22ea8874e6568795333c2587a0563137be6",
+      "actual": "0b9726bad45c4fadefc3ba0bca7fc22ea8874e6568795333c2587a0563137be6",
+      "match": true
+    },
+    {
+      "path": "reproduce/run-SS16.sh",
+      "expected": "d14ab00717a2ed20bf050b8080ec3aed277dc97af0c0285644ce582aeefaec21",
+      "actual": "d14ab00717a2ed20bf050b8080ec3aed277dc97af0c0285644ce582aeefaec21",
+      "match": true
+    }
+  ],
+  "manifestChecks": [
+    {
+      "path": "MISSING_ORIGINAL.json",
+      "sha256Match": true,
+      "bytesMatch": true
+    },
+    {
+      "path": "ORIGINAL_ARTIFACTS.json",
+      "sha256Match": true,
+      "bytesMatch": true
+    },
+    {
+      "path": "PATCHES.md",
+      "sha256Match": true,
+      "bytesMatch": true
+    },
+    {
+      "path": "README.md",
+      "sha256Match": true,
+      "bytesMatch": true
+    },
+    {
+      "path": "SS16.fixture-excerpt.json",
+      "sha256Match": true,
+      "bytesMatch": true
+    },
+    {
+      "path": "SS16.observed.public.json",
+      "sha256Match": true,
+      "bytesMatch": true
+    },
+    {
+      "path": "SS16.plan-check.json",
+      "sha256Match": true,
+      "bytesMatch": true
+    },
+    {
+      "path": "SS16.result.public.json",
+      "sha256Match": true,
+      "bytesMatch": true
+    },
+    {
+      "path": "SS16.snapshot.json",
+      "sha256Match": true,
+      "bytesMatch": true
+    },
+    {
+      "path": "SS16.test-plan.public.json",
+      "sha256Match": true,
+      "bytesMatch": true
+    },
+    {
+      "path": "SS16.test-proof.json",
+      "sha256Match": true,
+      "bytesMatch": true
+    },
+    {
+      "path": "SS16.vitest.public.json",
+      "sha256Match": true,
+      "bytesMatch": true
+    },
+    {
+      "path": "SS16.vitest.public.log",
+      "sha256Match": true,
+      "bytesMatch": true
+    },
+    {
+      "path": "inputs/originalPrompt.utf8.txt",
+      "sha256Match": true,
+      "bytesMatch": true
+    },
+    {
+      "path": "reproduce/SS16-isolated.test.ts",
+      "sha256Match": true,
+      "bytesMatch": true
+    },
+    {
+      "path": "reproduce/run-SS16.sh",
+      "sha256Match": true,
+      "bytesMatch": true
+    }
+  ],
+  "originalPromptMatchesFixtureUTF8": true,
+  "allPASS": true
+}

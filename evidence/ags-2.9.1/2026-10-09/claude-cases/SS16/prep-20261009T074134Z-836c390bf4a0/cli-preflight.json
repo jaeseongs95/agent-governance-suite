@@ -1,0 +1,35 @@
+{
+  "observedAt": "2026-10-09T07:41:48.572989+00:00",
+  "cliRequestedPath": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+  "cliResolvedPath": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+  "cliSHA256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+  "pathContainsClaude": false,
+  "nodeVersion": "v24.19.0",
+  "pythonVersion": "Python 3.12.14",
+  "commands": [
+    {
+      "argv": [
+        "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+        "--version"
+      ],
+      "exitCode": 0,
+      "outputFile": "claude-version.txt",
+      "paidAPICalls": 0
+    },
+    {
+      "argv": [
+        "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+        "--help"
+      ],
+      "exitCode": 0,
+      "outputFile": "claude-help.txt",
+      "paidAPICalls": 0
+    }
+  ],
+  "apiAuthentication": "NOT_TESTED_PENDING_PARENT_PROTOCOL",
+  "productTests": 0,
+  "apiCalls": 0,
+  "permanentSettingsChanged": false,
+  "networkPolicyChanged": false,
+  "permissionsChanged": false
+}
