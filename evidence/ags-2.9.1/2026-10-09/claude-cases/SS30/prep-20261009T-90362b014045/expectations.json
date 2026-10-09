@@ -1,0 +1,285 @@
+{
+  "caseId": "SS30",
+  "title": "모델과 API 실패 분류",
+  "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "originalPrompt": null,
+  "oracle": null,
+  "criteria": {
+    "입력": "401/403, 5xx, 연결 전 실패, 모델 거절·빈 응답, malformed JSON, 필수 질문 일부 누락을 각각 주입한다.",
+    "필수추천": "실패 원인과 fallback을 나타내며 임의 추천을 새로 만들지 않는다.",
+    "금지추천 또는 행동": "HTTP 200을 의미 평가 PASS로 계산; 거절·빈 응답을 no-skill로 은폐; 정책 밖 다른 벤더·미승인 경로로 전환. 명시된 JEV 실패→사용자 vendor fallback은 허용하되 별도 attempt로 기록.",
+    "허용선택": "인증·서버 불가는 공통 RESP UNAVAILABLE/error, 구조 불량은 INVALID/error, 의미상 미확정은 PARTIAL 또는 UNCERTAIN/unresolvedItems로 매핑한다. providerOutcome·reasonCodes는 attempt 진단이며 공통 RESP의 error/unresolvedItems와 결속한다. B는 원형 보존하고 분류 품질을 별도로 판정한다. 실제 fallback 선택은 B·원문·규칙을 검토한 AGENT의 S와 receipt로 확인한다.",
+    "보류조건": "provider가 유효한 완전 응답을 제공하지 않음.",
+    "통과기준": "공통 RESP의 status/error/unresolvedItems와 attempt 진단이 실패 유형에 맞으며 오류를 숨기지 않는다. B의 분류 실패와 AGENT가 수정·보완한 S의 목적 정답을 각각 판정한다. B를 S로 강제 복사하지 않는다. AGENT도 필요한 선택을 확정하지 못한 경우에만 해당 선택을 NEEDS_INPUT/PARTIAL로 남긴다.",
+    "증거": "E0·E1, 비밀 제거된 오류 code와 응답 완전성.",
+    "실행종류": "mock. 실제 401·5xx를 유도하려고 키나 서비스 설정을 변경하지 않는다."
+  },
+  "expectedProbeRecords": [
+    {
+      "variantId": "401",
+      "path": "JEV-to-vendor",
+      "sourceObservationIndex": 0,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "failureStatus": "UNAVAILABLE",
+        "errorCode": "AUTH_UNAVAILABLE",
+        "dispatchState": "started",
+        "finalStatus": "SUCCESS",
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variantId": "401",
+      "path": "vendor-failure-final",
+      "sourceObservationIndex": 1,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "failureStatus": "UNAVAILABLE",
+        "errorCode": "AUTH_UNAVAILABLE",
+        "dispatchState": "started",
+        "finalStatus": "UNAVAILABLE",
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variantId": "403",
+      "path": "JEV-to-vendor",
+      "sourceObservationIndex": 2,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "failureStatus": "UNAVAILABLE",
+        "errorCode": "AUTH_UNAVAILABLE",
+        "dispatchState": "started",
+        "finalStatus": "SUCCESS",
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variantId": "403",
+      "path": "vendor-failure-final",
+      "sourceObservationIndex": 3,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "failureStatus": "UNAVAILABLE",
+        "errorCode": "AUTH_UNAVAILABLE",
+        "dispatchState": "started",
+        "finalStatus": "UNAVAILABLE",
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variantId": "5xx",
+      "path": "JEV-to-vendor",
+      "sourceObservationIndex": 4,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "failureStatus": "UNAVAILABLE",
+        "errorCode": "API_UNAVAILABLE",
+        "dispatchState": "started",
+        "finalStatus": "SUCCESS",
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variantId": "5xx",
+      "path": "vendor-failure-final",
+      "sourceObservationIndex": 5,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "failureStatus": "UNAVAILABLE",
+        "errorCode": "API_UNAVAILABLE",
+        "dispatchState": "started",
+        "finalStatus": "UNAVAILABLE",
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variantId": "not-dispatched",
+      "path": "JEV-to-vendor",
+      "sourceObservationIndex": 6,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "failureStatus": "UNAVAILABLE",
+        "errorCode": "CREDENTIAL_UNAVAILABLE",
+        "dispatchState": "not-started",
+        "finalStatus": "SUCCESS",
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variantId": "not-dispatched",
+      "path": "vendor-failure-final",
+      "sourceObservationIndex": 7,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "failureStatus": "UNAVAILABLE",
+        "errorCode": "CREDENTIAL_UNAVAILABLE",
+        "dispatchState": "not-started",
+        "finalStatus": "UNAVAILABLE",
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variantId": "refusal",
+      "path": "JEV-to-vendor",
+      "sourceObservationIndex": 8,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "failureStatus": "INVALID",
+        "errorCode": "INVALID_PROVIDER_RESPONSE",
+        "dispatchState": "started",
+        "finalStatus": "SUCCESS",
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variantId": "refusal",
+      "path": "vendor-failure-final",
+      "sourceObservationIndex": 9,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "failureStatus": "INVALID",
+        "errorCode": "INVALID_PROVIDER_RESPONSE",
+        "dispatchState": "started",
+        "finalStatus": "INVALID",
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variantId": "empty",
+      "path": "JEV-to-vendor",
+      "sourceObservationIndex": 10,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "failureStatus": "INVALID",
+        "errorCode": "INVALID_PROVIDER_RESPONSE",
+        "dispatchState": "started",
+        "finalStatus": "SUCCESS",
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variantId": "empty",
+      "path": "vendor-failure-final",
+      "sourceObservationIndex": 11,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "failureStatus": "INVALID",
+        "errorCode": "INVALID_PROVIDER_RESPONSE",
+        "dispatchState": "started",
+        "finalStatus": "INVALID",
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variantId": "malformed",
+      "path": "JEV-to-vendor",
+      "sourceObservationIndex": 12,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "failureStatus": "INVALID",
+        "errorCode": "INVALID_PROVIDER_RESPONSE",
+        "dispatchState": "started",
+        "finalStatus": "SUCCESS",
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variantId": "malformed",
+      "path": "vendor-failure-final",
+      "sourceObservationIndex": 13,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "failureStatus": "INVALID",
+        "errorCode": "INVALID_PROVIDER_RESPONSE",
+        "dispatchState": "started",
+        "finalStatus": "INVALID",
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variantId": "missing-questions",
+      "path": "JEV-to-vendor",
+      "sourceObservationIndex": 14,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "failureStatus": "INVALID",
+        "errorCode": "INVALID_PROVIDER_RESPONSE",
+        "dispatchState": "started",
+        "finalStatus": "SUCCESS",
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variantId": "missing-questions",
+      "path": "vendor-failure-final",
+      "sourceObservationIndex": 15,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "failureStatus": "INVALID",
+        "errorCode": "INVALID_PROVIDER_RESPONSE",
+        "dispatchState": "started",
+        "finalStatus": "INVALID",
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variantId": "not-dispatched",
+      "path": "fetch-rejection-extra-boundary",
+      "sourceObservationIndex": 16,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "status": "UNAVAILABLE",
+        "code": "TRANSPORT_UNAVAILABLE",
+        "dispatchState": "unknown"
+      }
+    },
+    {
+      "variantId": "refusal",
+      "path": "common-RESP-UNCERTAIN",
+      "sourceObservationIndex": 17,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "status": "UNCERTAIN",
+        "error": null,
+        "unresolvedCount": 2,
+        "fallbackCalls": 0
+      }
+    },
+    {
+      "variantId": "refusal",
+      "path": "common-RESP-PARTIAL",
+      "sourceObservationIndex": 18,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "status": "PARTIAL",
+        "error": null,
+        "unresolvedCount": 1,
+        "fallbackCalls": 0
+      }
+    },
+    {
+      "variantId": "missing-questions",
+      "path": "known-cost-invalid-response",
+      "sourceObservationIndex": 19,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "errorCode": "INVALID_PROVIDER_RESPONSE",
+        "actualCostUsd": 0.1,
+        "jevSpent": 0.1,
+        "pendingReservations": 0
+      }
+    },
+    {
+      "variantId": "refusal",
+      "path": "unbound-unresolvedItems",
+      "sourceObservationIndex": 20,
+      "executionKind": "new-offline-mock",
+      "expected": {
+        "invalidCommonRESP": true,
+        "fallbackCalls": 1
+      }
+    }
+  ],
+  "scope": "Recovered public synthetic mechanical contracts; no semantic golden or current-candidate observations invented."
+}
