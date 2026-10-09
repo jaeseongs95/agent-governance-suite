@@ -216,6 +216,7 @@ export function oracleDigest(value: { oracleRevision: string; sourceSpecDigest: 
 }
 
 export const OBSERVATION_REVISION = "2.0.0";
+export const SCORER_PATCH_REVISION = "r15";
 type RequestBinding = Pick<SkillClassificationRequestV1, "requestId" | "operationId" | "requestDigest" | "inventoryDigest">;
 interface ObservationBase extends RequestBinding {
   observationRevision: "2.0.0"; caseId: string; state: RunState;
@@ -238,6 +239,11 @@ export interface SelectionObservation extends ObservationBase {
 }
 export type Observation = ClassificationObservation | CombinedObservation | SelectionObservation;
 export interface PairTrial extends Omit<LegacyPairTrial, "codex" | "claude"> {codex: SelectionObservation | null; claude: SelectionObservation | null}
+/** Supplied separately by the evaluator caller; observations cannot issue this plan or authenticate its author. */
+export interface TrustedStagePlan extends RequestBinding {
+  caseId: string; conditionDigest: string; candidateDigest: string;
+  readRefs: {path: string; digest: string}[]; obligationIds: string[]; requiredPhases: string[];
+}
 
 const text = z.string().min(1), ids = z.array(text), digest = z.string().regex(/^sha256:[a-f0-9]{64}$/u);
 const reasons = z.array(z.object({skillId: z.string().nullable(), reasonCode: text}).strict());
@@ -249,6 +255,9 @@ const stageSchema = z.object({read: z.boolean(), applied: z.boolean(), verified:
   obligations: z.array(z.object({obligationId: text, artifactRef: text}).strict()).optional(),
   requiredPhases: ids.optional(), completedPhases: ids.optional(),
   verification: z.object({candidateDigest: text, result: z.enum(["PASS", "FAIL", "NOT_RUN"]), evidenceRef: text}).strict().optional()}).strict();
+const stagePlanSchema = z.object({caseId: text, requestId: text, operationId: text, requestDigest: digest, inventoryDigest: digest,
+  conditionDigest: digest, candidateDigest: digest, readRefs: z.array(z.object({path: text, digest}).strict()).min(1),
+  obligationIds: ids.min(1), requiredPhases: ids}).strict();
 const observationSchema = z.discriminatedUnion("kind", [
   z.object({...base, kind: z.literal("classification"), layer: z.enum(["jevRaw", "vendorRaw"]), classificationResponse: responseSchema.nullable(),
     producerDiagnostics: z.object({errorCode: text.nullable(), capViolation: z.boolean(), dispatchState: z.enum(["not-started", "started", "unknown"]), responseValidationErrors: ids}).strict()}).strict(),
@@ -328,6 +337,10 @@ function scoringEvidence(observation: Observation): LegacyObservation {
 export function scoreCase(fixture: SemanticCase, observation: Observation | undefined, inventory: string[]): CaseScore {
   if (observation) assertObservation(observation, inventory);
   const score = scoreLegacyCase(fixture, observation && scoringEvidence(observation), inventory);
+  if (observation?.state === "PASS") {
+    const selected = scoringEvidence(observation).skillIds;
+    if (selected !== null) score.falsePositives = new Set([...score.forbidden, ...score.unnecessary, ...selected.filter(id => !inventory.includes(id))]).size;
+  }
   if (observation && observation.kind !== "selection" && score.reasons.includes("UNCERTAINTY_HIDDEN_AS_SELECTION")) {
     const unresolved = observation.kind === "classification" ? observation.classificationResponse?.unresolvedItems ?? [] : observation.unresolvedItems;
     const reasonsPresent = fixture.oracle!.requiredReasons.every(reason => unresolved.some(row => row.reasonCode === reason));
@@ -336,14 +349,36 @@ export function scoreCase(fixture: SemanticCase, observation: Observation | unde
   }
   return score;
 }
-export function aggregate(cases: SemanticCase[], observations: Observation[], layer: Layer, inventory: string[]) {
+function stageObserved(observation: Observation, stage: "read" | "applied" | "verified", plans: TrustedStagePlan[]): boolean {
+  if (observation.kind !== "selection" || observation.state !== "PASS" || !observation.decision.hostReceipt) return false;
+  const e = observation.stageEvidence;
+  const read = e.read && !!e.readRefs?.length && e.readRefs.every(row => !!row.path && /^sha256:[a-f0-9]{64}$/u.test(row.digest));
+  if (stage === "read") return read;
+  const plan = plans.find(row => row.caseId === observation.caseId && row.requestId === observation.requestId && row.operationId === observation.operationId &&
+    row.requestDigest === observation.requestDigest && row.inventoryDigest === observation.inventoryDigest && row.conditionDigest === observation.conditionDigest && row.candidateDigest === observation.candidateDigest);
+  const applied = read && e.applied && !!plan && Array.isArray(e.requiredPhases) && Array.isArray(e.completedPhases) &&
+    sameSet(e.requiredPhases, plan.requiredPhases) && plan.requiredPhases.every(phase => e.completedPhases!.includes(phase)) &&
+    sameSet(e.readRefs!.map(row => JSON.stringify([row.path, row.digest])), plan.readRefs.map(row => JSON.stringify([row.path, row.digest]))) &&
+    !!e.obligations && e.obligations.every(row => !!row.artifactRef) && sameSet(e.obligations.map(row => row.obligationId), plan.obligationIds);
+  if (stage === "applied") return applied;
+  return applied && e.verified && e.verification?.candidateDigest === plan!.candidateDigest && e.verification.result === "PASS" && !!e.verification.evidenceRef;
+}
+export function aggregate(cases: SemanticCase[], observations: Observation[], layer: Layer, inventory: string[], stagePlans: TrustedStagePlan[] = []) {
   observations.forEach(row => assertObservation(row, inventory));
+  stagePlans.forEach(plan => {
+    stagePlanSchema.parse(plan);
+    if (new Set(plan.requiredPhases).size !== plan.requiredPhases.length || new Set(plan.obligationIds).size !== plan.obligationIds.length ||
+      new Set(plan.readRefs.map(row => row.path)).size !== plan.readRefs.length) throw new Error("DUPLICATE_STAGE_PLAN_MEMBER");
+  });
+  if (new Set(stagePlans.map(plan => JSON.stringify([plan.caseId, plan.requestId, plan.operationId, plan.requestDigest, plan.inventoryDigest, plan.conditionDigest, plan.candidateDigest]))).size !== stagePlans.length) throw new Error("DUPLICATE_STAGE_PLAN_BINDING");
   const result = aggregateScores(cases, observations.map(scoringEvidence), layer, inventory,
     fixture => scoreCase(fixture, observations.find(row => row.caseId === fixture.caseId && row.layer === layer), inventory));
-  return {...result, observationRevision: OBSERVATION_REVISION, scorerRevision: OBSERVATION_REVISION};
+  const stageCoverage = Object.fromEntries((["read", "applied", "verified"] as const).map(stage => [stage, result.denominator === 0 ? null :
+    observations.filter(row => row.layer === layer && result.scores.find(score => score.caseId === row.caseId)?.answered && stageObserved(row, stage, stagePlans)).length / result.denominator]));
+  return {...result, stageCoverage, observationRevision: OBSERVATION_REVISION, scorerRevision: OBSERVATION_REVISION, scorerPatchRevision: SCORER_PATCH_REVISION};
 }
-export function evaluateLayers(cases: SemanticCase[], observations: Observation[], inventory: string[]) {
-  return Object.fromEntries((["jevRaw", "vendorRaw", "combined", "selected"] as const).map(layer => [layer, aggregate(cases, observations, layer, inventory)]));
+export function evaluateLayers(cases: SemanticCase[], observations: Observation[], inventory: string[], stagePlans: TrustedStagePlan[] = []) {
+  return Object.fromEntries((["jevRaw", "vendorRaw", "combined", "selected"] as const).map(layer => [layer, aggregate(cases, observations, layer, inventory, stagePlans)]));
 }
 export function pairedMatrix(): PairTrial[] {return legacyPairedMatrix().map(row => ({...row, codex: null, claude: null}));}
 export function scorePairs(trials: PairTrial[], cases: SemanticCase[], inventory: string[]) {
@@ -351,7 +386,52 @@ export function scorePairs(trials: PairTrial[], cases: SemanticCase[], inventory
     assertObservation(observation, inventory);
     if (observation.kind !== "selection") throw new Error("PAIR_REQUIRES_SELECTION_OBSERVATION");
   }
-  return scoreLegacyPairs(trials.map(row => ({...row, codex: row.codex && scoringEvidence(row.codex), claude: row.claude && scoringEvidence(row.claude)})), cases, inventory);
+  const legacy = scoreLegacyPairs(trials.map(row => ({...row, codex: row.codex && scoringEvidence(row.codex), claude: row.claude && scoringEvidence(row.claude)})), cases, inventory);
+  const records = pairedMatrix().map(expected => {
+    const trial = trials.find(row => row.pairId === expected.pairId) ?? expected;
+    const {codex, claude} = trial;
+    const trace = {...expected, codex: structuredClone(codex), claude: structuredClone(claude)};
+    const old = legacy.records.find(row => row.pairId === expected.pairId)!;
+    let status = old.status;
+    if (!codex || !claude || codex.state === "NOT_RUN" || claude.state === "NOT_RUN") status = "NOT_RUN";
+    else if (codex.state === "BLOCKED" || claude.state === "BLOCKED") status = "BLOCKED";
+    const executed = codex?.state === "PASS" && claude?.state === "PASS" && codex.host === "codex" && claude.host === "claude" &&
+      codex.caseId === expected.caseId && claude.caseId === expected.caseId && status !== "UNMATCHED";
+    const selected = executed && codex.decision.agentSelectedSkillIds !== null && claude.decision.agentSelectedSkillIds !== null;
+    const agreement = selected ? sameSet(codex.decision.agentSelectedSkillIds, claude.decision.agentSelectedSkillIds) : null;
+    const abstentionAgreement = executed && !selected ? codex.decision.agentSelectedSkillIds === null && claude.decision.agentSelectedSkillIds === null : null;
+    return {...trace, status, agreement, abstentionAgreement, codexGolden: codex?.state === "NOT_RUN" ? "NOT_RUN" : old.codexGolden,
+      claudeGolden: claude?.state === "NOT_RUN" ? "NOT_RUN" : old.claudeGolden};
+  });
+  const eligibleSlot = (record: typeof records[number], host: "codex" | "claude") => {
+    const row = record[host];
+    return row?.state === "PASS" && row.host === host && row.caseId === record.caseId && record.status !== "UNMATCHED";
+  };
+  const stability = (["codex", "claude"] as const).map(host => {
+    const groups = REPRESENTATIVE_CASES.flatMap(caseId => PAIR_PATHS.map(path => {
+      const observations = records.filter(row => row.caseId === caseId && row.path === path && eligibleSlot(row, host)).map(row => row[host]!);
+      const selected = observations.filter(row => row.decision.agentSelectedSkillIds !== null);
+      const bindingCount = new Set(observations.map(row => JSON.stringify([row.conditionDigest, row.inventoryDigest, row.candidateDigest]))).size;
+      const values = selected.map(row => JSON.stringify(canonicalSet(row.decision.agentSelectedSkillIds)));
+      const observedAbstentions = observations.length - selected.length;
+      return {caseId, path, observedRepeats: selected.length, observedAbstentions,
+        status: bindingCount > 1 ? "UNMATCHED" : values.length < 3 ? "NOT_RUN" : new Set(values).size === 1 ? "STABLE" : "UNSTABLE",
+        abstentionStatus: bindingCount > 1 ? "UNMATCHED" : observedAbstentions === 3 ? "STABLE" : "NOT_RUN"};
+    }));
+    return {host, denominator: groups.length, stableGroups: groups.filter(row => row.status === "STABLE").length,
+      unstableGroups: groups.filter(row => row.status === "UNSTABLE").length, notRunGroups: groups.filter(row => row.status === "NOT_RUN").length,
+      unmatchedGroups: groups.filter(row => row.status === "UNMATCHED").length, stableAbstentionGroups: groups.filter(row => row.abstentionStatus === "STABLE").length, groups};
+  });
+  const compared = records.filter(row => row.agreement !== null), abstentions = records.filter(row => row.abstentionAgreement !== null);
+  return {...legacy, scorerPatchRevision: SCORER_PATCH_REVISION, expectedHostSlots: records.length * 2,
+    executedHostSlots: records.reduce((count, row) => count + Number(eligibleSlot(row, "codex")) + Number(eligibleSlot(row, "claude")), 0),
+    comparedPairs: compared.length, comparedAbstentionPairs: abstentions.length,
+    exactSetAgreement: compared.length ? compared.filter(row => row.agreement).length / compared.length : null,
+    executedAbstentionAgreement: abstentions.length ? abstentions.filter(row => row.abstentionAgreement).length / abstentions.length : null,
+    notRunPairs: records.filter(row => row.status === "NOT_RUN").length, blockedPairs: records.filter(row => row.status === "BLOCKED").length,
+    unmatchedPairs: records.filter(row => row.status === "UNMATCHED").length,
+    completedPurposeRate: records.filter(row => row.status === "PASS").length / records.length, stability, records,
+    verdict: legacy.issues.length === 0 && records.every(row => row.status === "PASS") ? "PASS" : "INCOMPLETE_OR_FAIL"};
 }
 
 const legacySchema = z.object({caseId: text, layer: z.enum(["jevRaw", "vendorRaw", "combined", "selected"]), state: z.enum(["PASS", "FAIL", "BLOCKED", "NOT_RUN"]),
@@ -359,7 +439,7 @@ const legacySchema = z.object({caseId: text, layer: z.enum(["jevRaw", "vendorRaw
   executionKind: base.executionKind, host: text.nullable(), hostReceipt: z.object({receiptId: text, host: text, requestDigest: text, inventoryDigest: text, agentSelectedSkillIds: ids, acceptedAt: text}).strict().nullable(),
   requestDigest: text, inventoryDigest: text, conditionDigest: text, candidateDigest: text.optional(), stageEvidence: stageSchema}).strict();
 const pairSchema = z.object({pairId: text, caseId: text, path: text, repetition: z.number().int(), codex: z.unknown().nullable(), claude: z.unknown().nullable()}).strict();
-export function evaluateInput(value: unknown, corpus: {cases: SemanticCase[]; inventorySkillIds: string[]}) {
+export function evaluateInput(value: unknown, corpus: {cases: SemanticCase[]; inventorySkillIds: string[]; stagePlans?: TrustedStagePlan[]}) {
   const input = z.object({observationRevision: z.enum(["2.0.0", "legacy-v1"]), observations: z.array(z.unknown()), pairs: z.array(pairSchema)}).strict().parse(value);
   if (input.observationRevision === "legacy-v1") {
     input.observations.forEach(row => legacySchema.parse(row));
@@ -370,8 +450,8 @@ export function evaluateInput(value: unknown, corpus: {cases: SemanticCase[]; in
   }
   input.observations.forEach(row => assertObservation(row, corpus.inventorySkillIds));
   input.pairs.forEach(row => [row.codex, row.claude].forEach(observation => {if (observation !== null) {assertObservation(observation, corpus.inventorySkillIds); if (observation.kind !== "selection") throw new Error("PAIR_REQUIRES_SELECTION_OBSERVATION");}}));
-  return {observationRevision: OBSERVATION_REVISION, scorerRevision: OBSERVATION_REVISION,
-    layers: evaluateLayers(corpus.cases, input.observations as Observation[], corpus.inventorySkillIds),
+  return {observationRevision: OBSERVATION_REVISION, scorerRevision: OBSERVATION_REVISION, scorerPatchRevision: SCORER_PATCH_REVISION,
+    layers: evaluateLayers(corpus.cases, input.observations as Observation[], corpus.inventorySkillIds, corpus.stagePlans),
     pairs: scorePairs(input.pairs as PairTrial[], corpus.cases, corpus.inventorySkillIds), releaseAcceptance: "NOT_ASSESSED"};
 }
 

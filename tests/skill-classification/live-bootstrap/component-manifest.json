@@ -63,8 +63,8 @@
       "path": "tests/skill-classification/evaluation.ts",
       "role": "versioned-observation-scorer",
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
-      "bytes": 32672,
-      "digest": "sha256:08e309bb3fee27d6d7af3d6e8c7bc13c978f7ea2298a3183292290636947004c"
+      "bytes": 40750,
+      "digest": "sha256:c7e367982b6028eed816ea275a40b3112084ff245803dd61c322b2cf168ea4f7"
     },
     {
       "path": "tests/skill-classification/evaluation.test.ts",
@@ -72,6 +72,13 @@
       "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
       "bytes": 30312,
       "digest": "sha256:23f8248adefb690529eb71bf0acc79395b287143bb614aafe9435a88923d7caa"
+    },
+    {
+      "path": "tests/skill-classification/evaluation-r15.test.ts",
+      "role": "offline-evaluator-metric-regression",
+      "fixtureOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+      "bytes": 12550,
+      "digest": "sha256:eb16355737717fe250f5d86ca0eb801633693f9e5f48dc72af5fc318cafd826d"
     }
   ],
   "actualApiCalls": 0,
@@ -97,5 +104,12 @@
     "originalHelperDigest": "sha256:1e258ae50a0e25d9c2a01a1ff186df1cce73c0693995ea7cef2be3cd187e791c",
     "originalScorerDigest": "sha256:e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
     "purpose": "R14 관측·채점 버전의 이전 소스. 원 21run 및 11PASS7FAIL을 새 후보 검증으로 승격하지 않는다."
+  },
+  "scorerPatchRevision": "r15",
+  "priorMetricCandidate": {
+    "commit": "98c875fc27c91eba1f1b5f65b509be669c6f42db",
+    "tree": "df8639acd8834faed1c4fc6550da378a376a669b",
+    "scorerDigest": "sha256:08e309bb3fee27d6d7af3d6e8c7bc13c978f7ea2298a3183292290636947004c",
+    "purpose": "R14 원 후보와 잔여 지표 실패를 보존하며 r15의 별도 교정 근거와 구분한다. 모델·호스트 품질 검증 완료를 뜻하지 않는다."
   }
 }
