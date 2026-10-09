@@ -1,0 +1,172 @@
+{
+  "caseId": "SS31",
+  "title": "timeout과 결과 불명",
+  "status": "PREPARED_WAITING_PARENT; actual Claude product test NOTRUN",
+  "proposedCandidateOnly": {
+    "label": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "remotePublication": "UNCONFIRMED",
+    "independentSOURCEVerdict": "UNCONFIRMED",
+    "receivedParentValidation": false
+  },
+  "responsibilities": {
+    "Sol": "Prepare isolated workspace, frozen input checks, cost bookkeeping and sanitized evidence publication. Never substitute Sol execution for Claude host work.",
+    "Claude Code": "After parent gates, actually read applicable plugin skills and execute host tools/mock runner on the verified candidate; collect hook/task/selection/read/application/verification evidence."
+  },
+  "resumeGates": [
+    "Parent provides verified immutable candidate commit/tree and fixed remote source links with independent SOURCE judgment and preliminary checks. Do not fall back to main or c6a8019.",
+    "Parent provides common exact Claude model, effort, run flags, successful API auth method and preflight result; use only process-local secret handoff without printing or persisting keys.",
+    "Confirm approved plugin/MCP installation, host task binding and hook observation mechanism, inventory, route/profile/qualification/config/budget. Keep global permissions/auth/network unchanged.",
+    "Agree original E0/E1/E2 definitions/provenance and missing purpose(B) task/oracle; missing definitions remain blockers for complete host/B acceptance, not invented criteria.",
+    "JEV live API remains forbidden until separately allocated. Original SS31 executionKind mock is preserved; mocked transport is labeled separately from real Claude orchestration cost."
+  ],
+  "stepsAfterGates": [
+    "Isolate verified immutable candidate; read its AGENTS.md and relevant SKILL.md (fallback .agents/skills); record commit/tree and input/test/source hashes. Resolve runner from candidate lockfile without altering product or generated deployment files.",
+    "Parent-approved Claude Code must use its own host tools to read the unchanged SS31 public input and sourceSpec, then read/apply relevant real plugin skills. Capture actual tool and hook evidence. Artificial review carrier is not real host skill selection.",
+    "Stage exact pinned repro/SS31-isolated.test.ts as an isolated test-only file in separate test workspace. Verify its SHA256 f70b1ebcfd2b29b8b1c1f66ecf7bc389cd6fc690befe7d148a268314d0ffb751. Preserve assertions; resolve API incompatibility as blocked or a separate reviewed harness change, never relax expectations.",
+    "Claude host runs original SS31 targeted regression, 14 isolated mock assertions and relevant static check. Capture command argv, timestamps, exit/signal, separate stdout/stderr, observations, source/test hashes and actual Claude tool events. No test run during this preparation.",
+    "For every timeout variant record provider invocation versus mocked HTTP transmission, dispatchState/timedOut/status, JEV and vendor attempt histories, unknown/confirmed cost and conservative reservations, cancel signal versus cancellation confirmation, ordered late-response events, replay and final completion count.",
+    "Check unchanged sourceSpec requirements. Allow final fallback success with retained JEV diagnosis and final UNAVAILABLE/UNCERTAIN holds as allowed. Treat credential-gap and timer-overflow findings as historical repro targets, not automatically correct outcomes or new duplicate defects.",
+    "Verify real selected/read/applied/verified observations and purpose(B) independently. If original task/oracle/E0/E1/E2 provenance remains absent, report host/B NOTRUN/BLOCKED even if mock assertions pass.",
+    "Reconcile all Claude paid calls including preparation, failure, retry and cache usage against US$2 soft cap. Stop before next call on approaching cap or unknown outstanding charge. Sanitize aggregate evidence and publish additive files only under SS31 unique run paths; read back fixed remote files and verify SHA256."
+  ],
+  "plannedCommandsTemplateOnly": [
+    [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "tests/mcp/skill-classification-service.test.ts",
+      "-t",
+      "SS31",
+      "--reporter=json",
+      "--outputFile=existing-regression.json"
+    ],
+    [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "tests/SS31-isolated.test.ts",
+      "--reporter=json",
+      "--outputFile=isolated-tests.json"
+    ],
+    [
+      "node",
+      "node_modules/typescript/bin/tsc",
+      "--ignoreConfig",
+      "--noEmit",
+      "--strict",
+      "--skipLibCheck",
+      "--types",
+      "node",
+      "--target",
+      "es2023",
+      "--module",
+      "nodenext",
+      "tests/SS31-isolated.test.ts"
+    ]
+  ],
+  "commandTemplateNotes": "SS31_OUTPUT_DIRECTORY must point to isolated output. Exact candidate-compatible argv must be frozen after parent gates. Commands copied as historical procedural references only; not executed.",
+  "subcases": [
+    {
+      "id": "SS31-ND-availability",
+      "variant": "not-dispatched",
+      "input": "JEV availability remains pending until timeout then resolves; approved vendor succeeds",
+      "expected": "JEV not-started/timedOut=true/reserved=0; JEV dispatch 0; vendor 1; late availability never dispatches"
+    },
+    {
+      "id": "SS31-ND-typed",
+      "variant": "not-dispatched",
+      "input": "provider confirms timeout before dispatch via PROVIDER_TIMEOUT/not-started",
+      "expected": "Confirmed nondispatch releases reservation; timeout remains recorded; vendor succeeds"
+    },
+    {
+      "id": "SS31-ND-credential-gap",
+      "variant": "not-dispatched",
+      "input": "approved remote provider's first credential read succeeds; second read remains pending until timeout; fetch never invoked",
+      "expected": "Known nondispatch timeout must be not-started with no retained charge reservation; JEV mock HTTP 0"
+    },
+    {
+      "id": "SS31-UC-started",
+      "variant": "unknown-consumption",
+      "input": "JEV reports PROVIDER_TIMEOUT/started; vendor succeeds",
+      "expected": "Attempt UNCERTAIN/timedOut=true; costs null; JEV reserve .4 and vendor confirmed .1 remain separate; 1 attempt each"
+    },
+    {
+      "id": "SS31-UC-unknown",
+      "variant": "unknown-consumption",
+      "input": "JEV reports PROVIDER_TIMEOUT/unknown; vendor succeeds",
+      "expected": "Attempt UNCERTAIN/timedOut=true; costs null; JEV reserve .4 and vendor confirmed .1 remain separate; 1 attempt each"
+    },
+    {
+      "id": "SS31-UC-remote-hang",
+      "variant": "unknown-consumption",
+      "input": "JEV approved remote mock fetch starts and never resolves; service deadline expires",
+      "expected": "Exactly 1 mock HTTP fetch; abort signal sent; JEV unknown reservation retained; fallback profile fixed; final completion 1"
+    },
+    {
+      "id": "SS31-UC-vendor-missing",
+      "variant": "unknown-consumption",
+      "input": "JEV timeout/started; no vendor provider available",
+      "expected": "Final UNAVAILABLE or UNCERTAIN hold retains JEV timeout attempt and conservative reservation; actual selection NOTRUN"
+    },
+    {
+      "id": "SS31-UC-vendor-blocked",
+      "variant": "unknown-consumption",
+      "input": "JEV timeout/unknown; vendor route is unapproved",
+      "expected": "No policy escape, vendor dispatch 0; allowed final hold with JEV uncertain diagnosis retained in attempts"
+    },
+    {
+      "id": "SS31-UC-both-timeout",
+      "variant": "unknown-consumption",
+      "input": "JEV timeout/started then vendor timeout/unknown",
+      "expected": "Both costs remain unknown with distinct .4 reservations; final UNCERTAIN; neither provider retries"
+    },
+    {
+      "id": "SS31-LR-remote-success",
+      "variant": "late-result",
+      "input": "JEV remote mock fetch times out; vendor succeeds; JEV late response supplies successful result and .1 cost; replay identical operation",
+      "expected": "Late success cannot overwrite fallback, settle unknown reservation or complete twice; replay does not resend"
+    },
+    {
+      "id": "SS31-LR-remote-rejection",
+      "variant": "late-result",
+      "input": "JEV remote mock fetch times out then rejects late; vendor succeeded",
+      "expected": "Late rejection must not overwrite or double complete; no unhandled rejection; reservation remains unknown"
+    },
+    {
+      "id": "SS31-LR-during-fallback",
+      "variant": "late-result",
+      "input": "JEV times out; vendor remains pending; JEV late success arrives before vendor completes",
+      "expected": "JEV late result cannot complete or overwrite vendor-in-flight result; one final fallback completion; unknown JEV cost retained"
+    },
+    {
+      "id": "SS31-LR-cancelled-task",
+      "variant": "late-result",
+      "input": "User cancels active JEV task; JEV late success arrives afterward",
+      "expected": "Cancellation signal sent but completion/charge not confirmed; fallback 0; late result inert; one final hold"
+    },
+    {
+      "id": "SS31-UC-timeout-overflow",
+      "variant": "unknown-consumption",
+      "input": "timeoutMs=2147483648 (safe positive integer); JEV availability pending; Node real timer used",
+      "expected": "Unsupported timer delay must be rejected INVALID_TIMEOUT before availability, never silently collapse to 1ms"
+    }
+  ],
+  "currentHostStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "currentHostObservations": {
+    "selected": null,
+    "read": null,
+    "applied": null,
+    "verified": null
+  },
+  "productCodeModified": false,
+  "generatedDeploymentModified": false,
+  "productTestsStarted": false,
+  "JEVCallsStarted": false
+}

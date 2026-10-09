@@ -1,0 +1,80 @@
+{
+  "caseId": "SS31",
+  "status": "FAIL",
+  "statusScope": "Offline mechanical validation only; actual host/full-case acceptance NOTRUN",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "acceptanceVerdict": "FAIL",
+  "testCounts": {
+    "existingRegression": {
+      "pass": 3,
+      "fail": 0,
+      "nonSS31Skipped": 37
+    },
+    "isolated": {
+      "total": 14,
+      "pass": 12,
+      "fail": 2
+    }
+  },
+  "findings": [
+    {
+      "id": "SS31-F1",
+      "severity": "medium",
+      "rootCause": "service sets dispatchState=unknown before provider classify enters its second credential await; no dispatch progress port, and late not-started completion cannot settle the already-returned unknown reservation",
+      "subcase": "SS31-ND-credential-gap",
+      "actual": "mock HTTP0, timeout unknown/UNCERTAIN, outstanding JEV reserve .4",
+      "expected": "confirmed nondispatch timeout/not-started, no residual charge reservation",
+      "locations": [
+        "mcp-server/src/skill-classification/service.ts:184",
+        "mcp-server/src/skill-classification/providers.ts:80",
+        "mcp-server/src/skill-classification/service.ts:208"
+      ],
+      "relatedKnownFinding": "No exact match among supplied known defects; shared provider/service observation gap, do not double-count across cases"
+    },
+    {
+      "id": "SS31-F2",
+      "severity": "high",
+      "rootCause": "safe integer/positive check lacks Node timer upper bound; setTimeout truncates 2147483648ms to 1ms",
+      "subcase": "SS31-UC-timeout-overflow",
+      "actual": "TimeoutOverflowWarning, JEV timeout, vendor fallback SUCCESS",
+      "expected": "Reject unsafe timer delay before dispatch",
+      "locations": [
+        "mcp-server/src/skill-classification/service.ts:127",
+        "mcp-server/src/skill-classification/service.ts:166"
+      ],
+      "relatedKnownFinding": "Existing timeoutoverflow; reproduction only, not a newly counted root cause"
+    }
+  ],
+  "actualHost": "NOTRUN",
+  "stageStatus": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "originalPrompt": null,
+  "oracle": null,
+  "accuracy": null,
+  "sensitivityProof": "NOTRUN; no repaired green, product mutation prohibited",
+  "independentAudit": "NOTRUN",
+  "exploratoryCorrection": {
+    "preserved": [
+      "exploratory-test.ts",
+      "exploratory-tests.json",
+      "exploratory-observations.json",
+      "exploratory-tests.log"
+    ],
+    "excludedFindings": [
+      "vendor-missing and vendor-blocked strict UNCERTAIN-only assertions: embedded sourceSpec explicitly permits UNAVAILABLE final hold; attempts and reservations preserved"
+    ]
+  },
+  "missingInputs": [
+    "Genuine originalPrompt and purpose(B) expected choice: embedded originalPrompt and oracle null",
+    "E0/E1/E2 prescribed definitions and real host signed records, not supplied in embedded text",
+    "Configured approved installation AGENT_GOVERNANCE_CLASSIFICATION_CONFIG, fixed profile registry and runtime route/budget/qualification inputs",
+    "Live host session task binding, hook observations, inventory host-active state, actual AGENT decision reasons/applicability",
+    "Actual provider transmission/confirmed billing/cancellation evidence (outside API0 allocation)",
+    "Repaired candidate for follow-up red/green verification"
+  ]
+}

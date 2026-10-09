@@ -1,0 +1,41 @@
+{
+  "caseId": "SS31",
+  "title": "timeout과 결과 불명",
+  "executionKind": "mock.",
+  "fixtureOriginalPrompt": null,
+  "oracle": null,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS31",
+    "fields": {
+      "입력": "확실한 미전송 timeout, 전송 뒤 응답 없는 timeout, 전송 여부도 불명인 timeout, timeout 뒤 늦게 성공하는 응답을 각각 주입한다.",
+      "필수추천": "JEV attempt의 미전송 확정은 timeout/not-started로, 전송·소비 불명은 uncertain/timedOut=true/started 또는 unknown으로 진단한다. vendor fallback이 성공하면 최종 선택은 정상 수락될 수 있으며 이전 JEV 실패를 지우지 않는다. fallback도 불가할 때만 해당 실패·NEEDS_INPUT/UNAVAILABLE/UNCERTAIN을 최종 보류와 결속한다. B의 목적 적합성은 따로 검증한다.",
+      "금지추천 또는 행동": "같은 JEV 요청 자동 재전송; 정책 밖 vendor·모델로 우회; timeout을 취소·무과금 확정으로 표현; 늦은 응답 이중 완료.",
+      "허용선택": "취소 신호를 보내되 취소 확인과 결과 불명을 구분한다.",
+      "보류조건": "수신·완료·비용이 확인되지 않음.",
+      "통과기준": "선택한 JEV 시도는 최대 1회이며 허용된 vendor fallback은 별도 최대 1회다. 각 실제 HTTP 전송과 비용을 따로 세고 JEV 미전송은 0회다. 최종 선택 완료는 최대 1회이며, 늦은 결과는 현재 결과·fallback 선택을 덮지 않는다. JEV 비용은 확인 전 unknown과 보수적 예약으로 남기고 vendor 비용을 별도로 기록한다.",
+      "증거": "E0·E1·E2, timeout·취소·늦은 응답 순서.",
+      "실행종류": "mock."
+    },
+    "bodyDigest": "sha256:b896c10879d53f882c91bfd6958175c95c6242f81e72e6ef5fe04b62c04f227f"
+  },
+  "variants": [
+    "not-dispatched",
+    "unknown-consumption",
+    "late-result"
+  ],
+  "publicInput": {
+    "path": "inputs/mock-original-prompt.utf8.txt",
+    "bytes": 161,
+    "sha256": "8e3cd8c4633c42b293685eb2452bbe6379123202957d5b243c2deab3d58bc655",
+    "origin": "Exact public synthetic sourceSpec.fields.입력 carrier, not recovered end-user chat."
+  },
+  "recordedRequest": {
+    "path": "inputs/recorded-request.json",
+    "sha256": "86dbebc89baeb8275d72f8454ea4a1dfe6aa859208b05f3718ef5ab328400c54",
+    "rawHTTPWireBytes": "MISSING_ORIGINAL",
+    "inventory": "Synthetic one-skill review carrier; not a semantic oracle or host-active skill inventory."
+  },
+  "fixtureFileSha256": "bc53e0835e112ae97e7a16fb0331396e9cd1b6b877e726589526b06e74dc43fa",
+  "prohibition": "Do not change original fields, add a semantic oracle, or treat previous FAIL/NOTRUN as the expected answer."
+}

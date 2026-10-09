@@ -1,0 +1,39 @@
+{
+  "caseId": "SS31",
+  "scope": "This preparation run only; future case cap includes all paid preparation and execution calls.",
+  "softCapUsd": 2,
+  "globalReservationContext": {
+    "cases": 39,
+    "reservedTotalUsd": 78,
+    "spendingTarget": false
+  },
+  "claudeApiCalls": 0,
+  "jevApiCalls": 0,
+  "vendorApiCalls": 0,
+  "failedApiCalls": 0,
+  "retries": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "knownSpentUsd": 0,
+  "unconfirmedChargeUsd": 0,
+  "calls": [],
+  "futureCallRecordFields": [
+    "startUtc",
+    "endUtc",
+    "model",
+    "attempt",
+    "exitOrFailure",
+    "providerReportedCostUsd",
+    "costSource",
+    "inputTokens",
+    "outputTokens",
+    "cacheReadTokens",
+    "cacheWriteTokens",
+    "retryCount",
+    "unconfirmedCharge",
+    "remainingConservativeBudget"
+  ],
+  "stopRule": "Before each next call include actual spend, failed/retried calls, cache cost and any outstanding unknown charge. Stop when near US$2 or insufficient conservative remaining budget; do not silently retry. CLI --max-budget-usd is an additional guard, not proof that failed/uncertain calls were free."
+}
