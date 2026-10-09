@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "2.0.0",
+  "skills": [
+    {
+      "skillId": "subject",
+      "version": "1.0.0",
+      "path": "./subject",
+      "enabled": true,
+      "providers": [
+        {
+          "capabilities": [
+            "queue-review"
+          ],
+          "phase": "analysis",
+          "phaseOrder": 10,
+          "requiredInputArtifacts": [],
+          "producedArtifacts": [],
+          "inputBindings": [],
+          "gate": {
+            "kind": "none",
+            "policy": "none"
+          }
+        }
+      ],
+      "description": "Wrong registry description",
+      "applicability": [
+        "Wrong registry applicability"
+      ],
+      "exclusions": [
+        "Wrong registry exclusion"
+      ]
+    },
+    {
+      "skillId": "complete",
+      "version": "1.0.0",
+      "path": "./complete",
+      "enabled": true,
+      "providers": [
+        {
+          "capabilities": [
+            "queue-review"
+          ],
+          "phase": "analysis",
+          "phaseOrder": 10,
+          "requiredInputArtifacts": [],
+          "producedArtifacts": [],
+          "inputBindings": [],
+          "gate": {
+            "kind": "none",
+            "policy": "none"
+          }
+        }
+      ]
+    }
+  ]
+}

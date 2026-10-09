@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-snapshot",
+  "files": [
+    {
+      "path": "mcp-server/src/skill-classification/gateway.ts",
+      "digest": "sha256:80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+      "size": 15017,
+      "lineCount": 156
+    },
+    {
+      "path": "mcp-server/src/skill-classification/inventory.ts",
+      "digest": "sha256:8c7ee54546f17fb1e63368fbfb72668a3c7136570a545ad5f0494f076c91727c",
+      "size": 20714,
+      "lineCount": 259
+    },
+    {
+      "path": "mcp-server/src/skill-classification/profiles.ts",
+      "digest": "sha256:0add9c19bd0c7a8e45a57be64f4a2ecb503e0305dc9777629fba142a8566d5be",
+      "size": 6859,
+      "lineCount": 81
+    },
+    {
+      "path": "mcp-server/src/skill-classification/request.ts",
+      "digest": "sha256:1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f",
+      "size": 7093,
+      "lineCount": 99
+    },
+    {
+      "path": "mcp-server/src/skill-classification/service.ts",
+      "digest": "sha256:c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb",
+      "size": 19033,
+      "lineCount": 215
+    },
+    {
+      "path": "mcp-server/src/skill-classification/validation.ts",
+      "digest": "sha256:70f988d9e5d49f8eaef55ca0ff378b4819798ff8141bd09119691c2cffb2891f",
+      "size": 8449,
+      "lineCount": 107
+    },
+    {
+      "path": "scripts/build-claude-plugin.mjs",
+      "digest": "sha256:c0836a12cabba39420db7454fb90a97eaef8d56a9fbfc2b02d3e0315e7ce9e41",
+      "size": 21574,
+      "lineCount": 439
+    },
+    {
+      "path": "tests/skill-classification/SS26.isolated.test.ts",
+      "digest": "sha256:e390fd5112a1fd8fc381d277f83d56a225dad234283fc41ca4805387b4924687",
+      "size": 21674,
+      "lineCount": 185
+    },
+    {
+      "path": "tests/skill-classification/fixtures.json",
+      "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "size": 142450,
+      "lineCount": 2912
+    }
+  ],
+  "digest": "sha256:84da6dd4a57e1dc6e7f57f9bb36c33a9ec1489100ea52ae214250f514577d93c"
+}

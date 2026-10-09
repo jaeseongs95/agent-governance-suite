@@ -1,0 +1,11 @@
+[
+  "tests/skill-classification/SS26.isolated.test.ts",
+  "tests/skill-classification/fixtures.json",
+  "mcp-server/src/skill-classification/inventory.ts",
+  "mcp-server/src/skill-classification/request.ts",
+  "mcp-server/src/skill-classification/service.ts",
+  "mcp-server/src/skill-classification/gateway.ts",
+  "mcp-server/src/skill-classification/validation.ts",
+  "mcp-server/src/skill-classification/profiles.ts",
+  "scripts/build-claude-plugin.mjs"
+]

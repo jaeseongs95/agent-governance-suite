@@ -1,0 +1,17 @@
+SS26 reproduction instructions only — NOT EXECUTED during publication.
+
+1. Use a separate checkout of jaeseongs95/agent-governance-suite at
+   c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6
+   (tree 28f2f2ed8a864405320f6d20e7bc5004e8466ad3).
+2. Use the repo's Node >=24 and pnpm 11.19.0 dependency environment.
+3. Copy repro/SS26.isolated.test.ts into tests/skill-classification/SS26.isolated.test.ts.
+   This public copy differs from historical original only as documented in manifest.json.
+4. From that candidate checkout, run only:
+   node node_modules/vitest/vitest.mjs run tests/skill-classification/SS26.isolated.test.ts --reporter=json --outputFile=SS26-output/isolated.vitest.json
+   Historical process exit was 1: 4 PASS / 8 FAIL variants, plus frozen-binding PASS.
+5. The separately recorded existing regression command was:
+   node node_modules/vitest/vitest.mjs run tests/mcp/skill-classification-inventory.test.ts -t 'detects stale prose sources without hiding independent complete candidates|rejects duplicate IDs/version conflicts and retains disabled registry entries' --reporter=json --outputFile=SS26-output/existing.vitest.json
+   Historical exit was 0: 2 passed, 4 skipped. This is not whole-case acceptance.
+
+Historical exact commands with private path placeholders are in *.command.json.
+These instructions do not authorize live model/API/host calls or a full suite.

@@ -1,0 +1,39 @@
+{
+  "caseId": "SS26",
+  "title": "정본 metadata 변경과 cache 무효화",
+  "familyId": "mechanical-SS26",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "mock·fixture source 검사. 실제 원천 파일을 변경하지 않고 합성 snapshot을 사용한다.",
+  "originalPrompt": null,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS26",
+    "fields": {
+      "입력": "정본 SKILL.md와 registry의 고정 revision을 단일 loader로 읽는다. v1 이후 설명·적용·제외 조건 변경, 신규 스킬 추가, ID 중복, 설명 누락, ID/version/짧은설명/taxonomy/apply/exclude의 정본·생성물 불일치, 삭제·비활성화를 각각 제공한다. SKILL.md와 registry의 담당 필드가 충돌하는 변형도 둔다.",
+      "필수추천": "각 요청은 해당 revision의 전체 유효 descriptor로 평가한다. ID/version/짧은설명/taxonomy/apply/exclude별 정본·생성물 source-map을 고정하고 그 우선순위와 필드 책임을 지키며 신규 스킬을 반영한다.",
+      "금지추천 또는 행동": "선택기 내부 수기 설명 목록만 갱신; SKILL.md 변경 후 옛 REQ·embedding·직렬화 cache 재사용; 누락·중복 ID를 조용히 정상 처리; 원천 충돌을 추정으로 덮어씀.",
+      "허용선택": "원천·설명·inventory·profile model revision에 결속된 cache. 설명 부족·충돌은 구체적 입력 공백으로 보류하고 다른 완전 후보까지 숨기지 않는다.",
+      "보류조건": "정본 역할이나 revision을 확인할 수 없거나 필수 설명·적용/제외가 누락됨.",
+      "통과기준": "원천 변경 후 descriptor·REQ digest가 바뀌고 관련 cache가 무효화된다. 부정/제외 조건 변경도 다음 분류에 반영된다. 새 스킬은 정본 추가·loader 재읽기만으로 노출되며 selector 코드 수정은 0이다. 삭제된 후보의 늦은 결과는 현재 선택을 덮지 않는다.",
+      "증거": "E0·E2·E4, source→loader→descriptor→REQ→cache key 연결, 신규·삭제·충돌 diff, 선택기 코드 무변경 근거.",
+      "실행종류": "mock·fixture source 검사. 실제 원천 파일을 변경하지 않고 합성 snapshot을 사용한다."
+    },
+    "bodyDigest": "sha256:4f38a388d9db17c442cf2e89be304ead0782730424a53b2dcfb64181fc3160a7"
+  },
+  "oracle": null,
+  "variants": [
+    "description",
+    "applicability",
+    "exclusion",
+    "new-skill",
+    "duplicate-id",
+    "missing-description",
+    "id-conflict",
+    "version-conflict",
+    "taxonomy-conflict",
+    "source-generated-conflict",
+    "delete",
+    "disable"
+  ]
+}

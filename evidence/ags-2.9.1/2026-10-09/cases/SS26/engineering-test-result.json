@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:84da6dd4a57e1dc6e7f57f9bb36c33a9ec1489100ea52ae214250f514577d93c",
+  "reportDigest": "sha256:e9aaae8541cc1f46156971d236fcc356da392c008cec5e8356c8bea4e152418b",
+  "issues": [
+    "REQUIRED SS26.description: NOT_RUN — Fixed-candidate mechanical execution and fault repro are separately captured in SS26.observations.json and isolated.vitest.json. Repaired-candidate green/mutation sensitivity proof NOT_RUN: product changes prohibited; no such candidate supplied.",
+    "REQUIRED SS26.applicability: NOT_RUN — Fixed-candidate mechanical execution and fault repro are separately captured in SS26.observations.json and isolated.vitest.json. Repaired-candidate green/mutation sensitivity proof NOT_RUN: product changes prohibited; no such candidate supplied.",
+    "REQUIRED SS26.exclusion: NOT_RUN — Fixed-candidate mechanical execution and fault repro are separately captured in SS26.observations.json and isolated.vitest.json. Repaired-candidate green/mutation sensitivity proof NOT_RUN: product changes prohibited; no such candidate supplied.",
+    "REQUIRED SS26.new-skill: NOT_RUN — Fixed-candidate mechanical execution and fault repro are separately captured in SS26.observations.json and isolated.vitest.json. Repaired-candidate green/mutation sensitivity proof NOT_RUN: product changes prohibited; no such candidate supplied.",
+    "REQUIRED SS26.duplicate-id: NOT_RUN — Fixed-candidate mechanical execution and fault repro are separately captured in SS26.observations.json and isolated.vitest.json. Repaired-candidate green/mutation sensitivity proof NOT_RUN: product changes prohibited; no such candidate supplied.",
+    "REQUIRED SS26.missing-description: NOT_RUN — Fixed-candidate mechanical execution and fault repro are separately captured in SS26.observations.json and isolated.vitest.json. Repaired-candidate green/mutation sensitivity proof NOT_RUN: product changes prohibited; no such candidate supplied.",
+    "REQUIRED SS26.id-conflict: NOT_RUN — Fixed-candidate mechanical execution and fault repro are separately captured in SS26.observations.json and isolated.vitest.json. Repaired-candidate green/mutation sensitivity proof NOT_RUN: product changes prohibited; no such candidate supplied.",
+    "REQUIRED SS26.version-conflict: NOT_RUN — Fixed-candidate mechanical execution and fault repro are separately captured in SS26.observations.json and isolated.vitest.json. Repaired-candidate green/mutation sensitivity proof NOT_RUN: product changes prohibited; no such candidate supplied.",
+    "REQUIRED SS26.taxonomy-conflict: NOT_RUN — Fixed-candidate mechanical execution and fault repro are separately captured in SS26.observations.json and isolated.vitest.json. Repaired-candidate green/mutation sensitivity proof NOT_RUN: product changes prohibited; no such candidate supplied.",
+    "REQUIRED SS26.source-generated-conflict: NOT_RUN — Fixed-candidate mechanical execution and fault repro are separately captured in SS26.observations.json and isolated.vitest.json. Repaired-candidate green/mutation sensitivity proof NOT_RUN: product changes prohibited; no such candidate supplied.",
+    "REQUIRED SS26.delete: NOT_RUN — Fixed-candidate mechanical execution and fault repro are separately captured in SS26.observations.json and isolated.vitest.json. Repaired-candidate green/mutation sensitivity proof NOT_RUN: product changes prohibited; no such candidate supplied.",
+    "REQUIRED SS26.disable: NOT_RUN — Fixed-candidate mechanical execution and fault repro are separately captured in SS26.observations.json and isolated.vitest.json. Repaired-candidate green/mutation sensitivity proof NOT_RUN: product changes prohibited; no such candidate supplied."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

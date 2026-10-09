@@ -1,0 +1,20 @@
+{
+  "caseId": "SS26",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/mcp/skill-classification-inventory.test.ts",
+    "-t",
+    "detects stale prose sources without hiding independent complete candidates|rejects duplicate IDs/version conflicts and retains disabled registry entries",
+    "--reporter=json",
+    "--outputFile=<EVIDENCE_ROOT>/existing.vitest.json"
+  ],
+  "cwd": "<PINNED_CHECKOUT>",
+  "exitCode": 0,
+  "executionKind": "existing-regression/offline-mock",
+  "API0": true,
+  "source": "Actual exec tool result e3ce58; 2 passed/4 skipped; no full-case PASS claim",
+  "stdout": "existing.stdout.log",
+  "stderr": "existing.stderr.log"
+}

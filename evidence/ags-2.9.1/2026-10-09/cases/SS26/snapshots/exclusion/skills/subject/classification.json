@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "review"
+  ],
+  "targets": [
+    "queue"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "capabilities": [
+    "queue-review"
+  ],
+  "applicability": [
+    {
+      "path": "skills/subject/SKILL.md",
+      "startLine": 7,
+      "endLine": 7,
+      "digest": "sha256:f0410aebd96d73450cec0175ca180a04ec7e9cea2662c447233eb3d4fb006262"
+    }
+  ],
+  "exclusions": []
+}

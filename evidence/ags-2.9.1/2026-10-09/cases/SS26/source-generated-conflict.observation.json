@@ -1,0 +1,911 @@
+{
+  "variant": "source-generated-conflict",
+  "input": {
+    "root": "<EVIDENCE_ROOT>/snapshots/source-generated-conflict",
+    "syntheticProbePrompt": "Synthetic SS26: inspect queue delivery.",
+    "baselineSources": {
+      "skills/complete/SKILL.md": {
+        "digest": "sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a",
+        "content": "---\nname: complete\ndescription: Review queue delivery.\nmetadata:\n  version: '1.0.0'\n---\nApply to queue delivery analysis.\nExclude implementation and ordinary explanation.\n"
+      },
+      "skills/complete/classification.json": {
+        "digest": "sha256:7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf",
+        "content": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"taxonomyRevision\": \"1.0.0\",\n  \"actions\": [\n    \"review\"\n  ],\n  \"targets\": [\n    \"queue\"\n  ],\n  \"constraints\": [],\n  \"dependencies\": [],\n  \"capabilities\": [\n    \"queue-review\"\n  ],\n  \"applicability\": [\n    {\n      \"path\": \"skills/complete/SKILL.md\",\n      \"startLine\": 7,\n      \"endLine\": 7,\n      \"digest\": \"sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a\"\n    }\n  ],\n  \"exclusions\": [\n    {\n      \"path\": \"skills/complete/SKILL.md\",\n      \"startLine\": 8,\n      \"endLine\": 8,\n      \"digest\": \"sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a\"\n    }\n  ]\n}\n"
+      },
+      "skills/registry.json": {
+        "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf",
+        "content": "{\n  \"schemaVersion\": \"2.0.0\",\n  \"skills\": [\n    {\n      \"skillId\": \"subject\",\n      \"version\": \"1.0.0\",\n      \"path\": \"./subject\",\n      \"enabled\": true,\n      \"providers\": [\n        {\n          \"capabilities\": [\n            \"queue-review\"\n          ],\n          \"phase\": \"analysis\",\n          \"phaseOrder\": 10,\n          \"requiredInputArtifacts\": [],\n          \"producedArtifacts\": [],\n          \"inputBindings\": [],\n          \"gate\": {\n            \"kind\": \"none\",\n            \"policy\": \"none\"\n          }\n        }\n      ]\n    },\n    {\n      \"skillId\": \"complete\",\n      \"version\": \"1.0.0\",\n      \"path\": \"./complete\",\n      \"enabled\": true,\n      \"providers\": [\n        {\n          \"capabilities\": [\n            \"queue-review\"\n          ],\n          \"phase\": \"analysis\",\n          \"phaseOrder\": 10,\n          \"requiredInputArtifacts\": [],\n          \"producedArtifacts\": [],\n          \"inputBindings\": [],\n          \"gate\": {\n            \"kind\": \"none\",\n            \"policy\": \"none\"\n          }\n        }\n      ]\n    }\n  ]\n}\n"
+      },
+      "skills/subject/SKILL.md": {
+        "digest": "sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30",
+        "content": "---\nname: subject\ndescription: Review queue delivery.\nmetadata:\n  version: '1.0.0'\n---\nApply to queue delivery analysis.\nExclude implementation and ordinary explanation.\n"
+      },
+      "skills/subject/classification.json": {
+        "digest": "sha256:d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d",
+        "content": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"taxonomyRevision\": \"1.0.0\",\n  \"actions\": [\n    \"review\"\n  ],\n  \"targets\": [\n    \"queue\"\n  ],\n  \"constraints\": [],\n  \"dependencies\": [],\n  \"capabilities\": [\n    \"queue-review\"\n  ],\n  \"applicability\": [\n    {\n      \"path\": \"skills/subject/SKILL.md\",\n      \"startLine\": 7,\n      \"endLine\": 7,\n      \"digest\": \"sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30\"\n    }\n  ],\n  \"exclusions\": [\n    {\n      \"path\": \"skills/subject/SKILL.md\",\n      \"startLine\": 8,\n      \"endLine\": 8,\n      \"digest\": \"sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30\"\n    }\n  ]\n}\n"
+      }
+    },
+    "currentSources": {
+      "skills/classification-projection.json": {
+        "digest": "sha256:623e4588aa70d8e95a2952030377434f0f81030616fb8d0f472e8a77530c3c07",
+        "content": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"projectionRevision\": \"1.0.0\",\n  \"host\": \"claude-code\",\n  \"installedSkillIds\": [\n    \"complete\",\n    \"subject\"\n  ],\n  \"canonicalSources\": [\n    {\n      \"path\": \"skills/complete/classification.json\",\n      \"digest\": \"sha256:7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf\",\n      \"content\": \"{\\n  \\\"schemaVersion\\\": \\\"1.0.0\\\",\\n  \\\"taxonomyRevision\\\": \\\"1.0.0\\\",\\n  \\\"actions\\\": [\\n    \\\"review\\\"\\n  ],\\n  \\\"targets\\\": [\\n    \\\"queue\\\"\\n  ],\\n  \\\"constraints\\\": [],\\n  \\\"dependencies\\\": [],\\n  \\\"capabilities\\\": [\\n    \\\"queue-review\\\"\\n  ],\\n  \\\"applicability\\\": [\\n    {\\n      \\\"path\\\": \\\"skills/complete/SKILL.md\\\",\\n      \\\"startLine\\\": 7,\\n      \\\"endLine\\\": 7,\\n      \\\"digest\\\": \\\"sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a\\\"\\n    }\\n  ],\\n  \\\"exclusions\\\": [\\n    {\\n      \\\"path\\\": \\\"skills/complete/SKILL.md\\\",\\n      \\\"startLine\\\": 8,\\n      \\\"endLine\\\": 8,\\n      \\\"digest\\\": \\\"sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a\\\"\\n    }\\n  ]\\n}\\n\"\n    },\n    {\n      \"path\": \"skills/complete/SKILL.md\",\n      \"digest\": \"sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a\",\n      \"content\": \"---\\nname: complete\\ndescription: Review queue delivery.\\nmetadata:\\n  version: '1.0.0'\\n---\\nApply to queue delivery analysis.\\nExclude implementation and ordinary explanation.\\n\"\n    },\n    {\n      \"path\": \"skills/registry.json\",\n      \"digest\": \"sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf\",\n      \"content\": \"{\\n  \\\"schemaVersion\\\": \\\"2.0.0\\\",\\n  \\\"skills\\\": [\\n    {\\n      \\\"skillId\\\": \\\"subject\\\",\\n      \\\"version\\\": \\\"1.0.0\\\",\\n      \\\"path\\\": \\\"./subject\\\",\\n      \\\"enabled\\\": true,\\n      \\\"providers\\\": [\\n        {\\n          \\\"capabilities\\\": [\\n            \\\"queue-review\\\"\\n          ],\\n          \\\"phase\\\": \\\"analysis\\\",\\n          \\\"phaseOrder\\\": 10,\\n          \\\"requiredInputArtifacts\\\": [],\\n          \\\"producedArtifacts\\\": [],\\n          \\\"inputBindings\\\": [],\\n          \\\"gate\\\": {\\n            \\\"kind\\\": \\\"none\\\",\\n            \\\"policy\\\": \\\"none\\\"\\n          }\\n        }\\n      ]\\n    },\\n    {\\n      \\\"skillId\\\": \\\"complete\\\",\\n      \\\"version\\\": \\\"1.0.0\\\",\\n      \\\"path\\\": \\\"./complete\\\",\\n      \\\"enabled\\\": true,\\n      \\\"providers\\\": [\\n        {\\n          \\\"capabilities\\\": [\\n            \\\"queue-review\\\"\\n          ],\\n          \\\"phase\\\": \\\"analysis\\\",\\n          \\\"phaseOrder\\\": 10,\\n          \\\"requiredInputArtifacts\\\": [],\\n          \\\"producedArtifacts\\\": [],\\n          \\\"inputBindings\\\": [],\\n          \\\"gate\\\": {\\n            \\\"kind\\\": \\\"none\\\",\\n            \\\"policy\\\": \\\"none\\\"\\n          }\\n        }\\n      ]\\n    }\\n  ]\\n}\\n\"\n    },\n    {\n      \"path\": \"skills/subject/classification.json\",\n      \"digest\": \"sha256:d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d\",\n      \"content\": \"{\\n  \\\"schemaVersion\\\": \\\"1.0.0\\\",\\n  \\\"taxonomyRevision\\\": \\\"1.0.0\\\",\\n  \\\"actions\\\": [\\n    \\\"review\\\"\\n  ],\\n  \\\"targets\\\": [\\n    \\\"queue\\\"\\n  ],\\n  \\\"constraints\\\": [],\\n  \\\"dependencies\\\": [],\\n  \\\"capabilities\\\": [\\n    \\\"queue-review\\\"\\n  ],\\n  \\\"applicability\\\": [\\n    {\\n      \\\"path\\\": \\\"skills/subject/SKILL.md\\\",\\n      \\\"startLine\\\": 7,\\n      \\\"endLine\\\": 7,\\n      \\\"digest\\\": \\\"sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30\\\"\\n    }\\n  ],\\n  \\\"exclusions\\\": [\\n    {\\n      \\\"path\\\": \\\"skills/subject/SKILL.md\\\",\\n      \\\"startLine\\\": 8,\\n      \\\"endLine\\\": 8,\\n      \\\"digest\\\": \\\"sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30\\\"\\n    }\\n  ]\\n}\\n\"\n    },\n    {\n      \"path\": \"skills/subject/SKILL.md\",\n      \"digest\": \"sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30\",\n      \"content\": \"---\\nname: subject\\ndescription: Review queue delivery.\\nmetadata:\\n  version: '1.0.0'\\n---\\nApply to queue delivery analysis.\\nExclude implementation and ordinary explanation.\\n\"\n    }\n  ],\n  \"hostSources\": [\n    {\n      \"path\": \"skills/complete/classification.json\",\n      \"digest\": \"sha256:7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf\"\n    },\n    {\n      \"path\": \"skills/complete/SKILL.md\",\n      \"digest\": \"sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a\"\n    },\n    {\n      \"path\": \"skills/registry.json\",\n      \"digest\": \"sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf\"\n    },\n    {\n      \"path\": \"skills/subject/classification.json\",\n      \"digest\": \"sha256:d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d\"\n    },\n    {\n      \"path\": \"skills/subject/SKILL.md\",\n      \"digest\": \"sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30\"\n    }\n  ]\n}\n"
+      },
+      "skills/complete/SKILL.md": {
+        "digest": "sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a",
+        "content": "---\nname: complete\ndescription: Review queue delivery.\nmetadata:\n  version: '1.0.0'\n---\nApply to queue delivery analysis.\nExclude implementation and ordinary explanation.\n"
+      },
+      "skills/complete/classification.json": {
+        "digest": "sha256:7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf",
+        "content": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"taxonomyRevision\": \"1.0.0\",\n  \"actions\": [\n    \"review\"\n  ],\n  \"targets\": [\n    \"queue\"\n  ],\n  \"constraints\": [],\n  \"dependencies\": [],\n  \"capabilities\": [\n    \"queue-review\"\n  ],\n  \"applicability\": [\n    {\n      \"path\": \"skills/complete/SKILL.md\",\n      \"startLine\": 7,\n      \"endLine\": 7,\n      \"digest\": \"sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a\"\n    }\n  ],\n  \"exclusions\": [\n    {\n      \"path\": \"skills/complete/SKILL.md\",\n      \"startLine\": 8,\n      \"endLine\": 8,\n      \"digest\": \"sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a\"\n    }\n  ]\n}\n"
+      },
+      "skills/registry.json": {
+        "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf",
+        "content": "{\n  \"schemaVersion\": \"2.0.0\",\n  \"skills\": [\n    {\n      \"skillId\": \"subject\",\n      \"version\": \"1.0.0\",\n      \"path\": \"./subject\",\n      \"enabled\": true,\n      \"providers\": [\n        {\n          \"capabilities\": [\n            \"queue-review\"\n          ],\n          \"phase\": \"analysis\",\n          \"phaseOrder\": 10,\n          \"requiredInputArtifacts\": [],\n          \"producedArtifacts\": [],\n          \"inputBindings\": [],\n          \"gate\": {\n            \"kind\": \"none\",\n            \"policy\": \"none\"\n          }\n        }\n      ]\n    },\n    {\n      \"skillId\": \"complete\",\n      \"version\": \"1.0.0\",\n      \"path\": \"./complete\",\n      \"enabled\": true,\n      \"providers\": [\n        {\n          \"capabilities\": [\n            \"queue-review\"\n          ],\n          \"phase\": \"analysis\",\n          \"phaseOrder\": 10,\n          \"requiredInputArtifacts\": [],\n          \"producedArtifacts\": [],\n          \"inputBindings\": [],\n          \"gate\": {\n            \"kind\": \"none\",\n            \"policy\": \"none\"\n          }\n        }\n      ]\n    }\n  ]\n}\n"
+      },
+      "skills/subject/SKILL.md": {
+        "digest": "sha256:f0e4b16e3d88058bb98b3fb8e567d382ceac21803e6df25faf0789522e18da0f",
+        "content": "stale generated bytes"
+      },
+      "skills/subject/classification.json": {
+        "digest": "sha256:d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d",
+        "content": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"taxonomyRevision\": \"1.0.0\",\n  \"actions\": [\n    \"review\"\n  ],\n  \"targets\": [\n    \"queue\"\n  ],\n  \"constraints\": [],\n  \"dependencies\": [],\n  \"capabilities\": [\n    \"queue-review\"\n  ],\n  \"applicability\": [\n    {\n      \"path\": \"skills/subject/SKILL.md\",\n      \"startLine\": 7,\n      \"endLine\": 7,\n      \"digest\": \"sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30\"\n    }\n  ],\n  \"exclusions\": [\n    {\n      \"path\": \"skills/subject/SKILL.md\",\n      \"startLine\": 8,\n      \"endLine\": 8,\n      \"digest\": \"sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30\"\n    }\n  ]\n}\n"
+      }
+    },
+    "changedPaths": [
+      "skills/subject/SKILL.md",
+      "skills/classification-projection.json"
+    ]
+  },
+  "expected": {
+    "sourceSpec": {
+      "입력": "정본 SKILL.md와 registry의 고정 revision을 단일 loader로 읽는다. v1 이후 설명·적용·제외 조건 변경, 신규 스킬 추가, ID 중복, 설명 누락, ID/version/짧은설명/taxonomy/apply/exclude의 정본·생성물 불일치, 삭제·비활성화를 각각 제공한다. SKILL.md와 registry의 담당 필드가 충돌하는 변형도 둔다.",
+      "필수추천": "각 요청은 해당 revision의 전체 유효 descriptor로 평가한다. ID/version/짧은설명/taxonomy/apply/exclude별 정본·생성물 source-map을 고정하고 그 우선순위와 필드 책임을 지키며 신규 스킬을 반영한다.",
+      "금지추천 또는 행동": "선택기 내부 수기 설명 목록만 갱신; SKILL.md 변경 후 옛 REQ·embedding·직렬화 cache 재사용; 누락·중복 ID를 조용히 정상 처리; 원천 충돌을 추정으로 덮어씀.",
+      "허용선택": "원천·설명·inventory·profile model revision에 결속된 cache. 설명 부족·충돌은 구체적 입력 공백으로 보류하고 다른 완전 후보까지 숨기지 않는다.",
+      "보류조건": "정본 역할이나 revision을 확인할 수 없거나 필수 설명·적용/제외가 누락됨.",
+      "통과기준": "원천 변경 후 descriptor·REQ digest가 바뀌고 관련 cache가 무효화된다. 부정/제외 조건 변경도 다음 분류에 반영된다. 새 스킬은 정본 추가·loader 재읽기만으로 노출되며 selector 코드 수정은 0이다. 삭제된 후보의 늦은 결과는 현재 선택을 덮지 않는다.",
+      "증거": "E0·E2·E4, source→loader→descriptor→REQ→cache key 연결, 신규·삭제·충돌 diff, 선택기 코드 무변경 근거.",
+      "실행종류": "mock·fixture source 검사. 실제 원천 파일을 변경하지 않고 합성 snapshot을 사용한다."
+    },
+    "semantics": "null oracle; mechanical invariants only"
+  },
+  "observed": {
+    "generatedFieldChecks": [
+      {
+        "field": "id",
+        "relative": "skills/subject/SKILL.md",
+        "expected": "HOST_SOURCE_STALE, no guessing",
+        "inventory": {
+          "skills": [],
+          "issues": [
+            {
+              "skillId": null,
+              "code": "HOST_SOURCE_STALE",
+              "field": "skills/classification-projection.json"
+            }
+          ],
+          "taxonomyRevision": "invalid",
+          "inventoryDigest": "sha256:43b901355033d697564e25d2c489e329e416e5dff78d22debf337b32cc2e30e5"
+        }
+      },
+      {
+        "field": "version",
+        "relative": "skills/registry.json",
+        "expected": "HOST_SOURCE_STALE, no guessing",
+        "inventory": {
+          "skills": [],
+          "issues": [
+            {
+              "skillId": null,
+              "code": "HOST_SOURCE_STALE",
+              "field": "skills/classification-projection.json"
+            }
+          ],
+          "taxonomyRevision": "invalid",
+          "inventoryDigest": "sha256:6e38c5c176c63217eb9f2479b75ad6cdfd902b35e54b3db276a5f1711f76acfc"
+        }
+      },
+      {
+        "field": "description",
+        "relative": "skills/subject/SKILL.md",
+        "expected": "HOST_SOURCE_STALE, no guessing",
+        "inventory": {
+          "skills": [],
+          "issues": [
+            {
+              "skillId": null,
+              "code": "HOST_SOURCE_STALE",
+              "field": "skills/classification-projection.json"
+            }
+          ],
+          "taxonomyRevision": "invalid",
+          "inventoryDigest": "sha256:d046086aa555d5a249972949bbf80a1d19c6a6454d209fa3d945b087b1a80fb6"
+        }
+      },
+      {
+        "field": "taxonomy",
+        "relative": "skills/subject/classification.json",
+        "expected": "HOST_SOURCE_STALE, no guessing",
+        "inventory": {
+          "skills": [],
+          "issues": [
+            {
+              "skillId": null,
+              "code": "HOST_SOURCE_STALE",
+              "field": "skills/classification-projection.json"
+            }
+          ],
+          "taxonomyRevision": "invalid",
+          "inventoryDigest": "sha256:ea3e5107c6b6c6dc6d7b857ab869bdd0662003e582f7504485dfe5c85cdfeb8d"
+        }
+      },
+      {
+        "field": "apply",
+        "relative": "skills/subject/SKILL.md",
+        "expected": "HOST_SOURCE_STALE, no guessing",
+        "inventory": {
+          "skills": [],
+          "issues": [
+            {
+              "skillId": null,
+              "code": "HOST_SOURCE_STALE",
+              "field": "skills/classification-projection.json"
+            }
+          ],
+          "taxonomyRevision": "invalid",
+          "inventoryDigest": "sha256:7887d87a7230ffc8180fe89c65c4ca83c37ebdeed308923c8e645aa4dae306c6"
+        }
+      },
+      {
+        "field": "exclude",
+        "relative": "skills/subject/SKILL.md",
+        "expected": "HOST_SOURCE_STALE, no guessing",
+        "inventory": {
+          "skills": [],
+          "issues": [
+            {
+              "skillId": null,
+              "code": "HOST_SOURCE_STALE",
+              "field": "skills/classification-projection.json"
+            }
+          ],
+          "taxonomyRevision": "invalid",
+          "inventoryDigest": "sha256:a700a88e95ed3bc9074072942a1d7b052ef2cf46e83d7f6c1801b69374cd378b"
+        }
+      }
+    ],
+    "before": {
+      "inventory": {
+        "skills": [
+          {
+            "skillId": "complete",
+            "version": "1.0.0",
+            "description": "Review queue delivery.",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "queue-review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "queue"
+            ],
+            "constraints": [],
+            "applicability": [
+              "Apply to queue delivery analysis."
+            ],
+            "exclusions": [
+              "Exclude implementation and ordinary explanation."
+            ],
+            "dependencies": [],
+            "phases": [
+              {
+                "capability": "queue-review",
+                "phase": "analysis",
+                "phaseOrder": 10,
+                "requiredInputArtifacts": [],
+                "producedArtifacts": [],
+                "inputBindings": [],
+                "gate": {
+                  "kind": "none",
+                  "policy": "none"
+                }
+              }
+            ],
+            "sourceRefs": [
+              {
+                "path": "skills/complete/classification.json",
+                "digest": "sha256:7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf"
+              },
+              {
+                "path": "skills/complete/SKILL.md",
+                "digest": "sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a"
+              },
+              {
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              }
+            ],
+            "sourceMap": [
+              {
+                "field": "skillId",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "description",
+                "path": "skills/complete/SKILL.md",
+                "startLine": 3,
+                "endLine": 3,
+                "digest": "sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a"
+              },
+              {
+                "field": "version",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "enabled",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "capabilities",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "phases",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "actions",
+                "path": "skills/complete/classification.json",
+                "digest": "sha256:7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf"
+              },
+              {
+                "field": "targets",
+                "path": "skills/complete/classification.json",
+                "digest": "sha256:7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf"
+              },
+              {
+                "field": "constraints",
+                "path": "skills/complete/classification.json",
+                "digest": "sha256:7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf"
+              },
+              {
+                "field": "dependencies",
+                "path": "skills/complete/classification.json",
+                "digest": "sha256:7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf"
+              },
+              {
+                "field": "taxonomyRevision",
+                "path": "skills/complete/classification.json",
+                "digest": "sha256:7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf"
+              },
+              {
+                "field": "applicability",
+                "path": "skills/complete/SKILL.md",
+                "startLine": 7,
+                "endLine": 7,
+                "digest": "sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a"
+              },
+              {
+                "field": "exclusions",
+                "path": "skills/complete/SKILL.md",
+                "startLine": 8,
+                "endLine": 8,
+                "digest": "sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a"
+              }
+            ]
+          },
+          {
+            "skillId": "subject",
+            "version": "1.0.0",
+            "description": "Review queue delivery.",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "queue-review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "queue"
+            ],
+            "constraints": [],
+            "applicability": [
+              "Apply to queue delivery analysis."
+            ],
+            "exclusions": [
+              "Exclude implementation and ordinary explanation."
+            ],
+            "dependencies": [],
+            "phases": [
+              {
+                "capability": "queue-review",
+                "phase": "analysis",
+                "phaseOrder": 10,
+                "requiredInputArtifacts": [],
+                "producedArtifacts": [],
+                "inputBindings": [],
+                "gate": {
+                  "kind": "none",
+                  "policy": "none"
+                }
+              }
+            ],
+            "sourceRefs": [
+              {
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "path": "skills/subject/classification.json",
+                "digest": "sha256:d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d"
+              },
+              {
+                "path": "skills/subject/SKILL.md",
+                "digest": "sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30"
+              }
+            ],
+            "sourceMap": [
+              {
+                "field": "skillId",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "description",
+                "path": "skills/subject/SKILL.md",
+                "startLine": 3,
+                "endLine": 3,
+                "digest": "sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30"
+              },
+              {
+                "field": "version",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "enabled",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "capabilities",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "phases",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "actions",
+                "path": "skills/subject/classification.json",
+                "digest": "sha256:d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d"
+              },
+              {
+                "field": "targets",
+                "path": "skills/subject/classification.json",
+                "digest": "sha256:d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d"
+              },
+              {
+                "field": "constraints",
+                "path": "skills/subject/classification.json",
+                "digest": "sha256:d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d"
+              },
+              {
+                "field": "dependencies",
+                "path": "skills/subject/classification.json",
+                "digest": "sha256:d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d"
+              },
+              {
+                "field": "taxonomyRevision",
+                "path": "skills/subject/classification.json",
+                "digest": "sha256:d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d"
+              },
+              {
+                "field": "applicability",
+                "path": "skills/subject/SKILL.md",
+                "startLine": 7,
+                "endLine": 7,
+                "digest": "sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30"
+              },
+              {
+                "field": "exclusions",
+                "path": "skills/subject/SKILL.md",
+                "startLine": 8,
+                "endLine": 8,
+                "digest": "sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30"
+              }
+            ]
+          }
+        ],
+        "issues": [],
+        "taxonomyRevision": "1.0.0",
+        "inventoryDigest": "sha256:9ea1dbb31db26bc21037c0a15afb7f2fb8bf6aa22c6dd25a4cffa4a7f44082c2"
+      },
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS26-same",
+        "operationId": "SS26-same",
+        "originalPrompt": "Synthetic SS26: inspect queue delivery.",
+        "promptDigest": "sha256:87695bed2a1ebbd1d0fef58b20be4daa16119ea5d66fd7fb8a7d86d8d1b9854e",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "complete",
+            "version": "1.0.0",
+            "description": "Review queue delivery.",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "queue-review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "queue"
+            ],
+            "constraints": [],
+            "applicability": [
+              "Apply to queue delivery analysis."
+            ],
+            "exclusions": [
+              "Exclude implementation and ordinary explanation."
+            ],
+            "dependencies": [],
+            "phases": [
+              {
+                "capability": "queue-review",
+                "phase": "analysis",
+                "phaseOrder": 10,
+                "requiredInputArtifacts": [],
+                "producedArtifacts": [],
+                "inputBindings": [],
+                "gate": {
+                  "kind": "none",
+                  "policy": "none"
+                }
+              }
+            ],
+            "sourceRefs": [
+              {
+                "path": "skills/complete/classification.json",
+                "digest": "sha256:7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf"
+              },
+              {
+                "path": "skills/complete/SKILL.md",
+                "digest": "sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a"
+              },
+              {
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              }
+            ],
+            "sourceMap": [
+              {
+                "field": "skillId",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "description",
+                "path": "skills/complete/SKILL.md",
+                "startLine": 3,
+                "endLine": 3,
+                "digest": "sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a"
+              },
+              {
+                "field": "version",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "enabled",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "capabilities",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "phases",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "actions",
+                "path": "skills/complete/classification.json",
+                "digest": "sha256:7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf"
+              },
+              {
+                "field": "targets",
+                "path": "skills/complete/classification.json",
+                "digest": "sha256:7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf"
+              },
+              {
+                "field": "constraints",
+                "path": "skills/complete/classification.json",
+                "digest": "sha256:7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf"
+              },
+              {
+                "field": "dependencies",
+                "path": "skills/complete/classification.json",
+                "digest": "sha256:7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf"
+              },
+              {
+                "field": "taxonomyRevision",
+                "path": "skills/complete/classification.json",
+                "digest": "sha256:7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf"
+              },
+              {
+                "field": "applicability",
+                "path": "skills/complete/SKILL.md",
+                "startLine": 7,
+                "endLine": 7,
+                "digest": "sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a"
+              },
+              {
+                "field": "exclusions",
+                "path": "skills/complete/SKILL.md",
+                "startLine": 8,
+                "endLine": 8,
+                "digest": "sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a"
+              }
+            ]
+          },
+          {
+            "skillId": "subject",
+            "version": "1.0.0",
+            "description": "Review queue delivery.",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "queue-review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "queue"
+            ],
+            "constraints": [],
+            "applicability": [
+              "Apply to queue delivery analysis."
+            ],
+            "exclusions": [
+              "Exclude implementation and ordinary explanation."
+            ],
+            "dependencies": [],
+            "phases": [
+              {
+                "capability": "queue-review",
+                "phase": "analysis",
+                "phaseOrder": 10,
+                "requiredInputArtifacts": [],
+                "producedArtifacts": [],
+                "inputBindings": [],
+                "gate": {
+                  "kind": "none",
+                  "policy": "none"
+                }
+              }
+            ],
+            "sourceRefs": [
+              {
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "path": "skills/subject/classification.json",
+                "digest": "sha256:d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d"
+              },
+              {
+                "path": "skills/subject/SKILL.md",
+                "digest": "sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30"
+              }
+            ],
+            "sourceMap": [
+              {
+                "field": "skillId",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "description",
+                "path": "skills/subject/SKILL.md",
+                "startLine": 3,
+                "endLine": 3,
+                "digest": "sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30"
+              },
+              {
+                "field": "version",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "enabled",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "capabilities",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "phases",
+                "path": "skills/registry.json",
+                "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf"
+              },
+              {
+                "field": "actions",
+                "path": "skills/subject/classification.json",
+                "digest": "sha256:d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d"
+              },
+              {
+                "field": "targets",
+                "path": "skills/subject/classification.json",
+                "digest": "sha256:d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d"
+              },
+              {
+                "field": "constraints",
+                "path": "skills/subject/classification.json",
+                "digest": "sha256:d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d"
+              },
+              {
+                "field": "dependencies",
+                "path": "skills/subject/classification.json",
+                "digest": "sha256:d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d"
+              },
+              {
+                "field": "taxonomyRevision",
+                "path": "skills/subject/classification.json",
+                "digest": "sha256:d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d"
+              },
+              {
+                "field": "applicability",
+                "path": "skills/subject/SKILL.md",
+                "startLine": 7,
+                "endLine": 7,
+                "digest": "sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30"
+              },
+              {
+                "field": "exclusions",
+                "path": "skills/subject/SKILL.md",
+                "startLine": 8,
+                "endLine": 8,
+                "digest": "sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30"
+              }
+            ]
+          }
+        ],
+        "inventoryDigest": "sha256:9ea1dbb31db26bc21037c0a15afb7f2fb8bf6aa22c6dd25a4cffa4a7f44082c2",
+        "taxonomyRevision": "1.0.0",
+        "classificationCriteriaRef": "skills/orchestrator/references/skill-classification.md",
+        "requestDigest": "sha256:4920e3c54cdcc7685facdec88a7c11bd1c58ecdf08c5a5e63201e8b5d128cbcf"
+      }
+    },
+    "after": {
+      "inventory": {
+        "skills": [],
+        "issues": [
+          {
+            "skillId": null,
+            "code": "HOST_SOURCE_STALE",
+            "field": "skills/classification-projection.json"
+          }
+        ],
+        "taxonomyRevision": "invalid",
+        "inventoryDigest": "sha256:deb49f9ffd21eaa22bfda59e2c5f99e05b3e087f2f450c8eb0a4ddb16cb00568"
+      },
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS26-same",
+        "operationId": "SS26-same",
+        "originalPrompt": "Synthetic SS26: inspect queue delivery.",
+        "promptDigest": "sha256:87695bed2a1ebbd1d0fef58b20be4daa16119ea5d66fd7fb8a7d86d8d1b9854e",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [],
+        "inventoryDigest": "sha256:deb49f9ffd21eaa22bfda59e2c5f99e05b3e087f2f450c8eb0a4ddb16cb00568",
+        "taxonomyRevision": "invalid",
+        "classificationCriteriaRef": "skills/orchestrator/references/skill-classification.md",
+        "requestDigest": "sha256:d5a4d5d0b2dd168b3f7e813fcdc3baf43eba12801acfbe17d504ff12014fc558"
+      }
+    },
+    "cache": {
+      "identityFields": [
+        "requestId",
+        "requestDigest",
+        "taskRevision",
+        "configRevision",
+        "profileRevision",
+        "inventoryDigest",
+        "currentVendorId"
+      ],
+      "oldCacheError": {
+        "code": "STALE_CLASSIFICATION",
+        "retryable": false,
+        "dispatchState": "not-started"
+      },
+      "staleProfileError": {
+        "code": "QUALIFICATION_MISMATCH",
+        "retryable": false,
+        "dispatchState": "not-started"
+      }
+    },
+    "gateway": {
+      "status": "NEEDS_INPUT",
+      "errors": [
+        {
+          "skillId": null,
+          "code": "HOST_SOURCE_STALE",
+          "field": "skills/classification-projection.json"
+        }
+      ],
+      "response": null,
+      "agentSelectedSkillIds": null
+    },
+    "mockProviderCalls": 0,
+    "finalSnapshotSources": {
+      "skills/classification-projection.json": {
+        "digest": "sha256:623e4588aa70d8e95a2952030377434f0f81030616fb8d0f472e8a77530c3c07",
+        "content": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"projectionRevision\": \"1.0.0\",\n  \"host\": \"claude-code\",\n  \"installedSkillIds\": [\n    \"complete\",\n    \"subject\"\n  ],\n  \"canonicalSources\": [\n    {\n      \"path\": \"skills/complete/classification.json\",\n      \"digest\": \"sha256:7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf\",\n      \"content\": \"{\\n  \\\"schemaVersion\\\": \\\"1.0.0\\\",\\n  \\\"taxonomyRevision\\\": \\\"1.0.0\\\",\\n  \\\"actions\\\": [\\n    \\\"review\\\"\\n  ],\\n  \\\"targets\\\": [\\n    \\\"queue\\\"\\n  ],\\n  \\\"constraints\\\": [],\\n  \\\"dependencies\\\": [],\\n  \\\"capabilities\\\": [\\n    \\\"queue-review\\\"\\n  ],\\n  \\\"applicability\\\": [\\n    {\\n      \\\"path\\\": \\\"skills/complete/SKILL.md\\\",\\n      \\\"startLine\\\": 7,\\n      \\\"endLine\\\": 7,\\n      \\\"digest\\\": \\\"sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a\\\"\\n    }\\n  ],\\n  \\\"exclusions\\\": [\\n    {\\n      \\\"path\\\": \\\"skills/complete/SKILL.md\\\",\\n      \\\"startLine\\\": 8,\\n      \\\"endLine\\\": 8,\\n      \\\"digest\\\": \\\"sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a\\\"\\n    }\\n  ]\\n}\\n\"\n    },\n    {\n      \"path\": \"skills/complete/SKILL.md\",\n      \"digest\": \"sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a\",\n      \"content\": \"---\\nname: complete\\ndescription: Review queue delivery.\\nmetadata:\\n  version: '1.0.0'\\n---\\nApply to queue delivery analysis.\\nExclude implementation and ordinary explanation.\\n\"\n    },\n    {\n      \"path\": \"skills/registry.json\",\n      \"digest\": \"sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf\",\n      \"content\": \"{\\n  \\\"schemaVersion\\\": \\\"2.0.0\\\",\\n  \\\"skills\\\": [\\n    {\\n      \\\"skillId\\\": \\\"subject\\\",\\n      \\\"version\\\": \\\"1.0.0\\\",\\n      \\\"path\\\": \\\"./subject\\\",\\n      \\\"enabled\\\": true,\\n      \\\"providers\\\": [\\n        {\\n          \\\"capabilities\\\": [\\n            \\\"queue-review\\\"\\n          ],\\n          \\\"phase\\\": \\\"analysis\\\",\\n          \\\"phaseOrder\\\": 10,\\n          \\\"requiredInputArtifacts\\\": [],\\n          \\\"producedArtifacts\\\": [],\\n          \\\"inputBindings\\\": [],\\n          \\\"gate\\\": {\\n            \\\"kind\\\": \\\"none\\\",\\n            \\\"policy\\\": \\\"none\\\"\\n          }\\n        }\\n      ]\\n    },\\n    {\\n      \\\"skillId\\\": \\\"complete\\\",\\n      \\\"version\\\": \\\"1.0.0\\\",\\n      \\\"path\\\": \\\"./complete\\\",\\n      \\\"enabled\\\": true,\\n      \\\"providers\\\": [\\n        {\\n          \\\"capabilities\\\": [\\n            \\\"queue-review\\\"\\n          ],\\n          \\\"phase\\\": \\\"analysis\\\",\\n          \\\"phaseOrder\\\": 10,\\n          \\\"requiredInputArtifacts\\\": [],\\n          \\\"producedArtifacts\\\": [],\\n          \\\"inputBindings\\\": [],\\n          \\\"gate\\\": {\\n            \\\"kind\\\": \\\"none\\\",\\n            \\\"policy\\\": \\\"none\\\"\\n          }\\n        }\\n      ]\\n    }\\n  ]\\n}\\n\"\n    },\n    {\n      \"path\": \"skills/subject/classification.json\",\n      \"digest\": \"sha256:d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d\",\n      \"content\": \"{\\n  \\\"schemaVersion\\\": \\\"1.0.0\\\",\\n  \\\"taxonomyRevision\\\": \\\"1.0.0\\\",\\n  \\\"actions\\\": [\\n    \\\"review\\\"\\n  ],\\n  \\\"targets\\\": [\\n    \\\"queue\\\"\\n  ],\\n  \\\"constraints\\\": [],\\n  \\\"dependencies\\\": [],\\n  \\\"capabilities\\\": [\\n    \\\"queue-review\\\"\\n  ],\\n  \\\"applicability\\\": [\\n    {\\n      \\\"path\\\": \\\"skills/subject/SKILL.md\\\",\\n      \\\"startLine\\\": 7,\\n      \\\"endLine\\\": 7,\\n      \\\"digest\\\": \\\"sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30\\\"\\n    }\\n  ],\\n  \\\"exclusions\\\": [\\n    {\\n      \\\"path\\\": \\\"skills/subject/SKILL.md\\\",\\n      \\\"startLine\\\": 8,\\n      \\\"endLine\\\": 8,\\n      \\\"digest\\\": \\\"sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30\\\"\\n    }\\n  ]\\n}\\n\"\n    },\n    {\n      \"path\": \"skills/subject/SKILL.md\",\n      \"digest\": \"sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30\",\n      \"content\": \"---\\nname: subject\\ndescription: Review queue delivery.\\nmetadata:\\n  version: '1.0.0'\\n---\\nApply to queue delivery analysis.\\nExclude implementation and ordinary explanation.\\n\"\n    }\n  ],\n  \"hostSources\": [\n    {\n      \"path\": \"skills/complete/classification.json\",\n      \"digest\": \"sha256:7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf\"\n    },\n    {\n      \"path\": \"skills/complete/SKILL.md\",\n      \"digest\": \"sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a\"\n    },\n    {\n      \"path\": \"skills/registry.json\",\n      \"digest\": \"sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf\"\n    },\n    {\n      \"path\": \"skills/subject/classification.json\",\n      \"digest\": \"sha256:d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d\"\n    },\n    {\n      \"path\": \"skills/subject/SKILL.md\",\n      \"digest\": \"sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30\"\n    }\n  ]\n}\n"
+      },
+      "skills/complete/SKILL.md": {
+        "digest": "sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a",
+        "content": "---\nname: complete\ndescription: Review queue delivery.\nmetadata:\n  version: '1.0.0'\n---\nApply to queue delivery analysis.\nExclude implementation and ordinary explanation.\n"
+      },
+      "skills/complete/classification.json": {
+        "digest": "sha256:7d991e5394dac5a396f0a088224c69f66d4ca87abe8f2349cd8332c8786eafbf",
+        "content": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"taxonomyRevision\": \"1.0.0\",\n  \"actions\": [\n    \"review\"\n  ],\n  \"targets\": [\n    \"queue\"\n  ],\n  \"constraints\": [],\n  \"dependencies\": [],\n  \"capabilities\": [\n    \"queue-review\"\n  ],\n  \"applicability\": [\n    {\n      \"path\": \"skills/complete/SKILL.md\",\n      \"startLine\": 7,\n      \"endLine\": 7,\n      \"digest\": \"sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a\"\n    }\n  ],\n  \"exclusions\": [\n    {\n      \"path\": \"skills/complete/SKILL.md\",\n      \"startLine\": 8,\n      \"endLine\": 8,\n      \"digest\": \"sha256:7e83f697499c079121cdb199cca42aab3f72471ffef5b091bbfd4bc09ca06b1a\"\n    }\n  ]\n}\n"
+      },
+      "skills/registry.json": {
+        "digest": "sha256:9db03d901c6f7048d1ebdd0291736e199cd6dfb4d4437e0be060f890236ebedf",
+        "content": "{\n  \"schemaVersion\": \"2.0.0\",\n  \"skills\": [\n    {\n      \"skillId\": \"subject\",\n      \"version\": \"1.0.0\",\n      \"path\": \"./subject\",\n      \"enabled\": true,\n      \"providers\": [\n        {\n          \"capabilities\": [\n            \"queue-review\"\n          ],\n          \"phase\": \"analysis\",\n          \"phaseOrder\": 10,\n          \"requiredInputArtifacts\": [],\n          \"producedArtifacts\": [],\n          \"inputBindings\": [],\n          \"gate\": {\n            \"kind\": \"none\",\n            \"policy\": \"none\"\n          }\n        }\n      ]\n    },\n    {\n      \"skillId\": \"complete\",\n      \"version\": \"1.0.0\",\n      \"path\": \"./complete\",\n      \"enabled\": true,\n      \"providers\": [\n        {\n          \"capabilities\": [\n            \"queue-review\"\n          ],\n          \"phase\": \"analysis\",\n          \"phaseOrder\": 10,\n          \"requiredInputArtifacts\": [],\n          \"producedArtifacts\": [],\n          \"inputBindings\": [],\n          \"gate\": {\n            \"kind\": \"none\",\n            \"policy\": \"none\"\n          }\n        }\n      ]\n    }\n  ]\n}\n"
+      },
+      "skills/subject/SKILL.md": {
+        "digest": "sha256:f0e4b16e3d88058bb98b3fb8e567d382ceac21803e6df25faf0789522e18da0f",
+        "content": "stale generated bytes"
+      },
+      "skills/subject/classification.json": {
+        "digest": "sha256:d37ef214f38f8b570aa7991fe606d5b9d57e43a901317c2e7f7f2168eeabd67d",
+        "content": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"taxonomyRevision\": \"1.0.0\",\n  \"actions\": [\n    \"review\"\n  ],\n  \"targets\": [\n    \"queue\"\n  ],\n  \"constraints\": [],\n  \"dependencies\": [],\n  \"capabilities\": [\n    \"queue-review\"\n  ],\n  \"applicability\": [\n    {\n      \"path\": \"skills/subject/SKILL.md\",\n      \"startLine\": 7,\n      \"endLine\": 7,\n      \"digest\": \"sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30\"\n    }\n  ],\n  \"exclusions\": [\n    {\n      \"path\": \"skills/subject/SKILL.md\",\n      \"startLine\": 8,\n      \"endLine\": 8,\n      \"digest\": \"sha256:4a64bef5d079931654179362d4d8789e4a45a05396d3a5d0faf6f571897f8c30\"\n    }\n  ]\n}\n"
+      }
+    }
+  },
+  "checks": [
+    {
+      "label": "clean two-candidate baseline",
+      "passed": true
+    },
+    {
+      "label": "valid synthetic generated projection",
+      "passed": true
+    },
+    {
+      "label": "id: generated source digest conflict reported",
+      "passed": true
+    },
+    {
+      "label": "id: generated conflict invalidates inventory digest",
+      "passed": true
+    },
+    {
+      "label": "version: generated source digest conflict reported",
+      "passed": true
+    },
+    {
+      "label": "version: generated conflict invalidates inventory digest",
+      "passed": true
+    },
+    {
+      "label": "description: generated source digest conflict reported",
+      "passed": true
+    },
+    {
+      "label": "description: generated conflict invalidates inventory digest",
+      "passed": true
+    },
+    {
+      "label": "taxonomy: generated source digest conflict reported",
+      "passed": true
+    },
+    {
+      "label": "taxonomy: generated conflict invalidates inventory digest",
+      "passed": true
+    },
+    {
+      "label": "apply: generated source digest conflict reported",
+      "passed": true
+    },
+    {
+      "label": "apply: generated conflict invalidates inventory digest",
+      "passed": true
+    },
+    {
+      "label": "exclude: generated source digest conflict reported",
+      "passed": true
+    },
+    {
+      "label": "exclude: generated conflict invalidates inventory digest",
+      "passed": true
+    },
+    {
+      "label": "source/inventory digest changes",
+      "passed": true
+    },
+    {
+      "label": "same IDs and prompt produce changed REQ digest",
+      "passed": true
+    },
+    {
+      "label": "loader preserves complete candidate",
+      "passed": false
+    },
+    {
+      "label": "baseline mock classification runs",
+      "passed": true
+    },
+    {
+      "label": "old profile inventory binding rejected",
+      "passed": true
+    },
+    {
+      "label": "completed operation cache rejects changed inventory",
+      "passed": true
+    },
+    {
+      "label": "specific conflict/missing input reported",
+      "passed": true
+    },
+    {
+      "label": "incomplete subject must not hide independent complete candidate at gateway",
+      "passed": false
+    }
+  ],
+  "executionKind": "offline-mock",
+  "API0": true,
+  "stages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "agentSelectedSkillIds": null,
+  "hostReceipt": null,
+  "state": "FAIL"
+}

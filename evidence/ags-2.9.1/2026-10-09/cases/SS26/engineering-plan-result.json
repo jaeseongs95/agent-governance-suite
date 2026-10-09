@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:90c6dbbc84773aca6605cf11caae1a4fff5366e433d913ea4dc063163063a1d0",
+  "caseIds": [
+    "SS26.description",
+    "SS26.applicability",
+    "SS26.exclusion",
+    "SS26.new-skill",
+    "SS26.duplicate-id",
+    "SS26.missing-description",
+    "SS26.id-conflict",
+    "SS26.version-conflict",
+    "SS26.taxonomy-conflict",
+    "SS26.source-generated-conflict",
+    "SS26.delete",
+    "SS26.disable"
+  ]
+}

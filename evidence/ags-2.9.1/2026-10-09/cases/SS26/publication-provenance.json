@@ -1,0 +1,48 @@
+{
+  "caseId": "SS26",
+  "publicationOnly": true,
+  "newTests": 0,
+  "modelAPICalls": {
+    "JEV": 0,
+    "vendor": 0,
+    "Claude": 0,
+    "Codex": 0
+  },
+  "candidateCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "candidateTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "frozenOracleDigest": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "sourceSpecification": "Embedded SS26 only; originalPrompt=null, oracle=null; no invented semantic accuracy",
+  "inputs": "Snapshot files and input.baselineSources/currentSources in observations preserve existing synthetic bytes and digest bindings; path labels are redacted only in derived records.",
+  "redaction": "Private local paths replaced by named placeholders; reproducible test output root made relative. No credential/environment value/private conversation included. JSON digests inside derived records refer to original execution bytes; not recomputed as if the public record were the original.",
+  "originalManifest": {
+    "bytes": 12500,
+    "SHA256": "fa9699c53853b8b19fe4afb1705f6eaf2787c071b0f39438eb4f647780dcb00d",
+    "verification": "All present frozen files matched original digests before redaction"
+  },
+  "missingOriginals": [
+    {
+      "artifact": "TEST-SPEC.seq7.ko.md",
+      "state": "MISSING_ORIGINAL",
+      "reason": "Source file absent at original test; embedded SS26 sourceSpec preserved. No reconstruction."
+    },
+    {
+      "artifact": "r1 version-specific stdout/stderr/command receipt",
+      "state": "MISSING_ORIGINAL",
+      "reason": "Only r1 Vitest JSON, observations, and test source were retained. Final-run logs are not relabeled as r1 logs."
+    }
+  ],
+  "patch": {
+    "state": "NONE",
+    "reason": "No existing product patch. tracked-diff.txt exists and is exactly 0 bytes. Tests are reproduced as existing-file copies, not a newly fabricated patch."
+  },
+  "hostStages": {
+    "selected": "NOT_RUN",
+    "read": "NOT_RUN",
+    "applied": "NOT_RUN",
+    "verified": "NOT_RUN"
+  },
+  "agentSelectedSkillIds": null,
+  "hostReceipt": null,
+  "historicalStatusSpelling": "Original result uses NOTRUN; host stage meaning remains NOT_RUN. No promotion."
+}

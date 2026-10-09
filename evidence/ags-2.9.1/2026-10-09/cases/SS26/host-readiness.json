@@ -1,0 +1,21 @@
+{
+  "toolsAvailable": [],
+  "actualHost": "NOTRUN",
+  "necessaryForSS26Offline": false,
+  "supportedRepositoryPath": [
+    "mcp-server/src/index.ts:88 AGENT_GOVERNANCE_CLASSIFICATION_CONFIG",
+    "mcp-server/src/index.ts:109 runtime source digest observer",
+    "mcp-server/src/index.ts:121 host current task observer",
+    "mcp-server/src/server.ts:386 get_skill_inventory",
+    "mcp-server/src/server.ts:391 classify_skills",
+    "mcp-server/src/server.ts:396 record_skill_selection",
+    "mcp-server/src/skill-classification/native-adapters.ts:171 vetted native codex exec/Claude --print routes"
+  ],
+  "missingInputs": [
+    "Actual AGS MCP get_skill_inventory/classify_skills/record_skill_selection tools are not present in current available tool list.",
+    "Workspace .codex and .agents are empty and repository .agents/skills does not exist; approved installation/registered pinned AGS host runtime not demonstrated.",
+    "No actual signed host invocation observation, current session/prompt task binding, host membership/active status supplier, AGENT chosen IDs/reasons, body read/apply/verified artifact receipts.",
+    "No approved classification config/provider runtime/native adapter definitions, current matching qualified fixed profile, vetted host executable/isolation/retry evidence and native allowance/budget inputs supplied. SS26 is a mock-source operational case; actual host test is not necessary to finish its offline obligations."
+  ],
+  "API0": true
+}

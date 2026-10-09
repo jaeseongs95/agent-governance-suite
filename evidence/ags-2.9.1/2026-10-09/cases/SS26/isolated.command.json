@@ -1,0 +1,23 @@
+{
+  "caseId": "SS26",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/skill-classification/SS26.isolated.test.ts",
+    "--reporter=json",
+    "--outputFile=<EVIDENCE_ROOT>/isolated.vitest.json"
+  ],
+  "cwd": "<PINNED_CHECKOUT>",
+  "exitCode": 1,
+  "signal": null,
+  "startedAt": "2026-10-09T02:59:43.662425+00:00",
+  "finishedAt": "2026-10-09T02:59:44.579993+00:00",
+  "executionKind": "offline-mock",
+  "API0": true,
+  "stdout": "isolated.stdout.log",
+  "stderr": "isolated.stderr.log",
+  "testSha256": "e390fd5112a1fd8fc381d277f83d56a225dad234283fc41ca4805387b4924687",
+  "unsignedLocalProcessRecord": true,
+  "hostReceipt": null
+}

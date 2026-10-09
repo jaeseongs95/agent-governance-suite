@@ -1,0 +1,338 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS26",
+  "contractDigest": "sha256:4f38a388d9db17c442cf2e89be304ead0782730424a53b2dcfb64181fc3160a7",
+  "requirements": [
+    "SS26.description",
+    "SS26.applicability",
+    "SS26.exclusion",
+    "SS26.new-skill",
+    "SS26.duplicate-id",
+    "SS26.missing-description",
+    "SS26.id-conflict",
+    "SS26.version-conflict",
+    "SS26.taxonomy-conflict",
+    "SS26.source-generated-conflict",
+    "SS26.delete",
+    "SS26.disable"
+  ],
+  "scopeFiles": [
+    "tests/skill-classification/SS26.isolated.test.ts",
+    "tests/skill-classification/fixtures.json",
+    "mcp-server/src/skill-classification/inventory.ts",
+    "mcp-server/src/skill-classification/request.ts",
+    "mcp-server/src/skill-classification/service.ts",
+    "mcp-server/src/skill-classification/gateway.ts",
+    "mcp-server/src/skill-classification/validation.ts",
+    "mcp-server/src/skill-classification/profiles.ts",
+    "scripts/build-claude-plugin.mjs"
+  ],
+  "runner": "repository Vitest 5.0.0; no build/full suite",
+  "environment": "Independent Cloud, Node v24.19.0, pnpm11.19.0, Linux UTC; fixed commit; synthetic sources, mock provider; external API zero",
+  "cases": [
+    {
+      "id": "SS26.description",
+      "requirementIds": [
+        "SS26.description"
+      ],
+      "scenario": "description",
+      "entryPoint": "loadSkillInventory / createClassificationRequest / SkillClassificationService.classify / RuntimeSkillClassificationGateway.classify",
+      "level": "integration",
+      "expectedBehavior": "원천 변경 후 descriptor·REQ digest가 바뀌고 관련 cache가 무효화된다. 부정/제외 조건 변경도 다음 분류에 반영된다. 새 스킬은 정본 추가·loader 재읽기만으로 노출되며 selector 코드 수정은 0이다. 삭제된 후보의 늦은 결과는 현재 선택을 덮지 않는다. 원천·설명·inventory·profile model revision에 결속된 cache. 설명 부족·충돌은 구체적 입력 공백으로 보류하고 다른 완전 후보까지 숨기지 않는다.",
+      "oracle": "Embedded SS26 mechanical obligations; semantic oracle and originalPrompt null; probe prompt is newly authored synthetic input",
+      "testFiles": [
+        "tests/skill-classification/SS26.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Actual fault reproduction at fixed candidate; no product edits allowed, so repaired-candidate red/green remains NOT_RUN. No host accuracy or receipt claims.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS26.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS26.applicability",
+      "requirementIds": [
+        "SS26.applicability"
+      ],
+      "scenario": "applicability",
+      "entryPoint": "loadSkillInventory / createClassificationRequest / SkillClassificationService.classify / RuntimeSkillClassificationGateway.classify",
+      "level": "integration",
+      "expectedBehavior": "원천 변경 후 descriptor·REQ digest가 바뀌고 관련 cache가 무효화된다. 부정/제외 조건 변경도 다음 분류에 반영된다. 새 스킬은 정본 추가·loader 재읽기만으로 노출되며 selector 코드 수정은 0이다. 삭제된 후보의 늦은 결과는 현재 선택을 덮지 않는다. 원천·설명·inventory·profile model revision에 결속된 cache. 설명 부족·충돌은 구체적 입력 공백으로 보류하고 다른 완전 후보까지 숨기지 않는다.",
+      "oracle": "Embedded SS26 mechanical obligations; semantic oracle and originalPrompt null; probe prompt is newly authored synthetic input",
+      "testFiles": [
+        "tests/skill-classification/SS26.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Actual fault reproduction at fixed candidate; no product edits allowed, so repaired-candidate red/green remains NOT_RUN. No host accuracy or receipt claims.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS26.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS26.exclusion",
+      "requirementIds": [
+        "SS26.exclusion"
+      ],
+      "scenario": "exclusion",
+      "entryPoint": "loadSkillInventory / createClassificationRequest / SkillClassificationService.classify / RuntimeSkillClassificationGateway.classify",
+      "level": "integration",
+      "expectedBehavior": "원천 변경 후 descriptor·REQ digest가 바뀌고 관련 cache가 무효화된다. 부정/제외 조건 변경도 다음 분류에 반영된다. 새 스킬은 정본 추가·loader 재읽기만으로 노출되며 selector 코드 수정은 0이다. 삭제된 후보의 늦은 결과는 현재 선택을 덮지 않는다. 원천·설명·inventory·profile model revision에 결속된 cache. 설명 부족·충돌은 구체적 입력 공백으로 보류하고 다른 완전 후보까지 숨기지 않는다.",
+      "oracle": "Embedded SS26 mechanical obligations; semantic oracle and originalPrompt null; probe prompt is newly authored synthetic input",
+      "testFiles": [
+        "tests/skill-classification/SS26.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Actual fault reproduction at fixed candidate; no product edits allowed, so repaired-candidate red/green remains NOT_RUN. No host accuracy or receipt claims.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS26.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS26.new-skill",
+      "requirementIds": [
+        "SS26.new-skill"
+      ],
+      "scenario": "new-skill",
+      "entryPoint": "loadSkillInventory / createClassificationRequest / SkillClassificationService.classify / RuntimeSkillClassificationGateway.classify",
+      "level": "integration",
+      "expectedBehavior": "원천 변경 후 descriptor·REQ digest가 바뀌고 관련 cache가 무효화된다. 부정/제외 조건 변경도 다음 분류에 반영된다. 새 스킬은 정본 추가·loader 재읽기만으로 노출되며 selector 코드 수정은 0이다. 삭제된 후보의 늦은 결과는 현재 선택을 덮지 않는다. 원천·설명·inventory·profile model revision에 결속된 cache. 설명 부족·충돌은 구체적 입력 공백으로 보류하고 다른 완전 후보까지 숨기지 않는다.",
+      "oracle": "Embedded SS26 mechanical obligations; semantic oracle and originalPrompt null; probe prompt is newly authored synthetic input",
+      "testFiles": [
+        "tests/skill-classification/SS26.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Actual fault reproduction at fixed candidate; no product edits allowed, so repaired-candidate red/green remains NOT_RUN. No host accuracy or receipt claims.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS26.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS26.duplicate-id",
+      "requirementIds": [
+        "SS26.duplicate-id"
+      ],
+      "scenario": "duplicate-id",
+      "entryPoint": "loadSkillInventory / createClassificationRequest / SkillClassificationService.classify / RuntimeSkillClassificationGateway.classify",
+      "level": "integration",
+      "expectedBehavior": "원천 변경 후 descriptor·REQ digest가 바뀌고 관련 cache가 무효화된다. 부정/제외 조건 변경도 다음 분류에 반영된다. 새 스킬은 정본 추가·loader 재읽기만으로 노출되며 selector 코드 수정은 0이다. 삭제된 후보의 늦은 결과는 현재 선택을 덮지 않는다. 원천·설명·inventory·profile model revision에 결속된 cache. 설명 부족·충돌은 구체적 입력 공백으로 보류하고 다른 완전 후보까지 숨기지 않는다.",
+      "oracle": "Embedded SS26 mechanical obligations; semantic oracle and originalPrompt null; probe prompt is newly authored synthetic input",
+      "testFiles": [
+        "tests/skill-classification/SS26.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Actual fault reproduction at fixed candidate; no product edits allowed, so repaired-candidate red/green remains NOT_RUN. No host accuracy or receipt claims.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS26.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS26.missing-description",
+      "requirementIds": [
+        "SS26.missing-description"
+      ],
+      "scenario": "missing-description",
+      "entryPoint": "loadSkillInventory / createClassificationRequest / SkillClassificationService.classify / RuntimeSkillClassificationGateway.classify",
+      "level": "integration",
+      "expectedBehavior": "원천 변경 후 descriptor·REQ digest가 바뀌고 관련 cache가 무효화된다. 부정/제외 조건 변경도 다음 분류에 반영된다. 새 스킬은 정본 추가·loader 재읽기만으로 노출되며 selector 코드 수정은 0이다. 삭제된 후보의 늦은 결과는 현재 선택을 덮지 않는다. 원천·설명·inventory·profile model revision에 결속된 cache. 설명 부족·충돌은 구체적 입력 공백으로 보류하고 다른 완전 후보까지 숨기지 않는다.",
+      "oracle": "Embedded SS26 mechanical obligations; semantic oracle and originalPrompt null; probe prompt is newly authored synthetic input",
+      "testFiles": [
+        "tests/skill-classification/SS26.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Actual fault reproduction at fixed candidate; no product edits allowed, so repaired-candidate red/green remains NOT_RUN. No host accuracy or receipt claims.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS26.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS26.id-conflict",
+      "requirementIds": [
+        "SS26.id-conflict"
+      ],
+      "scenario": "id-conflict",
+      "entryPoint": "loadSkillInventory / createClassificationRequest / SkillClassificationService.classify / RuntimeSkillClassificationGateway.classify",
+      "level": "integration",
+      "expectedBehavior": "원천 변경 후 descriptor·REQ digest가 바뀌고 관련 cache가 무효화된다. 부정/제외 조건 변경도 다음 분류에 반영된다. 새 스킬은 정본 추가·loader 재읽기만으로 노출되며 selector 코드 수정은 0이다. 삭제된 후보의 늦은 결과는 현재 선택을 덮지 않는다. 원천·설명·inventory·profile model revision에 결속된 cache. 설명 부족·충돌은 구체적 입력 공백으로 보류하고 다른 완전 후보까지 숨기지 않는다.",
+      "oracle": "Embedded SS26 mechanical obligations; semantic oracle and originalPrompt null; probe prompt is newly authored synthetic input",
+      "testFiles": [
+        "tests/skill-classification/SS26.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Actual fault reproduction at fixed candidate; no product edits allowed, so repaired-candidate red/green remains NOT_RUN. No host accuracy or receipt claims.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS26.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS26.version-conflict",
+      "requirementIds": [
+        "SS26.version-conflict"
+      ],
+      "scenario": "version-conflict",
+      "entryPoint": "loadSkillInventory / createClassificationRequest / SkillClassificationService.classify / RuntimeSkillClassificationGateway.classify",
+      "level": "integration",
+      "expectedBehavior": "원천 변경 후 descriptor·REQ digest가 바뀌고 관련 cache가 무효화된다. 부정/제외 조건 변경도 다음 분류에 반영된다. 새 스킬은 정본 추가·loader 재읽기만으로 노출되며 selector 코드 수정은 0이다. 삭제된 후보의 늦은 결과는 현재 선택을 덮지 않는다. 원천·설명·inventory·profile model revision에 결속된 cache. 설명 부족·충돌은 구체적 입력 공백으로 보류하고 다른 완전 후보까지 숨기지 않는다.",
+      "oracle": "Embedded SS26 mechanical obligations; semantic oracle and originalPrompt null; probe prompt is newly authored synthetic input",
+      "testFiles": [
+        "tests/skill-classification/SS26.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Actual fault reproduction at fixed candidate; no product edits allowed, so repaired-candidate red/green remains NOT_RUN. No host accuracy or receipt claims.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS26.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS26.taxonomy-conflict",
+      "requirementIds": [
+        "SS26.taxonomy-conflict"
+      ],
+      "scenario": "taxonomy-conflict",
+      "entryPoint": "loadSkillInventory / createClassificationRequest / SkillClassificationService.classify / RuntimeSkillClassificationGateway.classify",
+      "level": "integration",
+      "expectedBehavior": "원천 변경 후 descriptor·REQ digest가 바뀌고 관련 cache가 무효화된다. 부정/제외 조건 변경도 다음 분류에 반영된다. 새 스킬은 정본 추가·loader 재읽기만으로 노출되며 selector 코드 수정은 0이다. 삭제된 후보의 늦은 결과는 현재 선택을 덮지 않는다. 원천·설명·inventory·profile model revision에 결속된 cache. 설명 부족·충돌은 구체적 입력 공백으로 보류하고 다른 완전 후보까지 숨기지 않는다.",
+      "oracle": "Embedded SS26 mechanical obligations; semantic oracle and originalPrompt null; probe prompt is newly authored synthetic input",
+      "testFiles": [
+        "tests/skill-classification/SS26.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Actual fault reproduction at fixed candidate; no product edits allowed, so repaired-candidate red/green remains NOT_RUN. No host accuracy or receipt claims.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS26.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS26.source-generated-conflict",
+      "requirementIds": [
+        "SS26.source-generated-conflict"
+      ],
+      "scenario": "source-generated-conflict",
+      "entryPoint": "loadSkillInventory / createClassificationRequest / SkillClassificationService.classify / RuntimeSkillClassificationGateway.classify",
+      "level": "integration",
+      "expectedBehavior": "원천 변경 후 descriptor·REQ digest가 바뀌고 관련 cache가 무효화된다. 부정/제외 조건 변경도 다음 분류에 반영된다. 새 스킬은 정본 추가·loader 재읽기만으로 노출되며 selector 코드 수정은 0이다. 삭제된 후보의 늦은 결과는 현재 선택을 덮지 않는다. 원천·설명·inventory·profile model revision에 결속된 cache. 설명 부족·충돌은 구체적 입력 공백으로 보류하고 다른 완전 후보까지 숨기지 않는다.",
+      "oracle": "Embedded SS26 mechanical obligations; semantic oracle and originalPrompt null; probe prompt is newly authored synthetic input",
+      "testFiles": [
+        "tests/skill-classification/SS26.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Actual fault reproduction at fixed candidate; no product edits allowed, so repaired-candidate red/green remains NOT_RUN. No host accuracy or receipt claims.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS26.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS26.delete",
+      "requirementIds": [
+        "SS26.delete"
+      ],
+      "scenario": "delete",
+      "entryPoint": "loadSkillInventory / createClassificationRequest / SkillClassificationService.classify / RuntimeSkillClassificationGateway.classify",
+      "level": "integration",
+      "expectedBehavior": "원천 변경 후 descriptor·REQ digest가 바뀌고 관련 cache가 무효화된다. 부정/제외 조건 변경도 다음 분류에 반영된다. 새 스킬은 정본 추가·loader 재읽기만으로 노출되며 selector 코드 수정은 0이다. 삭제된 후보의 늦은 결과는 현재 선택을 덮지 않는다. 원천·설명·inventory·profile model revision에 결속된 cache. 설명 부족·충돌은 구체적 입력 공백으로 보류하고 다른 완전 후보까지 숨기지 않는다.",
+      "oracle": "Embedded SS26 mechanical obligations; semantic oracle and originalPrompt null; probe prompt is newly authored synthetic input",
+      "testFiles": [
+        "tests/skill-classification/SS26.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Actual fault reproduction at fixed candidate; no product edits allowed, so repaired-candidate red/green remains NOT_RUN. No host accuracy or receipt claims.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS26.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS26.disable",
+      "requirementIds": [
+        "SS26.disable"
+      ],
+      "scenario": "disable",
+      "entryPoint": "loadSkillInventory / createClassificationRequest / SkillClassificationService.classify / RuntimeSkillClassificationGateway.classify",
+      "level": "integration",
+      "expectedBehavior": "원천 변경 후 descriptor·REQ digest가 바뀌고 관련 cache가 무효화된다. 부정/제외 조건 변경도 다음 분류에 반영된다. 새 스킬은 정본 추가·loader 재읽기만으로 노출되며 selector 코드 수정은 0이다. 삭제된 후보의 늦은 결과는 현재 선택을 덮지 않는다. 원천·설명·inventory·profile model revision에 결속된 cache. 설명 부족·충돌은 구체적 입력 공백으로 보류하고 다른 완전 후보까지 숨기지 않는다.",
+      "oracle": "Embedded SS26 mechanical obligations; semantic oracle and originalPrompt null; probe prompt is newly authored synthetic input",
+      "testFiles": [
+        "tests/skill-classification/SS26.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Actual fault reproduction at fixed candidate; no product edits allowed, so repaired-candidate red/green remains NOT_RUN. No host accuracy or receipt claims.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS26.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_ROOT>/isolated.vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "All other cases, full suite, previous21 provider runs, real host choice, provider-live, product modification/push/PR/release, repaired-candidate green and product mutation"
+  ]
+}

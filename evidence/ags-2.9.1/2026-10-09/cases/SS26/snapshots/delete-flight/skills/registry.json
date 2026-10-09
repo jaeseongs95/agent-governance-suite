@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "2.0.0",
+  "skills": [
+    {
+      "skillId": "complete",
+      "version": "1.0.0",
+      "path": "./complete",
+      "enabled": true,
+      "providers": [
+        {
+          "capabilities": [
+            "queue-review"
+          ],
+          "phase": "analysis",
+          "phaseOrder": 10,
+          "requiredInputArtifacts": [],
+          "producedArtifacts": [],
+          "inputBindings": [],
+          "gate": {
+            "kind": "none",
+            "policy": "none"
+          }
+        }
+      ]
+    }
+  ]
+}
