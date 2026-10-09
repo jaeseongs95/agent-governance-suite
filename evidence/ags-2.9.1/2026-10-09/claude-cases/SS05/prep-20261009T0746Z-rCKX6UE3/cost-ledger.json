@@ -1,0 +1,42 @@
+{
+  "caseId": "SS05",
+  "asOf": "2026-10-09T07:42:40.949777+00:00",
+  "currency": "USD",
+  "softBudgetUsd": 2,
+  "budgetIncludesPreparationCalls": true,
+  "allCasesReservationUsd": 78,
+  "allCasesCount": 39,
+  "isSpendTarget": false,
+  "paidCalls": 0,
+  "claudeApiAttempts": 0,
+  "jevCalls": 0,
+  "otherProviderCalls": 0,
+  "failedCalls": 0,
+  "retries": 0,
+  "totalCostUsd": 0,
+  "unresolvedConsumptionUsd": 0,
+  "reservedUnknownConsumptionUsd": 0,
+  "remainingSoftBudgetUsd": 2,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cacheCreationInput": 0,
+    "cacheReadInput": 0
+  },
+  "attempts": [],
+  "nextCallAllowedNow": false,
+  "blockedBy": "parent candidate/model/auth/prerequisite delivery pending",
+  "recordEachAttempt": [
+    "model",
+    "effort",
+    "start/end",
+    "success/failure/timeout",
+    "input/output tokens",
+    "cache creation/read tokens",
+    "cost including failure",
+    "retry count",
+    "unknown cost and reservation"
+  ],
+  "stopRule": "Before each next call stop if total or conservative reserved consumption approaches soft cap; if cost unknown stop for parent disposition. Never use cap as a spend target.",
+  "localCliVersionAndHelpChecksPaid": false
+}

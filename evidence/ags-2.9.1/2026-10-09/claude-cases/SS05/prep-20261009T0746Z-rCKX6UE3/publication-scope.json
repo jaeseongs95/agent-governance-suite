@@ -1,0 +1,27 @@
+{
+  "caseId": "SS05",
+  "operation": "append-only SS05 preparation evidence publication",
+  "runPath": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS05/prep-20261009T0746Z-rCKX6UE3",
+  "targetRepository": "jaeseongs95/agent-governance-suite",
+  "targetBranch": "evidence",
+  "authorization": "Explicit delegated instruction authorizes sanitized report/evidence/hash publication to this case unique run path; no raw conversation published",
+  "allowedWritePrefix": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS05/prep-20261009T0746Z-rCKX6UE3/",
+  "excluded": [
+    "product source",
+    "generated Claude plugin/deployment files",
+    "main",
+    "tags",
+    "other cases",
+    "existing files",
+    "credentials",
+    "personal information",
+    "raw conversation"
+  ],
+  "baselineProductWorktreeClean": true,
+  "baselinePublicationRunAbsent": true,
+  "forcePushAllowed": false,
+  "publicationMethod": "append-only tree based on freshly observed evidence head; non-force fast-forward ref update; if concurrent race re-read head and rebase only new run files",
+  "rollback": "Preserve before/after immutable commits; if correction needed append new corrective report or revert only this run addition on fresh evidence head. No reset or force push.",
+  "privacyReview": "allowlisted derived JSON/Markdown only, fixed public benchmark prompt referenced/quoted; no environment dumps, secret/placeholder values, raw private host logs or raw chat",
+  "formalIndependentAuditClaim": false
+}

@@ -1,0 +1,69 @@
+{
+  "caseId": "SS05",
+  "title": "동시성 변경분의 읽기 전용 리뷰",
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "sourceProductCommitForProvenanceOnly": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "sourceProductNotTested": true,
+  "allManifestPayloadFilesVerified": 13,
+  "sha256sumEntriesVerified": 14,
+  "promptBytes": 152,
+  "promptSHA256": "8eb7a8e365198bc58cd8e486d723f51efe80c503f6b7f990efae42be2bd61644",
+  "promptTrailingNewline": false,
+  "extractedCaseSHA256": "f678e261d14b18cf1266c78fbbef4b1cb3f0db62c6ed33317c788e9fd89f8f8e",
+  "extractedCaseEqualsSourceFixture": true,
+  "fullFixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "fullFixtureBytes": 142450,
+  "canonicalOracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "oracleRecomputedUsing": "standard-library SHA256 of exact JSON.stringify key projection stated in frozen evaluation.ts; no evaluation CLI/test/product service invocation",
+  "sourceRefs": [
+    {
+      "path": "skills/code-review/SKILL.md",
+      "sha256": "19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "bytes": 2841,
+      "matchesFrozenRef": true
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "sha256": "aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+      "bytes": 5211,
+      "matchesFrozenRef": true
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "sha256": "96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "bytes": 5024,
+      "matchesFrozenRef": true
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "sha256": "f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "bytes": 7274,
+      "matchesFrozenRef": true
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "bytes": 2981,
+      "matchesFrozenRef": true
+    },
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "sha256": "d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "bytes": 1944,
+      "matchesFrozenRef": true
+    },
+    {
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "sha256": "f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "bytes": 2053,
+      "matchesFrozenRef": true
+    }
+  ],
+  "evidenceManifestSHA256": "18d86776db63d6846f480dc0f6d9e907f00acd7d23c8dcb6467c620bf73150fc",
+  "evidenceSHA256SUMSSHA256": "d3b7dcd84c6eb982e23393d3541f5b6baa096a27cb209ea04c1c7d4d1c53e1ef",
+  "frozenVariants": [
+    "base"
+  ],
+  "missingOriginalSpec": true,
+  "fixedDiffPresent": false
+}

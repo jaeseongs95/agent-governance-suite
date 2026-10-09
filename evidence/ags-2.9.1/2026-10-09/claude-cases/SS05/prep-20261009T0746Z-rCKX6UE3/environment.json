@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "ss05-claude-preparation-1",
+  "observedAt": "2026-10-09T07:42:40.949777+00:00",
+  "host": "Codex Cloud",
+  "operatorRole": "Sol prepares environment and evidence; Claude must perform future host task",
+  "caseId": "SS05",
+  "cli": {
+    "path": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+    "version": "2.1.286 (Claude Code)",
+    "sha256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+    "onPATH": false,
+    "verifiedBy": [
+      "ls -l explicit executable",
+      "explicit executable --version",
+      "explicit executable --help",
+      "sha256sum explicit executable"
+    ],
+    "present": true,
+    "apiInvocation": false
+  },
+  "runtime": {
+    "node": "v24.19.0",
+    "python": "3.12.14"
+  },
+  "candidate": {
+    "label": "R17",
+    "declaredCommit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "declaredTree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "parentVerifiedDelivery": false,
+    "independentSOURCEVerdictReceived": false,
+    "remotePublicationConfirmed": false,
+    "checkoutOrProductTestStarted": false,
+    "previousProductRevisionNotUsedAsFinalCandidate": true
+  },
+  "authentication": {
+    "procedureReceived": false,
+    "apiAuthenticationAttempted": false,
+    "secretValuesReadPrintedCopiedOrPublished": false,
+    "persistentAuthSettingsChanged": false,
+    "networkPoliciesChanged": false
+  },
+  "guidance": {
+    "workspaceAGENTSSkillDirectory": "absent",
+    "workspaceCatalogRelevantSkillMissing": true,
+    "localProductSkillDirectory": "skills/",
+    "evidenceCommitAGENTS": "absent",
+    "evidenceHeadAGENTS": "absent",
+    "localProductReadCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+    "historicalSourceReadCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "historicalSourceUsedFor": "input/oracle/instruction provenance only; no product test",
+    "frozenProductAGENTS_SHA256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827",
+    "requiredAtResume": "Read verified candidate AGENTS.md and Claude plugin SKILL.md/references from exact candidate before host work"
+  },
+  "noProductSourceOrGeneratedArtifactsModified": true
+}

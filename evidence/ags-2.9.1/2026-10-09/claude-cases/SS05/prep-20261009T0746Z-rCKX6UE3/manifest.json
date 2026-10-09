@@ -1,0 +1,44 @@
+{
+  "caseId": "SS05",
+  "runId": "prep-20261009T0746Z-rCKX6UE3",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS05/prep-20261009T0746Z-rCKX6UE3",
+  "phase": "PREPARATION_ONLY",
+  "hostTestStatus": "NOT_RUN",
+  "generatedAt": "2026-10-09T07:42:40.949777+00:00",
+  "files": [
+    {
+      "path": "cost-ledger.json",
+      "bytes": 1196,
+      "sha256": "30d3c21bc2cb8891777a758481ed36ecce0759b8d20482223d753565e0dfb4dd"
+    },
+    {
+      "path": "environment.json",
+      "bytes": 2173,
+      "sha256": "3ee13d21c0c36044c3105ca356699e93e8015b0183c6e3793d356f3f940bb0fa"
+    },
+    {
+      "path": "execution-plan.json",
+      "bytes": 6038,
+      "sha256": "8bddd5b19d2eed48c88402269e4e22d38c89aecac4a530ad5afd6e0ffa861b0f"
+    },
+    {
+      "path": "input-verification.json",
+      "bytes": 2710,
+      "sha256": "4492f1850cb3e65012ca2e266cf9c455143e8c0eebccd8ca3c0f58cc32dfd6e5"
+    },
+    {
+      "path": "prep-report.md",
+      "bytes": 6623,
+      "sha256": "5a6643ba3c9ac6daf6ba97ff5f4fb20d0c5ecf7643f238c6f6907c1f9c7f74cb"
+    },
+    {
+      "path": "publication-scope.json",
+      "bytes": 1485,
+      "sha256": "ad745b1048223bd4e417fd8865ee69d548d4156b6e2ae72e203a984cf706d79a"
+    }
+  ],
+  "hashBoundary": "manifest lists payload only; SHA256SUMS includes payload and manifest, excludes itself",
+  "newProductTests": 0,
+  "paidCalls": 0,
+  "secretOrRawChatPublished": false
+}
