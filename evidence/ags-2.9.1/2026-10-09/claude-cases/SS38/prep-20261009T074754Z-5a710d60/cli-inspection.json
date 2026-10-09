@@ -1,0 +1,20 @@
+{
+  "path": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+  "version": "2.1.286 (Claude Code)",
+  "PATHDiscovery": "absent via command -v; absolute path works",
+  "cliEntrySHA256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+  "helpSHA256": "13dd71866e4b6fde1a11de6fa26bd4f5866308794307ff0fb37804c03db8e0b2",
+  "flagsPresent": {
+    "--max-budget-usd": true,
+    "--model": true,
+    "--effort": true,
+    "--plugin-dir": true,
+    "--mcp-config": true,
+    "--output-format": true,
+    "--setting-sources": true
+  },
+  "authCheckPerformed": false,
+  "providerCallPerformed": false,
+  "nodeVersion": "v24.19.0",
+  "pnpmVersion": "11.19.0"
+}

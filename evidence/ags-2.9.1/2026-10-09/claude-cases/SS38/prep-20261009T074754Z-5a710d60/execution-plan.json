@@ -1,0 +1,1613 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "SS38-Claude-preparation-plan",
+  "phaseStatus": "PREPARED_WAITING_PARENT",
+  "productTestStatus": "NOT_RUN",
+  "caseTitle": "Codex와 Claude의 같은 목적 선택",
+  "candidateHint": {
+    "label": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "status": "UNVERIFIED_LOCAL_REPORT_ONLY; no SOURCE or remote verification supplied"
+  },
+  "steps": [
+    "Parent supplies independently SOURCE-verified and remotely published final candidate commit/tree, common Claude model/effort/settings, successful API auth procedure and preceding check results. Do not test old main or c6a8019; R17 is only an unverified hint.",
+    "Create a separate owned candidate checkout from that verified commit. Verify commit/tree, fixture/oracle, plugin/MCP artifacts and installed hashes before launching. Preserve all product code and generated deployment artifacts. Claude outputs go only to an isolated task sandbox.",
+    "Load candidate AGENTS.md and applicable installed Claude SKILL.md files, including .agents/skills if catalog misses them. Freeze inventory/skill text/taxonomy/availability/permissions/context, explicit and mandatory rule revisions and supported contracts. Preparation instruction hashes are not candidate validation.",
+    "Use parent-approved session-local API authentication and launch settings without persisting auth or changing permissions/network policy. Never print, copy, store, hash or transmit the key as evidence. API reachability is not yet tested.",
+    "Before each paid call, check cumulative ledger including cache, retries/failures/unknown spend; freeze prompt digest, model/reasoning/profile/qualification/cost basis, timeout and route. CLI --max-budget-usd is available but does not replace the cumulative ledger.",
+    "Have actual Claude Code perform host work: observe callable get_skill_inventory/classify_skills/record_skill_selection, classification results, genuine Skill invocation and source reading. Sol manages environment/evidence and must not supply selected sets or simulated host receipts.",
+    "For each of ten fixed representative prompts, retain pairId=case/route/repeat and observe three repeats for each route. Required routes are ON+JEV normal, OFF→vendor, JEV invalid-key→vendor, JEV timeout→vendor. All JEV work remains blocked until separately allocated. Controlled failures are labeled injected, never actual invalid-key/timeout measurements.",
+    "Acquire independent Codex counterpart receipts with matched prompt/normalized input/inventory/permissions/context/model-profile route evidence. Unmatched/missing evidence remains in the matrix and outside matched agreement denominator. A Claude-only trial cannot prove host agreement.",
+    "Capture E0–E4, independent actual agentSelectedSkillIds, canonical sets, intersection/difference, host golden judgments, repeat stability, signed host observations and separate selected/read/applied/verified receipts bound to task/session/artifact/candidate. Preserve null versus valid empty []. For no-skill and missing implementation targets use rubric-appropriate stage states without inventing application completion.",
+    "Keep raw model recommendation versus selection/rules distinct, especially SS18. Keep mock/replay parity versus actual provider/host runs distinct. Exclude evaluator sentinel sets and arbitrary replay all-not-needed judgments from semantic claims.",
+    "Report genuine observed status per slot and stage. Full specification requires 120 pairs/240 host trials plus replay parity; do not downsize rubric to fit USD2. Budget-limited partial evidence remains NOT_RUN/incomplete for missing slots. Sanitize logs into bounded evidence, publish additive files only, then read immutable remote commit files and compare hashes."
+  ],
+  "expected": {
+    "pairs": 120,
+    "hostTrials": 240,
+    "protocolParity": 1.0,
+    "requirements": [
+      "Actual sets agree and each independently satisfies golden purpose.",
+      "Each host repeat stability is measured separately.",
+      "Same wrong sets never prove golden PASS.",
+      "Allowed alternatives can pass golden while still disagreeing across hosts.",
+      "null NOT_RUN cannot become [] valid no-skill or count as agreement/stability.",
+      "Missing equality evidence is unmatched.",
+      "Missing read/applied evidence is a separate stage failure.",
+      "No forced skill sets; source/candidate/rubric unchanged."
+    ]
+  },
+  "matrix": [
+    {
+      "pairId": "SS01/jev-on/1",
+      "representative": "SS01",
+      "route": "jev-on",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS01/jev-on/2",
+      "representative": "SS01",
+      "route": "jev-on",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS01/jev-on/3",
+      "representative": "SS01",
+      "route": "jev-on",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS01/jev-off-vendor/1",
+      "representative": "SS01",
+      "route": "jev-off-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS01/jev-off-vendor/2",
+      "representative": "SS01",
+      "route": "jev-off-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS01/jev-off-vendor/3",
+      "representative": "SS01",
+      "route": "jev-off-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS01/jev-invalid-key-vendor/1",
+      "representative": "SS01",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS01/jev-invalid-key-vendor/2",
+      "representative": "SS01",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS01/jev-invalid-key-vendor/3",
+      "representative": "SS01",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS01/jev-timeout-vendor/1",
+      "representative": "SS01",
+      "route": "jev-timeout-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS01/jev-timeout-vendor/2",
+      "representative": "SS01",
+      "route": "jev-timeout-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS01/jev-timeout-vendor/3",
+      "representative": "SS01",
+      "route": "jev-timeout-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS03/jev-on/1",
+      "representative": "SS03",
+      "route": "jev-on",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS03/jev-on/2",
+      "representative": "SS03",
+      "route": "jev-on",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS03/jev-on/3",
+      "representative": "SS03",
+      "route": "jev-on",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS03/jev-off-vendor/1",
+      "representative": "SS03",
+      "route": "jev-off-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS03/jev-off-vendor/2",
+      "representative": "SS03",
+      "route": "jev-off-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS03/jev-off-vendor/3",
+      "representative": "SS03",
+      "route": "jev-off-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS03/jev-invalid-key-vendor/1",
+      "representative": "SS03",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS03/jev-invalid-key-vendor/2",
+      "representative": "SS03",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS03/jev-invalid-key-vendor/3",
+      "representative": "SS03",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS03/jev-timeout-vendor/1",
+      "representative": "SS03",
+      "route": "jev-timeout-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS03/jev-timeout-vendor/2",
+      "representative": "SS03",
+      "route": "jev-timeout-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS03/jev-timeout-vendor/3",
+      "representative": "SS03",
+      "route": "jev-timeout-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS04/jev-on/1",
+      "representative": "SS04",
+      "route": "jev-on",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS04/jev-on/2",
+      "representative": "SS04",
+      "route": "jev-on",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS04/jev-on/3",
+      "representative": "SS04",
+      "route": "jev-on",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS04/jev-off-vendor/1",
+      "representative": "SS04",
+      "route": "jev-off-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS04/jev-off-vendor/2",
+      "representative": "SS04",
+      "route": "jev-off-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS04/jev-off-vendor/3",
+      "representative": "SS04",
+      "route": "jev-off-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS04/jev-invalid-key-vendor/1",
+      "representative": "SS04",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS04/jev-invalid-key-vendor/2",
+      "representative": "SS04",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS04/jev-invalid-key-vendor/3",
+      "representative": "SS04",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS04/jev-timeout-vendor/1",
+      "representative": "SS04",
+      "route": "jev-timeout-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS04/jev-timeout-vendor/2",
+      "representative": "SS04",
+      "route": "jev-timeout-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS04/jev-timeout-vendor/3",
+      "representative": "SS04",
+      "route": "jev-timeout-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS05/jev-on/1",
+      "representative": "SS05",
+      "route": "jev-on",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS05/jev-on/2",
+      "representative": "SS05",
+      "route": "jev-on",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS05/jev-on/3",
+      "representative": "SS05",
+      "route": "jev-on",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS05/jev-off-vendor/1",
+      "representative": "SS05",
+      "route": "jev-off-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS05/jev-off-vendor/2",
+      "representative": "SS05",
+      "route": "jev-off-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS05/jev-off-vendor/3",
+      "representative": "SS05",
+      "route": "jev-off-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS05/jev-invalid-key-vendor/1",
+      "representative": "SS05",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS05/jev-invalid-key-vendor/2",
+      "representative": "SS05",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS05/jev-invalid-key-vendor/3",
+      "representative": "SS05",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS05/jev-timeout-vendor/1",
+      "representative": "SS05",
+      "route": "jev-timeout-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS05/jev-timeout-vendor/2",
+      "representative": "SS05",
+      "route": "jev-timeout-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS05/jev-timeout-vendor/3",
+      "representative": "SS05",
+      "route": "jev-timeout-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS08/jev-on/1",
+      "representative": "SS08",
+      "route": "jev-on",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS08/jev-on/2",
+      "representative": "SS08",
+      "route": "jev-on",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS08/jev-on/3",
+      "representative": "SS08",
+      "route": "jev-on",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS08/jev-off-vendor/1",
+      "representative": "SS08",
+      "route": "jev-off-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS08/jev-off-vendor/2",
+      "representative": "SS08",
+      "route": "jev-off-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS08/jev-off-vendor/3",
+      "representative": "SS08",
+      "route": "jev-off-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS08/jev-invalid-key-vendor/1",
+      "representative": "SS08",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS08/jev-invalid-key-vendor/2",
+      "representative": "SS08",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS08/jev-invalid-key-vendor/3",
+      "representative": "SS08",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS08/jev-timeout-vendor/1",
+      "representative": "SS08",
+      "route": "jev-timeout-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS08/jev-timeout-vendor/2",
+      "representative": "SS08",
+      "route": "jev-timeout-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS08/jev-timeout-vendor/3",
+      "representative": "SS08",
+      "route": "jev-timeout-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS09/jev-on/1",
+      "representative": "SS09",
+      "route": "jev-on",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS09/jev-on/2",
+      "representative": "SS09",
+      "route": "jev-on",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS09/jev-on/3",
+      "representative": "SS09",
+      "route": "jev-on",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS09/jev-off-vendor/1",
+      "representative": "SS09",
+      "route": "jev-off-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS09/jev-off-vendor/2",
+      "representative": "SS09",
+      "route": "jev-off-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS09/jev-off-vendor/3",
+      "representative": "SS09",
+      "route": "jev-off-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS09/jev-invalid-key-vendor/1",
+      "representative": "SS09",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS09/jev-invalid-key-vendor/2",
+      "representative": "SS09",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS09/jev-invalid-key-vendor/3",
+      "representative": "SS09",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS09/jev-timeout-vendor/1",
+      "representative": "SS09",
+      "route": "jev-timeout-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS09/jev-timeout-vendor/2",
+      "representative": "SS09",
+      "route": "jev-timeout-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS09/jev-timeout-vendor/3",
+      "representative": "SS09",
+      "route": "jev-timeout-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS10/jev-on/1",
+      "representative": "SS10",
+      "route": "jev-on",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS10/jev-on/2",
+      "representative": "SS10",
+      "route": "jev-on",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS10/jev-on/3",
+      "representative": "SS10",
+      "route": "jev-on",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS10/jev-off-vendor/1",
+      "representative": "SS10",
+      "route": "jev-off-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS10/jev-off-vendor/2",
+      "representative": "SS10",
+      "route": "jev-off-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS10/jev-off-vendor/3",
+      "representative": "SS10",
+      "route": "jev-off-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS10/jev-invalid-key-vendor/1",
+      "representative": "SS10",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS10/jev-invalid-key-vendor/2",
+      "representative": "SS10",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS10/jev-invalid-key-vendor/3",
+      "representative": "SS10",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS10/jev-timeout-vendor/1",
+      "representative": "SS10",
+      "route": "jev-timeout-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS10/jev-timeout-vendor/2",
+      "representative": "SS10",
+      "route": "jev-timeout-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS10/jev-timeout-vendor/3",
+      "representative": "SS10",
+      "route": "jev-timeout-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS11/jev-on/1",
+      "representative": "SS11",
+      "route": "jev-on",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS11/jev-on/2",
+      "representative": "SS11",
+      "route": "jev-on",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS11/jev-on/3",
+      "representative": "SS11",
+      "route": "jev-on",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS11/jev-off-vendor/1",
+      "representative": "SS11",
+      "route": "jev-off-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS11/jev-off-vendor/2",
+      "representative": "SS11",
+      "route": "jev-off-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS11/jev-off-vendor/3",
+      "representative": "SS11",
+      "route": "jev-off-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS11/jev-invalid-key-vendor/1",
+      "representative": "SS11",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS11/jev-invalid-key-vendor/2",
+      "representative": "SS11",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS11/jev-invalid-key-vendor/3",
+      "representative": "SS11",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS11/jev-timeout-vendor/1",
+      "representative": "SS11",
+      "route": "jev-timeout-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS11/jev-timeout-vendor/2",
+      "representative": "SS11",
+      "route": "jev-timeout-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS11/jev-timeout-vendor/3",
+      "representative": "SS11",
+      "route": "jev-timeout-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS14/jev-on/1",
+      "representative": "SS14",
+      "route": "jev-on",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS14/jev-on/2",
+      "representative": "SS14",
+      "route": "jev-on",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS14/jev-on/3",
+      "representative": "SS14",
+      "route": "jev-on",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS14/jev-off-vendor/1",
+      "representative": "SS14",
+      "route": "jev-off-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS14/jev-off-vendor/2",
+      "representative": "SS14",
+      "route": "jev-off-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS14/jev-off-vendor/3",
+      "representative": "SS14",
+      "route": "jev-off-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS14/jev-invalid-key-vendor/1",
+      "representative": "SS14",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS14/jev-invalid-key-vendor/2",
+      "representative": "SS14",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS14/jev-invalid-key-vendor/3",
+      "representative": "SS14",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS14/jev-timeout-vendor/1",
+      "representative": "SS14",
+      "route": "jev-timeout-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS14/jev-timeout-vendor/2",
+      "representative": "SS14",
+      "route": "jev-timeout-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS14/jev-timeout-vendor/3",
+      "representative": "SS14",
+      "route": "jev-timeout-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS18/jev-on/1",
+      "representative": "SS18",
+      "route": "jev-on",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS18/jev-on/2",
+      "representative": "SS18",
+      "route": "jev-on",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS18/jev-on/3",
+      "representative": "SS18",
+      "route": "jev-on",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS18/jev-off-vendor/1",
+      "representative": "SS18",
+      "route": "jev-off-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS18/jev-off-vendor/2",
+      "representative": "SS18",
+      "route": "jev-off-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS18/jev-off-vendor/3",
+      "representative": "SS18",
+      "route": "jev-off-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS18/jev-invalid-key-vendor/1",
+      "representative": "SS18",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS18/jev-invalid-key-vendor/2",
+      "representative": "SS18",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS18/jev-invalid-key-vendor/3",
+      "representative": "SS18",
+      "route": "jev-invalid-key-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS18/jev-timeout-vendor/1",
+      "representative": "SS18",
+      "route": "jev-timeout-vendor",
+      "repeat": 1,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS18/jev-timeout-vendor/2",
+      "representative": "SS18",
+      "route": "jev-timeout-vendor",
+      "repeat": 2,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    },
+    {
+      "pairId": "SS18/jev-timeout-vendor/3",
+      "representative": "SS18",
+      "route": "jev-timeout-vendor",
+      "repeat": 3,
+      "codex": "NOT_RUN",
+      "claude": "NOT_RUN",
+      "sameConditionEvidence": null,
+      "agentSelectedSkillIds": {
+        "codex": null,
+        "claude": null
+      }
+    }
+  ],
+  "unresolved": [
+    "Verified final candidate and remote publication",
+    "Common model/effort/settings and successful auth procedure",
+    "Parent preceding check results",
+    "Qualified shared classification runtime and callable tools",
+    "Matching independent Codex host counterparts",
+    "Signed selection and per-stage receipts",
+    "Separate JEV allocation",
+    "Pre-call estimates proving approved workload fits USD2 or reporting partial NOT_RUN"
+  ]
+}

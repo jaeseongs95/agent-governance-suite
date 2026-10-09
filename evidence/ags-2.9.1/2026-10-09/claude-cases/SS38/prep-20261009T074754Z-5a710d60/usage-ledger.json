@@ -1,0 +1,22 @@
+{
+  "caseId": "SS38",
+  "phase": "PREPARATION_ONLY",
+  "softBudgetUSD": 2,
+  "globalReservedBudgetUSD": 78,
+  "globalReservedCaseCount": 39,
+  "spentUSD": 0,
+  "unknownCostCalls": 0,
+  "paidCalls": 0,
+  "providerCalls": 0,
+  "jevCalls": 0,
+  "claudeCodeModelCalls": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheCreationInputTokens": 0,
+  "cacheReadInputTokens": 0,
+  "retries": 0,
+  "failedProviderCalls": 0,
+  "entries": [],
+  "localCLIInspection": "--version and --help only; no auth command or model execution",
+  "stopRule": "Include all preparation/model/classifier calls, failures, retries and cache costs in the same USD2 soft budget. Reserve estimated next-call cost and stop before approaching/exceeding cap. Any unknown billable cost blocks further calls until reconciled. JEV requires a separate parent allocation."
+}
