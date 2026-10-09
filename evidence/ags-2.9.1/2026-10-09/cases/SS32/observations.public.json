@@ -1,0 +1,4233 @@
+[
+  {
+    "caseId": "SS32",
+    "id": "fallback-429",
+    "variant": "429",
+    "executionKind": "new-isolated-offline-mock",
+    "input": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS32-request",
+        "operationId": "SS32-operation",
+        "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+        "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "review",
+            "version": "1",
+            "description": "합성 읽기 전용 검토",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "diff"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "fixed diff"
+            ],
+            "exclusions": [
+              "implementation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "synthetic-SS32",
+        "classificationCriteriaRef": "mock:SS32",
+        "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+      },
+      "httpStatus": 429,
+      "retryAfter": "120"
+    },
+    "expected": {
+      "attemptKinds": [
+        "jev",
+        "vendor"
+      ],
+      "jevStatus": "UNAVAILABLE",
+      "error": "RATE_LIMITED",
+      "transports": 2,
+      "inputUnchanged": true
+    },
+    "observed": {
+      "result": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": true,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "jev",
+            "profileId": "mock-jev",
+            "modelId": "mock-jev-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "UNAVAILABLE",
+            "errorCode": "RATE_LIMITED",
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0.4
+          },
+          {
+            "providerKind": "vendor",
+            "profileId": "mock-vendor",
+            "modelId": "mock-vendor-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0.1
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "review",
+              "judgment": "needed",
+              "reasonRefs": [
+                "mock:SS32"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        }
+      },
+      "wires": [
+        {
+          "kind": "jev",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "digest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        {
+          "kind": "vendor",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "digest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        }
+      ],
+      "budget": {
+        "limits": {
+          "jev": {
+            "limitUsd": 5,
+            "spentUsd": 0
+          },
+          "vendor:mock-vendor": {
+            "limitUsd": 2,
+            "spentUsd": 0.1
+          }
+        },
+        "nativeAllowances": {},
+        "invalidCostCeilings": [],
+        "reservations": [
+          {
+            "id": "[\"SS32-operation\",\"sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a\",\"mock-jev\"]",
+            "bucket": "jev",
+            "maximumUsd": 0.4,
+            "profileId": "mock-jev",
+            "nativeProfileId": null
+          }
+        ]
+      },
+      "inputUnchanged": true
+    },
+    "externalAPI": {
+      "jev": 0,
+      "vendor": 0,
+      "claude": 0
+    },
+    "hostStages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "agentSelectedSkillIds": null,
+    "semanticAccuracy": null
+  },
+  {
+    "caseId": "SS32",
+    "id": "fallback-529",
+    "variant": "429",
+    "executionKind": "new-isolated-offline-mock",
+    "input": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS32-request",
+        "operationId": "SS32-operation",
+        "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+        "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "review",
+            "version": "1",
+            "description": "합성 읽기 전용 검토",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "diff"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "fixed diff"
+            ],
+            "exclusions": [
+              "implementation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "synthetic-SS32",
+        "classificationCriteriaRef": "mock:SS32",
+        "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+      },
+      "httpStatus": 529,
+      "retryAfter": "120"
+    },
+    "expected": {
+      "attemptKinds": [
+        "jev",
+        "vendor"
+      ],
+      "jevStatus": "UNAVAILABLE",
+      "error": "RATE_LIMITED",
+      "transports": 2,
+      "inputUnchanged": true
+    },
+    "observed": {
+      "result": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": true,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "jev",
+            "profileId": "mock-jev",
+            "modelId": "mock-jev-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "UNAVAILABLE",
+            "errorCode": "RATE_LIMITED",
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0.4
+          },
+          {
+            "providerKind": "vendor",
+            "profileId": "mock-vendor",
+            "modelId": "mock-vendor-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0.1
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "review",
+              "judgment": "needed",
+              "reasonRefs": [
+                "mock:SS32"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        }
+      },
+      "wires": [
+        {
+          "kind": "jev",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "digest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        {
+          "kind": "vendor",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "digest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        }
+      ],
+      "budget": {
+        "limits": {
+          "jev": {
+            "limitUsd": 5,
+            "spentUsd": 0
+          },
+          "vendor:mock-vendor": {
+            "limitUsd": 2,
+            "spentUsd": 0.1
+          }
+        },
+        "nativeAllowances": {},
+        "invalidCostCeilings": [],
+        "reservations": [
+          {
+            "id": "[\"SS32-operation\",\"sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a\",\"mock-jev\"]",
+            "bucket": "jev",
+            "maximumUsd": 0.4,
+            "profileId": "mock-jev",
+            "nativeProfileId": null
+          }
+        ]
+      },
+      "inputUnchanged": true
+    },
+    "externalAPI": {
+      "jev": 0,
+      "vendor": 0,
+      "claude": 0
+    },
+    "hostStages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "agentSelectedSkillIds": null,
+    "semanticAccuracy": null
+  },
+  {
+    "caseId": "SS32",
+    "id": "both-rate-limited",
+    "variant": "429",
+    "executionKind": "new-isolated-offline-mock",
+    "input": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS32-request",
+        "operationId": "SS32-operation",
+        "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+        "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "review",
+            "version": "1",
+            "description": "합성 읽기 전용 검토",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "diff"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "fixed diff"
+            ],
+            "exclusions": [
+              "implementation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "synthetic-SS32",
+        "classificationCriteriaRef": "mock:SS32",
+        "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+      },
+      "statuses": [
+        429,
+        529
+      ]
+    },
+    "expected": {
+      "status": "UNAVAILABLE",
+      "transports": 2,
+      "unknownCostReservations": 2
+    },
+    "observed": {
+      "result": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": true,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "jev",
+            "profileId": "mock-jev",
+            "modelId": "mock-jev-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "UNAVAILABLE",
+            "errorCode": "RATE_LIMITED",
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0.4
+          },
+          {
+            "providerKind": "vendor",
+            "profileId": "mock-vendor",
+            "modelId": "mock-vendor-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "UNAVAILABLE",
+            "errorCode": "RATE_LIMITED",
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "RATE_LIMITED"
+            }
+          ],
+          "error": {
+            "code": "RATE_LIMITED",
+            "retryable": false,
+            "dispatchState": "started"
+          }
+        }
+      },
+      "wires": [
+        {
+          "kind": "jev",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "digest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        {
+          "kind": "vendor",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "digest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        }
+      ],
+      "budget": {
+        "limits": {
+          "jev": {
+            "limitUsd": 5,
+            "spentUsd": 0
+          },
+          "vendor:mock-vendor": {
+            "limitUsd": 2,
+            "spentUsd": 0
+          }
+        },
+        "nativeAllowances": {},
+        "invalidCostCeilings": [],
+        "reservations": [
+          {
+            "id": "[\"SS32-operation\",\"sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a\",\"mock-jev\"]",
+            "bucket": "jev",
+            "maximumUsd": 0.4,
+            "profileId": "mock-jev",
+            "nativeProfileId": null
+          },
+          {
+            "id": "[\"SS32-operation\",\"sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a\",\"mock-vendor\"]",
+            "bucket": "vendor:mock-vendor",
+            "maximumUsd": 0.4,
+            "profileId": "mock-vendor",
+            "nativeProfileId": null
+          }
+        ]
+      }
+    },
+    "externalAPI": {
+      "jev": 0,
+      "vendor": 0,
+      "claude": 0
+    },
+    "hostStages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "agentSelectedSkillIds": null,
+    "semanticAccuracy": null
+  },
+  {
+    "caseId": "SS32",
+    "id": "retry-after-429",
+    "variant": "429",
+    "executionKind": "new-isolated-offline-mock",
+    "input": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS32-request",
+        "operationId": "SS32-operation",
+        "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+        "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "review",
+            "version": "1",
+            "description": "합성 읽기 전용 검토",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "diff"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "fixed diff"
+            ],
+            "exclusions": [
+              "implementation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "synthetic-SS32",
+        "classificationCriteriaRef": "mock:SS32",
+        "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+      },
+      "httpStatus": 429,
+      "retryAfter": "120"
+    },
+    "expected": {
+      "retryAfterObservation": "120",
+      "transportCount": 1
+    },
+    "observed": {
+      "retryAfterValues": [],
+      "result": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": false,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "vendor",
+            "profileId": "mock-vendor",
+            "modelId": "mock-vendor-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "UNAVAILABLE",
+            "errorCode": "RATE_LIMITED",
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "RATE_LIMITED"
+            }
+          ],
+          "error": {
+            "code": "RATE_LIMITED",
+            "retryable": false,
+            "dispatchState": "started"
+          }
+        }
+      },
+      "wires": [
+        {
+          "kind": "vendor",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "digest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        }
+      ]
+    },
+    "externalAPI": {
+      "jev": 0,
+      "vendor": 0,
+      "claude": 0
+    },
+    "hostStages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "agentSelectedSkillIds": null,
+    "semanticAccuracy": null
+  },
+  {
+    "caseId": "SS32",
+    "id": "retry-after-529",
+    "variant": "429",
+    "executionKind": "new-isolated-offline-mock",
+    "input": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS32-request",
+        "operationId": "SS32-operation",
+        "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+        "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "review",
+            "version": "1",
+            "description": "합성 읽기 전용 검토",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "diff"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "fixed diff"
+            ],
+            "exclusions": [
+              "implementation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "synthetic-SS32",
+        "classificationCriteriaRef": "mock:SS32",
+        "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+      },
+      "httpStatus": 529,
+      "retryAfter": "Fri, 09 Oct 2026 03:00:00 GMT"
+    },
+    "expected": {
+      "retryAfterObservation": "Fri, 09 Oct 2026 03:00:00 GMT",
+      "transportCount": 1
+    },
+    "observed": {
+      "retryAfterValues": [],
+      "result": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": false,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "vendor",
+            "profileId": "mock-vendor",
+            "modelId": "mock-vendor-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "UNAVAILABLE",
+            "errorCode": "RATE_LIMITED",
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "RATE_LIMITED"
+            }
+          ],
+          "error": {
+            "code": "RATE_LIMITED",
+            "retryable": false,
+            "dispatchState": "started"
+          }
+        }
+      },
+      "wires": [
+        {
+          "kind": "vendor",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "digest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        }
+      ]
+    },
+    "externalAPI": {
+      "jev": 0,
+      "vendor": 0,
+      "claude": 0
+    },
+    "hostStages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "agentSelectedSkillIds": null,
+    "semanticAccuracy": null
+  },
+  {
+    "caseId": "SS32",
+    "id": "no-retry-429",
+    "variant": "sdk-retry-negative",
+    "executionKind": "new-isolated-offline-mock",
+    "input": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS32-request",
+        "operationId": "SS32-operation",
+        "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+        "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "review",
+            "version": "1",
+            "description": "합성 읽기 전용 검토",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "diff"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "fixed diff"
+            ],
+            "exclusions": [
+              "implementation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "synthetic-SS32",
+        "classificationCriteriaRef": "mock:SS32",
+        "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+      },
+      "responseQueue": [
+        429,
+        200
+      ],
+      "retryAfter": "0"
+    },
+    "expected": {
+      "status": "UNAVAILABLE",
+      "transportCount": 1,
+      "completedResubmitSharesResult": true
+    },
+    "observed": {
+      "result": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": false,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "vendor",
+            "profileId": "mock-vendor",
+            "modelId": "mock-vendor-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "UNAVAILABLE",
+            "errorCode": "RATE_LIMITED",
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "RATE_LIMITED"
+            }
+          ],
+          "error": {
+            "code": "RATE_LIMITED",
+            "retryable": false,
+            "dispatchState": "started"
+          }
+        }
+      },
+      "repeated": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": false,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "vendor",
+            "profileId": "mock-vendor",
+            "modelId": "mock-vendor-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "UNAVAILABLE",
+            "errorCode": "RATE_LIMITED",
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "RATE_LIMITED"
+            }
+          ],
+          "error": {
+            "code": "RATE_LIMITED",
+            "retryable": false,
+            "dispatchState": "started"
+          }
+        }
+      },
+      "wires": [
+        {
+          "kind": "vendor",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "digest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        }
+      ],
+      "calls": 1
+    },
+    "externalAPI": {
+      "jev": 0,
+      "vendor": 0,
+      "claude": 0
+    },
+    "hostStages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "agentSelectedSkillIds": null,
+    "semanticAccuracy": null
+  },
+  {
+    "caseId": "SS32",
+    "id": "no-retry-529",
+    "variant": "sdk-retry-negative",
+    "executionKind": "new-isolated-offline-mock",
+    "input": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS32-request",
+        "operationId": "SS32-operation",
+        "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+        "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "review",
+            "version": "1",
+            "description": "합성 읽기 전용 검토",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "diff"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "fixed diff"
+            ],
+            "exclusions": [
+              "implementation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "synthetic-SS32",
+        "classificationCriteriaRef": "mock:SS32",
+        "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+      },
+      "responseQueue": [
+        529,
+        200
+      ],
+      "retryAfter": "0"
+    },
+    "expected": {
+      "status": "UNAVAILABLE",
+      "transportCount": 1,
+      "completedResubmitSharesResult": true
+    },
+    "observed": {
+      "result": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": false,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "vendor",
+            "profileId": "mock-vendor",
+            "modelId": "mock-vendor-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "UNAVAILABLE",
+            "errorCode": "RATE_LIMITED",
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "RATE_LIMITED"
+            }
+          ],
+          "error": {
+            "code": "RATE_LIMITED",
+            "retryable": false,
+            "dispatchState": "started"
+          }
+        }
+      },
+      "repeated": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": false,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "vendor",
+            "profileId": "mock-vendor",
+            "modelId": "mock-vendor-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "UNAVAILABLE",
+            "errorCode": "RATE_LIMITED",
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "RATE_LIMITED"
+            }
+          ],
+          "error": {
+            "code": "RATE_LIMITED",
+            "retryable": false,
+            "dispatchState": "started"
+          }
+        }
+      },
+      "wires": [
+        {
+          "kind": "vendor",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "digest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        }
+      ],
+      "calls": 1
+    },
+    "externalAPI": {
+      "jev": 0,
+      "vendor": 0,
+      "claude": 0
+    },
+    "hostStages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "agentSelectedSkillIds": null,
+    "semanticAccuracy": null
+  },
+  {
+    "caseId": "SS32",
+    "id": "unverified-native-retry-policy",
+    "variant": "sdk-retry-negative",
+    "executionKind": "new-isolated-offline-mock",
+    "input": {
+      "retryPolicyVerified": false
+    },
+    "expected": {
+      "available": false,
+      "nativeInvocations": 0
+    },
+    "observed": {
+      "availability": {
+        "available": false,
+        "approved": false,
+        "routeKind": "remote",
+        "reasonCode": "ROUTE_NOT_APPROVED"
+      },
+      "nativeInvocations": 0
+    },
+    "externalAPI": {
+      "jev": 0,
+      "vendor": 0,
+      "claude": 0
+    },
+    "hostStages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "agentSelectedSkillIds": null,
+    "semanticAccuracy": null
+  },
+  {
+    "caseId": "SS32",
+    "id": "delayed-identical-submissions",
+    "variant": "duplicate-inflight",
+    "executionKind": "new-isolated-offline-mock",
+    "input": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS32-request",
+        "operationId": "SS32-operation",
+        "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+        "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "review",
+            "version": "1",
+            "description": "합성 읽기 전용 검토",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "diff"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "fixed diff"
+            ],
+            "exclusions": [
+              "implementation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "synthetic-SS32",
+        "classificationCriteriaRef": "mock:SS32",
+        "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+      },
+      "simultaneousSubmissions": 2,
+      "completedResubmissions": 1
+    },
+    "expected": {
+      "transportCount": 1,
+      "sameResult": true,
+      "settledCostUsd": 0.1
+    },
+    "observed": {
+      "a": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": true,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "jev",
+            "profileId": "mock-jev",
+            "modelId": "mock-jev-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0.1
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "review",
+              "judgment": "needed",
+              "reasonRefs": [
+                "mock:SS32"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        }
+      },
+      "b": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": true,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "jev",
+            "profileId": "mock-jev",
+            "modelId": "mock-jev-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0.1
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "review",
+              "judgment": "needed",
+              "reasonRefs": [
+                "mock:SS32"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        }
+      },
+      "completed": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": true,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "jev",
+            "profileId": "mock-jev",
+            "modelId": "mock-jev-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0.1
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "review",
+              "judgment": "needed",
+              "reasonRefs": [
+                "mock:SS32"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        }
+      },
+      "countWhilePending": 1,
+      "wires": [
+        {
+          "kind": "jev",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "digest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        }
+      ],
+      "budget": {
+        "limits": {
+          "jev": {
+            "limitUsd": 5,
+            "spentUsd": 0.1
+          },
+          "vendor:mock-vendor": {
+            "limitUsd": 2,
+            "spentUsd": 0
+          }
+        },
+        "nativeAllowances": {},
+        "invalidCostCeilings": [],
+        "reservations": []
+      }
+    },
+    "externalAPI": {
+      "jev": 0,
+      "vendor": 0,
+      "claude": 0
+    },
+    "hostStages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "agentSelectedSkillIds": null,
+    "semanticAccuracy": null
+  },
+  {
+    "caseId": "SS32",
+    "id": "delayed-fallback-identical-submissions",
+    "variant": "duplicate-inflight",
+    "executionKind": "new-isolated-offline-mock",
+    "input": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS32-request",
+        "operationId": "SS32-operation",
+        "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+        "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "review",
+            "version": "1",
+            "description": "합성 읽기 전용 검토",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "diff"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "fixed diff"
+            ],
+            "exclusions": [
+              "implementation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "synthetic-SS32",
+        "classificationCriteriaRef": "mock:SS32",
+        "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+      },
+      "simultaneousSubmissions": 2,
+      "jevHttpStatus": 429
+    },
+    "expected": {
+      "attemptKinds": [
+        "jev",
+        "vendor"
+      ],
+      "sameResult": true,
+      "settledVendorCostUsd": 0.1
+    },
+    "observed": {
+      "a": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": true,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "jev",
+            "profileId": "mock-jev",
+            "modelId": "mock-jev-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "UNAVAILABLE",
+            "errorCode": "RATE_LIMITED",
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0.4
+          },
+          {
+            "providerKind": "vendor",
+            "profileId": "mock-vendor",
+            "modelId": "mock-vendor-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0.1
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "review",
+              "judgment": "needed",
+              "reasonRefs": [
+                "mock:SS32"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        }
+      },
+      "b": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": true,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "jev",
+            "profileId": "mock-jev",
+            "modelId": "mock-jev-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "UNAVAILABLE",
+            "errorCode": "RATE_LIMITED",
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0.4
+          },
+          {
+            "providerKind": "vendor",
+            "profileId": "mock-vendor",
+            "modelId": "mock-vendor-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0.1
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "review",
+              "judgment": "needed",
+              "reasonRefs": [
+                "mock:SS32"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        }
+      },
+      "wires": [
+        {
+          "kind": "jev",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "digest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        {
+          "kind": "vendor",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "digest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        }
+      ],
+      "budget": {
+        "limits": {
+          "jev": {
+            "limitUsd": 5,
+            "spentUsd": 0
+          },
+          "vendor:mock-vendor": {
+            "limitUsd": 2,
+            "spentUsd": 0.1
+          }
+        },
+        "nativeAllowances": {},
+        "invalidCostCeilings": [],
+        "reservations": [
+          {
+            "id": "[\"SS32-operation\",\"sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a\",\"mock-jev\"]",
+            "bucket": "jev",
+            "maximumUsd": 0.4,
+            "profileId": "mock-jev",
+            "nativeProfileId": null
+          }
+        ]
+      }
+    },
+    "externalAPI": {
+      "jev": 0,
+      "vendor": 0,
+      "claude": 0
+    },
+    "hostStages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "agentSelectedSkillIds": null,
+    "semanticAccuracy": null
+  },
+  {
+    "caseId": "SS32",
+    "id": "unknown-cost-identical-resubmit",
+    "variant": "duplicate-inflight",
+    "executionKind": "new-isolated-offline-mock",
+    "input": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS32-request",
+        "operationId": "SS32-operation",
+        "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+        "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "review",
+            "version": "1",
+            "description": "합성 읽기 전용 검토",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "diff"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "fixed diff"
+            ],
+            "exclusions": [
+              "implementation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "synthetic-SS32",
+        "classificationCriteriaRef": "mock:SS32",
+        "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+      },
+      "timeoutMs": 20,
+      "completedResubmissions": 1
+    },
+    "expected": {
+      "transports": 1,
+      "status": "UNCERTAIN",
+      "error": "PROVIDER_TIMEOUT",
+      "unknownCostReservations": 1,
+      "lateCompletionIgnored": true
+    },
+    "observed": {
+      "result": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": false,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 20
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "vendor",
+            "profileId": "mock-vendor",
+            "modelId": "mock-vendor-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "unknown",
+            "status": "UNCERTAIN",
+            "errorCode": "PROVIDER_TIMEOUT",
+            "timedOut": true,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "UNCERTAIN",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "PROVIDER_TIMEOUT"
+            }
+          ],
+          "error": {
+            "code": "PROVIDER_TIMEOUT",
+            "retryable": false,
+            "dispatchState": "unknown"
+          }
+        }
+      },
+      "again": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": false,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 20
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "vendor",
+            "profileId": "mock-vendor",
+            "modelId": "mock-vendor-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "unknown",
+            "status": "UNCERTAIN",
+            "errorCode": "PROVIDER_TIMEOUT",
+            "timedOut": true,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "UNCERTAIN",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "PROVIDER_TIMEOUT"
+            }
+          ],
+          "error": {
+            "code": "PROVIDER_TIMEOUT",
+            "retryable": false,
+            "dispatchState": "unknown"
+          }
+        }
+      },
+      "wires": [
+        {
+          "kind": "vendor",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "digest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        }
+      ],
+      "budget": {
+        "limits": {
+          "jev": {
+            "limitUsd": 5,
+            "spentUsd": 0
+          },
+          "vendor:mock-vendor": {
+            "limitUsd": 2,
+            "spentUsd": 0
+          }
+        },
+        "nativeAllowances": {},
+        "invalidCostCeilings": [],
+        "reservations": [
+          {
+            "id": "[\"SS32-operation\",\"sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a\",\"mock-vendor\"]",
+            "bucket": "vendor:mock-vendor",
+            "maximumUsd": 0.4,
+            "profileId": "mock-vendor",
+            "nativeProfileId": null
+          }
+        ]
+      },
+      "lateCompletionIgnored": true
+    },
+    "externalAPI": {
+      "jev": 0,
+      "vendor": 0,
+      "claude": 0
+    },
+    "hostStages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "agentSelectedSkillIds": null,
+    "semanticAccuracy": null
+  },
+  {
+    "caseId": "SS32",
+    "id": "cancelled-before-shared-dispatch",
+    "variant": "duplicate-inflight",
+    "executionKind": "new-isolated-offline-mock",
+    "input": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS32-request",
+        "operationId": "SS32-operation",
+        "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+        "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "review",
+            "version": "1",
+            "description": "합성 읽기 전용 검토",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "diff"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "fixed diff"
+            ],
+            "exclusions": [
+              "implementation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "synthetic-SS32",
+        "classificationCriteriaRef": "mock:SS32",
+        "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+      },
+      "cancellationBoundary": "after availability/reservation, before transport credential await completes",
+      "simultaneousSubmissions": 2
+    },
+    "expected": {
+      "transports": 0,
+      "error": "STALE_CLASSIFICATION"
+    },
+    "observed": {
+      "a": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": false,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "vendor",
+            "profileId": "mock-vendor",
+            "modelId": "mock-vendor-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0.1
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "STALE_CLASSIFICATION"
+            }
+          ],
+          "error": {
+            "code": "STALE_CLASSIFICATION",
+            "retryable": false,
+            "dispatchState": "not-started"
+          }
+        }
+      },
+      "b": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": false,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "vendor",
+            "profileId": "mock-vendor",
+            "modelId": "mock-vendor-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0.1
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "STALE_CLASSIFICATION"
+            }
+          ],
+          "error": {
+            "code": "STALE_CLASSIFICATION",
+            "retryable": false,
+            "dispatchState": "not-started"
+          }
+        }
+      },
+      "wires": [
+        {
+          "kind": "vendor",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "digest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        }
+      ],
+      "credentialCalls": 2,
+      "budget": {
+        "limits": {
+          "jev": {
+            "limitUsd": 5,
+            "spentUsd": 0
+          },
+          "vendor:mock-vendor": {
+            "limitUsd": 2,
+            "spentUsd": 0.1
+          }
+        },
+        "nativeAllowances": {},
+        "invalidCostCeilings": [],
+        "reservations": []
+      }
+    },
+    "externalAPI": {
+      "jev": 0,
+      "vendor": 0,
+      "claude": 0
+    },
+    "hostStages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "agentSelectedSkillIds": null,
+    "semanticAccuracy": null
+  },
+  {
+    "caseId": "SS32",
+    "id": "collision-same-operation",
+    "variant": "digest-collision",
+    "executionKind": "new-isolated-offline-mock",
+    "input": {
+      "original": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS32-request",
+        "operationId": "SS32-operation",
+        "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+        "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "review",
+            "version": "1",
+            "description": "합성 읽기 전용 검토",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "diff"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "fixed diff"
+            ],
+            "exclusions": [
+              "implementation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "synthetic-SS32",
+        "classificationCriteriaRef": "mock:SS32",
+        "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+      },
+      "changed": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS32-request",
+        "operationId": "SS32-operation",
+        "originalPrompt": "SS32 alternate synthetic content",
+        "promptDigest": "sha256:4ac56806005f2497e5144fb374c51e7bffa6ef9b7fde9cca8110f9ad2225d1ff",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "review",
+            "version": "1",
+            "description": "합성 읽기 전용 검토",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "diff"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "fixed diff"
+            ],
+            "exclusions": [
+              "implementation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "synthetic-SS32",
+        "classificationCriteriaRef": "mock:SS32",
+        "requestDigest": "sha256:002bae3b768c53425603a353df1cadf8bd21b322746c1ad9327ef776cb07ff5f"
+      }
+    },
+    "expected": {
+      "status": "INVALID",
+      "error": "OPERATION_DIGEST_CONFLICT",
+      "transports": 1,
+      "originalUncontaminated": true
+    },
+    "observed": {
+      "conflict": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 alternate synthetic content",
+          "promptDigest": "sha256:4ac56806005f2497e5144fb374c51e7bffa6ef9b7fde9cca8110f9ad2225d1ff",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:002bae3b768c53425603a353df1cadf8bd21b322746c1ad9327ef776cb07ff5f"
+        },
+        "config": {
+          "jevEnabled": true,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:002bae3b768c53425603a353df1cadf8bd21b322746c1ad9327ef776cb07ff5f",
+          "cancelled": false
+        },
+        "attempts": [],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:002bae3b768c53425603a353df1cadf8bd21b322746c1ad9327ef776cb07ff5f",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "INVALID",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "OPERATION_DIGEST_CONFLICT"
+            }
+          ],
+          "error": {
+            "code": "OPERATION_DIGEST_CONFLICT",
+            "retryable": false,
+            "dispatchState": "not-started"
+          }
+        }
+      },
+      "original": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": true,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "jev",
+            "profileId": "mock-jev",
+            "modelId": "mock-jev-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0.1
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "review",
+              "judgment": "needed",
+              "reasonRefs": [
+                "mock:SS32"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        }
+      },
+      "cached": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": true,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "jev",
+            "profileId": "mock-jev",
+            "modelId": "mock-jev-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0.1
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "review",
+              "judgment": "needed",
+              "reasonRefs": [
+                "mock:SS32"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        }
+      },
+      "wires": [
+        {
+          "kind": "jev",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "digest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        }
+      ],
+      "budget": {
+        "limits": {
+          "jev": {
+            "limitUsd": 5,
+            "spentUsd": 0.1
+          },
+          "vendor:mock-vendor": {
+            "limitUsd": 2,
+            "spentUsd": 0
+          }
+        },
+        "nativeAllowances": {},
+        "invalidCostCeilings": [],
+        "reservations": []
+      }
+    },
+    "externalAPI": {
+      "jev": 0,
+      "vendor": 0,
+      "claude": 0
+    },
+    "hostStages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "agentSelectedSkillIds": null,
+    "semanticAccuracy": null
+  },
+  {
+    "caseId": "SS32",
+    "id": "collision-different-operation",
+    "variant": "digest-collision",
+    "executionKind": "new-isolated-offline-mock",
+    "input": {
+      "original": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS32-request",
+        "operationId": "SS32-operation",
+        "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+        "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "review",
+            "version": "1",
+            "description": "합성 읽기 전용 검토",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "diff"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "fixed diff"
+            ],
+            "exclusions": [
+              "implementation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "synthetic-SS32",
+        "classificationCriteriaRef": "mock:SS32",
+        "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+      },
+      "changed": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS32-request",
+        "operationId": "SS32-other-operation",
+        "originalPrompt": "SS32 alternate synthetic content",
+        "promptDigest": "sha256:4ac56806005f2497e5144fb374c51e7bffa6ef9b7fde9cca8110f9ad2225d1ff",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "review",
+            "version": "1",
+            "description": "합성 읽기 전용 검토",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "diff"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "fixed diff"
+            ],
+            "exclusions": [
+              "implementation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "synthetic-SS32",
+        "classificationCriteriaRef": "mock:SS32",
+        "requestDigest": "sha256:c09652a89d42b55a491ee25f38093d50e15feb046094948ecad1ad9f3214044a"
+      }
+    },
+    "expected": {
+      "status": "INVALID",
+      "error": "REQUEST_ID_CONFLICT",
+      "transports": 1,
+      "originalUncontaminated": true
+    },
+    "observed": {
+      "conflict": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-other-operation",
+          "originalPrompt": "SS32 alternate synthetic content",
+          "promptDigest": "sha256:4ac56806005f2497e5144fb374c51e7bffa6ef9b7fde9cca8110f9ad2225d1ff",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:c09652a89d42b55a491ee25f38093d50e15feb046094948ecad1ad9f3214044a"
+        },
+        "config": {
+          "jevEnabled": true,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:c09652a89d42b55a491ee25f38093d50e15feb046094948ecad1ad9f3214044a",
+          "cancelled": false
+        },
+        "attempts": [],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-other-operation",
+          "requestDigest": "sha256:c09652a89d42b55a491ee25f38093d50e15feb046094948ecad1ad9f3214044a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "INVALID",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "REQUEST_ID_CONFLICT"
+            }
+          ],
+          "error": {
+            "code": "REQUEST_ID_CONFLICT",
+            "retryable": false,
+            "dispatchState": "not-started"
+          }
+        }
+      },
+      "original": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": true,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "jev",
+            "profileId": "mock-jev",
+            "modelId": "mock-jev-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0.1
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "review",
+              "judgment": "needed",
+              "reasonRefs": [
+                "mock:SS32"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        }
+      },
+      "cached": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "originalPrompt": "SS32 합성 transport: 읽기 전용 검토; 수정 금지.",
+          "promptDigest": "sha256:433882700eb171fa854ac5a2251f4bfca49ae2bf72f71eac6933ba5edfda2549",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "합성 읽기 전용 검토",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "fixed diff"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic-SS32",
+          "classificationCriteriaRef": "mock:SS32",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        },
+        "config": {
+          "jevEnabled": true,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profiles",
+          "externalClassificationAllowed": true,
+          "configRevision": "mock-c1",
+          "timeoutMs": 2000
+        },
+        "profileRevision": "mock-pr1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "mock-c1",
+          "profileRevision": "mock-pr1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "jev",
+            "profileId": "mock-jev",
+            "modelId": "mock-jev-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0.1
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "requestDigest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "review",
+              "judgment": "needed",
+              "reasonRefs": [
+                "mock:SS32"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        }
+      },
+      "wires": [
+        {
+          "kind": "jev",
+          "requestId": "SS32-request",
+          "operationId": "SS32-operation",
+          "digest": "sha256:083730a446612311423ddc4bbc703f66ac0fb97c47295760bcfbd819a9cc273a"
+        }
+      ],
+      "budget": {
+        "limits": {
+          "jev": {
+            "limitUsd": 5,
+            "spentUsd": 0.1
+          },
+          "vendor:mock-vendor": {
+            "limitUsd": 2,
+            "spentUsd": 0
+          }
+        },
+        "nativeAllowances": {},
+        "invalidCostCeilings": [],
+        "reservations": []
+      }
+    },
+    "externalAPI": {
+      "jev": 0,
+      "vendor": 0,
+      "claude": 0
+    },
+    "hostStages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "agentSelectedSkillIds": null,
+    "semanticAccuracy": null
+  }
+]

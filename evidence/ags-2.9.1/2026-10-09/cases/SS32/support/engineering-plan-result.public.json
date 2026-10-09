@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:916f45d4f8eadfce0c1b92c2ec3ae1813a99b258622328ce49ec704f05bfa407",
+  "caseIds": [
+    "429",
+    "sdk-retry-negative",
+    "duplicate-inflight",
+    "digest-collision"
+  ]
+}

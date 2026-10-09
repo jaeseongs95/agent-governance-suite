@@ -1,0 +1,190 @@
+{
+  "schemaVersion": "1.0.0",
+  "target": {
+    "kind": "artifact",
+    "identifier": "evidence/SS32/candidate.snapshot.json (fixed commit c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6)",
+    "digest": "sha256:e06d1aa708658b20c9a242ed6a17cb4677e66166c6075eb8a0fb6330af109681"
+  },
+  "criteria": [
+    {
+      "criterionId": "AC-001",
+      "statement": "429/529 map UNAVAILABLE and permit at most one JEV attempt plus one separate fixed vendor fallback in supported offline paths.",
+      "status": "satisfied",
+      "evidenceRefs": [
+        "E-AC-001",
+        "command:CMD-existing-regression"
+      ],
+      "observedResult": "429/529 mappings and both-rate-limited fallback counts pass.; Verification command exited with code 0.",
+      "rationale": "Verified evidence for the current target supports this criterion."
+    },
+    {
+      "criterionId": "AC-002",
+      "statement": "Observe and retain Retry-After without retry.",
+      "status": "unsatisfied",
+      "evidenceRefs": [
+        "E-AC-002",
+        "command:CMD-new-isolated-failing-criteria"
+      ],
+      "observedResult": "Both Retry-After assertions fail: [] instead of numeric/date header.; Verification command exited with code 1.",
+      "rationale": "Current target evidence contradicts this acceptance criterion."
+    },
+    {
+      "criterionId": "AC-003",
+      "statement": "Default direct-fetch path never consumes queued retry success; reject native route lacking verified retry policy.",
+      "status": "satisfied",
+      "evidenceRefs": [
+        "E-AC-003"
+      ],
+      "observedResult": "429/529 queue negative controls and unverified native route guard pass; SDK live NOTRUN.",
+      "rationale": "Verified evidence for the current target supports this criterion."
+    },
+    {
+      "criterionId": "AC-004",
+      "statement": "Same in-flight/completed identity shares one result and settlement; unknown completion is not reissued in same service lifetime.",
+      "status": "satisfied",
+      "evidenceRefs": [
+        "E-AC-004",
+        "command:CMD-existing-regression"
+      ],
+      "observedResult": "Delayed primary/fallback sharing and unknown-cost same-identity no-reissue checks pass.; Verification command exited with code 0.",
+      "rationale": "Verified evidence for the current target supports this criterion."
+    },
+    {
+      "criterionId": "AC-005",
+      "statement": "Added boundary: current task cancellation during credential await prevents wire dispatch.",
+      "status": "unsatisfied",
+      "evidenceRefs": [
+        "E-AC-005",
+        "command:CMD-new-isolated-failing-criteria"
+      ],
+      "observedResult": "Cancelled host task still dispatches one vendor mock wire after credential await.; Verification command exited with code 1.",
+      "rationale": "Current target evidence contradicts this acceptance criterion."
+    },
+    {
+      "criterionId": "AC-006",
+      "statement": "Same requestId with a different digest is INVALID and does not contaminate the first result.",
+      "status": "satisfied",
+      "evidenceRefs": [
+        "E-AC-006",
+        "command:CMD-existing-regression"
+      ],
+      "observedResult": "Both same-operation and different-operation collision tests pass with one original transport.; Verification command exited with code 0.",
+      "rationale": "Verified evidence for the current target supports this criterion."
+    },
+    {
+      "criterionId": "AC-007",
+      "statement": "Preserve actual prior B and actual AGENT purpose judgment.",
+      "status": "insufficient-evidence",
+      "evidenceRefs": [],
+      "observedResult": "",
+      "rationale": "No verified evidence for the current target supports or refutes this criterion."
+    }
+  ],
+  "verifiedEvidenceIndex": [
+    {
+      "evidenceId": "E-AC-001",
+      "kind": "test",
+      "locator": "evidence/SS32/AC-001.evidence.json",
+      "digest": "sha256:cc0d8154ce5be98dcc8a0334457984d054d6c42e101861d0c2be74b3df1a1bd7",
+      "targetDigest": "sha256:e06d1aa708658b20c9a242ed6a17cb4677e66166c6075eb8a0fb6330af109681",
+      "criterionIds": [
+        "AC-001"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "E-AC-002",
+      "kind": "test",
+      "locator": "evidence/SS32/AC-002.evidence.json",
+      "digest": "sha256:29760bc985644abb20be328c6a240c1d7de71eae7d48e46e635cc1e75b52fa46",
+      "targetDigest": "sha256:e06d1aa708658b20c9a242ed6a17cb4677e66166c6075eb8a0fb6330af109681",
+      "criterionIds": [
+        "AC-002"
+      ],
+      "direction": "refutes"
+    },
+    {
+      "evidenceId": "E-AC-003",
+      "kind": "test",
+      "locator": "evidence/SS32/AC-003.evidence.json",
+      "digest": "sha256:e307b2332043cb51a33037511795bce979791c291a3136ba18c024e50be8065d",
+      "targetDigest": "sha256:e06d1aa708658b20c9a242ed6a17cb4677e66166c6075eb8a0fb6330af109681",
+      "criterionIds": [
+        "AC-003"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "E-AC-004",
+      "kind": "test",
+      "locator": "evidence/SS32/AC-004.evidence.json",
+      "digest": "sha256:bfd06e5eef326455e9ff0b249bdab175695ee02f593425a887c3696772f8880a",
+      "targetDigest": "sha256:e06d1aa708658b20c9a242ed6a17cb4677e66166c6075eb8a0fb6330af109681",
+      "criterionIds": [
+        "AC-004"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "E-AC-005",
+      "kind": "test",
+      "locator": "evidence/SS32/AC-005.evidence.json",
+      "digest": "sha256:5851d890960b49afee0d65614966040a58a136ccdc66bf243506fe361f3da00c",
+      "targetDigest": "sha256:e06d1aa708658b20c9a242ed6a17cb4677e66166c6075eb8a0fb6330af109681",
+      "criterionIds": [
+        "AC-005"
+      ],
+      "direction": "refutes"
+    },
+    {
+      "evidenceId": "E-AC-006",
+      "kind": "test",
+      "locator": "evidence/SS32/AC-006.evidence.json",
+      "digest": "sha256:9f7d191aee027eab97786e7b632626c2f56f8cbe28d3db971121f2d57fd82e84",
+      "targetDigest": "sha256:e06d1aa708658b20c9a242ed6a17cb4677e66166c6075eb8a0fb6330af109681",
+      "criterionIds": [
+        "AC-006"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "command:CMD-new-isolated-failing-criteria",
+      "kind": "verification-command",
+      "locator": "evidence/SS32/new-isolated.command.json",
+      "digest": "sha256:66aa5241009cd55faa1b0169889c23ef2127929891e8f21a95a535076f5fecc5",
+      "targetDigest": "sha256:e06d1aa708658b20c9a242ed6a17cb4677e66166c6075eb8a0fb6330af109681",
+      "criterionIds": [
+        "AC-002",
+        "AC-005"
+      ],
+      "direction": "refutes"
+    },
+    {
+      "evidenceId": "command:CMD-existing-regression",
+      "kind": "verification-command",
+      "locator": "evidence/SS32/existing-regression.command.json",
+      "digest": "sha256:17bd7ed5c3b33f196fe63f5d14f0282db9f75d4165da7d99c5ccf2852ddfb891",
+      "targetDigest": "sha256:e06d1aa708658b20c9a242ed6a17cb4677e66166c6075eb8a0fb6330af109681",
+      "criterionIds": [
+        "AC-001",
+        "AC-004",
+        "AC-006"
+      ],
+      "direction": "supports"
+    }
+  ],
+  "unresolvedCriteria": [
+    "AC-007"
+  ],
+  "limitations": [
+    "Actual SS32 baseline B and AGENT purpose judgment are not embedded (originalPrompt=null, oracle=null). Synthetic request unchanged is not proof of actual baseline preservation.",
+    "Current environment has no callable get_skill_inventory/classify_skills/record_skill_selection tools and AGENT_GOVERNANCE_CLASSIFICATION_CONFIG is unset.",
+    "Trusted fixed qualified profile registry, approved provider runtime/route or native-adapter definition with verified no-retry/isolation capability evidence, current balances/prior consumption/unknown reservations, and any native allowance.",
+    "Real host-owned current task/session source, signed exact-call classify/selection observation; accepted AGENT selection with reasons/applicability/exclusions; read/apply/verify artifacts bound to the same candidate.",
+    "Actual vendor/native SDK implementation and its no-hidden-retry evidence are absent; queued mock replies and native gate test do not attest an external SDK.",
+    "Acceptance report is local evidence consistency, not independent audit/host attestation/release approval.",
+    "Sensitivity red/green proof is INCOMPLETE: no repaired candidate allowed.",
+    "Cross-process/restart dedup is outside the service-lifetime cache verified here."
+  ],
+  "verdict": "FAIL"
+}

@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "node",
+    "skills/test-engineering/scripts/run.mjs",
+    "check-proof",
+    "--root",
+    ".",
+    "--plan",
+    "evidence/SS32/engineering-test-plan.json",
+    "--proof",
+    "evidence/SS32/engineering-test-proof.json"
+  ],
+  "exitCode": 1,
+  "stdout": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"kind\": \"engineering-test-result\",\n  \"verdict\": \"INCOMPLETE\",\n  \"targetDigest\": \"sha256:e06d1aa708658b20c9a242ed6a17cb4677e66166c6075eb8a0fb6330af109681\",\n  \"reportDigest\": \"sha256:e76834c5aa43e490b67f4d941ab5b4e79dfd1a6f20e9d404b4329adae5419cfc\",\n  \"issues\": [\n    \"REQUIRED 429: NOT_RUN — Fixed candidate assertion tests executed; product modification forbidden, so no repaired candidate or red/green/mutation proof exists. See new-isolated.command.json and isolated.vitest.json for direct PASS/FAIL results, separate from sensitivity proof.\",\n    \"REQUIRED sdk-retry-negative: NOT_RUN — Fixed candidate assertion tests executed; product modification forbidden, so no repaired candidate or red/green/mutation proof exists. See new-isolated.command.json and isolated.vitest.json for direct PASS/FAIL results, separate from sensitivity proof.\",\n    \"REQUIRED duplicate-inflight: NOT_RUN — Fixed candidate assertion tests executed; product modification forbidden, so no repaired candidate or red/green/mutation proof exists. See new-isolated.command.json and isolated.vitest.json for direct PASS/FAIL results, separate from sensitivity proof.\",\n    \"REQUIRED digest-collision: NOT_RUN — Fixed candidate assertion tests executed; product modification forbidden, so no repaired candidate or red/green/mutation proof exists. See new-isolated.command.json and isolated.vitest.json for direct PASS/FAIL results, separate from sensitivity proof.\"\n  ],\n  \"limitations\": [\n    \"This is an unsigned local consistency check, not host attestation or an independent audit.\",\n    \"Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.\",\n    \"Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities.\"\n  ]\n}\n",
+  "stderr": ""
+}

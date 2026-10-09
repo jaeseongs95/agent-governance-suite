@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:e06d1aa708658b20c9a242ed6a17cb4677e66166c6075eb8a0fb6330af109681",
+  "reportDigest": "sha256:e76834c5aa43e490b67f4d941ab5b4e79dfd1a6f20e9d404b4329adae5419cfc",
+  "issues": [
+    "REQUIRED 429: NOT_RUN — Fixed candidate assertion tests executed; product modification forbidden, so no repaired candidate or red/green/mutation proof exists. See new-isolated.command.json and isolated.vitest.json for direct PASS/FAIL results, separate from sensitivity proof.",
+    "REQUIRED sdk-retry-negative: NOT_RUN — Fixed candidate assertion tests executed; product modification forbidden, so no repaired candidate or red/green/mutation proof exists. See new-isolated.command.json and isolated.vitest.json for direct PASS/FAIL results, separate from sensitivity proof.",
+    "REQUIRED duplicate-inflight: NOT_RUN — Fixed candidate assertion tests executed; product modification forbidden, so no repaired candidate or red/green/mutation proof exists. See new-isolated.command.json and isolated.vitest.json for direct PASS/FAIL results, separate from sensitivity proof.",
+    "REQUIRED digest-collision: NOT_RUN — Fixed candidate assertion tests executed; product modification forbidden, so no repaired candidate or red/green/mutation proof exists. See new-isolated.command.json and isolated.vitest.json for direct PASS/FAIL results, separate from sensitivity proof."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

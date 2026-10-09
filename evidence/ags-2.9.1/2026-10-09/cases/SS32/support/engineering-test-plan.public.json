@@ -1,0 +1,121 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS32",
+  "contractDigest": "sha256:dee715910ed387f22cc669849ecd9eef3645de57c4e9c1bdaf7355b48ddb331a",
+  "requirements": [
+    "SS32:429",
+    "SS32:sdk-retry-negative",
+    "SS32:duplicate-inflight",
+    "SS32:digest-collision"
+  ],
+  "scopeFiles": [
+    "mcp-server/src/skill-classification/providers.ts",
+    "mcp-server/src/skill-classification/service.ts",
+    "mcp-server/src/skill-classification/runtime.ts",
+    "tests/skill-classification/SS32.isolated.test.ts"
+  ],
+  "runner": "Repository Vitest v5 via scripts/run-tests.mjs; no build/source modifications",
+  "environment": "Independent Cloud Linux, Node24.19.0 pnpm11.19.0 UTC; mock fetch only; lock-identical existing node_modules reused; immutable synthetic qualification not production quality evidence",
+  "cases": [
+    {
+      "id": "429",
+      "requirementIds": [
+        "SS32:429"
+      ],
+      "scenario": "429 또는 529와 Retry-After를 반환하는 provider, 동일 operationId·requestId·digest의 동시 제출 두 개, 동일 requestId지만 다른 digest를 각각 주입한다.; isolated refinements documented in tests",
+      "entryPoint": "SkillClassificationService.classify + ApprovedRouteClassificationProvider + createClassificationProviderRuntime",
+      "level": "integration",
+      "expectedBehavior": "429/529 -> UNAVAILABLE/RATE_LIMITED; JEV<=1 vendor fallback<=1; Retry-After observed and preserved; no final selection",
+      "oracle": "Embedded sourceSpec.fields; semantic oracle=null (no accuracy metric)",
+      "testFiles": [
+        "tests/skill-classification/SS32.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Direct specified assertions plus queued success negative control; product mutation/repair prohibited. No red/green pair or independently accepted release claim.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/SS32.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=evidence/SS32/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "sdk-retry-negative",
+      "requirementIds": [
+        "SS32:sdk-retry-negative"
+      ],
+      "scenario": "429 또는 529와 Retry-After를 반환하는 provider, 동일 operationId·requestId·digest의 동시 제출 두 개, 동일 requestId지만 다른 digest를 각각 주입한다.; isolated refinements documented in tests",
+      "entryPoint": "SkillClassificationService.classify + ApprovedRouteClassificationProvider + createClassificationProviderRuntime",
+      "level": "integration",
+      "expectedBehavior": "queued retry success is not consumed; unverified native retry policy rejects dispatch; native/vendor SDK live remains NOTRUN",
+      "oracle": "Embedded sourceSpec.fields; semantic oracle=null (no accuracy metric)",
+      "testFiles": [
+        "tests/skill-classification/SS32.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Direct specified assertions plus queued success negative control; product mutation/repair prohibited. No red/green pair or independently accepted release claim.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/SS32.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=evidence/SS32/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "duplicate-inflight",
+      "requirementIds": [
+        "SS32:duplicate-inflight"
+      ],
+      "scenario": "429 또는 529와 Retry-After를 반환하는 provider, 동일 operationId·requestId·digest의 동시 제출 두 개, 동일 requestId지만 다른 digest를 각각 주입한다.; isolated refinements documented in tests",
+      "entryPoint": "SkillClassificationService.classify + ApprovedRouteClassificationProvider + createClassificationProviderRuntime",
+      "level": "integration",
+      "expectedBehavior": "genuinely simultaneous duplicate joins one result, one cost settlement, no reissue on unknown completion; task cancellation fences actual dispatch",
+      "oracle": "Embedded sourceSpec.fields; semantic oracle=null (no accuracy metric)",
+      "testFiles": [
+        "tests/skill-classification/SS32.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Direct specified assertions plus queued success negative control; product mutation/repair prohibited. No red/green pair or independently accepted release claim.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/SS32.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=evidence/SS32/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "digest-collision",
+      "requirementIds": [
+        "SS32:digest-collision"
+      ],
+      "scenario": "429 또는 529와 Retry-After를 반환하는 provider, 동일 operationId·requestId·digest의 동시 제출 두 개, 동일 requestId지만 다른 digest를 각각 주입한다.; isolated refinements documented in tests",
+      "entryPoint": "SkillClassificationService.classify + ApprovedRouteClassificationProvider + createClassificationProviderRuntime",
+      "level": "integration",
+      "expectedBehavior": "valid differing request digests rejected INVALID, both same/different operation IDs; original result and cost remain unchanged",
+      "oracle": "Embedded sourceSpec.fields; semantic oracle=null (no accuracy metric)",
+      "testFiles": [
+        "tests/skill-classification/SS32.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Direct specified assertions plus queued success negative control; product mutation/repair prohibited. No red/green pair or independently accepted release claim.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/SS32.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=evidence/SS32/isolated.vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "Other cases/full suite; prior21 live run; JEV/vendor/Claude API; product modifications; push/PR/release; semantic scoring with null oracle; synthetic host receipts; cross-process/restart dedup not enforced by process-lifetime cache"
+  ]
+}

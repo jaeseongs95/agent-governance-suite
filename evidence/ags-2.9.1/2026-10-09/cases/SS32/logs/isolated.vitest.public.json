@@ -1,0 +1,234 @@
+{
+  "numTotalTestSuites": 2,
+  "numPassedTestSuites": 0,
+  "numFailedTestSuites": 2,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 14,
+  "numPassedTests": 11,
+  "numFailedTests": 3,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514746901,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "SS32 isolated specification checks"
+          ],
+          "fullName": "SS32 isolated specification checks SS32/429 HTTP 429 maps unavailable and falls back exactly once",
+          "status": "passed",
+          "title": "SS32/429 HTTP 429 maps unavailable and falls back exactly once",
+          "duration": 44.374881999999985,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS32 isolated specification checks"
+          ],
+          "fullName": "SS32 isolated specification checks SS32/429 HTTP 529 maps unavailable and falls back exactly once",
+          "status": "passed",
+          "title": "SS32/429 HTTP 529 maps unavailable and falls back exactly once",
+          "duration": 2.9786979999999517,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS32 isolated specification checks"
+          ],
+          "fullName": "SS32 isolated specification checks SS32/429 both providers rate limited return UNAVAILABLE without extra attempts",
+          "status": "passed",
+          "title": "SS32/429 both providers rate limited return UNAVAILABLE without extra attempts",
+          "duration": 2.5230270000000132,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS32 isolated specification checks"
+          ],
+          "fullName": "SS32 isolated specification checks SS32/429 preserves Retry-After for HTTP 429",
+          "status": "failed",
+          "title": "SS32/429 preserves Retry-After for HTTP 429",
+          "duration": 3.9383209999999735,
+          "failureMessages": [
+            "AssertionError: Embedded SS32 허용선택 requires observed Retry-After to be preserved: expected [] to include '120'\n    at tests/skill-classification/SS32.isolated.test.ts:101:90"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS32 isolated specification checks"
+          ],
+          "fullName": "SS32 isolated specification checks SS32/429 preserves Retry-After for HTTP 529",
+          "status": "failed",
+          "title": "SS32/429 preserves Retry-After for HTTP 529",
+          "duration": 1.810967000000005,
+          "failureMessages": [
+            "AssertionError: Embedded SS32 허용선택 requires observed Retry-After to be preserved: expected [] to include 'Fri, 09 Oct 2026 03:00:00 GMT'\n    at tests/skill-classification/SS32.isolated.test.ts:101:90"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS32 isolated specification checks"
+          ],
+          "fullName": "SS32 isolated specification checks SS32/sdk-retry-negative HTTP 429 never consumes queued retry success",
+          "status": "passed",
+          "title": "SS32/sdk-retry-negative HTTP 429 never consumes queued retry success",
+          "duration": 2.5819040000000086,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS32 isolated specification checks"
+          ],
+          "fullName": "SS32 isolated specification checks SS32/sdk-retry-negative HTTP 529 never consumes queued retry success",
+          "status": "passed",
+          "title": "SS32/sdk-retry-negative HTTP 529 never consumes queued retry success",
+          "duration": 1.8248279999999681,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS32 isolated specification checks"
+          ],
+          "fullName": "SS32 isolated specification checks SS32/sdk-retry-negative rejects native routes without verified no-retry policy",
+          "status": "passed",
+          "title": "SS32/sdk-retry-negative rejects native routes without verified no-retry policy",
+          "duration": 3.203930000000014,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS32 isolated specification checks"
+          ],
+          "fullName": "SS32 isolated specification checks SS32/duplicate-inflight shares a genuinely delayed transport and completed result",
+          "status": "passed",
+          "title": "SS32/duplicate-inflight shares a genuinely delayed transport and completed result",
+          "duration": 2.51015799999999,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS32 isolated specification checks"
+          ],
+          "fullName": "SS32 isolated specification checks SS32/duplicate-inflight shares the rate-limit fallback without duplicate billing",
+          "status": "passed",
+          "title": "SS32/duplicate-inflight shares the rate-limit fallback without duplicate billing",
+          "duration": 7.547398999999984,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS32 isolated specification checks"
+          ],
+          "fullName": "SS32 isolated specification checks SS32/duplicate-inflight never reissues an unknown-cost timed-out request",
+          "status": "passed",
+          "title": "SS32/duplicate-inflight never reissues an unknown-cost timed-out request",
+          "duration": 21.97836799999999,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS32 isolated specification checks"
+          ],
+          "fullName": "SS32 isolated specification checks SS32/duplicate-inflight rechecks task cancellation after delayed credential resolution",
+          "status": "failed",
+          "title": "SS32/duplicate-inflight rechecks task cancellation after delayed credential resolution",
+          "duration": 4.137264999999957,
+          "failureMessages": [
+            "AssertionError: Known concurrency/pre-dispatch recheck gap: cancellation must prevent transmission: expected [ { kind: 'vendor', …(3) } ] to have a length of +0 but got 1\n    at tests/skill-classification/SS32.isolated.test.ts:171:107"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS32 isolated specification checks"
+          ],
+          "fullName": "SS32 isolated specification checks SS32/digest-collision rejects same-operation while the original is in flight",
+          "status": "passed",
+          "title": "SS32/digest-collision rejects same-operation while the original is in flight",
+          "duration": 2.2870189999999866,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS32 isolated specification checks"
+          ],
+          "fullName": "SS32 isolated specification checks SS32/digest-collision rejects different-operation while the original is in flight",
+          "status": "passed",
+          "title": "SS32/digest-collision rejects different-operation while the original is in flight",
+          "duration": 1.719393000000025,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514747176,
+      "endTime": 1791514747279.7195,
+      "status": "failed",
+      "message": "",
+      "name": "tests/skill-classification/SS32.isolated.test.ts"
+    }
+  ],
+  "publicationSanitization": {
+    "omittedSkippedAssertions": 0,
+    "originalTopLevelCountsPreserved": true,
+    "failureStackInternalsTrimmed": true,
+    "interpretation": "Original executed PASS/FAIL counts preserved. Omitted skipped cases are never counted as executed."
+  }
+}

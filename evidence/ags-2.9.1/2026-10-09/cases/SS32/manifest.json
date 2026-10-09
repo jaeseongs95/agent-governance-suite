@@ -1,0 +1,684 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS32",
+  "publicationScope": "evidence/ags-2.9.1/2026-10-09/cases/SS32/",
+  "candidateCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "candidateTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA256": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "inputBytePolicy": "Every existing observation input encoded as separate public UTF8 JSON; original input/expected/observed data retained. Original serialized wire bytes MISSING_ORIGINAL, not fabricated.",
+  "originalResult": {
+    "bytes": 200645,
+    "sha256": "1160eb0111e5b738dbe7a1baf83f68b5df594d067d223c43b891d1a40e38b2b2"
+  },
+  "originalRetrieval": {
+    "missing": [
+      "Original serialized transport wire byte captures: MISSING_ORIGINAL"
+    ],
+    "patch": "NO_EXISTING_PATCH",
+    "allRecordedEvidenceFileDigestsMatched": true,
+    "originalArchive": {
+      "bytes": 48701,
+      "sha256": "fdd1804a23b1a5eca71a2698ea9852e1685d494515dd960a6189cd21c933b18b",
+      "published": false,
+      "reason": "Contains original private local paths; replaced by sanitized selected public evidence."
+    }
+  },
+  "outcomePreservation": {
+    "existingRegression": {
+      "PASS": 6,
+      "FAIL": 0,
+      "exit": 0
+    },
+    "newIsolated": {
+      "PASS": 11,
+      "FAIL": 3,
+      "exit": 1
+    },
+    "actualHost": "NOTRUN",
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "agentSelectedSkillIds": null,
+    "hostReceipt": null,
+    "API0": {
+      "jev": 0,
+      "vendor": 0,
+      "claude": 0,
+      "codexClassification": 0
+    },
+    "publicationNewTests": 0,
+    "publicationNewProviderAPI": 0
+  },
+  "files": [
+    {
+      "path": "SS32.result.public.json",
+      "bytes": 197043,
+      "sha256": "d0f1862d56a6af3fe9fa8cf864c94877a607067ba7c980c10ed7158b921e4750",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/SS32.result.json",
+        "bytes": 200645,
+        "sha256": "1160eb0111e5b738dbe7a1baf83f68b5df594d067d223c43b891d1a40e38b2b2",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "replace local absolute paths",
+        "remove infrastructure environment ID",
+        "trim failure stack dependency internals",
+        "add publication distinction; preserved all original outcome/status/digest/null values"
+      ]
+    },
+    {
+      "path": "SS32.fixture.json",
+      "bytes": 1958,
+      "sha256": "4ebfbc312fe2bd35334ecbe3f949676212c5261393f522ccd5642bb8901fcc6a",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/SS32.fixture.json",
+        "bytes": 1958,
+        "sha256": "4ebfbc312fe2bd35334ecbe3f949676212c5261393f522ccd5642bb8901fcc6a",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "JSON formatting only; originalPrompt and oracle remain null"
+      ]
+    },
+    {
+      "path": "observations.public.json",
+      "bytes": 135702,
+      "sha256": "58be25b6513d71d46427cc96c6183d793da5da0d0225d237cd2d356666150d4d",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/isolated.observations.json",
+        "bytes": 135702,
+        "sha256": "58be25b6513d71d46427cc96c6183d793da5da0d0225d237cd2d356666150d4d",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "local path replacement if any; input/expected/observed unchanged"
+      ]
+    },
+    {
+      "path": "logs/existing-regression.command.public.json",
+      "bytes": 932,
+      "sha256": "8419a8d671267d4d2d5323e7747742e77f52054ea26528a3dc0e07c9882ea58d",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/existing-regression.command.json",
+        "bytes": 910,
+        "sha256": "eb7b34b3e89da90d7d7ecb8d631fadc3a53b9127dfd9939914004aa404427ed2",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "replace personal local paths",
+        "redact process-local PID values only",
+        "retain original stdout/stderr and exits as sanitized existing data"
+      ]
+    },
+    {
+      "path": "logs/new-isolated.command.public.json",
+      "bytes": 773,
+      "sha256": "5d745789e785801f3904ac660a7f6c137f1ad5ae46a0fa00ef2904b35034b9d0",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/new-isolated.command.json",
+        "bytes": 751,
+        "sha256": "ab095e287999bf38f4d878cbdc5ffa8d74a49ba74ccf4b0e15e98ae125f8a858",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "replace personal local paths",
+        "redact process-local PID values only",
+        "retain original stdout/stderr and exits as sanitized existing data"
+      ]
+    },
+    {
+      "path": "logs/typecheck.command.public.json",
+      "bytes": 6589,
+      "sha256": "3f8b3b82cfd48097f5db4076d9712186f2a99b25f8c551e4719d4723f84785e4",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/typecheck.command.json",
+        "bytes": 6589,
+        "sha256": "3f8b3b82cfd48097f5db4076d9712186f2a99b25f8c551e4719d4723f84785e4",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "replace personal local paths",
+        "redact process-local PID values only",
+        "retain original stdout/stderr and exits as sanitized existing data"
+      ]
+    },
+    {
+      "path": "logs/proof-check.command.public.json",
+      "bytes": 2229,
+      "sha256": "23a610e13a9aef05e41b58c509e9a5677831ee9393d10562d16640af775976db",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/proof-check.command.json",
+        "bytes": 2241,
+        "sha256": "eaab2f5e868ba885feb89e865f83c7d091a730642d753b0d2d98a35af9462e38",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "replace personal local paths",
+        "redact process-local PID values only",
+        "retain original stdout/stderr and exits as sanitized existing data"
+      ]
+    },
+    {
+      "path": "logs/existing.vitest.public.json",
+      "bytes": 4475,
+      "sha256": "2263df4d07af44653827436cc2d39382862e444056a2d8ba07d32d8cbe910fdc",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/existing.vitest.json",
+        "bytes": 23127,
+        "sha256": "fd6f4ade02d0fe2138cb93d2bb76faece0399119f74fc4161efba8e75d0b2f73",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "replace local absolute paths",
+        "trim failure stack internals",
+        "omit skipped unrelated assertion details; preserve original report totals"
+      ]
+    },
+    {
+      "path": "logs/isolated.vitest.public.json",
+      "bytes": 9016,
+      "sha256": "03e40bdd06eee9bf41c0e89ee031294b439bc177bcb9ec85bb482076c35180af",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/isolated.vitest.json",
+        "bytes": 9084,
+        "sha256": "ed27139e2b7a09cbcaa464bc6a34dd40fa3c6b20407a4e29432061bab09fa512",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "replace local absolute paths",
+        "trim failure stack internals",
+        "omit skipped unrelated assertion details; preserve original report totals"
+      ]
+    },
+    {
+      "path": "support/engineering-test-plan.public.json",
+      "bytes": 6423,
+      "sha256": "ade8df6cc8ef426e31f35046a404951d678f9da67c73f001ed5a587612133a9b",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/engineering-test-plan.json",
+        "bytes": 6423,
+        "sha256": "ade8df6cc8ef426e31f35046a404951d678f9da67c73f001ed5a587612133a9b",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "local path replacement only; original canonical/raw references remain bound to original bytes; public versions are not claimed to satisfy original-byte canonical checks"
+      ]
+    },
+    {
+      "path": "support/engineering-plan-result.public.json",
+      "bytes": 287,
+      "sha256": "f04069941079b2bb20b8ec183f2ed9c7a4459f7a596375e5bf82c479db7e7dbd",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/engineering-plan-result.json",
+        "bytes": 287,
+        "sha256": "f04069941079b2bb20b8ec183f2ed9c7a4459f7a596375e5bf82c479db7e7dbd",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "local path replacement only; original canonical/raw references remain bound to original bytes; public versions are not claimed to satisfy original-byte canonical checks"
+      ]
+    },
+    {
+      "path": "support/engineering-test-proof.public.json",
+      "bytes": 3974,
+      "sha256": "ce62117f67903ed1ed49acc6186ca574a54ab22ae24c0bd314865f6b7c8594be",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/engineering-test-proof.json",
+        "bytes": 3974,
+        "sha256": "ce62117f67903ed1ed49acc6186ca574a54ab22ae24c0bd314865f6b7c8594be",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "local path replacement only; original canonical/raw references remain bound to original bytes; public versions are not claimed to satisfy original-byte canonical checks"
+      ]
+    },
+    {
+      "path": "support/engineering-test-result.public.json",
+      "bytes": 1878,
+      "sha256": "3533ebc0a1f68e303f0d5464d7573657c4a4582c6b5bf6e02fa3819149af917b",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/engineering-test-result.json",
+        "bytes": 1878,
+        "sha256": "3533ebc0a1f68e303f0d5464d7573657c4a4582c6b5bf6e02fa3819149af917b",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "local path replacement only; original canonical/raw references remain bound to original bytes; public versions are not claimed to satisfy original-byte canonical checks"
+      ]
+    },
+    {
+      "path": "support/candidate.snapshot.public.json",
+      "bytes": 1019,
+      "sha256": "30f83edd64750886f9b32a41035533bfb7721bc1615505c01ed220325b7c3adb",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/candidate.snapshot.json",
+        "bytes": 1019,
+        "sha256": "30f83edd64750886f9b32a41035533bfb7721bc1615505c01ed220325b7c3adb",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "local path replacement only; original canonical/raw references remain bound to original bytes; public versions are not claimed to satisfy original-byte canonical checks"
+      ]
+    },
+    {
+      "path": "support/acceptance-report.public.json",
+      "bytes": 8367,
+      "sha256": "8e6390c1b2c7b506ff87ca18887c423b16ef7dcdc36dcca2e4faa466347b95ee",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/acceptance-report.json",
+        "bytes": 8619,
+        "sha256": "c8d9b73c14dfd68be1e84ed80f7ec9d0766b122b4807293ba64be14565f339c4",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "local path replacement only; original canonical/raw references remain bound to original bytes; public versions are not claimed to satisfy original-byte canonical checks"
+      ]
+    },
+    {
+      "path": "support/acceptance-validation.public.json",
+      "bytes": 36,
+      "sha256": "655823ac7f996b259837b1279f4757264aac1ab82808d9b562c06a9f640f36af",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/acceptance-validation.json",
+        "bytes": 36,
+        "sha256": "655823ac7f996b259837b1279f4757264aac1ab82808d9b562c06a9f640f36af",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "local path replacement only; original canonical/raw references remain bound to original bytes; public versions are not claimed to satisfy original-byte canonical checks"
+      ]
+    },
+    {
+      "path": "repro/SS32.isolated.test.ts",
+      "bytes": 17891,
+      "sha256": "3ec3c6082f47ac942167d18b87e3342bd2c219e8705fe00db08060f92feec9c8",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "tests/skill-classification/SS32.isolated.test.ts",
+        "bytes": 17887,
+        "sha256": "cc7368996feb241a33c15d054a06f547c4a63894d6960d3af82c0529b66cf0d8",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "replace synthetic mock credential stand-in text only; assertions and input bytes unchanged"
+      ]
+    },
+    {
+      "path": "PATCH_STATUS.json",
+      "bytes": 248,
+      "sha256": "8611d90bd76612fa304acacf7a727141f15a0b876f3df00458a866b94508c8a1",
+      "kind": "derived-publication-metadata",
+      "original": null,
+      "transformations": []
+    },
+    {
+      "path": "inputs/fallback-429.json",
+      "bytes": 1074,
+      "sha256": "4ab5355c1aa0470b3d98ade83104a00c3c035923c0b069b1e953cc0ea588c7b2",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/isolated.observations.json",
+        "bytes": 135702,
+        "sha256": "58be25b6513d71d46427cc96c6183d793da5da0d0225d237cd2d356666150d4d",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "extract existing observation input",
+        "JSON sorted-key UTF8 encoding; source observation bytes SHA bound",
+        "not original transport wire bytes"
+      ]
+    },
+    {
+      "path": "inputs/fallback-529.json",
+      "bytes": 1074,
+      "sha256": "313d6a93c72a1fe83969a7a261a1b448bee8c7550a0a4653da2c9b9ac4a6699f",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/isolated.observations.json",
+        "bytes": 135702,
+        "sha256": "58be25b6513d71d46427cc96c6183d793da5da0d0225d237cd2d356666150d4d",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "extract existing observation input",
+        "JSON sorted-key UTF8 encoding; source observation bytes SHA bound",
+        "not original transport wire bytes"
+      ]
+    },
+    {
+      "path": "inputs/both-rate-limited.json",
+      "bytes": 1059,
+      "sha256": "a59793204036dc7f5557fa7a93b4bba6be78efffd8d808f790dd55cc6d548a5c",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/isolated.observations.json",
+        "bytes": 135702,
+        "sha256": "58be25b6513d71d46427cc96c6183d793da5da0d0225d237cd2d356666150d4d",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "extract existing observation input",
+        "JSON sorted-key UTF8 encoding; source observation bytes SHA bound",
+        "not original transport wire bytes"
+      ]
+    },
+    {
+      "path": "inputs/retry-after-429.json",
+      "bytes": 1074,
+      "sha256": "4ab5355c1aa0470b3d98ade83104a00c3c035923c0b069b1e953cc0ea588c7b2",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/isolated.observations.json",
+        "bytes": 135702,
+        "sha256": "58be25b6513d71d46427cc96c6183d793da5da0d0225d237cd2d356666150d4d",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "extract existing observation input",
+        "JSON sorted-key UTF8 encoding; source observation bytes SHA bound",
+        "not original transport wire bytes"
+      ]
+    },
+    {
+      "path": "inputs/retry-after-529.json",
+      "bytes": 1100,
+      "sha256": "56caa09194774fb276c4b3dd2ee0298414ea229f58e5dabf8c54da9126a808aa",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/isolated.observations.json",
+        "bytes": 135702,
+        "sha256": "58be25b6513d71d46427cc96c6183d793da5da0d0225d237cd2d356666150d4d",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "extract existing observation input",
+        "JSON sorted-key UTF8 encoding; source observation bytes SHA bound",
+        "not original transport wire bytes"
+      ]
+    },
+    {
+      "path": "inputs/no-retry-429.json",
+      "bytes": 1081,
+      "sha256": "487f155e128d38745f559d028bc7666a1db93992f27525bc3b5caffbbc414696",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/isolated.observations.json",
+        "bytes": 135702,
+        "sha256": "58be25b6513d71d46427cc96c6183d793da5da0d0225d237cd2d356666150d4d",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "extract existing observation input",
+        "JSON sorted-key UTF8 encoding; source observation bytes SHA bound",
+        "not original transport wire bytes"
+      ]
+    },
+    {
+      "path": "inputs/no-retry-529.json",
+      "bytes": 1081,
+      "sha256": "c1fa2d0fb644c1c10b8aab74d64a7f00ba53cee11741ae85d5c59f489e11c7d4",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/isolated.observations.json",
+        "bytes": 135702,
+        "sha256": "58be25b6513d71d46427cc96c6183d793da5da0d0225d237cd2d356666150d4d",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "extract existing observation input",
+        "JSON sorted-key UTF8 encoding; source observation bytes SHA bound",
+        "not original transport wire bytes"
+      ]
+    },
+    {
+      "path": "inputs/unverified-native-retry-policy.json",
+      "bytes": 30,
+      "sha256": "448eacafcdb6e76c8e9180240f7666be9dd370834ab6cbd98915d670c2ff110d",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/isolated.observations.json",
+        "bytes": 135702,
+        "sha256": "58be25b6513d71d46427cc96c6183d793da5da0d0225d237cd2d356666150d4d",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "extract existing observation input",
+        "JSON sorted-key UTF8 encoding; source observation bytes SHA bound",
+        "not original transport wire bytes"
+      ]
+    },
+    {
+      "path": "inputs/delayed-identical-submissions.json",
+      "bytes": 1093,
+      "sha256": "4fa7b736535bb7254d52658fff3777701c64702ba96e1e332bc9e34b4ce7ea6a",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/isolated.observations.json",
+        "bytes": 135702,
+        "sha256": "58be25b6513d71d46427cc96c6183d793da5da0d0225d237cd2d356666150d4d",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "extract existing observation input",
+        "JSON sorted-key UTF8 encoding; source observation bytes SHA bound",
+        "not original transport wire bytes"
+      ]
+    },
+    {
+      "path": "inputs/delayed-fallback-identical-submissions.json",
+      "bytes": 1086,
+      "sha256": "e3cda1dbbf246610e14ab2a0c198ec52a1a13fddf006f5e41ea3ef7c64f0542e",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/isolated.observations.json",
+        "bytes": 135702,
+        "sha256": "58be25b6513d71d46427cc96c6183d793da5da0d0225d237cd2d356666150d4d",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "extract existing observation input",
+        "JSON sorted-key UTF8 encoding; source observation bytes SHA bound",
+        "not original transport wire bytes"
+      ]
+    },
+    {
+      "path": "inputs/unknown-cost-identical-resubmit.json",
+      "bytes": 1080,
+      "sha256": "432eac36f61eacaa2a7a468fbdf58ac2b9d472b648b4e777fe23c700104b6165",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/isolated.observations.json",
+        "bytes": 135702,
+        "sha256": "58be25b6513d71d46427cc96c6183d793da5da0d0225d237cd2d356666150d4d",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "extract existing observation input",
+        "JSON sorted-key UTF8 encoding; source observation bytes SHA bound",
+        "not original transport wire bytes"
+      ]
+    },
+    {
+      "path": "inputs/cancelled-before-shared-dispatch.json",
+      "bytes": 1167,
+      "sha256": "f440bbe64e47ed8034dbf988fbad8fcbbd35356e01227abc00de298a18ada91a",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/isolated.observations.json",
+        "bytes": 135702,
+        "sha256": "58be25b6513d71d46427cc96c6183d793da5da0d0225d237cd2d356666150d4d",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "extract existing observation input",
+        "JSON sorted-key UTF8 encoding; source observation bytes SHA bound",
+        "not original transport wire bytes"
+      ]
+    },
+    {
+      "path": "inputs/collision-same-operation.json",
+      "bytes": 2048,
+      "sha256": "c090b317a70fad36fc48f0a319fdf7a263e56da733f82cdecaf6d8e1b86e8e6d",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/isolated.observations.json",
+        "bytes": 135702,
+        "sha256": "58be25b6513d71d46427cc96c6183d793da5da0d0225d237cd2d356666150d4d",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "extract existing observation input",
+        "JSON sorted-key UTF8 encoding; source observation bytes SHA bound",
+        "not original transport wire bytes"
+      ]
+    },
+    {
+      "path": "inputs/collision-different-operation.json",
+      "bytes": 2054,
+      "sha256": "7aa50b9bab3962d200aea863c7e66ea0bde98313a9182ab3852e3ec243f6848c",
+      "kind": "sanitized-existing-evidence",
+      "original": {
+        "ref": "evidence/SS32/isolated.observations.json",
+        "bytes": 135702,
+        "sha256": "58be25b6513d71d46427cc96c6183d793da5da0d0225d237cd2d356666150d4d",
+        "retrievalStatus": "RECOVERED"
+      },
+      "transformations": [
+        "extract existing observation input",
+        "JSON sorted-key UTF8 encoding; source observation bytes SHA bound",
+        "not original transport wire bytes"
+      ]
+    },
+    {
+      "path": "input-bytes-manifest.json",
+      "bytes": 8089,
+      "sha256": "0c7e1f333aedd20f23beb02cc9b0f0be791b626a7b871a451379303d93fa253e",
+      "kind": "derived-publication-metadata",
+      "original": null,
+      "transformations": []
+    },
+    {
+      "path": "README.md",
+      "bytes": 6406,
+      "sha256": "b0a8ab33917ceb1d3ce8e33197eca8910fa8c53f7ea39c07482cfe871a0f12f1",
+      "kind": "derived-publication-documentation",
+      "original": null,
+      "transformations": [
+        "Summarize existing evidence and authorized publication boundary; reproduction instructions not executed"
+      ]
+    }
+  ],
+  "omittedOriginalFiles": [
+    {
+      "ref": "evidence/SS32/AC-001.evidence.json",
+      "bytes": 25643,
+      "sha256": "cc0d8154ce5be98dcc8a0334457984d054d6c42e101861d0c2be74b3df1a1bd7",
+      "status": "RECOVERED_NOT_PUBLISHED",
+      "reason": "Redundant/private original metadata or original hash list; relevant outcomes preserved in public result/log/support files."
+    },
+    {
+      "ref": "evidence/SS32/AC-002.evidence.json",
+      "bytes": 13939,
+      "sha256": "29760bc985644abb20be328c6a240c1d7de71eae7d48e46e635cc1e75b52fa46",
+      "status": "RECOVERED_NOT_PUBLISHED",
+      "reason": "Redundant/private original metadata or original hash list; relevant outcomes preserved in public result/log/support files."
+    },
+    {
+      "ref": "evidence/SS32/AC-003.evidence.json",
+      "bytes": 22934,
+      "sha256": "e307b2332043cb51a33037511795bce979791c291a3136ba18c024e50be8065d",
+      "status": "RECOVERED_NOT_PUBLISHED",
+      "reason": "Redundant/private original metadata or original hash list; relevant outcomes preserved in public result/log/support files."
+    },
+    {
+      "ref": "evidence/SS32/AC-004.evidence.json",
+      "bytes": 39954,
+      "sha256": "bfd06e5eef326455e9ff0b249bdab175695ee02f593425a887c3696772f8880a",
+      "status": "RECOVERED_NOT_PUBLISHED",
+      "reason": "Redundant/private original metadata or original hash list; relevant outcomes preserved in public result/log/support files."
+    },
+    {
+      "ref": "evidence/SS32/AC-005.evidence.json",
+      "bytes": 11640,
+      "sha256": "5851d890960b49afee0d65614966040a58a136ccdc66bf243506fe361f3da00c",
+      "status": "RECOVERED_NOT_PUBLISHED",
+      "reason": "Redundant/private original metadata or original hash list; relevant outcomes preserved in public result/log/support files."
+    },
+    {
+      "ref": "evidence/SS32/AC-006.evidence.json",
+      "bytes": 32817,
+      "sha256": "9f7d191aee027eab97786e7b632626c2f56f8cbe28d3db971121f2d57fd82e84",
+      "status": "RECOVERED_NOT_PUBLISHED",
+      "reason": "Redundant/private original metadata or original hash list; relevant outcomes preserved in public result/log/support files."
+    },
+    {
+      "ref": "evidence/SS32/REPORT.txt",
+      "bytes": 2645,
+      "sha256": "44489fed807a2815cb0fe36667c89ea3513613054927a0e6d5d0c3c0d21e4147",
+      "status": "RECOVERED_NOT_PUBLISHED",
+      "reason": "Redundant/private original metadata or original hash list; relevant outcomes preserved in public result/log/support files."
+    },
+    {
+      "ref": "evidence/SS32/SHA256SUMS",
+      "bytes": 3040,
+      "sha256": "cb39543d3f94a687b97760b3c8b435fe7566d5a352ff6daf11cbeed6061ec0a1",
+      "status": "RECOVERED_NOT_PUBLISHED",
+      "reason": "Redundant/private original metadata or original hash list; relevant outcomes preserved in public result/log/support files."
+    },
+    {
+      "ref": "evidence/SS32/acceptance-input.json",
+      "bytes": 8176,
+      "sha256": "145ee6cb6e19b12e5c286f319a407da2b32d928e97b4c63912cd15006f1aacdd",
+      "status": "RECOVERED_NOT_PUBLISHED",
+      "reason": "Redundant/private original metadata or original hash list; relevant outcomes preserved in public result/log/support files."
+    },
+    {
+      "ref": "evidence/SS32/acceptance-report.command.json",
+      "bytes": 9461,
+      "sha256": "a730cfe4ee63b7022af2e3b5751e787e433735736d579afbb06d1e47a9819fb5",
+      "status": "RECOVERED_NOT_PUBLISHED",
+      "reason": "Redundant/private original metadata or original hash list; relevant outcomes preserved in public result/log/support files."
+    },
+    {
+      "ref": "evidence/SS32/acceptance-request-artifact.json",
+      "bytes": 332,
+      "sha256": "9fd7f306d5ef85811b2bfd3c35db7cfdcf5d5a605e2b22fe046593c6cc10fe31",
+      "status": "RECOVERED_NOT_PUBLISHED",
+      "reason": "Redundant/private original metadata or original hash list; relevant outcomes preserved in public result/log/support files."
+    },
+    {
+      "ref": "evidence/SS32/acceptance-validation.command.json",
+      "bytes": 396,
+      "sha256": "e59a0d474a2b8981cc6792e11870bc9594f13c0d5bba03d89bee58d4a5ed8da2",
+      "status": "RECOVERED_NOT_PUBLISHED",
+      "reason": "Redundant/private original metadata or original hash list; relevant outcomes preserved in public result/log/support files."
+    },
+    {
+      "ref": "evidence/SS32/final-integrity.command.json",
+      "bytes": 708,
+      "sha256": "561d3a0c1b5788f858cee334b425b6f50ca826bb6f5344abfce48bf507d558d7",
+      "status": "RECOVERED_NOT_PUBLISHED",
+      "reason": "Redundant/private original metadata or original hash list; relevant outcomes preserved in public result/log/support files."
+    }
+  ],
+  "hashPolicy": "Manifest does not hash itself or SHA256SUMS. SHA256SUMS includes manifest and all public payload files, excludes itself. Final remote verification separately computes SHA256SUMS digest."
+}

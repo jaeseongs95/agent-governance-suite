@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-snapshot",
+  "files": [
+    {
+      "path": "mcp-server/src/skill-classification/providers.ts",
+      "digest": "sha256:f191c46db32f38248ebdd23be725b426a0b3020e0bb464b36bcc57521983651c",
+      "size": 12898,
+      "lineCount": 162
+    },
+    {
+      "path": "mcp-server/src/skill-classification/runtime.ts",
+      "digest": "sha256:33c14b3597a9ed5d3a6103fc52c41ea9ed18c57c96856257b1dc407e3d6e6eea",
+      "size": 4336,
+      "lineCount": 60
+    },
+    {
+      "path": "mcp-server/src/skill-classification/service.ts",
+      "digest": "sha256:c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb",
+      "size": 19033,
+      "lineCount": 215
+    },
+    {
+      "path": "tests/skill-classification/SS32.isolated.test.ts",
+      "digest": "sha256:cc7368996feb241a33c15d054a06f547c4a63894d6960d3af82c0529b66cf0d8",
+      "size": 17887,
+      "lineCount": 186
+    }
+  ],
+  "digest": "sha256:e06d1aa708658b20c9a242ed6a17cb4677e66166c6075eb8a0fb6330af109681"
+}

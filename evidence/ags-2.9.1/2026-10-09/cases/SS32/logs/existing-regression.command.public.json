@@ -1,0 +1,24 @@
+{
+  "executionKind": "existing-regression",
+  "cwd": "<CANDIDATE_ROOT>",
+  "argv": [
+    "node",
+    "scripts/run-tests.mjs",
+    "tests/mcp/skill-classification-providers.test.ts",
+    "tests/mcp/skill-classification-service.test.ts",
+    "-t",
+    "SS30/32 HTTP (429|529)|SS28/30/32 RATE_LIMITED|SS32 (concurrent|rejects|bounded)",
+    "--reporter=json",
+    "--outputFile=evidence/SS32/existing.vitest.json"
+  ],
+  "startedAt": "2026-10-09T02:59:05.854505+00:00",
+  "finishedAt": "2026-10-09T02:59:06.627646+00:00",
+  "exitCode": 0,
+  "stdout": "JSON report written to evidence/SS32/existing.vitest.json\n",
+  "stderr": "{\"harness\": \"test-subreaper\", \"ownerPid\": \"REDACTED_PROCESS_IDS\", \"runnerPid\": \"REDACTED_PROCESS_IDS\", \"reapedPids\": \"REDACTED_PROCESS_IDS\", \"remainingChildren\": false, \"runnerExitCode\": 0, \"cancelled\": false}\n",
+  "externalAPI": {
+    "jev": 0,
+    "vendor": 0,
+    "claude": 0
+  }
+}

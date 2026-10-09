@@ -1,0 +1,8 @@
+{
+  "caseId": "SS32",
+  "status": "NO_EXISTING_PATCH",
+  "productPatch": null,
+  "testFileIncluded": "repro/SS32.isolated.test.ts",
+  "note": "No original .patch/.diff exists. No patch was generated during publication.",
+  "retrievalMissing": []
+}

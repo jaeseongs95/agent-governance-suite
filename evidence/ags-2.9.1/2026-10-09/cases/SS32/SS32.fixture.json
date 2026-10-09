@@ -1,0 +1,31 @@
+{
+  "caseId": "SS32",
+  "title": "429와 중복 요청",
+  "familyId": "mechanical-SS32",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "mock. rate limit을 만들려고 실제 API를 대량 호출하지 않는다.",
+  "originalPrompt": null,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS32",
+    "fields": {
+      "입력": "429 또는 529와 Retry-After를 반환하는 provider, 동일 operationId·requestId·digest의 동시 제출 두 개, 동일 requestId지만 다른 digest를 각각 주입한다.",
+      "필수추천": "429·529는 UNAVAILABLE/unavailable로 드러내고 기존 B와 목적 적합성 판정을 보존한다.",
+      "금지추천 또는 행동": "무제한 재시도; prototype과 SDK의 자동 429·529 재시도; 같은 논리 요청의 이중 전송·과금·결과 합성; 다른 digest를 같은 요청으로 합침.",
+      "허용선택": "Retry-After는 관측만 보존하고 JEV 재시도는 하지 않는다. 현재 정책의 vendor fallback이 허용되면 별도 attempt로 한 번 분류한다. 진행 중 동일 요청은 공유 결과 또는 중복 거부 중 고정 정책을 따른다.",
+      "보류조건": "이전 요청의 처리 상태를 알 수 없으면 새 요청으로 재발급하지 않는다.",
+      "통과기준": "같은 JEV 시도 최대 1회와 정책상 허용된 vendor fallback 최대 1회를 각각 검사한다. SDK 은닉 재시도·중복 완료는 0이며, digest 충돌은 invalid이며 다른 결과를 오염시키지 않는다.",
+      "증거": "E0·E1·E2, requestId·digest와 전송 계수.",
+      "실행종류": "mock. rate limit을 만들려고 실제 API를 대량 호출하지 않는다."
+    },
+    "bodyDigest": "sha256:dee715910ed387f22cc669849ecd9eef3645de57c4e9c1bdaf7355b48ddb331a"
+  },
+  "oracle": null,
+  "variants": [
+    "429",
+    "sdk-retry-negative",
+    "duplicate-inflight",
+    "digest-collision"
+  ]
+}
