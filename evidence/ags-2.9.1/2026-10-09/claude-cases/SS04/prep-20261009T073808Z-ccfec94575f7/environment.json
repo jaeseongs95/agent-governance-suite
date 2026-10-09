@@ -1,0 +1,37 @@
+{
+  "observedAt": "2026-10-09T07:40:00.543394+00:00",
+  "cliPath": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+  "version": "2.1.286 (Claude Code)",
+  "onPath": false,
+  "resolvedExecutableSha256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+  "checks": [
+    "local --version",
+    "local --help"
+  ],
+  "helpOnlyFlagsObserved": [
+    "--model",
+    "--effort",
+    "--max-budget-usd",
+    "--output-format",
+    "--plugin-dir",
+    "--mcp-config",
+    "--settings",
+    "--bare"
+  ],
+  "nodeVersion": "v24.19.0",
+  "authQualification": "NOT_RUN; waiting for parent approved successful API authentication procedure",
+  "credentialValuesReadPrintedCopiedOrPublished": false,
+  "permanentAuthPermissionOrNetworkChanges": false,
+  "productTrialCalls": 0,
+  "paidCalls": 0,
+  "candidate": {
+    "label": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "status": "UNVERIFIED; reported local-only candidate; independent SOURCE and remote publication pending"
+  },
+  "forbiddenSubstituteCandidates": [
+    "main",
+    "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6"
+  ]
+}

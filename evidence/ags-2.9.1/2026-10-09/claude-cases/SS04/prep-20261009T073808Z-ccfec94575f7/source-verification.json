@@ -1,0 +1,133 @@
+{
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "sourcePath": "evidence/ags-2.9.1/2026-10-09/cases/SS04/",
+  "title": "SQLite WAL과 oldbroker 전환",
+  "sha256sumsSha256": "de8e226dd1d77163aba32a1fe3df07d8b2cd7434b5d059f0f104eaa5df0d7965",
+  "manifestPayloadsVerified": 18,
+  "checksumEntriesVerified": 19,
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 3341,
+      "sha256": "57bfc7b800515e001897fc7d7ea5e484db87297061503395773ac6f0010b0ebf",
+      "status": "MATCH"
+    },
+    {
+      "path": "SS04.result.public.json",
+      "bytes": 2802476,
+      "sha256": "a7d4bc24ce2e53ff1ea88b150f6d8a3b9eec3345ea4ffe4272ac2d97a7afadb3",
+      "status": "MATCH"
+    },
+    {
+      "path": "commands/existing-regression.original-sanitized.json",
+      "bytes": 517,
+      "sha256": "bd8e630c306e4aca1a7bb33ee2152793188f5f6fe69f7668913bfe78396493d4",
+      "status": "MATCH"
+    },
+    {
+      "path": "commands/isolated-tests.original-sanitized.json",
+      "bytes": 392,
+      "sha256": "49ab2705e592d693fb8078a32f71f7dc246241fbc4b237a51ae91143b40c071f",
+      "status": "MATCH"
+    },
+    {
+      "path": "inputs/SS04.fixture-extract.json",
+      "bytes": 4371,
+      "sha256": "faccfed9f9cbeaa48594109fbf510c644e174f3f83ca3f5aee03c0120686472f",
+      "status": "MATCH"
+    },
+    {
+      "path": "inputs/SS04.oracle.json",
+      "bytes": 2364,
+      "sha256": "b0c7357f89969b570884194b0a0265add6904e9bf43582d7daeb016377789fee",
+      "status": "MATCH"
+    },
+    {
+      "path": "inputs/originalPrompt.txt",
+      "bytes": 217,
+      "sha256": "2288c3c42196e715d437359c2b064d16c18d87c68e989b47b708084df5f2bd5b",
+      "status": "MATCH"
+    },
+    {
+      "path": "logs/existing-regression.report.public.json",
+      "bytes": 5886,
+      "sha256": "2c7755b1cafd8d8cc852e696a09c07451efa1af5705148a1de3e5278e2ab58fd",
+      "status": "MATCH"
+    },
+    {
+      "path": "logs/existing-regression.stderr.public.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "MATCH"
+    },
+    {
+      "path": "logs/existing-regression.stdout.public.txt",
+      "bytes": 66,
+      "sha256": "e73f6703d8987e7bca805fe676b455ae84e0957e678f256a679fce7d4ba9f662",
+      "status": "MATCH"
+    },
+    {
+      "path": "logs/isolated-tests.report.public.json",
+      "bytes": 10207,
+      "sha256": "bd81d4f959f6ba982ed6358732d73d9e17dbf27ad83ac38e18b8e73a850f1b5e",
+      "status": "MATCH"
+    },
+    {
+      "path": "logs/isolated-tests.stderr.public.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "MATCH"
+    },
+    {
+      "path": "logs/isolated-tests.stdout.public.txt",
+      "bytes": 61,
+      "sha256": "9a6df628b60c98cc40569de35642e81e04728f1879079f9b4cd4d7a5a840a871",
+      "status": "MATCH"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 11668,
+      "sha256": "896c68aade556a4b1200ab7103480c35f18b91f2d5e02abdcf42b3878190b67d",
+      "status": "MATCH"
+    },
+    {
+      "path": "repro/README.md",
+      "bytes": 3114,
+      "sha256": "96d6b956c88603a71bd59bd6d70cff239d45bb38c65c75ddae44a96a963df068",
+      "status": "MATCH"
+    },
+    {
+      "path": "repro/SS04.test.ts",
+      "bytes": 16176,
+      "sha256": "f36f5582d1a3290ec2794b3abd6cb11331894a4e7cdcf269439864ae46c4534f",
+      "status": "MATCH"
+    },
+    {
+      "path": "results/SS04.plan.public.json",
+      "bytes": 1674,
+      "sha256": "33c4b743a9cdea38f4c19d52c3099beb8e0bc637f57b46ab7648c6f347fb3142",
+      "status": "MATCH"
+    },
+    {
+      "path": "results/isolated-observations.public.json",
+      "bytes": 2023836,
+      "sha256": "60b50c804c45b5762e3b019807a6981c852309c260c2e941f66f88371cd04c03",
+      "status": "MATCH"
+    },
+    {
+      "path": "results/provenance.public.json",
+      "bytes": 3355,
+      "sha256": "6415e04a2e0e730267f143c3e30b44412b98bf01b9d68b89f25bb438b22a384c",
+      "status": "MATCH"
+    }
+  ],
+  "originalWholeFixture": {
+    "artifactName": "tests/skill-classification/fixtures.json",
+    "bytes": 142450,
+    "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "publishedWholeFixture": false
+  },
+  "wholeFixtureLimitation": "Only SS04 public extraction is available here; the whole-fixture hash and logical oracle digest are recorded provenance, not freshly recomputed whole-fixture verification.",
+  "frozenOracleLogicalSha256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "sourceSpecBodyDigest": "sha256:08961807e837c0ea62cb1f7ca9665b2327cebf6678304329dda22cd694dfc3f4"
+}

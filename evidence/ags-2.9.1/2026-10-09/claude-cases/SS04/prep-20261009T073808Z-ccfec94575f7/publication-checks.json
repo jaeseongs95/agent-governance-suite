@@ -1,0 +1,41 @@
+{
+  "scopeVerdict": "PASS",
+  "scopeReportSha256": "33dce9b9669a3cf3a18c9348cec142fa326a8ce9c65e85b4084e58d31ed4552e",
+  "frozenBaselineManifestSha256": "70394ab64b2712b7c2f8e01f72fe6de1b6ae0d492ac05c9382e041c981ddf282",
+  "baselineCommit": "19e8812f1fdb49ce8ce78db18234be75445e5353",
+  "changes": [
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS04/prep-20261009T073808Z-ccfec94575f7/budget-ledger.json",
+      "classification": "in-scope"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS04/prep-20261009T073808Z-ccfec94575f7/environment.json",
+      "classification": "in-scope"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS04/prep-20261009T073808Z-ccfec94575f7/execution-plan.json",
+      "classification": "in-scope"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS04/prep-20261009T073808Z-ccfec94575f7/instructions-read.json",
+      "classification": "in-scope"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS04/prep-20261009T073808Z-ccfec94575f7/oracle.json",
+      "classification": "in-scope"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS04/prep-20261009T073808Z-ccfec94575f7/originalPrompt.txt",
+      "classification": "in-scope"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS04/prep-20261009T073808Z-ccfec94575f7/README.md",
+      "classification": "in-scope"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS04/prep-20261009T073808Z-ccfec94575f7/source-verification.json",
+      "classification": "in-scope"
+    }
+  ],
+  "scopePurpose": "Evidence-only publication checks with existing local tooling; not an SS04 product test or independent SOURCE audit."
+}

@@ -1,0 +1,78 @@
+{
+  "status": "PREPARATION_READY_WAITING_FOR_PARENT; HOST_TEST_NOT_RUN",
+  "caseId": "SS04",
+  "title": "SQLite WAL과 oldbroker 전환",
+  "variant": "base",
+  "oracleUnchanged": true,
+  "expected": {
+    "required": [
+      "cs-engineering",
+      "test-engineering",
+      "orchestrator"
+    ],
+    "allowed": [
+      "ponytail"
+    ],
+    "notApplicable": [
+      "code-review",
+      "software-security-auditor",
+      "korean-prose-editor"
+    ],
+    "selectionStatus": "SELECTED",
+    "productionMigration": false,
+    "unknownDBDoesNotPermitCSOmission": true
+  },
+  "authority": "Actual Claude AGENT final skill choice; classifier recommendations are support only",
+  "steps": [
+    {
+      "id": "0",
+      "stage": "resume gates",
+      "action": "Receive parent verified candidate commit/tree with independent SOURCE result and fixed remote identity; common Claude model/effort/auth/permission configuration; prerequisite results and conservative cost accounting. Stop on missing inputs."
+    },
+    {
+      "id": "1",
+      "stage": "bind candidate",
+      "action": "Use isolated read-only candidate deployment at the parent verified commit/tree. Read candidate AGENTS.md and relevant SKILL.md plus activated references; confirm generated Claude plugin and host discovery without modifying code, generated artifacts, permanent credentials, permissions or network policy."
+    },
+    {
+      "id": "2",
+      "stage": "invoke actual Claude",
+      "action": "Pass exact originalPrompt.txt UTF-8 base input to actual Claude Code via approved API authentication. Do not inject expected skill IDs or old outcomes into task prompt; retain separate scorer oracle. Do not use --bare or other flags that bypass required plugin/hooks unless parent procedure explicitly validates equivalent host behavior. No Sol replacement of Claude host work."
+    },
+    {
+      "id": "3",
+      "stage": "selected",
+      "action": "Observe actual Claude choice/reasons and installed enabled supported inventory including external skills; record host-bound request/task/actor and signed receipt where required. Missing receipt or unsupported route is NOT_RUN/BLOCKED, never fabricated."
+    },
+    {
+      "id": "4",
+      "stage": "read",
+      "action": "Verify Claude actually reads selected cs-engineering, test-engineering and orchestrator bodies/references at the candidate. Selection labels alone do not prove reading."
+    },
+    {
+      "id": "5",
+      "stage": "applied",
+      "action": "Verify Claude produces the minimal transition design, identifies concurrent-writer, crash-recovery and duplicate-delivery obligations and regression-test plan. Unknown schema/candidate specifics remain explicit open inputs and never justify omitting CS. Production database migration is prohibited; no product code changes."
+    },
+    {
+      "id": "6",
+      "stage": "verified",
+      "action": "Bind observed selected/read/applied/verified evidence to same candidate/request. Original selection criterion is simultaneous CS/T/O and no production change; ponytail is allowed, not required. code-review/software-security-auditor/korean-prose-editor are not applicable. Unadjudicated extras require review; do not silently mark permitted. Review obligation coverage; dynamic sandbox checks only if original scope and parent configuration permit, otherwise keep execution NOT_RUN without inventing stricter oracle."
+    },
+    {
+      "id": "7",
+      "stage": "account and publish",
+      "action": "Record cost/tokens/cache/retries/failed calls after each attempt; stop near $2. Publish only sanitized new run evidence and hashes to evidence branch; re-fetch fixed remote files and verify digests. No raw chat, secrets, personal information, overwrites or force push."
+    }
+  ],
+  "doNotAutomaticallyExpand": "No JEV, paired 4 x 3 x 2 historical matrix, full suite, provider retry, or extra paid preparation call is authorized by this preparation.",
+  "requiredParentInputs": [
+    "verified final candidate and fixed accessible source/deployment",
+    "independent SOURCE adjudication and remote publication evidence",
+    "common explicit Claude model and effort configuration",
+    "approved successful transient API authentication procedure",
+    "prerequisite results, host/plugin/MCP configuration and permissions",
+    "per-case accounting method and conservative call bound",
+    "if dynamic DB verification is requested, actual schema/runtime and isolated concurrency/crash environment"
+  ]
+}

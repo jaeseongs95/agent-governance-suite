@@ -1,0 +1,21 @@
+{
+  "caseId": "SS04",
+  "softBudgetUsd": 2,
+  "portfolioReservedCases": 39,
+  "portfolioReservationUsd": 78,
+  "spendTarget": false,
+  "apiCalls": 0,
+  "jevCalls": 0,
+  "paidPreparationCalls": 0,
+  "failedPaidCalls": 0,
+  "retries": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadInputTokens": 0,
+  "cacheCreationInputTokens": 0,
+  "actualCostUsd": 0,
+  "reservedForInflightUsd": 0,
+  "entries": [],
+  "stopPolicy": "Before each paid attempt include preparation, retries, cache usage and failed-call costs; reserve a conservative next-call bound. Stop before any next call when the remaining $2 soft budget cannot cover that bound, when approaching the limit, or when prior cost/usage cannot be accounted for. Report to parent. Do not interpret the budget as a spending target. JEV requires separate explicit allocation.",
+  "cliBudgetFlagLimitation": "CLI --max-budget-usd is observed in local help only, not a verified enforcement or billing guarantee; parent must provide the approved common configuration and accounting method."
+}
