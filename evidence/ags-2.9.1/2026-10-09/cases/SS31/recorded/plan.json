@@ -1,0 +1,369 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS31-c6a8019-offline",
+  "contractDigest": "sha256:bc53e0835e112ae97e7a16fb0331396e9cd1b6b877e726589526b06e74dc43fa",
+  "requirements": [
+    "SS31:not-dispatched",
+    "SS31:unknown-consumption",
+    "SS31:late-result"
+  ],
+  "scopeFiles": [
+    "SS31-repo/tests/SS31-isolated.test.ts",
+    "SS31-repo/tests/skill-classification/fixtures.json",
+    "SS31-repo/mcp-server/src/skill-classification/service.ts",
+    "SS31-repo/mcp-server/src/skill-classification/providers.ts",
+    "SS31-repo/mcp-server/src/skill-classification/types.ts",
+    "SS31-repo/mcp-server/src/skill-classification/request.ts",
+    "SS31-repo/mcp-server/src/skill-classification/profiles.ts",
+    "SS31-repo/mcp-server/src/skill-classification/validation.ts",
+    "SS31-repo/mcp-server/src/skill-classification/digest.ts"
+  ],
+  "runner": "existing repository Vitest 5; no build, installation or provider calls",
+  "environment": "Node v24.19.0; Linux Cloud independent environment; TZ UTC; Vitest fake timers except Node overflow case; each test fresh in-memory state",
+  "cases": [
+    {
+      "id": "SS31-ND-availability",
+      "requirementIds": [
+        "SS31:not-dispatched"
+      ],
+      "scenario": "SS31-ND-availability; inspect frozen test declaration for exact injection",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider.classify with injected fetcher",
+      "level": "integration",
+      "expectedBehavior": "선택한 JEV 시도는 최대 1회이며 허용된 vendor fallback은 별도 최대 1회다. 각 실제 HTTP 전송과 비용을 따로 세고 JEV 미전송은 0회다. 최종 선택 완료는 최대 1회이며, 늦은 결과는 현재 결과·fallback 선택을 덮지 않는다. JEV 비용은 확인 전 unknown과 보수적 예약으로 남기고 vendor 비용을 별도로 기록한다.; JEV attempt의 미전송 확정은 timeout/not-started로, 전송·소비 불명은 uncertain/timedOut=true/started 또는 unknown으로 진단한다. vendor fallback이 성공하면 최종 선택은 정상 수락될 수 있으며 이전 JEV 실패를 지우지 않는다. fallback도 불가할 때만 해당 실패·NEEDS_INPUT/UNAVAILABLE/UNCERTAIN을 최종 보류와 결속한다. B의 목적 적합성은 따로 검증한다.",
+      "oracle": "SS31 embedded sourceSpec.fields only; semantic oracle=null; unsupported Node timer boundary derives from safe timeout control requirement",
+      "testFiles": [
+        "SS31-repo/tests/SS31-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Authorized offline verification only; product source modification prohibited. Preserve failing tests; green and independent acceptance remain NOT_RUN.",
+      "argv": [
+        "<AGS_DEPENDENCY_ROOT>/node_modules/.bin/vitest",
+        "run",
+        "tests/SS31-isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<SS31_OUTPUT_ROOT>/isolated-tests.json"
+      ]
+    },
+    {
+      "id": "SS31-ND-typed",
+      "requirementIds": [
+        "SS31:not-dispatched"
+      ],
+      "scenario": "SS31-ND-typed; inspect frozen test declaration for exact injection",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider.classify with injected fetcher",
+      "level": "integration",
+      "expectedBehavior": "선택한 JEV 시도는 최대 1회이며 허용된 vendor fallback은 별도 최대 1회다. 각 실제 HTTP 전송과 비용을 따로 세고 JEV 미전송은 0회다. 최종 선택 완료는 최대 1회이며, 늦은 결과는 현재 결과·fallback 선택을 덮지 않는다. JEV 비용은 확인 전 unknown과 보수적 예약으로 남기고 vendor 비용을 별도로 기록한다.; JEV attempt의 미전송 확정은 timeout/not-started로, 전송·소비 불명은 uncertain/timedOut=true/started 또는 unknown으로 진단한다. vendor fallback이 성공하면 최종 선택은 정상 수락될 수 있으며 이전 JEV 실패를 지우지 않는다. fallback도 불가할 때만 해당 실패·NEEDS_INPUT/UNAVAILABLE/UNCERTAIN을 최종 보류와 결속한다. B의 목적 적합성은 따로 검증한다.",
+      "oracle": "SS31 embedded sourceSpec.fields only; semantic oracle=null; unsupported Node timer boundary derives from safe timeout control requirement",
+      "testFiles": [
+        "SS31-repo/tests/SS31-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Authorized offline verification only; product source modification prohibited. Preserve failing tests; green and independent acceptance remain NOT_RUN.",
+      "argv": [
+        "<AGS_DEPENDENCY_ROOT>/node_modules/.bin/vitest",
+        "run",
+        "tests/SS31-isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<SS31_OUTPUT_ROOT>/isolated-tests.json"
+      ]
+    },
+    {
+      "id": "SS31-ND-credential-gap",
+      "requirementIds": [
+        "SS31:not-dispatched"
+      ],
+      "scenario": "SS31-ND-credential-gap; inspect frozen test declaration for exact injection",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider.classify with injected fetcher",
+      "level": "integration",
+      "expectedBehavior": "선택한 JEV 시도는 최대 1회이며 허용된 vendor fallback은 별도 최대 1회다. 각 실제 HTTP 전송과 비용을 따로 세고 JEV 미전송은 0회다. 최종 선택 완료는 최대 1회이며, 늦은 결과는 현재 결과·fallback 선택을 덮지 않는다. JEV 비용은 확인 전 unknown과 보수적 예약으로 남기고 vendor 비용을 별도로 기록한다.; JEV attempt의 미전송 확정은 timeout/not-started로, 전송·소비 불명은 uncertain/timedOut=true/started 또는 unknown으로 진단한다. vendor fallback이 성공하면 최종 선택은 정상 수락될 수 있으며 이전 JEV 실패를 지우지 않는다. fallback도 불가할 때만 해당 실패·NEEDS_INPUT/UNAVAILABLE/UNCERTAIN을 최종 보류와 결속한다. B의 목적 적합성은 따로 검증한다.",
+      "oracle": "SS31 embedded sourceSpec.fields only; semantic oracle=null; unsupported Node timer boundary derives from safe timeout control requirement",
+      "testFiles": [
+        "SS31-repo/tests/SS31-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Authorized offline verification only; product source modification prohibited. Preserve failing tests; green and independent acceptance remain NOT_RUN.",
+      "argv": [
+        "<AGS_DEPENDENCY_ROOT>/node_modules/.bin/vitest",
+        "run",
+        "tests/SS31-isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<SS31_OUTPUT_ROOT>/isolated-tests.json"
+      ]
+    },
+    {
+      "id": "SS31-UC-started",
+      "requirementIds": [
+        "SS31:unknown-consumption"
+      ],
+      "scenario": "SS31-UC-started; inspect frozen test declaration for exact injection",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider.classify with injected fetcher",
+      "level": "integration",
+      "expectedBehavior": "선택한 JEV 시도는 최대 1회이며 허용된 vendor fallback은 별도 최대 1회다. 각 실제 HTTP 전송과 비용을 따로 세고 JEV 미전송은 0회다. 최종 선택 완료는 최대 1회이며, 늦은 결과는 현재 결과·fallback 선택을 덮지 않는다. JEV 비용은 확인 전 unknown과 보수적 예약으로 남기고 vendor 비용을 별도로 기록한다.; JEV attempt의 미전송 확정은 timeout/not-started로, 전송·소비 불명은 uncertain/timedOut=true/started 또는 unknown으로 진단한다. vendor fallback이 성공하면 최종 선택은 정상 수락될 수 있으며 이전 JEV 실패를 지우지 않는다. fallback도 불가할 때만 해당 실패·NEEDS_INPUT/UNAVAILABLE/UNCERTAIN을 최종 보류와 결속한다. B의 목적 적합성은 따로 검증한다.",
+      "oracle": "SS31 embedded sourceSpec.fields only; semantic oracle=null; unsupported Node timer boundary derives from safe timeout control requirement",
+      "testFiles": [
+        "SS31-repo/tests/SS31-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Authorized offline verification only; product source modification prohibited. Preserve failing tests; green and independent acceptance remain NOT_RUN.",
+      "argv": [
+        "<AGS_DEPENDENCY_ROOT>/node_modules/.bin/vitest",
+        "run",
+        "tests/SS31-isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<SS31_OUTPUT_ROOT>/isolated-tests.json"
+      ]
+    },
+    {
+      "id": "SS31-UC-unknown",
+      "requirementIds": [
+        "SS31:unknown-consumption"
+      ],
+      "scenario": "SS31-UC-unknown; inspect frozen test declaration for exact injection",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider.classify with injected fetcher",
+      "level": "integration",
+      "expectedBehavior": "선택한 JEV 시도는 최대 1회이며 허용된 vendor fallback은 별도 최대 1회다. 각 실제 HTTP 전송과 비용을 따로 세고 JEV 미전송은 0회다. 최종 선택 완료는 최대 1회이며, 늦은 결과는 현재 결과·fallback 선택을 덮지 않는다. JEV 비용은 확인 전 unknown과 보수적 예약으로 남기고 vendor 비용을 별도로 기록한다.; JEV attempt의 미전송 확정은 timeout/not-started로, 전송·소비 불명은 uncertain/timedOut=true/started 또는 unknown으로 진단한다. vendor fallback이 성공하면 최종 선택은 정상 수락될 수 있으며 이전 JEV 실패를 지우지 않는다. fallback도 불가할 때만 해당 실패·NEEDS_INPUT/UNAVAILABLE/UNCERTAIN을 최종 보류와 결속한다. B의 목적 적합성은 따로 검증한다.",
+      "oracle": "SS31 embedded sourceSpec.fields only; semantic oracle=null; unsupported Node timer boundary derives from safe timeout control requirement",
+      "testFiles": [
+        "SS31-repo/tests/SS31-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Authorized offline verification only; product source modification prohibited. Preserve failing tests; green and independent acceptance remain NOT_RUN.",
+      "argv": [
+        "<AGS_DEPENDENCY_ROOT>/node_modules/.bin/vitest",
+        "run",
+        "tests/SS31-isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<SS31_OUTPUT_ROOT>/isolated-tests.json"
+      ]
+    },
+    {
+      "id": "SS31-UC-remote-hang",
+      "requirementIds": [
+        "SS31:unknown-consumption"
+      ],
+      "scenario": "SS31-UC-remote-hang; inspect frozen test declaration for exact injection",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider.classify with injected fetcher",
+      "level": "integration",
+      "expectedBehavior": "선택한 JEV 시도는 최대 1회이며 허용된 vendor fallback은 별도 최대 1회다. 각 실제 HTTP 전송과 비용을 따로 세고 JEV 미전송은 0회다. 최종 선택 완료는 최대 1회이며, 늦은 결과는 현재 결과·fallback 선택을 덮지 않는다. JEV 비용은 확인 전 unknown과 보수적 예약으로 남기고 vendor 비용을 별도로 기록한다.; JEV attempt의 미전송 확정은 timeout/not-started로, 전송·소비 불명은 uncertain/timedOut=true/started 또는 unknown으로 진단한다. vendor fallback이 성공하면 최종 선택은 정상 수락될 수 있으며 이전 JEV 실패를 지우지 않는다. fallback도 불가할 때만 해당 실패·NEEDS_INPUT/UNAVAILABLE/UNCERTAIN을 최종 보류와 결속한다. B의 목적 적합성은 따로 검증한다.",
+      "oracle": "SS31 embedded sourceSpec.fields only; semantic oracle=null; unsupported Node timer boundary derives from safe timeout control requirement",
+      "testFiles": [
+        "SS31-repo/tests/SS31-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Authorized offline verification only; product source modification prohibited. Preserve failing tests; green and independent acceptance remain NOT_RUN.",
+      "argv": [
+        "<AGS_DEPENDENCY_ROOT>/node_modules/.bin/vitest",
+        "run",
+        "tests/SS31-isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<SS31_OUTPUT_ROOT>/isolated-tests.json"
+      ]
+    },
+    {
+      "id": "SS31-UC-vendor-missing",
+      "requirementIds": [
+        "SS31:unknown-consumption"
+      ],
+      "scenario": "SS31-UC-vendor-missing; inspect frozen test declaration for exact injection",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider.classify with injected fetcher",
+      "level": "integration",
+      "expectedBehavior": "선택한 JEV 시도는 최대 1회이며 허용된 vendor fallback은 별도 최대 1회다. 각 실제 HTTP 전송과 비용을 따로 세고 JEV 미전송은 0회다. 최종 선택 완료는 최대 1회이며, 늦은 결과는 현재 결과·fallback 선택을 덮지 않는다. JEV 비용은 확인 전 unknown과 보수적 예약으로 남기고 vendor 비용을 별도로 기록한다.; JEV attempt의 미전송 확정은 timeout/not-started로, 전송·소비 불명은 uncertain/timedOut=true/started 또는 unknown으로 진단한다. vendor fallback이 성공하면 최종 선택은 정상 수락될 수 있으며 이전 JEV 실패를 지우지 않는다. fallback도 불가할 때만 해당 실패·NEEDS_INPUT/UNAVAILABLE/UNCERTAIN을 최종 보류와 결속한다. B의 목적 적합성은 따로 검증한다.",
+      "oracle": "SS31 embedded sourceSpec.fields only; semantic oracle=null; unsupported Node timer boundary derives from safe timeout control requirement",
+      "testFiles": [
+        "SS31-repo/tests/SS31-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Authorized offline verification only; product source modification prohibited. Preserve failing tests; green and independent acceptance remain NOT_RUN.",
+      "argv": [
+        "<AGS_DEPENDENCY_ROOT>/node_modules/.bin/vitest",
+        "run",
+        "tests/SS31-isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<SS31_OUTPUT_ROOT>/isolated-tests.json"
+      ]
+    },
+    {
+      "id": "SS31-UC-vendor-blocked",
+      "requirementIds": [
+        "SS31:unknown-consumption"
+      ],
+      "scenario": "SS31-UC-vendor-blocked; inspect frozen test declaration for exact injection",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider.classify with injected fetcher",
+      "level": "integration",
+      "expectedBehavior": "선택한 JEV 시도는 최대 1회이며 허용된 vendor fallback은 별도 최대 1회다. 각 실제 HTTP 전송과 비용을 따로 세고 JEV 미전송은 0회다. 최종 선택 완료는 최대 1회이며, 늦은 결과는 현재 결과·fallback 선택을 덮지 않는다. JEV 비용은 확인 전 unknown과 보수적 예약으로 남기고 vendor 비용을 별도로 기록한다.; JEV attempt의 미전송 확정은 timeout/not-started로, 전송·소비 불명은 uncertain/timedOut=true/started 또는 unknown으로 진단한다. vendor fallback이 성공하면 최종 선택은 정상 수락될 수 있으며 이전 JEV 실패를 지우지 않는다. fallback도 불가할 때만 해당 실패·NEEDS_INPUT/UNAVAILABLE/UNCERTAIN을 최종 보류와 결속한다. B의 목적 적합성은 따로 검증한다.",
+      "oracle": "SS31 embedded sourceSpec.fields only; semantic oracle=null; unsupported Node timer boundary derives from safe timeout control requirement",
+      "testFiles": [
+        "SS31-repo/tests/SS31-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Authorized offline verification only; product source modification prohibited. Preserve failing tests; green and independent acceptance remain NOT_RUN.",
+      "argv": [
+        "<AGS_DEPENDENCY_ROOT>/node_modules/.bin/vitest",
+        "run",
+        "tests/SS31-isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<SS31_OUTPUT_ROOT>/isolated-tests.json"
+      ]
+    },
+    {
+      "id": "SS31-UC-both-timeout",
+      "requirementIds": [
+        "SS31:unknown-consumption"
+      ],
+      "scenario": "SS31-UC-both-timeout; inspect frozen test declaration for exact injection",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider.classify with injected fetcher",
+      "level": "integration",
+      "expectedBehavior": "선택한 JEV 시도는 최대 1회이며 허용된 vendor fallback은 별도 최대 1회다. 각 실제 HTTP 전송과 비용을 따로 세고 JEV 미전송은 0회다. 최종 선택 완료는 최대 1회이며, 늦은 결과는 현재 결과·fallback 선택을 덮지 않는다. JEV 비용은 확인 전 unknown과 보수적 예약으로 남기고 vendor 비용을 별도로 기록한다.; JEV attempt의 미전송 확정은 timeout/not-started로, 전송·소비 불명은 uncertain/timedOut=true/started 또는 unknown으로 진단한다. vendor fallback이 성공하면 최종 선택은 정상 수락될 수 있으며 이전 JEV 실패를 지우지 않는다. fallback도 불가할 때만 해당 실패·NEEDS_INPUT/UNAVAILABLE/UNCERTAIN을 최종 보류와 결속한다. B의 목적 적합성은 따로 검증한다.",
+      "oracle": "SS31 embedded sourceSpec.fields only; semantic oracle=null; unsupported Node timer boundary derives from safe timeout control requirement",
+      "testFiles": [
+        "SS31-repo/tests/SS31-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Authorized offline verification only; product source modification prohibited. Preserve failing tests; green and independent acceptance remain NOT_RUN.",
+      "argv": [
+        "<AGS_DEPENDENCY_ROOT>/node_modules/.bin/vitest",
+        "run",
+        "tests/SS31-isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<SS31_OUTPUT_ROOT>/isolated-tests.json"
+      ]
+    },
+    {
+      "id": "SS31-UC-timeout-overflow",
+      "requirementIds": [
+        "SS31:unknown-consumption"
+      ],
+      "scenario": "SS31-UC-timeout-overflow; inspect frozen test declaration for exact injection",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider.classify with injected fetcher",
+      "level": "integration",
+      "expectedBehavior": "선택한 JEV 시도는 최대 1회이며 허용된 vendor fallback은 별도 최대 1회다. 각 실제 HTTP 전송과 비용을 따로 세고 JEV 미전송은 0회다. 최종 선택 완료는 최대 1회이며, 늦은 결과는 현재 결과·fallback 선택을 덮지 않는다. JEV 비용은 확인 전 unknown과 보수적 예약으로 남기고 vendor 비용을 별도로 기록한다.; JEV attempt의 미전송 확정은 timeout/not-started로, 전송·소비 불명은 uncertain/timedOut=true/started 또는 unknown으로 진단한다. vendor fallback이 성공하면 최종 선택은 정상 수락될 수 있으며 이전 JEV 실패를 지우지 않는다. fallback도 불가할 때만 해당 실패·NEEDS_INPUT/UNAVAILABLE/UNCERTAIN을 최종 보류와 결속한다. B의 목적 적합성은 따로 검증한다.",
+      "oracle": "SS31 embedded sourceSpec.fields only; semantic oracle=null; unsupported Node timer boundary derives from safe timeout control requirement",
+      "testFiles": [
+        "SS31-repo/tests/SS31-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Authorized offline verification only; product source modification prohibited. Preserve failing tests; green and independent acceptance remain NOT_RUN.",
+      "argv": [
+        "<AGS_DEPENDENCY_ROOT>/node_modules/.bin/vitest",
+        "run",
+        "tests/SS31-isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<SS31_OUTPUT_ROOT>/isolated-tests.json"
+      ]
+    },
+    {
+      "id": "SS31-LR-remote-success",
+      "requirementIds": [
+        "SS31:late-result"
+      ],
+      "scenario": "SS31-LR-remote-success; inspect frozen test declaration for exact injection",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider.classify with injected fetcher",
+      "level": "integration",
+      "expectedBehavior": "선택한 JEV 시도는 최대 1회이며 허용된 vendor fallback은 별도 최대 1회다. 각 실제 HTTP 전송과 비용을 따로 세고 JEV 미전송은 0회다. 최종 선택 완료는 최대 1회이며, 늦은 결과는 현재 결과·fallback 선택을 덮지 않는다. JEV 비용은 확인 전 unknown과 보수적 예약으로 남기고 vendor 비용을 별도로 기록한다.; JEV attempt의 미전송 확정은 timeout/not-started로, 전송·소비 불명은 uncertain/timedOut=true/started 또는 unknown으로 진단한다. vendor fallback이 성공하면 최종 선택은 정상 수락될 수 있으며 이전 JEV 실패를 지우지 않는다. fallback도 불가할 때만 해당 실패·NEEDS_INPUT/UNAVAILABLE/UNCERTAIN을 최종 보류와 결속한다. B의 목적 적합성은 따로 검증한다.",
+      "oracle": "SS31 embedded sourceSpec.fields only; semantic oracle=null; unsupported Node timer boundary derives from safe timeout control requirement",
+      "testFiles": [
+        "SS31-repo/tests/SS31-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Authorized offline verification only; product source modification prohibited. Preserve failing tests; green and independent acceptance remain NOT_RUN.",
+      "argv": [
+        "<AGS_DEPENDENCY_ROOT>/node_modules/.bin/vitest",
+        "run",
+        "tests/SS31-isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<SS31_OUTPUT_ROOT>/isolated-tests.json"
+      ]
+    },
+    {
+      "id": "SS31-LR-remote-rejection",
+      "requirementIds": [
+        "SS31:late-result"
+      ],
+      "scenario": "SS31-LR-remote-rejection; inspect frozen test declaration for exact injection",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider.classify with injected fetcher",
+      "level": "integration",
+      "expectedBehavior": "선택한 JEV 시도는 최대 1회이며 허용된 vendor fallback은 별도 최대 1회다. 각 실제 HTTP 전송과 비용을 따로 세고 JEV 미전송은 0회다. 최종 선택 완료는 최대 1회이며, 늦은 결과는 현재 결과·fallback 선택을 덮지 않는다. JEV 비용은 확인 전 unknown과 보수적 예약으로 남기고 vendor 비용을 별도로 기록한다.; JEV attempt의 미전송 확정은 timeout/not-started로, 전송·소비 불명은 uncertain/timedOut=true/started 또는 unknown으로 진단한다. vendor fallback이 성공하면 최종 선택은 정상 수락될 수 있으며 이전 JEV 실패를 지우지 않는다. fallback도 불가할 때만 해당 실패·NEEDS_INPUT/UNAVAILABLE/UNCERTAIN을 최종 보류와 결속한다. B의 목적 적합성은 따로 검증한다.",
+      "oracle": "SS31 embedded sourceSpec.fields only; semantic oracle=null; unsupported Node timer boundary derives from safe timeout control requirement",
+      "testFiles": [
+        "SS31-repo/tests/SS31-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Authorized offline verification only; product source modification prohibited. Preserve failing tests; green and independent acceptance remain NOT_RUN.",
+      "argv": [
+        "<AGS_DEPENDENCY_ROOT>/node_modules/.bin/vitest",
+        "run",
+        "tests/SS31-isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<SS31_OUTPUT_ROOT>/isolated-tests.json"
+      ]
+    },
+    {
+      "id": "SS31-LR-during-fallback",
+      "requirementIds": [
+        "SS31:late-result"
+      ],
+      "scenario": "SS31-LR-during-fallback; exact injections in frozen test declaration",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider.classify with injected fetcher",
+      "level": "integration",
+      "expectedBehavior": "선택한 JEV 시도는 최대 1회이며 허용된 vendor fallback은 별도 최대 1회다. 각 실제 HTTP 전송과 비용을 따로 세고 JEV 미전송은 0회다. 최종 선택 완료는 최대 1회이며, 늦은 결과는 현재 결과·fallback 선택을 덮지 않는다. JEV 비용은 확인 전 unknown과 보수적 예약으로 남기고 vendor 비용을 별도로 기록한다.; JEV attempt의 미전송 확정은 timeout/not-started로, 전송·소비 불명은 uncertain/timedOut=true/started 또는 unknown으로 진단한다. vendor fallback이 성공하면 최종 선택은 정상 수락될 수 있으며 이전 JEV 실패를 지우지 않는다. fallback도 불가할 때만 해당 실패·NEEDS_INPUT/UNAVAILABLE/UNCERTAIN을 최종 보류와 결속한다. B의 목적 적합성은 따로 검증한다.",
+      "oracle": "SS31 embedded sourceSpec.fields only; semantic oracle=null; unsupported Node timer boundary derives from safe timeout control requirement",
+      "testFiles": [
+        "SS31-repo/tests/SS31-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Authorized offline verification only; product source modification prohibited. Preserve failing tests; green and independent acceptance remain NOT_RUN.",
+      "argv": [
+        "<AGS_DEPENDENCY_ROOT>/node_modules/.bin/vitest",
+        "run",
+        "tests/SS31-isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<SS31_OUTPUT_ROOT>/isolated-tests.json"
+      ]
+    },
+    {
+      "id": "SS31-LR-cancelled-task",
+      "requirementIds": [
+        "SS31:late-result"
+      ],
+      "scenario": "SS31-LR-cancelled-task; exact injections in frozen test declaration",
+      "entryPoint": "SkillClassificationService.classify / ApprovedRouteClassificationProvider.classify with injected fetcher",
+      "level": "integration",
+      "expectedBehavior": "선택한 JEV 시도는 최대 1회이며 허용된 vendor fallback은 별도 최대 1회다. 각 실제 HTTP 전송과 비용을 따로 세고 JEV 미전송은 0회다. 최종 선택 완료는 최대 1회이며, 늦은 결과는 현재 결과·fallback 선택을 덮지 않는다. JEV 비용은 확인 전 unknown과 보수적 예약으로 남기고 vendor 비용을 별도로 기록한다.; JEV attempt의 미전송 확정은 timeout/not-started로, 전송·소비 불명은 uncertain/timedOut=true/started 또는 unknown으로 진단한다. vendor fallback이 성공하면 최종 선택은 정상 수락될 수 있으며 이전 JEV 실패를 지우지 않는다. fallback도 불가할 때만 해당 실패·NEEDS_INPUT/UNAVAILABLE/UNCERTAIN을 최종 보류와 결속한다. B의 목적 적합성은 따로 검증한다.",
+      "oracle": "SS31 embedded sourceSpec.fields only; semantic oracle=null; unsupported Node timer boundary derives from safe timeout control requirement",
+      "testFiles": [
+        "SS31-repo/tests/SS31-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Authorized offline verification only; product source modification prohibited. Preserve failing tests; green and independent acceptance remain NOT_RUN.",
+      "argv": [
+        "<AGS_DEPENDENCY_ROOT>/node_modules/.bin/vitest",
+        "run",
+        "tests/SS31-isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<SS31_OUTPUT_ROOT>/isolated-tests.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "Other cases and entire suite",
+    "21 completed provider run replay",
+    "Provider-live / actual network / vendor API / Claude calls",
+    "Actual host selection acceptance and skill purpose(B) execution",
+    "Source mutation and green candidate unavailable; no independent acceptance audit"
+  ]
+}

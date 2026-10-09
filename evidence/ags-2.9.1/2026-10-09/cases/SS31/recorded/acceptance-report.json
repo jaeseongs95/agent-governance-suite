@@ -1,0 +1,227 @@
+{
+  "schemaVersion": "1.0.0",
+  "target": {
+    "kind": "artifact",
+    "identifier": "c6a8019/28f2f2ed SS31 candidate snapshot",
+    "digest": "sha256:52b98c9c0b3eeb4fb8130bd0942b0a037275dd7cc5dbf553297ac9faa0bda3bb"
+  },
+  "criteria": [
+    {
+      "criterionId": "AC-001",
+      "statement": "not-dispatched: confirmed zero HTTP transmission is diagnosed timeout/not-started, no residual charge reservation",
+      "status": "unsatisfied",
+      "evidenceRefs": [
+        "SS31-ND-credential-gap"
+      ],
+      "observedResult": "FAIL; Known nondispatch timeout must be not-started with no retained charge reservation; JEV mock HTTP 0; inspect observations for bound actual result",
+      "rationale": "Current target evidence contradicts this acceptance criterion."
+    },
+    {
+      "criterionId": "AC-002",
+      "statement": "unknown-consumption: uncertain timeout retains conservative cost, bounded approved fallback, safe timeout configuration",
+      "status": "unsatisfied",
+      "evidenceRefs": [
+        "SS31-UC-timeout-overflow"
+      ],
+      "observedResult": "FAIL; Unsupported timer delay must be rejected INVALID_TIMEOUT before availability, never silently collapse to 1ms; inspect observations for bound actual result",
+      "rationale": "Current target evidence contradicts this acceptance criterion."
+    },
+    {
+      "criterionId": "AC-003",
+      "statement": "late-result: no resend, overwritten result/cost, or duplicate completion",
+      "status": "satisfied",
+      "evidenceRefs": [
+        "SS31-LR-remote-success",
+        "SS31-LR-remote-rejection",
+        "SS31-LR-during-fallback",
+        "SS31-LR-cancelled-task"
+      ],
+      "observedResult": "PASS; Late success cannot overwrite fallback, settle unknown reservation or complete twice; replay does not resend; inspect observations for bound actual result; PASS; Late rejection must not overwrite or double complete; no unhandled rejection; reservation remains unknown; inspect observations for bound actual result; PASS; JEV late result cannot complete or overwrite vendor-in-flight result; one final fallback completion; unknown JEV cost retained; inspect observations for bound actual result; PASS; Cancellation signal sent but completion/charge not confirmed; fallback 0; late result inert; one final hold; inspect observations for bound actual result",
+      "rationale": "Verified evidence for the current target supports this criterion."
+    },
+    {
+      "criterionId": "AC-004",
+      "statement": "Actual host AGENT choice acceptance is observed; selected/read/applied/verified are independently evidenced",
+      "status": "insufficient-evidence",
+      "evidenceRefs": [],
+      "observedResult": "",
+      "rationale": "No verified evidence for the current target supports or refutes this criterion."
+    },
+    {
+      "criterionId": "AC-005",
+      "statement": "B: selected skill purpose suitability is verified against genuine task inputs",
+      "status": "insufficient-evidence",
+      "evidenceRefs": [],
+      "observedResult": "",
+      "rationale": "No verified evidence for the current target supports or refutes this criterion."
+    }
+  ],
+  "verifiedEvidenceIndex": [
+    {
+      "evidenceId": "SS31-ND-availability",
+      "kind": "test",
+      "locator": "<SS31_OUTPUT_ROOT>/SS31-ND-availability.observation.json",
+      "digest": "sha256:f0b39babe2077a9a87b758e3535b7ebb99141e50a3b06b8306384a309cf6ac81",
+      "targetDigest": "sha256:52b98c9c0b3eeb4fb8130bd0942b0a037275dd7cc5dbf553297ac9faa0bda3bb",
+      "criterionIds": [
+        "AC-001"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "SS31-ND-typed",
+      "kind": "test",
+      "locator": "<SS31_OUTPUT_ROOT>/SS31-ND-typed.observation.json",
+      "digest": "sha256:0097c5adecd99980553e9df29ad68dba04f8af46c6d86a7d440572feecd58434",
+      "targetDigest": "sha256:52b98c9c0b3eeb4fb8130bd0942b0a037275dd7cc5dbf553297ac9faa0bda3bb",
+      "criterionIds": [
+        "AC-001"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "SS31-ND-credential-gap",
+      "kind": "test",
+      "locator": "<SS31_OUTPUT_ROOT>/SS31-ND-credential-gap.observation.json",
+      "digest": "sha256:955340298391fe58c7543d8575c52900e46d8583db69dc69cf13d4562e0257c7",
+      "targetDigest": "sha256:52b98c9c0b3eeb4fb8130bd0942b0a037275dd7cc5dbf553297ac9faa0bda3bb",
+      "criterionIds": [
+        "AC-001"
+      ],
+      "direction": "refutes"
+    },
+    {
+      "evidenceId": "SS31-UC-started",
+      "kind": "test",
+      "locator": "<SS31_OUTPUT_ROOT>/SS31-UC-started.observation.json",
+      "digest": "sha256:90c61cb38bbb042d0c5c7b95400c720d279ccc7e480849117a8253153206c76e",
+      "targetDigest": "sha256:52b98c9c0b3eeb4fb8130bd0942b0a037275dd7cc5dbf553297ac9faa0bda3bb",
+      "criterionIds": [
+        "AC-002"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "SS31-UC-unknown",
+      "kind": "test",
+      "locator": "<SS31_OUTPUT_ROOT>/SS31-UC-unknown.observation.json",
+      "digest": "sha256:64b78f7d036127e671aeb8bfee9f89d879d6df4df27303b6c5e885f9d7966f6e",
+      "targetDigest": "sha256:52b98c9c0b3eeb4fb8130bd0942b0a037275dd7cc5dbf553297ac9faa0bda3bb",
+      "criterionIds": [
+        "AC-002"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "SS31-UC-remote-hang",
+      "kind": "test",
+      "locator": "<SS31_OUTPUT_ROOT>/SS31-UC-remote-hang.observation.json",
+      "digest": "sha256:eb0f9851339cd3c99f2ab3e0024999b1164c3c87b68d9345a22ee32a3076984f",
+      "targetDigest": "sha256:52b98c9c0b3eeb4fb8130bd0942b0a037275dd7cc5dbf553297ac9faa0bda3bb",
+      "criterionIds": [
+        "AC-002"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "SS31-UC-vendor-missing",
+      "kind": "test",
+      "locator": "<SS31_OUTPUT_ROOT>/SS31-UC-vendor-missing.observation.json",
+      "digest": "sha256:c46f47a4b0246565c78ac9dbf1bb17d1be353cf96d6c7ea3b954b545f5b6c90a",
+      "targetDigest": "sha256:52b98c9c0b3eeb4fb8130bd0942b0a037275dd7cc5dbf553297ac9faa0bda3bb",
+      "criterionIds": [
+        "AC-002"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "SS31-UC-vendor-blocked",
+      "kind": "test",
+      "locator": "<SS31_OUTPUT_ROOT>/SS31-UC-vendor-blocked.observation.json",
+      "digest": "sha256:5a2b339685ea532b02d0c2a92917ee370b51a90b6479f595ebde8c23d92dbea2",
+      "targetDigest": "sha256:52b98c9c0b3eeb4fb8130bd0942b0a037275dd7cc5dbf553297ac9faa0bda3bb",
+      "criterionIds": [
+        "AC-002"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "SS31-UC-both-timeout",
+      "kind": "test",
+      "locator": "<SS31_OUTPUT_ROOT>/SS31-UC-both-timeout.observation.json",
+      "digest": "sha256:1baeaf2b680f9035ecff5baa7fb6affa336784454a3b43e5805fd25418982ee1",
+      "targetDigest": "sha256:52b98c9c0b3eeb4fb8130bd0942b0a037275dd7cc5dbf553297ac9faa0bda3bb",
+      "criterionIds": [
+        "AC-002"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "SS31-LR-remote-success",
+      "kind": "test",
+      "locator": "<SS31_OUTPUT_ROOT>/SS31-LR-remote-success.observation.json",
+      "digest": "sha256:fb68161b5408b7ea41d51dd22532a215ce7f24f3e6a24588659b60896fbc397c",
+      "targetDigest": "sha256:52b98c9c0b3eeb4fb8130bd0942b0a037275dd7cc5dbf553297ac9faa0bda3bb",
+      "criterionIds": [
+        "AC-003"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "SS31-LR-remote-rejection",
+      "kind": "test",
+      "locator": "<SS31_OUTPUT_ROOT>/SS31-LR-remote-rejection.observation.json",
+      "digest": "sha256:fc51554aec4885e3dd8f1175908fc465f67953640aefb29ed4d4b2d6af25a5eb",
+      "targetDigest": "sha256:52b98c9c0b3eeb4fb8130bd0942b0a037275dd7cc5dbf553297ac9faa0bda3bb",
+      "criterionIds": [
+        "AC-003"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "SS31-LR-during-fallback",
+      "kind": "test",
+      "locator": "<SS31_OUTPUT_ROOT>/SS31-LR-during-fallback.observation.json",
+      "digest": "sha256:9ffa727f9b093475bc47244b157e70293f08cf914814f85d66e921d06f1e11e3",
+      "targetDigest": "sha256:52b98c9c0b3eeb4fb8130bd0942b0a037275dd7cc5dbf553297ac9faa0bda3bb",
+      "criterionIds": [
+        "AC-003"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "SS31-LR-cancelled-task",
+      "kind": "test",
+      "locator": "<SS31_OUTPUT_ROOT>/SS31-LR-cancelled-task.observation.json",
+      "digest": "sha256:361183bcb1397b05668ec0ea07b4c6441d3e2d12f433a19331f51847c335e766",
+      "targetDigest": "sha256:52b98c9c0b3eeb4fb8130bd0942b0a037275dd7cc5dbf553297ac9faa0bda3bb",
+      "criterionIds": [
+        "AC-003"
+      ],
+      "direction": "supports"
+    },
+    {
+      "evidenceId": "SS31-UC-timeout-overflow",
+      "kind": "test",
+      "locator": "<SS31_OUTPUT_ROOT>/SS31-UC-timeout-overflow.observation.json",
+      "digest": "sha256:8f9dbea774bf9f147a09cd99bfabfbc9f7e2721d7cef0c60a1d41c2636d5dec1",
+      "targetDigest": "sha256:52b98c9c0b3eeb4fb8130bd0942b0a037275dd7cc5dbf553297ac9faa0bda3bb",
+      "criterionIds": [
+        "AC-002"
+      ],
+      "direction": "refutes"
+    }
+  ],
+  "unresolvedCriteria": [
+    "AC-004",
+    "AC-005"
+  ],
+  "limitations": [
+    "Offline mock mechanics only; API0; no host signed selection or skill completion observations",
+    "No oracle/semantic purpose input; B is NOTRUN",
+    "Product source modification prohibited; repaired green and mutation proof NOT_RUN",
+    "Typed started/unknown errors emulate provider diagnostics; remote fetcher replaces network, provider-live NOTRUN",
+    "Initial exploratory assertions wrongly demanded only UNCERTAIN final hold, corrected to permit specified UNAVAILABLE; initial records retained"
+  ],
+  "verdict": "FAIL"
+}

@@ -1,0 +1,37 @@
+{
+  "originalEvidenceFilesRecovered": 40,
+  "originalEvidenceFilesMissing": [],
+  "missingOriginalArtifacts": [
+    {
+      "artifact": "Separate stdout and stderr stream originals for prior commands",
+      "status": "MISSING_ORIGINAL",
+      "detail": "Original .log files contain redirected combined streams; no separate stream copies exist. Existing combined logs are preserved and path-sanitized."
+    },
+    {
+      "artifact": "Raw mock HTTP request body bytes",
+      "status": "MISSING_ORIGINAL",
+      "detail": "Existing test and recorded request are available; wire bytes were not saved. No new wire payload generated."
+    },
+    {
+      "artifact": "Signed runner receipt / actual host E0/E1/E2 observations",
+      "status": "MISSING_ORIGINAL",
+      "detail": "Existing command/exit records are unsigned local result metadata, not host receipts."
+    },
+    {
+      "artifact": "TEST-SPEC.seq7.ko.md",
+      "status": "MISSING_ORIGINAL",
+      "detail": "Absent in frozen repository; embedded SS31 sourceSpec fields preserved; no recreated oracle."
+    }
+  ],
+  "productPatch": {
+    "status": "ABSENT",
+    "detail": "No product patch existed. No product source edit and no patch was generated."
+  },
+  "newTests": 0,
+  "newModelApiCalls": {
+    "jev": 0,
+    "vendor": 0,
+    "claude": 0,
+    "codex": 0
+  }
+}

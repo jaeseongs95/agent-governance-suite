@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:52b98c9c0b3eeb4fb8130bd0942b0a037275dd7cc5dbf553297ac9faa0bda3bb",
+  "reportDigest": "sha256:da155f0b857c354bd4ec6b6089a0da30bfe4c8bd9f665da2b085af1cc4164319",
+  "issues": [
+    "REQUIRED SS31-ND-availability: NOT_RUN — Current candidate offline observations are recorded separately. No product mutation or repaired green candidate authorized; sensitivity demonstration NOT_RUN.",
+    "REQUIRED SS31-ND-typed: NOT_RUN — Current candidate offline observations are recorded separately. No product mutation or repaired green candidate authorized; sensitivity demonstration NOT_RUN.",
+    "REQUIRED SS31-ND-credential-gap: NOT_RUN — Current candidate offline observations are recorded separately. No product mutation or repaired green candidate authorized; sensitivity demonstration NOT_RUN.",
+    "REQUIRED SS31-UC-started: NOT_RUN — Current candidate offline observations are recorded separately. No product mutation or repaired green candidate authorized; sensitivity demonstration NOT_RUN.",
+    "REQUIRED SS31-UC-unknown: NOT_RUN — Current candidate offline observations are recorded separately. No product mutation or repaired green candidate authorized; sensitivity demonstration NOT_RUN.",
+    "REQUIRED SS31-UC-remote-hang: NOT_RUN — Current candidate offline observations are recorded separately. No product mutation or repaired green candidate authorized; sensitivity demonstration NOT_RUN.",
+    "REQUIRED SS31-UC-vendor-missing: NOT_RUN — Current candidate offline observations are recorded separately. No product mutation or repaired green candidate authorized; sensitivity demonstration NOT_RUN.",
+    "REQUIRED SS31-UC-vendor-blocked: NOT_RUN — Current candidate offline observations are recorded separately. No product mutation or repaired green candidate authorized; sensitivity demonstration NOT_RUN.",
+    "REQUIRED SS31-UC-both-timeout: NOT_RUN — Current candidate offline observations are recorded separately. No product mutation or repaired green candidate authorized; sensitivity demonstration NOT_RUN.",
+    "REQUIRED SS31-UC-timeout-overflow: NOT_RUN — Current candidate offline observations are recorded separately. No product mutation or repaired green candidate authorized; sensitivity demonstration NOT_RUN.",
+    "REQUIRED SS31-LR-remote-success: NOT_RUN — Current candidate offline observations are recorded separately. No product mutation or repaired green candidate authorized; sensitivity demonstration NOT_RUN.",
+    "REQUIRED SS31-LR-remote-rejection: NOT_RUN — Current candidate offline observations are recorded separately. No product mutation or repaired green candidate authorized; sensitivity demonstration NOT_RUN.",
+    "REQUIRED SS31-LR-during-fallback: NOT_RUN — Current candidate offline observations are recorded separately. No product mutation or repaired green candidate authorized; sensitivity demonstration NOT_RUN.",
+    "REQUIRED SS31-LR-cancelled-task: NOT_RUN — Current candidate offline observations are recorded separately. No product mutation or repaired green candidate authorized; sensitivity demonstration NOT_RUN."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

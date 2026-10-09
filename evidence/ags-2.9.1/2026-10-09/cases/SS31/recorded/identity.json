@@ -1,0 +1,11 @@
+{
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSha256": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "oracleRecomputed": true,
+  "originalPrompt": null,
+  "oracle": null,
+  "sourceSpecFileExists": false,
+  ".agents/skillsExists": false
+}

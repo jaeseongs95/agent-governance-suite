@@ -1,0 +1,11 @@
+[
+  "SS31-repo/tests/SS31-isolated.test.ts",
+  "SS31-repo/tests/skill-classification/fixtures.json",
+  "SS31-repo/mcp-server/src/skill-classification/service.ts",
+  "SS31-repo/mcp-server/src/skill-classification/providers.ts",
+  "SS31-repo/mcp-server/src/skill-classification/types.ts",
+  "SS31-repo/mcp-server/src/skill-classification/request.ts",
+  "SS31-repo/mcp-server/src/skill-classification/profiles.ts",
+  "SS31-repo/mcp-server/src/skill-classification/validation.ts",
+  "SS31-repo/mcp-server/src/skill-classification/digest.ts"
+]

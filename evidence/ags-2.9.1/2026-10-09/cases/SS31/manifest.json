@@ -1,0 +1,653 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS31",
+  "publicationScope": "evidence/ags-2.9.1/2026-10-09/cases/SS31/",
+  "sourceIdentity": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixtureSha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSha256": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "oracleRecomputed": true,
+    "originalPrompt": null,
+    "oracle": null,
+    "sourceSpecFileExists": false,
+    ".agents/skillsExists": false
+  },
+  "recordPreservation": {
+    "verdict": "FAIL",
+    "existingRegression": {
+      "pass": 3,
+      "fail": 0,
+      "otherCasesSkipped": 37
+    },
+    "isolated": {
+      "total": 14,
+      "pass": 12,
+      "fail": 2
+    },
+    "hostStages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "selected": null,
+    "oracle": null,
+    "modelApiCalls": 0,
+    "newTests": 0,
+    "productPatch": "ABSENT"
+  },
+  "originRecovery": {
+    "originalEvidenceFilesRecovered": 40,
+    "originalEvidenceFilesMissing": [],
+    "missingOriginalArtifacts": [
+      {
+        "artifact": "Separate stdout and stderr stream originals for prior commands",
+        "status": "MISSING_ORIGINAL",
+        "detail": "Original .log files contain redirected combined streams; no separate stream copies exist. Existing combined logs are preserved and path-sanitized."
+      },
+      {
+        "artifact": "Raw mock HTTP request body bytes",
+        "status": "MISSING_ORIGINAL",
+        "detail": "Existing test and recorded request are available; wire bytes were not saved. No new wire payload generated."
+      },
+      {
+        "artifact": "Signed runner receipt / actual host E0/E1/E2 observations",
+        "status": "MISSING_ORIGINAL",
+        "detail": "Existing command/exit records are unsigned local result metadata, not host receipts."
+      },
+      {
+        "artifact": "TEST-SPEC.seq7.ko.md",
+        "status": "MISSING_ORIGINAL",
+        "detail": "Absent in frozen repository; embedded SS31 sourceSpec fields preserved; no recreated oracle."
+      }
+    ],
+    "productPatch": {
+      "status": "ABSENT",
+      "detail": "No product patch existed. No product source edit and no patch was generated."
+    },
+    "newTests": 0,
+    "newModelApiCalls": {
+      "jev": 0,
+      "vendor": 0,
+      "claude": 0,
+      "codex": 0
+    }
+  },
+  "manifestHashPolicy": "files excludes manifest.json and SHA256SUMS; SHA256SUMS includes manifest.json but excludes itself",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 5052,
+      "sha256": "6309edae6fbf84e81f1ef550f05c516e1c4b9693e87e85d9de649ef55f6d4f3c",
+      "transform": "publication packaging metadata; not a new test result",
+      "recordKind": "publication-metadata-only"
+    },
+    {
+      "path": "SS31.result.json",
+      "bytes": 107414,
+      "sha256": "c0466caaf03117b1f799146a158b0a0ef4a40386391eaf0019f65a7721b99c53",
+      "transform": "agent-governance-suite path token replaced; SS31-repo path token replaced; SS31-evidence path token replaced; codex path token replaced; workspace path token replaced",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "SS31.result.json",
+        "bytes": 107485,
+        "sha256": "0ad46c943c1fe57262ec66df8f7576913388f213b4b585a16cd2da4d8daea2f0",
+        "available": true
+      }
+    },
+    {
+      "path": "inputs/mock-original-prompt.utf8.txt",
+      "bytes": 161,
+      "sha256": "8e3cd8c4633c42b293685eb2452bbe6379123202957d5b243c2deab3d58bc655",
+      "transform": "Exact UTF8 originalPrompt extracted without newline from existing observation; no new input supplied",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "isolated-observations.json",
+        "bytes": 77668,
+        "sha256": "d864a95995920d81e70d0627fe91738e8daa8d0e3eb49e33e046e3b9c4344326",
+        "available": true
+      }
+    },
+    {
+      "path": "inputs/recorded-request.json",
+      "bytes": 1430,
+      "sha256": "86dbebc89baeb8275d72f8454ea4a1dfe6aa859208b05f3718ef5ab328400c54",
+      "transform": "Recorded identical request object extracted from existing observations; JSON pretty serialization; raw transmitted HTTP bytes MISSING_ORIGINAL",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "isolated-observations.json",
+        "bytes": 77668,
+        "sha256": "d864a95995920d81e70d0627fe91738e8daa8d0e3eb49e33e046e3b9c4344326",
+        "available": true
+      }
+    },
+    {
+      "path": "original-recovery.json",
+      "bytes": 1328,
+      "sha256": "71ab5d60461f55deb53e4e5c0d11a45552805cdbbf45d2145073b7cb83a9daa6",
+      "transform": "publication packaging metadata; not a new test result",
+      "recordKind": "publication-metadata-only"
+    },
+    {
+      "path": "recorded/README.ko.md",
+      "bytes": 6322,
+      "sha256": "dfa5b255cc9f9d65c4a489f3604242def1eb89b2df4a3456f0e2aa03ab744483",
+      "transform": "agent-governance-suite path token replaced; SS31-repo path token replaced; SS31-evidence path token replaced; codex path token replaced; workspace path token replaced",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "README.ko.md",
+        "bytes": 6345,
+        "sha256": "3458fa9b0ce893f0e324353620f318e7abb8d2c05acdf990ca54057d2c712344",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/SHA256SUMS",
+      "bytes": 3619,
+      "sha256": "512b7891cd22f1de32425a0cc3c7f52e40c94d59bb151d96713a706e23c1d9b7",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "SHA256SUMS",
+        "bytes": 3619,
+        "sha256": "512b7891cd22f1de32425a0cc3c7f52e40c94d59bb151d96713a706e23c1d9b7",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/SS31-LR-cancelled-task.observation.json",
+      "bytes": 4865,
+      "sha256": "361183bcb1397b05668ec0ea07b4c6441d3e2d12f433a19331f51847c335e766",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "SS31-LR-cancelled-task.observation.json",
+        "bytes": 4865,
+        "sha256": "361183bcb1397b05668ec0ea07b4c6441d3e2d12f433a19331f51847c335e766",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/SS31-LR-during-fallback.observation.json",
+      "bytes": 5341,
+      "sha256": "9ffa727f9b093475bc47244b157e70293f08cf914814f85d66e921d06f1e11e3",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "SS31-LR-during-fallback.observation.json",
+        "bytes": 5341,
+        "sha256": "9ffa727f9b093475bc47244b157e70293f08cf914814f85d66e921d06f1e11e3",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/SS31-LR-remote-rejection.observation.json",
+      "bytes": 5309,
+      "sha256": "fc51554aec4885e3dd8f1175908fc465f67953640aefb29ed4d4b2d6af25a5eb",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "SS31-LR-remote-rejection.observation.json",
+        "bytes": 5309,
+        "sha256": "fc51554aec4885e3dd8f1175908fc465f67953640aefb29ed4d4b2d6af25a5eb",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/SS31-LR-remote-success.observation.json",
+      "bytes": 5423,
+      "sha256": "fb68161b5408b7ea41d51dd22532a215ce7f24f3e6a24588659b60896fbc397c",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "SS31-LR-remote-success.observation.json",
+        "bytes": 5423,
+        "sha256": "fb68161b5408b7ea41d51dd22532a215ce7f24f3e6a24588659b60896fbc397c",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/SS31-ND-availability.observation.json",
+      "bytes": 4998,
+      "sha256": "f0b39babe2077a9a87b758e3535b7ebb99141e50a3b06b8306384a309cf6ac81",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "SS31-ND-availability.observation.json",
+        "bytes": 4998,
+        "sha256": "f0b39babe2077a9a87b758e3535b7ebb99141e50a3b06b8306384a309cf6ac81",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/SS31-ND-credential-gap.observation.json",
+      "bytes": 5351,
+      "sha256": "955340298391fe58c7543d8575c52900e46d8583db69dc69cf13d4562e0257c7",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "SS31-ND-credential-gap.observation.json",
+        "bytes": 5351,
+        "sha256": "955340298391fe58c7543d8575c52900e46d8583db69dc69cf13d4562e0257c7",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/SS31-ND-typed.observation.json",
+      "bytes": 4996,
+      "sha256": "0097c5adecd99980553e9df29ad68dba04f8af46c6d86a7d440572feecd58434",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "SS31-ND-typed.observation.json",
+        "bytes": 4996,
+        "sha256": "0097c5adecd99980553e9df29ad68dba04f8af46c6d86a7d440572feecd58434",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/SS31-UC-both-timeout.observation.json",
+      "bytes": 5536,
+      "sha256": "1baeaf2b680f9035ecff5baa7fb6affa336784454a3b43e5805fd25418982ee1",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "SS31-UC-both-timeout.observation.json",
+        "bytes": 5536,
+        "sha256": "1baeaf2b680f9035ecff5baa7fb6affa336784454a3b43e5805fd25418982ee1",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/SS31-UC-remote-hang.observation.json",
+      "bytes": 5399,
+      "sha256": "eb0f9851339cd3c99f2ab3e0024999b1164c3c87b68d9345a22ee32a3076984f",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "SS31-UC-remote-hang.observation.json",
+        "bytes": 5399,
+        "sha256": "eb0f9851339cd3c99f2ab3e0024999b1164c3c87b68d9345a22ee32a3076984f",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/SS31-UC-started.observation.json",
+      "bytes": 5240,
+      "sha256": "90c61cb38bbb042d0c5c7b95400c720d279ccc7e480849117a8253153206c76e",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "SS31-UC-started.observation.json",
+        "bytes": 5240,
+        "sha256": "90c61cb38bbb042d0c5c7b95400c720d279ccc7e480849117a8253153206c76e",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/SS31-UC-timeout-overflow.observation.json",
+      "bytes": 5088,
+      "sha256": "8f9dbea774bf9f147a09cd99bfabfbc9f7e2721d7cef0c60a1d41c2636d5dec1",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "SS31-UC-timeout-overflow.observation.json",
+        "bytes": 5088,
+        "sha256": "8f9dbea774bf9f147a09cd99bfabfbc9f7e2721d7cef0c60a1d41c2636d5dec1",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/SS31-UC-unknown.observation.json",
+      "bytes": 5240,
+      "sha256": "64b78f7d036127e671aeb8bfee9f89d879d6df4df27303b6c5e885f9d7966f6e",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "SS31-UC-unknown.observation.json",
+        "bytes": 5240,
+        "sha256": "64b78f7d036127e671aeb8bfee9f89d879d6df4df27303b6c5e885f9d7966f6e",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/SS31-UC-vendor-blocked.observation.json",
+      "bytes": 5278,
+      "sha256": "5a2b339685ea532b02d0c2a92917ee370b51a90b6479f595ebde8c23d92dbea2",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "SS31-UC-vendor-blocked.observation.json",
+        "bytes": 5278,
+        "sha256": "5a2b339685ea532b02d0c2a92917ee370b51a90b6479f595ebde8c23d92dbea2",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/SS31-UC-vendor-missing.observation.json",
+      "bytes": 4777,
+      "sha256": "c46f47a4b0246565c78ac9dbf1bb17d1be353cf96d6c7ea3b954b545f5b6c90a",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "SS31-UC-vendor-missing.observation.json",
+        "bytes": 4777,
+        "sha256": "c46f47a4b0246565c78ac9dbf1bb17d1be353cf96d6c7ea3b954b545f5b6c90a",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/SS31-isolated.test.ts",
+      "bytes": 20036,
+      "sha256": "8dfe563fac9a80b6d30dd4221418871553ba0b206d62a89458d18840ddc1bcec",
+      "transform": "SS31-evidence path token replaced",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "SS31-isolated.test.ts",
+        "bytes": 20042,
+        "sha256": "c3eccbf13172dec7d6a1f6b1370374ca199ce14229f32c46ed2698f353f5c87d",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/SS31.fixture.json",
+      "bytes": 2019,
+      "sha256": "bc53e0835e112ae97e7a16fb0331396e9cd1b6b877e726589526b06e74dc43fa",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "SS31.fixture.json",
+        "bytes": 2019,
+        "sha256": "bc53e0835e112ae97e7a16fb0331396e9cd1b6b877e726589526b06e74dc43fa",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/acceptance-input.json",
+      "bytes": 11507,
+      "sha256": "76a1d23e6781d9601c7ea44eacbab61380e7a7ec7328c38320d8029c742afdf3",
+      "transform": "SS31-evidence path token replaced",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "acceptance-input.json",
+        "bytes": 11591,
+        "sha256": "ee247a5dd14fc25b8b6e6f9ac6487c20615a0ef1ca687a003ff9fce79aa3eb98",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/acceptance-report-check.json",
+      "bytes": 36,
+      "sha256": "655823ac7f996b259837b1279f4757264aac1ab82808d9b562c06a9f640f36af",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "acceptance-report-check.json",
+        "bytes": 36,
+        "sha256": "655823ac7f996b259837b1279f4757264aac1ab82808d9b562c06a9f640f36af",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/acceptance-report.json",
+      "bytes": 9751,
+      "sha256": "03b1e0e8deb48a18ec980e9de1a039e827e53a1b4f9afd1c540093fb0a49e8d4",
+      "transform": "SS31-evidence path token replaced",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "acceptance-report.json",
+        "bytes": 9835,
+        "sha256": "88b0469489c0a0ca42b18eba6dfdffbdc7a66e60d32630c91b7beb2212dae4fa",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/acceptance-request-artifact.json",
+      "bytes": 339,
+      "sha256": "e23ba8ad92bec58d5b22922e1de696d546a4f7f8e08a3bcef0d9016d1d6b0e8e",
+      "transform": "SS31-evidence path token replaced",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "acceptance-request-artifact.json",
+        "bytes": 345,
+        "sha256": "e5c4162311aaf3f214d027f9010a65cd7f80f675ec2527842e5ec199abdcdd52",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/candidate.snapshot.json",
+      "bytes": 2138,
+      "sha256": "b542436d1919b8dad0d5f25d34857e295c484192ce4f14f71fa249c1edf1359d",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "candidate.snapshot.json",
+        "bytes": 2138,
+        "sha256": "b542436d1919b8dad0d5f25d34857e295c484192ce4f14f71fa249c1edf1359d",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/existing-regression.json",
+      "bytes": 14953,
+      "sha256": "4a844536a12873a55b01d66e6ad2fd5255a0edd2330009a9f4b91553393164bb",
+      "transform": "SS31-repo path token replaced",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "existing-regression.json",
+        "bytes": 14958,
+        "sha256": "2f28b8bbf0ad4a0521ef7fc6fc8398a30285aa9881bd67c59522fc28528092fd",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/existing-regression.log",
+      "bytes": 67,
+      "sha256": "2c081cff662050f01ae741dc2911b91c5482a8b3bfcde62ea679fac517dca410",
+      "transform": "SS31-evidence path token replaced",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "existing-regression.log",
+        "bytes": 73,
+        "sha256": "ab5898031023f0de89a8886627538fb7a4a77cacde66a203cdcad18fdb92fd26",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/exploratory-observations.json",
+      "bytes": 66756,
+      "sha256": "ff51fd42687c2155d96c06a01aedf7dac5661623c761f0ae16b8b3984d7e372d",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "exploratory-observations.json",
+        "bytes": 66756,
+        "sha256": "ff51fd42687c2155d96c06a01aedf7dac5661623c761f0ae16b8b3984d7e372d",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/exploratory-test.ts",
+      "bytes": 17024,
+      "sha256": "ba820389f61fb7d0cf24c44999652613a993a60809a2b9453f39dbf1829e2f61",
+      "transform": "SS31-evidence path token replaced",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "exploratory-test.ts",
+        "bytes": 17030,
+        "sha256": "904f67b89b4e4d22b4b2ff0914945d3e2b7b501f836f7f100b3776c64ed25aec",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/exploratory-tests.json",
+      "bytes": 5759,
+      "sha256": "a8f959844b182ad34095dec8416cfe4f6db9158c84c8373f2eba1276ae803aab",
+      "transform": "agent-governance-suite path token replaced; SS31-repo path token replaced",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "exploratory-tests.json",
+        "bytes": 5852,
+        "sha256": "10190b74394ace85224c59deafbcf594d2c9c1ea477a59e3c83359d4867b5a16",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/exploratory-tests.log",
+      "bytes": 374,
+      "sha256": "c57a7268dab5a626b471145ca80560cd3c3e3afa455c7086663969f85d038c64",
+      "transform": "SS31-evidence path token replaced",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "exploratory-tests.log",
+        "bytes": 380,
+        "sha256": "3b95799886c73ffeab87ddeac21df6dfd5822c761b343366d5307e1017f002fd",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/identity.json",
+      "bytes": 431,
+      "sha256": "ac2802cb28744306ec688c1aed12e58a69f513f458e5ab2ed0a056693dc6ea2a",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "identity.json",
+        "bytes": 431,
+        "sha256": "ac2802cb28744306ec688c1aed12e58a69f513f458e5ab2ed0a056693dc6ea2a",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/isolated-observations.json",
+      "bytes": 77668,
+      "sha256": "d864a95995920d81e70d0627fe91738e8daa8d0e3eb49e33e046e3b9c4344326",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "isolated-observations.json",
+        "bytes": 77668,
+        "sha256": "d864a95995920d81e70d0627fe91738e8daa8d0e3eb49e33e046e3b9c4344326",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/isolated-tests.json",
+      "bytes": 5373,
+      "sha256": "acb72ad145d274695d86310490521c8341f20ad30337480151b56b426058fcae",
+      "transform": "agent-governance-suite path token replaced; SS31-repo path token replaced",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "isolated-tests.json",
+        "bytes": 5422,
+        "sha256": "02ca75c8ac7249af746ad68b8d7906a1ec8df65f36db8db1fd5ab2b99d4f44b1",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/isolated-tests.log",
+      "bytes": 376,
+      "sha256": "771d8ed5b01bdc73deeae1e15a830ebdb99c22b61adc4d00cb4feda9b9122fff",
+      "transform": "SS31-evidence path token replaced",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "isolated-tests.log",
+        "bytes": 382,
+        "sha256": "90790fc15a9360debd7e880cee2f08aad268b5304a0cd84d0783e427d2dd2f53",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/plan-check.json",
+      "bytes": 595,
+      "sha256": "b5f032f4d90e87cb873160933535bfc0b58b1e51700563c5223d3a65907c1fbf",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "plan-check.json",
+        "bytes": 595,
+        "sha256": "b5f032f4d90e87cb873160933535bfc0b58b1e51700563c5223d3a65907c1fbf",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/plan.json",
+      "bytes": 28399,
+      "sha256": "152b91216e502585987b2c8928427283d2d35045ca22de056ba941f6b563ea61",
+      "transform": "agent-governance-suite path token replaced; SS31-evidence path token replaced",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "plan.json",
+        "bytes": 28651,
+        "sha256": "7fa83134417e6d97f89f999eb7a948dd08121a324922014349ded940c29984b5",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/proof-check.json",
+      "bytes": 3620,
+      "sha256": "f821041d45f09c40a4dc3fce7c6fc3bdeeb22eedacf9e6f951b1a199bc42ebdd",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "proof-check.json",
+        "bytes": 3620,
+        "sha256": "f821041d45f09c40a4dc3fce7c6fc3bdeeb22eedacf9e6f951b1a199bc42ebdd",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/proof.json",
+      "bytes": 10685,
+      "sha256": "d14675848cab8fe13114eb10a4065610edd3cbcb6337cb8d533676eeed513306",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "proof.json",
+        "bytes": 10685,
+        "sha256": "d14675848cab8fe13114eb10a4065610edd3cbcb6337cb8d533676eeed513306",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/scope-files.json",
+      "bytes": 539,
+      "sha256": "f050ee7cd24148f912ec0683d6c97e00c5cea7614037336d00e883e437807a00",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "scope-files.json",
+        "bytes": 539,
+        "sha256": "f050ee7cd24148f912ec0683d6c97e00c5cea7614037336d00e883e437807a00",
+        "available": true
+      }
+    },
+    {
+      "path": "recorded/typecheck.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transform": "exact original bytes; no transformation",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "typecheck.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "available": true
+      }
+    },
+    {
+      "path": "repro/SS31-isolated.test.ts",
+      "bytes": 20097,
+      "sha256": "f70b1ebcfd2b29b8b1c1f66ecf7bc389cd6fc690befe7d148a268314d0ffb751",
+      "transform": "Portability edit only: output location uses SS31_OUTPUT_DIRECTORY or current directory via node:path.join; imports/assertions/inputs retained; NOT_EXECUTED",
+      "recordKind": "existing-record-copy",
+      "original": {
+        "artifactId": "SS31-isolated.test.ts",
+        "bytes": 20042,
+        "sha256": "c3eccbf13172dec7d6a1f6b1370374ca199ce14229f32c46ed2698f353f5c87d",
+        "available": true
+      }
+    }
+  ]
+}

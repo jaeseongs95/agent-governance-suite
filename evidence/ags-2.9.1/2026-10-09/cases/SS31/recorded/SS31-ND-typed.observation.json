@@ -1,0 +1,167 @@
+{
+  "id": "SS31-ND-typed",
+  "variant": "not-dispatched",
+  "input": "provider confirms timeout before dispatch via PROVIDER_TIMEOUT/not-started",
+  "expected": "Confirmed nondispatch releases reservation; timeout remains recorded; vendor succeeds",
+  "executionKind": "isolated-offline-mock",
+  "apiCalls": {
+    "jev": 0,
+    "vendor": 0,
+    "claude": 0
+  },
+  "status": "PASS",
+  "observations": {
+    "result": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "request",
+        "operationId": "operation",
+        "originalPrompt": "확실한 미전송 timeout, 전송 뒤 응답 없는 timeout, 전송 여부도 불명인 timeout, timeout 뒤 늦게 성공하는 응답을 각각 주입한다.",
+        "promptDigest": "sha256:8e3cd8c4633c42b293685eb2452bbe6379123202957d5b243c2deab3d58bc655",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "review",
+            "version": "1",
+            "description": "고정 변경분 검토",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "review"
+            ],
+            "actions": [
+              "review"
+            ],
+            "targets": [
+              "diff"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "fixed diff"
+            ],
+            "exclusions": [
+              "implementation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "taxonomy",
+        "classificationCriteriaRef": "criteria",
+        "requestDigest": "sha256:b4c0e7941f6badebf2bfb644b6142da00b21bba447f1793e87a53429d70b0335"
+      },
+      "config": {
+        "jevEnabled": true,
+        "mode": "select",
+        "providerProfileRegistryRef": "profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "c1",
+        "timeoutMs": 50
+      },
+      "profileRevision": "pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "c1",
+        "profileRevision": "pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:b4c0e7941f6badebf2bfb644b6142da00b21bba447f1793e87a53429d70b0335",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "jev",
+          "profileId": "jev",
+          "modelId": "jev-fixed",
+          "reasoningEffort": null,
+          "dispatchState": "not-started",
+          "status": "UNAVAILABLE",
+          "errorCode": "PROVIDER_TIMEOUT",
+          "timedOut": true,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        },
+        {
+          "providerKind": "vendor",
+          "profileId": "vendor",
+          "modelId": "vendor-fixed",
+          "reasoningEffort": "low",
+          "dispatchState": "started",
+          "status": "SUCCESS",
+          "errorCode": null,
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": 0.1
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "request",
+        "operationId": "operation",
+        "requestDigest": "sha256:b4c0e7941f6badebf2bfb644b6142da00b21bba447f1793e87a53429d70b0335",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "SUCCESS",
+        "judgments": [
+          {
+            "skillId": "review",
+            "judgment": "needed",
+            "reasonRefs": [
+              "fixture"
+            ],
+            "uncertaintyReason": null
+          }
+        ],
+        "unresolvedItems": [],
+        "error": null
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0.1
+        }
+      },
+      "nativeAllowances": {
+        "vendor": {
+          "approvalRef": "fixture-quota",
+          "remainingCalls": 2
+        }
+      },
+      "invalidCostCeilings": [],
+      "reservations": []
+    },
+    "providerCalls": {
+      "jev": 1,
+      "vendor": 1
+    },
+    "mockHttpTransmissions": 0
+  }
+}

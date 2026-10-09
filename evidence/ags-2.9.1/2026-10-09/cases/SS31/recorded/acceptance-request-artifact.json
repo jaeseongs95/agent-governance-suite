@@ -1,0 +1,6 @@
+{
+  "artifactId": "SS31-frozen-local-acceptance-request",
+  "schemaId": "https://agent-governance-skills.local/acceptance-evidence-validator/contracts/acceptance-evidence-input.v1.schema.json",
+  "locator": "<SS31_OUTPUT_ROOT>/acceptance-input.json",
+  "digest": "sha256:7d807279be56389d026a33a7c01dcd06abd163f8bde0bcd688b6fe1ce0a38095"
+}

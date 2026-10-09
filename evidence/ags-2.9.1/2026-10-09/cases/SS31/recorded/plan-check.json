@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:e6442e0745c02a6fb6fd0c323d1e9e9f33d238c4703ac05a2fc3b888c8a5878e",
+  "caseIds": [
+    "SS31-ND-availability",
+    "SS31-ND-typed",
+    "SS31-ND-credential-gap",
+    "SS31-UC-started",
+    "SS31-UC-unknown",
+    "SS31-UC-remote-hang",
+    "SS31-UC-vendor-missing",
+    "SS31-UC-vendor-blocked",
+    "SS31-UC-both-timeout",
+    "SS31-UC-timeout-overflow",
+    "SS31-LR-remote-success",
+    "SS31-LR-remote-rejection",
+    "SS31-LR-during-fallback",
+    "SS31-LR-cancelled-task"
+  ]
+}
