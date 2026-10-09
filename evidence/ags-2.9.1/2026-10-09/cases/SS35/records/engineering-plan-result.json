@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:645f736ad8f3a0bd28f4ee4a4f144f026aed36971894ae4a85c1d98190159a27",
+  "caseIds": [
+    "SS35-offline-all-variants"
+  ]
+}

@@ -1,0 +1,4272 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS35",
+  "status": "FAIL",
+  "assessment": "All four variant inputs were inspected and offline requirement checks were executed. Structural clean/translation/paraphrase checks pass; post-holdout-tuning support missing; runtime family-validation boundaries fail. No overall-case PASS or live acceptance claim.",
+  "identity": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "requestedBranch": "codex/skill-classification-2.9.1",
+    "checkout": "detached fixed commit worktree; branch not mutated",
+    "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "computedOracleDigestVerified": true,
+    "fixtureRevision": "ags-classification-seq7-oracle-v1",
+    "oracleRevision": "pre-live-source-reviewed-v1",
+    "splitRevision": "public-regression-v1",
+    "thresholdRevision": null,
+    "promptRevision": null
+  },
+  "originalPrompt": null,
+  "oracle": null,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS35",
+    "fields": {
+      "입력": "SS01·SS02의 번역쌍, SS03의 어순·용어만 바꾼 문장, 독립된 runtime 전환 의미군을 포함한 fixture 목록을 분할한다. 고의로 같은 의미군을 양쪽에 넣은 잘못된 split도 준다.",
+      "필수추천": "새로운 스킬 추천 없음. 평가 분할의 유효성을 판정한다.",
+      "금지추천 또는 행동": "번역·동의미 변형을 독립 holdout으로 계산; holdout 결과를 보고 threshold·프롬프트를 조정한 뒤 같은 holdout 점수를 최종 성능으로 재사용.",
+      "허용선택": "family 단위로 한쪽에만 배치하고, 오염된 holdout은 tuning으로 재분류한 뒤 새로운 holdout을 확보한다.",
+      "보류조건": "family 구분이나 조정 이력이 없어 독립성을 확인할 수 없음.",
+      "통과기준": "의미군 교집합 0, 정답·분할·threshold·프롬프트 revision 고정. 잘못된 split 변형은 반드시 FAIL한다.",
+      "증거": "E4, 중복 의미군 검출과 검토 기록.",
+      "실행종류": "mock 또는 오프라인 데이터 검증. 유효한 split 뒤의 live 결과에 적용한다."
+    },
+    "bodyDigest": "sha256:d5c60637cab6859c66c8253128b0018f4f702ce55778dc8e9be834b34c30884e"
+  },
+  "sourcePathExists": false,
+  "sourcePolicy": "Only embedded original SS35 fields used. No missing TEST-SPEC contents or skill-answer oracle invented.",
+  "executionKinds": [
+    "existing-regression",
+    "new-offline-specification-variants",
+    "unsigned-offline-consistency-check"
+  ],
+  "API0": true,
+  "apiCalls": {
+    "JEV": 0,
+    "externalVendorAPI": 0,
+    "Claude": 0
+  },
+  "historical21RunReexecutions": 0,
+  "otherCaseRuns": 0,
+  "fullSuiteRuns": 0,
+  "productSourceChanged": false,
+  "push": false,
+  "pullRequest": false,
+  "release": false,
+  "variants": [
+    {
+      "variantId": "family-clean",
+      "status": "PASS",
+      "executionKind": "new-offline-specification-variants",
+      "statusScope": "structural family-split checks only",
+      "completeIndependenceValidation": "NOTRUN",
+      "scenarios": [
+        {
+          "variant": "family-clean",
+          "scenario": "base",
+          "executionKind": "offline-data-validation",
+          "entryPoint": "tests/skill-classification/evaluation.ts#checkFamilySplit",
+          "input": {
+            "fixtureRef": "tests/skill-classification/fixtures.json",
+            "cases": [
+              {
+                "caseId": "SS01",
+                "familyId": "integer-max",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS02",
+                "familyId": "integer-max",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS03",
+                "familyId": "session-handoff",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS04",
+                "familyId": "runtime-transition",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS05",
+                "familyId": "concurrent-diff",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS06",
+                "familyId": "parser-test-design",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS07",
+                "familyId": "security-audit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS08",
+                "familyId": "explicit-cs",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS09",
+                "familyId": "wal-explanation",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS10",
+                "familyId": "negated-review",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS11",
+                "familyId": "quoted-translation",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS12",
+                "familyId": "missing-action-target",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS13",
+                "familyId": "recipe-no-skill",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS14",
+                "familyId": "queue-test-analysis",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS15",
+                "familyId": "unknown-explicit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS16",
+                "familyId": "korean-edit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS17",
+                "familyId": "scope-only",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS18",
+                "familyId": "mandatory-security",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS19",
+                "familyId": "mechanical-SS19",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS20",
+                "familyId": "mechanical-SS20",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS21",
+                "familyId": "mechanical-SS21",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS22",
+                "familyId": "mechanical-SS22",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS23",
+                "familyId": "mechanical-SS23",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS24",
+                "familyId": "mechanical-SS24",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS25",
+                "familyId": "mechanical-SS25",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS26",
+                "familyId": "mechanical-SS26",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS27",
+                "familyId": "mechanical-SS27",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS28",
+                "familyId": "mechanical-SS28",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS29",
+                "familyId": "mechanical-SS29",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS30",
+                "familyId": "mechanical-SS30",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS31",
+                "familyId": "mechanical-SS31",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS32",
+                "familyId": "mechanical-SS32",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS33",
+                "familyId": "mechanical-SS33",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS34",
+                "familyId": "mechanical-SS34",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS35",
+                "familyId": "mechanical-SS35",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS36",
+                "familyId": "mechanical-SS36",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS37",
+                "familyId": "mechanical-SS37",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS38",
+                "familyId": "mechanical-SS38",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS39",
+                "familyId": "mechanical-SS39",
+                "semanticOraclePresent": false
+              }
+            ],
+            "calibration": [
+              "SS01",
+              "SS02",
+              "SS03",
+              "SS08",
+              "SS15",
+              "SS18"
+            ],
+            "holdout": [
+              "SS04",
+              "SS05",
+              "SS06",
+              "SS07",
+              "SS09",
+              "SS10",
+              "SS11",
+              "SS12",
+              "SS13",
+              "SS14",
+              "SS16",
+              "SS17"
+            ]
+          },
+          "unsupportedContext": null,
+          "observedIssues": [],
+          "expected": {
+            "splitIssues": [],
+            "assessment": "family-disjoint structural split; public regression, not unseen holdout"
+          },
+          "testStatus": "PASS",
+          "commandRef": "isolated-specification.command.json",
+          "commandExitCode": 1
+        }
+      ],
+      "stages": {
+        "selected": {
+          "status": "NOTRUN",
+          "evidence": null
+        },
+        "read": {
+          "status": "NOTRUN",
+          "evidence": null
+        },
+        "applied": {
+          "status": "NOTRUN",
+          "evidence": null
+        },
+        "verified": {
+          "status": "NOTRUN",
+          "evidence": null
+        }
+      },
+      "hostReceipt": null
+    },
+    {
+      "variantId": "translation-leak",
+      "status": "PASS",
+      "executionKind": "new-offline-specification-variants",
+      "statusScope": "expected invalid split correctly rejected",
+      "completeIndependenceValidation": "NOT_APPLICABLE",
+      "scenarios": [
+        {
+          "variant": "translation-leak",
+          "scenario": "base",
+          "executionKind": "offline-data-validation",
+          "entryPoint": "tests/skill-classification/evaluation.ts#checkFamilySplit",
+          "input": {
+            "fixtureRef": "tests/skill-classification/fixtures.json",
+            "cases": [
+              {
+                "caseId": "SS01",
+                "familyId": "integer-max",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS02",
+                "familyId": "integer-max",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS03",
+                "familyId": "session-handoff",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS04",
+                "familyId": "runtime-transition",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS05",
+                "familyId": "concurrent-diff",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS06",
+                "familyId": "parser-test-design",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS07",
+                "familyId": "security-audit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS08",
+                "familyId": "explicit-cs",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS09",
+                "familyId": "wal-explanation",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS10",
+                "familyId": "negated-review",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS11",
+                "familyId": "quoted-translation",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS12",
+                "familyId": "missing-action-target",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS13",
+                "familyId": "recipe-no-skill",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS14",
+                "familyId": "queue-test-analysis",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS15",
+                "familyId": "unknown-explicit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS16",
+                "familyId": "korean-edit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS17",
+                "familyId": "scope-only",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS18",
+                "familyId": "mandatory-security",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS19",
+                "familyId": "mechanical-SS19",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS20",
+                "familyId": "mechanical-SS20",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS21",
+                "familyId": "mechanical-SS21",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS22",
+                "familyId": "mechanical-SS22",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS23",
+                "familyId": "mechanical-SS23",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS24",
+                "familyId": "mechanical-SS24",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS25",
+                "familyId": "mechanical-SS25",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS26",
+                "familyId": "mechanical-SS26",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS27",
+                "familyId": "mechanical-SS27",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS28",
+                "familyId": "mechanical-SS28",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS29",
+                "familyId": "mechanical-SS29",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS30",
+                "familyId": "mechanical-SS30",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS31",
+                "familyId": "mechanical-SS31",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS32",
+                "familyId": "mechanical-SS32",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS33",
+                "familyId": "mechanical-SS33",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS34",
+                "familyId": "mechanical-SS34",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS35",
+                "familyId": "mechanical-SS35",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS36",
+                "familyId": "mechanical-SS36",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS37",
+                "familyId": "mechanical-SS37",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS38",
+                "familyId": "mechanical-SS38",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS39",
+                "familyId": "mechanical-SS39",
+                "semanticOraclePresent": false
+              }
+            ],
+            "calibration": [
+              "SS01",
+              "SS03",
+              "SS08",
+              "SS15",
+              "SS18"
+            ],
+            "holdout": [
+              "SS04",
+              "SS05",
+              "SS06",
+              "SS07",
+              "SS09",
+              "SS10",
+              "SS11",
+              "SS12",
+              "SS13",
+              "SS14",
+              "SS16",
+              "SS17",
+              "SS02"
+            ]
+          },
+          "unsupportedContext": null,
+          "observedIssues": [
+            "FAMILY_LEAKAGE"
+          ],
+          "expected": {
+            "splitIssues": [
+              "FAMILY_LEAKAGE"
+            ],
+            "splitVerdict": "FAIL"
+          },
+          "testStatus": "PASS",
+          "commandRef": "isolated-specification.command.json",
+          "commandExitCode": 1
+        },
+        {
+          "variant": "translation-leak",
+          "scenario": "reverse",
+          "executionKind": "offline-data-validation",
+          "entryPoint": "tests/skill-classification/evaluation.ts#checkFamilySplit",
+          "input": {
+            "fixtureRef": "tests/skill-classification/fixtures.json",
+            "cases": [
+              {
+                "caseId": "SS01",
+                "familyId": "integer-max",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS02",
+                "familyId": "integer-max",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS03",
+                "familyId": "session-handoff",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS04",
+                "familyId": "runtime-transition",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS05",
+                "familyId": "concurrent-diff",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS06",
+                "familyId": "parser-test-design",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS07",
+                "familyId": "security-audit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS08",
+                "familyId": "explicit-cs",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS09",
+                "familyId": "wal-explanation",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS10",
+                "familyId": "negated-review",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS11",
+                "familyId": "quoted-translation",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS12",
+                "familyId": "missing-action-target",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS13",
+                "familyId": "recipe-no-skill",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS14",
+                "familyId": "queue-test-analysis",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS15",
+                "familyId": "unknown-explicit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS16",
+                "familyId": "korean-edit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS17",
+                "familyId": "scope-only",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS18",
+                "familyId": "mandatory-security",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS19",
+                "familyId": "mechanical-SS19",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS20",
+                "familyId": "mechanical-SS20",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS21",
+                "familyId": "mechanical-SS21",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS22",
+                "familyId": "mechanical-SS22",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS23",
+                "familyId": "mechanical-SS23",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS24",
+                "familyId": "mechanical-SS24",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS25",
+                "familyId": "mechanical-SS25",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS26",
+                "familyId": "mechanical-SS26",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS27",
+                "familyId": "mechanical-SS27",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS28",
+                "familyId": "mechanical-SS28",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS29",
+                "familyId": "mechanical-SS29",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS30",
+                "familyId": "mechanical-SS30",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS31",
+                "familyId": "mechanical-SS31",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS32",
+                "familyId": "mechanical-SS32",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS33",
+                "familyId": "mechanical-SS33",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS34",
+                "familyId": "mechanical-SS34",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS35",
+                "familyId": "mechanical-SS35",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS36",
+                "familyId": "mechanical-SS36",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS37",
+                "familyId": "mechanical-SS37",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS38",
+                "familyId": "mechanical-SS38",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS39",
+                "familyId": "mechanical-SS39",
+                "semanticOraclePresent": false
+              }
+            ],
+            "calibration": [
+              "SS02",
+              "SS03",
+              "SS08",
+              "SS15",
+              "SS18"
+            ],
+            "holdout": [
+              "SS04",
+              "SS05",
+              "SS06",
+              "SS07",
+              "SS09",
+              "SS10",
+              "SS11",
+              "SS12",
+              "SS13",
+              "SS14",
+              "SS16",
+              "SS17",
+              "SS01"
+            ]
+          },
+          "unsupportedContext": null,
+          "observedIssues": [
+            "FAMILY_LEAKAGE"
+          ],
+          "expected": {
+            "splitIssues": [
+              "FAMILY_LEAKAGE"
+            ],
+            "splitVerdict": "FAIL"
+          },
+          "testStatus": "PASS",
+          "commandRef": "isolated-specification.command.json",
+          "commandExitCode": 1
+        }
+      ],
+      "stages": {
+        "selected": {
+          "status": "NOTRUN",
+          "evidence": null
+        },
+        "read": {
+          "status": "NOTRUN",
+          "evidence": null
+        },
+        "applied": {
+          "status": "NOTRUN",
+          "evidence": null
+        },
+        "verified": {
+          "status": "NOTRUN",
+          "evidence": null
+        }
+      },
+      "hostReceipt": null
+    },
+    {
+      "variantId": "paraphrase-leak",
+      "status": "PASS",
+      "executionKind": "new-offline-specification-variants",
+      "statusScope": "expected invalid split correctly rejected",
+      "completeIndependenceValidation": "NOT_APPLICABLE",
+      "scenarios": [
+        {
+          "variant": "paraphrase-leak",
+          "scenario": "base",
+          "executionKind": "offline-data-validation",
+          "entryPoint": "tests/skill-classification/evaluation.ts#checkFamilySplit",
+          "input": {
+            "fixtureRef": "tests/skill-classification/fixtures.json",
+            "cases": [
+              {
+                "caseId": "SS01",
+                "familyId": "integer-max",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS02",
+                "familyId": "integer-max",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS03",
+                "familyId": "session-handoff",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS04",
+                "familyId": "runtime-transition",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS05",
+                "familyId": "concurrent-diff",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS06",
+                "familyId": "parser-test-design",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS07",
+                "familyId": "security-audit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS08",
+                "familyId": "explicit-cs",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS09",
+                "familyId": "wal-explanation",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS10",
+                "familyId": "negated-review",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS11",
+                "familyId": "quoted-translation",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS12",
+                "familyId": "missing-action-target",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS13",
+                "familyId": "recipe-no-skill",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS14",
+                "familyId": "queue-test-analysis",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS15",
+                "familyId": "unknown-explicit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS16",
+                "familyId": "korean-edit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS17",
+                "familyId": "scope-only",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS18",
+                "familyId": "mandatory-security",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS19",
+                "familyId": "mechanical-SS19",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS20",
+                "familyId": "mechanical-SS20",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS21",
+                "familyId": "mechanical-SS21",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS22",
+                "familyId": "mechanical-SS22",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS23",
+                "familyId": "mechanical-SS23",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS24",
+                "familyId": "mechanical-SS24",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS25",
+                "familyId": "mechanical-SS25",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS26",
+                "familyId": "mechanical-SS26",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS27",
+                "familyId": "mechanical-SS27",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS28",
+                "familyId": "mechanical-SS28",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS29",
+                "familyId": "mechanical-SS29",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS30",
+                "familyId": "mechanical-SS30",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS31",
+                "familyId": "mechanical-SS31",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS32",
+                "familyId": "mechanical-SS32",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS33",
+                "familyId": "mechanical-SS33",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS34",
+                "familyId": "mechanical-SS34",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS35",
+                "familyId": "mechanical-SS35",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS36",
+                "familyId": "mechanical-SS36",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS37",
+                "familyId": "mechanical-SS37",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS38",
+                "familyId": "mechanical-SS38",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS39",
+                "familyId": "mechanical-SS39",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS03-paraphrase",
+                "familyId": "session-handoff",
+                "semanticOraclePresent": true,
+                "originalPrompt": "같은 메시지를 다시 수신하거나 ACK 뒤 crash, 수신 전 종료가 발생해도 session-handoff 인계 유실과 중복 완료가 없도록 최소 구현과 회귀 테스트를 설계해 줘."
+              }
+            ],
+            "calibration": [
+              "SS01",
+              "SS02",
+              "SS03",
+              "SS08",
+              "SS15",
+              "SS18"
+            ],
+            "holdout": [
+              "SS04",
+              "SS05",
+              "SS06",
+              "SS07",
+              "SS09",
+              "SS10",
+              "SS11",
+              "SS12",
+              "SS13",
+              "SS14",
+              "SS16",
+              "SS17",
+              "SS03-paraphrase"
+            ]
+          },
+          "unsupportedContext": null,
+          "observedIssues": [
+            "FAMILY_LEAKAGE"
+          ],
+          "expected": {
+            "splitIssues": [
+              "FAMILY_LEAKAGE"
+            ],
+            "splitVerdict": "FAIL"
+          },
+          "testStatus": "PASS",
+          "commandRef": "isolated-specification.command.json",
+          "commandExitCode": 1
+        },
+        {
+          "variant": "paraphrase-leak",
+          "scenario": "reverse",
+          "executionKind": "offline-data-validation",
+          "entryPoint": "tests/skill-classification/evaluation.ts#checkFamilySplit",
+          "input": {
+            "fixtureRef": "tests/skill-classification/fixtures.json",
+            "cases": [
+              {
+                "caseId": "SS01",
+                "familyId": "integer-max",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS02",
+                "familyId": "integer-max",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS03",
+                "familyId": "session-handoff",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS04",
+                "familyId": "runtime-transition",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS05",
+                "familyId": "concurrent-diff",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS06",
+                "familyId": "parser-test-design",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS07",
+                "familyId": "security-audit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS08",
+                "familyId": "explicit-cs",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS09",
+                "familyId": "wal-explanation",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS10",
+                "familyId": "negated-review",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS11",
+                "familyId": "quoted-translation",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS12",
+                "familyId": "missing-action-target",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS13",
+                "familyId": "recipe-no-skill",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS14",
+                "familyId": "queue-test-analysis",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS15",
+                "familyId": "unknown-explicit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS16",
+                "familyId": "korean-edit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS17",
+                "familyId": "scope-only",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS18",
+                "familyId": "mandatory-security",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS19",
+                "familyId": "mechanical-SS19",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS20",
+                "familyId": "mechanical-SS20",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS21",
+                "familyId": "mechanical-SS21",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS22",
+                "familyId": "mechanical-SS22",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS23",
+                "familyId": "mechanical-SS23",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS24",
+                "familyId": "mechanical-SS24",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS25",
+                "familyId": "mechanical-SS25",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS26",
+                "familyId": "mechanical-SS26",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS27",
+                "familyId": "mechanical-SS27",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS28",
+                "familyId": "mechanical-SS28",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS29",
+                "familyId": "mechanical-SS29",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS30",
+                "familyId": "mechanical-SS30",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS31",
+                "familyId": "mechanical-SS31",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS32",
+                "familyId": "mechanical-SS32",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS33",
+                "familyId": "mechanical-SS33",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS34",
+                "familyId": "mechanical-SS34",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS35",
+                "familyId": "mechanical-SS35",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS36",
+                "familyId": "mechanical-SS36",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS37",
+                "familyId": "mechanical-SS37",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS38",
+                "familyId": "mechanical-SS38",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS39",
+                "familyId": "mechanical-SS39",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS03-paraphrase",
+                "familyId": "session-handoff",
+                "semanticOraclePresent": true,
+                "originalPrompt": "같은 메시지를 다시 수신하거나 ACK 뒤 crash, 수신 전 종료가 발생해도 session-handoff 인계 유실과 중복 완료가 없도록 최소 구현과 회귀 테스트를 설계해 줘."
+              }
+            ],
+            "calibration": [
+              "SS01",
+              "SS02",
+              "SS08",
+              "SS15",
+              "SS18",
+              "SS03-paraphrase"
+            ],
+            "holdout": [
+              "SS04",
+              "SS05",
+              "SS06",
+              "SS07",
+              "SS09",
+              "SS10",
+              "SS11",
+              "SS12",
+              "SS13",
+              "SS14",
+              "SS16",
+              "SS17",
+              "SS03"
+            ]
+          },
+          "unsupportedContext": null,
+          "observedIssues": [
+            "FAMILY_LEAKAGE"
+          ],
+          "expected": {
+            "splitIssues": [
+              "FAMILY_LEAKAGE"
+            ],
+            "splitVerdict": "FAIL"
+          },
+          "testStatus": "PASS",
+          "commandRef": "isolated-specification.command.json",
+          "commandExitCode": 1
+        }
+      ],
+      "stages": {
+        "selected": {
+          "status": "NOTRUN",
+          "evidence": null
+        },
+        "read": {
+          "status": "NOTRUN",
+          "evidence": null
+        },
+        "applied": {
+          "status": "NOTRUN",
+          "evidence": null
+        },
+        "verified": {
+          "status": "NOTRUN",
+          "evidence": null
+        }
+      },
+      "hostReceipt": null
+    },
+    {
+      "variantId": "post-holdout-tuning",
+      "status": "FAIL",
+      "executionKind": "new-offline-specification-variants",
+      "statusScope": "required adjustment history/revision gate unavailable, demonstrated offline capability gap",
+      "completeIndependenceValidation": "NOTRUN",
+      "scenarios": [
+        {
+          "variant": "post-holdout-tuning",
+          "scenario": "threshold",
+          "executionKind": "offline-data-validation",
+          "entryPoint": "tests/skill-classification/evaluation.ts#checkFamilySplit",
+          "input": {
+            "fixtureRef": "tests/skill-classification/fixtures.json",
+            "cases": [
+              {
+                "caseId": "SS01",
+                "familyId": "integer-max",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS02",
+                "familyId": "integer-max",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS03",
+                "familyId": "session-handoff",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS04",
+                "familyId": "runtime-transition",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS05",
+                "familyId": "concurrent-diff",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS06",
+                "familyId": "parser-test-design",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS07",
+                "familyId": "security-audit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS08",
+                "familyId": "explicit-cs",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS09",
+                "familyId": "wal-explanation",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS10",
+                "familyId": "negated-review",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS11",
+                "familyId": "quoted-translation",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS12",
+                "familyId": "missing-action-target",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS13",
+                "familyId": "recipe-no-skill",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS14",
+                "familyId": "queue-test-analysis",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS15",
+                "familyId": "unknown-explicit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS16",
+                "familyId": "korean-edit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS17",
+                "familyId": "scope-only",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS18",
+                "familyId": "mandatory-security",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS19",
+                "familyId": "mechanical-SS19",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS20",
+                "familyId": "mechanical-SS20",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS21",
+                "familyId": "mechanical-SS21",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS22",
+                "familyId": "mechanical-SS22",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS23",
+                "familyId": "mechanical-SS23",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS24",
+                "familyId": "mechanical-SS24",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS25",
+                "familyId": "mechanical-SS25",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS26",
+                "familyId": "mechanical-SS26",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS27",
+                "familyId": "mechanical-SS27",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS28",
+                "familyId": "mechanical-SS28",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS29",
+                "familyId": "mechanical-SS29",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS30",
+                "familyId": "mechanical-SS30",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS31",
+                "familyId": "mechanical-SS31",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS32",
+                "familyId": "mechanical-SS32",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS33",
+                "familyId": "mechanical-SS33",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS34",
+                "familyId": "mechanical-SS34",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS35",
+                "familyId": "mechanical-SS35",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS36",
+                "familyId": "mechanical-SS36",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS37",
+                "familyId": "mechanical-SS37",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS38",
+                "familyId": "mechanical-SS38",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS39",
+                "familyId": "mechanical-SS39",
+                "semanticOraclePresent": false
+              }
+            ],
+            "calibration": [
+              "SS01",
+              "SS02",
+              "SS03",
+              "SS08",
+              "SS15",
+              "SS18"
+            ],
+            "holdout": [
+              "SS04",
+              "SS05",
+              "SS06",
+              "SS07",
+              "SS09",
+              "SS10",
+              "SS11",
+              "SS12",
+              "SS13",
+              "SS14",
+              "SS16",
+              "SS17"
+            ]
+          },
+          "unsupportedContext": {
+            "holdoutResultObservedAt": "2026-10-09T00:01:00.000Z",
+            "adjustedAt": "2026-10-09T00:02:00.000Z",
+            "finalScoreSource": "same-holdout-result",
+            "reclassifiedAsTuning": false,
+            "newHoldout": null,
+            "before": {
+              "oracleRevision": "pre-live-source-reviewed-v1",
+              "splitRevision": "public-regression-v1",
+              "thresholdRevision": "ss35-offline-threshold-v1",
+              "promptRevision": "ss35-offline-prompt-v1"
+            },
+            "after": {
+              "oracleRevision": "pre-live-source-reviewed-v1",
+              "splitRevision": "public-regression-v1",
+              "thresholdRevision": "ss35-offline-threshold-v2",
+              "promptRevision": "ss35-offline-prompt-v1"
+            }
+          },
+          "observedIssues": [],
+          "expected": {
+            "assessment": "Reject contaminated final independent-holdout claim; reclassify as tuning and obtain fresh holdout"
+          },
+          "testStatus": "FAIL",
+          "commandRef": "isolated-specification.command.json",
+          "commandExitCode": 1
+        },
+        {
+          "variant": "post-holdout-tuning",
+          "scenario": "prompt",
+          "executionKind": "offline-data-validation",
+          "entryPoint": "tests/skill-classification/evaluation.ts#checkFamilySplit",
+          "input": {
+            "fixtureRef": "tests/skill-classification/fixtures.json",
+            "cases": [
+              {
+                "caseId": "SS01",
+                "familyId": "integer-max",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS02",
+                "familyId": "integer-max",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS03",
+                "familyId": "session-handoff",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS04",
+                "familyId": "runtime-transition",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS05",
+                "familyId": "concurrent-diff",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS06",
+                "familyId": "parser-test-design",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS07",
+                "familyId": "security-audit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS08",
+                "familyId": "explicit-cs",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS09",
+                "familyId": "wal-explanation",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS10",
+                "familyId": "negated-review",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS11",
+                "familyId": "quoted-translation",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS12",
+                "familyId": "missing-action-target",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS13",
+                "familyId": "recipe-no-skill",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS14",
+                "familyId": "queue-test-analysis",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS15",
+                "familyId": "unknown-explicit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS16",
+                "familyId": "korean-edit",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS17",
+                "familyId": "scope-only",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS18",
+                "familyId": "mandatory-security",
+                "semanticOraclePresent": true
+              },
+              {
+                "caseId": "SS19",
+                "familyId": "mechanical-SS19",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS20",
+                "familyId": "mechanical-SS20",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS21",
+                "familyId": "mechanical-SS21",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS22",
+                "familyId": "mechanical-SS22",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS23",
+                "familyId": "mechanical-SS23",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS24",
+                "familyId": "mechanical-SS24",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS25",
+                "familyId": "mechanical-SS25",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS26",
+                "familyId": "mechanical-SS26",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS27",
+                "familyId": "mechanical-SS27",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS28",
+                "familyId": "mechanical-SS28",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS29",
+                "familyId": "mechanical-SS29",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS30",
+                "familyId": "mechanical-SS30",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS31",
+                "familyId": "mechanical-SS31",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS32",
+                "familyId": "mechanical-SS32",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS33",
+                "familyId": "mechanical-SS33",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS34",
+                "familyId": "mechanical-SS34",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS35",
+                "familyId": "mechanical-SS35",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS36",
+                "familyId": "mechanical-SS36",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS37",
+                "familyId": "mechanical-SS37",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS38",
+                "familyId": "mechanical-SS38",
+                "semanticOraclePresent": false
+              },
+              {
+                "caseId": "SS39",
+                "familyId": "mechanical-SS39",
+                "semanticOraclePresent": false
+              }
+            ],
+            "calibration": [
+              "SS01",
+              "SS02",
+              "SS03",
+              "SS08",
+              "SS15",
+              "SS18"
+            ],
+            "holdout": [
+              "SS04",
+              "SS05",
+              "SS06",
+              "SS07",
+              "SS09",
+              "SS10",
+              "SS11",
+              "SS12",
+              "SS13",
+              "SS14",
+              "SS16",
+              "SS17"
+            ]
+          },
+          "unsupportedContext": {
+            "holdoutResultObservedAt": "2026-10-09T00:01:00.000Z",
+            "adjustedAt": "2026-10-09T00:02:00.000Z",
+            "finalScoreSource": "same-holdout-result",
+            "reclassifiedAsTuning": false,
+            "newHoldout": null,
+            "before": {
+              "oracleRevision": "pre-live-source-reviewed-v1",
+              "splitRevision": "public-regression-v1",
+              "thresholdRevision": "ss35-offline-threshold-v1",
+              "promptRevision": "ss35-offline-prompt-v1"
+            },
+            "after": {
+              "oracleRevision": "pre-live-source-reviewed-v1",
+              "splitRevision": "public-regression-v1",
+              "thresholdRevision": "ss35-offline-threshold-v1",
+              "promptRevision": "ss35-offline-prompt-v2"
+            }
+          },
+          "observedIssues": [],
+          "expected": {
+            "assessment": "Reject contaminated final independent-holdout claim; reclassify as tuning and obtain fresh holdout"
+          },
+          "testStatus": "FAIL",
+          "commandRef": "isolated-specification.command.json",
+          "commandExitCode": 1
+        }
+      ],
+      "stages": {
+        "selected": {
+          "status": "NOTRUN",
+          "evidence": null
+        },
+        "read": {
+          "status": "NOTRUN",
+          "evidence": null
+        },
+        "applied": {
+          "status": "NOTRUN",
+          "evidence": null
+        },
+        "verified": {
+          "status": "NOTRUN",
+          "evidence": null
+        }
+      },
+      "hostReceipt": null
+    }
+  ],
+  "boundaryChecks": [
+    {
+      "variant": "boundary-missing-family",
+      "scenario": "absent",
+      "executionKind": "offline-data-validation",
+      "entryPoint": "tests/skill-classification/evaluation.ts#checkFamilySplit",
+      "input": {
+        "fixtureRef": "tests/skill-classification/fixtures.json",
+        "cases": [
+          {
+            "caseId": "SS01",
+            "familyId": "integer-max",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS02",
+            "familyId": "integer-max",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS03",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS04",
+            "familyId": "runtime-transition",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS05",
+            "familyId": "concurrent-diff",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS06",
+            "familyId": "parser-test-design",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS07",
+            "familyId": "security-audit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS08",
+            "familyId": "explicit-cs",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS09",
+            "familyId": "wal-explanation",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS10",
+            "familyId": "negated-review",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS11",
+            "familyId": "quoted-translation",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS12",
+            "familyId": "missing-action-target",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS13",
+            "familyId": "recipe-no-skill",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS14",
+            "familyId": "queue-test-analysis",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS15",
+            "familyId": "unknown-explicit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS16",
+            "familyId": "korean-edit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS17",
+            "familyId": "scope-only",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS18",
+            "familyId": "mandatory-security",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS19",
+            "familyId": "mechanical-SS19",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS20",
+            "familyId": "mechanical-SS20",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS21",
+            "familyId": "mechanical-SS21",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS22",
+            "familyId": "mechanical-SS22",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS23",
+            "familyId": "mechanical-SS23",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS24",
+            "familyId": "mechanical-SS24",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS25",
+            "familyId": "mechanical-SS25",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS26",
+            "familyId": "mechanical-SS26",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS27",
+            "familyId": "mechanical-SS27",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS28",
+            "familyId": "mechanical-SS28",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS29",
+            "familyId": "mechanical-SS29",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS30",
+            "familyId": "mechanical-SS30",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS31",
+            "familyId": "mechanical-SS31",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS32",
+            "familyId": "mechanical-SS32",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS33",
+            "familyId": "mechanical-SS33",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS34",
+            "familyId": "mechanical-SS34",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS35",
+            "familyId": "mechanical-SS35",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS36",
+            "familyId": "mechanical-SS36",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS37",
+            "familyId": "mechanical-SS37",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS38",
+            "familyId": "mechanical-SS38",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS39",
+            "familyId": "mechanical-SS39",
+            "semanticOraclePresent": false
+          }
+        ],
+        "calibration": [
+          "SS01",
+          "SS02",
+          "SS03",
+          "SS08",
+          "SS15",
+          "SS18"
+        ],
+        "holdout": [
+          "SS04",
+          "SS05",
+          "SS06",
+          "SS07",
+          "SS09",
+          "SS10",
+          "SS11",
+          "SS12",
+          "SS13",
+          "SS14",
+          "SS16",
+          "SS17"
+        ]
+      },
+      "unsupportedContext": null,
+      "observedIssues": [],
+      "expected": "reject or defer",
+      "testStatus": "FAIL",
+      "commandRef": "isolated-specification.command.json",
+      "commandExitCode": 1
+    },
+    {
+      "variant": "boundary-missing-family",
+      "scenario": "null",
+      "executionKind": "offline-data-validation",
+      "entryPoint": "tests/skill-classification/evaluation.ts#checkFamilySplit",
+      "input": {
+        "fixtureRef": "tests/skill-classification/fixtures.json",
+        "cases": [
+          {
+            "caseId": "SS01",
+            "familyId": "integer-max",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS02",
+            "familyId": "integer-max",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS03",
+            "familyId": null,
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS04",
+            "familyId": "runtime-transition",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS05",
+            "familyId": "concurrent-diff",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS06",
+            "familyId": "parser-test-design",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS07",
+            "familyId": "security-audit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS08",
+            "familyId": "explicit-cs",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS09",
+            "familyId": "wal-explanation",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS10",
+            "familyId": "negated-review",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS11",
+            "familyId": "quoted-translation",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS12",
+            "familyId": "missing-action-target",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS13",
+            "familyId": "recipe-no-skill",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS14",
+            "familyId": "queue-test-analysis",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS15",
+            "familyId": "unknown-explicit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS16",
+            "familyId": "korean-edit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS17",
+            "familyId": "scope-only",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS18",
+            "familyId": "mandatory-security",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS19",
+            "familyId": "mechanical-SS19",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS20",
+            "familyId": "mechanical-SS20",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS21",
+            "familyId": "mechanical-SS21",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS22",
+            "familyId": "mechanical-SS22",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS23",
+            "familyId": "mechanical-SS23",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS24",
+            "familyId": "mechanical-SS24",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS25",
+            "familyId": "mechanical-SS25",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS26",
+            "familyId": "mechanical-SS26",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS27",
+            "familyId": "mechanical-SS27",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS28",
+            "familyId": "mechanical-SS28",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS29",
+            "familyId": "mechanical-SS29",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS30",
+            "familyId": "mechanical-SS30",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS31",
+            "familyId": "mechanical-SS31",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS32",
+            "familyId": "mechanical-SS32",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS33",
+            "familyId": "mechanical-SS33",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS34",
+            "familyId": "mechanical-SS34",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS35",
+            "familyId": "mechanical-SS35",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS36",
+            "familyId": "mechanical-SS36",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS37",
+            "familyId": "mechanical-SS37",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS38",
+            "familyId": "mechanical-SS38",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS39",
+            "familyId": "mechanical-SS39",
+            "semanticOraclePresent": false
+          }
+        ],
+        "calibration": [
+          "SS01",
+          "SS02",
+          "SS03",
+          "SS08",
+          "SS15",
+          "SS18"
+        ],
+        "holdout": [
+          "SS04",
+          "SS05",
+          "SS06",
+          "SS07",
+          "SS09",
+          "SS10",
+          "SS11",
+          "SS12",
+          "SS13",
+          "SS14",
+          "SS16",
+          "SS17"
+        ]
+      },
+      "unsupportedContext": null,
+      "observedIssues": [],
+      "expected": "reject or defer",
+      "testStatus": "FAIL",
+      "commandRef": "isolated-specification.command.json",
+      "commandExitCode": 1
+    },
+    {
+      "variant": "boundary-missing-family",
+      "scenario": "blank",
+      "executionKind": "offline-data-validation",
+      "entryPoint": "tests/skill-classification/evaluation.ts#checkFamilySplit",
+      "input": {
+        "fixtureRef": "tests/skill-classification/fixtures.json",
+        "cases": [
+          {
+            "caseId": "SS01",
+            "familyId": "integer-max",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS02",
+            "familyId": "integer-max",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS03",
+            "familyId": "",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS04",
+            "familyId": "runtime-transition",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS05",
+            "familyId": "concurrent-diff",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS06",
+            "familyId": "parser-test-design",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS07",
+            "familyId": "security-audit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS08",
+            "familyId": "explicit-cs",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS09",
+            "familyId": "wal-explanation",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS10",
+            "familyId": "negated-review",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS11",
+            "familyId": "quoted-translation",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS12",
+            "familyId": "missing-action-target",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS13",
+            "familyId": "recipe-no-skill",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS14",
+            "familyId": "queue-test-analysis",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS15",
+            "familyId": "unknown-explicit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS16",
+            "familyId": "korean-edit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS17",
+            "familyId": "scope-only",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS18",
+            "familyId": "mandatory-security",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS19",
+            "familyId": "mechanical-SS19",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS20",
+            "familyId": "mechanical-SS20",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS21",
+            "familyId": "mechanical-SS21",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS22",
+            "familyId": "mechanical-SS22",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS23",
+            "familyId": "mechanical-SS23",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS24",
+            "familyId": "mechanical-SS24",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS25",
+            "familyId": "mechanical-SS25",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS26",
+            "familyId": "mechanical-SS26",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS27",
+            "familyId": "mechanical-SS27",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS28",
+            "familyId": "mechanical-SS28",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS29",
+            "familyId": "mechanical-SS29",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS30",
+            "familyId": "mechanical-SS30",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS31",
+            "familyId": "mechanical-SS31",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS32",
+            "familyId": "mechanical-SS32",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS33",
+            "familyId": "mechanical-SS33",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS34",
+            "familyId": "mechanical-SS34",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS35",
+            "familyId": "mechanical-SS35",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS36",
+            "familyId": "mechanical-SS36",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS37",
+            "familyId": "mechanical-SS37",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS38",
+            "familyId": "mechanical-SS38",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS39",
+            "familyId": "mechanical-SS39",
+            "semanticOraclePresent": false
+          }
+        ],
+        "calibration": [
+          "SS01",
+          "SS02",
+          "SS03",
+          "SS08",
+          "SS15",
+          "SS18"
+        ],
+        "holdout": [
+          "SS04",
+          "SS05",
+          "SS06",
+          "SS07",
+          "SS09",
+          "SS10",
+          "SS11",
+          "SS12",
+          "SS13",
+          "SS14",
+          "SS16",
+          "SS17"
+        ]
+      },
+      "unsupportedContext": null,
+      "observedIssues": [],
+      "expected": "reject or defer",
+      "testStatus": "FAIL",
+      "commandRef": "isolated-specification.command.json",
+      "commandExitCode": 1
+    },
+    {
+      "variant": "boundary-conflicting-case-family",
+      "scenario": "base",
+      "executionKind": "offline-data-validation",
+      "entryPoint": "tests/skill-classification/evaluation.ts#checkFamilySplit",
+      "input": {
+        "fixtureRef": "tests/skill-classification/fixtures.json",
+        "cases": [
+          {
+            "caseId": "SS01",
+            "familyId": "integer-max",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS02",
+            "familyId": "integer-max",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS03",
+            "familyId": "session-handoff",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS04",
+            "familyId": "runtime-transition",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS05",
+            "familyId": "concurrent-diff",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS06",
+            "familyId": "parser-test-design",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS07",
+            "familyId": "security-audit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS08",
+            "familyId": "explicit-cs",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS09",
+            "familyId": "wal-explanation",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS10",
+            "familyId": "negated-review",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS11",
+            "familyId": "quoted-translation",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS12",
+            "familyId": "missing-action-target",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS13",
+            "familyId": "recipe-no-skill",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS14",
+            "familyId": "queue-test-analysis",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS15",
+            "familyId": "unknown-explicit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS16",
+            "familyId": "korean-edit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS17",
+            "familyId": "scope-only",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS18",
+            "familyId": "mandatory-security",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS19",
+            "familyId": "mechanical-SS19",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS20",
+            "familyId": "mechanical-SS20",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS21",
+            "familyId": "mechanical-SS21",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS22",
+            "familyId": "mechanical-SS22",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS23",
+            "familyId": "mechanical-SS23",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS24",
+            "familyId": "mechanical-SS24",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS25",
+            "familyId": "mechanical-SS25",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS26",
+            "familyId": "mechanical-SS26",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS27",
+            "familyId": "mechanical-SS27",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS28",
+            "familyId": "mechanical-SS28",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS29",
+            "familyId": "mechanical-SS29",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS30",
+            "familyId": "mechanical-SS30",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS31",
+            "familyId": "mechanical-SS31",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS32",
+            "familyId": "mechanical-SS32",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS33",
+            "familyId": "mechanical-SS33",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS34",
+            "familyId": "mechanical-SS34",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS35",
+            "familyId": "mechanical-SS35",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS36",
+            "familyId": "mechanical-SS36",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS37",
+            "familyId": "mechanical-SS37",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS38",
+            "familyId": "mechanical-SS38",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS39",
+            "familyId": "mechanical-SS39",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS02",
+            "familyId": "test-only-conflicting-family",
+            "semanticOraclePresent": true
+          }
+        ],
+        "calibration": [
+          "SS01",
+          "SS03",
+          "SS08",
+          "SS15",
+          "SS18"
+        ],
+        "holdout": [
+          "SS04",
+          "SS05",
+          "SS06",
+          "SS07",
+          "SS09",
+          "SS10",
+          "SS11",
+          "SS12",
+          "SS13",
+          "SS14",
+          "SS16",
+          "SS17",
+          "SS02"
+        ]
+      },
+      "unsupportedContext": null,
+      "observedIssues": [],
+      "expected": "reject or defer",
+      "testStatus": "FAIL",
+      "commandRef": "isolated-specification.command.json",
+      "commandExitCode": 1
+    },
+    {
+      "variant": "boundary-missing-history",
+      "scenario": "base",
+      "executionKind": "offline-data-validation",
+      "entryPoint": "tests/skill-classification/evaluation.ts#checkFamilySplit",
+      "input": {
+        "fixtureRef": "tests/skill-classification/fixtures.json",
+        "cases": [
+          {
+            "caseId": "SS01",
+            "familyId": "integer-max",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS02",
+            "familyId": "integer-max",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS03",
+            "familyId": "session-handoff",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS04",
+            "familyId": "runtime-transition",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS05",
+            "familyId": "concurrent-diff",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS06",
+            "familyId": "parser-test-design",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS07",
+            "familyId": "security-audit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS08",
+            "familyId": "explicit-cs",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS09",
+            "familyId": "wal-explanation",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS10",
+            "familyId": "negated-review",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS11",
+            "familyId": "quoted-translation",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS12",
+            "familyId": "missing-action-target",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS13",
+            "familyId": "recipe-no-skill",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS14",
+            "familyId": "queue-test-analysis",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS15",
+            "familyId": "unknown-explicit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS16",
+            "familyId": "korean-edit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS17",
+            "familyId": "scope-only",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS18",
+            "familyId": "mandatory-security",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS19",
+            "familyId": "mechanical-SS19",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS20",
+            "familyId": "mechanical-SS20",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS21",
+            "familyId": "mechanical-SS21",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS22",
+            "familyId": "mechanical-SS22",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS23",
+            "familyId": "mechanical-SS23",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS24",
+            "familyId": "mechanical-SS24",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS25",
+            "familyId": "mechanical-SS25",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS26",
+            "familyId": "mechanical-SS26",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS27",
+            "familyId": "mechanical-SS27",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS28",
+            "familyId": "mechanical-SS28",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS29",
+            "familyId": "mechanical-SS29",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS30",
+            "familyId": "mechanical-SS30",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS31",
+            "familyId": "mechanical-SS31",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS32",
+            "familyId": "mechanical-SS32",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS33",
+            "familyId": "mechanical-SS33",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS34",
+            "familyId": "mechanical-SS34",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS35",
+            "familyId": "mechanical-SS35",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS36",
+            "familyId": "mechanical-SS36",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS37",
+            "familyId": "mechanical-SS37",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS38",
+            "familyId": "mechanical-SS38",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS39",
+            "familyId": "mechanical-SS39",
+            "semanticOraclePresent": false
+          }
+        ],
+        "calibration": [
+          "SS01",
+          "SS02",
+          "SS03",
+          "SS08",
+          "SS15",
+          "SS18"
+        ],
+        "holdout": [
+          "SS04",
+          "SS05",
+          "SS06",
+          "SS07",
+          "SS09",
+          "SS10",
+          "SS11",
+          "SS12",
+          "SS13",
+          "SS14",
+          "SS16",
+          "SS17"
+        ]
+      },
+      "unsupportedContext": {
+        "adjustmentHistory": null,
+        "thresholdRevision": null,
+        "promptRevision": null,
+        "claimIndependentHoldout": true
+      },
+      "observedIssues": [],
+      "expected": "reject or defer",
+      "testStatus": "FAIL",
+      "commandRef": "isolated-specification.command.json",
+      "commandExitCode": 1
+    },
+    {
+      "variant": "boundary-duplicate-split",
+      "scenario": "base",
+      "executionKind": "offline-data-validation",
+      "entryPoint": "tests/skill-classification/evaluation.ts#checkFamilySplit",
+      "input": {
+        "fixtureRef": "tests/skill-classification/fixtures.json",
+        "cases": [
+          {
+            "caseId": "SS01",
+            "familyId": "integer-max",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS02",
+            "familyId": "integer-max",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS03",
+            "familyId": "session-handoff",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS04",
+            "familyId": "runtime-transition",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS05",
+            "familyId": "concurrent-diff",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS06",
+            "familyId": "parser-test-design",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS07",
+            "familyId": "security-audit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS08",
+            "familyId": "explicit-cs",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS09",
+            "familyId": "wal-explanation",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS10",
+            "familyId": "negated-review",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS11",
+            "familyId": "quoted-translation",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS12",
+            "familyId": "missing-action-target",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS13",
+            "familyId": "recipe-no-skill",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS14",
+            "familyId": "queue-test-analysis",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS15",
+            "familyId": "unknown-explicit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS16",
+            "familyId": "korean-edit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS17",
+            "familyId": "scope-only",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS18",
+            "familyId": "mandatory-security",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS19",
+            "familyId": "mechanical-SS19",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS20",
+            "familyId": "mechanical-SS20",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS21",
+            "familyId": "mechanical-SS21",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS22",
+            "familyId": "mechanical-SS22",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS23",
+            "familyId": "mechanical-SS23",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS24",
+            "familyId": "mechanical-SS24",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS25",
+            "familyId": "mechanical-SS25",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS26",
+            "familyId": "mechanical-SS26",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS27",
+            "familyId": "mechanical-SS27",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS28",
+            "familyId": "mechanical-SS28",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS29",
+            "familyId": "mechanical-SS29",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS30",
+            "familyId": "mechanical-SS30",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS31",
+            "familyId": "mechanical-SS31",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS32",
+            "familyId": "mechanical-SS32",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS33",
+            "familyId": "mechanical-SS33",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS34",
+            "familyId": "mechanical-SS34",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS35",
+            "familyId": "mechanical-SS35",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS36",
+            "familyId": "mechanical-SS36",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS37",
+            "familyId": "mechanical-SS37",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS38",
+            "familyId": "mechanical-SS38",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS39",
+            "familyId": "mechanical-SS39",
+            "semanticOraclePresent": false
+          }
+        ],
+        "calibration": [
+          "SS01",
+          "SS02",
+          "SS03",
+          "SS08",
+          "SS15",
+          "SS18",
+          "SS03"
+        ],
+        "holdout": [
+          "SS04",
+          "SS05",
+          "SS06",
+          "SS07",
+          "SS09",
+          "SS10",
+          "SS11",
+          "SS12",
+          "SS13",
+          "SS14",
+          "SS16",
+          "SS17"
+        ]
+      },
+      "unsupportedContext": null,
+      "observedIssues": [
+        "DUPLICATE_SPLIT_CASE"
+      ],
+      "expected": "reject invalid split",
+      "testStatus": "PASS",
+      "commandRef": "isolated-specification.command.json",
+      "commandExitCode": 1
+    },
+    {
+      "variant": "boundary-unknown-split",
+      "scenario": "base",
+      "executionKind": "offline-data-validation",
+      "entryPoint": "tests/skill-classification/evaluation.ts#checkFamilySplit",
+      "input": {
+        "fixtureRef": "tests/skill-classification/fixtures.json",
+        "cases": [
+          {
+            "caseId": "SS01",
+            "familyId": "integer-max",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS02",
+            "familyId": "integer-max",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS03",
+            "familyId": "session-handoff",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS04",
+            "familyId": "runtime-transition",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS05",
+            "familyId": "concurrent-diff",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS06",
+            "familyId": "parser-test-design",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS07",
+            "familyId": "security-audit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS08",
+            "familyId": "explicit-cs",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS09",
+            "familyId": "wal-explanation",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS10",
+            "familyId": "negated-review",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS11",
+            "familyId": "quoted-translation",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS12",
+            "familyId": "missing-action-target",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS13",
+            "familyId": "recipe-no-skill",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS14",
+            "familyId": "queue-test-analysis",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS15",
+            "familyId": "unknown-explicit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS16",
+            "familyId": "korean-edit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS17",
+            "familyId": "scope-only",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS18",
+            "familyId": "mandatory-security",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS19",
+            "familyId": "mechanical-SS19",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS20",
+            "familyId": "mechanical-SS20",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS21",
+            "familyId": "mechanical-SS21",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS22",
+            "familyId": "mechanical-SS22",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS23",
+            "familyId": "mechanical-SS23",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS24",
+            "familyId": "mechanical-SS24",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS25",
+            "familyId": "mechanical-SS25",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS26",
+            "familyId": "mechanical-SS26",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS27",
+            "familyId": "mechanical-SS27",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS28",
+            "familyId": "mechanical-SS28",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS29",
+            "familyId": "mechanical-SS29",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS30",
+            "familyId": "mechanical-SS30",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS31",
+            "familyId": "mechanical-SS31",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS32",
+            "familyId": "mechanical-SS32",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS33",
+            "familyId": "mechanical-SS33",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS34",
+            "familyId": "mechanical-SS34",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS35",
+            "familyId": "mechanical-SS35",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS36",
+            "familyId": "mechanical-SS36",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS37",
+            "familyId": "mechanical-SS37",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS38",
+            "familyId": "mechanical-SS38",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS39",
+            "familyId": "mechanical-SS39",
+            "semanticOraclePresent": false
+          }
+        ],
+        "calibration": [
+          "SS01",
+          "SS02",
+          "SS03",
+          "SS08",
+          "SS15",
+          "SS18"
+        ],
+        "holdout": [
+          "SS04",
+          "SS05",
+          "SS06",
+          "SS07",
+          "SS09",
+          "SS10",
+          "SS11",
+          "SS12",
+          "SS13",
+          "SS14",
+          "SS16",
+          "SS17",
+          "SS35-unknown"
+        ]
+      },
+      "unsupportedContext": null,
+      "observedIssues": [
+        "UNKNOWN_SPLIT_CASE"
+      ],
+      "expected": "reject invalid split",
+      "testStatus": "PASS",
+      "commandRef": "isolated-specification.command.json",
+      "commandExitCode": 1
+    },
+    {
+      "variant": "boundary-unassigned",
+      "scenario": "base",
+      "executionKind": "offline-data-validation",
+      "entryPoint": "tests/skill-classification/evaluation.ts#checkFamilySplit",
+      "input": {
+        "fixtureRef": "tests/skill-classification/fixtures.json",
+        "cases": [
+          {
+            "caseId": "SS01",
+            "familyId": "integer-max",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS02",
+            "familyId": "integer-max",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS03",
+            "familyId": "session-handoff",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS04",
+            "familyId": "runtime-transition",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS05",
+            "familyId": "concurrent-diff",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS06",
+            "familyId": "parser-test-design",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS07",
+            "familyId": "security-audit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS08",
+            "familyId": "explicit-cs",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS09",
+            "familyId": "wal-explanation",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS10",
+            "familyId": "negated-review",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS11",
+            "familyId": "quoted-translation",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS12",
+            "familyId": "missing-action-target",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS13",
+            "familyId": "recipe-no-skill",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS14",
+            "familyId": "queue-test-analysis",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS15",
+            "familyId": "unknown-explicit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS16",
+            "familyId": "korean-edit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS17",
+            "familyId": "scope-only",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS18",
+            "familyId": "mandatory-security",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS19",
+            "familyId": "mechanical-SS19",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS20",
+            "familyId": "mechanical-SS20",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS21",
+            "familyId": "mechanical-SS21",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS22",
+            "familyId": "mechanical-SS22",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS23",
+            "familyId": "mechanical-SS23",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS24",
+            "familyId": "mechanical-SS24",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS25",
+            "familyId": "mechanical-SS25",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS26",
+            "familyId": "mechanical-SS26",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS27",
+            "familyId": "mechanical-SS27",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS28",
+            "familyId": "mechanical-SS28",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS29",
+            "familyId": "mechanical-SS29",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS30",
+            "familyId": "mechanical-SS30",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS31",
+            "familyId": "mechanical-SS31",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS32",
+            "familyId": "mechanical-SS32",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS33",
+            "familyId": "mechanical-SS33",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS34",
+            "familyId": "mechanical-SS34",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS35",
+            "familyId": "mechanical-SS35",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS36",
+            "familyId": "mechanical-SS36",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS37",
+            "familyId": "mechanical-SS37",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS38",
+            "familyId": "mechanical-SS38",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS39",
+            "familyId": "mechanical-SS39",
+            "semanticOraclePresent": false
+          }
+        ],
+        "calibration": [
+          "SS01",
+          "SS02",
+          "SS03",
+          "SS08",
+          "SS15",
+          "SS18"
+        ],
+        "holdout": [
+          "SS05",
+          "SS06",
+          "SS07",
+          "SS09",
+          "SS10",
+          "SS11",
+          "SS12",
+          "SS13",
+          "SS14",
+          "SS16",
+          "SS17"
+        ]
+      },
+      "unsupportedContext": null,
+      "observedIssues": [
+        "UNASSIGNED_SEMANTIC_CASE"
+      ],
+      "expected": "reject invalid split",
+      "testStatus": "PASS",
+      "commandRef": "isolated-specification.command.json",
+      "commandExitCode": 1
+    },
+    {
+      "variant": "boundary-both-sides",
+      "scenario": "base",
+      "executionKind": "offline-data-validation",
+      "entryPoint": "tests/skill-classification/evaluation.ts#checkFamilySplit",
+      "input": {
+        "fixtureRef": "tests/skill-classification/fixtures.json",
+        "cases": [
+          {
+            "caseId": "SS01",
+            "familyId": "integer-max",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS02",
+            "familyId": "integer-max",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS03",
+            "familyId": "session-handoff",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS04",
+            "familyId": "runtime-transition",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS05",
+            "familyId": "concurrent-diff",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS06",
+            "familyId": "parser-test-design",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS07",
+            "familyId": "security-audit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS08",
+            "familyId": "explicit-cs",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS09",
+            "familyId": "wal-explanation",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS10",
+            "familyId": "negated-review",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS11",
+            "familyId": "quoted-translation",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS12",
+            "familyId": "missing-action-target",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS13",
+            "familyId": "recipe-no-skill",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS14",
+            "familyId": "queue-test-analysis",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS15",
+            "familyId": "unknown-explicit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS16",
+            "familyId": "korean-edit",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS17",
+            "familyId": "scope-only",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS18",
+            "familyId": "mandatory-security",
+            "semanticOraclePresent": true
+          },
+          {
+            "caseId": "SS19",
+            "familyId": "mechanical-SS19",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS20",
+            "familyId": "mechanical-SS20",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS21",
+            "familyId": "mechanical-SS21",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS22",
+            "familyId": "mechanical-SS22",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS23",
+            "familyId": "mechanical-SS23",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS24",
+            "familyId": "mechanical-SS24",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS25",
+            "familyId": "mechanical-SS25",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS26",
+            "familyId": "mechanical-SS26",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS27",
+            "familyId": "mechanical-SS27",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS28",
+            "familyId": "mechanical-SS28",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS29",
+            "familyId": "mechanical-SS29",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS30",
+            "familyId": "mechanical-SS30",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS31",
+            "familyId": "mechanical-SS31",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS32",
+            "familyId": "mechanical-SS32",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS33",
+            "familyId": "mechanical-SS33",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS34",
+            "familyId": "mechanical-SS34",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS35",
+            "familyId": "mechanical-SS35",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS36",
+            "familyId": "mechanical-SS36",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS37",
+            "familyId": "mechanical-SS37",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS38",
+            "familyId": "mechanical-SS38",
+            "semanticOraclePresent": false
+          },
+          {
+            "caseId": "SS39",
+            "familyId": "mechanical-SS39",
+            "semanticOraclePresent": false
+          }
+        ],
+        "calibration": [
+          "SS01",
+          "SS02",
+          "SS03",
+          "SS08",
+          "SS15",
+          "SS18"
+        ],
+        "holdout": [
+          "SS04",
+          "SS05",
+          "SS06",
+          "SS07",
+          "SS09",
+          "SS10",
+          "SS11",
+          "SS12",
+          "SS13",
+          "SS14",
+          "SS16",
+          "SS17",
+          "SS03"
+        ]
+      },
+      "unsupportedContext": null,
+      "observedIssues": [
+        "DUPLICATE_SPLIT_CASE",
+        "FAMILY_LEAKAGE"
+      ],
+      "expected": "reject invalid split",
+      "testStatus": "PASS",
+      "commandRef": "isolated-specification.command.json",
+      "commandExitCode": 1
+    }
+  ],
+  "findings": [
+    {
+      "id": "SS35-GAP-01",
+      "severity": "HIGH",
+      "kind": "unsupported-requirement-input",
+      "rootCause": "Public checkFamilySplit(cases, calibration, holdout) only examines family membership. No threshold/prompt revision or adjustment-history input or post-holdout gate is present.",
+      "sourceRequirement": "번역·동의미 변형을 독립 holdout으로 계산; holdout 결과를 보고 threshold·프롬프트를 조정한 뒤 같은 holdout 점수를 최종 성능으로 재사용.",
+      "location": "tests/skill-classification/evaluation.ts:142-153",
+      "scenarios": [
+        "post-holdout-tuning/threshold",
+        "post-holdout-tuning/prompt",
+        "boundary-missing-history/base"
+      ],
+      "observed": "Same clean split returns [] with no ability to bind synthetic tuning history or missing history. Context is recorded separately and was not accepted by the public API.",
+      "consequence": "Family-disjointness cannot certify independent final holdout performance; no actual final performance claim or live-score reuse was executed.",
+      "requiredInputs": [
+        "trusted frozen thresholdRevision and promptRevision",
+        "holdout access/tuning history",
+        "new holdout artifact after contaminated holdout is reclassified as tuning"
+      ],
+      "count": 1
+    },
+    {
+      "id": "SS35-GAP-02",
+      "severity": "HIGH",
+      "kind": "invalid-runtime-input-not-rejected",
+      "rootCause": "The runtime entry point does not validate each case familyId. A missing/null/blank calibration-only family maps to a value absent from holdout and returns no issues.",
+      "sourceRequirement": "family 구분이나 조정 이력이 없어 독립성을 확인할 수 없음.",
+      "location": "tests/skill-classification/evaluation.ts:144-149",
+      "scenarios": [
+        "boundary-missing-family/absent",
+        "boundary-missing-family/null",
+        "boundary-missing-family/blank"
+      ],
+      "observed": "Deleting or clearing SS03 familyId produces [] instead of rejection or deferral. These inputs violate the TypeScript string type; no runtime check is provided by this exported helper.",
+      "consequence": "Caller must validate family records before relying on family split check. Frozen baseline fixture is well-formed.",
+      "count": 1
+    },
+    {
+      "id": "SS35-GAP-03",
+      "severity": "HIGH",
+      "kind": "duplicate-runtime-row-overwrite",
+      "rootCause": "new Map(cases.map(...)) overwrites a duplicate caseId with the last familyId; uniqueness is checked only for split IDs, not source rows.",
+      "sourceRequirement": "의미군 교집합 0, 정답·분할·threshold·프롬프트 revision 고정. 잘못된 split 변형은 반드시 FAIL한다.",
+      "location": "tests/skill-classification/evaluation.ts:144-149",
+      "scenarios": [
+        "boundary-conflicting-case-family/base"
+      ],
+      "observed": "SS01 calibration and SS02 holdout returns FAMILY_LEAKAGE. Appending a duplicate SS02 row with conflicting familyId makes the same split return [].",
+      "consequence": "Conflicting duplicate source rows can conceal translation family leakage at the helper boundary. No frozen fixture changes were made.",
+      "count": 1
+    }
+  ],
+  "rootCauseCount": 3,
+  "failedAssertions": 7,
+  "knownDefectRelations": {
+    "costLostWithInvalidRESP": "NOTRUN: outside SS35 split scope",
+    "timeoutOverflow": "NOTRUN: outside SS35 split scope",
+    "metadataConditionDuplicates": "NOTRUN: duplicate family rows are a distinct evaluator input boundary, not demonstrated same root cause",
+    "hostActiveStateSupplyGap": "NOTRUN: no host invocation",
+    "concurrencyPreRecheckGap": "NOTRUN: no host invocation",
+    "countingPolicy": "3 root causes, not 7 defects; no duplication of provided known discoveries"
+  },
+  "commands": [
+    {
+      "caseId": "SS35",
+      "executionKind": "existing-regression",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/evaluation.test.ts",
+        "-t",
+        "rejects translations and synonyms leaking across split",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE>/existing-vitest.json"
+      ],
+      "cwd": "<REPO>",
+      "exitCode": 0,
+      "startedAt": "2026-10-09T02:58:24.527686+00:00",
+      "finishedAt": "2026-10-09T02:58:25.374083+00:00",
+      "API0": true,
+      "hostReceipt": null
+    },
+    {
+      "caseId": "SS35",
+      "executionKind": "new-offline-specification-variants",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/SS35-isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE>/isolated-vitest.json"
+      ],
+      "cwd": "<REPO>",
+      "exitCode": 1,
+      "startedAt": "2026-10-09T02:58:24.527652+00:00",
+      "finishedAt": "2026-10-09T02:58:25.435371+00:00",
+      "API0": true,
+      "hostReceipt": null
+    },
+    {
+      "caseId": "SS35",
+      "argv": [
+        "node",
+        "skills/test-engineering/scripts/run.mjs",
+        "check-proof",
+        "--root",
+        "<WORKSPACE>",
+        "--plan",
+        "SS35-evidence/engineering-test-plan.json",
+        "--proof",
+        "SS35-evidence/engineering-test-proof.json"
+      ],
+      "cwd": "<REPO>",
+      "exitCode": 1,
+      "executionKind": "unsigned-offline-consistency-check",
+      "API0": true
+    }
+  ],
+  "evidence": {
+    "existingRegression": {
+      "testsRun": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 14,
+      "exitCode": 0,
+      "path": "existing-vitest.json"
+    },
+    "newVariants": {
+      "testsRun": 17,
+      "passed": 10,
+      "failed": 7,
+      "skipped": 0,
+      "exitCode": 1,
+      "path": "isolated-vitest.json"
+    },
+    "localEngineeringConsistency": {
+      "plan": "READY",
+      "proofResult": "INCOMPLETE",
+      "exitCode": 1,
+      "path": "engineering-test-result.json",
+      "reason": "No product mutations or fix permitted; paired red/green NOTRUN. Existing actual assertions and observations retained. No forged host receipt."
+    }
+  },
+  "metrics": {
+    "semanticAccuracy": null,
+    "precision": null,
+    "recall": null,
+    "purposeSuccessRate": null,
+    "reason": "SS35 oracle null; test counts are not semantic model accuracy"
+  },
+  "observations": {
+    "jevRaw": null,
+    "vendorRaw": null,
+    "combined": null,
+    "selected": null,
+    "selectedSkillIds": null,
+    "hostReceipt": null,
+    "stages": {
+      "selected": {
+        "status": "NOTRUN",
+        "evidence": null
+      },
+      "read": {
+        "status": "NOTRUN",
+        "evidence": null
+      },
+      "applied": {
+        "status": "NOTRUN",
+        "evidence": null
+      },
+      "verified": {
+        "status": "NOTRUN",
+        "evidence": null
+      }
+    },
+    "nullVsEmpty": "null means no observation or accepted selection. observedIssues=[] means structural checker emitted no issues; never accepted AGENT no-skill selection."
+  },
+  "revisionFreeze": {
+    "oracle": "PASS digest matches fixed oracle",
+    "split": "PASS frozen fixture bytes and revision",
+    "threshold": "BLOCKED missing real frozen revision",
+    "prompt": "BLOCKED missing real classification profile/prompt revision",
+    "adjustmentHistory": "BLOCKED no real holdout/tuning history artifact",
+    "independentHoldoutClaim": false
+  },
+  "hostLive": {
+    "status": "NOTRUN",
+    "neededForThisOfflineCase": false,
+    "supportInRepository": [
+      ".mcp.json: node mcp-server/dist/server.mjs stdio entry point",
+      "hooks/hooks.json: PreToolUse host-attestation hook for classify_skills and record_skill_selection",
+      "mcp-server/src/skill-classification/runtime.ts: approved remote/native provider runtime",
+      "tests/skill-classification/live-bootstrap/bootstrap.mts: prepare selects public nonempty prompts; SS35 has null originalPrompt and is excluded"
+    ],
+    "currentEnvironment": {
+      "AGSCallableTools": [],
+      "classificationConfigEnvironmentPresent": false,
+      "workspaceAgentsSkillsExists": false,
+      "repoAgentsSkillsExists": false,
+      "cloudClaudeDirectoryPresent": true,
+      "cloudClaudeInvocations": 0
+    },
+    "requiredInputs": [
+      "trusted AGS plugin installation with real host hooks and tool-call identity/attestation",
+      "full installed inventory and actual active/supported state",
+      "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG plus bound qualified profile, approved route/native adapter and current budget only if a later live model test is authorized",
+      "AGENT-chosen exact IDs plus reasons; signed host accepted receipt; actual per-stage evidence",
+      "frozen family taxonomy, oracle/split/threshold/prompt revisions and independent adjustment-history/new holdout provenance"
+    ],
+    "note": "No receipt fabricated and no model calls. SS35 does not itself prescribe a classification prompt or new skill selection. Later live scores must use valid fresh held-out prompts; past 21 runs are not to be replayed."
+  },
+  "workerActivity": {
+    "selectedSkill": "test-engineering",
+    "selectionKind": "worker manual task choice, not tested host acceptance",
+    "readFiles": [
+      "AGENTS.md",
+      "skills/test-engineering/SKILL.md",
+      "skills/evaluation-validity-auditor/SKILL.md",
+      "skills/orchestrator/SKILL.md",
+      "skills/orchestrator/references/skill-classification.md",
+      "skills/orchestrator/references/engineering-practices/test-design.md",
+      "skills/orchestrator/references/engineering-practices/test-proof.md",
+      "skills/orchestrator/references/engineering-practices/cli.md"
+    ],
+    "appliedArtifacts": [
+      "engineering-test-plan.json",
+      "engineering-test-proof.json",
+      "engineering-test-result.json",
+      "isolated-vitest.json"
+    ],
+    "note": "Worker reading and test writing is separate from case selection/read/applied/verified host observations."
+  },
+  "missingInputs": [
+    "Real threshold and prompt revision freeze",
+    "Real adjustment/access history and fresh unseen holdout provenance",
+    "Host installation/accepted-selection/stage evidence only for later live application"
+  ],
+  "remainingBlockers": [
+    "Product support for tuning-history/revision independence not implemented at inspected boundary",
+    "Runtime validation of case family completeness and unique source case IDs absent",
+    "No authorized product fix or green candidate; await follow-up candidate for same SS35 task"
+  ],
+  "reproduction": [
+    "node",
+    "scripts/run-tests.mjs",
+    "tests/skill-classification/SS35-isolated.test.ts",
+    "--reporter=json",
+    "--outputFile=<EVIDENCE>/isolated-vitest.json"
+  ]
+}

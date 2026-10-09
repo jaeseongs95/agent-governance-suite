@@ -1,0 +1,19 @@
+{
+  "caseId": "SS35",
+  "executionKind": "existing-regression",
+  "argv": [
+    "node",
+    "scripts/run-tests.mjs",
+    "tests/skill-classification/evaluation.test.ts",
+    "-t",
+    "rejects translations and synonyms leaking across split",
+    "--reporter=json",
+    "--outputFile=<EVIDENCE>/existing-vitest.json"
+  ],
+  "cwd": "<REPO>",
+  "exitCode": 0,
+  "startedAt": "2026-10-09T02:58:24.527686+00:00",
+  "finishedAt": "2026-10-09T02:58:25.374083+00:00",
+  "API0": true,
+  "hostReceipt": null
+}

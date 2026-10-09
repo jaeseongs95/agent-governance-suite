@@ -1,0 +1,275 @@
+{
+  "numTotalTestSuites": 2,
+  "numPassedTestSuites": 0,
+  "numFailedTestSuites": 2,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 17,
+  "numPassedTests": 10,
+  "numFailedTests": 7,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514705077,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "SS35 isolated offline specification checks"
+          ],
+          "fullName": "SS35 isolated offline specification checks SS35 frozen identity and null operational oracle",
+          "status": "passed",
+          "title": "SS35 frozen identity and null operational oracle",
+          "duration": 5.713193000000018,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS35 isolated offline specification checks"
+          ],
+          "fullName": "SS35 isolated offline specification checks SS35 family-clean accepts only family-disjoint structural split",
+          "status": "passed",
+          "title": "SS35 family-clean accepts only family-disjoint structural split",
+          "duration": 2.021273000000008,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS35 isolated offline specification checks"
+          ],
+          "fullName": "SS35 isolated offline specification checks SS35 translation-leak base must FAIL the split",
+          "status": "passed",
+          "title": "SS35 translation-leak base must FAIL the split",
+          "duration": 0.6894900000000064,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS35 isolated offline specification checks"
+          ],
+          "fullName": "SS35 isolated offline specification checks SS35 translation-leak reverse must FAIL the split",
+          "status": "passed",
+          "title": "SS35 translation-leak reverse must FAIL the split",
+          "duration": 0.7359880000000203,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS35 isolated offline specification checks"
+          ],
+          "fullName": "SS35 isolated offline specification checks SS35 paraphrase-leak base must FAIL the split",
+          "status": "passed",
+          "title": "SS35 paraphrase-leak base must FAIL the split",
+          "duration": 0.767957000000024,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS35 isolated offline specification checks"
+          ],
+          "fullName": "SS35 isolated offline specification checks SS35 paraphrase-leak reverse must FAIL the split",
+          "status": "passed",
+          "title": "SS35 paraphrase-leak reverse must FAIL the split",
+          "duration": 0.6481029999999919,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS35 isolated offline specification checks"
+          ],
+          "fullName": "SS35 isolated offline specification checks SS35 post-holdout-tuning threshold must not pass independence gate",
+          "status": "failed",
+          "title": "SS35 post-holdout-tuning threshold must not pass independence gate",
+          "duration": 6.088476000000014,
+          "failureMessages": [
+            "AssertionError: SS35_TUNING_HISTORY_INPUT_UNSUPPORTED: public split boundary cannot reject known contaminated frame: expected [] to not deeply equal []\n    at <REPO>/tests/skill-classification/SS35-isolated.test.ts:31:136"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS35 isolated offline specification checks"
+          ],
+          "fullName": "SS35 isolated offline specification checks SS35 post-holdout-tuning prompt must not pass independence gate",
+          "status": "failed",
+          "title": "SS35 post-holdout-tuning prompt must not pass independence gate",
+          "duration": 1.801271000000014,
+          "failureMessages": [
+            "AssertionError: SS35_TUNING_HISTORY_INPUT_UNSUPPORTED: public split boundary cannot reject known contaminated frame: expected [] to not deeply equal []\n    at <REPO>/tests/skill-classification/SS35-isolated.test.ts:31:136"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS35 isolated offline specification checks"
+          ],
+          "fullName": "SS35 isolated offline specification checks SS35 missing family absent must not be treated as independent",
+          "status": "failed",
+          "title": "SS35 missing family absent must not be treated as independent",
+          "duration": 1.8010110000000168,
+          "failureMessages": [
+            "AssertionError: SS35_MISSING_FAMILY_NOT_REJECTED: specification requires deferral when family membership unavailable: expected [] to not deeply equal []\n    at <REPO>/tests/skill-classification/SS35-isolated.test.ts:35:137"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS35 isolated offline specification checks"
+          ],
+          "fullName": "SS35 isolated offline specification checks SS35 missing family null must not be treated as independent",
+          "status": "failed",
+          "title": "SS35 missing family null must not be treated as independent",
+          "duration": 2.503955999999988,
+          "failureMessages": [
+            "AssertionError: SS35_MISSING_FAMILY_NOT_REJECTED: specification requires deferral when family membership unavailable: expected [] to not deeply equal []\n    at <REPO>/tests/skill-classification/SS35-isolated.test.ts:35:137"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS35 isolated offline specification checks"
+          ],
+          "fullName": "SS35 isolated offline specification checks SS35 missing family blank must not be treated as independent",
+          "status": "failed",
+          "title": "SS35 missing family blank must not be treated as independent",
+          "duration": 1.0884969999999896,
+          "failureMessages": [
+            "AssertionError: SS35_MISSING_FAMILY_NOT_REJECTED: specification requires deferral when family membership unavailable: expected [] to not deeply equal []\n    at <REPO>/tests/skill-classification/SS35-isolated.test.ts:35:137"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS35 isolated offline specification checks"
+          ],
+          "fullName": "SS35 isolated offline specification checks SS35 duplicate conflicting source row must not hide translation leakage",
+          "status": "failed",
+          "title": "SS35 duplicate conflicting source row must not hide translation leakage",
+          "duration": 0.9329559999999901,
+          "failureMessages": [
+            "AssertionError: SS35_CONFLICTING_FAMILY_OVERWRITE: duplicate caseId must not hide original shared family: expected [] to not deeply equal []\n    at <REPO>/tests/skill-classification/SS35-isolated.test.ts:38:163"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS35 isolated offline specification checks"
+          ],
+          "fullName": "SS35 isolated offline specification checks SS35 missing adjustment history must not pass independent claim",
+          "status": "failed",
+          "title": "SS35 missing adjustment history must not pass independent claim",
+          "duration": 0.8335610000000031,
+          "failureMessages": [
+            "AssertionError: SS35_TUNING_HISTORY_INPUT_UNSUPPORTED: missing history cannot establish independence: expected [] to not deeply equal []\n    at <REPO>/tests/skill-classification/SS35-isolated.test.ts:41:151"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS35 isolated offline specification checks"
+          ],
+          "fullName": "SS35 isolated offline specification checks SS35 duplicate split case is rejected",
+          "status": "passed",
+          "title": "SS35 duplicate split case is rejected",
+          "duration": 0.5360830000000192,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS35 isolated offline specification checks"
+          ],
+          "fullName": "SS35 isolated offline specification checks SS35 unknown split case is rejected",
+          "status": "passed",
+          "title": "SS35 unknown split case is rejected",
+          "duration": 0.5859959999999944,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS35 isolated offline specification checks"
+          ],
+          "fullName": "SS35 isolated offline specification checks SS35 unassigned semantic row is rejected",
+          "status": "passed",
+          "title": "SS35 unassigned semantic row is rejected",
+          "duration": 0.5364040000000045,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS35 isolated offline specification checks"
+          ],
+          "fullName": "SS35 isolated offline specification checks SS35 same case on both sides is rejected",
+          "status": "passed",
+          "title": "SS35 same case on both sides is rejected",
+          "duration": 0.535191999999995,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514705329,
+      "endTime": 1791514705357.5352,
+      "status": "failed",
+      "message": "",
+      "name": "<REPO>/tests/skill-classification/SS35-isolated.test.ts"
+    }
+  ]
+}

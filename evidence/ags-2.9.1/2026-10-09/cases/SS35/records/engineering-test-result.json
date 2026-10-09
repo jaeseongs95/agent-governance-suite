@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:f957f4fcf000afa7bf880945d77366b00a388c475966d51d59c87eba4086b9ad",
+  "reportDigest": "sha256:2c4062e1a6e1eeeeb3ea1f19cb9fc20fcaeb8a08230b567e548ca6b0f942b9e4",
+  "issues": [
+    "REQUIRED SS35-offline-all-variants: NOT_RUN — Only frozen product is authorized. Specification tests were executed with actual failing assertions; paired red-green/mutation proof is NOT_RUN because product mutation or fixes are prohibited. See isolated-vitest.json and isolated-specification.command.json. This proof is not host selection evidence."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

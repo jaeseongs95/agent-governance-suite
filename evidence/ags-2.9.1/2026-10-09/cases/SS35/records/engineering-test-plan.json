@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS35-fixed-c6a8019",
+  "contractDigest": "sha256:9892b15d4cd2b0df34b960abeb098ab57ecfb243768031d14f6e4208bcc5e62c",
+  "requirements": [
+    "SS35-FAMILY-ISOLATION",
+    "SS35-TUNING-INDEPENDENCE",
+    "SS35-MISSING-PROVENANCE-DEFERRAL",
+    "SS35-FROZEN-REVISIONS",
+    "SS35-NULL-NOT-EMPTY"
+  ],
+  "scopeFiles": [
+    "SS35-repo/tests/skill-classification/evaluation.ts",
+    "SS35-repo/tests/skill-classification/fixtures.json",
+    "SS35-repo/tests/skill-classification/SS35-probes.ts",
+    "SS35-repo/tests/skill-classification/SS35-isolated.test.ts"
+  ],
+  "runner": "Existing Vitest 5 via scripts/run-tests.mjs; no build, no pnpm test, no new dependencies",
+  "environment": "Independent Cloud Linux Node 24.19.0 pnpm 11.19.0; fixed commit; API 0; existing node_modules symlink for runner only",
+  "cases": [
+    {
+      "id": "SS35-offline-all-variants",
+      "requirementIds": [
+        "SS35-FAMILY-ISOLATION",
+        "SS35-TUNING-INDEPENDENCE",
+        "SS35-MISSING-PROVENANCE-DEFERRAL",
+        "SS35-FROZEN-REVISIONS",
+        "SS35-NULL-NOT-EMPTY"
+      ],
+      "scenario": "4 declared variants plus complete-partition leak tests and invalid-family/history boundaries",
+      "entryPoint": "tests/skill-classification/evaluation.ts#checkFamilySplit; scoreCase/aggregate null-oracle guard only",
+      "level": "unit",
+      "expectedBehavior": "Reject same-family split; reject or defer contaminated/missing-history or missing-family independence claims; preserve null oracle and null score",
+      "oracle": "Embedded SS35 sourceSpec.fields only; no semantic skill-answer oracle",
+      "testFiles": [
+        "SS35-repo/tests/skill-classification/SS35-probes.ts",
+        "SS35-repo/tests/skill-classification/SS35-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Specification-derived failing assertions and direct public boundary observations; product mutation/fix prohibited so no red-green claim",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/SS35-isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE>/isolated-vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "All other case execution and full suite",
+    "Any model/vendor/Claude/JEV calls",
+    "21 completed historical runs",
+    "Host signed selection/read/apply/verify receipts",
+    "Product source changes; push/PR/release",
+    "Independent holdout/model accuracy claim; SS35 oracle is null"
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-proof",
+  "planDigest": "sha256:645f736ad8f3a0bd28f4ee4a4f144f026aed36971894ae4a85c1d98190159a27",
+  "candidate": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-snapshot",
+    "files": [
+      {
+        "path": "SS35-repo/tests/skill-classification/SS35-isolated.test.ts",
+        "digest": "sha256:3557fca8324357bbfc47fbcbd9d337343a6907d2f8ffe948981dec74d2db39ee",
+        "size": 3921,
+        "lineCount": 47
+      },
+      {
+        "path": "SS35-repo/tests/skill-classification/SS35-probes.ts",
+        "digest": "sha256:f882761766c911c375c8bd4c67c46d1de7256e0a4fa7716512739ff63de6f3d7",
+        "size": 4054,
+        "lineCount": 41
+      },
+      {
+        "path": "SS35-repo/tests/skill-classification/evaluation.ts",
+        "digest": "sha256:e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+        "size": 16532,
+        "lineCount": 223
+      },
+      {
+        "path": "SS35-repo/tests/skill-classification/fixtures.json",
+        "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "size": 142450,
+        "lineCount": 2912
+      }
+    ],
+    "digest": "sha256:f957f4fcf000afa7bf880945d77366b00a388c475966d51d59c87eba4086b9ad"
+  },
+  "proofs": [
+    {
+      "caseId": "SS35-offline-all-variants",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Only frozen product is authorized. Specification tests were executed with actual failing assertions; paired red-green/mutation proof is NOT_RUN because product mutation or fixes are prohibited. See isolated-vitest.json and isolated-specification.command.json. This proof is not host selection evidence."
+    }
+  ]
+}

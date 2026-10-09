@@ -1,0 +1,18 @@
+{
+  "caseId": "SS35",
+  "argv": [
+    "node",
+    "skills/test-engineering/scripts/run.mjs",
+    "check-proof",
+    "--root",
+    "<WORKSPACE>",
+    "--plan",
+    "SS35-evidence/engineering-test-plan.json",
+    "--proof",
+    "SS35-evidence/engineering-test-proof.json"
+  ],
+  "cwd": "<REPO>",
+  "exitCode": 1,
+  "executionKind": "unsigned-offline-consistency-check",
+  "API0": true
+}

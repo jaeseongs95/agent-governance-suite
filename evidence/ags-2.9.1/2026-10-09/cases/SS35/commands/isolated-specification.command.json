@@ -1,0 +1,17 @@
+{
+  "caseId": "SS35",
+  "executionKind": "new-offline-specification-variants",
+  "argv": [
+    "node",
+    "scripts/run-tests.mjs",
+    "tests/skill-classification/SS35-isolated.test.ts",
+    "--reporter=json",
+    "--outputFile=<EVIDENCE>/isolated-vitest.json"
+  ],
+  "cwd": "<REPO>",
+  "exitCode": 1,
+  "startedAt": "2026-10-09T02:58:24.527652+00:00",
+  "finishedAt": "2026-10-09T02:58:25.435371+00:00",
+  "API0": true,
+  "hostReceipt": null
+}

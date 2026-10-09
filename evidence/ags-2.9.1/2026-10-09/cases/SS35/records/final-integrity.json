@@ -1,0 +1,20 @@
+{
+  "caseId": "SS35",
+  "status": "PASS",
+  "scope": "evidence consistency and product tracked-file preservation only",
+  "fixedIdentity": [
+    "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "28f2f2ed8a864405320f6d20e7bc5004e8466ad3"
+  ],
+  "checks": [
+    "all 4 declared variants recorded",
+    "17 tests = 10 PASS + 7 FAIL",
+    "3 grouped causes",
+    "source oracle and prompt null preserved",
+    "all host stages NOTRUN and selected null",
+    "declared snapshot bytes unchanged",
+    "git diff --exit-code = 0"
+  ],
+  "API0": true,
+  "claim": "This does not override case FAIL, issue a host receipt, or establish independent holdout validity."
+}

@@ -1,0 +1,354 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS35",
+  "kind": "public-package-manifest",
+  "candidate": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "requestedBranch": "codex/skill-classification-2.9.1",
+    "checkout": "detached fixed commit worktree; branch not mutated",
+    "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "computedOracleDigestVerified": true,
+    "fixtureRevision": "ags-classification-seq7-oracle-v1",
+    "oracleRevision": "pre-live-source-reviewed-v1",
+    "splitRevision": "public-regression-v1",
+    "thresholdRevision": null,
+    "promptRevision": null
+  },
+  "packageScope": "evidence/ags-2.9.1/2026-10-09/cases/SS35/",
+  "originalAssessment": "FAIL",
+  "missingOriginals": [],
+  "patch": "NO_EXISTING_PATCH",
+  "publicationNewTests": 0,
+  "publicationAPIcalls": 0,
+  "hostStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "manifestHashPolicy": "Payload entries exclude manifest.json and SHA256SUMS; sums includes manifest and excludes itself",
+  "files": [
+    {
+      "path": "README.md",
+      "publicBytes": 5214,
+      "publicSHA256": "f939109ed2e473eac5531b53a6d50c0448d1f527899dcc092c0ebf67e0f8fe12",
+      "transformation": "derived publication metadata; not a new test result",
+      "original": {
+        "status": "NOT_AN_ORIGINAL",
+        "reference": null
+      }
+    },
+    {
+      "path": "commands/engineering-check-proof.command.json",
+      "publicBytes": 385,
+      "publicSHA256": "b0066e30d7b7152fa904095fef9649cfb5d1d8aeb80ade7b670383646e303c92",
+      "transformation": "sanitized existing command/exit record: private cwd/output paths replaced by placeholders, argv/exit and historical timestamps retained",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "engineering-check-proof.command.json",
+        "bytes": 398,
+        "sha256": "9b72bc818172e5fc6e4cfa5809fe28d85086c50c47ce9d8d1b6a833903a9b437"
+      }
+    },
+    {
+      "path": "commands/existing-regression.command.json",
+      "publicBytes": 500,
+      "publicSHA256": "2f3024d3ba923cbd0eee4ac463205cb2abbdbfdf7ac083b1eb8e7f2b569f9962",
+      "transformation": "sanitized existing command/exit record: private cwd/output paths replaced by placeholders, argv/exit and historical timestamps retained",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "existing-regression.command.json",
+        "bytes": 528,
+        "sha256": "e8e24fb76ee1108a32a8617d59acef87d4c0d6876a8fcea575cf5c8d6d779cdc"
+      }
+    },
+    {
+      "path": "commands/isolated-specification.command.json",
+      "publicBytes": 446,
+      "publicSHA256": "0ad2859ddf17ffb4132e846f230b54db36b91a7db214cc971473a5d3f836bd98",
+      "transformation": "sanitized existing command/exit record: private cwd/output paths replaced by placeholders, argv/exit and historical timestamps retained",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "isolated-specification.command.json",
+        "bytes": 474,
+        "sha256": "fcebeeb66b1c49ea46563a541dc9908154c194393fd8763e9a86b7dc2edafce5"
+      }
+    },
+    {
+      "path": "fixtures/frozen-fixtures.json",
+      "publicBytes": 142450,
+      "publicSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "transformation": "exact frozen public fixture bytes; unrelated case data is included only to bind SS35 split inputs, no other case was executed",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "repo@c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6:tests/skill-classification/fixtures.json",
+        "bytes": 142450,
+        "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9"
+      }
+    },
+    {
+      "path": "fixtures/oracle-digest-preimage.json",
+      "publicBytes": 112149,
+      "publicSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+      "transformation": "derived exact JSON.stringify projection of embedded frozen oracle; hash matches frozen oracleSHA256; no standalone original oracle file is claimed",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "repo@c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6:tests/skill-classification/fixtures.json",
+        "bytes": 142450,
+        "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9"
+      }
+    },
+    {
+      "path": "logs/engineering-check-proof.stderr.log",
+      "publicBytes": 0,
+      "publicSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "sanitized existing stdout/stderr: private paths replaced; nonessential process IDs omitted; exit and cancellation state retained",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "engineering-check-proof.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "path": "logs/existing-regression.stderr.log",
+      "publicBytes": 92,
+      "publicSHA256": "926e47abf45ac67910cdd4aef8bb0d6d1a114d195116463422f806a0fcb4ae01",
+      "transformation": "sanitized existing stdout/stderr: private paths replaced; nonessential process IDs omitted; exit and cancellation state retained",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "existing-regression.stderr.log",
+        "bytes": 155,
+        "sha256": "d0d42243131dc19ce780d1bc34943c372e6208b458c3101f92a0e4266fe43bf1"
+      }
+    },
+    {
+      "path": "logs/existing-regression.stdout.log",
+      "publicBytes": 55,
+      "publicSHA256": "c5d481531e08eaeb33a97d3822fe43a0a7e58c897dc1f542aabedf40df996efd",
+      "transformation": "sanitized existing stdout/stderr: private paths replaced; nonessential process IDs omitted; exit and cancellation state retained",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "existing-regression.stdout.log",
+        "bytes": 69,
+        "sha256": "dccb81fbfa45edd43b305fdc670491701d47fc07e486ec6529eec3f7791ffa50"
+      }
+    },
+    {
+      "path": "logs/existing-vitest.json",
+      "publicBytes": 8167,
+      "publicSHA256": "014eed073f44e8db525e35820db49bf3ca9f29d13c6071d4e0e90f8ca69ac9e6",
+      "transformation": "sanitized existing Vitest JSON: retain counts, status, assertions, first failure line and SS35 test frames; remove dependency stack frames; replace private paths",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "existing-vitest.json",
+        "bytes": 5890,
+        "sha256": "75ade07e1b383db594339862e234f3439fcf536eed5f4cb29fc5fd387ed1c017"
+      }
+    },
+    {
+      "path": "logs/isolated-specification.stderr.log",
+      "publicBytes": 92,
+      "publicSHA256": "23ef70c7bfa9b1952becf051f5dc3b8ccaf267c9ccc02d95a2bbe1b26149ec47",
+      "transformation": "sanitized existing stdout/stderr: private paths replaced; nonessential process IDs omitted; exit and cancellation state retained",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "isolated-specification.stderr.log",
+        "bytes": 155,
+        "sha256": "e4708a58ee24b5980928e7b0a8e318d28c0e18ab95486aa26cf7540f64570318"
+      }
+    },
+    {
+      "path": "logs/isolated-specification.stdout.log",
+      "publicBytes": 55,
+      "publicSHA256": "d1443bfc43d821def71384fe5783c8c644ea7ba52b19ce7a662e27a178386124",
+      "transformation": "sanitized existing stdout/stderr: private paths replaced; nonessential process IDs omitted; exit and cancellation state retained",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "isolated-specification.stdout.log",
+        "bytes": 69,
+        "sha256": "54433761469c0289c284a64772d96a37d372dd0a4c82ede1e1c013608f91ac63"
+      }
+    },
+    {
+      "path": "logs/isolated-vitest.json",
+      "publicBytes": 10974,
+      "publicSHA256": "6d48e03fd8d2b8377562322ec6494961cfca31e0867368cd52c9b267a6bd93d7",
+      "transformation": "sanitized existing Vitest JSON: retain counts, status, assertions, first failure line and SS35 test frames; remove dependency stack frames; replace private paths",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "isolated-vitest.json",
+        "bytes": 19352,
+        "sha256": "76c6a1f9a6f6e4b31a33692c9363cb6e30bf5995f1859933a8b5938d03957b63"
+      }
+    },
+    {
+      "path": "original-inventory/artifact-sha256.json",
+      "publicBytes": 2012,
+      "publicSHA256": "67e0c36f7f65a55a16bf4f096d056ddf74dedd0829d2e13b0c1b3b3aff7e4284",
+      "transformation": "sanitized existing record: replace machine-local paths with symbolic placeholders; preserve statuses, null/[] and numeric results",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "artifact-sha256.json",
+        "bytes": 2012,
+        "sha256": "67e0c36f7f65a55a16bf4f096d056ddf74dedd0829d2e13b0c1b3b3aff7e4284"
+      }
+    },
+    {
+      "path": "patch-status.json",
+      "publicBytes": 244,
+      "publicSHA256": "75cb99443498f2d6b267475d61157ea512ee663b1308d96ab6b96a7bcd6f546f",
+      "transformation": "derived publication metadata; not a new test result",
+      "original": {
+        "status": "NOT_AN_ORIGINAL",
+        "reference": null
+      }
+    },
+    {
+      "path": "records/SS35.report.md",
+      "publicBytes": 4497,
+      "publicSHA256": "5b8eaae3057bd111794b45427f6d8217622105964636979dd9556d6f016459c9",
+      "transformation": "sanitized existing narrative; local paths replaced with placeholders",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "SS35.report.md",
+        "bytes": 4539,
+        "sha256": "41ae91a5752835cea73bf9e0194c46d234c9f50cdc8c2f7fb1bd149fe17a1af2"
+      }
+    },
+    {
+      "path": "records/SS35.result.json",
+      "publicBytes": 129705,
+      "publicSHA256": "dd569fbe2f550f922a4a99c55bd1b2868b2682c0d89b76a9f87fb82966db635e",
+      "transformation": "sanitized existing record: replace machine-local paths with symbolic placeholders; preserve statuses, null/[] and numeric results",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "SS35.result.json",
+        "bytes": 129788,
+        "sha256": "00755dd3d7a15d71c6c9e7e3de432c8b90033d42ae5df7097e4379245156f36a"
+      }
+    },
+    {
+      "path": "records/SS35.source.json",
+      "publicBytes": 1783,
+      "publicSHA256": "1d02ddd4a4c538a5b45ee1fd04809c74486f21cd4df8f26f29a850d4c741aa2c",
+      "transformation": "sanitized existing record: replace machine-local paths with symbolic placeholders; preserve statuses, null/[] and numeric results",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "SS35.source.json",
+        "bytes": 1783,
+        "sha256": "1d02ddd4a4c538a5b45ee1fd04809c74486f21cd4df8f26f29a850d4c741aa2c"
+      }
+    },
+    {
+      "path": "records/engineering-plan-result.json",
+      "publicBytes": 233,
+      "publicSHA256": "9ecafec58d1daba30cf5c638eac58dc8753c43aa6cba44267892b61fc5af0bf7",
+      "transformation": "sanitized existing record: replace machine-local paths with symbolic placeholders; preserve statuses, null/[] and numeric results",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "engineering-plan-result.json",
+        "bytes": 233,
+        "sha256": "9ecafec58d1daba30cf5c638eac58dc8753c43aa6cba44267892b61fc5af0bf7"
+      }
+    },
+    {
+      "path": "records/engineering-snapshot.json",
+      "publicBytes": 1040,
+      "publicSHA256": "3b0789a3dac7a0c6c7872e7d2d883d0fc5497e33a1a865012f27c664dfa021f1",
+      "transformation": "sanitized existing record: replace machine-local paths with symbolic placeholders; preserve statuses, null/[] and numeric results",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "engineering-snapshot.json",
+        "bytes": 1040,
+        "sha256": "3b0789a3dac7a0c6c7872e7d2d883d0fc5497e33a1a865012f27c664dfa021f1"
+      }
+    },
+    {
+      "path": "records/engineering-test-plan.json",
+      "publicBytes": 2612,
+      "publicSHA256": "3e00fdf49712f1a9b632629f66d14e828ad92d915f7b6799f2028d52a5aae269",
+      "transformation": "sanitized existing record: replace machine-local paths with symbolic placeholders; preserve statuses, null/[] and numeric results",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "engineering-test-plan.json",
+        "bytes": 2626,
+        "sha256": "d3dc0e0b165c9a8a0d0db29f0c9ddb14755fb2afe6ea41fb8fd3936e74b457ab"
+      }
+    },
+    {
+      "path": "records/engineering-test-proof.json",
+      "publicBytes": 2029,
+      "publicSHA256": "971676c19e086d36618f15966d2d3ca055cd17d4a5f6dda3f2ca6cff77dcb44e",
+      "transformation": "sanitized existing record: replace machine-local paths with symbolic placeholders; preserve statuses, null/[] and numeric results",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "engineering-test-proof.json",
+        "bytes": 2029,
+        "sha256": "971676c19e086d36618f15966d2d3ca055cd17d4a5f6dda3f2ca6cff77dcb44e"
+      }
+    },
+    {
+      "path": "records/engineering-test-result.json",
+      "publicBytes": 1049,
+      "publicSHA256": "e65bfb73139bce07fea9bf2e4fc8897581545f0e6b3a381e5379c528a963ee6a",
+      "transformation": "sanitized existing record: replace machine-local paths with symbolic placeholders; preserve statuses, null/[] and numeric results",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "engineering-test-result.json",
+        "bytes": 1049,
+        "sha256": "e65bfb73139bce07fea9bf2e4fc8897581545f0e6b3a381e5379c528a963ee6a"
+      }
+    },
+    {
+      "path": "records/final-integrity.json",
+      "publicBytes": 656,
+      "publicSHA256": "9b0d92952589dbdfb2ebfcff68257af35ba04c5a8149feb18757f7a7d7685321",
+      "transformation": "sanitized existing record: replace machine-local paths with symbolic placeholders; preserve statuses, null/[] and numeric results",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "final-integrity.json",
+        "bytes": 656,
+        "sha256": "9b0d92952589dbdfb2ebfcff68257af35ba04c5a8149feb18757f7a7d7685321"
+      }
+    },
+    {
+      "path": "records/isolated-observations.json",
+      "publicBytes": 95611,
+      "publicSHA256": "6375a05b867f16f64e1f1bc82c80076cf3b0917b26ac83c92139bfc9f76653d2",
+      "transformation": "sanitized existing record: replace machine-local paths with symbolic placeholders; preserve statuses, null/[] and numeric results",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "isolated-observations.json",
+        "bytes": 95611,
+        "sha256": "6375a05b867f16f64e1f1bc82c80076cf3b0917b26ac83c92139bfc9f76653d2"
+      }
+    },
+    {
+      "path": "reproduction/SS35-isolated.test.ts",
+      "publicBytes": 3921,
+      "publicSHA256": "3557fca8324357bbfc47fbcbd9d337343a6907d2f8ffe948981dec74d2db39ee",
+      "transformation": "reproduction adaptation only: machine-specific observation output becomes a URL relative to test file; no assertions or expected outcomes changed; NOT EXECUTED",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "repo@c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6:tests/skill-classification/SS35-isolated.test.ts (original untracked test)",
+        "bytes": 3921,
+        "sha256": "3557fca8324357bbfc47fbcbd9d337343a6907d2f8ffe948981dec74d2db39ee"
+      }
+    },
+    {
+      "path": "reproduction/SS35-probes.ts",
+      "publicBytes": 4065,
+      "publicSHA256": "cb85ec162551583e004cb2a6313b048b3ee86f083e2c804d629ce643d4f1221d",
+      "transformation": "reproduction adaptation only: machine-specific observation output becomes a URL relative to test file; no assertions or expected outcomes changed; NOT EXECUTED",
+      "original": {
+        "status": "RECOVERED",
+        "reference": "repo@c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6:tests/skill-classification/SS35-probes.ts (original untracked test)",
+        "bytes": 4054,
+        "sha256": "f882761766c911c375c8bd4c67c46d1de7256e0a4fa7716512739ff63de6f3d7"
+      }
+    }
+  ]
+}
