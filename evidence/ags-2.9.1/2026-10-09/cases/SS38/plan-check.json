@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:feaa732fbc5e855736612e6f8abf8495e1aaa4bb70fae6284d77a9d36c41d4fc",
+  "caseIds": [
+    "SS38:paired-matrix",
+    "SS38:replay-contract",
+    "SS38:independent-provider-live",
+    "SS38:host-selection-live",
+    "SS38:unmatched-pair",
+    "SS38:same-wrong",
+    "SS38:null-vs-empty",
+    "SS38:allowed-alternative-disagreement"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "caseId": "SS38",
+  "title": "Codex와 Claude의 같은 목적 선택",
+  "familyId": "mechanical-SS38",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "mock decision-record replay, host-live의 통제된 오류 주입, 각 host의 독립 JEV 및 승인된 사용자 vendor provider-live를 분리한다. 오류 주입은 fallback 통합만 검증하며 실제 인증·네트워크 실패를 실측한 것으로 표시하지 않는다. 진짜 invalid-key·timeout 경계의 실측이 요구되면 승인된 격리 시험환경에서 별도 시행한다.",
+  "originalPrompt": null,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS38",
+    "fields": {
+      "입력": "SS01·SS03·SS04·SS05·SS08·SS09·SS10·SS11·SS14·SS18의 10개 대표 fixture를 두 host에 같은 원문으로 입력한다. prompt digest, 정규화 입력, inventory·스킬 본문·taxonomy·공통 지원·계약 검증·threshold·각 route의 model·reasoning·profile·qualification revision과 사전 비용 근거, JEV ON/OFF 및 timeout 설정, 명시·필수 규칙, 권한, 제공 context를 맞춘다. 각 fixture에서 ON+JEV 정상, OFF→vendor, JEV invalid-key→vendor, JEV timeout→vendor의 4경로를 각각 3쌍 이상 반복한다. 기본 행렬은 10×4×3=120 paired trials이며 각 pair는 Codex 1회와 Claude 1회다.",
+      "필수추천": "두 host의 실제 정규화 agentSelectedSkillIds 집합이 같고, 각자의 집합도 독립 golden 목적 정답을 만족해야 한다. OFF·실패 fallback도 같은 목적 품질을 요구한다. agentSelectedSkillIds=null인 실패·보류와 []인 유효 no-skill을 같다고 정규화하지 않는다.",
+      "금지추천 또는 행동": "같은 오답을 일치율 PASS로 처리; 두 host의 프롬프트·inventory·권한 차이를 감춤; mock/replay를 양host 실JEV 통합으로 표시; Claude 검증을 위해 키를 복사·공유; 한 host의 단회 성공으로 다른 host를 PASS 처리.",
+      "허용선택": "순서는 집합 비교에서 제외하되 정확한 canonical skillId를 사용한다. 명시된 alias만 정규화한다. 동등한 선택지 A가 여러 개라도 두 host 집합이 다르면 agreement는 불일치로 남기고, 각각의 목적 적합성과 별도 보고한다.",
+      "보류조건": "같은 조건을 만들 수 없으면 unmatched pair로 기록하고 동조건 일치율 분모에 넣지 않는다. 없는 표본을 지우지는 않는다. 사용자는 Claude JEV 연결 성공을 직접 관측했다고 보고했다. 해당 시험의 실제 분류·선택·vendor fallback 실행 근거와 승인이 없으면 필요한 실통합은 NOT_RUN이며 출시 조건 미충족이다. 예산이나 권한이 부족하면 남은 live를 보류한다.",
+      "통과기준": "동일 지원 record 재생의 REQ/RESP 계약 parity는 100%를 요구한다. AGENT의 최종 선택 일치는 보장으로 가정하지 않고 실제 결정에서 측정한다. 강제집합 주입은 FAIL이다. 독립 live 호출은 관측한 exact-set agreement, host별 golden-pass, 각 host 내 반복 안정성을 별도 측정하고 필수 대표·경계 표본의 미해결 불일치는 요구 미충족으로 남긴다. 두 host의 실제 ON 선택과 OFF·실패 fallback이 검증되어야 하며, 추천만 같고 read/applied가 빠지는 오류도 별도 실패다. 표본의 100%를 모든 미래 입력의 보장으로 확대하지 않는다.",
+      "증거": "E0·E1·E2·E3·E4 및 pairId, host build·선택 adapter·모델, 입력 동등성 체크, normalized sets, 교집합·차집합, host별 golden 판정, 반복 간 변동, selected/read/applied/verified 각각의 receipt. 불일치는 정규화/노출·inventory/권한·context/JEV 원시응답/상위 선택정책/선택 반영/파일 읽기·적용으로 원인을 나눈다.",
+      "실행종류": "mock decision-record replay, host-live의 통제된 오류 주입, 각 host의 독립 JEV 및 승인된 사용자 vendor provider-live를 분리한다. 오류 주입은 fallback 통합만 검증하며 실제 인증·네트워크 실패를 실측한 것으로 표시하지 않는다. 진짜 invalid-key·timeout 경계의 실측이 요구되면 승인된 격리 시험환경에서 별도 시행한다."
+    },
+    "bodyDigest": "sha256:8757b998fdbc51daf8e99085be692f3da21d5a64fe9d7d32e9a1c49ae4036099"
+  },
+  "oracle": null,
+  "variants": [
+    "paired-matrix",
+    "replay-contract",
+    "independent-provider-live",
+    "host-selection-live",
+    "unmatched-pair",
+    "same-wrong",
+    "null-vs-empty",
+    "allowed-alternative-disagreement"
+  ]
+}

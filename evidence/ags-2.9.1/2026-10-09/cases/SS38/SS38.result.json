@@ -1,0 +1,517 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS38",
+  "overallStatus": "FAIL",
+  "liveStatus": "NOTRUN",
+  "completionClaim": "All eight variants reviewed; independent offline component checks completed; full SS38 operational acceptance not satisfied",
+  "completedAt": "2026-10-09T03:03:11.924853+00:00",
+  "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+  "branch": "codex/skill-classification-2.9.1",
+  "checkout": "detached fixed commit",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "hashVerification": "Observed commit/tree/byte fixture hash match; real oracleDigest(corpus) matches frozen oracle",
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS38",
+    "fields": {
+      "입력": "SS01·SS03·SS04·SS05·SS08·SS09·SS10·SS11·SS14·SS18의 10개 대표 fixture를 두 host에 같은 원문으로 입력한다. prompt digest, 정규화 입력, inventory·스킬 본문·taxonomy·공통 지원·계약 검증·threshold·각 route의 model·reasoning·profile·qualification revision과 사전 비용 근거, JEV ON/OFF 및 timeout 설정, 명시·필수 규칙, 권한, 제공 context를 맞춘다. 각 fixture에서 ON+JEV 정상, OFF→vendor, JEV invalid-key→vendor, JEV timeout→vendor의 4경로를 각각 3쌍 이상 반복한다. 기본 행렬은 10×4×3=120 paired trials이며 각 pair는 Codex 1회와 Claude 1회다.",
+      "필수추천": "두 host의 실제 정규화 agentSelectedSkillIds 집합이 같고, 각자의 집합도 독립 golden 목적 정답을 만족해야 한다. OFF·실패 fallback도 같은 목적 품질을 요구한다. agentSelectedSkillIds=null인 실패·보류와 []인 유효 no-skill을 같다고 정규화하지 않는다.",
+      "금지추천 또는 행동": "같은 오답을 일치율 PASS로 처리; 두 host의 프롬프트·inventory·권한 차이를 감춤; mock/replay를 양host 실JEV 통합으로 표시; Claude 검증을 위해 키를 복사·공유; 한 host의 단회 성공으로 다른 host를 PASS 처리.",
+      "허용선택": "순서는 집합 비교에서 제외하되 정확한 canonical skillId를 사용한다. 명시된 alias만 정규화한다. 동등한 선택지 A가 여러 개라도 두 host 집합이 다르면 agreement는 불일치로 남기고, 각각의 목적 적합성과 별도 보고한다.",
+      "보류조건": "같은 조건을 만들 수 없으면 unmatched pair로 기록하고 동조건 일치율 분모에 넣지 않는다. 없는 표본을 지우지는 않는다. 사용자는 Claude JEV 연결 성공을 직접 관측했다고 보고했다. 해당 시험의 실제 분류·선택·vendor fallback 실행 근거와 승인이 없으면 필요한 실통합은 NOT_RUN이며 출시 조건 미충족이다. 예산이나 권한이 부족하면 남은 live를 보류한다.",
+      "통과기준": "동일 지원 record 재생의 REQ/RESP 계약 parity는 100%를 요구한다. AGENT의 최종 선택 일치는 보장으로 가정하지 않고 실제 결정에서 측정한다. 강제집합 주입은 FAIL이다. 독립 live 호출은 관측한 exact-set agreement, host별 golden-pass, 각 host 내 반복 안정성을 별도 측정하고 필수 대표·경계 표본의 미해결 불일치는 요구 미충족으로 남긴다. 두 host의 실제 ON 선택과 OFF·실패 fallback이 검증되어야 하며, 추천만 같고 read/applied가 빠지는 오류도 별도 실패다. 표본의 100%를 모든 미래 입력의 보장으로 확대하지 않는다.",
+      "증거": "E0·E1·E2·E3·E4 및 pairId, host build·선택 adapter·모델, 입력 동등성 체크, normalized sets, 교집합·차집합, host별 golden 판정, 반복 간 변동, selected/read/applied/verified 각각의 receipt. 불일치는 정규화/노출·inventory/권한·context/JEV 원시응답/상위 선택정책/선택 반영/파일 읽기·적용으로 원인을 나눈다.",
+      "실행종류": "mock decision-record replay, host-live의 통제된 오류 주입, 각 host의 독립 JEV 및 승인된 사용자 vendor provider-live를 분리한다. 오류 주입은 fallback 통합만 검증하며 실제 인증·네트워크 실패를 실측한 것으로 표시하지 않는다. 진짜 invalid-key·timeout 경계의 실측이 요구되면 승인된 격리 시험환경에서 별도 시행한다."
+    },
+    "bodyDigest": "sha256:8757b998fdbc51daf8e99085be692f3da21d5a64fe9d7d32e9a1c49ae4036099"
+  },
+  "originalPrompt": null,
+  "oracle": null,
+  "semanticAccuracy": null,
+  "sourceSpecMissing": "TEST-SPEC.seq7.ko.md absent from fixed repo; embedded SS38 fields used only",
+  "API0": true,
+  "externalCalls": {
+    "jev": 0,
+    "vendorAPI": 0,
+    "claude": 0,
+    "nativeCLI": 0,
+    "past21RunReruns": 0,
+    "credentialReads": 0,
+    "note": "Git fetch/dependency installation network are setup, not classification/vendor API calls"
+  },
+  "executionKinds": [
+    "existing-regression/offline-mock",
+    "new-isolated-spec-test/offline-mock"
+  ],
+  "actualStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "actualAgentSelectedSkillIds": null,
+  "actualPairedTrials": {
+    "expectedPairs": 120,
+    "expectedHostTrials": 240,
+    "observedPairs": 0,
+    "observedHostTrials": 0,
+    "notRunPairs": 120,
+    "exactSetAgreement": null,
+    "hostGoldenPass": {
+      "codex": null,
+      "claude": null
+    },
+    "hostRepeatStability": {
+      "codex": null,
+      "claude": null
+    }
+  },
+  "mockWarning": "Unsigned synthetic sentinel receipts and injected test sets are evaluator inputs ONLY; never accepted by record_skill_selection, never evidence of actual AGENT selection. Replay all-not-needed judgments are arbitrary protocol sentinels, not classifier correctness predictions. Four path labels are planning labels, not fallback executions.",
+  "regressionSummary": {
+    "passed": 5,
+    "filteredOut": 14,
+    "scope": "4 SS38 pair controls plus1 cross-host projection; not entire fixture case PASS"
+  },
+  "isolatedSummary": {
+    "passed": 11,
+    "failed": 5,
+    "notRun": 2,
+    "assertionsExecuted": 16,
+    "rootCauseCount": 4,
+    "exit": 1
+  },
+  "variants": [
+    {
+      "variant": "paired-matrix",
+      "status": "FAIL",
+      "offlineStatus": "FAIL",
+      "executionKind": "offline-mock/new-isolated-spec-test",
+      "command": "pnpm exec vitest run tests/skill-classification/SS38.isolated.test.ts --reporter=json --outputFile=<EVIDENCE_DIR>/isolated.vitest.json",
+      "exit": 1,
+      "commandNote": "Whole isolated file exits1 for five genuine failed assertions; probe statuses are individually in Vitest JSON",
+      "inputEvidence": "SS38.observations.json",
+      "probes": [
+        "matrix",
+        "pair-keys",
+        "one-host",
+        "notrun-stability",
+        "repeat-variation"
+      ],
+      "expected": "Exact 120 pairs/240 host slots retained; no missing observation stability",
+      "observed": "Structure/duplicate/invalid/missing-slot/variation checks PASS; NOTRUN repeats erroneously STABLE",
+      "actualStages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "API0": true,
+      "missingInputs": [
+        "Two actual independent Codex/Claude AGENT sessions and host build/model/selection adapter identities",
+        "Callable get_skill_inventory, classify_skills and record_skill_selection from approved AGS installation; current tools expose none",
+        "Current trusted AGENT_GOVERNANCE_CLASSIFICATION_CONFIG, profile registry, providerRuntimeRef and any nativeAdapterDefinitionsRef",
+        "Actual full inventory/skill text/taxonomy/availability/permission/context/threshold/runtime-condition equality artifacts; generated inventories may differ and must be UNMATCHED until established",
+        "Signed actual host-hook selection observations (hostReceipt=null from caller), task/session-board binding and documented host identity normalization (runtime Claude actor uses claude-code, pair evaluator expects claude)",
+        "Per-host selected/read/applied/verified receipts bound to the same target/artifact/candidate digests",
+        "10 representative prompts ×4 actual routes ×3 repeats, pairId, host-specific golden judgments, intersections/differences and repeat stability; all 240 live slots remain missing"
+      ],
+      "liveStatus": "NOTRUN"
+    },
+    {
+      "variant": "replay-contract",
+      "status": "PASS",
+      "offlineStatus": "PASS",
+      "executionKind": "offline-mock/new-isolated-spec-test",
+      "command": "pnpm exec vitest run tests/skill-classification/SS38.isolated.test.ts --reporter=json --outputFile=<EVIDENCE_DIR>/isolated.vitest.json",
+      "exit": 1,
+      "commandNote": "Whole isolated file exits1 for five genuine failed assertions; probe statuses are individually in Vitest JSON",
+      "inputEvidence": "SS38.observations.json",
+      "probes": [
+        "replay"
+      ],
+      "expected": "Shared records REQ/RESP parity100%; no enforced final sets",
+      "observed": "120 shared mock records, 240 valid real decoder results and 240 corrupted-binding rejections; wire parity120/120; no route dispatched",
+      "actualStages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "API0": true,
+      "missingInputs": [],
+      "liveStatus": "NOTRUN"
+    },
+    {
+      "variant": "independent-provider-live",
+      "status": "NOTRUN",
+      "offlineStatus": "NOTRUN",
+      "executionKind": "NOTRUN",
+      "command": null,
+      "exit": null,
+      "commandNote": "No external/host command invoked",
+      "inputEvidence": "SS38.observations.json",
+      "probes": [],
+      "expected": "Independent real provider evidence for ON/OFF/invalid-key/timeout per host",
+      "observed": "No authorized external calls in assignment; API0 preserved",
+      "actualStages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "API0": true,
+      "missingInputs": [
+        "Explicit new-run authorization preserving API0 at this assignment and no rerun of completed21-run",
+        "Each host independently approved JEV and current-vendor route, credential by ENV reference; no copying/sharing keys",
+        "Qualified fixed model/reasoning/profile/adapter/prompt/qualification revisions with matching inventory/taxonomy and validity",
+        "Per-route allowed transmission, timeout, budget allocations, prior confirmed/unknown spend, cost evidence and approved ledger",
+        "A separate paired-trial provider harness: bootstrap handles 21 public prompts, not 120 paired host trials"
+      ],
+      "liveStatus": "NOTRUN"
+    },
+    {
+      "variant": "host-selection-live",
+      "status": "NOTRUN",
+      "offlineStatus": "FAIL",
+      "executionKind": "offline-mock/new-isolated-spec-test",
+      "command": "pnpm exec vitest run tests/skill-classification/SS38.isolated.test.ts --reporter=json --outputFile=<EVIDENCE_DIR>/isolated.vitest.json",
+      "exit": 1,
+      "commandNote": "Whole isolated file exits1 for five genuine failed assertions; probe statuses are individually in Vitest JSON",
+      "inputEvidence": "SS38.observations.json",
+      "probes": [
+        "missing-stages"
+      ],
+      "expected": "Actual independent final selections and signed stage evidence, missing read/applied failures separately reported",
+      "observed": "Actual host selected/read/applied/verified NOTRUN; synthetic stage omission repro FAIL",
+      "actualStages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "API0": true,
+      "missingInputs": [
+        "Two actual independent Codex/Claude AGENT sessions and host build/model/selection adapter identities",
+        "Callable get_skill_inventory, classify_skills and record_skill_selection from approved AGS installation; current tools expose none",
+        "Current trusted AGENT_GOVERNANCE_CLASSIFICATION_CONFIG, profile registry, providerRuntimeRef and any nativeAdapterDefinitionsRef",
+        "Actual full inventory/skill text/taxonomy/availability/permission/context/threshold/runtime-condition equality artifacts; generated inventories may differ and must be UNMATCHED until established",
+        "Signed actual host-hook selection observations (hostReceipt=null from caller), task/session-board binding and documented host identity normalization (runtime Claude actor uses claude-code, pair evaluator expects claude)",
+        "Per-host selected/read/applied/verified receipts bound to the same target/artifact/candidate digests",
+        "10 representative prompts ×4 actual routes ×3 repeats, pairId, host-specific golden judgments, intersections/differences and repeat stability; all 240 live slots remain missing"
+      ],
+      "liveStatus": "NOTRUN"
+    },
+    {
+      "variant": "unmatched-pair",
+      "status": "FAIL",
+      "offlineStatus": "FAIL",
+      "executionKind": "offline-mock/new-isolated-spec-test",
+      "command": "pnpm exec vitest run tests/skill-classification/SS38.isolated.test.ts --reporter=json --outputFile=<EVIDENCE_DIR>/isolated.vitest.json",
+      "exit": 1,
+      "commandNote": "Whole isolated file exits1 for five genuine failed assertions; probe statuses are individually in Vitest JSON",
+      "inputEvidence": "SS38.observations.json",
+      "probes": [
+        "unmatched-conditionDigest",
+        "unmatched-inventoryDigest",
+        "missing-equivalence"
+      ],
+      "expected": "Mismatch/missing equivalence excluded from agreement denominator and retained",
+      "observed": "Condition/inventory mismatch PASS; two empty condition digests counted as matched FAIL",
+      "actualStages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "API0": true,
+      "missingInputs": [
+        "Two actual independent Codex/Claude AGENT sessions and host build/model/selection adapter identities",
+        "Callable get_skill_inventory, classify_skills and record_skill_selection from approved AGS installation; current tools expose none",
+        "Current trusted AGENT_GOVERNANCE_CLASSIFICATION_CONFIG, profile registry, providerRuntimeRef and any nativeAdapterDefinitionsRef",
+        "Actual full inventory/skill text/taxonomy/availability/permission/context/threshold/runtime-condition equality artifacts; generated inventories may differ and must be UNMATCHED until established",
+        "Signed actual host-hook selection observations (hostReceipt=null from caller), task/session-board binding and documented host identity normalization (runtime Claude actor uses claude-code, pair evaluator expects claude)",
+        "Per-host selected/read/applied/verified receipts bound to the same target/artifact/candidate digests",
+        "10 representative prompts ×4 actual routes ×3 repeats, pairId, host-specific golden judgments, intersections/differences and repeat stability; all 240 live slots remain missing"
+      ],
+      "liveStatus": "NOTRUN"
+    },
+    {
+      "variant": "same-wrong",
+      "status": "PASS",
+      "offlineStatus": "PASS",
+      "executionKind": "offline-mock/new-isolated-spec-test",
+      "command": "pnpm exec vitest run tests/skill-classification/SS38.isolated.test.ts --reporter=json --outputFile=<EVIDENCE_DIR>/isolated.vitest.json",
+      "exit": 1,
+      "commandNote": "Whole isolated file exits1 for five genuine failed assertions; probe statuses are individually in Vitest JSON",
+      "inputEvidence": "SS38.observations.json",
+      "probes": [
+        "same-wrong"
+      ],
+      "expected": "Matching wrong sets agree yet fail independent golden purposes",
+      "observed": "Synthetic SS03 pair agreement1, both goldenFAIL, completedPurposeRate0; no semantic host rerun",
+      "actualStages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "API0": true,
+      "missingInputs": [],
+      "liveStatus": "NOTRUN"
+    },
+    {
+      "variant": "null-vs-empty",
+      "status": "FAIL",
+      "offlineStatus": "FAIL",
+      "executionKind": "offline-mock/new-isolated-spec-test",
+      "command": "pnpm exec vitest run tests/skill-classification/SS38.isolated.test.ts --reporter=json --outputFile=<EVIDENCE_DIR>/isolated.vitest.json",
+      "exit": 1,
+      "commandNote": "Whole isolated file exits1 for five genuine failed assertions; probe statuses are individually in Vitest JSON",
+      "inputEvidence": "SS38.observations.json",
+      "probes": [
+        "null-empty",
+        "null-null-unobserved",
+        "preserve-pair-evidence"
+      ],
+      "expected": "null never collapsed to []; missing selection not measured as actual set; preserve observations",
+      "observed": "null vs[] comparison PASS; null/null NOTRUN comparison and output observation preservation FAIL",
+      "actualStages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "API0": true,
+      "missingInputs": [],
+      "liveStatus": "NOTRUN"
+    },
+    {
+      "variant": "allowed-alternative-disagreement",
+      "status": "PASS",
+      "offlineStatus": "PASS",
+      "executionKind": "offline-mock/new-isolated-spec-test",
+      "command": "pnpm exec vitest run tests/skill-classification/SS38.isolated.test.ts --reporter=json --outputFile=<EVIDENCE_DIR>/isolated.vitest.json",
+      "exit": 1,
+      "commandNote": "Whole isolated file exits1 for five genuine failed assertions; probe statuses are individually in Vitest JSON",
+      "inputEvidence": "SS38.observations.json",
+      "probes": [
+        "alternatives"
+      ],
+      "expected": "Allowed different sets both goldenPASS yet agreementfalse",
+      "observed": "Synthetic SS04 permitted sets produce PASS/PASS purpose, agreementfalse and pairFAIL; no semantic host rerun",
+      "actualStages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "API0": true,
+      "missingInputs": [],
+      "liveStatus": "NOTRUN"
+    }
+  ],
+  "findings": [
+    {
+      "id": "SS38-EVAL-01",
+      "severity": "HIGH",
+      "rootCause": "Missing execution-state and observed-selection eligibility checks before agreement/stability aggregation",
+      "probes": [
+        "null-null-unobserved",
+        "notrun-stability"
+      ],
+      "source": "tests/skill-classification/evaluation.ts:177,182,185-189",
+      "expected": "NOTRUN/null selection must not enter actual exact-set comparison or prove repeat stability",
+      "observed": "Two state=NOT_RUN, skillIds=null observations give comparedPairs=1/exactSetAgreement=1; three null NOT_RUN repeats give stableGroups=1 for each host",
+      "scope": "Offline evaluator defect; no live AGENT conclusion. Pair overall remains INCOMPLETE_OR_FAIL; falsely elevated agreement/stability only."
+    },
+    {
+      "id": "SS38-EVAL-02",
+      "severity": "HIGH",
+      "rootCause": "Paired scoring omits stage-evidence evaluation and separate stage failures",
+      "probes": [
+        "missing-stages"
+      ],
+      "source": "tests/skill-classification/evaluation.ts:176-180",
+      "expected": "Missing read/applied must be separately reported as failures per SS38 embedded criteria",
+      "observed": "Selected-only synthetic pair returns status=PASS, host golden=PASS/PASS with read/applied/verified all false; separately aggregate.stageCoverage is zero",
+      "scope": "Pair evidence/gating gap. Purpose quality and stage completion should be separate. This is not a real host stage omission or signed selection acceptance."
+    },
+    {
+      "id": "SS38-EVAL-03",
+      "severity": "MEDIUM",
+      "rootCause": "Scored records spread the default expected pair e instead of preserving the supplied trial observations",
+      "probes": [
+        "preserve-pair-evidence"
+      ],
+      "source": "tests/skill-classification/evaluation.ts:171-180",
+      "expected": "Retain supplied host observations, normalized [] vs absent null and evidence necessary for intersection/difference/reasons",
+      "observed": "Valid no-skill []/[] input produces status=PASS record with codex=null and claude=null",
+      "scope": "Returned evaluator record loses evidence. Original input remains in our isolated observations file."
+    },
+    {
+      "id": "SS38-EVAL-04",
+      "severity": "HIGH",
+      "rootCause": "Input equivalence accepts equal opaque digests without evidence/schema validity",
+      "probes": [
+        "missing-equivalence"
+      ],
+      "source": "tests/skill-classification/evaluation.ts:173",
+      "expected": "Missing equality evidence must be UNMATCHED/invalid and excluded from matched comparison denominator",
+      "observed": "conditionDigest=\"\" on both hosts yields comparedPairs=1, agreement=1, pair status=PASS",
+      "scope": "Offline evaluator trust-boundary defect, not reproduction of host active-state or pre-concurrency recheck bug."
+    }
+  ],
+  "knownDefectConnections": {
+    "invalidResponseCostLoss": "NOT_REPRODUCED: corrupted response rejected, but no valid actual billing/cost exercised",
+    "timeoutOverflow": "NOTRUN: no timer/service timeout boundary exercised",
+    "metadataConditionDuplication": "NOTRUN: no relevant metadata condition mutation exercised",
+    "hostActiveStateSupplyGap": "NOTRUN as runtime defect; actual host availability/equivalence input absent; not counted as a new occurrence",
+    "preConcurrencyRecheckGap": "NOTRUN: no gateway concurrent selection test executed",
+    "R14": "New evaluator findings reported; no bootstrap/selfcheck/manifest/product edits; no dependency on pending SS12/SS15 typo scoring candidate"
+  },
+  "commands": [
+    {
+      "kind": "setup",
+      "command": "git clone --no-checkout --single-branch --branch codex/skill-classification-2.9.1 https://github.com/jaeseongs95/agent-governance-suite.git <REPO> && git -C <REPO> checkout --detach c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "exit": 0
+    },
+    {
+      "kind": "setup",
+      "command": "pnpm install --frozen-lockfile",
+      "exit": 254,
+      "note": "Default store directory unavailable; resolved using explicit writable store. No approval failure."
+    },
+    {
+      "kind": "setup",
+      "command": "pnpm install --frozen-lockfile --store-dir <PNPM_STORE>",
+      "exit": 0,
+      "note": "Dependency installation only; product unchanged; no provider API calls."
+    },
+    {
+      "kind": "existing-regression",
+      "command": "pnpm exec vitest run tests/skill-classification/evaluation.test.ts -t 'retains all 120 pairs|fails two equally wrong hosts|reports allowed alternatives|measures within-host repeat stability' --reporter=json --outputFile=<EVIDENCE_DIR>/existing-pairs.vitest.json",
+      "exit": 0,
+      "passed": 4,
+      "filteredOut": 11,
+      "evidence": "existing-pairs.vitest.json"
+    },
+    {
+      "kind": "existing-regression",
+      "command": "pnpm exec vitest run tests/mcp/skill-classification-claude-projection.test.ts -t 'keeps canonical meaning for every skill' --reporter=json --outputFile=<EVIDENCE_DIR>/existing-projection.vitest.json",
+      "exit": 0,
+      "passed": 1,
+      "filteredOut": 3,
+      "evidence": "existing-projection.vitest.json",
+      "note": "Generated projection fixture, no Claude CLI/API. Canonical meaning equal; actual inventory digests intentionally differ. Does not establish matched live inventories."
+    },
+    {
+      "kind": "new-isolated-spec-test",
+      "command": "pnpm exec vitest run tests/skill-classification/SS38.isolated.test.ts --reporter=json --outputFile=<EVIDENCE_DIR>/isolated.vitest.json",
+      "exit": 1,
+      "passed": 11,
+      "failed": 5,
+      "notRun": 2,
+      "evidence": "isolated.vitest.json"
+    },
+    {
+      "kind": "local-plan-consistency",
+      "command": "node skills/test-engineering/scripts/run.mjs check-plan --root <REPO> --plan tests/skill-classification/SS38.plan.json",
+      "exit": 0,
+      "evidence": "plan-check.json",
+      "verdict": "READY"
+    },
+    {
+      "kind": "local-sensitivity-proof-consistency",
+      "command": "node skills/test-engineering/scripts/run.mjs check-proof --root <REPO> --plan tests/skill-classification/SS38.plan.json --proof tests/skill-classification/SS38.proof.json",
+      "exit": 1,
+      "evidence": "proof-check.json",
+      "verdict": "INCOMPLETE",
+      "note": "No alternate green candidate or product mutations. Red-green/mutation sensitivity proof remains NOTRUN; separate actual spec assertions executed."
+    },
+    {
+      "kind": "integrity",
+      "command": "git diff --exit-code; git diff --check; git rev-parse HEAD HEAD^{tree}; sha256sum tests/skill-classification/fixtures.json",
+      "exit": 0,
+      "note": "Tracked product files unchanged. Only SS38 test/plan/proof/scope files untracked."
+    }
+  ],
+  "environment": {
+    "configEnvironmentPresent": false,
+    "codexExecutable": "<CODEX_EXECUTABLE>",
+    "claudeExecutable": null,
+    "AGSCallableTools": [],
+    "workspaceAgentsSkillsExists": false,
+    "repoAgentsSkillsExists": false,
+    "noCredentialsRead": true,
+    "noCLIInvoked": true
+  },
+  "supportPath": {
+    "native": "mcp-server/src/skill-classification/native-adapters.ts:createNativeClassificationAdapters; this provides classification support only, not AGENT final selection",
+    "installation": "mcp-server/src/index.ts reads AGENT_GOVERNANCE_CLASSIFICATION_CONFIG and trusted registry/runtime/native definitions",
+    "selection": "RuntimeSkillClassificationGateway.accept requires actual signed host observation/task binding and rejects caller-supplied hostReceipt",
+    "bootstrap": "tests/skill-classification/live-bootstrap/bootstrap.mts prepare <private-config> is a separate21-public-input qualification entry, not SS38 paired-host harness; not invoked"
+  },
+  "remainingBlockers": [
+    "Explicit new-run authorization preserving API0 at this assignment and no rerun of completed21-run",
+    "Each host independently approved JEV and current-vendor route, credential by ENV reference; no copying/sharing keys",
+    "Qualified fixed model/reasoning/profile/adapter/prompt/qualification revisions with matching inventory/taxonomy and validity",
+    "Per-route allowed transmission, timeout, budget allocations, prior confirmed/unknown spend, cost evidence and approved ledger",
+    "A separate paired-trial provider harness: bootstrap handles 21 public prompts, not 120 paired host trials",
+    "Two actual independent Codex/Claude AGENT sessions and host build/model/selection adapter identities",
+    "Callable get_skill_inventory, classify_skills and record_skill_selection from approved AGS installation; current tools expose none",
+    "Current trusted AGENT_GOVERNANCE_CLASSIFICATION_CONFIG, profile registry, providerRuntimeRef and any nativeAdapterDefinitionsRef",
+    "Actual full inventory/skill text/taxonomy/availability/permission/context/threshold/runtime-condition equality artifacts; generated inventories may differ and must be UNMATCHED until established",
+    "Signed actual host-hook selection observations (hostReceipt=null from caller), task/session-board binding and documented host identity normalization (runtime Claude actor uses claude-code, pair evaluator expects claude)",
+    "Per-host selected/read/applied/verified receipts bound to the same target/artifact/candidate digests",
+    "10 representative prompts ×4 actual routes ×3 repeats, pairId, host-specific golden judgments, intersections/differences and repeat stability; all 240 live slots remain missing"
+  ],
+  "sensitivityProof": {
+    "status": "NOTRUN",
+    "consistencyVerdict": "INCOMPLETE",
+    "reason": "No modified green product candidate; do not claim red-green/mutation proof from ordinary PASS/FAIL tests"
+  },
+  "trackedSourceModified": false,
+  "pushPRReleasePerformed": false,
+  "followUp": "Continue this SS38 task on explicit corrected evaluator candidate; rerun unchanged SS38 test bytes and report new commit/tree/hashes, preserving initial evidence. No product fix applied here.",
+  "originalEvidenceFileHashes": {
+    "isolated.exit": "sha256:4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "SS38.isolated.test.ts": "sha256:0e3819eb5c19b3d0094be55cca13a00452de7844967a5e2fdd09569c9497e22d",
+    "proof-check.initial-error.stderr": "sha256:e891695086076a246b4c2817579a97fb4da57c1bd3bff83379f4aaafc61ec019",
+    "SS38.replay-contract.json": "sha256:8cdb990708b52b5c8aa040a51e3f8696ce7a8f58260fc187be3aeb9dcd990037",
+    "proof-check.json": "sha256:4cb55e12e9e7b42e62a8872efafb352216e0f3188be7d7f03791eb419a341c36",
+    "existing-projection.log": "sha256:79ccc3f503019204925cae9f65b890e0f137136fe9b7afeb8c56f04923f3f7f0",
+    "SS38.scope-files.json": "sha256:ef5edcc14e7c5d0b61fb0a9d74b2498d22a4b2a1751e2f2592c0ea8fd19908df",
+    "host-capabilities.json": "sha256:52a22ac6acf9c0291454e6b0081e33d57f91d4dcbc35843bc5e55cb3fa30dc47",
+    "SS38.replay-contract.index.json": "sha256:c0045de3d9a89356d1e3705e5f66384f921f71a19c08386897d7f8624cbc1aab",
+    "proof-check.exit": "sha256:4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "existing-projection.vitest.json": "sha256:5563d460a3c1a81a126b89b43973aa467f05fce0fb841d100c54c21ca6e670f0",
+    "SS38.plan.json": "sha256:d90d7b2a9def53bf60d1ff0af98144513303af241b615541d6c0f18d9b8fa6c8",
+    "SS38.replay-contract.json.gz": "sha256:da9ad8d9d60738adaf0368e971bd34329c6e4893a9aa56fc0e5d520814cb650c",
+    "isolated.log": "sha256:54996e2a51807887a09916236dd8c74ea30a60991a97fa6f683854dad94a758a",
+    "existing-projection.exit": "sha256:9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "SS38.source.json": "sha256:2179e2f7107049a7b2696a7da8409e3d0732c91d105e2438571c2b98028fb796",
+    "SS38.representatives.json": "sha256:918fc8892987ea8afac4945fe8818165f04d2a108599ac30c764156f71803595",
+    "SS38.observations.json": "sha256:319000cc8850411296a4b44e8877dcf4ff6f697845114425e663f7b31ac56636",
+    "plan-check.json": "sha256:d9473895dc75d013af6364e7fecd58a55f7aa752f7b6aa6e8174cbe11e9f2a5b",
+    "isolated.vitest.json": "sha256:ab63355901eb73f287cb320586154be78affa7137e187a00e504ce58126a430d",
+    "candidate-snapshot.json": "sha256:477d099c26935d43cd33d188cc2a4aa61c109f073c14a0d1870d8a97d17699af",
+    "existing-pairs.log": "sha256:16b6742b9476f49e04550a18f6fc7801b17856b9ebd30b51252901d502ea4d42",
+    "SS38.proof.json": "sha256:23a13a0d49152474ef03ee7d35ddbafd1d60fad511245b912ce28968f07af23c",
+    "proof-check.stderr": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "existing-pairs.vitest.json": "sha256:31efd8b9bbdab38a07bb8b57169a9f3d6fc5b025ced4f05c329107f09e2a93d2"
+  },
+  "publication": {
+    "newTests": 0,
+    "newProviderOrHostCalls": 0,
+    "patchStatus": "NO_PRODUCT_PATCH_EXISTS",
+    "originalResultFile": "SS38.result.json",
+    "originalResultBytes": 31323,
+    "originalResultSHA256": "ef37f1fbdf8b072920873122dd34e165655803997b3df4816bb03756cb09a332",
+    "publicView": "Sanitized existing result; original hashes refer to original private bytes, public hashes are in manifest.json",
+    "missingOriginalLogs": "See manifest.json originalRecovery",
+    "reportedStatusesUnchanged": true
+  }
+}

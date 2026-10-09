@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-snapshot",
+  "files": [
+    {
+      "path": "mcp-server/src/skill-classification/native-adapters.ts",
+      "digest": "sha256:dc6a0e763b175b077cee401d9020144d49b99f143b34da88059fbf4da5bc39f6",
+      "size": 13788,
+      "lineCount": 192
+    },
+    {
+      "path": "mcp-server/src/skill-classification/request.ts",
+      "digest": "sha256:1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f",
+      "size": 7093,
+      "lineCount": 99
+    },
+    {
+      "path": "mcp-server/src/skill-classification/validation.ts",
+      "digest": "sha256:70f988d9e5d49f8eaef55ca0ff378b4819798ff8141bd09119691c2cffb2891f",
+      "size": 8449,
+      "lineCount": 107
+    },
+    {
+      "path": "tests/skill-classification/SS38.isolated.test.ts",
+      "digest": "sha256:0e3819eb5c19b3d0094be55cca13a00452de7844967a5e2fdd09569c9497e22d",
+      "size": 16916,
+      "lineCount": 171
+    },
+    {
+      "path": "tests/skill-classification/evaluation.ts",
+      "digest": "sha256:e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+      "size": 16532,
+      "lineCount": 223
+    },
+    {
+      "path": "tests/skill-classification/fixtures.json",
+      "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "size": 142450,
+      "lineCount": 2912
+    },
+    {
+      "path": "vitest.config.mjs",
+      "digest": "sha256:cfcc4d27a36e48897ecd19d376decbb8683fc42c8489babcc89846fe9df98fdb",
+      "size": 374,
+      "lineCount": 11
+    }
+  ],
+  "digest": "sha256:84c7732307423fd80dd84ec664926cb4e2b4c35e27c0f204c91f04b50e45fa0d"
+}

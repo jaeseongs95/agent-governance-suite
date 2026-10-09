@@ -1,0 +1,570 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS38",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cases/SS38/",
+  "payloadFiles": [
+    {
+      "path": "SS38.source.json",
+      "publicBytes": 4666,
+      "publicSHA256": "2179e2f7107049a7b2696a7da8409e3d0732c91d105e2438571c2b98028fb796",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Local paths replaced with placeholders only; parsed JSON reserialized; original digests and statuses retained",
+      "originalFile": "SS38.source.json",
+      "originalBytes": 4666,
+      "originalSHA256": "2179e2f7107049a7b2696a7da8409e3d0732c91d105e2438571c2b98028fb796"
+    },
+    {
+      "path": "SS38.representatives.json",
+      "publicBytes": 43393,
+      "publicSHA256": "918fc8892987ea8afac4945fe8818165f04d2a108599ac30c764156f71803595",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Local paths replaced with placeholders only; parsed JSON reserialized; original digests and statuses retained",
+      "originalFile": "SS38.representatives.json",
+      "originalBytes": 43393,
+      "originalSHA256": "918fc8892987ea8afac4945fe8818165f04d2a108599ac30c764156f71803595"
+    },
+    {
+      "path": "SS38.observations.json",
+      "publicBytes": 309863,
+      "publicSHA256": "319000cc8850411296a4b44e8877dcf4ff6f697845114425e663f7b31ac56636",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Local paths replaced with placeholders only; parsed JSON reserialized; original digests and statuses retained",
+      "originalFile": "SS38.observations.json",
+      "originalBytes": 309863,
+      "originalSHA256": "319000cc8850411296a4b44e8877dcf4ff6f697845114425e663f7b31ac56636"
+    },
+    {
+      "path": "SS38.replay-contract.index.json",
+      "publicBytes": 850141,
+      "publicSHA256": "c0045de3d9a89356d1e3705e5f66384f921f71a19c08386897d7f8624cbc1aab",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Local paths replaced with placeholders only; parsed JSON reserialized; original digests and statuses retained",
+      "originalFile": "SS38.replay-contract.index.json",
+      "originalBytes": 850141,
+      "originalSHA256": "c0045de3d9a89356d1e3705e5f66384f921f71a19c08386897d7f8624cbc1aab"
+    },
+    {
+      "path": "SS38.scope-files.json",
+      "publicBytes": 339,
+      "publicSHA256": "00cb56188faa69fc610678cc6f969828767524b611d64007e249872c93605665",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Local paths replaced with placeholders only; parsed JSON reserialized; original digests and statuses retained",
+      "originalFile": "SS38.scope-files.json",
+      "originalBytes": 323,
+      "originalSHA256": "ef5edcc14e7c5d0b61fb0a9d74b2498d22a4b2a1751e2f2592c0ea8fd19908df"
+    },
+    {
+      "path": "candidate-snapshot.json",
+      "publicBytes": 1621,
+      "publicSHA256": "477d099c26935d43cd33d188cc2a4aa61c109f073c14a0d1870d8a97d17699af",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Local paths replaced with placeholders only; parsed JSON reserialized; original digests and statuses retained",
+      "originalFile": "candidate-snapshot.json",
+      "originalBytes": 1621,
+      "originalSHA256": "477d099c26935d43cd33d188cc2a4aa61c109f073c14a0d1870d8a97d17699af"
+    },
+    {
+      "path": "plan-check.json",
+      "publicBytes": 445,
+      "publicSHA256": "d9473895dc75d013af6364e7fecd58a55f7aa752f7b6aa6e8174cbe11e9f2a5b",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Local paths replaced with placeholders only; parsed JSON reserialized; original digests and statuses retained",
+      "originalFile": "plan-check.json",
+      "originalBytes": 445,
+      "originalSHA256": "d9473895dc75d013af6364e7fecd58a55f7aa752f7b6aa6e8174cbe11e9f2a5b"
+    },
+    {
+      "path": "proof-check.json",
+      "publicBytes": 2936,
+      "publicSHA256": "4b670640861768ec707b4d74df0b660d9c1d158f5f13bc341c1b10e1849e021c",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Local paths replaced with placeholders only; parsed JSON reserialized; original digests and statuses retained",
+      "originalFile": "proof-check.json",
+      "originalBytes": 3016,
+      "originalSHA256": "4cb55e12e9e7b42e62a8872efafb352216e0f3188be7d7f03791eb419a341c36"
+    },
+    {
+      "path": "SS38.plan.json",
+      "publicBytes": 15648,
+      "publicSHA256": "e11b8d325243cd2ad7185eca2ce8e282173f88434f1a2148e3204025c36c4a09",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Local paths replaced with placeholders only; parsed JSON reserialized; original digests and statuses retained",
+      "originalFile": "SS38.plan.json",
+      "originalBytes": 15728,
+      "originalSHA256": "d90d7b2a9def53bf60d1ff0af98144513303af241b615541d6c0f18d9b8fa6c8"
+    },
+    {
+      "path": "SS38.proof.json",
+      "publicBytes": 7186,
+      "publicSHA256": "acaa6b7765b2147466c03b68e694ad01d9d22a2cacaa58ab40eb4f32af0f6ec8",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Local paths replaced with placeholders only; parsed JSON reserialized; original digests and statuses retained",
+      "originalFile": "SS38.proof.json",
+      "originalBytes": 7266,
+      "originalSHA256": "23a13a0d49152474ef03ee7d35ddbafd1d60fad511245b912ce28968f07af23c"
+    },
+    {
+      "path": "host-capabilities.json",
+      "publicBytes": 265,
+      "publicSHA256": "fb8f5540e4985f652dd373c989a31efeae9ecba4ba74fa466b7733c8e8a8dc30",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Local paths replaced with placeholders only; parsed JSON reserialized; original digests and statuses retained",
+      "originalFile": "host-capabilities.json",
+      "originalBytes": 267,
+      "originalSHA256": "52a22ac6acf9c0291454e6b0081e33d57f91d4dcbc35843bc5e55cb3fa30dc47"
+    },
+    {
+      "path": "SS38.result.json",
+      "publicBytes": 31697,
+      "publicSHA256": "4b4630db44ad5ab358c75f15c51da9da584535797a817a1e6612c41ddaa4239e",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Local paths replaced with placeholders; original evidence hashes explicitly relabeled; publication provenance appended; all existing statuses/counts preserved",
+      "originalFile": "SS38.result.json",
+      "originalBytes": 31323,
+      "originalSHA256": "ef37f1fbdf8b072920873122dd34e165655803997b3df4816bb03756cb09a332"
+    },
+    {
+      "path": "logs/existing-pairs.vitest.json",
+      "publicBytes": 8290,
+      "publicSHA256": "d9b1e3dbfb6e31ca7806595507082806f6f91a8da204bbbf82dda4ce4152c8f0",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Local paths replaced with placeholders; unnecessary stack frames removed; original test status/count/message unchanged",
+      "originalFile": "existing-pairs.vitest.json",
+      "originalBytes": 5977,
+      "originalSHA256": "31efd8b9bbdab38a07bb8b57169a9f3d6fc5b025ced4f05c329107f09e2a93d2"
+    },
+    {
+      "path": "logs/existing-projection.vitest.json",
+      "publicBytes": 2939,
+      "publicSHA256": "a1c54808b68d07ab8f7fef81422b879517886f4ce8d804e7b2deae7be27d21d8",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Local paths replaced with placeholders; unnecessary stack frames removed; original test status/count/message unchanged",
+      "originalFile": "existing-projection.vitest.json",
+      "originalBytes": 2180,
+      "originalSHA256": "5563d460a3c1a81a126b89b43973aa467f05fce0fb841d100c54c21ca6e670f0"
+    },
+    {
+      "path": "logs/isolated.vitest.json",
+      "publicBytes": 10493,
+      "publicSHA256": "7ac71e1d1a4ea69e9da93fa17f63aa4007478206e4facc6f505010af24564cfa",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Local paths replaced with placeholders; unnecessary stack frames removed; original test status/count/message unchanged",
+      "originalFile": "isolated.vitest.json",
+      "originalBytes": 15468,
+      "originalSHA256": "ab63355901eb73f287cb320586154be78affa7137e187a00e504ce58126a430d"
+    },
+    {
+      "path": "logs/existing-pairs.log",
+      "publicBytes": 65,
+      "publicSHA256": "b4a12d480b70e2153be3a747614fdc01bc23233aeb6e3ffe1e52b531e4c63d1b",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Necessary captured reporter stdout/stderr only; unrelated pnpm update banner removed; local output path replaced",
+      "originalFile": "existing-pairs.log",
+      "originalBytes": 664,
+      "originalSHA256": "16b6742b9476f49e04550a18f6fc7801b17856b9ebd30b51252901d502ea4d42",
+      "note": "Original was captured with stdout and stderr combined; no separate stream files existed"
+    },
+    {
+      "path": "logs/existing-projection.log",
+      "publicBytes": 70,
+      "publicSHA256": "a89964783fe36981593f55401b39b21d0666c54eff646f2d7437602bcc215ee9",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Necessary captured reporter stdout/stderr only; unrelated pnpm update banner removed; local output path replaced",
+      "originalFile": "existing-projection.log",
+      "originalBytes": 669,
+      "originalSHA256": "79ccc3f503019204925cae9f65b890e0f137136fe9b7afeb8c56f04923f3f7f0",
+      "note": "Original was captured with stdout and stderr combined; no separate stream files existed"
+    },
+    {
+      "path": "logs/isolated.log",
+      "publicBytes": 59,
+      "publicSHA256": "cb3e1f12baebffd3eff497cdbba39f91d15082c5ca0aceb8248b76f3067ea51e",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Necessary captured reporter stdout/stderr only; unrelated pnpm update banner removed; local output path replaced",
+      "originalFile": "isolated.log",
+      "originalBytes": 658,
+      "originalSHA256": "54996e2a51807887a09916236dd8c74ea30a60991a97fa6f683854dad94a758a",
+      "note": "Original was captured with stdout and stderr combined; no separate stream files existed"
+    },
+    {
+      "path": "logs/isolated.exit",
+      "publicBytes": 2,
+      "publicSHA256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "unchanged original bytes",
+      "originalFile": "isolated.exit",
+      "originalBytes": 2,
+      "originalSHA256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "path": "logs/existing-projection.exit",
+      "publicBytes": 2,
+      "publicSHA256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "unchanged original bytes",
+      "originalFile": "existing-projection.exit",
+      "originalBytes": 2,
+      "originalSHA256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "logs/proof-check.exit",
+      "publicBytes": 2,
+      "publicSHA256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "unchanged original bytes",
+      "originalFile": "proof-check.exit",
+      "originalBytes": 2,
+      "originalSHA256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "path": "logs/proof-check.stderr",
+      "publicBytes": 0,
+      "publicSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "unchanged original bytes",
+      "originalFile": "proof-check.stderr",
+      "originalBytes": 0,
+      "originalSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/proof-check.initial-error.stderr",
+      "publicBytes": 126,
+      "publicSHA256": "e891695086076a246b4c2817579a97fb4da57c1bd3bff83379f4aaafc61ec019",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "unchanged original bytes",
+      "originalFile": "proof-check.initial-error.stderr",
+      "originalBytes": 126,
+      "originalSHA256": "e891695086076a246b4c2817579a97fb4da57c1bd3bff83379f4aaafc61ec019"
+    },
+    {
+      "path": "SS38.replay-contract.json.gz",
+      "publicBytes": 9087346,
+      "publicSHA256": "da9ad8d9d60738adaf0368e971bd34329c6e4893a9aa56fc0e5d520814cb650c",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Unchanged original gzip bytes",
+      "originalFile": "SS38.replay-contract.json.gz",
+      "originalBytes": 9087346,
+      "originalSHA256": "da9ad8d9d60738adaf0368e971bd34329c6e4893a9aa56fc0e5d520814cb650c",
+      "note": "Decompressed original SS38.replay-contract.json bytes=70542698; SHA256=8cdb990708b52b5c8aa040a51e3f8696ce7a8f58260fc187be3aeb9dcd990037"
+    },
+    {
+      "path": "repro/SS38.isolated.test.ts",
+      "publicBytes": 16981,
+      "publicSHA256": "5b20384a501e01b98b8b1365a3c953326408e1e473e442abb9c2f13f8f1fb36a",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Portable output/dummy executable paths only; node:path import added; test body/assertions unchanged; NOT executed after adaptation",
+      "originalFile": "SS38.isolated.test.ts",
+      "originalBytes": 16916,
+      "originalSHA256": "0e3819eb5c19b3d0094be55cca13a00452de7844967a5e2fdd09569c9497e22d"
+    },
+    {
+      "path": "original-report.public.md",
+      "publicBytes": 2809,
+      "publicSHA256": "725c711bdfdc10c06b14b3cd70413e850241a8122c9f57fd638f28b0051550af",
+      "provenance": "EXISTING_ORIGINAL",
+      "transformation": "Local paths replaced with placeholders only",
+      "originalFile": "SS38.report.md",
+      "originalBytes": 2833,
+      "originalSHA256": "157f2be539081eb62c791064432692d030f486e85843874e08544723e27294ac"
+    },
+    {
+      "path": "repro/REPRODUCE.txt",
+      "publicBytes": 2255,
+      "publicSHA256": "4ef81cfa56b7012e2d73a5a382b6a9d8a41dea48dbd76a5593360ab3ff1adfc1",
+      "provenance": "PUBLICATION_METADATA_ONLY",
+      "transformation": "New reproduction guidance; no commands executed"
+    },
+    {
+      "path": "README.md",
+      "publicBytes": 2268,
+      "publicSHA256": "c9110b1c7d8e0dfc581a75994c25265481c651685cef8162525fca89b59c2e9b",
+      "provenance": "PUBLICATION_METADATA_ONLY",
+      "transformation": "New publication description of existing evidence, no new execution claim"
+    }
+  ],
+  "originalInventory": [
+    {
+      "file": "SS38.isolated.test.ts",
+      "bytes": 16916,
+      "SHA256": "0e3819eb5c19b3d0094be55cca13a00452de7844967a5e2fdd09569c9497e22d",
+      "postedPublicPaths": [
+        "repro/SS38.isolated.test.ts"
+      ]
+    },
+    {
+      "file": "SS38.observations.json",
+      "bytes": 309863,
+      "SHA256": "319000cc8850411296a4b44e8877dcf4ff6f697845114425e663f7b31ac56636",
+      "postedPublicPaths": [
+        "SS38.observations.json"
+      ]
+    },
+    {
+      "file": "SS38.plan.json",
+      "bytes": 15728,
+      "SHA256": "d90d7b2a9def53bf60d1ff0af98144513303af241b615541d6c0f18d9b8fa6c8",
+      "postedPublicPaths": [
+        "SS38.plan.json"
+      ]
+    },
+    {
+      "file": "SS38.proof.json",
+      "bytes": 7266,
+      "SHA256": "23a13a0d49152474ef03ee7d35ddbafd1d60fad511245b912ce28968f07af23c",
+      "postedPublicPaths": [
+        "SS38.proof.json"
+      ]
+    },
+    {
+      "file": "SS38.replay-contract.index.json",
+      "bytes": 850141,
+      "SHA256": "c0045de3d9a89356d1e3705e5f66384f921f71a19c08386897d7f8624cbc1aab",
+      "postedPublicPaths": [
+        "SS38.replay-contract.index.json"
+      ]
+    },
+    {
+      "file": "SS38.replay-contract.json",
+      "bytes": 70542698,
+      "SHA256": "8cdb990708b52b5c8aa040a51e3f8696ce7a8f58260fc187be3aeb9dcd990037",
+      "postedPublicPaths": []
+    },
+    {
+      "file": "SS38.replay-contract.json.gz",
+      "bytes": 9087346,
+      "SHA256": "da9ad8d9d60738adaf0368e971bd34329c6e4893a9aa56fc0e5d520814cb650c",
+      "postedPublicPaths": [
+        "SS38.replay-contract.json.gz"
+      ]
+    },
+    {
+      "file": "SS38.report.md",
+      "bytes": 2833,
+      "SHA256": "157f2be539081eb62c791064432692d030f486e85843874e08544723e27294ac",
+      "postedPublicPaths": [
+        "original-report.public.md"
+      ]
+    },
+    {
+      "file": "SS38.representatives.json",
+      "bytes": 43393,
+      "SHA256": "918fc8892987ea8afac4945fe8818165f04d2a108599ac30c764156f71803595",
+      "postedPublicPaths": [
+        "SS38.representatives.json"
+      ]
+    },
+    {
+      "file": "SS38.result.json",
+      "bytes": 31323,
+      "SHA256": "ef37f1fbdf8b072920873122dd34e165655803997b3df4816bb03756cb09a332",
+      "postedPublicPaths": [
+        "SS38.result.json"
+      ]
+    },
+    {
+      "file": "SS38.scope-files.json",
+      "bytes": 323,
+      "SHA256": "ef5edcc14e7c5d0b61fb0a9d74b2498d22a4b2a1751e2f2592c0ea8fd19908df",
+      "postedPublicPaths": [
+        "SS38.scope-files.json"
+      ]
+    },
+    {
+      "file": "SS38.source.json",
+      "bytes": 4666,
+      "SHA256": "2179e2f7107049a7b2696a7da8409e3d0732c91d105e2438571c2b98028fb796",
+      "postedPublicPaths": [
+        "SS38.source.json"
+      ]
+    },
+    {
+      "file": "build-result.py",
+      "bytes": 18209,
+      "SHA256": "5d6e7f85afe8ff42c9c1231eb5b656a0bd79e13d0b5f3f9a2163e1b79e261d4a",
+      "postedPublicPaths": []
+    },
+    {
+      "file": "candidate-snapshot.json",
+      "bytes": 1621,
+      "SHA256": "477d099c26935d43cd33d188cc2a4aa61c109f073c14a0d1870d8a97d17699af",
+      "postedPublicPaths": [
+        "candidate-snapshot.json"
+      ]
+    },
+    {
+      "file": "existing-pairs.log",
+      "bytes": 664,
+      "SHA256": "16b6742b9476f49e04550a18f6fc7801b17856b9ebd30b51252901d502ea4d42",
+      "postedPublicPaths": [
+        "logs/existing-pairs.log"
+      ]
+    },
+    {
+      "file": "existing-pairs.vitest.json",
+      "bytes": 5977,
+      "SHA256": "31efd8b9bbdab38a07bb8b57169a9f3d6fc5b025ced4f05c329107f09e2a93d2",
+      "postedPublicPaths": [
+        "logs/existing-pairs.vitest.json"
+      ]
+    },
+    {
+      "file": "existing-projection.exit",
+      "bytes": 2,
+      "SHA256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "postedPublicPaths": [
+        "logs/existing-projection.exit"
+      ]
+    },
+    {
+      "file": "existing-projection.log",
+      "bytes": 669,
+      "SHA256": "79ccc3f503019204925cae9f65b890e0f137136fe9b7afeb8c56f04923f3f7f0",
+      "postedPublicPaths": [
+        "logs/existing-projection.log"
+      ]
+    },
+    {
+      "file": "existing-projection.vitest.json",
+      "bytes": 2180,
+      "SHA256": "5563d460a3c1a81a126b89b43973aa467f05fce0fb841d100c54c21ca6e670f0",
+      "postedPublicPaths": [
+        "logs/existing-projection.vitest.json"
+      ]
+    },
+    {
+      "file": "host-capabilities.json",
+      "bytes": 267,
+      "SHA256": "52a22ac6acf9c0291454e6b0081e33d57f91d4dcbc35843bc5e55cb3fa30dc47",
+      "postedPublicPaths": [
+        "host-capabilities.json"
+      ]
+    },
+    {
+      "file": "isolated.exit",
+      "bytes": 2,
+      "SHA256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "postedPublicPaths": [
+        "logs/isolated.exit"
+      ]
+    },
+    {
+      "file": "isolated.log",
+      "bytes": 658,
+      "SHA256": "54996e2a51807887a09916236dd8c74ea30a60991a97fa6f683854dad94a758a",
+      "postedPublicPaths": [
+        "logs/isolated.log"
+      ]
+    },
+    {
+      "file": "isolated.vitest.json",
+      "bytes": 15468,
+      "SHA256": "ab63355901eb73f287cb320586154be78affa7137e187a00e504ce58126a430d",
+      "postedPublicPaths": [
+        "logs/isolated.vitest.json"
+      ]
+    },
+    {
+      "file": "plan-check.json",
+      "bytes": 445,
+      "SHA256": "d9473895dc75d013af6364e7fecd58a55f7aa752f7b6aa6e8174cbe11e9f2a5b",
+      "postedPublicPaths": [
+        "plan-check.json"
+      ]
+    },
+    {
+      "file": "proof-check.exit",
+      "bytes": 2,
+      "SHA256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "postedPublicPaths": [
+        "logs/proof-check.exit"
+      ]
+    },
+    {
+      "file": "proof-check.initial-error.stderr",
+      "bytes": 126,
+      "SHA256": "e891695086076a246b4c2817579a97fb4da57c1bd3bff83379f4aaafc61ec019",
+      "postedPublicPaths": [
+        "logs/proof-check.initial-error.stderr"
+      ]
+    },
+    {
+      "file": "proof-check.json",
+      "bytes": 3016,
+      "SHA256": "4cb55e12e9e7b42e62a8872efafb352216e0f3188be7d7f03791eb419a341c36",
+      "postedPublicPaths": [
+        "proof-check.json"
+      ]
+    },
+    {
+      "file": "proof-check.stderr",
+      "bytes": 0,
+      "SHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "postedPublicPaths": [
+        "logs/proof-check.stderr"
+      ]
+    }
+  ],
+  "originalRecovery": {
+    "missingOriginals": [
+      {
+        "item": "TEST-SPEC.seq7.ko.md",
+        "state": "MISSING_ORIGINAL",
+        "reason": "Not in fixed repository; original evaluation used embedded SS38 sourceSpec.fields only"
+      },
+      {
+        "item": "Separate stdout/stderr for existing-pairs, existing-projection, isolated Vitest executions",
+        "state": "MISSING_ORIGINAL",
+        "reason": "Only combined stdout/stderr .log files originally captured; public logs preserve selected existing lines"
+      },
+      {
+        "item": "Standalone existing-pairs.exit file",
+        "state": "MISSING_ORIGINAL",
+        "reason": "No standalone exit file existed; original SS38.result.json commands records exit0 and existing-pairs.vitest.json success=true"
+      },
+      {
+        "item": "Raw setup clone/checkout/install stdout/stderr, raw integrity and snapshot command logs",
+        "state": "MISSING_ORIGINAL",
+        "reason": "No saved files; original result records command and exit; not reconstructed"
+      }
+    ],
+    "originalResultReferencedFilesRecovered": 25,
+    "originalResultReferencedFilesMissing": [],
+    "omittedPrivateOrUnnecessaryOriginals": [
+      {
+        "file": "build-result.py",
+        "reason": "Packaging helper with private paths, unnecessary to reproduce tests; byte digest recorded below"
+      },
+      {
+        "file": "SS38.replay-contract.json",
+        "reason": "70 MB raw replay retained as existing original gzip with decompressed byte digest"
+      }
+    ],
+    "patch": {
+      "state": "NO_PRODUCT_PATCH_EXISTS",
+      "note": "Original fixed product was never modified. No patch fabricated. Public repro copy has explicitly disclosed path-only adaptations."
+    }
+  },
+  "candidate": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+  },
+  "originalReplayDecompressed": {
+    "file": "SS38.replay-contract.json",
+    "bytes": 70542698,
+    "SHA256": "8cdb990708b52b5c8aa040a51e3f8696ce7a8f58260fc187be3aeb9dcd990037"
+  },
+  "execution": {
+    "newTests": 0,
+    "pastRunReruns": 0,
+    "newProviderOrHostCalls": 0,
+    "originalProviderOrHostCalls": 0,
+    "selected": "NOT_RUN",
+    "read": "NOT_RUN",
+    "applied": "NOT_RUN",
+    "verified": "NOT_RUN"
+  },
+  "hashPolicy": "manifest payloadFiles exclude manifest.json and SHA256SUMS; SHA256SUMS includes payloads+manifest and excludes itself; no circular hashes",
+  "sanitization": "Only existing synthetic/public fixture data and evaluation evidence. No credential values, ENV values, private conversation, user identity/email or personal local paths published."
+}

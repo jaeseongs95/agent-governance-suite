@@ -1,0 +1,9 @@
+[
+  "tests/skill-classification/SS38.isolated.test.ts",
+  "tests/skill-classification/fixtures.json",
+  "tests/skill-classification/evaluation.ts",
+  "mcp-server/src/skill-classification/request.ts",
+  "mcp-server/src/skill-classification/native-adapters.ts",
+  "mcp-server/src/skill-classification/validation.ts",
+  "vitest.config.mjs"
+]

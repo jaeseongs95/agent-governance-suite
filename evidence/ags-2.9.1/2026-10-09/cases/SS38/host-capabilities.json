@@ -1,0 +1,10 @@
+{
+  "configEnvironmentPresent": false,
+  "codexExecutable": "<CODEX_EXECUTABLE>",
+  "claudeExecutable": null,
+  "AGSCallableTools": [],
+  "workspaceAgentsSkillsExists": false,
+  "repoAgentsSkillsExists": false,
+  "noCredentialsRead": true,
+  "noCLIInvoked": true
+}

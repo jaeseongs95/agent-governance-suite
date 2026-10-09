@@ -1,0 +1,282 @@
+{
+  "numTotalTestSuites": 2,
+  "numPassedTestSuites": 0,
+  "numFailedTestSuites": 2,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 18,
+  "numPassedTests": 11,
+  "numFailedTests": 5,
+  "numPendingTests": 2,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514741400,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "SS38 isolated specification boundaries"
+          ],
+          "fullName": "SS38 isolated specification boundaries freezes SS38 null oracle and all eight variants",
+          "status": "passed",
+          "title": "freezes SS38 null oracle and all eight variants",
+          "duration": 4.157113999999979,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS38 isolated specification boundaries"
+          ],
+          "fullName": "SS38 isolated specification boundaries retains exact 10 by 4 by 3 paired matrix and all missing slots",
+          "status": "passed",
+          "title": "retains exact 10 by 4 by 3 paired matrix and all missing slots",
+          "duration": 1.7643279999999777,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS38 isolated specification boundaries"
+          ],
+          "fullName": "SS38 isolated specification boundaries rejects duplicate and invalid pair keys",
+          "status": "passed",
+          "title": "rejects duplicate and invalid pair keys",
+          "duration": 0.8759689999999978,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS38 isolated specification boundaries"
+          ],
+          "fullName": "SS38 isolated specification boundaries counts one missing host as NOTRUN",
+          "status": "passed",
+          "title": "counts one missing host as NOTRUN",
+          "duration": 0.9533000000000129,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS38 isolated specification boundaries"
+          ],
+          "fullName": "SS38 isolated specification boundaries excludes unmatched conditionDigest from agreement denominator",
+          "status": "passed",
+          "title": "excludes unmatched conditionDigest from agreement denominator",
+          "duration": 0.8022799999999961,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS38 isolated specification boundaries"
+          ],
+          "fullName": "SS38 isolated specification boundaries excludes unmatched inventoryDigest from agreement denominator",
+          "status": "passed",
+          "title": "excludes unmatched inventoryDigest from agreement denominator",
+          "duration": 0.6705519999999865,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS38 isolated specification boundaries"
+          ],
+          "fullName": "SS38 isolated specification boundaries same wrong sets agree but fail both golden purposes",
+          "status": "passed",
+          "title": "same wrong sets agree but fail both golden purposes",
+          "duration": 1.111941999999999,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS38 isolated specification boundaries"
+          ],
+          "fullName": "SS38 isolated specification boundaries keeps allowed alternatives purpose PASS and agreement false",
+          "status": "passed",
+          "title": "keeps allowed alternatives purpose PASS and agreement false",
+          "duration": 1.0352169999999887,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS38 isolated specification boundaries"
+          ],
+          "fullName": "SS38 isolated specification boundaries distinguishes null from valid no-skill []",
+          "status": "passed",
+          "title": "distinguishes null from valid no-skill []",
+          "duration": 0.8551980000000299,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS38 isolated specification boundaries"
+          ],
+          "fullName": "SS38 isolated specification boundaries excludes two unobserved null selections from exact-set agreement",
+          "status": "failed",
+          "title": "excludes two unobserved null selections from exact-set agreement",
+          "duration": 7.733980000000031,
+          "failureMessages": [
+            "AssertionError: Unobserved nulls are not actual selected sets: expected 1 to be +0 // Object.is equality"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS38 isolated specification boundaries"
+          ],
+          "fullName": "SS38 isolated specification boundaries does not mark three NOTRUN selections stable",
+          "status": "failed",
+          "title": "does not mark three NOTRUN selections stable",
+          "duration": 2.4515650000000164,
+          "failureMessages": [
+            "AssertionError: Missing observations cannot prove within-host repeat stability: expected [ 1, 1 ] to deeply equal [ +0, +0 ]"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS38 isolated specification boundaries"
+          ],
+          "fullName": "SS38 isolated specification boundaries reports missing read/applied as a separate pair failure",
+          "status": "failed",
+          "title": "reports missing read/applied as a separate pair failure",
+          "duration": 1.5017349999999965,
+          "failureMessages": [
+            "AssertionError: SS38 requires separate failures for recommendations/selection with missing read/applied: expected false to be true // Object.is equality"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS38 isolated specification boundaries"
+          ],
+          "fullName": "SS38 isolated specification boundaries retains supplied normalized selections in paired evidence records",
+          "status": "failed",
+          "title": "retains supplied normalized selections in paired evidence records",
+          "duration": 0.7176529999999843,
+          "failureMessages": [
+            "AssertionError: [] input must remain distinguishable from absent null in emitted pair evidence: expected null not to be null"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS38 isolated specification boundaries"
+          ],
+          "fullName": "SS38 isolated specification boundaries does not treat absent equality evidence as a matched pair",
+          "status": "failed",
+          "title": "does not treat absent equality evidence as a matched pair",
+          "duration": 1.0396839999999656,
+          "failureMessages": [
+            "AssertionError: Two empty condition digests are not an input equivalence check: expected 1 to be +0 // Object.is equality"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS38 isolated specification boundaries"
+          ],
+          "fullName": "SS38 isolated specification boundaries measures actual set variation independently by host",
+          "status": "passed",
+          "title": "measures actual set variation independently by host",
+          "duration": 0.47505999999998494,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS38 isolated specification boundaries"
+          ],
+          "fullName": "SS38 isolated specification boundaries replays shared REQ/RESP records through both real decoders for every planned slot",
+          "status": "passed",
+          "title": "replays shared REQ/RESP records through both real decoders for every planned slot",
+          "duration": 4820.834322,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS38 isolated specification boundaries"
+          ],
+          "fullName": "SS38 isolated specification boundaries independent-provider-live requires explicit route/profile/budget authority; NOTRUN",
+          "status": "skipped",
+          "title": "independent-provider-live requires explicit route/profile/budget authority; NOTRUN",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS38 isolated specification boundaries"
+          ],
+          "fullName": "SS38 isolated specification boundaries host-selection-live requires two real independent AGENT decisions and signed stage evidence; NOTRUN",
+          "status": "skipped",
+          "title": "host-selection-live requires two real independent AGENT decisions and signed stage evidence; NOTRUN",
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514741698,
+      "endTime": 1791514746544.8342,
+      "status": "failed",
+      "message": "",
+      "name": "<REPO>/tests/skill-classification/SS38.isolated.test.ts"
+    }
+  ]
+}

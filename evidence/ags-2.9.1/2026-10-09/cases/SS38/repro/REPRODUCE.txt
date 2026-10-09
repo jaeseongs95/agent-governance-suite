@@ -1,0 +1,18 @@
+SS38 reproduction instructions (NOT executed during publication)
+
+Use the fixed candidate c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6 (tree 28f2f2ed8a864405320f6d20e7bc5004e8466ad3), Node24.19.0 and pnpm11.19.0.
+The evidence branch is not the product source checkout. In a separate candidate checkout, verify tests/skill-classification/fixtures.json SHA256 is 17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9 and frozen oracle is 5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055.
+Copy repro/SS38.isolated.test.ts from this evidence directory into candidate tests/skill-classification/SS38.isolated.test.ts.
+
+From the candidate root (existing dependencies required):
+  SS38_EVIDENCE_OUTPUT="$PWD/ss38-reproduction-output" pnpm exec vitest run tests/skill-classification/SS38.isolated.test.ts --reporter=json --outputFile=ss38-reproduction-output/isolated.vitest.json
+
+Expected original result: exit1, 11 PASS, 5 FAIL, 2 skipped/NOT_RUN. All five failures were real specification assertions, not import/runner errors. The portable public copy was NOT executed: original results apply to original test SHA in manifest; path substitutions are disclosed, not claimed byte-identical.
+
+Existing narrowly scoped regressions, also NOT rerun here:
+  pnpm exec vitest run tests/skill-classification/evaluation.test.ts -t 'retains all 120 pairs|fails two equally wrong hosts|reports allowed alternatives|measures within-host repeat stability'
+  pnpm exec vitest run tests/mcp/skill-classification-claude-projection.test.ts -t 'keeps canonical meaning for every skill'
+Original outcomes: exit0/4 PASS/11 filtered-out, and exit0/1 PASS/3 filtered-out respectively. They do not establish whole-case operational PASS.
+
+No JEV/vendor/Claude/Codex provider API or native CLI is required or permitted by the isolated test. CLI runners and fetch boundary are mocked. Planned route labels are not actual route executions. Synthetic receipts and selected sets are unsigned evaluator sentinels, never real AGENT selections.
+To inspect exact existing replay inputs/expectations/outputs, decompress SS38.replay-contract.json.gz; original decompressed bytes and SHA256 are in manifest. No live reproduction instructions are authorized by this package.

@@ -1,0 +1,243 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS38-fixed-c6a8019-offline",
+  "contractDigest": "sha256:101b5873a87ad76261e3eaa031a60ddb8e7e6898b0a0be3d2e82cbd724946573",
+  "requirements": [
+    "SS38:paired-matrix",
+    "SS38:replay-contract",
+    "SS38:independent-provider-live",
+    "SS38:host-selection-live",
+    "SS38:unmatched-pair",
+    "SS38:same-wrong",
+    "SS38:null-vs-empty",
+    "SS38:allowed-alternative-disagreement"
+  ],
+  "scopeFiles": [
+    "tests/skill-classification/SS38.isolated.test.ts",
+    "tests/skill-classification/fixtures.json",
+    "tests/skill-classification/evaluation.ts",
+    "mcp-server/src/skill-classification/request.ts",
+    "mcp-server/src/skill-classification/native-adapters.ts",
+    "mcp-server/src/skill-classification/validation.ts",
+    "vitest.config.mjs"
+  ],
+  "runner": "Existing Vitest 5.0.0; no pnpm test/build/full suite",
+  "environment": "Independent Cloud Linux workspace, Node24.19, pnpm11.19, mocked fetch/CLI; no credential reads; deterministic sentinels",
+  "cases": [
+    {
+      "id": "SS38:paired-matrix",
+      "requirementIds": [
+        "SS38:paired-matrix"
+      ],
+      "scenario": "paired-matrix; isolated specification sentinels; live dependencies retained NOTRUN",
+      "entryPoint": "pairedMatrix/scorePairs/scoreCase and createClassificationRequest/createNativeClassificationAdapters",
+      "level": "unit",
+      "expectedBehavior": "동일 지원 record 재생의 REQ/RESP 계약 parity는 100%를 요구한다. AGENT의 최종 선택 일치는 보장으로 가정하지 않고 실제 결정에서 측정한다. 강제집합 주입은 FAIL이다. 독립 live 호출은 관측한 exact-set agreement, host별 golden-pass, 각 host 내 반복 안정성을 별도 측정하고 필수 대표·경계 표본의 미해결 불일치는 요구 미충족으로 남긴다. 두 host의 실제 ON 선택과 OFF·실패 fallback이 검증되어야 하며, 추천만 같고 read/applied가 빠지는 오류도 별도 실패다. 표본의 100%를 모든 미래 입력의 보장으로 확대하지 않는다.",
+      "oracle": "Embedded SS38 fields, frozen representative oracles; SS38 oracle=null, no invented semantic accuracy",
+      "testFiles": [
+        "tests/skill-classification/SS38.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product modification authorized; actual specification assertions can remain RED. No mutated green implementation or independent host attestation is fabricated. Live cases remain NOTRUN.",
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/skill-classification/SS38.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_DIR>/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS38:replay-contract",
+      "requirementIds": [
+        "SS38:replay-contract"
+      ],
+      "scenario": "replay-contract; isolated specification sentinels; live dependencies retained NOTRUN",
+      "entryPoint": "pairedMatrix/scorePairs/scoreCase and createClassificationRequest/createNativeClassificationAdapters",
+      "level": "unit",
+      "expectedBehavior": "동일 지원 record 재생의 REQ/RESP 계약 parity는 100%를 요구한다. AGENT의 최종 선택 일치는 보장으로 가정하지 않고 실제 결정에서 측정한다. 강제집합 주입은 FAIL이다. 독립 live 호출은 관측한 exact-set agreement, host별 golden-pass, 각 host 내 반복 안정성을 별도 측정하고 필수 대표·경계 표본의 미해결 불일치는 요구 미충족으로 남긴다. 두 host의 실제 ON 선택과 OFF·실패 fallback이 검증되어야 하며, 추천만 같고 read/applied가 빠지는 오류도 별도 실패다. 표본의 100%를 모든 미래 입력의 보장으로 확대하지 않는다.",
+      "oracle": "Embedded SS38 fields, frozen representative oracles; SS38 oracle=null, no invented semantic accuracy",
+      "testFiles": [
+        "tests/skill-classification/SS38.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product modification authorized; actual specification assertions can remain RED. No mutated green implementation or independent host attestation is fabricated. Live cases remain NOTRUN.",
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/skill-classification/SS38.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_DIR>/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS38:independent-provider-live",
+      "requirementIds": [
+        "SS38:independent-provider-live"
+      ],
+      "scenario": "independent-provider-live; isolated specification sentinels; live dependencies retained NOTRUN",
+      "entryPoint": "pairedMatrix/scorePairs/scoreCase and createClassificationRequest/createNativeClassificationAdapters",
+      "level": "unit",
+      "expectedBehavior": "동일 지원 record 재생의 REQ/RESP 계약 parity는 100%를 요구한다. AGENT의 최종 선택 일치는 보장으로 가정하지 않고 실제 결정에서 측정한다. 강제집합 주입은 FAIL이다. 독립 live 호출은 관측한 exact-set agreement, host별 golden-pass, 각 host 내 반복 안정성을 별도 측정하고 필수 대표·경계 표본의 미해결 불일치는 요구 미충족으로 남긴다. 두 host의 실제 ON 선택과 OFF·실패 fallback이 검증되어야 하며, 추천만 같고 read/applied가 빠지는 오류도 별도 실패다. 표본의 100%를 모든 미래 입력의 보장으로 확대하지 않는다.",
+      "oracle": "Embedded SS38 fields, frozen representative oracles; SS38 oracle=null, no invented semantic accuracy",
+      "testFiles": [
+        "tests/skill-classification/SS38.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product modification authorized; actual specification assertions can remain RED. No mutated green implementation or independent host attestation is fabricated. Live cases remain NOTRUN.",
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/skill-classification/SS38.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_DIR>/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS38:host-selection-live",
+      "requirementIds": [
+        "SS38:host-selection-live"
+      ],
+      "scenario": "host-selection-live; isolated specification sentinels; live dependencies retained NOTRUN",
+      "entryPoint": "pairedMatrix/scorePairs/scoreCase and createClassificationRequest/createNativeClassificationAdapters",
+      "level": "unit",
+      "expectedBehavior": "동일 지원 record 재생의 REQ/RESP 계약 parity는 100%를 요구한다. AGENT의 최종 선택 일치는 보장으로 가정하지 않고 실제 결정에서 측정한다. 강제집합 주입은 FAIL이다. 독립 live 호출은 관측한 exact-set agreement, host별 golden-pass, 각 host 내 반복 안정성을 별도 측정하고 필수 대표·경계 표본의 미해결 불일치는 요구 미충족으로 남긴다. 두 host의 실제 ON 선택과 OFF·실패 fallback이 검증되어야 하며, 추천만 같고 read/applied가 빠지는 오류도 별도 실패다. 표본의 100%를 모든 미래 입력의 보장으로 확대하지 않는다.",
+      "oracle": "Embedded SS38 fields, frozen representative oracles; SS38 oracle=null, no invented semantic accuracy",
+      "testFiles": [
+        "tests/skill-classification/SS38.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product modification authorized; actual specification assertions can remain RED. No mutated green implementation or independent host attestation is fabricated. Live cases remain NOTRUN.",
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/skill-classification/SS38.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_DIR>/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS38:unmatched-pair",
+      "requirementIds": [
+        "SS38:unmatched-pair"
+      ],
+      "scenario": "unmatched-pair; isolated specification sentinels; live dependencies retained NOTRUN",
+      "entryPoint": "pairedMatrix/scorePairs/scoreCase and createClassificationRequest/createNativeClassificationAdapters",
+      "level": "unit",
+      "expectedBehavior": "동일 지원 record 재생의 REQ/RESP 계약 parity는 100%를 요구한다. AGENT의 최종 선택 일치는 보장으로 가정하지 않고 실제 결정에서 측정한다. 강제집합 주입은 FAIL이다. 독립 live 호출은 관측한 exact-set agreement, host별 golden-pass, 각 host 내 반복 안정성을 별도 측정하고 필수 대표·경계 표본의 미해결 불일치는 요구 미충족으로 남긴다. 두 host의 실제 ON 선택과 OFF·실패 fallback이 검증되어야 하며, 추천만 같고 read/applied가 빠지는 오류도 별도 실패다. 표본의 100%를 모든 미래 입력의 보장으로 확대하지 않는다.",
+      "oracle": "Embedded SS38 fields, frozen representative oracles; SS38 oracle=null, no invented semantic accuracy",
+      "testFiles": [
+        "tests/skill-classification/SS38.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product modification authorized; actual specification assertions can remain RED. No mutated green implementation or independent host attestation is fabricated. Live cases remain NOTRUN.",
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/skill-classification/SS38.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_DIR>/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS38:same-wrong",
+      "requirementIds": [
+        "SS38:same-wrong"
+      ],
+      "scenario": "same-wrong; isolated specification sentinels; live dependencies retained NOTRUN",
+      "entryPoint": "pairedMatrix/scorePairs/scoreCase and createClassificationRequest/createNativeClassificationAdapters",
+      "level": "unit",
+      "expectedBehavior": "동일 지원 record 재생의 REQ/RESP 계약 parity는 100%를 요구한다. AGENT의 최종 선택 일치는 보장으로 가정하지 않고 실제 결정에서 측정한다. 강제집합 주입은 FAIL이다. 독립 live 호출은 관측한 exact-set agreement, host별 golden-pass, 각 host 내 반복 안정성을 별도 측정하고 필수 대표·경계 표본의 미해결 불일치는 요구 미충족으로 남긴다. 두 host의 실제 ON 선택과 OFF·실패 fallback이 검증되어야 하며, 추천만 같고 read/applied가 빠지는 오류도 별도 실패다. 표본의 100%를 모든 미래 입력의 보장으로 확대하지 않는다.",
+      "oracle": "Embedded SS38 fields, frozen representative oracles; SS38 oracle=null, no invented semantic accuracy",
+      "testFiles": [
+        "tests/skill-classification/SS38.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product modification authorized; actual specification assertions can remain RED. No mutated green implementation or independent host attestation is fabricated. Live cases remain NOTRUN.",
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/skill-classification/SS38.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_DIR>/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS38:null-vs-empty",
+      "requirementIds": [
+        "SS38:null-vs-empty"
+      ],
+      "scenario": "null-vs-empty; isolated specification sentinels; live dependencies retained NOTRUN",
+      "entryPoint": "pairedMatrix/scorePairs/scoreCase and createClassificationRequest/createNativeClassificationAdapters",
+      "level": "unit",
+      "expectedBehavior": "동일 지원 record 재생의 REQ/RESP 계약 parity는 100%를 요구한다. AGENT의 최종 선택 일치는 보장으로 가정하지 않고 실제 결정에서 측정한다. 강제집합 주입은 FAIL이다. 독립 live 호출은 관측한 exact-set agreement, host별 golden-pass, 각 host 내 반복 안정성을 별도 측정하고 필수 대표·경계 표본의 미해결 불일치는 요구 미충족으로 남긴다. 두 host의 실제 ON 선택과 OFF·실패 fallback이 검증되어야 하며, 추천만 같고 read/applied가 빠지는 오류도 별도 실패다. 표본의 100%를 모든 미래 입력의 보장으로 확대하지 않는다.",
+      "oracle": "Embedded SS38 fields, frozen representative oracles; SS38 oracle=null, no invented semantic accuracy",
+      "testFiles": [
+        "tests/skill-classification/SS38.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product modification authorized; actual specification assertions can remain RED. No mutated green implementation or independent host attestation is fabricated. Live cases remain NOTRUN.",
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/skill-classification/SS38.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_DIR>/isolated.vitest.json"
+      ]
+    },
+    {
+      "id": "SS38:allowed-alternative-disagreement",
+      "requirementIds": [
+        "SS38:allowed-alternative-disagreement"
+      ],
+      "scenario": "allowed-alternative-disagreement; isolated specification sentinels; live dependencies retained NOTRUN",
+      "entryPoint": "pairedMatrix/scorePairs/scoreCase and createClassificationRequest/createNativeClassificationAdapters",
+      "level": "unit",
+      "expectedBehavior": "동일 지원 record 재생의 REQ/RESP 계약 parity는 100%를 요구한다. AGENT의 최종 선택 일치는 보장으로 가정하지 않고 실제 결정에서 측정한다. 강제집합 주입은 FAIL이다. 독립 live 호출은 관측한 exact-set agreement, host별 golden-pass, 각 host 내 반복 안정성을 별도 측정하고 필수 대표·경계 표본의 미해결 불일치는 요구 미충족으로 남긴다. 두 host의 실제 ON 선택과 OFF·실패 fallback이 검증되어야 하며, 추천만 같고 read/applied가 빠지는 오류도 별도 실패다. 표본의 100%를 모든 미래 입력의 보장으로 확대하지 않는다.",
+      "oracle": "Embedded SS38 fields, frozen representative oracles; SS38 oracle=null, no invented semantic accuracy",
+      "testFiles": [
+        "tests/skill-classification/SS38.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product modification authorized; actual specification assertions can remain RED. No mutated green implementation or independent host attestation is fabricated. Live cases remain NOTRUN.",
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/skill-classification/SS38.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_DIR>/isolated.vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "All other original case runs and full suite",
+    "Product changes/build/push/PR/release",
+    "JEV/vendor/Claude calls and prior21-run replay",
+    "Real host selection and signed receipts; no equality guarantee for future inputs"
+  ]
+}

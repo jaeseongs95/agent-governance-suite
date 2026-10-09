@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:84c7732307423fd80dd84ec664926cb4e2b4c35e27c0f204c91f04b50e45fa0d",
+  "reportDigest": "sha256:6478e4c3ecae205c0b14788efdb32eb1cac1d0b3add526a7b511eea2d0a2fab0",
+  "issues": [
+    "REQUIRED SS38:paired-matrix: NOT_RUN — Mutation/red-green sensitivity proof NOTRUN: fixed product is unchanged and no alternate green candidate authorized. Separate actual spec assertions and failures are in <EVIDENCE_DIR>/isolated.vitest.json; live variants NOTRUN.",
+    "REQUIRED SS38:replay-contract: NOT_RUN — Mutation/red-green sensitivity proof NOTRUN: fixed product is unchanged and no alternate green candidate authorized. Separate actual spec assertions and failures are in <EVIDENCE_DIR>/isolated.vitest.json; live variants NOTRUN.",
+    "REQUIRED SS38:independent-provider-live: NOT_RUN — Mutation/red-green sensitivity proof NOTRUN: fixed product is unchanged and no alternate green candidate authorized. Separate actual spec assertions and failures are in <EVIDENCE_DIR>/isolated.vitest.json; live variants NOTRUN.",
+    "REQUIRED SS38:host-selection-live: NOT_RUN — Mutation/red-green sensitivity proof NOTRUN: fixed product is unchanged and no alternate green candidate authorized. Separate actual spec assertions and failures are in <EVIDENCE_DIR>/isolated.vitest.json; live variants NOTRUN.",
+    "REQUIRED SS38:unmatched-pair: NOT_RUN — Mutation/red-green sensitivity proof NOTRUN: fixed product is unchanged and no alternate green candidate authorized. Separate actual spec assertions and failures are in <EVIDENCE_DIR>/isolated.vitest.json; live variants NOTRUN.",
+    "REQUIRED SS38:same-wrong: NOT_RUN — Mutation/red-green sensitivity proof NOTRUN: fixed product is unchanged and no alternate green candidate authorized. Separate actual spec assertions and failures are in <EVIDENCE_DIR>/isolated.vitest.json; live variants NOTRUN.",
+    "REQUIRED SS38:null-vs-empty: NOT_RUN — Mutation/red-green sensitivity proof NOTRUN: fixed product is unchanged and no alternate green candidate authorized. Separate actual spec assertions and failures are in <EVIDENCE_DIR>/isolated.vitest.json; live variants NOTRUN.",
+    "REQUIRED SS38:allowed-alternative-disagreement: NOT_RUN — Mutation/red-green sensitivity proof NOTRUN: fixed product is unchanged and no alternate green candidate authorized. Separate actual spec assertions and failures are in <EVIDENCE_DIR>/isolated.vitest.json; live variants NOTRUN."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}
