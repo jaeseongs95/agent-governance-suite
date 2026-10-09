@@ -1,0 +1,32 @@
+{
+  "status": {
+    "argv": [
+      "git",
+      "status",
+      "--short"
+    ],
+    "exitCode": 0,
+    "stdout": "?? tests/SS03-isolated.test.ts\n",
+    "stderr": ""
+  },
+  "tracked-diff": {
+    "argv": [
+      "git",
+      "diff",
+      "--exit-code"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "diff-check": {
+    "argv": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+}

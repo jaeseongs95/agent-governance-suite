@@ -1,0 +1,687 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS03",
+  "kind": "public-package-provenance",
+  "originalHashInventoryVerified": true,
+  "originalHashInventoryExpectedFiles": 25,
+  "candidateCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "candidateTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fullFixtureSha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "frozenOracleSha256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "promptUtf8Bytes": 220,
+  "promptSha256": "3dd99a26ff73a9e8b8a933ec3ac9f67845003f0910fa3c0d56978e0a6d55a972",
+  "requestOriginalBytes": 254920,
+  "requestOriginalSha256": "3216449afa32b2ee92dd2f3daae478914553dc05e5a2a9b2cae07af2180b723a",
+  "requestSemanticDigest": "sha256:7e73e463d2fd8333c20968fb2438a44d964ca45955ff2005652bc77fdfd65b7b",
+  "sourceSpecPolicy": "embedded fields only; sourceSpec.path absent in candidate repository",
+  "missingOriginals": [
+    {
+      "item": "contemporaneous test snapshot used by initial controls and known-defect run",
+      "status": "MISSING_ORIGINAL",
+      "availableAlternative": "existing reconstructed snapshot; historical reconstruction provenance retained, not upgraded to an original"
+    },
+    {
+      "item": "initial control observation journal before the separate defect run overwrote it",
+      "status": "MISSING_ORIGINAL",
+      "availableAlternative": "initial Vitest report/logs and preserved later control journal; later controls run is not an independent extra sample"
+    },
+    {
+      "item": "TEST-SPEC.seq7.ko.md",
+      "status": "MISSING_ORIGINAL",
+      "availableAlternative": "frozen embedded SS03 sourceSpec.fields only; no external source or missing answer invented"
+    }
+  ],
+  "patchStatus": "NO_EXISTING_PATCH",
+  "newTests": 0,
+  "newModelAPICalls": 0,
+  "publicFiles": [
+    {
+      "path": "inputs/SS03.request.json",
+      "publicBytes": 254920,
+      "publicSha256": "3216449afa32b2ee92dd2f3daae478914553dc05e5a2a9b2cae07af2180b723a",
+      "transformation": "byte-identical existing synthetic request, including complete 24-skill inventory",
+      "originals": [
+        {
+          "file": "SS03.request.json",
+          "bytes": 254920,
+          "sha256": "3216449afa32b2ee92dd2f3daae478914553dc05e5a2a9b2cae07af2180b723a"
+        }
+      ]
+    },
+    {
+      "path": "inputs/SS03.fixture.json",
+      "publicBytes": 4457,
+      "publicSha256": "f90494bc3334b9fa79f21f03ebf5b0d80d2d9dcf788d0273dddad07961662239",
+      "transformation": "byte-identical existing SS03 case excerpt; not the full frozen corpus file",
+      "originals": [
+        {
+          "file": "SS03.fixture.json",
+          "bytes": 4457,
+          "sha256": "f90494bc3334b9fa79f21f03ebf5b0d80d2d9dcf788d0273dddad07961662239"
+        }
+      ]
+    },
+    {
+      "path": "inputs/SS03.plan.json",
+      "publicBytes": 5113,
+      "publicSha256": "6333efb28b5eb6b18ab4ac5dbf8dfb0b611a27412cdea1f6677e9b9d6da2a6e1",
+      "transformation": "byte-identical existing plan",
+      "originals": [
+        {
+          "file": "SS03.plan.json",
+          "bytes": 5113,
+          "sha256": "6333efb28b5eb6b18ab4ac5dbf8dfb0b611a27412cdea1f6677e9b9d6da2a6e1"
+        }
+      ]
+    },
+    {
+      "path": "inputs/SS03.prompt.utf8",
+      "publicBytes": 220,
+      "publicSha256": "3dd99a26ff73a9e8b8a933ec3ac9f67845003f0910fa3c0d56978e0a6d55a972",
+      "transformation": "exact originalPrompt string extracted as UTF-8 bytes without newline; matches original request promptDigest",
+      "originals": [
+        {
+          "file": "SS03.fixture.json",
+          "bytes": 4457,
+          "sha256": "f90494bc3334b9fa79f21f03ebf5b0d80d2d9dcf788d0273dddad07961662239"
+        },
+        {
+          "file": "SS03.request.json",
+          "bytes": 254920,
+          "sha256": "3216449afa32b2ee92dd2f3daae478914553dc05e5a2a9b2cae07af2180b723a"
+        }
+      ]
+    },
+    {
+      "path": "inputs/SS03.projection.json",
+      "publicBytes": 159569,
+      "publicSha256": "027bddd8f21001973d7693a83733b5618241b0697ff93df5a10b5b6311a53094",
+      "transformation": "existing base-request observed projection extracted from journal; JSON reserialized, no newly executed projection",
+      "originals": [
+        {
+          "file": "observations.json",
+          "bytes": 1971899,
+          "sha256": "2f636ba2b861e54ba363d78783e9a19f54e7b4bdec67197b400362f1d672c3dd"
+        }
+      ]
+    },
+    {
+      "path": "observations.public.json",
+      "publicBytes": 44992,
+      "publicSha256": "e50493613ffbed29f4b61c7c0d0a3007b7f5514cdab5e86d86a97b3fcc06bc11",
+      "transformation": "path redaction, JSON reserialization, and lossless identical request/skills/fixture/projection references; every input/expected/observed journal row retained",
+      "originals": [
+        {
+          "file": "observations.json",
+          "bytes": 1971899,
+          "sha256": "2f636ba2b861e54ba363d78783e9a19f54e7b4bdec67197b400362f1d672c3dd"
+        }
+      ]
+    },
+    {
+      "path": "SS03.result.public.json",
+      "publicBytes": 24214,
+      "publicSha256": "7fd254b58cb0732111b74c32b16885a1f55db3514c7439c3874825c36ac62170",
+      "transformation": "existing result paths redacted; repeated controls replaced by references to unchanged journal facts; no new score, run, or status promotion",
+      "originals": [
+        {
+          "file": "SS03.result.json",
+          "bytes": 2199000,
+          "sha256": "f02fd8bf7b06d0b59e2f57c2a4a5d3a24b3f9a253d372ceb72055435b5ee362b"
+        }
+      ]
+    },
+    {
+      "path": "commands.public.json",
+      "publicBytes": 3672,
+      "publicSha256": "2206d0028e8a61047fcd7c33f1e8c12951cb602373bf93df77f3f3dc43f36f96",
+      "transformation": "path redaction and JSON reserialization; actual historical exit/status and unset/present booleans retained",
+      "originals": [
+        {
+          "file": "commands.json",
+          "bytes": 3712,
+          "sha256": "70b3912003b18a350348415df64149ffb1f00d16c9df9cc5cb0fa1da7b9c95e3"
+        }
+      ]
+    },
+    {
+      "path": "environment.public.json",
+      "publicBytes": 619,
+      "publicSha256": "0f4cf75027f99cf4361491a225cd8197aace6826e6145e9b8256f24b7742ff05",
+      "transformation": "path redaction and JSON reserialization; actual historical exit/status and unset/present booleans retained",
+      "originals": [
+        {
+          "file": "environment.json",
+          "bytes": 621,
+          "sha256": "37bc2a7b7fac21825378c303cf4dc9e83f44d57d02e67422b1e3e8367d113c71"
+        }
+      ]
+    },
+    {
+      "path": "integrity-final.public.json",
+      "publicBytes": 462,
+      "publicSha256": "b9a41bbee035d8fe37409b47412556213c8b140c40a4d6ea7de8572dae156ae0",
+      "transformation": "path redaction and JSON reserialization; actual historical exit/status and unset/present booleans retained",
+      "originals": [
+        {
+          "file": "integrity-final.json",
+          "bytes": 462,
+          "sha256": "b9a41bbee035d8fe37409b47412556213c8b140c40a4d6ea7de8572dae156ae0"
+        }
+      ]
+    },
+    {
+      "path": "logs/existing-regression.stdout.log",
+      "publicBytes": 73,
+      "publicSha256": "0fbce0018557afc700a18d8b2e68d88793bff5dcee5740471d67ac89917546f3",
+      "transformation": "path redaction only; existing log/report, not newly generated test output",
+      "originals": [
+        {
+          "file": "existing-regression.stdout.log",
+          "bytes": 80,
+          "sha256": "c9dc8694e6789b1f42a6b42790b774d95b25a72a1e83112401522e5e5cf18c88"
+        }
+      ]
+    },
+    {
+      "path": "logs/existing-regression.stderr.log",
+      "publicBytes": 0,
+      "publicSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "path redaction only; existing log/report, not newly generated test output",
+      "originals": [
+        {
+          "file": "existing-regression.stderr.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "path": "logs/existing-regression.vitest.json",
+      "publicBytes": 5916,
+      "publicSha256": "7f0387e6c08a71feae10fda9e6606a05c8e71d70114938f42e2c42e65373e3e2",
+      "transformation": "path redaction only; existing log/report, not newly generated test output",
+      "originals": [
+        {
+          "file": "existing-regression.vitest.json",
+          "bytes": 5918,
+          "sha256": "efdc1b6d237347ab17274f93da059631df705bd855823db75e6d84ac0d0e2a06"
+        }
+      ]
+    },
+    {
+      "path": "logs/isolated-controls.stdout.log",
+      "publicBytes": 71,
+      "publicSha256": "76e7df4bb0c1df16e07282f289430e8283f98a6cf95a822360300657676f752f",
+      "transformation": "path redaction only; existing log/report, not newly generated test output",
+      "originals": [
+        {
+          "file": "isolated-controls.stdout.log",
+          "bytes": 78,
+          "sha256": "270c80f131df501ca14a5505704b4ffd0899ef45d35ad2049293cd149c83b3dc"
+        }
+      ]
+    },
+    {
+      "path": "logs/isolated-controls.stderr.log",
+      "publicBytes": 0,
+      "publicSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "path redaction only; existing log/report, not newly generated test output",
+      "originals": [
+        {
+          "file": "isolated-controls.stderr.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "path": "logs/isolated-controls.vitest.json",
+      "publicBytes": 6190,
+      "publicSha256": "bec685269aab328b3adffb738f9abea9dd11f0826892f5bed1e455a4ee5375c3",
+      "transformation": "path redaction only; existing log/report, not newly generated test output",
+      "originals": [
+        {
+          "file": "isolated-controls.vitest.json",
+          "bytes": 6192,
+          "sha256": "7d76643518bae2bbff925b6ec2043e033b55d036ed09ff27b4aa2f35194398e2"
+        }
+      ]
+    },
+    {
+      "path": "logs/isolated-controls-final.stdout.log",
+      "publicBytes": 77,
+      "publicSha256": "d7f021f21ed0e37d421840d00750469c2a6e34fa864a5e4639ce4aaf2cded4e9",
+      "transformation": "path redaction only; existing log/report, not newly generated test output",
+      "originals": [
+        {
+          "file": "isolated-controls-final.stdout.log",
+          "bytes": 84,
+          "sha256": "f0f226ee51c38afea31583a80d91aadd2b1fb8a8d050cc9d9060f0dfde405e84"
+        }
+      ]
+    },
+    {
+      "path": "logs/isolated-controls-final.stderr.log",
+      "publicBytes": 0,
+      "publicSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "path redaction only; existing log/report, not newly generated test output",
+      "originals": [
+        {
+          "file": "isolated-controls-final.stderr.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "path": "logs/isolated-controls-final.vitest.json",
+      "publicBytes": 6178,
+      "publicSha256": "21f7b4aca52aa79de120adb66706da30611e85bf0f6ae6cc7c95d5f87c7264b7",
+      "transformation": "path redaction only; existing log/report, not newly generated test output",
+      "originals": [
+        {
+          "file": "isolated-controls-final.vitest.json",
+          "bytes": 6180,
+          "sha256": "c709f9354ea13023f97ce2620ca8c4fa8cd2fb7f84bae80e18d1ea8a0ce50bc8"
+        }
+      ]
+    },
+    {
+      "path": "logs/known-defects.stdout.log",
+      "publicBytes": 67,
+      "publicSha256": "7a75315caec0007d1207eff920ba98b317d34b5efa5b7922ed6de5155da27087",
+      "transformation": "path redaction only; existing log/report, not newly generated test output",
+      "originals": [
+        {
+          "file": "known-defects.stdout.log",
+          "bytes": 74,
+          "sha256": "a15dc1cba902df06b312dcc94f297045b87dd138306d0c0d6ee1c7f2048dd8bb"
+        }
+      ]
+    },
+    {
+      "path": "logs/known-defects.stderr.log",
+      "publicBytes": 0,
+      "publicSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "path redaction only; existing log/report, not newly generated test output",
+      "originals": [
+        {
+          "file": "known-defects.stderr.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "path": "logs/known-defects.vitest.json",
+      "publicBytes": 9494,
+      "publicSha256": "627e841943f1b9a42bea658b45133aae40220db7a6e70ade2fcb087ccc9387eb",
+      "transformation": "path redaction only; existing log/report, not newly generated test output",
+      "originals": [
+        {
+          "file": "known-defects.vitest.json",
+          "bytes": 9514,
+          "sha256": "f5755c647f949b36d6b38396788bb40e044ccc14a4aefc35925ea0e8fc6d0b87"
+        }
+      ]
+    },
+    {
+      "path": "REPORT.public.txt",
+      "publicBytes": 3087,
+      "publicSha256": "7f350ddbe8485c16b7dd44bd5f43c50b8d9cb85c8e8dea5db23c8a4a02e7eb80",
+      "transformation": "path redaction only of existing human report",
+      "originals": [
+        {
+          "file": "SS03.report.txt",
+          "bytes": 3091,
+          "sha256": "3c11bf755245c588054f661bf85bc59e73c69d3bff73936ca089ea6fa1d2224f"
+        }
+      ]
+    },
+    {
+      "path": "repro/SS03-isolated.public.test.ts",
+      "publicBytes": 16876,
+      "publicSha256": "f0f9c2890ed0283414630a4f189f1ea2bc9957caddb4a746c1d9560fea1e60fd",
+      "transformation": "only evidence-output directory made repository-relative; not executed after adaptation",
+      "originals": [
+        {
+          "file": "SS03-isolated.test.ts",
+          "bytes": 16885,
+          "sha256": "3fa105474d98eb89fb72759aad072f27a383ef4f7fe49304fdbb2a57ab325cf7"
+        }
+      ]
+    },
+    {
+      "path": "repro/SS03-isolated.initial.reconstructed.public.test.ts",
+      "publicBytes": 16679,
+      "publicSha256": "444a124a2dcb611dd2682471dbe96f63a524ae58ec118240f2d2b9d9e1334a53",
+      "transformation": "only evidence-output directory made repository-relative; not executed after adaptation; source was already explicitly labeled reconstructed initial snapshot, not a contemporaneous original",
+      "originals": [
+        {
+          "file": "SS03-isolated.initial.test.ts",
+          "bytes": 16688,
+          "sha256": "c4a30eecffe4af1782fd497f628e63b04b1c1b5fc68385fa2172b459d579c344"
+        }
+      ]
+    },
+    {
+      "path": "PATCH_STATUS.json",
+      "publicBytes": 343,
+      "publicSha256": "3ce52983a32d8da3764142fef4408c8d03211829e270ac7b53e0a0fc1d1c9f97",
+      "transformation": "publication metadata documenting existing absence; no patch fabricated",
+      "originals": [
+        {
+          "file": "integrity-final.json",
+          "bytes": 462,
+          "sha256": "b9a41bbee035d8fe37409b47412556213c8b140c40a4d6ea7de8572dae156ae0"
+        }
+      ]
+    },
+    {
+      "path": "README.md",
+      "publicBytes": 5648,
+      "publicSha256": "fde41f8f15597e794e0807a6698081a56d1f7b3c10f05fdbbb1821b205664752",
+      "transformation": "new publication/read-only reproduction instructions derived solely from existing facts; no execution",
+      "originals": [
+        {
+          "file": "SS03.result.json",
+          "bytes": 2199000,
+          "sha256": "f02fd8bf7b06d0b59e2f57c2a4a5d3a24b3f9a253d372ceb72055435b5ee362b"
+        },
+        {
+          "file": "SS03.fixture.json",
+          "bytes": 4457,
+          "sha256": "f90494bc3334b9fa79f21f03ebf5b0d80d2d9dcf788d0273dddad07961662239"
+        },
+        {
+          "file": "commands.json",
+          "bytes": 3712,
+          "sha256": "70b3912003b18a350348415df64149ffb1f00d16c9df9cc5cb0fa1da7b9c95e3"
+        },
+        {
+          "file": "SS03.report.txt",
+          "bytes": 3091,
+          "sha256": "3c11bf755245c588054f661bf85bc59e73c69d3bff73936ca089ea6fa1d2224f"
+        }
+      ]
+    }
+  ],
+  "originalFiles": [
+    {
+      "file": "SHA256SUMS.json",
+      "bytes": 2452,
+      "sha256": "bea3ef0122eaba4020e6622b003b5e6480fafacec1c138de68aeeba24bafacc5",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [],
+      "notPublishedReason": "Redundant source hash inventory; hashes mapped separately here"
+    },
+    {
+      "file": "SS03-isolated.initial.test.ts",
+      "bytes": 16688,
+      "sha256": "c4a30eecffe4af1782fd497f628e63b04b1c1b5fc68385fa2172b459d579c344",
+      "recoveryStatus": "EXISTING_RECONSTRUCTION",
+      "publicPaths": [
+        "repro/SS03-isolated.initial.reconstructed.public.test.ts"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "SS03-isolated.test.ts",
+      "bytes": 16885,
+      "sha256": "3fa105474d98eb89fb72759aad072f27a383ef4f7fe49304fdbb2a57ab325cf7",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "repro/SS03-isolated.public.test.ts"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "SS03.fixture.json",
+      "bytes": 4457,
+      "sha256": "f90494bc3334b9fa79f21f03ebf5b0d80d2d9dcf788d0273dddad07961662239",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "inputs/SS03.fixture.json",
+        "inputs/SS03.prompt.utf8",
+        "README.md"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "SS03.plan.json",
+      "bytes": 5113,
+      "sha256": "6333efb28b5eb6b18ab4ac5dbf8dfb0b611a27412cdea1f6677e9b9d6da2a6e1",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "inputs/SS03.plan.json"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "SS03.report.txt",
+      "bytes": 3091,
+      "sha256": "3c11bf755245c588054f661bf85bc59e73c69d3bff73936ca089ea6fa1d2224f",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "REPORT.public.txt",
+        "README.md"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "SS03.request.json",
+      "bytes": 254920,
+      "sha256": "3216449afa32b2ee92dd2f3daae478914553dc05e5a2a9b2cae07af2180b723a",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "inputs/SS03.request.json",
+        "inputs/SS03.prompt.utf8"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "SS03.result.json",
+      "bytes": 2199000,
+      "sha256": "f02fd8bf7b06d0b59e2f57c2a4a5d3a24b3f9a253d372ceb72055435b5ee362b",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "SS03.result.public.json",
+        "README.md"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "codex-exec-help.stderr.log",
+      "bytes": 103,
+      "sha256": "d47a06d59aba2814c3fb7460049fc2ccbfc834196c956d6c6558e8be8b079e24",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [],
+      "notPublishedReason": "Unnecessary CLI help text retained locally; historical command/exit and availability preserved in public metadata"
+    },
+    {
+      "file": "codex-exec-help.stdout.log",
+      "bytes": 4031,
+      "sha256": "0e82cfde0122715250e93dc65866caa956b2ac5b9d0b20ec4ad4f9e81486509e",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [],
+      "notPublishedReason": "Unnecessary CLI help text retained locally; historical command/exit and availability preserved in public metadata"
+    },
+    {
+      "file": "commands.json",
+      "bytes": 3712,
+      "sha256": "70b3912003b18a350348415df64149ffb1f00d16c9df9cc5cb0fa1da7b9c95e3",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "commands.public.json",
+        "README.md"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "environment.json",
+      "bytes": 621,
+      "sha256": "37bc2a7b7fac21825378c303cf4dc9e83f44d57d02e67422b1e3e8367d113c71",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "environment.public.json"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "existing-regression.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "logs/existing-regression.stderr.log"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "existing-regression.stdout.log",
+      "bytes": 80,
+      "sha256": "c9dc8694e6789b1f42a6b42790b774d95b25a72a1e83112401522e5e5cf18c88",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "logs/existing-regression.stdout.log"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "existing-regression.vitest.json",
+      "bytes": 5918,
+      "sha256": "efdc1b6d237347ab17274f93da059631df705bd855823db75e6d84ac0d0e2a06",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "logs/existing-regression.vitest.json"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "integrity-final.json",
+      "bytes": 462,
+      "sha256": "b9a41bbee035d8fe37409b47412556213c8b140c40a4d6ea7de8572dae156ae0",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "integrity-final.public.json",
+        "PATCH_STATUS.json"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "isolated-controls-final.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "logs/isolated-controls-final.stderr.log"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "isolated-controls-final.stdout.log",
+      "bytes": 84,
+      "sha256": "f0f226ee51c38afea31583a80d91aadd2b1fb8a8d050cc9d9060f0dfde405e84",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "logs/isolated-controls-final.stdout.log"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "isolated-controls-final.vitest.json",
+      "bytes": 6180,
+      "sha256": "c709f9354ea13023f97ce2620ca8c4fa8cd2fb7f84bae80e18d1ea8a0ce50bc8",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "logs/isolated-controls-final.vitest.json"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "isolated-controls.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "logs/isolated-controls.stderr.log"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "isolated-controls.stdout.log",
+      "bytes": 78,
+      "sha256": "270c80f131df501ca14a5505704b4ffd0899ef45d35ad2049293cd149c83b3dc",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "logs/isolated-controls.stdout.log"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "isolated-controls.vitest.json",
+      "bytes": 6192,
+      "sha256": "7d76643518bae2bbff925b6ec2043e033b55d036ed09ff27b4aa2f35194398e2",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "logs/isolated-controls.vitest.json"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "known-defects.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "logs/known-defects.stderr.log"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "known-defects.stdout.log",
+      "bytes": 74,
+      "sha256": "a15dc1cba902df06b312dcc94f297045b87dd138306d0c0d6ee1c7f2048dd8bb",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "logs/known-defects.stdout.log"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "known-defects.vitest.json",
+      "bytes": 9514,
+      "sha256": "f5755c647f949b36d6b38396788bb40e044ccc14a4aefc35925ea0e8fc6d0b87",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "logs/known-defects.vitest.json"
+      ],
+      "notPublishedReason": null
+    },
+    {
+      "file": "observations.json",
+      "bytes": 1971899,
+      "sha256": "2f636ba2b861e54ba363d78783e9a19f54e7b4bdec67197b400362f1d672c3dd",
+      "recoveryStatus": "RECOVERED",
+      "publicPaths": [
+        "inputs/SS03.projection.json",
+        "observations.public.json"
+      ],
+      "notPublishedReason": null
+    }
+  ],
+  "privacyTransformations": [
+    "workspace/repository/output/executable paths replaced by descriptive placeholders",
+    "no environment values or authentication files collected",
+    "identical repeated input objects represented by resolvable publication references"
+  ],
+  "notClaimed": [
+    "signed execution attestation",
+    "actual AGENT selection",
+    "new model semantic accuracy",
+    "native cancellation race",
+    "fixed product green",
+    "independent audit or release acceptance"
+  ]
+}

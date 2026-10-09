@@ -1,0 +1,9 @@
+{
+  "caseId": "SS03",
+  "status": "NO_EXISTING_PATCH",
+  "existingPatchFiles": [],
+  "existingDiffFiles": [],
+  "productSourceModified": false,
+  "newPatchCreated": false,
+  "evidence": "Original integrity-final.json recorded git diff --exit-code=0; only new test file was untracked. No .patch/.diff existed in original evidence directory."
+}

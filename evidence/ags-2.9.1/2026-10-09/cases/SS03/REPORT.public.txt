@@ -1,0 +1,19 @@
+SS03 base 검증 결과: 오프라인 검증 완료, 실제 호스트 NOTRUN, 기존 결함 2개 재현
+
+고정 commit c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6 / tree 28f2f2ed8a864405320f6d20e7bc5004e8466ad3. fixture SHA256와 동결 oracle SHA256 요청값 일치. sourceSpec 파일은 없으므로 SS03.fixture.json의 embedded 원문만 사용. 전체 suite 및 과거 21회 run 재실행 없음. 제품 소스, push/PR/릴리스 변경 없음.
+
+기대 추천 R = ponytail, cs-engineering, test-engineering, orchestrator. 기존 SS03 전용 회귀 2개 PASS; 새 오프라인 경계 15개 PASS; 기존 결함 재현 테스트 2개 FAIL(exit 1). 이 PASS는 주입된 응답의 평가와 실제 로컬 서비스/게이트웨이 경계 검증이다. SS03 전체/모델 정확도/실호스트 PASS가 아니다.
+
+1. invalid RESP + actualCostUsd=0.1 -> observed actualCostUsd=null, spentUsd=0, 예약0.4 유지. 기존 유효비용 유실 발견과 같은 원인.
+2. 예약 성공 callback에서 취소 상태 변경 -> mock provider 1회 호출 후 STALE_CLASSIFICATION. 기대 호출0. 기존 직전 재검사 공백과 연결. 동기 budget-port 재현이며 native 병렬 호스트 관측은 아니다.
+
+selected/read/applied/verified 전부 NOTRUN; agentSelectedSkillIds=null, receipt=null. 개발자가 자료를 읽은 사실은 해당 SS03 호스트의 read 근거가 아니다. null과 []는 별도 관측과 assertion으로 보존했다. ACK 업무완료 판정, 자동 큐/DB/daemon 설치, 실제 메시징 유실/중복 방지는 구현·실호스트 근거가 없어 NOTRUN.
+
+현재 codex executable=<codex-executable>; exec --help exit0만 확인. Claude executable 없음. 분류 config·host attestation env 미설정. 승인 profile/route/qualification/예산/native isolation 및 no-retry 근거, 실제 session/turn/model/effort/call/task 관측과 설치 inventory가 필요하다. 정확한 입력 목록·소스 접점은 SS03.result.json missingInputs/hostSupport 참조. 새 테스트는 수락된 host receipt를 생성하지 않는다. 기존 stage 회귀의 mock-only receipt는 mock으로만 보고한다.
+
+재현(저장소 루트 <repository-root>):
+node node_modules/vitest/vitest.mjs run tests/SS03-isolated.test.ts --testNamePattern 'SS03 offline controls'
+node node_modules/vitest/vitest.mjs run tests/SS03-isolated.test.ts --testNamePattern 'SS03 known-defect reproductions'
+두 번째는 기존 결함 기대행동 assertion 때문에 exit1이어야 한다. 제품 수정 green 증거 없음. 전체 명령·exit/stdout/stderr는 commands.json 및 *.log. 실제 API: JEV0/외부vendor0/Claude0/CodexModel0. Git clone과 locked 기존 패키지 다운로드는 모델 호출이 아니다.
+
+초기 제어시험 후 별도 결함시험의 JSON writer가 제어 관측 파일을 덮어쓴 것을 발견해 writer만 보완하고 동일 제어15개를 1회 재검증했다. 초기/최종 보고서를 둘 다 보존하며 30개 독립 표본으로 합산하지 않았다. 결함 시험 바이트의 초기 snapshot 및 최종 test snapshot을 보존했다.

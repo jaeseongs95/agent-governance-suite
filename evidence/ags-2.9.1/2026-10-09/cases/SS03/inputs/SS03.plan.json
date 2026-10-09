@@ -1,0 +1,130 @@
+{
+  "kind": "engineering-test-plan",
+  "caseId": "SS03",
+  "scope": [
+    "tests/skill-classification/evaluation.ts",
+    "mcp-server/src/skill-classification/request.ts",
+    "mcp-server/src/skill-classification/inventory.ts",
+    "mcp-server/src/skill-classification/service.ts",
+    "mcp-server/src/skill-classification/gateway.ts"
+  ],
+  "runner": "existing Vitest 5.0.0; no build; SS03 only",
+  "requirements": {
+    "입력": "“session-handoff를 구현해 줘. 수신 전 종료, ACK 뒤 crash, 같은 메시지 재수신에서 인계가 유실되거나 중복 완료되지 않아야 해. 최소 구현과 회귀 테스트를 함께 설계해 줘.”",
+    "필수추천": "R={P, CS, T, O}.",
+    "금지추천 또는 행동": "P만 추천하고 CS를 생략; ACK를 업무 완료로 판정; 새 큐·DB·상시 실행기를 자동 설치.",
+    "허용선택": "A={}. 별도 승인·검증 규칙은 rules에 따로 기록한다.",
+    "보류조건": "실제 현장 원인은 미확정이다. 원인 가설이 없어도 주어진 동시성·중복·유실 요구의 CS 적용성을 판정한다.",
+    "통과기준": "4개를 동시에 추천한다. CS를 추천했다는 이유만으로 실제 파일 읽기·적용·검증을 PASS로 만들지 않는다.",
+    "증거": "E0, 중복·유실·완료 상태 요구별 정답 근거, 실제 적용 평가는 E3.",
+    "실행종류": "live와 mock. 사용자 제보를 공개 가능한 합성 입력으로 재구성한 회귀이며 원인 재현 완료는 아니다."
+  },
+  "frozenVariants": [
+    "base"
+  ],
+  "oracle": {
+    "required": [
+      "ponytail",
+      "cs-engineering",
+      "test-engineering",
+      "orchestrator"
+    ],
+    "allowed": [],
+    "allowedConditions": {},
+    "forbidden": [],
+    "notApplicable": [
+      "code-review",
+      "software-security-auditor",
+      "korean-prose-editor"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "change-scope-guardian",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      }
+    ],
+    "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+  },
+  "levels": [
+    "local evaluator controls",
+    "real filesystem inventory/request",
+    "public service and gateway with injected provider responses"
+  ],
+  "mockBoundaries": [
+    "provider availability/classify",
+    "synthetic profile qualification",
+    "clock for isolated service tests",
+    "budget cancellation interleaving"
+  ],
+  "noHostReceiptGeneratedByNewTests": true,
+  "forbidden": [
+    "product-source changes",
+    "vendor/Claude/JEV/network classification",
+    "rerun historical 21-case runs",
+    "whole suite",
+    "push/PR/release"
+  ],
+  "notRun": [
+    "semantic model quality",
+    "host-selected",
+    "host-read",
+    "host-applied",
+    "host-verified",
+    "ACK-as-completion and automatic-install behavior in actual session-handoff implementation"
+  ],
+  "redGreenException": "Product edits prohibited. Negative controls must reject each missing required skill; known pinned defects have independent expected-behavior red tests, no repaired candidate green claim."
+}

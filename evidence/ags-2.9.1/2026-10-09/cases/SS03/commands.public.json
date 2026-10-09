@@ -1,0 +1,101 @@
+[
+  {
+    "name": "existing-regression",
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "tests/skill-classification/evaluation.test.ts",
+      "--testNamePattern",
+      "rejects select-all despite recall 1 and accepts only R|never promotes stage labels without source, obligation, phase and candidate evidence",
+      "--reporter=json",
+      "--outputFile=<evidence-output>/existing-regression.vitest.json"
+    ],
+    "cwd": "<repository-root>",
+    "exitCode": 0,
+    "startedAt": "2026-10-09T02:55:25.752864+00:00",
+    "endedAt": "2026-10-09T02:55:26.763990+00:00",
+    "executionKind": "existing-regression-offline-mock",
+    "apiCalls": 0,
+    "testFileSha256": "0ab579c0eacbb2b0e70e0bcd381f4c8bfc33d9422439768beb49eaf240ad32bf",
+    "testDigestProvenance": "pinned tracked file bytes, unchanged throughout task"
+  },
+  {
+    "name": "isolated-controls",
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "tests/SS03-isolated.test.ts",
+      "--testNamePattern",
+      "SS03 offline controls",
+      "--reporter=json",
+      "--outputFile=<evidence-output>/isolated-controls.vitest.json"
+    ],
+    "cwd": "<repository-root>",
+    "exitCode": 0,
+    "startedAt": "2026-10-09T02:55:26.764511+00:00",
+    "endedAt": "2026-10-09T02:55:28.353337+00:00",
+    "executionKind": "new-isolated-offline-mock",
+    "apiCalls": 0,
+    "testFileSha256": "c4a30eecffe4af1782fd497f628e63b04b1c1b5fc68385fa2172b459d579c344",
+    "testDigestProvenance": "earlier test bytes reconstructed exactly from evidence-writer-only patch; not a signed execution attestation"
+  },
+  {
+    "name": "known-defects",
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "tests/SS03-isolated.test.ts",
+      "--testNamePattern",
+      "SS03 known-defect reproductions",
+      "--reporter=json",
+      "--outputFile=<evidence-output>/known-defects.vitest.json"
+    ],
+    "cwd": "<repository-root>",
+    "exitCode": 1,
+    "startedAt": "2026-10-09T02:55:28.353559+00:00",
+    "endedAt": "2026-10-09T02:55:29.889890+00:00",
+    "executionKind": "new-isolated-offline-mock",
+    "apiCalls": 0,
+    "testFileSha256": "c4a30eecffe4af1782fd497f628e63b04b1c1b5fc68385fa2172b459d579c344",
+    "testDigestProvenance": "earlier test bytes reconstructed exactly from evidence-writer-only patch; not a signed execution attestation"
+  },
+  {
+    "name": "isolated-controls-final",
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "tests/SS03-isolated.test.ts",
+      "--testNamePattern",
+      "SS03 offline controls",
+      "--reporter=json",
+      "--outputFile=<evidence-output>/isolated-controls-final.vitest.json"
+    ],
+    "cwd": "<repository-root>",
+    "exitCode": 0,
+    "startedAt": "2026-10-09T02:56:05.446122+00:00",
+    "endedAt": "2026-10-09T02:56:06.940330+00:00",
+    "executionKind": "new-isolated-offline-mock",
+    "apiCalls": 0,
+    "repeatReason": "Evidence writer changed to preserve both independently run groups. Initial controls journal was overwritten by the defect run; recover actual observations without rerunning defects or other cases.",
+    "testFileSha256": "3fa105474d98eb89fb72759aad072f27a383ef4f7fe49304fdbb2a57ab325cf7",
+    "testDigestProvenance": "current evidence snapshot"
+  },
+  {
+    "name": "codex-help-readonly",
+    "argv": [
+      "<codex-executable>",
+      "exec",
+      "--help"
+    ],
+    "cwd": "<repository-root>",
+    "exitCode": 0,
+    "executionKind": "host-cli-capability-help-only",
+    "apiCalls": 0,
+    "stdoutRef": "codex-exec-help.stdout.log",
+    "stderrRef": "codex-exec-help.stderr.log"
+  }
+]

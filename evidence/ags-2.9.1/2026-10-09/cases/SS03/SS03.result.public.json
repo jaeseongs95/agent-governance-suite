@@ -1,0 +1,594 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS03",
+  "result": "INCOMPLETE_WITH_REPRODUCED_KNOWN_DEFECTS",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSha256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "sourceBranch": "codex/skill-classification-2.9.1",
+  "fixedCheckout": "detached HEAD",
+  "executionKinds": [
+    "existing-regression-offline-mock",
+    "new-isolated-offline-mock",
+    "host-cli-capability-help-only"
+  ],
+  "API0": true,
+  "apiCalls": {
+    "jev": 0,
+    "externalVendorAPI": 0,
+    "claude": 0,
+    "codexModel": 0
+  },
+  "historical21RunReruns": 0,
+  "productSourceModified": false,
+  "pushPRRelease": false,
+  "testFile": "tests/SS03-isolated.test.ts",
+  "testFileSha256": "3fa105474d98eb89fb72759aad072f27a383ef4f7fe49304fdbb2a57ab325cf7",
+  "commands": [
+    {
+      "name": "existing-regression",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/evaluation.test.ts",
+        "--testNamePattern",
+        "rejects select-all despite recall 1 and accepts only R|never promotes stage labels without source, obligation, phase and candidate evidence",
+        "--reporter=json",
+        "--outputFile=<evidence-output>/existing-regression.vitest.json"
+      ],
+      "cwd": "<repository-root>",
+      "exitCode": 0,
+      "startedAt": "2026-10-09T02:55:25.752864+00:00",
+      "endedAt": "2026-10-09T02:55:26.763990+00:00",
+      "executionKind": "existing-regression-offline-mock",
+      "apiCalls": 0,
+      "testFileSha256": "0ab579c0eacbb2b0e70e0bcd381f4c8bfc33d9422439768beb49eaf240ad32bf",
+      "testDigestProvenance": "pinned tracked file bytes, unchanged throughout task"
+    },
+    {
+      "name": "isolated-controls",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/SS03-isolated.test.ts",
+        "--testNamePattern",
+        "SS03 offline controls",
+        "--reporter=json",
+        "--outputFile=<evidence-output>/isolated-controls.vitest.json"
+      ],
+      "cwd": "<repository-root>",
+      "exitCode": 0,
+      "startedAt": "2026-10-09T02:55:26.764511+00:00",
+      "endedAt": "2026-10-09T02:55:28.353337+00:00",
+      "executionKind": "new-isolated-offline-mock",
+      "apiCalls": 0,
+      "testFileSha256": "c4a30eecffe4af1782fd497f628e63b04b1c1b5fc68385fa2172b459d579c344",
+      "testDigestProvenance": "earlier test bytes reconstructed exactly from evidence-writer-only patch; not a signed execution attestation"
+    },
+    {
+      "name": "known-defects",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/SS03-isolated.test.ts",
+        "--testNamePattern",
+        "SS03 known-defect reproductions",
+        "--reporter=json",
+        "--outputFile=<evidence-output>/known-defects.vitest.json"
+      ],
+      "cwd": "<repository-root>",
+      "exitCode": 1,
+      "startedAt": "2026-10-09T02:55:28.353559+00:00",
+      "endedAt": "2026-10-09T02:55:29.889890+00:00",
+      "executionKind": "new-isolated-offline-mock",
+      "apiCalls": 0,
+      "testFileSha256": "c4a30eecffe4af1782fd497f628e63b04b1c1b5fc68385fa2172b459d579c344",
+      "testDigestProvenance": "earlier test bytes reconstructed exactly from evidence-writer-only patch; not a signed execution attestation"
+    },
+    {
+      "name": "isolated-controls-final",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/SS03-isolated.test.ts",
+        "--testNamePattern",
+        "SS03 offline controls",
+        "--reporter=json",
+        "--outputFile=<evidence-output>/isolated-controls-final.vitest.json"
+      ],
+      "cwd": "<repository-root>",
+      "exitCode": 0,
+      "startedAt": "2026-10-09T02:56:05.446122+00:00",
+      "endedAt": "2026-10-09T02:56:06.940330+00:00",
+      "executionKind": "new-isolated-offline-mock",
+      "apiCalls": 0,
+      "repeatReason": "Evidence writer changed to preserve both independently run groups. Initial controls journal was overwritten by the defect run; recover actual observations without rerunning defects or other cases.",
+      "testFileSha256": "3fa105474d98eb89fb72759aad072f27a383ef4f7fe49304fdbb2a57ab325cf7",
+      "testDigestProvenance": "current evidence snapshot"
+    },
+    {
+      "name": "codex-help-readonly",
+      "argv": [
+        "<codex-executable>",
+        "exec",
+        "--help"
+      ],
+      "cwd": "<repository-root>",
+      "exitCode": 0,
+      "executionKind": "host-cli-capability-help-only",
+      "apiCalls": 0,
+      "stdoutRef": "codex-exec-help.stdout.log",
+      "stderrRef": "codex-exec-help.stderr.log"
+    }
+  ],
+  "existingRegression": {
+    "passed": 2,
+    "failed": 0,
+    "skipped": 13,
+    "evidenceRef": "existing-regression.vitest.json",
+    "limitation": "SS03-only evaluator assertions. Existing stage test uses mock-only receipt and fabricated reference digests; no host execution or acceptance claimed."
+  },
+  "newIsolatedTests": {
+    "controlsPassed": 15,
+    "defectTestsFailed": 2,
+    "countUniqueTests": 17,
+    "firstControlsRunPassed": 15,
+    "finalControlsRunPassed": 15,
+    "repeatReason": "Only evidence retention fixed; final control journal recovered. Not additional independent samples."
+  },
+  "variants": [
+    {
+      "variantId": "base",
+      "input": "session-handoff를 구현해 줘. 수신 전 종료, ACK 뒤 crash, 같은 메시지 재수신에서 인계가 유실되거나 중복 완료되지 않아야 해. 최소 구현과 회귀 테스트를 함께 설계해 줘.",
+      "context": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "expected": {
+        "required": [
+          "ponytail",
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "allowed": [],
+        "allowedConditions": {},
+        "forbidden": [],
+        "notApplicable": [
+          "code-review",
+          "software-security-auditor",
+          "korean-prose-editor"
+        ],
+        "unadjudicated": [
+          "acceptance-evidence-validator",
+          "blocker-diagnostician",
+          "change-scope-guardian",
+          "codex-token-usage-analyzer",
+          "context-continuity",
+          "coordinate-subagents",
+          "evaluation-validity-auditor",
+          "independent-audit-gate",
+          "independent-deliberation-panel",
+          "instruction-scope-resolver",
+          "iteration-frame-auditor",
+          "model-effort-advisor",
+          "mutation-risk-preflight",
+          "recovery-strategy-selector",
+          "session-board",
+          "task-contract",
+          "workspace-convention-profiler"
+        ],
+        "expectedSelection": "SELECTED",
+        "explicitSkillIds": [],
+        "ruleRequiredSkillIds": [],
+        "requiredReasons": [],
+        "sourceRefs": [
+          {
+            "skillId": "ponytail",
+            "path": "skills/ponytail/SKILL.md",
+            "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+          },
+          {
+            "skillId": "cs-engineering",
+            "path": "skills/cs-engineering/SKILL.md",
+            "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+          },
+          {
+            "skillId": "test-engineering",
+            "path": "skills/test-engineering/SKILL.md",
+            "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+          },
+          {
+            "skillId": "orchestrator",
+            "path": "skills/orchestrator/SKILL.md",
+            "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+          },
+          {
+            "skillId": "code-review",
+            "path": "skills/code-review/SKILL.md",
+            "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+          },
+          {
+            "skillId": "software-security-auditor",
+            "path": "skills/software-security-auditor/SKILL.md",
+            "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+          },
+          {
+            "skillId": "korean-prose-editor",
+            "path": "skills/korean-prose-editor/SKILL.md",
+            "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+          }
+        ],
+        "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+      },
+      "status": "OFFLINE_CHECKS_COMPLETE_WITH_KNOWN_DEFECTS; HOST_NOTRUN",
+      "offlineScoringControls": "PASS",
+      "semanticModelQuality": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "observedHostReceipt": null,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "behaviorBoundaries": {
+        "ACK_as_business_completion": "NOTRUN",
+        "new_queue_DB_daemon_automatic_installation": "NOTRUN",
+        "actual_handoff_loss_and_duplicate_completion": "NOTRUN"
+      },
+      "controls": [
+        {
+          "controlId": "known-invalid-RESP-valid-cost-loss",
+          "status": "FAIL",
+          "kind": "known-defect-reproduction",
+          "variantId": "base",
+          "executionKind": "offline-mock",
+          "apiCalls": 0,
+          "evidenceRef": "observations.public.json",
+          "controlLookup": "known-invalid-RESP-valid-cost-loss"
+        },
+        {
+          "controlId": "known-before-dispatch-recheck-gap",
+          "status": "FAIL",
+          "kind": "known-defect-reproduction",
+          "variantId": "base",
+          "executionKind": "offline-mock",
+          "apiCalls": 0,
+          "evidenceRef": "observations.public.json",
+          "controlLookup": "known-before-dispatch-recheck-gap"
+        },
+        {
+          "controlId": "frozen-integrity",
+          "status": "PASS",
+          "kind": "new-boundary-control",
+          "variantId": "base",
+          "executionKind": "offline-mock",
+          "apiCalls": 0,
+          "evidenceRef": "observations.public.json",
+          "controlLookup": "frozen-integrity"
+        },
+        {
+          "controlId": "base-request",
+          "status": "PASS",
+          "kind": "new-boundary-control",
+          "variantId": "base",
+          "executionKind": "offline-mock",
+          "apiCalls": 0,
+          "evidenceRef": "observations.public.json",
+          "controlLookup": "base-request"
+        },
+        {
+          "controlId": "exact-R",
+          "status": "PASS",
+          "kind": "new-boundary-control",
+          "variantId": "base",
+          "executionKind": "offline-mock",
+          "apiCalls": 0,
+          "evidenceRef": "observations.public.json",
+          "controlLookup": "exact-R"
+        },
+        {
+          "controlId": "missing-ponytail",
+          "status": "PASS",
+          "kind": "new-boundary-control",
+          "variantId": "base",
+          "executionKind": "offline-mock",
+          "apiCalls": 0,
+          "evidenceRef": "observations.public.json",
+          "controlLookup": "missing-ponytail"
+        },
+        {
+          "controlId": "missing-cs-engineering",
+          "status": "PASS",
+          "kind": "new-boundary-control",
+          "variantId": "base",
+          "executionKind": "offline-mock",
+          "apiCalls": 0,
+          "evidenceRef": "observations.public.json",
+          "controlLookup": "missing-cs-engineering"
+        },
+        {
+          "controlId": "missing-test-engineering",
+          "status": "PASS",
+          "kind": "new-boundary-control",
+          "variantId": "base",
+          "executionKind": "offline-mock",
+          "apiCalls": 0,
+          "evidenceRef": "observations.public.json",
+          "controlLookup": "missing-test-engineering"
+        },
+        {
+          "controlId": "missing-orchestrator",
+          "status": "PASS",
+          "kind": "new-boundary-control",
+          "variantId": "base",
+          "executionKind": "offline-mock",
+          "apiCalls": 0,
+          "evidenceRef": "observations.public.json",
+          "controlLookup": "missing-orchestrator"
+        },
+        {
+          "controlId": "P-only-CS-regression",
+          "status": "PASS",
+          "kind": "new-boundary-control",
+          "variantId": "base",
+          "executionKind": "offline-mock",
+          "apiCalls": 0,
+          "evidenceRef": "observations.public.json",
+          "controlLookup": "P-only-CS-regression"
+        },
+        {
+          "controlId": "select-all",
+          "status": "PASS",
+          "kind": "new-boundary-control",
+          "variantId": "base",
+          "executionKind": "offline-mock",
+          "apiCalls": 0,
+          "evidenceRef": "observations.public.json",
+          "controlLookup": "select-all"
+        },
+        {
+          "controlId": "extra-code-review",
+          "status": "PASS",
+          "kind": "new-boundary-control",
+          "variantId": "base",
+          "executionKind": "offline-mock",
+          "apiCalls": 0,
+          "evidenceRef": "observations.public.json",
+          "controlLookup": "extra-code-review"
+        },
+        {
+          "controlId": "extra-software-security-auditor",
+          "status": "PASS",
+          "kind": "new-boundary-control",
+          "variantId": "base",
+          "executionKind": "offline-mock",
+          "apiCalls": 0,
+          "evidenceRef": "observations.public.json",
+          "controlLookup": "extra-software-security-auditor"
+        },
+        {
+          "controlId": "extra-korean-prose-editor",
+          "status": "PASS",
+          "kind": "new-boundary-control",
+          "variantId": "base",
+          "executionKind": "offline-mock",
+          "apiCalls": 0,
+          "evidenceRef": "observations.public.json",
+          "controlLookup": "extra-korean-prose-editor"
+        },
+        {
+          "controlId": "null-empty-notrun",
+          "status": "PASS",
+          "kind": "new-boundary-control",
+          "variantId": "base",
+          "executionKind": "offline-mock",
+          "apiCalls": 0,
+          "evidenceRef": "observations.public.json",
+          "controlLookup": "null-empty-notrun"
+        },
+        {
+          "controlId": "no-receipt-no-stages",
+          "status": "PASS",
+          "kind": "new-boundary-control",
+          "variantId": "base",
+          "executionKind": "offline-mock",
+          "apiCalls": 0,
+          "evidenceRef": "observations.public.json",
+          "controlLookup": "no-receipt-no-stages"
+        },
+        {
+          "controlId": "raw-versus-corrected",
+          "status": "PASS",
+          "kind": "new-boundary-control",
+          "variantId": "base",
+          "executionKind": "offline-mock",
+          "apiCalls": 0,
+          "evidenceRef": "observations.public.json",
+          "controlLookup": "raw-versus-corrected"
+        },
+        {
+          "controlId": "gateway-no-agent-receipt",
+          "status": "PASS",
+          "kind": "new-boundary-control",
+          "variantId": "base",
+          "executionKind": "offline-mock",
+          "apiCalls": 0,
+          "evidenceRef": "observations.public.json",
+          "controlLookup": "gateway-no-agent-receipt"
+        },
+        {
+          "controlId": "unconfigured",
+          "status": "PASS",
+          "kind": "new-boundary-control",
+          "variantId": "base",
+          "executionKind": "offline-mock",
+          "apiCalls": 0,
+          "evidenceRef": "observations.public.json",
+          "controlLookup": "unconfigured"
+        }
+      ]
+    }
+  ],
+  "agentAuthority": "AGENT final selection remains unobserved. Classifier is advice only. No new test creates a host selection receipt. The developer reading these skill files is not an SS03 host-stage observation.",
+  "oracleEvidence": {
+    "ponytail": "Implementation and minimal design explicitly requested; coding applicability in SKILL.md.",
+    "cs-engineering": "Exit before receipt, crash after ACK and redelivery create loss/duplicate/completion invariants; absence of field cause or target path does not erase applicability. ACK cannot itself prove business completion.",
+    "test-engineering": "Regression tests explicitly requested.",
+    "orchestrator": "Connect CS constraints, minimal implementation and regression verification responsibilities.",
+    "notApplicable": "No fixed diff/PR review, security audit request, or Korean prose editing target. These are reviewed incompatible extras, not oracle.forbidden entries."
+  },
+  "findings": [
+    {
+      "id": "SS03-known-invalid-RESP-valid-cost-loss",
+      "deduplicationKey": "existing-known-invalid-RESP-valid-cost-loss",
+      "newRootCauseCount": 0,
+      "status": "REPRODUCED_OFFLINE",
+      "impact": "A dispatched invalid response discards valid reported actualCostUsd; settlement retains unknown reservation instead of recording known spend. This does not demonstrate released reservation or free credit.",
+      "input": {
+        "originalPrompt": "session-handoff를 구현해 줘. 수신 전 종료, ACK 뒤 crash, 같은 메시지 재수신에서 인계가 유실되거나 중복 완료되지 않아야 해. 최소 구현과 회귀 테스트를 함께 설계해 줘.",
+        "judgments": [],
+        "actualCostUsd": 0.1
+      },
+      "expected": {
+        "responseError": "INVALID_PROVIDER_RESPONSE",
+        "actualCostUsd": 0.1,
+        "spentUsd": 0.1
+      },
+      "observed": {
+        "responseError": "INVALID_PROVIDER_RESPONSE",
+        "actualCostUsd": null,
+        "spentUsd": 0,
+        "reservedMaximumUsd": 0.4
+      },
+      "causeRefs": [
+        "mcp-server/src/skill-classification/service.ts:194",
+        "mcp-server/src/skill-classification/service.ts:204",
+        "mcp-server/src/skill-classification/service.ts:210"
+      ],
+      "testRef": "tests/SS03-isolated.test.ts:167",
+      "evidenceRefs": [
+        "observations.json",
+        "known-defects.vitest.json"
+      ],
+      "limit": "Injected public provider port; no real provider usage/billing claim"
+    },
+    {
+      "id": "SS03-known-before-dispatch-recheck-gap",
+      "deduplicationKey": "existing-known-before-dispatch-recheck-gap",
+      "newRootCauseCount": 0,
+      "status": "REPRODUCED_OFFLINE",
+      "impact": "Cancellation exposed by the budget port after reservation is observed only after dispatch; result is fenced as stale but a provider side effect has already happened.",
+      "input": {
+        "originalPrompt": "session-handoff를 구현해 줘. 수신 전 종료, ACK 뒤 crash, 같은 메시지 재수신에서 인계가 유실되거나 중복 완료되지 않아야 해. 최소 구현과 회귀 테스트를 함께 설계해 줘.",
+        "cancellationPoint": "budget.reserve callback after successful reservation and before provider.classify"
+      },
+      "expected": {
+        "providerCalls": 0,
+        "error": "STALE_CLASSIFICATION"
+      },
+      "observed": {
+        "providerCalls": 1,
+        "error": "STALE_CLASSIFICATION",
+        "attemptDispatchState": "started",
+        "mockCostUsd": 0.1
+      },
+      "causeRefs": [
+        "mcp-server/src/skill-classification/service.ts:181",
+        "mcp-server/src/skill-classification/service.ts:182",
+        "mcp-server/src/skill-classification/service.ts:185"
+      ],
+      "testRef": "tests/SS03-isolated.test.ts:175",
+      "evidenceRefs": [
+        "observations.json",
+        "known-defects.vitest.json"
+      ],
+      "limit": "Synthetic synchronous budget-port interleaving; actual concurrent host/native cancellation NOTRUN. No new root cause counted."
+    }
+  ],
+  "otherKnownDefects": {
+    "timeoutOverflow": "NOT_TESTED_OUTSIDE_SS03_SCOPE",
+    "metadataConditionDuplication": "NOT_APPLICABLE_TO_EMPTY_SS03_ALLOWED_CONDITIONS",
+    "hostActiveStateSupplyGap": "SOURCE_INSPECTED_EXISTING_GAP; NOT_HOST_REPRODUCED; no new root cause counted"
+  },
+  "missingInputs": [
+    {
+      "input": "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG",
+      "observed": "unset",
+      "needed": "Trusted installation file defining config plus providerProfileRegistryRef; approved remote content request digest or remote-private permission where required"
+    },
+    {
+      "input": "qualified central vendor profile",
+      "needed": "Exact approved current vendor/model/reasoning effort, supported options, matching inventory/taxonomy/prompt/model/profile digests, unexpired qualification, input/output/cost caps"
+    },
+    {
+      "input": "providerRuntimeRef / nativeAdapterDefinitionsRef",
+      "needed": "Approved provider route, separate native allowance/budget; adapterId, host=codex, executable=<codex-executable>, workingDirectory, approvalRef, capabilityEvidenceRef, retryPolicyVerified, retryPolicyEvidenceRef, isolationEvidenceRef, isolationArgs, timeoutMs, maximumOutputBytes"
+    },
+    {
+      "input": "live host attestation and task observation",
+      "observed": "host attestation env unset; no actual classify/selection host call captured",
+      "needed": "Real installed hook or host-owned openHostAttestation callback; model, reasoningEffort, sessionId, turnId, toolUseId, actorId; same workflow DB plus actual host prompt/task revision/source reference"
+    },
+    {
+      "input": "read/applied/verified artifacts",
+      "needed": "Actual selected skill body/reference reads, duplicate/loss/completion obligations and required phases, final implementation candidate digest, raw verification evidence for same candidate"
+    },
+    {
+      "input": "host-discovered installed/enabled/supported inventory",
+      "observed": "gateway loads repository inventory; no actual host installation/activity supplied",
+      "needed": "Host observation of full inventory and runnable state; defaults from repository tree are not active-host proof"
+    },
+    {
+      "input": "Claude executable/route",
+      "observed": "executable unavailable",
+      "needed": "Required only for cross-host paired execution, which is not authorized for this task"
+    }
+  ],
+  "hostSupport": {
+    "observedExecutable": "<codex-executable>",
+    "cliHelpExit": 0,
+    "cliHelpEvidence": "codex-exec-help.stdout.log",
+    "supportedSourcePath": "mcp-server/src/skill-classification/native-adapters.ts:createNativeClassificationAdapters",
+    "hostSelectionPath": "hooks/hooks.json PreToolUse -> mcp-server/dist/host-attestation-hook.mjs --host=codex -> classify_skills -> AGENT decision -> record_skill_selection(hostReceipt=null)",
+    "wrapperPath": "mcp-server/dist/host-attestation-api.mjs:openHostAttestation, host-owned real observation callback",
+    "routeStatus": "NOT_QUALIFIED_OR_CONFIGURED",
+    "claudeExecutable": null,
+    "helpIsNotNativeQualification": true
+  },
+  "evidenceFiles": [
+    "SS03.fixture.json",
+    "SS03.request.json",
+    "SS03.plan.json",
+    "observations.json",
+    "commands.json",
+    "environment.json",
+    "existing-regression.vitest.json",
+    "isolated-controls-final.vitest.json",
+    "known-defects.vitest.json",
+    "integrity-final.json"
+  ],
+  "accuracyClaim": null,
+  "releaseAcceptance": "NOT_ASSESSED",
+  "validationLimit": "Offline injected judgments validate evaluator and transport/gateway mechanics, not model semantic accuracy or actual handoff implementation correctness.",
+  "publication": {
+    "kind": "sanitized-existing-result-projection",
+    "sourceOriginalFile": "SS03.result.json",
+    "sourceOriginalBytes": 2199000,
+    "sourceOriginalSha256": "f02fd8bf7b06d0b59e2f57c2a4a5d3a24b3f9a253d372ceb72055435b5ee362b",
+    "newTestRuns": 0,
+    "newModelAPICalls": 0,
+    "newObservationOrPatchCreated": false,
+    "controlsRepresentation": "Control status and identifiers retained; input/expected/observed resolved from observations.public.json by controlLookup.",
+    "originalReferencePolicy": "Historical evidence refs are original basenames. Refer to provenance.json publicFiles for their public counterparts."
+  }
+}

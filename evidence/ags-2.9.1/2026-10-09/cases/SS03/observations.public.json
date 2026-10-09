@@ -1,0 +1,1572 @@
+[
+  {
+    "caseId": "SS03",
+    "variantId": "base",
+    "controlId": "known-invalid-RESP-valid-cost-loss",
+    "executionKind": "offline-mock",
+    "input": {
+      "prompt": "session-handoff를 구현해 줘. 수신 전 종료, ACK 뒤 crash, 같은 메시지 재수신에서 인계가 유실되거나 중복 완료되지 않아야 해. 최소 구현과 회귀 테스트를 함께 설계해 줘.",
+      "judgments": [],
+      "actualCostUsd": 0.1
+    },
+    "expected": {
+      "responseError": "INVALID_PROVIDER_RESPONSE",
+      "actualCostUsd": 0.1,
+      "spentUsd": 0.1
+    },
+    "observed": {
+      "result": {
+        "request": {
+          "$publicationRef": "inputs/SS03.request.json"
+        },
+        "config": {
+          "jevEnabled": false,
+          "mode": "select",
+          "providerProfileRegistryRef": "synthetic-only",
+          "externalClassificationAllowed": true,
+          "configRevision": "synthetic-only",
+          "timeoutMs": 1000
+        },
+        "profileRevision": "synthetic-only",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "synthetic-only",
+          "profileRevision": "synthetic-only",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "requestDigest": "sha256:7e73e463d2fd8333c20968fb2438a44d964ca45955ff2005652bc77fdfd65b7b",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "vendor",
+            "profileId": "SS03-test-profile",
+            "modelId": "synthetic-SS03-no-model",
+            "reasoningEffort": "low",
+            "dispatchState": "started",
+            "status": "INVALID",
+            "errorCode": "INVALID_PROVIDER_RESPONSE",
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS03-base",
+          "operationId": "SS03-base",
+          "requestDigest": "sha256:7e73e463d2fd8333c20968fb2438a44d964ca45955ff2005652bc77fdfd65b7b",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "INVALID",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "INVALID_PROVIDER_RESPONSE"
+            }
+          ],
+          "error": {
+            "code": "INVALID_PROVIDER_RESPONSE",
+            "retryable": false,
+            "dispatchState": "started"
+          }
+        }
+      },
+      "budget": {
+        "limits": {
+          "jev": {
+            "limitUsd": 0,
+            "spentUsd": 0
+          },
+          "vendor:SS03-test-vendor": {
+            "limitUsd": 2,
+            "spentUsd": 0
+          }
+        },
+        "nativeAllowances": {},
+        "invalidCostCeilings": [],
+        "reservations": [
+          {
+            "id": "[\"SS03-base\",\"sha256:7e73e463d2fd8333c20968fb2438a44d964ca45955ff2005652bc77fdfd65b7b\",\"SS03-test-profile\"]",
+            "bucket": "vendor:SS03-test-vendor",
+            "maximumUsd": 0.4,
+            "profileId": "SS03-test-profile",
+            "nativeProfileId": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "caseId": "SS03",
+    "variantId": "base",
+    "controlId": "known-before-dispatch-recheck-gap",
+    "executionKind": "offline-mock",
+    "input": {
+      "prompt": "session-handoff를 구현해 줘. 수신 전 종료, ACK 뒤 crash, 같은 메시지 재수신에서 인계가 유실되거나 중복 완료되지 않아야 해. 최소 구현과 회귀 테스트를 함께 설계해 줘.",
+      "cancellationPoint": "budget.reserve returns, before provider.classify"
+    },
+    "expected": {
+      "providerCalls": 0,
+      "error": "STALE_CLASSIFICATION"
+    },
+    "observed": {
+      "providerCalls": 1,
+      "result": {
+        "request": {
+          "$publicationRef": "inputs/SS03.request.json"
+        },
+        "config": {
+          "jevEnabled": false,
+          "mode": "select",
+          "providerProfileRegistryRef": "synthetic-only",
+          "externalClassificationAllowed": true,
+          "configRevision": "synthetic-only",
+          "timeoutMs": 1000
+        },
+        "profileRevision": "synthetic-only",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "synthetic-only",
+          "profileRevision": "synthetic-only",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "requestDigest": "sha256:7e73e463d2fd8333c20968fb2438a44d964ca45955ff2005652bc77fdfd65b7b",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "vendor",
+            "profileId": "SS03-test-profile",
+            "modelId": "synthetic-SS03-no-model",
+            "reasoningEffort": "low",
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0.1
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS03-base",
+          "operationId": "SS03-base",
+          "requestDigest": "sha256:7e73e463d2fd8333c20968fb2438a44d964ca45955ff2005652bc77fdfd65b7b",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "STALE_CLASSIFICATION"
+            }
+          ],
+          "error": {
+            "code": "STALE_CLASSIFICATION",
+            "retryable": false,
+            "dispatchState": "not-started"
+          }
+        }
+      },
+      "budget": {
+        "limits": {
+          "jev": {
+            "limitUsd": 0,
+            "spentUsd": 0
+          },
+          "vendor:SS03-test-vendor": {
+            "limitUsd": 2,
+            "spentUsd": 0.1
+          }
+        },
+        "nativeAllowances": {},
+        "invalidCostCeilings": [],
+        "reservations": []
+      }
+    }
+  },
+  {
+    "caseId": "SS03",
+    "variantId": "base",
+    "controlId": "frozen-integrity",
+    "executionKind": "offline-mock",
+    "input": {
+      "$publicationRef": "inputs/SS03.fixture.json"
+    },
+    "expected": {
+      "required": [
+        "ponytail",
+        "cs-engineering",
+        "test-engineering",
+        "orchestrator"
+      ],
+      "variants": [
+        "base"
+      ]
+    },
+    "observed": {
+      "required": [
+        "ponytail",
+        "cs-engineering",
+        "test-engineering",
+        "orchestrator"
+      ],
+      "variants": [
+        "base"
+      ],
+      "oracle": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+    }
+  },
+  {
+    "caseId": "SS03",
+    "variantId": "base",
+    "controlId": "base-request",
+    "executionKind": "offline-mock",
+    "input": {
+      "$publicationRef": "inputs/SS03.request.json"
+    },
+    "expected": {
+      "exactPrompt": "session-handoff를 구현해 줘. 수신 전 종료, ACK 뒤 crash, 같은 메시지 재수신에서 인계가 유실되거나 중복 완료되지 않아야 해. 최소 구현과 회귀 테스트를 함께 설계해 줘.",
+      "skillCount": 24,
+      "context": "all null"
+    },
+    "observed": {
+      "$publicationRef": "inputs/SS03.projection.json"
+    }
+  },
+  {
+    "caseId": "SS03",
+    "variantId": "base",
+    "controlId": "exact-R",
+    "executionKind": "offline-mock",
+    "input": [
+      "ponytail",
+      "cs-engineering",
+      "test-engineering",
+      "orchestrator"
+    ],
+    "expected": {
+      "verdict": "PASS",
+      "missingRequired": []
+    },
+    "observed": {
+      "caseId": "SS03",
+      "verdict": "PASS",
+      "missingRequired": [],
+      "forbidden": [],
+      "unnecessary": [],
+      "unadjudicated": [],
+      "truePositives": 4,
+      "falsePositives": 0,
+      "requiredHits": 4,
+      "answered": true,
+      "abstained": false,
+      "unnecessaryAbstention": false,
+      "reasons": []
+    }
+  },
+  {
+    "caseId": "SS03",
+    "variantId": "base",
+    "controlId": "missing-ponytail",
+    "executionKind": "offline-mock",
+    "input": [
+      "cs-engineering",
+      "test-engineering",
+      "orchestrator"
+    ],
+    "expected": {
+      "verdict": "FAIL",
+      "missingRequired": [
+        "ponytail"
+      ]
+    },
+    "observed": {
+      "caseId": "SS03",
+      "verdict": "FAIL",
+      "missingRequired": [
+        "ponytail"
+      ],
+      "forbidden": [],
+      "unnecessary": [],
+      "unadjudicated": [],
+      "truePositives": 3,
+      "falsePositives": 0,
+      "requiredHits": 3,
+      "answered": true,
+      "abstained": false,
+      "unnecessaryAbstention": false,
+      "reasons": []
+    }
+  },
+  {
+    "caseId": "SS03",
+    "variantId": "base",
+    "controlId": "missing-cs-engineering",
+    "executionKind": "offline-mock",
+    "input": [
+      "ponytail",
+      "test-engineering",
+      "orchestrator"
+    ],
+    "expected": {
+      "verdict": "FAIL",
+      "missingRequired": [
+        "cs-engineering"
+      ]
+    },
+    "observed": {
+      "caseId": "SS03",
+      "verdict": "FAIL",
+      "missingRequired": [
+        "cs-engineering"
+      ],
+      "forbidden": [],
+      "unnecessary": [],
+      "unadjudicated": [],
+      "truePositives": 3,
+      "falsePositives": 0,
+      "requiredHits": 3,
+      "answered": true,
+      "abstained": false,
+      "unnecessaryAbstention": false,
+      "reasons": []
+    }
+  },
+  {
+    "caseId": "SS03",
+    "variantId": "base",
+    "controlId": "missing-test-engineering",
+    "executionKind": "offline-mock",
+    "input": [
+      "ponytail",
+      "cs-engineering",
+      "orchestrator"
+    ],
+    "expected": {
+      "verdict": "FAIL",
+      "missingRequired": [
+        "test-engineering"
+      ]
+    },
+    "observed": {
+      "caseId": "SS03",
+      "verdict": "FAIL",
+      "missingRequired": [
+        "test-engineering"
+      ],
+      "forbidden": [],
+      "unnecessary": [],
+      "unadjudicated": [],
+      "truePositives": 3,
+      "falsePositives": 0,
+      "requiredHits": 3,
+      "answered": true,
+      "abstained": false,
+      "unnecessaryAbstention": false,
+      "reasons": []
+    }
+  },
+  {
+    "caseId": "SS03",
+    "variantId": "base",
+    "controlId": "missing-orchestrator",
+    "executionKind": "offline-mock",
+    "input": [
+      "ponytail",
+      "cs-engineering",
+      "test-engineering"
+    ],
+    "expected": {
+      "verdict": "FAIL",
+      "missingRequired": [
+        "orchestrator"
+      ]
+    },
+    "observed": {
+      "caseId": "SS03",
+      "verdict": "FAIL",
+      "missingRequired": [
+        "orchestrator"
+      ],
+      "forbidden": [],
+      "unnecessary": [],
+      "unadjudicated": [],
+      "truePositives": 3,
+      "falsePositives": 0,
+      "requiredHits": 3,
+      "answered": true,
+      "abstained": false,
+      "unnecessaryAbstention": false,
+      "reasons": []
+    }
+  },
+  {
+    "caseId": "SS03",
+    "variantId": "base",
+    "controlId": "P-only-CS-regression",
+    "executionKind": "offline-mock",
+    "input": {
+      "prompt": "session-handoff를 구현해 줘. 수신 전 종료, ACK 뒤 crash, 같은 메시지 재수신에서 인계가 유실되거나 중복 완료되지 않아야 해. 최소 구현과 회귀 테스트를 함께 설계해 줘.",
+      "context": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "injected": [
+        "ponytail"
+      ]
+    },
+    "expected": {
+      "verdict": "FAIL",
+      "missingRequired": [
+        "cs-engineering",
+        "test-engineering",
+        "orchestrator"
+      ]
+    },
+    "observed": {
+      "result": {
+        "request": {
+          "$publicationRef": "inputs/SS03.request.json"
+        },
+        "config": {
+          "jevEnabled": false,
+          "mode": "select",
+          "providerProfileRegistryRef": "synthetic-only",
+          "externalClassificationAllowed": true,
+          "configRevision": "synthetic-only",
+          "timeoutMs": 1000
+        },
+        "profileRevision": "synthetic-only",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "synthetic-only",
+          "profileRevision": "synthetic-only",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "requestDigest": "sha256:7e73e463d2fd8333c20968fb2438a44d964ca45955ff2005652bc77fdfd65b7b",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "vendor",
+            "profileId": "SS03-test-profile",
+            "modelId": "synthetic-SS03-no-model",
+            "reasoningEffort": "low",
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0.1
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS03-base",
+          "operationId": "SS03-base",
+          "requestDigest": "sha256:7e73e463d2fd8333c20968fb2438a44d964ca45955ff2005652bc77fdfd65b7b",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "acceptance-evidence-validator",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "blocker-diagnostician",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "change-scope-guardian",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "code-review",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "codex-token-usage-analyzer",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "context-continuity",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "coordinate-subagents",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "cs-engineering",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "evaluation-validity-auditor",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "independent-audit-gate",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "independent-deliberation-panel",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "instruction-scope-resolver",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "iteration-frame-auditor",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "korean-prose-editor",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "model-effort-advisor",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "mutation-risk-preflight",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "orchestrator",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "ponytail",
+              "judgment": "needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "recovery-strategy-selector",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "session-board",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "software-security-auditor",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "task-contract",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "test-engineering",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "workspace-convention-profiler",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-SS03-control"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        }
+      },
+      "scored": {
+        "caseId": "SS03",
+        "verdict": "FAIL",
+        "missingRequired": [
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "forbidden": [],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 1,
+        "falsePositives": 0,
+        "requiredHits": 1,
+        "answered": true,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": []
+      }
+    }
+  },
+  {
+    "caseId": "SS03",
+    "variantId": "base",
+    "controlId": "select-all",
+    "executionKind": "offline-mock",
+    "input": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "change-scope-guardian",
+      "code-review",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "cs-engineering",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "korean-prose-editor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "orchestrator",
+      "ponytail",
+      "recovery-strategy-selector",
+      "session-board",
+      "software-security-auditor",
+      "task-contract",
+      "test-engineering",
+      "workspace-convention-profiler"
+    ],
+    "expected": {
+      "falsePositives": 3,
+      "precision": null,
+      "verdict": "INCOMPLETE_OR_FAIL"
+    },
+    "observed": {
+      "layer": "vendorRaw",
+      "denominator": 1,
+      "executed": 1,
+      "passes": 0,
+      "failures": 1,
+      "blocked": 0,
+      "notRun": 0,
+      "reviewRequired": 0,
+      "requiredTotal": 4,
+      "requiredHits": 4,
+      "requiredRecall": 1,
+      "truePositives": 4,
+      "falsePositives": 3,
+      "unadjudicatedCount": 17,
+      "precision": null,
+      "forbiddenViolations": 0,
+      "forbiddenViolationRate": 0,
+      "unnecessarySelections": 3,
+      "exactPurposeSuccessRate": 0,
+      "coverage": 1,
+      "abstentions": 0,
+      "abstentionRate": 0,
+      "unnecessaryAbstentionRate": 0,
+      "stageCoverage": {
+        "read": 0,
+        "applied": 0,
+        "verified": 0
+      },
+      "verdict": "INCOMPLETE_OR_FAIL",
+      "scores": [
+        {
+          "caseId": "SS03",
+          "verdict": "FAIL",
+          "missingRequired": [],
+          "forbidden": [],
+          "unnecessary": [
+            "code-review",
+            "korean-prose-editor",
+            "software-security-auditor"
+          ],
+          "unadjudicated": [
+            "acceptance-evidence-validator",
+            "blocker-diagnostician",
+            "change-scope-guardian",
+            "codex-token-usage-analyzer",
+            "context-continuity",
+            "coordinate-subagents",
+            "evaluation-validity-auditor",
+            "independent-audit-gate",
+            "independent-deliberation-panel",
+            "instruction-scope-resolver",
+            "iteration-frame-auditor",
+            "model-effort-advisor",
+            "mutation-risk-preflight",
+            "recovery-strategy-selector",
+            "session-board",
+            "task-contract",
+            "workspace-convention-profiler"
+          ],
+          "truePositives": 4,
+          "falsePositives": 3,
+          "requiredHits": 4,
+          "answered": true,
+          "abstained": false,
+          "unnecessaryAbstention": false,
+          "reasons": []
+        }
+      ]
+    }
+  },
+  {
+    "caseId": "SS03",
+    "variantId": "base",
+    "controlId": "extra-code-review",
+    "executionKind": "offline-mock",
+    "input": [
+      "ponytail",
+      "cs-engineering",
+      "test-engineering",
+      "orchestrator",
+      "code-review"
+    ],
+    "expected": {
+      "verdict": "FAIL",
+      "unnecessary": [
+        "code-review"
+      ]
+    },
+    "observed": {
+      "caseId": "SS03",
+      "verdict": "FAIL",
+      "missingRequired": [],
+      "forbidden": [],
+      "unnecessary": [
+        "code-review"
+      ],
+      "unadjudicated": [],
+      "truePositives": 4,
+      "falsePositives": 1,
+      "requiredHits": 4,
+      "answered": true,
+      "abstained": false,
+      "unnecessaryAbstention": false,
+      "reasons": []
+    }
+  },
+  {
+    "caseId": "SS03",
+    "variantId": "base",
+    "controlId": "extra-software-security-auditor",
+    "executionKind": "offline-mock",
+    "input": [
+      "ponytail",
+      "cs-engineering",
+      "test-engineering",
+      "orchestrator",
+      "software-security-auditor"
+    ],
+    "expected": {
+      "verdict": "FAIL",
+      "unnecessary": [
+        "software-security-auditor"
+      ]
+    },
+    "observed": {
+      "caseId": "SS03",
+      "verdict": "FAIL",
+      "missingRequired": [],
+      "forbidden": [],
+      "unnecessary": [
+        "software-security-auditor"
+      ],
+      "unadjudicated": [],
+      "truePositives": 4,
+      "falsePositives": 1,
+      "requiredHits": 4,
+      "answered": true,
+      "abstained": false,
+      "unnecessaryAbstention": false,
+      "reasons": []
+    }
+  },
+  {
+    "caseId": "SS03",
+    "variantId": "base",
+    "controlId": "extra-korean-prose-editor",
+    "executionKind": "offline-mock",
+    "input": [
+      "ponytail",
+      "cs-engineering",
+      "test-engineering",
+      "orchestrator",
+      "korean-prose-editor"
+    ],
+    "expected": {
+      "verdict": "FAIL",
+      "unnecessary": [
+        "korean-prose-editor"
+      ]
+    },
+    "observed": {
+      "caseId": "SS03",
+      "verdict": "FAIL",
+      "missingRequired": [],
+      "forbidden": [],
+      "unnecessary": [
+        "korean-prose-editor"
+      ],
+      "unadjudicated": [],
+      "truePositives": 4,
+      "falsePositives": 1,
+      "requiredHits": 4,
+      "answered": true,
+      "abstained": false,
+      "unnecessaryAbstention": false,
+      "reasons": []
+    }
+  },
+  {
+    "caseId": "SS03",
+    "variantId": "base",
+    "controlId": "null-empty-notrun",
+    "executionKind": "offline-mock",
+    "input": [
+      null,
+      []
+    ],
+    "expected": {
+      "sameSet": false,
+      "nullAbstained": true,
+      "emptyAbstained": false,
+      "absent": "NOT_RUN"
+    },
+    "observed": {
+      "nullScore": {
+        "caseId": "SS03",
+        "verdict": "FAIL",
+        "missingRequired": [
+          "ponytail",
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "forbidden": [],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 0,
+        "falsePositives": 0,
+        "requiredHits": 0,
+        "answered": false,
+        "abstained": true,
+        "unnecessaryAbstention": true,
+        "reasons": [
+          "UNEXPECTED_OR_UNEXPLAINED_ABSTENTION"
+        ]
+      },
+      "emptyScore": {
+        "caseId": "SS03",
+        "verdict": "FAIL",
+        "missingRequired": [
+          "ponytail",
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "forbidden": [],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 0,
+        "falsePositives": 0,
+        "requiredHits": 0,
+        "answered": true,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": []
+      },
+      "absent": {
+        "caseId": "SS03",
+        "verdict": "NOT_RUN",
+        "missingRequired": [
+          "ponytail",
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "forbidden": [],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 0,
+        "falsePositives": 0,
+        "requiredHits": 0,
+        "answered": false,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": []
+      }
+    }
+  },
+  {
+    "caseId": "SS03",
+    "variantId": "base",
+    "controlId": "no-receipt-no-stages",
+    "executionKind": "offline-mock",
+    "input": {
+      "caseId": "SS03",
+      "layer": "selected",
+      "state": "PASS",
+      "skillIds": [
+        "ponytail",
+        "cs-engineering",
+        "test-engineering",
+        "orchestrator"
+      ],
+      "selectionStatus": "SELECTED",
+      "reasonCodes": [],
+      "selectionReasons": [],
+      "executionKind": "offline-mock",
+      "host": null,
+      "hostReceipt": null,
+      "requestDigest": "sha256:7e73e463d2fd8333c20968fb2438a44d964ca45955ff2005652bc77fdfd65b7b",
+      "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+      "conditionDigest": "SS03-offline",
+      "stageEvidence": {
+        "read": true,
+        "applied": true,
+        "verified": true
+      }
+    },
+    "expected": {
+      "verdict": "FAIL",
+      "stageCoverage": {
+        "read": 0,
+        "applied": 0,
+        "verified": 0
+      }
+    },
+    "observed": {
+      "score": {
+        "caseId": "SS03",
+        "verdict": "FAIL",
+        "missingRequired": [],
+        "forbidden": [],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 4,
+        "falsePositives": 0,
+        "requiredHits": 4,
+        "answered": false,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": [
+          "HOST_SELECTION_RECEIPT_MISSING_OR_MISMATCH"
+        ]
+      },
+      "report": {
+        "layer": "selected",
+        "denominator": 1,
+        "executed": 1,
+        "passes": 0,
+        "failures": 1,
+        "blocked": 0,
+        "notRun": 0,
+        "reviewRequired": 0,
+        "requiredTotal": 4,
+        "requiredHits": 4,
+        "requiredRecall": 1,
+        "truePositives": 4,
+        "falsePositives": 0,
+        "unadjudicatedCount": 0,
+        "precision": 1,
+        "forbiddenViolations": 0,
+        "forbiddenViolationRate": 0,
+        "unnecessarySelections": 0,
+        "exactPurposeSuccessRate": 0,
+        "coverage": 0,
+        "abstentions": 0,
+        "abstentionRate": 0,
+        "unnecessaryAbstentionRate": 0,
+        "stageCoverage": {
+          "read": 0,
+          "applied": 0,
+          "verified": 0
+        },
+        "verdict": "INCOMPLETE_OR_FAIL",
+        "scores": [
+          {
+            "caseId": "SS03",
+            "verdict": "FAIL",
+            "missingRequired": [],
+            "forbidden": [],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 4,
+            "falsePositives": 0,
+            "requiredHits": 4,
+            "answered": false,
+            "abstained": false,
+            "unnecessaryAbstention": false,
+            "reasons": [
+              "HOST_SELECTION_RECEIPT_MISSING_OR_MISMATCH"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "caseId": "SS03",
+    "variantId": "base",
+    "controlId": "raw-versus-corrected",
+    "executionKind": "offline-mock",
+    "input": {
+      "raw": [
+        "ponytail"
+      ],
+      "combined": [
+        "ponytail",
+        "cs-engineering",
+        "test-engineering",
+        "orchestrator"
+      ]
+    },
+    "expected": {
+      "rawRecall": 0.25,
+      "combinedRecall": 1
+    },
+    "observed": {
+      "raw": {
+        "layer": "vendorRaw",
+        "denominator": 1,
+        "executed": 1,
+        "passes": 0,
+        "failures": 1,
+        "blocked": 0,
+        "notRun": 0,
+        "reviewRequired": 0,
+        "requiredTotal": 4,
+        "requiredHits": 1,
+        "requiredRecall": 0.25,
+        "truePositives": 1,
+        "falsePositives": 0,
+        "unadjudicatedCount": 0,
+        "precision": 1,
+        "forbiddenViolations": 0,
+        "forbiddenViolationRate": 0,
+        "unnecessarySelections": 0,
+        "exactPurposeSuccessRate": 0,
+        "coverage": 1,
+        "abstentions": 0,
+        "abstentionRate": 0,
+        "unnecessaryAbstentionRate": 0,
+        "stageCoverage": {
+          "read": 0,
+          "applied": 0,
+          "verified": 0
+        },
+        "verdict": "INCOMPLETE_OR_FAIL",
+        "scores": [
+          {
+            "caseId": "SS03",
+            "verdict": "FAIL",
+            "missingRequired": [
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "forbidden": [],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 1,
+            "falsePositives": 0,
+            "requiredHits": 1,
+            "answered": true,
+            "abstained": false,
+            "unnecessaryAbstention": false,
+            "reasons": []
+          }
+        ]
+      },
+      "combined": {
+        "layer": "combined",
+        "denominator": 1,
+        "executed": 1,
+        "passes": 1,
+        "failures": 0,
+        "blocked": 0,
+        "notRun": 0,
+        "reviewRequired": 0,
+        "requiredTotal": 4,
+        "requiredHits": 4,
+        "requiredRecall": 1,
+        "truePositives": 4,
+        "falsePositives": 0,
+        "unadjudicatedCount": 0,
+        "precision": 1,
+        "forbiddenViolations": 0,
+        "forbiddenViolationRate": 0,
+        "unnecessarySelections": 0,
+        "exactPurposeSuccessRate": 1,
+        "coverage": 1,
+        "abstentions": 0,
+        "abstentionRate": 0,
+        "unnecessaryAbstentionRate": 0,
+        "stageCoverage": {
+          "read": 0,
+          "applied": 0,
+          "verified": 0
+        },
+        "verdict": "PASS",
+        "scores": [
+          {
+            "caseId": "SS03",
+            "verdict": "PASS",
+            "missingRequired": [],
+            "forbidden": [],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 4,
+            "falsePositives": 0,
+            "requiredHits": 4,
+            "answered": true,
+            "abstained": false,
+            "unnecessaryAbstention": false,
+            "reasons": []
+          }
+        ]
+      }
+    }
+  },
+  {
+    "caseId": "SS03",
+    "variantId": "base",
+    "controlId": "gateway-no-agent-receipt",
+    "executionKind": "offline-mock",
+    "input": {
+      "prompt": "session-handoff를 구현해 줘. 수신 전 종료, ACK 뒤 crash, 같은 메시지 재수신에서 인계가 유실되거나 중복 완료되지 않아야 해. 최소 구현과 회귀 테스트를 함께 설계해 줘.",
+      "injectedRecommendations": [
+        "ponytail",
+        "cs-engineering",
+        "test-engineering",
+        "orchestrator"
+      ],
+      "observation": null
+    },
+    "expected": {
+      "selected": null,
+      "proposed": true,
+      "rejection": "HOST_SELECTION_NOT_OBSERVED"
+    },
+    "observed": {
+      "result": {
+        "result": {
+          "request": {
+            "$publicationRef": "inputs/SS03.request.json"
+          },
+          "config": {
+            "jevEnabled": false,
+            "mode": "select",
+            "providerProfileRegistryRef": "synthetic-only",
+            "externalClassificationAllowed": true,
+            "configRevision": "synthetic-only",
+            "timeoutMs": 1000
+          },
+          "profileRevision": "synthetic-only",
+          "snapshot": {
+            "taskRevision": null,
+            "configRevision": "synthetic-only",
+            "profileRevision": "synthetic-only",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "requestDigest": "sha256:7e73e463d2fd8333c20968fb2438a44d964ca45955ff2005652bc77fdfd65b7b",
+            "cancelled": false
+          },
+          "attempts": [
+            {
+              "providerKind": "vendor",
+              "profileId": "SS03-test-profile",
+              "modelId": "synthetic-SS03-no-model",
+              "reasoningEffort": "low",
+              "dispatchState": "started",
+              "status": "SUCCESS",
+              "errorCode": null,
+              "timedOut": false,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": 0.1
+              },
+              "reservedCostUsd": 0.4
+            }
+          ],
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS03-base",
+            "operationId": "SS03-base",
+            "requestDigest": "sha256:7e73e463d2fd8333c20968fb2438a44d964ca45955ff2005652bc77fdfd65b7b",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "acceptance-evidence-validator",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "blocker-diagnostician",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "change-scope-guardian",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "code-review",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "codex-token-usage-analyzer",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "context-continuity",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "coordinate-subagents",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "cs-engineering",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "evaluation-validity-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "independent-audit-gate",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "independent-deliberation-panel",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "instruction-scope-resolver",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "iteration-frame-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "korean-prose-editor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "model-effort-advisor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "mutation-risk-preflight",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "orchestrator",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "ponytail",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "recovery-strategy-selector",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "session-board",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "task-contract",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "workspace-convention-profiler",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic-SS03-control"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          }
+        },
+        "classificationResponseRef": "sha256:44500115791628d044c8c1b4a99018cd61596f07fa9c9b88be5a7d0f2d83c664",
+        "agentSelectedSkillIds": null,
+        "selectionStatus": "PROPOSED",
+        "adviceApplied": false
+      },
+      "rejected": {
+        "valid": false,
+        "errors": [
+          "HOST_SELECTION_NOT_OBSERVED"
+        ],
+        "agentSelectedSkillIds": null
+      }
+    }
+  },
+  {
+    "caseId": "SS03",
+    "variantId": "base",
+    "controlId": "unconfigured",
+    "executionKind": "offline-mock",
+    "input": {
+      "configSupplied": false,
+      "request": "sha256:7e73e463d2fd8333c20968fb2438a44d964ca45955ff2005652bc77fdfd65b7b"
+    },
+    "expected": {
+      "attempts": [],
+      "error": "PROFILE_UNAVAILABLE"
+    },
+    "observed": {
+      "request": {
+        "$publicationRef": "inputs/SS03.request.json"
+      },
+      "config": {
+        "jevEnabled": true,
+        "mode": "select",
+        "providerProfileRegistryRef": "unconfigured",
+        "externalClassificationAllowed": false,
+        "configRevision": "unconfigured",
+        "timeoutMs": 30000
+      },
+      "profileRevision": "unconfigured",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "unconfigured",
+        "profileRevision": "unconfigured",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+        "requestDigest": "sha256:7e73e463d2fd8333c20968fb2438a44d964ca45955ff2005652bc77fdfd65b7b",
+        "cancelled": false
+      },
+      "attempts": [],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS03-base",
+        "operationId": "SS03-base",
+        "requestDigest": "sha256:7e73e463d2fd8333c20968fb2438a44d964ca45955ff2005652bc77fdfd65b7b",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+        "status": "UNAVAILABLE",
+        "judgments": [],
+        "unresolvedItems": [
+          {
+            "skillId": null,
+            "reasonCode": "PROFILE_UNAVAILABLE"
+          }
+        ],
+        "error": {
+          "code": "PROFILE_UNAVAILABLE",
+          "retryable": false,
+          "dispatchState": "not-started"
+        }
+      }
+    }
+  }
+]
