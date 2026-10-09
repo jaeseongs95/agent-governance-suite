@@ -14,6 +14,10 @@ class CleanupLimit(Exception):
     """Return control to the reap/cancellation loop after bounded cleanup work."""
 
 
+class ProcUnavailable(Exception):
+    """Missing child links are unobserved ownership, not an empty tree."""
+
+
 class CleanupBudget:
     def __init__(self, deadline):
         self.deadline = deadline
@@ -57,13 +61,114 @@ def descendants(pid, budget):
                                     yield child
                             if not chunk:
                                 break
-        except FileNotFoundError:
-            continue
+        except FileNotFoundError as cause:
+            raise ProcUnavailable() from cause
 
 
-def signal_owned(signum, deadline):
-    budget = CleanupBudget(deadline)
+def parent_pid(pid, budget):
+    """Extract only PID/PPid metadata; never inspect cmdline or environment."""
     try:
+        budget.check()
+        with Path(f"/proc/{pid}/status").open() as stream:
+            fields = {}
+            for _ in range(16):
+                budget.check()
+                line = stream.readline(256)
+                if not line:
+                    break
+                key, separator, value = line.partition(":")
+                if separator and key in ("Pid", "PPid"):
+                    fields[key] = int(value.strip())
+                if len(fields) == 2:
+                    return fields["PPid"] if fields["Pid"] == pid else None
+    except (OSError, ValueError):
+        pass
+    return None
+
+
+def current_owner(pid, budget):
+    owner = os.getpid()
+    seen = set()
+    while pid not in (0, 1, owner) and pid not in seen:
+        budget.check()
+        seen.add(pid)
+        pid = parent_pid(pid, budget)
+        if pid is None:
+            return None
+    return pid == owner
+
+
+class ProcScan:
+    """Invocation-owned lazy cursor; partial batches never restart a prefix."""
+    def __init__(self, known=()):
+        self.known = known
+        self.iterator = None
+        self.pending = None
+        self.unknown = False
+        self.enabled = False
+
+    def close(self):
+        if self.iterator is not None:
+            self.iterator.close()
+            self.iterator = None
+        self.pending = None
+
+    def signal_pid(self, pid, signum, budget):
+        if pid == os.getpid():
+            return
+        observed = current_owner(pid, budget)
+        if observed is not True:
+            self.unknown |= observed is None
+            return
+        budget.check()
+        try:
+            descriptor = os.pidfd_open(pid)
+        except ProcessLookupError:
+            return
+        try:
+            observed = current_owner(pid, budget)
+            self.unknown |= observed is None
+            if observed is True and pid != os.getpid():
+                budget.check()
+                signal.pidfd_send_signal(descriptor, signum)
+        except ProcessLookupError:
+            pass
+        finally:
+            os.close(descriptor)
+
+    def signal(self, signum, budget):
+        if self.iterator is None:
+            self.unknown = False
+        # The directly spawned runner cannot wait behind an unrelated prefix.
+        for pid in self.known:
+            self.signal_pid(pid, signum, budget)
+        if self.iterator is None:
+            budget.check()
+            self.iterator = os.scandir("/proc")
+        while True:
+            budget.check()
+            if self.pending is None:
+                try:
+                    entry = next(self.iterator)
+                except StopIteration:
+                    self.close()
+                    return not self.unknown
+                if not entry.name.isdecimal():
+                    continue
+                self.pending = int(entry.name)
+            budget.check()
+            self.signal_pid(self.pending, signum, budget)
+            self.pending = None
+
+
+def signal_owned(signum, deadline, proc_scan=None):
+    budget = CleanupBudget(deadline)
+    temporary = proc_scan is None
+    if temporary:
+        proc_scan = ProcScan()
+    try:
+        if proc_scan.enabled:
+            return proc_scan.signal(signum, budget)
         with closing(descendants(os.getpid(), budget)) as owned:
             for pid in owned:
                 # A pidfd cannot target a recycled PID. Recheck that the opened process
@@ -82,8 +187,23 @@ def signal_owned(signum, deadline):
                     pass
                 finally:
                     os.close(descriptor)
+    except ProcUnavailable:
+        proc_scan.enabled = True
+        try:
+            return proc_scan.signal(signum, budget)
+        except CleanupLimit:
+            return False
+        except OSError:
+            proc_scan.close()
+            return False
     except CleanupLimit:
         return False
+    except OSError:
+        proc_scan.close()
+        return False
+    finally:
+        if temporary:
+            proc_scan.close()
     return True
 
 
@@ -107,42 +227,46 @@ def main():
     cleanup_started = None
     term_sent = False
     remaining = False
-    while True:
-        # Reap throughout test execution: tests still use their original kill(0)
-        # criterion, which must see the orphan PID actually disappear.
-        for _ in range(32):
-            if cleanup_started is None and (cancellation or main_code is not None):
+    proc_scan = ProcScan((child.pid,))
+    try:
+        while True:
+            # Reap throughout test execution: tests still use their original kill(0)
+            # criterion, which must see the orphan PID actually disappear.
+            for _ in range(32):
+                if cleanup_started is None and (cancellation or main_code is not None):
+                    cleanup_started = time.monotonic()
+                if cleanup_started is not None and time.monotonic() >= cleanup_started + 5:
+                    remaining = True  # No absence observation at the deadline.
+                    break
+                try:
+                    pid, status = os.waitpid(-1, os.WNOHANG)
+                except ChildProcessError:
+                    remaining = False
+                    break
+                remaining = True
+                if pid == 0:
+                    break
+                reaped.append(pid)
+                if pid == child.pid:
+                    main_code = os.waitstatus_to_exitcode(status)
+                    child.returncode = main_code
+            if cancellation and cleanup_started is None:
                 cleanup_started = time.monotonic()
-            if cleanup_started is not None and time.monotonic() >= cleanup_started + 5:
-                remaining = True  # No absence observation at the deadline.
+            if main_code is not None and cleanup_started is None:
+                cleanup_started = time.monotonic()
+            if not remaining and main_code is not None:
                 break
-            try:
-                pid, status = os.waitpid(-1, os.WNOHANG)
-            except ChildProcessError:
-                remaining = False
-                break
-            remaining = True
-            if pid == 0:
-                break
-            reaped.append(pid)
-            if pid == child.pid:
-                main_code = os.waitstatus_to_exitcode(status)
-                child.returncode = main_code
-        if cancellation and cleanup_started is None:
-            cleanup_started = time.monotonic()
-        if main_code is not None and cleanup_started is None:
-            cleanup_started = time.monotonic()
-        if not remaining and main_code is not None:
-            break
-        if cleanup_started is not None:
-            elapsed = time.monotonic() - cleanup_started
-            if not term_sent and (cancellation or elapsed >= 1):
-                term_sent = signal_owned(signal.SIGTERM, cleanup_started + 5)
-            if elapsed >= 3:
-                signal_owned(signal.SIGKILL, cleanup_started + 5)
-            if time.monotonic() >= cleanup_started + 5:
-                break
-        time.sleep(0.02)
+            if cleanup_started is not None:
+                elapsed = time.monotonic() - cleanup_started
+                if not term_sent and (cancellation or elapsed >= 1):
+                    term_sent = signal_owned(signal.SIGTERM, cleanup_started + 5, proc_scan)
+                if elapsed >= 3:
+                    signal_owned(signal.SIGKILL, cleanup_started + 5, proc_scan)
+                if time.monotonic() >= cleanup_started + 5:
+                    break
+            time.sleep(0.02)
+    finally:
+        proc_scan.close()
     print(json.dumps({"harness": "test-subreaper", "ownerPid": os.getpid(),
                       "runnerPid": child.pid, "reapedPids": reaped,
                       "remainingChildren": remaining, "runnerExitCode": main_code,
