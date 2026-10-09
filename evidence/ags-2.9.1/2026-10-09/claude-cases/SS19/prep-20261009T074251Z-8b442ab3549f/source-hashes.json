@@ -1,0 +1,317 @@
+{
+  "schemaVersion": "1.0.0",
+  "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "sourceRoot": "evidence/ags-2.9.1/2026-10-09/cases/SS19",
+  "sha256ManifestEntriesVerified": 29,
+  "manifestPayloadEntriesVerified": 28,
+  "files": [
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/README.md",
+      "bytes": 3607,
+      "sha256": "ac05e2fda81ed3c7da1145242991f4d0f2960785a0cfbb30e961b72439c614a6",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/SHA256SUMS",
+      "bytes": 2754,
+      "sha256": "f61b63290901092ec8a9509959e3b7c8e609999633fca8687958e9ce5f5b9af0",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/SS19.result.public.json",
+      "bytes": 211103,
+      "sha256": "c9cf3f9cb91a9b071209de1e7365d90228a17f0e397ace0bf68245980e645c62",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/inputs/SS03.prompt.txt",
+      "bytes": 220,
+      "sha256": "3dd99a26ff73a9e8b8a933ec3ac9f67845003f0910fa3c0d56978e0a6d55a972",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/inputs/SS04.prompt.txt",
+      "bytes": 217,
+      "sha256": "2288c3c42196e715d437359c2b064d16c18d87c68e989b47b708084df5f2bd5b",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/inputs/SS09.prompt.txt",
+      "bytes": 121,
+      "sha256": "0050dc40116897b0a27139bf29a4f1731ad2a267564866ffac866e4c762de73c",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/inputs/SS10.prompt.txt",
+      "bytes": 132,
+      "sha256": "9e5d14a624e580e2bf40fcbbb0ecce4abad9e74f204384f79d20246e62ff8875",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/inputs/embedded-source.json",
+      "bytes": 20668,
+      "sha256": "e363d916d5e6f06f4f014fa2cb8a1816eb218fbfbb73656c443139f22f24c463",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/inputs/fixtures.original.json",
+      "bytes": 142450,
+      "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/inputs/request-bindings.public.json",
+      "bytes": 28819,
+      "sha256": "cf5ca33d523e37729d64b7393b0b28c81ca9556d5b3f197699d59b2df09651b8",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/logs/existing-regression.public.log",
+      "bytes": 345,
+      "sha256": "03c7b7b3e517dc78c5d0fdbacb7dc033ae3bb9d5bb9348da69d0970bc0792df0",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/logs/offline-initial.public.log",
+      "bytes": 8673,
+      "sha256": "7f0da0ee5b372853b5054f05dbd52cd9605661bc3cb3134fc1f708aab6f23ab7",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/logs/offline-pre-typecheck.public.log",
+      "bytes": 8676,
+      "sha256": "1ac8923dc5ce98af7e5cc013b886c09273d6301ca471739d648460e9b21d5603",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/logs/offline.public.log",
+      "bytes": 8678,
+      "sha256": "d37cfb29302fa2c191a6c077495563bb672fbdfde53d4bebc3fb0a83fb27ddb9",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/logs/plan-check.public.log",
+      "bytes": 288,
+      "sha256": "d24a64394397f6921a0741d00d8fd7a79f457d17640e306b0fd5c87ca2171f3d",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/logs/preservation.public.log",
+      "bytes": 35,
+      "sha256": "fe7dd0551f1a4d068e099f7ee5e0646058c5e6ace32a478f035fdc74220fc39c",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/logs/test-typecheck-initial.public.log",
+      "bytes": 13004,
+      "sha256": "e4b83e8081693fe6c34d77e0f0309302e55bb270ec57eedf8693290645c66ceb",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/logs/test-typecheck.public.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/logs/vitest-initial.public.json",
+      "bytes": 8773,
+      "sha256": "7f2029ab7292d63d2ecdfa14c26315f431d421d12530404c8fdef96be5314da3",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/logs/vitest-pre-typecheck.public.json",
+      "bytes": 8772,
+      "sha256": "30fb9641b8d95e9a12f2cf30c927f928c7b0ba968b16f733d9e1b090dee9bce2",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/logs/vitest.public.json",
+      "bytes": 8777,
+      "sha256": "bf8603942393e34c80a72b2f701d0b7a80c20140d32ff67eaf6ebe52ab488c51",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/manifest.json",
+      "bytes": 15562,
+      "sha256": "bee353935773849b51f8656fecafa958b0856d47a46e1cfd7368112177d40477",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/observations.public.json",
+      "bytes": 445765,
+      "sha256": "d5efb5e32003d27d8e83f9411d5bd6bf864a4adc84bbe58dbeb03e1dc4ccb0ea",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/provenance/candidate-snapshot.json",
+      "bytes": 3698,
+      "sha256": "a865704f280ccebb683249b877f52d6c16ebdf28156e835be60453b8090d8308",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/provenance/engineering-test-plan.json",
+      "bytes": 5501,
+      "sha256": "46d2c165414e6aebf91d1b087d405dd33358239542cbdb2b7cb9c3f07256a4aa",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/provenance/engineering-test-proof.json",
+      "bytes": 6003,
+      "sha256": "b88ec1e5a870fab01515a1dc23c07b7f88301ff58a6f0e37205b76f019fe1fcb",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/provenance/engineering-test-result.json",
+      "bytes": 1451,
+      "sha256": "979d0a4379a73bcc93a14d746b5113209ce860c476ec61160d0aab400b8972c8",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/provenance/missing-originals.json",
+      "bytes": 1306,
+      "sha256": "3b795caf78fd08d7957f7de627bbf100d85e13f1d4380f0d617fc7f5c8b7f53c",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/reproduce/SS19.test.ts",
+      "bytes": 14390,
+      "sha256": "69aab0fa915229b2dd38fbacf1fff868c2e22af54df35d05470d845d7921875f",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS19/reproduce/commands.md",
+      "bytes": 1339,
+      "sha256": "56b3816e6769a66606aad65325902c0581afdf8674981d03ecdaff116e13915b",
+      "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68"
+    }
+  ],
+  "checks": [
+    {
+      "path": "README.md",
+      "matched": true
+    },
+    {
+      "path": "SS19.result.public.json",
+      "matched": true
+    },
+    {
+      "path": "inputs/SS03.prompt.txt",
+      "matched": true
+    },
+    {
+      "path": "inputs/SS04.prompt.txt",
+      "matched": true
+    },
+    {
+      "path": "inputs/SS09.prompt.txt",
+      "matched": true
+    },
+    {
+      "path": "inputs/SS10.prompt.txt",
+      "matched": true
+    },
+    {
+      "path": "inputs/embedded-source.json",
+      "matched": true
+    },
+    {
+      "path": "inputs/fixtures.original.json",
+      "matched": true
+    },
+    {
+      "path": "inputs/request-bindings.public.json",
+      "matched": true
+    },
+    {
+      "path": "logs/existing-regression.public.log",
+      "matched": true
+    },
+    {
+      "path": "logs/offline-initial.public.log",
+      "matched": true
+    },
+    {
+      "path": "logs/offline-pre-typecheck.public.log",
+      "matched": true
+    },
+    {
+      "path": "logs/offline.public.log",
+      "matched": true
+    },
+    {
+      "path": "logs/plan-check.public.log",
+      "matched": true
+    },
+    {
+      "path": "logs/preservation.public.log",
+      "matched": true
+    },
+    {
+      "path": "logs/test-typecheck-initial.public.log",
+      "matched": true
+    },
+    {
+      "path": "logs/test-typecheck.public.log",
+      "matched": true
+    },
+    {
+      "path": "logs/vitest-initial.public.json",
+      "matched": true
+    },
+    {
+      "path": "logs/vitest-pre-typecheck.public.json",
+      "matched": true
+    },
+    {
+      "path": "logs/vitest.public.json",
+      "matched": true
+    },
+    {
+      "path": "manifest.json",
+      "matched": true
+    },
+    {
+      "path": "observations.public.json",
+      "matched": true
+    },
+    {
+      "path": "provenance/candidate-snapshot.json",
+      "matched": true
+    },
+    {
+      "path": "provenance/engineering-test-plan.json",
+      "matched": true
+    },
+    {
+      "path": "provenance/engineering-test-proof.json",
+      "matched": true
+    },
+    {
+      "path": "provenance/engineering-test-result.json",
+      "matched": true
+    },
+    {
+      "path": "provenance/missing-originals.json",
+      "matched": true
+    },
+    {
+      "path": "reproduce/SS19.test.ts",
+      "matched": true
+    },
+    {
+      "path": "reproduce/commands.md",
+      "matched": true
+    }
+  ],
+  "oracleVerification": {
+    "recorded": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "recomputed": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "matched": true,
+    "recipeSource": "https://github.com/jaeseongs95/agent-governance-suite/blob/c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6/tests/skill-classification/evaluation.ts",
+    "scope": "Historical digest recipe read for evidence integrity only; old product not tested."
+  },
+  "specBodyDigestVerification": "RECORDED_ONLY: external TEST-SPEC.seq7.ko.md is MISSING_ORIGINAL; no raw spec body or serialization recipe available. Verified embedded-source bytes and equality with frozen fixture.",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "historicalHelperSHA256": "e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9"
+}

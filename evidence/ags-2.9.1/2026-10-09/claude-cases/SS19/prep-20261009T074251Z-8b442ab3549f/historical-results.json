@@ -1,0 +1,67 @@
+{
+  "caseId": "SS19",
+  "status": "FAIL_WITH_HOST_NOTRUN",
+  "summary": {
+    "existingRegression": {
+      "passed": 1,
+      "skipped": 39
+    },
+    "newOffline": {
+      "passed": 14,
+      "failed": 3,
+      "total": 17
+    },
+    "frozenVariantChecks": {
+      "passed": 8,
+      "total": 8
+    },
+    "holdChecks": {
+      "passed": 6,
+      "total": 6
+    },
+    "knownRootCausesReproduced": 3,
+    "newRootCauses": 0,
+    "fullCasePassClaim": false
+  },
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "executionKind": "offline-mock existing regression + isolated new variant/boundary tests; host-live/provider-live NOTRUN",
+  "actualCalls": {
+    "jev": 0,
+    "jevCredentialLookup": 0,
+    "externalVendorAPI": 0,
+    "realVendorCredentialLookup": 0,
+    "claude": 0,
+    "nativeClassifierProcesses": 0
+  },
+  "mockCalls": {
+    "jev": 0,
+    "vendor": 7,
+    "fetch": 6
+  },
+  "selected": "NOTRUN",
+  "read": "NOTRUN",
+  "applied": "NOTRUN",
+  "verified": "NOTRUN",
+  "agentSelectedSkillIds": null,
+  "hostReceipt": null,
+  "purposeAccuracy": null,
+  "metricsPolicy": "SS19 oracle=null. No SS19 semantic score or model quality score. Responses are synthetic golden-shaped fixtures, never actual classifier quality or AGENT selection evidence. SS09 raw mock [] is success advice; unaccepted agent selection remains null.",
+  "limitations": [
+    "Only one independent environment and SS19 original case; referenced four prompts are SS19 subinputs, not separate case task runs",
+    "Qualification PASS, vendor identity/model, credentials, price/cost and external RESP in offline fixtures are synthetic",
+    "Gateway accept not called; no test-built host receipt",
+    "Host enabled/installed/supported status defaults observed from repo inventory are not live host observations; existing host state supply gap remains NOTRUN in SS19",
+    "No product correction or mutation; red-green sensitivity remains NOT_RUN, check-proof must report INCOMPLETE",
+    "No build/full suite/bootstrap/qualification batch was run; R14 modifications are not included in this fixed candidate",
+    "Initial and intermediate test versions were not frozen as source artifacts; only final source digest is authoritative. Their logs remain separately archived and are not used for final-source sensitivity proof."
+  ],
+  "engineeringArtifacts": {
+    "plan": "engineering-test-plan.json",
+    "planResult": "READY",
+    "proof": "engineering-test-proof.json",
+    "sensitivityResult": "INCOMPLETE",
+    "sensitivityStatuses": "NOT_RUN",
+    "note": "Artifact files materialized after direct test executions; no pre-run frozen-plan or red-green claim."
+  }
+}

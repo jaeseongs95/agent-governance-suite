@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS19",
+  "phase": "preparation",
+  "caseSoftBudgetUsd": 2,
+  "all39ReservedTotalUsd": 78,
+  "calls": [],
+  "totalCostUsd": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadInputTokens": 0,
+  "cacheCreationInputTokens": 0,
+  "retries": 0,
+  "failedCalls": 0,
+  "jevCalls": 0,
+  "jevCredentialLookups": 0,
+  "nativeClassifierProcesses": 0,
+  "claudeInferenceProcesses": 0,
+  "localOnlyClaudeInvocations": [
+    "--version",
+    "--help"
+  ],
+  "accounting": "These counters describe this preparation run only. Historical synthetic usage is excluded. Record actual usage, cache categories, all failed attempts, timeout and retries from every future host and classifier call; track unknown charges/reservations separately and stop if the next call ceiling cannot fit within the remaining US$2. The CLI per-process budget flag does not by itself enforce an aggregate multi-process case budget.",
+  "stopRule": "No inference until parent handoff. No JEV calls before individual allocation. Stop and report before a next call when approaching or unable to bound remaining budget; US$2 is a ceiling, not a target."
+}

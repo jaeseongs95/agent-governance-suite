@@ -1,0 +1,1 @@
+Design a minimal transition from oldbroker to the SQLite WAL-backed runtime. Account for concurrent writers, crash recovery and duplicate delivery, and specify regression tests. Do not migrate the production database.

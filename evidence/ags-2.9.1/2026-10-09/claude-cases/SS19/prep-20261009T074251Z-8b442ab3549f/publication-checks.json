@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "baseEvidenceCommit": "4641681ad95916189d468d6e24e02e9ec2312731",
+  "target": "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/evidence/ags-2.9.1/2026-10-09/claude-cases/SS19/prep-20261009T074251Z-8b442ab3549f",
+  "uniqueRunAbsentAtBaseline": true,
+  "scopeCheck": {
+    "verdict": "PASS",
+    "summary": {
+      "in-scope": 14,
+      "excluded": 0,
+      "unplanned": 0,
+      "preexisting-untouched": 0,
+      "preexisting-overlap": 0,
+      "ownership-unknown": 0
+    },
+    "baselineDigest": "4d2dd7dfd79664161e86188d04cc841df5ab90b2d7e5b6f88aac2bc463adba3b",
+    "scopeReportDigest": "4d533f03848762961ff042e93616cd581dd7bd8bdf6ae5a509e08afa30fa2209"
+  },
+  "privacyCheck": "Static credential-pattern scan passed; no raw conversation, secrets or personal data included. Only prior public synthetic prompts are copied.",
+  "authorization": {
+    "operationId": "prep-20261009T074251Z-8b442ab3549f",
+    "actionClass": "publish",
+    "targets": [
+      "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/evidence/ags-2.9.1/2026-10-09/claude-cases/SS19/prep-20261009T074251Z-8b442ab3549f"
+    ],
+    "environments": [
+      "external"
+    ],
+    "source": "Explicit delegated instruction to publish sanitized SS19 reports and hashes to the existing evidence branch under a unique run directory; no original conversation or secrets; no force push or overwrite.",
+    "noNewApprovalRequested": true
+  },
+  "restoreTested": false,
+  "rollback": "Only additive evidence files; preserve prior commit. Any later removal would use a normal additive revert/removal commit, never force push. Public history may retain previously published sanitized evidence.",
+  "modelAPICalls": 0,
+  "productTestStatus": "NOT_RUN"
+}
