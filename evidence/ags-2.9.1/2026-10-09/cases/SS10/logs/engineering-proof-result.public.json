@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:2db3bf40b6875f6b221cb43d406d9710cfe5b0e0fbdf824bb982de2c823c732f",
+  "reportDigest": "sha256:37fc8623442c322d39ca4ca57ee83492c8adcada886636d4f0a2b460a5a40f5a",
+  "issues": [
+    "REQUIRED B01: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+    "REQUIRED B02: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+    "REQUIRED B03: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+    "REQUIRED N01: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+    "REQUIRED N02: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+    "REQUIRED R01: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+    "REQUIRED N03-exact-CR: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+    "REQUIRED N04-negated-SEC: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+    "REQUIRED N05-both-negated: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+    "REQUIRED N06-missing-patch-no-skill: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+    "REQUIRED N07-missing-patch-abstention: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+    "REQUIRED N08-unadjudicated-extra: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+    "REQUIRED N09-noncanonical-alias: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+    "REQUIRED N10-cs-engineering: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+    "REQUIRED N10-test-engineering: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+    "REQUIRED N10-orchestrator: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+    "REQUIRED N10-korean-prose-editor: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+    "REQUIRED N11: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+    "REQUIRED N12: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+    "REQUIRED D01: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "caseId": "SS10",
+  "title": "부정문으로 구현을 제외한 리뷰",
+  "familyId": "negated-review",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "live.",
+  "originalPrompt": "Do not implement or refactor anything. Review only this fixed patch for incorrect return values. There is no security audit request.",
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS10",
+    "fields": {
+      "입력": "“Do not implement or refactor anything. Review only this fixed patch for incorrect return values. There is no security audit request.”",
+      "필수추천": "R={CR}.",
+      "금지추천 또는 행동": "implement·refactor 단어를 긍정 지시로 취급해 P 추천; 보안 언급만으로 SEC 추천.",
+      "허용선택": "A={}.",
+      "보류조건": "patch가 없으면 실제 리뷰는 보류한다.",
+      "통과기준": "CR만 추천하고 부정문을 정확히 해석한다.",
+      "증거": "E0, 긍정 행동과 부정 행동의 구분.",
+      "실행종류": "live."
+    },
+    "bodyDigest": "sha256:e9a2a6b1535fed0109c0460fdfc6500dc8e92bb4df28e3ddcba4560a00aa2665"
+  },
+  "oracle": {
+    "required": [
+      "code-review"
+    ],
+    "allowed": [],
+    "allowedConditions": {},
+    "forbidden": [
+      "ponytail",
+      "software-security-auditor"
+    ],
+    "notApplicable": [
+      "cs-engineering",
+      "test-engineering",
+      "orchestrator",
+      "korean-prose-editor"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "change-scope-guardian",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      }
+    ],
+    "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+  },
+  "variants": [
+    "base"
+  ]
+}

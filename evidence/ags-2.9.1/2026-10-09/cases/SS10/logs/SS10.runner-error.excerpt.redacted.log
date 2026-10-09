@@ -1,0 +1,3 @@
+[ENOENT] ENOENT: no such file or directory, mkdir '<PRIVATE_HOME>/.local/share/pnpm'
+pnpm: ENOENT: no such file or directory, mkdir '<PRIVATE_HOME>/.local/share/pnpm'
+[ERROR] Command failed with exit code 254: <NODE_RUNTIME_ROOT>/bin/node <NODE_RUNTIME_ROOT>/node_modules/pnpm/bin/pnpm.mjs install

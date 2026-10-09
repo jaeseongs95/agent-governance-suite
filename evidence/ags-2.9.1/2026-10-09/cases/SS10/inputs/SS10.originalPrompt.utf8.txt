@@ -1,0 +1,1 @@
+Do not implement or refactor anything. Review only this fixed patch for incorrect return values. There is no security audit request.

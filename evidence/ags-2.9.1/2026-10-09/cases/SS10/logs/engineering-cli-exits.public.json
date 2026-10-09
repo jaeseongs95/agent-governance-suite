@@ -1,0 +1,14 @@
+[
+  {
+    "command": "node skills/test-engineering/scripts/run.mjs check-plan --root <PRIVATE_WORKSPACE_ROOT> --plan SS10-evidence/engineering-test-plan.json",
+    "exitCode": 0,
+    "executionKind": "OFFLINE_PLAN_SCHEMA_CONSISTENCY",
+    "evidence": "engineering-plan-cli-result.json"
+  },
+  {
+    "command": "node skills/test-engineering/scripts/run.mjs check-proof --root <PRIVATE_WORKSPACE_ROOT> --plan SS10-evidence/engineering-test-plan.json --proof SS10-evidence/engineering-test-proof.json",
+    "exitCode": 1,
+    "executionKind": "OFFLINE_SENSITIVITY_COMPLETENESS",
+    "evidence": "engineering-proof-result.json"
+  }
+]

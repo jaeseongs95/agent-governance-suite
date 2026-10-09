@@ -1,0 +1,546 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS10",
+  "targetRelease": "2.9.1",
+  "targetBranch": "codex/skill-classification-2.9.1",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "overallStatus": "INCOMPLETE_WITH_KNOWN_DEFECT",
+  "fullCasePass": false,
+  "executionKind": "offline-component-and-evaluator-controls",
+  "API0": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0
+  },
+  "past21RunsRepeated": 0,
+  "productSourceModified": false,
+  "hostReceiptCreated": false,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "present": false,
+    "authority": "Embedded sourceSpec.fields only; no reconstructed absent source or patch"
+  },
+  "oracle": {
+    "required": [
+      "code-review"
+    ],
+    "allowed": [],
+    "allowedConditions": {},
+    "forbidden": [
+      "ponytail",
+      "software-security-auditor"
+    ],
+    "notApplicable": [
+      "cs-engineering",
+      "test-engineering",
+      "orchestrator",
+      "korean-prose-editor"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "change-scope-guardian",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      }
+    ],
+    "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+  },
+  "variants": [
+    {
+      "variantId": "base",
+      "originalPrompt": "Do not implement or refactor anything. Review only this fixed patch for incorrect return values. There is no security audit request.",
+      "expected": {
+        "recommendedSkillIds": [
+          "code-review"
+        ],
+        "allowedSkillIds": [],
+        "forbiddenSkillIds": [
+          "ponytail",
+          "software-security-auditor"
+        ],
+        "actualReviewWithoutPatch": "HOLD"
+      },
+      "status": "OFFLINE_CHECKS_COMPLETE_HOST_NOTRUN",
+      "offline": {
+        "status": "FAIL_KNOWN_DEFECT",
+        "total": 20,
+        "passed": 19,
+        "failed": 1,
+        "command": "node node_modules/vitest/vitest.mjs run tests/ss10-isolated/SS10.test.ts --reporter=verbose --reporter=json --outputFile.json=<PRIVATE_EVIDENCE_ROOT>/SS10.vitest.json",
+        "exitCode": 1,
+        "evidence": [
+          "SS10.vitest.log",
+          "SS10.vitest.json",
+          "SS10.offline-checks.json",
+          "SS10.request.json"
+        ]
+      },
+      "observed": {
+        "jevRaw": null,
+        "vendorRaw": null,
+        "combined": null,
+        "agentSelectedSkillIds": null,
+        "hostReceipt": null,
+        "reasonCodes": [],
+        "stageEvidence": {
+          "read": false,
+          "applied": false,
+          "verified": false
+        }
+      },
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "semanticAccuracy": null,
+      "hostLive": "NOTRUN",
+      "providerLive": "NOTRUN",
+      "missingInputs": [
+        "Fixed patch/base-head/changed files required to perform code review",
+        "Host-exposed AGS MCP get_skill_inventory/classify_skills/record_skill_selection tools in this session",
+        "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG pointing to approved installation config and fixed qualified provider registry",
+        "Approved provider runtime route and adapter evidence; native retry/isolation/capability evidence and confirmed allowance, or separately authorized remote route/budget",
+        "AGENT_GOVERNANCE_HOST_ATTESTATION plus genuine host-owned signed tool observation bound to current prompt/session/task and freshness",
+        "Authoritative host installed/supported/enabled state; public gateway lacks this supply path"
+      ],
+      "expectedExecutionKind": "live."
+    }
+  ],
+  "categories": {
+    "existingRegression": {
+      "status": "PASS_EXTRACTED_SS10_ONLY",
+      "checkId": "R01",
+      "source": "tests/skill-classification/evaluation.test.ts:80-83",
+      "note": "Only SS10 assertions extracted into isolated test; no original multi-case test or full suite run"
+    },
+    "newOfflineChecks": {
+      "passed": 18,
+      "failed": 1,
+      "note": "Added structural/evaluator controls are not new frozen semantic variants"
+    },
+    "actualHost": {
+      "status": "NOTRUN",
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "semanticAccuracy": null,
+      "note": "Skills read for test preparation do not count as SS10 host read/applied/verified evidence"
+    }
+  },
+  "defects": [
+    {
+      "id": "D01",
+      "knownRootCause": "host-active-state-supply-gap",
+      "newRootCauseCount": 0,
+      "severity": "Host routing applicability evidence gap; no observed live wrong selection",
+      "status": "REPRODUCED_OFFLINE",
+      "expected": {
+        "directInventoryCRSupported": false,
+        "gatewayInventoryCRSupported": false
+      },
+      "observed": {
+        "directInventoryCRSupported": false,
+        "gatewayInventoryCRSupported": true
+      },
+      "sourceRefs": [
+        "mcp-server/src/skill-classification/inventory.ts:30",
+        "mcp-server/src/skill-classification/inventory.ts:219",
+        "mcp-server/src/skill-classification/gateway.ts:49",
+        "mcp-server/src/skill-classification/gateway.ts:60",
+        "mcp-server/src/index.ts:108"
+      ],
+      "evidence": "SS10.offline-checks.json#D01"
+    }
+  ],
+  "otherKnownDefects": {
+    "validCostLostWithInvalidRESP": "NOTRUN_OUTSIDE_SS10_NEGATION_BOUNDARIES",
+    "timeoutOverflow": "NOTRUN_OUTSIDE_SS10_NEGATION_BOUNDARIES",
+    "duplicateMetadataConditions": "Static source spans overlap; no separate semantic defect reproduced or counted",
+    "concurrencyBeforeDispatchRecheckGap": "NOTRUN_OUTSIDE_SS10_NEGATION_BOUNDARIES"
+  },
+  "hostSupport": {
+    "classificationToolsExposed": false,
+    "configEnvPresent": false,
+    "hostAttestationEnvPresent": false,
+    "cliInPath": {
+      "codex": false,
+      "claude": false
+    },
+    "agentsSkills": {
+      "repository": false,
+      "environment": false
+    },
+    "supportedCodePath": "mcp-server/src/index.ts -> RuntimeSkillClassificationGateway -> approved classification runtime/native adapters; AGENT chooses IDs then host-signed record_skill_selection. JEV OFF with a qualified current-vendor native route is a supported implementation path, not a proven available route in this environment.",
+    "missingInputs": [
+      "Fixed patch/base-head/changed files required to perform code review",
+      "Host-exposed AGS MCP get_skill_inventory/classify_skills/record_skill_selection tools in this session",
+      "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG pointing to approved installation config and fixed qualified provider registry",
+      "Approved provider runtime route and adapter evidence; native retry/isolation/capability evidence and confirmed allowance, or separately authorized remote route/budget",
+      "AGENT_GOVERNANCE_HOST_ATTESTATION plus genuine host-owned signed tool observation bound to current prompt/session/task and freshness",
+      "Authoritative host installed/supported/enabled state; public gateway lacks this supply path"
+    ]
+  },
+  "commands": [
+    {
+      "command": "pnpm exec vitest run tests/ss10-isolated/SS10.test.ts --reporter=verbose --reporter=json --outputFile.json=<PRIVATE_EVIDENCE_ROOT>/SS10.vitest.json",
+      "exitCode": 1,
+      "executionKind": "RUNNER_ERROR_BEFORE_TESTS",
+      "evidence": "SS10.runner-error.log",
+      "note": "pnpm attempted dependency status/install and failed before Vitest; not an assertion red result. Direct existing Vitest executable used next."
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run tests/ss10-isolated/SS10.test.ts --reporter=verbose --reporter=json --outputFile.json=<PRIVATE_EVIDENCE_ROOT>/SS10.vitest.json",
+      "exitCode": 1,
+      "executionKind": "OFFLINE_COMPONENT_AND_EVALUATOR",
+      "evidence": "SS10.vitest.log"
+    },
+    {
+      "command": "node skills/test-engineering/scripts/run.mjs check-plan --root <PRIVATE_WORKSPACE_ROOT> --plan SS10-evidence/engineering-test-plan.json",
+      "exitCode": 0,
+      "executionKind": "OFFLINE_PLAN_SCHEMA_CONSISTENCY",
+      "evidence": "engineering-plan-cli-result.json"
+    },
+    {
+      "command": "node skills/test-engineering/scripts/run.mjs check-proof --root <PRIVATE_WORKSPACE_ROOT> --plan SS10-evidence/engineering-test-plan.json --proof SS10-evidence/engineering-test-proof.json",
+      "exitCode": 1,
+      "executionKind": "OFFLINE_SENSITIVITY_COMPLETENESS",
+      "evidence": "engineering-proof-result.json"
+    }
+  ],
+  "sensitivityProof": {
+    "status": "NOTRUN",
+    "reason": "No product patch/green candidate or production mutation; formal proof records no execution claims. Local assertion red evidence is preserved separately.",
+    "result": {
+      "schemaVersion": "1.0.0",
+      "kind": "engineering-test-result",
+      "verdict": "INCOMPLETE",
+      "targetDigest": "sha256:2db3bf40b6875f6b221cb43d406d9710cfe5b0e0fbdf824bb982de2c823c732f",
+      "reportDigest": "sha256:37fc8623442c322d39ca4ca57ee83492c8adcada886636d4f0a2b460a5a40f5a",
+      "issues": [
+        "REQUIRED B01: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+        "REQUIRED B02: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+        "REQUIRED B03: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+        "REQUIRED N01: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+        "REQUIRED N02: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+        "REQUIRED R01: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+        "REQUIRED N03-exact-CR: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+        "REQUIRED N04-negated-SEC: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+        "REQUIRED N05-both-negated: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+        "REQUIRED N06-missing-patch-no-skill: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+        "REQUIRED N07-missing-patch-abstention: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+        "REQUIRED N08-unadjudicated-extra: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+        "REQUIRED N09-noncanonical-alias: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+        "REQUIRED N10-cs-engineering: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+        "REQUIRED N10-test-engineering: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+        "REQUIRED N10-orchestrator: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+        "REQUIRED N10-korean-prose-editor: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+        "REQUIRED N11: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+        "REQUIRED N12: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json.",
+        "REQUIRED D01: NOT_RUN — Paired red/green or production mutation not run; product modifications prohibited. The actual offline assertions and known-gap red result are separately preserved in SS10.vitest.json."
+      ],
+      "limitations": [
+        "This is an unsigned local consistency check, not host attestation or an independent audit.",
+        "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+        "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+      ]
+    }
+  },
+  "supportingEvidence": [
+    {
+      "path": "tests/skill-classification/fixtures.json",
+      "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9"
+    },
+    {
+      "path": "tests/skill-classification/evaluation.ts",
+      "digest": "sha256:e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9"
+    },
+    {
+      "path": "tests/skill-classification/evaluation.test.ts",
+      "digest": "sha256:0ab579c0eacbb2b0e70e0bcd381f4c8bfc33d9422439768beb49eaf240ad32bf"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/request.ts",
+      "digest": "sha256:1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/inventory.ts",
+      "digest": "sha256:8c7ee54546f17fb1e63368fbfb72668a3c7136570a545ad5f0494f076c91727c"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/gateway.ts",
+      "digest": "sha256:80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/service.ts",
+      "digest": "sha256:c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/providers.ts",
+      "digest": "sha256:f191c46db32f38248ebdd23be725b426a0b3020e0bb464b36bcc57521983651c"
+    },
+    {
+      "path": "mcp-server/src/index.ts",
+      "digest": "sha256:bd2d886cd4ef1bb42c8cd00dd22a0428be899c7e21f1e48afe83c280f0104d46"
+    },
+    {
+      "path": "mcp-server/src/host-attestation.ts",
+      "digest": "sha256:334b17dd635daeb19d7b5401bf6a167fde860e0df3edfa71c16a698ec5bef1b7"
+    },
+    {
+      "path": "mcp-server/src/runtime-config.ts",
+      "digest": "sha256:c5653f628fc6a903616f4a481dbdfaa7afc8c630a1d9406398fa47b48da264f1"
+    },
+    {
+      "path": "skills/code-review/SKILL.md",
+      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+    },
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+    },
+    {
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+    }
+  ],
+  "checks": [
+    {
+      "name": "B01 binds the entire frozen oracle and all SS10 referenced source bytes",
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "name": "B02 preserves base negations, unknown patch/context and the complete inventory",
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "name": "B03 accepts the exact byte limit and rejects one byte under without truncation",
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "name": "N01 keeps positive review and prohibited implement/refactor in separate sourced fields",
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "name": "N02 distinguishes unknown targets null from a sourced confirmed empty targets array",
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "name": "R01 extracts only the pre-existing SS10 forbidden-ponytail regression",
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "name": "N03-exact-CR evaluates independent negative controls without claiming model behavior",
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "name": "N04-negated-SEC evaluates independent negative controls without claiming model behavior",
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "name": "N05-both-negated evaluates independent negative controls without claiming model behavior",
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "name": "N06-missing-patch-no-skill evaluates independent negative controls without claiming model behavior",
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "name": "N07-missing-patch-abstention evaluates independent negative controls without claiming model behavior",
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "name": "N08-unadjudicated-extra evaluates independent negative controls without claiming model behavior",
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "name": "N09-noncanonical-alias evaluates independent negative controls without claiming model behavior",
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "name": "N10 rejects not-applicable extra cs-engineering",
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "name": "N10 rejects not-applicable extra test-engineering",
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "name": "N10 rejects not-applicable extra orchestrator",
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "name": "N10 rejects not-applicable extra korean-prose-editor",
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "name": "N11 never promotes advice without host evidence and retains null versus []",
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "name": "N12 unconfigured public gateway has no provider invocation or agent selection",
+      "status": "passed",
+      "failures": []
+    },
+    {
+      "name": "D01 known host-state supply gap: gateway cannot reflect an unsupported CR host",
+      "status": "failed",
+      "failures": [
+        "AssertionError: expected true to be false // Object.is equality\n    at <CANDIDATE_ROOT>/tests/ss10-isolated/SS10.test.ts:156:37\n    at file:///<DEPENDENCY_TREE>/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+      ]
+    }
+  ],
+  "remainingBlockers": [
+    "Fixed patch/base-head/changed files required to perform code review",
+    "Host-exposed AGS MCP get_skill_inventory/classify_skills/record_skill_selection tools in this session",
+    "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG pointing to approved installation config and fixed qualified provider registry",
+    "Approved provider runtime route and adapter evidence; native retry/isolation/capability evidence and confirmed allowance, or separately authorized remote route/budget",
+    "AGENT_GOVERNANCE_HOST_ATTESTATION plus genuine host-owned signed tool observation bound to current prompt/session/task and freshness",
+    "Authoritative host installed/supported/enabled state; public gateway lacks this supply path"
+  ],
+  "workingTreeVerification": {
+    "trackedDiffEmpty": true,
+    "gitDiffCheckExit": 0,
+    "untracked": [
+      "node_modules (symlink to preexisting dependencies)",
+      "tests/ss10-isolated/ (authorized added test only)"
+    ]
+  },
+  "publication": {
+    "kind": "redacted-copy-of-existing-result",
+    "originalResult": {
+      "bytes": 23637,
+      "sha256": "63cf8fbd84895aee07d80818bb25324aeef3547aa056f4ea94ff7003848effbb"
+    },
+    "newTestsRun": 0,
+    "modelCalls": {
+      "JEV": 0,
+      "externalVendor": 0,
+      "Claude": 0,
+      "Codex": 0
+    },
+    "patch": {
+      "status": "MISSING_ORIGINAL",
+      "published": false
+    },
+    "missingOriginals": [
+      {
+        "item": "TEST-SPEC.seq7.ko.md standalone source",
+        "status": "MISSING_ORIGINAL",
+        "note": "Absent at the fixed candidate; embedded SS10 fields are the only source used."
+      },
+      {
+        "item": "Reviewed fixed patch/base-head/changed-files input",
+        "status": "MISSING_ORIGINAL",
+        "note": "No patch was supplied or produced; no patch file is published."
+      },
+      {
+        "item": "Separate raw stdout and stderr streams",
+        "status": "MISSING_ORIGINAL",
+        "note": "Existing Vitest and runner captures combine stdout/stderr with 2>&1; no separated streams are fabricated."
+      },
+      {
+        "item": "Provider/live-host responses and signed selection receipts",
+        "status": "NOT_RUN",
+        "note": "No such run occurred; observed selected and hostReceipt remain null."
+      }
+    ],
+    "digestSemantics": "Recorded candidate/oracle/input/snapshot digests continue to refer to original evidence bytes; public artifact bytes/SHA256 are in manifest.json.",
+    "reproductionTestExecuted": false,
+    "logs": "Existing combined captures only; runner error uses an explicitly labeled excerpt."
+  }
+}

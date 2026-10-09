@@ -1,0 +1,376 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS10",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cases/SS10",
+  "candidateCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "candidateTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "originalRecovery": {
+    "status": "All 19 checksum-listed existing artifacts recovered and matched; additional checksum inventory retained privately.",
+    "mismatches": [],
+    "missingOriginals": [
+      {
+        "item": "TEST-SPEC.seq7.ko.md standalone source",
+        "status": "MISSING_ORIGINAL",
+        "note": "Absent at the fixed candidate; embedded SS10 fields are the only source used."
+      },
+      {
+        "item": "Reviewed fixed patch/base-head/changed-files input",
+        "status": "MISSING_ORIGINAL",
+        "note": "No patch was supplied or produced; no patch file is published."
+      },
+      {
+        "item": "Separate raw stdout and stderr streams",
+        "status": "MISSING_ORIGINAL",
+        "note": "Existing Vitest and runner captures combine stdout/stderr with 2>&1; no separated streams are fabricated."
+      },
+      {
+        "item": "Provider/live-host responses and signed selection receipts",
+        "status": "NOT_RUN",
+        "note": "No such run occurred; observed selected and hostReceipt remain null."
+      }
+    ]
+  },
+  "originalInventory": {
+    "SHA256SUMS.json": {
+      "bytes": 1812,
+      "sha256": "f1be0c07112ccca7d0087b27f34bc4ed99c10771b967d42e1ba7b274361a102d"
+    },
+    "SS10.fixture.json": {
+      "bytes": 3733,
+      "sha256": "65763ed769bff6a256b7abc414639650acd515e50b68b74ed31fd63b859a5a0a"
+    },
+    "SS10.offline-checks.json": {
+      "bytes": 338891,
+      "sha256": "d50e19d5194163139aa74923d980f87340b93caa7277fef53044e0698eb06c6c"
+    },
+    "SS10.report.md": {
+      "bytes": 4450,
+      "sha256": "92d268b2df6f88cc3b325678dcfeea4f8847cb462f0bd3faa3b62ed52fd7cb76"
+    },
+    "SS10.request.json": {
+      "bytes": 254832,
+      "sha256": "b3f412db3d0674e1d20acab1f293ca4e68f71a09588ad14e3de080bfdd0d2777"
+    },
+    "SS10.result.json": {
+      "bytes": 23637,
+      "sha256": "63cf8fbd84895aee07d80818bb25324aeef3547aa056f4ea94ff7003848effbb"
+    },
+    "SS10.runner-error-exit.json": {
+      "bytes": 185,
+      "sha256": "0d25cd769e0796593e9ca7aacf79e87c2c55edb59543a2520ca68d0e3e3b8475"
+    },
+    "SS10.runner-error.log": {
+      "bytes": 2875,
+      "sha256": "81ddddc703075eea80ec18879ef1559d799377b14e8fb0a5d9e3bcf53dc1a24b"
+    },
+    "SS10.test-exit.json": {
+      "bytes": 204,
+      "sha256": "f7e44832b08540c35b48f160757b954cf03ad7dab44e51d2ef26f48d45d61d4b"
+    },
+    "SS10.test.ts": {
+      "bytes": 15319,
+      "sha256": "6ed27dcac10e39dd3e5a951b29705ca7649b7b1ed01a6eda48c0837d6711eff7"
+    },
+    "SS10.vitest.json": {
+      "bytes": 8408,
+      "sha256": "a3887995a23de9fa8e6d920956647d00b7c87203a35fe98bc2e0ecfc98d96b0b"
+    },
+    "SS10.vitest.log": {
+      "bytes": 4155,
+      "sha256": "50c6c320c3e50d0fb42dcfd99d3f358e5f69db940f8a6e6ca6ec5d2dfcbd0475"
+    },
+    "engineering-cli-exits.json": {
+      "bytes": 602,
+      "sha256": "ad5ac5762c7a5c8b988cc64a9d1e30f2a0101be453fa0d498f4a4638c0c27777"
+    },
+    "engineering-plan-cli-result.json": {
+      "bytes": 606,
+      "sha256": "b9753738d25aeaa95ba338a21b3d5a0cc21fe033cfc4d1b6916d3372db0fcb88"
+    },
+    "engineering-plan-result.json": {
+      "bytes": 606,
+      "sha256": "b9753738d25aeaa95ba338a21b3d5a0cc21fe033cfc4d1b6916d3372db0fcb88"
+    },
+    "engineering-proof-result.json": {
+      "bytes": 5217,
+      "sha256": "5f65df26dba51c181ee0d6bd77b545dc8e7d04e5bbc03379739342e248cddca8"
+    },
+    "engineering-snapshot.json": {
+      "bytes": 4233,
+      "sha256": "bf5f874166a3db80fb81ebab60803f6abe4aaa8cc519b5c15ac573cc1a9340a1"
+    },
+    "engineering-test-plan.json": {
+      "bytes": 29962,
+      "sha256": "afa02a786ba7a1b1398a21844b03f9dfa1f531f991bf1325c634d41ca982b080"
+    },
+    "engineering-test-proof.json": {
+      "bytes": 16771,
+      "sha256": "c86ddd9027d6969cc4f0c0755c7cbaec8200141ed4c58f906edded0c4de1ebc4"
+    },
+    "finalize.mjs": {
+      "bytes": 15016,
+      "sha256": "c2df7cffe0415f15dcffe00b76143545e1655e9b26d28241666959d6558096d5"
+    }
+  },
+  "intentionallyOmittedOriginals": [
+    {
+      "name": "SHA256SUMS.json",
+      "reason": "Not needed for public result reproduction; generated local finalizer, redundant contract/snapshot scaffolding or original checksum inventory. Existing original bytes/digest retained above; not MISSING_ORIGINAL."
+    },
+    {
+      "name": "engineering-plan-result.json",
+      "reason": "Not needed for public result reproduction; generated local finalizer, redundant contract/snapshot scaffolding or original checksum inventory. Existing original bytes/digest retained above; not MISSING_ORIGINAL."
+    },
+    {
+      "name": "engineering-snapshot.json",
+      "reason": "Not needed for public result reproduction; generated local finalizer, redundant contract/snapshot scaffolding or original checksum inventory. Existing original bytes/digest retained above; not MISSING_ORIGINAL."
+    },
+    {
+      "name": "engineering-test-plan.json",
+      "reason": "Not needed for public result reproduction; generated local finalizer, redundant contract/snapshot scaffolding or original checksum inventory. Existing original bytes/digest retained above; not MISSING_ORIGINAL."
+    },
+    {
+      "name": "engineering-test-proof.json",
+      "reason": "Not needed for public result reproduction; generated local finalizer, redundant contract/snapshot scaffolding or original checksum inventory. Existing original bytes/digest retained above; not MISSING_ORIGINAL."
+    },
+    {
+      "name": "finalize.mjs",
+      "reason": "Not needed for public result reproduction; generated local finalizer, redundant contract/snapshot scaffolding or original checksum inventory. Existing original bytes/digest retained above; not MISSING_ORIGINAL."
+    }
+  ],
+  "inputBytes": {
+    "originalPromptUtf8": {
+      "bytes": 132,
+      "sha256": "9e5d14a624e580e2bf40fcbbb0ecce4abad9e74f204384f79d20246e62ff8875"
+    },
+    "frozenFixtureFile": {
+      "bytes": 142450,
+      "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9"
+    },
+    "requestOriginal": {
+      "bytes": 254832,
+      "sha256": "b3f412db3d0674e1d20acab1f293ca4e68f71a09588ad14e3de080bfdd0d2777"
+    }
+  },
+  "newTestsRun": 0,
+  "API0": {
+    "JEV": 0,
+    "externalVendor": 0,
+    "Claude": 0,
+    "Codex": 0
+  },
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 4215,
+      "sha256": "799d04ec8cc4b42826e6da7dc40799e116fdeaddb00f61c83a960e1d87a3d686",
+      "transform": "generated-public-document"
+    },
+    {
+      "path": "SS10.offline-checks.public.json",
+      "bytes": 339101,
+      "sha256": "8673029c6b2083976967452d24c9ea8f4af5e68d3e95ece35ce43aa56070b26f",
+      "transform": "private-local-paths-redacted",
+      "original": {
+        "name": "SS10.offline-checks.json",
+        "bytes": 338891,
+        "sha256": "d50e19d5194163139aa74923d980f87340b93caa7277fef53044e0698eb06c6c"
+      },
+      "note": "Existing evidence only. Embedded request/snapshot/test digests identify the original pre-redaction bytes; public file hashes are separately recorded here."
+    },
+    {
+      "path": "SS10.report.redacted.md",
+      "bytes": 4443,
+      "sha256": "83fb799f0c4aeb1d631601ab460dd1bfd441b3581faf67974a3ec24c5bb3bf42",
+      "transform": "private-local-paths-redacted",
+      "original": {
+        "name": "SS10.report.md",
+        "bytes": 4450,
+        "sha256": "92d268b2df6f88cc3b325678dcfeea4f8847cb462f0bd3faa3b62ed52fd7cb76"
+      },
+      "note": "Existing evidence only. Embedded request/snapshot/test digests identify the original pre-redaction bytes; public file hashes are separately recorded here."
+    },
+    {
+      "path": "SS10.result.public.json",
+      "bytes": 25249,
+      "sha256": "40e5516e67adbf7866470d0ed410adb65860c1b50fab254403f8ecba9f1024c5",
+      "transform": "private-local-path-redaction-and-publication-annotation-no-status-change",
+      "original": {
+        "name": "SS10.result.json",
+        "bytes": 23637,
+        "sha256": "63cf8fbd84895aee07d80818bb25324aeef3547aa056f4ea94ff7003848effbb"
+      }
+    },
+    {
+      "path": "inputs/SS10.fixture.json",
+      "bytes": 3733,
+      "sha256": "65763ed769bff6a256b7abc414639650acd515e50b68b74ed31fd63b859a5a0a",
+      "transform": "exact-copy",
+      "original": {
+        "name": "SS10.fixture.json",
+        "bytes": 3733,
+        "sha256": "65763ed769bff6a256b7abc414639650acd515e50b68b74ed31fd63b859a5a0a"
+      },
+      "note": "Existing evidence only. Embedded request/snapshot/test digests identify the original pre-redaction bytes; public file hashes are separately recorded here."
+    },
+    {
+      "path": "inputs/SS10.originalPrompt.utf8.txt",
+      "bytes": 132,
+      "sha256": "9e5d14a624e580e2bf40fcbbb0ecce4abad9e74f204384f79d20246e62ff8875",
+      "transform": "exact-embedded-prompt-utf8-extraction-no-newline",
+      "original": {
+        "name": "SS10.fixture.json",
+        "bytes": 3733,
+        "sha256": "65763ed769bff6a256b7abc414639650acd515e50b68b74ed31fd63b859a5a0a"
+      },
+      "note": "Derived raw field bytes from the existing fixture; not an invented missing original input file. Digest equals the recorded promptDigest."
+    },
+    {
+      "path": "inputs/SS10.request.public.json",
+      "bytes": 255042,
+      "sha256": "a6f8f27b84509ab1487b6a9a3eb02290eafeb678fe60b20a6f94de0163140580",
+      "transform": "private-local-paths-redacted",
+      "original": {
+        "name": "SS10.request.json",
+        "bytes": 254832,
+        "sha256": "b3f412db3d0674e1d20acab1f293ca4e68f71a09588ad14e3de080bfdd0d2777"
+      },
+      "note": "Existing evidence only. Embedded request/snapshot/test digests identify the original pre-redaction bytes; public file hashes are separately recorded here."
+    },
+    {
+      "path": "inputs/fixtures.frozen.json",
+      "bytes": 142450,
+      "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "transform": "exact-existing-public-candidate-git-blob",
+      "source": {
+        "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+        "path": "tests/skill-classification/fixtures.json",
+        "bytes": 142450,
+        "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9"
+      },
+      "note": "Full existing frozen fixture bytes supplied solely for provenance and reproducibility; no other case was run or scored for this publication."
+    },
+    {
+      "path": "logs/SS10.runner-error-exit.public.json",
+      "bytes": 184,
+      "sha256": "d13e83a061f034fc2bab5a479d7f018dcc0343fee6ccb00ff3a20d309e070fc0",
+      "transform": "private-local-paths-redacted",
+      "original": {
+        "name": "SS10.runner-error-exit.json",
+        "bytes": 185,
+        "sha256": "0d25cd769e0796593e9ca7aacf79e87c2c55edb59543a2520ca68d0e3e3b8475"
+      },
+      "note": "Existing evidence only. Embedded request/snapshot/test digests identify the original pre-redaction bytes; public file hashes are separately recorded here."
+    },
+    {
+      "path": "logs/SS10.runner-error.excerpt.redacted.log",
+      "bytes": 298,
+      "sha256": "26c53e4b59fee8398cb0880e1b2a30690f2c865385abdf07e4b938e2deded879",
+      "transform": "existing-log-excerpt-and-private-path-redaction",
+      "original": {
+        "name": "SS10.runner-error.log",
+        "bytes": 2875,
+        "sha256": "81ddddc703075eea80ec18879ef1559d799377b14e8fb0a5d9e3bcf53dc1a24b"
+      },
+      "note": "Excerpt of the existing combined stream: top ENOENT and dependency subprocess exit 254. Parent command exit 1 remains in runner-error-exit. Omitted stack frames; this is not a new run/log."
+    },
+    {
+      "path": "logs/SS10.test-exit.public.json",
+      "bytes": 203,
+      "sha256": "807d9831bf7999969e9d8708fbfa4fcf724d752eb3e9e099f0878ea82c0a748b",
+      "transform": "private-local-paths-redacted",
+      "original": {
+        "name": "SS10.test-exit.json",
+        "bytes": 204,
+        "sha256": "f7e44832b08540c35b48f160757b954cf03ad7dab44e51d2ef26f48d45d61d4b"
+      },
+      "note": "Existing evidence only. Embedded request/snapshot/test digests identify the original pre-redaction bytes; public file hashes are separately recorded here."
+    },
+    {
+      "path": "logs/SS10.vitest.combined.redacted.log",
+      "bytes": 4148,
+      "sha256": "fd3a7dba2196699466c12c35df2f467d530a7c007c1d4e49b3823192247c2c75",
+      "transform": "private-local-paths-redacted",
+      "original": {
+        "name": "SS10.vitest.log",
+        "bytes": 4155,
+        "sha256": "50c6c320c3e50d0fb42dcfd99d3f358e5f69db940f8a6e6ca6ec5d2dfcbd0475"
+      },
+      "note": "Existing evidence only. Embedded request/snapshot/test digests identify the original pre-redaction bytes; public file hashes are separately recorded here."
+    },
+    {
+      "path": "logs/SS10.vitest.public.json",
+      "bytes": 8368,
+      "sha256": "18337f3fa18c9c9a99615b1e3a27a01d044e14b7d436f42616a4847ed3f81c4f",
+      "transform": "private-local-paths-redacted",
+      "original": {
+        "name": "SS10.vitest.json",
+        "bytes": 8408,
+        "sha256": "a3887995a23de9fa8e6d920956647d00b7c87203a35fe98bc2e0ecfc98d96b0b"
+      },
+      "note": "Existing evidence only. Embedded request/snapshot/test digests identify the original pre-redaction bytes; public file hashes are separately recorded here."
+    },
+    {
+      "path": "logs/engineering-cli-exits.public.json",
+      "bytes": 630,
+      "sha256": "954c973508244b5e4e977709f243aad77c11cd013133262d67dddd151d9c005e",
+      "transform": "private-local-paths-redacted",
+      "original": {
+        "name": "engineering-cli-exits.json",
+        "bytes": 602,
+        "sha256": "ad5ac5762c7a5c8b988cc64a9d1e30f2a0101be453fa0d498f4a4638c0c27777"
+      },
+      "note": "Existing evidence only. Embedded request/snapshot/test digests identify the original pre-redaction bytes; public file hashes are separately recorded here."
+    },
+    {
+      "path": "logs/engineering-plan-cli-result.public.json",
+      "bytes": 606,
+      "sha256": "b9753738d25aeaa95ba338a21b3d5a0cc21fe033cfc4d1b6916d3372db0fcb88",
+      "transform": "exact-copy",
+      "original": {
+        "name": "engineering-plan-cli-result.json",
+        "bytes": 606,
+        "sha256": "b9753738d25aeaa95ba338a21b3d5a0cc21fe033cfc4d1b6916d3372db0fcb88"
+      },
+      "note": "Existing evidence only. Embedded request/snapshot/test digests identify the original pre-redaction bytes; public file hashes are separately recorded here."
+    },
+    {
+      "path": "logs/engineering-proof-result.public.json",
+      "bytes": 5217,
+      "sha256": "5f65df26dba51c181ee0d6bd77b545dc8e7d04e5bbc03379739342e248cddca8",
+      "transform": "exact-copy",
+      "original": {
+        "name": "engineering-proof-result.json",
+        "bytes": 5217,
+        "sha256": "5f65df26dba51c181ee0d6bd77b545dc8e7d04e5bbc03379739342e248cddca8"
+      },
+      "note": "Existing evidence only. Embedded request/snapshot/test digests identify the original pre-redaction bytes; public file hashes are separately recorded here."
+    },
+    {
+      "path": "reproduce/README.md",
+      "bytes": 2083,
+      "sha256": "8e7c5ae3678f458bf00887393ef05b25578e07c8fa610b76a266fd046c1484f7",
+      "transform": "generated-public-document"
+    },
+    {
+      "path": "reproduce/SS10.test.ts",
+      "bytes": 15349,
+      "sha256": "18790a2956a8f4e7aaf97494eb1daf7402b6a30c65e4fced7a5f94d1f1a1d9d5",
+      "transform": "output-locators-only-portability-edit-not-executed",
+      "original": {
+        "name": "SS10.test.ts",
+        "bytes": 15319,
+        "sha256": "6ed27dcac10e39dd3e5a951b29705ca7649b7b1ed01a6eda48c0837d6711eff7"
+      },
+      "note": "All assertions/imports/case inputs are preserved. Only private output directory literals become repository-relative reproduction-output literals. This public copy has not been executed."
+    }
+  ],
+  "hashPolicy": {
+    "manifestSelfHashExcluded": true,
+    "SHA256SUMSExcludedFromManifest": true,
+    "SHA256SUMSIncludesManifest": true,
+    "SHA256SUMSSelfHashExcluded": true
+  }
+}

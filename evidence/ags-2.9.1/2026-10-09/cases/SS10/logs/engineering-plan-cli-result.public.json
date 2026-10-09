@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:a293211af97235abfcec976fdb768cd50ca202bab783b8b5a713cd72e33e8e60",
+  "caseIds": [
+    "B01",
+    "B02",
+    "B03",
+    "N01",
+    "N02",
+    "R01",
+    "N03-exact-CR",
+    "N04-negated-SEC",
+    "N05-both-negated",
+    "N06-missing-patch-no-skill",
+    "N07-missing-patch-abstention",
+    "N08-unadjudicated-extra",
+    "N09-noncanonical-alias",
+    "N10-cs-engineering",
+    "N10-test-engineering",
+    "N10-orchestrator",
+    "N10-korean-prose-editor",
+    "N11",
+    "N12",
+    "D01"
+  ]
+}

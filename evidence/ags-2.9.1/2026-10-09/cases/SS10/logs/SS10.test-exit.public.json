@@ -1,0 +1,4 @@
+{
+  "command": "node node_modules/vitest/vitest.mjs run tests/ss10-isolated/SS10.test.ts --reporter=verbose --reporter=json --outputFile.json=<PRIVATE_EVIDENCE_ROOT>/SS10.vitest.json",
+  "exitCode": 1
+}

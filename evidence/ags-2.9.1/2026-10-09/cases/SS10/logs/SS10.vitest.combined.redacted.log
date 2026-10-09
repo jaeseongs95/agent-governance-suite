@@ -1,0 +1,53 @@
+
+ RUN  v5.0.0 <CANDIDATE_ROOT>
+
+ ✓ tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > B01 binds the entire frozen oracle and all SS10 referenced source bytes 4ms
+ ✓ tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > B02 preserves base negations, unknown patch/context and the complete inventory 52ms
+ ✓ tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > B03 accepts the exact byte limit and rejects one byte under without truncation 26ms
+ ✓ tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > N01 keeps positive review and prohibited implement/refactor in separate sourced fields 18ms
+ ✓ tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > N02 distinguishes unknown targets null from a sourced confirmed empty targets array 25ms
+ ✓ tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > R01 extracts only the pre-existing SS10 forbidden-ponytail regression 1ms
+ ✓ tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > N03-exact-CR evaluates independent negative controls without claiming model behavior 0ms
+ ✓ tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > N04-negated-SEC evaluates independent negative controls without claiming model behavior 0ms
+ ✓ tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > N05-both-negated evaluates independent negative controls without claiming model behavior 0ms
+ ✓ tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > N06-missing-patch-no-skill evaluates independent negative controls without claiming model behavior 0ms
+ ✓ tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > N07-missing-patch-abstention evaluates independent negative controls without claiming model behavior 0ms
+ ✓ tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > N08-unadjudicated-extra evaluates independent negative controls without claiming model behavior 0ms
+ ✓ tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > N09-noncanonical-alias evaluates independent negative controls without claiming model behavior 0ms
+ ✓ tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > N10 rejects not-applicable extra cs-engineering 0ms
+ ✓ tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > N10 rejects not-applicable extra test-engineering 0ms
+ ✓ tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > N10 rejects not-applicable extra orchestrator 0ms
+ ✓ tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > N10 rejects not-applicable extra korean-prose-editor 0ms
+ ✓ tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > N11 never promotes advice without host evidence and retains null versus [] 1ms
+ ✓ tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > N12 unconfigured public gateway has no provider invocation or agent selection 59ms
+ × tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > D01 known host-state supply gap: gateway cannot reflect an unsupported CR host 90ms
+   → expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/ss10-isolated/SS10.test.ts > SS10 pinned base / offline only > D01 known host-state supply gap: gateway cannot reflect an unsupported CR host
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/ss10-isolated/SS10.test.ts:156:37
+    154|     expect(directCR.hostSupported).toBe(false);
+    155|     // Normative assertion intentionally red. No host receipt or real …
+    156|     expect(gatewayCR.hostSupported).toBe(false);
+       |                                     ^
+    157|   });
+    158| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 passed (20)
+   Start at  02:55:54
+   Duration  663ms (tests 62%, transform 22%, import 16%, worker 1%)
+
+JSON report written to <PRIVATE_EVIDENCE_ROOT>/SS10.vitest.json
