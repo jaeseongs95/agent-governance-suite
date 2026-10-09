@@ -1,0 +1,73 @@
+{
+  "checkedAt": "2026-10-09T07:42:22.174947+00:00",
+  "status": "CLI_PRESENT_MODEL_AUTH_NOT_TESTED",
+  "claudePath": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+  "resolvedPath": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+  "version": "2.1.286 (Claude Code)",
+  "nodeVersion": "v24.19.0",
+  "PATHResolvedClaude": null,
+  "commands": [
+    {
+      "argv": [
+        "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+        "--version"
+      ],
+      "exit": 0,
+      "stdoutSHA256": "137c91ab68b8a7a011de6f45c0bdbb962abd1fa261daafa7f7fe4dbac82ba604",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutBytes": 22,
+      "stderrBytes": 0,
+      "executionKind": "local-cli-inspection",
+      "modelApiCalls": 0
+    },
+    {
+      "argv": [
+        "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+        "--help"
+      ],
+      "exit": 0,
+      "stdoutSHA256": "13dd71866e4b6fde1a11de6fa26bd4f5866308794307ff0fb37804c03db8e0b2",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutBytes": 22344,
+      "stderrBytes": 0,
+      "executionKind": "local-cli-inspection",
+      "modelApiCalls": 0
+    },
+    {
+      "argv": [
+        "node",
+        "--version"
+      ],
+      "exit": 0,
+      "stdoutSHA256": "b7677d3ec37ee1897ba07dc2cfe8292fe421c9ac93396cca5bbece486d1a2a41",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutBytes": 9,
+      "stderrBytes": 0,
+      "executionKind": "local-cli-inspection",
+      "modelApiCalls": 0
+    }
+  ],
+  "agentsSkillDirectories": {
+    "/workspace/.agents/skills": "ABSENT",
+    "/workspace/agent-governance-suite/.agents/skills": "ABSENT"
+  },
+  "instructions": {
+    "workspaceRepoAGENTSRead": true,
+    "evidenceCommitHasRootAGENTS": false,
+    "pinnedHistoricalAGENTSRead": true,
+    "catalogMissingRepositorySkillsResolvedFrom": "historical repository skills/; .agents/skills checked and absent",
+    "application": "test-engineering preparation; security and forbidden roles read as fixed case evidence"
+  },
+  "apiAuthentication": {
+    "state": "AWAITING_PARENT_PROCEDURE",
+    "secretValuesReadPrintedCopiedOrPublished": false,
+    "apiAuthenticationAttempted": false,
+    "permanentAuthenticationPermissionNetworkPolicyChanged": false
+  },
+  "productCodeAndGeneratedDistributionModified": false,
+  "failedLocalRead": {
+    "path": "skills/test-engineering/references/entry-details.md",
+    "reason": "absent at historical commit; actual SKILL references test-design.md and that reference was read",
+    "modelCalls": 0
+  }
+}

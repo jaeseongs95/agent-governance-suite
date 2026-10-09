@@ -1,0 +1,72 @@
+{
+  "caseId": "SS07",
+  "phase": "PREPARATION_ONLY",
+  "preparationState": "READY_WAITING_PARENT",
+  "productVerdict": "NOTRUN",
+  "modelSettings": null,
+  "authProcedure": null,
+  "expectedSelection": "SELECTED",
+  "expectedRequired": [
+    "software-security-auditor"
+  ],
+  "expectedAllowed": [],
+  "expectedForbidden": [
+    "ponytail",
+    "code-review",
+    "independent-audit-gate"
+  ],
+  "steps": [
+    {
+      "id": "P1",
+      "action": "Receive verified final product commit/tree, independent SOURCE result, fixed remote publication proof, common Claude exact model/effort and successful API auth procedure from parent. Refuse old main/c6a8019 substitution.",
+      "status": "BLOCKED"
+    },
+    {
+      "id": "P2",
+      "action": "Prepare isolated verified candidate installation without rebuilding or editing product/generated code; bind actual plugin inventory/enabled/support state, task/session and input digest. Inspect effective host/MCP/hook support.",
+      "status": "NOTRUN"
+    },
+    {
+      "id": "P3",
+      "action": "Keep base original prompt UTF8 bytes unchanged; retain null target/context. Do not present oracle, previous results, or preselected SEC in the model input. Do not treat plugin sources as an implicitly supplied audit target.",
+      "status": "INPUT_VERIFIED"
+    },
+    {
+      "id": "P4",
+      "action": "Launch actual Claude Code through parent-approved API procedure and common model settings; Sol manages environment/evidence and Claude performs host selection/read/work. Record configured isolation/tool permissions without bypass or permanent policy changes.",
+      "status": "NOTRUN"
+    },
+    {
+      "id": "P5",
+      "action": "Observe raw recommendation and host-selected skill IDs separately. Require SEC, reject automatic ponytail/code-review/independent-audit-gate additions; general review cannot replace security audit. Preserve null vs [] and bind trusted host receipt to current task/candidate.",
+      "status": "NOTRUN"
+    },
+    {
+      "id": "P6",
+      "action": "Capture independent selected/read/applied/verified evidence. With missing target, Claude should state missing root/files/fixed bytes/scope/permission model and defer audit execution; no production probing, source invention, modifications or release/safety assurance. Do not mark audit stages verified from recommendation or natural-language claims alone.",
+      "status": "NOTRUN"
+    },
+    {
+      "id": "P7",
+      "action": "Record per-call model/revision, tokens, cache, actual or unknown charge, failures and retries. Stop before next call near US$2. JEV awaits individual allocation and must remain uncalled.",
+      "status": "READY_LEDGER_ZERO_CALLS"
+    },
+    {
+      "id": "P8",
+      "action": "Score against frozen original oracle; retain findings/outstanding limitations. Publish only sanitized report/evidence/hash lists to this case unique run, then refetch fixed remote commit and compare byte hashes.",
+      "status": "PREPARATION_PUBLICATION_PENDING"
+    }
+  ],
+  "originalTestReproduction": {
+    "path": "reproduce/SS07.test.ts",
+    "status": "ARCHIVED_NOT_EXECUTED",
+    "limitation": "Original test pins c6a8019/tree. Blind execution against R17 causes provenance mismatch; get parent-approved candidate-bound plan, preserve semantic assertions and historical failures, and record all harness/provenance changes. No product changes."
+  },
+  "missingTarget": "absence is part of base case and expected deferred audit behavior; a supplied target is new confirmed context requiring explicit case/variant handling, not silent substitution",
+  "resumeConditions": [
+    "verified candidate and independent SOURCE/remote proof",
+    "common model/effort/API auth/isolation/no-retry and billing settings",
+    "same-candidate plugin installation and host stage/receipt support",
+    "parent authorization to start paid/product test; case budget available"
+  ]
+}

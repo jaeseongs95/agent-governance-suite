@@ -1,0 +1,430 @@
+{
+  "caseId": "SS07",
+  "title": "보안 감사만 요청",
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "evidenceTree": "9c49cc011a10c23ed135b1c020e7577ff12a2370",
+  "files": [
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS07/README.md",
+      "bytes": 4307,
+      "sha256": "b1c3d2421a3ff07f8d3b1613e250254131d2cba3553026b7629c285446dcd4cc",
+      "gitBlob": "8c359051126b6f07cf8455acee4f2e7d9bdfdc3a"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS07/SHA256SUMS",
+      "bytes": 1604,
+      "sha256": "c51bbbe6c35cc27fc93a76e42f603fdd1b62fd886b515607ad11039d51f5538e",
+      "gitBlob": "6cbe024a9f469a7a59020192d65671df0ecfb441"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS07/commands.public.json",
+      "bytes": 2514,
+      "sha256": "dee7beb51d1be6cd2f43b432afdb29e912465bc6cfed74f01bcf53516747fa1e",
+      "gitBlob": "695a374f78f410934a3ddbc1d58ac42a9277f6ed"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS07/inputs/fixture.json",
+      "bytes": 4119,
+      "sha256": "b0180ab3048fb61245e3ed891b48d23041d0d2bccdf775a00167ae9d4be18b0b",
+      "gitBlob": "f86edac66adfc0efe2eed62db369ef8dd8c5f856"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS07/inputs/inventory.json",
+      "bytes": 254106,
+      "sha256": "4b04dbe7f8825b50d7154fcd0b03c25fd333d30f3765ed5f9d3cc7c15a88c5f1",
+      "gitBlob": "a1b114e20a627c23cec775d762873b169eff4fe6"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS07/inputs/original-prompt.utf8.txt",
+      "bytes": 182,
+      "sha256": "556baefc0f9e03dcdb8c46a363b7d226412aed14071c71d634be607c023242a5",
+      "gitBlob": "3ad86f61f04ce6cbf95fd261994367834673bb78"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS07/inputs/projection.json",
+      "bytes": 159531,
+      "sha256": "39760453580fae75e271bfe67ebe47556f830c020f0572695bff7da19f620e13",
+      "gitBlob": "b5ee7793fb1a5c74a175201511957ce317635aef"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS07/inputs/request.json",
+      "bytes": 254881,
+      "sha256": "51c3cbd63e0162bb0cac02137a539b2cae0253043cb6b3afa8eb5c61bce47d73",
+      "gitBlob": "78ccd16110db8728ea63f5d18c874a0b6d8e0bb1"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS07/inputs/source-hashes.json",
+      "bytes": 2343,
+      "sha256": "43b41491ee5ae2dea437596e30cbc5330add98a9c43cdc79658a043bf6e275b0",
+      "gitBlob": "e9c1665d760421ee7a461914cb98b558b905fecd"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS07/logs/plan-check.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS07/logs/plan-check.stdout.log",
+      "bytes": 236,
+      "sha256": "9c6862f9f41e64bc2a8b917e818928809664d331dcf2947e4e931f73df1b5f0b",
+      "gitBlob": "952d6547b9189714b5ec3ee529f11aaf2f2e4b89"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS07/logs/test.stderr.public.log",
+      "bytes": 1953,
+      "sha256": "c4d2228fc2236f8c4d833ba1f5a47f82c89f5d7969edd4b28849933a315913c5",
+      "gitBlob": "c60fb06b81c2aaafa3a5e4e778b811aa02ac77c9"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS07/logs/test.stdout.public.log",
+      "bytes": 3235,
+      "sha256": "3a316a7ebbad3308493254070a9bad1a5fb24e3482b3d87256edc3d111a92fb0",
+      "gitBlob": "353909163b77ec788d82524a4edcd62a0110f48e"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS07/logs/vitest.public.json",
+      "bytes": 10738,
+      "sha256": "889b7a036fd405f4e66ef214e3743b3d46bbc6af53bb56680a5f4cdd226e5662",
+      "gitBlob": "e00b9cfe34fb5a3bf49620580f91ad72dd4aaae5"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS07/manifest.json",
+      "bytes": 12694,
+      "sha256": "d46016d4ab952995dc49e85f57016411c9a2adbdaf8e5d16a6aaa689aa63e773",
+      "gitBlob": "d4bda2c357d329b6fb755b0d13c25fc536489004"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS07/observations.public.json",
+      "bytes": 37916,
+      "sha256": "e8da86c335416226dbdefec2ffe91c61c9d8e0f1ce710ccfd4ec153b30753dcc",
+      "gitBlob": "9c3e8d35af9c1d5700f022372cd696432bfb0e4f"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS07/reproduce/SS07.test.ts",
+      "bytes": 20027,
+      "sha256": "028e28910a1034b15fafd36529b4e3d813ae76fd949fabbc8fd6a78a9dff15ae",
+      "gitBlob": "eca701215cf733684284d173aa8a0f44fd50ffec"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS07/reproduce/plan.public.json",
+      "bytes": 2938,
+      "sha256": "98dc10be194b996ff142c0e6d6616c18225edb9ce3958d1e22d7e790a81cf875",
+      "gitBlob": "d09fb77c03d5e27b9f55a25c8a8a4f1f6aa6a847"
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS07/result.public.json",
+      "bytes": 24355,
+      "sha256": "f3268053b972da71ab541a664f613a1677f7ea11db2aa21bff970ebaf75ebbd7",
+      "gitBlob": "1deb76e5f9430a00d1d32a7770333f81bacae61e"
+    }
+  ],
+  "verification": {
+    "SHA256SUMS": {
+      "entries": 18,
+      "mismatches": 0
+    },
+    "manifestPayload": {
+      "entries": 17,
+      "mismatches": 0
+    },
+    "historicalSourceHashes": {
+      "entries": 19,
+      "mismatches": 0
+    },
+    "promptMatchesRequestFixtureAndUTF8File": true,
+    "promptBytes": 182,
+    "promptSHA256": "556baefc0f9e03dcdb8c46a363b7d226412aed14071c71d634be607c023242a5",
+    "archivedInventoryCount": 24
+  },
+  "originalSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "status": "MISSING_ORIGINAL",
+    "basis": "published embedded sourceSpec, originalPrompt, oracle, variants only; original spec body not independently recovered"
+  },
+  "historicalSourceCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "historicalSourceReadsForPreparationOnly": [
+    "AGENTS.md",
+    "skills/test-engineering/SKILL.md",
+    "skills/orchestrator/references/engineering-practices/test-design.md",
+    "skills/software-security-auditor/SKILL.md",
+    "skills/software-security-auditor/references/entry-details.md",
+    "skills/ponytail/SKILL.md",
+    "skills/code-review/SKILL.md",
+    "skills/independent-audit-gate/SKILL.md"
+  ],
+  "historicalSourceHashes": [
+    {
+      "path": "AGENTS.md",
+      "expected": "sha256:d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827",
+      "actual": "sha256:d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827",
+      "matched": true
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "expected": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "actual": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "matched": true
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "expected": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "actual": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "matched": true
+    },
+    {
+      "path": "skills/orchestrator/references/skill-classification.md",
+      "expected": "sha256:85cfd39b4c3771669747a9ebf61bc8623b510104c4bd6af40c2168781adc3ef8",
+      "actual": "sha256:85cfd39b4c3771669747a9ebf61bc8623b510104c4bd6af40c2168781adc3ef8",
+      "matched": true
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/test-design.md",
+      "expected": "sha256:fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c",
+      "actual": "sha256:fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c",
+      "matched": true
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/test-proof.md",
+      "expected": "sha256:7ac0a9d5031d32e5d2b3770a080c1629451903184dac1e38e240812c6fc91e1d",
+      "actual": "sha256:7ac0a9d5031d32e5d2b3770a080c1629451903184dac1e38e240812c6fc91e1d",
+      "matched": true
+    },
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "expected": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "actual": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "matched": true
+    },
+    {
+      "path": "skills/software-security-auditor/references/entry-details.md",
+      "expected": "sha256:8f03bb00300befa9eaa2b350330a695b42ac3d9f8d336d6d84020c467a95b6a0",
+      "actual": "sha256:8f03bb00300befa9eaa2b350330a695b42ac3d9f8d336d6d84020c467a95b6a0",
+      "matched": true
+    },
+    {
+      "path": "skills/software-security-auditor/classification.json",
+      "expected": "sha256:1ce8edfb98f9608e66d98bc75e1827f4cd8cc585ae8741290c6b093c3119b9c7",
+      "actual": "sha256:1ce8edfb98f9608e66d98bc75e1827f4cd8cc585ae8741290c6b093c3119b9c7",
+      "matched": true
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "expected": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "actual": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "matched": true
+    },
+    {
+      "path": "skills/code-review/SKILL.md",
+      "expected": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "actual": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "matched": true
+    },
+    {
+      "path": "skills/independent-audit-gate/SKILL.md",
+      "expected": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8",
+      "actual": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8",
+      "matched": true
+    },
+    {
+      "path": "mcp-server/src/skill-classification/inventory.ts",
+      "expected": "sha256:8c7ee54546f17fb1e63368fbfb72668a3c7136570a545ad5f0494f076c91727c",
+      "actual": "sha256:8c7ee54546f17fb1e63368fbfb72668a3c7136570a545ad5f0494f076c91727c",
+      "matched": true
+    },
+    {
+      "path": "mcp-server/src/skill-classification/request.ts",
+      "expected": "sha256:1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f",
+      "actual": "sha256:1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f",
+      "matched": true
+    },
+    {
+      "path": "mcp-server/src/skill-classification/service.ts",
+      "expected": "sha256:c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb",
+      "actual": "sha256:c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb",
+      "matched": true
+    },
+    {
+      "path": "mcp-server/src/skill-classification/gateway.ts",
+      "expected": "sha256:80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+      "actual": "sha256:80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+      "matched": true
+    },
+    {
+      "path": "mcp-server/src/skill-classification/native-adapters.ts",
+      "expected": "sha256:dc6a0e763b175b077cee401d9020144d49b99f143b34da88059fbf4da5bc39f6",
+      "actual": "sha256:dc6a0e763b175b077cee401d9020144d49b99f143b34da88059fbf4da5bc39f6",
+      "matched": true
+    },
+    {
+      "path": "mcp-server/src/index.ts",
+      "expected": "sha256:bd2d886cd4ef1bb42c8cd00dd22a0428be899c7e21f1e48afe83c280f0104d46",
+      "actual": "sha256:bd2d886cd4ef1bb42c8cd00dd22a0428be899c7e21f1e48afe83c280f0104d46",
+      "matched": true
+    },
+    {
+      "path": "tests/skill-classification/evaluation.ts",
+      "expected": "sha256:e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+      "actual": "sha256:e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+      "matched": true
+    }
+  ],
+  "oracle": {
+    "required": [
+      "software-security-auditor"
+    ],
+    "allowed": [],
+    "allowedConditions": {},
+    "forbidden": [
+      "ponytail",
+      "code-review",
+      "independent-audit-gate"
+    ],
+    "notApplicable": [
+      "test-engineering",
+      "cs-engineering",
+      "orchestrator",
+      "korean-prose-editor"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "change-scope-guardian",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "independent-audit-gate",
+        "path": "skills/independent-audit-gate/SKILL.md",
+        "digest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      }
+    ],
+    "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+  },
+  "variants": [
+    "base"
+  ],
+  "confirmedContext": {
+    "taskRevision": null,
+    "objective": null,
+    "actions": null,
+    "targets": null,
+    "constraints": null,
+    "prohibitedActions": null,
+    "background": null
+  },
+  "historicalResults": {
+    "tests": 16,
+    "PASS": 13,
+    "FAIL": 3,
+    "testExit": 1,
+    "knownFindings": [
+      {
+        "id": "known-metadata-condition-duplication",
+        "status": "REPRODUCED_EXISTING",
+        "checkStatus": "FAIL",
+        "existingFindingLink": "metadata조건중복",
+        "newRootCauseCount": 0,
+        "executionKind": "offline-static",
+        "source": "skills/software-security-auditor/classification.json:17",
+        "explanation": "Applicability and exclusions refer to identical SKILL.md line 3 and lines 8–12. Resolved inventory arrays are identical; ambiguous positive/negative taxonomy, not proof of live misclassification.",
+        "expected": "applicability/exclusion clauses separately represented",
+        "observedRef": "SS07.observations.json#/raw/12"
+      },
+      {
+        "id": "known-valid-cost-loss",
+        "status": "REPRODUCED_EXISTING",
+        "checkStatus": "FAIL",
+        "existingFindingLink": "유효비용이invalidRESP와함께유실",
+        "newRootCauseCount": 0,
+        "executionKind": "offline-mock",
+        "source": "mcp-server/src/skill-classification/service.ts:194",
+        "explanation": "Missing SEC judgment makes RESP invalid; throw/catch returns unknownUsage(), discarding valid actualCostUsd=0.1. Budget spent remains 0 and conservative 0.4 reservation remains. No real charge occurred.",
+        "expected": "INVALID_PROVIDER_RESPONSE, actualCostUsd=0.1; settle known cost",
+        "observedRef": "SS07.observations.json#/raw/13"
+      },
+      {
+        "id": "known-timeout-overflow",
+        "status": "REPRODUCED_EXISTING",
+        "checkStatus": "FAIL",
+        "existingFindingLink": "timeoutoverflow",
+        "newRootCauseCount": 0,
+        "executionKind": "offline-mock",
+        "source": "mcp-server/src/skill-classification/service.ts:127",
+        "explanation": "No upper-bound check before setTimeout; Node reduces 2147483648ms to 1ms. One mocked vendor dispatch occurs and PROVIDER_TIMEOUT replaces pre-dispatch invalid-timeout rejection.",
+        "expected": "INVALID_TIMEOUT; attempts=[], provider calls=0",
+        "observedRef": "SS07.observations.json#/raw/14"
+      }
+    ],
+    "host": {
+      "executionKind": "host-live",
+      "state": "NOT_RUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null,
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    }
+  },
+  "candidateAwaitingParent": {
+    "label": "R17",
+    "reportedCommit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "reportedTree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "verification": "NOT_VERIFIED",
+    "independentSOURCE": "AWAITING_PARENT",
+    "remotePublication": "AWAITING_PARENT"
+  },
+  "newProductTests": 0
+}

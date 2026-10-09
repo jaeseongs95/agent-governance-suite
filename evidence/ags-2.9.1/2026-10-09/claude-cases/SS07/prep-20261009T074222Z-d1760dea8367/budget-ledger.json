@@ -1,0 +1,20 @@
+{
+  "caseId": "SS07",
+  "currency": "USD",
+  "softBudget": 2,
+  "includesPreparationCalls": true,
+  "aggregateReservedCases": 39,
+  "aggregateReservationUsd": 78,
+  "calls": [],
+  "modelApiCalls": 0,
+  "jevCalls": 0,
+  "spentUsd": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadInputTokens": 0,
+  "cacheCreationInputTokens": 0,
+  "retries": 0,
+  "failedModelCalls": 0,
+  "nextCallAuthorized": false,
+  "stopRule": "Before any new call, reserve its possible charge within remaining case allowance; near limit stop and report. Include failed calls, retries and cache usage; unknown cost is not zero. US$2 is a soft ceiling and not a spending goal."
+}
