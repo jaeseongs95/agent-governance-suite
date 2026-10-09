@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "SS24-Claude-budget-ledger-1",
+  "runId": "20261009T074126Z-4cd6f85e-preparation",
+  "caseSoftAllocationUsd": 2,
+  "aggregate39CasesReservedUsd": 78,
+  "allocationIsNotSpendTarget": true,
+  "calls": [],
+  "totals": {
+    "claudeApiCalls": 0,
+    "vendorApiCalls": 0,
+    "jevApiCalls": 0,
+    "preparationApiCalls": 0,
+    "retryCalls": 0,
+    "failedCalls": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "cacheCreationInputTokens": 0,
+    "recordedCostUsd": 0,
+    "unknownCostCalls": 0,
+    "unknownReservedUsd": 0,
+    "remainingSoftAllocationUsd": 2
+  },
+  "scope": "This SS24 preparation only; no assertion about account-wide balance or other-case spend.",
+  "stopPolicy": "Before every future call include known spend and unknown reservations; halt next call when near the USD2 soft cap or when cost cannot be safely reconciled. CLI max-budget-usd is a secondary stop and not an exact billing guarantee. Record all calls including automatic retries/failures/cache; do not start JEV without separate allocation."
+}

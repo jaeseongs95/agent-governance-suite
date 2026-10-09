@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "SS24-preparation-publication-safety-1",
+  "runId": "20261009T074126Z-4cd6f85e-preparation",
+  "publicationBaseCommit": "326f38d04f5df4010a29c6b35f96c93b7558fd0c",
+  "scopeVerdict": "PASS",
+  "scopeBaselineRawSHA256": "df1f36d1b8ab04ef4f00ba91b9babb2042f1397e7b73b42bd09def38783d0d6b",
+  "scopeBaselineManifestDigest": "7062cbdd33c72185e2a1bc534ea07f211545cf7840653f0d3840930ea37fe02b",
+  "preflightVerdict": "READY",
+  "preflightReceiptVerified": true,
+  "preflightActionDigest": "sha256:e344ead5bc1fcf4fe4e48addf8ccde6f8d1e4ae87e5899193b6ad89b8752ce1c",
+  "preflightTargetDigest": "sha256:574d8b2d19e91dc84c0c36cb51463e6ff462fc46c26fd23f62558dc9e088d3b0",
+  "permissionBasis": "Explicit delegation authorizes sanitized reports/evidence/hash lists only on the existing evidence branch under SS24 unique runs.",
+  "newDirectoryPreviouslyAbsent": true,
+  "productOrExistingEvidenceEdits": false,
+  "forcePush": false,
+  "sanitization": {
+    "privateChats": false,
+    "personalInformation": false,
+    "credentialValuesOrPlaceholders": false,
+    "secretValuesReadForScan": false,
+    "structuredCredentialPatternHits": []
+  },
+  "recovery": {
+    "previousCommit": "326f38d04f5df4010a29c6b35f96c93b7558fd0c",
+    "previousTree": "a8bbb18addd7098b5c764434c7fb2523afd63fa4",
+    "restoredPrivateIndexTree": "a8bbb18addd7098b5c764434c7fb2523afd63fa4",
+    "matches": true,
+    "procedure": "If necessary, add a new evidence-only revert/removal commit limited to this new run directory; preserve all other concurrent additions. No force push or shared branch reset.",
+    "limitations": "Local independent-index restoration verified; no remote rollback executed."
+  },
+  "preparationWrapperCorrection": "Initial scope wrapper supplied raw file SHA instead of required manifestSha256; corrected digest argument without changing captured baseline or product. Initial wrapper check did not execute product tests or API calls.",
+  "limitations": [
+    "Preparation-only evidence; actual Claude host examination remains NOTRUN.",
+    "Local skill checks cover evidence publishing procedure; they do not test or approve R17.",
+    "No claim that a pattern scan proves absence of all conceivable secrets."
+  ]
+}
