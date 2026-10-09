@@ -1,0 +1,310 @@
+{
+  "numTotalTestSuites": 2,
+  "numPassedTestSuites": 0,
+  "numFailedTestSuites": 2,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 20,
+  "numPassedTests": 15,
+  "numFailedTests": 5,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514451821,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 frozen identity and source digests",
+          "status": "passed",
+          "title": "SS01 frozen identity and source digests",
+          "duration": 7.942813000000001,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 base ON exact original prompt and full inventory",
+          "status": "passed",
+          "title": "SS01 base ON exact original prompt and full inventory",
+          "duration": 504.92474400000003,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 base OFF exact original prompt and full inventory",
+          "status": "failed",
+          "title": "SS01 base OFF exact original prompt and full inventory",
+          "duration": 454.72106600000006,
+          "failureMessages": [
+            "AssertionError: expected \"vi.fn()\" to not be called at all, but actually been called 1 times\n\nReceived:\n\n  1st vi.fn() call:\n\n    Array [\n      Object {\n        \"classificationCriteriaRef\": \"skills/orchestrator/references/skill-classification.md\",\n        \"confirmedContext\": [Object],\n        \"contextSources\": [Array],\n        \"inventoryDigest\": \"sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82\",\n        \"operationId\": \"SS01-base-OFF\",\n        \"originalPrompt\": \"정수 리스트의 최댓값을 반환하는 함수를 표준 라이브러리로 간단히 고쳐 줘. 동시성·DB 변경이나 리뷰는 없어.\",\n        \"promptDigest\": \"sha256:c41025f56b16711d241f2b5fd8956da7b23b404aba0225d9b55489da1782c0de\",\n        \"requestDigest\": \"sha256:0141bc001760de95ae86e31969083873837d38d6155c4a08c2366c49785e5cd4\",\n        \"requestId\": \"request-SS01-base-OFF\",\n        \"schemaVersion\": \"1.0.0\",\n        \"skills\": [Array],\n        \"taxonomyRevision\": \"1.0.0\",\n      },\n      Object {\n        \"adapterRevision\": \"adapter-1\",\n        \"approvedRouteRef\": \"fixture:approved-native-route\",\n        \"judgmentPolicy\": null,\n        \"maximumCostUsd\": 0,\n        \"maximumInputBytes\": 2000000,\n        \"maximumOutputTokens\": 1000,\n        \"modelId\": \"mock-fixed\",\n        \"modelRevision\": \"mock-fixed-v1\",\n        \"profileId\": \"vendor-mock\",\n        \"promptRevision\": \"prompt-1\",\n        \"providerKind\": \"vendor\",\n        \"qualification\": [Object],\n        \"qualificationRevision\": \"mock-quality-only\",\n        \"reasoningEffort\": \"low\",\n        \"supportedOptions\": [Object],\n        \"vendorId\": \"mock-vendor\",\n      },\n      AbortSignal {\n        Symbol(kEvents): [Map],\n        Symbol(events.maxEventTargetListeners): 0,\n        Symbol(events.maxEventTargetListenersWarned): false,\n        Symbol(kHandlers): undefined,\n        Symbol(kAborted): false,\n        Symbol(kReason): undefined,\n        Symbol(kComposite): false,\n      },\n    ]\n\n\nNumber of calls: 1\n\n    at Proxy.<anonymous> (file://node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/index.OVGXnVRj.js:2204:51)\n    at Proxy.<anonymous> (file://node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/index.OVGXnVRj.js:1934:14)\n    at Proxy.methodWrapper (file://node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)\n    at ./SS01.test.ts:168:99\n    at file://node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 base invalid-key exact original prompt and full inventory",
+          "status": "failed",
+          "title": "SS01 base invalid-key exact original prompt and full inventory",
+          "duration": 341.0627599999998,
+          "failureMessages": [
+            "AssertionError: expected \"vi.fn()\" to not be called at all, but actually been called 1 times\n\nReceived:\n\n  1st vi.fn() call:\n\n    Array [\n      Object {\n        \"classificationCriteriaRef\": \"skills/orchestrator/references/skill-classification.md\",\n        \"confirmedContext\": [Object],\n        \"contextSources\": [Array],\n        \"inventoryDigest\": \"sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82\",\n        \"operationId\": \"SS01-base-invalid-key\",\n        \"originalPrompt\": \"정수 리스트의 최댓값을 반환하는 함수를 표준 라이브러리로 간단히 고쳐 줘. 동시성·DB 변경이나 리뷰는 없어.\",\n        \"promptDigest\": \"sha256:c41025f56b16711d241f2b5fd8956da7b23b404aba0225d9b55489da1782c0de\",\n        \"requestDigest\": \"sha256:9b1a29671431b66df11e08782eee3497178b438bbb990ab23826b49a8b724473\",\n        \"requestId\": \"request-SS01-base-invalid-key\",\n        \"schemaVersion\": \"1.0.0\",\n        \"skills\": [Array],\n        \"taxonomyRevision\": \"1.0.0\",\n      },\n      Object {\n        \"adapterRevision\": \"adapter-1\",\n        \"approvedRouteRef\": \"fixture:approved-native-route\",\n        \"judgmentPolicy\": null,\n        \"maximumCostUsd\": 0,\n        \"maximumInputBytes\": 2000000,\n        \"maximumOutputTokens\": 1000,\n        \"modelId\": \"mock-fixed\",\n        \"modelRevision\": \"mock-fixed-v1\",\n        \"profileId\": \"vendor-mock\",\n        \"promptRevision\": \"prompt-1\",\n        \"providerKind\": \"vendor\",\n        \"qualification\": [Object],\n        \"qualificationRevision\": \"mock-quality-only\",\n        \"reasoningEffort\": \"low\",\n        \"supportedOptions\": [Object],\n        \"vendorId\": \"mock-vendor\",\n      },\n      AbortSignal {\n        Symbol(kEvents): [Map],\n        Symbol(events.maxEventTargetListeners): 0,\n        Symbol(events.maxEventTargetListenersWarned): false,\n        Symbol(kHandlers): undefined,\n        Symbol(kAborted): false,\n        Symbol(kReason): undefined,\n        Symbol(kComposite): false,\n      },\n    ]\n\n\nNumber of calls: 1\n\n    at Proxy.<anonymous> (file://node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/index.OVGXnVRj.js:2204:51)\n    at Proxy.<anonymous> (file://node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/index.OVGXnVRj.js:1934:14)\n    at Proxy.methodWrapper (file://node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)\n    at ./SS01.test.ts:169:57\n    at file://node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 base timeout exact original prompt and full inventory",
+          "status": "failed",
+          "title": "SS01 base timeout exact original prompt and full inventory",
+          "duration": 328.41092400000025,
+          "failureMessages": [
+            "AssertionError: expected { code: 'PROVIDER_TIMEOUT', …(2) } to be null\n    at Object.call (./SS01.test.ts:127:44)\n    at ./SS01.test.ts:159:56\n    at file://node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 missing host observation preserves null selection",
+          "status": "passed",
+          "title": "SS01 missing host observation preserves null selection",
+          "duration": 291.5400629999999,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 synthetic signed choice accepts P and does not claim later stages",
+          "status": "passed",
+          "title": "SS01 synthetic signed choice accepts P and does not claim later stages",
+          "duration": 346.2554150000001,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 caller receipt cannot establish selection",
+          "status": "passed",
+          "title": "SS01 caller receipt cannot establish selection",
+          "duration": 288.7295059999997,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 rejects oracle-incompatible output null",
+          "status": "passed",
+          "title": "SS01 rejects oracle-incompatible output null",
+          "duration": 0.7174410000002354,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 rejects oracle-incompatible output undefined",
+          "status": "passed",
+          "title": "SS01 rejects oracle-incompatible output undefined",
+          "duration": 0.20291099999985818,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 rejects oracle-incompatible output \"ponytail\"",
+          "status": "passed",
+          "title": "SS01 rejects oracle-incompatible output \"ponytail\"",
+          "duration": 0.09257100000013452,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 rejects oracle-incompatible output \"ponytail\"",
+          "status": "passed",
+          "title": "SS01 rejects oracle-incompatible output \"ponytail\"",
+          "duration": 0.07078199999978096,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 rejects oracle-incompatible output \"ponytail\"",
+          "status": "passed",
+          "title": "SS01 rejects oracle-incompatible output \"ponytail\"",
+          "duration": 0.06190999999989799,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 rejects oracle-incompatible output \"ponytail\"",
+          "status": "passed",
+          "title": "SS01 rejects oracle-incompatible output \"ponytail\"",
+          "duration": 0.07547599999998056,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 rejects oracle-incompatible output \"ponytail\"",
+          "status": "passed",
+          "title": "SS01 rejects oracle-incompatible output \"ponytail\"",
+          "duration": 0.18097099999977218,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 rejects oracle-incompatible output \"P\"",
+          "status": "passed",
+          "title": "SS01 rejects oracle-incompatible output \"P\"",
+          "duration": 0.06513300000005984,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 keeps null and [] distinct and advice never creates a host receipt",
+          "status": "passed",
+          "title": "SS01 keeps null and [] distinct and advice never creates a host receipt",
+          "duration": 267.8817979999999,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 AGENT correction remains independent of incorrect raw advice",
+          "status": "passed",
+          "title": "SS01 AGENT correction remains independent of incorrect raw advice",
+          "duration": 340.09853799999973,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 known defect invalid RESP must preserve independently valid cost",
+          "status": "failed",
+          "title": "SS01 known defect invalid RESP must preserve independently valid cost",
+          "duration": 361.90671699999984,
+          "failureMessages": [
+            "AssertionError: expected { …(3) } to be null\n    at Object.call (./SS01.test.ts:127:44)\n    at ./SS01.test.ts:209:14\n    at file://node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 known defect must recheck cancellation after async acceptance read",
+          "status": "failed",
+          "title": "SS01 known defect must recheck cancellation after async acceptance read",
+          "duration": 288.71676599999955,
+          "failureMessages": [
+            "AssertionError: cancelled during asynchronous acceptance read: expected true to be false // Object.is equality\n    at ./SS01.test.ts:219:69\n    at file://node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514452612,
+      "endTime": 1791514456435.7168,
+      "status": "failed",
+      "message": "",
+      "name": "./SS01.test.ts"
+    }
+  ]
+}

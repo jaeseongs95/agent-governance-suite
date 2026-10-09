@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:c06050f94b0dad078675e6fa5e8b4e7c6dde6074e2d2094df436e467de552fb5",
+  "reportDigest": "sha256:b794ddf36b2c90f6bf976f7a06f120437e828923adfa9c15fb7832ff220d9d6c",
+  "issues": [
+    "REQUIRED SS01-isolated-boundaries: NOT_RUN — Red defect assertions recorded in isolated-vitest.json. A formal red/green pair cannot be completed because modifying product source is forbidden and no corrected candidate was supplied. Actual model behavior and host selection NOTRUN."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

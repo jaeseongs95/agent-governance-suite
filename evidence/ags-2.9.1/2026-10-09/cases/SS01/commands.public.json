@@ -1,0 +1,82 @@
+[
+  {
+    "kind": "existing-regression",
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "tests/skill-classification/evaluation.test.ts",
+      "-t",
+      "requires host acceptance without fabricating a receipt from advice",
+      "--reporter=json",
+      "--outputFile=artifacts/existing-vitest.json"
+    ],
+    "cwd": "repo",
+    "exitCode": 0,
+    "startedAt": "2026-10-09T02:54:10.783835+00:00",
+    "finishedAt": "2026-10-09T02:54:11.518162+00:00",
+    "stdout": "existing-regression.stdout.log",
+    "stderr": "existing-regression.stderr.log",
+    "API0": true
+  },
+  {
+    "kind": "new-isolated",
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "SS01.test.ts",
+      "--root",
+      ".",
+      "--reporter=json",
+      "--outputFile=artifacts/isolated-vitest.json"
+    ],
+    "cwd": ".",
+    "exitCode": 1,
+    "startedAt": "2026-10-09T02:54:11.518207+00:00",
+    "finishedAt": "2026-10-09T02:54:16.498746+00:00",
+    "stdout": "initial-harness-new-isolated.stdout.log",
+    "stderr": "initial-harness-new-isolated.stderr.log",
+    "API0": true,
+    "classification": "TEST_HARNESS_ERROR: vi.fn(mock) reused function; not counted as product defect"
+  },
+  {
+    "kind": "new-isolated-corrected-harness",
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "SS01.test.ts",
+      "--root",
+      ".",
+      "--reporter=json",
+      "--outputFile=artifacts/isolated-vitest.json"
+    ],
+    "cwd": ".",
+    "exitCode": 1,
+    "finishedAt": "2026-10-09T02:54:49.416899+00:00",
+    "stdout": "corrected-20-new-isolated.stdout.log",
+    "stderr": "corrected-20-new-isolated.stderr.log",
+    "API0": true
+  },
+  {
+    "kind": "new-isolated-added-boundaries",
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "SS01.test.ts",
+      "--root",
+      ".",
+      "--reporter=json",
+      "--outputFile=artifacts/isolated-vitest.json"
+    ],
+    "cwd": ".",
+    "exitCode": 1,
+    "startedAt": "2026-10-09T02:55:29.564079+00:00",
+    "finishedAt": "2026-10-09T02:55:35.519956+00:00",
+    "stdout": "new-isolated.stdout.log",
+    "stderr": "new-isolated.stderr.log",
+    "API0": true
+  }
+]

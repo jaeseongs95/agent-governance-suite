@@ -1,0 +1,183 @@
+{
+  "caseId": "SS01",
+  "scope": "Existing SS01 artifacts only; publisher performed packaging checks, no tests",
+  "artifacts": {
+    "SS01.result.json": {
+      "bytes": 2685238,
+      "sha256": "60610d0b80e1f5d973907e36b6ae8d259223e579e199db352fd8564e7b1702d3",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "SS01.test.ts": {
+      "bytes": 24867,
+      "sha256": "9646d8bbdea920644b5eb63b06e67f45265e0c8afe9a64b75f450287c016bf50",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "run-SS01.py": {
+      "bytes": 573,
+      "sha256": "84f4bda25ea62ce09aeb27fac3bc068489b3b2f23657c14955f2febed2576874",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "SHA256SUMS": {
+      "bytes": 2616,
+      "sha256": "0d8f2b2b1a26737a0441a4da14bffabe6ffa86fbe67cee3ab15bfdd9bc037307",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "SS01.evidence.tar.gz": {
+      "bytes": 1043044,
+      "sha256": "ee0b10dbc57f910d4501a3e943fd78796af22b88158628109372ab8e5f94e3b0",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "evidence/SS01.embedded-source.json": {
+      "bytes": 4334,
+      "sha256": "7153331edeef8fd84ea85c4d5777756ef4e82e45b47f297a0af8909f046f7ca8",
+      "availability": "PRESENT",
+      "rawPublished": true
+    },
+    "evidence/candidate-snapshot.json": {
+      "bytes": 3152,
+      "sha256": "10e65154515127105af2ea19ececfdd58f52fe98b81fb090cf4f4f0f12646fac",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "evidence/commands.json": {
+      "bytes": 2529,
+      "sha256": "ac1286f307cc314c7ef4466351f6a278464a14066a8032748a16dfe0ef565a1a",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "evidence/corrected-20-isolated-vitest.json": {
+      "bytes": 8422,
+      "sha256": "25a0abce70da1a3516452f9e65a95ca6f982180a23e469db1aa7ca8fa3454578",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "evidence/corrected-20-new-isolated.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "availability": "PRESENT",
+      "rawPublished": true
+    },
+    "evidence/corrected-20-new-isolated.stdout.log": {
+      "bytes": 69,
+      "sha256": "786644d0c604150ab892ca5d8656b74bd1be4b74019156923a55426966bdfb8a",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "evidence/corrected-20-observations.json": {
+      "bytes": 2435236,
+      "sha256": "0f97213da4f7fbc6942dd423a7483b7aa92709ec372d21c7821c0e2a61e66ce4",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "evidence/engineering-plan-result.json": {
+      "bytes": 232,
+      "sha256": "1851f2ff6675bd41d375b80970374cdd2eb14281be71313ff95bfc51eee14937",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "evidence/engineering-test-plan.json": {
+      "bytes": 3451,
+      "sha256": "4c8a426306fcc1d3ac65149b69cc3d9bdaf85865d88d04467cd3e89c9d1a398e",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "evidence/engineering-test-proof.json": {
+      "bytes": 4193,
+      "sha256": "6889bdaeb539b58a66d597bed678817df96be8427e0695c30884f84a79fb744e",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "evidence/engineering-test-result.json": {
+      "bytes": 981,
+      "sha256": "ba1435fed0364f31f9100612d512a1fbd0935d03c480fbffbd8158b9f26258b3",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "evidence/existing-regression.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "availability": "PRESENT",
+      "rawPublished": true
+    },
+    "evidence/existing-regression.stdout.log": {
+      "bytes": 69,
+      "sha256": "1222cdfe7a14383a1106130fda5229662fc80022e620109616e7844cf76cd551",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "evidence/existing-vitest.json": {
+      "bytes": 5889,
+      "sha256": "50eb04bd7f1309e52b70d841d977104c1d4157f5fccacb83efda1e729596f776",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "evidence/formalize.mjs": {
+      "bytes": 3846,
+      "sha256": "7789e4345a8e53be147074cccd327414994ef86d5a2198680437add7fc2a4799",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "evidence/initial-harness-isolated-vitest.json": {
+      "bytes": 14834,
+      "sha256": "1c15f8eed4e58ba7e752db360fcc67b1e11386ced3da1f87be4a7b0474a725fd",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "evidence/initial-harness-new-isolated.stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "availability": "PRESENT",
+      "rawPublished": true
+    },
+    "evidence/initial-harness-new-isolated.stdout.log": {
+      "bytes": 69,
+      "sha256": "786644d0c604150ab892ca5d8656b74bd1be4b74019156923a55426966bdfb8a",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "evidence/initial-harness-observations.json": {
+      "bytes": 1831163,
+      "sha256": "50d04cafeb392e810d8394c6e69cc5d78a993d15ddfab69590904119133f7cae",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "evidence/isolated-vitest.json": {
+      "bytes": 9912,
+      "sha256": "5077317ed611e98548e7c4488b51c0ef6dc992508185f1354f2a0ce456ad8ef3",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "evidence/new-isolated.stderr.log": {
+      "bytes": 314,
+      "sha256": "2bb41b3cdeb2395c7f62354f8ed3fdcdf69a63ca57341321daa5ba292552ddaf",
+      "availability": "PRESENT",
+      "rawPublished": true
+    },
+    "evidence/new-isolated.stdout.log": {
+      "bytes": 69,
+      "sha256": "786644d0c604150ab892ca5d8656b74bd1be4b74019156923a55426966bdfb8a",
+      "availability": "PRESENT",
+      "rawPublished": false
+    },
+    "evidence/observations.json": {
+      "bytes": 2742193,
+      "sha256": "833d2e1e995280d083344ff353e275baf9cef2ce48171fc60160c1cd3ac08928",
+      "availability": "PRESENT",
+      "rawPublished": false
+    }
+  },
+  "missingOriginalArtifacts": [
+    "TEST-SPEC.seq7.ko.md: MISSING_ORIGINAL; sourceSpec embedded SS01 fields preserved"
+  ],
+  "notCreatedArtifacts": [
+    "product patch",
+    "real host receipt",
+    "real provider response"
+  ],
+  "withheldReason": "Raw result/observations contain private absolute paths and repeated repository inventory bodies. Initial/corrected raw observations and archive are unnecessary to publish; their original bytes and hashes are catalogued."
+}

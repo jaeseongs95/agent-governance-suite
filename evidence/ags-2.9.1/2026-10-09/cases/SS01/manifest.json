@@ -1,0 +1,587 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS01",
+  "publicationScope": "evidence/ags-2.9.1/2026-10-09/cases/SS01/",
+  "candidate": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+  },
+  "input": {
+    "path": "input/originalPrompt.utf8.txt",
+    "encoding": "UTF-8",
+    "bytes": 148,
+    "sha256": "c41025f56b16711d241f2b5fd8956da7b23b404aba0225d9b55489da1782c0de",
+    "terminalNewlineAdded": false
+  },
+  "existingOutcome": {
+    "regression": {
+      "PASS": 1,
+      "FAIL": 0,
+      "NOT_RUN": 14,
+      "exit": 0
+    },
+    "finalIsolated": {
+      "PASS": 20,
+      "FAIL": 3,
+      "NOT_RUN": 0,
+      "exit": 1
+    },
+    "hostStages": {
+      "selected": "NOT_RUN",
+      "read": "NOT_RUN",
+      "applied": "NOT_RUN",
+      "verified": "NOT_RUN"
+    },
+    "API0": true,
+    "newTestRunsForPublication": 0
+  },
+  "patchStatus": "NO_PATCH_CREATED",
+  "missingOriginalArtifacts": [
+    "TEST-SPEC.seq7.ko.md"
+  ],
+  "hashPolicy": {
+    "manifestExcludes": [
+      "manifest.json",
+      "SHA256SUMS"
+    ],
+    "sha256sumsExcludes": [
+      "SHA256SUMS"
+    ]
+  },
+  "payloadFileCount": 27,
+  "payloadTotalBytes": 2217518,
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 4680,
+      "sha256": "d5a4aae836d495568ee43fe5e00cd1e1d17c3b26f0a7150fff9f3d3de979202f",
+      "sourceIds": [],
+      "form": "public-derived",
+      "transformations": [
+        "Publication documentation; derived from existing outcome and source requirements"
+      ],
+      "originalSources": []
+    },
+    {
+      "path": "SS01.result.public.json",
+      "bytes": 1071648,
+      "sha256": "a4c5d57421f0c9261665d45f3622f2799e37f874b4ba6841689de67dcd151177",
+      "sourceIds": [
+        "SS01.result.json"
+      ],
+      "form": "public-derived",
+      "transformations": [
+        "Absolute path redaction",
+        "Duplicate inventory body projection",
+        "Publication metadata added; original outcomes unchanged"
+      ],
+      "originalSources": [
+        {
+          "sourceId": "SS01.result.json",
+          "bytes": 2685238,
+          "sha256": "60610d0b80e1f5d973907e36b6ae8d259223e579e199db352fd8564e7b1702d3",
+          "availability": "PRESENT",
+          "rawPublished": false
+        }
+      ]
+    },
+    {
+      "path": "commands.public.json",
+      "bytes": 2233,
+      "sha256": "b61f0962b1d1fc2b12159ea0dccb472ac8a250327d76b396660ec424e51616c3",
+      "sourceIds": [
+        "evidence/commands.json"
+      ],
+      "form": "public-derived",
+      "transformations": [
+        "Private absolute path redaction; all original argv, exits and available timestamps preserved"
+      ],
+      "originalSources": [
+        {
+          "sourceId": "evidence/commands.json",
+          "bytes": 2529,
+          "sha256": "ac1286f307cc314c7ef4466351f6a278464a14066a8032748a16dfe0ef565a1a",
+          "availability": "PRESENT",
+          "rawPublished": false
+        }
+      ]
+    },
+    {
+      "path": "input/SS01.embedded-source.json",
+      "bytes": 4334,
+      "sha256": "7153331edeef8fd84ea85c4d5777756ef4e82e45b47f297a0af8909f046f7ca8",
+      "sourceIds": [
+        "evidence/SS01.embedded-source.json"
+      ],
+      "form": "byte-identical-original",
+      "transformations": [],
+      "originalSources": [
+        {
+          "sourceId": "evidence/SS01.embedded-source.json",
+          "bytes": 4334,
+          "sha256": "7153331edeef8fd84ea85c4d5777756ef4e82e45b47f297a0af8909f046f7ca8",
+          "availability": "PRESENT",
+          "rawPublished": true
+        }
+      ]
+    },
+    {
+      "path": "input/originalPrompt.utf8.txt",
+      "bytes": 148,
+      "sha256": "c41025f56b16711d241f2b5fd8956da7b23b404aba0225d9b55489da1782c0de",
+      "sourceIds": [
+        "SS01.result.json"
+      ],
+      "form": "public-derived",
+      "transformations": [
+        "Extract originalPrompt UTF-8 bytes without terminal newline"
+      ],
+      "originalSources": [
+        {
+          "sourceId": "SS01.result.json",
+          "bytes": 2685238,
+          "sha256": "60610d0b80e1f5d973907e36b6ae8d259223e579e199db352fd8564e7b1702d3",
+          "availability": "PRESENT",
+          "rawPublished": false
+        }
+      ]
+    },
+    {
+      "path": "logs/corrected-20-new-isolated.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sourceIds": [
+        "evidence/corrected-20-new-isolated.stderr.log"
+      ],
+      "form": "byte-identical-original",
+      "transformations": [],
+      "originalSources": [
+        {
+          "sourceId": "evidence/corrected-20-new-isolated.stderr.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "availability": "PRESENT",
+          "rawPublished": true
+        }
+      ]
+    },
+    {
+      "path": "logs/corrected-20-new-isolated.stdout.log",
+      "bytes": 54,
+      "sha256": "d1f4df13612a6721a57c24aca65ba68e0f3a17bce33b2a2218c3cb148c51c846",
+      "sourceIds": [
+        "evidence/corrected-20-new-isolated.stdout.log"
+      ],
+      "form": "public-derived",
+      "transformations": [
+        "Private absolute path redaction"
+      ],
+      "originalSources": [
+        {
+          "sourceId": "evidence/corrected-20-new-isolated.stdout.log",
+          "bytes": 69,
+          "sha256": "786644d0c604150ab892ca5d8656b74bd1be4b74019156923a55426966bdfb8a",
+          "availability": "PRESENT",
+          "rawPublished": false
+        }
+      ]
+    },
+    {
+      "path": "logs/existing-regression.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sourceIds": [
+        "evidence/existing-regression.stderr.log"
+      ],
+      "form": "byte-identical-original",
+      "transformations": [],
+      "originalSources": [
+        {
+          "sourceId": "evidence/existing-regression.stderr.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "availability": "PRESENT",
+          "rawPublished": true
+        }
+      ]
+    },
+    {
+      "path": "logs/existing-regression.stdout.log",
+      "bytes": 54,
+      "sha256": "739b06c5163ba9d39a70352c9573859505194779a1a6c1a5e9732cdce771da22",
+      "sourceIds": [
+        "evidence/existing-regression.stdout.log"
+      ],
+      "form": "public-derived",
+      "transformations": [
+        "Private absolute path redaction"
+      ],
+      "originalSources": [
+        {
+          "sourceId": "evidence/existing-regression.stdout.log",
+          "bytes": 69,
+          "sha256": "1222cdfe7a14383a1106130fda5229662fc80022e620109616e7844cf76cd551",
+          "availability": "PRESENT",
+          "rawPublished": false
+        }
+      ]
+    },
+    {
+      "path": "logs/initial-harness-new-isolated.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sourceIds": [
+        "evidence/initial-harness-new-isolated.stderr.log"
+      ],
+      "form": "byte-identical-original",
+      "transformations": [],
+      "originalSources": [
+        {
+          "sourceId": "evidence/initial-harness-new-isolated.stderr.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "availability": "PRESENT",
+          "rawPublished": true
+        }
+      ]
+    },
+    {
+      "path": "logs/initial-harness-new-isolated.stdout.log",
+      "bytes": 54,
+      "sha256": "d1f4df13612a6721a57c24aca65ba68e0f3a17bce33b2a2218c3cb148c51c846",
+      "sourceIds": [
+        "evidence/initial-harness-new-isolated.stdout.log"
+      ],
+      "form": "public-derived",
+      "transformations": [
+        "Private absolute path redaction"
+      ],
+      "originalSources": [
+        {
+          "sourceId": "evidence/initial-harness-new-isolated.stdout.log",
+          "bytes": 69,
+          "sha256": "786644d0c604150ab892ca5d8656b74bd1be4b74019156923a55426966bdfb8a",
+          "availability": "PRESENT",
+          "rawPublished": false
+        }
+      ]
+    },
+    {
+      "path": "logs/new-isolated.stderr.log",
+      "bytes": 314,
+      "sha256": "2bb41b3cdeb2395c7f62354f8ed3fdcdf69a63ca57341321daa5ba292552ddaf",
+      "sourceIds": [
+        "evidence/new-isolated.stderr.log"
+      ],
+      "form": "byte-identical-original",
+      "transformations": [],
+      "originalSources": [
+        {
+          "sourceId": "evidence/new-isolated.stderr.log",
+          "bytes": 314,
+          "sha256": "2bb41b3cdeb2395c7f62354f8ed3fdcdf69a63ca57341321daa5ba292552ddaf",
+          "availability": "PRESENT",
+          "rawPublished": true
+        }
+      ]
+    },
+    {
+      "path": "logs/new-isolated.stdout.log",
+      "bytes": 54,
+      "sha256": "d1f4df13612a6721a57c24aca65ba68e0f3a17bce33b2a2218c3cb148c51c846",
+      "sourceIds": [
+        "evidence/new-isolated.stdout.log"
+      ],
+      "form": "public-derived",
+      "transformations": [
+        "Private absolute path redaction"
+      ],
+      "originalSources": [
+        {
+          "sourceId": "evidence/new-isolated.stdout.log",
+          "bytes": 69,
+          "sha256": "786644d0c604150ab892ca5d8656b74bd1be4b74019156923a55426966bdfb8a",
+          "availability": "PRESENT",
+          "rawPublished": false
+        }
+      ]
+    },
+    {
+      "path": "observations.public.json",
+      "bytes": 1038870,
+      "sha256": "e411a218a379776d147d8f9516b8ef4c7060d0de420859928a867083049b1d5e",
+      "sourceIds": [
+        "evidence/observations.json"
+      ],
+      "form": "public-derived",
+      "transformations": [
+        "Private absolute path redaction",
+        "Duplicate inventory body projection; all 23 observation records retained"
+      ],
+      "originalSources": [
+        {
+          "sourceId": "evidence/observations.json",
+          "bytes": 2742193,
+          "sha256": "833d2e1e995280d083344ff353e275baf9cef2ce48171fc60160c1cd3ac08928",
+          "availability": "PRESENT",
+          "rawPublished": false
+        }
+      ]
+    },
+    {
+      "path": "original-artifacts.json",
+      "bytes": 6629,
+      "sha256": "8f9bb71d79b8601017b8c71867b0590b7d162bc0bfba8d716251c1e79bac3950",
+      "sourceIds": [],
+      "form": "public-derived",
+      "transformations": [
+        "Original byte counts and hashes computed from retained files; no fabricated originals"
+      ],
+      "originalSources": []
+    },
+    {
+      "path": "patch-status.json",
+      "bytes": 233,
+      "sha256": "70cbd1437ed60e5ad170901b72160710c65e6210896d932eb7112b9d5d691b99",
+      "sourceIds": [],
+      "form": "public-derived",
+      "transformations": [
+        "Metadata from existing productSourceChanges=false and source artifact inventory"
+      ],
+      "originalSources": []
+    },
+    {
+      "path": "reports/candidate-snapshot.json",
+      "bytes": 3152,
+      "sha256": "10e65154515127105af2ea19ececfdd58f52fe98b81fb090cf4f4f0f12646fac",
+      "sourceIds": [
+        "evidence/candidate-snapshot.json"
+      ],
+      "form": "public-derived",
+      "transformations": [
+        "Private absolute path redaction; no assertion status or failure promoted"
+      ],
+      "originalSources": [
+        {
+          "sourceId": "evidence/candidate-snapshot.json",
+          "bytes": 3152,
+          "sha256": "10e65154515127105af2ea19ececfdd58f52fe98b81fb090cf4f4f0f12646fac",
+          "availability": "PRESENT",
+          "rawPublished": false
+        }
+      ]
+    },
+    {
+      "path": "reports/corrected-20-isolated-vitest.json",
+      "bytes": 11569,
+      "sha256": "c5d22fa7eeb4c456bf0963a1f202e63a5fcf1bd20de8074702768c2df3de5fa7",
+      "sourceIds": [
+        "evidence/corrected-20-isolated-vitest.json"
+      ],
+      "form": "public-derived",
+      "transformations": [
+        "Private absolute path redaction; no assertion status or failure promoted"
+      ],
+      "originalSources": [
+        {
+          "sourceId": "evidence/corrected-20-isolated-vitest.json",
+          "bytes": 8422,
+          "sha256": "25a0abce70da1a3516452f9e65a95ca6f982180a23e469db1aa7ca8fa3454578",
+          "availability": "PRESENT",
+          "rawPublished": false
+        }
+      ]
+    },
+    {
+      "path": "reports/engineering-plan-result.json",
+      "bytes": 232,
+      "sha256": "1851f2ff6675bd41d375b80970374cdd2eb14281be71313ff95bfc51eee14937",
+      "sourceIds": [
+        "evidence/engineering-plan-result.json"
+      ],
+      "form": "public-derived",
+      "transformations": [
+        "Private absolute path redaction; no assertion status or failure promoted"
+      ],
+      "originalSources": [
+        {
+          "sourceId": "evidence/engineering-plan-result.json",
+          "bytes": 232,
+          "sha256": "1851f2ff6675bd41d375b80970374cdd2eb14281be71313ff95bfc51eee14937",
+          "availability": "PRESENT",
+          "rawPublished": false
+        }
+      ]
+    },
+    {
+      "path": "reports/engineering-test-plan.json",
+      "bytes": 3388,
+      "sha256": "de0c151ab7f57b8cd4e2ae8ae45a292b7b9f817cf8bd97849d89434577bfcec1",
+      "sourceIds": [
+        "evidence/engineering-test-plan.json"
+      ],
+      "form": "public-derived",
+      "transformations": [
+        "Private absolute path redaction; no assertion status or failure promoted"
+      ],
+      "originalSources": [
+        {
+          "sourceId": "evidence/engineering-test-plan.json",
+          "bytes": 3451,
+          "sha256": "4c8a426306fcc1d3ac65149b69cc3d9bdaf85865d88d04467cd3e89c9d1a398e",
+          "availability": "PRESENT",
+          "rawPublished": false
+        }
+      ]
+    },
+    {
+      "path": "reports/engineering-test-proof.json",
+      "bytes": 4193,
+      "sha256": "6889bdaeb539b58a66d597bed678817df96be8427e0695c30884f84a79fb744e",
+      "sourceIds": [
+        "evidence/engineering-test-proof.json"
+      ],
+      "form": "public-derived",
+      "transformations": [
+        "Private absolute path redaction; no assertion status or failure promoted"
+      ],
+      "originalSources": [
+        {
+          "sourceId": "evidence/engineering-test-proof.json",
+          "bytes": 4193,
+          "sha256": "6889bdaeb539b58a66d597bed678817df96be8427e0695c30884f84a79fb744e",
+          "availability": "PRESENT",
+          "rawPublished": false
+        }
+      ]
+    },
+    {
+      "path": "reports/engineering-test-result.json",
+      "bytes": 981,
+      "sha256": "ba1435fed0364f31f9100612d512a1fbd0935d03c480fbffbd8158b9f26258b3",
+      "sourceIds": [
+        "evidence/engineering-test-result.json"
+      ],
+      "form": "public-derived",
+      "transformations": [
+        "Private absolute path redaction; no assertion status or failure promoted"
+      ],
+      "originalSources": [
+        {
+          "sourceId": "evidence/engineering-test-result.json",
+          "bytes": 981,
+          "sha256": "ba1435fed0364f31f9100612d512a1fbd0935d03c480fbffbd8158b9f26258b3",
+          "availability": "PRESENT",
+          "rawPublished": false
+        }
+      ]
+    },
+    {
+      "path": "reports/existing-vitest.json",
+      "bytes": 8164,
+      "sha256": "e57dee683f48ec4a83c96f6ab713e9b287de3610dd307908352e46bc87815614",
+      "sourceIds": [
+        "evidence/existing-vitest.json"
+      ],
+      "form": "public-derived",
+      "transformations": [
+        "Private absolute path redaction; no assertion status or failure promoted"
+      ],
+      "originalSources": [
+        {
+          "sourceId": "evidence/existing-vitest.json",
+          "bytes": 5889,
+          "sha256": "50eb04bd7f1309e52b70d841d977104c1d4157f5fccacb83efda1e729596f776",
+          "availability": "PRESENT",
+          "rawPublished": false
+        }
+      ]
+    },
+    {
+      "path": "reports/initial-harness-isolated-vitest.json",
+      "bytes": 17677,
+      "sha256": "9052cf68257a17b58ad6ccf3636243a4489fbda1a6326682f4f8e342433f47b4",
+      "sourceIds": [
+        "evidence/initial-harness-isolated-vitest.json"
+      ],
+      "form": "public-derived",
+      "transformations": [
+        "Private absolute path redaction; no assertion status or failure promoted"
+      ],
+      "originalSources": [
+        {
+          "sourceId": "evidence/initial-harness-isolated-vitest.json",
+          "bytes": 14834,
+          "sha256": "1c15f8eed4e58ba7e752db360fcc67b1e11386ced3da1f87be4a7b0474a725fd",
+          "availability": "PRESENT",
+          "rawPublished": false
+        }
+      ]
+    },
+    {
+      "path": "reports/isolated-vitest.json",
+      "bytes": 13485,
+      "sha256": "e25bb52521d400f3bae9d513f0a67840ed7d5363600337372b575388c1c4b4a2",
+      "sourceIds": [
+        "evidence/isolated-vitest.json"
+      ],
+      "form": "public-derived",
+      "transformations": [
+        "Private absolute path redaction; no assertion status or failure promoted"
+      ],
+      "originalSources": [
+        {
+          "sourceId": "evidence/isolated-vitest.json",
+          "bytes": 9912,
+          "sha256": "5077317ed611e98548e7c4488b51c0ef6dc992508185f1354f2a0ce456ad8ef3",
+          "availability": "PRESENT",
+          "rawPublished": false
+        }
+      ]
+    },
+    {
+      "path": "reproduce/SS01.test.ts",
+      "bytes": 24854,
+      "sha256": "bf94c43476acba85b24c5a3873a13af848243375c06161f030dcaacccf63b4d9",
+      "sourceIds": [
+        "SS01.test.ts"
+      ],
+      "form": "public-derived",
+      "transformations": [
+        "Observation output made relative; no test logic change; not executed for publication"
+      ],
+      "originalSources": [
+        {
+          "sourceId": "SS01.test.ts",
+          "bytes": 24867,
+          "sha256": "9646d8bbdea920644b5eb63b06e67f45265e0c8afe9a64b75f450287c016bf50",
+          "availability": "PRESENT",
+          "rawPublished": false
+        }
+      ]
+    },
+    {
+      "path": "reproduce/run-SS01.py",
+      "bytes": 518,
+      "sha256": "d429097e45667c96d4c42ae8b78acaedc254aba3df205a4ae510327f51d6ba0a",
+      "sourceIds": [
+        "run-SS01.py"
+      ],
+      "form": "public-derived",
+      "transformations": [
+        "Use prepared pinned candidate dependency directory; avoid self symlink; no assertion change; not executed"
+      ],
+      "originalSources": [
+        {
+          "sourceId": "run-SS01.py",
+          "bytes": 573,
+          "sha256": "84f4bda25ea62ce09aeb27fac3bc068489b3b2f23657c14955f2febed2576874",
+          "availability": "PRESENT",
+          "rawPublished": false
+        }
+      ]
+    }
+  ]
+}

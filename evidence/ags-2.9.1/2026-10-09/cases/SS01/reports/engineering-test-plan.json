@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS01",
+  "contractDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "requirements": [
+    "SS01-base-R-P",
+    "SS01-target-absent",
+    "SS01-no-forbidden",
+    "SS01-agent-final",
+    "SS01-null-empty",
+    "SS01-invalid-response-cost",
+    "SS01-cancel-fence",
+    "SS01-timer-bound",
+    "SS01-host-state-supply"
+  ],
+  "scopeFiles": [
+    "SS01.test.ts",
+    "repo/tests/skill-classification/fixtures.json",
+    "repo/tests/skill-classification/evaluation.ts",
+    "repo/mcp-server/src/skill-classification/gateway.ts",
+    "repo/mcp-server/src/skill-classification/inventory.ts",
+    "repo/mcp-server/src/skill-classification/native-adapters.ts",
+    "repo/mcp-server/src/skill-classification/providers.ts",
+    "repo/mcp-server/src/skill-classification/service.ts",
+    "repo/mcp-server/src/skill-classification/profiles.ts",
+    "repo/mcp-server/src/skill-classification/request.ts",
+    "repo/mcp-server/src/skill-classification/validation.ts",
+    "repo/mcp-server/src/skill-classification/runtime.ts",
+    "repo/mcp-server/src/skill-classification/types.ts",
+    "repo/mcp-server/src/host-attestation.ts"
+  ],
+  "runner": "Existing Vitest 5.0.0; no build; no whole suite",
+  "environment": "Node 24.19.0, Linux, Etc/UTC; synthetic provider and signer; all actual API calls 0",
+  "cases": [
+    {
+      "id": "SS01-isolated-boundaries",
+      "requirementIds": [
+        "SS01-base-R-P",
+        "SS01-target-absent",
+        "SS01-no-forbidden",
+        "SS01-agent-final",
+        "SS01-null-empty",
+        "SS01-invalid-response-cost",
+        "SS01-cancel-fence",
+        "SS01-timer-bound",
+        "SS01-host-state-supply"
+      ],
+      "scenario": "Exact SS01 base across mocked ON/OFF/key unavailable/timeout; incompatible sets; synthetic acceptance; known cost/cancellation/timeout and host supply boundaries",
+      "entryPoint": "actual MCP Client/Server transport, classify_skills, record_skill_selection, scoreCase, loadSkillInventory",
+      "level": "integration",
+      "expectedBehavior": "P-only purpose, unchanged prompt and complete inventory, actual stages remain NOTRUN, known cost retained, cancellation fenced, no timer overflow",
+      "oracle": "Frozen SS01 embedded fields and oracle; SHA sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055; mock labels test transport only",
+      "testFiles": [
+        "SS01.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "red-green",
+      "sensitivityReason": "Three intended requirement assertions are red on pinned product. Product source changes forbidden; no fixed candidate or mutation/green proof is claimed. Formal plan records tested scope after execution and is not represented as pre-execution frozen evidence.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "SS01.test.ts",
+        "--root",
+        ".",
+        "--reporter=json",
+        "--outputFile=artifacts/isolated-vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "Other case IDs and whole-suite runs",
+    "JEV/vendor/Claude and Codex model calls",
+    "Past completed 21-run rerun",
+    "Product edits, push, PR, release",
+    "Host-live stages and model classification accuracy",
+    "Independent audit and release acceptance"
+  ]
+}

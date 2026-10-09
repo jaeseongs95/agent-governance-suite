@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:cc12ad61a8cdb5878efa7bf382c53da28609f1b38f6d801d92617be74e2c4247",
+  "caseIds": [
+    "SS01-isolated-boundaries"
+  ]
+}

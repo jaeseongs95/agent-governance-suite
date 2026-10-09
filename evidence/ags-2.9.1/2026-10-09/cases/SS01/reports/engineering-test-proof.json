@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-proof",
+  "planDigest": "sha256:cc12ad61a8cdb5878efa7bf382c53da28609f1b38f6d801d92617be74e2c4247",
+  "candidate": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-snapshot",
+    "files": [
+      {
+        "path": "SS01.test.ts",
+        "digest": "sha256:9646d8bbdea920644b5eb63b06e67f45265e0c8afe9a64b75f450287c016bf50",
+        "size": 24867,
+        "lineCount": 244
+      },
+      {
+        "path": "repo/mcp-server/src/host-attestation.ts",
+        "digest": "sha256:334b17dd635daeb19d7b5401bf6a167fde860e0df3edfa71c16a698ec5bef1b7",
+        "size": 12930,
+        "lineCount": 302
+      },
+      {
+        "path": "repo/mcp-server/src/skill-classification/gateway.ts",
+        "digest": "sha256:80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+        "size": 15017,
+        "lineCount": 156
+      },
+      {
+        "path": "repo/mcp-server/src/skill-classification/inventory.ts",
+        "digest": "sha256:8c7ee54546f17fb1e63368fbfb72668a3c7136570a545ad5f0494f076c91727c",
+        "size": 20714,
+        "lineCount": 259
+      },
+      {
+        "path": "repo/mcp-server/src/skill-classification/native-adapters.ts",
+        "digest": "sha256:dc6a0e763b175b077cee401d9020144d49b99f143b34da88059fbf4da5bc39f6",
+        "size": 13788,
+        "lineCount": 192
+      },
+      {
+        "path": "repo/mcp-server/src/skill-classification/profiles.ts",
+        "digest": "sha256:0add9c19bd0c7a8e45a57be64f4a2ecb503e0305dc9777629fba142a8566d5be",
+        "size": 6859,
+        "lineCount": 81
+      },
+      {
+        "path": "repo/mcp-server/src/skill-classification/providers.ts",
+        "digest": "sha256:f191c46db32f38248ebdd23be725b426a0b3020e0bb464b36bcc57521983651c",
+        "size": 12898,
+        "lineCount": 162
+      },
+      {
+        "path": "repo/mcp-server/src/skill-classification/request.ts",
+        "digest": "sha256:1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f",
+        "size": 7093,
+        "lineCount": 99
+      },
+      {
+        "path": "repo/mcp-server/src/skill-classification/runtime.ts",
+        "digest": "sha256:33c14b3597a9ed5d3a6103fc52c41ea9ed18c57c96856257b1dc407e3d6e6eea",
+        "size": 4336,
+        "lineCount": 60
+      },
+      {
+        "path": "repo/mcp-server/src/skill-classification/service.ts",
+        "digest": "sha256:c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb",
+        "size": 19033,
+        "lineCount": 215
+      },
+      {
+        "path": "repo/mcp-server/src/skill-classification/types.ts",
+        "digest": "sha256:a5a238741eb34d5af50eb2e67e1d20f97dfebc30cdfc29c77ec7ae618f1319b5",
+        "size": 5949,
+        "lineCount": 173
+      },
+      {
+        "path": "repo/mcp-server/src/skill-classification/validation.ts",
+        "digest": "sha256:70f988d9e5d49f8eaef55ca0ff378b4819798ff8141bd09119691c2cffb2891f",
+        "size": 8449,
+        "lineCount": 107
+      },
+      {
+        "path": "repo/tests/skill-classification/evaluation.ts",
+        "digest": "sha256:e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+        "size": 16532,
+        "lineCount": 223
+      },
+      {
+        "path": "repo/tests/skill-classification/fixtures.json",
+        "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "size": 142450,
+        "lineCount": 2912
+      }
+    ],
+    "digest": "sha256:c06050f94b0dad078675e6fa5e8b4e7c6dde6074e2d2094df436e467de552fb5"
+  },
+  "proofs": [
+    {
+      "caseId": "SS01-isolated-boundaries",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Red defect assertions recorded in isolated-vitest.json. A formal red/green pair cannot be completed because modifying product source is forbidden and no corrected candidate was supplied. Actual model behavior and host selection NOTRUN."
+    }
+  ]
+}

@@ -1,0 +1,345 @@
+{
+  "numTotalTestSuites": 2,
+  "numPassedTestSuites": 0,
+  "numFailedTestSuites": 2,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 23,
+  "numPassedTests": 20,
+  "numFailedTests": 3,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514529878,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 frozen identity and source digests",
+          "status": "passed",
+          "title": "SS01 frozen identity and source digests",
+          "duration": 8.805310000000077,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 base ON exact original prompt and full inventory",
+          "status": "passed",
+          "title": "SS01 base ON exact original prompt and full inventory",
+          "duration": 563.5367060000001,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 base OFF exact original prompt and full inventory",
+          "status": "passed",
+          "title": "SS01 base OFF exact original prompt and full inventory",
+          "duration": 356.0619919999999,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 base invalid-key exact original prompt and full inventory",
+          "status": "passed",
+          "title": "SS01 base invalid-key exact original prompt and full inventory",
+          "duration": 372.38926200000014,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 base timeout exact original prompt and full inventory",
+          "status": "passed",
+          "title": "SS01 base timeout exact original prompt and full inventory",
+          "duration": 283.66572399999995,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 missing host observation preserves null selection",
+          "status": "passed",
+          "title": "SS01 missing host observation preserves null selection",
+          "duration": 286.55881599999975,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 synthetic signed choice accepts P and does not claim later stages",
+          "status": "passed",
+          "title": "SS01 synthetic signed choice accepts P and does not claim later stages",
+          "duration": 355.56535699999995,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 caller receipt cannot establish selection",
+          "status": "passed",
+          "title": "SS01 caller receipt cannot establish selection",
+          "duration": 267.21436700000004,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 rejects oracle-incompatible output null",
+          "status": "passed",
+          "title": "SS01 rejects oracle-incompatible output null",
+          "duration": 0.7828500000000531,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 rejects oracle-incompatible output undefined",
+          "status": "passed",
+          "title": "SS01 rejects oracle-incompatible output undefined",
+          "duration": 0.561565999999857,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 rejects oracle-incompatible output \"ponytail\"",
+          "status": "passed",
+          "title": "SS01 rejects oracle-incompatible output \"ponytail\"",
+          "duration": 0.12870199999997567,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 rejects oracle-incompatible output \"ponytail\"",
+          "status": "passed",
+          "title": "SS01 rejects oracle-incompatible output \"ponytail\"",
+          "duration": 0.06516899999996895,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 rejects oracle-incompatible output \"ponytail\"",
+          "status": "passed",
+          "title": "SS01 rejects oracle-incompatible output \"ponytail\"",
+          "duration": 0.09639000000015585,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 rejects oracle-incompatible output \"ponytail\"",
+          "status": "passed",
+          "title": "SS01 rejects oracle-incompatible output \"ponytail\"",
+          "duration": 0.1246369999998933,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 rejects oracle-incompatible output \"ponytail\"",
+          "status": "passed",
+          "title": "SS01 rejects oracle-incompatible output \"ponytail\"",
+          "duration": 0.07630900000003749,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 rejects oracle-incompatible output \"P\"",
+          "status": "passed",
+          "title": "SS01 rejects oracle-incompatible output \"P\"",
+          "duration": 0.05571899999995367,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 keeps null and [] distinct and advice never creates a host receipt",
+          "status": "passed",
+          "title": "SS01 keeps null and [] distinct and advice never creates a host receipt",
+          "duration": 318.07665399999996,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 AGENT correction remains independent of incorrect raw advice",
+          "status": "passed",
+          "title": "SS01 AGENT correction remains independent of incorrect raw advice",
+          "duration": 354.055981,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 known defect invalid RESP must preserve independently valid cost",
+          "status": "failed",
+          "title": "SS01 known defect invalid RESP must preserve independently valid cost",
+          "duration": 317.1696989999996,
+          "failureMessages": [
+            "AssertionError: valid observed cost lost with invalid RESP: expected null to be 0.1 // Object.is equality\n    at ./SS01.test.ts:212:99\n    at file://node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 known defect must recheck cancellation after async acceptance read",
+          "status": "failed",
+          "title": "SS01 known defect must recheck cancellation after async acceptance read",
+          "duration": 612.9633439999998,
+          "failureMessages": [
+            "AssertionError: cancelled during asynchronous acceptance read: expected true to be false // Object.is equality\n    at ./SS01.test.ts:219:69\n    at file://node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 known defect timer overflow must not become a 1ms timeout",
+          "status": "failed",
+          "title": "SS01 known defect timer overflow must not become a 1ms timeout",
+          "duration": 267.65217399999983,
+          "failureMessages": [
+            "AssertionError: 24 day timeout overflowed to 1ms: expected true to be false // Object.is equality\n    at ./SS01.test.ts:227:78\n    at file://node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 unconfigured actual local runtime does not imply a provider or host selection",
+          "status": "passed",
+          "title": "SS01 unconfigured actual local runtime does not imply a provider or host selection",
+          "duration": 65.71149199999945,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS01 isolated base and new boundary controls"
+          ],
+          "fullName": "SS01 isolated base and new boundary controls SS01 host support discovery has no gateway supplier",
+          "status": "passed",
+          "title": "SS01 host support discovery has no gateway supplier",
+          "duration": 312.51931500000046,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514530714,
+      "endTime": 1791514535458.5193,
+      "status": "failed",
+      "message": "",
+      "name": "./SS01.test.ts"
+    }
+  ]
+}
