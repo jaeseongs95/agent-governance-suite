@@ -1,0 +1,126 @@
+{
+  "caseId": "SS30",
+  "title": "모델과 API 실패 분류",
+  "phase": "PREPARATION_COMPLETE_WAITING_PARENT",
+  "productTestVerdict": "NOTRUN",
+  "claudeHostVerdict": "NOTRUN",
+  "selected": "NOTRUN",
+  "read": "NOTRUN",
+  "applied": "NOTRUN",
+  "verified": "NOTRUN",
+  "newTestsExecuted": 0,
+  "priorTestsRerun": 0,
+  "newAPICalls": 0,
+  "sourceEvidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "sourcePrefix": "evidence/ags-2.9.1/2026-10-09/cases/SS30/",
+  "sourceInputSHA256": "73c7cf4024f55cdf22823c086aa1c457f03b554ff47e62836acc57d585cbc588",
+  "sourceBodyDigestRecordedOnly": "sha256:5c11db9b4720ae8be49fd34de54a5a85af0851f44d78623b28eb31d30de6c304",
+  "originalPrompt": null,
+  "oracle": null,
+  "accuracyScore": null,
+  "reportedCandidate": {
+    "label": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "status": "Parent reports local fixed candidate only; independent SOURCE judgment and remote publication are still unverified. Not fetched, installed or tested in this preparation."
+  },
+  "priorResult": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "verdict": "FAIL",
+    "counts": [
+      {
+        "executionKind": "existing-regression",
+        "totalCollected": 63,
+        "executed": 7,
+        "passed": 7,
+        "failed": 0,
+        "skipped": 56
+      },
+      {
+        "executionKind": "new-offline-mock",
+        "totalCollected": 21,
+        "executed": 21,
+        "passed": 19,
+        "failed": 2,
+        "skipped": 0
+      }
+    ],
+    "hostLive": "NOTRUN",
+    "sensitivityProof": "NOTRUN: no production mutation or fixed green candidate; local test results do not attest AGENT actions.",
+    "findings": [
+      {
+        "id": "SS30-F1",
+        "existingFinding": "valid-cost-lost-with-invalid-RESP",
+        "rootCause": "service validation throws and catch replaces known valid usage with unknownUsage before budget settlement",
+        "countAsNewRootCause": false,
+        "severity": "material accounting defect",
+        "sourceLocations": [
+          "mcp-server/src/skill-classification/service.ts:194",
+          "mcp-server/src/skill-classification/service.ts:204",
+          "mcp-server/src/skill-classification/service.ts:210"
+        ],
+        "expected": {
+          "jevUsageActualCostUsd": 0.1,
+          "jevSpentUsd": 0.1,
+          "pendingJevReservation": false
+        },
+        "observed": {
+          "jevUsageActualCostUsd": null,
+          "jevSpentUsd": 0,
+          "pendingJevReservationUsd": 0.4
+        },
+        "evidence": "observations.json known-cost-invalid-response; new-vitest.json failing assertion",
+        "limitation": "Pending .4 reservation remains conservative; this probe does not demonstrate overspending."
+      },
+      {
+        "id": "SS30-F2",
+        "rootCause": "response validation does not bind uncertain judgment IDs to unresolvedItems; PARTIAL with empty unresolvedItems passes and suppresses fallback",
+        "countAsNewRootCause": true,
+        "severity": "unresolved-evidence contract gap",
+        "sourceLocations": [
+          "mcp-server/src/skill-classification/validation.ts:44",
+          "mcp-server/src/skill-classification/validation.ts:51",
+          "mcp-server/src/skill-classification/service.ts:152"
+        ],
+        "expected": "A PARTIAL semantic refusal binds beta to unresolvedItems; otherwise reject incomplete common RESP and fallback.",
+        "observed": {
+          "validationErrors": [],
+          "status": "PARTIAL",
+          "betaJudgment": "uncertain",
+          "betaUncertaintyReason": "MODEL_REFUSAL",
+          "unresolvedItems": [],
+          "mockVendorCalls": 0
+        },
+        "evidence": "observations.json unbound-unresolvedItems; new-vitest.json failing assertion",
+        "limitation": "uncertaintyReason still exists on judgment; unresolved evidence is incompletely bound rather than erased entirely."
+      }
+    ],
+    "isCurrentCandidateResult": false
+  },
+  "instructions": {
+    "repositoryRootInstructionsRead": true,
+    "instructionsRepositoryCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+    "repoAgentsSkillsPresent": false,
+    "workspaceAgentsSkillsPresent": false,
+    "relevantSkillFilesRead": [
+      "skills/test-engineering/SKILL.md",
+      "skills/evaluation-validity-auditor/SKILL.md",
+      "skills/orchestrator/SKILL.md",
+      "skills/change-scope-guardian/SKILL.md",
+      "skills/mutation-risk-preflight/SKILL.md"
+    ],
+    "instructionReadsAreClaudeCaseHostEvidence": false
+  },
+  "missingInputs": [
+    "Original TEST-SPEC.seq7.ko.md is absent in the fixed source package; embedded source.SS30 fields remain authoritative recovered input.",
+    "No original semantic prompt or oracle: a semantic golden selection and accuracy score cannot be invented.",
+    "Parent-confirmed final candidate commit/tree, independent SOURCE judgment and pinned remote publication proof.",
+    "Common exact Claude model/effort, successful API authentication procedure, session-scoped settings and paid-call release.",
+    "Successful common prerequisites and approved host/plugin/MCP exposure, frozen profiles, allowed routes, budget and actual actor/task observations where live selection is required."
+  ],
+  "resumeOnlyAfterParentSuppliesAllRequiredExecutionInputs": true,
+  "publicationPrefix": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS30/prep-20261009T-90362b014045/",
+  "persistentAuthPermissionNetworkSettingsChanged": false,
+  "productAndGeneratedDistributionChanged": false
+}
