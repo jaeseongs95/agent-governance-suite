@@ -1,0 +1,162 @@
+{
+  "caseId": "SS28",
+  "title": "compact REQ와 입력 출력 잘림",
+  "originalPrompt": "읽기 전용, 수정 금지",
+  "status": "PREPARED_WAITING_FOR_PARENT",
+  "productTestStatus": "NOT_RUN",
+  "candidateExpected": {
+    "name": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "sourceVerdict": "NOT_RECEIVED",
+    "remotePublicationVerification": "NOT_RECEIVED"
+  },
+  "roles": {
+    "Sol": "Environment, input provenance, frozen checksums, sanitized evidence and accounting only",
+    "Claude Code": "Actual AGS host selection/read/application/verification and permitted host commands after parent handoff"
+  },
+  "variants": [
+    {
+      "variantId": "original",
+      "inputRef": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68:evidence/ags-2.9.1/2026-10-09/cases/SS28/original.json#/input",
+      "sourceSha256": "8a10510b5439caf31b243b21c9595a3755bffe786eb21e0fa8f371125fda9922",
+      "expected": {
+        "originalPrompt": "읽기 전용, 수정 금지",
+        "candidateIds": [
+          "acceptance-evidence-validator",
+          "blocker-diagnostician",
+          "change-scope-guardian",
+          "code-review",
+          "codex-token-usage-analyzer",
+          "context-continuity",
+          "coordinate-subagents",
+          "cs-engineering",
+          "evaluation-validity-auditor",
+          "independent-audit-gate",
+          "independent-deliberation-panel",
+          "instruction-scope-resolver",
+          "iteration-frame-auditor",
+          "korean-prose-editor",
+          "model-effort-advisor",
+          "mutation-risk-preflight",
+          "orchestrator",
+          "ponytail",
+          "recovery-strategy-selector",
+          "session-board",
+          "software-security-auditor",
+          "task-contract",
+          "test-engineering",
+          "workspace-convention-profiler"
+        ],
+        "oracle": null
+      },
+      "currentClaudeExecution": "NOT_RUN"
+    },
+    {
+      "variantId": "compact",
+      "inputRef": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68:evidence/ags-2.9.1/2026-10-09/cases/SS28/compact.json#/input",
+      "sourceSha256": "ee421422b3780584d575830b5645a746b72fbfd7cf856ff6905e0dfd34671a20",
+      "expected": "Preserve exact prompt, full candidate inventory, descriptions/applicability/exclusions/dependencies; paired measured tokens, semantics and real AGENT choice.",
+      "currentClaudeExecution": "NOT_RUN"
+    },
+    {
+      "variantId": "negation-at-tail",
+      "inputRef": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68:evidence/ags-2.9.1/2026-10-09/cases/SS28/negation-at-tail.json#/input",
+      "sourceSha256": "a2baaf3fe8aa533c4328c8f982f1fdc0c0392397ee3c282cba756aa52a1a3b9a",
+      "expected": "읽기 전용, 수정 금지",
+      "currentClaudeExecution": "NOT_RUN"
+    },
+    {
+      "variantId": "required-at-tail",
+      "inputRef": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68:evidence/ags-2.9.1/2026-10-09/cases/SS28/required-at-tail.json#/input",
+      "sourceSha256": "ebfcc142cb5726ab81e5937dba87d71f95e58723b8d458bd0bcbcc3ee9b119ed",
+      "expected": {
+        "lastId": "cs-engineering",
+        "ruleRequiredSkillIds": [
+          "cs-engineering"
+        ],
+        "note": "synthetic mechanical placement; not a semantic oracle for the original read-only prompt"
+      },
+      "currentClaudeExecution": "NOT_RUN"
+    },
+    {
+      "variantId": "truncated-json",
+      "inputRef": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68:evidence/ags-2.9.1/2026-10-09/cases/SS28/truncated-json.json#/input",
+      "sourceSha256": "5319f7f7a020d3a1f6235c2f41f126537a149ce46423e2682da94a067f2a5b94",
+      "expected": {
+        "code": "INVALID_PROVIDER_RESPONSE",
+        "selected": null
+      },
+      "currentClaudeExecution": "NOT_RUN"
+    },
+    {
+      "variantId": "truncated-question-results",
+      "inputRef": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68:evidence/ags-2.9.1/2026-10-09/cases/SS28/truncated-question-results.json#/input",
+      "sourceSha256": "c68b0a604e9954537edec72cb24405fd331c3227fb09b25a35a5e3f5c89e51a7",
+      "expected": "INVALID_PROVIDER_RESPONSE / MISSING_CANDIDATE_JUDGMENT; never []",
+      "currentClaudeExecution": "NOT_RUN"
+    },
+    {
+      "variantId": "too-long",
+      "inputRef": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68:evidence/ags-2.9.1/2026-10-09/cases/SS28/too-long.json#/input",
+      "sourceSha256": "ae2a12a46a39b57860fcc2f7cc016d7170afbc13d465a7a4e9ab5e4e08961c31",
+      "expected": {
+        "code": "INPUT_TOO_LONG",
+        "omittedRanges": [],
+        "mockFetchCalls": 0
+      },
+      "currentClaudeExecution": "NOT_RUN"
+    },
+    {
+      "variantId": "unknown-not-empty",
+      "inputRef": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68:evidence/ags-2.9.1/2026-10-09/cases/SS28/unknown-not-empty.json#/input",
+      "sourceSha256": "d2d789a889314f3d66f0dc552e7191c5f63f56f67dfac1e454fffc80f9b87dda",
+      "expected": "null unknown differs from confirmed []; absent AGENT observation selected stays null",
+      "currentClaudeExecution": "NOT_RUN"
+    },
+    {
+      "variantId": "unneeded-log-omitted",
+      "inputRef": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68:evidence/ags-2.9.1/2026-10-09/cases/SS28/unneeded-log-omitted.json#/input",
+      "sourceSha256": "98cbe65cdf3c73f461a6c4abf6239b205cb698c33598926dc7ebbf3307a0cdf8",
+      "expected": "omit only local trace/binding fields; preserve description, applicability, exclusions and dependencies",
+      "currentClaudeExecution": "NOT_RUN"
+    },
+    {
+      "variantId": "known-cost-invalid-response",
+      "inputRef": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68:evidence/ags-2.9.1/2026-10-09/cases/SS28/known-cost-invalid-response.json#/input",
+      "sourceSha256": "baa5d3daaa1f51632af5b820636f0a12ed25376af2fad4af296e83b6681195fb",
+      "expected": {
+        "status": "INVALID",
+        "actualCostUsd": 0.1,
+        "spentUsd": 0.1
+      },
+      "currentClaudeExecution": "NOT_RUN"
+    }
+  ],
+  "steps": [
+    "Receive parent-verified R17 SOURCE verdict, fixed remote commit/tree, common Claude model/effort/authentication procedure and preflight result. Never substitute previous main or c6a8019.",
+    "Fetch the authorized candidate into a new isolated checkout; verify commit/tree and all applicable AGENTS.md/SKILL.md; verify fixture/oracle/inventory bindings without silently replacing frozen input.",
+    "Receive qualified central classification config/profile/runtime/native-adapter/isolation/retry/egress and real Claude host-attestation setup. Use transient authorized API auth; do not change permanent authentication, permissions or network policy.",
+    "Have actual Claude Code execute host workflow get_skill_inventory -> classify_skills -> independent final AGENT selection -> record_skill_selection with caller hostReceipt=null. Collect actual host-generated receipt and selected/read/applied/verified references; Sol must not fabricate these.",
+    "Use identical original/compact fixture content for paired trials. Measure actual model input tokens, full wire body digest, field diff, all candidates, latency, usage and cache billed components. Retain read-only tail, dependencies and synthetic inventory-tail coverage without making cs-engineering a semantic oracle.",
+    "After authorization, have Claude execute existing structural/boundary tests in isolated scope. Product code/generated deployment modifications remain prohibited. Truncated output is invalid, not no-skill; too-long is explicit rejection/verified lossless split; unknown null remains distinct from confirmed [].",
+    "Independently valid usage.actualCostUsd=0.1 must survive invalid candidate response and spentUsd must be 0.1. Preserve failure if observed; link same historical root cause without duplicating finding.",
+    "Record all paid attempts, failures/retries, tokens/cache/cost/reservations; stop before any next call approaches or exceeds remaining US$2. No automatic retry/fallback or JEV invocation without assigned approval.",
+    "Publish only sanitized report/evidence/hash list in a unique SS28 run directory on existing evidence branch, with additive fast-forward commit and pinned remote reread verification."
+  ],
+  "semanticOracle": null,
+  "goldenRequirement": "Missing frozen semantic oracle is a blocker for overall paired golden accuracy; never infer expected selection from old failed or NOT_RUN outputs. Parent must provide approved frozen golden provenance or report unresolved requirement.",
+  "candidateRuntimePrerequisites": [
+    "approved AGENT_GOVERNANCE_CLASSIFICATION_CONFIG path and central fixed qualified profile registry bound to inventory/taxonomy/model/prompt/config digest and validUntil",
+    "approved providerRuntimeRef, route/egress authorization and known budget/prior consumption/reservations; no inferred default model or zero billing",
+    "for native route: nativeAdapterDefinitionsRef with executable/cwd/approvalRef/capabilityEvidenceRef/retryPolicyEvidenceRef/isolationEvidenceRef, vetted isolationArgs and limits",
+    "installed AGS MCP plus functioning real host attestation/session-board prompt observation, vendorContext provenance, task revision/currentness",
+    "original/compact identical paired scenario content with target tokenization and usage evidence; CS-required scenario must come from confirmed rule, not fabricated SS28 semantic oracle"
+  ],
+  "currentChanges": {
+    "product": [],
+    "generatedDeployment": [],
+    "productTestsRun": 0,
+    "paidCalls": 0
+  }
+}

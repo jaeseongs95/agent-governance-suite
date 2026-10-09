@@ -1,0 +1,51 @@
+{
+  "observedAt": "2026-10-09T07:45:46.883982+00:00",
+  "claudeExecutable": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+  "resolvedExecutable": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+  "version": "2.1.286 (Claude Code)",
+  "claudeOnPATH": false,
+  "apiSecretPresenceChecked": true,
+  "apiSecretValueReadOrPublished": false,
+  "authenticationTest": "NOT_RUN",
+  "versionAndHelpOnly": true,
+  "nodeVersion": "v24.19.0",
+  "pnpmVersion": "11.19.0",
+  "productWorkspaceReferenceCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+  "productWorkspaceIsTestCandidate": false,
+  "instructionFilesRead": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827"
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "sha256": "0bd44e1a780bb930c69f6880102ac3b4d662de3ecdcd16116a48d870aa971d87"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/SKILL.md",
+      "sha256": "eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/SKILL.md",
+      "sha256": "1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109"
+    },
+    {
+      "path": "skills/change-scope-guardian/SKILL.md",
+      "sha256": "4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "sha256": "eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe"
+    }
+  ],
+  ".agentsSkillsCheck": {
+    "/workspace/.agents/skills": "ABSENT",
+    "product/.agents/skills": "ABSENT"
+  },
+  "frozenEvidenceHasRootAGENTS": false,
+  "note": "Preloaded product workspace instructions are preparation references only; candidate instructions must be reread after parent delivers verified candidate. CLI availability and secret presence do not establish qualified host route or authentication success."
+}

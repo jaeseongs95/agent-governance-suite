@@ -1,0 +1,28 @@
+{
+  "caseId": "SS28",
+  "phase": "preparation-only",
+  "softBudgetUsd": 2,
+  "global39CaseReservationUsd": 78,
+  "paidCallCount": 0,
+  "attempts": [],
+  "costUsd": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadTokens": 0,
+  "cacheCreationTokens": 0,
+  "retries": 0,
+  "failedPaidCalls": 0,
+  "JEVCalls": 0,
+  "costBasis": "No model/provider calls issued; only local --version/--help and GitHub evidence reads/publication.",
+  "futureRequiredFields": [
+    "attempt/session ID",
+    "model/effort",
+    "start/end/latency",
+    "input/output tokens",
+    "cache read/write tokens and rates",
+    "actual or explicitly unknown cost",
+    "retry/failure outcome",
+    "prior spent/reserved and remaining case budget"
+  ],
+  "stopRule": "Stop next call if known+reserved+estimated next-call spend approaches US$2; unknown cost must never be treated as zero."
+}
