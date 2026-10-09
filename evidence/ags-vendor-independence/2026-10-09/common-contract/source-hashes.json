@@ -1,0 +1,224 @@
+{
+  "schemaVersion": "source-hash-manifest-1.0.0",
+  "hashAlgorithm": "SHA-256",
+  "byteScope": "exact git blob bytes, not normalized text",
+  "entries": [
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "AGENTS.md",
+      "gitBlob": "32468c65693032ba54a0840b9105ed3acbd97d0b",
+      "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827",
+      "bytes": 9551
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "contracts/api-result.v1.schema.json",
+      "gitBlob": "422afcd9671c5ce821cf1c9f9e2f733fb7a75126",
+      "sha256": "18aadedaaa4c465771316a1889c0affea108344ce96ccbc615d35830869585c4",
+      "bytes": 1219
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "contracts/checkpoint-context-request.v1.schema.json",
+      "gitBlob": "8d2c7e44bf3f0907b9feecc4d0ca8c8a706eda91",
+      "sha256": "67ed949d981463c3ade41aaa9e1865af3c14251e201072549032d1ccda07c12f",
+      "bytes": 2114
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "contracts/input-source-receipt.v1.schema.json",
+      "gitBlob": "254a5a93c9423e1653c7b32c454b0779dc20b945",
+      "sha256": "d19a6c7ad885300930929b4593a2ea785fc9e74812785f240fed99835567ecdd",
+      "bytes": 2022
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "contracts/provider-result.v1.schema.json",
+      "gitBlob": "da0fa4cd8d97c57e042388873997dd12a8576032",
+      "sha256": "e3f643676d09d81b13436e4cac7cfdcbe9517a78b77b2f3bd96c4fa14335b010",
+      "bytes": 1976
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "contracts/session-auto-wake-outlook.v1.schema.json",
+      "gitBlob": "5a549b574596b4b25a4c8152e00147c2f60fa9e6",
+      "sha256": "dff6c334cf6aaf10d6ddb6787bc6a35d6f40d2d195b13cb3dc90b79b80e6b565",
+      "bytes": 1594
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "contracts/task-envelope.v1.schema.json",
+      "gitBlob": "a95f74c14089ce8c79ada753e787cc8d72facb17",
+      "sha256": "b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21",
+      "bytes": 3037
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "contracts/types.ts",
+      "gitBlob": "f07dbc358e0938d468a23803b01990e80086ebc8",
+      "sha256": "d3c0a2a20b61a8842bb91568ead5ea74468a3147eb74a4a5c89a434806f9f66e",
+      "bytes": 27972
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "mcp-server/src/continuity-hook.ts",
+      "gitBlob": "a4de8d457ec96289228a5c8a1adaf966a3b1a000",
+      "sha256": "8cc63863f572324281377a80967bed61f8b928f00088e8b93a3d4da4c51fe202",
+      "bytes": 4281
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "mcp-server/src/continuity-service.ts",
+      "gitBlob": "8ac78c7c89947b17114908b37e66907378e3265c",
+      "sha256": "2a54c04e17dc77fe3f9bd061f383c25eab64eaba445bf0d242daa56a73aae3c4",
+      "bytes": 25238
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "mcp-server/src/host-attestation.ts",
+      "gitBlob": "f2b2ea2dedf5a409aa4f2685be0c61700f906e34",
+      "sha256": "efa4bb5c0c5763b6277cd5eff2a60a69f595b40c2f42a001dea65caaba0b3d9e",
+      "bytes": 12478
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "mcp-server/src/index.ts",
+      "gitBlob": "a5679b63ca535641d28304f3d660441b2232d938",
+      "sha256": "9193eed694174009f900a82d8b17582cb076cacaeb52200c9ab5f14df057dbfb",
+      "bytes": 3909
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "mcp-server/src/runtime-config.ts",
+      "gitBlob": "bdcadb29fb9f6eb2ead10ee30b4176025bd485bb",
+      "sha256": "c5653f628fc6a903616f4a481dbdfaa7afc8c630a1d9406398fa47b48da264f1",
+      "bytes": 7806
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "mcp-server/src/schema-validator.ts",
+      "gitBlob": "b3610e1e6d390870d5d08263faa0cec83ae37281",
+      "sha256": "9c7ba21c1e6880aca76d79fbb0cac177b5b5ea52f56dd7e2a5325a99eeee3878",
+      "bytes": 20165
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "mcp-server/src/session-message-service.ts",
+      "gitBlob": "ab327519aa6f7a8ee2218a258dceb3890f40f7b2",
+      "sha256": "c4c782a70e2581b26102d7b96242624b7aee7d615c17997245a42ddab894fad2",
+      "bytes": 8656
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "skills/context-continuity/SKILL.md",
+      "gitBlob": "4da1a124f36f1cbf5bbb97f2b5f1f3132e6658cd",
+      "sha256": "e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022",
+      "bytes": 1944
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "skills/context-continuity/references/entry-details.md",
+      "gitBlob": "2bbfa6afed21f8a5d131f05f783afec012f6ca22",
+      "sha256": "10b186ff6d32f5b2533c7af0e28d27e98d08a8131da2a5954f6ca20fe88f72fe",
+      "bytes": 2022
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "skills/coordinate-subagents/references/entry-details.md",
+      "gitBlob": "2c3ee6d0498bfe80296f385c02e2040844ab23f7",
+      "sha256": "2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604",
+      "bytes": 8511
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "skills/orchestrator/SKILL.md",
+      "gitBlob": "ea71f60635f6569796f112b45714d68e67a2d7e2",
+      "sha256": "0bd44e1a780bb930c69f6880102ac3b4d662de3ecdcd16116a48d870aa971d87",
+      "bytes": 4583
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "skills/orchestrator/references/entry-details.md",
+      "gitBlob": "132d1fb452b2c9e7e48d84ce311d772d486f671f",
+      "sha256": "2c50a92c5cc59676ae6ac2bae1f9d86f337cdc7870b20ff9df12e8e3cd09670b",
+      "bytes": 20088
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "skills/orchestrator/references/input-origin.md",
+      "gitBlob": "b07585e37506283e64a3335847ca54d00c78f90f",
+      "sha256": "d5375c58b657dfb35e07c465ab7220056c59af51330b24239448851463248927",
+      "bytes": 2335
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "skills/orchestrator/references/mcp-execution.md",
+      "gitBlob": "115bf03da10d7045a0aa19630c73854bb164b32f",
+      "sha256": "be972eaa9b6d2ceab78f48f37fcc0eb4e1d4ce52cd8cfb5de356f019da46c546",
+      "bytes": 7627
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "skills/session-board/SKILL.md",
+      "gitBlob": "5a8ff34cd042d90e736506f78f33b7bd771bc4e0",
+      "sha256": "b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",
+      "bytes": 2918
+    },
+    {
+      "commit": "56fef8bd189377b80f4020f506e717ab292b260a",
+      "path": "skills/session-board/references/entry-details.md",
+      "gitBlob": "db2b84519d50775be118ca81d291528a02c16281",
+      "sha256": "e8ea65d5d3d372fe70ba0fe7cdba18d965704450f2a7084b27ce885695e68660",
+      "bytes": 2342
+    },
+    {
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "path": "AGENTS.md",
+      "gitBlob": "32468c65693032ba54a0840b9105ed3acbd97d0b",
+      "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827",
+      "bytes": 9551
+    },
+    {
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "path": "contracts/skill-classification-provider-profiles.v1.schema.json",
+      "gitBlob": "035710a169fffa33333b32f4e7e5394ecb18ea1f",
+      "sha256": "cdd23434d1986098212e46d93ad09080234a2c5006c4d99964b97ce265751abb",
+      "bytes": 3085
+    },
+    {
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "path": "mcp-server/src/skill-classification/native-adapters.ts",
+      "gitBlob": "c67cb9a8bb34550f14d2309118cf82e23c240bea",
+      "sha256": "dc6a0e763b175b077cee401d9020144d49b99f143b34da88059fbf4da5bc39f6",
+      "bytes": 13788
+    },
+    {
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "path": "mcp-server/src/skill-classification/providers.ts",
+      "gitBlob": "ee0bff27f0f116a998b70e0c1064abed4dac5f03",
+      "sha256": "f191c46db32f38248ebdd23be725b426a0b3020e0bb464b36bcc57521983651c",
+      "bytes": 12898
+    },
+    {
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "path": "mcp-server/src/skill-classification/runtime.ts",
+      "gitBlob": "129d68bd5c10b8b64ca0b929da3866688bccc7f8",
+      "sha256": "33c14b3597a9ed5d3a6103fc52c41ea9ed18c57c96856257b1dc407e3d6e6eea",
+      "bytes": 4336
+    },
+    {
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "path": "skills/orchestrator/SKILL.md",
+      "gitBlob": "4733ba26dff9cbb49550033e67a9336ced315a9d",
+      "sha256": "96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "bytes": 5024
+    },
+    {
+      "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "path": "skills/orchestrator/references/skill-classification.md",
+      "gitBlob": "5d6a5dfe406280cc9733dc6c5144214f36016e80",
+      "sha256": "85cfd39b4c3771669747a9ebf61bc8623b510104c4bd6af40c2168781adc3ef8",
+      "bytes": 3478
+    }
+  ]
+}
