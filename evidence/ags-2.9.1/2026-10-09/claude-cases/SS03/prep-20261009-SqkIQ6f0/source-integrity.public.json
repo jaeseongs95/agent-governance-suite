@@ -1,0 +1,207 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS03",
+  "checkedAt": "2026-10-09T07:40:42.360850+00:00",
+  "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "evidenceTree": "9c49cc011a10c23ed135b1c020e7577ff12a2370",
+  "sourcePath": "evidence/ags-2.9.1/2026-10-09/cases/SS03/",
+  "sha256sumsEntriesChecked": 29,
+  "sha256sumsAllMatched": true,
+  "manifestPayloadEntriesChecked": 28,
+  "manifestBytesAndHashesAllMatched": true,
+  "promptFixtureRequestByteEquality": true,
+  "fullCorpusSha256HistoricalReference": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "fullOracleSha256HistoricalReference": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "fullCorpusAndOracleRecomputedInThisPreparation": false,
+  "sourceFiles": [
+    {
+      "path": "PATCH_STATUS.json",
+      "bytes": 343,
+      "sha256": "3ce52983a32d8da3764142fef4408c8d03211829e270ac7b53e0a0fc1d1c9f97"
+    },
+    {
+      "path": "README.md",
+      "bytes": 5648,
+      "sha256": "fde41f8f15597e794e0807a6698081a56d1f7b3c10f05fdbbb1821b205664752"
+    },
+    {
+      "path": "REPORT.public.txt",
+      "bytes": 3087,
+      "sha256": "7f350ddbe8485c16b7dd44bd5f43c50b8d9cb85c8e8dea5db23c8a4a02e7eb80"
+    },
+    {
+      "path": "SHA256SUMS",
+      "bytes": 2752,
+      "sha256": "474f8a2e91bac0313b826c592056fe27e2e06691fada7fef3629b0bfbb0a4cb0"
+    },
+    {
+      "path": "SS03.result.public.json",
+      "bytes": 24214,
+      "sha256": "7fd254b58cb0732111b74c32b16885a1f55db3514c7439c3874825c36ac62170"
+    },
+    {
+      "path": "commands.public.json",
+      "bytes": 3672,
+      "sha256": "2206d0028e8a61047fcd7c33f1e8c12951cb602373bf93df77f3f3dc43f36f96"
+    },
+    {
+      "path": "environment.public.json",
+      "bytes": 619,
+      "sha256": "0f4cf75027f99cf4361491a225cd8197aace6826e6145e9b8256f24b7742ff05"
+    },
+    {
+      "path": "inputs/SS03.fixture.json",
+      "bytes": 4457,
+      "sha256": "f90494bc3334b9fa79f21f03ebf5b0d80d2d9dcf788d0273dddad07961662239"
+    },
+    {
+      "path": "inputs/SS03.plan.json",
+      "bytes": 5113,
+      "sha256": "6333efb28b5eb6b18ab4ac5dbf8dfb0b611a27412cdea1f6677e9b9d6da2a6e1"
+    },
+    {
+      "path": "inputs/SS03.projection.json",
+      "bytes": 159569,
+      "sha256": "027bddd8f21001973d7693a83733b5618241b0697ff93df5a10b5b6311a53094"
+    },
+    {
+      "path": "inputs/SS03.prompt.utf8",
+      "bytes": 220,
+      "sha256": "3dd99a26ff73a9e8b8a933ec3ac9f67845003f0910fa3c0d56978e0a6d55a972"
+    },
+    {
+      "path": "inputs/SS03.request.json",
+      "bytes": 254920,
+      "sha256": "3216449afa32b2ee92dd2f3daae478914553dc05e5a2a9b2cae07af2180b723a"
+    },
+    {
+      "path": "integrity-final.public.json",
+      "bytes": 462,
+      "sha256": "b9a41bbee035d8fe37409b47412556213c8b140c40a4d6ea7de8572dae156ae0"
+    },
+    {
+      "path": "logs/existing-regression.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/existing-regression.stdout.log",
+      "bytes": 73,
+      "sha256": "0fbce0018557afc700a18d8b2e68d88793bff5dcee5740471d67ac89917546f3"
+    },
+    {
+      "path": "logs/existing-regression.vitest.json",
+      "bytes": 5916,
+      "sha256": "7f0387e6c08a71feae10fda9e6606a05c8e71d70114938f42e2c42e65373e3e2"
+    },
+    {
+      "path": "logs/isolated-controls-final.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/isolated-controls-final.stdout.log",
+      "bytes": 77,
+      "sha256": "d7f021f21ed0e37d421840d00750469c2a6e34fa864a5e4639ce4aaf2cded4e9"
+    },
+    {
+      "path": "logs/isolated-controls-final.vitest.json",
+      "bytes": 6178,
+      "sha256": "21f7b4aca52aa79de120adb66706da30611e85bf0f6ae6cc7c95d5f87c7264b7"
+    },
+    {
+      "path": "logs/isolated-controls.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/isolated-controls.stdout.log",
+      "bytes": 71,
+      "sha256": "76e7df4bb0c1df16e07282f289430e8283f98a6cf95a822360300657676f752f"
+    },
+    {
+      "path": "logs/isolated-controls.vitest.json",
+      "bytes": 6190,
+      "sha256": "bec685269aab328b3adffb738f9abea9dd11f0826892f5bed1e455a4ee5375c3"
+    },
+    {
+      "path": "logs/known-defects.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/known-defects.stdout.log",
+      "bytes": 67,
+      "sha256": "7a75315caec0007d1207eff920ba98b317d34b5efa5b7922ed6de5155da27087"
+    },
+    {
+      "path": "logs/known-defects.vitest.json",
+      "bytes": 9494,
+      "sha256": "627e841943f1b9a42bea658b45133aae40220db7a6e70ade2fcb087ccc9387eb"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 15587,
+      "sha256": "8e57c8348c84a7e2911ddd0f32752ec92abc3a69b475c5c1b71e0d43e8f70f10"
+    },
+    {
+      "path": "observations.public.json",
+      "bytes": 44992,
+      "sha256": "e50493613ffbed29f4b61c7c0d0a3007b7f5514cdab5e86d86a97b3fcc06bc11"
+    },
+    {
+      "path": "provenance.json",
+      "bytes": 24747,
+      "sha256": "5d4065fbfcf1dff53520d14bded5e98cccd38a67ceeb78b57aa93f454d7f1d63"
+    },
+    {
+      "path": "repro/SS03-isolated.initial.reconstructed.public.test.ts",
+      "bytes": 16679,
+      "sha256": "444a124a2dcb611dd2682471dbe96f63a524ae58ec118240f2d2b9d9e1334a53"
+    },
+    {
+      "path": "repro/SS03-isolated.public.test.ts",
+      "bytes": 16876,
+      "sha256": "f0f9c2890ed0283414630a4f189f1ea2bc9957caddb4a746c1d9560fea1e60fd"
+    }
+  ],
+  "oracleSourceRefs": [
+    {
+      "skillId": "ponytail",
+      "path": "skills/ponytail/SKILL.md",
+      "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+    },
+    {
+      "skillId": "cs-engineering",
+      "path": "skills/cs-engineering/SKILL.md",
+      "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+    },
+    {
+      "skillId": "test-engineering",
+      "path": "skills/test-engineering/SKILL.md",
+      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+    },
+    {
+      "skillId": "orchestrator",
+      "path": "skills/orchestrator/SKILL.md",
+      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+    },
+    {
+      "skillId": "code-review",
+      "path": "skills/code-review/SKILL.md",
+      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+    },
+    {
+      "skillId": "software-security-auditor",
+      "path": "skills/software-security-auditor/SKILL.md",
+      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+    },
+    {
+      "skillId": "korean-prose-editor",
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+    }
+  ],
+  "oracleSourceRefsReverifiedAgainstR17": false
+}

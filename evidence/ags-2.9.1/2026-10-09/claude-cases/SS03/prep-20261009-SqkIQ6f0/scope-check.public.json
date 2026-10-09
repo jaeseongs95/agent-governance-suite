@@ -1,0 +1,7 @@
+{
+  "verdict": "PASS",
+  "meaning": "Only authorized preparation evidence paths changed; this is not an actual Claude test PASS",
+  "baselineArtifactDigest": "067ab7639217260221cb12f067bb21219996f8f42c6ec55f5be47ca9a2f63381",
+  "uniquePath": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS03/prep-20261009-SqkIQ6f0/",
+  "productAndOtherEvidencePathsChanged": false
+}

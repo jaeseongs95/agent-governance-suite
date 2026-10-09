@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS03",
+  "runId": "prep-20261009-SqkIQ6f0",
+  "status": "PREPARATION_COMPLETE_WAITING_FOR_PARENT",
+  "files": [
+    {
+      "path": "README.ko.md",
+      "bytes": 4212,
+      "sha256": "358708e2978fb3c9f67c650e829500ddfd461e2d26db0b9ec1b24e42c198f78b"
+    },
+    {
+      "path": "cost-ledger.public.json",
+      "bytes": 928,
+      "sha256": "667ef443ed60449a04a95463a455323a7a6d5e485b8cc5ea1f8f7f9abb0b17c4"
+    },
+    {
+      "path": "environment.public.json",
+      "bytes": 1692,
+      "sha256": "3a305ebbd39579b427d6c51bcb51ee1974380a25252f6c9052d757866013d3c3"
+    },
+    {
+      "path": "execution-plan.public.md",
+      "bytes": 4407,
+      "sha256": "998f798b57e109f75e9ade10841658fbf8dc89b28857a3513fda820ecdaadf71"
+    },
+    {
+      "path": "frozen-case.public.json",
+      "bytes": 4711,
+      "sha256": "940a90cf185234e69f1680644b53cbc9ce67853cda206a7e2908e0b817d288c5"
+    },
+    {
+      "path": "original-input.public.utf8",
+      "bytes": 220,
+      "sha256": "3dd99a26ff73a9e8b8a933ec3ac9f67845003f0910fa3c0d56978e0a6d55a972"
+    },
+    {
+      "path": "publication-scope.public.json",
+      "bytes": 1279,
+      "sha256": "88d03d87a860822954d3be0aacb97256d7538797d7c590086ca749d6bedbc2e9"
+    },
+    {
+      "path": "scope-check.public.json",
+      "bytes": 366,
+      "sha256": "dce37a45c4c730fead224b072584650bb37c3fb50c6ac838d91fb29ae2da8bff"
+    },
+    {
+      "path": "source-hash-check.public.txt",
+      "bytes": 954,
+      "sha256": "1c3d11ac7d3ef6661e7de79e4fe5fefbbdac36d6d5ce7f2e3dd101987c33e4fa"
+    },
+    {
+      "path": "source-integrity.public.json",
+      "bytes": 7103,
+      "sha256": "fb5a22759a33132c2c73d2764a8cc018a44fae83f35f7083a8e6e8277698a25f"
+    },
+    {
+      "path": "status.public.json",
+      "bytes": 2061,
+      "sha256": "b2bddb4c1df5f0cf05f002f29454489a17d1c857e46442c68104ddad234400ec"
+    }
+  ],
+  "cyclePolicy": "manifest lists payload only; SHA256SUMS lists payload plus manifest; SHA256SUMS excludes itself"
+}

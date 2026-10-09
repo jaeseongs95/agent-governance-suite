@@ -1,0 +1,22 @@
+{
+  "caseId": "SS03",
+  "scope": "This preparation run only; includes all preparation calls",
+  "softBudgetUsd": 2,
+  "aggregate39CaseReservationUsd": 78,
+  "apiCalls": {
+    "claude": 0,
+    "anthropic": 0,
+    "jev": 0,
+    "externalVendor": 0,
+    "codexModelTest": 0
+  },
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadInputTokens": 0,
+  "cacheCreationInputTokens": 0,
+  "actualCostUsd": 0,
+  "retryCalls": 0,
+  "failedAPICalls": 0,
+  "calls": [],
+  "accountingPolicy": "On resume append each attempt including failed/retried calls, raw usage/cost references, model, token counts and cache usage. Unknown dispatched cost stays unknown and its reserved maximum remains charged against remaining headroom. Stop before next call when actual plus unknown reservations plus next-call maximum approaches/exceeds USD 2. Budget is a cap, not a spend target; do not use USD 2 anew for each process. No unassigned JEV calls."
+}

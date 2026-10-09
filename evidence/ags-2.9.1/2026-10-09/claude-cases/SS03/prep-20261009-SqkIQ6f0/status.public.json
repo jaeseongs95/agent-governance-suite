@@ -1,0 +1,46 @@
+{
+  "caseId": "SS03",
+  "runId": "prep-20261009-SqkIQ6f0",
+  "title": "session handoff 구현의 CS 누락 회귀",
+  "status": "PREPARATION_COMPLETE_WAITING_FOR_PARENT",
+  "actualClaudeCodeTest": "NOTRUN",
+  "productTest": "NOTRUN",
+  "selected": "NOTRUN",
+  "read": "NOTRUN",
+  "applied": "NOTRUN",
+  "verified": "NOTRUN",
+  "agentSelectedSkillIds": null,
+  "hostReceipt": null,
+  "model": null,
+  "effort": null,
+  "apiAuthenticationTested": false,
+  "claudeCandidate": {
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "label": "R17",
+    "source": "parent-provided local fixed report",
+    "independentSourceVerdictConfirmed": false,
+    "remotePublicationConfirmed": false,
+    "candidateCheckedOutOrExecuted": false
+  },
+  "historicalResult": {
+    "candidateCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "status": "INCOMPLETE_WITH_REPRODUCED_KNOWN_DEFECTS",
+    "existingRegressionPassed": 2,
+    "isolatedControlsUniquePassed": 15,
+    "knownDefectFailures": 2,
+    "newRootCauses": 0,
+    "actualHostAllStages": "NOTRUN",
+    "reexecutedHere": false
+  },
+  "remainingPrerequisites": [
+    "Parent-verified final candidate commit/tree and independent SOURCE verdict with fixed remote publication evidence",
+    "Parent common Claude model ID, effort, supported options, API auth procedure and completed preflight results",
+    "Trusted actual installed plugin inventory, approved ephemeral invocation settings, host observation/receipt route and permitted sandbox task directory",
+    "Case-wide no-retry/accounting procedure covering failures, cache and all calls within USD 2; JEV remains unassigned"
+  ],
+  "resumeConditions": "Resume only after parent explicitly supplies verified candidate, common execution settings and preflight results. Use that exact candidate; do not substitute main or historical c6a8019.",
+  "productSourceModified": false,
+  "generatedProductArtifactsModified": false,
+  "permanentAuthenticationOrPermissionsOrNetworkPolicyChanged": false
+}

@@ -1,0 +1,21 @@
+{
+  "operationId": "SS03-claude-prep-SqkIQ6f0",
+  "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+  "branch": "evidence",
+  "authorizedAddOnlyPath": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS03/prep-20261009-SqkIQ6f0/",
+  "authority": "Explicit delegated user request to publish sanitized SS03 report, evidence and hash inventory under a unique path on existing evidence branch",
+  "sourceChatCopied": false,
+  "baselineCommit": "19e8812f1fdb49ce8ce78db18234be75445e5353",
+  "baselineScopeDigest": "067ab7639217260221cb12f067bb21219996f8f42c6ec55f5be47ca9a2f63381",
+  "prohibited": [
+    "force push",
+    "overwrite other case files",
+    "product-source changes",
+    "generated-deployment changes",
+    "secrets",
+    "personal information",
+    "original chat"
+  ],
+  "recovery": "Preserve prior evidence tree; undo only this unique added run path in a new commit if necessary. Do not reset shared evidence branch.",
+  "preparationScopeCheckNote": "Initial sparse working-tree scope check returned BLOCKED for excluded tracked paths absent from sparse view. No such paths were changed in Git. Preserved local check and captured a new clean full-worktree baseline; final scope check uses full checkout. No product or acceptance criteria altered."
+}

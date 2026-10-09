@@ -1,0 +1,40 @@
+{
+  "observedAt": "2026-10-09T07:40:42.360850+00:00",
+  "kind": "local-read-only-capability-check",
+  "claudeExecutable": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+  "claudeResolvedExecutable": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+  "claudeVersion": "2.1.286 (Claude Code)",
+  "claudeVersionExit": 0,
+  "claudeHelpExit": 0,
+  "claudeExecutableSha256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+  "nodeVersion": "v24.19.0",
+  "gitVersion": "git version 2.52.0",
+  "workspaceAgentsSkillsExists": false,
+  "repositoryAgentsSkillsExists": false,
+  "bootstrapGuidelinesCheckout": "56fef8bd189377b80f4020f506e717ab292b260a",
+  "bootstrapReadPaths": [
+    "AGENTS.md",
+    "skills/ponytail/SKILL.md",
+    "skills/cs-engineering/SKILL.md",
+    "skills/test-engineering/SKILL.md",
+    "skills/orchestrator/SKILL.md",
+    "skills/change-scope-guardian/SKILL.md",
+    "skills/mutation-risk-preflight/SKILL.md"
+  ],
+  "bootstrapReadIsClaudeCaseReadEvidence": false,
+  "evidenceCommitContainsRootAGENTS": false,
+  "apiAuthenticationVerified": false,
+  "helpCapabilityPresence": {
+    "--plugin-dir": true,
+    "--model": true,
+    "--effort": true,
+    "--max-budget-usd": true,
+    "--output-format": true,
+    "--session-id": true,
+    "--settings": true,
+    "--strict-mcp-config": true,
+    "--include-hook-events": true
+  },
+  "helpLimitation": "CLI help/version is not an actual host invocation, authentication, qualification, plugin installation or stage success. Do not disable hooks/skills for the product trial; invocation details await parent.",
+  "apiCredentialValuePrintedCopiedOrPublished": false
+}
