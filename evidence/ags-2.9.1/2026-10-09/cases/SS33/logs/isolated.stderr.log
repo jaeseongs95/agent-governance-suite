@@ -1,0 +1,74 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/skill-classification/ss33-isolated.test.ts > SS33 isolated operational variants > secret-sentinel: egress-blocked gateway response must not echo task secret
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/skill-classification/ss33-isolated.test.ts:72:42
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/skill-classification/ss33-isolated.test.ts > SS33 isolated operational variants > jev-budget: invalid RESP must retain independently valid actual cost and ceiling overrun
+AssertionError: expected null to be 0.7 // Object.is equality
+
+- Expected:
+0.7
+
++ Received:
+null
+
+ ❯ tests/skill-classification/ss33-isolated.test.ts:95:46
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/skill-classification/ss33-isolated.test.ts > SS33 isolated operational variants > jev-budget: invalid RESP must retain independently valid actual cost and ceiling overrun
+AssertionError: expected 4.1 to be close to 4.8, received difference is 0.7000000000000002, but expected 0.005
+ ❯ tests/skill-classification/ss33-isolated.test.ts:95:88
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/skill-classification/ss33-isolated.test.ts > SS33 isolated operational variants > jev-budget: invalid RESP must retain independently valid actual cost and ceiling overrun
+AssertionError: expected [] to include 'jev'
+ ❯ tests/skill-classification/ss33-isolated.test.ts:95:148
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/skill-classification/ss33-isolated.test.ts > SS33 isolated operational variants > jev-budget: invalid RESP must retain independently valid actual cost and ceiling overrun
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ tests/skill-classification/ss33-isolated.test.ts:95:197
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/skill-classification/ss33-isolated.test.ts > SS33 isolated operational variants > vendor-unapproved: revocation during credential await must block final transport
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/skill-classification/ss33-isolated.test.ts:125:83
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+{"harness": "test-subreaper", "ownerPid": 1084, "runnerPid": 1085, "reapedPids": [1085], "remainingChildren": false, "runnerExitCode": 1, "cancelled": false}

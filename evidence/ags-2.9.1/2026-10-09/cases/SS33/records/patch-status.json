@@ -1,0 +1,7 @@
+{
+  "caseId": "SS33",
+  "subjectPatch": "NONE_CREATED",
+  "productSourcesModified": false,
+  "originalTestSourceRecovered": true,
+  "reason": "Only diagnostic test/plan files were authored. No original product fix patch exists; no new patch is synthesized for publication."
+}

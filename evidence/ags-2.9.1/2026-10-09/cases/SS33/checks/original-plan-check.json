@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:c32648369130f0f2107ba29e4d76fde07038bbb48e95f06221317acbda90f585",
+  "caseIds": [
+    "SS33/secret-sentinel",
+    "SS33/jev-budget",
+    "SS33/vendor-unapproved",
+    "SS33/vendor-unknown-budget",
+    "SS33/inflight-reservation"
+  ]
+}

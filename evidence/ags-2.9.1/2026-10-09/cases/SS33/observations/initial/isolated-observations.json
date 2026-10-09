@@ -1,0 +1,342 @@
+{
+  "caseId": "SS33",
+  "executionKind": "offline-mock",
+  "apiCalls": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0
+  },
+  "agentSelectedSkillIds": null,
+  "selected": "NOTRUN",
+  "read": "NOTRUN",
+  "applied": "NOTRUN",
+  "verified": "NOTRUN",
+  "observations": [
+    {
+      "variant": "secret-sentinel",
+      "boundary": "provider HTTP401/header",
+      "input": {
+        "syntheticInputRef": "input-fixtures.json",
+        "prompt": "public",
+        "errorBody": "synthetic-secret",
+        "header": "synthetic-secret"
+      },
+      "expected": {
+        "sentinelOccurrences": 0,
+        "calls": 1,
+        "code": "AUTH_UNAVAILABLE"
+      },
+      "observed": {
+        "sentinelOccurrences": 0,
+        "calls": 1,
+        "code": "AUTH_UNAVAILABLE"
+      }
+    },
+    {
+      "variant": "secret-sentinel",
+      "boundary": "gateway content approval",
+      "input": {
+        "syntheticInputRef": "input-fixtures.json",
+        "publicSynthetic": true,
+        "approvedPublicRequestDigests": null,
+        "allowRemotePrivateContent": false
+      },
+      "expected": {
+        "sentinelOccurrences": 0,
+        "response": null,
+        "agentSelectedSkillIds": null,
+        "providerCalls": 0
+      },
+      "observed": {
+        "sentinelOccurrences": 0,
+        "result": {
+          "status": "NEEDS_INPUT",
+          "errors": [
+            "REMOTE_CONTENT_NOT_APPROVED"
+          ],
+          "response": null,
+          "agentSelectedSkillIds": null
+        },
+        "jevCalls": 0,
+        "vendorCalls": 0
+      }
+    },
+    {
+      "variant": "secret-sentinel",
+      "boundary": "gateway response task echo",
+      "input": {
+        "syntheticInputRef": "input-fixtures.json",
+        "externalClassificationAllowed": false
+      },
+      "expected": {
+        "sentinelOccurrences": 0,
+        "providerCalls": 0,
+        "agentSelectedSkillIds": null
+      },
+      "observed": {
+        "sentinelOccurrences": 1,
+        "leakedField": "result.request.originalPrompt",
+        "jevCalls": 0,
+        "vendorCalls": 0,
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variant": "jev-budget",
+      "boundary": "prior spend",
+      "input": {
+        "configuredLimitUsd": 100,
+        "priorSpentUsd": 4.7,
+        "upperBoundUsd": 0.4,
+        "vendorBudget": null
+      },
+      "expected": {
+        "jevLimitUsd": 5,
+        "providerCalls": 0,
+        "reservations": 0
+      },
+      "observed": {
+        "jevLimitUsd": 5,
+        "jevSpentUsd": 4.7,
+        "providerCalls": 0,
+        "attemptCodes": [
+          "BUDGET_UNAVAILABLE",
+          "BUDGET_UNAVAILABLE"
+        ],
+        "reservations": 0
+      }
+    },
+    {
+      "variant": "jev-budget",
+      "boundary": "exact boundary and settlement",
+      "input": {
+        "priorSpentUsd": 4.6,
+        "upperBoundUsd": 0.4,
+        "actualCostUsd": 0.1
+      },
+      "expected": {
+        "spentUsd": 4.7,
+        "reservations": 0,
+        "jevCalls": 1,
+        "vendorCalls": 0
+      },
+      "observed": {
+        "spentUsd": 4.699999999999999,
+        "reservations": 0,
+        "jevCalls": 1,
+        "vendorCalls": 0
+      }
+    },
+    {
+      "variant": "jev-budget",
+      "boundary": "known-cost invalid RESP (existing reported root cause)",
+      "input": {
+        "priorSpentUsd": 4.2,
+        "maximumCostUsd": 0.4,
+        "actualCostUsd": 0.7,
+        "malformed": "missing candidate judgments",
+        "operations": 2
+      },
+      "expected": {
+        "firstActualCostUsd": 0.7,
+        "spentUsd": 4.9,
+        "invalidCostCeilings": [
+          "jev"
+        ],
+        "jevCalls": 1,
+        "secondCallHeld": true
+      },
+      "observed": {
+        "firstErrorCode": "INVALID_PROVIDER_RESPONSE",
+        "firstActualCostUsd": null,
+        "spentUsd": 4.2,
+        "reservedUsd": 0.4,
+        "invalidCostCeilings": [],
+        "jevCalls": 1,
+        "secondErrorCode": "BUDGET_UNAVAILABLE",
+        "suppliedActualCumulativeUsd": 4.9
+      }
+    },
+    {
+      "variant": "vendor-unapproved",
+      "boundary": "route approval",
+      "input": {
+        "jevEnabled": false,
+        "vendorBudgetUsd": 2,
+        "approved": false
+      },
+      "expected": {
+        "errorCode": "ROUTE_NOT_APPROVED",
+        "providerCalls": 0,
+        "reservations": 0
+      },
+      "observed": {
+        "errorCode": "ROUTE_NOT_APPROVED",
+        "providerCalls": 0,
+        "reservations": 0
+      }
+    },
+    {
+      "variant": "vendor-unapproved",
+      "boundary": "separate paid permission/budget",
+      "input": {
+        "approved": true,
+        "vendorBudget": null,
+        "jevEnabled": false
+      },
+      "expected": {
+        "errorCode": "BUDGET_UNAVAILABLE",
+        "providerCalls": 0,
+        "jevCalls": 0,
+        "vendorBudget": null
+      },
+      "observed": {
+        "errorCode": "BUDGET_UNAVAILABLE",
+        "providerCalls": 0,
+        "jevCalls": 0,
+        "vendorBudget": null
+      }
+    },
+    {
+      "variant": "vendor-unknown-budget",
+      "boundary": "limit unknown",
+      "input": {
+        "limitUsd": null,
+        "spentUsd": 0,
+        "maximumCostUsd": 0.4
+      },
+      "expected": {
+        "errorCode": "BUDGET_UNAVAILABLE",
+        "providerCalls": 0,
+        "vendorBudget": {
+          "limitUsd": null,
+          "spentUsd": 0
+        }
+      },
+      "observed": {
+        "errorCode": "BUDGET_UNAVAILABLE",
+        "providerCalls": 0,
+        "vendorBudget": {
+          "limitUsd": null,
+          "spentUsd": 0
+        }
+      }
+    },
+    {
+      "variant": "vendor-unknown-budget",
+      "boundary": "prior usage unknown",
+      "input": {
+        "limitUsd": 2,
+        "spentUsd": null,
+        "maximumCostUsd": 0.4
+      },
+      "expected": {
+        "errorCode": "BUDGET_UNAVAILABLE",
+        "providerCalls": 0,
+        "vendorBudget": {
+          "limitUsd": 2,
+          "spentUsd": null
+        }
+      },
+      "observed": {
+        "errorCode": "BUDGET_UNAVAILABLE",
+        "providerCalls": 0,
+        "vendorBudget": {
+          "limitUsd": 2,
+          "spentUsd": null
+        }
+      }
+    },
+    {
+      "variant": "vendor-unknown-budget",
+      "boundary": "both unknown",
+      "input": {
+        "limitUsd": null,
+        "spentUsd": null,
+        "maximumCostUsd": 0.4
+      },
+      "expected": {
+        "errorCode": "BUDGET_UNAVAILABLE",
+        "providerCalls": 0,
+        "vendorBudget": {
+          "limitUsd": null,
+          "spentUsd": null
+        }
+      },
+      "observed": {
+        "errorCode": "BUDGET_UNAVAILABLE",
+        "providerCalls": 0,
+        "vendorBudget": {
+          "limitUsd": null,
+          "spentUsd": null
+        }
+      }
+    },
+    {
+      "variant": "vendor-unknown-budget",
+      "boundary": "unknown per-call cost",
+      "input": {
+        "maximumCostUsd": null,
+        "vendorLimitUsd": 2
+      },
+      "expected": {
+        "errorCode": "COST_UNKNOWN",
+        "availabilityCalls": 0,
+        "providerCalls": 0,
+        "attempts": []
+      },
+      "observed": {
+        "errorCode": "COST_UNKNOWN",
+        "availabilityCalls": 0,
+        "providerCalls": 0,
+        "attempts": []
+      }
+    },
+    {
+      "variant": "inflight-reservation",
+      "boundary": "distinct operations barrier",
+      "input": {
+        "limitUsd": 5,
+        "priorSpentUsd": 4.3,
+        "firstReserveUsd": 0.4,
+        "secondReserveUsd": 0.4
+      },
+      "expected": {
+        "secondErrorCode": "BUDGET_UNAVAILABLE",
+        "jevCalls": 1,
+        "reservedDuringUsd": 0.4,
+        "finalSpentUsd": 4.4,
+        "finalReservations": 0
+      },
+      "observed": {
+        "secondErrorCode": "BUDGET_UNAVAILABLE",
+        "jevCalls": 1,
+        "reservedDuringUsd": 0.4,
+        "finalSpentUsd": 4.3999999999999995,
+        "finalReservations": 0
+      }
+    },
+    {
+      "variant": "inflight-reservation",
+      "boundary": "unknown settlement",
+      "input": {
+        "priorSpentUsd": 4.3,
+        "firstDispatchState": "unknown",
+        "actualCostUsd": null,
+        "maximumCostUsd": 0.4
+      },
+      "expected": {
+        "secondErrorCode": "BUDGET_UNAVAILABLE",
+        "jevCalls": 1,
+        "spentUsd": 4.3,
+        "reservedUsd": 0.4
+      },
+      "observed": {
+        "secondErrorCode": "BUDGET_UNAVAILABLE",
+        "jevCalls": 1,
+        "spentUsd": 4.3,
+        "reservedUsd": 0.4
+      }
+    }
+  ]
+}

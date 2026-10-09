@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "node",
+    "scripts/run-tests.mjs",
+    "tests/skill-classification/ss33-isolated.test.ts"
+  ],
+  "cwd": "<AGS_REPO>",
+  "startedAt": "2026-10-09T02:58:58.040727+00:00",
+  "finishedAt": "2026-10-09T02:58:59.378026+00:00",
+  "exitCode": 1,
+  "executionKind": "offline-mock",
+  "apiCalls": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS33",
+  "contractDigest": "sha256:9bbdd4673d7ff4c93819824b8b35a255301154790b5951278d8606ca83bde000",
+  "requirements": [
+    "secret-sentinel",
+    "jev-budget",
+    "vendor-unapproved",
+    "vendor-unknown-budget",
+    "inflight-reservation"
+  ],
+  "scopeFiles": [
+    "tests/skill-classification/ss33-isolated.test.ts",
+    "tests/skill-classification/fixtures.json",
+    "mcp-server/src/skill-classification/service.ts",
+    "mcp-server/src/skill-classification/providers.ts",
+    "mcp-server/src/skill-classification/gateway.ts",
+    "mcp-server/src/skill-classification/request.ts",
+    "mcp-server/src/skill-classification/profiles.ts",
+    "mcp-server/src/skill-classification/validation.ts",
+    "mcp-server/src/skill-classification/inventory.ts",
+    "vitest.config.mjs",
+    "pnpm-lock.yaml"
+  ],
+  "runner": "existing Vitest via scripts/run-tests.mjs (no build or product mutation)",
+  "environment": "Independent Cloud <AGS_REPO>; Node24.19.0/pnpm11.19.0; identical-lock dependency tree reused; mocked transport only.",
+  "cases": [
+    {
+      "id": "SS33/secret-sentinel",
+      "requirementIds": [
+        "secret-sentinel"
+      ],
+      "scenario": "secret-sentinel",
+      "entryPoint": "RuntimeSkillClassificationGateway.classify / SkillClassificationService.classify / ApprovedRouteClassificationProvider.classify",
+      "level": "integration",
+      "expectedBehavior": "Task/body/header mock secrets produce zero secret occurrences in response/log/artifact outside input fixture; unapproved content never dispatches.",
+      "oracle": "Embedded SS33 sourceSpec.fields only; classification oracle is null; operational assertions use explicit USD arithmetic and zero secret occurrence.",
+      "testFiles": [
+        "tests/skill-classification/ss33-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read-only development diagnostics on pinned candidate; source changes prohibited, so no corrected green or mutation claimed.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/ss33-isolated.test.ts",
+        "-t",
+        "secret-sentinel"
+      ]
+    },
+    {
+      "id": "SS33/jev-budget",
+      "requirementIds": [
+        "jev-budget"
+      ],
+      "scenario": "jev-budget",
+      "entryPoint": "RuntimeSkillClassificationGateway.classify / SkillClassificationService.classify / ApprovedRouteClassificationProvider.classify",
+      "level": "integration",
+      "expectedBehavior": "Include prior JEV spending under USD5; reserve ceiling before dispatch and accumulate actual usage even when RESP is invalid.",
+      "oracle": "Embedded SS33 sourceSpec.fields only; classification oracle is null; operational assertions use explicit USD arithmetic and zero secret occurrence.",
+      "testFiles": [
+        "tests/skill-classification/ss33-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read-only development diagnostics on pinned candidate; source changes prohibited, so no corrected green or mutation claimed.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/ss33-isolated.test.ts",
+        "-t",
+        "jev-budget"
+      ]
+    },
+    {
+      "id": "SS33/vendor-unapproved",
+      "requirementIds": [
+        "vendor-unapproved"
+      ],
+      "scenario": "vendor-unapproved",
+      "entryPoint": "RuntimeSkillClassificationGateway.classify / SkillClassificationService.classify / ApprovedRouteClassificationProvider.classify",
+      "level": "integration",
+      "expectedBehavior": "No paid vendor transport without approved route and separate known vendor budget.",
+      "oracle": "Embedded SS33 sourceSpec.fields only; classification oracle is null; operational assertions use explicit USD arithmetic and zero secret occurrence.",
+      "testFiles": [
+        "tests/skill-classification/ss33-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read-only development diagnostics on pinned candidate; source changes prohibited, so no corrected green or mutation claimed.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/ss33-isolated.test.ts",
+        "-t",
+        "vendor-unapproved"
+      ]
+    },
+    {
+      "id": "SS33/vendor-unknown-budget",
+      "requirementIds": [
+        "vendor-unknown-budget"
+      ],
+      "scenario": "vendor-unknown-budget",
+      "entryPoint": "RuntimeSkillClassificationGateway.classify / SkillClassificationService.classify / ApprovedRouteClassificationProvider.classify",
+      "level": "integration",
+      "expectedBehavior": "Unknown limit, previous usage, or per-call maximum remains null and blocks calls.",
+      "oracle": "Embedded SS33 sourceSpec.fields only; classification oracle is null; operational assertions use explicit USD arithmetic and zero secret occurrence.",
+      "testFiles": [
+        "tests/skill-classification/ss33-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read-only development diagnostics on pinned candidate; source changes prohibited, so no corrected green or mutation claimed.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/ss33-isolated.test.ts",
+        "-t",
+        "vendor-unknown-budget"
+      ]
+    },
+    {
+      "id": "SS33/inflight-reservation",
+      "requirementIds": [
+        "inflight-reservation"
+      ],
+      "scenario": "inflight-reservation",
+      "entryPoint": "RuntimeSkillClassificationGateway.classify / SkillClassificationService.classify / ApprovedRouteClassificationProvider.classify",
+      "level": "integration",
+      "expectedBehavior": "Concurrent and dispatched unknown usage stays reserved; next distinct operation cannot exceed USD5.",
+      "oracle": "Embedded SS33 sourceSpec.fields only; classification oracle is null; operational assertions use explicit USD arithmetic and zero secret occurrence.",
+      "testFiles": [
+        "tests/skill-classification/ss33-isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read-only development diagnostics on pinned candidate; source changes prohibited, so no corrected green or mutation claimed.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/ss33-isolated.test.ts",
+        "-t",
+        "inflight-reservation"
+      ]
+    }
+  ],
+  "exclusions": [
+    "Other original IDs/full suite/21 completed live runs",
+    "External JEV/vendor API and Claude CLI calls",
+    "Real AGENT selection/read/applied/verified or host attestation",
+    "Product implementation, push, PR, release and bootstrap modifications",
+    "Independent acceptance audit and fixed-green proof"
+  ]
+}

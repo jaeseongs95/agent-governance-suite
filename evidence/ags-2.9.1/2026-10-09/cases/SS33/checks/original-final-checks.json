@@ -1,0 +1,31 @@
+{
+  "caseId": "SS33",
+  "commands": [
+    {
+      "argv": [
+        "node",
+        "node_modules/eslint/bin/eslint.js",
+        "tests/skill-classification/ss33-isolated.test.ts"
+      ],
+      "cwd": "<AGS_REPO>",
+      "exitCode": 0,
+      "executionKind": "static-single-test-file-lint"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "cwd": "<AGS_REPO>",
+      "exitCode": 0,
+      "executionKind": "tracked-diff-whitespace-check"
+    }
+  ],
+  "variantCount": 5,
+  "isolatedCheckCount": 16,
+  "localEvidenceSecretScan": "PASS",
+  "trackedProductDiff": "empty",
+  "proofGreen": "NOTRUN",
+  "independentAcceptanceAudit": "NOTRUN"
+}

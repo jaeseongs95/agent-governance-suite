@@ -1,0 +1,1079 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS33",
+  "title": "비밀값 보호와 분리된 예산",
+  "overallStatus": "FAIL",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSha256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "identityVerified": true,
+  "originalPrompt": null,
+  "oracle": null,
+  "accuracyScore": null,
+  "sourceBinding": {
+    "fixture": "tests/skill-classification/fixtures.json",
+    "embeddedSourceRef": "<SS33_EVIDENCE_ROOT>/SS33.embedded-source.input.json",
+    "sourceSpecPath": "TEST-SPEC.seq7.ko.md",
+    "sourceSpecPresent": false,
+    "sourceSpecBodyDigest": "sha256:9bbdd4673d7ff4c93819824b8b35a255301154790b5951278d8606ca83bde000",
+    "allFieldsAndVariantsRead": true,
+    "oracleAuthority": "embedded sourceSpec.fields operational invariants only; no invented skill-set answer"
+  },
+  "executionKinds": [
+    "existing-regression-offline-mock",
+    "new-variant-offline-mock"
+  ],
+  "apiCalls": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0
+  },
+  "topUps": 0,
+  "prior21LiveRunsReexecuted": 0,
+  "otherCaseExecutions": 0,
+  "selectionReceiptsCreated": 0,
+  "productSourceChanged": false,
+  "pushPRReleasePerformed": false,
+  "existingRegression": {
+    "command": [
+      "node",
+      "scripts/run-tests.mjs",
+      "tests/mcp/skill-classification-service.test.ts",
+      "tests/mcp/skill-classification-runtime.test.ts",
+      "-t",
+      "SS33"
+    ],
+    "cwd": "<AGS_REPO>",
+    "exitCode": 0,
+    "executionKind": "existing-regression-offline-mock",
+    "passed": 9,
+    "failed": 0,
+    "skipped": 36,
+    "evidence": "existing-regression.log",
+    "scope": "SS33 name-filter only, not whole SS33 acceptance"
+  },
+  "isolatedRun": {
+    "argv": [
+      "node",
+      "scripts/run-tests.mjs",
+      "tests/skill-classification/ss33-isolated.test.ts"
+    ],
+    "cwd": "<AGS_REPO>",
+    "startedAt": "2026-10-09T03:00:17.282342+00:00",
+    "finishedAt": "2026-10-09T03:00:18.375963+00:00",
+    "exitCode": 1,
+    "executionKind": "offline-mock",
+    "apiCalls": {
+      "jev": 0,
+      "externalVendor": 0,
+      "claude": 0
+    },
+    "tests": 16,
+    "passed": 13,
+    "failed": 3,
+    "skipped": 0,
+    "evidence": [
+      "isolated-run.stdout.log",
+      "isolated-run.stderr.log",
+      "isolated-observations.json"
+    ],
+    "initialRunRetained": "initial-run/ (14 tests, 12 PASS/2 FAIL); second run adds revocation/timeout boundaries and makes the invalid-cost overrun counterexample independent of the original floating-point rejection."
+  },
+  "variants": [
+    {
+      "variantId": "secret-sentinel",
+      "offlineStatus": "FAIL",
+      "statusScope": "Only the listed isolated mechanical boundaries; not host-live or whole-case acceptance",
+      "checks": [
+        {
+          "variant": "secret-sentinel",
+          "boundary": "provider HTTP401/header",
+          "input": {
+            "syntheticInputRef": "input-fixtures.json",
+            "prompt": "public",
+            "errorBody": "synthetic-secret",
+            "header": "synthetic-secret"
+          },
+          "expected": {
+            "sentinelOccurrences": 0,
+            "calls": 1,
+            "code": "AUTH_UNAVAILABLE"
+          },
+          "observed": {
+            "sentinelOccurrences": 0,
+            "calls": 1,
+            "code": "AUTH_UNAVAILABLE"
+          },
+          "status": "PASS",
+          "findingRef": null,
+          "command": [
+            "node",
+            "scripts/run-tests.mjs",
+            "tests/skill-classification/ss33-isolated.test.ts"
+          ],
+          "exitCode": 1,
+          "executionKind": "offline-mock",
+          "apiCalls": {
+            "jev": 0,
+            "externalVendor": 0,
+            "claude": 0
+          }
+        },
+        {
+          "variant": "secret-sentinel",
+          "boundary": "gateway content approval",
+          "input": {
+            "syntheticInputRef": "input-fixtures.json",
+            "publicSynthetic": true,
+            "approvedPublicRequestDigests": null,
+            "allowRemotePrivateContent": false
+          },
+          "expected": {
+            "sentinelOccurrences": 0,
+            "response": null,
+            "agentSelectedSkillIds": null,
+            "providerCalls": 0
+          },
+          "observed": {
+            "sentinelOccurrences": 0,
+            "result": {
+              "status": "NEEDS_INPUT",
+              "errors": [
+                "REMOTE_CONTENT_NOT_APPROVED"
+              ],
+              "response": null,
+              "agentSelectedSkillIds": null
+            },
+            "jevCalls": 0,
+            "vendorCalls": 0
+          },
+          "status": "PASS",
+          "findingRef": null,
+          "command": [
+            "node",
+            "scripts/run-tests.mjs",
+            "tests/skill-classification/ss33-isolated.test.ts"
+          ],
+          "exitCode": 1,
+          "executionKind": "offline-mock",
+          "apiCalls": {
+            "jev": 0,
+            "externalVendor": 0,
+            "claude": 0
+          }
+        },
+        {
+          "variant": "secret-sentinel",
+          "boundary": "gateway response task echo",
+          "input": {
+            "syntheticInputRef": "input-fixtures.json",
+            "externalClassificationAllowed": false
+          },
+          "expected": {
+            "sentinelOccurrences": 0,
+            "providerCalls": 0,
+            "agentSelectedSkillIds": null
+          },
+          "observed": {
+            "sentinelOccurrences": 1,
+            "leakedField": "result.request.originalPrompt",
+            "jevCalls": 0,
+            "vendorCalls": 0,
+            "agentSelectedSkillIds": null
+          },
+          "status": "FAIL",
+          "findingRef": "SS33-SECRET-RESPONSE-ECHO",
+          "command": [
+            "node",
+            "scripts/run-tests.mjs",
+            "tests/skill-classification/ss33-isolated.test.ts"
+          ],
+          "exitCode": 1,
+          "executionKind": "offline-mock",
+          "apiCalls": {
+            "jev": 0,
+            "externalVendor": 0,
+            "claude": 0
+          }
+        }
+      ],
+      "hostStatus": "NOTRUN",
+      "selected": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "read": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "applied": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "verified": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "missingInputs": [
+        "Approved SS33-specific public synthetic host input and full-payload digest (originalPrompt is null).",
+        "Installed active AGS MCP classification tools and approved runtime config/profile registry/providerRuntimeRef.",
+        "Current externally authoritative budget/prior-spend/unknown-reservation evidence and separate vendor authorization.",
+        "Host-native capability, no-retry and isolation evidence and explicit allowance if native; actual host task/context observation and selection attestation.",
+        "Real AGENT selection reasons and source reading/application/output verification evidence.",
+        "E0/E1 label definitions are not embedded and the external sourceSpec.path is absent; no definitions invented."
+      ]
+    },
+    {
+      "variantId": "jev-budget",
+      "offlineStatus": "FAIL",
+      "statusScope": "Only the listed isolated mechanical boundaries; not host-live or whole-case acceptance",
+      "checks": [
+        {
+          "variant": "jev-budget",
+          "boundary": "prior spend",
+          "input": {
+            "configuredLimitUsd": 100,
+            "priorSpentUsd": 4.7,
+            "upperBoundUsd": 0.4,
+            "vendorBudget": null
+          },
+          "expected": {
+            "jevLimitUsd": 5,
+            "providerCalls": 0,
+            "reservations": 0
+          },
+          "observed": {
+            "jevLimitUsd": 5,
+            "jevSpentUsd": 4.7,
+            "providerCalls": 0,
+            "attemptCodes": [
+              "BUDGET_UNAVAILABLE",
+              "BUDGET_UNAVAILABLE"
+            ],
+            "reservations": 0
+          },
+          "status": "PASS",
+          "findingRef": null,
+          "command": [
+            "node",
+            "scripts/run-tests.mjs",
+            "tests/skill-classification/ss33-isolated.test.ts"
+          ],
+          "exitCode": 1,
+          "executionKind": "offline-mock",
+          "apiCalls": {
+            "jev": 0,
+            "externalVendor": 0,
+            "claude": 0
+          }
+        },
+        {
+          "variant": "jev-budget",
+          "boundary": "exact boundary and settlement",
+          "input": {
+            "priorSpentUsd": 4.6,
+            "upperBoundUsd": 0.4,
+            "actualCostUsd": 0.1
+          },
+          "expected": {
+            "spentUsd": 4.7,
+            "reservations": 0,
+            "jevCalls": 1,
+            "vendorCalls": 0
+          },
+          "observed": {
+            "spentUsd": 4.699999999999999,
+            "reservations": 0,
+            "jevCalls": 1,
+            "vendorCalls": 0
+          },
+          "status": "PASS",
+          "findingRef": null,
+          "command": [
+            "node",
+            "scripts/run-tests.mjs",
+            "tests/skill-classification/ss33-isolated.test.ts"
+          ],
+          "exitCode": 1,
+          "executionKind": "offline-mock",
+          "apiCalls": {
+            "jev": 0,
+            "externalVendor": 0,
+            "claude": 0
+          }
+        },
+        {
+          "variant": "jev-budget",
+          "boundary": "known-cost invalid RESP (existing reported root cause)",
+          "input": {
+            "priorSpentUsd": 4.1,
+            "maximumCostUsd": 0.4,
+            "actualCostUsd": 0.7,
+            "malformed": "missing candidate judgments",
+            "operations": 2
+          },
+          "expected": {
+            "firstActualCostUsd": 0.7,
+            "spentUsd": 4.8,
+            "invalidCostCeilings": [
+              "jev"
+            ],
+            "jevCalls": 1,
+            "secondCallHeld": true
+          },
+          "observed": {
+            "firstErrorCode": "INVALID_PROVIDER_RESPONSE",
+            "firstActualCostUsd": null,
+            "spentUsd": 4.1,
+            "reservedUsd": 0.8,
+            "invalidCostCeilings": [],
+            "jevCalls": 2,
+            "secondErrorCode": "INVALID_PROVIDER_RESPONSE",
+            "suppliedActualCumulativeUsd": 5.5
+          },
+          "status": "FAIL",
+          "findingRef": "KNOWN-INVALID-RESP-COST-LOSS",
+          "command": [
+            "node",
+            "scripts/run-tests.mjs",
+            "tests/skill-classification/ss33-isolated.test.ts"
+          ],
+          "exitCode": 1,
+          "executionKind": "offline-mock",
+          "apiCalls": {
+            "jev": 0,
+            "externalVendor": 0,
+            "claude": 0
+          }
+        }
+      ],
+      "hostStatus": "NOTRUN",
+      "selected": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "read": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "applied": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "verified": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "missingInputs": [
+        "Approved SS33-specific public synthetic host input and full-payload digest (originalPrompt is null).",
+        "Installed active AGS MCP classification tools and approved runtime config/profile registry/providerRuntimeRef.",
+        "Current externally authoritative budget/prior-spend/unknown-reservation evidence and separate vendor authorization.",
+        "Host-native capability, no-retry and isolation evidence and explicit allowance if native; actual host task/context observation and selection attestation.",
+        "Real AGENT selection reasons and source reading/application/output verification evidence.",
+        "E0/E1 label definitions are not embedded and the external sourceSpec.path is absent; no definitions invented."
+      ]
+    },
+    {
+      "variantId": "vendor-unapproved",
+      "offlineStatus": "FAIL",
+      "statusScope": "Only the listed isolated mechanical boundaries; not host-live or whole-case acceptance",
+      "checks": [
+        {
+          "variant": "vendor-unapproved",
+          "boundary": "route approval",
+          "input": {
+            "jevEnabled": false,
+            "vendorBudgetUsd": 2,
+            "approved": false
+          },
+          "expected": {
+            "errorCode": "ROUTE_NOT_APPROVED",
+            "providerCalls": 0,
+            "reservations": 0
+          },
+          "observed": {
+            "errorCode": "ROUTE_NOT_APPROVED",
+            "providerCalls": 0,
+            "reservations": 0
+          },
+          "status": "PASS",
+          "findingRef": null,
+          "command": [
+            "node",
+            "scripts/run-tests.mjs",
+            "tests/skill-classification/ss33-isolated.test.ts"
+          ],
+          "exitCode": 1,
+          "executionKind": "offline-mock",
+          "apiCalls": {
+            "jev": 0,
+            "externalVendor": 0,
+            "claude": 0
+          }
+        },
+        {
+          "variant": "vendor-unapproved",
+          "boundary": "separate paid permission/budget",
+          "input": {
+            "approved": true,
+            "vendorBudget": null,
+            "jevEnabled": false
+          },
+          "expected": {
+            "errorCode": "BUDGET_UNAVAILABLE",
+            "providerCalls": 0,
+            "jevCalls": 0,
+            "vendorBudget": null
+          },
+          "observed": {
+            "errorCode": "BUDGET_UNAVAILABLE",
+            "providerCalls": 0,
+            "jevCalls": 0,
+            "vendorBudget": null
+          },
+          "status": "PASS",
+          "findingRef": null,
+          "command": [
+            "node",
+            "scripts/run-tests.mjs",
+            "tests/skill-classification/ss33-isolated.test.ts"
+          ],
+          "exitCode": 1,
+          "executionKind": "offline-mock",
+          "apiCalls": {
+            "jev": 0,
+            "externalVendor": 0,
+            "claude": 0
+          }
+        },
+        {
+          "variant": "vendor-unapproved",
+          "boundary": "permission revocation before dispatch (linked pre-dispatch recheck gap)",
+          "input": {
+            "approvedAtEntry": true,
+            "approvedAfterCredentialBarrier": false,
+            "syntheticCredentialRef": "input-fixtures.json"
+          },
+          "expected": {
+            "mockFetchCalls": 0,
+            "sentinelOccurrences": 0
+          },
+          "observed": {
+            "approvedAtFetch": false,
+            "mockFetchCalls": 1,
+            "sentinelOccurrences": 0
+          },
+          "status": "FAIL",
+          "findingRef": "KNOWN-PRE-DISPATCH-RECHECK-GAP",
+          "command": [
+            "node",
+            "scripts/run-tests.mjs",
+            "tests/skill-classification/ss33-isolated.test.ts"
+          ],
+          "exitCode": 1,
+          "executionKind": "offline-mock",
+          "apiCalls": {
+            "jev": 0,
+            "externalVendor": 0,
+            "claude": 0
+          }
+        }
+      ],
+      "hostStatus": "NOTRUN",
+      "selected": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "read": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "applied": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "verified": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "missingInputs": [
+        "Approved SS33-specific public synthetic host input and full-payload digest (originalPrompt is null).",
+        "Installed active AGS MCP classification tools and approved runtime config/profile registry/providerRuntimeRef.",
+        "Current externally authoritative budget/prior-spend/unknown-reservation evidence and separate vendor authorization.",
+        "Host-native capability, no-retry and isolation evidence and explicit allowance if native; actual host task/context observation and selection attestation.",
+        "Real AGENT selection reasons and source reading/application/output verification evidence.",
+        "E0/E1 label definitions are not embedded and the external sourceSpec.path is absent; no definitions invented."
+      ]
+    },
+    {
+      "variantId": "vendor-unknown-budget",
+      "offlineStatus": "PASS",
+      "statusScope": "Only the listed isolated mechanical boundaries; not host-live or whole-case acceptance",
+      "checks": [
+        {
+          "variant": "vendor-unknown-budget",
+          "boundary": "limit unknown",
+          "input": {
+            "limitUsd": null,
+            "spentUsd": 0,
+            "maximumCostUsd": 0.4
+          },
+          "expected": {
+            "errorCode": "BUDGET_UNAVAILABLE",
+            "providerCalls": 0,
+            "vendorBudget": {
+              "limitUsd": null,
+              "spentUsd": 0
+            }
+          },
+          "observed": {
+            "errorCode": "BUDGET_UNAVAILABLE",
+            "providerCalls": 0,
+            "vendorBudget": {
+              "limitUsd": null,
+              "spentUsd": 0
+            }
+          },
+          "status": "PASS",
+          "findingRef": null,
+          "command": [
+            "node",
+            "scripts/run-tests.mjs",
+            "tests/skill-classification/ss33-isolated.test.ts"
+          ],
+          "exitCode": 1,
+          "executionKind": "offline-mock",
+          "apiCalls": {
+            "jev": 0,
+            "externalVendor": 0,
+            "claude": 0
+          }
+        },
+        {
+          "variant": "vendor-unknown-budget",
+          "boundary": "prior usage unknown",
+          "input": {
+            "limitUsd": 2,
+            "spentUsd": null,
+            "maximumCostUsd": 0.4
+          },
+          "expected": {
+            "errorCode": "BUDGET_UNAVAILABLE",
+            "providerCalls": 0,
+            "vendorBudget": {
+              "limitUsd": 2,
+              "spentUsd": null
+            }
+          },
+          "observed": {
+            "errorCode": "BUDGET_UNAVAILABLE",
+            "providerCalls": 0,
+            "vendorBudget": {
+              "limitUsd": 2,
+              "spentUsd": null
+            }
+          },
+          "status": "PASS",
+          "findingRef": null,
+          "command": [
+            "node",
+            "scripts/run-tests.mjs",
+            "tests/skill-classification/ss33-isolated.test.ts"
+          ],
+          "exitCode": 1,
+          "executionKind": "offline-mock",
+          "apiCalls": {
+            "jev": 0,
+            "externalVendor": 0,
+            "claude": 0
+          }
+        },
+        {
+          "variant": "vendor-unknown-budget",
+          "boundary": "both unknown",
+          "input": {
+            "limitUsd": null,
+            "spentUsd": null,
+            "maximumCostUsd": 0.4
+          },
+          "expected": {
+            "errorCode": "BUDGET_UNAVAILABLE",
+            "providerCalls": 0,
+            "vendorBudget": {
+              "limitUsd": null,
+              "spentUsd": null
+            }
+          },
+          "observed": {
+            "errorCode": "BUDGET_UNAVAILABLE",
+            "providerCalls": 0,
+            "vendorBudget": {
+              "limitUsd": null,
+              "spentUsd": null
+            }
+          },
+          "status": "PASS",
+          "findingRef": null,
+          "command": [
+            "node",
+            "scripts/run-tests.mjs",
+            "tests/skill-classification/ss33-isolated.test.ts"
+          ],
+          "exitCode": 1,
+          "executionKind": "offline-mock",
+          "apiCalls": {
+            "jev": 0,
+            "externalVendor": 0,
+            "claude": 0
+          }
+        },
+        {
+          "variant": "vendor-unknown-budget",
+          "boundary": "unknown per-call cost",
+          "input": {
+            "maximumCostUsd": null,
+            "vendorLimitUsd": 2
+          },
+          "expected": {
+            "errorCode": "COST_UNKNOWN",
+            "availabilityCalls": 0,
+            "providerCalls": 0,
+            "attempts": []
+          },
+          "observed": {
+            "errorCode": "COST_UNKNOWN",
+            "availabilityCalls": 0,
+            "providerCalls": 0,
+            "attempts": []
+          },
+          "status": "PASS",
+          "findingRef": null,
+          "command": [
+            "node",
+            "scripts/run-tests.mjs",
+            "tests/skill-classification/ss33-isolated.test.ts"
+          ],
+          "exitCode": 1,
+          "executionKind": "offline-mock",
+          "apiCalls": {
+            "jev": 0,
+            "externalVendor": 0,
+            "claude": 0
+          }
+        }
+      ],
+      "hostStatus": "NOTRUN",
+      "selected": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "read": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "applied": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "verified": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "missingInputs": [
+        "Approved SS33-specific public synthetic host input and full-payload digest (originalPrompt is null).",
+        "Installed active AGS MCP classification tools and approved runtime config/profile registry/providerRuntimeRef.",
+        "Current externally authoritative budget/prior-spend/unknown-reservation evidence and separate vendor authorization.",
+        "Host-native capability, no-retry and isolation evidence and explicit allowance if native; actual host task/context observation and selection attestation.",
+        "Real AGENT selection reasons and source reading/application/output verification evidence.",
+        "E0/E1 label definitions are not embedded and the external sourceSpec.path is absent; no definitions invented."
+      ]
+    },
+    {
+      "variantId": "inflight-reservation",
+      "offlineStatus": "PASS",
+      "statusScope": "Only the listed isolated mechanical boundaries; not host-live or whole-case acceptance",
+      "checks": [
+        {
+          "variant": "inflight-reservation",
+          "boundary": "distinct operations barrier",
+          "input": {
+            "limitUsd": 5,
+            "priorSpentUsd": 4.3,
+            "firstReserveUsd": 0.4,
+            "secondReserveUsd": 0.4
+          },
+          "expected": {
+            "secondErrorCode": "BUDGET_UNAVAILABLE",
+            "jevCalls": 1,
+            "reservedDuringUsd": 0.4,
+            "finalSpentUsd": 4.4,
+            "finalReservations": 0
+          },
+          "observed": {
+            "secondErrorCode": "BUDGET_UNAVAILABLE",
+            "jevCalls": 1,
+            "reservedDuringUsd": 0.4,
+            "finalSpentUsd": 4.3999999999999995,
+            "finalReservations": 0
+          },
+          "status": "PASS",
+          "findingRef": null,
+          "command": [
+            "node",
+            "scripts/run-tests.mjs",
+            "tests/skill-classification/ss33-isolated.test.ts"
+          ],
+          "exitCode": 1,
+          "executionKind": "offline-mock",
+          "apiCalls": {
+            "jev": 0,
+            "externalVendor": 0,
+            "claude": 0
+          }
+        },
+        {
+          "variant": "inflight-reservation",
+          "boundary": "unknown settlement",
+          "input": {
+            "priorSpentUsd": 4.3,
+            "firstDispatchState": "unknown",
+            "actualCostUsd": null,
+            "maximumCostUsd": 0.4
+          },
+          "expected": {
+            "secondErrorCode": "BUDGET_UNAVAILABLE",
+            "jevCalls": 1,
+            "spentUsd": 4.3,
+            "reservedUsd": 0.4
+          },
+          "observed": {
+            "secondErrorCode": "BUDGET_UNAVAILABLE",
+            "jevCalls": 1,
+            "spentUsd": 4.3,
+            "reservedUsd": 0.4
+          },
+          "status": "PASS",
+          "findingRef": null,
+          "command": [
+            "node",
+            "scripts/run-tests.mjs",
+            "tests/skill-classification/ss33-isolated.test.ts"
+          ],
+          "exitCode": 1,
+          "executionKind": "offline-mock",
+          "apiCalls": {
+            "jev": 0,
+            "externalVendor": 0,
+            "claude": 0
+          }
+        },
+        {
+          "variant": "inflight-reservation",
+          "boundary": "timeout late completion",
+          "input": {
+            "priorSpentUsd": 4.3,
+            "upperBoundUsd": 0.4,
+            "timeoutMs": 1000,
+            "lateActualCostUsd": 0.1
+          },
+          "expected": {
+            "firstTimedOut": true,
+            "firstActualCostUsd": null,
+            "secondErrorCode": "BUDGET_UNAVAILABLE",
+            "jevCalls": 1,
+            "reservedUsd": 0.4,
+            "unchangedAfterLate": true
+          },
+          "observed": {
+            "firstTimedOut": true,
+            "firstActualCostUsd": null,
+            "secondErrorCode": "BUDGET_UNAVAILABLE",
+            "jevCalls": 1,
+            "reservedUsd": 0.4,
+            "unchangedAfterLate": true
+          },
+          "status": "PASS",
+          "findingRef": null,
+          "command": [
+            "node",
+            "scripts/run-tests.mjs",
+            "tests/skill-classification/ss33-isolated.test.ts"
+          ],
+          "exitCode": 1,
+          "executionKind": "offline-mock",
+          "apiCalls": {
+            "jev": 0,
+            "externalVendor": 0,
+            "claude": 0
+          }
+        }
+      ],
+      "hostStatus": "NOTRUN",
+      "selected": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "read": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "applied": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "verified": {
+        "status": "NOTRUN",
+        "skillIds": null,
+        "evidence": null
+      },
+      "missingInputs": [
+        "Approved SS33-specific public synthetic host input and full-payload digest (originalPrompt is null).",
+        "Installed active AGS MCP classification tools and approved runtime config/profile registry/providerRuntimeRef.",
+        "Current externally authoritative budget/prior-spend/unknown-reservation evidence and separate vendor authorization.",
+        "Host-native capability, no-retry and isolation evidence and explicit allowance if native; actual host task/context observation and selection attestation.",
+        "Real AGENT selection reasons and source reading/application/output verification evidence.",
+        "E0/E1 label definitions are not embedded and the external sourceSpec.path is absent; no definitions invented."
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "SS33-SECRET-RESPONSE-ECHO",
+      "severity": "HIGH",
+      "knownFindingRelationship": "New local reproduction; no match claimed to the listed existing defects.",
+      "boundary": "secret-sentinel",
+      "cause": "Service returns full request in result; gateway.classify returns that result, server.ts serializes it into MCP output even when remote egress is blocked.",
+      "evidence": "gateway response task echo: sentinelOccurrences=1 in result.request.originalPrompt; jevCalls=0/vendorCalls=0; raw secret output deliberately not persisted.",
+      "sourceLocations": [
+        "mcp-server/src/skill-classification/service.ts:115",
+        "mcp-server/src/skill-classification/gateway.ts:107",
+        "mcp-server/src/server.ts:592"
+      ],
+      "testLocation": "tests/skill-classification/ss33-isolated.test.ts:63"
+    },
+    {
+      "id": "KNOWN-INVALID-RESP-COST-LOSS",
+      "severity": "HIGH",
+      "knownFindingRelationship": "Direct reproduction of reported valid-cost loss with invalid RESP; do not increment global unique-root count.",
+      "boundary": "jev-budget",
+      "cause": "Invalid response throws before ceiling/settlement; catch replaces valid usage with unknownUsage, causing actual-cost loss and missed ceiling invalidation.",
+      "evidence": "prior=4.1, qualified ceiling=.4, reported actual=.7 on malformed response; two mock calls allowed; recorded spent=4.1/reserved=.8/actualCostUsd=null/invalidCostCeilings=[]; supplied cumulative mock actual=5.5 exceeds USD5.",
+      "sourceLocations": [
+        "mcp-server/src/skill-classification/service.ts:194",
+        "mcp-server/src/skill-classification/service.ts:204",
+        "mcp-server/src/skill-classification/service.ts:210"
+      ],
+      "testLocation": "tests/skill-classification/ss33-isolated.test.ts:88"
+    },
+    {
+      "id": "KNOWN-PRE-DISPATCH-RECHECK-GAP",
+      "severity": "HIGH",
+      "knownFindingRelationship": "Connects to reported concurrency pre-dispatch recheck gap; this is mutable approved-route revocation at the provider adapter boundary, not a new global root count.",
+      "boundary": "vendor-unapproved",
+      "cause": "Route approval checked before awaited getCredential, but approval is not checked again immediately before mock fetch.",
+      "evidence": "Route approved=true on entry, false after credential barrier; mock fetch calls=1, secret response occurrences=0. Production runtime uses startup installation snapshots, so operational route-change propagation also needs actual host/runtime evidence.",
+      "sourceLocations": [
+        "mcp-server/src/skill-classification/providers.ts:69",
+        "mcp-server/src/skill-classification/providers.ts:80",
+        "mcp-server/src/skill-classification/providers.ts:90"
+      ],
+      "testLocation": "tests/skill-classification/ss33-isolated.test.ts:112"
+    }
+  ],
+  "agentObservation": {
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "hostReceipt": null,
+    "evidence": null,
+    "note": "Test-engineering skill reading for this developer task is not an observation of evaluated SS33 AGENT skill selection."
+  },
+  "host": {
+    "executionKind": "real-host",
+    "status": "NOTRUN",
+    "apiCalls": {
+      "jev": 0,
+      "externalVendor": 0,
+      "claude": 0
+    },
+    "observedEnvironment": {
+      "classificationConfigPresent": false,
+      "codexExecutable": "<OBSERVED_CODEX_EXECUTABLE>",
+      "claudeExecutable": null,
+      "agsClassificationToolsExposed": false,
+      "repoAgentsSkillsPresent": false,
+      "workspaceAgentsSkillsPresent": false
+    },
+    "supportedRepositoryPaths": {
+      "MCP": ".mcp.json -> node mcp-server/dist/server.mjs",
+      "runtime": "mcp-server/src/index.ts:88 -> AGENT_GOVERNANCE_CLASSIFICATION_CONFIG; gateway.ts:142 readClassificationRuntime; runtime.ts:56 createClassificationProviderRuntime",
+      "native": "mcp-server/src/skill-classification/native-adapters.ts:25 NativeClassificationAdapterDefinition, :175 Codex/Claude CLI construction",
+      "selection": "get_skill_inventory -> classify_skills (advice only) -> independent AGENT selection -> record_skill_selection with hostReceipt:null plus actual signed host observation"
+    },
+    "limitations": [
+      "Executable presence is not profile qualification, free usage, authorization, or successful host invocation.",
+      "No host CLI/help/model invocation was performed.",
+      "live-bootstrap qualification uses 21 frozen original prompts and is not an SS33 operational-case host runner; not executed."
+    ],
+    "missingInputs": [
+      "Approved SS33-specific public synthetic host input and full-payload digest (originalPrompt is null).",
+      "Installed active AGS MCP classification tools and approved runtime config/profile registry/providerRuntimeRef.",
+      "Current externally authoritative budget/prior-spend/unknown-reservation evidence and separate vendor authorization.",
+      "Host-native capability, no-retry and isolation evidence and explicit allowance if native; actual host task/context observation and selection attestation.",
+      "Real AGENT selection reasons and source reading/application/output verification evidence.",
+      "E0/E1 label definitions are not embedded and the external sourceSpec.path is absent; no definitions invented."
+    ]
+  },
+  "engineeringPlan": {
+    "path": "<AGS_REPO>/tests/skill-classification/ss33-plan.json",
+    "checkResult": "plan-check.json",
+    "checkStatus": "READY",
+    "proofStatus": "NOTRUN",
+    "reason": "Failing diagnostic assertions observed; corrected green/mutation not performed because product changes are forbidden. Unsigned local records are not host attestation or independent acceptance audit."
+  },
+  "limits": [
+    "Mock provider reported actual costs are synthetic and are not real invoices.",
+    "Offline PASS means the listed boundary assertions passed, not live operational safety or classification accuracy.",
+    "No actual uploads or Space writes performed; scan only covers local evidence and authored test code, not host logs or remote vendor systems.",
+    "Identical lockfile dependency tree reused from <EXISTING_IDENTICAL_LOCK_DEPENDENCIES>; no clean-room installation claim.",
+    "Node floating-point values are preserved in observations; monetary comparisons with tolerance occur only in exact-boundary assertion displays.",
+    "External TEST-SPEC.seq7.ko.md absent; only embedded fields used."
+  ],
+  "environmentSetup": {
+    "node": "24.19.0",
+    "pnpm": "11.19.0",
+    "lockfileSha256": "00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e",
+    "dependencyPath": "<EXISTING_IDENTICAL_LOCK_DEPENDENCIES>",
+    "offlineInstallAttempts": [
+      {
+        "command": "pnpm install --frozen-lockfile --offline",
+        "exitCode": 254,
+        "reason": "default pnpm home unavailable"
+      },
+      {
+        "command": "PNPM_HOME=<PRIVATE_PNPM_HOME> pnpm install --frozen-lockfile --offline --store-dir <PRIVATE_PNPM_STORE>",
+        "exitCode": 1,
+        "reason": "new offline store missing cached tarball"
+      }
+    ],
+    "resolvedBy": "Reuse already available dependencies with byte-identical pnpm lockfile; successful test runner proves execution available."
+  },
+  "missingInputs": [
+    "Approved SS33-specific public synthetic host input and full-payload digest (originalPrompt is null).",
+    "Installed active AGS MCP classification tools and approved runtime config/profile registry/providerRuntimeRef.",
+    "Current externally authoritative budget/prior-spend/unknown-reservation evidence and separate vendor authorization.",
+    "Host-native capability, no-retry and isolation evidence and explicit allowance if native; actual host task/context observation and selection attestation.",
+    "Real AGENT selection reasons and source reading/application/output verification evidence.",
+    "E0/E1 label definitions are not embedded and the external sourceSpec.path is absent; no definitions invented."
+  ],
+  "evidenceSecretScan": {
+    "file": "secret-scan.json",
+    "status": "PASS",
+    "outputSentinelOccurrences": 0,
+    "allowedInputFixtures": [
+      "SS33.embedded-source.input.json",
+      "input-fixtures.json"
+    ],
+    "distinction": "Local evidence sanitation passes while product runtime response sanitation fails."
+  },
+  "sourceFileSha256": {
+    "tests/skill-classification/ss33-isolated.test.ts": "e0ce31b604b67cd3513cb217bcff485b33c917b04397074999a0b1ea568e4de3",
+    "tests/skill-classification/ss33-plan.json": "0c974e61009f0f83bee53e747395e8491970d0af44054eb6a6a29c076c9ac04f",
+    "tests/skill-classification/fixtures.json": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "mcp-server/src/skill-classification/service.ts": "c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb",
+    "mcp-server/src/skill-classification/providers.ts": "f191c46db32f38248ebdd23be725b426a0b3020e0bb464b36bcc57521983651c",
+    "mcp-server/src/skill-classification/gateway.ts": "80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+    "mcp-server/src/server.ts": "073ba501a64af9a7996f64e953446834c93baf2a093dd673e761dc9b45ca99d4",
+    "pnpm-lock.yaml": "00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e"
+  },
+  "finalChecks": {
+    "file": "final-checks.json",
+    "lintExitCode": 0,
+    "gitDiffCheckExitCode": 0,
+    "resultConsistency": "PASS"
+  },
+  "originalEvidenceSha256": {
+    "SS33.embedded-source.input.json": "92e2e4daa58debc40c0297edc40b912966b7d0f69997b0e548e75cb69e51f2e3",
+    "existing-regression.log": "40cb48fae9f337fd87c9f2ec8bb7f3604208674efd3e0e334389e7d59cf69fea",
+    "host-support.json": "d1633beddae3fc6929015f0e3ea229079c8f8faf83e64ee7796623bd4f74a469",
+    "identity.json": "d6ccb71ad06908141d1ab8427da7283630b78400dab424b4d09c0ea42bfe2403",
+    "initial-run/isolated-command.json": "abe7444503734f3edd4cea99cb36614c4a9f331f10f03b4473af7c56ae5f31e2",
+    "initial-run/isolated-observations.json": "a69171a9520301b7c8b96c9d7810ad2b3747a050e5ee6f9fcbc671747baed8e9",
+    "initial-run/isolated-run.stderr.log": "d5acf348952cafb7790b9dc8485e755da24518382a223e0771a9b108fec7f451",
+    "initial-run/isolated-run.stdout.log": "314b85a456d708829d8c6d2ad188719d31bbbcaf93f11f25cd5fa1f4b896196f",
+    "input-fixtures.json": "c4f87b96e0eed22a43d76342da7319e798f3732048155d459e4c3594fe63d6ab",
+    "isolated-command.json": "e603c2eed4d5c015f0a7077b78d03c8c5786063c6eaac0d1242f9b6c16ca4ec8",
+    "isolated-observations.json": "0e28112051aab18045ed216ca9729112801e8917ca5a83abedd2446871acea2f",
+    "isolated-run.stderr.log": "4e7a2df0ae6d157137bdb91adee11eb28e5dadd15a1fecf005e72fde4b618105",
+    "isolated-run.stdout.log": "ea60256b676fbf287ff849dc105485cfe751f879ce65c848c49f14e3c5c80df3",
+    "plan-check.json": "9a49353324d35e0d12e5b249a65b68072062ca5ee22bb228256f61139cc9551b",
+    "scope-files.json": "97628b4af1b2aa3078b5487a5223ad302aaf868747222afbd91ec0d1658b0e74",
+    "secret-scan.json": "1c7411f8ba4f976518c4be5fbcd383f6844e271f8a45fc12c362b886365101c9",
+    "snapshot.json": "149b57f5b27a2018cc05228e3e076b9a90d7d65a3b413f9df38e531a9a009fc3",
+    "final-checks.json": "af39691f02f5eabf15f01c797e3642358b0c8115f1d80def6b7a31c1f7e80127"
+  },
+  "publicPackaging": {
+    "casePath": "evidence/ags-2.9.1/2026-10-09/cases/SS33/",
+    "originalResult": {
+      "bytes": 38615,
+      "sha256": "d735cd0224d57b1923af4240bb2fda52009c4b523361a3a984491d2633784242"
+    },
+    "newTestsExecuted": 0,
+    "newProviderOrHostCalls": {
+      "jev": 0,
+      "externalVendor": 0,
+      "claude": 0,
+      "codex": 0
+    },
+    "statusPreservation": "Existing PASS/FAIL and NOTRUN states retained; no new evaluation occurred.",
+    "originalEvidenceSha256Meaning": "Original local files, not the sanitized public bytes. manifest.json maps each original to public bytes and digest.",
+    "publicInputBytesChanged": true,
+    "publicInputExecutionStatus": "NOTRUN; original input digests recorded in manifest; replaced marker has not been re-tested.",
+    "subjectPatchStatus": "NONE_CREATED",
+    "missingOriginals": [
+      {
+        "item": "existing-regression separated stdout",
+        "status": "MISSING_ORIGINAL",
+        "reason": "Only original merged stream exists."
+      },
+      {
+        "item": "existing-regression separated stderr",
+        "status": "MISSING_ORIGINAL",
+        "reason": "Only original merged stream exists."
+      },
+      {
+        "item": "raw leaking gateway response",
+        "status": "MISSING_ORIGINAL",
+        "reason": "Deliberately not persisted originally; original in-memory count and assertion failure are retained."
+      },
+      {
+        "item": "TEST-SPEC.seq7.ko.md external original",
+        "status": "MISSING_ORIGINAL",
+        "reason": "Absent in original pinned repository; embedded SS33 source was used."
+      }
+    ],
+    "remoteVerification": "Performed after push and reported externally; this file does not claim a future verification result."
+  }
+}

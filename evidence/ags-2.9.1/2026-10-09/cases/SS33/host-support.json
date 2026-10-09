@@ -1,0 +1,36 @@
+{
+  "executionKind": "real-host",
+  "status": "NOTRUN",
+  "apiCalls": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0
+  },
+  "observedEnvironment": {
+    "classificationConfigPresent": false,
+    "codexExecutable": "<OBSERVED_CODEX_EXECUTABLE>",
+    "claudeExecutable": null,
+    "agsClassificationToolsExposed": false,
+    "repoAgentsSkillsPresent": false,
+    "workspaceAgentsSkillsPresent": false
+  },
+  "supportedRepositoryPaths": {
+    "MCP": ".mcp.json -> node mcp-server/dist/server.mjs",
+    "runtime": "mcp-server/src/index.ts:88 -> AGENT_GOVERNANCE_CLASSIFICATION_CONFIG; gateway.ts:142 readClassificationRuntime; runtime.ts:56 createClassificationProviderRuntime",
+    "native": "mcp-server/src/skill-classification/native-adapters.ts:25 NativeClassificationAdapterDefinition, :175 Codex/Claude CLI construction",
+    "selection": "get_skill_inventory -> classify_skills (advice only) -> independent AGENT selection -> record_skill_selection with hostReceipt:null plus actual signed host observation"
+  },
+  "limitations": [
+    "Executable presence is not profile qualification, free usage, authorization, or successful host invocation.",
+    "No host CLI/help/model invocation was performed.",
+    "live-bootstrap qualification uses 21 frozen original prompts and is not an SS33 operational-case host runner; not executed."
+  ],
+  "missingInputs": [
+    "Approved SS33-specific public synthetic host input and full-payload digest (originalPrompt is null).",
+    "Installed active AGS MCP classification tools and approved runtime config/profile registry/providerRuntimeRef.",
+    "Current externally authoritative budget/prior-spend/unknown-reservation evidence and separate vendor authorization.",
+    "Host-native capability, no-retry and isolation evidence and explicit allowance if native; actual host task/context observation and selection attestation.",
+    "Real AGENT selection reasons and source reading/application/output verification evidence.",
+    "E0/E1 label definitions are not embedded and the external sourceSpec.path is absent; no definitions invented."
+  ]
+}

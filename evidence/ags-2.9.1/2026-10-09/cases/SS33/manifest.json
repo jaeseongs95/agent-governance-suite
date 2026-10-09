@@ -1,0 +1,486 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS33",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cases/SS33/",
+  "candidate": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixtureSha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSha256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+  },
+  "originalResult": {
+    "bytes": 38615,
+    "sha256": "d735cd0224d57b1923af4240bb2fda52009c4b523361a3a984491d2633784242"
+  },
+  "files": [
+    {
+      "path": "README.md",
+      "role": "evidence",
+      "public": {
+        "bytes": 3653,
+        "sha256": "32235fef13ee2819b18e1916d90033a37c2a9edcd5e95c4d81e7a393a13a0bba"
+      },
+      "originKind": "new-publication-documentation",
+      "transformations": [],
+      "original": null,
+      "note": "Publication packaging only; not a newly observed test, result, log, or patch."
+    },
+    {
+      "path": "SS33.result.json",
+      "role": "public-result-derived-from-existing-result",
+      "public": {
+        "bytes": 40332,
+        "sha256": "de612e9c9b1b7b22d94eda859bd179fb8c8b24ee29ded3a86f9a42c06b4f5c92"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [
+        "Sanitize local absolute paths and synthetic marker, relabel original evidence digest map, add publication provenance without changing evaluation outcomes."
+      ],
+      "original": {
+        "sourceLabel": "SS33.result.json",
+        "bytes": 38615,
+        "sha256": "d735cd0224d57b1923af4240bb2fda52009c4b523361a3a984491d2633784242",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": false
+    },
+    {
+      "path": "checks/original-evidence-secret-scan.json",
+      "role": "existing-execution-evidence",
+      "public": {
+        "bytes": 2882,
+        "sha256": "a4e3be60332fa433f431807a318af180f61db38c9c27fa10f430fb1961c94ef6"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [
+        "Replace personal local absolute paths with documented placeholders and replace synthetic secret marker with public substitute, if present."
+      ],
+      "original": {
+        "sourceLabel": "secret-scan.json",
+        "bytes": 2912,
+        "sha256": "1c7411f8ba4f976518c4be5fbcd383f6844e271f8a45fc12c362b886365101c9",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": false
+    },
+    {
+      "path": "checks/original-final-checks.json",
+      "role": "existing-execution-evidence",
+      "public": {
+        "bytes": 680,
+        "sha256": "68c694008303f2364e661d7667f3d505d638acc23a4225eb95bfd8a4180bfab2"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [
+        "Replace personal local absolute paths with documented placeholders and replace synthetic secret marker with public substitute, if present."
+      ],
+      "original": {
+        "sourceLabel": "final-checks.json",
+        "bytes": 700,
+        "sha256": "af39691f02f5eabf15f01c797e3642358b0c8115f1d80def6b7a31c1f7e80127",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": false
+    },
+    {
+      "path": "checks/original-plan-check.json",
+      "role": "existing-execution-evidence",
+      "public": {
+        "bytes": 348,
+        "sha256": "9a49353324d35e0d12e5b249a65b68072062ca5ee22bb228256f61139cc9551b"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [],
+      "original": {
+        "sourceLabel": "plan-check.json",
+        "bytes": 348,
+        "sha256": "9a49353324d35e0d12e5b249a65b68072062ca5ee22bb228256f61139cc9551b",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": true
+    },
+    {
+      "path": "checks/original-snapshot.json",
+      "role": "existing-execution-evidence",
+      "public": {
+        "bytes": 2439,
+        "sha256": "149b57f5b27a2018cc05228e3e076b9a90d7d65a3b413f9df38e531a9a009fc3"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [],
+      "original": {
+        "sourceLabel": "snapshot.json",
+        "bytes": 2439,
+        "sha256": "149b57f5b27a2018cc05228e3e076b9a90d7d65a3b413f9df38e531a9a009fc3",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": true
+    },
+    {
+      "path": "host-support.json",
+      "role": "existing-execution-evidence",
+      "public": {
+        "bytes": 2101,
+        "sha256": "eb118009d5fc3665bb2ae4e91767bc029dfdf4a1cfdb4988f3b01f93e1375005"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [
+        "Replace personal local absolute paths with documented placeholders and replace synthetic secret marker with public substitute, if present."
+      ],
+      "original": {
+        "sourceLabel": "host-support.json",
+        "bytes": 2094,
+        "sha256": "d1633beddae3fc6929015f0e3ea229079c8f8faf83e64ee7796623bd4f74a469",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": false
+    },
+    {
+      "path": "identity.json",
+      "role": "existing-execution-evidence",
+      "public": {
+        "bytes": 432,
+        "sha256": "d6ccb71ad06908141d1ab8427da7283630b78400dab424b4d09c0ea42bfe2403"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [],
+      "original": {
+        "sourceLabel": "identity.json",
+        "bytes": 432,
+        "sha256": "d6ccb71ad06908141d1ab8427da7283630b78400dab424b4d09c0ea42bfe2403",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": true
+    },
+    {
+      "path": "inputs/embedded-source.public.json",
+      "role": "public-input-substitute",
+      "public": {
+        "bytes": 2535,
+        "sha256": "ae3ad016238c50fa0e2ec6c0c9a15f6bdcc098f8fcc421d91fdf65f3d1ffcca8"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [
+        "Replace personal local absolute paths with documented placeholders and replace synthetic secret marker with public substitute, if present."
+      ],
+      "original": {
+        "sourceLabel": "SS33.embedded-source.input.json",
+        "bytes": 2518,
+        "sha256": "92e2e4daa58debc40c0297edc40b912966b7d0f69997b0e548e75cb69e51f2e3",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": false
+    },
+    {
+      "path": "inputs/input-fixtures.json",
+      "role": "public-input-substitute",
+      "public": {
+        "bytes": 250,
+        "sha256": "88bf8b98db1bd5aebadc5de76d7de61bc2cf0e624ba242a7b48e289d3615cd76"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [
+        "Replace personal local absolute paths with documented placeholders and replace synthetic secret marker with public substitute, if present."
+      ],
+      "original": {
+        "sourceLabel": "input-fixtures.json",
+        "bytes": 182,
+        "sha256": "c4f87b96e0eed22a43d76342da7319e798f3732048155d459e4c3594fe63d6ab",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": false
+    },
+    {
+      "path": "logs/existing-regression.merged.log",
+      "role": "existing-execution-evidence",
+      "public": {
+        "bytes": 339,
+        "sha256": "77479026100b8768ecca12152d591eccd5e68b647eb5ccd1875836d785fe0fcb"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [
+        "Replace personal local absolute paths with documented placeholders and replace synthetic secret marker with public substitute, if present."
+      ],
+      "original": {
+        "sourceLabel": "existing-regression.log",
+        "bytes": 349,
+        "sha256": "40cb48fae9f337fd87c9f2ec8bb7f3604208674efd3e0e334389e7d59cf69fea",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": false
+    },
+    {
+      "path": "logs/initial/isolated.stderr.log",
+      "role": "existing-execution-evidence",
+      "public": {
+        "bytes": 1863,
+        "sha256": "d5acf348952cafb7790b9dc8485e755da24518382a223e0771a9b108fec7f451"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [],
+      "original": {
+        "sourceLabel": "initial-run/isolated-run.stderr.log",
+        "bytes": 1863,
+        "sha256": "d5acf348952cafb7790b9dc8485e755da24518382a223e0771a9b108fec7f451",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": true
+    },
+    {
+      "path": "logs/initial/isolated.stdout.log",
+      "role": "existing-execution-evidence",
+      "public": {
+        "bytes": 502,
+        "sha256": "236ab0ada2ac7336bb2281e2f2c8ff770c75d574fb5add942cd23d581f6e484c"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [
+        "Replace personal local absolute paths with documented placeholders and replace synthetic secret marker with public substitute, if present.",
+        "Trim trailing empty terminal lines only; test output, exit and assertion values are unchanged."
+      ],
+      "original": {
+        "sourceLabel": "initial-run/isolated-run.stdout.log",
+        "bytes": 513,
+        "sha256": "314b85a456d708829d8c6d2ad188719d31bbbcaf93f11f25cd5fa1f4b896196f",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": false
+    },
+    {
+      "path": "logs/isolated.stderr.log",
+      "role": "existing-execution-evidence",
+      "public": {
+        "bytes": 2694,
+        "sha256": "4e7a2df0ae6d157137bdb91adee11eb28e5dadd15a1fecf005e72fde4b618105"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [],
+      "original": {
+        "sourceLabel": "isolated-run.stderr.log",
+        "bytes": 2694,
+        "sha256": "4e7a2df0ae6d157137bdb91adee11eb28e5dadd15a1fecf005e72fde4b618105",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": true
+    },
+    {
+      "path": "logs/isolated.stdout.log",
+      "role": "existing-execution-evidence",
+      "public": {
+        "bytes": 595,
+        "sha256": "1a359af322e728b1b742d8281d2b91244003d4156098669fa81dfd9485ed262b"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [
+        "Replace personal local absolute paths with documented placeholders and replace synthetic secret marker with public substitute, if present.",
+        "Trim trailing empty terminal lines only; test output, exit and assertion values are unchanged."
+      ],
+      "original": {
+        "sourceLabel": "isolated-run.stdout.log",
+        "bytes": 606,
+        "sha256": "ea60256b676fbf287ff849dc105485cfe751f879ce65c848c49f14e3c5c80df3",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": false
+    },
+    {
+      "path": "observations/initial/isolated-observations.json",
+      "role": "existing-execution-evidence",
+      "public": {
+        "bytes": 8393,
+        "sha256": "a69171a9520301b7c8b96c9d7810ad2b3747a050e5ee6f9fcbc671747baed8e9"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [],
+      "original": {
+        "sourceLabel": "initial-run/isolated-observations.json",
+        "bytes": 8393,
+        "sha256": "a69171a9520301b7c8b96c9d7810ad2b3747a050e5ee6f9fcbc671747baed8e9",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": true
+    },
+    {
+      "path": "observations/isolated-observations.json",
+      "role": "existing-execution-evidence",
+      "public": {
+        "bytes": 9629,
+        "sha256": "0e28112051aab18045ed216ca9729112801e8917ca5a83abedd2446871acea2f"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [],
+      "original": {
+        "sourceLabel": "isolated-observations.json",
+        "bytes": 9629,
+        "sha256": "0e28112051aab18045ed216ca9729112801e8917ca5a83abedd2446871acea2f",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": true
+    },
+    {
+      "path": "records/patch-status.json",
+      "role": "evidence",
+      "public": {
+        "bytes": 276,
+        "sha256": "30386d5223f5a4a167b41a5d30a20bbded7c0a80c32167897c37cdca3697a34f"
+      },
+      "originKind": "new-publication-documentation",
+      "transformations": [],
+      "original": null,
+      "note": "Publication packaging only; not a newly observed test, result, log, or patch."
+    },
+    {
+      "path": "repro/original-plan.public.json",
+      "role": "original-plan-sanitized-reference",
+      "public": {
+        "bytes": 7052,
+        "sha256": "8f20f0f2c259411736db0c3ff9b496e4997b02283179b4327402b8486ef0360d"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [
+        "Sanitize absolute paths in descriptive environment only; original planDigest remains tied to original bytes."
+      ],
+      "original": {
+        "sourceLabel": "repo/tests/skill-classification/ss33-plan.json",
+        "bytes": 7062,
+        "sha256": "0c974e61009f0f83bee53e747395e8491970d0af44054eb6a6a29c076c9ac04f",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": false
+    },
+    {
+      "path": "repro/original-scope-files.json",
+      "role": "existing-execution-evidence",
+      "public": {
+        "bytes": 518,
+        "sha256": "97628b4af1b2aa3078b5487a5223ad302aaf868747222afbd91ec0d1658b0e74"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [],
+      "original": {
+        "sourceLabel": "scope-files.json",
+        "bytes": 518,
+        "sha256": "97628b4af1b2aa3078b5487a5223ad302aaf868747222afbd91ec0d1658b0e74",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": true
+    },
+    {
+      "path": "repro/reproduce.md",
+      "role": "evidence",
+      "public": {
+        "bytes": 2554,
+        "sha256": "4a548092430426442778771db52bf49d29e22ee58d1d9bad360509b19b1551b8"
+      },
+      "originKind": "new-publication-documentation",
+      "transformations": [],
+      "original": null,
+      "note": "Publication packaging only; not a newly observed test, result, log, or patch."
+    },
+    {
+      "path": "repro/tests/skill-classification/ss33-isolated.test.ts",
+      "role": "reproduction-code-derived-from-executed-original",
+      "public": {
+        "bytes": 22742,
+        "sha256": "61688a0e5d50817639389f5ee31f03b24250ce6ffdb4591822afd71f65cf47a3"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [
+        "Replace private default evidence directory with process.cwd(); preserve assertions and use SS33_EVIDENCE_ROOT for portable reproduction. Public version not executed."
+      ],
+      "original": {
+        "sourceLabel": "repo/tests/skill-classification/ss33-isolated.test.ts",
+        "bytes": 22755,
+        "sha256": "e0ce31b604b67cd3513cb217bcff485b33c917b04397074999a0b1ea568e4de3",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": false
+    },
+    {
+      "path": "runs/initial/isolated-command.json",
+      "role": "existing-execution-evidence",
+      "public": {
+        "bytes": 370,
+        "sha256": "7a85506bf4cbda6d96267aca7c8dd74292e353680b7084121e71b558364a6e3e"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [
+        "Replace personal local absolute paths with documented placeholders and replace synthetic secret marker with public substitute, if present."
+      ],
+      "original": {
+        "sourceLabel": "initial-run/isolated-command.json",
+        "bytes": 380,
+        "sha256": "abe7444503734f3edd4cea99cb36614c4a9f331f10f03b4473af7c56ae5f31e2",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": false
+    },
+    {
+      "path": "runs/isolated-command.json",
+      "role": "existing-execution-evidence",
+      "public": {
+        "bytes": 370,
+        "sha256": "81570f63b6d02167f21a332053c5a7714e5b1548bf9b732cc5a034820df69596"
+      },
+      "originKind": "existing-file-derived",
+      "transformations": [
+        "Replace personal local absolute paths with documented placeholders and replace synthetic secret marker with public substitute, if present."
+      ],
+      "original": {
+        "sourceLabel": "isolated-command.json",
+        "bytes": 380,
+        "sha256": "e603c2eed4d5c015f0a7077b78d03c8c5786063c6eaac0d1242f9b6c16ca4ec8",
+        "retrievalStatus": "RECOVERED"
+      },
+      "publicBytesIdenticalToOriginal": false
+    }
+  ],
+  "payloadFileCount": 24,
+  "payloadTotalBytes": 113549,
+  "hashPolicy": {
+    "manifestCoverage": "Every payload file only; excludes manifest.json and SHA256SUMS to avoid circular hashes.",
+    "sha256sumsCoverage": "All payload files plus manifest.json; excludes SHA256SUMS itself.",
+    "controlFileDigests": "Reported separately after remote verification."
+  },
+  "inputBytePolicy": "Original synthetic inputs recovered and hashed; public synthetic-marker replacements not executed; full corpus stays at pinned product fixture SHA.",
+  "evaluationStatesPreserved": true,
+  "publicationTestExecutions": 0,
+  "publicationProviderOrHostCalls": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0,
+    "codex": 0
+  },
+  "patchStatus": "NONE_CREATED",
+  "missingOriginals": [
+    {
+      "item": "existing-regression separated stdout",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Only original merged stream exists."
+    },
+    {
+      "item": "existing-regression separated stderr",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Only original merged stream exists."
+    },
+    {
+      "item": "raw leaking gateway response",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Deliberately not persisted originally; original in-memory count and assertion failure are retained."
+    },
+    {
+      "item": "TEST-SPEC.seq7.ko.md external original",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Absent in original pinned repository; embedded SS33 source was used."
+    }
+  ],
+  "publicationSanitizationCheck": {
+    "status": "PASS",
+    "scope": "Prepared public UTF-8 bytes only",
+    "privateAbsolutePaths": 0,
+    "originalSyntheticMarkerOccurrences": 0,
+    "credentialLikePatterns": 0,
+    "notAHostTest": true
+  },
+  "omittedOriginalFiles": []
+}

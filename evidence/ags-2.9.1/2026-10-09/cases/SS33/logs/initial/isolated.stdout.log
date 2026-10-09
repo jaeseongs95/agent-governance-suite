@@ -1,0 +1,12 @@
+
+ RUN  v5.0.0 <AGS_REPO>
+
+ ❯ tests/skill-classification/ss33-isolated.test.ts (14 tests | 2 failed) 360ms
+   ❯ SS33 isolated operational variants (14)
+     × secret-sentinel: egress-blocked gateway response must not echo task secret 170ms
+     × jev-budget: invalid RESP must retain independently valid actual cost and ceiling overrun 5ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 12 passed (14)
+   Start at  02:58:58
+   Duration  801ms (tests 57%, transform 27%, import 16%, worker 1%)
