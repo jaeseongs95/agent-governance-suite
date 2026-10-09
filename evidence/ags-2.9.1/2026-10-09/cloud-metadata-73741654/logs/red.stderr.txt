@@ -1,0 +1,47 @@
+FAIL  tests/mcp/skill-classification-inventory.test.ts > signed source evidence and selection context regression > keeps all 24 skills while separating applicable evidence from exclusions
+AssertionError: acceptance-evidence-validator: expected [ …(3) ] to not deeply equal [ …(3) ]
+
+FAIL  tests/mcp/skill-classification-inventory.test.ts > signed source evidence and selection context regression > preserves software-security-auditor omitted context through common REQ and JEV
+AssertionError: expected '{"skillId":"software-security-auditor…' to contain '감사자는 새 재현 코드를 작성·실행하지 않고'
+Expected: "감사자는 새 재현 코드를 작성·실행하지 않고"
+
+FAIL  tests/mcp/skill-classification-inventory.test.ts > signed source evidence and selection context regression > preserves independent-audit-gate omitted context through common REQ and JEV
+AssertionError: expected '{"skillId":"independent-audit-gate","…' to contain '감사자는 새 재현 코드를 직접 작성하거나 실행하지 않는다'
+Expected: "감사자는 새 재현 코드를 직접 작성하거나 실행하지 않는다"
+
+FAIL  tests/mcp/skill-classification-inventory.test.ts > signed source evidence and selection context regression > preserves session-board omitted context through common REQ and JEV
+AssertionError: expected '{"skillId":"session-board","version":…' to contain '공유 checkout 수정 전에'
+Expected: "공유 checkout 수정 전에"
+
+FAIL  tests/mcp/skill-classification-inventory.test.ts > signed source evidence and selection context regression > preserves recovery-strategy-selector omitted context through common REQ and JEV
+AssertionError: expected '{"skillId":"recovery-strategy-selecto…' to contain '원본 diagnosis request·외부 동결 digest'
+Expected: "원본 diagnosis request·외부 동결 digest"
+
+FAIL  tests/mcp/skill-classification-inventory.test.ts > signed source evidence and selection context regression > preserves blocker-diagnostician omitted context through common REQ and JEV
+AssertionError: expected '{"skillId":"blocker-diagnostician","v…' to contain 'read-only 검사도 명시적 허용 없이는'
+Expected: "read-only 검사도 명시적 허용 없이는"
+
+FAIL  tests/mcp/skill-classification-inventory.test.ts > signed source evidence and selection context regression > preserves independent-deliberation-panel omitted context through common REQ and JEV
+AssertionError: expected '{"skillId":"independent-deliberation-…' to contain 'worker를 한 명도 instantiate하지 않는다'
+Expected: "worker를 한 명도 instantiate하지 않는다"
+
+FAIL  tests/mcp/skill-classification-inventory.test.ts > signed source evidence and selection context regression > preserves every registry precondition as verbatim source evidence
+AssertionError: independent-deliberation-panel: expected [] to deep equally contain { phase: 'decision-analysis', …(2) }
+
+FAIL  tests/mcp/skill-classification-inventory.test.ts > signed source evidence and selection context regression > extracts UTF-8 clause ranges without copying or rewriting source prose
+AssertionError: expected [ Array(2) ] to deeply equal []
+
+FAIL  tests/mcp/skill-classification-inventory.test.ts > signed source evidence and selection context regression > rejects invalid/partial/mid-codepoint clause bounds {"startByte":1}
+
+FAIL  tests/mcp/skill-classification-inventory.test.ts > signed source evidence and selection context regression > rejects invalid/partial/mid-codepoint clause bounds {"endByte":8}
+
+FAIL  tests/mcp/skill-classification-inventory.test.ts > signed source evidence and selection context regression > rejects invalid/partial/mid-codepoint clause bounds {"startByte":0,"endByte":0}
+
+FAIL  tests/mcp/skill-classification-inventory.test.ts > signed source evidence and selection context regression > rejects invalid/partial/mid-codepoint clause bounds {"startByte":10,"endByte":3}
+
+FAIL  tests/mcp/skill-classification-inventory.test.ts > signed source evidence and selection context regression > rejects invalid/partial/mid-codepoint clause bounds {"startByte":0,"endByte":10000}
+
+FAIL  tests/mcp/skill-classification-inventory.test.ts > signed source evidence and selection context regression > rejects invalid/partial/mid-codepoint clause bounds {"startByte":14,"endByte":15}
+AssertionError: expected [ Array(2) ] to deep equally contain { skillId: 'skill-z17', …(2) }
+
+{"harness": "test-subreaper", "remainingChildren": false, "runnerExitCode": 1, "cancelled": false}

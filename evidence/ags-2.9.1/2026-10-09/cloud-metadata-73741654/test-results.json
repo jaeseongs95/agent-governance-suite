@@ -1,0 +1,113 @@
+{
+  "execution": "Previously completed API0 local runs; no new test execution for publication",
+  "sourceCandidate": "737416547b02d60df2b29d0f093143bdab54cf01",
+  "redSourceCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "finalTest": {
+    "path": "tests/mcp/skill-classification-inventory.test.ts",
+    "digest": "sha256:d6b668481d01d1df0f8676caa833d97e1749f9dea8397d263c61fb314438a44e",
+    "size": 17678,
+    "lineCount": 219
+  },
+  "sameFinalTestBytes": true,
+  "sameArgv": true,
+  "redGreen": {
+    "argv": [
+      "node",
+      "scripts/run-tests.mjs",
+      "tests/mcp/skill-classification-inventory.test.ts"
+    ],
+    "red": {
+      "passed": 16,
+      "failed": 15,
+      "status": "FAIL",
+      "exitCode": 1
+    },
+    "green": {
+      "passed": 31,
+      "failed": 0,
+      "status": "PASS",
+      "exitCode": 0
+    },
+    "note": "Original six tests unchanged, 25 new regressions. Fifteen failures include six new UTF-8-bound feature/error-contract tests; counts are not a claim of fifteen independent baseline defects."
+  },
+  "scopedRegression": {
+    "core": {
+      "files": [
+        "tests/mcp/skill-classification-inventory.test.ts",
+        "tests/mcp/skill-classification-request.test.ts",
+        "tests/mcp/skill-classification-providers.test.ts",
+        "tests/mcp/skill-classification-claude-projection.test.ts"
+      ],
+      "passed": 63,
+      "failed": 0,
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/mcp/skill-classification-inventory.test.ts",
+        "tests/mcp/skill-classification-request.test.ts",
+        "tests/mcp/skill-classification-providers.test.ts",
+        "tests/mcp/skill-classification-claude-projection.test.ts"
+      ]
+    },
+    "related": {
+      "files": [
+        "tests/mcp/skill-classification-service.test.ts",
+        "tests/mcp/skill-classification-profiles.test.ts",
+        "tests/mcp/skill-classification-validation.test.ts",
+        "tests/mcp/skill-classification-gateway.test.ts",
+        "tests/mcp/skill-classification-runtime.test.ts"
+      ],
+      "passed": 133,
+      "failed": 0,
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/mcp/skill-classification-service.test.ts",
+        "tests/mcp/skill-classification-profiles.test.ts",
+        "tests/mcp/skill-classification-validation.test.ts",
+        "tests/mcp/skill-classification-gateway.test.ts",
+        "tests/mcp/skill-classification-runtime.test.ts"
+      ]
+    },
+    "uniqueTargetedTests": 196,
+    "standalone31AndRepeatedRunsNotAddedToUniqueTotal": true
+  },
+  "checks": {
+    "typecheck": {
+      "argv": [
+        "./node_modules/.bin/tsc",
+        "--noEmit"
+      ],
+      "exitCode": 0,
+      "originalLogBytes": 0
+    },
+    "eslintOwnedTypeScript": {
+      "exitCode": 0,
+      "files": [
+        "mcp-server/src/skill-classification/inventory.ts",
+        "tests/mcp/skill-classification-inventory.test.ts"
+      ],
+      "originalLogBytes": 0
+    },
+    "diffCheckExitCode": 0,
+    "originalPlanVerdict": "READY",
+    "originalProofVerdict": "CONSISTENT",
+    "originalProofIssues": [],
+    "originalProofLimitations": [
+      "This is an unsigned local consistency check, not host attestation or an independent audit.",
+      "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+      "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+    ]
+  },
+  "modelCalls": 0,
+  "claudeCalls": 0,
+  "notRun": [
+    "actual model quality/semantic qualification and final AGENT decisions",
+    "integration bundle build/freshness PASS",
+    "CONTENT_LOCK integrity PASS",
+    "full 1257-test suite",
+    "R14 evaluation writer checks",
+    "release/host E2E"
+  ],
+  "receiptScopeNote": "Snapshots bind 69 declared files; unsigned local consistency is not host attestation or independent release approval."
+}

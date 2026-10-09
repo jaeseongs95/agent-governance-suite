@@ -1,0 +1,311 @@
+{
+  "schemaVersion": "1",
+  "purpose": "Public evidence only; product patch not applied on evidence branch",
+  "sourceCandidate": "737416547b02d60df2b29d0f093143bdab54cf01",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cloud-metadata-73741654",
+  "publicationBase": "fe7c99d935827156b4c675179766b54806c5e937",
+  "originalRecords": [
+    {
+      "record": "candidate.patch",
+      "bytes": 81411,
+      "sha256": "da0e85a39b84d0b374c91fe5139ee8649fcdb94d1f669eee3fbd2ba066d1a119",
+      "originalPublished": false
+    },
+    {
+      "record": "commit-manifest.json",
+      "bytes": 7967,
+      "sha256": "66bc77b64e15775b0856807e0fbad430ad2e1d2416812863eacfc7da39a21bff",
+      "originalPublished": false
+    },
+    {
+      "record": "red-receipt.json",
+      "bytes": 86255,
+      "sha256": "cada894da3c7e1b165c35b643fa9d2dc4b122dfc60a34c671373372367ef1b19",
+      "originalPublished": false
+    },
+    {
+      "record": "green-receipt.json",
+      "bytes": 16707,
+      "sha256": "e826b16c907ae114e0032a049efc60aaed4305e9aa2761a3e0780c3069a53d2d",
+      "originalPublished": false
+    },
+    {
+      "record": "regression.log",
+      "bytes": 352,
+      "sha256": "ddd696658026051220a9c26c87fb18d846c5ffd3e4953a0e1c2f2529da3d2c5f",
+      "originalPublished": false
+    },
+    {
+      "record": "related-regression.log",
+      "bytes": 353,
+      "sha256": "c89e2ebf799a1fac4bd40fac0449b79d39ec94cbb25707cace6230cec65f0a55",
+      "originalPublished": false
+    },
+    {
+      "record": "engineering-test-plan.json",
+      "bytes": 5811,
+      "sha256": "44d291d440a7d363cc887a3ccf44ff366e14a58555f13e4f061cc25cf9f7c412",
+      "originalPublished": false
+    },
+    {
+      "record": "engineering-test-result.json",
+      "bytes": 688,
+      "sha256": "2766e93982cc1c887dc830505e053908562dcc96dbc90014cc4f432864226e96",
+      "originalPublished": false
+    },
+    {
+      "record": "engineering-plan-result.json",
+      "bytes": 233,
+      "sha256": "106a0c92c6d63d3b05f81b44571edf1cea2a4c2c25956ec3f4d1012e8a42a26a",
+      "originalPublished": false
+    },
+    {
+      "record": "engineering-test-proof.json",
+      "bytes": 17654,
+      "sha256": "754f1c72c3e2b67175be306e5accc121297a7af833ae809c8ec6ce4e0118ae70",
+      "originalPublished": false
+    },
+    {
+      "record": "check-plan.log",
+      "bytes": 234,
+      "sha256": "aebfc6ba27d2175a45f3366b361ea7e9b61e99d8379035a87ba151bad38289db",
+      "originalPublished": false
+    },
+    {
+      "record": "check-proof.log",
+      "bytes": 689,
+      "sha256": "51f33ccb4b70cf2245ae5a6806ad546474fc3ae9e582e524ddd982f43e08feab",
+      "originalPublished": false
+    },
+    {
+      "record": "typecheck.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "originalPublished": false
+    },
+    {
+      "record": "lint.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "originalPublished": false
+    },
+    {
+      "record": "measure.json",
+      "bytes": 3839,
+      "sha256": "335b3d6af346af033905776a56c15965b56a2c738955fba724111255f545094d",
+      "originalPublished": false
+    },
+    {
+      "record": "token-counts.json",
+      "bytes": 292,
+      "sha256": "7a447347f513f8c2b28aae48bb23d36cadd105328a58519651a339038f9f06ab",
+      "originalPublished": false
+    },
+    {
+      "record": "baseline-size-breakdown.json",
+      "bytes": 16017,
+      "sha256": "708fe563c7cff5b85cdb76d9ceed3bc920b6fd90535d248f1e9d5f157970b52d",
+      "originalPublished": false
+    },
+    {
+      "record": "reviewer-check.json",
+      "bytes": 12219,
+      "sha256": "6c6be78580a40dfd6ba665e3f6e7965ac3a5c39e278db929b964fc5bd5fe9c58",
+      "originalPublished": false
+    },
+    {
+      "record": "reviewer-runtime.json",
+      "bytes": 16287,
+      "sha256": "3e98c44d9b40faf3a91186f05b3578b85da3352b38a6f659bb997c84bd236d18",
+      "originalPublished": false
+    },
+    {
+      "record": "reviewer-metadata-fields.json",
+      "bytes": 2055,
+      "sha256": "3f1391742f69d5abf68ea0c187ba3fcd9948417a8fbe34636a755d83ae3ba25b",
+      "originalPublished": false
+    },
+    {
+      "record": "reviewer-notes.md",
+      "bytes": 9231,
+      "sha256": "06bbaebdd9bdbb93b0fa8853a09024910d157d5bd63ac6988fae7337c3d36973",
+      "originalPublished": false
+    },
+    {
+      "record": "scope-report.json",
+      "bytes": 11174,
+      "sha256": "9902e3d09f2810390bf0e6ca61b89247550f8a46d638cb4c463d273bf062f208",
+      "originalPublished": false
+    },
+    {
+      "record": "scope-integrity.json",
+      "bytes": 109396,
+      "sha256": "15c1bb31957a420df8c2e7e85f78e0fe57a642f9b54b27b5909796c8256fd94b",
+      "originalPublished": false
+    },
+    {
+      "record": "partition-proof.json",
+      "bytes": 78381,
+      "sha256": "c8c93c51e1aa9be731e3f8c25db8815987209204c374c8c1f59aa36b35152b67",
+      "originalPublished": true
+    },
+    {
+      "record": "context-pin-check.log",
+      "bytes": 13415,
+      "sha256": "f14ec51fc5db42912ed14b6597763b0a91581383cf91f0410ebe2566a69d60ac",
+      "originalPublished": false
+    },
+    {
+      "record": "bundle-check.log",
+      "bytes": 365,
+      "sha256": "58ac08091f4ad8a2017c29be51da31bfb5677c5d3424c4ec7bec19a89d534a56",
+      "originalPublished": false
+    },
+    {
+      "record": "content-lock-check.log",
+      "bytes": 96,
+      "sha256": "cdf8f6faf390f07126ba20988bf294e06cd47d7cdcc808a55fbcd44f97f38d12",
+      "originalPublished": false
+    }
+  ],
+  "publicPatch": {
+    "bytes": 81399,
+    "sha256": "3606943cc6e5b424f93a3fc020d4630a61de11a7762d741f76d089caf6f51049",
+    "originalBytes": 81411,
+    "originalSha256": "da0e85a39b84d0b374c91fe5139ee8649fcdb94d1f669eee3fbd2ba066d1a119",
+    "completeCodeDiffSha256": "4d1c638921a4cce939da442240e2acbddcc4b36038f866cc5b8241e5e37747d6",
+    "completeDiffBodyByteIdentical": true,
+    "transformation": "Only From author identity replaced with generic AGS Evidence <noreply@users.noreply.github.com>. Original patch/commit identity is provenance, not a promise of git am output SHA."
+  },
+  "derivatives": {
+    "candidate.patch": {
+      "sourceRecords": [
+        "candidate.patch"
+      ],
+      "transformation": "Replace only mail From author identity with a generic public evidence identity; complete diff body byte-identical."
+    },
+    "pins.json": {
+      "sourceRecords": [
+        "commit-manifest.json"
+      ],
+      "transformation": "Select source/result pins and changed Git blob/SHA256 records; add independently fetched publication base; omit local context."
+    },
+    "changed-files.sha256": {
+      "sourceRecords": [
+        "commit-manifest.json"
+      ],
+      "transformation": "Format candidate file SHA256 and repository-relative paths into sha256sum syntax."
+    },
+    "run-receipts.public.json": {
+      "sourceRecords": [
+        "red-receipt.json",
+        "green-receipt.json"
+      ],
+      "transformation": "Whitelist receipt fields and 69 declared source snapshot file hashes; omit executable, environmentNote, full stdout/stderr; retain original digest references."
+    },
+    "logs/red.stdout.txt": {
+      "sourceRecords": [
+        "red-receipt.json"
+      ],
+      "transformation": "Select actual Vitest version, final test counts, start/duration; replace absolute checkout path with [isolated-checkout]."
+    },
+    "logs/green.stdout.txt": {
+      "sourceRecords": [
+        "green-receipt.json"
+      ],
+      "transformation": "Select actual Vitest version, final test counts, start/duration; replace absolute checkout path with [isolated-checkout]."
+    },
+    "logs/red.stderr.txt": {
+      "sourceRecords": [
+        "red-receipt.json"
+      ],
+      "transformation": "Keep all 15 failing test names, short assertion/expected lines and harness exit/cleanup; omit full serialized Received state, stack frames and process IDs."
+    },
+    "logs/green.stderr.txt": {
+      "sourceRecords": [
+        "green-receipt.json"
+      ],
+      "transformation": "Retain actual harness exit/cleanup JSON fields; omit process IDs."
+    },
+    "logs/core-regression.stdout.txt": {
+      "sourceRecords": [
+        "regression.log"
+      ],
+      "transformation": "Select actual Vitest version/counts/time; redact absolute checkout path."
+    },
+    "logs/core-regression.stderr.txt": {
+      "sourceRecords": [
+        "regression.log"
+      ],
+      "transformation": "Extract actual harness exit/cleanup status from original combined log; remove process IDs. Original recording combined stdout/stderr."
+    },
+    "logs/related-regression.stdout.txt": {
+      "sourceRecords": [
+        "related-regression.log"
+      ],
+      "transformation": "Select actual Vitest version/counts/time; redact absolute checkout path."
+    },
+    "logs/related-regression.stderr.txt": {
+      "sourceRecords": [
+        "related-regression.log"
+      ],
+      "transformation": "Extract actual harness exit/cleanup status from original combined log; remove process IDs. Original recording combined stdout/stderr."
+    },
+    "test-results.json": {
+      "sourceRecords": [
+        "red-receipt.json",
+        "green-receipt.json",
+        "regression.log",
+        "related-regression.log",
+        "engineering-test-plan.json",
+        "engineering-test-result.json",
+        "engineering-plan-result.json",
+        "typecheck.log",
+        "lint.log"
+      ],
+      "transformation": "Select historical actual counts, commands, statuses, same-test SHA and original consistency limits. No new runs."
+    },
+    "size-and-inventory.json": {
+      "sourceRecords": [
+        "measure.json",
+        "token-counts.json",
+        "baseline-size-breakdown.json"
+      ],
+      "transformation": "Select exact byte/token measurements, synthetic input, all24 signed counts and external new-skill result; omit irrelevant raw request/wire bodies."
+    },
+    "independent-review.public.json": {
+      "sourceRecords": [
+        "reviewer-check.json",
+        "reviewer-runtime.json",
+        "reviewer-metadata-fields.json",
+        "reviewer-notes.md",
+        "scope-report.json",
+        "scope-integrity.json"
+      ],
+      "transformation": "Select final review results/resolved-context source refs, protected-file hashes and scope verdict; omit stale draft prose/local paths and internal repository identity."
+    },
+    "partition-proof.json": {
+      "sourceRecords": [
+        "partition-proof.json"
+      ],
+      "transformation": "Byte-identical original; repository-relative source byte-range and hash evidence only."
+    },
+    "integration-limitations.json": {
+      "sourceRecords": [
+        "context-pin-check.log",
+        "bundle-check.log",
+        "content-lock-check.log"
+      ],
+      "transformation": "Keep actual error messages/statuses/commands; omit absolute stack paths. No correction or new validation for publication."
+    }
+  },
+  "excluded": [
+    "credentials/authentication material",
+    "environment variable values",
+    "private conversations and transcripts",
+    "personal identifiers and local checkout paths",
+    "unnecessary raw logs/full serialized request or provider bodies",
+    "local Git bundle containing original author metadata"
+  ],
+  "existingEvidencePolicy": "Preserve every prior path/mode/blob; append only under publicationPath. Non-force push only refs/heads/evidence."
+}

@@ -1,0 +1,206 @@
+{
+  "execution": "Historical synthetic/local encoding only; no real provider usage",
+  "measure": {
+    "baseCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "baseWireBytes": 136489,
+    "candidateWireBytes": 108472,
+    "savedBytes": 28017,
+    "savedPercent": 20.526928910022054,
+    "baseReqBytes": 197464,
+    "candidateReqBytes": 189184,
+    "baseProjectedBytes": 124530,
+    "candidateProjectedBytes": 96513,
+    "preservedSkillFields": 24,
+    "originalRangesChecked": 66,
+    "sourcePiecesChecked": 266,
+    "signed": [
+      {
+        "skillId": "acceptance-evidence-validator",
+        "applicabilityCount": 5,
+        "exclusionCount": 9,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "blocker-diagnostician",
+        "applicabilityCount": 4,
+        "exclusionCount": 8,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "change-scope-guardian",
+        "applicabilityCount": 5,
+        "exclusionCount": 2,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "code-review",
+        "applicabilityCount": 6,
+        "exclusionCount": 3,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "codex-token-usage-analyzer",
+        "applicabilityCount": 3,
+        "exclusionCount": 1,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "context-continuity",
+        "applicabilityCount": 3,
+        "exclusionCount": 4,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "coordinate-subagents",
+        "applicabilityCount": 11,
+        "exclusionCount": 7,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "cs-engineering",
+        "applicabilityCount": 9,
+        "exclusionCount": 4,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "evaluation-validity-auditor",
+        "applicabilityCount": 4,
+        "exclusionCount": 2,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "independent-audit-gate",
+        "applicabilityCount": 7,
+        "exclusionCount": 8,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "independent-deliberation-panel",
+        "applicabilityCount": 6,
+        "exclusionCount": 4,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "instruction-scope-resolver",
+        "applicabilityCount": 5,
+        "exclusionCount": 4,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "iteration-frame-auditor",
+        "applicabilityCount": 6,
+        "exclusionCount": 8,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "applicabilityCount": 14,
+        "exclusionCount": 5,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "model-effort-advisor",
+        "applicabilityCount": 5,
+        "exclusionCount": 3,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "mutation-risk-preflight",
+        "applicabilityCount": 5,
+        "exclusionCount": 3,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "orchestrator",
+        "applicabilityCount": 8,
+        "exclusionCount": 8,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "ponytail",
+        "applicabilityCount": 3,
+        "exclusionCount": 5,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "recovery-strategy-selector",
+        "applicabilityCount": 5,
+        "exclusionCount": 6,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "session-board",
+        "applicabilityCount": 5,
+        "exclusionCount": 5,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "software-security-auditor",
+        "applicabilityCount": 3,
+        "exclusionCount": 4,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "task-contract",
+        "applicabilityCount": 3,
+        "exclusionCount": 2,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "test-engineering",
+        "applicabilityCount": 8,
+        "exclusionCount": 2,
+        "sharedStrings": 0
+      },
+      {
+        "skillId": "workspace-convention-profiler",
+        "applicabilityCount": 6,
+        "exclusionCount": 8,
+        "sharedStrings": 0
+      }
+    ],
+    "externalSkill": {
+      "id": "neutral-candidate-z99",
+      "total": 25,
+      "wireReached": true
+    },
+    "modelCalls": 0
+  },
+  "tokenCounts": {
+    "tool": "js-tiktoken@1.0.21",
+    "tokenizerUsage": "local JSON BPE only; actual JEV usage NOT_RUN",
+    "values": {
+      "cl100k_base": {
+        "baseTokens": 39394,
+        "candidateTokens": 28581
+      },
+      "o200k_base": {
+        "baseTokens": 30290,
+        "candidateTokens": 23547
+      }
+    }
+  },
+  "fixedSyntheticInput": {
+    "prompt": "고정 diff를 읽기 전용으로 검토해 주세요. 수정·push·릴리스 금지.",
+    "utf8Bytes": 87,
+    "modelId": "synthetic-local-jev"
+  },
+  "baselineWireAdditiveBytes": {
+    "skillId": 780,
+    "version": 409,
+    "description": 8006,
+    "enabled": 336,
+    "installed": 384,
+    "hostSupported": 480,
+    "capabilities": 1423,
+    "actions": 1254,
+    "targets": 1304,
+    "constraints": 410,
+    "applicability": 39860,
+    "exclusions": 40621,
+    "dependencies": 408,
+    "phases": 28090
+  },
+  "baselineWireNonSkillBytes": 12364,
+  "historical41700Tokens": "Not exactly reproduced; contemporaneous body, real tokenizer and provider framing not available. Local BPE numbers are not actual usage."
+}

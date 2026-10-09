@@ -1,0 +1,3240 @@
+{
+  "targetCandidate": "737416547b02d60df2b29d0f093143bdab54cf01",
+  "method": "Previously completed separate read-only reviewer; no reviewer product writes and no paid calls",
+  "skillsReviewed": 24,
+  "registryBytesUnchanged": true,
+  "structuralChecks": [
+    {
+      "skillId": "acceptance-evidence-validator",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "blocker-diagnostician",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "change-scope-guardian",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "code-review",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "codex-token-usage-analyzer",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "context-continuity",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "coordinate-subagents",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "cs-engineering",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "evaluation-validity-auditor",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "independent-audit-gate",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "independent-deliberation-panel",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "instruction-scope-resolver",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "iteration-frame-auditor",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "korean-prose-editor",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "model-effort-advisor",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "mutation-risk-preflight",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "orchestrator",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "ponytail",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "recovery-strategy-selector",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "session-board",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "software-security-auditor",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "task-contract",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "test-engineering",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    },
+    {
+      "skillId": "workspace-convention-profiler",
+      "sourceUnchanged": true,
+      "allSourceDigestsValid": true,
+      "allNonWhitespaceBytesCoveredExactlyOnce": true,
+      "missingCount": 0,
+      "extraCount": 0,
+      "overlapCount": 0,
+      "signedArraysDistinct": true,
+      "nonemptyValues": true
+    }
+  ],
+  "resolvedDraftRisks": [
+    {
+      "id": "CTX-OTHER-SKILL",
+      "skillId": "orchestrator",
+      "sourcePath": "skills/orchestrator/SKILL.md",
+      "line": 18,
+      "sourceSha256": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "currentFields": [
+        "applicability"
+      ],
+      "currentExactPresent": true,
+      "requiredAntecedentSameChunk": true
+    },
+    {
+      "id": "CTX-ALL-FOUR",
+      "skillId": "orchestrator",
+      "sourcePath": "skills/orchestrator/SKILL.md",
+      "line": 26,
+      "sourceSha256": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "currentFields": [
+        "applicability"
+      ],
+      "currentExactPresent": true,
+      "requiredAntecedentSameChunk": true
+    },
+    {
+      "id": "CTX-PRE-PASS",
+      "skillId": "evaluation-validity-auditor",
+      "sourcePath": "skills/evaluation-validity-auditor/references/entry-details.md",
+      "line": 5,
+      "sourceSha256": "sha256:7d31114e9200454d084dd7df04db34f1afc4c3ac23f3feb09c5eef6a85be8950",
+      "currentFields": [
+        "applicability"
+      ],
+      "currentExactPresent": true,
+      "requiredAntecedentSameChunk": true
+    },
+    {
+      "id": "CTX-POST-PASS",
+      "skillId": "evaluation-validity-auditor",
+      "sourcePath": "skills/evaluation-validity-auditor/references/entry-details.md",
+      "line": 6,
+      "sourceSha256": "sha256:7d31114e9200454d084dd7df04db34f1afc4c3ac23f3feb09c5eef6a85be8950",
+      "currentFields": [
+        "applicability"
+      ],
+      "currentExactPresent": true,
+      "requiredAntecedentSameChunk": true
+    },
+    {
+      "id": "CTX-PREFLIGHT-FAIL",
+      "skillId": "korean-prose-editor",
+      "sourcePath": "skills/korean-prose-editor/references/entry-details.md",
+      "line": 9,
+      "sourceSha256": "sha256:26ce188795767864370bbd07ae06ba5e164ff802b301656daa3759626996a9a1",
+      "currentFields": [
+        "applicability"
+      ],
+      "currentExactPresent": true,
+      "requiredAntecedentSameChunk": true
+    }
+  ],
+  "runtime": {
+    "inventoryDigest": "sha256:8aee21bd595317f40336fa4cae46eff4e963e486e7b74ca29200736e9fa09e81",
+    "skills": 24,
+    "issues": [],
+    "protectedContexts": [
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "startLine": 18,
+        "endLine": 18,
+        "intactSingleApplicabilityChunk": true
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "startLine": 19,
+        "endLine": 19,
+        "intactSingleApplicabilityChunk": true
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "startLine": 26,
+        "endLine": 26,
+        "intactSingleApplicabilityChunk": true
+      },
+      {
+        "skillId": "evaluation-validity-auditor",
+        "path": "skills/evaluation-validity-auditor/references/entry-details.md",
+        "startLine": 5,
+        "endLine": 5,
+        "intactSingleApplicabilityChunk": true
+      },
+      {
+        "skillId": "evaluation-validity-auditor",
+        "path": "skills/evaluation-validity-auditor/references/entry-details.md",
+        "startLine": 6,
+        "endLine": 6,
+        "intactSingleApplicabilityChunk": true
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/references/entry-details.md",
+        "startLine": 3,
+        "endLine": 3,
+        "intactSingleApplicabilityChunk": true
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/references/entry-details.md",
+        "startLine": 9,
+        "endLine": 9,
+        "intactSingleApplicabilityChunk": true
+      },
+      {
+        "skillId": "session-board",
+        "path": "skills/session-board/SKILL.md",
+        "startLine": 15,
+        "endLine": 19,
+        "intactSingleApplicabilityChunk": true
+      },
+      {
+        "skillId": "session-board",
+        "path": "skills/session-board/SKILL.md",
+        "startLine": 21,
+        "endLine": 21,
+        "intactSingleApplicabilityChunk": true
+      }
+    ],
+    "registryPreconditions": [
+      {
+        "skillId": "independent-deliberation-panel",
+        "phase": "decision-analysis",
+        "capabilities": [
+          "independent-deliberation",
+          "independent-review",
+          "cross-examination",
+          "evidence-resolution",
+          "consensus-decision"
+        ],
+        "precondition": "The request contains material uncertainty, conflicting requirements, or high failure cost.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "independent-deliberation-panel",
+        "phase": "decision-analysis",
+        "capabilities": [
+          "independent-deliberation",
+          "independent-review",
+          "cross-examination",
+          "evidence-resolution",
+          "consensus-decision"
+        ],
+        "precondition": "A case brief and directly inspectable evidence or evidence locations are available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "coordinate-subagents",
+        "phase": "execution-planning",
+        "capabilities": [
+          "subagent-coordination",
+          "task-decomposition",
+          "subagent-delegation",
+          "ownership-coordination",
+          "evidence-integration"
+        ],
+        "precondition": "The user authorizes the requested work and applicable permission boundaries are known.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "coordinate-subagents",
+        "phase": "execution-planning",
+        "capabilities": [
+          "subagent-coordination",
+          "task-decomposition",
+          "subagent-delegation",
+          "ownership-coordination",
+          "evidence-integration"
+        ],
+        "precondition": "The task explicitly requires one of this provider's capabilities. Subagent dispatch additionally requires an explicit user request or a documented net benefit.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "independent-audit-gate",
+        "phase": "completion-gate",
+        "capabilities": [
+          "independent-audit",
+          "risk-classification",
+          "evidence-verification",
+          "release-gate"
+        ],
+        "precondition": "A final target identifier and final change or release artifact are fixed.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "independent-audit-gate",
+        "phase": "completion-gate",
+        "capabilities": [
+          "independent-audit",
+          "risk-classification",
+          "evidence-verification",
+          "release-gate"
+        ],
+        "precondition": "Implementation verification evidence and a fresh auditor independent from implementation are available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "task-contract",
+        "phase": "task-definition",
+        "capabilities": [
+          "task-contract-definition"
+        ],
+        "precondition": "The user request and applicable instruction resolution are available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "acceptance-evidence-validator",
+        "phase": "acceptance-verification",
+        "capabilities": [
+          "acceptance-evidence-validation"
+        ],
+        "precondition": "A valid TaskEnvelope.v1, fixed target identifier, inspectable evidence locations, and a frozen acceptance request artifact are available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "blocker-diagnostician",
+        "phase": "failure-diagnosis",
+        "capabilities": [
+          "blocker-diagnosis"
+        ],
+        "precondition": "Observed failure episodes or directly inspectable evidence and the diagnostic permission boundary are available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "recovery-strategy-selector",
+        "phase": "recovery-strategy-selection",
+        "capabilities": [
+          "recovery-strategy-selection"
+        ],
+        "precondition": "A validated CAUSE_CONFIRMED diagnosis, the source task, the failed workflow receipt, constraints, and authorization evidence are available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "workspace-convention-profiler",
+        "phase": "workspace-discovery",
+        "capabilities": [
+          "workspace-convention-profiling"
+        ],
+        "precondition": "The workspace root is known and readable.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "workspace-convention-profiler",
+        "phase": "workspace-discovery",
+        "capabilities": [
+          "workspace-convention-profiling"
+        ],
+        "precondition": "The requested investigation is read-only.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "mutation-risk-preflight",
+        "phase": "pre-mutation-gate",
+        "capabilities": [
+          "mutation-risk-preflight"
+        ],
+        "precondition": "A concrete mutation action and exact target are available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "mutation-risk-preflight",
+        "phase": "pre-mutation-gate",
+        "capabilities": [
+          "mutation-risk-preflight"
+        ],
+        "precondition": "The check runs before the mutation.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "instruction-scope-resolver",
+        "phase": "instruction-resolution",
+        "capabilities": [
+          "instruction-scope-resolution"
+        ],
+        "precondition": "A workspace root and target paths are known.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "change-scope-guardian",
+        "phase": "scope-baseline",
+        "capabilities": [
+          "change-scope-baseline-capture"
+        ],
+        "precondition": "A readable Git repository and frozen task envelope are available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "change-scope-guardian",
+        "phase": "scope-baseline",
+        "capabilities": [
+          "change-scope-baseline-capture"
+        ],
+        "precondition": "No task mutation has started.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "change-scope-guardian",
+        "phase": "scope-verification",
+        "capabilities": [
+          "change-scope-assurance"
+        ],
+        "precondition": "A frozen task envelope and matching workspace baseline are available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "model-effort-advisor",
+        "phase": "model-effort-assessment",
+        "capabilities": [
+          "model-effort-fit-assessment"
+        ],
+        "precondition": "The original user request is available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "model-effort-advisor",
+        "phase": "model-effort-assessment",
+        "capabilities": [
+          "model-effort-fit-assessment"
+        ],
+        "precondition": "A mismatch verdict requires an observed current model and reasoning effort from the host, user, or current screenshot.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "iteration-frame-auditor",
+        "phase": "convergence-review",
+        "capabilities": [
+          "iteration-frame-audit"
+        ],
+        "precondition": "A frozen convergence root, append-only attempt history, proposed frame change, and verified evidence inventory are available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "iteration-frame-auditor",
+        "phase": "convergence-review",
+        "capabilities": [
+          "iteration-frame-audit"
+        ],
+        "precondition": "A fresh-context reviewer distinct from every implementation actor is available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "phase": "korean-prose-selection",
+        "capabilities": [
+          "korean-prose-selection"
+        ],
+        "precondition": "The MCP host performed exactly one glossary lookup after protected-span extraction.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "phase": "korean-prose-selection",
+        "capabilities": [
+          "korean-prose-selection"
+        ],
+        "precondition": "A Korean prose request artifact is available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "phase": "korean-prose-selection",
+        "capabilities": [
+          "korean-prose-selection"
+        ],
+        "precondition": "A distinct selection actor is available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "phase": "korean-prose-editing",
+        "capabilities": [
+          "korean-prose-editing"
+        ],
+        "precondition": "The selection artifact matches the request digest.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "phase": "korean-prose-editing",
+        "capabilities": [
+          "korean-prose-editing"
+        ],
+        "precondition": "A distinct editing actor is available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "phase": "korean-prose-verification",
+        "capabilities": [
+          "korean-prose-verification"
+        ],
+        "precondition": "The frozen rubric artifact is available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "phase": "korean-prose-verification",
+        "capabilities": [
+          "korean-prose-verification"
+        ],
+        "precondition": "A verification actor distinct from selection and editing is available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "phase": "korean-prose-finalization",
+        "capabilities": [
+          "korean-prose-finalization"
+        ],
+        "precondition": "The selection, candidate, and verification report are digest-linked to the same source.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "phase": "korean-prose-finalization",
+        "capabilities": [
+          "korean-prose-finalization"
+        ],
+        "precondition": "The deterministic finalizer is available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "evaluation-validity-auditor",
+        "phase": "evaluation-validity",
+        "capabilities": [
+          "evaluation-validity-audit"
+        ],
+        "precondition": "A frozen evaluation request and inspectable evidence rooted in one explicit artifact directory are available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "codex-token-usage-analyzer",
+        "phase": "usage-analysis",
+        "capabilities": [
+          "local-codex-token-usage-analysis"
+        ],
+        "precondition": "The request explicitly invokes codex-token-usage-analyzer and local Codex session logs are readable.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "software-security-auditor",
+        "phase": "security-audit",
+        "capabilities": [
+          "software-security-audit"
+        ],
+        "precondition": "A fixed security audit request and inspectable target are available.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "cs-engineering",
+        "phase": "cs-constraint-derivation",
+        "capabilities": [
+          "cs-constraint-derivation"
+        ],
+        "precondition": "Applicable instructions and permitted evidence sources are known.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "cs-engineering",
+        "phase": "cs-constraint-derivation",
+        "capabilities": [
+          "cs-constraint-derivation"
+        ],
+        "precondition": "CS applicability is determined by the host/orchestrator; metadata is not a semantic runtime filter.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "cs-engineering",
+        "phase": "cs-implementation-review",
+        "capabilities": [
+          "cs-implementation-review"
+        ],
+        "precondition": "Applicable instructions and permitted evidence sources are known.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "cs-engineering",
+        "phase": "cs-implementation-review",
+        "capabilities": [
+          "cs-implementation-review"
+        ],
+        "precondition": "CS applicability is determined by the host/orchestrator; metadata is not a semantic runtime filter.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "cs-engineering",
+        "phase": "cs-implementation-review",
+        "capabilities": [
+          "cs-implementation-review"
+        ],
+        "precondition": "Supply a verified cs-review-bundle artifact with local relative references; selected stage validation checks it at recording and finalization.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "test-engineering",
+        "phase": "test-plan-validation",
+        "capabilities": [
+          "test-plan-validation"
+        ],
+        "precondition": "The applicable AGS instructions and existing authorization are known.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "test-engineering",
+        "phase": "test-plan-validation",
+        "capabilities": [
+          "test-plan-validation"
+        ],
+        "precondition": "Input artifacts are fixed by references. Selection metadata is not runtime semantic enforcement.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "test-engineering",
+        "phase": "test-sensitivity-review",
+        "capabilities": [
+          "test-sensitivity-review"
+        ],
+        "precondition": "The applicable AGS instructions and existing authorization are known.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "test-engineering",
+        "phase": "test-sensitivity-review",
+        "capabilities": [
+          "test-sensitivity-review"
+        ],
+        "precondition": "Input artifacts are fixed by references. Selection metadata is not runtime semantic enforcement.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "code-review",
+        "phase": "change-code-review",
+        "capabilities": [
+          "change-code-review"
+        ],
+        "precondition": "The applicable AGS instructions and existing authorization are known.",
+        "preservedExactlyOnce": true
+      },
+      {
+        "skillId": "code-review",
+        "phase": "change-code-review",
+        "capabilities": [
+          "change-code-review"
+        ],
+        "precondition": "Input artifacts are fixed by references. Selection metadata is not runtime semantic enforcement.",
+        "preservedExactlyOnce": true
+      }
+    ],
+    "registryPreconditionsChecked": 45,
+    "allChecksPassed": true,
+    "actualPaidCalls": 0,
+    "reviewerProductWrites": 0
+  },
+  "nonSpanFields": [
+    {
+      "skillId": "acceptance-evidence-validator",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "blocker-diagnostician",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "change-scope-guardian",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "code-review",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "codex-token-usage-analyzer",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "context-continuity",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "coordinate-subagents",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "cs-engineering",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "evaluation-validity-auditor",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "independent-audit-gate",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "independent-deliberation-panel",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "instruction-scope-resolver",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "iteration-frame-auditor",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "korean-prose-editor",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "model-effort-advisor",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "mutation-risk-preflight",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "orchestrator",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "ponytail",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "recovery-strategy-selector",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "session-board",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "software-security-auditor",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "task-contract",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "test-engineering",
+      "nonSpanMetadataUnchanged": true
+    },
+    {
+      "skillId": "workspace-convention-profiler",
+      "nonSpanMetadataUnchanged": true
+    }
+  ],
+  "limitation": "No live semantic model/AGENT mischoice has been observed. These are deterministic context segmentation observations and human-reviewed polarity risks.",
+  "openBlockingFindingsWithinReviewedScope": 0,
+  "scope": {
+    "verdict": "PASS",
+    "summary": {
+      "in-scope": 26,
+      "excluded": 0,
+      "unplanned": 0,
+      "preexisting-untouched": 0,
+      "preexisting-overlap": 0,
+      "ownership-unknown": 0
+    },
+    "findings": [],
+    "baselineDigest": "ba086715a6d467b23373b2504ab09fb18ac1a1f4efa11de2b5c30aa9df877d32",
+    "currentDigest": "fdfda2161b1edd58389d96c4bede8e59c8a59b1df7eddda85caaa96202c80fca",
+    "frozenBaselineDigest": "ba086715a6d467b23373b2504ab09fb18ac1a1f4efa11de2b5c30aa9df877d32",
+    "unchangedTrackedFilesChecked": 1541,
+    "protectedFileHashes": [
+      {
+        "path": "mcp-server/dist/server.mjs",
+        "sha256": "3ee791bc7bdef2702707116f4fbdb9b308100dd2d3f0c04d266f2c476e5e74ba",
+        "baseBlob": "45e5945a40121c3b20d4bd34ad510c5630eb98fc"
+      },
+      {
+        "path": "mcp-server/src/skill-classification/gateway.ts",
+        "sha256": "80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+        "baseBlob": "9ecac2b99eeaf242f7adb4a3b52e6c92f8c54fae"
+      },
+      {
+        "path": "mcp-server/src/skill-classification/providers.ts",
+        "sha256": "f191c46db32f38248ebdd23be725b426a0b3020e0bb464b36bcc57521983651c",
+        "baseBlob": "ee0bff27f0f116a998b70e0c1064abed4dac5f03"
+      },
+      {
+        "path": "runtime/engineering-practices/CONTENT_LOCK.json",
+        "sha256": "5e131f5a6342d776ea0f8e585aacedc349486b5c61b4ce6812bba3f7503f1509",
+        "baseBlob": "f1bfdd436df2d8723764a45fc41f53d0078a1d21"
+      },
+      {
+        "path": "scripts/check-skill-context-optimization.mjs",
+        "sha256": "bc1657bf2e0e903a2b8fc60addbb4428c12f1b45a71e755ae1d2c3b2e2d4501c",
+        "baseBlob": "a3213c5a7ba9d0462de708ea3779a13a38ee6a9f"
+      },
+      {
+        "path": "scripts/run-tests.mjs",
+        "sha256": "1da67c219b54d39a7106425f52e2bdd8abe7ab90081cafc111fd6d40d4516140",
+        "baseBlob": "09e7fd5c6cfd28beaaa0b0ec64018978c6eb8125"
+      },
+      {
+        "path": "scripts/test-subreaper.py",
+        "sha256": "808cd0c131866af24b0e3759403018e909a89617baa7ab72edead0ae4c543ca7",
+        "baseBlob": "b9755c079ca50bfe159bc6799d8843ac979f1ba6"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/LICENSE",
+        "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+        "baseBlob": "fce99f684ffb085d094f8352fedfa20552046d41"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/README.md",
+        "sha256": "278bb4e1190abfab15d2206eddd0dc8699ed0437ed619be8f1545568f07f371a",
+        "baseBlob": "3dd490f6876215323610ad178ea727540860e244"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/SKILL.md",
+        "sha256": "1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109",
+        "baseBlob": "b04f6d7a025d569b44aa280949074ab1b02eafd3"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/agents/openai.yaml",
+        "sha256": "f6647cd907a5b28becd6f6cf05601b4d15e0bf0151d1e896e94df1c27e29660a",
+        "baseBlob": "1a6dae5727433f34eaeceb3849f7c36eb12d5a9b"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/contracts/acceptance-evidence-input.v1.schema.json",
+        "sha256": "d41effd0fd54209b295f75d233d19fb6fab5864a052de70b1272f6dd203e092c",
+        "baseBlob": "6c45d3400acb0c75da5219270e3627256170b09e"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/contracts/acceptance-evidence-report.v1.schema.json",
+        "sha256": "cf22e268b09e823e25b74f2ee3da74de103f3a00b8a672409b2bec6580fe6507",
+        "baseBlob": "b1fda1b2c1a74102664863bfe249905fc5256a21"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/contracts/acceptance-report-validation.v1.schema.json",
+        "sha256": "3062feb742fc20f846dccf7002a2edae74e2bd9b10dba4f2d8937d0775880f32",
+        "baseBlob": "cbb59079c1473ed90d69d1ebcaaba4cc5d6fc58d"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/contracts/upstream/lock.json",
+        "sha256": "faec991bfaf7725a5ab6d9494840e6d4d152c5eeaa3cc5ea260b6398c0534901",
+        "baseBlob": "7b441c3e2ce40c6dfa5d6fff81ffeaabd7b0cf1a"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/contracts/upstream/task-envelope.v1.schema.json",
+        "sha256": "b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21",
+        "baseBlob": "a95f74c14089ce8c79ada753e787cc8d72facb17"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/integration/provider-result.v1.schema.json",
+        "sha256": "708c3cf8b44b05bc1a81ea3290982bd81053a442f8a07eeb1eee2f656b860800",
+        "baseBlob": "c6399b28e1492d536eecb4781c44721c0c2c708b"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/integration/skill-descriptor.json",
+        "sha256": "03c363f12563acb2dc76a4dc340652b671bf166408fea6b156f2be717dd360c5",
+        "baseBlob": "7a2e1e3ab92c3263ffa353f58908a1c9f478912b"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/references/entry-details.md",
+        "sha256": "2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991",
+        "baseBlob": "ffd969ed2c49379915acfbdcae1cfaafc211e288"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/references/evidence-protocol.md",
+        "sha256": "229d6f16a1b560b8482d3283f5a46f74f86a405d47c0bdf592d18f3f3e3897d0",
+        "baseBlob": "e74dca6358d8320f9f1e733623db6633ffb22c68"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/scripts/check-repository.mjs",
+        "sha256": "eb88d4a8e383b3c93ee456901eb479937548dde1c7737a948d81d0d3144770bd",
+        "baseBlob": "1915407d4286752fd1d748e18a726c69677a7e49"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/scripts/cli.mjs",
+        "sha256": "296b2a8d0eb3690f69538e2cc1693e0129af3b2a95d6c9792d88ae2821fa6e9c",
+        "baseBlob": "8499a7a97db782c89734e1757e01310dca43cfab"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/scripts/core.mjs",
+        "sha256": "0a340ef81cafbc1d08edfdd042480d14ede06fbce407417be6d4def4ca7a4216",
+        "baseBlob": "103f161b3f9f084d24a4cc44fe054924651976c5"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/scripts/io.mjs",
+        "sha256": "f04aacb1603b18aa3b431cbcc96eb7f815ee7af9ece586d3e7c1221149f78dc0",
+        "baseBlob": "e7e644674ad23882f37430f9b84a84f6c59d31d0"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/scripts/schema-validation.mjs",
+        "sha256": "f6870594c5c16bac20adaa2c6e9dcbdf2e4804c5922fd591c6ef030ee6495c44",
+        "baseBlob": "6e3a64e2773f88a6a90e2cccd855daf99a3cc7c4"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/scripts/validate-report.mjs",
+        "sha256": "ab569b96c807b62ece0ff404f8b732c12f6a7c054b33dfda300bc7839ff07794",
+        "baseBlob": "208b423f9acc1c08aba8f513ebf07ac17f0a94ad"
+      },
+      {
+        "path": "skills/blocker-diagnostician/LICENSE",
+        "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+        "baseBlob": "fce99f684ffb085d094f8352fedfa20552046d41"
+      },
+      {
+        "path": "skills/blocker-diagnostician/README.md",
+        "sha256": "51ad3ab0e4942811b1d1a7224b68eafb831acd1f3245b6a89ea9488cb8cb6830",
+        "baseBlob": "9799a3f43c45d4fb84f62f4779c76698052f85a0"
+      },
+      {
+        "path": "skills/blocker-diagnostician/SKILL.md",
+        "sha256": "5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e",
+        "baseBlob": "9d0485ea76cb4f16845787ba69dcf3d8a54ce0f8"
+      },
+      {
+        "path": "skills/blocker-diagnostician/agents/openai.yaml",
+        "sha256": "168b913d43a54297a77f7d50f22d3f4fb592d1dc90e618855ab1189c32aa3c9b",
+        "baseBlob": "84ac19b8c5d39c6b5eb87703ade24c406d694516"
+      },
+      {
+        "path": "skills/blocker-diagnostician/contracts/diagnosis-report.v1.schema.json",
+        "sha256": "ce04ec2821fb07ebc66373b3783165c461758ac30437d401171fc43c0a07fba0",
+        "baseBlob": "60f6bf46f8dffabb44d34ca24a8f8ace98f6ca22"
+      },
+      {
+        "path": "skills/blocker-diagnostician/contracts/failure-episode-set.v1.schema.json",
+        "sha256": "646601a2450a99b3748f56e152a81257c3fcd9d928f0c4cc6f27482c503a0fd4",
+        "baseBlob": "372a0141b331bf5f1c89bddf1a436ef912aac78a"
+      },
+      {
+        "path": "skills/blocker-diagnostician/integration/provider-result.v1.schema.json",
+        "sha256": "00d317e9b1a0ede9f27927d49663c7179189722e6545e76d4e43b828fdacb181",
+        "baseBlob": "900db7f25a247487d832966b7acfbade6aff39b5"
+      },
+      {
+        "path": "skills/blocker-diagnostician/integration/skill-descriptor.json",
+        "sha256": "ba5636a13f1b98dbab34c8e46e37ea3b34f2ddb10afb4ea0d7d0be2a08069e0e",
+        "baseBlob": "3c5705a69f0e3a65a30dd3761f3836b267c2ba77"
+      },
+      {
+        "path": "skills/blocker-diagnostician/references/diagnosis-protocol.md",
+        "sha256": "ee079daee6f2d17b0660fdcf1e49da51fdcfaaf98f14fce6ade8db5932061c80",
+        "baseBlob": "ad5c75e0d9435826a6ddef57cbbbc705d53f4bbc"
+      },
+      {
+        "path": "skills/blocker-diagnostician/references/entry-details.md",
+        "sha256": "5d3068c1151d10ff89304f2c3a5e18be6dc235d75cff179e3ff68a28d76aaebf",
+        "baseBlob": "9d2db6ccbb0c93bd04b4e49919a3aaeefd5f123d"
+      },
+      {
+        "path": "skills/blocker-diagnostician/scripts/check-repository.mjs",
+        "sha256": "8e50291ed41d4adff92b5f85c499aec045651ec9d7aff83a7b8e8ecc3e7c8356",
+        "baseBlob": "ca7ee301f6f1b29ec5cdb008243714dda3f4eb75"
+      },
+      {
+        "path": "skills/blocker-diagnostician/scripts/cli.mjs",
+        "sha256": "321dd6be1cc02731dd4d9d1a26bc67a1dbe2595cb3fed00250c56e56d0d7d76c",
+        "baseBlob": "084838d243f77e6d04031ab93a389d78e47d983e"
+      },
+      {
+        "path": "skills/blocker-diagnostician/scripts/cluster-failures.mjs",
+        "sha256": "23c4410936ad785ca40d9ef36fc2a4086113829e2be953f04ad875a11df71c27",
+        "baseBlob": "560d1f79ba382b078f8773c5b255cf202b29216c"
+      },
+      {
+        "path": "skills/blocker-diagnostician/scripts/core.mjs",
+        "sha256": "a0aa3c9b75e62fbfa0db398043787e91b9efa78eb0374af42baff01f864bb01f",
+        "baseBlob": "8496e836cabd5a3d23e36a7c413f70cb7a9d1a30"
+      },
+      {
+        "path": "skills/blocker-diagnostician/scripts/digest-request.mjs",
+        "sha256": "ccbcf4eb50947808bd820af3205cd0b043b753894cac5e7d06b24e73d0775b58",
+        "baseBlob": "46e1a99dc27347d01a5ec51ed4b31a77d7d10b23"
+      },
+      {
+        "path": "skills/blocker-diagnostician/scripts/io.mjs",
+        "sha256": "f04aacb1603b18aa3b431cbcc96eb7f815ee7af9ece586d3e7c1221149f78dc0",
+        "baseBlob": "e7e644674ad23882f37430f9b84a84f6c59d31d0"
+      },
+      {
+        "path": "skills/blocker-diagnostician/scripts/schema-validation.mjs",
+        "sha256": "cc240a10b7e02ab42d515c93a883568484dbd1580a1046ae321918409055b088",
+        "baseBlob": "4ee361dea1c1b28704b97cf5278b1bbb1321d810"
+      },
+      {
+        "path": "skills/blocker-diagnostician/scripts/validate-report.mjs",
+        "sha256": "b96161ec93e69c4cd4518e99069423fe784c415cea97971f607bc94c80317fa3",
+        "baseBlob": "571344c4bc2c46d0acd60ae05e7ab59b82c25be5"
+      },
+      {
+        "path": "skills/change-scope-guardian/LICENSE",
+        "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+        "baseBlob": "fce99f684ffb085d094f8352fedfa20552046d41"
+      },
+      {
+        "path": "skills/change-scope-guardian/README.md",
+        "sha256": "b6c00b38e32d0ed8b2f3344e9884672f1f55c619c3449f22e766c2bb35830fad",
+        "baseBlob": "be37f6b962a11a2cff253e0f8e687e64ef46406b"
+      },
+      {
+        "path": "skills/change-scope-guardian/SKILL.md",
+        "sha256": "4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e",
+        "baseBlob": "d55e01c514e150cb6113edac6de67df12595e9ca"
+      },
+      {
+        "path": "skills/change-scope-guardian/VERSION",
+        "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03",
+        "baseBlob": "3eefcb9dd5b38e2c1dc061052455dd97bcd51e6c"
+      },
+      {
+        "path": "skills/change-scope-guardian/agents/openai.yaml",
+        "sha256": "82edc01f3289309e7f19458b5dee1d9cc877cd5643f4643d5ffa9de066c9543f",
+        "baseBlob": "decd3b94b761d78898ea2f229cfaa2ffdaa7b828"
+      },
+      {
+        "path": "skills/change-scope-guardian/contracts/change-scope-report.v1.schema.json",
+        "sha256": "5495ea406196ea120bd6a237fa5db22c152c26beac84d276cf09080404a6039c",
+        "baseBlob": "58f802e3374fe7c84bb0999c714de68068cab942"
+      },
+      {
+        "path": "skills/change-scope-guardian/contracts/change-scope-request.v1.schema.json",
+        "sha256": "42e658217660fa7e21e102d8fca570461edc3ab5bf83a8588f871f5c3c9d4571",
+        "baseBlob": "c0ede8f03455d8f18495173a3e2c3dd1177612b9"
+      },
+      {
+        "path": "skills/change-scope-guardian/contracts/upstream/lock.json",
+        "sha256": "175a485d0dde0a4339282622ecfc495b85bb388db3c7b942d0023849f1908c09",
+        "baseBlob": "b228ba88f6fb398d2d6eac23c7e5ccea4afc1edb"
+      },
+      {
+        "path": "skills/change-scope-guardian/contracts/upstream/task-envelope.v1.schema.json",
+        "sha256": "b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21",
+        "baseBlob": "a95f74c14089ce8c79ada753e787cc8d72facb17"
+      },
+      {
+        "path": "skills/change-scope-guardian/contracts/workspace-baseline.v1.schema.json",
+        "sha256": "e45fa635212cc86c49f62818181f90f06f014c3533d7e74f2929f66608b36452",
+        "baseBlob": "7328e9e144e29108b352d1ca34c28529be311d7b"
+      },
+      {
+        "path": "skills/change-scope-guardian/integration/provider-result.v1.schema.json",
+        "sha256": "7142aa17f93e7b50d2149dc002bb8c6a1ce9dd66a40ea181763f5158b1f9c6d1",
+        "baseBlob": "1bce5aea425e60c1a5fe2a0ed3c80448f43c2175"
+      },
+      {
+        "path": "skills/change-scope-guardian/integration/skill-descriptor.json",
+        "sha256": "bebe755fae0dc2350ddf773472b6725ea236c01764e344eb99c59fe69807d194",
+        "baseBlob": "a93c3def1d7ba64a0f36ad06a8e0c6fdcd9bae47"
+      },
+      {
+        "path": "skills/change-scope-guardian/references/entry-details.md",
+        "sha256": "d164e59584763265a4bd8ccfd6a4ee75560f1df4ef30cd44dee68d814baf185b",
+        "baseBlob": "775fad2b6c19be522874db3d4e065fe89fb44f79"
+      },
+      {
+        "path": "skills/change-scope-guardian/references/path-policy.md",
+        "sha256": "8165defb0cb02f683718f8c6c927b0455f30d2120f3d4d6e0a971247c912a56d",
+        "baseBlob": "815b8e4e49b132c2a733ebeed8f02f0eb80564b1"
+      },
+      {
+        "path": "skills/change-scope-guardian/references/verdict-rules.md",
+        "sha256": "71d8e964c03874b8bdcaef4e21487a56d672d59553da0c01276e4896a8fc1c28",
+        "baseBlob": "0d0c0777245ae62ddd84ea3d77eb39b5c2936e8d"
+      },
+      {
+        "path": "skills/change-scope-guardian/scripts/capture-workspace-baseline.mjs",
+        "sha256": "c7f6b887fa94697434568ed987b66d81525841949bf64ebfdadcc6f5dcecfe69",
+        "baseBlob": "3feb812f66f8e1f94a6f062af2a6206d28d632a3"
+      },
+      {
+        "path": "skills/change-scope-guardian/scripts/compare-change-scope.mjs",
+        "sha256": "017e03abb617f5fa9d582e1b812b78f1dfa570e411970ae9aa6afb4a67b9e1ba",
+        "baseBlob": "e7c03855c30ec437b49b59bfdf04d231463a5be7"
+      },
+      {
+        "path": "skills/change-scope-guardian/scripts/compile-schemas.mjs",
+        "sha256": "c2bcd5f917c09c2e1adec7694b4939372f3352e1eb911a09c62acdfc32f826dd",
+        "baseBlob": "d96ec82785abfe46f163e037f75fe5ed9ae0a26f"
+      },
+      {
+        "path": "skills/change-scope-guardian/scripts/lib.mjs",
+        "sha256": "0fa25746036db845760c61a41a53dcbb012c40ec310640a1ef5a3a993c500562",
+        "baseBlob": "7c441a6e96fcaf9d49f20e84c7ac3d27124b4815"
+      },
+      {
+        "path": "skills/change-scope-guardian/scripts/schema-validator.mjs",
+        "sha256": "53165cecfb1dc4e1d78317d88e04f0c9e938ded84bd4ba96bda57178923e6238",
+        "baseBlob": "4bc3edd81c74a6fe28f195a5d86a91762eb462c0"
+      },
+      {
+        "path": "skills/change-scope-guardian/scripts/validate-package.mjs",
+        "sha256": "64434769172c15b9ee835f17ec0239f013f859ec58116db49c711b0e6c18707f",
+        "baseBlob": "598e8d8fcc90565dceff78f7b80f65c62cb3016e"
+      },
+      {
+        "path": "skills/change-scope-guardian/scripts/validate-report.mjs",
+        "sha256": "226996920248045fbfe5f3fef921a095c831702de4a00766bb1b5f4866a40ae3",
+        "baseBlob": "f0c1dd49899475bd5c2e22453c0d9f4d6f8e836c"
+      },
+      {
+        "path": "skills/code-review/LICENSE",
+        "sha256": "75f3ee170babffa9aac464afff60ad521d9731220ae4f67e0c40cb457b18a0a2",
+        "baseBlob": "337687a6d14ef9bb50784d983cb700637d43d47b"
+      },
+      {
+        "path": "skills/code-review/SKILL.md",
+        "sha256": "19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+        "baseBlob": "ac33d0109c2d8addcccdfb005571fd7649f352d4"
+      },
+      {
+        "path": "skills/code-review/VERSION",
+        "sha256": "e9dd8507f4bf0c6f42458e41aea833ad0bd3f6127272335eee9bf4d58541ed67",
+        "baseBlob": "6e8bf73aa550d4c57f6f35830f1bcdc7a4a62f38"
+      },
+      {
+        "path": "skills/code-review/agents/openai.yaml",
+        "sha256": "ad18ce5bea33d73429f40580286f12c0716117c04fbc1097a362038952d306f6",
+        "baseBlob": "f35877b44293d98ba027047c6bf1c37ef3160108"
+      },
+      {
+        "path": "skills/code-review/assets/shared-dependencies.json",
+        "sha256": "0ce2c7256664836d3c0517d3aed202a282f805028a68b4753a7b855d427b3368",
+        "baseBlob": "952159988f64fbb417621663be945f1e26bd8755"
+      },
+      {
+        "path": "skills/code-review/integration/skill-descriptor.json",
+        "sha256": "9cae248bf3d0606fe7011354fd87d8c8462d6786dab7479d964f6a3eb5360851",
+        "baseBlob": "5b85b584162f277c51d1a1713211ff8ad1d6e48f"
+      },
+      {
+        "path": "skills/code-review/scripts/run.mjs",
+        "sha256": "a6a866d7d1c9ea3a19a6a5779d977b0438e85715db4d4f3dcc1c26e87258f0f5",
+        "baseBlob": "c8af6deffee07515ec3589fa777d15bafe477866"
+      },
+      {
+        "path": "skills/codex-token-usage-analyzer/LICENSE",
+        "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+        "baseBlob": "fce99f684ffb085d094f8352fedfa20552046d41"
+      },
+      {
+        "path": "skills/codex-token-usage-analyzer/SKILL.md",
+        "sha256": "81e119d5c8ef11d8f2c928f8c3c9d518941643ae9c88c03cdb8a6ece09f80f1f",
+        "baseBlob": "076ab082f4c152b3517d9217743ca6f294f7165b"
+      },
+      {
+        "path": "skills/codex-token-usage-analyzer/agents/openai.yaml",
+        "sha256": "c1fada1a8914ac00faafd91ebd3bf798c225ff402ce870b1b8150ba77b28a5b8",
+        "baseBlob": "4f9f6077a090fb0ab2c1a0d863a77259f622622f"
+      },
+      {
+        "path": "skills/codex-token-usage-analyzer/contracts/token-usage-report-request.v1.schema.json",
+        "sha256": "e9d418c702b8f764e515a925f5511d6203c37d13d23c130e3b9df86472a838b4",
+        "baseBlob": "814d4af92803db815f208e4329f8cdcc8f37fe39"
+      },
+      {
+        "path": "skills/codex-token-usage-analyzer/contracts/token-usage-report.v1.schema.json",
+        "sha256": "0a3306633ed0c192e6bfc3b269df0b35b4e2a72492c5fc1cd7dad7f5f0d37612",
+        "baseBlob": "d604b73c2069d7007a84bd54c2bd75209ef2a5ae"
+      },
+      {
+        "path": "skills/codex-token-usage-analyzer/integration/provider-result.v1.schema.json",
+        "sha256": "0e8cc867092b27a8336acab857c32afada525ee06c4aa2f13ba0f1c981015d9f",
+        "baseBlob": "3503cb063c05c60ba977f95a57ac7fef93c34739"
+      },
+      {
+        "path": "skills/codex-token-usage-analyzer/integration/skill-descriptor.json",
+        "sha256": "e2364fee9ef778fdf66bbffb8bb5cb666b65aafb64be1d73b1b9561b381efa72",
+        "baseBlob": "a3ec1f7c607461a93bc9f7161f42b2ad866a88f7"
+      },
+      {
+        "path": "skills/codex-token-usage-analyzer/references/entry-details.md",
+        "sha256": "95d3acae36c832218dcaa0d31fbbc1c89b572ba013dff2ab07525910601ac5d4",
+        "baseBlob": "62bf0df3e7ea39c01809738974f28a66bd00b530"
+      },
+      {
+        "path": "skills/codex-token-usage-analyzer/scripts/cli.mjs",
+        "sha256": "4fe42023dd42334ab2b225b4e5612e6788c5b79d3a2502b5f4f81099b31c2c03",
+        "baseBlob": "f6c8a210c2bd2483e1e9c65b107b5d7df60a22e4"
+      },
+      {
+        "path": "skills/codex-token-usage-analyzer/scripts/core.mjs",
+        "sha256": "7504ef02e9fd32e0bb43e9c492f017a0b89b24f3518a9e9c6c04709c86a01b1b",
+        "baseBlob": "340b895b807f9def5060155171aea93b09962bf9"
+      },
+      {
+        "path": "skills/codex-token-usage-analyzer/scripts/schema-validation.mjs",
+        "sha256": "90a9765698538fbda1921d26f95b6436bb61cd00184f7e8cf05effe4e75e0c5b",
+        "baseBlob": "ad9d1a72b47d3c54e425631f7ae9379fe1d31ea6"
+      },
+      {
+        "path": "skills/context-continuity/SKILL.md",
+        "sha256": "e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022",
+        "baseBlob": "4da1a124f36f1cbf5bbb97f2b5f1f3132e6658cd"
+      },
+      {
+        "path": "skills/context-continuity/agents/openai.yaml",
+        "sha256": "fbeeced183253cf5cc7bf1dd02b21a5089333e221b3f1700c74d42f567d91224",
+        "baseBlob": "0cb1bdea58ff787185fb22c4b2039579752962e0"
+      },
+      {
+        "path": "skills/context-continuity/references/entry-details.md",
+        "sha256": "10b186ff6d32f5b2533c7af0e28d27e98d08a8131da2a5954f6ca20fe88f72fe",
+        "baseBlob": "2bbfa6afed21f8a5d131f05f783afec012f6ca22"
+      },
+      {
+        "path": "skills/coordinate-subagents/LICENSE",
+        "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+        "baseBlob": "fce99f684ffb085d094f8352fedfa20552046d41"
+      },
+      {
+        "path": "skills/coordinate-subagents/SKILL.md",
+        "sha256": "b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0",
+        "baseBlob": "ff75b2d24dc9c17979f6aa43549ce2048f38fb78"
+      },
+      {
+        "path": "skills/coordinate-subagents/agents/openai.yaml",
+        "sha256": "5750afef5b44abeb163804a8b220faef63102579b9e54a579ee2a828b041e4b7",
+        "baseBlob": "6a482482925a0b1f18ce4a59427d6161e31b824f"
+      },
+      {
+        "path": "skills/coordinate-subagents/references/delegation-playbook.md",
+        "sha256": "a69a4935d3782ce55663e097c670632599249cc5d261a6f323c03df62e86716f",
+        "baseBlob": "30f1928333169a2e12cff6ef6c7dcd040e5f3fd1"
+      },
+      {
+        "path": "skills/coordinate-subagents/references/entry-details.md",
+        "sha256": "2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604",
+        "baseBlob": "2c3ee6d0498bfe80296f385c02e2040844ab23f7"
+      },
+      {
+        "path": "skills/coordinate-subagents/references/live-dispatch-check.md",
+        "sha256": "873ee07aa7176464bb88e8bb402ce29e704308378d01c0fd36f68880dd5e74e4",
+        "baseBlob": "dda63ced8bb0ca7da2c9b693c7d68e2b1d087563"
+      },
+      {
+        "path": "skills/coordinate-subagents/references/model-routing-presets.json",
+        "sha256": "3f53fa46a6868e76bf790794a8b2b7abf30714cc22a42b280991711df770bca9",
+        "baseBlob": "3845bc33547fba255dae732cec30472890780f4e"
+      },
+      {
+        "path": "skills/coordinate-subagents/references/model-routing.md",
+        "sha256": "303d915d11cff399cc0c8cad8ad182ce59a7ac2fb86083bd897b67cbcc71a1d2",
+        "baseBlob": "a13a734b9a5b612452798076bf5d2546057a5cd2"
+      },
+      {
+        "path": "skills/coordinate-subagents/scripts/model-routing.mjs",
+        "sha256": "7f50713ee1461fb0afbc623fa027dc0e5432b410cb336eb6e275fd1bbbf9a08e",
+        "baseBlob": "f6e0604dc0b7c5e48822fbe1b38ec54672c3c78a"
+      },
+      {
+        "path": "skills/cs-engineering/LICENSE",
+        "sha256": "75f3ee170babffa9aac464afff60ad521d9731220ae4f67e0c40cb457b18a0a2",
+        "baseBlob": "337687a6d14ef9bb50784d983cb700637d43d47b"
+      },
+      {
+        "path": "skills/cs-engineering/SKILL.md",
+        "sha256": "aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+        "baseBlob": "ed9106e30ef448eecc890d6d133e0dfb9266db75"
+      },
+      {
+        "path": "skills/cs-engineering/VERSION",
+        "sha256": "1f930dd1f133c1f97a94fe3acb8db34372cf4c01ffdb2b3ff4ca72f9494121e9",
+        "baseBlob": "0ea3a944b399d25f7e1b8fe684d754eb8da9fe7f"
+      },
+      {
+        "path": "skills/cs-engineering/agents/openai.yaml",
+        "sha256": "6255ba0de822be779f21d9cc486b1244de616c90c45b5a9276639a20a74e5ea0",
+        "baseBlob": "936360024f54dcfd9e278b35ce663730ffcd2a06"
+      },
+      {
+        "path": "skills/cs-engineering/assets/examples/sqlite-queue/binding.json",
+        "sha256": "7ccdbc9e9424ef07173d87c5f51141e1ef03cef4c4c99832a5e6f92c296d980e",
+        "baseBlob": "b01424957b817d2fcc4bd453aad1ea947b242a61"
+      },
+      {
+        "path": "skills/cs-engineering/assets/examples/sqlite-queue/candidate.json",
+        "sha256": "420efbcde3bfae38adc317a795528af681c95649d73c739c5065af0f6446baa5",
+        "baseBlob": "64f72b539cb7eee806e2b5beb4b80557b0102a59"
+      },
+      {
+        "path": "skills/cs-engineering/assets/examples/sqlite-queue/candidate/queue.py",
+        "sha256": "4bd3ed50da73659ebe233c32c9243193eaf66634bb71307354ce2e0385bb66ee",
+        "baseBlob": "b93b6ccbebd881dd0175c9fd3c7f0811e3b3177c"
+      },
+      {
+        "path": "skills/cs-engineering/assets/examples/sqlite-queue/constraints.json",
+        "sha256": "3c4b86b78c6b9c230fda615afa0d6e7a953e4a0c5a8f68e18ab1120822480a1e",
+        "baseBlob": "eb959dbceccc5fe73d19812b190e71538182a383"
+      },
+      {
+        "path": "skills/cs-engineering/assets/examples/sqlite-queue/evidence/queue-tests.json",
+        "sha256": "6ae3172d1ad4e6e5ff80e2c8100d48b346f8fc56a7464d64975c9ed775fc32eb",
+        "baseBlob": "f1c3aee9a015fd08c0713cb629c3fc1c1230db1e"
+      },
+      {
+        "path": "skills/cs-engineering/assets/examples/sqlite-queue/policy.json",
+        "sha256": "84e0ca731600b904f372c7754a3052a3fcc0345710cedf4bde2239de268ceb31",
+        "baseBlob": "cd206a75408d4b0bea9bb1ede82b3693e493a8aa"
+      },
+      {
+        "path": "skills/cs-engineering/assets/examples/sqlite-queue/request.json",
+        "sha256": "ca1b37620739e7516a37a86ec242d9cf7762ed381be66a57a05409d97d8c0378",
+        "baseBlob": "aa636dc54580af7bf25c797c107bcc062bda98f4"
+      },
+      {
+        "path": "skills/cs-engineering/assets/examples/sqlite-queue/review.json",
+        "sha256": "51980b33e88751281be8c7e46ebe6d57b8fbcefc7dab23494549c916f244cff3",
+        "baseBlob": "9821b37845c91df6f3ea3bba0fb0c505c336adaa"
+      },
+      {
+        "path": "skills/cs-engineering/assets/examples/sqlite-queue/source/baseline.txt",
+        "sha256": "3d9e8a12a76e329d44b203d698bc00e0374e536c5093fcbdd1120d8bb7474b7a",
+        "baseBlob": "ddbb449ec78309cd02feb7feae70e133bcca2222"
+      },
+      {
+        "path": "skills/cs-engineering/assets/examples/sqlite-queue/source/request.txt",
+        "sha256": "5101489f5fdd3767892028b1327ef0f3970fb5c9fbccd495fb3d665302b6a37a",
+        "baseBlob": "b440acbddd81cd36d2d0dd23315049196f278335"
+      },
+      {
+        "path": "skills/cs-engineering/assets/examples/sqlite-queue/stage-bundle.json",
+        "sha256": "4ab4e1f532734ac9173965be0cb49247b044606ce8616a9e4d9a3d156653f5e5",
+        "baseBlob": "ea8fcbf47c42df1dda9708c1e30f6b60dc4fb431"
+      },
+      {
+        "path": "skills/cs-engineering/assets/examples/sqlite-queue/task.json",
+        "sha256": "ad26674fd4324e8d8aea7eb41ee818872233cada9012e9ad95eca02b84ec6bb2",
+        "baseBlob": "136c12bac97dc05af4240728deb7db4af0941eb4"
+      },
+      {
+        "path": "skills/cs-engineering/assets/knowledge-lock.json",
+        "sha256": "af72203315c251c981925ecf54e9d97bfbfdb57d00b362a9d80d020d8545ddc0",
+        "baseBlob": "60dccf7ff7305e1b2aea625d23ecdc1319700204"
+      },
+      {
+        "path": "skills/cs-engineering/assets/rule-catalog.json",
+        "sha256": "d528175ca269566160445637b60f14ebc3820df6ffe85449c5339cecc3b12164",
+        "baseBlob": "9292fe4922bc85a868baaef4a3e33569dbd30f47"
+      },
+      {
+        "path": "skills/cs-engineering/assets/rules/algorithms-data-structures.json",
+        "sha256": "4d2d6a572ae5bc19959ebb9dc853c2dac2b5c575a437866e0bc1da3746171589",
+        "baseBlob": "6a0ee459c76b6bf311470db250fd479836b17c71"
+      },
+      {
+        "path": "skills/cs-engineering/assets/rules/concurrency.json",
+        "sha256": "2b2df7f6f0384c921196bc94f8bb707cc656e9886b8992c52c90031e0fa62893",
+        "baseBlob": "61a97800100c46890f87d732b830ecc76e7c5977"
+      },
+      {
+        "path": "skills/cs-engineering/assets/rules/databases.json",
+        "sha256": "7edfffa6a53dfdc538f1f9714828ba1aa2007d4781344fcc35bd30d841d611db",
+        "baseBlob": "49adfde93bda9c8c68757ab6100745c370df21a5"
+      },
+      {
+        "path": "skills/cs-engineering/assets/rules/distributed-systems.json",
+        "sha256": "275a37de1fedb4152bbd907e4dcc5dd2de8db86a35551c1caab8e0966d1b5d52",
+        "baseBlob": "83fca04478c5fa7c3497d569f3b6455480000ed8"
+      },
+      {
+        "path": "skills/cs-engineering/assets/rules/language-semantics.json",
+        "sha256": "98f25fa5f99b7207ff71b7a3793f2145a0ee88a6b1fc6b5454c725d1f90c9989",
+        "baseBlob": "a247dd5ec86e6e4bd1e271a2e90d0ab66489f8b0"
+      },
+      {
+        "path": "skills/cs-engineering/assets/rules/networking.json",
+        "sha256": "c261ccb573b4e28c4e39e5ce82e5e18a99260dc74e4b0fc7d3590152bad8732a",
+        "baseBlob": "61fa4b0b80062f05d7770147b5eeeb1c5b5fe9b4"
+      },
+      {
+        "path": "skills/cs-engineering/assets/rules/operating-systems.json",
+        "sha256": "c5259c4e67a2a46b997711cd841aab0c64484c7a5a765b491a8b64b9eed88027",
+        "baseBlob": "313fe71028ed3434bc0f792ab1dcbe4cc9620c9f"
+      },
+      {
+        "path": "skills/cs-engineering/assets/rules/performance.json",
+        "sha256": "a73f2c9c81fc13f897933966da2819acbf5280c2126c3738fb636f83f2ab7179",
+        "baseBlob": "51ec5719ddd3ba073b3367858951018d21baa12c"
+      },
+      {
+        "path": "skills/cs-engineering/assets/rules/security-boundaries.json",
+        "sha256": "c743a9be8981b4c8913a08721e13fe623936d64192a2e86313e9b94df227a57a",
+        "baseBlob": "e36fba7f8911d60f70882d8c3dc7d83d28b3fbf6"
+      },
+      {
+        "path": "skills/cs-engineering/assets/rules/software-design.json",
+        "sha256": "20a9f86cad94bf428021ae3dd204877e2e3c42f1d7e48f03cdf54d9d2acf6fc9",
+        "baseBlob": "c6463434664aae9595dd6d1b43f37e918996cee7"
+      },
+      {
+        "path": "skills/cs-engineering/assets/sources.json",
+        "sha256": "56e7eedee105dbc966909b1977ac1220a930e1d26dbbf762f9118d79e4f17da7",
+        "baseBlob": "0b94f9302b9fe115a7042ba5188fbd118d89da2d"
+      },
+      {
+        "path": "skills/cs-engineering/contracts/cs-candidate.v1.schema.json",
+        "sha256": "85914866d6ac38dd21a19e40b998410061bb492b16b527f08648158da23bebb0",
+        "baseBlob": "1b3713869509c94fe8fedd3bb074acbf463a940d"
+      },
+      {
+        "path": "skills/cs-engineering/contracts/cs-constraint-report.v1.schema.json",
+        "sha256": "febfb7477c922c50945e62efeacee78fefcc223b34080c8e8d9478cf6f5c5e5e",
+        "baseBlob": "5e0a0cf2bd6375e17959313e0ffd7bc01560a7b3"
+      },
+      {
+        "path": "skills/cs-engineering/contracts/cs-engineering-binding.v1.schema.json",
+        "sha256": "91d03b77feff657951707d73a4620adeb63015a5ffecacbf82aa1770ce2bc2d9",
+        "baseBlob": "a8d1103bc19fcd80e51dce27580760bdeadef12d"
+      },
+      {
+        "path": "skills/cs-engineering/contracts/cs-policy.v1.schema.json",
+        "sha256": "78284b42eb3b2a6e1b2a60fb9072ac66d57ef070ce38d3a8dff0661262acef2b",
+        "baseBlob": "61f0bf7575fe93724f2cda5029dd16de544c834d"
+      },
+      {
+        "path": "skills/cs-engineering/contracts/cs-request.v1.schema.json",
+        "sha256": "0a7961351f071f3b5b26f2efcc5aeb2b1c00aa3d45edae35914404b8242e8a7a",
+        "baseBlob": "a049ee71e7f1b87249caa246486f20f0dfd358d0"
+      },
+      {
+        "path": "skills/cs-engineering/contracts/cs-review-report.v1.schema.json",
+        "sha256": "41f9ed9dad383a5c99cc143b6089e6f8753739f6f38ea4cb747b7ff8461f0a37",
+        "baseBlob": "bcc4ba49c23f4d74bdbdd92ed7fc4fa55ac2237c"
+      },
+      {
+        "path": "skills/cs-engineering/contracts/cs-stage-bundle.v1.schema.json",
+        "sha256": "0f3039f866078aee5634af121019e247136de087682cea384abf1f6d0bed8f3f",
+        "baseBlob": "7c26d959cbb8631cf5f5c62d2e4c6930158a35d5"
+      },
+      {
+        "path": "skills/cs-engineering/evals/host-cases.json",
+        "sha256": "6ca16bd57956fdc062eef28e2dcf96b80826cfccece564e4e854594718d903ff",
+        "baseBlob": "6c70a7f2eff1d960032c027ee2c933502067ed44"
+      },
+      {
+        "path": "skills/cs-engineering/integration/skill-descriptor.json",
+        "sha256": "490c609d065c2937eb51891bea99c880d522e73cbcd53c307b9c9792537e212c",
+        "baseBlob": "fb58bf7841999f27b5a353de129f48facc5be15b"
+      },
+      {
+        "path": "skills/cs-engineering/references/ags-2x-integration.md",
+        "sha256": "e20adcfc11a2e0eb9a52ac917e14556a51f31585147d3e7e4859c3aa0f32612b",
+        "baseBlob": "32b1cbc0cc645d7e8c854bc656bb100f434e5cf3"
+      },
+      {
+        "path": "skills/cs-engineering/references/algorithms-data-structures.md",
+        "sha256": "25f23e5932b6785a790e5b855a4f20b59a68569dfedda4c587ed5a935689ea84",
+        "baseBlob": "edc55fddbbe937a4fd713eed6fd653e4f8ebcb8a"
+      },
+      {
+        "path": "skills/cs-engineering/references/concurrency.md",
+        "sha256": "9b64864e2c1d2088f0a48a2d382f13c903891cca61c9d62b08beec3fb6badcdb",
+        "baseBlob": "f2bd0b56421705a897c325491a11e77d73dd250c"
+      },
+      {
+        "path": "skills/cs-engineering/references/contracts-and-cli.md",
+        "sha256": "debc046e444e6198b9151e3f3fcab577a81fd8e6488bc0b9280715b0c08aa9a4",
+        "baseBlob": "a16c3d9625cbe847058069b4a3414164b19850b8"
+      },
+      {
+        "path": "skills/cs-engineering/references/databases.md",
+        "sha256": "ad83c7d47da20bd75f18148639412a80c86c9ff14b6a0f9f92570e5e631a1725",
+        "baseBlob": "60fa30131dfeb7aef035dd61c83f5bd7712e0db1"
+      },
+      {
+        "path": "skills/cs-engineering/references/design-basis.ko.md",
+        "sha256": "01081d243ad0fa04cf3993a3ed1e4017a43708fb54677063e72573438cfc7034",
+        "baseBlob": "f99377014492ea2e345b361010b3527a17d77fe6"
+      },
+      {
+        "path": "skills/cs-engineering/references/distributed-systems.md",
+        "sha256": "35150f3bc3979d7a18733d0b298d8d90e5d6f1ed859d43fd3aab0b3596d23545",
+        "baseBlob": "1590ea8a2e511c872a5c3fbad17abc87089cbc19"
+      },
+      {
+        "path": "skills/cs-engineering/references/index.md",
+        "sha256": "0852a5c9b4b592649fa050864bd95dcbd2fdf7fbc453c531c5349d9546c30fbb",
+        "baseBlob": "edc83f4350cee3e48de6ea9bbb6462b9745fb9f3"
+      },
+      {
+        "path": "skills/cs-engineering/references/language-semantics.md",
+        "sha256": "93d62a15ca4911215018994ba32e50eab1f7306e0b8c96432e14828ac24d57b5",
+        "baseBlob": "f0ac01271af073b05eda33400f3bd46593e090ec"
+      },
+      {
+        "path": "skills/cs-engineering/references/networking.md",
+        "sha256": "e084c6b06f42e43bbdf86ca1658a16069a5952729b12d02c89eb1d5bb8f3e46f",
+        "baseBlob": "6a77e861f96d6178a0c9f825ec6ffae2b7b39c2e"
+      },
+      {
+        "path": "skills/cs-engineering/references/operating-systems.md",
+        "sha256": "21411cb00332b0943749608bb6bd390759921941f0401ca9eaa9c008ff9fe9c9",
+        "baseBlob": "5296e3ae355cc397e7b0ce04fae792a4bf75117e"
+      },
+      {
+        "path": "skills/cs-engineering/references/performance.md",
+        "sha256": "15ef21b6783be2fadbb179144c4a604dcb40a62131c1aea910204291da6e9c85",
+        "baseBlob": "6e587b0efeed3c2150eec4cc437189cef6c227c2"
+      },
+      {
+        "path": "skills/cs-engineering/references/security-boundaries.md",
+        "sha256": "8726e1874b9e62eefaa8cf1ce90c4ac3e31c26e5dfe9e398b3581fc333fdeb66",
+        "baseBlob": "2f90c5b6a1158b7bfa18993ebe9127cf5b67cb4b"
+      },
+      {
+        "path": "skills/cs-engineering/references/software-design.md",
+        "sha256": "6840195e3569b53fac4553500694a82241b47abc471f6b5e8f31a04ba6d3321c",
+        "baseBlob": "18266aef9be219baf91876ce6869e040d8f14663"
+      },
+      {
+        "path": "skills/cs-engineering/references/worked-example.md",
+        "sha256": "9bc64625ca47ca87c720b122e3198393f26f8629fe1764793a9d822606e52bc5",
+        "baseBlob": "09285679fd63caa8fb90881540550668f70e88b8"
+      },
+      {
+        "path": "skills/cs-engineering/scripts/ags-adapter.mjs",
+        "sha256": "4dc16c0a60bf1d2c7d57e63b6e2c48ff7785332e0bb52e9a0a2121b7a36031f6",
+        "baseBlob": "e63f84fdfe1d614aa2afcf287eb1162cd091d76a"
+      },
+      {
+        "path": "skills/cs-engineering/scripts/core.mjs",
+        "sha256": "ca2cd74b7d51c51f5fc4c0205a2a2ccd235fca497aaf21d28d3040a9d57de6c4",
+        "baseBlob": "0ad0b4605aaab5892d0e52c550b0a3edbe0e4fa3"
+      },
+      {
+        "path": "skills/cs-engineering/scripts/primitives.mjs",
+        "sha256": "18aa97483f885310246ea846b34b62fd800a53ccd468812b1d7f4384e64b0d7e",
+        "baseBlob": "5232034876ffaad57bf6d7b443dced4dbbb050d0"
+      },
+      {
+        "path": "skills/cs-engineering/scripts/schema-validation.mjs",
+        "sha256": "5c6567bb8946b8b7cafdf48e8269753d4dbfc6efe796e340ec2aff3c96a6ed31",
+        "baseBlob": "4191e0062087d50c1f34d1a5526191f0dc8150b6"
+      },
+      {
+        "path": "skills/cs-engineering/scripts/validate.mjs",
+        "sha256": "943b8aa6246b7c48b771a5405edcc73cc74ed709a724d0c96ce5ba79ad683c38",
+        "baseBlob": "7d2cd29a4083828af99550908a35f39238e18b0f"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/LICENSE",
+        "sha256": "1126322e2cc8d165adc4c792eeb195717de2bcc7b39be1ce77959d78e87ef685",
+        "baseBlob": "14fac913ccf80234b1848540089a3bbcb6e5283d"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/README.md",
+        "sha256": "ab89282af193071b96259a5b1c38e8045dfcb3d4cd7cf9839c5487c00e45bd3f",
+        "baseBlob": "ad0f94815b34c9657efc92d619ff4fcf4fdb4022"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/SKILL.md",
+        "sha256": "eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230",
+        "baseBlob": "4c78f3173e186da4405f1d233a1194b5287e108f"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/agents/openai.yaml",
+        "sha256": "ac47f1fd2fc6f18baad1cded0969c8a48c4be091a6a17a275a9a821c2095b849",
+        "baseBlob": "9662d271d9d9604c42a0abf4b05e9fe260fd9c25"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/contracts/evaluation-aggregate-claim.v1.schema.json",
+        "sha256": "996dfacc6fcfab1c850120e33c2977403338f24c494fd83860ae6d6f01d627d0",
+        "baseBlob": "2952a0d8fcb0b479010014c32290f60662f4a7a9"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/contracts/evaluation-case-record.v1.schema.json",
+        "sha256": "166e0c016b953dc1df0ea930afea3781d27cd03c23eb90cbafc0b9c5251fbb86",
+        "baseBlob": "81f5aa1f94cebb7ede8daeec06656d0e85b091b2"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/contracts/evaluation-result-record.v1.schema.json",
+        "sha256": "71228eda30ffb78e6fc9a9583a1934e3cdf5bee531dfedf455fc30c60a57f581",
+        "baseBlob": "738dd052e0fe493d3a4adee6b8413bfd5c45d24a"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/contracts/evaluation-validity-report.v1.schema.json",
+        "sha256": "fc67b9e7fccbe99c4d0c0f2895a654ab5669122043336debc4837b807ba10f0a",
+        "baseBlob": "87f0891381c7bef0b1b14831638bca824487085d"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/contracts/evaluation-validity-request.v1.schema.json",
+        "sha256": "e6976558c876e8b6a299036ea8411bb6b5c9bd7d2c58198fdb312e0babacb767",
+        "baseBlob": "7c85b5c8e3254da900a95a592deb5c649316661c"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/contracts/evaluation-validity-validation.v1.schema.json",
+        "sha256": "eeb42567f3602158c15aff5b19e8793fac37e482f974a2cd015ad676f80386e0",
+        "baseBlob": "26b7542f6cddb18723e625324f3e7eec523d99a8"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/integration/provider-result.v1.schema.json",
+        "sha256": "e4b97706a426aba4aa594e04d74c4bad2f2fd46e3f91f83738d06e7756402ea0",
+        "baseBlob": "395cadf18fc6ad93b5e626ee67eec270424371b3"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/integration/skill-descriptor.json",
+        "sha256": "c832e9f4ad623a4087426c13bb70bd5c08faa3814652af7f3a41d82ded20c867",
+        "baseBlob": "e60cf4ad96284df5abb56ea68e1bc12c6b63fd34"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/references/audit-protocol.md",
+        "sha256": "e9e49b113e088cb9055bae6f5f1f93f3be83cfaf18bafb1f6854e67853ea62a9",
+        "baseBlob": "9c7ec0e5e3678f7d385799b86c81ece4250bfb24"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/references/entry-details.md",
+        "sha256": "7d31114e9200454d084dd7df04db34f1afc4c3ac23f3feb09c5eef6a85be8950",
+        "baseBlob": "73ece2839b77ec07bb53416c0e8e20c2a8bcea67"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/scripts/check-repository.mjs",
+        "sha256": "f8c6783c3c9fd921912d862dd772ea5f6e0a6bbed83ca7034388fe8b7ae4fd6d",
+        "baseBlob": "4b9f2a613cceec83a9ddb86e3195c0d595298a7d"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/scripts/cli.mjs",
+        "sha256": "0b6282eef0b25ffdc3b8f41ffee4faa0fe3f0b178edc35fca73413f4b28adbc6",
+        "baseBlob": "8820c28fc1ed3b384bc1a11b8c64cca0f573ff44"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/scripts/core.mjs",
+        "sha256": "ef16baf8366bfbaa2deec09ec8c9986a0a2611caa389f3d30685495ae4285190",
+        "baseBlob": "a510c63b95c7998a8fe2016938852fc2b660f50a"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/scripts/digest-request.mjs",
+        "sha256": "ed67da3854f1b0dcd43b5275705394a1fb818ff7d37cb9ebeb33f49d6067edbc",
+        "baseBlob": "313d1cdc4ea5ce3bd423230d230561fe8fe4941d"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/scripts/io.mjs",
+        "sha256": "085c8e483e8d15609a55d1cf728c9d1ccbddcb89a0cd68b4c544b8de93c8a3d5",
+        "baseBlob": "4f02448edb9896ec8f2b93462be24631256d5604"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/scripts/runtime-smoke.mjs",
+        "sha256": "9bc75ff121fc1be7db270dd19d0ab8168b2cb196164cbc1fbd75c2f240af9086",
+        "baseBlob": "c24d694f4177f404931c7b8d4feaa4a43b48cb2d"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/scripts/schema-validation.mjs",
+        "sha256": "425ea52a1bd24ea010ee8959d9ae6e8d5ad15ff5345bb1f6e42473afc53c921e",
+        "baseBlob": "3409c5cd9bb1df719d3e3075c79d43b50484cc61"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/scripts/validate-report.mjs",
+        "sha256": "b9f139590014f8b3476e8e0007511cee0376643e9bda48d6643cd41d2738b122",
+        "baseBlob": "d17e19c1d7987f560c8aad316ddbccac883af78e"
+      },
+      {
+        "path": "skills/independent-audit-gate/LICENSE",
+        "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+        "baseBlob": "fce99f684ffb085d094f8352fedfa20552046d41"
+      },
+      {
+        "path": "skills/independent-audit-gate/README.md",
+        "sha256": "bdec1f18c48e33e7399daff1a4fb7f5260d57c4fdbfae7e1a80bbac2f8e89427",
+        "baseBlob": "499e2d8acc03138db8b1ef245f01c392797d8a1e"
+      },
+      {
+        "path": "skills/independent-audit-gate/SKILL.md",
+        "sha256": "6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8",
+        "baseBlob": "6a5002a9aa92f7644af126edf31a6359b833b704"
+      },
+      {
+        "path": "skills/independent-audit-gate/agents/openai.yaml",
+        "sha256": "eab0f9599b357495c129a0a80fa7b8787f910981a646e6c7a8da4f6c741d1240",
+        "baseBlob": "5d679ed709f180adbd0be30eec9ab3d86c0bf678"
+      },
+      {
+        "path": "skills/independent-audit-gate/references/audit-protocol.md",
+        "sha256": "9fdd74f1a7fbaa3dd7655524d69a1e0d948149f115717957912b7dcbaf93021f",
+        "baseBlob": "38f618971418e3d082eeca881ec653fb56e18d4e"
+      },
+      {
+        "path": "skills/independent-audit-gate/references/entry-details.md",
+        "sha256": "3f117c44ba584885a2dc9b370a20f3f4ae4a8e672dae1bd174586d8d27b9ca7e",
+        "baseBlob": "7f7226284148a084f82d75f4f9b57530570e8b7c"
+      },
+      {
+        "path": "skills/independent-audit-gate/references/orchestrator-integration.md",
+        "sha256": "bb2876718149c148daab12cea59a337dd62eb6b61939e69c6f39d27f04b12dda",
+        "baseBlob": "9904355b7dd911a95fd42c6c1bd18419a4f1fc8c"
+      },
+      {
+        "path": "skills/independent-audit-gate/scripts/test_plugin_component.py",
+        "sha256": "8c46aa71bdb49a23f6d4437dd701af5004a74069679d672f1bd9805aba609c5b",
+        "baseBlob": "bca819db6f1ad24d8e2f3de3718721f4eac83c02"
+      },
+      {
+        "path": "skills/independent-audit-gate/scripts/validate_skill.py",
+        "sha256": "54033b8e4a268831e5841b9a1715cfdef81753047e8bacaaade7b8845478ba47",
+        "baseBlob": "1d14a4700c55b8b06080ddee7d52e5159fec3b87"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/LICENSE",
+        "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+        "baseBlob": "fce99f684ffb085d094f8352fedfa20552046d41"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/README.md",
+        "sha256": "6790a265f9bcb37d8b7b88ce1261af017dde5753299b71deb6afc309d790bfd0",
+        "baseBlob": "cf3f125bd753ff8ca67e6a549bfbcdf48320cd03"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/SKILL.md",
+        "sha256": "899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab",
+        "baseBlob": "f2224626ff23da82a16df4d82cdb1993ef745974"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/agents/openai.yaml",
+        "sha256": "3aefb839c3dd1c275f88f895d066a2e9ec3533b2bbe373a10ba66ddae83afa78",
+        "baseBlob": "3eaa8b99c3343f7b5a4a03ffe636ec06b1327861"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/contracts/decision-record.v1.schema.json",
+        "sha256": "af181dcd574356dff20136b08af527eb9e1f0a0d47a371a087791f87179735a3",
+        "baseBlob": "14c55fdf951295544fe951f6bae0055a86b7675b"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/contracts/requirements.json",
+        "sha256": "13b2163ed2588ad9bd068df7a13efae39dcc8da094d31349c1adc370149904b4",
+        "baseBlob": "9cd2e1463873cdb8071eb5eee630cc72266345dd"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/corpus/01-low-routing.json",
+        "sha256": "1e3f20da8526ad496b006a070dbe28650dda6f6161633e1828c0cebef85abda3",
+        "baseBlob": "c2d7fd5e616b3d04c0e6fff5b7d3ea0de9831841"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/corpus/02-medium-contract-conflict.json",
+        "sha256": "7842da871839543b8d01e2125366f6aa7b243aed8d7f43029f5fafb6cfdaa915",
+        "baseBlob": "e3644bf4a1b8d5b7eb1a29141b1a9667658739ab"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/corpus/03-high-cross-exam-skip.json",
+        "sha256": "e59f4e65eb3c18a4392dd1c28044b41e6a46e67a0b82cb8bc3f18f4491eccc40",
+        "baseBlob": "a6b11668d4135e5bbe226fa3e135b422c5a5e5bd"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/corpus/04-high-adaptive.json",
+        "sha256": "59d315a916a4be8fffc9e8ce7f2e945661afbc86e0fd4a083210def8df87d723",
+        "baseBlob": "ba9916699b9ad20f7d3ed06a0b5219211190f63e"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/corpus/05-injection-unverified.json",
+        "sha256": "d7e87710bef984450b0de47bae3736cfd1204e3d7178ed7491ce0f713f551839",
+        "baseBlob": "719a046ab62f0d25f4e146b5ccc0e9a26b96ce78"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/corpus/06-critical-no-consensus.json",
+        "sha256": "965450c1db7a3ba23dc9e2cb1af38f00568df39344684b8db2688e1700dbe491",
+        "baseBlob": "f419f49102980e6779981cdb2fcfb999dfe60bca"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/ad01_specialist_cap.json",
+        "sha256": "a34dbe3160e136709a0803ddc4badcdc81ee1803997e5d9ac749f2a6eb82bb2f",
+        "baseBlob": "3505810c6f73c554b741a588cf155be91f08bb2a"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/ad02_redeliberation_cap.json",
+        "sha256": "e29dd71e0d91d087829d5347adc3ec9475a2ed3f4c02bc262429dc49065663e8",
+        "baseBlob": "d8e85acd32e4a3f82a4d2a20796647b3f1427706"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/ad03_impacted_scope.json",
+        "sha256": "6d01cd9d3ee3b7c7ec73c98a627a8ca52d165dd7ac5449e73f966a4ec39aa97a",
+        "baseBlob": "613419af67d2864e05dd7921e0eb9cfc1a30091d"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/ad04_worker_cap.json",
+        "sha256": "69ce979be60b94172580b6608829894951d0e4cf10e424336e2959a013e34871",
+        "baseBlob": "8d24ac830452e2ea7fe650a160a0c06fb9f16e80"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/co01_verified_links.json",
+        "sha256": "fe3b60abba103284594deae025a28f32f3b4737e2d9417bfdbf12aa73d4ce625",
+        "baseBlob": "7ffc5eb465ab45e9611c4943bd323fc438d2dd9b"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/co02_constraints.json",
+        "sha256": "82bcea5fb5140b6a2135bd11a0e7107d5fa17ce093961321baf457468d617b2c",
+        "baseBlob": "a794eb9a1fea889ed86a1797618830ecf9f41d47"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/co03_axes.json",
+        "sha256": "4188774b1f8b03c1617f1c2e5d09a6fc349d76194ac5589ef1f3f28a54aa6b22",
+        "baseBlob": "dcda293030079e641fa0c24061246265e70767cf"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/co04_unresolved_dissent.json",
+        "sha256": "2ede2e4684fe56c0e02510e1bd31922ca2876bbf2b501fb9453c895a712b2805",
+        "baseBlob": "a350078a54465f2426da36109c338982c6d77fc0"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/co05_no_consensus_shape.json",
+        "sha256": "23db11add99df3714a8985394dbb0fec01db43b6def338b8ea7e0d472fd6ea6b",
+        "baseBlob": "b564e54ed5af411d4e080b5699c1f9e9f3f226ff"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/cx01_reason.json",
+        "sha256": "db427e0a2d948e46e653eb321bf5a427305213edb5284ff91cf90c33a6ebe943",
+        "baseBlob": "59dfd217e756b65b85da23bc07398b9c538c08bf"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/cx02_all_triggers_selected.json",
+        "sha256": "36c3a9c2166efb0fa1f610769ed1ff8f1962385bf0e2def43d71bec970eba07b",
+        "baseBlob": "07753e0ec949b08471af9585a52696e8ec223af4"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/cx03_nonorigin_coverage.json",
+        "sha256": "d44455e0ad603e5ab064431b86ea0b9ea19e6b25d34651949e2a17269741f307",
+        "baseBlob": "78f4be834644431b1857840e0b62feea454fa3dc"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/cx04_followup_cap.json",
+        "sha256": "77b43c80c942080beaf2c33d479aedc1fbdef6c8d336dbf161c68b6a72ff6d45",
+        "baseBlob": "3817535d3b1f2f9c984b312c4bbd5ffa105ba37b"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/es01_status.json",
+        "sha256": "2d56737f2b5eaa8e2cbef40ecc37dd528b31623b7e5c0f24c5a163ed5c24ac9b",
+        "baseBlob": "60fc70e7e85fcd292fdb4c7e0420e0284265fbc9"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/es02_verified_locator_note.json",
+        "sha256": "b924898b0af04281fb336536c7b5e4d85b86d18f79834bdd419543dcce2857d8",
+        "baseBlob": "b7922f1a7f70db436e0c2545764b2311b7d09ff9"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/es03_only_verified_consensus_links.json",
+        "sha256": "1ad5f87d5de91936d0a4cde746bf0c3b16d3f7d9a2d44bffae65aa434b952c92",
+        "baseBlob": "9ec01cac4679e969aecbbf7a27bf5e0988c89609"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/es04_no_raw_reasoning.json",
+        "sha256": "4fb43c6337e3239c190637b0f3ff20048bbd20b77ab524797c2decb38af15604",
+        "baseBlob": "845177dd6d61fa4a46c1fbe5d1c5c28798bd300b"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/es05_no_execution_directive.json",
+        "sha256": "7753437dae1763caec2dfbb1dcb625fdcaf9d5f73ed87134f7f2dca7cabf045c",
+        "baseBlob": "9a2a0aab0e1417ce357c71d11f8b56fb8db32032"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/lf01_completed_reused_distinct.json",
+        "sha256": "e6d598cfcd2ef5a08483078767d5e16d9cf9c5047f3db6a812b423a13d2345ee",
+        "baseBlob": "328e1d5ab1b87dd2bb60dcf6c24774d6b0ec6d6c"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/lf02_judge_fallback.json",
+        "sha256": "d60461e8a176c009f0d50c21ff98145e6b2b235df53cc440c7afaf89ed6c0960",
+        "baseBlob": "cc1e89ae5108e8b403c31950c86cb9f090ed5a35"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/rc01_low_no_workers.json",
+        "sha256": "02fa46c56accc14dae5115d468ccdabba6a09fd78483865861f8d295144461c8",
+        "baseBlob": "16713b4e3080c3ae125003583c87e5f5bee953d4"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/rc02_medium_two_reviewers.json",
+        "sha256": "4d60143f5c518ea16ebe90d52c69060d09936cf646cf829e85183919bebc0e1d",
+        "baseBlob": "74ee812801c300efe33fe74e188361e7f09cf9b3"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/rc03_high_fresh_judge.json",
+        "sha256": "7f0248ccf2f21f9d4f5b6af99e2d9cdb5f95d4580c9e85d6a4efde8dc58541a2",
+        "baseBlob": "983ea1bc2c09d4cbd9929397563fbe52f914fc24"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/invalid/rc04_critical_red_team.json",
+        "sha256": "fe029660a8b8a2fa5129020d385dd3e6b49767fadbf19dd63efc6885c7378f56",
+        "baseBlob": "ecc06aaa75314b01db4aee2de3b4f1a90f6a8185"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/ad01_specialist_cap.json",
+        "sha256": "d1ef4857cc5fdc94163c9f97fde6274f34a2621fa633f6a65384a46fab7d4a27",
+        "baseBlob": "217ac4106b693ce7f26e769dac53eb51d335283d"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/ad02_redeliberation_cap.json",
+        "sha256": "8240d45e162ed94c20f7c8a43d2c9b3e13dfaa09777934e1ffb04148e1dc0807",
+        "baseBlob": "dd51c30dcf869c76bd9dacc77456302efd41e362"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/ad03_impacted_scope.json",
+        "sha256": "8240d45e162ed94c20f7c8a43d2c9b3e13dfaa09777934e1ffb04148e1dc0807",
+        "baseBlob": "dd51c30dcf869c76bd9dacc77456302efd41e362"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/ad04_worker_cap.json",
+        "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+        "baseBlob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/co01_verified_links.json",
+        "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+        "baseBlob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/co02_constraints.json",
+        "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+        "baseBlob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/co03_axes.json",
+        "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+        "baseBlob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/co04_unresolved_dissent.json",
+        "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+        "baseBlob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/co05_no_consensus_shape.json",
+        "sha256": "3d95502500037cbb7819943653e0ec73b36d8bc577e5ea37fa659e1a1450f2c4",
+        "baseBlob": "f9e07302fa487a2bb83fa413295f4c2f5de0e383"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/cx01_reason.json",
+        "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+        "baseBlob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/cx02_all_triggers_selected.json",
+        "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+        "baseBlob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/cx03_nonorigin_coverage.json",
+        "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+        "baseBlob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/cx04_followup_cap.json",
+        "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+        "baseBlob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/es01_status.json",
+        "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+        "baseBlob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/es02_verified_locator_note.json",
+        "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+        "baseBlob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/es03_only_verified_consensus_links.json",
+        "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+        "baseBlob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/es04_no_raw_reasoning.json",
+        "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+        "baseBlob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/es05_no_execution_directive.json",
+        "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+        "baseBlob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/lf01_completed_reused_distinct.json",
+        "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+        "baseBlob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/lf02_judge_fallback.json",
+        "sha256": "1e700f51495ae573d7637912e49b944580bd5b650d9cffc4275b6f7dcf33ce8b",
+        "baseBlob": "d9c2d0d362c6c0831b3e08dc8615bcb7f5e85dfa"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/rc01_low_no_workers.json",
+        "sha256": "f24477c6e8cc00dbbebab4ad7fa1406ef7dc4836af583090e6dff0be8f944876",
+        "baseBlob": "246b1be7cb2061951c4d0f2a8c55a5b309e686a9"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/rc02_medium_two_reviewers.json",
+        "sha256": "cd613b02886ab513a3b28b7f1fe4e8e94e954bea0dc5f92d5648fa1fca480b9a",
+        "baseBlob": "b1622d9ee288b21f752b452ed781653714b56722"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/rc03_high_fresh_judge.json",
+        "sha256": "da57783d608610a2f84f2b521bdbe48f51efa2c80a334c57becf2ffc9b748b81",
+        "baseBlob": "6fdba5cd721291d465c1a9e86079d2e6189bfdd2"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/evals/fixtures/valid/rc04_critical_red_team.json",
+        "sha256": "82ca6210fbb8530dfc48e3ad7b1121c6b2783e375377e24960843ec3d3297658",
+        "baseBlob": "ebd7d765e4e09f031b6decfcbf458e58294484df"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/references/entry-details.md",
+        "sha256": "f7fcfd9206f63c282a51c01446250dfc97eb7c65e576c00131030d1e0e2dbd65",
+        "baseBlob": "1e30fb9e916a489387e603f7d9f60683d8642c8f"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/references/evidence-and-verdict-schema.md",
+        "sha256": "3fe89dbe91f6b9cf944c3187da6c3f7b50f9e1815558a53d4522151edeab291f",
+        "baseBlob": "3b6343fe38ec73d5833fc8dd25f2faefd3dedc78"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/references/integration-contract.md",
+        "sha256": "39a8746dd1358baf81d1b7242810c970c8fcf98152a5b3155975f9e75019421f",
+        "baseBlob": "125bef327fb7e839f18f492486427273c8648424"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/references/orchestration-policy.md",
+        "sha256": "9764435e1520cde98885cd06038869f17fbd4060d25b7ee3dc2d95d5b3e837e3",
+        "baseBlob": "98f13af9a91f5f00937e8f9c9d8cbaf2cbfc5aa6"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/references/role-catalog.md",
+        "sha256": "18d8d9b6c65bc6925c1dfe3cbce86055bbf44f274a1c406ab4be5cf7c7a6ada5",
+        "baseBlob": "872d7dc124aed1b8c1f0220629d64c149f1c70d8"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/scripts/run_evals.py",
+        "sha256": "5c7666d6b15147bffaaa24f8f564fd62e3f8348736a42aeb220b1edcf846a6e9",
+        "baseBlob": "5924bbf42a89a222cc1d2f5caecd01a4aba80522"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/scripts/summarize_evals.py",
+        "sha256": "38be053cb6b7dee6aa4bb5c1923d98c7e8e5586959f11a126957470d838e3bcd",
+        "baseBlob": "ec8db5c1f8b2fb22e624feaa1e198e5c27b1a7ff"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/scripts/validate_decision_record.py",
+        "sha256": "c381670411a8fee8ceb657df3f1887298839bc875d9dfac9eb6c7ad61a8e7d34",
+        "baseBlob": "be95c4e64d94ad1b37133f82534087a8717f3e74"
+      },
+      {
+        "path": "skills/independent-deliberation-panel/scripts/validate_package.py",
+        "sha256": "f2047446d7a1d1a439f951b24257c3dbdaa769e282cf8c6e02bb74d3ef9d1548",
+        "baseBlob": "b2b92a0152137e69acf6c5b0102862aa03aa03b4"
+      },
+      {
+        "path": "skills/instruction-scope-resolver/LICENSE",
+        "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+        "baseBlob": "fce99f684ffb085d094f8352fedfa20552046d41"
+      },
+      {
+        "path": "skills/instruction-scope-resolver/README.md",
+        "sha256": "50c64615850cb097e0a23a751801c7086bcf73f4be4499f92fa8a8781c9b83f6",
+        "baseBlob": "87315de993ccd4a0f103d061d37ffdc230497f0f"
+      },
+      {
+        "path": "skills/instruction-scope-resolver/SKILL.md",
+        "sha256": "5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
+        "baseBlob": "25bd3dd957a2c21d4028231e1534715dc56e44a0"
+      },
+      {
+        "path": "skills/instruction-scope-resolver/agents/openai.yaml",
+        "sha256": "f073b57d3fa7f64c6e0ed053eb9000b00c92cdd4b4862bfb4083458fb46d19d1",
+        "baseBlob": "94fa6ffb2a4f3d346ff33dfb3b7172fb3d6ce119"
+      },
+      {
+        "path": "skills/instruction-scope-resolver/contracts/instruction-scope-request.v1.schema.json",
+        "sha256": "e53189bb093e631abe8a162ac8c61a807b6b962d9d2f5cd3c4b1d9d83703b1b8",
+        "baseBlob": "f0845ae2052f8062a417f94cac11f4c2a122b138"
+      },
+      {
+        "path": "skills/instruction-scope-resolver/contracts/instruction-scope-resolution.v1.schema.json",
+        "sha256": "fa7e89a1aa9b4874d0d6d98d51fd3366e3871a2d8daf66c958bd36073815dee2",
+        "baseBlob": "ba1013a7be2489be9d60f0cc17f2343f9ecfe9a4"
+      },
+      {
+        "path": "skills/instruction-scope-resolver/integration/provider-result.v1.schema.json",
+        "sha256": "17517fb4a61fa6eda8322d566b48b3d2cd1d6be8c7cc1a27ac2024e9c6b93771",
+        "baseBlob": "e1e58a47b5eae250050f9c53ab4ce2531afb898a"
+      },
+      {
+        "path": "skills/instruction-scope-resolver/integration/skill-descriptor.json",
+        "sha256": "c2cb3fb401f1255034979001b3112987bb0909c2f1e7d7e09117a0b7972b0f0c",
+        "baseBlob": "9e07da514da17598f8b80a806e517cd7e5ba9d3e"
+      },
+      {
+        "path": "skills/instruction-scope-resolver/references/conflict-classification.md",
+        "sha256": "8ede2ce0c1a8c0c6665c87fb4f5ee5695064eaa8b6e13c435900e52a2109d79d",
+        "baseBlob": "cbac13bf8c40d5538dd4b613eebed073ee91550f"
+      },
+      {
+        "path": "skills/instruction-scope-resolver/references/entry-details.md",
+        "sha256": "309a4dfc616428b9ef99f94094ec48495c52d4f5c47bf6fc28ac2fa04890dab8",
+        "baseBlob": "becb3972ca89be184bfde0730704dcd10e50f573"
+      },
+      {
+        "path": "skills/instruction-scope-resolver/references/resolution-model.md",
+        "sha256": "7bbac014604998b1d89248c09140a1a5fe7be4c7215e9258942d8234bdd9dc9c",
+        "baseBlob": "9bffb87bdc4bfdc4c8afa6f5be5b01cff7fbc863"
+      },
+      {
+        "path": "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs",
+        "sha256": "d95f342597a78ae056baa66d46fc85ef5adf8d0c4b12258c1f215011926a62d4",
+        "baseBlob": "6e30579614c97e65701799fdaaacc567f8d285cf"
+      },
+      {
+        "path": "skills/instruction-scope-resolver/scripts/validate-repository.mjs",
+        "sha256": "b515baba6e195c5187363f0ffe424301d8734e42bb1aa6bd07c758443f3f6352",
+        "baseBlob": "64ba8929ec0086e70771fe722d19f983433a6770"
+      },
+      {
+        "path": "skills/iteration-frame-auditor/SKILL.md",
+        "sha256": "e83cf0abff280adfca9f12c35afd67e3787c75ce4e7866f7d1e402f59211945f",
+        "baseBlob": "8f45820b3c1759115ff98b1b521d060139cf704a"
+      },
+      {
+        "path": "skills/iteration-frame-auditor/agents/openai.yaml",
+        "sha256": "47af6090e68c68870bce9b150355e7feb8f62b7638a431adff857e8384332508",
+        "baseBlob": "7acddf84035951937c9d5870368f3d55b157e15f"
+      },
+      {
+        "path": "skills/iteration-frame-auditor/contracts/iteration-frame-audit-request.v1.schema.json",
+        "sha256": "5a13e78ed8c170a5e25d42564df1aa4bb40464c5851c8c8edd0b8206dd88d08f",
+        "baseBlob": "c2c92cbef5958b6b306086e4306484578ab3c20e"
+      },
+      {
+        "path": "skills/iteration-frame-auditor/contracts/iteration-frame-comparison.v1.schema.json",
+        "sha256": "9c114f04bed89dbeab7245e4e13661b903df0f273f3e153bda3494a6809e71d2",
+        "baseBlob": "95911bc0e6f42fb15076b8a29636b86a13a2d2e2"
+      },
+      {
+        "path": "skills/iteration-frame-auditor/integration/skill-descriptor.json",
+        "sha256": "e5ef324675190cac44c89fe72d924a4b3ccc1a4c1afbb16231b792875a25c35e",
+        "baseBlob": "ac509baada3f0657e1cad28890d14523f7dafe60"
+      },
+      {
+        "path": "skills/iteration-frame-auditor/references/entry-details.md",
+        "sha256": "e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432",
+        "baseBlob": "eef2f59c2bd42126ff6a2bc40b9ac5952ce7c471"
+      },
+      {
+        "path": "skills/iteration-frame-auditor/references/review-protocol.md",
+        "sha256": "1abfd6a06a67d11277e24db17ee2e9fe8c2597e37304202378f782b959472793",
+        "baseBlob": "28b5f2deb51edd604c8668565672d14a4ae71362"
+      },
+      {
+        "path": "skills/iteration-frame-auditor/scripts/core.mjs",
+        "sha256": "be484cd917b6e21f426712c45019d413803d21b86e07daa2d94f8d3441e0bb71",
+        "baseBlob": "697423bedb925fa55a4eeea42ac0b4ac49b0dc32"
+      },
+      {
+        "path": "skills/iteration-frame-auditor/scripts/digest-request.mjs",
+        "sha256": "3aa667511afd0e2a82f01ef8c619c0ae0aed233d5cbf1254431dd654a934a1da",
+        "baseBlob": "56fae765c068b44695c1e3183d61cef6b8cea88c"
+      },
+      {
+        "path": "skills/iteration-frame-auditor/scripts/io.mjs",
+        "sha256": "149cee7dff10cd69e03c8dcbe85fce842bddac0db6f6d89d779cf4a0b2cc6768",
+        "baseBlob": "77f530b93a889130b979bc82cfb00b669173fc3d"
+      },
+      {
+        "path": "skills/iteration-frame-auditor/scripts/schema-validation.mjs",
+        "sha256": "368b47454f6c444eab80f187c1ab9f66228dc9f9c254768e2ccb4327aa6b76e1",
+        "baseBlob": "41543c3ed4dd40dffa5f4d6894005b68096267f3"
+      },
+      {
+        "path": "skills/iteration-frame-auditor/scripts/validate-review.mjs",
+        "sha256": "222f6a202e6848faf4446a9edd20a15753e4c0e3aff59d9809c625a82d24bb32",
+        "baseBlob": "75d19adc6b1ca688c1dc069fbe273ff63772f35f"
+      },
+      {
+        "path": "skills/korean-prose-editor/LICENSE",
+        "sha256": "a9cd9629f1976b407579466b4ae9d6b84c40d91d587827f3180c009701bc7472",
+        "baseBlob": "b45731fb916f750c99bc740de5768ad4c092c3db"
+      },
+      {
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "sha256": "f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+        "baseBlob": "2dbfe102f743f25d790e2bd600042d3a94f7ba10"
+      },
+      {
+        "path": "skills/korean-prose-editor/agents/openai.yaml",
+        "sha256": "7d2b7f9d360db9be036cf2086b5e4bbd5d621b23c13c1cae0fc4ca64ec53d8cb",
+        "baseBlob": "c34f86aeabad1707c4ee1f048de03d8c496555b6"
+      },
+      {
+        "path": "skills/korean-prose-editor/contracts/edit-candidate.v1.schema.json",
+        "sha256": "8026fae9d2597f3cc127e80f9d04b7fade42d1c66d03a23ca8656a4c27708db0",
+        "baseBlob": "d96c4cae56a4bb129e80d6c7c57ef90cb0c398a6"
+      },
+      {
+        "path": "skills/korean-prose-editor/contracts/edit-decision-set.v1.schema.json",
+        "sha256": "db9a283e623df89093c2dcc93f74461e309ef8d952956a5baacd88ff141147ee",
+        "baseBlob": "c308d18bec8436ea8cc40ae6eebfc0234b389b65"
+      },
+      {
+        "path": "skills/korean-prose-editor/contracts/edit-verification-report.v1.schema.json",
+        "sha256": "3cee16cadb97f532d1a6416c623510b5d338465fbc0c742c8fe2e3992dc7ef95",
+        "baseBlob": "6850b59e8efced0cd8b7f992ea5861e86ee047c7"
+      },
+      {
+        "path": "skills/korean-prose-editor/contracts/editing-draft.v1.schema.json",
+        "sha256": "5819c6be58cde00623b18f82bf4b2389d9340369ecf70510e937fedcbac7acd8",
+        "baseBlob": "db140dd49f5c498bda2dcc0f9675f63712453203"
+      },
+      {
+        "path": "skills/korean-prose-editor/contracts/editing-work-product.v1.schema.json",
+        "sha256": "fd2cd013431c46e54324c43e5012635ac12731dc9d8b3716d2f43f125f9ad2e3",
+        "baseBlob": "56daf844244eb9292ce06c0af24b98e8f42f5d98"
+      },
+      {
+        "path": "skills/korean-prose-editor/contracts/final-text-receipt.v1.schema.json",
+        "sha256": "19c95d9ece81e110b286460253929ed60382786decdf139261baa357b1da89e9",
+        "baseBlob": "e8153ed00a71415315e2f3ebd781a1ccb0a70afd"
+      },
+      {
+        "path": "skills/korean-prose-editor/contracts/finalization-request.schema.json",
+        "sha256": "79f4dc6d10d037288a698814400514a710692e432905a6d2ca56cea707c03f79",
+        "baseBlob": "1a2e47350517fd1a18d63526f57d856b25dd9c99"
+      },
+      {
+        "path": "skills/korean-prose-editor/contracts/glossary-binding.v1.schema.json",
+        "sha256": "ac67afeff4d6844a64514bab3c17a5dffdba3172d1d4db79f726f1422e4a5ec3",
+        "baseBlob": "35ce861120d031bd17e9f4d1fc868c6d5fb12063"
+      },
+      {
+        "path": "skills/korean-prose-editor/contracts/glossary-match-set.v1.schema.json",
+        "sha256": "44fb2ad4b377cc48594daa9d89d82a8dc677b7ef04f8dd28335454b1d10da04e",
+        "baseBlob": "aad9b0c6bac8a536d3490fc7005a3e0a92457045"
+      },
+      {
+        "path": "skills/korean-prose-editor/contracts/protected-manifest.schema.json",
+        "sha256": "cad9ae7bb477bfa2fc4bfc71adef5749f9d7be9eb89aaa1c147d388374fef395",
+        "baseBlob": "92aa185abc9cd685c9d9f0117627997b37e1fb54"
+      },
+      {
+        "path": "skills/korean-prose-editor/contracts/provider-plan.schema.json",
+        "sha256": "b52bd05b1682add3736122b079af6be0e29db1686a0715d6decb72febe589269",
+        "baseBlob": "d222df5fe6c9d7885fd6e7e024db8becda84c9d7"
+      },
+      {
+        "path": "skills/korean-prose-editor/contracts/receipt.schema.json",
+        "sha256": "3b6605f74e6bf88e2930f0e8eb99f2e5678f66b03ff459d083b178bbcbe8f6bd",
+        "baseBlob": "9a9d2418a48af3b9d435efd90f6c827abbe0bcc3"
+      },
+      {
+        "path": "skills/korean-prose-editor/contracts/selection-work-product.v1.schema.json",
+        "sha256": "a3c48d8e260170034b86b5abe7719a00989bedada184112626e5eee6a162f970",
+        "baseBlob": "22744667314fb2ffdbbbba4c8c13a3d8e9b4a977"
+      },
+      {
+        "path": "skills/korean-prose-editor/contracts/source-unit-manifest.v1.schema.json",
+        "sha256": "a51b3dfd6cf54bcac1f31f2848aecfd5dfc1816156efb7bf65a5441817243241",
+        "baseBlob": "44908ec30a4bc90a9718da4bae298792515c70c0"
+      },
+      {
+        "path": "skills/korean-prose-editor/contracts/verification-work-product.v1.schema.json",
+        "sha256": "3e771ac4ce0e9da64303afea9665b977b3069daf66adebbfc533488ddf930073",
+        "baseBlob": "36ed7d77d260b69e80fb18c7c816b0be4ebaea77"
+      },
+      {
+        "path": "skills/korean-prose-editor/integration/provider-result.v1.schema.json",
+        "sha256": "788965c348cda56b92e048b7e4687b212bcea5f8613037f71ad62c726c6e2a08",
+        "baseBlob": "6baebb27de92073479bb0451fe69cf00c8741290"
+      },
+      {
+        "path": "skills/korean-prose-editor/integration/skill-descriptor.json",
+        "sha256": "ae35d2f59c286315e9b6615dffeb19f6e09ace1542f4dd802c8159c92b101bb8",
+        "baseBlob": "27ceddace09d5067e3d2cab79d1f8d4ab759fe09"
+      },
+      {
+        "path": "skills/korean-prose-editor/integration/skill-descriptor.v2.schema.json",
+        "sha256": "ff6c893da551709fead4ce14ad16c37b86c27443d1b7d98ed01359ca3fff36a4",
+        "baseBlob": "b57a00fc385256393763872aad84dc58434c1b25"
+      },
+      {
+        "path": "skills/korean-prose-editor/references/contracts.md",
+        "sha256": "fb60315862766c57abcc6e14fad9ba8921876aa6c9b4f7630d94905c108209b6",
+        "baseBlob": "ed081da955dc6f10cc6d4bf97c6d474ecd002826"
+      },
+      {
+        "path": "skills/korean-prose-editor/references/editing-policy.md",
+        "sha256": "80bd41d27715577fbb0e4fe25596308587e1ddac80bc226080adbf09118e0891",
+        "baseBlob": "a57d9a56fc3958fb7f52f6b706be6d77e592970b"
+      },
+      {
+        "path": "skills/korean-prose-editor/references/entry-details.md",
+        "sha256": "26ce188795767864370bbd07ae06ba5e164ff802b301656daa3759626996a9a1",
+        "baseBlob": "c5d1c7eb3d1f4bd50d19d7524fca68775c9a155c"
+      },
+      {
+        "path": "skills/korean-prose-editor/references/finalization.md",
+        "sha256": "19577be3ad79676361a95df560f6c48510aaac9764829cdc1aa8201bfb72cf37",
+        "baseBlob": "3ed48b5366582f691b7323fe87723f951433d078"
+      },
+      {
+        "path": "skills/korean-prose-editor/references/integration.md",
+        "sha256": "b521561d3fff7c1bc375a82a81e46fb63869fbd71c67904d283bc59c7537cb27",
+        "baseBlob": "e0f4dd2bfa75c91e2977b86fecb3984e7292582f"
+      },
+      {
+        "path": "skills/korean-prose-editor/references/selection-policy.md",
+        "sha256": "a3cb288adef204d6aed59ef339f62a979b57bd411c9d3be794731ef19b963d64",
+        "baseBlob": "667dadeeb694081af0cd06bbbc493b694cbdf8b1"
+      },
+      {
+        "path": "skills/korean-prose-editor/references/verification-rubric.md",
+        "sha256": "313627ddfc4978097d4b28aa87b93fcbeb066d823e1f18b6ee3939e7d1413e5a",
+        "baseBlob": "10855cc843d722ac439358e6d865b291ded4ad61"
+      },
+      {
+        "path": "skills/korean-prose-editor/resources/glossary.seed.jsonl",
+        "sha256": "6015c95f05ce9923b53bb3c53404b9feb364971b296f820fedc9c4e530b73eda",
+        "baseBlob": "d9cc5d3f0dc2609f068d5040fa27518a02062ac5"
+      },
+      {
+        "path": "skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3",
+        "sha256": "6aee8db6e08136cf8d4399c90232484e13a9e287d843f1638b65ffb2ef8d283d",
+        "baseBlob": "0544edaa149f8a5274b3a466bd78393bc144a7df"
+      },
+      {
+        "path": "skills/korean-prose-editor/scripts/check-result.mjs",
+        "sha256": "081aa5271d45a1c80ae1631b02f16214df5270f7b27f08a69cecbac269aeddaa",
+        "baseBlob": "81df9501d6cdcbce7ce15d63d2c25141717a5efa"
+      },
+      {
+        "path": "skills/korean-prose-editor/scripts/extract-protected-spans.mjs",
+        "sha256": "474670fcb5a206fcf8f4e195fae7014de7431c461922f0f445028ff4e146d8b5",
+        "baseBlob": "599dd1e78defb0a6f0a44cf648b821d3b29c4f40"
+      },
+      {
+        "path": "skills/korean-prose-editor/scripts/finalize.mjs",
+        "sha256": "310f74bd37e41d37abb5f652592a2287cb6fe951a72317b080675eb8ae66223c",
+        "baseBlob": "869ed00cfb7e074f3b85b2c11d6ca066e405fd99"
+      },
+      {
+        "path": "skills/korean-prose-editor/scripts/finalizer-core.mjs",
+        "sha256": "68bfe12f54d9dd321d3b174d7ea04ed5fbbfc219d2a0f2b78829ca17168b9b14",
+        "baseBlob": "e4f9210651d4d8cbba0c90295ac32c6277ea993b"
+      },
+      {
+        "path": "skills/korean-prose-editor/scripts/lib.mjs",
+        "sha256": "0c4f336c557823db6d5d05a73721fd29bee1301ce0a80d2a691c15cd43a9509c",
+        "baseBlob": "af38509105abd3d0bcb4094c44f1c5519eca3f62"
+      },
+      {
+        "path": "skills/korean-prose-editor/scripts/protected-spans.mjs",
+        "sha256": "ff27d0065fdcf9b08b4f76161b9b08fa295464c57a3235e3dd2d4a61c854320a",
+        "baseBlob": "b14d53193dbd3fe489e1937188670a12d7732102"
+      },
+      {
+        "path": "skills/korean-prose-editor/scripts/provider-plan.mjs",
+        "sha256": "b087dee0727ab552441413e5ce9218f5116caad2c0508aa8549c0adc95bd60fe",
+        "baseBlob": "b5492bd014412db562166417c201a513f80c23a2"
+      },
+      {
+        "path": "skills/korean-prose-editor/scripts/result-checker.mjs",
+        "sha256": "9de25749efd1839fcdc9e05050c2ced4f6ea01097ca6c4dda2a6de6a3dfaf5d8",
+        "baseBlob": "6d06dad787265b43647d18a05789fdf8ada8aa52"
+      },
+      {
+        "path": "skills/korean-prose-editor/scripts/source-units.mjs",
+        "sha256": "23842dc723e303e58b521be7414013a2cfabe19607306d2a602ff6de0bf2e637",
+        "baseBlob": "578e85ac22d0cdad50c303329469be8e5c1fcf61"
+      },
+      {
+        "path": "skills/model-effort-advisor/SKILL.md",
+        "sha256": "55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106",
+        "baseBlob": "d1a9082177248d8220461a4d3d15041c27a83d02"
+      },
+      {
+        "path": "skills/model-effort-advisor/agents/openai.yaml",
+        "sha256": "64b36b7840823a5e389a97689c7e5baa3f598faa2ebec720b1d96271f07681fa",
+        "baseBlob": "9a3c1ee12027917c4d3f033104d4a352e9a1d642"
+      },
+      {
+        "path": "skills/model-effort-advisor/contracts/model-effort-advice.v1.schema.json",
+        "sha256": "7150d4f934f9a9422c31fc9f94b7bd7d6b1ac1e6bd029233293c40c658c693fe",
+        "baseBlob": "6d534c585ae28c00c36296b43e31bc4a6e92f5f2"
+      },
+      {
+        "path": "skills/model-effort-advisor/references/entry-details.md",
+        "sha256": "806874cf4ff417e5e5416a48df8f373ba7483591dbc916ce5edb3868280255de",
+        "baseBlob": "62e8705893dfcccc8fea5ce9d7a3550429b3ea38"
+      },
+      {
+        "path": "skills/model-effort-advisor/scripts/support-guard.mjs",
+        "sha256": "f080508b68211eddad4a29e59ed0290dc54bd7200617dbcc4e46a2cfd319cfd2",
+        "baseBlob": "b4e8e273354aa205aad4384ebb8cfc9a61cb447d"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/LICENSE",
+        "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+        "baseBlob": "fce99f684ffb085d094f8352fedfa20552046d41"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/README.md",
+        "sha256": "c7bc39a506ff4aeed3726cea2c92ef4558e62d0d28d03ccde09d083a33ada213",
+        "baseBlob": "2abc778d8f9c53f51df9a05b9d5cd1390c92fe3d"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/SKILL.md",
+        "sha256": "eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe",
+        "baseBlob": "970c631a052de8f6990fe7cc25d59d71ef707a58"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/agents/openai.yaml",
+        "sha256": "8db08f748c2f6b07e0a267bfec74717ecc696a3432b1c84d69b23b7877f42706",
+        "baseBlob": "66072cf9f4ec82bd296ed01d4edc141449722b9c"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/contracts/mutation-intent.v1.schema.json",
+        "sha256": "b66cf7e41d10d5808dafecea3f8df147e029952d5a0b46a2013841ca1a45452c",
+        "baseBlob": "2bcd349241d4cf00e7f3de7c8390ece4b642e09d"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json",
+        "sha256": "4e6f86d0baf672ef0bd83a4a9c592bd8ec5dcab1f342071372908f52e5217fde",
+        "baseBlob": "9442fd5a88563c77b63dc6d10d666f9866a1336b"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/contracts/upstream/lock.json",
+        "sha256": "a89a52a20bf14ce1ac8a7e9583fca0a38f9ade0d64d5866b2a7b8624cb52fb9c",
+        "baseBlob": "ee147a1059cef73d8c576e2189dc1dd1bf57be11"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/contracts/upstream/task-envelope.v1.schema.json",
+        "sha256": "b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21",
+        "baseBlob": "a95f74c14089ce8c79ada753e787cc8d72facb17"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/integration/provider-result.v1.schema.json",
+        "sha256": "0fa638d22b6a37ac9e585597b1ddd985de4562756e1a14b9076875dee154e311",
+        "baseBlob": "f84955eedb8a7f5670b87a6325ddbcdab938bb7e"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/integration/skill-descriptor.json",
+        "sha256": "c0340eaf53126034cb3ba13b2c9adbd03fdbecb23942687fca771487dc393264",
+        "baseBlob": "83a1a4a43057a89e1cf7d225bc615135461765f5"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/references/approval-and-authority.md",
+        "sha256": "471afb623db2b67f45465f924eec5426d470dafa0c92bcad14b7bd16d0c16334",
+        "baseBlob": "df1aee0222d468cdcce179bac59fbfa5a07817e7"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/references/entry-details.md",
+        "sha256": "13dc04ff9d74e17f2d0bb6d69583a2c502dc5c69766d9a4ed91a59c0c5741154",
+        "baseBlob": "65f9b4fab90bf55de1d5f51dccbbfe54a26c5384"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/references/recovery-requirements.md",
+        "sha256": "60a0bded3a1453092e2d02469393e39f3709f0810e0e4c076628854c4d7d54af",
+        "baseBlob": "0b304febfd4b98d09d81a0c1e86c06c122a71624"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/references/risk-matrix.md",
+        "sha256": "0377275e0487f9823bed76cd3541e0caa5f3bf030ea407fee5ad17b0f761c801",
+        "baseBlob": "0b75607bd941de834859a2d96b270bf5819d9054"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
+        "sha256": "39ad62d3f1bde2194d3efd116ee81b52e1d59cbeb6a30d5a2a8beb3db4d4b1a5",
+        "baseBlob": "6946cb918e0b8c39ab11718dd420368fde9848ce"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/scripts/schema-validation.mjs",
+        "sha256": "8402dd38105e29e0599cb6fbdf520206a677ca896d6dfcbc32408f07db19eb84",
+        "baseBlob": "1b573d104fb80cb705f0e57c4d9c5cb62423ed44"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/scripts/validate-skill.mjs",
+        "sha256": "84ebdd1d94a93db8010a5c569a17dbd1fe127f94d3ea4fb0e446d7ec489801a6",
+        "baseBlob": "bb073020fb8ecf8379ab4eb021f16ad9cae261ec"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+        "sha256": "0c738b534c3fb15bd9919873df6cd9e05314647de9cefdba541748f8ee3e612f",
+        "baseBlob": "15004d7c064c92949aa84e47a0ce835ed177d6c6"
+      },
+      {
+        "path": "skills/orchestrator/SKILL.md",
+        "sha256": "96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+        "baseBlob": "4733ba26dff9cbb49550033e67a9336ced315a9d"
+      },
+      {
+        "path": "skills/orchestrator/agents/openai.yaml",
+        "sha256": "a3720fb79d43213466a2ca952843b5271663c478dc24655f31914fbcf46ddb94",
+        "baseBlob": "895ab70f4473662815e0dae9a123d9edda20ca2b"
+      },
+      {
+        "path": "skills/orchestrator/contracts/collaboration-decision.v1.schema.json",
+        "sha256": "f27d20be8d5269b99534bcde02846d13a586137c362840fdc5ad1856b502cd5f",
+        "baseBlob": "704123980c02a0a2c55053bf2b85adf17d17c2bc"
+      },
+      {
+        "path": "skills/orchestrator/references/collaboration.md",
+        "sha256": "e590f6cd87e5a352c27740f60329dae51a6ba95505747d9edaae59e3557f2f0d",
+        "baseBlob": "e81b5f1f6a560f23df9ea0d8b79f208689234f0e"
+      },
+      {
+        "path": "skills/orchestrator/references/convergence-guard.md",
+        "sha256": "8a73f99a45c2cde18e5c821991af516b4a1d47cd845ac650b8d63a8b6f5a9489",
+        "baseBlob": "74b899384e866b329be7276e44203d8317eefe9b"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/agent-instructions.md",
+        "sha256": "a6df55ef522a75262b93381ad2f8b5fcaca4212a0afeab6cc0d1a90de2230424",
+        "baseBlob": "0c8373ee214bb90c9dd7b1a513c3bc9ee05231c6"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/catalog.json",
+        "sha256": "936714985d22b8ea67b51c5d74cceef2d1321efac8dbfca58989ba124bff3d81",
+        "baseBlob": "6f46f9f82788ec30d066e9c4a325717daafac556"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/cli.md",
+        "sha256": "42d409ec8fd0f39c491dfdeb18da3f3d15d9fb518c82a8d9f69ed0ae87a59f69",
+        "baseBlob": "09d742fdc632e4c042664b35f628a76e5a609432"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/code-review.md",
+        "sha256": "2f0e7f9a75293084a766aa997daf39fe3d2dbbd6e45f9c7455709e9766f8b492",
+        "baseBlob": "538ddca3738d0168e60c0784ce659829139088bc"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/debugging.md",
+        "sha256": "86239a76c5553be28fe4fddc89fa55b355015e20361d528fcb4c4874bc7fab84",
+        "baseBlob": "cfb9b0da03ec5d3f5c24a7032323136ad667634e"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/dependency.md",
+        "sha256": "88c6db7f0e7f2feb90484c8519eacdb51a313f96f38d7e3f62858e3df1d3ceaa",
+        "baseBlob": "08cd299337b0297c5ed110926c5bf7cfc30073a5"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/implementation.md",
+        "sha256": "4b338f1d4b7dd51726f8f007c927bcae575c120283142136f802e64590defbd1",
+        "baseBlob": "3a7e7b868b52553f4d29e19da8dcee31ee1b9257"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/index.md",
+        "sha256": "75d831fd83588e02f8604fa827ceace01b88cee04c0af5e820d46edd50ffe081",
+        "baseBlob": "32ce72db3371dd59dd5cd7f07b18ab17f33153fe"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/sources.lock.json",
+        "sha256": "2c3bff501633df40599cf6e631db0a885beec38e4690e51a9628097c8e719b9d",
+        "baseBlob": "2484fba11071c65caee2fcd95cc37d35085bf777"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/test-design.md",
+        "sha256": "fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c",
+        "baseBlob": "573edc04cf6e33d6be94f20f6e3e9cf8598c83da"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/test-proof.md",
+        "sha256": "7ac0a9d5031d32e5d2b3770a080c1629451903184dac1e38e240812c6fc91e1d",
+        "baseBlob": "1512f927d68b840b1aeef6b70fc5d06daa4e868d"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/verification.md",
+        "sha256": "0eb46c1e34a3d53cd171b4e254c186aab11e062d7b2ebf456fa700df347c4f62",
+        "baseBlob": "5309029f210b3cd13e9516154963c4bd0db11f2c"
+      },
+      {
+        "path": "skills/orchestrator/references/entry-details.md",
+        "sha256": "2c50a92c5cc59676ae6ac2bae1f9d86f337cdc7870b20ff9df12e8e3cd09670b",
+        "baseBlob": "132d1fb452b2c9e7e48d84ce311d772d486f671f"
+      },
+      {
+        "path": "skills/orchestrator/references/input-origin.md",
+        "sha256": "d5375c58b657dfb35e07c465ab7220056c59af51330b24239448851463248927",
+        "baseBlob": "b07585e37506283e64a3335847ca54d00c78f90f"
+      },
+      {
+        "path": "skills/orchestrator/references/mcp-execution.md",
+        "sha256": "be972eaa9b6d2ceab78f48f37fcc0eb4e1d4ce52cd8cfb5de356f019da46c546",
+        "baseBlob": "115bf03da10d7045a0aa19630c73854bb164b32f"
+      },
+      {
+        "path": "skills/orchestrator/references/skill-classification.md",
+        "sha256": "85cfd39b4c3771669747a9ebf61bc8623b510104c4bd6af40c2168781adc3ef8",
+        "baseBlob": "5d6a5dfe406280cc9733dc6c5144214f36016e80"
+      },
+      {
+        "path": "skills/orchestrator/references/specialist-handoffs.md",
+        "sha256": "127e02cf38a6a80d73a2e2b103aed48eece1544edbc6f2d8ed2a2ce4f7064238",
+        "baseBlob": "52b8bcb79f7f6fc2c97eca5351b79b51697a8e50"
+      },
+      {
+        "path": "skills/orchestrator/scripts/collaboration-decision.d.mts",
+        "sha256": "2d7bac5952b67b52e4aaa23934cd396eda1ad9aa864f30bcd2eae455f4c50650",
+        "baseBlob": "1affc3d69f7db06ca7fcaf2a2d5b26692f63c904"
+      },
+      {
+        "path": "skills/orchestrator/scripts/collaboration-decision.mjs",
+        "sha256": "21b8d7f51370d59e16fb6ece4dea4e30ca7583a5f2cac6974f419dcb78a1f643",
+        "baseBlob": "041289eb7af2cae68cb5158cb2182dfcdc5b59b2"
+      },
+      {
+        "path": "skills/orchestrator/scripts/query-registry.mjs",
+        "sha256": "493e26245b359d187da2496d075bb8a44ded5a66fe2b1600b3151193c3a50c3b",
+        "baseBlob": "96ed517ddf42db0f9ea4da54e47024ff58105c2d"
+      },
+      {
+        "path": "skills/orchestrator/scripts/validate-collaboration-decision.mjs",
+        "sha256": "e4a618be45eb86828d030a08521517af07e20caa46f3e826c771cfa789ff3a08",
+        "baseBlob": "bd4035155cf9ffb361b73ac7f499f7326c23bccf"
+      },
+      {
+        "path": "skills/ponytail/LICENSE",
+        "sha256": "fb1bc6909ac3ef82d5c22106e32ef682b0cff66788fa915fb9b53b15c9d2f3ab",
+        "baseBlob": "715d483338cea4365f0d91a27799cf61226d6bcf"
+      },
+      {
+        "path": "skills/ponytail/SKILL.md",
+        "sha256": "f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+        "baseBlob": "4e408885b206d784aa7ef79ff0b76fc161ce8d95"
+      },
+      {
+        "path": "skills/ponytail/VERSION",
+        "sha256": "f52b4f81a0c60cd988f8ccc9a0333e206b5f7e41dd0f5286c6ab5f7bf2d5335f",
+        "baseBlob": "2da4316236a12b429b6903fb663fe4fec257756c"
+      },
+      {
+        "path": "skills/ponytail/agents/openai.yaml",
+        "sha256": "99b2f27b7983ae2543010244c90280519152c061c7ab8f817e629d5eb63fb64b",
+        "baseBlob": "e74e25b4a85db747e1318a4a054bcb36ce8ae590"
+      },
+      {
+        "path": "skills/recovery-strategy-selector/SKILL.md",
+        "sha256": "ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25",
+        "baseBlob": "0cc941f6fe239e307d4e7726a3dc79fe67d78190"
+      },
+      {
+        "path": "skills/recovery-strategy-selector/agents/openai.yaml",
+        "sha256": "862c453af0633ad07ddb54cd13219dd881a04871ccaa13725f4ae22b52c42420",
+        "baseBlob": "8a94ef62b92da7f9570ff1926257180aa0b69c8e"
+      },
+      {
+        "path": "skills/recovery-strategy-selector/contracts/recovery-handoff.v1.schema.json",
+        "sha256": "c8a063c6e34c303c343c067d3f453b72739952fe34eb2e6f8e5eb125630e318e",
+        "baseBlob": "c8318a5a3b237f415d443a44bef38ad428076d44"
+      },
+      {
+        "path": "skills/recovery-strategy-selector/contracts/recovery-strategy-selection-request.v1.schema.json",
+        "sha256": "062e5210736afa8c96f99e9015879f38860ef29a7f2e739a62a59d0a750a4a4d",
+        "baseBlob": "7fcbe3c9edc5bd0a830174e1f6b469551c4ce2a5"
+      },
+      {
+        "path": "skills/recovery-strategy-selector/contracts/recovery-task-binding-report.v1.schema.json",
+        "sha256": "77425da5b6e8d7ea78e99a4c8081797d52c1f01969d63f8ab8bc4c079e881829",
+        "baseBlob": "e7c859aa3f1fd8d65b937b9e2eaf79279edeb62b"
+      },
+      {
+        "path": "skills/recovery-strategy-selector/integration/provider-result.v1.schema.json",
+        "sha256": "88a0e4bef0087af655f548408fdc92917e91d2d79185c9daf5325e578a41cac9",
+        "baseBlob": "7f1f19792f7c2109eb4165e4610ad47bc7b7c8c7"
+      },
+      {
+        "path": "skills/recovery-strategy-selector/integration/skill-descriptor.json",
+        "sha256": "d1038d1d026fd7cda0280a5de733dd81624170801848205e633e0c7f283812ca",
+        "baseBlob": "0982269b7d6d63e84646bf26a3b5955bb643f60f"
+      },
+      {
+        "path": "skills/recovery-strategy-selector/references/entry-details.md",
+        "sha256": "08b489c4ace78471ae6737fcea06e1885294d8d0b5f2207c74c6f740ac05375e",
+        "baseBlob": "08a2ccb4d61c0b626f1499afdac59ccb6b41d923"
+      },
+      {
+        "path": "skills/recovery-strategy-selector/references/selection-protocol.md",
+        "sha256": "845d333cbe95855d6d1968a13645c2eecb37ad9909a9947c0d5c8a9e9e0846eb",
+        "baseBlob": "1b594a1493487b2b6bb720d2609c55248408ffe8"
+      },
+      {
+        "path": "skills/recovery-strategy-selector/scripts/core.mjs",
+        "sha256": "ecf03e657a72c7a8d9270c7fa3c9aa61e0fa8800f9ec679b58a26533426d67fb",
+        "baseBlob": "7bf4f23925618ac3c75380290b18b88833416125"
+      },
+      {
+        "path": "skills/recovery-strategy-selector/scripts/digest-request.mjs",
+        "sha256": "ae5bfe09b7dbee17fab33626abe515a6557bbcf1bad28f64af2602b9490be20b",
+        "baseBlob": "4d585b7beb3cf44cb3389fa6381b67b304558f57"
+      },
+      {
+        "path": "skills/recovery-strategy-selector/scripts/io.mjs",
+        "sha256": "be18888f7299ff481c7017098f0de057fefc247b841294c03bf6b79477e53775",
+        "baseBlob": "6f55b84e0e4ad1fe853f886eb9935327386043b3"
+      },
+      {
+        "path": "skills/recovery-strategy-selector/scripts/schema-validation.mjs",
+        "sha256": "15e55eaba8b8cfde79e134004e77c2e415b04c589b73f74d6da757966d2c32e0",
+        "baseBlob": "bd925bc8757ea6e5aaf785c2ade0c77dfb3a6630"
+      },
+      {
+        "path": "skills/recovery-strategy-selector/scripts/validate-handoff.mjs",
+        "sha256": "4020d7f19b81b19d795bde414d345d809aa3e5373a23e1c9a5f48134a9f024e1",
+        "baseBlob": "bc795531f984684de782c350ef83b6effc176e1c"
+      },
+      {
+        "path": "skills/recovery-strategy-selector/scripts/validate-task-binding.mjs",
+        "sha256": "ae94d30153f617566ad2c2b2856addd2f45a72c21a8ec598809383a298e35f7f",
+        "baseBlob": "fac9c105b03d338c8b56b7b028f39f6e5c2eb1bc"
+      },
+      {
+        "path": "skills/registry.json",
+        "sha256": "395cb7a025a0e1fef81cff8aa509205c170fb9c626591a880466452c0885422c",
+        "baseBlob": "075dfc1adfd48f8540ec9124737e0db0f59da398"
+      },
+      {
+        "path": "skills/session-board/SKILL.md",
+        "sha256": "b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",
+        "baseBlob": "5a8ff34cd042d90e736506f78f33b7bd771bc4e0"
+      },
+      {
+        "path": "skills/session-board/agents/openai.yaml",
+        "sha256": "f8b8ee3b95852f31a3a4122c71d42611328a42482e3f09d62f2bef32e5f730dc",
+        "baseBlob": "865121da4bcd932f7f93e930591d111e3eaf5e7e"
+      },
+      {
+        "path": "skills/session-board/references/entry-details.md",
+        "sha256": "e8ea65d5d3d372fe70ba0fe7cdba18d965704450f2a7084b27ce885695e68660",
+        "baseBlob": "db2b84519d50775be118ca81d291528a02c16281"
+      },
+      {
+        "path": "skills/session-board/scripts/board-store.d.mts",
+        "sha256": "d4a156f0a4f3a83fdaf655daf3fe88efd14c427c79ffceb1b8012d14c38a0098",
+        "baseBlob": "34dbdcbb9b4101567a345be4bd820ada6109a2f6"
+      },
+      {
+        "path": "skills/session-board/scripts/board-store.mjs",
+        "sha256": "87851a74230cc3ba03d3ff34ef3e1bb6a9c3b8aaa1566b158cd9906b35b1fb81",
+        "baseBlob": "646d28409be3068189fee3433b44845210d530ba"
+      },
+      {
+        "path": "skills/software-security-auditor/SKILL.md",
+        "sha256": "d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+        "baseBlob": "4669fa0ae698fbbe179a62e153648f779936b4c9"
+      },
+      {
+        "path": "skills/software-security-auditor/agents/openai.yaml",
+        "sha256": "e1f661bad104f52f3941b3406bb62ec34393f9806c26c34164c91a01ae126701",
+        "baseBlob": "8ebd9e4bffe9f1ab5ff29a65e5c5d0a89a621d5a"
+      },
+      {
+        "path": "skills/software-security-auditor/contracts/security-audit-report.v1.schema.json",
+        "sha256": "12ed15bc510ceae9411db7e0101722b862965aa495c6233a5a29390e29e500fb",
+        "baseBlob": "82eec1e3e6b71900aa006c9f3697db29e93fa8eb"
+      },
+      {
+        "path": "skills/software-security-auditor/contracts/security-audit-request.v1.schema.json",
+        "sha256": "a78412985ff35634acba9242be09673ac08f61753d9b1c7b55264ec66995e103",
+        "baseBlob": "cc2b4bd9c7b8087b6d6f56ad7b8c2ed883674c41"
+      },
+      {
+        "path": "skills/software-security-auditor/integration/provider-result.v1.schema.json",
+        "sha256": "9067e06f1b36f22a3f10c99777f3a35d1dc10cd128537053982826e2248105a5",
+        "baseBlob": "60716073fa18f5346e0cfa8d37124fe826f6eeca"
+      },
+      {
+        "path": "skills/software-security-auditor/integration/skill-descriptor.json",
+        "sha256": "ffe3a15db77dbc96ba0968554e4c7975308ffd31d1e4f1247f587312783efae7",
+        "baseBlob": "e75bc826cfcd25038d9d59c493d1859540682411"
+      },
+      {
+        "path": "skills/software-security-auditor/references/cli-mcp.md",
+        "sha256": "08a551a35198d84e4449f03e35fcf29251d73688ad84461f0a93e832f9e3035a",
+        "baseBlob": "d82723b889af4372068b1a6ee7617a9551ab9a35"
+      },
+      {
+        "path": "skills/software-security-auditor/references/entry-details.md",
+        "sha256": "8f03bb00300befa9eaa2b350330a695b42ac3d9f8d336d6d84020c467a95b6a0",
+        "baseBlob": "2a150d3831ac6b44a20bc6ade8251ca2b2833b02"
+      },
+      {
+        "path": "skills/software-security-auditor/references/web-api.md",
+        "sha256": "00adebf91994623838cac5ff90a28bb7ac9455f24515c85fd80d721d8b17abe0",
+        "baseBlob": "4cfb7727b0b6b73eed9a75cf406cff4f2fcba3e3"
+      },
+      {
+        "path": "skills/software-security-auditor/scripts/cli.mjs",
+        "sha256": "7b12f9568776c1678aa6cab151694b4c02a215f8b1c3f64a73dbd378d8a96360",
+        "baseBlob": "e7793c9d4680074b40b80d8457e7fd1db2b0b600"
+      },
+      {
+        "path": "skills/software-security-auditor/scripts/core.d.mts",
+        "sha256": "9ffc696aa773d947ecac176381d78e524ce4770301e09f4177c51969353a6323",
+        "baseBlob": "fa546e10e5ac9a7d1d75be23e6acea16623f1b82"
+      },
+      {
+        "path": "skills/software-security-auditor/scripts/core.mjs",
+        "sha256": "84fe73357254b9f98062d03eca83126bf72ac582cc63526cd5d97fa730d2ba13",
+        "baseBlob": "cde3a6f716217b2f7a2d2ee0d9f94c73845c700d"
+      },
+      {
+        "path": "skills/software-security-auditor/scripts/validation.mjs",
+        "sha256": "af11086a2cf3ea1737e272d4ac59bd99f05c1555934fe5c34e7396572be415ec",
+        "baseBlob": "8452aadf21930d84df041fd1bc171031eb4d8014"
+      },
+      {
+        "path": "skills/source-lock.json",
+        "sha256": "59976e31cdc7ab2eff9a8554325b666d42007a4e7e97136838de2314980bcd3e",
+        "baseBlob": "52b9582b28d4afdf107ae1c71a5edaf595a3e463"
+      },
+      {
+        "path": "skills/task-contract/LICENSE",
+        "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+        "baseBlob": "fce99f684ffb085d094f8352fedfa20552046d41"
+      },
+      {
+        "path": "skills/task-contract/README.md",
+        "sha256": "e5c63fa3447d1e9a4bae033465843f2b1d9c6eba86f7326729015398b3ac8ff1",
+        "baseBlob": "7ed78a23d99157499a97346620a9d9987a25cf16"
+      },
+      {
+        "path": "skills/task-contract/SKILL.md",
+        "sha256": "0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100",
+        "baseBlob": "32f1fa0f7bab5dbaefeca886989c63becf00fe7d"
+      },
+      {
+        "path": "skills/task-contract/agents/openai.yaml",
+        "sha256": "7393c78a7591bc5748f7452361f8d810a03178c69b64d53bb76f24afd39effed",
+        "baseBlob": "960c169b3deb733083ee9c40adc34707a4a8dbc8"
+      },
+      {
+        "path": "skills/task-contract/contracts/acceptance-evidence-plan.v1.schema.json",
+        "sha256": "77fe7a7280904046d2b372a75db5ac38a76e148f878dd8f853f69e49bcb1d8b4",
+        "baseBlob": "0b953a1de6909d31cd7e3d6830a07c181459de20"
+      },
+      {
+        "path": "skills/task-contract/contracts/task-contract-report.v1.schema.json",
+        "sha256": "ce5263ec3d1edc13f0461b4ac012989623808cc0bd6dd759456d107a34104dbd",
+        "baseBlob": "71975e9d5ed9b921b899bf44df5e2bd585e98045"
+      },
+      {
+        "path": "skills/task-contract/contracts/task-contract-request.v1.schema.json",
+        "sha256": "e6393d9b242730f9bc1dec0fd1a8ab16028f894f342e84e0799462d0bdc279e6",
+        "baseBlob": "6f7a45ba0231751737e47c81ad11667fc23e939a"
+      },
+      {
+        "path": "skills/task-contract/contracts/task-contract-validation.v1.schema.json",
+        "sha256": "54b7b67a4439b5a8c6f8079d44d1ecc91efea89fa0e5b4b80596d846852a38b3",
+        "baseBlob": "3373ba704372fd36208e165dabab1dc94ad7ca52"
+      },
+      {
+        "path": "skills/task-contract/contracts/upstream/lock.json",
+        "sha256": "7d986629a673ce2877d5ebfc4616cbfb81f61ece3b5bc03ad483ea3ba305027d",
+        "baseBlob": "22d60bff341dc356dbf245b99a6c954ecb066dad"
+      },
+      {
+        "path": "skills/task-contract/contracts/upstream/task-envelope.v1.schema.json",
+        "sha256": "b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21",
+        "baseBlob": "a95f74c14089ce8c79ada753e787cc8d72facb17"
+      },
+      {
+        "path": "skills/task-contract/integration/provider-result.v1.schema.json",
+        "sha256": "619451cd870832d1a223958dc31bc1dd5bacee2039b61fd4ca1ff63932829958",
+        "baseBlob": "08a2fd18e2bd56732f0d99f6dbf2b6ccdb820e73"
+      },
+      {
+        "path": "skills/task-contract/integration/skill-descriptor.json",
+        "sha256": "1bb1645cce768b1c287601908dad3ea1e2deb5e0cd5b1cfb5720b927eb5243dc",
+        "baseBlob": "badb55a69a962b5cf4aaf56cd0a399319efc1f56"
+      },
+      {
+        "path": "skills/task-contract/references/acceptance-criteria.md",
+        "sha256": "ae6977721dee30fa64b3c8f467b2c81f9e7a3b0f3de3f3d062e7391fe88ae6b1",
+        "baseBlob": "c9c8b8875de23dc33068c7f634c550abb0c8c1f4"
+      },
+      {
+        "path": "skills/task-contract/references/entry-details.md",
+        "sha256": "e587fd4a1b94415ec30ad943bb1cc9d81f1cb988b07ecab3df3cedd4f6c7efc9",
+        "baseBlob": "77f545c02aafca957c55205f592ff7f12051232a"
+      },
+      {
+        "path": "skills/task-contract/references/field-guide.md",
+        "sha256": "88b50aeb18f1c316655fe13557bdf06749db0a6a3f1d3c2de321c8f4687c268f",
+        "baseBlob": "63b1b2465a497b352424ff98a4c1625f166dd621"
+      },
+      {
+        "path": "skills/task-contract/references/risk-and-authorization-rubric.md",
+        "sha256": "7c5c7bf57f9f57989ed7b22352e9742e6cbf0962bac1ff099c5fea56509f4827",
+        "baseBlob": "e9d13aead4c3042039e7a650140f5cf7f18d8b93"
+      },
+      {
+        "path": "skills/task-contract/scripts/validate-repository.mjs",
+        "sha256": "64ba1aaf5da1f153e38e9a0584db2758bb886941f48e39af4705e76852685389",
+        "baseBlob": "dea247752a2ef752fd0751944b5770ee630df7bd"
+      },
+      {
+        "path": "skills/task-contract/scripts/validate-task-contract.mjs",
+        "sha256": "cb79d6a233a8e79ac6bf65a1b6bf3f256917461dbda1a102fd053863e6180ec4",
+        "baseBlob": "be492539c64f8d9f5e1f62c72aa8b6ed573f4611"
+      },
+      {
+        "path": "skills/test-engineering/LICENSE",
+        "sha256": "75f3ee170babffa9aac464afff60ad521d9731220ae4f67e0c40cb457b18a0a2",
+        "baseBlob": "337687a6d14ef9bb50784d983cb700637d43d47b"
+      },
+      {
+        "path": "skills/test-engineering/SKILL.md",
+        "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+        "baseBlob": "65f86d8c09292f2d48eb4df90f656670f2ca09f3"
+      },
+      {
+        "path": "skills/test-engineering/VERSION",
+        "sha256": "e9dd8507f4bf0c6f42458e41aea833ad0bd3f6127272335eee9bf4d58541ed67",
+        "baseBlob": "6e8bf73aa550d4c57f6f35830f1bcdc7a4a62f38"
+      },
+      {
+        "path": "skills/test-engineering/agents/openai.yaml",
+        "sha256": "1841d0a0dd48f31681b33f698067046075cc69fd960c9a8029d39545f3b98def",
+        "baseBlob": "43212d8657e34193681b3ced544ccfadaa12d59d"
+      },
+      {
+        "path": "skills/test-engineering/assets/shared-dependencies.json",
+        "sha256": "0ce2c7256664836d3c0517d3aed202a282f805028a68b4753a7b855d427b3368",
+        "baseBlob": "952159988f64fbb417621663be945f1e26bd8755"
+      },
+      {
+        "path": "skills/test-engineering/integration/skill-descriptor.json",
+        "sha256": "c9a78c170b303aa83d603b558aff288e955b018cdfab8adf3311296a3d07c022",
+        "baseBlob": "6646c141ca4a0e41f72d266a6ed6e7edc2d03214"
+      },
+      {
+        "path": "skills/test-engineering/scripts/run.mjs",
+        "sha256": "a6a866d7d1c9ea3a19a6a5779d977b0438e85715db4d4f3dcc1c26e87258f0f5",
+        "baseBlob": "c8af6deffee07515ec3589fa777d15bafe477866"
+      },
+      {
+        "path": "skills/workspace-convention-profiler/LICENSE",
+        "sha256": "849a4e8cf657531b138680d6dbdad4466622b4fcd79de703bce7dd8208820c02",
+        "baseBlob": "fce99f684ffb085d094f8352fedfa20552046d41"
+      },
+      {
+        "path": "skills/workspace-convention-profiler/README.md",
+        "sha256": "0b853c43642022e7756db1c893bb9ef31626979044f0aea7ce4eb7dab15b48d1",
+        "baseBlob": "d8959dcfb121b6c370738f6107471e1271434175"
+      },
+      {
+        "path": "skills/workspace-convention-profiler/SKILL.md",
+        "sha256": "4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7",
+        "baseBlob": "17720c1986fc5f1b2ee12e1050919d23dc694b6b"
+      },
+      {
+        "path": "skills/workspace-convention-profiler/agents/openai.yaml",
+        "sha256": "4c870dd6fb5589ffe1e4ba3f0119e335b564bc897e07fbe9b965aa0c6a70f4b6",
+        "baseBlob": "9e67ec03f94566d416ee052b4a8caa6211fc9c3b"
+      },
+      {
+        "path": "skills/workspace-convention-profiler/contracts/workspace-convention-profile.v1.schema.json",
+        "sha256": "abffbd137671292de90000a62e4d3425eece203a6914a87defada2cf71a9e7bf",
+        "baseBlob": "4902f61cd734f8f2fa9bbe68987bba146b39c664"
+      },
+      {
+        "path": "skills/workspace-convention-profiler/contracts/workspace-profile-request.v1.schema.json",
+        "sha256": "775c90d3367a75d7ac96a7884486e3fe657a6c1a18b129f81d284f008467464d",
+        "baseBlob": "673f1e88d5ba8ffc3a0e86a8d0333a812f085e64"
+      },
+      {
+        "path": "skills/workspace-convention-profiler/integration/provider-result.v1.schema.json",
+        "sha256": "515e04e309f2c8f17ee249cd5ce2b3489b78c5edeb811d77596df6138e9adaf1",
+        "baseBlob": "781462680771b4a79841286a5b36f3436f088596"
+      },
+      {
+        "path": "skills/workspace-convention-profiler/integration/skill-descriptor.json",
+        "sha256": "b7b233767ccc927e577322bd1fe09832ebdc6932ab2ebe56f60ed34cea7055a4",
+        "baseBlob": "42836be2a259d1989a5a8e975b0f55597af4635a"
+      },
+      {
+        "path": "skills/workspace-convention-profiler/references/discovery-rules.md",
+        "sha256": "b521bdf226255257bc6077dd3ea376d75a3dd75cacdd38ee20cec44a95bda7d7",
+        "baseBlob": "8424de77434444a6535487ddfc246ea548da239b"
+      },
+      {
+        "path": "skills/workspace-convention-profiler/references/entry-details.md",
+        "sha256": "9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91",
+        "baseBlob": "d6b301e1f6d051284ee0c4a547053d8949cbf861"
+      },
+      {
+        "path": "skills/workspace-convention-profiler/references/evidence-confidence.md",
+        "sha256": "0cbb160bc1c316787b7a17e4598b9983bbbb688f57f90fcc3ec2d96f4fa368f5",
+        "baseBlob": "0270cae33464f9f756c454599a364d5b12a52b5b"
+      },
+      {
+        "path": "skills/workspace-convention-profiler/references/profile-contract.md",
+        "sha256": "95d10a1e0ad29e24a6530abf84d0b1c9c27664568279bc1a2967198aa2e4fd7b",
+        "baseBlob": "0f6be8e70d5ff60f5a7cf66ba90904777b2bac89"
+      },
+      {
+        "path": "skills/workspace-convention-profiler/scripts/profile-workspace.mjs",
+        "sha256": "acee97c401612c70fefabd7ec2a183af652956b674fbfd491f121a3a71004cc1",
+        "baseBlob": "950741b27e5c1fb1efa665d3555b997a115350b9"
+      },
+      {
+        "path": "skills/workspace-convention-profiler/scripts/schema-validation.mjs",
+        "sha256": "967c4e72461f05428693e51a9651cd6c015b4486ab4e9566d70151d6891c6615",
+        "baseBlob": "91281aa787d088946e78463b450d9351c58e9e02"
+      },
+      {
+        "path": "skills/workspace-convention-profiler/scripts/validate-profile.mjs",
+        "sha256": "a43243a8a8d01c05f78cac113d809e6282145e97e91304091408f43d0306751d",
+        "baseBlob": "1363e96375bf7381a6a0b5698aea21f1a6aa56f5"
+      },
+      {
+        "path": "skills/workspace-convention-profiler/scripts/validate-skill.mjs",
+        "sha256": "7a8e4d07d1cd3bb7a38491abfc8a33ad2156d5da4c83599926bc2c4bddd4779b",
+        "baseBlob": "55ef01b57f7b2331449beeacd5b6e3ac738fdaad"
+      },
+      {
+        "path": "tests/skill-classification/evaluation.test.ts",
+        "sha256": "0ab579c0eacbb2b0e70e0bcd381f4c8bfc33d9422439768beb49eaf240ad32bf",
+        "baseBlob": "7709dc97ac1736c73408233a48eeee8e9a83aac0"
+      },
+      {
+        "path": "tests/skill-classification/evaluation.ts",
+        "sha256": "e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+        "baseBlob": "1be15ffa6a36eff0c7888b18b59581f6bf0b5884"
+      },
+      {
+        "path": "tests/skill-classification/fixtures.json",
+        "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "baseBlob": "26b1fa1526f1e6bd38768409e0fa77943a4a4db8"
+      },
+      {
+        "path": "tests/skill-classification/live-bootstrap/README.md",
+        "sha256": "d293f128634d26a474b6437dc3da2ff81c8c01700b665bf642e22c1dba208a3a",
+        "baseBlob": "dbfc383ab6c28f2464821a84ee9fc5eb03de1025"
+      },
+      {
+        "path": "tests/skill-classification/live-bootstrap/bootstrap.mts",
+        "sha256": "1e258ae50a0e25d9c2a01a1ff186df1cce73c0693995ea7cef2be3cd187e791c",
+        "baseBlob": "703ec51bf26ec825c67a87a1a486126ec0d6a661"
+      },
+      {
+        "path": "tests/skill-classification/live-bootstrap/budget-regression.mts",
+        "sha256": "edb60ffa487657cc55e7ee1822fd4a2197f8fa1b0d94819fdaef0c47768509bf",
+        "baseBlob": "51ac89af6435fe3220cd0169f26aba20a97701bf"
+      },
+      {
+        "path": "tests/skill-classification/live-bootstrap/component-manifest.json",
+        "sha256": "b88ed698626c9b6af09c3d1ff11aebd48226a776d00cde4299491dbb0db88429",
+        "baseBlob": "e0cc3df31eb7e2b16a8ada6b9a1621cbfa19c69f"
+      },
+      {
+        "path": "tests/skill-classification/live-bootstrap/config.blocked.example.json",
+        "sha256": "739a30d0d6b7d1d38fca95cbd17cd7425d3858a4fff8d266752c2ee7fea9e980",
+        "baseBlob": "eb83d50a78aa4d716512f7e2eab75e2f96d62589"
+      },
+      {
+        "path": "tests/skill-classification/live-bootstrap/contract-selfcheck.mts",
+        "sha256": "fb5ac964d31c2dbce0a37d3d593fdeef8ceecf4be3b2661bb4c3b3d17776e751",
+        "baseBlob": "79b128062500a418a90d8534fd64e4129d96f6bf"
+      },
+      {
+        "path": "tests/skill-classification/live-bootstrap/expiry-regression.mts",
+        "sha256": "bccd024d9aed62fc40edc1d861384622c0d181f653c6101f4fa0ebe392468689",
+        "baseBlob": "833898bb483fccef886fa2bcdfe6e40bad2afa22"
+      }
+    ]
+  }
+}

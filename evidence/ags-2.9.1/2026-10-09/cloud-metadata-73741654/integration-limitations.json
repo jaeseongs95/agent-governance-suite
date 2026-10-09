@@ -1,0 +1,64 @@
+{
+  "modelQuality": {
+    "status": "NOT_RUN",
+    "meaning": "No actual JEV/API/Claude quality or final AGENT selection was measured"
+  },
+  "shaPins": {
+    "status": "FAIL",
+    "exitCode": 1,
+    "command": [
+      "node",
+      "scripts/check-skill-context-optimization.mjs"
+    ],
+    "observedErrors": [
+      "classification: reviewed bytes differ: skills/acceptance-evidence-validator/classification.json",
+      "classification: reviewed bytes differ: skills/blocker-diagnostician/classification.json",
+      "classification: reviewed bytes differ: skills/change-scope-guardian/classification.json",
+      "classification: reviewed bytes differ: skills/code-review/classification.json",
+      "classification: reviewed bytes differ: skills/codex-token-usage-analyzer/classification.json",
+      "classification: reviewed bytes differ: skills/context-continuity/classification.json",
+      "classification: reviewed bytes differ: skills/coordinate-subagents/classification.json",
+      "classification: reviewed bytes differ: skills/cs-engineering/classification.json",
+      "classification: reviewed bytes differ: skills/evaluation-validity-auditor/classification.json",
+      "classification: reviewed bytes differ: skills/independent-audit-gate/classification.json",
+      "classification: reviewed bytes differ: skills/independent-deliberation-panel/classification.json",
+      "classification: reviewed bytes differ: skills/instruction-scope-resolver/classification.json",
+      "classification: reviewed bytes differ: skills/iteration-frame-auditor/classification.json",
+      "classification: reviewed bytes differ: skills/korean-prose-editor/classification.json",
+      "classification: reviewed bytes differ: skills/model-effort-advisor/classification.json",
+      "classification: reviewed bytes differ: skills/mutation-risk-preflight/classification.json",
+      "classification: reviewed bytes differ: skills/orchestrator/classification.json",
+      "classification: reviewed bytes differ: skills/ponytail/classification.json",
+      "classification: reviewed bytes differ: skills/recovery-strategy-selector/classification.json",
+      "classification: reviewed bytes differ: skills/session-board/classification.json",
+      "classification: reviewed bytes differ: skills/software-security-auditor/classification.json",
+      "classification: reviewed bytes differ: skills/task-contract/classification.json",
+      "classification: reviewed bytes differ: skills/test-engineering/classification.json",
+      "classification: reviewed bytes differ: skills/workspace-convention-profiler/classification.json"
+    ],
+    "resolutionOwner": "Final integration single writer after reviewing new metadata SHA values"
+  },
+  "contentLock": {
+    "status": "FAIL",
+    "exitCode": 2,
+    "command": [
+      "node",
+      "skills/test-engineering/scripts/run.mjs",
+      "self-check"
+    ],
+    "code": "INTEGRITY_FAILED",
+    "message": "Artifact digest mismatch.",
+    "resolutionOwner": "Final integration single writer; code-review/test-engineering classification lock updates were out of scope"
+  },
+  "bundle": {
+    "status": "FAIL",
+    "exitCode": 1,
+    "command": [
+      "node",
+      "scripts/check-bundle.mjs"
+    ],
+    "message": "mcp-server/dist/server.mjs is stale. Run pnpm build and commit the result.",
+    "resolutionOwner": "Final integration single writer; generated product artifacts unchanged"
+  },
+  "policy": "Local source scope PASS is not whole-repository validation PASS, model qualification, integration acceptance or release approval. JEV OFF same-vendor fixed low-cost qualified fallback remains distinct from all-external OFF."
+}

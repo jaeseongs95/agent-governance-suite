@@ -1,0 +1,182 @@
+{
+  "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+  "source": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3"
+  },
+  "resultSource": {
+    "commit": "737416547b02d60df2b29d0f093143bdab54cf01",
+    "tree": "1bbfc9256e3f19038bd82dadd6a1bde3978e70a3",
+    "parent": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "localBranch": "codex/cloud-skill-metadata-fix"
+  },
+  "publication": {
+    "branch": "evidence",
+    "baseCommit": "fe7c99d935827156b4c675179766b54806c5e937",
+    "baseTree": "f8371c9829f0b2d7cefbe615fb3505fd3db24f43",
+    "path": "evidence/ags-2.9.1/2026-10-09/cloud-metadata-73741654",
+    "existingFilesToPreserve": 12385,
+    "effect": "Evidence only; patch not applied to product root",
+    "immutableResultLink": "Returned after non-force push and fixed-commit readback; no self-referential commit claim"
+  },
+  "changedFiles": [
+    {
+      "path": "mcp-server/src/skill-classification/inventory.ts",
+      "baseBlob": "2838e862c779f12d4845b673dd081fccd294c4c5",
+      "candidateBlob": "03b5fc067f549a7f14823344233535ee21e168c7",
+      "sha256": "8042233c53820cda2157f109bd2ea299931025a70b4c08cbb24341633eb26615"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/classification.json",
+      "baseBlob": "48488e7a0b265dbefd573d060ea47ec3377405ae",
+      "candidateBlob": "04433dfe1d26973a0e72d093af7ade3deb84d4b7",
+      "sha256": "8e5df6db63ddef4b4663df69cf102c66819e6a9c6883ca50681cf62e890e0db1"
+    },
+    {
+      "path": "skills/blocker-diagnostician/classification.json",
+      "baseBlob": "4361510561981e7fd3d76db4756b5fd54c57356e",
+      "candidateBlob": "11c7d60817a46c70aba12f173f8d2ee0d285a8df",
+      "sha256": "0d1aa4f87b5ec8d27f862b24c2988c72c020d0e1493e8493e1b3642a28069b38"
+    },
+    {
+      "path": "skills/change-scope-guardian/classification.json",
+      "baseBlob": "d00dc043ee0256547e7e62e0741f88163012597c",
+      "candidateBlob": "0b1ef36d660f4c5ca76a347162ddfafe3ac94998",
+      "sha256": "52103f0dde99c31e42dd548e6234a5198d9a1a5b7d639087dd54a52ae304ff0f"
+    },
+    {
+      "path": "skills/code-review/classification.json",
+      "baseBlob": "be16af070d7f405b29f0874a911b5bcfb9ae416d",
+      "candidateBlob": "805d99e42998ae3997176d5a860cfc6f2f3e0319",
+      "sha256": "d4253d69e8ebf8f384f5e5a93e375f128546e06a72c54220eea0c28f99521ac4"
+    },
+    {
+      "path": "skills/codex-token-usage-analyzer/classification.json",
+      "baseBlob": "6eaa87ae590748b6476f2ba1522979f25d0752b3",
+      "candidateBlob": "8826581546c3b5dbbdd6088641bff6db18f7cdec",
+      "sha256": "1f52246a9a1e8cd22c811d6ed26409910a7d844f4d4f67ca5d639f00d2ca03d3"
+    },
+    {
+      "path": "skills/context-continuity/classification.json",
+      "baseBlob": "479ef50b8c6dae92ea3b57fa665cb0a9588d7432",
+      "candidateBlob": "98cca7ad9b8446c8c3788c78e181386e084c22dd",
+      "sha256": "d2441089650196242dba576e9c11ae791f05fb8955e40b8a2b3cf63f2e09dfc5"
+    },
+    {
+      "path": "skills/coordinate-subagents/classification.json",
+      "baseBlob": "59ea026c51619602a6254e79c4a397c88f1f2cc0",
+      "candidateBlob": "778a0884943defd55a00ffc2c2cd7e2cb0f1dd80",
+      "sha256": "2fb7b1956b081acd07f6d17a0d17f083426bcf65d27873250e56877c84ec49dc"
+    },
+    {
+      "path": "skills/cs-engineering/classification.json",
+      "baseBlob": "f71532105ecf70c9516226c7b78cf7055ace9bab",
+      "candidateBlob": "1781ab4c911b7537d48c5df33c305bdf7fb2b242",
+      "sha256": "7ae34e15610c902316956642c74ca9b5186a2a7226ff623a3bd92bf0189ec592"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/classification.json",
+      "baseBlob": "2dc6930cbac704dbb755609ed6edce3c6f063cc7",
+      "candidateBlob": "24491e268a52bb33652d6740724445bf6a6defe1",
+      "sha256": "1515fe42d89383f5dcdeeeb165ccf8341481ae59ce4f0f9065ac9fdd5a467afd"
+    },
+    {
+      "path": "skills/independent-audit-gate/classification.json",
+      "baseBlob": "4edb1e568fefa77864e526a7ffeeae7c7d0c9377",
+      "candidateBlob": "90bb0fa3cbf2a931d474bcd3ec6b3a07fad14244",
+      "sha256": "ecc3cfc7486a232eb02de3cdcc775e449813a685e620ca8530eb0742574d6908"
+    },
+    {
+      "path": "skills/independent-deliberation-panel/classification.json",
+      "baseBlob": "6b9c9d4bb7a63f5a5acf47c795d4297687ffc662",
+      "candidateBlob": "5916095a62071613b9487f31059e77d2485a4f0d",
+      "sha256": "936f167838041d925990c9e853062f531069d64bcbfc95658c2e5399ed6792fe"
+    },
+    {
+      "path": "skills/instruction-scope-resolver/classification.json",
+      "baseBlob": "caa5db94ca6236ed4124558d280658434a49952c",
+      "candidateBlob": "727a174b5df3b56abf43c5754f3aa8681a48c7fe",
+      "sha256": "260ffec71166aa7a6403d78f98b3a2e41bac4f0eebc66ce242ac7d0618c453dc"
+    },
+    {
+      "path": "skills/iteration-frame-auditor/classification.json",
+      "baseBlob": "84e35abb8f4db54aaef6f7b1eda5fe98d38761f1",
+      "candidateBlob": "9d435a3ebdf43f3b358cd8cf742e9e3773e0a92c",
+      "sha256": "bfe14a5aa19ba5711963f4b93abce34e44ac4809bcb16c1f5fe7f8ce7dce5a59"
+    },
+    {
+      "path": "skills/korean-prose-editor/classification.json",
+      "baseBlob": "88880e0eab09d4768996ae0c4de694b38b702d52",
+      "candidateBlob": "0ea6e518eba58a05c0e6bb62163bd8cbf45a6661",
+      "sha256": "8f49189dcf8106d2f242a186b8ebf46238ae5ed54101e43e7860dc7eedfe0ceb"
+    },
+    {
+      "path": "skills/model-effort-advisor/classification.json",
+      "baseBlob": "936521750e10937511741d7ae25d055aa3d736ad",
+      "candidateBlob": "5426f0076bccd7d727adcbe4d16d8ec4f87fd569",
+      "sha256": "81d04623e6881ba127c1cdac3d6f53f228e4cfc8d4d38d567e06a1f309299d94"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/classification.json",
+      "baseBlob": "e2848cbb3161ebe97707cde4b671eacf7c0436aa",
+      "candidateBlob": "7eee5138fddeafc204807a4d0ac86a91ac734bf3",
+      "sha256": "0487794c38433a3153a5dee86de5ff524c16e84d7ac5f4a41f2ca4ab0328b99f"
+    },
+    {
+      "path": "skills/orchestrator/classification.json",
+      "baseBlob": "6d3e325e20d1a8b239e81fb3eda0c86e5392c109",
+      "candidateBlob": "350d21189abde3b23c41093d6efe7ec67101e274",
+      "sha256": "41891843dbbf4d4e86e830ad2d14613a67851fec35f04746ccad6c49e248cf0c"
+    },
+    {
+      "path": "skills/ponytail/classification.json",
+      "baseBlob": "b59e66ab65e6418e704356e2ab530c02fe8e4e75",
+      "candidateBlob": "2b58edffd396edf883929b22716a6355719b9aec",
+      "sha256": "3ab551f50bf4aae31ae0b4c3c3fd6158f8fde1cee75d62b68a07b7e49f22a481"
+    },
+    {
+      "path": "skills/recovery-strategy-selector/classification.json",
+      "baseBlob": "09fa0999d62e94b5a53eec1c1b3859176382091c",
+      "candidateBlob": "38ad2865b1e75331cd4b6412f29464d8a399fb02",
+      "sha256": "c9f3e8cd8f7982fe36c23115d3e4ceceeb7a5c0f8bd747a8c0158c81e1642314"
+    },
+    {
+      "path": "skills/session-board/classification.json",
+      "baseBlob": "c8cc9f0ddd7505d3c391a48cef109193d159813f",
+      "candidateBlob": "86509f74b6503e2760604dbb66e6d46a4823689f",
+      "sha256": "7193daa7a84da2918be65472c086624b5748f2122bf2071993c96e3afe20dd7e"
+    },
+    {
+      "path": "skills/software-security-auditor/classification.json",
+      "baseBlob": "c071135eddd34e76da3cd02842bb5f5f53517f6b",
+      "candidateBlob": "7e1da51d8aa54f1cfc74079f86fa8053f62efb0a",
+      "sha256": "f6354e18d117d008a8c8e8fc176eefa96e72eebb6040980d92dc3b4f861c3228"
+    },
+    {
+      "path": "skills/task-contract/classification.json",
+      "baseBlob": "faceaea288ff116873d979ed06ee386679e2ca48",
+      "candidateBlob": "59084d288f7dc68515ede5bb67295bdde6f8f167",
+      "sha256": "a0dc1edbc83b0b79b479956f780dbb197db36039d04c15546837946ddd02c213"
+    },
+    {
+      "path": "skills/test-engineering/classification.json",
+      "baseBlob": "eb593642067bd7d9761fd0e5d137a2214fbf02e8",
+      "candidateBlob": "30037066b6f3099d5a32f0469ca209f115022d51",
+      "sha256": "b7cd174b0a314bf228ac0a32f9c7c33ffe1494852c90ebd73c7682d548bb3e1c"
+    },
+    {
+      "path": "skills/workspace-convention-profiler/classification.json",
+      "baseBlob": "f0855645298fa08ea9daf5b8889eb3b1995e633e",
+      "candidateBlob": "847304417228b493467710a85ce26502452b5dc8",
+      "sha256": "15c01583cc8a233fd969ea873cf5ba0d56a6fc305cd2a9ff7ed7b57338cb2853"
+    },
+    {
+      "path": "tests/mcp/skill-classification-inventory.test.ts",
+      "baseBlob": "a655f194778957690866be2e80f7275ced3bc7ad",
+      "candidateBlob": "59545845d1de078735af6e62011ddfd42fabaa28",
+      "sha256": "d6b668481d01d1df0f8676caa833d97e1749f9dea8397d263c61fb314438a44e"
+    }
+  ],
+  "paidApiCalls": 0,
+  "claudeCalls": 0
+}

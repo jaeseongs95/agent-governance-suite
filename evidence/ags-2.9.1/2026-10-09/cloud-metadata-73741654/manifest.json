@@ -1,0 +1,112 @@
+{
+  "schemaVersion": "1",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cloud-metadata-73741654",
+  "publicationBranch": "evidence",
+  "publicationBaseCommit": "fe7c99d935827156b4c675179766b54806c5e937",
+  "publicationBaseTree": "f8371c9829f0b2d7cefbe615fb3505fd3db24f43",
+  "existingFileCount": 12385,
+  "sourceCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "resultSourceCommit": "737416547b02d60df2b29d0f093143bdab54cf01",
+  "resultSourceTree": "1bbfc9256e3f19038bd82dadd6a1bde3978e70a3",
+  "payloadFiles": [
+    {
+      "path": "README.md",
+      "bytes": 7110,
+      "sha256": "7ee06984bedbdfd31c82782292eda52a5264cbbae72153a0bb61a42f3fc894f7"
+    },
+    {
+      "path": "candidate.patch",
+      "bytes": 81399,
+      "sha256": "3606943cc6e5b424f93a3fc020d4630a61de11a7762d741f76d089caf6f51049"
+    },
+    {
+      "path": "changed-files.sha256",
+      "bytes": 2978,
+      "sha256": "f3b13c985f8d37bb901d39b85aa1b486814ad3334510b0a94001f48c0fb66670"
+    },
+    {
+      "path": "independent-review.public.json",
+      "bytes": 142639,
+      "sha256": "c2794577c1faee9e83354b758528bba4bdd6e03da2d791e029c8a1224678faa1"
+    },
+    {
+      "path": "integration-limitations.json",
+      "bytes": 3675,
+      "sha256": "1a704b18018115015ff0a2c27bd46d8b4199599e585b47472bdc75026134e261"
+    },
+    {
+      "path": "logs/core-regression.stderr.txt",
+      "bytes": 99,
+      "sha256": "f5c157d48b1fabac4eddfd5b29d430aaa5737bf1d521f1aad9f763cd858ff8f2"
+    },
+    {
+      "path": "logs/core-regression.stdout.txt",
+      "bytes": 167,
+      "sha256": "2ae8c61ed7bb9ca54961f59dc8251ea3ba38b8733104bbf8742c709f8127dae2"
+    },
+    {
+      "path": "logs/green.stderr.txt",
+      "bytes": 99,
+      "sha256": "f5c157d48b1fabac4eddfd5b29d430aaa5737bf1d521f1aad9f763cd858ff8f2"
+    },
+    {
+      "path": "logs/green.stdout.txt",
+      "bytes": 165,
+      "sha256": "bd4c69812317ef2b9c2de6ebe9b3efcfb0354a6f183e028f603cab994bfd25cf"
+    },
+    {
+      "path": "logs/red.stderr.txt",
+      "bytes": 4532,
+      "sha256": "b3a73905f3a07ea3c55ba542f142b18daf34db8c650aadf383927974ec3b6453"
+    },
+    {
+      "path": "logs/red.stdout.txt",
+      "bytes": 178,
+      "sha256": "119720ad400a6d647268fe66944b86ae789a05a01723b86ca64dc365ad3393b9"
+    },
+    {
+      "path": "logs/related-regression.stderr.txt",
+      "bytes": 99,
+      "sha256": "f5c157d48b1fabac4eddfd5b29d430aaa5737bf1d521f1aad9f763cd858ff8f2"
+    },
+    {
+      "path": "logs/related-regression.stdout.txt",
+      "bytes": 168,
+      "sha256": "8f09bc46a51177d7d7238a13d15043ffc6dcb52acc984b7293a80e1727161279"
+    },
+    {
+      "path": "partition-proof.json",
+      "bytes": 78381,
+      "sha256": "c8c93c51e1aa9be731e3f8c25db8815987209204c374c8c1f59aa36b35152b67"
+    },
+    {
+      "path": "pins.json",
+      "bytes": 8540,
+      "sha256": "9e133caa9abee8e718ab45c6214159e77c9fe144faf83d7e651502afd9f5cb43"
+    },
+    {
+      "path": "provenance.json",
+      "bytes": 11331,
+      "sha256": "04148886b735bd6d1329fbe9e2b427e04af6bea057f37c704c2fc5114f433f9a"
+    },
+    {
+      "path": "run-receipts.public.json",
+      "bytes": 34250,
+      "sha256": "a615ed14ffef0ca957c1423cc324da79998c8d41a502f7877f662eb16a1f6c49"
+    },
+    {
+      "path": "size-and-inventory.json",
+      "bytes": 5368,
+      "sha256": "672d88a91ba521ddbf7cf653dc877e2b2681798b27f4031aa3649a67a5fc89cf"
+    },
+    {
+      "path": "test-results.json",
+      "bytes": 3971,
+      "sha256": "8e40f02b184aabe7ab82fc94afe9cc571d9fccb184e2e399942df38406cf8364"
+    }
+  ],
+  "hashBoundary": "Payload hash records exclude manifest.json and SHA256SUMS to avoid recursion. SHA256SUMS covers payload plus manifest.json; fixed-commit readback verifies all files including SHA256SUMS.",
+  "sanitization": "Public derivative hashes are distinct from original record hashes in provenance.json. Complete code diff body unchanged.",
+  "privacyScan": "No excluded-pattern findings in new public payload. This scoped pattern check complements whitelist extraction; not a general secret-scanner certification.",
+  "claims": "Historical local source results only; actual model quality, integration bundle and CONTENT_LOCK acceptance remain incomplete. No new test execution for publication."
+}

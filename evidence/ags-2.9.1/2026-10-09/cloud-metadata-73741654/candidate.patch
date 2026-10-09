@@ -1,0 +1,2071 @@
+From 737416547b02d60df2b29d0f093143bdab54cf01 Mon Sep 17 00:00:00 2001
+From: AGS Evidence <noreply@users.noreply.github.com>
+Date: Fri, 9 Oct 2026 03:24:29 +0000
+Subject: [PATCH] fix: preserve skill metadata polarity and phase context
+
+---
+ .../src/skill-classification/inventory.ts     |  20 ++-
+ .../classification.json                       |  66 ++++++++--
+ .../blocker-diagnostician/classification.json |  50 ++++++--
+ .../change-scope-guardian/classification.json |  16 ++-
+ skills/code-review/classification.json        |  46 +++++--
+ .../classification.json                       |  18 ++-
+ skills/context-continuity/classification.json |  36 +++++-
+ .../coordinate-subagents/classification.json  |  80 ++++++++++--
+ skills/cs-engineering/classification.json     |  40 ++++--
+ .../classification.json                       |  32 ++---
+ .../classification.json                       |  70 +++++++++--
+ .../classification.json                       |  48 +++++++-
+ .../classification.json                       |  56 +++++++--
+ .../classification.json                       |  62 ++++++++--
+ .../korean-prose-editor/classification.json   |  66 ++++++++--
+ .../model-effort-advisor/classification.json  |  32 ++++-
+ .../classification.json                       |  32 ++++-
+ skills/orchestrator/classification.json       | 116 ++++++++++++++++--
+ skills/ponytail/classification.json           |  46 ++++++-
+ .../classification.json                       |  54 ++++++--
+ skills/session-board/classification.json      |  52 ++++++--
+ .../classification.json                       |  36 ++++--
+ skills/task-contract/classification.json      |  24 ++--
+ skills/test-engineering/classification.json   |  38 ++++--
+ .../classification.json                       |  62 ++++++++--
+ .../skill-classification-inventory.test.ts    | 111 +++++++++++++++++
+ 26 files changed, 1106 insertions(+), 203 deletions(-)
+
+diff --git a/mcp-server/src/skill-classification/inventory.ts b/mcp-server/src/skill-classification/inventory.ts
+index 2838e86..03b5fc0 100644
+--- a/mcp-server/src/skill-classification/inventory.ts
++++ b/mcp-server/src/skill-classification/inventory.ts
+@@ -6,7 +6,9 @@ import type { SkillInventory, SkillMetadata } from "./types.js";
+ import { digestClassificationValue } from "./request.js";
+ 
+ const strings = z.array(z.string().min(1));
+-const span = z.object({ path: z.string().min(1), startLine: z.number().int().positive(), endLine: z.number().int().positive(), digest: z.string().regex(/^sha256:[a-f0-9]{64}$/) }).strict();
++// Optional half-open UTF-8 bounds select a clause within the untrimmed joined lines.
++// They remain in digest-bound local metadata; the public REQ/wire shape is unchanged.
++const span = z.object({ path: z.string().min(1), startLine: z.number().int().positive(), endLine: z.number().int().positive(), digest: z.string().regex(/^sha256:[a-f0-9]{64}$/), startByte: z.number().int().nonnegative().optional(), endByte: z.number().int().nonnegative().optional() }).strict();
+ const classification = z.object({
+   schemaVersion: z.literal("1.0.0"), taxonomyRevision: z.string().min(1),
+   actions: strings.min(1), targets: strings.min(1), constraints: strings, dependencies: strings,
+@@ -17,6 +19,7 @@ const provider = z.object({
+   requiredInputArtifacts: strings, producedArtifacts: strings,
+   inputBindings: z.array(z.object({ targetArtifact: z.string(), sources: strings, operation: z.string() }).passthrough()),
+   gate: z.record(z.string(), z.unknown()),
++  preconditions: strings.optional(),
+ }).passthrough();
+ const descriptor = z.object({ skillId: z.string().min(1), version: z.string().min(1), path: z.string(), enabled: z.boolean(), providers: z.array(provider).min(1), dependencies: strings.optional() }).passthrough();
+ const projectionPath = "skills/classification-projection.json";
+@@ -199,16 +202,25 @@ async function readInventory(options: InventoryOptions, directSkillDirectory = f
+           if (source.digest !== digest) throw new Error("STALE_SOURCE");
+           const lines = bytes.toString("utf8").split(/\r?\n/);
+           if (source.endLine < source.startLine || source.endLine > lines.length) throw new Error("SOURCE_RANGE_INVALID");
+-          const value = lines.slice(source.startLine - 1, source.endLine).join("\n").trim();
++          const selected = Buffer.from(lines.slice(source.startLine - 1, source.endLine).join("\n"), "utf8");
++          let value: string;
++          if (source.startByte !== undefined || source.endByte !== undefined) {
++            if (source.startByte === undefined || source.endByte === undefined || source.startByte >= source.endByte || source.endByte > selected.length) throw new Error("SOURCE_RANGE_INVALID");
++            try { value = new TextDecoder("utf-8", { fatal: true }).decode(selected.subarray(source.startByte, source.endByte)).trim(); }
++            catch (error) { throw new Error("SOURCE_RANGE_INVALID", { cause: error }); }
++          } else value = selected.toString("utf8").trim();
+           if (!value) throw new Error("MISSING_APPLICABILITY_OR_EXCLUSION");
+-          result.push(value);
++          if (!result.includes(value)) result.push(value);
+           sourceRefs.set(source.path, digest);
+-          sourceMap.push({ field, ...source });
++          sourceMap.push({ field, path: source.path, startLine: source.startLine, endLine: source.endLine, digest: source.digest });
+         }
+         return result;
+       };
+       const applicability = await resolveSpans(metadata.applicability, "applicability");
+       const exclusions = await resolveSpans(metadata.exclusions, "exclusions");
++      const preconditions = entry?.providers.flatMap(item => (item.preconditions ?? []).map(precondition => JSON.stringify({ phase: item.phase, capabilities: item.capabilities, precondition }))) ?? [];
++      for (const condition of preconditions) if (!applicability.includes(condition)) applicability.push(condition);
++      if (preconditions.length) sourceMap.push({ field: "applicability", path: "skills/registry.json", digest: allSources.get("skills/registry.json")! });
+       const capabilities = entry ? [...new Set(entry.providers.flatMap((item) => item.capabilities))] : metadata.capabilities;
+       if (!capabilities?.length || (!entry && !head.version)) throw new Error("MISSING_CAPABILITY_OR_VERSION");
+       if (entry && metadata.capabilities && digestClassificationValue(capabilities) !== digestClassificationValue(metadata.capabilities)) throw new Error("SOURCE_CONFLICT");
+diff --git a/skills/acceptance-evidence-validator/classification.json b/skills/acceptance-evidence-validator/classification.json
+index 48488e7..04433df 100644
+--- a/skills/acceptance-evidence-validator/classification.json
++++ b/skills/acceptance-evidence-validator/classification.json
+@@ -15,18 +15,28 @@
+       "path": "skills/acceptance-evidence-validator/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109"
++      "digest": "sha256:1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109",
++      "startByte": 0,
++      "endByte": 151
++    },
++    {
++      "path": "skills/acceptance-evidence-validator/SKILL.md",
++      "startLine": 9,
++      "endLine": 11,
++      "digest": "sha256:1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109",
++      "startByte": 0,
++      "endByte": 117
+     },
+     {
+       "path": "skills/acceptance-evidence-validator/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 19,
++      "startLine": 13,
++      "endLine": 16,
+       "digest": "sha256:1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109"
+     },
+     {
+       "path": "skills/acceptance-evidence-validator/references/entry-details.md",
+       "startLine": 24,
+-      "endLine": 31,
++      "endLine": 24,
+       "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991"
+     }
+   ],
+@@ -35,18 +45,58 @@
+       "path": "skills/acceptance-evidence-validator/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
++      "digest": "sha256:1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109",
++      "startByte": 152,
++      "endByte": 262
++    },
++    {
++      "path": "skills/acceptance-evidence-validator/SKILL.md",
++      "startLine": 11,
++      "endLine": 11,
++      "digest": "sha256:1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109",
++      "startByte": 85,
++      "endByte": 233
++    },
++    {
++      "path": "skills/acceptance-evidence-validator/SKILL.md",
++      "startLine": 17,
++      "endLine": 17,
+       "digest": "sha256:1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109"
+     },
+     {
+       "path": "skills/acceptance-evidence-validator/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 19,
++      "startLine": 18,
++      "endLine": 18,
+       "digest": "sha256:1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109"
+     },
+     {
+       "path": "skills/acceptance-evidence-validator/references/entry-details.md",
+-      "startLine": 24,
+-      "endLine": 31,
++      "startLine": 26,
++      "endLine": 26,
++      "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991"
++    },
++    {
++      "path": "skills/acceptance-evidence-validator/references/entry-details.md",
++      "startLine": 27,
++      "endLine": 27,
++      "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991"
++    },
++    {
++      "path": "skills/acceptance-evidence-validator/references/entry-details.md",
++      "startLine": 28,
++      "endLine": 28,
++      "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991"
++    },
++    {
++      "path": "skills/acceptance-evidence-validator/references/entry-details.md",
++      "startLine": 29,
++      "endLine": 29,
++      "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991"
++    },
++    {
++      "path": "skills/acceptance-evidence-validator/references/entry-details.md",
++      "startLine": 30,
++      "endLine": 30,
+       "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991"
+     }
+   ]
+diff --git a/skills/blocker-diagnostician/classification.json b/skills/blocker-diagnostician/classification.json
+index 4361510..11c7d60 100644
+--- a/skills/blocker-diagnostician/classification.json
++++ b/skills/blocker-diagnostician/classification.json
+@@ -15,18 +15,20 @@
+       "path": "skills/blocker-diagnostician/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e"
++      "digest": "sha256:5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e",
++      "startByte": 0,
++      "endByte": 151
+     },
+     {
+       "path": "skills/blocker-diagnostician/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 19,
++      "startLine": 9,
++      "endLine": 16,
+       "digest": "sha256:5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e"
+     },
+     {
+       "path": "skills/blocker-diagnostician/references/entry-details.md",
+       "startLine": 27,
+-      "endLine": 33,
++      "endLine": 27,
+       "digest": "sha256:5d3068c1151d10ff89304f2c3a5e18be6dc235d75cff179e3ff68a28d76aaebf"
+     }
+   ],
+@@ -35,18 +37,50 @@
+       "path": "skills/blocker-diagnostician/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
++      "digest": "sha256:5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e",
++      "startByte": 152,
++      "endByte": 276
++    },
++    {
++      "path": "skills/blocker-diagnostician/SKILL.md",
++      "startLine": 17,
++      "endLine": 17,
+       "digest": "sha256:5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e"
+     },
+     {
+       "path": "skills/blocker-diagnostician/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 19,
++      "startLine": 18,
++      "endLine": 18,
+       "digest": "sha256:5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e"
+     },
+     {
+       "path": "skills/blocker-diagnostician/references/entry-details.md",
+-      "startLine": 27,
+-      "endLine": 33,
++      "startLine": 24,
++      "endLine": 24,
++      "digest": "sha256:5d3068c1151d10ff89304f2c3a5e18be6dc235d75cff179e3ff68a28d76aaebf"
++    },
++    {
++      "path": "skills/blocker-diagnostician/references/entry-details.md",
++      "startLine": 29,
++      "endLine": 29,
++      "digest": "sha256:5d3068c1151d10ff89304f2c3a5e18be6dc235d75cff179e3ff68a28d76aaebf"
++    },
++    {
++      "path": "skills/blocker-diagnostician/references/entry-details.md",
++      "startLine": 30,
++      "endLine": 30,
++      "digest": "sha256:5d3068c1151d10ff89304f2c3a5e18be6dc235d75cff179e3ff68a28d76aaebf"
++    },
++    {
++      "path": "skills/blocker-diagnostician/references/entry-details.md",
++      "startLine": 31,
++      "endLine": 31,
++      "digest": "sha256:5d3068c1151d10ff89304f2c3a5e18be6dc235d75cff179e3ff68a28d76aaebf"
++    },
++    {
++      "path": "skills/blocker-diagnostician/references/entry-details.md",
++      "startLine": 32,
++      "endLine": 32,
+       "digest": "sha256:5d3068c1151d10ff89304f2c3a5e18be6dc235d75cff179e3ff68a28d76aaebf"
+     }
+   ]
+diff --git a/skills/change-scope-guardian/classification.json b/skills/change-scope-guardian/classification.json
+index d00dc04..0b1ef36 100644
+--- a/skills/change-scope-guardian/classification.json
++++ b/skills/change-scope-guardian/classification.json
+@@ -16,12 +16,14 @@
+       "path": "skills/change-scope-guardian/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
++      "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e",
++      "startByte": 0,
++      "endByte": 166
+     },
+     {
+       "path": "skills/change-scope-guardian/SKILL.md",
+-      "startLine": 5,
+-      "endLine": 17,
++      "startLine": 6,
++      "endLine": 14,
+       "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+     }
+   ],
+@@ -30,12 +32,14 @@
+       "path": "skills/change-scope-guardian/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
++      "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e",
++      "startByte": 167,
++      "endByte": 243
+     },
+     {
+       "path": "skills/change-scope-guardian/SKILL.md",
+-      "startLine": 5,
+-      "endLine": 17,
++      "startLine": 16,
++      "endLine": 16,
+       "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+     }
+   ]
+diff --git a/skills/code-review/classification.json b/skills/code-review/classification.json
+index be16af0..805d99e 100644
+--- a/skills/code-review/classification.json
++++ b/skills/code-review/classification.json
+@@ -16,13 +16,33 @@
+       "path": "skills/code-review/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
++      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
++      "startByte": 0,
++      "endByte": 206
++    },
++    {
++      "path": "skills/code-review/SKILL.md",
++      "startLine": 3,
++      "endLine": 3,
++      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
++      "startByte": 375,
++      "endByte": 376
+     },
+     {
+       "path": "skills/code-review/SKILL.md",
+       "startLine": 11,
+-      "endLine": 13,
+-      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
++      "endLine": 12,
++      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
++      "startByte": 0,
++      "endByte": 66
++    },
++    {
++      "path": "skills/code-review/SKILL.md",
++      "startLine": 12,
++      "endLine": 12,
++      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
++      "startByte": 165,
++      "endByte": 264
+     }
+   ],
+   "exclusions": [
+@@ -30,13 +50,25 @@
+       "path": "skills/code-review/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
++      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
++      "startByte": 207,
++      "endByte": 375
+     },
+     {
+       "path": "skills/code-review/SKILL.md",
+-      "startLine": 11,
+-      "endLine": 13,
+-      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
++      "startLine": 12,
++      "endLine": 12,
++      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
++      "startByte": 47,
++      "endByte": 164
++    },
++    {
++      "path": "skills/code-review/SKILL.md",
++      "startLine": 12,
++      "endLine": 12,
++      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
++      "startByte": 265,
++      "endByte": 377
+     }
+   ]
+ }
+diff --git a/skills/codex-token-usage-analyzer/classification.json b/skills/codex-token-usage-analyzer/classification.json
+index 6eaa87a..8826581 100644
+--- a/skills/codex-token-usage-analyzer/classification.json
++++ b/skills/codex-token-usage-analyzer/classification.json
+@@ -16,12 +16,14 @@
+       "path": "skills/codex-token-usage-analyzer/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:81e119d5c8ef11d8f2c928f8c3c9d518941643ae9c88c03cdb8a6ece09f80f1f"
++      "digest": "sha256:81e119d5c8ef11d8f2c928f8c3c9d518941643ae9c88c03cdb8a6ece09f80f1f",
++      "startByte": 0,
++      "endByte": 103
+     },
+     {
+       "path": "skills/codex-token-usage-analyzer/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 12,
++      "startLine": 9,
++      "endLine": 11,
+       "digest": "sha256:81e119d5c8ef11d8f2c928f8c3c9d518941643ae9c88c03cdb8a6ece09f80f1f"
+     }
+   ],
+@@ -30,13 +32,9 @@
+       "path": "skills/codex-token-usage-analyzer/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:81e119d5c8ef11d8f2c928f8c3c9d518941643ae9c88c03cdb8a6ece09f80f1f"
+-    },
+-    {
+-      "path": "skills/codex-token-usage-analyzer/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 12,
+-      "digest": "sha256:81e119d5c8ef11d8f2c928f8c3c9d518941643ae9c88c03cdb8a6ece09f80f1f"
++      "digest": "sha256:81e119d5c8ef11d8f2c928f8c3c9d518941643ae9c88c03cdb8a6ece09f80f1f",
++      "startByte": 104,
++      "endByte": 186
+     }
+   ]
+ }
+diff --git a/skills/context-continuity/classification.json b/skills/context-continuity/classification.json
+index 479ef50..98cca7a 100644
+--- a/skills/context-continuity/classification.json
++++ b/skills/context-continuity/classification.json
+@@ -18,12 +18,22 @@
+       "path": "skills/context-continuity/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022"
++      "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022",
++      "startByte": 0,
++      "endByte": 197
+     },
+     {
+       "path": "skills/context-continuity/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 26,
++      "startLine": 9,
++      "endLine": 11,
++      "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022",
++      "startByte": 0,
++      "endByte": 99
++    },
++    {
++      "path": "skills/context-continuity/SKILL.md",
++      "startLine": 15,
++      "endLine": 23,
+       "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022"
+     }
+   ],
+@@ -32,12 +42,28 @@
+       "path": "skills/context-continuity/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
++      "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022",
++      "startByte": 198,
++      "endByte": 286
++    },
++    {
++      "path": "skills/context-continuity/SKILL.md",
++      "startLine": 11,
++      "endLine": 11,
++      "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022",
++      "startByte": 78,
++      "endByte": 256
++    },
++    {
++      "path": "skills/context-continuity/SKILL.md",
++      "startLine": 13,
++      "endLine": 13,
+       "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022"
+     },
+     {
+       "path": "skills/context-continuity/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 26,
++      "startLine": 25,
++      "endLine": 25,
+       "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022"
+     }
+   ]
+diff --git a/skills/coordinate-subagents/classification.json b/skills/coordinate-subagents/classification.json
+index 59ea026..778a088 100644
+--- a/skills/coordinate-subagents/classification.json
++++ b/skills/coordinate-subagents/classification.json
+@@ -16,24 +16,60 @@
+       "path": "skills/coordinate-subagents/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
++      "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0",
++      "startByte": 0,
++      "endByte": 236
++    },
++    {
++      "path": "skills/coordinate-subagents/SKILL.md",
++      "startLine": 9,
++      "endLine": 9,
+       "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0"
+     },
+     {
+       "path": "skills/coordinate-subagents/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 21,
++      "startLine": 13,
++      "endLine": 17,
++      "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0"
++    },
++    {
++      "path": "skills/coordinate-subagents/SKILL.md",
++      "startLine": 19,
++      "endLine": 20,
+       "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0"
+     },
+     {
+       "path": "skills/coordinate-subagents/references/entry-details.md",
+       "startLine": 1,
+-      "endLine": 22,
++      "endLine": 14,
++      "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604"
++    },
++    {
++      "path": "skills/coordinate-subagents/references/entry-details.md",
++      "startLine": 18,
++      "endLine": 19,
+       "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604"
+     },
+     {
+       "path": "skills/coordinate-subagents/references/entry-details.md",
+       "startLine": 23,
+-      "endLine": 33,
++      "endLine": 28,
++      "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604",
++      "startByte": 0,
++      "endByte": 496
++    },
++    {
++      "path": "skills/coordinate-subagents/references/entry-details.md",
++      "startLine": 30,
++      "endLine": 30,
++      "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604",
++      "startByte": 0,
++      "endByte": 147
++    },
++    {
++      "path": "skills/coordinate-subagents/references/entry-details.md",
++      "startLine": 32,
++      "endLine": 32,
+       "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604"
+     }
+   ],
+@@ -42,25 +78,49 @@
+       "path": "skills/coordinate-subagents/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
++      "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0",
++      "startByte": 237,
++      "endByte": 342
++    },
++    {
++      "path": "skills/coordinate-subagents/SKILL.md",
++      "startLine": 11,
++      "endLine": 11,
+       "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0"
+     },
+     {
+       "path": "skills/coordinate-subagents/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 21,
++      "startLine": 18,
++      "endLine": 18,
+       "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0"
+     },
+     {
+       "path": "skills/coordinate-subagents/references/entry-details.md",
+-      "startLine": 1,
+-      "endLine": 22,
++      "startLine": 16,
++      "endLine": 16,
+       "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604"
+     },
+     {
+       "path": "skills/coordinate-subagents/references/entry-details.md",
+-      "startLine": 23,
+-      "endLine": 33,
++      "startLine": 21,
++      "endLine": 21,
+       "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604"
++    },
++    {
++      "path": "skills/coordinate-subagents/references/entry-details.md",
++      "startLine": 28,
++      "endLine": 28,
++      "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604",
++      "startByte": 351,
++      "endByte": 480
++    },
++    {
++      "path": "skills/coordinate-subagents/references/entry-details.md",
++      "startLine": 30,
++      "endLine": 30,
++      "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604",
++      "startByte": 148,
++      "endByte": 483
+     }
+   ]
+ }
+diff --git a/skills/cs-engineering/classification.json b/skills/cs-engineering/classification.json
+index f715321..1781ab4 100644
+--- a/skills/cs-engineering/classification.json
++++ b/skills/cs-engineering/classification.json
+@@ -19,40 +19,60 @@
+     {
+       "path": "skills/cs-engineering/SKILL.md",
+       "startLine": 3,
+-      "endLine": 8,
+-      "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
++      "endLine": 7,
++      "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
++      "startByte": 0,
++      "endByte": 381
+     },
+     {
+       "path": "skills/cs-engineering/SKILL.md",
+       "startLine": 16,
+-      "endLine": 21,
++      "endLine": 19,
+       "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+     },
+     {
+       "path": "skills/cs-engineering/SKILL.md",
+       "startLine": 22,
+-      "endLine": 26,
++      "endLine": 23,
+       "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
++    },
++    {
++      "path": "skills/cs-engineering/SKILL.md",
++      "startLine": 25,
++      "endLine": 25,
++      "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
++      "startByte": 0,
++      "endByte": 70
+     }
+   ],
+   "exclusions": [
+     {
+       "path": "skills/cs-engineering/SKILL.md",
+-      "startLine": 3,
++      "startLine": 7,
+       "endLine": 8,
+-      "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
++      "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
++      "startByte": 57,
++      "endByte": 218
+     },
+     {
+       "path": "skills/cs-engineering/SKILL.md",
+-      "startLine": 16,
+-      "endLine": 21,
++      "startLine": 20,
++      "endLine": 20,
+       "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+     },
+     {
+       "path": "skills/cs-engineering/SKILL.md",
+-      "startLine": 22,
+-      "endLine": 26,
++      "startLine": 24,
++      "endLine": 24,
+       "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
++    },
++    {
++      "path": "skills/cs-engineering/SKILL.md",
++      "startLine": 25,
++      "endLine": 25,
++      "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
++      "startByte": 71,
++      "endByte": 120
+     }
+   ]
+ }
+diff --git a/skills/evaluation-validity-auditor/classification.json b/skills/evaluation-validity-auditor/classification.json
+index 2dc6930..24491e2 100644
+--- a/skills/evaluation-validity-auditor/classification.json
++++ b/skills/evaluation-validity-auditor/classification.json
+@@ -16,18 +16,22 @@
+       "path": "skills/evaluation-validity-auditor/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230"
++      "digest": "sha256:eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230",
++      "startByte": 0,
++      "endByte": 153
+     },
+     {
+       "path": "skills/evaluation-validity-auditor/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 12,
+-      "digest": "sha256:eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230"
++      "startLine": 9,
++      "endLine": 11,
++      "digest": "sha256:eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230",
++      "startByte": 0,
++      "endByte": 181
+     },
+     {
+       "path": "skills/evaluation-validity-auditor/references/entry-details.md",
+       "startLine": 1,
+-      "endLine": 15,
++      "endLine": 14,
+       "digest": "sha256:7d31114e9200454d084dd7df04db34f1afc4c3ac23f3feb09c5eef6a85be8950"
+     }
+   ],
+@@ -36,19 +40,17 @@
+       "path": "skills/evaluation-validity-auditor/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230"
++      "digest": "sha256:eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230",
++      "startByte": 154,
++      "endByte": 240
+     },
+     {
+       "path": "skills/evaluation-validity-auditor/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 12,
+-      "digest": "sha256:eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230"
+-    },
+-    {
+-      "path": "skills/evaluation-validity-auditor/references/entry-details.md",
+-      "startLine": 1,
+-      "endLine": 15,
+-      "digest": "sha256:7d31114e9200454d084dd7df04db34f1afc4c3ac23f3feb09c5eef6a85be8950"
++      "startLine": 11,
++      "endLine": 11,
++      "digest": "sha256:eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230",
++      "startByte": 151,
++      "endByte": 277
+     }
+   ]
+ }
+diff --git a/skills/independent-audit-gate/classification.json b/skills/independent-audit-gate/classification.json
+index 4edb1e5..90bb0fa 100644
+--- a/skills/independent-audit-gate/classification.json
++++ b/skills/independent-audit-gate/classification.json
+@@ -16,18 +16,34 @@
+       "path": "skills/independent-audit-gate/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8"
++      "digest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8",
++      "startByte": 0,
++      "endByte": 327
+     },
+     {
+       "path": "skills/independent-audit-gate/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 28,
+-      "digest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8"
++      "startLine": 9,
++      "endLine": 25,
++      "digest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8",
++      "startByte": 0,
++      "endByte": 1225
+     },
+     {
+       "path": "skills/independent-audit-gate/references/entry-details.md",
+       "startLine": 1,
+-      "endLine": 9,
++      "endLine": 1,
++      "digest": "sha256:3f117c44ba584885a2dc9b370a20f3f4ae4a8e672dae1bd174586d8d27b9ca7e"
++    },
++    {
++      "path": "skills/independent-audit-gate/references/entry-details.md",
++      "startLine": 4,
++      "endLine": 4,
++      "digest": "sha256:3f117c44ba584885a2dc9b370a20f3f4ae4a8e672dae1bd174586d8d27b9ca7e"
++    },
++    {
++      "path": "skills/independent-audit-gate/references/entry-details.md",
++      "startLine": 7,
++      "endLine": 7,
+       "digest": "sha256:3f117c44ba584885a2dc9b370a20f3f4ae4a8e672dae1bd174586d8d27b9ca7e"
+     }
+   ],
+@@ -36,18 +52,52 @@
+       "path": "skills/independent-audit-gate/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8"
++      "digest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8",
++      "startByte": 328,
++      "endByte": 440
+     },
+     {
+       "path": "skills/independent-audit-gate/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 28,
++      "startLine": 25,
++      "endLine": 25,
++      "digest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8",
++      "startByte": 180,
++      "endByte": 337
++    },
++    {
++      "path": "skills/independent-audit-gate/SKILL.md",
++      "startLine": 27,
++      "endLine": 27,
+       "digest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8"
+     },
+     {
+       "path": "skills/independent-audit-gate/references/entry-details.md",
+-      "startLine": 1,
+-      "endLine": 9,
++      "startLine": 3,
++      "endLine": 3,
++      "digest": "sha256:3f117c44ba584885a2dc9b370a20f3f4ae4a8e672dae1bd174586d8d27b9ca7e"
++    },
++    {
++      "path": "skills/independent-audit-gate/references/entry-details.md",
++      "startLine": 5,
++      "endLine": 5,
++      "digest": "sha256:3f117c44ba584885a2dc9b370a20f3f4ae4a8e672dae1bd174586d8d27b9ca7e"
++    },
++    {
++      "path": "skills/independent-audit-gate/references/entry-details.md",
++      "startLine": 6,
++      "endLine": 6,
++      "digest": "sha256:3f117c44ba584885a2dc9b370a20f3f4ae4a8e672dae1bd174586d8d27b9ca7e"
++    },
++    {
++      "path": "skills/independent-audit-gate/references/entry-details.md",
++      "startLine": 8,
++      "endLine": 8,
++      "digest": "sha256:3f117c44ba584885a2dc9b370a20f3f4ae4a8e672dae1bd174586d8d27b9ca7e"
++    },
++    {
++      "path": "skills/independent-audit-gate/references/entry-details.md",
++      "startLine": 19,
++      "endLine": 19,
+       "digest": "sha256:3f117c44ba584885a2dc9b370a20f3f4ae4a8e672dae1bd174586d8d27b9ca7e"
+     }
+   ]
+diff --git a/skills/independent-deliberation-panel/classification.json b/skills/independent-deliberation-panel/classification.json
+index 6b9c9d4..5916095 100644
+--- a/skills/independent-deliberation-panel/classification.json
++++ b/skills/independent-deliberation-panel/classification.json
+@@ -17,12 +17,30 @@
+       "path": "skills/independent-deliberation-panel/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab"
++      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab",
++      "startByte": 0,
++      "endByte": 165
++    },
++    {
++      "path": "skills/independent-deliberation-panel/SKILL.md",
++      "startLine": 9,
++      "endLine": 11,
++      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab",
++      "startByte": 0,
++      "endByte": 140
++    },
++    {
++      "path": "skills/independent-deliberation-panel/SKILL.md",
++      "startLine": 13,
++      "endLine": 15,
++      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab",
++      "startByte": 0,
++      "endByte": 292
+     },
+     {
+       "path": "skills/independent-deliberation-panel/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 18,
++      "startLine": 17,
++      "endLine": 17,
+       "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab"
+     }
+   ],
+@@ -31,12 +49,30 @@
+       "path": "skills/independent-deliberation-panel/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab"
++      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab",
++      "startByte": 166,
++      "endByte": 232
++    },
++    {
++      "path": "skills/independent-deliberation-panel/SKILL.md",
++      "startLine": 11,
++      "endLine": 11,
++      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab",
++      "startByte": 107,
++      "endByte": 445
++    },
++    {
++      "path": "skills/independent-deliberation-panel/SKILL.md",
++      "startLine": 15,
++      "endLine": 15,
++      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab",
++      "startByte": 275,
++      "endByte": 483
+     },
+     {
+       "path": "skills/independent-deliberation-panel/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 18,
++      "startLine": 41,
++      "endLine": 41,
+       "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab"
+     }
+   ]
+diff --git a/skills/instruction-scope-resolver/classification.json b/skills/instruction-scope-resolver/classification.json
+index caa5db9..727a174 100644
+--- a/skills/instruction-scope-resolver/classification.json
++++ b/skills/instruction-scope-resolver/classification.json
+@@ -16,13 +16,33 @@
+       "path": "skills/instruction-scope-resolver/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb"
++      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
++      "startByte": 0,
++      "endByte": 162
+     },
+     {
+       "path": "skills/instruction-scope-resolver/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 18,
+-      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb"
++      "startLine": 9,
++      "endLine": 11,
++      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
++      "startByte": 0,
++      "endByte": 120
++    },
++    {
++      "path": "skills/instruction-scope-resolver/SKILL.md",
++      "startLine": 13,
++      "endLine": 15,
++      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
++      "startByte": 0,
++      "endByte": 149
++    },
++    {
++      "path": "skills/instruction-scope-resolver/SKILL.md",
++      "startLine": 17,
++      "endLine": 17,
++      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
++      "startByte": 0,
++      "endByte": 63
+     }
+   ],
+   "exclusions": [
+@@ -30,13 +50,33 @@
+       "path": "skills/instruction-scope-resolver/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb"
++      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
++      "startByte": 163,
++      "endByte": 240
++    },
++    {
++      "path": "skills/instruction-scope-resolver/SKILL.md",
++      "startLine": 11,
++      "endLine": 11,
++      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
++      "startByte": 91,
++      "endByte": 208
++    },
++    {
++      "path": "skills/instruction-scope-resolver/SKILL.md",
++      "startLine": 15,
++      "endLine": 15,
++      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
++      "startByte": 132,
++      "endByte": 278
+     },
+     {
+       "path": "skills/instruction-scope-resolver/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 18,
+-      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb"
++      "startLine": 17,
++      "endLine": 17,
++      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
++      "startByte": 64,
++      "endByte": 204
+     }
+   ]
+ }
+diff --git a/skills/iteration-frame-auditor/classification.json b/skills/iteration-frame-auditor/classification.json
+index 84e35ab..9d435a3 100644
+--- a/skills/iteration-frame-auditor/classification.json
++++ b/skills/iteration-frame-auditor/classification.json
+@@ -15,18 +15,28 @@
+       "path": "skills/iteration-frame-auditor/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:e83cf0abff280adfca9f12c35afd67e3787c75ce4e7866f7d1e402f59211945f"
++      "digest": "sha256:e83cf0abff280adfca9f12c35afd67e3787c75ce4e7866f7d1e402f59211945f",
++      "startByte": 0,
++      "endByte": 151
++    },
++    {
++      "path": "skills/iteration-frame-auditor/SKILL.md",
++      "startLine": 8,
++      "endLine": 10,
++      "digest": "sha256:e83cf0abff280adfca9f12c35afd67e3787c75ce4e7866f7d1e402f59211945f",
++      "startByte": 0,
++      "endByte": 156
+     },
+     {
+       "path": "skills/iteration-frame-auditor/SKILL.md",
+-      "startLine": 7,
+-      "endLine": 17,
++      "startLine": 12,
++      "endLine": 15,
+       "digest": "sha256:e83cf0abff280adfca9f12c35afd67e3787c75ce4e7866f7d1e402f59211945f"
+     },
+     {
+       "path": "skills/iteration-frame-auditor/references/entry-details.md",
+       "startLine": 30,
+-      "endLine": 37,
++      "endLine": 30,
+       "digest": "sha256:e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432"
+     }
+   ],
+@@ -35,18 +45,52 @@
+       "path": "skills/iteration-frame-auditor/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:e83cf0abff280adfca9f12c35afd67e3787c75ce4e7866f7d1e402f59211945f"
++      "digest": "sha256:e83cf0abff280adfca9f12c35afd67e3787c75ce4e7866f7d1e402f59211945f",
++      "startByte": 152,
++      "endByte": 252
+     },
+     {
+       "path": "skills/iteration-frame-auditor/SKILL.md",
+-      "startLine": 7,
+-      "endLine": 17,
++      "startLine": 10,
++      "endLine": 10,
++      "digest": "sha256:e83cf0abff280adfca9f12c35afd67e3787c75ce4e7866f7d1e402f59211945f",
++      "startByte": 130,
++      "endByte": 294
++    },
++    {
++      "path": "skills/iteration-frame-auditor/SKILL.md",
++      "startLine": 16,
++      "endLine": 16,
+       "digest": "sha256:e83cf0abff280adfca9f12c35afd67e3787c75ce4e7866f7d1e402f59211945f"
+     },
+     {
+       "path": "skills/iteration-frame-auditor/references/entry-details.md",
+-      "startLine": 30,
+-      "endLine": 37,
++      "startLine": 32,
++      "endLine": 32,
++      "digest": "sha256:e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432"
++    },
++    {
++      "path": "skills/iteration-frame-auditor/references/entry-details.md",
++      "startLine": 33,
++      "endLine": 33,
++      "digest": "sha256:e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432"
++    },
++    {
++      "path": "skills/iteration-frame-auditor/references/entry-details.md",
++      "startLine": 34,
++      "endLine": 34,
++      "digest": "sha256:e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432"
++    },
++    {
++      "path": "skills/iteration-frame-auditor/references/entry-details.md",
++      "startLine": 35,
++      "endLine": 35,
++      "digest": "sha256:e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432"
++    },
++    {
++      "path": "skills/iteration-frame-auditor/references/entry-details.md",
++      "startLine": 36,
++      "endLine": 36,
+       "digest": "sha256:e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432"
+     }
+   ]
+diff --git a/skills/korean-prose-editor/classification.json b/skills/korean-prose-editor/classification.json
+index 88880e0..0ea6e51 100644
+--- a/skills/korean-prose-editor/classification.json
++++ b/skills/korean-prose-editor/classification.json
+@@ -17,18 +17,38 @@
+       "path": "skills/korean-prose-editor/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
++      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
++      "startByte": 0,
++      "endByte": 254
+     },
+     {
+       "path": "skills/korean-prose-editor/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 16,
+-      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
++      "startLine": 9,
++      "endLine": 11,
++      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
++      "startByte": 0,
++      "endByte": 119
++    },
++    {
++      "path": "skills/korean-prose-editor/SKILL.md",
++      "startLine": 13,
++      "endLine": 15,
++      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
++      "startByte": 0,
++      "endByte": 187
+     },
+     {
+       "path": "skills/korean-prose-editor/references/entry-details.md",
+       "startLine": 1,
+-      "endLine": 10,
++      "endLine": 5,
++      "digest": "sha256:26ce188795767864370bbd07ae06ba5e164ff802b301656daa3759626996a9a1",
++      "startByte": 0,
++      "endByte": 886
++    },
++    {
++      "path": "skills/korean-prose-editor/references/entry-details.md",
++      "startLine": 7,
++      "endLine": 9,
+       "digest": "sha256:26ce188795767864370bbd07ae06ba5e164ff802b301656daa3759626996a9a1"
+     }
+   ],
+@@ -37,19 +57,41 @@
+       "path": "skills/korean-prose-editor/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
++      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
++      "startByte": 255,
++      "endByte": 335
++    },
++    {
++      "path": "skills/korean-prose-editor/SKILL.md",
++      "startLine": 11,
++      "endLine": 11,
++      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
++      "startByte": 97,
++      "endByte": 246
+     },
+     {
+       "path": "skills/korean-prose-editor/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 16,
+-      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
++      "startLine": 15,
++      "endLine": 15,
++      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
++      "startByte": 170,
++      "endByte": 277
++    },
++    {
++      "path": "skills/korean-prose-editor/SKILL.md",
++      "startLine": 15,
++      "endLine": 15,
++      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
++      "startByte": 278,
++      "endByte": 383
+     },
+     {
+       "path": "skills/korean-prose-editor/references/entry-details.md",
+-      "startLine": 1,
+-      "endLine": 10,
+-      "digest": "sha256:26ce188795767864370bbd07ae06ba5e164ff802b301656daa3759626996a9a1"
++      "startLine": 5,
++      "endLine": 5,
++      "digest": "sha256:26ce188795767864370bbd07ae06ba5e164ff802b301656daa3759626996a9a1",
++      "startByte": 317,
++      "endByte": 444
+     }
+   ]
+ }
+diff --git a/skills/model-effort-advisor/classification.json b/skills/model-effort-advisor/classification.json
+index 9365217..5426f00 100644
+--- a/skills/model-effort-advisor/classification.json
++++ b/skills/model-effort-advisor/classification.json
+@@ -15,12 +15,22 @@
+       "path": "skills/model-effort-advisor/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106"
++      "digest": "sha256:55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106",
++      "startByte": 0,
++      "endByte": 211
++    },
++    {
++      "path": "skills/model-effort-advisor/SKILL.md",
++      "startLine": 9,
++      "endLine": 11,
++      "digest": "sha256:55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106",
++      "startByte": 0,
++      "endByte": 120
+     },
+     {
+       "path": "skills/model-effort-advisor/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 20,
++      "startLine": 13,
++      "endLine": 17,
+       "digest": "sha256:55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106"
+     }
+   ],
+@@ -29,12 +39,22 @@
+       "path": "skills/model-effort-advisor/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106"
++      "digest": "sha256:55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106",
++      "startByte": 212,
++      "endByte": 351
++    },
++    {
++      "path": "skills/model-effort-advisor/SKILL.md",
++      "startLine": 11,
++      "endLine": 11,
++      "digest": "sha256:55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106",
++      "startByte": 97,
++      "endByte": 251
+     },
+     {
+       "path": "skills/model-effort-advisor/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 20,
++      "startLine": 19,
++      "endLine": 19,
+       "digest": "sha256:55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106"
+     }
+   ]
+diff --git a/skills/mutation-risk-preflight/classification.json b/skills/mutation-risk-preflight/classification.json
+index e2848cb..7eee513 100644
+--- a/skills/mutation-risk-preflight/classification.json
++++ b/skills/mutation-risk-preflight/classification.json
+@@ -20,12 +20,22 @@
+       "path": "skills/mutation-risk-preflight/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe"
++      "digest": "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe",
++      "startByte": 0,
++      "endByte": 194
++    },
++    {
++      "path": "skills/mutation-risk-preflight/SKILL.md",
++      "startLine": 9,
++      "endLine": 11,
++      "digest": "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe",
++      "startByte": 0,
++      "endByte": 179
+     },
+     {
+       "path": "skills/mutation-risk-preflight/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 22,
++      "startLine": 13,
++      "endLine": 19,
+       "digest": "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe"
+     }
+   ],
+@@ -34,12 +44,22 @@
+       "path": "skills/mutation-risk-preflight/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe"
++      "digest": "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe",
++      "startByte": 195,
++      "endByte": 262
++    },
++    {
++      "path": "skills/mutation-risk-preflight/SKILL.md",
++      "startLine": 11,
++      "endLine": 11,
++      "digest": "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe",
++      "startByte": 153,
++      "endByte": 265
+     },
+     {
+       "path": "skills/mutation-risk-preflight/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 22,
++      "startLine": 21,
++      "endLine": 21,
+       "digest": "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe"
+     }
+   ]
+diff --git a/skills/orchestrator/classification.json b/skills/orchestrator/classification.json
+index 6d3e325..350d211 100644
+--- a/skills/orchestrator/classification.json
++++ b/skills/orchestrator/classification.json
+@@ -21,12 +21,62 @@
+       "path": "skills/orchestrator/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
++      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
++      "startByte": 0,
++      "endByte": 175
++    },
++    {
++      "path": "skills/orchestrator/SKILL.md",
++      "startLine": 9,
++      "endLine": 11,
++      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
++      "startByte": 0,
++      "endByte": 246
++    },
++    {
++      "path": "skills/orchestrator/SKILL.md",
++      "startLine": 13,
++      "endLine": 16,
++      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
++      "startByte": 0,
++      "endByte": 295
++    },
++    {
++      "path": "skills/orchestrator/SKILL.md",
++      "startLine": 18,
++      "endLine": 20,
++      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
++      "startByte": 0,
++      "endByte": 1243
+     },
+     {
+       "path": "skills/orchestrator/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 27,
++      "startLine": 21,
++      "endLine": 21,
++      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
++      "startByte": 0,
++      "endByte": 148
++    },
++    {
++      "path": "skills/orchestrator/SKILL.md",
++      "startLine": 22,
++      "endLine": 22,
++      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
++      "startByte": 0,
++      "endByte": 86
++    },
++    {
++      "path": "skills/orchestrator/SKILL.md",
++      "startLine": 23,
++      "endLine": 23,
++      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
++      "startByte": 0,
++      "endByte": 307
++    },
++    {
++      "path": "skills/orchestrator/SKILL.md",
++      "startLine": 24,
++      "endLine": 26,
+       "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+     }
+   ],
+@@ -35,13 +85,65 @@
+       "path": "skills/orchestrator/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
++      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
++      "startByte": 176,
++      "endByte": 341
+     },
+     {
+       "path": "skills/orchestrator/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 27,
+-      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
++      "startLine": 11,
++      "endLine": 11,
++      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
++      "startByte": 220,
++      "endByte": 313
++    },
++    {
++      "path": "skills/orchestrator/SKILL.md",
++      "startLine": 16,
++      "endLine": 16,
++      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
++      "startByte": 235,
++      "endByte": 319
++    },
++    {
++      "path": "skills/orchestrator/SKILL.md",
++      "startLine": 16,
++      "endLine": 16,
++      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
++      "startByte": 320,
++      "endByte": 510
++    },
++    {
++      "path": "skills/orchestrator/SKILL.md",
++      "startLine": 20,
++      "endLine": 20,
++      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
++      "startByte": 390,
++      "endByte": 492
++    },
++    {
++      "path": "skills/orchestrator/SKILL.md",
++      "startLine": 21,
++      "endLine": 21,
++      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
++      "startByte": 149,
++      "endByte": 344
++    },
++    {
++      "path": "skills/orchestrator/SKILL.md",
++      "startLine": 22,
++      "endLine": 22,
++      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
++      "startByte": 87,
++      "endByte": 291
++    },
++    {
++      "path": "skills/orchestrator/SKILL.md",
++      "startLine": 23,
++      "endLine": 23,
++      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
++      "startByte": 308,
++      "endByte": 440
+     }
+   ]
+ }
+diff --git a/skills/ponytail/classification.json b/skills/ponytail/classification.json
+index b59e66a..2b58edf 100644
+--- a/skills/ponytail/classification.json
++++ b/skills/ponytail/classification.json
+@@ -17,21 +17,59 @@
+     {
+       "path": "skills/ponytail/SKILL.md",
+       "startLine": 3,
+-      "endLine": 16,
++      "endLine": 13,
++      "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
++      "startByte": 0,
++      "endByte": 753
++    },
++    {
++      "path": "skills/ponytail/SKILL.md",
++      "startLine": 114,
++      "endLine": 116,
++      "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
++      "startByte": 0,
++      "endByte": 246
++    },
++    {
++      "path": "skills/ponytail/SKILL.md",
++      "startLine": 126,
++      "endLine": 126,
+       "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+     }
+   ],
+   "exclusions": [
+     {
+       "path": "skills/ponytail/SKILL.md",
+-      "startLine": 3,
++      "startLine": 13,
+       "endLine": 16,
++      "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
++      "startByte": 69,
++      "endByte": 242
++    },
++    {
++      "path": "skills/ponytail/SKILL.md",
++      "startLine": 116,
++      "endLine": 116,
++      "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
++      "startByte": 232,
++      "endByte": 297
++    },
++    {
++      "path": "skills/ponytail/SKILL.md",
++      "startLine": 118,
++      "endLine": 119,
+       "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+     },
+     {
+       "path": "skills/ponytail/SKILL.md",
+-      "startLine": 114,
+-      "endLine": 127,
++      "startLine": 120,
++      "endLine": 122,
++      "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
++    },
++    {
++      "path": "skills/ponytail/SKILL.md",
++      "startLine": 123,
++      "endLine": 124,
+       "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+     }
+   ]
+diff --git a/skills/recovery-strategy-selector/classification.json b/skills/recovery-strategy-selector/classification.json
+index 09fa099..38ad286 100644
+--- a/skills/recovery-strategy-selector/classification.json
++++ b/skills/recovery-strategy-selector/classification.json
+@@ -15,18 +15,28 @@
+       "path": "skills/recovery-strategy-selector/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25"
++      "digest": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25",
++      "startByte": 0,
++      "endByte": 175
+     },
+     {
+       "path": "skills/recovery-strategy-selector/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 12,
+-      "digest": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25"
++      "startLine": 9,
++      "endLine": 11,
++      "digest": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25",
++      "startByte": 0,
++      "endByte": 209
++    },
++    {
++      "path": "skills/recovery-strategy-selector/references/entry-details.md",
++      "startLine": 3,
++      "endLine": 3,
++      "digest": "sha256:08b489c4ace78471ae6737fcea06e1885294d8d0b5f2207c74c6f740ac05375e"
+     },
+     {
+       "path": "skills/recovery-strategy-selector/references/entry-details.md",
+       "startLine": 24,
+-      "endLine": 30,
++      "endLine": 24,
+       "digest": "sha256:08b489c4ace78471ae6737fcea06e1885294d8d0b5f2207c74c6f740ac05375e"
+     }
+   ],
+@@ -35,18 +45,40 @@
+       "path": "skills/recovery-strategy-selector/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25"
++      "digest": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25",
++      "startByte": 176,
++      "endByte": 263
+     },
+     {
+       "path": "skills/recovery-strategy-selector/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 12,
+-      "digest": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25"
++      "startLine": 11,
++      "endLine": 11,
++      "digest": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25",
++      "startByte": 180,
++      "endByte": 255
+     },
+     {
+       "path": "skills/recovery-strategy-selector/references/entry-details.md",
+-      "startLine": 24,
+-      "endLine": 30,
++      "startLine": 26,
++      "endLine": 26,
++      "digest": "sha256:08b489c4ace78471ae6737fcea06e1885294d8d0b5f2207c74c6f740ac05375e"
++    },
++    {
++      "path": "skills/recovery-strategy-selector/references/entry-details.md",
++      "startLine": 27,
++      "endLine": 27,
++      "digest": "sha256:08b489c4ace78471ae6737fcea06e1885294d8d0b5f2207c74c6f740ac05375e"
++    },
++    {
++      "path": "skills/recovery-strategy-selector/references/entry-details.md",
++      "startLine": 28,
++      "endLine": 28,
++      "digest": "sha256:08b489c4ace78471ae6737fcea06e1885294d8d0b5f2207c74c6f740ac05375e"
++    },
++    {
++      "path": "skills/recovery-strategy-selector/references/entry-details.md",
++      "startLine": 29,
++      "endLine": 29,
+       "digest": "sha256:08b489c4ace78471ae6737fcea06e1885294d8d0b5f2207c74c6f740ac05375e"
+     }
+   ]
+diff --git a/skills/session-board/classification.json b/skills/session-board/classification.json
+index c8cc9f0..86509f7 100644
+--- a/skills/session-board/classification.json
++++ b/skills/session-board/classification.json
+@@ -18,18 +18,34 @@
+       "path": "skills/session-board/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a"
++      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",
++      "startByte": 0,
++      "endByte": 373
++    },
++    {
++      "path": "skills/session-board/SKILL.md",
++      "startLine": 9,
++      "endLine": 11,
++      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",
++      "startByte": 0,
++      "endByte": 257
+     },
+     {
+       "path": "skills/session-board/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 22,
++      "startLine": 13,
++      "endLine": 21,
+       "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a"
+     },
++    {
++      "path": "skills/session-board/references/entry-details.md",
++      "startLine": 3,
++      "endLine": 3,
++      "digest": "sha256:e8ea65d5d3d372fe70ba0fe7cdba18d965704450f2a7084b27ce885695e68660"
++    },
+     {
+       "path": "skills/session-board/references/entry-details.md",
+       "startLine": 7,
+-      "endLine": 13,
++      "endLine": 9,
+       "digest": "sha256:e8ea65d5d3d372fe70ba0fe7cdba18d965704450f2a7084b27ce885695e68660"
+     }
+   ],
+@@ -38,18 +54,34 @@
+       "path": "skills/session-board/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a"
++      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",
++      "startByte": 374,
++      "endByte": 430
+     },
+     {
+       "path": "skills/session-board/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 22,
+-      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a"
++      "startLine": 11,
++      "endLine": 11,
++      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",
++      "startByte": 241,
++      "endByte": 382
+     },
+     {
+       "path": "skills/session-board/references/entry-details.md",
+-      "startLine": 7,
+-      "endLine": 13,
++      "startLine": 10,
++      "endLine": 10,
++      "digest": "sha256:e8ea65d5d3d372fe70ba0fe7cdba18d965704450f2a7084b27ce885695e68660"
++    },
++    {
++      "path": "skills/session-board/references/entry-details.md",
++      "startLine": 11,
++      "endLine": 11,
++      "digest": "sha256:e8ea65d5d3d372fe70ba0fe7cdba18d965704450f2a7084b27ce885695e68660"
++    },
++    {
++      "path": "skills/session-board/references/entry-details.md",
++      "startLine": 12,
++      "endLine": 12,
+       "digest": "sha256:e8ea65d5d3d372fe70ba0fe7cdba18d965704450f2a7084b27ce885695e68660"
+     }
+   ]
+diff --git a/skills/software-security-auditor/classification.json b/skills/software-security-auditor/classification.json
+index c071135..7e1da51 100644
+--- a/skills/software-security-auditor/classification.json
++++ b/skills/software-security-auditor/classification.json
+@@ -19,13 +19,17 @@
+       "path": "skills/software-security-auditor/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
++      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
++      "startByte": 0,
++      "endByte": 182
+     },
+     {
+       "path": "skills/software-security-auditor/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 12,
+-      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
++      "startLine": 9,
++      "endLine": 11,
++      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
++      "startByte": 0,
++      "endByte": 106
+     }
+   ],
+   "exclusions": [
+@@ -33,12 +37,30 @@
+       "path": "skills/software-security-auditor/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
++      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
++      "startByte": 183,
++      "endByte": 300
++    },
++    {
++      "path": "skills/software-security-auditor/SKILL.md",
++      "startLine": 11,
++      "endLine": 11,
++      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
++      "startByte": 78,
++      "endByte": 168
++    },
++    {
++      "path": "skills/software-security-auditor/SKILL.md",
++      "startLine": 11,
++      "endLine": 11,
++      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
++      "startByte": 169,
++      "endByte": 283
+     },
+     {
+       "path": "skills/software-security-auditor/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 12,
++      "startLine": 18,
++      "endLine": 18,
+       "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+     }
+   ]
+diff --git a/skills/task-contract/classification.json b/skills/task-contract/classification.json
+index faceaea..59084d2 100644
+--- a/skills/task-contract/classification.json
++++ b/skills/task-contract/classification.json
+@@ -16,13 +16,17 @@
+       "path": "skills/task-contract/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100"
++      "digest": "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100",
++      "startByte": 0,
++      "endByte": 180
+     },
+     {
+       "path": "skills/task-contract/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 12,
+-      "digest": "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100"
++      "startLine": 9,
++      "endLine": 11,
++      "digest": "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100",
++      "startByte": 0,
++      "endByte": 105
+     }
+   ],
+   "exclusions": [
+@@ -30,13 +34,17 @@
+       "path": "skills/task-contract/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100"
++      "digest": "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100",
++      "startByte": 181,
++      "endByte": 259
+     },
+     {
+       "path": "skills/task-contract/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 12,
+-      "digest": "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100"
++      "startLine": 11,
++      "endLine": 11,
++      "digest": "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100",
++      "startByte": 89,
++      "endByte": 174
+     }
+   ]
+ }
+diff --git a/skills/test-engineering/classification.json b/skills/test-engineering/classification.json
+index eb59364..3003706 100644
+--- a/skills/test-engineering/classification.json
++++ b/skills/test-engineering/classification.json
+@@ -17,13 +17,33 @@
+       "path": "skills/test-engineering/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
++      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
++      "startByte": 0,
++      "endByte": 231
++    },
++    {
++      "path": "skills/test-engineering/SKILL.md",
++      "startLine": 3,
++      "endLine": 3,
++      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
++      "startByte": 339,
++      "endByte": 340
+     },
+     {
+       "path": "skills/test-engineering/SKILL.md",
+       "startLine": 11,
+-      "endLine": 13,
+-      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
++      "endLine": 12,
++      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
++      "startByte": 0,
++      "endByte": 89
++    },
++    {
++      "path": "skills/test-engineering/SKILL.md",
++      "startLine": 12,
++      "endLine": 12,
++      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
++      "startByte": 188,
++      "endByte": 304
+     }
+   ],
+   "exclusions": [
+@@ -31,13 +51,17 @@
+       "path": "skills/test-engineering/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
++      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
++      "startByte": 232,
++      "endByte": 339
+     },
+     {
+       "path": "skills/test-engineering/SKILL.md",
+-      "startLine": 11,
+-      "endLine": 13,
+-      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
++      "startLine": 12,
++      "endLine": 12,
++      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
++      "startByte": 70,
++      "endByte": 187
+     }
+   ]
+ }
+diff --git a/skills/workspace-convention-profiler/classification.json b/skills/workspace-convention-profiler/classification.json
+index f085564..8473044 100644
+--- a/skills/workspace-convention-profiler/classification.json
++++ b/skills/workspace-convention-profiler/classification.json
+@@ -17,18 +17,28 @@
+       "path": "skills/workspace-convention-profiler/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7"
++      "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7",
++      "startByte": 0,
++      "endByte": 141
++    },
++    {
++      "path": "skills/workspace-convention-profiler/SKILL.md",
++      "startLine": 9,
++      "endLine": 11,
++      "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7",
++      "startByte": 0,
++      "endByte": 120
+     },
+     {
+       "path": "skills/workspace-convention-profiler/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 20,
++      "startLine": 13,
++      "endLine": 17,
+       "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7"
+     },
+     {
+       "path": "skills/workspace-convention-profiler/references/entry-details.md",
+       "startLine": 1,
+-      "endLine": 8,
++      "endLine": 1,
+       "digest": "sha256:9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91"
+     }
+   ],
+@@ -37,18 +47,52 @@
+       "path": "skills/workspace-convention-profiler/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7"
++      "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7",
++      "startByte": 142,
++      "endByte": 236
++    },
++    {
++      "path": "skills/workspace-convention-profiler/SKILL.md",
++      "startLine": 11,
++      "endLine": 11,
++      "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7",
++      "startByte": 88,
++      "endByte": 231
+     },
+     {
+       "path": "skills/workspace-convention-profiler/SKILL.md",
+-      "startLine": 8,
+-      "endLine": 20,
++      "startLine": 19,
++      "endLine": 19,
+       "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7"
+     },
+     {
+       "path": "skills/workspace-convention-profiler/references/entry-details.md",
+-      "startLine": 1,
+-      "endLine": 8,
++      "startLine": 3,
++      "endLine": 3,
++      "digest": "sha256:9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91"
++    },
++    {
++      "path": "skills/workspace-convention-profiler/references/entry-details.md",
++      "startLine": 4,
++      "endLine": 4,
++      "digest": "sha256:9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91"
++    },
++    {
++      "path": "skills/workspace-convention-profiler/references/entry-details.md",
++      "startLine": 5,
++      "endLine": 5,
++      "digest": "sha256:9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91"
++    },
++    {
++      "path": "skills/workspace-convention-profiler/references/entry-details.md",
++      "startLine": 6,
++      "endLine": 6,
++      "digest": "sha256:9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91"
++    },
++    {
++      "path": "skills/workspace-convention-profiler/references/entry-details.md",
++      "startLine": 7,
++      "endLine": 7,
+       "digest": "sha256:9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91"
+     }
+   ]
+diff --git a/tests/mcp/skill-classification-inventory.test.ts b/tests/mcp/skill-classification-inventory.test.ts
+index a655f19..5954584 100644
+--- a/tests/mcp/skill-classification-inventory.test.ts
++++ b/tests/mcp/skill-classification-inventory.test.ts
+@@ -4,6 +4,9 @@ import os from "node:os";
+ import path from "node:path";
+ import { afterEach, describe, expect, it } from "vitest";
+ import { loadSkillInventory } from "../../mcp-server/src/skill-classification/inventory.js";
++import { createClassificationRequest, projectClassificationRequest } from "../../mcp-server/src/skill-classification/request.js";
++import { jevNoulWireAdapter } from "../../mcp-server/src/skill-classification/providers.js";
++import type { ProviderProfile } from "../../mcp-server/src/skill-classification/types.js";
+ 
+ const roots: string[] = [];
+ const hash = (text: string) => `sha256:${createHash("sha256").update(text).digest("hex")}`;
+@@ -106,3 +109,111 @@ describe("classification inventory source authority (SS26/SS37)", () => {
+     expect((await loadSkillInventory({ root, externalSkillRoots: [path.join(external, "unavailable")] })).issues).toContainEqual({ skillId: null, code: "EXTERNAL_SKILL_UNAVAILABLE", field: "externalSkillRoots[0]" });
+   });
+ });
++
++describe("signed source evidence and selection context regression", () => {
++  it("keeps all 24 skills while separating applicable evidence from exclusions", async () => {
++    const inventory = await loadSkillInventory({ root: process.cwd() });
++    expect(inventory.issues).toEqual([]);
++    expect(inventory.skills).toHaveLength(24);
++    for (const skill of inventory.skills) {
++      expect(skill.applicability, skill.skillId).not.toEqual(skill.exclusions);
++      expect(skill.applicability.filter(text => skill.exclusions.includes(text)), skill.skillId).toEqual([]);
++      expect(new Set(skill.applicability).size, skill.skillId).toBe(skill.applicability.length);
++      expect(new Set(skill.exclusions).size, skill.skillId).toBe(skill.exclusions.length);
++    }
++    const tests = inventory.skills.find(skill => skill.skillId === "test-engineering")!;
++    expect(tests.exclusions.join("\n")).not.toContain("테스트 설계·구현·회귀 보호가 요청되면 사용한다.");
++    const ponytail = inventory.skills.find(skill => skill.skillId === "ponytail")!;
++    expect(ponytail.applicability.join("\n")).not.toContain("Do NOT use for code review");
++    expect(ponytail.exclusions.join("\n")).not.toContain("Use on ANY");
++  });
++
++  it.each([
++    ["software-security-auditor", "감사자는 새 재현 코드를 작성·실행하지 않고"],
++    ["independent-audit-gate", "감사자는 새 재현 코드를 직접 작성하거나 실행하지 않는다"],
++    ["session-board", "공유 checkout 수정 전에"],
++    ["recovery-strategy-selector", "원본 diagnosis request·외부 동결 digest"],
++    ["blocker-diagnostician", "read-only 검사도 명시적 허용 없이는"],
++    ["independent-deliberation-panel", "worker를 한 명도 instantiate하지 않는다"],
++  ])("preserves %s omitted context through common REQ and JEV", async (skillId, needle) => {
++    const inventory = await loadSkillInventory({ root: process.cwd() });
++    expect(inventory.issues).toEqual([]);
++    const originalPrompt = "인용: ‘수정한다’\r\n실제 요청: 읽기 전용. e\u0301  끝: 수정·push 금지.";
++    const request = createClassificationRequest({ requestId: "metadata-context", operationId: "metadata-context", originalPrompt, inventory, classificationCriteriaRef: "criteria:metadata-regression" });
++    const projected = projectClassificationRequest(request);
++    const wire = jevNoulWireAdapter.encode(request, { modelId: "synthetic-local-only" } as ProviderProfile) as { state: { originalPrompt: string }; questions: Record<string, { instructions: { skill: unknown } }> };
++    expect(wire.state.originalPrompt).toBe(originalPrompt);
++    expect(Object.keys(wire.questions)).toHaveLength(24);
++    for (const skill of [inventory.skills.find(s => s.skillId === skillId), request.skills.find(s => s.skillId === skillId), projected.payload.skills.find(s => s.skillId === skillId), wire.questions[skillId]!.instructions.skill]) expect(JSON.stringify(skill)).toContain(needle);
++  });
++
++  it("preserves every registry precondition as verbatim source evidence", async () => {
++    const registry = JSON.parse(await readFile("skills/registry.json", "utf8")) as { skills: { skillId: string; providers: { phase: string; capabilities: string[]; preconditions: string[] }[] }[] };
++    const inventory = await loadSkillInventory({ root: process.cwd() });
++    expect(inventory.issues).toEqual([]);
++    for (const entry of registry.skills) {
++      const skill = inventory.skills.find(s => s.skillId === entry.skillId)!;
++      for (const provider of entry.providers) for (const precondition of provider.preconditions) {
++        const bound = skill.applicability.filter(text => text.startsWith("{")).map(text => JSON.parse(text));
++        expect(bound, entry.skillId).toContainEqual({ phase: provider.phase, capabilities: provider.capabilities, precondition });
++      }
++      if (entry.providers.some(provider => provider.preconditions.length)) expect(skill.sourceMap).toContainEqual(expect.objectContaining({ field: "applicability", path: "skills/registry.json" }));
++    }
++  });
++
++  it.each([
++    ["orchestrator", "skills/orchestrator/SKILL.md", 18],
++    ["orchestrator", "skills/orchestrator/SKILL.md", 19],
++    ["orchestrator", "skills/orchestrator/SKILL.md", 26],
++    ["evaluation-validity-auditor", "skills/evaluation-validity-auditor/references/entry-details.md", 5],
++    ["evaluation-validity-auditor", "skills/evaluation-validity-auditor/references/entry-details.md", 6],
++    ["korean-prose-editor", "skills/korean-prose-editor/references/entry-details.md", 9],
++    ["korean-prose-editor", "skills/korean-prose-editor/references/entry-details.md", 3],
++    ["session-board", "skills/session-board/SKILL.md", 19],
++    ["session-board", "skills/session-board/SKILL.md", 21],
++  ])("retains contextual subject/phase/antecedent for %s:%s:%i", async (skillId, sourcePath, lineNumber) => {
++    const line = (await readFile(String(sourcePath), "utf8")).split("\n")[Number(lineNumber) - 1]!.trim();
++    const inventory = await loadSkillInventory({ root: process.cwd() });
++    const skill = inventory.skills.find(candidate => candidate.skillId === skillId)!;
++    expect(skill.applicability.join("\n")).toContain(line);
++    expect(skill.exclusions.some(text => line.includes(text))).toBe(false);
++  });
++
++  it("keeps the update-session tool antecedent together with its subagent restriction", async () => {
++    const context = (await readFile("skills/session-board/SKILL.md", "utf8")).split("\n").slice(14, 19).join("\n").trim();
++    const inventory = await loadSkillInventory({ root: process.cwd() });
++    const skill = inventory.skills.find(candidate => candidate.skillId === "session-board")!;
++    expect(skill.applicability.join("\n")).toContain(context);
++  });
++
++  it("extracts UTF-8 clause ranges without copying or rewriting source prose", async () => {
++    const root = await fixture(); await addSkill(root);
++    const skillFile = path.join(root, "skills/skill-z17/SKILL.md");
++    const text = await readFile(skillFile, "utf8");
++    const positive = "중복·유실 불변조건 분석.", negative = "일반 설명에는 사용하지 않는다.";
++    const line = text.split("\n")[2]!;
++    const source = (phrase: string) => ({ path: "skills/skill-z17/SKILL.md", startLine: 3, endLine: 3, digest: hash(text), startByte: Buffer.byteLength(line.slice(0, line.indexOf(phrase))), endByte: Buffer.byteLength(line.slice(0, line.indexOf(phrase) + phrase.length)) });
++    await metadata(root, value => { value.applicability = [source(positive), source(positive)]; value.exclusions = [source(negative)]; });
++    const inventory = await loadSkillInventory({ root });
++    expect(inventory.issues).toEqual([]);
++    expect(inventory.skills[0]).toMatchObject({ applicability: [positive], exclusions: [negative] });
++    expect(await readFile(skillFile, "utf8")).toBe(text);
++    const request = createClassificationRequest({ requestId: "utf8-clause", operationId: "utf8-clause", originalPrompt: "읽기 전용", inventory, classificationCriteriaRef: "criteria" });
++    expect(() => projectClassificationRequest(request)).not.toThrow();
++  });
++
++  it.each([
++    { startByte: 1 },
++    { endByte: 8 },
++    { startByte: 0, endByte: 0 },
++    { startByte: 10, endByte: 3 },
++    { startByte: 0, endByte: 10000 },
++    { startByte: 14, endByte: 15 },
++  ])("rejects invalid/partial/mid-codepoint clause bounds %j", async range => {
++    const root = await fixture(); await addSkill(root);
++    await metadata(root, value => { value.applicability = [{ ...(value.applicability as object[])[0], startLine: 3, endLine: 3, ...range }]; });
++    const inventory = await loadSkillInventory({ root });
++    expect(inventory.skills).toEqual([]);
++    expect(inventory.issues).toContainEqual({ skillId: "skill-z17", code: "SOURCE_RANGE_INVALID", field: "applicability" });
++  });
++});
+-- 
+2.52.0
+

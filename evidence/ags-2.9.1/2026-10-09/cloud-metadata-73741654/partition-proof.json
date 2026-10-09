@@ -1,0 +1,2384 @@
+[
+  {
+    "skillId": "acceptance-evidence-validator",
+    "applicabilitySpans": 4,
+    "exclusionSpans": 9,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/acceptance-evidence-validator/SKILL.md",
+        "startByte": 40,
+        "endByte": 302,
+        "partitionRestoresAllBytes": true,
+        "sha256": "43adf58c1bf5ada4c06f2df00fbfb38c377faf12fd29a7f8820126677e2b895b",
+        "pieces": [
+          {
+            "startByte": 40,
+            "endByte": 192,
+            "field": "applicability",
+            "sha256": "2ebcd3d67501acba1286820f0d762dd172f89d70008a46fa7a102b6855b7bcfd"
+          },
+          {
+            "startByte": 192,
+            "endByte": 302,
+            "field": "exclusions",
+            "sha256": "1a3dd80bcd4cc4489bfd69bc1ebb79bb52e904cd544e7c204aca1df6b8488f8d"
+          }
+        ]
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/SKILL.md",
+        "startByte": 349,
+        "endByte": 1055,
+        "partitionRestoresAllBytes": true,
+        "sha256": "695c54db73bfc5758acf72904e230168a58fe9ed80b8d1d1cedc5eb965f59b7d",
+        "pieces": [
+          {
+            "startByte": 349,
+            "endByte": 468,
+            "field": "applicability",
+            "sha256": "6a1f6c513e86385055f4539f8f81651b346c60505b358e95c344a8f844690564"
+          },
+          {
+            "startByte": 468,
+            "endByte": 616,
+            "field": "exclusions",
+            "sha256": "d886df5ddb16cd466c3982cd73660c4082eb35871abe56145b99d143aae4bea0"
+          },
+          {
+            "startByte": 616,
+            "endByte": 837,
+            "field": "applicability",
+            "sha256": "9474223e3e6b0c23073d9aaea792966e0a23941241dda4c7916447e10382888b"
+          },
+          {
+            "startByte": 837,
+            "endByte": 926,
+            "field": "exclusions",
+            "sha256": "073b122ffc27c2f9086f3ff83b051a988c2365647d1233cbc674b0eeb8c19f0c"
+          },
+          {
+            "startByte": 926,
+            "endByte": 927,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 927,
+            "endByte": 1054,
+            "field": "exclusions",
+            "sha256": "08794d73f656e6f1d9f5c16c171b1011e6a9f671205ab463b640fb113fec85dc"
+          },
+          {
+            "startByte": 1054,
+            "endByte": 1055,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/references/entry-details.md",
+        "startByte": 1937,
+        "endByte": 2528,
+        "partitionRestoresAllBytes": true,
+        "sha256": "431b693853fcae1ce86894bc2916fb8e1085a9460744deb19314c07f13a53f2b",
+        "pieces": [
+          {
+            "startByte": 1937,
+            "endByte": 1958,
+            "field": "applicability",
+            "sha256": "fda7ce6efcb021bae52a828a7443a3eb494cd1389f7c3db040e2d1c1ede30dbb"
+          },
+          {
+            "startByte": 1958,
+            "endByte": 2064,
+            "field": "exclusions",
+            "sha256": "a8998d3c9a1e3a73c7e1c718741f2c6a6c98bcea4fa907cb99a64d7fbe75c077"
+          },
+          {
+            "startByte": 2064,
+            "endByte": 2065,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 2065,
+            "endByte": 2150,
+            "field": "exclusions",
+            "sha256": "c0ae5a30318e01315d5f41207f11dadaec48883fdaddadb28f8823b5501aa8d0"
+          },
+          {
+            "startByte": 2150,
+            "endByte": 2151,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 2151,
+            "endByte": 2240,
+            "field": "exclusions",
+            "sha256": "1ebc9c23692e80027f8ee1526dd41e8eb25da98ce3f6b22aea78d72f029d7c03"
+          },
+          {
+            "startByte": 2240,
+            "endByte": 2241,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 2241,
+            "endByte": 2420,
+            "field": "exclusions",
+            "sha256": "15e6834f2876a16018edf9420b412713a5fac5efb27dbf4be7c8dbe1bcbced90"
+          },
+          {
+            "startByte": 2420,
+            "endByte": 2421,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 2421,
+            "endByte": 2527,
+            "field": "exclusions",
+            "sha256": "179f3d278b8654b57083f19e06cfa26eb6580ceee30c9de337d9a4e66e9b2408"
+          },
+          {
+            "startByte": 2527,
+            "endByte": 2528,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "blocker-diagnostician",
+    "applicabilitySpans": 3,
+    "exclusionSpans": 8,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/blocker-diagnostician/SKILL.md",
+        "startByte": 32,
+        "endByte": 308,
+        "partitionRestoresAllBytes": true,
+        "sha256": "74375e0bc9adbbb70379a05f6eab2748f4b1986bc7b9078ecc454df8f27ba49b",
+        "pieces": [
+          {
+            "startByte": 32,
+            "endByte": 184,
+            "field": "applicability",
+            "sha256": "d14f5302bdd25eff6029a54e97323996784272034287c0232c8695147076b5bc"
+          },
+          {
+            "startByte": 184,
+            "endByte": 308,
+            "field": "exclusions",
+            "sha256": "e1906afcda23c437132b325fdc7a744f17a0d51f1ab3ff3b854e25d62a8bcd9b"
+          }
+        ]
+      },
+      {
+        "path": "skills/blocker-diagnostician/SKILL.md",
+        "startByte": 355,
+        "endByte": 1299,
+        "partitionRestoresAllBytes": true,
+        "sha256": "0d4360a308e051f1e1e49980124c83927abbcfcae379847ce86b392e0f9a9860",
+        "pieces": [
+          {
+            "startByte": 355,
+            "endByte": 1056,
+            "field": "applicability",
+            "sha256": "0a3857c53fc1a216f591ac26071ae1a20aa9f4edfeb2dc3cc84f04a45f136d16"
+          },
+          {
+            "startByte": 1056,
+            "endByte": 1176,
+            "field": "exclusions",
+            "sha256": "884d69e5350b0609acdfe138830d0a09a9208edb0df39f81b345f945bd7752d5"
+          },
+          {
+            "startByte": 1176,
+            "endByte": 1177,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 1177,
+            "endByte": 1298,
+            "field": "exclusions",
+            "sha256": "1ebf8eda34de1ef0f4ba948027fafe3cebfd64630e364514c03ed17a439cb175"
+          },
+          {
+            "startByte": 1298,
+            "endByte": 1299,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      },
+      {
+        "path": "skills/blocker-diagnostician/references/entry-details.md",
+        "startByte": 2679,
+        "endByte": 2943,
+        "partitionRestoresAllBytes": true,
+        "sha256": "88472dbb2cb94c8cd3bddedc62155d638eda5bc0762a029248300776a60f22e5",
+        "pieces": [
+          {
+            "startByte": 2679,
+            "endByte": 2943,
+            "field": "exclusions",
+            "sha256": "88472dbb2cb94c8cd3bddedc62155d638eda5bc0762a029248300776a60f22e5"
+          }
+        ]
+      },
+      {
+        "path": "skills/blocker-diagnostician/references/entry-details.md",
+        "startByte": 3063,
+        "endByte": 3465,
+        "partitionRestoresAllBytes": true,
+        "sha256": "84eb8cc86bdb0fc34f0afd0845d4e650133142ff9585678992535e13bebd6e64",
+        "pieces": [
+          {
+            "startByte": 3063,
+            "endByte": 3074,
+            "field": "applicability",
+            "sha256": "0f49b121907e5129095f78390c1372e24bf1a6cb2cca3721869b4ad8fcb5673a"
+          },
+          {
+            "startByte": 3074,
+            "endByte": 3159,
+            "field": "exclusions",
+            "sha256": "0b0c3d565e3eafc198f0749f3164ea25f0a1297a6cc29aea868a293dbd7f7ad4"
+          },
+          {
+            "startByte": 3159,
+            "endByte": 3160,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 3160,
+            "endByte": 3266,
+            "field": "exclusions",
+            "sha256": "17e77d8f7d514ae8b5a7e6199c23f7ae7c2fe1bd9fc032f101dd581d02639276"
+          },
+          {
+            "startByte": 3266,
+            "endByte": 3267,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 3267,
+            "endByte": 3340,
+            "field": "exclusions",
+            "sha256": "69be2202e8fa155194c09fd4f929a17fc5cd3c4927671c837c0bbbd08293c626"
+          },
+          {
+            "startByte": 3340,
+            "endByte": 3341,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 3341,
+            "endByte": 3464,
+            "field": "exclusions",
+            "sha256": "ad318f4db73582e839dfd810694d0ca45b36de784dfb6936c6f9c4e3f81c98c1"
+          },
+          {
+            "startByte": 3464,
+            "endByte": 3465,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "change-scope-guardian",
+    "applicabilitySpans": 2,
+    "exclusionSpans": 2,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/change-scope-guardian/SKILL.md",
+        "startByte": 32,
+        "endByte": 275,
+        "partitionRestoresAllBytes": true,
+        "sha256": "d4fb3991fea62acdf1a51db32d5981e8869e4ddeaf5a286d92937e8135f12e01",
+        "pieces": [
+          {
+            "startByte": 32,
+            "endByte": 199,
+            "field": "applicability",
+            "sha256": "807a0150583928d2f5d70ac238f2363dad36d02f9b85e817b2385ae077085a88"
+          },
+          {
+            "startByte": 199,
+            "endByte": 275,
+            "field": "exclusions",
+            "sha256": "13d8df4ca2ba483144cb3e575c946dbd000bfb220505297ef0354aec205447b5"
+          }
+        ]
+      },
+      {
+        "path": "skills/change-scope-guardian/SKILL.md",
+        "startByte": 280,
+        "endByte": 928,
+        "partitionRestoresAllBytes": true,
+        "sha256": "4db8c4a74031ec814b864519d3247a98c24914c8d945f51ac4971cb74dcc8ae6",
+        "pieces": [
+          {
+            "startByte": 280,
+            "endByte": 761,
+            "field": "applicability",
+            "sha256": "3ee6f8591ca0305fd1443327cb78b40cd6883483b633a972e6c7cfd41da5a88e"
+          },
+          {
+            "startByte": 761,
+            "endByte": 927,
+            "field": "exclusions",
+            "sha256": "4a5885deb0b60b99bff58822a66b2a14c63c2f7924a313db25d078a166321f2e"
+          },
+          {
+            "startByte": 927,
+            "endByte": 928,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "code-review",
+    "applicabilitySpans": 4,
+    "exclusionSpans": 3,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/code-review/SKILL.md",
+        "startByte": 22,
+        "endByte": 398,
+        "partitionRestoresAllBytes": true,
+        "sha256": "cd16e1478388cdade82676c93f48d44db65047a7ca553ee52db8638e7d2f6cba",
+        "pieces": [
+          {
+            "startByte": 22,
+            "endByte": 229,
+            "field": "applicability",
+            "sha256": "9a19b0766171573eef950b91b6cb801535545aecbc4d43354fd79ce05f905ebf"
+          },
+          {
+            "startByte": 229,
+            "endByte": 397,
+            "field": "exclusions",
+            "sha256": "ee325c5cb0871800c91e39eddf392d0b9e666fcd9f0202c5593a24c53a7d09ed"
+          },
+          {
+            "startByte": 397,
+            "endByte": 398,
+            "field": "applicability",
+            "sha256": "8a331fdde7032f33a71e1b2e257d80166e348e00fcb17914f48bdb57a1c63007"
+          }
+        ]
+      },
+      {
+        "path": "skills/code-review/SKILL.md",
+        "startByte": 461,
+        "endByte": 859,
+        "partitionRestoresAllBytes": true,
+        "sha256": "ea0e36e7f83e6c00834dd90cf8c475f367be15da3e44b40cd1839e687ec1ebee",
+        "pieces": [
+          {
+            "startByte": 461,
+            "endByte": 528,
+            "field": "applicability",
+            "sha256": "1c2c12075124533919c1bc9c1832fb4395f420d86c0b302e792ccdbaff6723e7"
+          },
+          {
+            "startByte": 528,
+            "endByte": 645,
+            "field": "exclusions",
+            "sha256": "f3f57f6474691489132ba586476bb606fc1396a597ca81edc79c647a091cddbd"
+          },
+          {
+            "startByte": 645,
+            "endByte": 746,
+            "field": "applicability",
+            "sha256": "5d12936735318f6fb2b7a31eb97a942363b61d76f7f41daca549d67f6a0da9a8"
+          },
+          {
+            "startByte": 746,
+            "endByte": 858,
+            "field": "exclusions",
+            "sha256": "bce17d2330b9cd51c1d796e7bb2185f2dd7b332980531e08c03a33dce1ec594d"
+          },
+          {
+            "startByte": 858,
+            "endByte": 859,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "codex-token-usage-analyzer",
+    "applicabilitySpans": 2,
+    "exclusionSpans": 1,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/codex-token-usage-analyzer/SKILL.md",
+        "startByte": 37,
+        "endByte": 223,
+        "partitionRestoresAllBytes": true,
+        "sha256": "6bf2fee45185b756cb7a6bbfbaa441390821e700cb57d5d6302173b91ebe51ea",
+        "pieces": [
+          {
+            "startByte": 37,
+            "endByte": 141,
+            "field": "applicability",
+            "sha256": "6a32e3976f066f303515e2c9c76b4652267eda0f6a5b490f281f8840ccdce385"
+          },
+          {
+            "startByte": 141,
+            "endByte": 223,
+            "field": "exclusions",
+            "sha256": "6c7f2a4457c6f130df6be1375f64d664ebe9399013d9036064ad3a120ffd1cc1"
+          }
+        ]
+      },
+      {
+        "path": "skills/codex-token-usage-analyzer/SKILL.md",
+        "startByte": 270,
+        "endByte": 460,
+        "partitionRestoresAllBytes": true,
+        "sha256": "531ed76be25e34711600747bcfefdcbb3b17257ac2e302e1be9ddfe5aad30c86",
+        "pieces": [
+          {
+            "startByte": 270,
+            "endByte": 460,
+            "field": "applicability",
+            "sha256": "531ed76be25e34711600747bcfefdcbb3b17257ac2e302e1be9ddfe5aad30c86"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "context-continuity",
+    "applicabilitySpans": 3,
+    "exclusionSpans": 4,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/context-continuity/SKILL.md",
+        "startByte": 29,
+        "endByte": 315,
+        "partitionRestoresAllBytes": true,
+        "sha256": "66e6e59518f687ccffea70455ebbdfba780b88d92351254b9caf17413601151c",
+        "pieces": [
+          {
+            "startByte": 29,
+            "endByte": 227,
+            "field": "applicability",
+            "sha256": "ca8b9976122a2c03fbb7f61c9b26cfbb298b14e0871f132ba21bd39613c4618a"
+          },
+          {
+            "startByte": 227,
+            "endByte": 315,
+            "field": "exclusions",
+            "sha256": "a6606b459384275a35b536c6e203c4c02b6baba55fdee4ea9f1f65fbf3ac6a7e"
+          }
+        ]
+      },
+      {
+        "path": "skills/context-continuity/SKILL.md",
+        "startByte": 362,
+        "endByte": 1576,
+        "partitionRestoresAllBytes": true,
+        "sha256": "1ea21db591ddaab4c7e4b5736e93c23aa1367f529bbc0fe52033b92d437cd7ca",
+        "pieces": [
+          {
+            "startByte": 362,
+            "endByte": 463,
+            "field": "applicability",
+            "sha256": "358e6d872a8d4525aaf0e0680a09e29a70067bb693df195aa02be76c2fd26a85"
+          },
+          {
+            "startByte": 463,
+            "endByte": 641,
+            "field": "exclusions",
+            "sha256": "ef73ca91b695e179a692cc2594f5c505a9e6506e9f1cfff7864d1a2a40b1e15b"
+          },
+          {
+            "startByte": 641,
+            "endByte": 643,
+            "field": "applicability",
+            "sha256": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070"
+          },
+          {
+            "startByte": 643,
+            "endByte": 839,
+            "field": "exclusions",
+            "sha256": "8f28b015c84d16def38cfaf4c018091d013f4949eef20dbcf54fac33efb77a17"
+          },
+          {
+            "startByte": 839,
+            "endByte": 1252,
+            "field": "applicability",
+            "sha256": "e93501fb12ab55a2352aaeb167aded9169fe68cd7d30f27422de62398e95936a"
+          },
+          {
+            "startByte": 1252,
+            "endByte": 1575,
+            "field": "exclusions",
+            "sha256": "ae8120e8ec66e61cc7125d7dd11b8bcd38b34919ed61e2ad52526e3d811b47cb"
+          },
+          {
+            "startByte": 1575,
+            "endByte": 1576,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "coordinate-subagents",
+    "applicabilitySpans": 9,
+    "exclusionSpans": 7,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/coordinate-subagents/SKILL.md",
+        "startByte": 31,
+        "endByte": 373,
+        "partitionRestoresAllBytes": true,
+        "sha256": "eea92bce102832ab6f70f1216e45feb6af0baf434fde83fd2c6c6cb0e9355b6f",
+        "pieces": [
+          {
+            "startByte": 31,
+            "endByte": 268,
+            "field": "applicability",
+            "sha256": "3e51cd61940bc4165d1a18c37a15b078eb825a2774ea42b71f62bfcb7c8239d3"
+          },
+          {
+            "startByte": 268,
+            "endByte": 373,
+            "field": "exclusions",
+            "sha256": "78e4c9ab02a20ab96eddc97ed93c78de5d045f41d05c1963f3b1c08f0e98d9a5"
+          }
+        ]
+      },
+      {
+        "path": "skills/coordinate-subagents/SKILL.md",
+        "startByte": 420,
+        "endByte": 1019,
+        "partitionRestoresAllBytes": true,
+        "sha256": "395d75461e208c6125de437381fca78b36adca329bf1081c3690dac62ce66f2c",
+        "pieces": [
+          {
+            "startByte": 420,
+            "endByte": 445,
+            "field": "applicability",
+            "sha256": "a7319f89a0c68fdbab76ea3744ca5f554c94e13e70e38803fcfd3cc81a6cf246"
+          },
+          {
+            "startByte": 445,
+            "endByte": 553,
+            "field": "exclusions",
+            "sha256": "9df9c7ee55c435e50ec7b0b36abf93db1c90b76da78f7ceb345d8461823918a6"
+          },
+          {
+            "startByte": 553,
+            "endByte": 722,
+            "field": "applicability",
+            "sha256": "ce93fab5c33aadf156ab5d5be13d9c4cf7074be1645cf154b0cfcb920268744f"
+          },
+          {
+            "startByte": 722,
+            "endByte": 805,
+            "field": "exclusions",
+            "sha256": "dd39d29dd52015560972187bbdf1b2d7c3452ae2d536e85ce7c80c52ca2b9fc5"
+          },
+          {
+            "startByte": 805,
+            "endByte": 1019,
+            "field": "applicability",
+            "sha256": "09156752fddbe771caf9af7a16496ce19afe19d8a7d4b15cc432df75c7c1fd75"
+          }
+        ]
+      },
+      {
+        "path": "skills/coordinate-subagents/references/entry-details.md",
+        "startByte": 0,
+        "endByte": 2043,
+        "partitionRestoresAllBytes": true,
+        "sha256": "97c41db2c597e37d4c6ae98ce88c7ca484683b9fea9aa3ecca10b2ac6fb33b1e",
+        "pieces": [
+          {
+            "startByte": 0,
+            "endByte": 897,
+            "field": "applicability",
+            "sha256": "f75f70a28ff0418b278963c570ac084568010bc113220ff919800e43cc82bfbb"
+          },
+          {
+            "startByte": 897,
+            "endByte": 1149,
+            "field": "exclusions",
+            "sha256": "5273b41232d05503fe36b563e66698fbdc83dad1f8c07caa44a327b87164edde"
+          },
+          {
+            "startByte": 1149,
+            "endByte": 1258,
+            "field": "applicability",
+            "sha256": "030fd5a0764d61845949db3def65b9511fae9bd6ac5d58a1df86a37333ee2738"
+          },
+          {
+            "startByte": 1258,
+            "endByte": 2042,
+            "field": "exclusions",
+            "sha256": "a4b5507e3d2ce80be1ef20e6036e75f864c1ef9e9668660dcacbb888fdf40c6b"
+          },
+          {
+            "startByte": 2042,
+            "endByte": 2043,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      },
+      {
+        "path": "skills/coordinate-subagents/references/entry-details.md",
+        "startByte": 2044,
+        "endByte": 3272,
+        "partitionRestoresAllBytes": true,
+        "sha256": "ea15100857a522205f53ba82e380d5d9da813aa70ab3a2f22895ebc165b13daa",
+        "pieces": [
+          {
+            "startByte": 2044,
+            "endByte": 2541,
+            "field": "applicability",
+            "sha256": "c2228ba66d9144f0dc7301405642ee47f671acf8642202ceb21ad26c593a9e42"
+          },
+          {
+            "startByte": 2541,
+            "endByte": 2670,
+            "field": "exclusions",
+            "sha256": "320bb34518e22fab14b9d1e8f2e22a0d0258c4474548bccde8d83efd1dc35f4a"
+          },
+          {
+            "startByte": 2670,
+            "endByte": 2820,
+            "field": "applicability",
+            "sha256": "e578a22efbbaa93de578d77292a2249c2939d8487af130bef7213ac314bb9a11"
+          },
+          {
+            "startByte": 2820,
+            "endByte": 3155,
+            "field": "exclusions",
+            "sha256": "185aced4fce9ed9a390473de4246d48df1fb3e2fd4378ff8a6f699898a06b8fb"
+          },
+          {
+            "startByte": 3155,
+            "endByte": 3272,
+            "field": "applicability",
+            "sha256": "e3030095a53c299a768082a3f682ff08d0c762eceb8562cab22f372c958bbf72"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "cs-engineering",
+    "applicabilitySpans": 4,
+    "exclusionSpans": 4,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/cs-engineering/SKILL.md",
+        "startByte": 25,
+        "endByte": 568,
+        "partitionRestoresAllBytes": true,
+        "sha256": "639b857215e0292c8039e06ba04a54145f68b70e8674b10e6492bf9a7f993f1d",
+        "pieces": [
+          {
+            "startByte": 25,
+            "endByte": 407,
+            "field": "applicability",
+            "sha256": "a3cbaa33247f5d4fa91715d88ed57d16fa621192b2d3c540e1a3f996183dba10"
+          },
+          {
+            "startByte": 407,
+            "endByte": 568,
+            "field": "exclusions",
+            "sha256": "ce5084a8c12a631ee8631ac08d9341227a0c1fecb9221905d696814d40a131a8"
+          }
+        ]
+      },
+      {
+        "path": "skills/cs-engineering/SKILL.md",
+        "startByte": 634,
+        "endByte": 1021,
+        "partitionRestoresAllBytes": true,
+        "sha256": "4004ad8b6cb85403f893b9da0200c11a77120066509f54b60b8d5131ea525374",
+        "pieces": [
+          {
+            "startByte": 634,
+            "endByte": 940,
+            "field": "applicability",
+            "sha256": "b0a560f8d0221f1451b5cd452bf886039dd3685050a1ec8fd958566f2c4c8383"
+          },
+          {
+            "startByte": 940,
+            "endByte": 1020,
+            "field": "exclusions",
+            "sha256": "9fdda59d25bf740e1567e6d583297972fe9b51d86310c3063a49a2a4639b6b04"
+          },
+          {
+            "startByte": 1020,
+            "endByte": 1021,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      },
+      {
+        "path": "skills/cs-engineering/SKILL.md",
+        "startByte": 1022,
+        "endByte": 1368,
+        "partitionRestoresAllBytes": true,
+        "sha256": "7acd4fd76b5dd5c0984446b171870fcd6dda66c6995adb7d815e482231c84076",
+        "pieces": [
+          {
+            "startByte": 1022,
+            "endByte": 1153,
+            "field": "applicability",
+            "sha256": "c559af5c63b4f9023eb0865704b74c076dc64282ee52e85f706582f995db4e77"
+          },
+          {
+            "startByte": 1153,
+            "endByte": 1246,
+            "field": "exclusions",
+            "sha256": "6204b7ec0b1e5b96dd8ea65245adb95bd6c6eacebd2349359e1fd74864d3fb42"
+          },
+          {
+            "startByte": 1246,
+            "endByte": 1318,
+            "field": "applicability",
+            "sha256": "4402cc726235d7470fe09108c1258ed9c00edaf8712ad5f2938307b0846395a4"
+          },
+          {
+            "startByte": 1318,
+            "endByte": 1367,
+            "field": "exclusions",
+            "sha256": "eb2bb6066e5a2eec34b3cea530b7befe7bc67d45a2a6cb996b2ba5b681c66d93"
+          },
+          {
+            "startByte": 1367,
+            "endByte": 1368,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "evaluation-validity-auditor",
+    "applicabilitySpans": 3,
+    "exclusionSpans": 2,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/evaluation-validity-auditor/SKILL.md",
+        "startByte": 38,
+        "endByte": 278,
+        "partitionRestoresAllBytes": true,
+        "sha256": "e6deafb8e356beeb3e0ad7cbb8f7f759bfa1582f37aeef5d0560dfc09538cfac",
+        "pieces": [
+          {
+            "startByte": 38,
+            "endByte": 192,
+            "field": "applicability",
+            "sha256": "70b666317999a43fdb505a3a493cb8f16a5d53e1c109281fc385994a8e36c83a"
+          },
+          {
+            "startByte": 192,
+            "endByte": 278,
+            "field": "exclusions",
+            "sha256": "9692cf026bc6cfc206e0a3c6565773912a98d135214b03d272930a7a99161236"
+          }
+        ]
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/SKILL.md",
+        "startByte": 325,
+        "endByte": 635,
+        "partitionRestoresAllBytes": true,
+        "sha256": "e6f34b1d1f7b84f949d4d090a9e93fbad03778ea6fecdbef4fd4266c7f4b68bb",
+        "pieces": [
+          {
+            "startByte": 325,
+            "endByte": 508,
+            "field": "applicability",
+            "sha256": "52deff73ea31f633a556d31277418607b60b5530fffe402275a2ff0f00d712bd"
+          },
+          {
+            "startByte": 508,
+            "endByte": 634,
+            "field": "exclusions",
+            "sha256": "b45ae651ce3b860a3ba3faa1e206dbc32fe11df90f0b3facd30c88d4cdca3619"
+          },
+          {
+            "startByte": 634,
+            "endByte": 635,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/references/entry-details.md",
+        "startByte": 0,
+        "endByte": 999,
+        "partitionRestoresAllBytes": true,
+        "sha256": "f92bc30ec6d675cec94f8263c2191f5220de9327766845067a89cb71e3c7a233",
+        "pieces": [
+          {
+            "startByte": 0,
+            "endByte": 999,
+            "field": "applicability",
+            "sha256": "f92bc30ec6d675cec94f8263c2191f5220de9327766845067a89cb71e3c7a233"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "independent-audit-gate",
+    "applicabilitySpans": 5,
+    "exclusionSpans": 8,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/independent-audit-gate/SKILL.md",
+        "startByte": 33,
+        "endByte": 473,
+        "partitionRestoresAllBytes": true,
+        "sha256": "a410973065e2879950e48df48385de4ebb6f6a31cd68faf42e5a9542c77ab34f",
+        "pieces": [
+          {
+            "startByte": 33,
+            "endByte": 361,
+            "field": "applicability",
+            "sha256": "68e0a85949f39dd65e22b068fed6ea6fa385ef09683b1ae194544e79dda48265"
+          },
+          {
+            "startByte": 361,
+            "endByte": 473,
+            "field": "exclusions",
+            "sha256": "90f01bb899b32f2d8bc2791842527d5d09ba60ee2cbdfd60cda8725225a41bb4"
+          }
+        ]
+      },
+      {
+        "path": "skills/independent-audit-gate/SKILL.md",
+        "startByte": 520,
+        "endByte": 2254,
+        "partitionRestoresAllBytes": true,
+        "sha256": "6b0e1091860e7d5e4e76bcede483a1cd01523bc49510f29b70fd82bd7528a1c1",
+        "pieces": [
+          {
+            "startByte": 520,
+            "endByte": 1747,
+            "field": "applicability",
+            "sha256": "ad847a566e0e7a263369a322f2f28832a3f0c2c0ca000a06109503dad0b2e574"
+          },
+          {
+            "startByte": 1747,
+            "endByte": 1904,
+            "field": "exclusions",
+            "sha256": "f692bce8702468676c239444277b86f4c2b60789aec160870de80a6317b8fb9a"
+          },
+          {
+            "startByte": 1904,
+            "endByte": 1906,
+            "field": "applicability",
+            "sha256": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070"
+          },
+          {
+            "startByte": 1906,
+            "endByte": 2253,
+            "field": "exclusions",
+            "sha256": "e5172a8a849635141d9728d9dfd78b376f0c27bc53d410c7f332be5e8808b079"
+          },
+          {
+            "startByte": 2253,
+            "endByte": 2254,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      },
+      {
+        "path": "skills/independent-audit-gate/references/entry-details.md",
+        "startByte": 0,
+        "endByte": 959,
+        "partitionRestoresAllBytes": true,
+        "sha256": "059c1b7bc18466342ba9fd8bba3fd0cfcd9f93b984895a0742c8b0a8abb34faf",
+        "pieces": [
+          {
+            "startByte": 0,
+            "endByte": 28,
+            "field": "applicability",
+            "sha256": "798cd8d7ece7898236fa20e4d5db2092c38596084016f3d4159e520fa2b33a26"
+          },
+          {
+            "startByte": 28,
+            "endByte": 168,
+            "field": "exclusions",
+            "sha256": "5887acb7eb5eaee124a35a4567523c1ee4147520de0ec80074ac9f08bdac7aec"
+          },
+          {
+            "startByte": 168,
+            "endByte": 271,
+            "field": "applicability",
+            "sha256": "f7ff32a8b0861dd4edc5b75227a3bb291c718fd23b4467a2b88b5f5c8ba49c30"
+          },
+          {
+            "startByte": 271,
+            "endByte": 450,
+            "field": "exclusions",
+            "sha256": "9c384bb7b31da52611c1b9361e94eab5b00bbeaa08556ab6985823e61b1fb570"
+          },
+          {
+            "startByte": 450,
+            "endByte": 451,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 451,
+            "endByte": 624,
+            "field": "exclusions",
+            "sha256": "f2c5a1f114ab80c5efa3ab2cf8a6bd817aec1a34c29d605db297139d64b8c556"
+          },
+          {
+            "startByte": 624,
+            "endByte": 780,
+            "field": "applicability",
+            "sha256": "90083e77f019478354115a263db6f9857c3643fa3e549f911958b2aca0b034c6"
+          },
+          {
+            "startByte": 780,
+            "endByte": 958,
+            "field": "exclusions",
+            "sha256": "a9330282d973a02cd8806a5b14c8868c17a7be203e1e1a45c5bf5db6e4565b57"
+          },
+          {
+            "startByte": 958,
+            "endByte": 959,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      },
+      {
+        "path": "skills/independent-audit-gate/references/entry-details.md",
+        "startByte": 2294,
+        "endByte": 2518,
+        "partitionRestoresAllBytes": true,
+        "sha256": "67b0b747ac526e37dc52af5d8ecac2ff04d7be6a0ca9813fad0b1d8f5250c90a",
+        "pieces": [
+          {
+            "startByte": 2294,
+            "endByte": 2518,
+            "field": "exclusions",
+            "sha256": "67b0b747ac526e37dc52af5d8ecac2ff04d7be6a0ca9813fad0b1d8f5250c90a"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "independent-deliberation-panel",
+    "applicabilitySpans": 4,
+    "exclusionSpans": 4,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/independent-deliberation-panel/SKILL.md",
+        "startByte": 41,
+        "endByte": 273,
+        "partitionRestoresAllBytes": true,
+        "sha256": "5846cbee44314d1a053ec17e02e196c274a949026c22f139061e8b415cc5c851",
+        "pieces": [
+          {
+            "startByte": 41,
+            "endByte": 207,
+            "field": "applicability",
+            "sha256": "5298617f4dfeb2faa8de76d4becfc4e3a13d88570171b224207dc95780ee6c14"
+          },
+          {
+            "startByte": 207,
+            "endByte": 273,
+            "field": "exclusions",
+            "sha256": "50d5e08f7a0781930fbce6f4c6d5f3eb25739a67c3eac39735e65940f21931e0"
+          }
+        ]
+      },
+      {
+        "path": "skills/independent-deliberation-panel/SKILL.md",
+        "startByte": 320,
+        "endByte": 1671,
+        "partitionRestoresAllBytes": true,
+        "sha256": "9d838c5a0e6bcc109e518e306cc2f69bf6be68b5a99d5382ab83a7fbe7dff7c0",
+        "pieces": [
+          {
+            "startByte": 320,
+            "endByte": 462,
+            "field": "applicability",
+            "sha256": "99911b6e9753f5ecda4fd10872114429f84d416a238cd32584b92a65ca4ba912"
+          },
+          {
+            "startByte": 462,
+            "endByte": 800,
+            "field": "exclusions",
+            "sha256": "64cdc99b0bbc793e9ef3878988d474cd2c64cdfbc29f3a277bf696557ac76c06"
+          },
+          {
+            "startByte": 800,
+            "endByte": 1095,
+            "field": "applicability",
+            "sha256": "da5b624b5ef14737a23ef5f918ac5e7fb2745b2ec9aeba5f5370f1a5b48977d2"
+          },
+          {
+            "startByte": 1095,
+            "endByte": 1303,
+            "field": "exclusions",
+            "sha256": "2ffa0bd970214cfac52b37020333c8a6c06fdf9dd004150aa014628f370dfabe"
+          },
+          {
+            "startByte": 1303,
+            "endByte": 1671,
+            "field": "applicability",
+            "sha256": "e8dea3ba6cfc00ee82323f4cf088eecfb60f64f86aada8faed19208ab41e8c8d"
+          }
+        ]
+      },
+      {
+        "path": "skills/independent-deliberation-panel/SKILL.md",
+        "startByte": 3825,
+        "endByte": 4749,
+        "partitionRestoresAllBytes": true,
+        "sha256": "90daf0a295ce40f8b84eee8a80aad59e8f1279af05464cb1f9f617f7fe2361bd",
+        "pieces": [
+          {
+            "startByte": 3825,
+            "endByte": 4749,
+            "field": "exclusions",
+            "sha256": "90daf0a295ce40f8b84eee8a80aad59e8f1279af05464cb1f9f617f7fe2361bd"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "instruction-scope-resolver",
+    "applicabilitySpans": 4,
+    "exclusionSpans": 4,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/instruction-scope-resolver/SKILL.md",
+        "startByte": 37,
+        "endByte": 277,
+        "partitionRestoresAllBytes": true,
+        "sha256": "ad9db047ead58d445f62048feb8d4b42541fe05a6233d92f2027c8f740811359",
+        "pieces": [
+          {
+            "startByte": 37,
+            "endByte": 200,
+            "field": "applicability",
+            "sha256": "dc325ed4ef2e78d5c743e8491c36864bd17ff46a385bdff63f736b236f8c780c"
+          },
+          {
+            "startByte": 200,
+            "endByte": 277,
+            "field": "exclusions",
+            "sha256": "2536bfc72cff4251066ca26256af8f9cc3237d2e30f7a37412dd5f5e965e5f6a"
+          }
+        ]
+      },
+      {
+        "path": "skills/instruction-scope-resolver/SKILL.md",
+        "startByte": 324,
+        "endByte": 1068,
+        "partitionRestoresAllBytes": true,
+        "sha256": "14a630f2727a6bb6e011dcf12050e03a810e7b65047704da3523cd28e7461131",
+        "pieces": [
+          {
+            "startByte": 324,
+            "endByte": 446,
+            "field": "applicability",
+            "sha256": "e7a76ad12570ab472c30a3f77165fa3ea65bde0cbc553dab98842d008d85f18e"
+          },
+          {
+            "startByte": 446,
+            "endByte": 563,
+            "field": "exclusions",
+            "sha256": "84ac14e0e0bde9b3c668a6490702f4c403dfc2c8f81b0ce9d611d2b9db5e1236"
+          },
+          {
+            "startByte": 563,
+            "endByte": 715,
+            "field": "applicability",
+            "sha256": "601fd9bf66a139ba7b32de58ee171c4cf0d7b0bbb0b46140aa2fcb2a6fde65a9"
+          },
+          {
+            "startByte": 715,
+            "endByte": 861,
+            "field": "exclusions",
+            "sha256": "5d1f4831c8060b8047f424e7841769642a8df666ef4b05fe5cd506e0b86daa2d"
+          },
+          {
+            "startByte": 861,
+            "endByte": 927,
+            "field": "applicability",
+            "sha256": "78cc1d026707681e8f70de4d69fe7b915ce5843bd37481501258b7eb6a2054f1"
+          },
+          {
+            "startByte": 927,
+            "endByte": 1067,
+            "field": "exclusions",
+            "sha256": "036cd6bdc140d1db73de591c3e88502378aeb26b490111dfb09fc088e46e9c10"
+          },
+          {
+            "startByte": 1067,
+            "endByte": 1068,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "iteration-frame-auditor",
+    "applicabilitySpans": 4,
+    "exclusionSpans": 8,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/iteration-frame-auditor/SKILL.md",
+        "startByte": 34,
+        "endByte": 286,
+        "partitionRestoresAllBytes": true,
+        "sha256": "66d649692b88a73b89700847a989846a83ac3f582df475f575b87ef61fd1e3bd",
+        "pieces": [
+          {
+            "startByte": 34,
+            "endByte": 186,
+            "field": "applicability",
+            "sha256": "c74493b253da1bceae052ebd438930067ad509ce2c2bfe40842de601bbd2b2c4"
+          },
+          {
+            "startByte": 186,
+            "endByte": 286,
+            "field": "exclusions",
+            "sha256": "a1c32cc1699f8c85a4bcdcf1816411f8aa12e288ef3ceb6699118ca5d790fc17"
+          }
+        ]
+      },
+      {
+        "path": "skills/iteration-frame-auditor/SKILL.md",
+        "startByte": 320,
+        "endByte": 981,
+        "partitionRestoresAllBytes": true,
+        "sha256": "ab47a558ca2914e70391db4a6b3de7fbfe0e5f0d2e99d8fd162440480681ee8a",
+        "pieces": [
+          {
+            "startByte": 320,
+            "endByte": 478,
+            "field": "applicability",
+            "sha256": "e35ef442fa8c8f93450d7da108c46e2b17ae2ad15b70f00bbb403666c72e4695"
+          },
+          {
+            "startByte": 478,
+            "endByte": 642,
+            "field": "exclusions",
+            "sha256": "521c88a3f844f99dfe3ef66cc2fb5ba52e87d890747831ab7523b74648543ef6"
+          },
+          {
+            "startByte": 642,
+            "endByte": 863,
+            "field": "applicability",
+            "sha256": "e362e76b69a74ed53181da5aa0e3ba1817189155c36390adc3ac50e8dc62f489"
+          },
+          {
+            "startByte": 863,
+            "endByte": 980,
+            "field": "exclusions",
+            "sha256": "c970f2dc3f9e2d4160186e4fffdfc56f4af1ed474b1e2ebbad1de7e03699af56"
+          },
+          {
+            "startByte": 980,
+            "endByte": 981,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      },
+      {
+        "path": "skills/iteration-frame-auditor/references/entry-details.md",
+        "startByte": 2558,
+        "endByte": 3181,
+        "partitionRestoresAllBytes": true,
+        "sha256": "fd6e73feab07e19f4a399e1b868fb30dffc566ac11866c469cf80dd4b6d61e9f",
+        "pieces": [
+          {
+            "startByte": 2558,
+            "endByte": 2569,
+            "field": "applicability",
+            "sha256": "0f49b121907e5129095f78390c1372e24bf1a6cb2cca3721869b4ad8fcb5673a"
+          },
+          {
+            "startByte": 2569,
+            "endByte": 2671,
+            "field": "exclusions",
+            "sha256": "5d43416198061109ad994a60c6df43cf26e1ae9f59ac40ced43e22a8711f119e"
+          },
+          {
+            "startByte": 2671,
+            "endByte": 2672,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 2672,
+            "endByte": 2779,
+            "field": "exclusions",
+            "sha256": "3e9c171440ff21d4ec1ee55c6c46f83adcea87383801267277b02e3fcf6f68fc"
+          },
+          {
+            "startByte": 2779,
+            "endByte": 2780,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 2780,
+            "endByte": 2890,
+            "field": "exclusions",
+            "sha256": "e134a17a1b8f0a193452ffb72859947be58fffeb76b6e3762c19bfd73f16426b"
+          },
+          {
+            "startByte": 2890,
+            "endByte": 2891,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 2891,
+            "endByte": 3007,
+            "field": "exclusions",
+            "sha256": "edddac6329b34f4638d3aa03d2dc3e6442310640f4da9179572bf5867606a3c5"
+          },
+          {
+            "startByte": 3007,
+            "endByte": 3008,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 3008,
+            "endByte": 3180,
+            "field": "exclusions",
+            "sha256": "6521027899d6f9e7cb45f520f4d40246ff7bb88b5f592bdbdaeffafbc07d50c4"
+          },
+          {
+            "startByte": 3180,
+            "endByte": 3181,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "korean-prose-editor",
+    "applicabilitySpans": 5,
+    "exclusionSpans": 5,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "startByte": 30,
+        "endByte": 365,
+        "partitionRestoresAllBytes": true,
+        "sha256": "90fae297ae228d60aaf3c3ce61d2294a643dd4252460cdd0465ebda05809d5fa",
+        "pieces": [
+          {
+            "startByte": 30,
+            "endByte": 285,
+            "field": "applicability",
+            "sha256": "f66fdcc852595b391b419c23e4edc3d5c8636df02e910369ad42f1d8e421d368"
+          },
+          {
+            "startByte": 285,
+            "endByte": 365,
+            "field": "exclusions",
+            "sha256": "4a68ec5b78929175b136b0e15296788f8a395c198bdeaf4c46948b80c862cc46"
+          }
+        ]
+      },
+      {
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "startByte": 410,
+        "endByte": 1084,
+        "partitionRestoresAllBytes": true,
+        "sha256": "e849945050026dd96761077156c9235c4bb34c5767ddb8c79935c63e908666d0",
+        "pieces": [
+          {
+            "startByte": 410,
+            "endByte": 531,
+            "field": "applicability",
+            "sha256": "cd4cce5f99dbe82cf7865f6b0d1e286ab0ab0a3007edd846195631b350901a31"
+          },
+          {
+            "startByte": 531,
+            "endByte": 680,
+            "field": "exclusions",
+            "sha256": "173154bb43aa810c594bd5bb5f48dd014d320872646e5ecc95fb57e45cb09d2a"
+          },
+          {
+            "startByte": 680,
+            "endByte": 870,
+            "field": "applicability",
+            "sha256": "d808f491c0beb5b8292e517eb6b8ed3b26d3ee9330ed5c6d012fdb5294d28c20"
+          },
+          {
+            "startByte": 870,
+            "endByte": 977,
+            "field": "exclusions",
+            "sha256": "7a0ddfecf551e3aae48014b19ebee89a4b4cb740aafb79b9aa33108874147834"
+          },
+          {
+            "startByte": 977,
+            "endByte": 978,
+            "field": "applicability",
+            "sha256": "36a9e7f1c95b82ffb99743e0c5c4ce95d83c9a430aac59f84ef3cbfab6145068"
+          },
+          {
+            "startByte": 978,
+            "endByte": 1083,
+            "field": "exclusions",
+            "sha256": "ffbc6237e9cd0a29948391bacbf5c5af727900b5c34a44b5ff0831e300f8ac01"
+          },
+          {
+            "startByte": 1083,
+            "endByte": 1084,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      },
+      {
+        "path": "skills/korean-prose-editor/references/entry-details.md",
+        "startByte": 0,
+        "endByte": 1789,
+        "partitionRestoresAllBytes": true,
+        "sha256": "1f2bb0423e24a82e8adcdf1231ca19ec39f8c4571ff6c31c91ff2a73a7aa8fbe",
+        "pieces": [
+          {
+            "startByte": 0,
+            "endByte": 887,
+            "field": "applicability",
+            "sha256": "e69615379760fab900c32ebcbceffeacd3688cbfe37b36dfaa1e2e750440302f"
+          },
+          {
+            "startByte": 887,
+            "endByte": 1014,
+            "field": "exclusions",
+            "sha256": "05ea510a6b1c8a522a8e0573c9ad16ab2bf86d58ae0f8390a0d7ff7d81e01238"
+          },
+          {
+            "startByte": 1014,
+            "endByte": 1789,
+            "field": "applicability",
+            "sha256": "2c78b52c32582a899fba2c802da9f6020f170132a6d651f24d8e5a3bfbc7c2fa"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "model-effort-advisor",
+    "applicabilitySpans": 3,
+    "exclusionSpans": 3,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/model-effort-advisor/SKILL.md",
+        "startByte": 31,
+        "endByte": 382,
+        "partitionRestoresAllBytes": true,
+        "sha256": "29338ea9f87c7d5a75c86b77eaa20fbb43e30853f7e7c439e6d2c8bba49e70c0",
+        "pieces": [
+          {
+            "startByte": 31,
+            "endByte": 243,
+            "field": "applicability",
+            "sha256": "05190d9276ea6476cccf12b14e8609a11c01cf317e06be938c30191264a86b55"
+          },
+          {
+            "startByte": 243,
+            "endByte": 382,
+            "field": "exclusions",
+            "sha256": "2d85888bef6c88c122a1bf4206cad094d6b3678acac4b6d5b04f3a4652a8e6ba"
+          }
+        ]
+      },
+      {
+        "path": "skills/model-effort-advisor/SKILL.md",
+        "startByte": 429,
+        "endByte": 1410,
+        "partitionRestoresAllBytes": true,
+        "sha256": "41e0138919d27f0ba6969cadeb2e67735df9b891693bbdeb4e4efeee24a308f4",
+        "pieces": [
+          {
+            "startByte": 429,
+            "endByte": 551,
+            "field": "applicability",
+            "sha256": "3a28eb5ef398cebaf0a80ed543a9e3f84fdc55b428df8dd7e4884b343eddc535"
+          },
+          {
+            "startByte": 551,
+            "endByte": 705,
+            "field": "exclusions",
+            "sha256": "16e508c59f6974780b764b36bf42f12ecb3c3db2cc4a60f71ae536214ad7df41"
+          },
+          {
+            "startByte": 705,
+            "endByte": 1087,
+            "field": "applicability",
+            "sha256": "191ad12d53832eccdf3d1e865e6914dbb81151d8b4f0172fc8cb8a5cfcc6308f"
+          },
+          {
+            "startByte": 1087,
+            "endByte": 1409,
+            "field": "exclusions",
+            "sha256": "e9f2e760a41d9174591280b8ac5e3c962a8d0f7033ef4dbe12ba8039711dc5a8"
+          },
+          {
+            "startByte": 1409,
+            "endByte": 1410,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "mutation-risk-preflight",
+    "applicabilitySpans": 3,
+    "exclusionSpans": 3,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/mutation-risk-preflight/SKILL.md",
+        "startByte": 34,
+        "endByte": 296,
+        "partitionRestoresAllBytes": true,
+        "sha256": "fdc2708b4cfab4681ce17312d359875e2570dfd39a505a85879c716e85f3b84c",
+        "pieces": [
+          {
+            "startByte": 34,
+            "endByte": 229,
+            "field": "applicability",
+            "sha256": "beb5898ca4b2a07248f5b790b9d593714ce1ff51d8f133d617e7a0fb33f5f4f7"
+          },
+          {
+            "startByte": 229,
+            "endByte": 296,
+            "field": "exclusions",
+            "sha256": "442cb48aa5c86fdde8e7d5d36fcedfb0d33552d561fb7285eee25002b05cf4a6"
+          }
+        ]
+      },
+      {
+        "path": "skills/mutation-risk-preflight/SKILL.md",
+        "startByte": 343,
+        "endByte": 1156,
+        "partitionRestoresAllBytes": true,
+        "sha256": "fe0d97c1fe71e537f6680ccdb121e7a1a5bc2a0af2917c42628b88dfa13698ad",
+        "pieces": [
+          {
+            "startByte": 343,
+            "endByte": 524,
+            "field": "applicability",
+            "sha256": "51caba9b063a1fd6fe90a2a23b5d349a6ee3a8b8955b8065bc64dd617387ec37"
+          },
+          {
+            "startByte": 524,
+            "endByte": 636,
+            "field": "exclusions",
+            "sha256": "763f18e59869802c4e77ca9c96b4ee4371e0f1dc658be7f78af0e2c579225e9f"
+          },
+          {
+            "startByte": 636,
+            "endByte": 970,
+            "field": "applicability",
+            "sha256": "49d5344a603d95f36df0589b0ac152b9c5ea856b7e1259b3ce1afdd72b18bdc6"
+          },
+          {
+            "startByte": 970,
+            "endByte": 1155,
+            "field": "exclusions",
+            "sha256": "feefb2009de3801560d101c2ab7200832b5bc08b8764cf4ff6d21c58a7555116"
+          },
+          {
+            "startByte": 1155,
+            "endByte": 1156,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "orchestrator",
+    "applicabilitySpans": 8,
+    "exclusionSpans": 8,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/orchestrator/SKILL.md",
+        "startByte": 23,
+        "endByte": 364,
+        "partitionRestoresAllBytes": true,
+        "sha256": "a24f5a3e478fcbf42731497dd10ac7433dcfae33f436cbc10a46c425ec166812",
+        "pieces": [
+          {
+            "startByte": 23,
+            "endByte": 199,
+            "field": "applicability",
+            "sha256": "8851c28d1efe1b792354bbdae4040afecda3f1733621b8264145789db835a59f"
+          },
+          {
+            "startByte": 199,
+            "endByte": 364,
+            "field": "exclusions",
+            "sha256": "2a9183abcb7f392a9b2bc53c8fd459a8e288679b5f4b5b6ea52df056260feea4"
+          }
+        ]
+      },
+      {
+        "path": "skills/orchestrator/SKILL.md",
+        "startByte": 411,
+        "endByte": 4307,
+        "partitionRestoresAllBytes": true,
+        "sha256": "f3803ed90e94d31424185ce24169eec5414033cf7902417f18baf93d911ec9ba",
+        "pieces": [
+          {
+            "startByte": 411,
+            "endByte": 659,
+            "field": "applicability",
+            "sha256": "3e21f48daea79252b93d1387d072fed9fd09c319561099c8c672299b43fb68e7"
+          },
+          {
+            "startByte": 659,
+            "endByte": 752,
+            "field": "exclusions",
+            "sha256": "04b406d926af72f0a505cf6bc6edf49b53a955bb763ec2c7809c09fce776a3e8"
+          },
+          {
+            "startByte": 752,
+            "endByte": 1050,
+            "field": "applicability",
+            "sha256": "0a3465a66207de6a7337db9eadc177ed188fe70a7f82d11754c458909354f743"
+          },
+          {
+            "startByte": 1050,
+            "endByte": 1134,
+            "field": "exclusions",
+            "sha256": "7e9a4938e8f557cbfc35cf7fc16323ab8170e92293667e64aecd7724c262fe19"
+          },
+          {
+            "startByte": 1134,
+            "endByte": 1135,
+            "field": "applicability",
+            "sha256": "36a9e7f1c95b82ffb99743e0c5c4ce95d83c9a430aac59f84ef3cbfab6145068"
+          },
+          {
+            "startByte": 1135,
+            "endByte": 1325,
+            "field": "exclusions",
+            "sha256": "32f72efecb4ae1583dcb30875cc72f8336aba08a06331d413a1d6d60153f12bd"
+          },
+          {
+            "startByte": 1325,
+            "endByte": 2571,
+            "field": "applicability",
+            "sha256": "88a70e35a05ddb6ca3763f45dbf7270cad8717fd27f58a58fafd15143fffc236"
+          },
+          {
+            "startByte": 2571,
+            "endByte": 2673,
+            "field": "exclusions",
+            "sha256": "2b2ab5b45dad913e41f865905e0dd55bb7b3e9138b0638c7efb2881e52a16dbc"
+          },
+          {
+            "startByte": 2673,
+            "endByte": 2823,
+            "field": "applicability",
+            "sha256": "9fd8f3779558946381f5c1bfac5f6e08fe905b2abfcfbb0c40aae05452ea6be7"
+          },
+          {
+            "startByte": 2823,
+            "endByte": 3018,
+            "field": "exclusions",
+            "sha256": "cb8e4e139874c97d0134e6d5ace2ca66742167bbc0287f2eed4e13a32cb9416e"
+          },
+          {
+            "startByte": 3018,
+            "endByte": 3106,
+            "field": "applicability",
+            "sha256": "0876038b144734fc3bb440dddcdd36615edf2fc77f40aa4836e88907d9c95766"
+          },
+          {
+            "startByte": 3106,
+            "endByte": 3310,
+            "field": "exclusions",
+            "sha256": "173ac29462d5093e46bf0d25a145bf58720f5a398206001f2b9f3a10ffc647dd"
+          },
+          {
+            "startByte": 3310,
+            "endByte": 3619,
+            "field": "applicability",
+            "sha256": "2b1557967310916202335fbe4e01a1f20378f99d2a7faaa34aac08ea8fda827f"
+          },
+          {
+            "startByte": 3619,
+            "endByte": 3751,
+            "field": "exclusions",
+            "sha256": "ec22af1c01cb3b5b29098be6b1369e9a0475813d20200593eb2e0cc46caf3c56"
+          },
+          {
+            "startByte": 3751,
+            "endByte": 4307,
+            "field": "applicability",
+            "sha256": "05bfafbf73fe58c4f27850f5ece88e0deefc47736c3619dae0bd9437ade22b1e"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "ponytail",
+    "applicabilitySpans": 3,
+    "exclusionSpans": 5,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/ponytail/SKILL.md",
+        "startByte": 19,
+        "endByte": 946,
+        "partitionRestoresAllBytes": true,
+        "sha256": "55bc52d17601b97e0c5d68c44dba00e288b7491d0bfaa4b4cf6009f45efc045d",
+        "pieces": [
+          {
+            "startByte": 19,
+            "endByte": 773,
+            "field": "applicability",
+            "sha256": "f1ff8335605e73216b8959e0da04506807d925a895ee2690454de91803141643"
+          },
+          {
+            "startByte": 773,
+            "endByte": 946,
+            "field": "exclusions",
+            "sha256": "cbd51839eab1cb906ede8770468a2f762a2a2e36015dd866b551af0c7a0a6552"
+          }
+        ]
+      },
+      {
+        "path": "skills/ponytail/SKILL.md",
+        "startByte": 6459,
+        "endByte": 7274,
+        "partitionRestoresAllBytes": true,
+        "sha256": "e5b347ddffbd61305bd7c3a0aeff5d7604ca1954d8541ece34a6c48dfbb2dafc",
+        "pieces": [
+          {
+            "startByte": 6459,
+            "endByte": 6706,
+            "field": "applicability",
+            "sha256": "241716226dc4437e8b4a1cf725ee43c45c180491b2deff73005b422807b7ddfc"
+          },
+          {
+            "startByte": 6706,
+            "endByte": 6771,
+            "field": "exclusions",
+            "sha256": "daf76dd4f3f1e498d4770f5e99c826e66d71da78469ca036b2fdac80e3f4d237"
+          },
+          {
+            "startByte": 6771,
+            "endByte": 6773,
+            "field": "applicability",
+            "sha256": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070"
+          },
+          {
+            "startByte": 6773,
+            "endByte": 6918,
+            "field": "exclusions",
+            "sha256": "c0a14be5c6f4f136e1bb2adaf243084d22095ac31543d8bb223b33d135ebadd1"
+          },
+          {
+            "startByte": 6918,
+            "endByte": 6919,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 6919,
+            "endByte": 7141,
+            "field": "exclusions",
+            "sha256": "c2f337e0515c18cd29c817dc38662ffbca326ef1968d40fefa02142c9f5c027f"
+          },
+          {
+            "startByte": 7141,
+            "endByte": 7142,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 7142,
+            "endByte": 7227,
+            "field": "exclusions",
+            "sha256": "4f379000d23b27cdce6e9f6300535dfdb917609e0e6b19e904fe866879d1bf3c"
+          },
+          {
+            "startByte": 7227,
+            "endByte": 7274,
+            "field": "applicability",
+            "sha256": "583e8129f1540c243ed13a6ea13a2b462b64e7d769415c46da2326198d9d7d15"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "recovery-strategy-selector",
+    "applicabilitySpans": 4,
+    "exclusionSpans": 6,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/recovery-strategy-selector/SKILL.md",
+        "startByte": 37,
+        "endByte": 300,
+        "partitionRestoresAllBytes": true,
+        "sha256": "bb3ca852635fbd304c1e7f1c14d8f5936c0368993dcb972d6d5117acccb53be6",
+        "pieces": [
+          {
+            "startByte": 37,
+            "endByte": 213,
+            "field": "applicability",
+            "sha256": "a7a1596649acef35815d9af06587a0377ebe6cdc4d6f5a359c3859a4ba7fac7b"
+          },
+          {
+            "startByte": 213,
+            "endByte": 300,
+            "field": "exclusions",
+            "sha256": "41b8a08156c27d0b572e14f67232aba754b5fadc669de9bed0702c3b22ed6041"
+          }
+        ]
+      },
+      {
+        "path": "skills/recovery-strategy-selector/SKILL.md",
+        "startByte": 347,
+        "endByte": 634,
+        "partitionRestoresAllBytes": true,
+        "sha256": "ebe9f504d63b88b42b7c19f48f384db5b7426543bdd42d337d23329655bdba42",
+        "pieces": [
+          {
+            "startByte": 347,
+            "endByte": 558,
+            "field": "applicability",
+            "sha256": "59ea735c46107c0201cd32c6fc28f0421d6e7f10873008ad1a2e40aec7ddbb6d"
+          },
+          {
+            "startByte": 558,
+            "endByte": 633,
+            "field": "exclusions",
+            "sha256": "e30b5f08aa9f40fc8822856957e7c88a0bb08543fa2080ebd0eb0d9c83128d2c"
+          },
+          {
+            "startByte": 633,
+            "endByte": 634,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      },
+      {
+        "path": "skills/recovery-strategy-selector/references/entry-details.md",
+        "startByte": 11,
+        "endByte": 330,
+        "partitionRestoresAllBytes": true,
+        "sha256": "eddef29c753e9b70df6ae7e5d8ad6fa7e3270cf89e5e5e5c6f3e9c7f6c3ceef5",
+        "pieces": [
+          {
+            "startByte": 11,
+            "endByte": 330,
+            "field": "applicability",
+            "sha256": "eddef29c753e9b70df6ae7e5d8ad6fa7e3270cf89e5e5e5c6f3e9c7f6c3ceef5"
+          }
+        ]
+      },
+      {
+        "path": "skills/recovery-strategy-selector/references/entry-details.md",
+        "startByte": 2602,
+        "endByte": 3202,
+        "partitionRestoresAllBytes": true,
+        "sha256": "9d43aa5f1c4552e297d74ec6876fd292c6cc839a79d8ca4a19742b845f95074e",
+        "pieces": [
+          {
+            "startByte": 2602,
+            "endByte": 2630,
+            "field": "applicability",
+            "sha256": "c8cb7d33b52a8dce9aef527f2e8988ff8410da8b11fb6b5e8090354a1eb5227e"
+          },
+          {
+            "startByte": 2630,
+            "endByte": 2729,
+            "field": "exclusions",
+            "sha256": "a9fc481243e7529c51a07946e9e024cec4a29af1dd50f13e71d6dd97c7179b95"
+          },
+          {
+            "startByte": 2729,
+            "endByte": 2730,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 2730,
+            "endByte": 2899,
+            "field": "exclusions",
+            "sha256": "22917c64ee0f14d0994c66662291591c76aca7ca2a1306268ae9734e5f8a0928"
+          },
+          {
+            "startByte": 2899,
+            "endByte": 2900,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 2900,
+            "endByte": 3049,
+            "field": "exclusions",
+            "sha256": "d11ac5dee034c94b82c4d4c6cdf0d9f80f933135c4fac651150a4a2d7f462bf5"
+          },
+          {
+            "startByte": 3049,
+            "endByte": 3050,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 3050,
+            "endByte": 3201,
+            "field": "exclusions",
+            "sha256": "dede580cdaf9f1a1c6efcc23ece1278429b1963bd9a4e1f002f47dd2404c4799"
+          },
+          {
+            "startByte": 3201,
+            "endByte": 3202,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "session-board",
+    "applicabilitySpans": 5,
+    "exclusionSpans": 5,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/session-board/SKILL.md",
+        "startByte": 24,
+        "endByte": 454,
+        "partitionRestoresAllBytes": true,
+        "sha256": "2217df2b5d8665a2d77b9684dc0e4e5c1a931828e2b0d070128caad0f711867b",
+        "pieces": [
+          {
+            "startByte": 24,
+            "endByte": 398,
+            "field": "applicability",
+            "sha256": "60481fbf6d3405fff10ad019b8cffff0ac04319f82ac6753124ebcf8510a76e7"
+          },
+          {
+            "startByte": 398,
+            "endByte": 454,
+            "field": "exclusions",
+            "sha256": "fd2eae7770a72a4148ddc8f6717d0dcac1fb1eddc61c18f039e0573222d60077"
+          }
+        ]
+      },
+      {
+        "path": "skills/session-board/SKILL.md",
+        "startByte": 501,
+        "endByte": 2550,
+        "partitionRestoresAllBytes": true,
+        "sha256": "e575d9fc35d609672b41a6a72c8b7b94770b59b9b3f717305e7fb3df7a1c3dc4",
+        "pieces": [
+          {
+            "startByte": 501,
+            "endByte": 760,
+            "field": "applicability",
+            "sha256": "71d0df482ee09a714c6682b66e6b59b76123ed1072dcea33cfef896ac55fb191"
+          },
+          {
+            "startByte": 760,
+            "endByte": 901,
+            "field": "exclusions",
+            "sha256": "7a7ba05553b710baee5352b78999bea6b655af9ea79217edee8f18012ac33f34"
+          },
+          {
+            "startByte": 901,
+            "endByte": 2550,
+            "field": "applicability",
+            "sha256": "43413952d7cc854cefd055f8f410f22a671b5247b118e209d7568fe4f980e14f"
+          }
+        ]
+      },
+      {
+        "path": "skills/session-board/references/entry-details.md",
+        "startByte": 21,
+        "endByte": 279,
+        "partitionRestoresAllBytes": true,
+        "sha256": "977ae4479be39dc60b4f5d4db8ae1ecea2100415f3c9e464e36afe050fcd35d3",
+        "pieces": [
+          {
+            "startByte": 21,
+            "endByte": 279,
+            "field": "applicability",
+            "sha256": "977ae4479be39dc60b4f5d4db8ae1ecea2100415f3c9e464e36afe050fcd35d3"
+          }
+        ]
+      },
+      {
+        "path": "skills/session-board/references/entry-details.md",
+        "startByte": 757,
+        "endByte": 1450,
+        "partitionRestoresAllBytes": true,
+        "sha256": "052a7bfe1166f873238f71aecabf2639e2dbf520675a90929e03168fad15a811",
+        "pieces": [
+          {
+            "startByte": 757,
+            "endByte": 910,
+            "field": "applicability",
+            "sha256": "a06590e75a0d27c95e1816568cbcf900899736d44212fd84e6bd27f3b12acfb0"
+          },
+          {
+            "startByte": 910,
+            "endByte": 1073,
+            "field": "exclusions",
+            "sha256": "5f65df3baedebdd319e01ea612805c3c1c09632205d2cef7ab12786cd2615259"
+          },
+          {
+            "startByte": 1073,
+            "endByte": 1074,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 1074,
+            "endByte": 1364,
+            "field": "exclusions",
+            "sha256": "23d7f8bb5712fbed48b568a1c65fec6c6170eda3ee4fca2ad2cc5de05aeb8b8b"
+          },
+          {
+            "startByte": 1364,
+            "endByte": 1365,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 1365,
+            "endByte": 1449,
+            "field": "exclusions",
+            "sha256": "fb64b6b631858eedb233818b7ff8395cbcf2aa4ff5299e6e1dd42209faf82242"
+          },
+          {
+            "startByte": 1449,
+            "endByte": 1450,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "software-security-auditor",
+    "applicabilitySpans": 2,
+    "exclusionSpans": 4,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/software-security-auditor/SKILL.md",
+        "startByte": 36,
+        "endByte": 336,
+        "partitionRestoresAllBytes": true,
+        "sha256": "d1e2c05f97ed2d1c46502f2154bf869a0b96b2259901c024af6b7d8b155861f8",
+        "pieces": [
+          {
+            "startByte": 36,
+            "endByte": 219,
+            "field": "applicability",
+            "sha256": "235f51859913f3e314a37fe4dcfe921679f24d7a4de9dc2210e1112578f52912"
+          },
+          {
+            "startByte": 219,
+            "endByte": 336,
+            "field": "exclusions",
+            "sha256": "7979847771572be44b26180315fe7fd399614a32bed3bb48ba09683c1ec54ed8"
+          }
+        ]
+      },
+      {
+        "path": "skills/software-security-auditor/SKILL.md",
+        "startByte": 383,
+        "endByte": 697,
+        "partitionRestoresAllBytes": true,
+        "sha256": "02e5007bc1a39f75c5f14455356a31e37ba9c157a692856a4af945c398ea86d4",
+        "pieces": [
+          {
+            "startByte": 383,
+            "endByte": 491,
+            "field": "applicability",
+            "sha256": "27011cea0c923d693bcad0f1fdf98655b8e6041911079cb17d835fc74558d76f"
+          },
+          {
+            "startByte": 491,
+            "endByte": 581,
+            "field": "exclusions",
+            "sha256": "e56449d2e4ca0e2727002c6ddefd69b6c588ecf40f8983a3e37b3a8fbd5ee839"
+          },
+          {
+            "startByte": 581,
+            "endByte": 582,
+            "field": "applicability",
+            "sha256": "36a9e7f1c95b82ffb99743e0c5c4ce95d83c9a430aac59f84ef3cbfab6145068"
+          },
+          {
+            "startByte": 582,
+            "endByte": 696,
+            "field": "exclusions",
+            "sha256": "d75f61e30000fff64991d5488ae4bd9e2e44621a80f10f53aee6979624efd015"
+          },
+          {
+            "startByte": 696,
+            "endByte": 697,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      },
+      {
+        "path": "skills/software-security-auditor/SKILL.md",
+        "startByte": 1096,
+        "endByte": 1455,
+        "partitionRestoresAllBytes": true,
+        "sha256": "47ca0b69bf3ef2827b3caf8f1ca6c35c15f2f4f21606c53925361edfcad37136",
+        "pieces": [
+          {
+            "startByte": 1096,
+            "endByte": 1455,
+            "field": "exclusions",
+            "sha256": "47ca0b69bf3ef2827b3caf8f1ca6c35c15f2f4f21606c53925361edfcad37136"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "task-contract",
+    "applicabilitySpans": 2,
+    "exclusionSpans": 2,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/task-contract/SKILL.md",
+        "startByte": 24,
+        "endByte": 283,
+        "partitionRestoresAllBytes": true,
+        "sha256": "62cfac9f81483ac0c3026e264778f09a59a790a51a0b684e1ca01bee06014bfb",
+        "pieces": [
+          {
+            "startByte": 24,
+            "endByte": 205,
+            "field": "applicability",
+            "sha256": "f768ae055f95e51c9f893b805f2ae27891fcb0213a19a9f77369bc04d54a3835"
+          },
+          {
+            "startByte": 205,
+            "endByte": 283,
+            "field": "exclusions",
+            "sha256": "5c7c0898db449b6024a892b72e69acea8299d1438597d7b71882c3a4f61c84c6"
+          }
+        ]
+      },
+      {
+        "path": "skills/task-contract/SKILL.md",
+        "startByte": 330,
+        "endByte": 523,
+        "partitionRestoresAllBytes": true,
+        "sha256": "a78c11aa96846054cdedd6092ee93b00920b6ec0fca8db08df871c42d34a0e56",
+        "pieces": [
+          {
+            "startByte": 330,
+            "endByte": 437,
+            "field": "applicability",
+            "sha256": "f78d9361aa935146f4a139b24775328ec5d4ebf57b5e47d0f331cf43a3a27aaf"
+          },
+          {
+            "startByte": 437,
+            "endByte": 522,
+            "field": "exclusions",
+            "sha256": "82bd5fc9cbdeb89d07599236ca6e3ebe789a9b507617a97cb5a6747a92542e53"
+          },
+          {
+            "startByte": 522,
+            "endByte": 523,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "test-engineering",
+    "applicabilitySpans": 4,
+    "exclusionSpans": 2,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/test-engineering/SKILL.md",
+        "startByte": 27,
+        "endByte": 367,
+        "partitionRestoresAllBytes": true,
+        "sha256": "1ca565943e085d4a7e042430a62ec859ac0f5692af88bf1e962981ba7a878c18",
+        "pieces": [
+          {
+            "startByte": 27,
+            "endByte": 259,
+            "field": "applicability",
+            "sha256": "e310cd4e52d37b9cb740cbd2edb418231353a9e49f8a4ad95af76dc11e5a8be9"
+          },
+          {
+            "startByte": 259,
+            "endByte": 366,
+            "field": "exclusions",
+            "sha256": "5ff946f61997e65c4d0d8be1cf06b0bfbc9e34e0aa8554f2b0487508d9bf3546"
+          },
+          {
+            "startByte": 366,
+            "endByte": 367,
+            "field": "applicability",
+            "sha256": "8a331fdde7032f33a71e1b2e257d80166e348e00fcb17914f48bdb57a1c63007"
+          }
+        ]
+      },
+      {
+        "path": "skills/test-engineering/SKILL.md",
+        "startByte": 435,
+        "endByte": 760,
+        "partitionRestoresAllBytes": true,
+        "sha256": "8cebccd0356d05b37b692b0239378f88059c30e73f29b5785c025ee9648ebd83",
+        "pieces": [
+          {
+            "startByte": 435,
+            "endByte": 525,
+            "field": "applicability",
+            "sha256": "200793c53df29f424b424d1deb927cac035355778ed9085e7c10a108056f9325"
+          },
+          {
+            "startByte": 525,
+            "endByte": 642,
+            "field": "exclusions",
+            "sha256": "cfc1ab5733e0c74b37da89f587c97ee9d8a06f7ab1d373fce33aa1e5aa040122"
+          },
+          {
+            "startByte": 642,
+            "endByte": 760,
+            "field": "applicability",
+            "sha256": "e639398ff67c1d205abea39fc37347ab50e9c1261033881708f4406f00ee349e"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "skillId": "workspace-convention-profiler",
+    "applicabilitySpans": 4,
+    "exclusionSpans": 8,
+    "sourceBytesUnchanged": true,
+    "ranges": [
+      {
+        "path": "skills/workspace-convention-profiler/SKILL.md",
+        "startByte": 40,
+        "endByte": 276,
+        "partitionRestoresAllBytes": true,
+        "sha256": "eb4544194f8f359542958c813a9d0f2b3dff2616e70bab4693a7fedfa2e03530",
+        "pieces": [
+          {
+            "startByte": 40,
+            "endByte": 182,
+            "field": "applicability",
+            "sha256": "17819bfcf776ed98955694db2036d41f92f032702595ce35fd5fa6c6daa01a44"
+          },
+          {
+            "startByte": 182,
+            "endByte": 276,
+            "field": "exclusions",
+            "sha256": "cd8447d3a47e0a5a779d828057147447e5686c1477facae9144d6f52768dc7d2"
+          }
+        ]
+      },
+      {
+        "path": "skills/workspace-convention-profiler/SKILL.md",
+        "startByte": 323,
+        "endByte": 1119,
+        "partitionRestoresAllBytes": true,
+        "sha256": "f71306e252d9de553037a7a7044be59161786e1807688510ef19c6bfd4e40ad7",
+        "pieces": [
+          {
+            "startByte": 323,
+            "endByte": 445,
+            "field": "applicability",
+            "sha256": "87f798c865b644f72229cb8927065192538aa139f1401b843cdbe863d6f96c69"
+          },
+          {
+            "startByte": 445,
+            "endByte": 588,
+            "field": "exclusions",
+            "sha256": "6921207921246d90a47f5cc1a68c4d1d967bbaaead5324ccff16b0d1d32df633"
+          },
+          {
+            "startByte": 588,
+            "endByte": 945,
+            "field": "applicability",
+            "sha256": "9f71e37c29b21f10a8cb3bae5284a2b419c3dce15385beff34d5b49eef65e2cb"
+          },
+          {
+            "startByte": 945,
+            "endByte": 1118,
+            "field": "exclusions",
+            "sha256": "65c44a92430ece4109acdcbc46b37d8706d1887996a929ddc77edd556e5dc498"
+          },
+          {
+            "startByte": 1118,
+            "endByte": 1119,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      },
+      {
+        "path": "skills/workspace-convention-profiler/references/entry-details.md",
+        "startByte": 0,
+        "endByte": 562,
+        "partitionRestoresAllBytes": true,
+        "sha256": "a6463b0d7f63dfc0f2920440cfeec67ce6fd28ca89cfa37c64a3e4f137fb56d0",
+        "pieces": [
+          {
+            "startByte": 0,
+            "endByte": 11,
+            "field": "applicability",
+            "sha256": "0f49b121907e5129095f78390c1372e24bf1a6cb2cca3721869b4ad8fcb5673a"
+          },
+          {
+            "startByte": 11,
+            "endByte": 155,
+            "field": "exclusions",
+            "sha256": "2027930325efc1ae2d0f6dc33f339d875dc19dee1f799cc09d7d0d98a19c87a9"
+          },
+          {
+            "startByte": 155,
+            "endByte": 156,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 156,
+            "endByte": 242,
+            "field": "exclusions",
+            "sha256": "b74ab6978b6093f83e0741a3297b508d1bcebec5ab48bbddd8472c092480b95e"
+          },
+          {
+            "startByte": 242,
+            "endByte": 243,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 243,
+            "endByte": 333,
+            "field": "exclusions",
+            "sha256": "7fceb54d7d9c723c64d7c0ea905c0aa0280f8a2da3c50a3f1a3bf27c1f556d81"
+          },
+          {
+            "startByte": 333,
+            "endByte": 334,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 334,
+            "endByte": 448,
+            "field": "exclusions",
+            "sha256": "5e020836aea4e3dbe70871e26de1631989ca139bf531ea5426beb3641a482950"
+          },
+          {
+            "startByte": 448,
+            "endByte": 449,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          },
+          {
+            "startByte": 449,
+            "endByte": 561,
+            "field": "exclusions",
+            "sha256": "72c63a4620804d7014250258500e4a341b10220a5a6114a40b5afde875241754"
+          },
+          {
+            "startByte": 561,
+            "endByte": 562,
+            "field": "applicability",
+            "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+          }
+        ]
+      }
+    ]
+  }
+]

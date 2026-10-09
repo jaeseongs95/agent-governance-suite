@@ -1,0 +1,887 @@
+{
+  "notice": "Selected records from original receipts. Original digest fields refer to retained originals, not this public derivative. Executable/local paths and environment note/values omitted; outputs published only as extracts. No original contract validation of this derivative is claimed.",
+  "red": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-run-receipt",
+    "argv": [
+      "node",
+      "scripts/run-tests.mjs",
+      "tests/mcp/skill-classification-inventory.test.ts"
+    ],
+    "snapshot": {
+      "schemaVersion": "1.0.0",
+      "kind": "engineering-snapshot",
+      "files": [
+        {
+          "path": "mcp-server/src/skill-classification/digest.ts",
+          "digest": "sha256:90854882601154432f4e3ceea2ca9dca46802a496fe21e7d07bded713a3bcb01",
+          "size": 902,
+          "lineCount": 15
+        },
+        {
+          "path": "mcp-server/src/skill-classification/inventory.ts",
+          "digest": "sha256:8c7ee54546f17fb1e63368fbfb72668a3c7136570a545ad5f0494f076c91727c",
+          "size": 20714,
+          "lineCount": 259
+        },
+        {
+          "path": "mcp-server/src/skill-classification/providers.ts",
+          "digest": "sha256:f191c46db32f38248ebdd23be725b426a0b3020e0bb464b36bcc57521983651c",
+          "size": 12898,
+          "lineCount": 162
+        },
+        {
+          "path": "mcp-server/src/skill-classification/request.ts",
+          "digest": "sha256:1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f",
+          "size": 7093,
+          "lineCount": 99
+        },
+        {
+          "path": "mcp-server/src/skill-classification/types.ts",
+          "digest": "sha256:a5a238741eb34d5af50eb2e67e1d20f97dfebc30cdfc29c77ec7ae618f1319b5",
+          "size": 5949,
+          "lineCount": 173
+        },
+        {
+          "path": "package.json",
+          "digest": "sha256:27195e3424ff65b449c7d4efd198734195b56ae2f2651fc26f1e8904f46675d5",
+          "size": 2590,
+          "lineCount": 56
+        },
+        {
+          "path": "pnpm-lock.yaml",
+          "digest": "sha256:00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e",
+          "size": 79392,
+          "lineCount": 2482
+        },
+        {
+          "path": "scripts/run-tests.mjs",
+          "digest": "sha256:1da67c219b54d39a7106425f52e2bdd8abe7ab90081cafc111fd6d40d4516140",
+          "size": 3045,
+          "lineCount": 71
+        },
+        {
+          "path": "scripts/test-subreaper.py",
+          "digest": "sha256:808cd0c131866af24b0e3759403018e909a89617baa7ab72edead0ae4c543ca7",
+          "size": 10177,
+          "lineCount": 282
+        },
+        {
+          "path": "skills/acceptance-evidence-validator/SKILL.md",
+          "digest": "sha256:1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109",
+          "size": 1795,
+          "lineCount": 25
+        },
+        {
+          "path": "skills/acceptance-evidence-validator/classification.json",
+          "digest": "sha256:c0fc53904a0f2a834d81b3ab7bf5dfd4400ac66d02d549ae951bbeebf93d2693",
+          "size": 1561,
+          "lineCount": 53
+        },
+        {
+          "path": "skills/acceptance-evidence-validator/references/entry-details.md",
+          "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991",
+          "size": 2528,
+          "lineCount": 30
+        },
+        {
+          "path": "skills/blocker-diagnostician/SKILL.md",
+          "digest": "sha256:5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e",
+          "size": 1981,
+          "lineCount": 25
+        },
+        {
+          "path": "skills/blocker-diagnostician/classification.json",
+          "digest": "sha256:1a002221483c19e369e9f65c47f4772f2a9d6ed5d9329463ef22e67e9acf29fd",
+          "size": 1508,
+          "lineCount": 53
+        },
+        {
+          "path": "skills/blocker-diagnostician/references/entry-details.md",
+          "digest": "sha256:5d3068c1151d10ff89304f2c3a5e18be6dc235d75cff179e3ff68a28d76aaebf",
+          "size": 3465,
+          "lineCount": 32
+        },
+        {
+          "path": "skills/change-scope-guardian/SKILL.md",
+          "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e",
+          "size": 2184,
+          "lineCount": 31
+        },
+        {
+          "path": "skills/change-scope-guardian/classification.json",
+          "digest": "sha256:7625cfa18ff47fdf506564f940f1e3c9559a707d0abd908f5bbcd98f196b7863",
+          "size": 1086,
+          "lineCount": 42
+        },
+        {
+          "path": "skills/code-review/SKILL.md",
+          "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+          "size": 2841,
+          "lineCount": 29
+        },
+        {
+          "path": "skills/code-review/classification.json",
+          "digest": "sha256:90a64f660dd70304a9e9d15e43a72c69d27eda26722e63b0a133914194403bb9",
+          "size": 1034,
+          "lineCount": 42
+        },
+        {
+          "path": "skills/codex-token-usage-analyzer/SKILL.md",
+          "digest": "sha256:81e119d5c8ef11d8f2c928f8c3c9d518941643ae9c88c03cdb8a6ece09f80f1f",
+          "size": 1405,
+          "lineCount": 25
+        },
+        {
+          "path": "skills/codex-token-usage-analyzer/classification.json",
+          "digest": "sha256:86fa37553b99b01d7ecba38118010b81d8c2d5949913d040df221505b38b9178",
+          "size": 1105,
+          "lineCount": 42
+        },
+        {
+          "path": "skills/context-continuity/SKILL.md",
+          "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022",
+          "size": 1944,
+          "lineCount": 29
+        },
+        {
+          "path": "skills/context-continuity/classification.json",
+          "digest": "sha256:e03cc921314a2192ac1fcc08a05b260ccedf7c33aa552c4048be96216be4d7f0",
+          "size": 1113,
+          "lineCount": 44
+        },
+        {
+          "path": "skills/coordinate-subagents/SKILL.md",
+          "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0",
+          "size": 2191,
+          "lineCount": 39
+        },
+        {
+          "path": "skills/coordinate-subagents/classification.json",
+          "digest": "sha256:7c1ce52c2ca49ae39a1bda12b5c6c5cd1375becc6a8bdaf67339142cad76279e",
+          "size": 1958,
+          "lineCount": 66
+        },
+        {
+          "path": "skills/coordinate-subagents/references/entry-details.md",
+          "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604",
+          "size": 8511,
+          "lineCount": 93
+        },
+        {
+          "path": "skills/cs-engineering/SKILL.md",
+          "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+          "size": 5211,
+          "lineCount": 74
+        },
+        {
+          "path": "skills/cs-engineering/classification.json",
+          "digest": "sha256:e1bf88e230df87c817ba7305e11dddeb993ffc4852293cb897b3fb21049f7e12",
+          "size": 1525,
+          "lineCount": 58
+        },
+        {
+          "path": "skills/evaluation-validity-auditor/SKILL.md",
+          "digest": "sha256:eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230",
+          "size": 1585,
+          "lineCount": 22
+        },
+        {
+          "path": "skills/evaluation-validity-auditor/classification.json",
+          "digest": "sha256:4da293cb328e4d0dce8191e34a209f0305418ece9209ded57c7c874531d00676",
+          "size": 1583,
+          "lineCount": 54
+        },
+        {
+          "path": "skills/evaluation-validity-auditor/references/entry-details.md",
+          "digest": "sha256:7d31114e9200454d084dd7df04db34f1afc4c3ac23f3feb09c5eef6a85be8950",
+          "size": 1952,
+          "lineCount": 23
+        },
+        {
+          "path": "skills/independent-audit-gate/SKILL.md",
+          "digest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8",
+          "size": 3301,
+          "lineCount": 44
+        },
+        {
+          "path": "skills/independent-audit-gate/classification.json",
+          "digest": "sha256:0b80e06250ed5fb3c1ce9367b9c5f0c224ca9314bdebd578cd6f4d763eb4b7c8",
+          "size": 1537,
+          "lineCount": 54
+        },
+        {
+          "path": "skills/independent-audit-gate/references/entry-details.md",
+          "digest": "sha256:3f117c44ba584885a2dc9b370a20f3f4ae4a8e672dae1bd174586d8d27b9ca7e",
+          "size": 6709,
+          "lineCount": 53
+        },
+        {
+          "path": "skills/independent-deliberation-panel/SKILL.md",
+          "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab",
+          "size": 5256,
+          "lineCount": 43
+        },
+        {
+          "path": "skills/independent-deliberation-panel/classification.json",
+          "digest": "sha256:7ec268d5af4886dff92c44a602848c99c32db81b42c5bc88515613b0672d6bf4",
+          "size": 1169,
+          "lineCount": 43
+        },
+        {
+          "path": "skills/instruction-scope-resolver/SKILL.md",
+          "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
+          "size": 2068,
+          "lineCount": 31
+        },
+        {
+          "path": "skills/instruction-scope-resolver/classification.json",
+          "digest": "sha256:760673fa882feea5c27169dd7b87350a4b25c1b7d55cba845eee761bcda69bd2",
+          "size": 1111,
+          "lineCount": 42
+        },
+        {
+          "path": "skills/iteration-frame-auditor/SKILL.md",
+          "digest": "sha256:e83cf0abff280adfca9f12c35afd67e3787c75ce4e7866f7d1e402f59211945f",
+          "size": 1947,
+          "lineCount": 29
+        },
+        {
+          "path": "skills/iteration-frame-auditor/classification.json",
+          "digest": "sha256:02a2bf5cafee1f37964522380362f7932117ae5b30c55617f75f356eca5bf904",
+          "size": 1534,
+          "lineCount": 53
+        },
+        {
+          "path": "skills/iteration-frame-auditor/references/entry-details.md",
+          "digest": "sha256:e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432",
+          "size": 3181,
+          "lineCount": 36
+        },
+        {
+          "path": "skills/korean-prose-editor/SKILL.md",
+          "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+          "size": 2053,
+          "lineCount": 24
+        },
+        {
+          "path": "skills/korean-prose-editor/classification.json",
+          "digest": "sha256:d5f43baf696b955f788fb119f891599d4f8c996ce891e0aada15251b40e5bd72",
+          "size": 1526,
+          "lineCount": 55
+        },
+        {
+          "path": "skills/korean-prose-editor/references/entry-details.md",
+          "digest": "sha256:26ce188795767864370bbd07ae06ba5e164ff802b301656daa3759626996a9a1",
+          "size": 4219,
+          "lineCount": 25
+        },
+        {
+          "path": "skills/model-effort-advisor/SKILL.md",
+          "digest": "sha256:55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106",
+          "size": 2024,
+          "lineCount": 26
+        },
+        {
+          "path": "skills/model-effort-advisor/classification.json",
+          "digest": "sha256:c5fea20468ded9ab7e2b0ed6eef5c302829058596f19daa91ee7929228cdd4f3",
+          "size": 1082,
+          "lineCount": 41
+        },
+        {
+          "path": "skills/mutation-risk-preflight/SKILL.md",
+          "digest": "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe",
+          "size": 2140,
+          "lineCount": 34
+        },
+        {
+          "path": "skills/mutation-risk-preflight/classification.json",
+          "digest": "sha256:265f56f22559dfe7c4db632c373a3e5b73c67f578458f6d54452020bae74a782",
+          "size": 1162,
+          "lineCount": 46
+        },
+        {
+          "path": "skills/orchestrator/SKILL.md",
+          "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+          "size": 5024,
+          "lineCount": 33
+        },
+        {
+          "path": "skills/orchestrator/classification.json",
+          "digest": "sha256:87c4f8b6c840a219c0516132d2acbff1162b8ecccc5f14832fb4cf688e850320",
+          "size": 1153,
+          "lineCount": 47
+        },
+        {
+          "path": "skills/ponytail/SKILL.md",
+          "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+          "size": 7274,
+          "lineCount": 126
+        },
+        {
+          "path": "skills/ponytail/classification.json",
+          "digest": "sha256:ea4c82d05209d0ca29ffcf703223cf2b7d7f04e5c8ef80012c68c2581796c91b",
+          "size": 890,
+          "lineCount": 38
+        },
+        {
+          "path": "skills/recovery-strategy-selector/SKILL.md",
+          "digest": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25",
+          "size": 1166,
+          "lineCount": 18
+        },
+        {
+          "path": "skills/recovery-strategy-selector/classification.json",
+          "digest": "sha256:435761fd571f76e5c133d76ac965a6d24df63e3f45d9f8d1fe8b814816bd5a2c",
+          "size": 1571,
+          "lineCount": 53
+        },
+        {
+          "path": "skills/recovery-strategy-selector/references/entry-details.md",
+          "digest": "sha256:08b489c4ace78471ae6737fcea06e1885294d8d0b5f2207c74c6f740ac05375e",
+          "size": 3202,
+          "lineCount": 29
+        },
+        {
+          "path": "skills/registry.json",
+          "digest": "sha256:395cb7a025a0e1fef81cff8aa509205c170fb9c626591a880466452c0885422c",
+          "size": 80820,
+          "lineCount": 2497
+        },
+        {
+          "path": "skills/session-board/SKILL.md",
+          "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",
+          "size": 2918,
+          "lineCount": 25
+        },
+        {
+          "path": "skills/session-board/classification.json",
+          "digest": "sha256:dcd26e38b4bc9b23f39ab8fa8e91c1ceaad33445f8a3015151bace926a453448",
+          "size": 1539,
+          "lineCount": 56
+        },
+        {
+          "path": "skills/session-board/references/entry-details.md",
+          "digest": "sha256:e8ea65d5d3d372fe70ba0fe7cdba18d965704450f2a7084b27ce885695e68660",
+          "size": 2342,
+          "lineCount": 18
+        },
+        {
+          "path": "skills/software-security-auditor/SKILL.md",
+          "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+          "size": 1944,
+          "lineCount": 20
+        },
+        {
+          "path": "skills/software-security-auditor/classification.json",
+          "digest": "sha256:1ce8edfb98f9608e66d98bc75e1827f4cd8cc585ae8741290c6b093c3119b9c7",
+          "size": 1124,
+          "lineCount": 45
+        },
+        {
+          "path": "skills/task-contract/SKILL.md",
+          "digest": "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100",
+          "size": 1500,
+          "lineCount": 22
+        },
+        {
+          "path": "skills/task-contract/classification.json",
+          "digest": "sha256:fe0c29ea685cd0be6acd277c56fe9e6359cc33ab8aceb4f81aece7c5ee02888e",
+          "size": 1055,
+          "lineCount": 42
+        },
+        {
+          "path": "skills/test-engineering/SKILL.md",
+          "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+          "size": 2981,
+          "lineCount": 30
+        },
+        {
+          "path": "skills/test-engineering/classification.json",
+          "digest": "sha256:1ba6f5ddd650a209a53b8babaec0f07e17ab2d098d06c8bb92af44e69863c34a",
+          "size": 1085,
+          "lineCount": 43
+        },
+        {
+          "path": "skills/workspace-convention-profiler/SKILL.md",
+          "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7",
+          "size": 1866,
+          "lineCount": 26
+        },
+        {
+          "path": "skills/workspace-convention-profiler/classification.json",
+          "digest": "sha256:30c3892a3ca93f42040a3a3e256daf3b6077459ea3ca55cb50f3ea261ffcb8f6",
+          "size": 1604,
+          "lineCount": 55
+        },
+        {
+          "path": "skills/workspace-convention-profiler/references/entry-details.md",
+          "digest": "sha256:9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91",
+          "size": 1400,
+          "lineCount": 18
+        },
+        {
+          "path": "tests/mcp/skill-classification-inventory.test.ts",
+          "digest": "sha256:d6b668481d01d1df0f8676caa833d97e1749f9dea8397d263c61fb314438a44e",
+          "size": 17678,
+          "lineCount": 219
+        }
+      ],
+      "digest": "sha256:87225a4d8b903cdc31d6324b2b3bcdfefb5ac0d189459f6f850d9957cf1bc036"
+    },
+    "afterDigest": "sha256:87225a4d8b903cdc31d6324b2b3bcdfefb5ac0d189459f6f850d9957cf1bc036",
+    "startedAt": "2026-10-09T03:22:43.280Z",
+    "finishedAt": "2026-10-09T03:22:45.080Z",
+    "status": "FAIL",
+    "exitCode": 1,
+    "signal": null,
+    "stdoutDigest": "sha256:8df8e61100f6e63e434f2ce84717d13591a5a7a330442f3448bf9b92188d69b9",
+    "stderrDigest": "sha256:d26a8559574948254716b131df22f7c7cd947ad22e18ad5680f1f83e80bcce56",
+    "timeoutMs": 30000,
+    "nodeVersion": "24.19.0",
+    "platform": "linux",
+    "digest": "sha256:765dd99e3a6d4ef1c6bf42caaa9d1eea0ec57a0b5a0d22827d6be24398a51dbd"
+  },
+  "green": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-run-receipt",
+    "argv": [
+      "node",
+      "scripts/run-tests.mjs",
+      "tests/mcp/skill-classification-inventory.test.ts"
+    ],
+    "snapshot": {
+      "schemaVersion": "1.0.0",
+      "kind": "engineering-snapshot",
+      "files": [
+        {
+          "path": "mcp-server/src/skill-classification/digest.ts",
+          "digest": "sha256:90854882601154432f4e3ceea2ca9dca46802a496fe21e7d07bded713a3bcb01",
+          "size": 902,
+          "lineCount": 15
+        },
+        {
+          "path": "mcp-server/src/skill-classification/inventory.ts",
+          "digest": "sha256:8042233c53820cda2157f109bd2ea299931025a70b4c08cbb24341633eb26615",
+          "size": 22224,
+          "lineCount": 271
+        },
+        {
+          "path": "mcp-server/src/skill-classification/providers.ts",
+          "digest": "sha256:f191c46db32f38248ebdd23be725b426a0b3020e0bb464b36bcc57521983651c",
+          "size": 12898,
+          "lineCount": 162
+        },
+        {
+          "path": "mcp-server/src/skill-classification/request.ts",
+          "digest": "sha256:1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f",
+          "size": 7093,
+          "lineCount": 99
+        },
+        {
+          "path": "mcp-server/src/skill-classification/types.ts",
+          "digest": "sha256:a5a238741eb34d5af50eb2e67e1d20f97dfebc30cdfc29c77ec7ae618f1319b5",
+          "size": 5949,
+          "lineCount": 173
+        },
+        {
+          "path": "package.json",
+          "digest": "sha256:27195e3424ff65b449c7d4efd198734195b56ae2f2651fc26f1e8904f46675d5",
+          "size": 2590,
+          "lineCount": 56
+        },
+        {
+          "path": "pnpm-lock.yaml",
+          "digest": "sha256:00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e",
+          "size": 79392,
+          "lineCount": 2482
+        },
+        {
+          "path": "scripts/run-tests.mjs",
+          "digest": "sha256:1da67c219b54d39a7106425f52e2bdd8abe7ab90081cafc111fd6d40d4516140",
+          "size": 3045,
+          "lineCount": 71
+        },
+        {
+          "path": "scripts/test-subreaper.py",
+          "digest": "sha256:808cd0c131866af24b0e3759403018e909a89617baa7ab72edead0ae4c543ca7",
+          "size": 10177,
+          "lineCount": 282
+        },
+        {
+          "path": "skills/acceptance-evidence-validator/SKILL.md",
+          "digest": "sha256:1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109",
+          "size": 1795,
+          "lineCount": 25
+        },
+        {
+          "path": "skills/acceptance-evidence-validator/classification.json",
+          "digest": "sha256:8e5df6db63ddef4b4663df69cf102c66819e6a9c6883ca50681cf62e890e0db1",
+          "size": 3287,
+          "lineCount": 103
+        },
+        {
+          "path": "skills/acceptance-evidence-validator/references/entry-details.md",
+          "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991",
+          "size": 2528,
+          "lineCount": 30
+        },
+        {
+          "path": "skills/blocker-diagnostician/SKILL.md",
+          "digest": "sha256:5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e",
+          "size": 1981,
+          "lineCount": 25
+        },
+        {
+          "path": "skills/blocker-diagnostician/classification.json",
+          "digest": "sha256:0d1aa4f87b5ec8d27f862b24c2988c72c020d0e1493e8493e1b3642a28069b38",
+          "size": 2685,
+          "lineCount": 87
+        },
+        {
+          "path": "skills/blocker-diagnostician/references/entry-details.md",
+          "digest": "sha256:5d3068c1151d10ff89304f2c3a5e18be6dc235d75cff179e3ff68a28d76aaebf",
+          "size": 3465,
+          "lineCount": 32
+        },
+        {
+          "path": "skills/change-scope-guardian/SKILL.md",
+          "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e",
+          "size": 2184,
+          "lineCount": 31
+        },
+        {
+          "path": "skills/change-scope-guardian/classification.json",
+          "digest": "sha256:52103f0dde99c31e42dd548e6234a5198d9a1a5b7d639087dd54a52ae304ff0f",
+          "size": 1177,
+          "lineCount": 46
+        },
+        {
+          "path": "skills/code-review/SKILL.md",
+          "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+          "size": 2841,
+          "lineCount": 29
+        },
+        {
+          "path": "skills/code-review/classification.json",
+          "digest": "sha256:d4253d69e8ebf8f384f5e5a93e375f128546e06a72c54220eea0c28f99521ac4",
+          "size": 1924,
+          "lineCount": 74
+        },
+        {
+          "path": "skills/codex-token-usage-analyzer/SKILL.md",
+          "digest": "sha256:81e119d5c8ef11d8f2c928f8c3c9d518941643ae9c88c03cdb8a6ece09f80f1f",
+          "size": 1405,
+          "lineCount": 25
+        },
+        {
+          "path": "skills/codex-token-usage-analyzer/classification.json",
+          "digest": "sha256:1f52246a9a1e8cd22c811d6ed26409910a7d844f4d4f67ca5d639f00d2ca03d3",
+          "size": 989,
+          "lineCount": 40
+        },
+        {
+          "path": "skills/context-continuity/SKILL.md",
+          "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022",
+          "size": 1944,
+          "lineCount": 29
+        },
+        {
+          "path": "skills/context-continuity/classification.json",
+          "digest": "sha256:d2441089650196242dba576e9c11ae791f05fb8955e40b8a2b3cf63f2e09dfc5",
+          "size": 1889,
+          "lineCount": 70
+        },
+        {
+          "path": "skills/coordinate-subagents/SKILL.md",
+          "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0",
+          "size": 2191,
+          "lineCount": 39
+        },
+        {
+          "path": "skills/coordinate-subagents/classification.json",
+          "digest": "sha256:2fb7b1956b081acd07f6d17a0d17f083426bcf65d27873250e56877c84ec49dc",
+          "size": 3932,
+          "lineCount": 126
+        },
+        {
+          "path": "skills/coordinate-subagents/references/entry-details.md",
+          "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604",
+          "size": 8511,
+          "lineCount": 93
+        },
+        {
+          "path": "skills/cs-engineering/SKILL.md",
+          "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+          "size": 5211,
+          "lineCount": 74
+        },
+        {
+          "path": "skills/cs-engineering/classification.json",
+          "digest": "sha256:7ae34e15610c902316956642c74ca9b5186a2a7226ff623a3bd92bf0189ec592",
+          "size": 2092,
+          "lineCount": 78
+        },
+        {
+          "path": "skills/evaluation-validity-auditor/SKILL.md",
+          "digest": "sha256:eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230",
+          "size": 1585,
+          "lineCount": 22
+        },
+        {
+          "path": "skills/evaluation-validity-auditor/classification.json",
+          "digest": "sha256:1515fe42d89383f5dcdeeeb165ccf8341481ae59ce4f0f9065ac9fdd5a467afd",
+          "size": 1538,
+          "lineCount": 56
+        },
+        {
+          "path": "skills/evaluation-validity-auditor/references/entry-details.md",
+          "digest": "sha256:7d31114e9200454d084dd7df04db34f1afc4c3ac23f3feb09c5eef6a85be8950",
+          "size": 1952,
+          "lineCount": 23
+        },
+        {
+          "path": "skills/independent-audit-gate/SKILL.md",
+          "digest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8",
+          "size": 3301,
+          "lineCount": 44
+        },
+        {
+          "path": "skills/independent-audit-gate/classification.json",
+          "digest": "sha256:ecc3cfc7486a232eb02de3cdcc775e449813a685e620ca8530eb0742574d6908",
+          "size": 3244,
+          "lineCount": 104
+        },
+        {
+          "path": "skills/independent-audit-gate/references/entry-details.md",
+          "digest": "sha256:3f117c44ba584885a2dc9b370a20f3f4ae4a8e672dae1bd174586d8d27b9ca7e",
+          "size": 6709,
+          "lineCount": 53
+        },
+        {
+          "path": "skills/independent-deliberation-panel/SKILL.md",
+          "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab",
+          "size": 5256,
+          "lineCount": 43
+        },
+        {
+          "path": "skills/independent-deliberation-panel/classification.json",
+          "digest": "sha256:936f167838041d925990c9e853062f531069d64bcbfc95658c2e5399ed6792fe",
+          "size": 2284,
+          "lineCount": 79
+        },
+        {
+          "path": "skills/instruction-scope-resolver/SKILL.md",
+          "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
+          "size": 2068,
+          "lineCount": 31
+        },
+        {
+          "path": "skills/instruction-scope-resolver/classification.json",
+          "digest": "sha256:260ffec71166aa7a6403d78f98b3a2e41bac4f0eebc66ce242ac7d0618c453dc",
+          "size": 2297,
+          "lineCount": 82
+        },
+        {
+          "path": "skills/iteration-frame-auditor/SKILL.md",
+          "digest": "sha256:e83cf0abff280adfca9f12c35afd67e3787c75ce4e7866f7d1e402f59211945f",
+          "size": 1947,
+          "lineCount": 29
+        },
+        {
+          "path": "skills/iteration-frame-auditor/classification.json",
+          "digest": "sha256:bfe14a5aa19ba5711963f4b93abce34e44ac4809bcb16c1f5fe7f8ce7dce5a59",
+          "size": 3015,
+          "lineCount": 97
+        },
+        {
+          "path": "skills/iteration-frame-auditor/references/entry-details.md",
+          "digest": "sha256:e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432",
+          "size": 3181,
+          "lineCount": 36
+        },
+        {
+          "path": "skills/korean-prose-editor/SKILL.md",
+          "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+          "size": 2053,
+          "lineCount": 24
+        },
+        {
+          "path": "skills/korean-prose-editor/classification.json",
+          "digest": "sha256:8f49189dcf8106d2f242a186b8ebf46238ae5ed54101e43e7860dc7eedfe0ceb",
+          "size": 2747,
+          "lineCount": 97
+        },
+        {
+          "path": "skills/korean-prose-editor/references/entry-details.md",
+          "digest": "sha256:26ce188795767864370bbd07ae06ba5e164ff802b301656daa3759626996a9a1",
+          "size": 4219,
+          "lineCount": 25
+        },
+        {
+          "path": "skills/model-effort-advisor/SKILL.md",
+          "digest": "sha256:55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106",
+          "size": 2024,
+          "lineCount": 26
+        },
+        {
+          "path": "skills/model-effort-advisor/classification.json",
+          "digest": "sha256:81d04623e6881ba127c1cdac3d6f53f228e4cfc8d4d38d567e06a1f309299d94",
+          "size": 1664,
+          "lineCount": 61
+        },
+        {
+          "path": "skills/mutation-risk-preflight/SKILL.md",
+          "digest": "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe",
+          "size": 2140,
+          "lineCount": 34
+        },
+        {
+          "path": "skills/mutation-risk-preflight/classification.json",
+          "digest": "sha256:0487794c38433a3153a5dee86de5ff524c16e84d7ac5f4a41f2ca4ab0328b99f",
+          "size": 1751,
+          "lineCount": 66
+        },
+        {
+          "path": "skills/orchestrator/SKILL.md",
+          "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+          "size": 5024,
+          "lineCount": 33
+        },
+        {
+          "path": "skills/orchestrator/classification.json",
+          "digest": "sha256:41891843dbbf4d4e86e830ad2d14613a67851fec35f04746ccad6c49e248cf0c",
+          "size": 4145,
+          "lineCount": 149
+        },
+        {
+          "path": "skills/ponytail/SKILL.md",
+          "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+          "size": 7274,
+          "lineCount": 126
+        },
+        {
+          "path": "skills/ponytail/classification.json",
+          "digest": "sha256:3ab551f50bf4aae31ae0b4c3c3fd6158f8fde1cee75d62b68a07b7e49f22a481",
+          "size": 2025,
+          "lineCount": 76
+        },
+        {
+          "path": "skills/recovery-strategy-selector/SKILL.md",
+          "digest": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25",
+          "size": 1166,
+          "lineCount": 18
+        },
+        {
+          "path": "skills/recovery-strategy-selector/classification.json",
+          "digest": "sha256:c9f3e8cd8f7982fe36c23115d3e4ceceeb7a5c0f8bd747a8c0158c81e1642314",
+          "size": 2654,
+          "lineCount": 85
+        },
+        {
+          "path": "skills/recovery-strategy-selector/references/entry-details.md",
+          "digest": "sha256:08b489c4ace78471ae6737fcea06e1885294d8d0b5f2207c74c6f740ac05375e",
+          "size": 3202,
+          "lineCount": 29
+        },
+        {
+          "path": "skills/registry.json",
+          "digest": "sha256:395cb7a025a0e1fef81cff8aa509205c170fb9c626591a880466452c0885422c",
+          "size": 80820,
+          "lineCount": 2497
+        },
+        {
+          "path": "skills/session-board/SKILL.md",
+          "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",
+          "size": 2918,
+          "lineCount": 25
+        },
+        {
+          "path": "skills/session-board/classification.json",
+          "digest": "sha256:7193daa7a84da2918be65472c086624b5748f2122bf2071993c96e3afe20dd7e",
+          "size": 2551,
+          "lineCount": 88
+        },
+        {
+          "path": "skills/session-board/references/entry-details.md",
+          "digest": "sha256:e8ea65d5d3d372fe70ba0fe7cdba18d965704450f2a7084b27ce885695e68660",
+          "size": 2342,
+          "lineCount": 18
+        },
+        {
+          "path": "skills/software-security-auditor/SKILL.md",
+          "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+          "size": 1944,
+          "lineCount": 20
+        },
+        {
+          "path": "skills/software-security-auditor/classification.json",
+          "digest": "sha256:f6354e18d117d008a8c8e8fc176eefa96e72eebb6040980d92dc3b4f861c3228",
+          "size": 1762,
+          "lineCount": 67
+        },
+        {
+          "path": "skills/task-contract/SKILL.md",
+          "digest": "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100",
+          "size": 1500,
+          "lineCount": 22
+        },
+        {
+          "path": "skills/task-contract/classification.json",
+          "digest": "sha256:a0dc1edbc83b0b79b479956f780dbb197db36039d04c15546837946ddd02c213",
+          "size": 1235,
+          "lineCount": 50
+        },
+        {
+          "path": "skills/test-engineering/SKILL.md",
+          "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+          "size": 2981,
+          "lineCount": 30
+        },
+        {
+          "path": "skills/test-engineering/classification.json",
+          "digest": "sha256:b7cd174b0a314bf228ac0a32f9c7c33ffe1494852c90ebd73c7682d548bb3e1c",
+          "size": 1747,
+          "lineCount": 67
+        },
+        {
+          "path": "skills/workspace-convention-profiler/SKILL.md",
+          "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7",
+          "size": 1866,
+          "lineCount": 26
+        },
+        {
+          "path": "skills/workspace-convention-profiler/classification.json",
+          "digest": "sha256:15c01583cc8a233fd969ea873cf5ba0d56a6fc305cd2a9ff7ed7b57338cb2853",
+          "size": 3112,
+          "lineCount": 99
+        },
+        {
+          "path": "skills/workspace-convention-profiler/references/entry-details.md",
+          "digest": "sha256:9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91",
+          "size": 1400,
+          "lineCount": 18
+        },
+        {
+          "path": "tests/mcp/skill-classification-inventory.test.ts",
+          "digest": "sha256:d6b668481d01d1df0f8676caa833d97e1749f9dea8397d263c61fb314438a44e",
+          "size": 17678,
+          "lineCount": 219
+        }
+      ],
+      "digest": "sha256:0c8924cac692602949a684cbf23de45c3da16767774d42a62921dc4dc16a35a7"
+    },
+    "afterDigest": "sha256:0c8924cac692602949a684cbf23de45c3da16767774d42a62921dc4dc16a35a7",
+    "startedAt": "2026-10-09T03:22:45.102Z",
+    "finishedAt": "2026-10-09T03:22:47.517Z",
+    "status": "PASS",
+    "exitCode": 0,
+    "signal": null,
+    "stdoutDigest": "sha256:dc8591b364578b2ce0cfea346c48f5b611aae8388c2cf071939b905d47c11fe6",
+    "stderrDigest": "sha256:3d90d0ccc0e8c7567ed9705a8d6c08cf2f9f75b169d2d4f1e4b12f860b1f77c8",
+    "timeoutMs": 30000,
+    "nodeVersion": "24.19.0",
+    "platform": "linux",
+    "digest": "sha256:68a3d5c1e273888b4fb3c45ef3bf1a6262387b3bedc571446273b5f548b2e402"
+  }
+}

@@ -1,0 +1,5 @@
+ RUN  v5.0.0 [isolated-checkout]
+ Test Files  4 passed (4)
+      Tests  63 passed (63)
+   Start at  03:18:14
+   Duration  2.88s (tests 68%, import 21%, transform 11%)
