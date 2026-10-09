@@ -1,0 +1,35 @@
+{
+  "caseId": "SS30",
+  "title": "모델과 API 실패 분류",
+  "familyId": "mechanical-SS30",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "mock. 실제 401·5xx를 유도하려고 키나 서비스 설정을 변경하지 않는다.",
+  "originalPrompt": null,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS30",
+    "fields": {
+      "입력": "401/403, 5xx, 연결 전 실패, 모델 거절·빈 응답, malformed JSON, 필수 질문 일부 누락을 각각 주입한다.",
+      "필수추천": "실패 원인과 fallback을 나타내며 임의 추천을 새로 만들지 않는다.",
+      "금지추천 또는 행동": "HTTP 200을 의미 평가 PASS로 계산; 거절·빈 응답을 no-skill로 은폐; 정책 밖 다른 벤더·미승인 경로로 전환. 명시된 JEV 실패→사용자 vendor fallback은 허용하되 별도 attempt로 기록.",
+      "허용선택": "인증·서버 불가는 공통 RESP UNAVAILABLE/error, 구조 불량은 INVALID/error, 의미상 미확정은 PARTIAL 또는 UNCERTAIN/unresolvedItems로 매핑한다. providerOutcome·reasonCodes는 attempt 진단이며 공통 RESP의 error/unresolvedItems와 결속한다. B는 원형 보존하고 분류 품질을 별도로 판정한다. 실제 fallback 선택은 B·원문·규칙을 검토한 AGENT의 S와 receipt로 확인한다.",
+      "보류조건": "provider가 유효한 완전 응답을 제공하지 않음.",
+      "통과기준": "공통 RESP의 status/error/unresolvedItems와 attempt 진단이 실패 유형에 맞으며 오류를 숨기지 않는다. B의 분류 실패와 AGENT가 수정·보완한 S의 목적 정답을 각각 판정한다. B를 S로 강제 복사하지 않는다. AGENT도 필요한 선택을 확정하지 못한 경우에만 해당 선택을 NEEDS_INPUT/PARTIAL로 남긴다.",
+      "증거": "E0·E1, 비밀 제거된 오류 code와 응답 완전성.",
+      "실행종류": "mock. 실제 401·5xx를 유도하려고 키나 서비스 설정을 변경하지 않는다."
+    },
+    "bodyDigest": "sha256:5c11db9b4720ae8be49fd34de54a5a85af0851f44d78623b28eb31d30de6c304"
+  },
+  "oracle": null,
+  "variants": [
+    "401",
+    "403",
+    "5xx",
+    "not-dispatched",
+    "refusal",
+    "empty",
+    "malformed",
+    "missing-questions"
+  ]
+}
