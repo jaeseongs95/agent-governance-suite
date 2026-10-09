@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS27-only",
+  "contractDigest": "sha256:9ac7abe37b4345e1c88b93b4acbc906de3898be4e87cb3ea557481ce5f26144a",
+  "requirements": [
+    "SS27.schema-membership",
+    "SS27.availability",
+    "SS27.failure-provenance",
+    "SS27.numeric-and-duplicate-wire"
+  ],
+  "scopeFiles": [
+    "evidence/SS27/SS27.offline.test.ts"
+  ],
+  "runner": "Existing Vitest 5 runner; mock transports only",
+  "environment": "Independent Cloud Linux; Node 24.19.0; TZ Etc/UTC; fixed profile check clock 2026-10-09T00:00:00Z",
+  "cases": [
+    {
+      "id": "SS27.all-variants-and-boundaries",
+      "requirementIds": [
+        "SS27.schema-membership",
+        "SS27.availability",
+        "SS27.failure-provenance",
+        "SS27.numeric-and-duplicate-wire"
+      ],
+      "scenario": "Eight frozen SS27 variants plus isolated missing boundaries; embedded source only",
+      "entryPoint": "validateClassificationResponse, validateDecision, SkillClassificationService.classify, ApprovedRouteClassificationProvider.classify, RuntimeSkillClassificationGateway.inventory",
+      "level": "integration",
+      "expectedBehavior": "Reject malformed response, retain raw errors, preserve needed while blocking unavailable execution",
+      "oracle": "SS27 embedded sourceSpec.fields; oracle=null; no semantic accuracy scores",
+      "testFiles": [
+        "evidence/SS27/SS27.offline.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Known fixed candidate read-only verification; product mutations and fixes forbidden. Actual assertion failures are retained; green rerun awaits corrected candidate.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "evidence/SS27/SS27.offline.test.ts",
+        "--reporter=json",
+        "--outputFile=evidence/SS27/new-tests.vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "Every other SS case and full suite",
+    "JEV/vendorAPI/Claude external calls",
+    "Actual host selection/read/apply/verify",
+    "Past completed 21-case runs",
+    "Product source mutation, push, PR and release"
+  ]
+}

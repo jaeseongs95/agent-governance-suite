@@ -1,0 +1,320 @@
+{
+  "caseId": "SS27",
+  "rows": [
+    {
+      "id": "high-score-enabled",
+      "status": "PASS",
+      "input": {
+        "skills": [
+          {
+            "skillId": "software-security-auditor",
+            "version": "synthetic",
+            "description": "SS27",
+            "enabled": false,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "test"
+            ],
+            "actions": [
+              "test"
+            ],
+            "targets": [
+              "provider-output"
+            ],
+            "constraints": [],
+            "applicability": [
+              "synthetic"
+            ],
+            "exclusions": [
+              "semantic assessment"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "body": {
+          "model": "mock",
+          "answers": {
+            "software-security-auditor": {
+              "type": "noul",
+              "noul": 0.99
+            }
+          },
+          "usage": {
+            "input_tokens": 10,
+            "output_tokens": 1
+          }
+        }
+      },
+      "observed": {
+        "evaluation": {
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-high-enabled",
+            "operationId": "SS27-high-enabled",
+            "requestDigest": "sha256:1c868b09f40ab8c482bee3b1ca9035e1ea1c7a0285e9be1a4004f6aacbf5bac5",
+            "inventoryDigest": "sha256:aac164705f96ba50344b713f8b7940c2b9d801a4667419ed81dc2f530d223f46",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "profile:mock:mock"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          },
+          "dispatchState": "started",
+          "usage": {
+            "inputTokens": 10,
+            "outputTokens": 1,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "diagnostics": {
+            "scoreKind": "noul_probability",
+            "scores": [
+              {
+                "skillId": "software-security-auditor",
+                "value": 0.99
+              }
+            ]
+          }
+        },
+        "selectionBoundary": {
+          "valid": false,
+          "errors": [
+            "HOST_RECEIPT_MISMATCH"
+          ],
+          "neededSkillIds": [
+            "software-security-auditor"
+          ],
+          "runnableSkillIds": [],
+          "blockedItems": [
+            {
+              "skillId": "software-security-auditor",
+              "reasonCode": "DISABLED"
+            }
+          ]
+        }
+      },
+      "actualHost": {
+        "selected": null,
+        "hostReceipt": null,
+        "status": "NOTRUN"
+      }
+    },
+    {
+      "id": "high-score-hostSupported",
+      "status": "PASS",
+      "input": {
+        "skills": [
+          {
+            "skillId": "software-security-auditor",
+            "version": "synthetic",
+            "description": "SS27",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": false,
+            "capabilities": [
+              "test"
+            ],
+            "actions": [
+              "test"
+            ],
+            "targets": [
+              "provider-output"
+            ],
+            "constraints": [],
+            "applicability": [
+              "synthetic"
+            ],
+            "exclusions": [
+              "semantic assessment"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "body": {
+          "model": "mock",
+          "answers": {
+            "software-security-auditor": {
+              "type": "noul",
+              "noul": 0.99
+            }
+          },
+          "usage": {
+            "input_tokens": 10,
+            "output_tokens": 1
+          }
+        }
+      },
+      "observed": {
+        "evaluation": {
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-high-hostSupported",
+            "operationId": "SS27-high-hostSupported",
+            "requestDigest": "sha256:5b1c6a72b034360d7fa4e153ef720ae56a5bdd288f6c1288ca8969142adca788",
+            "inventoryDigest": "sha256:bfce6897105213e3062ded51f602cf6cd9d1faee44661d6b850c892e7cc1e1cc",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "profile:mock:mock"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          },
+          "dispatchState": "started",
+          "usage": {
+            "inputTokens": 10,
+            "outputTokens": 1,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "diagnostics": {
+            "scoreKind": "noul_probability",
+            "scores": [
+              {
+                "skillId": "software-security-auditor",
+                "value": 0.99
+              }
+            ]
+          }
+        },
+        "selectionBoundary": {
+          "valid": false,
+          "errors": [
+            "HOST_RECEIPT_MISMATCH"
+          ],
+          "neededSkillIds": [
+            "software-security-auditor"
+          ],
+          "runnableSkillIds": [],
+          "blockedItems": [
+            {
+              "skillId": "software-security-auditor",
+              "reasonCode": "HOST_UNSUPPORTED"
+            }
+          ]
+        }
+      },
+      "actualHost": {
+        "selected": null,
+        "hostReceipt": null,
+        "status": "NOTRUN"
+      }
+    },
+    {
+      "id": "identical-duplicate",
+      "status": "PASS",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS27-high-enabled",
+        "operationId": "SS27-high-enabled",
+        "requestDigest": "sha256:1c868b09f40ab8c482bee3b1ca9035e1ea1c7a0285e9be1a4004f6aacbf5bac5",
+        "inventoryDigest": "sha256:aac164705f96ba50344b713f8b7940c2b9d801a4667419ed81dc2f530d223f46",
+        "status": "SUCCESS",
+        "judgments": [
+          {
+            "skillId": "software-security-auditor",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:mock:mock"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "software-security-auditor",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:mock:mock"
+            ],
+            "uncertaintyReason": null
+          }
+        ],
+        "unresolvedItems": [],
+        "error": null
+      },
+      "observed": [
+        "DUPLICATE_SKILL_ID"
+      ]
+    },
+    {
+      "id": "omitted-SUCCESS",
+      "status": "PASS",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS27-high-enabled",
+        "operationId": "SS27-high-enabled",
+        "requestDigest": "sha256:1c868b09f40ab8c482bee3b1ca9035e1ea1c7a0285e9be1a4004f6aacbf5bac5",
+        "inventoryDigest": "sha256:aac164705f96ba50344b713f8b7940c2b9d801a4667419ed81dc2f530d223f46",
+        "status": "SUCCESS",
+        "judgments": [],
+        "unresolvedItems": [],
+        "error": null
+      },
+      "observed": [
+        "MISSING_CANDIDATE_JUDGMENT"
+      ]
+    },
+    {
+      "id": "omitted-PARTIAL",
+      "status": "PASS",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS27-high-enabled",
+        "operationId": "SS27-high-enabled",
+        "requestDigest": "sha256:1c868b09f40ab8c482bee3b1ca9035e1ea1c7a0285e9be1a4004f6aacbf5bac5",
+        "inventoryDigest": "sha256:aac164705f96ba50344b713f8b7940c2b9d801a4667419ed81dc2f530d223f46",
+        "status": "PARTIAL",
+        "judgments": [],
+        "unresolvedItems": [],
+        "error": null
+      },
+      "observed": [
+        "MISSING_CANDIDATE_JUDGMENT"
+      ]
+    },
+    {
+      "id": "omitted-UNCERTAIN",
+      "status": "PASS",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS27-high-enabled",
+        "operationId": "SS27-high-enabled",
+        "requestDigest": "sha256:1c868b09f40ab8c482bee3b1ca9035e1ea1c7a0285e9be1a4004f6aacbf5bac5",
+        "inventoryDigest": "sha256:aac164705f96ba50344b713f8b7940c2b9d801a4667419ed81dc2f530d223f46",
+        "status": "UNCERTAIN",
+        "judgments": [],
+        "unresolvedItems": [
+          {
+            "skillId": null,
+            "reasonCode": "SEMANTIC_UNCERTAINTY"
+          }
+        ],
+        "error": null
+      },
+      "observed": [
+        "MISSING_CANDIDATE_JUDGMENT"
+      ]
+    }
+  ],
+  "executionKind": "new-isolated-offline-mock",
+  "externalAPICalls": 0,
+  "hostReceipt": null
+}

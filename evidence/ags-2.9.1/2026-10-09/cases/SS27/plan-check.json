@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:151a12a83dd4de3f7e8add443715b1543ab9b9d40c2f6d3f200d74dfd1eb30cc",
+  "caseIds": [
+    "SS27.all-variants-and-boundaries"
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "numTotalTestSuites": 3,
+  "numPassedTestSuites": 3,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 26,
+  "numPassedTests": 1,
+  "numFailedTests": 0,
+  "numPendingTests": 25,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514677481,
+  "success": true,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "classification response public validation (SS21/27/29/30)"
+          ],
+          "fullName": "classification response public validation (SS21/27/29/30) rejects unknown, duplicate and invalid output without creating negative judgments",
+          "status": "passed",
+          "title": "rejects unknown, duplicate and invalid output without creating negative judgments",
+          "duration": 11.074208999999996,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514677755,
+      "endTime": 1791514677766.0742,
+      "status": "passed",
+      "message": "",
+      "name": "<PINNED_CHECKOUT>/tests/mcp/skill-classification-validation.test.ts"
+    }
+  ],
+  "_publicProjection": {
+    "derivedFromExistingReport": true,
+    "omittedSkippedOrPendingAssertionRows": 25,
+    "originalCountsPreserved": true,
+    "newExecution": false
+  }
+}

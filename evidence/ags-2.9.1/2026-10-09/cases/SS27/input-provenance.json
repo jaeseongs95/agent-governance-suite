@@ -1,0 +1,111 @@
+{
+  "caseId": "SS27",
+  "publicationOnlyDerivedIdentities": true,
+  "variants": [
+    {
+      "variant": "unknown-id",
+      "sourceArtifact": "observations.json",
+      "sourceArtifactSHA256": "449897d575d6394073f494786b9a973b75976668f90bfdc6ded4a8fbefb1729f",
+      "sourceInputEncoding": "UTF8 JSON compact projection of existing in-memory mock input; not a wire measurement",
+      "originalInputBytes": 3025,
+      "originalInputSHA256": "2ce7bf765345eb3ffeb6f3ade9b5aca3234050f751f60ed2aee623bf222806d2",
+      "publicInputBytes": 3025,
+      "publicInputSHA256": "2ce7bf765345eb3ffeb6f3ade9b5aca3234050f751f60ed2aee623bf222806d2",
+      "requestDigest": "sha256:0d0d196ed4f36e8e78a57afde15a2d0b3f61cd25a984dd476200cba3634ea372",
+      "rawExternalWireCapture": "NOT_APPLICABLE; in-memory mock port, no external call"
+    },
+    {
+      "variant": "duplicate-id",
+      "sourceArtifact": "observations.json",
+      "sourceArtifactSHA256": "449897d575d6394073f494786b9a973b75976668f90bfdc6ded4a8fbefb1729f",
+      "sourceInputEncoding": "UTF8 JSON compact projection of existing in-memory mock input; not a wire measurement",
+      "originalInputBytes": 3135,
+      "originalInputSHA256": "aa2d7ab460c520dba35a6d432a1dd5118449599c6ef26c44d13e326a97670171",
+      "publicInputBytes": 3135,
+      "publicInputSHA256": "aa2d7ab460c520dba35a6d432a1dd5118449599c6ef26c44d13e326a97670171",
+      "requestDigest": "sha256:db10c2c5ab7303f8e7839fa76aa45771b5abeeb0c55afc4783013edb7c6338fd",
+      "rawExternalWireCapture": "NOT_APPLICABLE; in-memory mock port, no external call"
+    },
+    {
+      "variant": "disabled",
+      "sourceArtifact": "observations.json",
+      "sourceArtifactSHA256": "449897d575d6394073f494786b9a973b75976668f90bfdc6ded4a8fbefb1729f",
+      "sourceInputEncoding": "UTF8 JSON compact projection of existing in-memory mock input; not a wire measurement",
+      "originalInputBytes": 3015,
+      "originalInputSHA256": "3f36941207a281ab88bce74f3bae0863f9e97d8a14ffab27828955b51db897bf",
+      "publicInputBytes": 3015,
+      "publicInputSHA256": "3f36941207a281ab88bce74f3bae0863f9e97d8a14ffab27828955b51db897bf",
+      "requestDigest": "sha256:35bdd1a786e0d63503e40aa1e2a2b51718c3bed2463c06cbd96d0100ec564b67",
+      "rawExternalWireCapture": "NOT_APPLICABLE; in-memory mock port, no external call"
+    },
+    {
+      "variant": "unsupported",
+      "sourceArtifact": "observations.json",
+      "sourceArtifactSHA256": "449897d575d6394073f494786b9a973b75976668f90bfdc6ded4a8fbefb1729f",
+      "sourceInputEncoding": "UTF8 JSON compact projection of existing in-memory mock input; not a wire measurement",
+      "originalInputBytes": 3027,
+      "originalInputSHA256": "d696a75d286ee9ffb1b738ebb0ba07bef74f7211ae0bcd0bdb53a34f95265470",
+      "publicInputBytes": 3027,
+      "publicInputSHA256": "d696a75d286ee9ffb1b738ebb0ba07bef74f7211ae0bcd0bdb53a34f95265470",
+      "requestDigest": "sha256:56f939210ad0af7f3570c0a2acd30b2447ed6f1fed14b73218ed9e665ba8abe8",
+      "rawExternalWireCapture": "NOT_APPLICABLE; in-memory mock port, no external call"
+    },
+    {
+      "variant": "invalid-judgment",
+      "sourceArtifact": "observations.json",
+      "sourceArtifactSHA256": "449897d575d6394073f494786b9a973b75976668f90bfdc6ded4a8fbefb1729f",
+      "sourceInputEncoding": "UTF8 JSON compact projection of existing in-memory mock input; not a wire measurement",
+      "originalInputBytes": 3039,
+      "originalInputSHA256": "dd7d79959579a3e1202b54a7525c818e5beae29020718b4d064248ac8fea4ce5",
+      "publicInputBytes": 3039,
+      "publicInputSHA256": "dd7d79959579a3e1202b54a7525c818e5beae29020718b4d064248ac8fea4ce5",
+      "requestDigest": "sha256:0bb4415d247f277bd5d4cdcb11e3d974162d29ceee355dac4306455236c52e89",
+      "rawExternalWireCapture": "NOT_APPLICABLE; in-memory mock port, no external call"
+    },
+    {
+      "variant": "nan-score",
+      "sourceArtifact": "observations.json",
+      "sourceArtifactSHA256": "449897d575d6394073f494786b9a973b75976668f90bfdc6ded4a8fbefb1729f",
+      "sourceInputEncoding": "UTF8 JSON compact projection of existing in-memory mock input; not a wire measurement",
+      "originalInputBytes": 3123,
+      "originalInputSHA256": "45ce62c92dc248c3a5d39548313ec2d13eca761fda7b1f11703a8443e97b2575",
+      "publicInputBytes": 3123,
+      "publicInputSHA256": "45ce62c92dc248c3a5d39548313ec2d13eca761fda7b1f11703a8443e97b2575",
+      "requestDigest": "sha256:0d4dd2ac4752870ce74fc399fe64f5fae6aec0ea7367203bbf8dd701fe96ee85",
+      "rawExternalWireCapture": "NOT_APPLICABLE; in-memory mock port, no external call"
+    },
+    {
+      "variant": "omitted-id",
+      "sourceArtifact": "observations.json",
+      "sourceArtifactSHA256": "449897d575d6394073f494786b9a973b75976668f90bfdc6ded4a8fbefb1729f",
+      "sourceInputEncoding": "UTF8 JSON compact projection of existing in-memory mock input; not a wire measurement",
+      "originalInputBytes": 2913,
+      "originalInputSHA256": "063993b464348e5cedec9b2b9100c782be9bcf698db3dbeb9d1b914cd394eb9f",
+      "publicInputBytes": 2913,
+      "publicInputSHA256": "063993b464348e5cedec9b2b9100c782be9bcf698db3dbeb9d1b914cd394eb9f",
+      "requestDigest": "sha256:c4660316a734d3dee30db1bd44ea17164a623cd8dab16d7e65fcca5f8f4b0d11",
+      "rawExternalWireCapture": "NOT_APPLICABLE; in-memory mock port, no external call"
+    },
+    {
+      "variant": "additional-id",
+      "sourceArtifact": "observations.json",
+      "sourceArtifactSHA256": "449897d575d6394073f494786b9a973b75976668f90bfdc6ded4a8fbefb1729f",
+      "sourceInputEncoding": "UTF8 JSON compact projection of existing in-memory mock input; not a wire measurement",
+      "originalInputBytes": 3141,
+      "originalInputSHA256": "239e607da9b246a409ae291a649c6cca3dce5b80aaaf74699b89632d74f137a5",
+      "publicInputBytes": 3141,
+      "publicInputSHA256": "239e607da9b246a409ae291a649c6cca3dce5b80aaaf74699b89632d74f137a5",
+      "requestDigest": "sha256:b63ba3bddea1d629cac1dff1bcafb9753ac56d86d8f62a0b35bbe03ea2fa46b7",
+      "rawExternalWireCapture": "NOT_APPLICABLE; in-memory mock port, no external call"
+    }
+  ],
+  "existingDuplicateKeyRawWire": {
+    "sourceArtifact": "observations.json",
+    "sourcePath": "boundaries[duplicate-json-key].input.rawWire",
+    "utf8Bytes": 267,
+    "sha256": "79f27255c78bbcccea78cc86c171f0dade5d8eec0477e045efae3e06421579a2",
+    "rawWire": "{\"model\":\"mock-jev\",\"answers\":{\"cs-engineering\":{\"type\":\"noul\",\"noul\":0.1},\"cs-engineering\":{\"type\":\"noul\",\"noul\":0.9},\"software-security-auditor\":{\"type\":\"noul\",\"noul\":0.1},\"test-engineering\":{\"type\":\"noul\",\"noul\":0.1}},\"usage\":{\"input_tokens\":10,\"output_tokens\":2}}"
+  },
+  "originalPrompt": null,
+  "oracle": null
+}

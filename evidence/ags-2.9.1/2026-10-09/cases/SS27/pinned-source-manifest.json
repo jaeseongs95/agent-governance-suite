@@ -1,0 +1,107 @@
+[
+  {
+    "path": "AGENTS.md",
+    "sha256": "sha256:d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "tests/skill-classification/fixtures.json",
+    "sha256": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "tests/skill-classification/evaluation.ts",
+    "sha256": "sha256:e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "mcp-server/src/skill-classification/request.ts",
+    "sha256": "sha256:1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "mcp-server/src/skill-classification/digest.ts",
+    "sha256": "sha256:90854882601154432f4e3ceea2ca9dca46802a496fe21e7d07bded713a3bcb01",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "mcp-server/src/skill-classification/profiles.ts",
+    "sha256": "sha256:0add9c19bd0c7a8e45a57be64f4a2ecb503e0305dc9777629fba142a8566d5be",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "mcp-server/src/skill-classification/validation.ts",
+    "sha256": "sha256:70f988d9e5d49f8eaef55ca0ff378b4819798ff8141bd09119691c2cffb2891f",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "mcp-server/src/skill-classification/service.ts",
+    "sha256": "sha256:c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "mcp-server/src/skill-classification/providers.ts",
+    "sha256": "sha256:f191c46db32f38248ebdd23be725b426a0b3020e0bb464b36bcc57521983651c",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "mcp-server/src/skill-classification/gateway.ts",
+    "sha256": "sha256:80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "mcp-server/src/skill-classification/inventory.ts",
+    "sha256": "sha256:8c7ee54546f17fb1e63368fbfb72668a3c7136570a545ad5f0494f076c91727c",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "mcp-server/src/skill-classification/types.ts",
+    "sha256": "sha256:a5a238741eb34d5af50eb2e67e1d20f97dfebc30cdfc29c77ec7ae618f1319b5",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "mcp-server/src/skill-classification/native-adapters.ts",
+    "sha256": "sha256:dc6a0e763b175b077cee401d9020144d49b99f143b34da88059fbf4da5bc39f6",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "mcp-server/src/host-attestation.ts",
+    "sha256": "sha256:334b17dd635daeb19d7b5401bf6a167fde860e0df3edfa71c16a698ec5bef1b7",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "mcp-server/src/index.ts",
+    "sha256": "sha256:bd2d886cd4ef1bb42c8cd00dd22a0428be899c7e21f1e48afe83c280f0104d46",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "contracts/skill-classification-response.v1.schema.json",
+    "sha256": "sha256:7c9624b44027918155a91b823de41a5ad21d8c35e551967c0d397f7356e957b6",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "vitest.config.mjs",
+    "sha256": "sha256:cfcc4d27a36e48897ecd19d376decbb8683fc42c8489babcc89846fe9df98fdb",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "scripts/run-tests.mjs",
+    "sha256": "sha256:1da67c219b54d39a7106425f52e2bdd8abe7ab90081cafc111fd6d40d4516140",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "skills/test-engineering/SKILL.md",
+    "sha256": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "skills/orchestrator/SKILL.md",
+    "sha256": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+    "matchesPinnedGitBlob": true
+  },
+  {
+    "path": "skills/evaluation-validity-auditor/SKILL.md",
+    "sha256": "sha256:eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230",
+    "matchesPinnedGitBlob": true
+  }
+]

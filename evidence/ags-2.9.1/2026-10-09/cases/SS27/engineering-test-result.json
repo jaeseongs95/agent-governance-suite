@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:94228f8dbe3e72eea31d7fc2773d57fefc22f9b19ca34dd1bb786244a9b18f27",
+  "reportDigest": "sha256:9626e751546341eefba154b3f8bb04c0c8e837fce7853b61309af2aa8e2931f5",
+  "issues": [
+    "REQUIRED SS27.all-variants-and-boundaries: NOT_RUN — Paired red/green sensitivity proof NOT_RUN: product mutation/fix forbidden, no corrected candidate. Actual fixed-candidate failing assertions are independently retained in new-tests.vitest.json; this proof does not replace those observations."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

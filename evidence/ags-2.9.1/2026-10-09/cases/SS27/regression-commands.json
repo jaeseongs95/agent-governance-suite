@@ -1,0 +1,79 @@
+[
+  {
+    "name": "response-validation",
+    "command": [
+      "node",
+      "scripts/run-tests.mjs",
+      "tests/mcp/skill-classification-validation.test.ts",
+      "-t",
+      "rejects unknown, duplicate and invalid output without creating negative judgments",
+      "--reporter=json",
+      "--outputFile=evidence/SS27/regression-response.vitest.json"
+    ],
+    "exitCode": 0,
+    "executionKind": "existing-regression-offline-mock",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 25,
+    "assertions": [
+      {
+        "title": "classification response public validation (SS21/27/29/30) rejects unknown, duplicate and invalid output without creating negative judgments",
+        "status": "passed"
+      }
+    ]
+  },
+  {
+    "name": "fallback",
+    "command": [
+      "node",
+      "scripts/run-tests.mjs",
+      "tests/mcp/skill-classification-service.test.ts",
+      "-t",
+      "SS27/30 malformed and incomplete JEV judgments produce INVALID and vendor fallback",
+      "--reporter=json",
+      "--outputFile=evidence/SS27/regression-fallback.vitest.json"
+    ],
+    "exitCode": 0,
+    "executionKind": "existing-regression-offline-mock",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 39,
+    "assertions": [
+      {
+        "title": "fixed-profile classification service SS27/30 malformed and incomplete JEV judgments produce INVALID and vendor fallback",
+        "status": "passed"
+      }
+    ]
+  },
+  {
+    "name": "wire-variants",
+    "command": [
+      "node",
+      "scripts/run-tests.mjs",
+      "tests/mcp/skill-classification-providers.test.ts",
+      "-t",
+      "SS27/28 rejects (unknown-id|missing-id|nan) responses rather than producing no-skill",
+      "--reporter=json",
+      "--outputFile=evidence/SS27/regression-wire.vitest.json"
+    ],
+    "exitCode": 0,
+    "executionKind": "existing-regression-offline-mock",
+    "passed": 3,
+    "failed": 0,
+    "skipped": 20,
+    "assertions": [
+      {
+        "title": "approved classification wire adapters SS27/28 rejects unknown-id responses rather than producing no-skill",
+        "status": "passed"
+      },
+      {
+        "title": "approved classification wire adapters SS27/28 rejects missing-id responses rather than producing no-skill",
+        "status": "passed"
+      },
+      {
+        "title": "approved classification wire adapters SS27/28 rejects nan responses rather than producing no-skill",
+        "status": "passed"
+      }
+    ]
+  }
+]

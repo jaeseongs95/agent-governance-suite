@@ -1,0 +1,4741 @@
+{
+  "caseId": "SS27",
+  "status": "FAIL",
+  "offlineVerification": "COMPLETED_ALL_8_FROZEN_VARIANTS",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "requestedBranch": "codex/skill-classification-2.9.1",
+  "worktree": "<PINNED_CHECKOUT>",
+  "checkoutMode": "detached fixed commit; product sources unchanged",
+  "fixtureSHA": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "originalPrompt": null,
+  "oracle": null,
+  "accuracy": null,
+  "semanticScore": null,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS27",
+    "fields": {
+      "입력": "raw에 존재하지 않는 ID, 중복 CS, disabled SEC, host 미지원 ID, 잘못된 judgment 값, NaN score를 각각 주입한다.",
+      "필수추천": "유효 항목을 위조하지 않고 오류 항목·사유를 보존한다.",
+      "금지추천 또는 행동": "unknown ID 실행; invalid 구조를 성공으로 처리; disabled를 모델 고득점 때문에 되살림.",
+      "허용선택": "미등록·구조 오류에는 INVALID로 baseline fallback하고 원시 오류를 보존한다. 알려진 ID의 미설치·미지원은 목적 판단을 지우지 않고 실행 가용성 경계로 처리한다. provider의 중복·추가·누락 응답은 INVALID다. 상위의 서로 다른 유효 집합에서 반복되는 ID를 결합 시 한 번만 유지하는 것과 구분한다.",
+      "보류조건": "스키마 또는 inventory membership 검증 실패.",
+      "통과기준": "미등록·구조 오류 항목은 유효 선택으로 채택하지 않는다. 등록된 필요 스킬의 비활성·미지원은 needed에 남기되 runnable에는 0개이며 실행을 차단한다. 중복·충돌·숫자 유효성 결과가 결정적이고 이유가 남는다.",
+      "증거": "E0, schema·membership 오류 경로.",
+      "실행종류": "mock."
+    },
+    "bodyDigest": "sha256:7e3f1fdec67a2ba6560bbca965347ef6c495498db687eb894a589014c8a0c5cd"
+  },
+  "sourceSpecFileExists": false,
+  "sourceUsed": "All SS27 embedded originalPrompt/sourceSpec.fields/oracle/variants; absent TEST-SPEC.seq7.ko.md not reconstructed",
+  "executionKind": "mock/offline development verification; actual-host NOTRUN",
+  "API0": true,
+  "externalCalls": {
+    "jev": 0,
+    "vendorAPI": 0,
+    "claude": 0,
+    "nativeHostCLISpawn": 0
+  },
+  "networkScope": "Git repository fetch only; no external classification APIs",
+  "past21CaseRunsRepeated": false,
+  "wholeSuiteRun": false,
+  "commands": [
+    {
+      "name": "response-validation",
+      "command": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/mcp/skill-classification-validation.test.ts",
+        "-t",
+        "rejects unknown, duplicate and invalid output without creating negative judgments",
+        "--reporter=json",
+        "--outputFile=evidence/SS27/regression-response.vitest.json"
+      ],
+      "exitCode": 0,
+      "executionKind": "existing-regression-offline-mock",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 25,
+      "assertions": [
+        {
+          "title": "classification response public validation (SS21/27/29/30) rejects unknown, duplicate and invalid output without creating negative judgments",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "name": "fallback",
+      "command": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/mcp/skill-classification-service.test.ts",
+        "-t",
+        "SS27/30 malformed and incomplete JEV judgments produce INVALID and vendor fallback",
+        "--reporter=json",
+        "--outputFile=evidence/SS27/regression-fallback.vitest.json"
+      ],
+      "exitCode": 0,
+      "executionKind": "existing-regression-offline-mock",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 39,
+      "assertions": [
+        {
+          "title": "fixed-profile classification service SS27/30 malformed and incomplete JEV judgments produce INVALID and vendor fallback",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "name": "wire-variants",
+      "command": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/mcp/skill-classification-providers.test.ts",
+        "-t",
+        "SS27/28 rejects (unknown-id|missing-id|nan) responses rather than producing no-skill",
+        "--reporter=json",
+        "--outputFile=evidence/SS27/regression-wire.vitest.json"
+      ],
+      "exitCode": 0,
+      "executionKind": "existing-regression-offline-mock",
+      "passed": 3,
+      "failed": 0,
+      "skipped": 20,
+      "assertions": [
+        {
+          "title": "approved classification wire adapters SS27/28 rejects unknown-id responses rather than producing no-skill",
+          "status": "passed"
+        },
+        {
+          "title": "approved classification wire adapters SS27/28 rejects missing-id responses rather than producing no-skill",
+          "status": "passed"
+        },
+        {
+          "title": "approved classification wire adapters SS27/28 rejects nan responses rather than producing no-skill",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "name": "new-variants-and-defects",
+      "command": [
+        "node",
+        "scripts/run-tests.mjs",
+        "evidence/SS27/SS27.offline.test.ts",
+        "--reporter=json",
+        "--outputFile=evidence/SS27/new-tests.vitest.json"
+      ],
+      "exitCode": 1,
+      "executionKind": "new-isolated-offline-mock",
+      "passed": 12,
+      "failed": 4,
+      "evidenceRef": "evidence/SS27/new-tests.vitest.json"
+    },
+    {
+      "name": "extra-boundaries",
+      "command": [
+        "node",
+        "scripts/run-tests.mjs",
+        "evidence/SS27/SS27.extra-boundaries.test.ts",
+        "--reporter=json",
+        "--outputFile=evidence/SS27/extra-tests.vitest.json"
+      ],
+      "exitCode": 0,
+      "executionKind": "new-isolated-offline-mock",
+      "passed": 6,
+      "failed": 0,
+      "evidenceRef": "evidence/SS27/extra-tests.vitest.json"
+    },
+    {
+      "name": "engineering-plan-check",
+      "command": [
+        "node",
+        "skills/test-engineering/scripts/run.mjs",
+        "check-plan",
+        "--root",
+        "<PINNED_CHECKOUT>",
+        "--plan",
+        "evidence/SS27/engineering-test-plan.json"
+      ],
+      "exitCode": 0,
+      "executionKind": "local-plan-consistency-only",
+      "evidenceRef": "evidence/SS27/plan-check.json"
+    },
+    {
+      "name": "engineering-proof-check",
+      "command": [
+        "node",
+        "skills/test-engineering/scripts/run.mjs",
+        "check-proof",
+        "--root",
+        "<PINNED_CHECKOUT>",
+        "--plan",
+        "evidence/SS27/engineering-test-plan.json",
+        "--proof",
+        "evidence/SS27/engineering-test-proof.json"
+      ],
+      "exitCode": 1,
+      "executionKind": "local-proof-consistency-only",
+      "evidenceRef": "evidence/SS27/engineering-test-result.json"
+    },
+    {
+      "name": "pinned-integrity-check",
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "evidence/SS27/integrity-check.mts"
+      ],
+      "exitCode": 0,
+      "executionKind": "offline-integrity-only",
+      "evidenceRef": "evidence/SS27/integrity-check.json"
+    }
+  ],
+  "variants": [
+    {
+      "variant": "unknown-id",
+      "status": "FAIL",
+      "executionKind": "new-isolated-offline-mock",
+      "input": {
+        "originalPrompt": null,
+        "mechanicalPromptSource": "embedded sourceSpec.fields.입력; synthetic API request string, not missing user originalPrompt",
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS27-unknown-id",
+          "operationId": "SS27-unknown-id",
+          "originalPrompt": "raw에 존재하지 않는 ID, 중복 CS, disabled SEC, host 미지원 ID, 잘못된 judgment 값, NaN score를 각각 주입한다.",
+          "promptDigest": "sha256:8fa8f8b6be68647646d806c1c49f131414a95e5fbdd025b1b601ac219dfa4ce5",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "cs-engineering",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            },
+            {
+              "skillId": "software-security-auditor",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            },
+            {
+              "skillId": "test-engineering",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+          "taxonomyRevision": "SS27-synthetic",
+          "classificationCriteriaRef": "embedded:SS27/sourceSpec.fields",
+          "requestDigest": "sha256:0d0d196ed4f36e8e78a57afde15a2d0b3f61cd25a984dd476200cba3634ea372"
+        },
+        "providerEvaluation": {
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-unknown-id",
+            "operationId": "SS27-unknown-id",
+            "requestDigest": "sha256:0d0d196ed4f36e8e78a57afde15a2d0b3f61cd25a984dd476200cba3634ea372",
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "unregistered-SS27",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          },
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "dispatchState": "started",
+          "diagnostics": null
+        }
+      },
+      "expected": {
+        "validationErrors": [
+          "UNKNOWN_SKILL_ID",
+          "MISSING_CANDIDATE_JUDGMENT"
+        ],
+        "firstAttemptStatus": "INVALID",
+        "firstAttemptError": "INVALID_PROVIDER_RESPONSE",
+        "fallback": true,
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "preserveRawFailureReasons": true
+      },
+      "observed": {
+        "validationErrors": [
+          "UNKNOWN_SKILL_ID",
+          "MISSING_CANDIDATE_JUDGMENT"
+        ],
+        "result": {
+          "request": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-unknown-id",
+            "operationId": "SS27-unknown-id",
+            "originalPrompt": "raw에 존재하지 않는 ID, 중복 CS, disabled SEC, host 미지원 ID, 잘못된 judgment 값, NaN score를 각각 주입한다.",
+            "promptDigest": "sha256:8fa8f8b6be68647646d806c1c49f131414a95e5fbdd025b1b601ac219dfa4ce5",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "skills": [
+              {
+                "skillId": "cs-engineering",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              },
+              {
+                "skillId": "software-security-auditor",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              },
+              {
+                "skillId": "test-engineering",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              }
+            ],
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "taxonomyRevision": "SS27-synthetic",
+            "classificationCriteriaRef": "embedded:SS27/sourceSpec.fields",
+            "requestDigest": "sha256:0d0d196ed4f36e8e78a57afde15a2d0b3f61cd25a984dd476200cba3634ea372"
+          },
+          "config": {
+            "jevEnabled": true,
+            "mode": "select",
+            "providerProfileRegistryRef": "mock-profile",
+            "externalClassificationAllowed": true,
+            "configRevision": "SS27",
+            "timeoutMs": 1000
+          },
+          "profileRevision": "SS27",
+          "snapshot": {
+            "taskRevision": null,
+            "configRevision": "SS27",
+            "profileRevision": "SS27",
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "requestDigest": "sha256:0d0d196ed4f36e8e78a57afde15a2d0b3f61cd25a984dd476200cba3634ea372",
+            "cancelled": false
+          },
+          "attempts": [
+            {
+              "providerKind": "jev",
+              "profileId": "mock-jev",
+              "modelId": "mock-jev",
+              "reasoningEffort": null,
+              "dispatchState": "started",
+              "status": "INVALID",
+              "errorCode": "INVALID_PROVIDER_RESPONSE",
+              "timedOut": false,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": null
+              },
+              "reservedCostUsd": 0.4
+            },
+            {
+              "providerKind": "vendor",
+              "profileId": "mock-vendor",
+              "modelId": "mock-vendor",
+              "reasoningEffort": null,
+              "dispatchState": "started",
+              "status": "SUCCESS",
+              "errorCode": null,
+              "timedOut": false,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": null
+              },
+              "reservedCostUsd": 0.4
+            }
+          ],
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-unknown-id",
+            "operationId": "SS27-unknown-id",
+            "requestDigest": "sha256:0d0d196ed4f36e8e78a57afde15a2d0b3f61cd25a984dd476200cba3634ea372",
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "cs-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic baseline vendor"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic baseline vendor"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "synthetic baseline vendor"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          }
+        },
+        "selectionBoundary": null,
+        "portCalls": {
+          "jevMock": 1,
+          "vendorMock": 1
+        },
+        "reasonCodesRetained": false
+      },
+      "checks": {
+        "safety": "PASS",
+        "availabilityBoundary": "NOT_APPLICABLE",
+        "rawFailureReasons": "FAIL"
+      },
+      "actualHost": {
+        "selected": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "read": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "applied": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "verified": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "hostReceipt": null
+      }
+    },
+    {
+      "variant": "duplicate-id",
+      "status": "FAIL",
+      "executionKind": "new-isolated-offline-mock",
+      "input": {
+        "originalPrompt": null,
+        "mechanicalPromptSource": "embedded sourceSpec.fields.입력; synthetic API request string, not missing user originalPrompt",
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS27-duplicate-id",
+          "operationId": "SS27-duplicate-id",
+          "originalPrompt": "raw에 존재하지 않는 ID, 중복 CS, disabled SEC, host 미지원 ID, 잘못된 judgment 값, NaN score를 각각 주입한다.",
+          "promptDigest": "sha256:8fa8f8b6be68647646d806c1c49f131414a95e5fbdd025b1b601ac219dfa4ce5",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "cs-engineering",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            },
+            {
+              "skillId": "software-security-auditor",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            },
+            {
+              "skillId": "test-engineering",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+          "taxonomyRevision": "SS27-synthetic",
+          "classificationCriteriaRef": "embedded:SS27/sourceSpec.fields",
+          "requestDigest": "sha256:db10c2c5ab7303f8e7839fa76aa45771b5abeeb0c55afc4783013edb7c6338fd"
+        },
+        "providerEvaluation": {
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-duplicate-id",
+            "operationId": "SS27-duplicate-id",
+            "requestDigest": "sha256:db10c2c5ab7303f8e7839fa76aa45771b5abeeb0c55afc4783013edb7c6338fd",
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "cs-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "cs-engineering",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          },
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "dispatchState": "started",
+          "diagnostics": null
+        }
+      },
+      "expected": {
+        "validationErrors": [
+          "DUPLICATE_SKILL_ID"
+        ],
+        "firstAttemptStatus": "INVALID",
+        "firstAttemptError": "INVALID_PROVIDER_RESPONSE",
+        "fallback": true,
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "preserveRawFailureReasons": true
+      },
+      "observed": {
+        "validationErrors": [
+          "DUPLICATE_SKILL_ID"
+        ],
+        "result": {
+          "request": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-duplicate-id",
+            "operationId": "SS27-duplicate-id",
+            "originalPrompt": "raw에 존재하지 않는 ID, 중복 CS, disabled SEC, host 미지원 ID, 잘못된 judgment 값, NaN score를 각각 주입한다.",
+            "promptDigest": "sha256:8fa8f8b6be68647646d806c1c49f131414a95e5fbdd025b1b601ac219dfa4ce5",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "skills": [
+              {
+                "skillId": "cs-engineering",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              },
+              {
+                "skillId": "software-security-auditor",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              },
+              {
+                "skillId": "test-engineering",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              }
+            ],
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "taxonomyRevision": "SS27-synthetic",
+            "classificationCriteriaRef": "embedded:SS27/sourceSpec.fields",
+            "requestDigest": "sha256:db10c2c5ab7303f8e7839fa76aa45771b5abeeb0c55afc4783013edb7c6338fd"
+          },
+          "config": {
+            "jevEnabled": true,
+            "mode": "select",
+            "providerProfileRegistryRef": "mock-profile",
+            "externalClassificationAllowed": true,
+            "configRevision": "SS27",
+            "timeoutMs": 1000
+          },
+          "profileRevision": "SS27",
+          "snapshot": {
+            "taskRevision": null,
+            "configRevision": "SS27",
+            "profileRevision": "SS27",
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "requestDigest": "sha256:db10c2c5ab7303f8e7839fa76aa45771b5abeeb0c55afc4783013edb7c6338fd",
+            "cancelled": false
+          },
+          "attempts": [
+            {
+              "providerKind": "jev",
+              "profileId": "mock-jev",
+              "modelId": "mock-jev",
+              "reasoningEffort": null,
+              "dispatchState": "started",
+              "status": "INVALID",
+              "errorCode": "INVALID_PROVIDER_RESPONSE",
+              "timedOut": false,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": null
+              },
+              "reservedCostUsd": 0.4
+            },
+            {
+              "providerKind": "vendor",
+              "profileId": "mock-vendor",
+              "modelId": "mock-vendor",
+              "reasoningEffort": null,
+              "dispatchState": "started",
+              "status": "SUCCESS",
+              "errorCode": null,
+              "timedOut": false,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": null
+              },
+              "reservedCostUsd": 0.4
+            }
+          ],
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-duplicate-id",
+            "operationId": "SS27-duplicate-id",
+            "requestDigest": "sha256:db10c2c5ab7303f8e7839fa76aa45771b5abeeb0c55afc4783013edb7c6338fd",
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "cs-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic baseline vendor"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic baseline vendor"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "synthetic baseline vendor"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          }
+        },
+        "selectionBoundary": null,
+        "portCalls": {
+          "jevMock": 1,
+          "vendorMock": 1
+        },
+        "reasonCodesRetained": false
+      },
+      "checks": {
+        "safety": "PASS",
+        "availabilityBoundary": "NOT_APPLICABLE",
+        "rawFailureReasons": "FAIL"
+      },
+      "actualHost": {
+        "selected": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "read": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "applied": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "verified": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "hostReceipt": null
+      }
+    },
+    {
+      "variant": "disabled",
+      "status": "PASS",
+      "executionKind": "new-isolated-offline-mock",
+      "input": {
+        "originalPrompt": null,
+        "mechanicalPromptSource": "embedded sourceSpec.fields.입력; synthetic API request string, not missing user originalPrompt",
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS27-disabled",
+          "operationId": "SS27-disabled",
+          "originalPrompt": "raw에 존재하지 않는 ID, 중복 CS, disabled SEC, host 미지원 ID, 잘못된 judgment 값, NaN score를 각각 주입한다.",
+          "promptDigest": "sha256:8fa8f8b6be68647646d806c1c49f131414a95e5fbdd025b1b601ac219dfa4ce5",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "cs-engineering",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            },
+            {
+              "skillId": "software-security-auditor",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": false,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            },
+            {
+              "skillId": "test-engineering",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:9b4b6256b2448ddf37f8159999a00fee1764b01de7e9bd33c27c8a0d84077b5a",
+          "taxonomyRevision": "SS27-synthetic",
+          "classificationCriteriaRef": "embedded:SS27/sourceSpec.fields",
+          "requestDigest": "sha256:35bdd1a786e0d63503e40aa1e2a2b51718c3bed2463c06cbd96d0100ec564b67"
+        },
+        "providerEvaluation": {
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-disabled",
+            "operationId": "SS27-disabled",
+            "requestDigest": "sha256:35bdd1a786e0d63503e40aa1e2a2b51718c3bed2463c06cbd96d0100ec564b67",
+            "inventoryDigest": "sha256:9b4b6256b2448ddf37f8159999a00fee1764b01de7e9bd33c27c8a0d84077b5a",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "cs-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          },
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "dispatchState": "started",
+          "diagnostics": null
+        }
+      },
+      "expected": {
+        "validationErrors": [],
+        "firstAttemptStatus": "SUCCESS",
+        "firstAttemptError": null,
+        "fallback": false,
+        "neededSkillIds": [
+          "software-security-auditor"
+        ],
+        "runnableSkillIds": [],
+        "preserveRawFailureReasons": true
+      },
+      "observed": {
+        "validationErrors": [],
+        "result": {
+          "request": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-disabled",
+            "operationId": "SS27-disabled",
+            "originalPrompt": "raw에 존재하지 않는 ID, 중복 CS, disabled SEC, host 미지원 ID, 잘못된 judgment 값, NaN score를 각각 주입한다.",
+            "promptDigest": "sha256:8fa8f8b6be68647646d806c1c49f131414a95e5fbdd025b1b601ac219dfa4ce5",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "skills": [
+              {
+                "skillId": "cs-engineering",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              },
+              {
+                "skillId": "software-security-auditor",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": false,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              },
+              {
+                "skillId": "test-engineering",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              }
+            ],
+            "inventoryDigest": "sha256:9b4b6256b2448ddf37f8159999a00fee1764b01de7e9bd33c27c8a0d84077b5a",
+            "taxonomyRevision": "SS27-synthetic",
+            "classificationCriteriaRef": "embedded:SS27/sourceSpec.fields",
+            "requestDigest": "sha256:35bdd1a786e0d63503e40aa1e2a2b51718c3bed2463c06cbd96d0100ec564b67"
+          },
+          "config": {
+            "jevEnabled": true,
+            "mode": "select",
+            "providerProfileRegistryRef": "mock-profile",
+            "externalClassificationAllowed": true,
+            "configRevision": "SS27",
+            "timeoutMs": 1000
+          },
+          "profileRevision": "SS27",
+          "snapshot": {
+            "taskRevision": null,
+            "configRevision": "SS27",
+            "profileRevision": "SS27",
+            "inventoryDigest": "sha256:9b4b6256b2448ddf37f8159999a00fee1764b01de7e9bd33c27c8a0d84077b5a",
+            "requestDigest": "sha256:35bdd1a786e0d63503e40aa1e2a2b51718c3bed2463c06cbd96d0100ec564b67",
+            "cancelled": false
+          },
+          "attempts": [
+            {
+              "providerKind": "jev",
+              "profileId": "mock-jev",
+              "modelId": "mock-jev",
+              "reasoningEffort": null,
+              "dispatchState": "started",
+              "status": "SUCCESS",
+              "errorCode": null,
+              "timedOut": false,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": null
+              },
+              "reservedCostUsd": 0.4
+            }
+          ],
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-disabled",
+            "operationId": "SS27-disabled",
+            "requestDigest": "sha256:35bdd1a786e0d63503e40aa1e2a2b51718c3bed2463c06cbd96d0100ec564b67",
+            "inventoryDigest": "sha256:9b4b6256b2448ddf37f8159999a00fee1764b01de7e9bd33c27c8a0d84077b5a",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "cs-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          }
+        },
+        "selectionBoundary": {
+          "valid": false,
+          "errors": [
+            "HOST_RECEIPT_MISMATCH"
+          ],
+          "neededSkillIds": [
+            "software-security-auditor"
+          ],
+          "runnableSkillIds": [],
+          "blockedItems": [
+            {
+              "skillId": "software-security-auditor",
+              "reasonCode": "DISABLED"
+            }
+          ]
+        },
+        "portCalls": {
+          "jevMock": 1,
+          "vendorMock": 0
+        },
+        "reasonCodesRetained": true
+      },
+      "checks": {
+        "safety": "PASS",
+        "availabilityBoundary": "PASS",
+        "rawFailureReasons": "PASS"
+      },
+      "actualHost": {
+        "selected": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "read": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "applied": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "verified": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "hostReceipt": null
+      }
+    },
+    {
+      "variant": "unsupported",
+      "status": "PASS",
+      "executionKind": "new-isolated-offline-mock",
+      "input": {
+        "originalPrompt": null,
+        "mechanicalPromptSource": "embedded sourceSpec.fields.입력; synthetic API request string, not missing user originalPrompt",
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS27-unsupported",
+          "operationId": "SS27-unsupported",
+          "originalPrompt": "raw에 존재하지 않는 ID, 중복 CS, disabled SEC, host 미지원 ID, 잘못된 judgment 값, NaN score를 각각 주입한다.",
+          "promptDigest": "sha256:8fa8f8b6be68647646d806c1c49f131414a95e5fbdd025b1b601ac219dfa4ce5",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "cs-engineering",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            },
+            {
+              "skillId": "software-security-auditor",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": false,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            },
+            {
+              "skillId": "test-engineering",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:12cd8574d736a9fcb4f5dbe80ec09e43370afa8dfa9fcea17596cd547ed41c20",
+          "taxonomyRevision": "SS27-synthetic",
+          "classificationCriteriaRef": "embedded:SS27/sourceSpec.fields",
+          "requestDigest": "sha256:56f939210ad0af7f3570c0a2acd30b2447ed6f1fed14b73218ed9e665ba8abe8"
+        },
+        "providerEvaluation": {
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-unsupported",
+            "operationId": "SS27-unsupported",
+            "requestDigest": "sha256:56f939210ad0af7f3570c0a2acd30b2447ed6f1fed14b73218ed9e665ba8abe8",
+            "inventoryDigest": "sha256:12cd8574d736a9fcb4f5dbe80ec09e43370afa8dfa9fcea17596cd547ed41c20",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "cs-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          },
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "dispatchState": "started",
+          "diagnostics": null
+        }
+      },
+      "expected": {
+        "validationErrors": [],
+        "firstAttemptStatus": "SUCCESS",
+        "firstAttemptError": null,
+        "fallback": false,
+        "neededSkillIds": [
+          "software-security-auditor"
+        ],
+        "runnableSkillIds": [],
+        "preserveRawFailureReasons": true
+      },
+      "observed": {
+        "validationErrors": [],
+        "result": {
+          "request": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-unsupported",
+            "operationId": "SS27-unsupported",
+            "originalPrompt": "raw에 존재하지 않는 ID, 중복 CS, disabled SEC, host 미지원 ID, 잘못된 judgment 값, NaN score를 각각 주입한다.",
+            "promptDigest": "sha256:8fa8f8b6be68647646d806c1c49f131414a95e5fbdd025b1b601ac219dfa4ce5",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "skills": [
+              {
+                "skillId": "cs-engineering",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              },
+              {
+                "skillId": "software-security-auditor",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": false,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              },
+              {
+                "skillId": "test-engineering",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              }
+            ],
+            "inventoryDigest": "sha256:12cd8574d736a9fcb4f5dbe80ec09e43370afa8dfa9fcea17596cd547ed41c20",
+            "taxonomyRevision": "SS27-synthetic",
+            "classificationCriteriaRef": "embedded:SS27/sourceSpec.fields",
+            "requestDigest": "sha256:56f939210ad0af7f3570c0a2acd30b2447ed6f1fed14b73218ed9e665ba8abe8"
+          },
+          "config": {
+            "jevEnabled": true,
+            "mode": "select",
+            "providerProfileRegistryRef": "mock-profile",
+            "externalClassificationAllowed": true,
+            "configRevision": "SS27",
+            "timeoutMs": 1000
+          },
+          "profileRevision": "SS27",
+          "snapshot": {
+            "taskRevision": null,
+            "configRevision": "SS27",
+            "profileRevision": "SS27",
+            "inventoryDigest": "sha256:12cd8574d736a9fcb4f5dbe80ec09e43370afa8dfa9fcea17596cd547ed41c20",
+            "requestDigest": "sha256:56f939210ad0af7f3570c0a2acd30b2447ed6f1fed14b73218ed9e665ba8abe8",
+            "cancelled": false
+          },
+          "attempts": [
+            {
+              "providerKind": "jev",
+              "profileId": "mock-jev",
+              "modelId": "mock-jev",
+              "reasoningEffort": null,
+              "dispatchState": "started",
+              "status": "SUCCESS",
+              "errorCode": null,
+              "timedOut": false,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": null
+              },
+              "reservedCostUsd": 0.4
+            }
+          ],
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-unsupported",
+            "operationId": "SS27-unsupported",
+            "requestDigest": "sha256:56f939210ad0af7f3570c0a2acd30b2447ed6f1fed14b73218ed9e665ba8abe8",
+            "inventoryDigest": "sha256:12cd8574d736a9fcb4f5dbe80ec09e43370afa8dfa9fcea17596cd547ed41c20",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "cs-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          }
+        },
+        "selectionBoundary": {
+          "valid": false,
+          "errors": [
+            "HOST_RECEIPT_MISMATCH"
+          ],
+          "neededSkillIds": [
+            "software-security-auditor"
+          ],
+          "runnableSkillIds": [],
+          "blockedItems": [
+            {
+              "skillId": "software-security-auditor",
+              "reasonCode": "HOST_UNSUPPORTED"
+            }
+          ]
+        },
+        "portCalls": {
+          "jevMock": 1,
+          "vendorMock": 0
+        },
+        "reasonCodesRetained": true
+      },
+      "checks": {
+        "safety": "PASS",
+        "availabilityBoundary": "PASS",
+        "rawFailureReasons": "PASS"
+      },
+      "actualHost": {
+        "selected": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "read": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "applied": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "verified": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "hostReceipt": null
+      }
+    },
+    {
+      "variant": "invalid-judgment",
+      "status": "FAIL",
+      "executionKind": "new-isolated-offline-mock",
+      "input": {
+        "originalPrompt": null,
+        "mechanicalPromptSource": "embedded sourceSpec.fields.입력; synthetic API request string, not missing user originalPrompt",
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS27-invalid-judgment",
+          "operationId": "SS27-invalid-judgment",
+          "originalPrompt": "raw에 존재하지 않는 ID, 중복 CS, disabled SEC, host 미지원 ID, 잘못된 judgment 값, NaN score를 각각 주입한다.",
+          "promptDigest": "sha256:8fa8f8b6be68647646d806c1c49f131414a95e5fbdd025b1b601ac219dfa4ce5",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "cs-engineering",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            },
+            {
+              "skillId": "software-security-auditor",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            },
+            {
+              "skillId": "test-engineering",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+          "taxonomyRevision": "SS27-synthetic",
+          "classificationCriteriaRef": "embedded:SS27/sourceSpec.fields",
+          "requestDigest": "sha256:0bb4415d247f277bd5d4cdcb11e3d974162d29ceee355dac4306455236c52e89"
+        },
+        "providerEvaluation": {
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-invalid-judgment",
+            "operationId": "SS27-invalid-judgment",
+            "requestDigest": "sha256:0bb4415d247f277bd5d4cdcb11e3d974162d29ceee355dac4306455236c52e89",
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "cs-engineering",
+                "judgment": "yes",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          },
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "dispatchState": "started",
+          "diagnostics": null
+        }
+      },
+      "expected": {
+        "validationErrors": [
+          "INVALID_RESPONSE_SCHEMA"
+        ],
+        "firstAttemptStatus": "INVALID",
+        "firstAttemptError": "INVALID_PROVIDER_RESPONSE",
+        "fallback": true,
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "preserveRawFailureReasons": true
+      },
+      "observed": {
+        "validationErrors": [
+          "INVALID_RESPONSE_SCHEMA"
+        ],
+        "result": {
+          "request": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-invalid-judgment",
+            "operationId": "SS27-invalid-judgment",
+            "originalPrompt": "raw에 존재하지 않는 ID, 중복 CS, disabled SEC, host 미지원 ID, 잘못된 judgment 값, NaN score를 각각 주입한다.",
+            "promptDigest": "sha256:8fa8f8b6be68647646d806c1c49f131414a95e5fbdd025b1b601ac219dfa4ce5",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "skills": [
+              {
+                "skillId": "cs-engineering",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              },
+              {
+                "skillId": "software-security-auditor",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              },
+              {
+                "skillId": "test-engineering",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              }
+            ],
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "taxonomyRevision": "SS27-synthetic",
+            "classificationCriteriaRef": "embedded:SS27/sourceSpec.fields",
+            "requestDigest": "sha256:0bb4415d247f277bd5d4cdcb11e3d974162d29ceee355dac4306455236c52e89"
+          },
+          "config": {
+            "jevEnabled": true,
+            "mode": "select",
+            "providerProfileRegistryRef": "mock-profile",
+            "externalClassificationAllowed": true,
+            "configRevision": "SS27",
+            "timeoutMs": 1000
+          },
+          "profileRevision": "SS27",
+          "snapshot": {
+            "taskRevision": null,
+            "configRevision": "SS27",
+            "profileRevision": "SS27",
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "requestDigest": "sha256:0bb4415d247f277bd5d4cdcb11e3d974162d29ceee355dac4306455236c52e89",
+            "cancelled": false
+          },
+          "attempts": [
+            {
+              "providerKind": "jev",
+              "profileId": "mock-jev",
+              "modelId": "mock-jev",
+              "reasoningEffort": null,
+              "dispatchState": "started",
+              "status": "INVALID",
+              "errorCode": "INVALID_PROVIDER_RESPONSE",
+              "timedOut": false,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": null
+              },
+              "reservedCostUsd": 0.4
+            },
+            {
+              "providerKind": "vendor",
+              "profileId": "mock-vendor",
+              "modelId": "mock-vendor",
+              "reasoningEffort": null,
+              "dispatchState": "started",
+              "status": "SUCCESS",
+              "errorCode": null,
+              "timedOut": false,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": null
+              },
+              "reservedCostUsd": 0.4
+            }
+          ],
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-invalid-judgment",
+            "operationId": "SS27-invalid-judgment",
+            "requestDigest": "sha256:0bb4415d247f277bd5d4cdcb11e3d974162d29ceee355dac4306455236c52e89",
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "cs-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic baseline vendor"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic baseline vendor"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "synthetic baseline vendor"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          }
+        },
+        "selectionBoundary": null,
+        "portCalls": {
+          "jevMock": 1,
+          "vendorMock": 1
+        },
+        "reasonCodesRetained": false
+      },
+      "checks": {
+        "safety": "PASS",
+        "availabilityBoundary": "NOT_APPLICABLE",
+        "rawFailureReasons": "FAIL"
+      },
+      "actualHost": {
+        "selected": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "read": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "applied": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "verified": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "hostReceipt": null
+      }
+    },
+    {
+      "variant": "nan-score",
+      "status": "PASS",
+      "executionKind": "new-isolated-offline-mock",
+      "input": {
+        "originalPrompt": null,
+        "mechanicalPromptSource": "embedded sourceSpec.fields.입력; synthetic API request string, not missing user originalPrompt",
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS27-nan-score",
+          "operationId": "SS27-nan-score",
+          "originalPrompt": "raw에 존재하지 않는 ID, 중복 CS, disabled SEC, host 미지원 ID, 잘못된 judgment 값, NaN score를 각각 주입한다.",
+          "promptDigest": "sha256:8fa8f8b6be68647646d806c1c49f131414a95e5fbdd025b1b601ac219dfa4ce5",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "cs-engineering",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            },
+            {
+              "skillId": "software-security-auditor",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            },
+            {
+              "skillId": "test-engineering",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+          "taxonomyRevision": "SS27-synthetic",
+          "classificationCriteriaRef": "embedded:SS27/sourceSpec.fields",
+          "requestDigest": "sha256:0d4dd2ac4752870ce74fc399fe64f5fae6aec0ea7367203bbf8dd701fe96ee85"
+        },
+        "providerEvaluation": {
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-nan-score",
+            "operationId": "SS27-nan-score",
+            "requestDigest": "sha256:0d4dd2ac4752870ce74fc399fe64f5fae6aec0ea7367203bbf8dd701fe96ee85",
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "cs-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          },
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "dispatchState": "started",
+          "diagnostics": {
+            "scoreKind": "noul_probability",
+            "scores": [
+              {
+                "skillId": "software-security-auditor",
+                "value": {
+                  "$number": "NaN"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "expected": {
+        "validationErrors": [],
+        "firstAttemptStatus": "INVALID",
+        "firstAttemptError": "INVALID_PROVIDER_USAGE",
+        "fallback": true,
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "preserveRawFailureReasons": true
+      },
+      "observed": {
+        "validationErrors": [],
+        "result": {
+          "request": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-nan-score",
+            "operationId": "SS27-nan-score",
+            "originalPrompt": "raw에 존재하지 않는 ID, 중복 CS, disabled SEC, host 미지원 ID, 잘못된 judgment 값, NaN score를 각각 주입한다.",
+            "promptDigest": "sha256:8fa8f8b6be68647646d806c1c49f131414a95e5fbdd025b1b601ac219dfa4ce5",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "skills": [
+              {
+                "skillId": "cs-engineering",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              },
+              {
+                "skillId": "software-security-auditor",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              },
+              {
+                "skillId": "test-engineering",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              }
+            ],
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "taxonomyRevision": "SS27-synthetic",
+            "classificationCriteriaRef": "embedded:SS27/sourceSpec.fields",
+            "requestDigest": "sha256:0d4dd2ac4752870ce74fc399fe64f5fae6aec0ea7367203bbf8dd701fe96ee85"
+          },
+          "config": {
+            "jevEnabled": true,
+            "mode": "select",
+            "providerProfileRegistryRef": "mock-profile",
+            "externalClassificationAllowed": true,
+            "configRevision": "SS27",
+            "timeoutMs": 1000
+          },
+          "profileRevision": "SS27",
+          "snapshot": {
+            "taskRevision": null,
+            "configRevision": "SS27",
+            "profileRevision": "SS27",
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "requestDigest": "sha256:0d4dd2ac4752870ce74fc399fe64f5fae6aec0ea7367203bbf8dd701fe96ee85",
+            "cancelled": false
+          },
+          "attempts": [
+            {
+              "providerKind": "jev",
+              "profileId": "mock-jev",
+              "modelId": "mock-jev",
+              "reasoningEffort": null,
+              "dispatchState": "unknown",
+              "status": "INVALID",
+              "errorCode": "INVALID_PROVIDER_USAGE",
+              "timedOut": false,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": null
+              },
+              "reservedCostUsd": 0.4
+            },
+            {
+              "providerKind": "vendor",
+              "profileId": "mock-vendor",
+              "modelId": "mock-vendor",
+              "reasoningEffort": null,
+              "dispatchState": "started",
+              "status": "SUCCESS",
+              "errorCode": null,
+              "timedOut": false,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": null
+              },
+              "reservedCostUsd": 0.4
+            }
+          ],
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-nan-score",
+            "operationId": "SS27-nan-score",
+            "requestDigest": "sha256:0d4dd2ac4752870ce74fc399fe64f5fae6aec0ea7367203bbf8dd701fe96ee85",
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "cs-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic baseline vendor"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic baseline vendor"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "synthetic baseline vendor"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          }
+        },
+        "selectionBoundary": null,
+        "portCalls": {
+          "jevMock": 1,
+          "vendorMock": 1
+        },
+        "reasonCodesRetained": true
+      },
+      "checks": {
+        "safety": "PASS",
+        "availabilityBoundary": "NOT_APPLICABLE",
+        "rawFailureReasons": "PASS"
+      },
+      "actualHost": {
+        "selected": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "read": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "applied": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "verified": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "hostReceipt": null
+      }
+    },
+    {
+      "variant": "omitted-id",
+      "status": "FAIL",
+      "executionKind": "new-isolated-offline-mock",
+      "input": {
+        "originalPrompt": null,
+        "mechanicalPromptSource": "embedded sourceSpec.fields.입력; synthetic API request string, not missing user originalPrompt",
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS27-omitted-id",
+          "operationId": "SS27-omitted-id",
+          "originalPrompt": "raw에 존재하지 않는 ID, 중복 CS, disabled SEC, host 미지원 ID, 잘못된 judgment 값, NaN score를 각각 주입한다.",
+          "promptDigest": "sha256:8fa8f8b6be68647646d806c1c49f131414a95e5fbdd025b1b601ac219dfa4ce5",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "cs-engineering",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            },
+            {
+              "skillId": "software-security-auditor",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            },
+            {
+              "skillId": "test-engineering",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+          "taxonomyRevision": "SS27-synthetic",
+          "classificationCriteriaRef": "embedded:SS27/sourceSpec.fields",
+          "requestDigest": "sha256:c4660316a734d3dee30db1bd44ea17164a623cd8dab16d7e65fcca5f8f4b0d11"
+        },
+        "providerEvaluation": {
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-omitted-id",
+            "operationId": "SS27-omitted-id",
+            "requestDigest": "sha256:c4660316a734d3dee30db1bd44ea17164a623cd8dab16d7e65fcca5f8f4b0d11",
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          },
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "dispatchState": "started",
+          "diagnostics": null
+        }
+      },
+      "expected": {
+        "validationErrors": [
+          "MISSING_CANDIDATE_JUDGMENT"
+        ],
+        "firstAttemptStatus": "INVALID",
+        "firstAttemptError": "INVALID_PROVIDER_RESPONSE",
+        "fallback": true,
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "preserveRawFailureReasons": true
+      },
+      "observed": {
+        "validationErrors": [
+          "MISSING_CANDIDATE_JUDGMENT"
+        ],
+        "result": {
+          "request": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-omitted-id",
+            "operationId": "SS27-omitted-id",
+            "originalPrompt": "raw에 존재하지 않는 ID, 중복 CS, disabled SEC, host 미지원 ID, 잘못된 judgment 값, NaN score를 각각 주입한다.",
+            "promptDigest": "sha256:8fa8f8b6be68647646d806c1c49f131414a95e5fbdd025b1b601ac219dfa4ce5",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "skills": [
+              {
+                "skillId": "cs-engineering",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              },
+              {
+                "skillId": "software-security-auditor",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              },
+              {
+                "skillId": "test-engineering",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              }
+            ],
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "taxonomyRevision": "SS27-synthetic",
+            "classificationCriteriaRef": "embedded:SS27/sourceSpec.fields",
+            "requestDigest": "sha256:c4660316a734d3dee30db1bd44ea17164a623cd8dab16d7e65fcca5f8f4b0d11"
+          },
+          "config": {
+            "jevEnabled": true,
+            "mode": "select",
+            "providerProfileRegistryRef": "mock-profile",
+            "externalClassificationAllowed": true,
+            "configRevision": "SS27",
+            "timeoutMs": 1000
+          },
+          "profileRevision": "SS27",
+          "snapshot": {
+            "taskRevision": null,
+            "configRevision": "SS27",
+            "profileRevision": "SS27",
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "requestDigest": "sha256:c4660316a734d3dee30db1bd44ea17164a623cd8dab16d7e65fcca5f8f4b0d11",
+            "cancelled": false
+          },
+          "attempts": [
+            {
+              "providerKind": "jev",
+              "profileId": "mock-jev",
+              "modelId": "mock-jev",
+              "reasoningEffort": null,
+              "dispatchState": "started",
+              "status": "INVALID",
+              "errorCode": "INVALID_PROVIDER_RESPONSE",
+              "timedOut": false,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": null
+              },
+              "reservedCostUsd": 0.4
+            },
+            {
+              "providerKind": "vendor",
+              "profileId": "mock-vendor",
+              "modelId": "mock-vendor",
+              "reasoningEffort": null,
+              "dispatchState": "started",
+              "status": "SUCCESS",
+              "errorCode": null,
+              "timedOut": false,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": null
+              },
+              "reservedCostUsd": 0.4
+            }
+          ],
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-omitted-id",
+            "operationId": "SS27-omitted-id",
+            "requestDigest": "sha256:c4660316a734d3dee30db1bd44ea17164a623cd8dab16d7e65fcca5f8f4b0d11",
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "cs-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic baseline vendor"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic baseline vendor"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "synthetic baseline vendor"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          }
+        },
+        "selectionBoundary": null,
+        "portCalls": {
+          "jevMock": 1,
+          "vendorMock": 1
+        },
+        "reasonCodesRetained": false
+      },
+      "checks": {
+        "safety": "PASS",
+        "availabilityBoundary": "NOT_APPLICABLE",
+        "rawFailureReasons": "FAIL"
+      },
+      "actualHost": {
+        "selected": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "read": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "applied": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "verified": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "hostReceipt": null
+      }
+    },
+    {
+      "variant": "additional-id",
+      "status": "FAIL",
+      "executionKind": "new-isolated-offline-mock",
+      "input": {
+        "originalPrompt": null,
+        "mechanicalPromptSource": "embedded sourceSpec.fields.입력; synthetic API request string, not missing user originalPrompt",
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS27-additional-id",
+          "operationId": "SS27-additional-id",
+          "originalPrompt": "raw에 존재하지 않는 ID, 중복 CS, disabled SEC, host 미지원 ID, 잘못된 judgment 값, NaN score를 각각 주입한다.",
+          "promptDigest": "sha256:8fa8f8b6be68647646d806c1c49f131414a95e5fbdd025b1b601ac219dfa4ce5",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "cs-engineering",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            },
+            {
+              "skillId": "software-security-auditor",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            },
+            {
+              "skillId": "test-engineering",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+          "taxonomyRevision": "SS27-synthetic",
+          "classificationCriteriaRef": "embedded:SS27/sourceSpec.fields",
+          "requestDigest": "sha256:b63ba3bddea1d629cac1dff1bcafb9753ac56d86d8f62a0b35bbe03ea2fa46b7"
+        },
+        "providerEvaluation": {
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-additional-id",
+            "operationId": "SS27-additional-id",
+            "requestDigest": "sha256:b63ba3bddea1d629cac1dff1bcafb9753ac56d86d8f62a0b35bbe03ea2fa46b7",
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "cs-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "orchestrator",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "embedded:SS27"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          },
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "dispatchState": "started",
+          "diagnostics": null
+        }
+      },
+      "expected": {
+        "validationErrors": [
+          "UNKNOWN_SKILL_ID"
+        ],
+        "firstAttemptStatus": "INVALID",
+        "firstAttemptError": "INVALID_PROVIDER_RESPONSE",
+        "fallback": true,
+        "neededSkillIds": null,
+        "runnableSkillIds": null,
+        "preserveRawFailureReasons": true
+      },
+      "observed": {
+        "validationErrors": [
+          "UNKNOWN_SKILL_ID"
+        ],
+        "result": {
+          "request": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-additional-id",
+            "operationId": "SS27-additional-id",
+            "originalPrompt": "raw에 존재하지 않는 ID, 중복 CS, disabled SEC, host 미지원 ID, 잘못된 judgment 값, NaN score를 각각 주입한다.",
+            "promptDigest": "sha256:8fa8f8b6be68647646d806c1c49f131414a95e5fbdd025b1b601ac219dfa4ce5",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "skills": [
+              {
+                "skillId": "cs-engineering",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              },
+              {
+                "skillId": "software-security-auditor",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              },
+              {
+                "skillId": "test-engineering",
+                "version": "synthetic-SS27",
+                "description": "SS27 mechanical input only",
+                "enabled": true,
+                "installed": true,
+                "hostSupported": true,
+                "capabilities": [
+                  "mechanical-test"
+                ],
+                "actions": [
+                  "mechanical-test"
+                ],
+                "targets": [
+                  "provider-output"
+                ],
+                "constraints": [],
+                "applicability": [
+                  "synthetic mechanical contract"
+                ],
+                "exclusions": [
+                  "semantic quality assessment"
+                ],
+                "dependencies": [],
+                "phases": [],
+                "sourceRefs": []
+              }
+            ],
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "taxonomyRevision": "SS27-synthetic",
+            "classificationCriteriaRef": "embedded:SS27/sourceSpec.fields",
+            "requestDigest": "sha256:b63ba3bddea1d629cac1dff1bcafb9753ac56d86d8f62a0b35bbe03ea2fa46b7"
+          },
+          "config": {
+            "jevEnabled": true,
+            "mode": "select",
+            "providerProfileRegistryRef": "mock-profile",
+            "externalClassificationAllowed": true,
+            "configRevision": "SS27",
+            "timeoutMs": 1000
+          },
+          "profileRevision": "SS27",
+          "snapshot": {
+            "taskRevision": null,
+            "configRevision": "SS27",
+            "profileRevision": "SS27",
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "requestDigest": "sha256:b63ba3bddea1d629cac1dff1bcafb9753ac56d86d8f62a0b35bbe03ea2fa46b7",
+            "cancelled": false
+          },
+          "attempts": [
+            {
+              "providerKind": "jev",
+              "profileId": "mock-jev",
+              "modelId": "mock-jev",
+              "reasoningEffort": null,
+              "dispatchState": "started",
+              "status": "INVALID",
+              "errorCode": "INVALID_PROVIDER_RESPONSE",
+              "timedOut": false,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": null
+              },
+              "reservedCostUsd": 0.4
+            },
+            {
+              "providerKind": "vendor",
+              "profileId": "mock-vendor",
+              "modelId": "mock-vendor",
+              "reasoningEffort": null,
+              "dispatchState": "started",
+              "status": "SUCCESS",
+              "errorCode": null,
+              "timedOut": false,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": null
+              },
+              "reservedCostUsd": 0.4
+            }
+          ],
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-additional-id",
+            "operationId": "SS27-additional-id",
+            "requestDigest": "sha256:b63ba3bddea1d629cac1dff1bcafb9753ac56d86d8f62a0b35bbe03ea2fa46b7",
+            "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "cs-engineering",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic baseline vendor"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "not-needed",
+                "reasonRefs": [
+                  "synthetic baseline vendor"
+                ],
+                "uncertaintyReason": null
+              },
+              {
+                "skillId": "test-engineering",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "synthetic baseline vendor"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          }
+        },
+        "selectionBoundary": null,
+        "portCalls": {
+          "jevMock": 1,
+          "vendorMock": 1
+        },
+        "reasonCodesRetained": false
+      },
+      "checks": {
+        "safety": "PASS",
+        "availabilityBoundary": "NOT_APPLICABLE",
+        "rawFailureReasons": "FAIL"
+      },
+      "actualHost": {
+        "selected": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "read": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "applied": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "verified": {
+          "status": "NOTRUN",
+          "skillIds": null
+        },
+        "hostReceipt": null
+      }
+    }
+  ],
+  "extraBoundaries": [
+    {
+      "id": "not-installed",
+      "status": "PASS",
+      "input": [
+        {
+          "skillId": "cs-engineering",
+          "version": "synthetic-SS27",
+          "description": "SS27 mechanical input only",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "mechanical-test"
+          ],
+          "actions": [
+            "mechanical-test"
+          ],
+          "targets": [
+            "provider-output"
+          ],
+          "constraints": [],
+          "applicability": [
+            "synthetic mechanical contract"
+          ],
+          "exclusions": [
+            "semantic quality assessment"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "software-security-auditor",
+          "version": "synthetic-SS27",
+          "description": "SS27 mechanical input only",
+          "enabled": true,
+          "installed": false,
+          "hostSupported": true,
+          "capabilities": [
+            "mechanical-test"
+          ],
+          "actions": [
+            "mechanical-test"
+          ],
+          "targets": [
+            "provider-output"
+          ],
+          "constraints": [],
+          "applicability": [
+            "synthetic mechanical contract"
+          ],
+          "exclusions": [
+            "semantic quality assessment"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "test-engineering",
+          "version": "synthetic-SS27",
+          "description": "SS27 mechanical input only",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "mechanical-test"
+          ],
+          "actions": [
+            "mechanical-test"
+          ],
+          "targets": [
+            "provider-output"
+          ],
+          "constraints": [],
+          "applicability": [
+            "synthetic mechanical contract"
+          ],
+          "exclusions": [
+            "semantic quality assessment"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "observed": {
+        "valid": false,
+        "errors": [
+          "HOST_RECEIPT_MISMATCH"
+        ],
+        "neededSkillIds": [
+          "software-security-auditor"
+        ],
+        "runnableSkillIds": [],
+        "blockedItems": [
+          {
+            "skillId": "software-security-auditor",
+            "reasonCode": "NOT_INSTALLED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "nan-direct",
+      "status": "PASS",
+      "input": {
+        "model": "mock-jev",
+        "answers": {
+          "cs-engineering": {
+            "type": "noul",
+            "noul": {
+              "$number": "NaN"
+            }
+          },
+          "software-security-auditor": {
+            "type": "noul",
+            "noul": 0.9
+          },
+          "test-engineering": {
+            "type": "noul",
+            "noul": 0.9
+          }
+        },
+        "usage": {
+          "input_tokens": 10,
+          "output_tokens": 2
+        }
+      },
+      "expected": "INVALID_JEV_SCORE"
+    },
+    {
+      "id": "baseline-exact-set",
+      "status": "PASS",
+      "observed": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS27-unknown-id",
+        "operationId": "SS27-unknown-id",
+        "requestDigest": "sha256:0d0d196ed4f36e8e78a57afde15a2d0b3f61cd25a984dd476200cba3634ea372",
+        "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+        "status": "SUCCESS",
+        "judgments": [
+          {
+            "skillId": "cs-engineering",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic baseline vendor"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "software-security-auditor",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic baseline vendor"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "test-engineering",
+            "judgment": "needed",
+            "reasonRefs": [
+              "synthetic baseline vendor"
+            ],
+            "uncertaintyReason": null
+          }
+        ],
+        "unresolvedItems": [],
+        "error": null
+      }
+    },
+    {
+      "id": "null-vs-empty",
+      "status": "PASS",
+      "observed": {
+        "unobserved": {
+          "valid": true,
+          "errors": [],
+          "neededSkillIds": [
+            "software-security-auditor"
+          ],
+          "runnableSkillIds": [],
+          "blockedItems": []
+        },
+        "claimedEmptyWithoutReceipt": {
+          "valid": false,
+          "errors": [
+            "HOST_RECEIPT_MISMATCH"
+          ],
+          "neededSkillIds": [
+            "software-security-auditor"
+          ],
+          "runnableSkillIds": [],
+          "blockedItems": []
+        }
+      }
+    },
+    {
+      "id": "known-cost-invalid-response",
+      "status": "FAIL",
+      "linksExistingFinding": "valid cost lost with invalid RESP",
+      "input": {
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS27-duplicate-id",
+          "operationId": "SS27-duplicate-id",
+          "requestDigest": "sha256:db10c2c5ab7303f8e7839fa76aa45771b5abeeb0c55afc4783013edb7c6338fd",
+          "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "cs-engineering",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "embedded:SS27"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "software-security-auditor",
+              "judgment": "needed",
+              "reasonRefs": [
+                "embedded:SS27"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "test-engineering",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "embedded:SS27"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "cs-engineering",
+              "judgment": "needed",
+              "reasonRefs": [
+                "embedded:SS27"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        },
+        "usage": {
+          "inputTokens": null,
+          "outputTokens": null,
+          "cachedInputTokens": null,
+          "actualCostUsd": 0.1
+        },
+        "dispatchState": "started",
+        "diagnostics": null
+      },
+      "expected": {
+        "actualCostUsd": 0.1,
+        "jevSpentUsd": 0.1
+      },
+      "observed": {
+        "attempt": {
+          "providerKind": "jev",
+          "profileId": "mock-jev",
+          "modelId": "mock-jev",
+          "reasoningEffort": null,
+          "dispatchState": "started",
+          "status": "INVALID",
+          "errorCode": "INVALID_PROVIDER_RESPONSE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        },
+        "budget": {
+          "limits": {
+            "jev": {
+              "limitUsd": 5,
+              "spentUsd": 0
+            },
+            "vendor:mock-vendor": {
+              "limitUsd": 5,
+              "spentUsd": 0
+            }
+          },
+          "nativeAllowances": {},
+          "invalidCostCeilings": [],
+          "reservations": [
+            {
+              "id": "[\"SS27-duplicate-id\",\"sha256:db10c2c5ab7303f8e7839fa76aa45771b5abeeb0c55afc4783013edb7c6338fd\",\"mock-jev\"]",
+              "bucket": "jev",
+              "maximumUsd": 0.4,
+              "profileId": "mock-jev",
+              "nativeProfileId": null
+            },
+            {
+              "id": "[\"SS27-duplicate-id\",\"sha256:db10c2c5ab7303f8e7839fa76aa45771b5abeeb0c55afc4783013edb7c6338fd\",\"mock-vendor\"]",
+              "bucket": "vendor:mock-vendor",
+              "maximumUsd": 0.4,
+              "profileId": "mock-vendor",
+              "nativeProfileId": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "raw-error-provenance",
+      "status": "FAIL",
+      "input": {
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS27-unknown-id",
+          "operationId": "SS27-unknown-id",
+          "requestDigest": "sha256:0d0d196ed4f36e8e78a57afde15a2d0b3f61cd25a984dd476200cba3634ea372",
+          "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "unregistered-SS27",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "embedded:SS27"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "software-security-auditor",
+              "judgment": "needed",
+              "reasonRefs": [
+                "embedded:SS27"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "test-engineering",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "embedded:SS27"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        },
+        "usage": {
+          "inputTokens": null,
+          "outputTokens": null,
+          "cachedInputTokens": null,
+          "actualCostUsd": null
+        },
+        "dispatchState": "started",
+        "diagnostics": null
+      },
+      "expected": [
+        "UNKNOWN_SKILL_ID",
+        "MISSING_CANDIDATE_JUDGMENT"
+      ],
+      "observed": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS27-unknown-id",
+          "operationId": "SS27-unknown-id",
+          "originalPrompt": "raw에 존재하지 않는 ID, 중복 CS, disabled SEC, host 미지원 ID, 잘못된 judgment 값, NaN score를 각각 주입한다.",
+          "promptDigest": "sha256:8fa8f8b6be68647646d806c1c49f131414a95e5fbdd025b1b601ac219dfa4ce5",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "cs-engineering",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            },
+            {
+              "skillId": "software-security-auditor",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            },
+            {
+              "skillId": "test-engineering",
+              "version": "synthetic-SS27",
+              "description": "SS27 mechanical input only",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "mechanical-test"
+              ],
+              "actions": [
+                "mechanical-test"
+              ],
+              "targets": [
+                "provider-output"
+              ],
+              "constraints": [],
+              "applicability": [
+                "synthetic mechanical contract"
+              ],
+              "exclusions": [
+                "semantic quality assessment"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+          "taxonomyRevision": "SS27-synthetic",
+          "classificationCriteriaRef": "embedded:SS27/sourceSpec.fields",
+          "requestDigest": "sha256:0d0d196ed4f36e8e78a57afde15a2d0b3f61cd25a984dd476200cba3634ea372"
+        },
+        "config": {
+          "jevEnabled": true,
+          "mode": "select",
+          "providerProfileRegistryRef": "mock-profile",
+          "externalClassificationAllowed": true,
+          "configRevision": "SS27",
+          "timeoutMs": 1000
+        },
+        "profileRevision": "SS27",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "SS27",
+          "profileRevision": "SS27",
+          "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+          "requestDigest": "sha256:0d0d196ed4f36e8e78a57afde15a2d0b3f61cd25a984dd476200cba3634ea372",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "jev",
+            "profileId": "mock-jev",
+            "modelId": "mock-jev",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "INVALID",
+            "errorCode": "INVALID_PROVIDER_RESPONSE",
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0.4
+          },
+          {
+            "providerKind": "vendor",
+            "profileId": "mock-vendor",
+            "modelId": "mock-vendor",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS27-unknown-id",
+          "operationId": "SS27-unknown-id",
+          "requestDigest": "sha256:0d0d196ed4f36e8e78a57afde15a2d0b3f61cd25a984dd476200cba3634ea372",
+          "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "cs-engineering",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic baseline vendor"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "software-security-auditor",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic baseline vendor"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "test-engineering",
+              "judgment": "needed",
+              "reasonRefs": [
+                "synthetic baseline vendor"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        }
+      }
+    },
+    {
+      "id": "duplicate-json-key",
+      "status": "FAIL",
+      "input": {
+        "rawWire": "{\"model\":\"mock-jev\",\"answers\":{\"cs-engineering\":{\"type\":\"noul\",\"noul\":0.1},\"cs-engineering\":{\"type\":\"noul\",\"noul\":0.9},\"software-security-auditor\":{\"type\":\"noul\",\"noul\":0.1},\"test-engineering\":{\"type\":\"noul\",\"noul\":0.1}},\"usage\":{\"input_tokens\":10,\"output_tokens\":2}}"
+      },
+      "expected": "INVALID_PROVIDER_RESPONSE; duplicate provider answers must not be accepted",
+      "observed": {
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS27-duplicate-wire",
+          "operationId": "SS27-duplicate-wire",
+          "requestDigest": "sha256:337b337503d380f538205923244eeb36220994e65935ed38fa9f1aab111fe416",
+          "inventoryDigest": "sha256:6aa11e8a5069a532d89b424972f5a84b708d0f56ebba0433ef671ca85798fa7d",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "cs-engineering",
+              "judgment": "needed",
+              "reasonRefs": [
+                "profile:mock-jev:SS27"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "software-security-auditor",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "profile:mock-jev:SS27"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "test-engineering",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "profile:mock-jev:SS27"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        },
+        "dispatchState": "started",
+        "usage": {
+          "inputTokens": 10,
+          "outputTokens": 2,
+          "cachedInputTokens": null,
+          "actualCostUsd": null
+        },
+        "diagnostics": {
+          "scoreKind": "noul_probability",
+          "scores": [
+            {
+              "skillId": "cs-engineering",
+              "value": 0.9
+            },
+            {
+              "skillId": "software-security-auditor",
+              "value": 0.1
+            },
+            {
+              "skillId": "test-engineering",
+              "value": 0.1
+            }
+          ]
+        }
+      },
+      "mockFetchCalls": 1,
+      "externalAPICalls": 0
+    },
+    {
+      "id": "host-state-supply",
+      "status": "FAIL",
+      "linksExistingFinding": "host active state supply gap",
+      "input": {
+        "hostSupportedSkillIds": [],
+        "interpretation": "synthetic explicit host observer reports zero supported skills; current real host support unknown"
+      },
+      "expected": [
+        {
+          "skillId": "acceptance-evidence-validator",
+          "hostSupported": false
+        },
+        {
+          "skillId": "blocker-diagnostician",
+          "hostSupported": false
+        },
+        {
+          "skillId": "change-scope-guardian",
+          "hostSupported": false
+        },
+        {
+          "skillId": "code-review",
+          "hostSupported": false
+        },
+        {
+          "skillId": "codex-token-usage-analyzer",
+          "hostSupported": false
+        },
+        {
+          "skillId": "context-continuity",
+          "hostSupported": false
+        },
+        {
+          "skillId": "coordinate-subagents",
+          "hostSupported": false
+        },
+        {
+          "skillId": "cs-engineering",
+          "hostSupported": false
+        },
+        {
+          "skillId": "evaluation-validity-auditor",
+          "hostSupported": false
+        },
+        {
+          "skillId": "independent-audit-gate",
+          "hostSupported": false
+        },
+        {
+          "skillId": "independent-deliberation-panel",
+          "hostSupported": false
+        },
+        {
+          "skillId": "instruction-scope-resolver",
+          "hostSupported": false
+        },
+        {
+          "skillId": "iteration-frame-auditor",
+          "hostSupported": false
+        },
+        {
+          "skillId": "korean-prose-editor",
+          "hostSupported": false
+        },
+        {
+          "skillId": "model-effort-advisor",
+          "hostSupported": false
+        },
+        {
+          "skillId": "mutation-risk-preflight",
+          "hostSupported": false
+        },
+        {
+          "skillId": "orchestrator",
+          "hostSupported": false
+        },
+        {
+          "skillId": "ponytail",
+          "hostSupported": false
+        },
+        {
+          "skillId": "recovery-strategy-selector",
+          "hostSupported": false
+        },
+        {
+          "skillId": "session-board",
+          "hostSupported": false
+        },
+        {
+          "skillId": "software-security-auditor",
+          "hostSupported": false
+        },
+        {
+          "skillId": "task-contract",
+          "hostSupported": false
+        },
+        {
+          "skillId": "test-engineering",
+          "hostSupported": false
+        },
+        {
+          "skillId": "workspace-convention-profiler",
+          "hostSupported": false
+        }
+      ],
+      "observed": [
+        {
+          "skillId": "acceptance-evidence-validator",
+          "hostSupported": true
+        },
+        {
+          "skillId": "blocker-diagnostician",
+          "hostSupported": true
+        },
+        {
+          "skillId": "change-scope-guardian",
+          "hostSupported": true
+        },
+        {
+          "skillId": "code-review",
+          "hostSupported": true
+        },
+        {
+          "skillId": "codex-token-usage-analyzer",
+          "hostSupported": true
+        },
+        {
+          "skillId": "context-continuity",
+          "hostSupported": true
+        },
+        {
+          "skillId": "coordinate-subagents",
+          "hostSupported": true
+        },
+        {
+          "skillId": "cs-engineering",
+          "hostSupported": true
+        },
+        {
+          "skillId": "evaluation-validity-auditor",
+          "hostSupported": true
+        },
+        {
+          "skillId": "independent-audit-gate",
+          "hostSupported": true
+        },
+        {
+          "skillId": "independent-deliberation-panel",
+          "hostSupported": true
+        },
+        {
+          "skillId": "instruction-scope-resolver",
+          "hostSupported": true
+        },
+        {
+          "skillId": "iteration-frame-auditor",
+          "hostSupported": true
+        },
+        {
+          "skillId": "korean-prose-editor",
+          "hostSupported": true
+        },
+        {
+          "skillId": "model-effort-advisor",
+          "hostSupported": true
+        },
+        {
+          "skillId": "mutation-risk-preflight",
+          "hostSupported": true
+        },
+        {
+          "skillId": "orchestrator",
+          "hostSupported": true
+        },
+        {
+          "skillId": "ponytail",
+          "hostSupported": true
+        },
+        {
+          "skillId": "recovery-strategy-selector",
+          "hostSupported": true
+        },
+        {
+          "skillId": "session-board",
+          "hostSupported": true
+        },
+        {
+          "skillId": "software-security-auditor",
+          "hostSupported": true
+        },
+        {
+          "skillId": "task-contract",
+          "hostSupported": true
+        },
+        {
+          "skillId": "test-engineering",
+          "hostSupported": true
+        },
+        {
+          "skillId": "workspace-convention-profiler",
+          "hostSupported": true
+        }
+      ],
+      "inventoryIssues": []
+    },
+    {
+      "id": "high-score-enabled",
+      "status": "PASS",
+      "input": {
+        "skills": [
+          {
+            "skillId": "software-security-auditor",
+            "version": "synthetic",
+            "description": "SS27",
+            "enabled": false,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "test"
+            ],
+            "actions": [
+              "test"
+            ],
+            "targets": [
+              "provider-output"
+            ],
+            "constraints": [],
+            "applicability": [
+              "synthetic"
+            ],
+            "exclusions": [
+              "semantic assessment"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "body": {
+          "model": "mock",
+          "answers": {
+            "software-security-auditor": {
+              "type": "noul",
+              "noul": 0.99
+            }
+          },
+          "usage": {
+            "input_tokens": 10,
+            "output_tokens": 1
+          }
+        }
+      },
+      "observed": {
+        "evaluation": {
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-high-enabled",
+            "operationId": "SS27-high-enabled",
+            "requestDigest": "sha256:1c868b09f40ab8c482bee3b1ca9035e1ea1c7a0285e9be1a4004f6aacbf5bac5",
+            "inventoryDigest": "sha256:aac164705f96ba50344b713f8b7940c2b9d801a4667419ed81dc2f530d223f46",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "profile:mock:mock"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          },
+          "dispatchState": "started",
+          "usage": {
+            "inputTokens": 10,
+            "outputTokens": 1,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "diagnostics": {
+            "scoreKind": "noul_probability",
+            "scores": [
+              {
+                "skillId": "software-security-auditor",
+                "value": 0.99
+              }
+            ]
+          }
+        },
+        "selectionBoundary": {
+          "valid": false,
+          "errors": [
+            "HOST_RECEIPT_MISMATCH"
+          ],
+          "neededSkillIds": [
+            "software-security-auditor"
+          ],
+          "runnableSkillIds": [],
+          "blockedItems": [
+            {
+              "skillId": "software-security-auditor",
+              "reasonCode": "DISABLED"
+            }
+          ]
+        }
+      },
+      "actualHost": {
+        "selected": null,
+        "hostReceipt": null,
+        "status": "NOTRUN"
+      }
+    },
+    {
+      "id": "high-score-hostSupported",
+      "status": "PASS",
+      "input": {
+        "skills": [
+          {
+            "skillId": "software-security-auditor",
+            "version": "synthetic",
+            "description": "SS27",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": false,
+            "capabilities": [
+              "test"
+            ],
+            "actions": [
+              "test"
+            ],
+            "targets": [
+              "provider-output"
+            ],
+            "constraints": [],
+            "applicability": [
+              "synthetic"
+            ],
+            "exclusions": [
+              "semantic assessment"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "body": {
+          "model": "mock",
+          "answers": {
+            "software-security-auditor": {
+              "type": "noul",
+              "noul": 0.99
+            }
+          },
+          "usage": {
+            "input_tokens": 10,
+            "output_tokens": 1
+          }
+        }
+      },
+      "observed": {
+        "evaluation": {
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS27-high-hostSupported",
+            "operationId": "SS27-high-hostSupported",
+            "requestDigest": "sha256:5b1c6a72b034360d7fa4e153ef720ae56a5bdd288f6c1288ca8969142adca788",
+            "inventoryDigest": "sha256:bfce6897105213e3062ded51f602cf6cd9d1faee44661d6b850c892e7cc1e1cc",
+            "status": "SUCCESS",
+            "judgments": [
+              {
+                "skillId": "software-security-auditor",
+                "judgment": "needed",
+                "reasonRefs": [
+                  "profile:mock:mock"
+                ],
+                "uncertaintyReason": null
+              }
+            ],
+            "unresolvedItems": [],
+            "error": null
+          },
+          "dispatchState": "started",
+          "usage": {
+            "inputTokens": 10,
+            "outputTokens": 1,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "diagnostics": {
+            "scoreKind": "noul_probability",
+            "scores": [
+              {
+                "skillId": "software-security-auditor",
+                "value": 0.99
+              }
+            ]
+          }
+        },
+        "selectionBoundary": {
+          "valid": false,
+          "errors": [
+            "HOST_RECEIPT_MISMATCH"
+          ],
+          "neededSkillIds": [
+            "software-security-auditor"
+          ],
+          "runnableSkillIds": [],
+          "blockedItems": [
+            {
+              "skillId": "software-security-auditor",
+              "reasonCode": "HOST_UNSUPPORTED"
+            }
+          ]
+        }
+      },
+      "actualHost": {
+        "selected": null,
+        "hostReceipt": null,
+        "status": "NOTRUN"
+      }
+    },
+    {
+      "id": "identical-duplicate",
+      "status": "PASS",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS27-high-enabled",
+        "operationId": "SS27-high-enabled",
+        "requestDigest": "sha256:1c868b09f40ab8c482bee3b1ca9035e1ea1c7a0285e9be1a4004f6aacbf5bac5",
+        "inventoryDigest": "sha256:aac164705f96ba50344b713f8b7940c2b9d801a4667419ed81dc2f530d223f46",
+        "status": "SUCCESS",
+        "judgments": [
+          {
+            "skillId": "software-security-auditor",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:mock:mock"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "software-security-auditor",
+            "judgment": "needed",
+            "reasonRefs": [
+              "profile:mock:mock"
+            ],
+            "uncertaintyReason": null
+          }
+        ],
+        "unresolvedItems": [],
+        "error": null
+      },
+      "observed": [
+        "DUPLICATE_SKILL_ID"
+      ]
+    },
+    {
+      "id": "omitted-SUCCESS",
+      "status": "PASS",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS27-high-enabled",
+        "operationId": "SS27-high-enabled",
+        "requestDigest": "sha256:1c868b09f40ab8c482bee3b1ca9035e1ea1c7a0285e9be1a4004f6aacbf5bac5",
+        "inventoryDigest": "sha256:aac164705f96ba50344b713f8b7940c2b9d801a4667419ed81dc2f530d223f46",
+        "status": "SUCCESS",
+        "judgments": [],
+        "unresolvedItems": [],
+        "error": null
+      },
+      "observed": [
+        "MISSING_CANDIDATE_JUDGMENT"
+      ]
+    },
+    {
+      "id": "omitted-PARTIAL",
+      "status": "PASS",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS27-high-enabled",
+        "operationId": "SS27-high-enabled",
+        "requestDigest": "sha256:1c868b09f40ab8c482bee3b1ca9035e1ea1c7a0285e9be1a4004f6aacbf5bac5",
+        "inventoryDigest": "sha256:aac164705f96ba50344b713f8b7940c2b9d801a4667419ed81dc2f530d223f46",
+        "status": "PARTIAL",
+        "judgments": [],
+        "unresolvedItems": [],
+        "error": null
+      },
+      "observed": [
+        "MISSING_CANDIDATE_JUDGMENT"
+      ]
+    },
+    {
+      "id": "omitted-UNCERTAIN",
+      "status": "PASS",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS27-high-enabled",
+        "operationId": "SS27-high-enabled",
+        "requestDigest": "sha256:1c868b09f40ab8c482bee3b1ca9035e1ea1c7a0285e9be1a4004f6aacbf5bac5",
+        "inventoryDigest": "sha256:aac164705f96ba50344b713f8b7940c2b9d801a4667419ed81dc2f530d223f46",
+        "status": "UNCERTAIN",
+        "judgments": [],
+        "unresolvedItems": [
+          {
+            "skillId": null,
+            "reasonCode": "SEMANTIC_UNCERTAINTY"
+          }
+        ],
+        "error": null
+      },
+      "observed": [
+        "MISSING_CANDIDATE_JUDGMENT"
+      ]
+    }
+  ],
+  "summary": {
+    "frozenVariantCount": 8,
+    "frozenVariantSafetyChecksPassed": 8,
+    "variantRequirementsPass": 3,
+    "variantRequirementsFail": 5,
+    "existingRegressionPassed": 5,
+    "newIsolatedAssertionsPassed": 18,
+    "newIsolatedAssertionsFailed": 4,
+    "rootCauseGroups": 3,
+    "newRootCauseGroups": 1,
+    "existingRootCauseGroupsReproduced": 2,
+    "interpretation": "8 safety checks PASS are not 8 full variant PASS: raw cause retention fails on 5 variants. 4 failing assertions are grouped into 3 root causes; known cost/raw error propagation grouped together."
+  },
+  "findings": [
+    {
+      "rootCauseId": "SS27-SERVICE-INVALID-PROPAGATION",
+      "priorFinding": "valid cost lost with invalid RESP",
+      "novelty": "EXISTING_ROOT_REPRODUCED; raw schema/membership cause loss recorded as related propagation consequence, not separately counted per variant",
+      "severity": "HIGH",
+      "boundaryIds": [
+        "known-cost-invalid-response",
+        "raw-error-provenance"
+      ],
+      "expected": "Preserve finite usage cost and raw schema/membership failure provenance when marking INVALID and falling back",
+      "observed": "Known 0.1 cost becomes null, JEV spent remains 0, 0.4 reservation persists. UNKNOWN_SKILL_ID/DUPLICATE_SKILL_ID/MISSING_CANDIDATE_JUDGMENT/INVALID_RESPONSE_SCHEMA are collapsed to INVALID_PROVIDER_RESPONSE; invalid provider response is not retained",
+      "sourceRefs": [
+        "mcp-server/src/skill-classification/service.ts:194",
+        "mcp-server/src/skill-classification/service.ts:204"
+      ],
+      "reproduceFilter": "SS27 DEFECT preserves"
+    },
+    {
+      "rootCauseId": "SS27-DUPLICATE-WIRE-KEY",
+      "priorFinding": null,
+      "novelty": "NEW_SS27_BOUNDARY_FINDING",
+      "severity": "HIGH",
+      "boundaryIds": [
+        "duplicate-json-key"
+      ],
+      "expected": "Duplicate provider answers INVALID; never adopt conflicting last value as valid advice",
+      "observed": "Duplicate cs-engineering JSON answer keys 0.1 then 0.9 become one entry at JSON.parse; wire provider returns SUCCESS with cs-engineering needed, error null",
+      "sourceRefs": [
+        "mcp-server/src/skill-classification/providers.ts:98",
+        "mcp-server/src/skill-classification/providers.ts:147"
+      ],
+      "reproduceFilter": "SS27 DEFECT rejects duplicate JSON answer keys"
+    },
+    {
+      "rootCauseId": "SS27-HOST-STATE-SUPPLY",
+      "priorFinding": "host active state supply gap",
+      "novelty": "EXISTING_ROOT_REPRODUCED",
+      "severity": "HIGH",
+      "boundaryIds": [
+        "host-state-supply"
+      ],
+      "expected": "Runtime gateway can consume current host support observation; known necessary unsupported skill remains needed but runnable is empty",
+      "observed": "Inventory reader accepts explicit hostSupportedSkillIds=[] and marks all unsupported. Runtime gateway inventory exposes no input for that observation and defaults all 24 skills to supported. Current real host support remains unknown; no actual unsupported execution performed",
+      "sourceRefs": [
+        "mcp-server/src/skill-classification/gateway.ts:49",
+        "mcp-server/src/skill-classification/gateway.ts:60",
+        "mcp-server/src/skill-classification/gateway.ts:124",
+        "mcp-server/src/skill-classification/inventory.ts:219"
+      ],
+      "reproduceFilter": "SS27 DEFECT runtime inventory"
+    }
+  ],
+  "stages": {
+    "selected": {
+      "status": "NOTRUN",
+      "skillIds": null,
+      "evidence": null
+    },
+    "read": {
+      "status": "NOTRUN",
+      "skillIds": null,
+      "evidence": null
+    },
+    "applied": {
+      "status": "NOTRUN",
+      "skillIds": null,
+      "evidence": null
+    },
+    "verified": {
+      "status": "NOTRUN",
+      "skillIds": null,
+      "evidence": null
+    }
+  },
+  "hostReceipt": null,
+  "selectionAuthority": "AGENT; classification is advice only. Mock proposals were not submitted to accept or record_skill_selection; no receipt synthesized",
+  "missingInputs": [
+    "Approved AGENT_GOVERNANCE_CLASSIFICATION_CONFIG runtime config (currently absent)",
+    "Qualified current-vendor profile registry bound to inventory/taxonomy/model/prompt/configuration and unexpired qualification",
+    "Approved providerRuntimeRef native route and nativeAdapterDefinitionsRef; approvalRef, capabilityEvidenceRef, retryPolicyVerified+retryPolicyEvidenceRef, isolationEvidenceRef, vetted isolationArgs",
+    "Confirmed native allowance and maximumCostUsd; no balance, cost, approval or model defaults inferred",
+    "Actual current host installed/support state source and runtime supply adapter",
+    "Signed runtime host tool observation + session board task/actor/revision binding for record_skill_selection; no synthetic substitute",
+    "Actual skill read/apply/verify artifact references, digests, obligations and verification evidence"
+  ],
+  "hostSupportPath": {
+    "observedExecutable": "<HOST_CODEX_EXECUTABLE>",
+    "claudeExecutable": null,
+    "qualification": "NOTRUN; CLI presence does not qualify native route",
+    "configuredRuntimePresent": false,
+    "implementation": "mcp-server/src/skill-classification/native-adapters.ts:createNativeClassificationAdapters -> ApprovedRouteClassificationProvider -> SkillClassificationService -> RuntimeSkillClassificationGateway; MCP classify_skills and record_skill_selection with host attestation",
+    "nativeCodexArgvTemplate": [
+      "<HOST_CODEX_EXECUTABLE>",
+      "exec",
+      "--json",
+      "--sandbox",
+      "read-only",
+      "--ephemeral",
+      "--ignore-user-config",
+      "--skip-git-repo-check",
+      "--model",
+      "<qualified profile.modelId>",
+      "--config",
+      "model_reasoning_effort=<qualified effort>",
+      "<vetted --disable arguments>",
+      "--output-schema",
+      "<temporary bound response schema>",
+      "-"
+    ],
+    "safeNextStep": "No live call under current API0 assignment. After corrected candidate and required inputs, continue this task for same SS27 revalidation."
+  },
+  "instructionsRead": [
+    "AGENTS.md",
+    "skills/test-engineering/SKILL.md",
+    "skills/orchestrator/SKILL.md",
+    "skills/orchestrator/references/skill-classification.md",
+    "skills/orchestrator/references/engineering-practices/test-design.md",
+    "skills/orchestrator/references/engineering-practices/test-proof.md",
+    "skills/orchestrator/references/engineering-practices/cli.md",
+    "skills/evaluation-validity-auditor/SKILL.md"
+  ],
+  "agentsSkillsDiscovery": {
+    "<WORKSPACE_AGENTS>/skills": "ABSENT",
+    "<PINNED_CHECKOUT>/.agents/skills": "ABSENT",
+    "repoAgentsFiles": [
+      ".agents/plugins/marketplace.json"
+    ],
+    "actualReadLocation": "repo skills/<name>/SKILL.md"
+  },
+  "proofSensitivity": {
+    "status": "NOTRUN",
+    "computedResult": "INCOMPLETE",
+    "reason": "No product mutation or corrected candidate authorized; failing fixed-candidate observations are preserved, no paired red/green or independent audit claimed"
+  },
+  "notExecuted": [
+    "Unassigned SS cases and whole suite",
+    "Timeout overflow/metadata duplicate/concurrency pre-recheck unrelated to this SS27 scope",
+    "R14 evaluator/bootstrap/selfcheck/manifest changes or SS12/SS15 typo scoring",
+    "Host-live and previous 21-case runs"
+  ],
+  "evidenceRefs": [
+    "evidence/SS27/observations.json",
+    "evidence/SS27/extra-observations.json",
+    "evidence/SS27/new-tests.vitest.json",
+    "evidence/SS27/extra-tests.vitest.json",
+    "evidence/SS27/regression-commands.json",
+    "evidence/SS27/engineering-test-plan.json",
+    "evidence/SS27/engineering-test-proof.json",
+    "evidence/SS27/engineering-test-result.json",
+    "evidence/SS27/pinned-source-manifest.json",
+    "evidence/SS27/integrity-check.json",
+    "evidence/SS27/README.md"
+  ],
+  "createdAt": "2026-10-09T03:00:39.376777+00:00",
+  "setCombinationBoundary": {
+    "status": "NOTRUN",
+    "reason": "Service chooses valid fallback response without union; actual upper AGENT valid-set merge is outside absent live-host observations. Duplicate provider judgments remain INVALID."
+  },
+  "publication": {
+    "casePath": "evidence/ags-2.9.1/2026-10-09/cases/SS27/",
+    "sourceResultSHA256": "b3b715ef7a7f6f361cbb3d9ca5ff89dea25c21d5ea3e5dd53275e98850dd0605",
+    "sourceResultBytes": 157479,
+    "packagingOnly": true,
+    "newTests": 0,
+    "newClassificationOrHostAPICalls": 0,
+    "sourcePatchStatus": "NO_PATCH_EXISTS",
+    "missingOriginalArtifacts": [],
+    "originalAbsolutePaths": "redacted; not reinterpreted as actual paths",
+    "semanticJudgmentUnchanged": true
+  }
+}

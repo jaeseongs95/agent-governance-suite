@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-proof",
+  "planDigest": "sha256:151a12a83dd4de3f7e8add443715b1543ab9b9d40c2f6d3f200d74dfd1eb30cc",
+  "candidate": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-snapshot",
+    "files": [
+      {
+        "path": "evidence/SS27/SS27.offline.test.ts",
+        "digest": "sha256:cc8263935701a9d5ad091fcfa9f8761e90d8d142b2452fb1c99e7570368e3306",
+        "size": 16247,
+        "lineCount": 105
+      }
+    ],
+    "digest": "sha256:94228f8dbe3e72eea31d7fc2773d57fefc22f9b19ca34dd1bb786244a9b18f27"
+  },
+  "proofs": [
+    {
+      "caseId": "SS27.all-variants-and-boundaries",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Paired red/green sensitivity proof NOT_RUN: product mutation/fix forbidden, no corrected candidate. Actual fixed-candidate failing assertions are independently retained in new-tests.vitest.json; this proof does not replace those observations."
+    }
+  ]
+}

@@ -1,0 +1,262 @@
+{
+  "numTotalTestSuites": 3,
+  "numPassedTestSuites": 1,
+  "numFailedTestSuites": 2,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 16,
+  "numPassedTests": 12,
+  "numFailedTests": 4,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514620589,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "SS27 frozen variants"
+          ],
+          "fullName": "SS27 frozen variants SS27 variant unknown-id response, service and execution availability",
+          "status": "passed",
+          "title": "SS27 variant unknown-id response, service and execution availability",
+          "duration": 13.995108999999957,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS27 frozen variants"
+          ],
+          "fullName": "SS27 frozen variants SS27 variant duplicate-id response, service and execution availability",
+          "status": "passed",
+          "title": "SS27 variant duplicate-id response, service and execution availability",
+          "duration": 2.9477810000000204,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS27 frozen variants"
+          ],
+          "fullName": "SS27 frozen variants SS27 variant disabled response, service and execution availability",
+          "status": "passed",
+          "title": "SS27 variant disabled response, service and execution availability",
+          "duration": 5.582786999999996,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS27 frozen variants"
+          ],
+          "fullName": "SS27 frozen variants SS27 variant unsupported response, service and execution availability",
+          "status": "passed",
+          "title": "SS27 variant unsupported response, service and execution availability",
+          "duration": 1.6722720000000209,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS27 frozen variants"
+          ],
+          "fullName": "SS27 frozen variants SS27 variant invalid-judgment response, service and execution availability",
+          "status": "passed",
+          "title": "SS27 variant invalid-judgment response, service and execution availability",
+          "duration": 2.405507,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS27 frozen variants"
+          ],
+          "fullName": "SS27 frozen variants SS27 variant nan-score response, service and execution availability",
+          "status": "passed",
+          "title": "SS27 variant nan-score response, service and execution availability",
+          "duration": 2.2237590000000296,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS27 frozen variants"
+          ],
+          "fullName": "SS27 frozen variants SS27 variant omitted-id response, service and execution availability",
+          "status": "passed",
+          "title": "SS27 variant omitted-id response, service and execution availability",
+          "duration": 1.760735000000011,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS27 frozen variants"
+          ],
+          "fullName": "SS27 frozen variants SS27 variant additional-id response, service and execution availability",
+          "status": "passed",
+          "title": "SS27 variant additional-id response, service and execution availability",
+          "duration": 2.0890339999999696,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS27 additional boundaries and defect witnesses"
+          ],
+          "fullName": "SS27 additional boundaries and defect witnesses SS27 uninstalled known skill remains needed and cannot run",
+          "status": "passed",
+          "title": "SS27 uninstalled known skill remains needed and cannot run",
+          "duration": 1.4917749999999614,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS27 additional boundaries and defect witnesses"
+          ],
+          "fullName": "SS27 additional boundaries and defect witnesses SS27 true NaN score is rejected by JEV decoder before JSON serialization",
+          "status": "passed",
+          "title": "SS27 true NaN score is rejected by JEV decoder before JSON serialization",
+          "duration": 1.5805390000000443,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS27 additional boundaries and defect witnesses"
+          ],
+          "fullName": "SS27 additional boundaries and defect witnesses SS27 valid independent baseline does not union rejected raw advice",
+          "status": "passed",
+          "title": "SS27 valid independent baseline does not union rejected raw advice",
+          "duration": 3.4065029999999865,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS27 additional boundaries and defect witnesses"
+          ],
+          "fullName": "SS27 additional boundaries and defect witnesses SS27 no actual receipt cannot become observed no-skill []",
+          "status": "passed",
+          "title": "SS27 no actual receipt cannot become observed no-skill []",
+          "duration": 1.5463440000000332,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS27 additional boundaries and defect witnesses"
+          ],
+          "fullName": "SS27 additional boundaries and defect witnesses SS27 DEFECT preserves finite known cost when malformed response is INVALID",
+          "status": "failed",
+          "title": "SS27 DEFECT preserves finite known cost when malformed response is INVALID",
+          "duration": 5.363606000000004,
+          "failureMessages": [
+            "AssertionError: expected null to be 0.1 // Object.is equality\n    at <PINNED_CHECKOUT>/evidence/SS27/SS27.offline.test.ts:86:423\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at <DEPENDENCY_FRAME_OMITTED>"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS27 additional boundaries and defect witnesses"
+          ],
+          "fullName": "SS27 additional boundaries and defect witnesses SS27 DEFECT preserves specific raw membership error after fallback",
+          "status": "failed",
+          "title": "SS27 DEFECT preserves specific raw membership error after fallback",
+          "duration": 6.954330999999968,
+          "failureMessages": [
+            "AssertionError: expected '{\"request\":{\"schemaVersion\":\"1.0.0\",\"…' to contain 'UNKNOWN_SKILL_ID'\n    at <PINNED_CHECKOUT>/evidence/SS27/SS27.offline.test.ts:89:316\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at <DEPENDENCY_FRAME_OMITTED>"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS27 additional boundaries and defect witnesses"
+          ],
+          "fullName": "SS27 additional boundaries and defect witnesses SS27 DEFECT rejects duplicate JSON answer keys at provider wire boundary",
+          "status": "failed",
+          "title": "SS27 DEFECT rejects duplicate JSON answer keys at provider wire boundary",
+          "duration": 23.145084000000054,
+          "failureMessages": [
+            "AssertionError: expected { response: { …(9) }, …(3) } to have property \"error\"\n    at <PINNED_CHECKOUT>/evidence/SS27/SS27.offline.test.ts:97:277\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at <DEPENDENCY_FRAME_OMITTED>"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS27 additional boundaries and defect witnesses"
+          ],
+          "fullName": "SS27 additional boundaries and defect witnesses SS27 DEFECT runtime inventory has no path to current host support observation",
+          "status": "failed",
+          "title": "SS27 DEFECT runtime inventory has no path to current host support observation",
+          "duration": 126.15674100000001,
+          "failureMessages": [
+            "AssertionError: expected [ { …(16) }, { …(16) }, …(22) ] to have a length of +0 but got 24\n    at <DEPENDENCY_FRAME_OMITTED>\n    at <DEPENDENCY_FRAME_OMITTED>\n    at <DEPENDENCY_FRAME_OMITTED>\n    at <PINNED_CHECKOUT>/evidence/SS27/SS27.offline.test.ts:102:571\n    at <DEPENDENCY_FRAME_OMITTED>"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514620918,
+      "endTime": 1791514621121.1567,
+      "status": "failed",
+      "message": "",
+      "name": "<PINNED_CHECKOUT>/evidence/SS27/SS27.offline.test.ts"
+    }
+  ],
+  "_publicProjection": {
+    "derivedFromExistingReport": true,
+    "omittedSkippedOrPendingAssertionRows": 0,
+    "originalCountsPreserved": true,
+    "newExecution": false
+  }
+}
