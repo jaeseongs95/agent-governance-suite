@@ -1,0 +1,149 @@
+{
+  "caseId": "SS15",
+  "title": "존재하지 않거나 사용할 수 없는 명시 스킬",
+  "runId": "prep-20261009T074214Z-c40775e7",
+  "preparedAt": "2026-10-09T07:44:22.341414+00:00",
+  "status": "PREPARATION_COMPLETE_WAITING_PARENT",
+  "productVerdict": "NOTRUN",
+  "candidate": {
+    "label": "R17",
+    "reportedCommit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "reportedTree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "provenance": "Delegated parent brief only; local fixed report reported; independent SOURCE and remote publication not yet confirmed",
+    "independentSourceDecisionReceived": false,
+    "fixedRemoteCandidateVerified": false,
+    "candidateCheckoutOrExecutionPerformed": false
+  },
+  "historicalTarget": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "usedAsCurrentTestCandidate": false
+  },
+  "historicalResult": {
+    "offlineStatus": "FAIL",
+    "isolatedDevelopment": {
+      "executed": 17,
+      "passed": 12,
+      "failed": 5
+    },
+    "regressionExecutedPassed": 2,
+    "regressionSkipped": 24,
+    "zeroMatchedFirstRegression": "NOTRUN: 0 executed / 26 skipped despite exit 0",
+    "stages": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN"
+    },
+    "actualHostReceipt": null,
+    "apiCalls": {
+      "jev": 0,
+      "externalVendor": 0,
+      "claude": 0,
+      "actualNativeInference": 0
+    },
+    "historicalReadinessClaudeAbsentClaim": "Historical environment observation only; current CLI confirmed present 2.1.286"
+  },
+  "currentHostStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "instructions": {
+    "readFromLocalCheckoutCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+    "candidateInstructionsReReadRequiredOnResume": true,
+    "pathsAndSha256": [
+      {
+        "path": "AGENTS.md",
+        "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827"
+      },
+      {
+        "path": "skills/test-engineering/SKILL.md",
+        "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "path": "skills/cs-engineering/SKILL.md",
+        "sha256": "aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "path": "skills/orchestrator/SKILL.md",
+        "sha256": "0bd44e1a780bb930c69f6880102ac3b4d662de3ecdcd16116a48d870aa971d87"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/SKILL.md",
+        "sha256": "1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/SKILL.md",
+        "sha256": "eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230"
+      },
+      {
+        "path": "skills/change-scope-guardian/SKILL.md",
+        "sha256": "4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+      },
+      {
+        "path": "skills/change-scope-guardian/references/entry-details.md",
+        "sha256": "d164e59584763265a4bd8ccfd6a4ee75560f1df4ef30cd44dee68d814baf185b"
+      },
+      {
+        "path": "skills/change-scope-guardian/references/path-policy.md",
+        "sha256": "8165defb0cb02f683718f8c6c927b0455f30d2120f3d4d6e0a971247c912a56d"
+      },
+      {
+        "path": "skills/change-scope-guardian/references/verdict-rules.md",
+        "sha256": "71d8e964c03874b8bdcaef4e21487a56d672d59553da0c01276e4896a8fc1c28"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/SKILL.md",
+        "sha256": "eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/references/entry-details.md",
+        "sha256": "13dc04ff9d74e17f2d0bb6d69583a2c502dc5c69766d9a4ed91a59c0c5741154"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/references/risk-matrix.md",
+        "sha256": "0377275e0487f9823bed76cd3541e0caa5f3bf030ea407fee5ad17b0f761c801"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/references/approval-and-authority.md",
+        "sha256": "471afb623db2b67f45465f924eec5426d470dafa0c92bcad14b7bd16d0c16334"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/references/recovery-requirements.md",
+        "sha256": "60a0bded3a1453092e2d02469393e39f3709f0810e0e4c076628854c4d7d54af"
+      },
+      {
+        "path": "skills/orchestrator/references/entry-details.md",
+        "sha256": "2c50a92c5cc59676ae6ac2bae1f9d86f337cdc7870b20ff9df12e8e3cd09670b"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/test-design.md",
+        "sha256": "fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/cli.md",
+        "sha256": "42d409ec8fd0f39c491dfdeb18da3f3d15d9fb518c82a8d9f69ed0ae87a59f69"
+      }
+    ],
+    "repoAgentsSkillsExists": false,
+    "environmentAgentsSkillsExists": false,
+    "evidenceBranchHasAgentsMd": false,
+    "skillExecutionLimits": "Preparation and publication scope checks only. No CS review, product tests, acceptance PASS or independent evaluation audit executed."
+  },
+  "blockingInputs": [
+    "Parent verified exact R17 candidate commit/tree and independent SOURCE verdict plus fixed remote availability",
+    "Parent common Claude model id and effort, API authentication procedure and prerequisite/preflight results",
+    "Approved exact candidate plugin loading/settings and inventory state delivery at real host boundary",
+    "Genuine host hook attestation/session-board task binding and selected/read/applied/verified capture procedure",
+    "Current approved profile/route/native allowance only where the chosen flow requires them; no synthesized approval or JEV allocation",
+    "Verified successor evaluator/bootstrap/selfcheck/manifest for typo scoring if original bootstrap path is included"
+  ],
+  "resumeConditions": "Parent supplies verified candidate, shared execution settings/auth and passed prerequisites; then revalidate candidate and applicable instructions, freeze session/input/inventory bindings and start only allowed Claude host calls within remaining SS15 $2. JEV remains unallocated and stopped.",
+  "productCodeChanged": false,
+  "generatedArtifactsChanged": false,
+  "permanentAuthSettingsPermissionsOrNetworkPolicyChanged": false,
+  "paidCalls": 0,
+  "costUsd": 0
+}

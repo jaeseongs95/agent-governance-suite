@@ -1,0 +1,33 @@
+{
+  "checkedAt": "2026-10-09T07:44:22.341414+00:00",
+  "cliPath": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+  "resolvedExecutablePath": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+  "executableSha256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+  "version": "2.1.286 (Claude Code)",
+  "versionExit": 0,
+  "helpExit": 0,
+  "cliOnPath": false,
+  "nodeVersion": "v24.19.0",
+  "pnpmVersion": "11.19.0",
+  "claudeApiKeyPresenceObserved": true,
+  "secretValuesReadPrintedCopiedOrPublished": false,
+  "inferenceOrAuthProbeRun": false,
+  "permanentAuthPermissionsOrNetworkPolicyChanged": false,
+  "flagsObserved": {
+    "print": "--print",
+    "pluginSessionLoading": "--plugin-dir",
+    "model": "--model",
+    "effort": "--effort",
+    "jsonUsageResult": "--output-format json",
+    "streamToolEvidence": "--output-format stream-json",
+    "perInvocationBudget": "--max-budget-usd",
+    "hookEventStream": "--include-hook-events",
+    "settingsIsolation": "--setting-sources / --settings",
+    "noSessionPersistence": "--no-session-persistence"
+  },
+  "limitations": [
+    "Help/version are local observations, not API authentication success, model qualification, plugin load or product PASS.",
+    "No blanket --bare / --safe-mode / --disable-slash-commands / permission bypass selected: hook and plugin fidelity and existing permission boundaries must follow parent approved procedure.",
+    "An absent PATH entry does not mean CLI absent."
+  ]
+}

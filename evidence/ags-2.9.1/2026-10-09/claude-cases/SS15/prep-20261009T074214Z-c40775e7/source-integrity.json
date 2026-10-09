@@ -1,0 +1,189 @@
+{
+  "caseId": "SS15",
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "evidenceTree": "9c49cc011a10c23ed135b1c020e7577ff12a2370",
+  "sourcePrefix": "evidence/ags-2.9.1/2026-10-09/cases/SS15/",
+  "checkedAt": "2026-10-09T07:44:22.341414+00:00",
+  "checksumEntries": [
+    {
+      "path": "README.md",
+      "bytes": 5540,
+      "expectedSha256": "ef6f57676115e67e67ca2e6b4538288f49fe9ac3180a6d8645712bbee9827e43",
+      "actualSha256": "ef6f57676115e67e67ca2e6b4538288f49fe9ac3180a6d8645712bbee9827e43",
+      "match": true
+    },
+    {
+      "path": "SS15.result.json",
+      "bytes": 926816,
+      "expectedSha256": "1c1722f1f51ee1ec9959cffba49b64e3a8a43afe2af9d42153f9695d246ab160",
+      "actualSha256": "1c1722f1f51ee1ec9959cffba49b64e3a8a43afe2af9d42153f9695d246ab160",
+      "match": true
+    },
+    {
+      "path": "SS15.source.json",
+      "bytes": 3052,
+      "expectedSha256": "f56261cbee940e3594bde520fa6d3baaf8519779a443bb06c73657cb7ed8ea7a",
+      "actualSha256": "f56261cbee940e3594bde520fa6d3baaf8519779a443bb06c73657cb7ed8ea7a",
+      "match": true
+    },
+    {
+      "path": "SS15.witnesses.json",
+      "bytes": 4535414,
+      "expectedSha256": "08d18716feea4d288d023c68675a850523a21d2d46200d2187314038f6aeb3e4",
+      "actualSha256": "08d18716feea4d288d023c68675a850523a21d2d46200d2187314038f6aeb3e4",
+      "match": true
+    },
+    {
+      "path": "candidate.snapshot.json",
+      "bytes": 4263,
+      "expectedSha256": "bdf134ded625003cc83543bf66b306329253832b441e56099d73a306e99d7762",
+      "actualSha256": "bdf134ded625003cc83543bf66b306329253832b441e56099d73a306e99d7762",
+      "match": true
+    },
+    {
+      "path": "engineering-test-plan.json",
+      "bytes": 4318,
+      "expectedSha256": "217d34587f141ed328dbb3c2df842c0f47f4caa9232887a97a923fe40ca7b810",
+      "actualSha256": "217d34587f141ed328dbb3c2df842c0f47f4caa9232887a97a923fe40ca7b810",
+      "match": true
+    },
+    {
+      "path": "engineering-test-proof.json",
+      "bytes": 5802,
+      "expectedSha256": "b0a29265e81bad7f675ee5539de65f4eca4ae0ccabb9757c9120140faedb337f",
+      "actualSha256": "b0a29265e81bad7f675ee5539de65f4eca4ae0ccabb9757c9120140faedb337f",
+      "match": true
+    },
+    {
+      "path": "host-readiness.json",
+      "bytes": 1514,
+      "expectedSha256": "adbafab63b67df41cefff8dac9217a3259f5740c425c510fe66ec5a0f492d963",
+      "actualSha256": "adbafab63b67df41cefff8dac9217a3259f5740c425c510fe66ec5a0f492d963",
+      "match": true
+    },
+    {
+      "path": "inputs/SS15.disabled.prompt.txt",
+      "bytes": 37,
+      "expectedSha256": "621dadbf2fd3593b116726b9667ed1bba49e611c51609406614b64cd4180595f",
+      "actualSha256": "621dadbf2fd3593b116726b9667ed1bba49e611c51609406614b64cd4180595f",
+      "match": true
+    },
+    {
+      "path": "inputs/SS15.typo.prompt.txt",
+      "bytes": 36,
+      "expectedSha256": "1d799abe590417947862c67e9120a3092834ab47d5ae90136ead95777514b612",
+      "actualSha256": "1d799abe590417947862c67e9120a3092834ab47d5ae90136ead95777514b612",
+      "match": true
+    },
+    {
+      "path": "inputs/SS15.unsupported.prompt.txt",
+      "bytes": 37,
+      "expectedSha256": "621dadbf2fd3593b116726b9667ed1bba49e611c51609406614b64cd4180595f",
+      "actualSha256": "621dadbf2fd3593b116726b9667ed1bba49e611c51609406614b64cd4180595f",
+      "match": true
+    },
+    {
+      "path": "logs/codex-exec-help.txt",
+      "bytes": 4031,
+      "expectedSha256": "0e82cfde0122715250e93dc65866caa956b2ac5b9d0b20ec4ad4f9e81486509e",
+      "actualSha256": "0e82cfde0122715250e93dc65866caa956b2ac5b9d0b20ec4ad4f9e81486509e",
+      "match": true
+    },
+    {
+      "path": "logs/codex-version.txt",
+      "bytes": 26,
+      "expectedSha256": "158f4415765f804622953bb1c3fff91172fa05c5885eec0478773fb97bdee883",
+      "actualSha256": "158f4415765f804622953bb1c3fff91172fa05c5885eec0478773fb97bdee883",
+      "match": true
+    },
+    {
+      "path": "logs/development-tests.json",
+      "bytes": 11010,
+      "expectedSha256": "d1b9f65c31f24a6a5e64bd7298e91175fb4b0a9268ef8274093a4def612f4993",
+      "actualSha256": "d1b9f65c31f24a6a5e64bd7298e91175fb4b0a9268ef8274093a4def612f4993",
+      "match": true
+    },
+    {
+      "path": "logs/engineering-plan-result.json",
+      "bytes": 251,
+      "expectedSha256": "15f104ef7f21395ec34759722991f43673391aeadb194d38cd2a5ee25e2a4d00",
+      "actualSha256": "15f104ef7f21395ec34759722991f43673391aeadb194d38cd2a5ee25e2a4d00",
+      "match": true
+    },
+    {
+      "path": "logs/engineering-test-result.json",
+      "bytes": 1028,
+      "expectedSha256": "1edd2fc429987d184a74c774b6d3172cbe4273801af3f122d84bc2e5b81e4714",
+      "actualSha256": "1edd2fc429987d184a74c774b6d3172cbe4273801af3f122d84bc2e5b81e4714",
+      "match": true
+    },
+    {
+      "path": "logs/existing-regression-corrected.json",
+      "bytes": 14312,
+      "expectedSha256": "8ec32a17d597deeced90c10ac33d99f44e2109b38a10bd93be807de1f04bcd5a",
+      "actualSha256": "8ec32a17d597deeced90c10ac33d99f44e2109b38a10bd93be807de1f04bcd5a",
+      "match": true
+    },
+    {
+      "path": "logs/existing-regression.json",
+      "bytes": 14225,
+      "expectedSha256": "eb31c7d9266c5f64ac0b5684acfd9d6a3882fe674ca1a89449d5495b8a8ab205",
+      "actualSha256": "eb31c7d9266c5f64ac0b5684acfd9d6a3882fe674ca1a89449d5495b8a8ab205",
+      "match": true
+    },
+    {
+      "path": "logs/original-integrity-check.json",
+      "bytes": 438,
+      "expectedSha256": "946fe529066f41d928ef9db0dfa32973182044bdcc80c821841315d869580b0b",
+      "actualSha256": "946fe529066f41d928ef9db0dfa32973182044bdcc80c821841315d869580b0b",
+      "match": true
+    },
+    {
+      "path": "missing-originals.json",
+      "bytes": 1985,
+      "expectedSha256": "197be8da0142af4b7a704837bd7be97c54b99e08825f5de38347f43c2e3bd5bc",
+      "actualSha256": "197be8da0142af4b7a704837bd7be97c54b99e08825f5de38347f43c2e3bd5bc",
+      "match": true
+    },
+    {
+      "path": "original-artifact-digests.json",
+      "bytes": 1758,
+      "expectedSha256": "0f6b69d5d4061cc5bbbe7d08030d9144f07fbe5365c5193deaedbcd983b596cc",
+      "actualSha256": "0f6b69d5d4061cc5bbbe7d08030d9144f07fbe5365c5193deaedbcd983b596cc",
+      "match": true
+    },
+    {
+      "path": "repro/SS15.development.test.ts",
+      "bytes": 16156,
+      "expectedSha256": "7bf340341f47a0034b44c3705ea560227dab6e18a2c52a156a92ee427f6ba4cd",
+      "actualSha256": "7bf340341f47a0034b44c3705ea560227dab6e18a2c52a156a92ee427f6ba4cd",
+      "match": true
+    },
+    {
+      "path": "repro/reproduce.sh",
+      "bytes": 1373,
+      "expectedSha256": "7c18b665144b77042445a0a4d02f23c6a1734f8ee3ca507e142731c1d44254f9",
+      "actualSha256": "7c18b665144b77042445a0a4d02f23c6a1734f8ee3ca507e142731c1d44254f9",
+      "match": true
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 13933,
+      "expectedSha256": "05334e2f6175d784d6d94e56d482b9ce43ed9afe1122f2ed4b88b4f640e72663",
+      "actualSha256": "05334e2f6175d784d6d94e56d482b9ce43ed9afe1122f2ed4b88b4f640e72663",
+      "match": true
+    }
+  ],
+  "checksumEntryCount": 24,
+  "checksumMatches": 24,
+  "manifestPayloadEntryCount": 23,
+  "manifestPayloadHashesAndSizesMatch": true,
+  "exactPromptUtf8MatchesExistingResult": true,
+  "sourceSpecBodyDigestPreserved": "sha256:3b5d853564598d442f7b0ceb1ee2fc35830b31b18988faec15ef93a48bc83041",
+  "historicalFixtureDigest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "historicalOracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "historicalFixtureAndOracleFullBytesRevalidated": false,
+  "historicalFixtureAndOracleLimit": "Only historical embedded source/oracle and recorded digests are public here; full original fixture bytes and original spec file are unavailable. These digests are retained claims, distinct from newly validated public file bytes.",
+  "originalSpecificationFileExists": false,
+  "originalSpecificationSourceUsed": "Embedded SS15.source.json sourceSpec.fields and oracle; do not fabricate TEST-SPEC.seq7.ko.md or change rubric."
+}

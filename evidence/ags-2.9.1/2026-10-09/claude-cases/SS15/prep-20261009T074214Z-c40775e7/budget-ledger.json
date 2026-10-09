@@ -1,0 +1,48 @@
+{
+  "caseId": "SS15",
+  "currency": "USD",
+  "softCap": 2,
+  "preparationPaidCallsIncluded": true,
+  "allocatedSuiteCases": 39,
+  "allocatedSuiteTotalUsd": 78,
+  "paidCalls": [],
+  "paidCallCount": 0,
+  "jevCalls": 0,
+  "claudeInferenceCalls": 0,
+  "retryCount": 0,
+  "failedPaidCallCount": 0,
+  "costUsdTotal": 0,
+  "remainingUsd": 2,
+  "tokens": {
+    "input": 0,
+    "output": 0,
+    "cacheReadInput": 0,
+    "cacheCreationInput": 0
+  },
+  "apiAuthenticationStatus": "NOT_TESTED_WAITING_PARENT",
+  "stopPolicy": "Before each call calculate SS15 cumulative cost including paid preparation, cache, retries and failed calls. Set per-invocation budget no greater than remaining amount; it alone does not guarantee a hard $2 cap. Stop near cap or on unavailable usage/cost and report; do not silently retry.",
+  "requiredPaidCallFields": [
+    "timestamp",
+    "purpose",
+    "variant",
+    "exactModel",
+    "effort",
+    "sessionBinding",
+    "attemptNumber",
+    "status",
+    "retryOrFailure",
+    "inputTokens",
+    "outputTokens",
+    "cacheReadInputTokens",
+    "cacheCreationInputTokens",
+    "pricingEvidenceRef",
+    "costUsd",
+    "cumulativeCostUsd",
+    "usageEvidenceRef"
+  ],
+  "localNonInferenceCommands": [
+    "claude --version",
+    "claude --help"
+  ],
+  "status": "ZERO_SPEND_PREPARATION_ONLY"
+}
