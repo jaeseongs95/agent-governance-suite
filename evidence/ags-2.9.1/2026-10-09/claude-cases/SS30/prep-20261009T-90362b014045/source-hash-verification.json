@@ -1,0 +1,178 @@
+{
+  "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "sha256sumEntries": 24,
+  "sha256sumFailures": [],
+  "manifestEntries": 23,
+  "manifestFailures": [],
+  "sha256sumsSelfSHA256": "26ef0e05cf1e142aa90a14c4abc1151ba10e07356f830e080a3d4813dc262b16",
+  "files": [
+    {
+      "path": "PATCH_STATUS.md",
+      "bytes": 423,
+      "expectedSHA256": "b2db4b364d3b0e76bc871a16afa6767ea3bf3d7b15b827f533f7b0715efefa38",
+      "actualSHA256": "b2db4b364d3b0e76bc871a16afa6767ea3bf3d7b15b827f533f7b0715efefa38",
+      "matches": true
+    },
+    {
+      "path": "README.md",
+      "bytes": 3269,
+      "expectedSHA256": "d13dfb68b5cee69200f63c1d256c27c2deddbf67f3b764acec4fadbd4a9a32aa",
+      "actualSHA256": "d13dfb68b5cee69200f63c1d256c27c2deddbf67f3b764acec4fadbd4a9a32aa",
+      "matches": true
+    },
+    {
+      "path": "REPORT.public.ko.md",
+      "bytes": 7512,
+      "expectedSHA256": "5bd2139ea760d6fc68edb45a3364be47d117d5f2de77b74308be8f36d636440d",
+      "actualSHA256": "5bd2139ea760d6fc68edb45a3364be47d117d5f2de77b74308be8f36d636440d",
+      "matches": true
+    },
+    {
+      "path": "SS30.public.result.json",
+      "bytes": 234641,
+      "expectedSHA256": "ee236ed4b74e9fc91b3c7435d527774a33d54684f5a4690358d8f66e6bc6a882",
+      "actualSHA256": "ee236ed4b74e9fc91b3c7435d527774a33d54684f5a4690358d8f66e6bc6a882",
+      "matches": true
+    },
+    {
+      "path": "checks-summary.public.json",
+      "bytes": 2973,
+      "expectedSHA256": "600a9fe99ec2f575fa8e72efa1e96a7def200194be273bea9c05db584424a657",
+      "actualSHA256": "600a9fe99ec2f575fa8e72efa1e96a7def200194be273bea9c05db584424a657",
+      "matches": true
+    },
+    {
+      "path": "engineering/engineering-test-plan.json",
+      "bytes": 10679,
+      "expectedSHA256": "26cae2bff7637172217074c55f868727a5589364b135b68bc5a9d5aee508c26d",
+      "actualSHA256": "26cae2bff7637172217074c55f868727a5589364b135b68bc5a9d5aee508c26d",
+      "matches": true
+    },
+    {
+      "path": "engineering/engineering-test-proof.json",
+      "bytes": 7863,
+      "expectedSHA256": "ed3e8836be50599d77605213e90fc9a49bd2f476f257a937258c0269eb668428",
+      "actualSHA256": "ed3e8836be50599d77605213e90fc9a49bd2f476f257a937258c0269eb668428",
+      "matches": true
+    },
+    {
+      "path": "engineering/engineering-test-result.json",
+      "bytes": 2736,
+      "expectedSHA256": "3ae55c888073a643cdce2fa1aeeb60360915c29f134a7e08792936ec093f2512",
+      "actualSHA256": "3ae55c888073a643cdce2fa1aeeb60360915c29f134a7e08792936ec093f2512",
+      "matches": true
+    },
+    {
+      "path": "engineering/plan-check.json",
+      "bytes": 365,
+      "expectedSHA256": "b786e3947a0eceb97e0f4d5ad2aafe9ca31e482b57771913d86d550db6f1996b",
+      "actualSHA256": "b786e3947a0eceb97e0f4d5ad2aafe9ca31e482b57771913d86d550db6f1996b",
+      "matches": true
+    },
+    {
+      "path": "inputs/source.SS30.json",
+      "bytes": 2310,
+      "expectedSHA256": "73c7cf4024f55cdf22823c086aa1c457f03b554ff47e62836acc57d585cbc588",
+      "actualSHA256": "73c7cf4024f55cdf22823c086aa1c457f03b554ff47e62836acc57d585cbc588",
+      "matches": true
+    },
+    {
+      "path": "inputs-expectations-observations.json",
+      "bytes": 178902,
+      "expectedSHA256": "099749ab3d6b994765aed5bcf4609dd2305f53235a6d08819d948e97d5efb298",
+      "actualSHA256": "099749ab3d6b994765aed5bcf4609dd2305f53235a6d08819d948e97d5efb298",
+      "matches": true
+    },
+    {
+      "path": "logs/existing-regression.command.public.json",
+      "bytes": 859,
+      "expectedSHA256": "b6c928ae9b00d7c20f9da0a5f7bbce9d44f5e159403ab46098d56c0df1867b7f",
+      "actualSHA256": "b6c928ae9b00d7c20f9da0a5f7bbce9d44f5e159403ab46098d56c0df1867b7f",
+      "matches": true
+    },
+    {
+      "path": "logs/existing-regression.setup-error.public.json",
+      "bytes": 3849,
+      "expectedSHA256": "7d89db98ff0898b4f3511fac39307723ee5fc9c80078b6ef77934bec77cf21a5",
+      "actualSHA256": "7d89db98ff0898b4f3511fac39307723ee5fc9c80078b6ef77934bec77cf21a5",
+      "matches": true
+    },
+    {
+      "path": "logs/existing-vitest.public.json",
+      "bytes": 32298,
+      "expectedSHA256": "7a4630726aba4f80ec558f5ee91b464555c05876237cfec609c90f5f6a7adb9c",
+      "actualSHA256": "7a4630726aba4f80ec558f5ee91b464555c05876237cfec609c90f5f6a7adb9c",
+      "matches": true
+    },
+    {
+      "path": "logs/new-offline-mock.command.public.json",
+      "bytes": 612,
+      "expectedSHA256": "c7d73ea0429f220521dc3ac9e1699f3add795b9e22fcaf6742a745dd00f0ca44",
+      "actualSHA256": "c7d73ea0429f220521dc3ac9e1699f3add795b9e22fcaf6742a745dd00f0ca44",
+      "matches": true
+    },
+    {
+      "path": "logs/new-offline-mock.setup-error.public.json",
+      "bytes": 3607,
+      "expectedSHA256": "8c93354d51d0e523905c42e341b8005e694cba105f5e8ac64c90dd1c8550f5d3",
+      "actualSHA256": "8c93354d51d0e523905c42e341b8005e694cba105f5e8ac64c90dd1c8550f5d3",
+      "matches": true
+    },
+    {
+      "path": "logs/new-vitest.public.json",
+      "bytes": 8422,
+      "expectedSHA256": "8906c0f15437883a2cc70e11aea0db9b2859d339244b23fd367cff72e0efe110",
+      "actualSHA256": "8906c0f15437883a2cc70e11aea0db9b2859d339244b23fd367cff72e0efe110",
+      "matches": true
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 12080,
+      "expectedSHA256": "19066a1fb0d13c2892d2e823096d8c632296aa40ca82a2754ec51b9c06f4af47",
+      "actualSHA256": "19066a1fb0d13c2892d2e823096d8c632296aa40ca82a2754ec51b9c06f4af47",
+      "matches": true
+    },
+    {
+      "path": "provenance/original-artifact-digests.json",
+      "bytes": 1922,
+      "expectedSHA256": "c173c0f70055f693575e59d2c2ca627e852399c2900fba34f4c1a25624055cc4",
+      "actualSHA256": "c173c0f70055f693575e59d2c2ca627e852399c2900fba34f4c1a25624055cc4",
+      "matches": true
+    },
+    {
+      "path": "provenance/original-snapshot.json",
+      "bytes": 2450,
+      "expectedSHA256": "bd970cf66e844b04e239fa9c952c65545c9fb1b4239c951d83bc80d9a01afcdb",
+      "actualSHA256": "bd970cf66e844b04e239fa9c952c65545c9fb1b4239c951d83bc80d9a01afcdb",
+      "matches": true
+    },
+    {
+      "path": "provenance/publication.json",
+      "bytes": 6166,
+      "expectedSHA256": "7a57bf3c80de830b100578f966f2177569de6ef1659d4245a8072e8d0ccea605",
+      "actualSHA256": "7a57bf3c80de830b100578f966f2177569de6ef1659d4245a8072e8d0ccea605",
+      "matches": true
+    },
+    {
+      "path": "reproduce/SS30.test.ts",
+      "bytes": 13678,
+      "expectedSHA256": "e081bb8480388b5498368304459652d89586c0906da57f800097883080bf95fc",
+      "actualSHA256": "e081bb8480388b5498368304459652d89586c0906da57f800097883080bf95fc",
+      "matches": true
+    },
+    {
+      "path": "reproduce/finalize.mjs",
+      "bytes": 8245,
+      "expectedSHA256": "224a1fbc74b86779651bd3e4923186ab94d576dacb7de35ba529d42a42fcddf8",
+      "actualSHA256": "224a1fbc74b86779651bd3e4923186ab94d576dacb7de35ba529d42a42fcddf8",
+      "matches": true
+    },
+    {
+      "path": "reproduce/run.mjs",
+      "bytes": 7940,
+      "expectedSHA256": "62dbd5e0270e7ee5f84bedd5b13674f023a20b67e4f89ad9894116f393b1a0f9",
+      "actualSHA256": "62dbd5e0270e7ee5f84bedd5b13674f023a20b67e4f89ad9894116f393b1a0f9",
+      "matches": true
+    }
+  ]
+}
