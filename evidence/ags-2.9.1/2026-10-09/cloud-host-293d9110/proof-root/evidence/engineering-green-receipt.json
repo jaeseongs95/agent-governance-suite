@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-run-receipt",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/mcp/skill-classification-host-discovery.test.ts",
+    "-t",
+    "HD1|HD2|HD3|HD4|HD5|AC runtime",
+    "--reporter=verbose"
+  ],
+  "snapshot": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-snapshot",
+    "files": [
+      {
+        "path": "mcp-server/src/skill-classification/gateway.ts",
+        "digest": "sha256:0f316dce675f386ecb90e444377ca2b7930bc176c2cc4bb21ca0fd3cfe81ae87",
+        "size": 17119,
+        "lineCount": 174
+      },
+      {
+        "path": "mcp-server/src/skill-classification/host-discovery-adapter.ts",
+        "digest": "sha256:32bc7ae66550d7d5caf5f59c84a8590ccb476855b444a375bc42a3f9c912006b",
+        "size": 4692,
+        "lineCount": 78
+      },
+      {
+        "path": "tests/mcp/skill-classification-host-discovery.test.ts",
+        "digest": "sha256:ad8db36590ff08e47d1ae0885c1558a927c804b5732f490b863b2992f5abcabf",
+        "size": 15219,
+        "lineCount": 161
+      }
+    ],
+    "digest": "sha256:5a5e8414f64c8689a53f6548b3e29f66553d2953e99e1cad6a80ae929b7456a5"
+  },
+  "afterDigest": "sha256:5a5e8414f64c8689a53f6548b3e29f66553d2953e99e1cad6a80ae929b7456a5",
+  "startedAt": "2026-10-09T03:26:06.070Z",
+  "finishedAt": "2026-10-09T03:26:09.633Z",
+  "status": "PASS",
+  "exitCode": 0,
+  "signal": null,
+  "stdout": "\n RUN  v5.0.0 /workspace/ags291-host-discovery-fix/repo\n\n ✓ tests/mcp/skill-classification-host-discovery.test.ts > trusted host discovery at the actual classification gateway > HD1 preserves disabled needed candidate but rejects complete selection and excludes runnable 426ms\n ✓ tests/mcp/skill-classification-host-discovery.test.ts > trusted host discovery at the actual classification gateway > HD2 forwards observed installed membership instead of local-tree defaults 262ms\n ✓ tests/mcp/skill-classification-host-discovery.test.ts > trusted host discovery at the actual classification gateway > HD2 forwards observed hostSupported membership instead of local-tree defaults 264ms\n ✓ tests/mcp/skill-classification-host-discovery.test.ts > trusted host discovery at the actual classification gateway > HD3 missing discovery reports local scope and prevents falsely complete selection support 197ms\n ✓ tests/mcp/skill-classification-host-discovery.test.ts > trusted host discovery at the actual classification gateway > HD4 missing external metadata is reported rather than forcing a system candidate into taxonomy 149ms\n ✓ tests/mcp/skill-classification-host-discovery.test.ts > trusted host discovery at the actual classification gateway > HD5 changed host observation revision cannot reuse or accept an old selected operation 234ms\n ↓ tests/mcp/skill-classification-host-discovery.test.ts > trusted host discovery at the actual classification gateway > HD6 configured trusted snapshot is read through the existing runtime configuration boundary\n ✓ tests/mcp/skill-classification-host-discovery.test.ts > current task fence immediately before selection storage > AC runtime await cannot commit after cancelled 231ms\n ✓ tests/mcp/skill-classification-host-discovery.test.ts > current task fence immediately before selection storage > AC runtime await cannot commit after removed 219ms\n ✓ tests/mcp/skill-classification-host-discovery.test.ts > current task fence immediately before selection storage > AC runtime await cannot commit after taskRevision 227ms\n ✓ tests/mcp/skill-classification-host-discovery.test.ts > current task fence immediately before selection storage > AC runtime await cannot commit after requestDigest 225ms\n ✓ tests/mcp/skill-classification-host-discovery.test.ts > current task fence immediately before selection storage > AC runtime await cannot commit after sourceRef 333ms\n ↓ tests/mcp/skill-classification-host-discovery.test.ts > current task fence immediately before selection storage > AC discovery await cannot commit after cancelled\n ↓ tests/mcp/skill-classification-host-discovery.test.ts > current task fence immediately before selection storage > AC discovery await cannot commit after removed\n ↓ tests/mcp/skill-classification-host-discovery.test.ts > current task fence immediately before selection storage > AC discovery await cannot commit after taskRevision\n ↓ tests/mcp/skill-classification-host-discovery.test.ts > current task fence immediately before selection storage > AC discovery await cannot commit after requestDigest\n ↓ tests/mcp/skill-classification-host-discovery.test.ts > current task fence immediately before selection storage > AC discovery await cannot commit after sourceRef\n ↓ tests/mcp/skill-classification-host-discovery.test.ts > current task fence immediately before selection storage > AC unchanged task accepts once and repeats idempotently without claiming read/application\n\n Test Files  1 passed (1)\n      Tests  11 passed | 7 skipped (18)\n   Start at  03:26:06\n   Duration  3.10s (tests 93%, transform 5%, import 3%)\n\n",
+  "stderr": "",
+  "stdoutDigest": "sha256:7df7d0b2a717957c0e07c23feab665732817325614f1f97deed0827db9e56f55",
+  "stderrDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "timeoutMs": 60000,
+  "executable": "node",
+  "nodeVersion": "24.19.0",
+  "platform": "linux",
+  "environmentNote": "Same execution environment, Linux Node 24.19.0 UTC; fixed synthetic clock; no network/provider/model turns; same shared installed dependencies; NO_COLOR=1 Child NODE_TEST_CONTEXT is cleared to avoid nested-runner suppression.",
+  "digest": "sha256:6277d4d453d73b1d2af7c9b3e69df0c8f628791216f3b95c4c82d87c718cc927"
+}

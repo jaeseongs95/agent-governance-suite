@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-proof",
+  "planDigest": "sha256:684407dfa258a2f696570cd8471ce046b12806073fdd727db931eb48ad778fd0",
+  "candidate": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-snapshot",
+    "files": [
+      {
+        "path": "mcp-server/src/skill-classification/gateway.ts",
+        "digest": "sha256:0f316dce675f386ecb90e444377ca2b7930bc176c2cc4bb21ca0fd3cfe81ae87",
+        "size": 17119,
+        "lineCount": 174
+      },
+      {
+        "path": "mcp-server/src/skill-classification/host-discovery-adapter.ts",
+        "digest": "sha256:32bc7ae66550d7d5caf5f59c84a8590ccb476855b444a375bc42a3f9c912006b",
+        "size": 4692,
+        "lineCount": 78
+      },
+      {
+        "path": "tests/mcp/skill-classification-host-discovery.test.ts",
+        "digest": "sha256:ad8db36590ff08e47d1ae0885c1558a927c804b5732f490b863b2992f5abcabf",
+        "size": 15219,
+        "lineCount": 161
+      }
+    ],
+    "digest": "sha256:5a5e8414f64c8689a53f6548b3e29f66553d2953e99e1cad6a80ae929b7456a5"
+  },
+  "proofs": [
+    {
+      "caseId": "HOST_DISCOVERY_AND_TASK_FENCE",
+      "status": "DEMONSTRATED",
+      "red": {
+        "path": "evidence/engineering-red-receipt.json",
+        "digest": "sha256:2e2c072b673d9ae91f9655349cce6b943fb2dcddb9c9e6c49708d16c50e7f7a4"
+      },
+      "green": {
+        "path": "evidence/engineering-green-receipt.json",
+        "digest": "sha256:33c316f90ec182d5c6e0fd5e7cb7a4939d63bb24f230aaa1e6d5cf8ad845ec9f"
+      },
+      "mutationPaths": [
+        "mcp-server/src/skill-classification/gateway.ts"
+      ],
+      "assertionWitness": "expected true to be false",
+      "reason": "Original c6a8019 gateway versus candidate gateway, identical test/adapter bytes/argv/dependencies; eleven product assertion failures, zero import errors/timeouts; successful candidate follows failed base."
+    }
+  ]
+}

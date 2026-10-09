@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0.0",
+  "repositoryIdentity": "9dc0ba62cc6ac46fc5b7ab48aa2a8b90e7c4e3dc3f7b21f163d31468864fc484",
+  "baselineDigest": "a01db275f463bc159da389b7bb7abe7bf0c4555f41044ac930acf8cfa4a5fe53",
+  "currentDigest": "53e5e21a4f4d5fda09bd261319846c668693cc471a511a68b105f5f810441eda",
+  "taskEnvelopeDigest": "761396ec81d2933234bf8a3d6282cb054795b4bdca3e347bc2dc9784d196109b",
+  "changes": [
+    {
+      "path": "mcp-server/src/skill-classification/gateway.ts",
+      "originalPath": null,
+      "status": "M.",
+      "classification": "in-scope",
+      "baselineSha256": "80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+      "currentSha256": "0f316dce675f386ecb90e444377ca2b7930bc176c2cc4bb21ca0fd3cfe81ae87",
+      "matchedRule": "mcp-server/src/skill-classification/gateway.ts"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/host-discovery-adapter.ts",
+      "originalPath": null,
+      "status": "A.",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "32bc7ae66550d7d5caf5f59c84a8590ccb476855b444a375bc42a3f9c912006b",
+      "matchedRule": "mcp-server/src/skill-classification/host-discovery-adapter.ts"
+    },
+    {
+      "path": "tests/mcp/skill-classification-gateway.test.ts",
+      "originalPath": null,
+      "status": "M.",
+      "classification": "in-scope",
+      "baselineSha256": "e45307b5240f8ed872a0b62e9324a44244e8dafd96de8184c0737d3a4e7c2268",
+      "currentSha256": "523c04a17d6bc760201a188f4fcbcfac070d28c712873c4dd0b6f3b2775a2c12",
+      "matchedRule": "tests/mcp/skill-classification-gateway.test.ts"
+    },
+    {
+      "path": "tests/mcp/skill-classification-host-discovery-adapter.test.ts",
+      "originalPath": null,
+      "status": "A.",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "9b72ab40ce293fba5f561dd3ca71bd8e7614b9eead27743b5a03f0c692bdf790",
+      "matchedRule": "tests/mcp/skill-classification-host-discovery-adapter.test.ts"
+    },
+    {
+      "path": "tests/mcp/skill-classification-host-discovery.test.ts",
+      "originalPath": null,
+      "status": "A.",
+      "classification": "in-scope",
+      "baselineSha256": null,
+      "currentSha256": "ad8db36590ff08e47d1ae0885c1558a927c804b5732f490b863b2992f5abcabf",
+      "matchedRule": "tests/mcp/skill-classification-host-discovery.test.ts"
+    }
+  ],
+  "summary": {
+    "in-scope": 5,
+    "excluded": 0,
+    "unplanned": 0,
+    "preexisting-untouched": 0,
+    "preexisting-overlap": 0,
+    "ownership-unknown": 0
+  },
+  "findings": [],
+  "verdict": "PASS",
+  "observedAt": "2026-10-09T03:26:57.080Z",
+  "reportSha256": "21ec8ee6f41e55ad073f7a4545c1fb899adaecb53dbfaf9eb2b13407365496d8"
+}

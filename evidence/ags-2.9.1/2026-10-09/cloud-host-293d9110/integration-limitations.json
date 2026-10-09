@@ -1,0 +1,19 @@
+{
+  "actualHostProducer": "NOT_IMPLEMENTED: trusted callback/file consumer exists; actual installed/supported/enabled/root/freshness snapshot producer still must be wired",
+  "actualCodexAgentSelection": "NOT_RUN",
+  "actualSkillReadAndApplication": "NOT_RUN; readStatus/appliedStatus NOT_OBSERVED retained",
+  "integratedBundleAndInstallationCache": "NOT_RUN; candidate temporary compiled bundle/stdio passed, shared dist and installation cache not updated",
+  "providerQualityQualification": "NOT_RUN; synthetic qualified fixture is not a real model quality result",
+  "timeoutUpperBound": {
+    "status": "UNFIXED",
+    "scope": "Not implemented or retested in this publication",
+    "source": "mcp-server/src/skill-classification/gateway.ts",
+    "candidateCommit": "293d9110affb7048c703cf4ac6e14dcfe0a9ea3b",
+    "observedDeclaration": "timeoutMs: z.number().int().positive()",
+    "limitation": "No maximum timeout bound is added by this candidate. Extremely large timeout configuration and timer behavior remain outside this proof."
+  },
+  "nameMappingAndModelReasoningProfiles": "Out of scope; no alias mapping or gpt-6.1 profile addition",
+  "wholeSuite": "NOT_RUN; existing R13 whole suite not repeated",
+  "originalBundleFreshness": "PREEXISTING_FAIL before product edits; shared dist untouched",
+  "modelAndNetworkBoundaries": "0 paid API calls, 0 Claude calls, 0 actual host model turns; mocked provider behavior is not actual AGENT behavior"
+}

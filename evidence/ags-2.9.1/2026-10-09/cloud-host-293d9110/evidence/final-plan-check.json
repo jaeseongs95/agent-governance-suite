@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:684407dfa258a2f696570cd8471ce046b12806073fdd727db931eb48ad778fd0",
+  "caseIds": [
+    "HOST_DISCOVERY_AND_TASK_FENCE"
+  ]
+}

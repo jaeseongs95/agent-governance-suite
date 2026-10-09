@@ -1,0 +1,276 @@
+{
+  "schemaVersion": "1",
+  "purpose": "Public evidence only; original candidate patch is not applied on the evidence branch root",
+  "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cloud-host-293d9110",
+  "publicationBase": "78bfff21903e2429d501377ef795ea4f4dff4f41",
+  "sourceCandidate": {
+    "commit": "293d9110affb7048c703cf4ac6e14dcfe0a9ea3b",
+    "tree": "63dd3ae9e5910ffa2fa3c3ee456c2d7a7b646ce7",
+    "parent": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "baseTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3"
+  },
+  "sourceChangedFiles": {
+    "mcp-server/src/skill-classification/gateway.ts": "0f316dce675f386ecb90e444377ca2b7930bc176c2cc4bb21ca0fd3cfe81ae87",
+    "mcp-server/src/skill-classification/host-discovery-adapter.ts": "32bc7ae66550d7d5caf5f59c84a8590ccb476855b444a375bc42a3f9c912006b",
+    "tests/mcp/skill-classification-gateway.test.ts": "523c04a17d6bc760201a188f4fcbcfac070d28c712873c4dd0b6f3b2775a2c12",
+    "tests/mcp/skill-classification-host-discovery-adapter.test.ts": "9b72ab40ce293fba5f561dd3ca71bd8e7614b9eead27743b5a03f0c692bdf790",
+    "tests/mcp/skill-classification-host-discovery.test.ts": "ad8db36590ff08e47d1ae0885c1558a927c804b5732f490b863b2992f5abcabf"
+  },
+  "selectedArtifactRecords": [
+    {
+      "sourceArtifact": "host-discovery-fix.patch",
+      "sourceBytes": 50119,
+      "sourceSha256": "9892bb58c850359566563c12c80ad53b8bb7d1f873b4e4db51a35c546c550bd0",
+      "publishedArtifact": "candidate.patch",
+      "publishedBytes": 50099,
+      "publishedSha256": "dbd46fc68d42b7ed39a1c7389482135d1b8e7f3ebc624b6d80a1aa7c6b9fc137",
+      "transformation": "Remove private mail author header only; diff body byte-identical"
+    },
+    {
+      "sourceArtifact": "host-discovery-fix.diff",
+      "sourceBytes": 49252,
+      "sourceSha256": "279ca5fb58dc313c07439a31fa6819e761887f4c659b3e453bf79f1b54b38382",
+      "publishedArtifact": "candidate.diff",
+      "publishedBytes": 49252,
+      "publishedSha256": "279ca5fb58dc313c07439a31fa6819e761887f4c659b3e453bf79f1b54b38382",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "REPORT.ko.md",
+      "sourceBytes": 10474,
+      "sourceSha256": "1d9a8e00689301bd3a6875a2e5203a02d85f468bbf908f680e3acf0914da13a7",
+      "publishedArtifact": "REPORT.ko.md",
+      "publishedBytes": 10474,
+      "publishedSha256": "1d9a8e00689301bd3a6875a2e5203a02d85f468bbf908f680e3acf0914da13a7",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/final-host-regression.json",
+      "sourceBytes": 30932,
+      "sourceSha256": "4e1d5ae17bbde8e64e1a2dde2baba1c3154a8859f4185fd65b779bc7c32729aa",
+      "publishedArtifact": "evidence/final-host-regression.json",
+      "publishedBytes": 30932,
+      "publishedSha256": "4e1d5ae17bbde8e64e1a2dde2baba1c3154a8859f4185fd65b779bc7c32729aa",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/adjacent-regression.json",
+      "sourceBytes": 16229,
+      "sourceSha256": "d931a2d367b14b874af272d3f39caa9b6b50d8b5f57889d048ed001eef8a8196",
+      "publishedArtifact": "evidence/adjacent-regression.json",
+      "publishedBytes": 16229,
+      "publishedSha256": "d931a2d367b14b874af272d3f39caa9b6b50d8b5f57889d048ed001eef8a8196",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/engineering-test-result.json",
+      "sourceBytes": 689,
+      "sourceSha256": "e8f2583c7b836e7b6a1a4bb3293d4530786d5f26322fe94940176504bbc19fe9",
+      "publishedArtifact": "evidence/engineering-test-result.json",
+      "publishedBytes": 689,
+      "publishedSha256": "e8f2583c7b836e7b6a1a4bb3293d4530786d5f26322fe94940176504bbc19fe9",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/final-proof-check.json",
+      "sourceBytes": 689,
+      "sourceSha256": "e8f2583c7b836e7b6a1a4bb3293d4530786d5f26322fe94940176504bbc19fe9",
+      "publishedArtifact": "evidence/final-proof-check.json",
+      "publishedBytes": 689,
+      "publishedSha256": "e8f2583c7b836e7b6a1a4bb3293d4530786d5f26322fe94940176504bbc19fe9",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/final-plan-check.json",
+      "sourceBytes": 237,
+      "sourceSha256": "8136e613d20b44c56c20b214eb40dbe6b444e7d9e611fa74e9facd9c81439937",
+      "publishedArtifact": "evidence/final-plan-check.json",
+      "publishedBytes": 237,
+      "publishedSha256": "8136e613d20b44c56c20b214eb40dbe6b444e7d9e611fa74e9facd9c81439937",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/source-integrity.json",
+      "sourceBytes": 1062,
+      "sourceSha256": "25a76268e8ad897583ef07848eaa61d954cc9ae93023f71cc9260a2317b87228",
+      "publishedArtifact": "evidence/source-integrity.json",
+      "publishedBytes": 1062,
+      "publishedSha256": "25a76268e8ad897583ef07848eaa61d954cc9ae93023f71cc9260a2317b87228",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/final-scope-report.json",
+      "sourceBytes": 2713,
+      "sourceSha256": "e3925fa3505ebddee7ecc9eae0a58c182a53e44f3b55a875a4183f41e7a11832",
+      "publishedArtifact": "evidence/final-scope-report.json",
+      "publishedBytes": 2713,
+      "publishedSha256": "e3925fa3505ebddee7ecc9eae0a58c182a53e44f3b55a875a4183f41e7a11832",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/base-bundle-check.stdout",
+      "sourceBytes": 0,
+      "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publishedArtifact": "evidence/base-bundle-check.stdout",
+      "publishedBytes": 0,
+      "publishedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/base-bundle-check.stderr",
+      "sourceBytes": 363,
+      "sourceSha256": "76eb396d2efbcb35639eed25defb288e9e98b3a65b2ae8459541ba3c7b5becdf",
+      "publishedArtifact": "evidence/base-bundle-check.stderr",
+      "publishedBytes": 363,
+      "publishedSha256": "76eb396d2efbcb35639eed25defb288e9e98b3a65b2ae8459541ba3c7b5becdf",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/final-typecheck.stdout",
+      "sourceBytes": 0,
+      "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publishedArtifact": "evidence/final-typecheck.stdout",
+      "publishedBytes": 0,
+      "publishedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/final-typecheck.stderr",
+      "sourceBytes": 0,
+      "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publishedArtifact": "evidence/final-typecheck.stderr",
+      "publishedBytes": 0,
+      "publishedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/final-lint.stdout",
+      "sourceBytes": 0,
+      "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publishedArtifact": "evidence/final-lint.stdout",
+      "publishedBytes": 0,
+      "publishedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/final-lint.stderr",
+      "sourceBytes": 0,
+      "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publishedArtifact": "evidence/final-lint.stderr",
+      "publishedBytes": 0,
+      "publishedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/temp-stdio-probe.stdout",
+      "sourceBytes": 264,
+      "sourceSha256": "be37b1f0ede05f116a518aa55b89dea5238fc79b60caa05c489f25943e89366f",
+      "publishedArtifact": "evidence/temp-stdio-probe.stdout",
+      "publishedBytes": 264,
+      "publishedSha256": "be37b1f0ede05f116a518aa55b89dea5238fc79b60caa05c489f25943e89366f",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/temp-stdio-probe.stderr",
+      "sourceBytes": 0,
+      "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publishedArtifact": "evidence/temp-stdio-probe.stderr",
+      "publishedBytes": 0,
+      "publishedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/final-formal-proof.stdout",
+      "sourceBytes": 171,
+      "sourceSha256": "059042b37db0631d972999fd425234d6619982e8ac98da9881c421446f0a5b4a",
+      "publishedArtifact": "evidence/final-formal-proof.stdout",
+      "publishedBytes": 171,
+      "publishedSha256": "059042b37db0631d972999fd425234d6619982e8ac98da9881c421446f0a5b4a",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/proof-root/evidence/engineering-green-receipt.json",
+      "sourceBytes": 5709,
+      "sourceSha256": "33c316f90ec182d5c6e0fd5e7cb7a4939d63bb24f230aaa1e6d5cf8ad845ec9f",
+      "publishedArtifact": "proof-root/evidence/engineering-green-receipt.json",
+      "publishedBytes": 5709,
+      "publishedSha256": "33c316f90ec182d5c6e0fd5e7cb7a4939d63bb24f230aaa1e6d5cf8ad845ec9f",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/proof-root/evidence/engineering-red-receipt.json",
+      "sourceBytes": 13833,
+      "sourceSha256": "2e2c072b673d9ae91f9655349cce6b943fb2dcddb9c9e6c49708d16c50e7f7a4",
+      "publishedArtifact": "proof-root/evidence/engineering-red-receipt.json",
+      "publishedBytes": 13833,
+      "publishedSha256": "2e2c072b673d9ae91f9655349cce6b943fb2dcddb9c9e6c49708d16c50e7f7a4",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/proof-root/mcp-server/src/skill-classification/gateway.ts",
+      "sourceBytes": 17119,
+      "sourceSha256": "0f316dce675f386ecb90e444377ca2b7930bc176c2cc4bb21ca0fd3cfe81ae87",
+      "publishedArtifact": "proof-root/mcp-server/src/skill-classification/gateway.ts",
+      "publishedBytes": 17119,
+      "publishedSha256": "0f316dce675f386ecb90e444377ca2b7930bc176c2cc4bb21ca0fd3cfe81ae87",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/proof-root/mcp-server/src/skill-classification/host-discovery-adapter.ts",
+      "sourceBytes": 4692,
+      "sourceSha256": "32bc7ae66550d7d5caf5f59c84a8590ccb476855b444a375bc42a3f9c912006b",
+      "publishedArtifact": "proof-root/mcp-server/src/skill-classification/host-discovery-adapter.ts",
+      "publishedBytes": 4692,
+      "publishedSha256": "32bc7ae66550d7d5caf5f59c84a8590ccb476855b444a375bc42a3f9c912006b",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/proof-root/plan.json",
+      "sourceBytes": 2488,
+      "sourceSha256": "5cec7c6146e08dfc76a64eb04acd17e1da254700e725191bec9cdabbfd7cd5cf",
+      "publishedArtifact": "proof-root/plan.json",
+      "publishedBytes": 2488,
+      "publishedSha256": "5cec7c6146e08dfc76a64eb04acd17e1da254700e725191bec9cdabbfd7cd5cf",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/proof-root/proof.json",
+      "sourceBytes": 1878,
+      "sourceSha256": "b80c4de0df1462f164aa9e23dd6a1b95fc0514ba4816e8d8d989d7a8ca8aac0e",
+      "publishedArtifact": "proof-root/proof.json",
+      "publishedBytes": 1878,
+      "publishedSha256": "b80c4de0df1462f164aa9e23dd6a1b95fc0514ba4816e8d8d989d7a8ca8aac0e",
+      "transformation": "none; byte-identical"
+    },
+    {
+      "sourceArtifact": "evidence/proof-root/tests/mcp/skill-classification-host-discovery.test.ts",
+      "sourceBytes": 15219,
+      "sourceSha256": "ad8db36590ff08e47d1ae0885c1558a927c804b5732f490b863b2992f5abcabf",
+      "publishedArtifact": "proof-root/tests/mcp/skill-classification-host-discovery.test.ts",
+      "publishedBytes": 15219,
+      "publishedSha256": "ad8db36590ff08e47d1ae0885c1558a927c804b5732f490b863b2992f5abcabf",
+      "transformation": "none; byte-identical"
+    }
+  ],
+  "largeRawStdioSource": {
+    "bytes": 4896085,
+    "sha256": "a5c660e2f58b94a44313d1040eb93b4c9c1fa81fb53e7f0e222d0342d1395215",
+    "published": false
+  },
+  "privacy": {
+    "mailAuthorHeader": "anonymized; diff body unchanged",
+    "excluded": [
+      "credentials",
+      "secret values",
+      "personal conversations",
+      "personal author identity",
+      "host state databases",
+      "unnecessary raw artifacts"
+    ],
+    "remainingPromptsAndActors": "synthetic fixtures only"
+  },
+  "reviewIndependence": "Author self-review only; no independent audit claimed",
+  "publicationOnly": true,
+  "existingEvidencePolicy": "Append-only under publicationPath; preserve all prior path/mode/blob entries; non-force push one evidence ref"
+}

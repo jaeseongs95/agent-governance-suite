@@ -1,0 +1,660 @@
+{
+  "sourceArtifactBytes": 4896085,
+  "sourceArtifactSha256": "a5c660e2f58b94a44313d1040eb93b4c9c1fa81fb53e7f0e222d0342d1395215",
+  "sourceArtifactPublished": false,
+  "derivation": "Exact synthetic inputs and selected observed fields from existing stdio report; large duplicated tool inventories/raw SDK responses omitted. No fresh execution.",
+  "executionKind": "temporary compiled candidate MCP bundle, actual stdio; synthetic host file; no actual host AGENT",
+  "paidApiCalls": 0,
+  "claudeCalls": 0,
+  "hostModelTurns": 0,
+  "variants": [
+    {
+      "variant": "absent",
+      "expectedDiscoveryStatus": "UNAVAILABLE",
+      "observedDiscovery": {
+        "status": "UNAVAILABLE",
+        "scope": "local-tree",
+        "sourceRef": null,
+        "revision": null
+      },
+      "candidateCount": 24,
+      "inventoryIssues": [
+        {
+          "skillId": null,
+          "code": "HOST_DISCOVERY_UNAVAILABLE",
+          "field": "hostDiscovery"
+        }
+      ],
+      "codeReviewEnabled": true,
+      "cases": [
+        {
+          "requestId": "named",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "requestId": "named",
+            "operationId": "absent-named",
+            "originalPrompt": "$test-engineering으로 검토해 주세요.",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "explicitSkillIds": [
+              "test-engineering"
+            ],
+            "ruleRequiredSkillIds": [],
+            "vendorContext": {
+              "vendorId": "openai",
+              "reference": "synthetic-only"
+            },
+            "publicSynthetic": true
+          },
+          "agentSelectedSkillIds": null,
+          "observedStatus": "NEEDS_INPUT",
+          "providerAttempts": null,
+          "originalPromptUtf8Sha256": "856c77444ac11fbe41ce219051f2ea8cb6120189177591d4b0ec2ece0403479f",
+          "returnedOriginalPrompt": null,
+          "returnedOriginalPromptMatches": null
+        },
+        {
+          "requestId": "unnamed",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "requestId": "unnamed",
+            "operationId": "absent-unnamed",
+            "originalPrompt": "회귀 테스트의 검출력을 점검해 주세요.",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "vendorContext": {
+              "vendorId": "openai",
+              "reference": "synthetic-only"
+            },
+            "publicSynthetic": true
+          },
+          "agentSelectedSkillIds": null,
+          "observedStatus": "NEEDS_INPUT",
+          "providerAttempts": null,
+          "originalPromptUtf8Sha256": "b48014a0f8ab12d4a6ef382a47b4f3ad2f5d9104ae5a8b956604cb7082073a4f",
+          "returnedOriginalPrompt": null,
+          "returnedOriginalPromptMatches": null
+        },
+        {
+          "requestId": "composite",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "requestId": "composite",
+            "operationId": "absent-composite",
+            "originalPrompt": "큐의 중복·유실 방지 기능을 구현하고 CS 불변조건과 회귀 테스트를 연결해 주세요.",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "vendorContext": {
+              "vendorId": "openai",
+              "reference": "synthetic-only"
+            },
+            "publicSynthetic": true
+          },
+          "agentSelectedSkillIds": null,
+          "observedStatus": "NEEDS_INPUT",
+          "providerAttempts": null,
+          "originalPromptUtf8Sha256": "5d8941c39a053f6406edff30cd340b8395ea82a9f9c522b907336c3864a2acc1",
+          "returnedOriginalPrompt": null,
+          "returnedOriginalPromptMatches": null
+        },
+        {
+          "requestId": "readonly",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "requestId": "readonly",
+            "operationId": "absent-readonly",
+            "originalPrompt": "고정 diff를 읽기 전용 리뷰하세요. 수정 금지.",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "vendorContext": {
+              "vendorId": "openai",
+              "reference": "synthetic-only"
+            },
+            "publicSynthetic": true
+          },
+          "agentSelectedSkillIds": null,
+          "observedStatus": "NEEDS_INPUT",
+          "providerAttempts": null,
+          "originalPromptUtf8Sha256": "923454f10306a38dffc62e53af72af440b34b4e612c6e67a18239e63fa450cbd",
+          "returnedOriginalPrompt": null,
+          "returnedOriginalPromptMatches": null
+        },
+        {
+          "requestId": "ambiguous",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "requestId": "ambiguous",
+            "operationId": "absent-ambiguous",
+            "originalPrompt": "이거 처리해 줘.",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "vendorContext": {
+              "vendorId": "openai",
+              "reference": "synthetic-only"
+            },
+            "publicSynthetic": true
+          },
+          "agentSelectedSkillIds": null,
+          "observedStatus": "NEEDS_INPUT",
+          "providerAttempts": null,
+          "originalPromptUtf8Sha256": "a684ceb7f902c3dc1e59037121d0281e309834243de5bac24c3c2925e5bd36b9",
+          "returnedOriginalPrompt": null,
+          "returnedOriginalPromptMatches": null
+        },
+        {
+          "requestId": "typo",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "requestId": "typo",
+            "operationId": "absent-typo",
+            "originalPrompt": "$test-enginering으로 검토해 주세요.",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "explicitSkillIds": [
+              "test-enginering"
+            ],
+            "ruleRequiredSkillIds": [],
+            "vendorContext": {
+              "vendorId": "openai",
+              "reference": "synthetic-only"
+            },
+            "publicSynthetic": true
+          },
+          "agentSelectedSkillIds": null,
+          "observedStatus": "NEEDS_INPUT",
+          "providerAttempts": null,
+          "originalPromptUtf8Sha256": "6f346eaebeeb2be9343bf29d0b39ba9448fe4d5fc4d5134d1a399961cc82dbef",
+          "returnedOriginalPrompt": null,
+          "returnedOriginalPromptMatches": null
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "variant": "trusted-file",
+      "expectedDiscoveryStatus": "COMPLETE",
+      "observedDiscovery": {
+        "status": "COMPLETE",
+        "scope": "host",
+        "sourceRef": "fixture:temp-stdio-host-snapshot",
+        "revision": "r1"
+      },
+      "candidateCount": 24,
+      "inventoryIssues": [],
+      "codeReviewEnabled": false,
+      "cases": [
+        {
+          "requestId": "named",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "requestId": "named",
+            "operationId": "trusted-file-named",
+            "originalPrompt": "$test-engineering으로 검토해 주세요.",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "explicitSkillIds": [
+              "test-engineering"
+            ],
+            "ruleRequiredSkillIds": [],
+            "vendorContext": {
+              "vendorId": "openai",
+              "reference": "synthetic-only"
+            },
+            "publicSynthetic": true
+          },
+          "agentSelectedSkillIds": null,
+          "observedStatus": "UNAVAILABLE",
+          "providerAttempts": 0,
+          "originalPromptUtf8Sha256": "856c77444ac11fbe41ce219051f2ea8cb6120189177591d4b0ec2ece0403479f",
+          "returnedOriginalPrompt": "$test-engineering으로 검토해 주세요.",
+          "returnedOriginalPromptMatches": true
+        },
+        {
+          "requestId": "unnamed",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "requestId": "unnamed",
+            "operationId": "trusted-file-unnamed",
+            "originalPrompt": "회귀 테스트의 검출력을 점검해 주세요.",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "vendorContext": {
+              "vendorId": "openai",
+              "reference": "synthetic-only"
+            },
+            "publicSynthetic": true
+          },
+          "agentSelectedSkillIds": null,
+          "observedStatus": "UNAVAILABLE",
+          "providerAttempts": 0,
+          "originalPromptUtf8Sha256": "b48014a0f8ab12d4a6ef382a47b4f3ad2f5d9104ae5a8b956604cb7082073a4f",
+          "returnedOriginalPrompt": "회귀 테스트의 검출력을 점검해 주세요.",
+          "returnedOriginalPromptMatches": true
+        },
+        {
+          "requestId": "composite",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "requestId": "composite",
+            "operationId": "trusted-file-composite",
+            "originalPrompt": "큐의 중복·유실 방지 기능을 구현하고 CS 불변조건과 회귀 테스트를 연결해 주세요.",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "vendorContext": {
+              "vendorId": "openai",
+              "reference": "synthetic-only"
+            },
+            "publicSynthetic": true
+          },
+          "agentSelectedSkillIds": null,
+          "observedStatus": "UNAVAILABLE",
+          "providerAttempts": 0,
+          "originalPromptUtf8Sha256": "5d8941c39a053f6406edff30cd340b8395ea82a9f9c522b907336c3864a2acc1",
+          "returnedOriginalPrompt": "큐의 중복·유실 방지 기능을 구현하고 CS 불변조건과 회귀 테스트를 연결해 주세요.",
+          "returnedOriginalPromptMatches": true
+        },
+        {
+          "requestId": "readonly",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "requestId": "readonly",
+            "operationId": "trusted-file-readonly",
+            "originalPrompt": "고정 diff를 읽기 전용 리뷰하세요. 수정 금지.",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "vendorContext": {
+              "vendorId": "openai",
+              "reference": "synthetic-only"
+            },
+            "publicSynthetic": true
+          },
+          "agentSelectedSkillIds": null,
+          "observedStatus": "UNAVAILABLE",
+          "providerAttempts": 0,
+          "originalPromptUtf8Sha256": "923454f10306a38dffc62e53af72af440b34b4e612c6e67a18239e63fa450cbd",
+          "returnedOriginalPrompt": "고정 diff를 읽기 전용 리뷰하세요. 수정 금지.",
+          "returnedOriginalPromptMatches": true
+        },
+        {
+          "requestId": "ambiguous",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "requestId": "ambiguous",
+            "operationId": "trusted-file-ambiguous",
+            "originalPrompt": "이거 처리해 줘.",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "vendorContext": {
+              "vendorId": "openai",
+              "reference": "synthetic-only"
+            },
+            "publicSynthetic": true
+          },
+          "agentSelectedSkillIds": null,
+          "observedStatus": "UNAVAILABLE",
+          "providerAttempts": 0,
+          "originalPromptUtf8Sha256": "a684ceb7f902c3dc1e59037121d0281e309834243de5bac24c3c2925e5bd36b9",
+          "returnedOriginalPrompt": "이거 처리해 줘.",
+          "returnedOriginalPromptMatches": true
+        },
+        {
+          "requestId": "typo",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "requestId": "typo",
+            "operationId": "trusted-file-typo",
+            "originalPrompt": "$test-enginering으로 검토해 주세요.",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "explicitSkillIds": [
+              "test-enginering"
+            ],
+            "ruleRequiredSkillIds": [],
+            "vendorContext": {
+              "vendorId": "openai",
+              "reference": "synthetic-only"
+            },
+            "publicSynthetic": true
+          },
+          "agentSelectedSkillIds": null,
+          "observedStatus": "UNAVAILABLE",
+          "providerAttempts": 0,
+          "originalPromptUtf8Sha256": "6f346eaebeeb2be9343bf29d0b39ba9448fe4d5fc4d5134d1a399961cc82dbef",
+          "returnedOriginalPrompt": "$test-enginering으로 검토해 주세요.",
+          "returnedOriginalPromptMatches": true
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "variant": "missing-metadata",
+      "expectedDiscoveryStatus": "INCOMPLETE",
+      "observedDiscovery": {
+        "status": "INCOMPLETE",
+        "scope": "host",
+        "sourceRef": "fixture:temp-stdio-host-snapshot",
+        "revision": "r2"
+      },
+      "candidateCount": 24,
+      "inventoryIssues": [
+        {
+          "skillId": "unmapped-host-skill",
+          "code": "INSTALLED_SKILL_UNEXPOSED",
+          "field": "installedSkillIds"
+        }
+      ],
+      "codeReviewEnabled": false,
+      "cases": [
+        {
+          "requestId": "named",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "requestId": "named",
+            "operationId": "missing-metadata-named",
+            "originalPrompt": "$test-engineering으로 검토해 주세요.",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "explicitSkillIds": [
+              "test-engineering"
+            ],
+            "ruleRequiredSkillIds": [],
+            "vendorContext": {
+              "vendorId": "openai",
+              "reference": "synthetic-only"
+            },
+            "publicSynthetic": true
+          },
+          "agentSelectedSkillIds": null,
+          "observedStatus": "NEEDS_INPUT",
+          "providerAttempts": null,
+          "originalPromptUtf8Sha256": "856c77444ac11fbe41ce219051f2ea8cb6120189177591d4b0ec2ece0403479f",
+          "returnedOriginalPrompt": null,
+          "returnedOriginalPromptMatches": null
+        },
+        {
+          "requestId": "unnamed",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "requestId": "unnamed",
+            "operationId": "missing-metadata-unnamed",
+            "originalPrompt": "회귀 테스트의 검출력을 점검해 주세요.",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "vendorContext": {
+              "vendorId": "openai",
+              "reference": "synthetic-only"
+            },
+            "publicSynthetic": true
+          },
+          "agentSelectedSkillIds": null,
+          "observedStatus": "NEEDS_INPUT",
+          "providerAttempts": null,
+          "originalPromptUtf8Sha256": "b48014a0f8ab12d4a6ef382a47b4f3ad2f5d9104ae5a8b956604cb7082073a4f",
+          "returnedOriginalPrompt": null,
+          "returnedOriginalPromptMatches": null
+        },
+        {
+          "requestId": "composite",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "requestId": "composite",
+            "operationId": "missing-metadata-composite",
+            "originalPrompt": "큐의 중복·유실 방지 기능을 구현하고 CS 불변조건과 회귀 테스트를 연결해 주세요.",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "vendorContext": {
+              "vendorId": "openai",
+              "reference": "synthetic-only"
+            },
+            "publicSynthetic": true
+          },
+          "agentSelectedSkillIds": null,
+          "observedStatus": "NEEDS_INPUT",
+          "providerAttempts": null,
+          "originalPromptUtf8Sha256": "5d8941c39a053f6406edff30cd340b8395ea82a9f9c522b907336c3864a2acc1",
+          "returnedOriginalPrompt": null,
+          "returnedOriginalPromptMatches": null
+        },
+        {
+          "requestId": "readonly",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "requestId": "readonly",
+            "operationId": "missing-metadata-readonly",
+            "originalPrompt": "고정 diff를 읽기 전용 리뷰하세요. 수정 금지.",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "vendorContext": {
+              "vendorId": "openai",
+              "reference": "synthetic-only"
+            },
+            "publicSynthetic": true
+          },
+          "agentSelectedSkillIds": null,
+          "observedStatus": "NEEDS_INPUT",
+          "providerAttempts": null,
+          "originalPromptUtf8Sha256": "923454f10306a38dffc62e53af72af440b34b4e612c6e67a18239e63fa450cbd",
+          "returnedOriginalPrompt": null,
+          "returnedOriginalPromptMatches": null
+        },
+        {
+          "requestId": "ambiguous",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "requestId": "ambiguous",
+            "operationId": "missing-metadata-ambiguous",
+            "originalPrompt": "이거 처리해 줘.",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "vendorContext": {
+              "vendorId": "openai",
+              "reference": "synthetic-only"
+            },
+            "publicSynthetic": true
+          },
+          "agentSelectedSkillIds": null,
+          "observedStatus": "NEEDS_INPUT",
+          "providerAttempts": null,
+          "originalPromptUtf8Sha256": "a684ceb7f902c3dc1e59037121d0281e309834243de5bac24c3c2925e5bd36b9",
+          "returnedOriginalPrompt": null,
+          "returnedOriginalPromptMatches": null
+        },
+        {
+          "requestId": "typo",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "requestId": "typo",
+            "operationId": "missing-metadata-typo",
+            "originalPrompt": "$test-enginering으로 검토해 주세요.",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "contextSources": [],
+            "explicitSkillIds": [
+              "test-enginering"
+            ],
+            "ruleRequiredSkillIds": [],
+            "vendorContext": {
+              "vendorId": "openai",
+              "reference": "synthetic-only"
+            },
+            "publicSynthetic": true
+          },
+          "agentSelectedSkillIds": null,
+          "observedStatus": "NEEDS_INPUT",
+          "providerAttempts": null,
+          "originalPromptUtf8Sha256": "6f346eaebeeb2be9343bf29d0b39ba9448fe4d5fc4d5134d1a399961cc82dbef",
+          "returnedOriginalPrompt": null,
+          "returnedOriginalPromptMatches": null
+        }
+      ],
+      "status": "PASS"
+    }
+  ]
+}

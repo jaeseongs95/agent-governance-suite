@@ -1,0 +1,44 @@
+{
+  "candidateCommit": "293d9110affb7048c703cf4ac6e14dcfe0a9ea3b",
+  "candidateTree": "63dd3ae9e5910ffa2fa3c3ee456c2d7a7b646ce7",
+  "baseCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "baseTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "results": {
+    "hostGatewayAndAdapter": {
+      "passed": 69,
+      "failed": 0,
+      "files": [
+        "tests/mcp/skill-classification-gateway.test.ts",
+        "tests/mcp/skill-classification-host-discovery.test.ts",
+        "tests/mcp/skill-classification-host-discovery-adapter.test.ts"
+      ]
+    },
+    "adjacentInventoryRequestValidation": {
+      "passed": 37,
+      "failed": 0
+    },
+    "distinctTests": 106,
+    "redGreen": {
+      "baseMeaningfulAssertionFailures": 11,
+      "candidatePassed": 11,
+      "filteredEach": 7,
+      "notAdditionalDistinctTests": true,
+      "proofConsistency": "CONSISTENT"
+    },
+    "temporaryCompiledStdio": {
+      "variants": 3,
+      "syntheticRequestCasesPerVariant": 6,
+      "status": "PASS"
+    },
+    "typecheck": "PASS",
+    "ownedFilesEslint": "PASS",
+    "scope": "PASS",
+    "wholeSuite": "NOT_RUN"
+  },
+  "publicationExecution": "No new implementation or test reruns; this publication reads existing artifacts and verifies publication bytes only.",
+  "paidApiCalls": 0,
+  "claudeCalls": 0,
+  "hostModelTurns": 0,
+  "actualAgentSkillSelectionReadApplication": "NOT_RUN",
+  "independentAudit": "NOT_RUN; technical review notes below are author self-review"
+}

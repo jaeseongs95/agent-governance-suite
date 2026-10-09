@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "cloud-host-discovery-fix",
+  "contractDigest": "sha256:761396ec81d2933234bf8a3d6282cb054795b4bdca3e347bc2dc9784d196109b",
+  "requirements": [
+    "HOST_MEMBERSHIP_ENABLEMENT",
+    "HOST_COMPLETENESS",
+    "CONC-CANCEL-004"
+  ],
+  "scopeFiles": [
+    "mcp-server/src/skill-classification/gateway.ts",
+    "mcp-server/src/skill-classification/host-discovery-adapter.ts",
+    "tests/mcp/skill-classification-host-discovery.test.ts"
+  ],
+  "runner": "Existing Vitest 5.0.0",
+  "environment": "Same execution environment, Linux Node 24.19.0 UTC; fixed synthetic clock; no network/provider/model turns; same shared installed dependencies",
+  "cases": [
+    {
+      "id": "HOST_DISCOVERY_AND_TASK_FENCE",
+      "requirementIds": [
+        "HOST_MEMBERSHIP_ENABLEMENT",
+        "HOST_COMPLETENESS",
+        "CONC-CANCEL-004"
+      ],
+      "scenario": "11 HD1..HD5 and runtime-await cancellation/change assertions defined in the original pre-edit test-plan.json",
+      "entryPoint": "RuntimeSkillClassificationGateway.inventory/classify/accept",
+      "level": "integration",
+      "expectedBehavior": "Disabled and unavailable candidates retained with correct runnable flags; missing host discovery reported; awaited task changes prevent storage",
+      "oracle": "Exact flags and completeness issues; stale revision rejected; task changes return HOST_TASK_CHANGED_OR_NOT_OBSERVED with null selected and no stored choice",
+      "testFiles": [
+        "tests/mcp/skill-classification-host-discovery.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "red-green",
+      "sensitivityReason": "Base gateway ignores trusted host observation and stores selected after task changes during await. Candidate changes those behaviors.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/mcp/skill-classification-host-discovery.test.ts",
+        "-t",
+        "HD1|HD2|HD3|HD4|HD5|AC runtime",
+        "--reporter=verbose"
+      ]
+    }
+  ],
+  "exclusions": [
+    "Actual AGENT model choice/SKILL reading/application NOT_RUN",
+    "Actual paid APIs/Claude/model turns 0",
+    "Provider quality qualification NOT_RUN",
+    "New adapter unit cases and existing MCP regression are separately recorded green checks",
+    "All source except gateway stays identical between red and green; candidate adapter copied into red but not imported by the base gateway"
+  ]
+}

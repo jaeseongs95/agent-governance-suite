@@ -1,0 +1,1 @@
+{"status":"PASS","variants":[{"variant":"absent","classifyCalls":6,"status":"PASS"},{"variant":"trusted-file","classifyCalls":6,"status":"PASS"},{"variant":"missing-metadata","classifyCalls":6,"status":"PASS"}],"paidApiCalls":0,"claudeCalls":0,"hostModelTurns":0}

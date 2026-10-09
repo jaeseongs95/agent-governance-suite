@@ -1,0 +1,5 @@
+0f316dce675f386ecb90e444377ca2b7930bc176c2cc4bb21ca0fd3cfe81ae87  mcp-server/src/skill-classification/gateway.ts
+32bc7ae66550d7d5caf5f59c84a8590ccb476855b444a375bc42a3f9c912006b  mcp-server/src/skill-classification/host-discovery-adapter.ts
+523c04a17d6bc760201a188f4fcbcfac070d28c712873c4dd0b6f3b2775a2c12  tests/mcp/skill-classification-gateway.test.ts
+9b72ab40ce293fba5f561dd3ca71bd8e7614b9eead27743b5a03f0c692bdf790  tests/mcp/skill-classification-host-discovery-adapter.test.ts
+ad8db36590ff08e47d1ae0885c1558a927c804b5732f490b863b2992f5abcabf  tests/mcp/skill-classification-host-discovery.test.ts
