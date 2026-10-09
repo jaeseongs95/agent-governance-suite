@@ -1,0 +1,110 @@
+{
+  "caseId": "SS17",
+  "title": "변경 범위만 확인",
+  "familyId": "scope-only",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "live와 mock.",
+  "originalPrompt": "저장된 baseline과 현재 dirty worktree를 비교해서 제외 경로 침범과 기존 사용자 변경 겹침만 확인해 줘. 코드 품질 리뷰·복구·커밋은 하지 마.",
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS17",
+    "fields": {
+      "입력": "“저장된 baseline과 현재 dirty worktree를 비교해서 제외 경로 침범과 기존 사용자 변경 겹침만 확인해 줘. 코드 품질 리뷰·복구·커밋은 하지 마.”",
+      "필수추천": "R={SCOPE}.",
+      "금지추천 또는 행동": "scope guardian이라는 비공식 ID 출력; CR·P 추가; reset·restore·stash·clean.",
+      "허용선택": "A={}.",
+      "보류조건": "baseline이나 repository identity가 다르면 비교 보류. 변경 소유자를 추정하지 않는다.",
+      "통과기준": "정확한 ID change-scope-guardian을 추천하고 읽기 전용 경계를 유지한다.",
+      "증거": "E0, 적용 목적·baseline 유무·금지 행동 관측.",
+      "실행종류": "live와 mock."
+    },
+    "bodyDigest": "sha256:fd3ba1f3b2fff701256b70def1e94a73a41f573d383dd1271f70dfd974d9ffee"
+  },
+  "oracle": {
+    "required": [
+      "change-scope-guardian"
+    ],
+    "allowed": [],
+    "allowedConditions": {},
+    "forbidden": [
+      "code-review",
+      "ponytail"
+    ],
+    "notApplicable": [
+      "cs-engineering",
+      "test-engineering",
+      "software-security-auditor",
+      "orchestrator",
+      "korean-prose-editor"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "change-scope-guardian",
+        "path": "skills/change-scope-guardian/SKILL.md",
+        "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      }
+    ],
+    "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+  },
+  "variants": [
+    "base"
+  ]
+}

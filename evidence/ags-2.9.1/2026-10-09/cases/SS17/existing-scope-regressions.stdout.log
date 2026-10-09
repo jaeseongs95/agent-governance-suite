@@ -1,0 +1,14 @@
+✔ blocks explicit excluded changes (76.898088ms)
+✔ preserves untouched preexisting changes and detects overlap (60.692695ms)
+✔ rejects a baseline from another repository (65.855606ms)
+✔ returns INCONCLUSIVE instead of guessing ownership without a baseline (31.51607ms)
+✔ rejects a baseline captured for a different frozen task envelope (45.580776ms)
+✔ requires an externally frozen baseline digest even when a forged checksum is self-consistent (45.222442ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 517.175526

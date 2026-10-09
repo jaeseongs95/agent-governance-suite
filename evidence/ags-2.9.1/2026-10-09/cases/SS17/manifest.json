@@ -1,0 +1,262 @@
+{
+  "schemaVersion": "public-evidence-package/1.0",
+  "caseId": "SS17",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cases/SS17/",
+  "candidate": {
+    "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+    "targetBranch": "codex/skill-classification-2.9.1",
+    "checkoutMode": "isolated detached worktree at authorized fixed commit",
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixturePath": "tests/skill-classification/fixtures.json",
+    "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "oracleBinding": "recomputed using repository oracleDigest on full frozen data, no other case execution",
+    "sourceSpecPath": "TEST-SPEC.seq7.ko.md",
+    "sourceSpecFilePresent": false,
+    "sourceSpecUsed": "embedded originalPrompt + sourceSpec.fields + oracle + variants only"
+  },
+  "originalRecoveryMissing": [],
+  "nonexistentArtifacts": {
+    "productPatch": "NO_PATCH",
+    "sourceSpecStandaloneFile": "NOT_PRESENT_IN_FIXED_REPOSITORY; embedded source used"
+  },
+  "inputBytes": {
+    "utf8Bytes": 184,
+    "sha256": "c7b41247e26d7e18de50acacf0bf1f2e3bd03e38f0b100c899598f957f3d6279",
+    "requestDigest": "sha256:08cd8cedd0b48a1e3a3abc70558f640cf7931a0b5fa8ba18d24e15a24ac98b04"
+  },
+  "originalSources": [
+    {
+      "originalName": "existing-scope-regressions.stdout.log",
+      "bytes": 586,
+      "sha256": "b8b755926c3f68513df0cd43f8e01dc8442873265700ae4a3d85940c32e7a51a",
+      "availability": "RECOVERED"
+    },
+    {
+      "originalName": "SS17.commands.json",
+      "bytes": 1362,
+      "sha256": "f1d572a47997edac4c6e106580de3764beab071913d6b091cb6370543a92c97c",
+      "availability": "RECOVERED"
+    },
+    {
+      "originalName": "build-result.py",
+      "bytes": 9665,
+      "sha256": "2c51cd161208fc2f600bdbf05b9ce75a65ee0c93c1c6213625c2f297bebc0878",
+      "availability": "RECOVERED"
+    },
+    {
+      "originalName": "SS17-isolated-offline.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "availability": "RECOVERED"
+    },
+    {
+      "originalName": "SS17.offline.node.mjs",
+      "bytes": 23488,
+      "sha256": "69566fa9d52905f1856501a0b92b1793500f3e3442e0a519aaab5737a54fa0a3",
+      "availability": "RECOVERED"
+    },
+    {
+      "originalName": "SS17.result.json",
+      "bytes": 18402,
+      "sha256": "f707451efe49643355dfa42e4e73f240bc8b00ebb3e91e996ec486cce022e9d5",
+      "availability": "RECOVERED"
+    },
+    {
+      "originalName": "SS17.report.md",
+      "bytes": 4499,
+      "sha256": "23af0e7de7bb87a67075e139cb662e23590419e84301bbd2264e553648a8ff59",
+      "availability": "RECOVERED"
+    },
+    {
+      "originalName": "SS17-isolated-offline.stdout.log",
+      "bytes": 1553,
+      "sha256": "27a00bd0a767673be1940ff338a0df1a597da5470f9b0afcad09af7b164fade6",
+      "availability": "RECOVERED"
+    },
+    {
+      "originalName": "existing-scope-regressions.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "availability": "RECOVERED"
+    },
+    {
+      "originalName": "SS17.observations.json",
+      "bytes": 1214060,
+      "sha256": "3cc70f475277c89524e2f9b4e21f4c8797be73545de8705afae03b2b26f2f91b",
+      "availability": "RECOVERED"
+    },
+    {
+      "originalName": "SS17.git-readonly-trace.jsonl",
+      "bytes": 6016,
+      "sha256": "00c9a7f4bd4dbd258d8737cf7a3020995ade6c995add8e6233b73616958cf0dc",
+      "availability": "RECOVERED"
+    },
+    {
+      "originalName": "tests/skill-classification/fixtures.json",
+      "bytes": 142450,
+      "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "availability": "RECOVERED"
+    }
+  ],
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 4999,
+      "sha256": "934a1fa033e659b02eb9c7f3f1d08ca9e1c03fa61874bb1b6c59da8baa8607f8",
+      "transformation": "New publication explanation only; no new test evidence."
+    },
+    {
+      "path": "SS17-isolated-offline.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "Byte-identical original stdout/stderr; no redaction needed.",
+      "original": {
+        "originalName": "SS17-isolated-offline.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "availability": "RECOVERED"
+      }
+    },
+    {
+      "path": "SS17-isolated-offline.stdout.log",
+      "bytes": 1553,
+      "sha256": "27a00bd0a767673be1940ff338a0df1a597da5470f9b0afcad09af7b164fade6",
+      "transformation": "Byte-identical original stdout/stderr; no redaction needed.",
+      "original": {
+        "originalName": "SS17-isolated-offline.stdout.log",
+        "bytes": 1553,
+        "sha256": "27a00bd0a767673be1940ff338a0df1a597da5470f9b0afcad09af7b164fade6",
+        "availability": "RECOVERED"
+      }
+    },
+    {
+      "path": "SS17.offline.node.mjs",
+      "bytes": 23500,
+      "sha256": "b3ead3c63af42779f643d55aae0af2185046d3b96270c9032846b9bdf09d6f59",
+      "transformation": "Portability-only defaults: use repository cwd and reproduction output; replace synthetic fixture email with another non-personal synthetic value. Assertions/expected behavior unchanged. Public reproduction file NOT_RUN; original file produced existing 21 PASS.",
+      "original": {
+        "originalName": "SS17.offline.node.mjs",
+        "bytes": 23488,
+        "sha256": "69566fa9d52905f1856501a0b92b1793500f3e3442e0a519aaab5737a54fa0a3",
+        "availability": "RECOVERED"
+      }
+    },
+    {
+      "path": "SS17.result.public.json",
+      "bytes": 19718,
+      "sha256": "744ecab37af0ca36965021f0505c7ec5eff707274f683e3f3c12528b1c7e334b",
+      "transformation": "Sanitize private local path values and replace original artifact locators with filename/digest provenance; preserve all original result statuses/counts and API0 limitations.",
+      "original": {
+        "originalName": "SS17.result.json",
+        "bytes": 18402,
+        "sha256": "f707451efe49643355dfa42e4e73f240bc8b00ebb3e91e996ec486cce022e9d5",
+        "availability": "RECOVERED"
+      }
+    },
+    {
+      "path": "commands.public.json",
+      "bytes": 1317,
+      "sha256": "a268972f8a283101b39d6091fba6fdbc2100ca88117944487d983756a7b3d8a4",
+      "transformation": "Replace private cwd/script/log path values with role placeholders; preserve exact recorded argv structure, exit, timing and evidence kind.",
+      "original": {
+        "originalName": "SS17.commands.json",
+        "bytes": 1362,
+        "sha256": "f1d572a47997edac4c6e106580de3764beab071913d6b091cb6370543a92c97c",
+        "availability": "RECOVERED"
+      }
+    },
+    {
+      "path": "existing-scope-regressions.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "Byte-identical original stdout/stderr; no redaction needed.",
+      "original": {
+        "originalName": "existing-scope-regressions.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "availability": "RECOVERED"
+      }
+    },
+    {
+      "path": "existing-scope-regressions.stdout.log",
+      "bytes": 586,
+      "sha256": "b8b755926c3f68513df0cd43f8e01dc8442873265700ae4a3d85940c32e7a51a",
+      "transformation": "Byte-identical original stdout/stderr; no redaction needed.",
+      "original": {
+        "originalName": "existing-scope-regressions.stdout.log",
+        "bytes": 586,
+        "sha256": "b8b755926c3f68513df0cd43f8e01dc8442873265700ae4a3d85940c32e7a51a",
+        "availability": "RECOVERED"
+      }
+    },
+    {
+      "path": "fixture.SS17.json",
+      "bytes": 4132,
+      "sha256": "ee62e35e82e5e5861df770df10c127640e880cf77aa86ac7e33c483c6a1483be",
+      "transformation": "Extract SS17 only; no new oracle or variants",
+      "original": {
+        "originalName": "tests/skill-classification/fixtures.json",
+        "bytes": 142450,
+        "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "availability": "RECOVERED"
+      },
+      "sourceSelector": "cases[caseId=SS17]"
+    },
+    {
+      "path": "git-readonly-trace.public.jsonl",
+      "bytes": 4916,
+      "sha256": "65204c72988370e9a86bbae724f63331a50db38ba247ff541342eae294e3f9d1",
+      "transformation": "Replace synthetic sandbox absolute location with role placeholder; preserve all 55 existing command observations.",
+      "original": {
+        "originalName": "SS17.git-readonly-trace.jsonl",
+        "bytes": 6016,
+        "sha256": "00c9a7f4bd4dbd258d8737cf7a3020995ade6c995add8e6233b73616958cf0dc",
+        "availability": "RECOVERED"
+      }
+    },
+    {
+      "path": "input.originalPrompt.txt",
+      "bytes": 184,
+      "sha256": "c7b41247e26d7e18de50acacf0bf1f2e3bd03e38f0b100c899598f957f3d6279",
+      "transformation": "Extract exact UTF-8 originalPrompt bytes without appended newline",
+      "original": {
+        "originalName": "tests/skill-classification/fixtures.json",
+        "bytes": 142450,
+        "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "availability": "RECOVERED"
+      },
+      "sourceSelector": "cases[caseId=SS17].originalPrompt"
+    },
+    {
+      "path": "observations.public.json",
+      "bytes": 89129,
+      "sha256": "94afda1cef5a8364229f1f5f9d2339c2a0afb9593d553ae7717ddddffb05e031",
+      "transformation": "Sanitize private local path values; deduplicate repeated inventory by reference; reduce known-gap metadata to relevant fields. Original artifact digests unchanged; sanitized baseline/report objects are evidence views, not validator-ready inputs.",
+      "original": {
+        "originalName": "SS17.observations.json",
+        "bytes": 1214060,
+        "sha256": "3cc70f475277c89524e2f9b4e21f4c8797be73545de8705afae03b2b26f2f91b",
+        "availability": "RECOVERED"
+      }
+    },
+    {
+      "path": "request.public.json",
+      "bytes": 254900,
+      "sha256": "3c2059fa4158c44c3276f0ac0ec3b4ac7a4ef04c8b0947aab9f2985529486d3a",
+      "transformation": "Extract existing request with entire 24-skill inventory; no semantic changes",
+      "original": {
+        "originalName": "SS17.observations.json",
+        "bytes": 1214060,
+        "sha256": "3cc70f475277c89524e2f9b4e21f4c8797be73545de8705afae03b2b26f2f91b",
+        "availability": "RECOVERED"
+      },
+      "sourceSelector": "records[boundaryId=base-request-preserves-entire-prompt-inventory-and-unknown-context].observed.request"
+    }
+  ],
+  "hashCoverage": "files excludes manifest.json and SHA256SUMS to avoid cycles; SHA256SUMS includes manifest.json and all payload, excludes itself",
+  "newTests": 0,
+  "newAPIModelCalls": 0,
+  "redaction": "Private local locations replaced by role placeholders; repeated public inventory deduplicated; synthetic email portability edit only; no credentials/environment values/personal chats included."
+}

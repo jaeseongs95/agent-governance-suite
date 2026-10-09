@@ -1,0 +1,29 @@
+✔ SS17 frozen-input-and-source-bindings (11.416786ms)
+✔ SS17 base-request-preserves-entire-prompt-inventory-and-unknown-context (15.050558ms)
+✔ SS17 unknown-null-is-distinct-from-confirmed-empty (20.349768ms)
+✔ SS17 byte-limit-keeps-final-prohibition-or-abstains-without-trimming (21.576783ms)
+✔ SS17 exact-canonical-advice (6.032373ms)
+✔ SS17 unofficial-id-rejected (10.77885ms)
+✔ SS17 forbidden-code-review-rejected (11.851161ms)
+✔ SS17 forbidden-ponytail-rejected (10.851086ms)
+✔ SS17 unnecessary-orchestrator-rejected (11.769037ms)
+✔ SS17 empty-advice-missing-required (11.845625ms)
+✔ SS17 response-unknown-id-and-missing-candidate-rejected (10.765513ms)
+✔ SS17 mock-provider-support-never-selects-agent-or-mints-receipt (98.805516ms)
+✔ SS17 no-host-observation-keeps-all-four-stages-NOTRUN (10.251251ms)
+✔ SS17 unconfigured-host-runtime-has-no-qualified-provider (76.134684ms)
+✔ SS17 known-host-membership-supply-gap (107.399168ms)
+✔ SS17 base-dirty-excluded-plus-preexisting-overlap-readonly-CLI (616.292405ms)
+✔ SS17 preexisting-user-change-untouched-readonly-CLI (581.573243ms)
+✔ SS17 missing-baseline-never-guesses-ownership-readonly-CLI (300.729649ms)
+✔ SS17 repository-identity-mismatch-abstains-readonly-CLI (610.404247ms)
+✔ SS17 baseline-digest-and-task-mismatch-abstain-readonly-CLI (703.235118ms)
+✔ SS17 rename-excluded-original-path-remains-blocked-readonly-CLI (586.945214ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4388.989313

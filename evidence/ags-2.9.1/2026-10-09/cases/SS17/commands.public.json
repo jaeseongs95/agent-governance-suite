@@ -1,0 +1,36 @@
+[
+  {
+    "name": "existing-scope-regressions",
+    "command": [
+      "node",
+      "--test",
+      "--test-name-pattern",
+      "^(blocks explicit excluded changes|preserves untouched preexisting changes and detects overlap|rejects a baseline from another repository|returns INCONCLUSIVE instead of guessing ownership without a baseline|requires an externally frozen baseline digest even when a forged checksum is self-consistent|rejects a baseline captured for a different frozen task envelope)$",
+      "tests/change-scope-guardian/change-scope.node.mjs"
+    ],
+    "cwd": "<PINNED_REPO>",
+    "exit": 0,
+    "seconds": 0.5609068870544434,
+    "executionKind": "existing-regression",
+    "API0": true,
+    "stdout": "<ORIGINAL_EVIDENCE>/existing-scope-regressions.stdout.log",
+    "stderr": "<ORIGINAL_EVIDENCE>/existing-scope-regressions.stderr.log"
+  },
+  {
+    "name": "SS17-isolated-offline",
+    "command": [
+      "node",
+      "--import",
+      "tsx",
+      "--test",
+      "<ORIGINAL_EVIDENCE>/SS17.offline.node.mjs"
+    ],
+    "cwd": "<PINNED_REPO>",
+    "exit": 0,
+    "seconds": 4.428990602493286,
+    "executionKind": "offline-isolated",
+    "API0": true,
+    "stdout": "<ORIGINAL_EVIDENCE>/SS17-isolated-offline.stdout.log",
+    "stderr": "<ORIGINAL_EVIDENCE>/SS17-isolated-offline.stderr.log"
+  }
+]

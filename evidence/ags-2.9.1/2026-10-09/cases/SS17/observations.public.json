@@ -1,0 +1,2227 @@
+{
+  "records": [
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "frozen-input-and-source-bindings",
+      "executionKind": "offline-isolated",
+      "input": {
+        "caseId": "SS17",
+        "variants": [
+          "base"
+        ]
+      },
+      "expected": {
+        "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+        "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+        "fixtureSha": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "oracleSha": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+      },
+      "observed": {
+        "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+        "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+        "fixtureSha": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "oracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+        "sourceRefs": [
+          {
+            "skillId": "change-scope-guardian",
+            "path": "skills/change-scope-guardian/SKILL.md",
+            "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e",
+            "actual": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+          },
+          {
+            "skillId": "code-review",
+            "path": "skills/code-review/SKILL.md",
+            "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+            "actual": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+          },
+          {
+            "skillId": "ponytail",
+            "path": "skills/ponytail/SKILL.md",
+            "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+            "actual": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+          },
+          {
+            "skillId": "cs-engineering",
+            "path": "skills/cs-engineering/SKILL.md",
+            "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+            "actual": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+          },
+          {
+            "skillId": "test-engineering",
+            "path": "skills/test-engineering/SKILL.md",
+            "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+            "actual": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+          },
+          {
+            "skillId": "software-security-auditor",
+            "path": "skills/software-security-auditor/SKILL.md",
+            "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+            "actual": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+          },
+          {
+            "skillId": "orchestrator",
+            "path": "skills/orchestrator/SKILL.md",
+            "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+            "actual": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+          },
+          {
+            "skillId": "korean-prose-editor",
+            "path": "skills/korean-prose-editor/SKILL.md",
+            "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+            "actual": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+          }
+        ],
+        "embeddedSourceSpec": {
+          "path": "TEST-SPEC.seq7.ko.md",
+          "section": "SS17",
+          "fields": {
+            "입력": "“저장된 baseline과 현재 dirty worktree를 비교해서 제외 경로 침범과 기존 사용자 변경 겹침만 확인해 줘. 코드 품질 리뷰·복구·커밋은 하지 마.”",
+            "필수추천": "R={SCOPE}.",
+            "금지추천 또는 행동": "scope guardian이라는 비공식 ID 출력; CR·P 추가; reset·restore·stash·clean.",
+            "허용선택": "A={}.",
+            "보류조건": "baseline이나 repository identity가 다르면 비교 보류. 변경 소유자를 추정하지 않는다.",
+            "통과기준": "정확한 ID change-scope-guardian을 추천하고 읽기 전용 경계를 유지한다.",
+            "증거": "E0, 적용 목적·baseline 유무·금지 행동 관측.",
+            "실행종류": "live와 mock."
+          },
+          "bodyDigest": "sha256:fd3ba1f3b2fff701256b70def1e94a73a41f573d383dd1271f70dfd974d9ffee"
+        }
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "base-request-preserves-entire-prompt-inventory-and-unknown-context",
+      "executionKind": "offline-isolated",
+      "input": {
+        "originalPrompt": "저장된 baseline과 현재 dirty worktree를 비교해서 제외 경로 침범과 기존 사용자 변경 겹침만 확인해 줘. 코드 품질 리뷰·복구·커밋은 하지 마."
+      },
+      "expected": {
+        "inventoryCount": 24,
+        "unknownContext": null
+      },
+      "observed": {
+        "request": {
+          "publicEvidenceRef": "request.public.json",
+          "requestDigest": "sha256:08cd8cedd0b48a1e3a3abc70558f640cf7931a0b5fa8ba18d24e15a24ac98b04",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "skillsCount": 24
+        },
+        "projection": {
+          "projectionRevision": "1.0.0",
+          "payloadBytes": 124627,
+          "preservedFields": [
+            "originalPrompt",
+            "confirmedContext",
+            "taxonomyRevision",
+            "classificationCriteriaRef",
+            "skills.* except sourceRefs/sourceMap"
+          ],
+          "omittedFields": [
+            "schemaVersion",
+            "requestId",
+            "operationId",
+            "promptDigest",
+            "contextSources",
+            "inventoryDigest",
+            "requestDigest",
+            "skills.*.sourceRefs",
+            "skills.*.sourceMap"
+          ],
+          "payload": {
+            "originalPrompt": "저장된 baseline과 현재 dirty worktree를 비교해서 제외 경로 침범과 기존 사용자 변경 겹침만 확인해 줘. 코드 품질 리뷰·복구·커밋은 하지 마.",
+            "confirmedContext": {
+              "taskRevision": null,
+              "objective": null,
+              "actions": null,
+              "targets": null,
+              "constraints": null,
+              "prohibitedActions": null,
+              "background": null
+            },
+            "taxonomyRevision": "1.0.0",
+            "classificationCriteriaRef": "skills/orchestrator/references/skill-classification.md",
+            "skillsRef": "request.public.json#/skills",
+            "projectionRule": "Remove only sourceRefs/sourceMap; full original captured payload retained privately."
+          }
+        }
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "unknown-null-is-distinct-from-confirmed-empty",
+      "executionKind": "offline-isolated",
+      "input": {
+        "actions": [
+          null,
+          []
+        ]
+      },
+      "expected": {
+        "sameSet": false,
+        "unknown": null,
+        "confirmedEmpty": []
+      },
+      "observed": {
+        "unknown": null,
+        "confirmedEmpty": [],
+        "sameSet": false
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "byte-limit-keeps-final-prohibition-or-abstains-without-trimming",
+      "executionKind": "offline-isolated",
+      "input": {
+        "prompt": "저장된 baseline과 현재 dirty worktree를 비교해서 제외 경로 침범과 기존 사용자 변경 겹침만 확인해 줘. 코드 품질 리뷰·복구·커밋은 하지 마."
+      },
+      "expected": {
+        "atLimit": "preserved",
+        "belowLimit": "INPUT_TOO_LONG",
+        "omittedRanges": []
+      },
+      "observed": {
+        "payloadBytes": 124627,
+        "failure": {
+          "message": "INPUT_TOO_LONG",
+          "payloadBytes": 124627,
+          "maximumInputBytes": 124626,
+          "omittedRanges": []
+        }
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "exact-canonical-advice",
+      "executionKind": "offline-isolated",
+      "input": {
+        "syntheticAdvice": [
+          "change-scope-guardian"
+        ]
+      },
+      "expected": {
+        "verdict": "PASS"
+      },
+      "observed": {
+        "caseId": "SS17",
+        "verdict": "PASS",
+        "missingRequired": [],
+        "forbidden": [],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 1,
+        "falsePositives": 0,
+        "requiredHits": 1,
+        "answered": true,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": []
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "unofficial-id-rejected",
+      "executionKind": "offline-isolated",
+      "input": {
+        "syntheticAdvice": [
+          "scope guardian"
+        ]
+      },
+      "expected": {
+        "verdict": "FAIL"
+      },
+      "observed": {
+        "caseId": "SS17",
+        "verdict": "FAIL",
+        "missingRequired": [
+          "change-scope-guardian"
+        ],
+        "forbidden": [],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 0,
+        "falsePositives": 1,
+        "requiredHits": 0,
+        "answered": true,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": [
+          "UNKNOWN_CANONICAL_ID"
+        ]
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "forbidden-code-review-rejected",
+      "executionKind": "offline-isolated",
+      "input": {
+        "syntheticAdvice": [
+          "change-scope-guardian",
+          "code-review"
+        ]
+      },
+      "expected": {
+        "verdict": "FAIL"
+      },
+      "observed": {
+        "caseId": "SS17",
+        "verdict": "FAIL",
+        "missingRequired": [],
+        "forbidden": [
+          "code-review"
+        ],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 1,
+        "falsePositives": 1,
+        "requiredHits": 1,
+        "answered": true,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": []
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "forbidden-ponytail-rejected",
+      "executionKind": "offline-isolated",
+      "input": {
+        "syntheticAdvice": [
+          "change-scope-guardian",
+          "ponytail"
+        ]
+      },
+      "expected": {
+        "verdict": "FAIL"
+      },
+      "observed": {
+        "caseId": "SS17",
+        "verdict": "FAIL",
+        "missingRequired": [],
+        "forbidden": [
+          "ponytail"
+        ],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 1,
+        "falsePositives": 1,
+        "requiredHits": 1,
+        "answered": true,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": []
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "unnecessary-orchestrator-rejected",
+      "executionKind": "offline-isolated",
+      "input": {
+        "syntheticAdvice": [
+          "change-scope-guardian",
+          "orchestrator"
+        ]
+      },
+      "expected": {
+        "verdict": "FAIL"
+      },
+      "observed": {
+        "caseId": "SS17",
+        "verdict": "FAIL",
+        "missingRequired": [],
+        "forbidden": [],
+        "unnecessary": [
+          "orchestrator"
+        ],
+        "unadjudicated": [],
+        "truePositives": 1,
+        "falsePositives": 1,
+        "requiredHits": 1,
+        "answered": true,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": []
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "empty-advice-missing-required",
+      "executionKind": "offline-isolated",
+      "input": {
+        "syntheticAdvice": []
+      },
+      "expected": {
+        "verdict": "FAIL"
+      },
+      "observed": {
+        "caseId": "SS17",
+        "verdict": "FAIL",
+        "missingRequired": [
+          "change-scope-guardian"
+        ],
+        "forbidden": [],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 0,
+        "falsePositives": 0,
+        "requiredHits": 0,
+        "answered": true,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": []
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "response-unknown-id-and-missing-candidate-rejected",
+      "executionKind": "offline-isolated",
+      "input": {
+        "syntheticResp": "canonical/full, alias/full, incomplete"
+      },
+      "expected": {
+        "canonical": [],
+        "alias": "UNKNOWN_SKILL_ID",
+        "incomplete": "MISSING_CANDIDATE_JUDGMENT"
+      },
+      "observed": {
+        "canonical": [],
+        "alias": [
+          "UNKNOWN_SKILL_ID",
+          "MISSING_CANDIDATE_JUDGMENT"
+        ],
+        "incomplete": [
+          "MISSING_CANDIDATE_JUDGMENT"
+        ]
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "mock-provider-support-never-selects-agent-or-mints-receipt",
+      "executionKind": "offline-isolated",
+      "input": {
+        "originalPrompt": "저장된 baseline과 현재 dirty worktree를 비교해서 제외 경로 침범과 기존 사용자 변경 겹침만 확인해 줘. 코드 품질 리뷰·복구·커밋은 하지 마.",
+        "provider": "in-memory synthetic vendor; JEV OFF"
+      },
+      "expected": {
+        "advice": [
+          "change-scope-guardian"
+        ],
+        "selected": null,
+        "acceptError": "HOST_SELECTION_NOT_OBSERVED",
+        "externalCalls": 0
+      },
+      "observed": {
+        "classified": {
+          "result": {
+            "request": {
+              "publicEvidenceRef": "request.public.json",
+              "requestDigest": "sha256:08cd8cedd0b48a1e3a3abc70558f640cf7931a0b5fa8ba18d24e15a24ac98b04",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82"
+            },
+            "config": {
+              "jevEnabled": false,
+              "mode": "select",
+              "providerProfileRegistryRef": "offline",
+              "externalClassificationAllowed": true,
+              "configRevision": "SS17-offline",
+              "timeoutMs": 30000
+            },
+            "profileRevision": "offline",
+            "snapshot": {
+              "taskRevision": null,
+              "configRevision": "SS17-offline",
+              "profileRevision": "offline",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "requestDigest": "sha256:08cd8cedd0b48a1e3a3abc70558f640cf7931a0b5fa8ba18d24e15a24ac98b04",
+              "cancelled": false
+            },
+            "attempts": [
+              {
+                "providerKind": "vendor",
+                "profileId": "SS17-offline-only",
+                "modelId": "synthetic-no-model-call",
+                "reasoningEffort": "low",
+                "dispatchState": "started",
+                "status": "SUCCESS",
+                "errorCode": null,
+                "timedOut": false,
+                "usage": {
+                  "inputTokens": null,
+                  "outputTokens": null,
+                  "cachedInputTokens": null,
+                  "actualCostUsd": 0
+                },
+                "reservedCostUsd": 0
+              }
+            ],
+            "response": {
+              "schemaVersion": "1.0.0",
+              "requestId": "SS17-base-offline",
+              "operationId": "SS17-base-offline",
+              "requestDigest": "sha256:08cd8cedd0b48a1e3a3abc70558f640cf7931a0b5fa8ba18d24e15a24ac98b04",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "status": "SUCCESS",
+              "judgments": [
+                {
+                  "skillId": "acceptance-evidence-validator",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "blocker-diagnostician",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "change-scope-guardian",
+                  "judgment": "needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "code-review",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "codex-token-usage-analyzer",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "context-continuity",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "coordinate-subagents",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "cs-engineering",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "evaluation-validity-auditor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "independent-audit-gate",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "independent-deliberation-panel",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "instruction-scope-resolver",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "iteration-frame-auditor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "model-effort-advisor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "mutation-risk-preflight",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "orchestrator",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "ponytail",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "recovery-strategy-selector",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "session-board",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "task-contract",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "test-engineering",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "workspace-convention-profiler",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "explicit-offline-oracle-control"
+                  ],
+                  "uncertaintyReason": null
+                }
+              ],
+              "unresolvedItems": [],
+              "error": null
+            }
+          },
+          "classificationResponseRef": "sha256:fa7602d4e178769fd7c4652760d4039a5607892f7a2877b9e6d0d6751efbd0cb",
+          "agentSelectedSkillIds": null,
+          "selectionStatus": "PROPOSED",
+          "adviceApplied": false
+        },
+        "rejected": {
+          "valid": false,
+          "errors": [
+            "HOST_SELECTION_NOT_OBSERVED"
+          ],
+          "agentSelectedSkillIds": null
+        },
+        "mockProviderCalls": 1,
+        "API0": true,
+        "notActualAgentSelection": true
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "no-host-observation-keeps-all-four-stages-NOTRUN",
+      "executionKind": "offline-isolated",
+      "input": {
+        "observation": null
+      },
+      "expected": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "observed": {
+        "selected": null,
+        "hostReceipt": null,
+        "stages": {
+          "selected": "NOTRUN",
+          "read": "NOTRUN",
+          "applied": "NOTRUN",
+          "verified": "NOTRUN"
+        },
+        "score": {
+          "caseId": "SS17",
+          "verdict": "NOT_RUN",
+          "missingRequired": [
+            "change-scope-guardian"
+          ],
+          "forbidden": [],
+          "unnecessary": [],
+          "unadjudicated": [],
+          "truePositives": 0,
+          "falsePositives": 0,
+          "requiredHits": 0,
+          "answered": false,
+          "abstained": false,
+          "unnecessaryAbstention": false,
+          "reasons": []
+        },
+        "unsupported": {
+          "caseId": "SS17",
+          "verdict": "FAIL",
+          "missingRequired": [],
+          "forbidden": [],
+          "unnecessary": [],
+          "unadjudicated": [],
+          "truePositives": 1,
+          "falsePositives": 0,
+          "requiredHits": 1,
+          "answered": false,
+          "abstained": false,
+          "unnecessaryAbstention": false,
+          "reasons": [
+            "HOST_SELECTION_RECEIPT_MISSING_OR_MISMATCH"
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "unconfigured-host-runtime-has-no-qualified-provider",
+      "executionKind": "offline-isolated",
+      "input": {
+        "configurationEnvPresent": false
+      },
+      "expected": {
+        "response": "UNAVAILABLE",
+        "attempts": [],
+        "externalCalls": 0
+      },
+      "observed": {
+        "runtime": {
+          "config": {
+            "jevEnabled": true,
+            "mode": "select",
+            "providerProfileRegistryRef": "unconfigured",
+            "externalClassificationAllowed": false,
+            "configRevision": "unconfigured",
+            "timeoutMs": 30000
+          },
+          "registry": {
+            "schemaVersion": "1.0.0",
+            "profileRevision": "unconfigured",
+            "profiles": []
+          },
+          "allowRemotePrivateContent": false
+        },
+        "classified": {
+          "result": {
+            "request": {
+              "publicEvidenceRef": "request.public.json",
+              "requestDigest": "sha256:08cd8cedd0b48a1e3a3abc70558f640cf7931a0b5fa8ba18d24e15a24ac98b04",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82"
+            },
+            "config": {
+              "jevEnabled": true,
+              "mode": "select",
+              "providerProfileRegistryRef": "unconfigured",
+              "externalClassificationAllowed": false,
+              "configRevision": "unconfigured",
+              "timeoutMs": 30000
+            },
+            "profileRevision": "unconfigured",
+            "snapshot": {
+              "taskRevision": null,
+              "configRevision": "unconfigured",
+              "profileRevision": "unconfigured",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "requestDigest": "sha256:08cd8cedd0b48a1e3a3abc70558f640cf7931a0b5fa8ba18d24e15a24ac98b04",
+              "cancelled": false
+            },
+            "attempts": [],
+            "response": {
+              "schemaVersion": "1.0.0",
+              "requestId": "SS17-base-offline",
+              "operationId": "SS17-base-offline",
+              "requestDigest": "sha256:08cd8cedd0b48a1e3a3abc70558f640cf7931a0b5fa8ba18d24e15a24ac98b04",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "status": "UNAVAILABLE",
+              "judgments": [],
+              "unresolvedItems": [
+                {
+                  "skillId": null,
+                  "reasonCode": "PROFILE_UNAVAILABLE"
+                }
+              ],
+              "error": {
+                "code": "PROFILE_UNAVAILABLE",
+                "retryable": false,
+                "dispatchState": "not-started"
+              }
+            }
+          },
+          "classificationResponseRef": "sha256:7744c6bd8adfcaa49c7d5d73477fcafaf2e4d0014af8c6ba7554350be597052f",
+          "agentSelectedSkillIds": null,
+          "selectionStatus": "PROPOSED",
+          "adviceApplied": false
+        },
+        "API0": true
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "known-host-membership-supply-gap",
+      "executionKind": "offline-isolated",
+      "input": {
+        "hostObservedInstalledSkillIds": [],
+        "hostObservedSupportedSkillIds": []
+      },
+      "expected": {
+        "directInventoryInstalled": false,
+        "gatewayInventoryInstalled": true,
+        "knownFinding": "host-active-state-supply-gap"
+      },
+      "observed": {
+        "explicitHostObservation": {
+          "skillId": "change-scope-guardian",
+          "enabled": true,
+          "installed": false,
+          "hostSupported": false,
+          "dependencies": []
+        },
+        "gatewayDefault": {
+          "skillId": "change-scope-guardian",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "dependencies": []
+        },
+        "knownFinding": "host-active-state-supply-gap",
+        "status": "REPRODUCED",
+        "notNewRootCause": true,
+        "hostLive": "NOTRUN"
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "base-dirty-excluded-plus-preexisting-overlap-readonly-CLI",
+      "executionKind": "offline-isolated",
+      "input": {
+        "syntheticRepo": "base",
+        "baseline": "saved before second user-file edit",
+        "excluded": "docs/**"
+      },
+      "expected": {
+        "verdict": "BLOCKED",
+        "excluded": 1,
+        "overlap": 1,
+        "repositoryUnchanged": true
+      },
+      "observed": {
+        "baseline": {
+          "command": [
+            "<NODE_EXECUTABLE>",
+            "<PINNED_REPO>/skills/change-scope-guardian/scripts/capture-workspace-baseline.mjs"
+          ],
+          "exit": 0,
+          "stdout": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"repository\": {\n    \"root\": \"<SYNTHETIC_SCOPE_SANDBOX>/base\",\n    \"identity\": \"606f501748aa30de84c7c3cde5af8f4f06b1db0a84504a6a5f6015a69147c1e0\"\n  },\n  \"head\": \"577ed8e5c0998c4f37a5d0b788c1cc8c0f5ad62b\",\n  \"comparisonTarget\": \"working-tree\",\n  \"targetRef\": \"WORKTREE\",\n  \"taskEnvelopeDigest\": \"15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a\",\n  \"entries\": [\n    {\n      \"path\": \"docs/excluded.txt\",\n      \"status\": \"clean\",\n      \"sha256\": \"cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc\",\n      \"size\": 10,\n      \"kind\": \"file\",\n      \"originalPath\": null\n    },\n    {\n      \"path\": \"src/user.txt\",\n      \"status\": \".M\",\n      \"sha256\": \"276dd93fed121186b0cc5e8b40f93580c31144adaa280fb234d08cda622956a4\",\n      \"size\": 22,\n      \"kind\": \"file\",\n      \"originalPath\": null\n    }\n  ],\n  \"manifestSha256\": \"39e591a966155ec5bd058687c11fa5e5e84df8ddfc868e2d8c451b214deef62b\",\n  \"capturedAt\": \"2026-10-09T02:56:44.601Z\"\n}\n",
+          "stderr": "",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "mode": "capture",
+            "repositoryRoot": "<SYNTHETIC_SCOPE_SANDBOX>/base",
+            "comparisonTarget": "working-tree",
+            "taskEnvelope": {
+              "schemaVersion": "1.0.0",
+              "taskId": "SS17-synthetic-scope",
+              "objective": "Read-only check of excluded paths and preexisting overlap",
+              "scope": {
+                "included": [
+                  "src/**"
+                ],
+                "excluded": [
+                  "docs/**"
+                ]
+              },
+              "acceptanceCriteria": [
+                "Report scope and overlap only"
+              ],
+              "riskLevel": "low",
+              "workUnits": [],
+              "requiredCapabilities": [],
+              "constraints": [
+                "read-only",
+                "do not infer ownership"
+              ],
+              "authorization": {
+                "allowedActions": [
+                  "read"
+                ],
+                "prohibitedActions": [
+                  "reset",
+                  "restore",
+                  "stash",
+                  "clean",
+                  "checkout",
+                  "commit",
+                  "quality-review"
+                ],
+                "approvalRequired": []
+              },
+              "decision": {
+                "complexity": "simple",
+                "hasConflicts": false
+              },
+              "orchestration": {
+                "requested": false,
+                "mcpAvailable": false
+              }
+            }
+          },
+          "output": {
+            "schemaVersion": "1.0.0",
+            "repository": {
+              "root": "<SYNTHETIC_SCOPE_SANDBOX>/base",
+              "identity": "606f501748aa30de84c7c3cde5af8f4f06b1db0a84504a6a5f6015a69147c1e0"
+            },
+            "head": "577ed8e5c0998c4f37a5d0b788c1cc8c0f5ad62b",
+            "comparisonTarget": "working-tree",
+            "targetRef": "WORKTREE",
+            "taskEnvelopeDigest": "15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a",
+            "entries": [
+              {
+                "path": "docs/excluded.txt",
+                "status": "clean",
+                "sha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                "size": 10,
+                "kind": "file",
+                "originalPath": null
+              },
+              {
+                "path": "src/user.txt",
+                "status": ".M",
+                "sha256": "276dd93fed121186b0cc5e8b40f93580c31144adaa280fb234d08cda622956a4",
+                "size": 22,
+                "kind": "file",
+                "originalPath": null
+              }
+            ],
+            "manifestSha256": "39e591a966155ec5bd058687c11fa5e5e84df8ddfc868e2d8c451b214deef62b",
+            "capturedAt": "2026-10-09T02:56:44.601Z"
+          },
+          "repositoryUnchanged": true
+        },
+        "result": {
+          "command": [
+            "<NODE_EXECUTABLE>",
+            "<PINNED_REPO>/skills/change-scope-guardian/scripts/compare-change-scope.mjs"
+          ],
+          "exit": 0,
+          "stdout": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"repositoryIdentity\": \"606f501748aa30de84c7c3cde5af8f4f06b1db0a84504a6a5f6015a69147c1e0\",\n  \"baselineDigest\": \"39e591a966155ec5bd058687c11fa5e5e84df8ddfc868e2d8c451b214deef62b\",\n  \"currentDigest\": \"3649c389bc9ea974da0f4316d0217426031fcbbd5d283efef3aeb4804e34c6e2\",\n  \"taskEnvelopeDigest\": \"15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a\",\n  \"changes\": [\n    {\n      \"path\": \"docs/excluded.txt\",\n      \"originalPath\": null,\n      \"status\": \".M\",\n      \"classification\": \"excluded\",\n      \"baselineSha256\": \"cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc\",\n      \"currentSha256\": \"b70b4f5e2dadbde0e9188fe54d099f63375b9c04151ff7d8e458baf558457dc8\",\n      \"matchedRule\": \"docs/**\"\n    },\n    {\n      \"path\": \"src/user.txt\",\n      \"originalPath\": null,\n      \"status\": \".M\",\n      \"classification\": \"preexisting-overlap\",\n      \"baselineSha256\": \"276dd93fed121186b0cc5e8b40f93580c31144adaa280fb234d08cda622956a4\",\n      \"currentSha256\": \"0d95a4ae29df7506101d9a2b4abd00d1961bacfdbdc665428dbbc7b93ebcd7f6\",\n      \"matchedRule\": \"src/**\"\n    }\n  ],\n  \"summary\": {\n    \"in-scope\": 0,\n    \"excluded\": 1,\n    \"unplanned\": 0,\n    \"preexisting-untouched\": 0,\n    \"preexisting-overlap\": 1,\n    \"ownership-unknown\": 0\n  },\n  \"findings\": [\n    \"excluded:docs/excluded.txt\",\n    \"preexisting-overlap:src/user.txt\"\n  ],\n  \"verdict\": \"BLOCKED\",\n  \"observedAt\": \"2026-10-09T02:56:44.881Z\",\n  \"reportSha256\": \"dd32aa813f3d8331dd4120d9f83d8c8b56c7f5d48a31b27907ec53cb49b1d015\"\n}\n",
+          "stderr": "",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "mode": "verify",
+            "repositoryRoot": "<SYNTHETIC_SCOPE_SANDBOX>/base",
+            "comparisonTarget": "working-tree",
+            "taskEnvelope": {
+              "schemaVersion": "1.0.0",
+              "taskId": "SS17-synthetic-scope",
+              "objective": "Read-only check of excluded paths and preexisting overlap",
+              "scope": {
+                "included": [
+                  "src/**"
+                ],
+                "excluded": [
+                  "docs/**"
+                ]
+              },
+              "acceptanceCriteria": [
+                "Report scope and overlap only"
+              ],
+              "riskLevel": "low",
+              "workUnits": [],
+              "requiredCapabilities": [],
+              "constraints": [
+                "read-only",
+                "do not infer ownership"
+              ],
+              "authorization": {
+                "allowedActions": [
+                  "read"
+                ],
+                "prohibitedActions": [
+                  "reset",
+                  "restore",
+                  "stash",
+                  "clean",
+                  "checkout",
+                  "commit",
+                  "quality-review"
+                ],
+                "approvalRequired": []
+              },
+              "decision": {
+                "complexity": "simple",
+                "hasConflicts": false
+              },
+              "orchestration": {
+                "requested": false,
+                "mcpAvailable": false
+              }
+            },
+            "baseline": {
+              "schemaVersion": "1.0.0",
+              "repository": {
+                "root": "<SYNTHETIC_SCOPE_SANDBOX>/base",
+                "identity": "606f501748aa30de84c7c3cde5af8f4f06b1db0a84504a6a5f6015a69147c1e0"
+              },
+              "head": "577ed8e5c0998c4f37a5d0b788c1cc8c0f5ad62b",
+              "comparisonTarget": "working-tree",
+              "targetRef": "WORKTREE",
+              "taskEnvelopeDigest": "15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a",
+              "entries": [
+                {
+                  "path": "docs/excluded.txt",
+                  "status": "clean",
+                  "sha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                  "size": 10,
+                  "kind": "file",
+                  "originalPath": null
+                },
+                {
+                  "path": "src/user.txt",
+                  "status": ".M",
+                  "sha256": "276dd93fed121186b0cc5e8b40f93580c31144adaa280fb234d08cda622956a4",
+                  "size": 22,
+                  "kind": "file",
+                  "originalPath": null
+                }
+              ],
+              "manifestSha256": "39e591a966155ec5bd058687c11fa5e5e84df8ddfc868e2d8c451b214deef62b",
+              "capturedAt": "2026-10-09T02:56:44.601Z"
+            },
+            "baselineArtifactDigest": "39e591a966155ec5bd058687c11fa5e5e84df8ddfc868e2d8c451b214deef62b"
+          },
+          "output": {
+            "schemaVersion": "1.0.0",
+            "repositoryIdentity": "606f501748aa30de84c7c3cde5af8f4f06b1db0a84504a6a5f6015a69147c1e0",
+            "baselineDigest": "39e591a966155ec5bd058687c11fa5e5e84df8ddfc868e2d8c451b214deef62b",
+            "currentDigest": "3649c389bc9ea974da0f4316d0217426031fcbbd5d283efef3aeb4804e34c6e2",
+            "taskEnvelopeDigest": "15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a",
+            "changes": [
+              {
+                "path": "docs/excluded.txt",
+                "originalPath": null,
+                "status": ".M",
+                "classification": "excluded",
+                "baselineSha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                "currentSha256": "b70b4f5e2dadbde0e9188fe54d099f63375b9c04151ff7d8e458baf558457dc8",
+                "matchedRule": "docs/**"
+              },
+              {
+                "path": "src/user.txt",
+                "originalPath": null,
+                "status": ".M",
+                "classification": "preexisting-overlap",
+                "baselineSha256": "276dd93fed121186b0cc5e8b40f93580c31144adaa280fb234d08cda622956a4",
+                "currentSha256": "0d95a4ae29df7506101d9a2b4abd00d1961bacfdbdc665428dbbc7b93ebcd7f6",
+                "matchedRule": "src/**"
+              }
+            ],
+            "summary": {
+              "in-scope": 0,
+              "excluded": 1,
+              "unplanned": 0,
+              "preexisting-untouched": 0,
+              "preexisting-overlap": 1,
+              "ownership-unknown": 0
+            },
+            "findings": [
+              "excluded:docs/excluded.txt",
+              "preexisting-overlap:src/user.txt"
+            ],
+            "verdict": "BLOCKED",
+            "observedAt": "2026-10-09T02:56:44.881Z",
+            "reportSha256": "dd32aa813f3d8331dd4120d9f83d8c8b56c7f5d48a31b27907ec53cb49b1d015"
+          },
+          "repositoryUnchanged": true
+        }
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "preexisting-user-change-untouched-readonly-CLI",
+      "executionKind": "offline-isolated",
+      "input": {
+        "syntheticRepo": "untouched"
+      },
+      "expected": {
+        "verdict": "PASS",
+        "classification": "preexisting-untouched"
+      },
+      "observed": {
+        "baseline": {
+          "command": [
+            "<NODE_EXECUTABLE>",
+            "<PINNED_REPO>/skills/change-scope-guardian/scripts/capture-workspace-baseline.mjs"
+          ],
+          "exit": 0,
+          "stdout": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"repository\": {\n    \"root\": \"<SYNTHETIC_SCOPE_SANDBOX>/untouched\",\n    \"identity\": \"4b766a1df490da052936ab0f7f2e68ec6800946f0173abe094bf3dfe452971da\"\n  },\n  \"head\": \"1d153be0730da30a5bc0e79e25c1fc90535b882e\",\n  \"comparisonTarget\": \"working-tree\",\n  \"targetRef\": \"WORKTREE\",\n  \"taskEnvelopeDigest\": \"15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a\",\n  \"entries\": [\n    {\n      \"path\": \"docs/excluded.txt\",\n      \"status\": \"clean\",\n      \"sha256\": \"cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc\",\n      \"size\": 10,\n      \"kind\": \"file\",\n      \"originalPath\": null\n    },\n    {\n      \"path\": \"src/user.txt\",\n      \"status\": \".M\",\n      \"sha256\": \"276dd93fed121186b0cc5e8b40f93580c31144adaa280fb234d08cda622956a4\",\n      \"size\": 22,\n      \"kind\": \"file\",\n      \"originalPath\": null\n    }\n  ],\n  \"manifestSha256\": \"6f8cf7a4d9a4ac3fdf035e05a117cdfaf28f56ab5c7434a030a35124dfaddddf\",\n  \"capturedAt\": \"2026-10-09T02:56:45.186Z\"\n}\n",
+          "stderr": "",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "mode": "capture",
+            "repositoryRoot": "<SYNTHETIC_SCOPE_SANDBOX>/untouched",
+            "comparisonTarget": "working-tree",
+            "taskEnvelope": {
+              "schemaVersion": "1.0.0",
+              "taskId": "SS17-synthetic-scope",
+              "objective": "Read-only check of excluded paths and preexisting overlap",
+              "scope": {
+                "included": [
+                  "src/**"
+                ],
+                "excluded": [
+                  "docs/**"
+                ]
+              },
+              "acceptanceCriteria": [
+                "Report scope and overlap only"
+              ],
+              "riskLevel": "low",
+              "workUnits": [],
+              "requiredCapabilities": [],
+              "constraints": [
+                "read-only",
+                "do not infer ownership"
+              ],
+              "authorization": {
+                "allowedActions": [
+                  "read"
+                ],
+                "prohibitedActions": [
+                  "reset",
+                  "restore",
+                  "stash",
+                  "clean",
+                  "checkout",
+                  "commit",
+                  "quality-review"
+                ],
+                "approvalRequired": []
+              },
+              "decision": {
+                "complexity": "simple",
+                "hasConflicts": false
+              },
+              "orchestration": {
+                "requested": false,
+                "mcpAvailable": false
+              }
+            }
+          },
+          "output": {
+            "schemaVersion": "1.0.0",
+            "repository": {
+              "root": "<SYNTHETIC_SCOPE_SANDBOX>/untouched",
+              "identity": "4b766a1df490da052936ab0f7f2e68ec6800946f0173abe094bf3dfe452971da"
+            },
+            "head": "1d153be0730da30a5bc0e79e25c1fc90535b882e",
+            "comparisonTarget": "working-tree",
+            "targetRef": "WORKTREE",
+            "taskEnvelopeDigest": "15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a",
+            "entries": [
+              {
+                "path": "docs/excluded.txt",
+                "status": "clean",
+                "sha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                "size": 10,
+                "kind": "file",
+                "originalPath": null
+              },
+              {
+                "path": "src/user.txt",
+                "status": ".M",
+                "sha256": "276dd93fed121186b0cc5e8b40f93580c31144adaa280fb234d08cda622956a4",
+                "size": 22,
+                "kind": "file",
+                "originalPath": null
+              }
+            ],
+            "manifestSha256": "6f8cf7a4d9a4ac3fdf035e05a117cdfaf28f56ab5c7434a030a35124dfaddddf",
+            "capturedAt": "2026-10-09T02:56:45.186Z"
+          },
+          "repositoryUnchanged": true
+        },
+        "result": {
+          "command": [
+            "<NODE_EXECUTABLE>",
+            "<PINNED_REPO>/skills/change-scope-guardian/scripts/compare-change-scope.mjs"
+          ],
+          "exit": 0,
+          "stdout": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"repositoryIdentity\": \"4b766a1df490da052936ab0f7f2e68ec6800946f0173abe094bf3dfe452971da\",\n  \"baselineDigest\": \"6f8cf7a4d9a4ac3fdf035e05a117cdfaf28f56ab5c7434a030a35124dfaddddf\",\n  \"currentDigest\": \"12940bf4ca8534e00e0ebc3532242cb844f700d6359a2af2a43ebffaac25a863\",\n  \"taskEnvelopeDigest\": \"15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a\",\n  \"changes\": [\n    {\n      \"path\": \"src/user.txt\",\n      \"originalPath\": null,\n      \"status\": \".M\",\n      \"classification\": \"preexisting-untouched\",\n      \"baselineSha256\": \"276dd93fed121186b0cc5e8b40f93580c31144adaa280fb234d08cda622956a4\",\n      \"currentSha256\": \"276dd93fed121186b0cc5e8b40f93580c31144adaa280fb234d08cda622956a4\",\n      \"matchedRule\": \"src/**\"\n    }\n  ],\n  \"summary\": {\n    \"in-scope\": 0,\n    \"excluded\": 0,\n    \"unplanned\": 0,\n    \"preexisting-untouched\": 1,\n    \"preexisting-overlap\": 0,\n    \"ownership-unknown\": 0\n  },\n  \"findings\": [],\n  \"verdict\": \"PASS\",\n  \"observedAt\": \"2026-10-09T02:56:45.459Z\",\n  \"reportSha256\": \"26c95fd9c8f54c900f343071b5994b59de2018bd4c8ed340e32545ba2201d146\"\n}\n",
+          "stderr": "",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "mode": "verify",
+            "repositoryRoot": "<SYNTHETIC_SCOPE_SANDBOX>/untouched",
+            "comparisonTarget": "working-tree",
+            "taskEnvelope": {
+              "schemaVersion": "1.0.0",
+              "taskId": "SS17-synthetic-scope",
+              "objective": "Read-only check of excluded paths and preexisting overlap",
+              "scope": {
+                "included": [
+                  "src/**"
+                ],
+                "excluded": [
+                  "docs/**"
+                ]
+              },
+              "acceptanceCriteria": [
+                "Report scope and overlap only"
+              ],
+              "riskLevel": "low",
+              "workUnits": [],
+              "requiredCapabilities": [],
+              "constraints": [
+                "read-only",
+                "do not infer ownership"
+              ],
+              "authorization": {
+                "allowedActions": [
+                  "read"
+                ],
+                "prohibitedActions": [
+                  "reset",
+                  "restore",
+                  "stash",
+                  "clean",
+                  "checkout",
+                  "commit",
+                  "quality-review"
+                ],
+                "approvalRequired": []
+              },
+              "decision": {
+                "complexity": "simple",
+                "hasConflicts": false
+              },
+              "orchestration": {
+                "requested": false,
+                "mcpAvailable": false
+              }
+            },
+            "baseline": {
+              "schemaVersion": "1.0.0",
+              "repository": {
+                "root": "<SYNTHETIC_SCOPE_SANDBOX>/untouched",
+                "identity": "4b766a1df490da052936ab0f7f2e68ec6800946f0173abe094bf3dfe452971da"
+              },
+              "head": "1d153be0730da30a5bc0e79e25c1fc90535b882e",
+              "comparisonTarget": "working-tree",
+              "targetRef": "WORKTREE",
+              "taskEnvelopeDigest": "15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a",
+              "entries": [
+                {
+                  "path": "docs/excluded.txt",
+                  "status": "clean",
+                  "sha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                  "size": 10,
+                  "kind": "file",
+                  "originalPath": null
+                },
+                {
+                  "path": "src/user.txt",
+                  "status": ".M",
+                  "sha256": "276dd93fed121186b0cc5e8b40f93580c31144adaa280fb234d08cda622956a4",
+                  "size": 22,
+                  "kind": "file",
+                  "originalPath": null
+                }
+              ],
+              "manifestSha256": "6f8cf7a4d9a4ac3fdf035e05a117cdfaf28f56ab5c7434a030a35124dfaddddf",
+              "capturedAt": "2026-10-09T02:56:45.186Z"
+            },
+            "baselineArtifactDigest": "6f8cf7a4d9a4ac3fdf035e05a117cdfaf28f56ab5c7434a030a35124dfaddddf"
+          },
+          "output": {
+            "schemaVersion": "1.0.0",
+            "repositoryIdentity": "4b766a1df490da052936ab0f7f2e68ec6800946f0173abe094bf3dfe452971da",
+            "baselineDigest": "6f8cf7a4d9a4ac3fdf035e05a117cdfaf28f56ab5c7434a030a35124dfaddddf",
+            "currentDigest": "12940bf4ca8534e00e0ebc3532242cb844f700d6359a2af2a43ebffaac25a863",
+            "taskEnvelopeDigest": "15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a",
+            "changes": [
+              {
+                "path": "src/user.txt",
+                "originalPath": null,
+                "status": ".M",
+                "classification": "preexisting-untouched",
+                "baselineSha256": "276dd93fed121186b0cc5e8b40f93580c31144adaa280fb234d08cda622956a4",
+                "currentSha256": "276dd93fed121186b0cc5e8b40f93580c31144adaa280fb234d08cda622956a4",
+                "matchedRule": "src/**"
+              }
+            ],
+            "summary": {
+              "in-scope": 0,
+              "excluded": 0,
+              "unplanned": 0,
+              "preexisting-untouched": 1,
+              "preexisting-overlap": 0,
+              "ownership-unknown": 0
+            },
+            "findings": [],
+            "verdict": "PASS",
+            "observedAt": "2026-10-09T02:56:45.459Z",
+            "reportSha256": "26c95fd9c8f54c900f343071b5994b59de2018bd4c8ed340e32545ba2201d146"
+          },
+          "repositoryUnchanged": true
+        }
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "missing-baseline-never-guesses-ownership-readonly-CLI",
+      "executionKind": "offline-isolated",
+      "input": {
+        "syntheticRepo": "missing-baseline",
+        "baseline": null
+      },
+      "expected": {
+        "verdict": "INCONCLUSIVE",
+        "classification": "ownership-unknown"
+      },
+      "observed": {
+        "command": [
+          "<NODE_EXECUTABLE>",
+          "<PINNED_REPO>/skills/change-scope-guardian/scripts/compare-change-scope.mjs"
+        ],
+        "exit": 0,
+        "stdout": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"repositoryIdentity\": \"cf75eb9e3de9893fe75fe7060c5a310e8735f0aabef877baceab8d63147a4f3e\",\n  \"baselineDigest\": \"0000000000000000000000000000000000000000000000000000000000000000\",\n  \"currentDigest\": \"a06b274737b71e4b184e895a93af0faf66783e13f0ee6145179572e70bbe5d80\",\n  \"taskEnvelopeDigest\": \"15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a\",\n  \"changes\": [\n    {\n      \"path\": \"src/user.txt\",\n      \"originalPath\": null,\n      \"status\": \".M\",\n      \"classification\": \"ownership-unknown\",\n      \"baselineSha256\": null,\n      \"currentSha256\": \"5f21b25d2ca70543b0589249d800cd01d6f9a31573ef6bf272df2b231cec06c3\",\n      \"matchedRule\": null\n    }\n  ],\n  \"summary\": {\n    \"in-scope\": 0,\n    \"excluded\": 0,\n    \"unplanned\": 0,\n    \"preexisting-untouched\": 0,\n    \"preexisting-overlap\": 0,\n    \"ownership-unknown\": 1\n  },\n  \"findings\": [\n    \"ownership-unknown:src/user.txt\"\n  ],\n  \"verdict\": \"INCONCLUSIVE\",\n  \"observedAt\": \"2026-10-09T02:56:45.757Z\",\n  \"reportSha256\": \"ec220d2cc2c6180b21941ab6068a1aefb799d0f86c02f820164be4d6a2a113d9\"\n}\n",
+        "stderr": "",
+        "input": {
+          "schemaVersion": "1.0.0",
+          "mode": "verify",
+          "repositoryRoot": "<SYNTHETIC_SCOPE_SANDBOX>/missing",
+          "comparisonTarget": "working-tree",
+          "taskEnvelope": {
+            "schemaVersion": "1.0.0",
+            "taskId": "SS17-synthetic-scope",
+            "objective": "Read-only check of excluded paths and preexisting overlap",
+            "scope": {
+              "included": [
+                "src/**"
+              ],
+              "excluded": [
+                "docs/**"
+              ]
+            },
+            "acceptanceCriteria": [
+              "Report scope and overlap only"
+            ],
+            "riskLevel": "low",
+            "workUnits": [],
+            "requiredCapabilities": [],
+            "constraints": [
+              "read-only",
+              "do not infer ownership"
+            ],
+            "authorization": {
+              "allowedActions": [
+                "read"
+              ],
+              "prohibitedActions": [
+                "reset",
+                "restore",
+                "stash",
+                "clean",
+                "checkout",
+                "commit",
+                "quality-review"
+              ],
+              "approvalRequired": []
+            },
+            "decision": {
+              "complexity": "simple",
+              "hasConflicts": false
+            },
+            "orchestration": {
+              "requested": false,
+              "mcpAvailable": false
+            }
+          }
+        },
+        "output": {
+          "schemaVersion": "1.0.0",
+          "repositoryIdentity": "cf75eb9e3de9893fe75fe7060c5a310e8735f0aabef877baceab8d63147a4f3e",
+          "baselineDigest": "0000000000000000000000000000000000000000000000000000000000000000",
+          "currentDigest": "a06b274737b71e4b184e895a93af0faf66783e13f0ee6145179572e70bbe5d80",
+          "taskEnvelopeDigest": "15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a",
+          "changes": [
+            {
+              "path": "src/user.txt",
+              "originalPath": null,
+              "status": ".M",
+              "classification": "ownership-unknown",
+              "baselineSha256": null,
+              "currentSha256": "5f21b25d2ca70543b0589249d800cd01d6f9a31573ef6bf272df2b231cec06c3",
+              "matchedRule": null
+            }
+          ],
+          "summary": {
+            "in-scope": 0,
+            "excluded": 0,
+            "unplanned": 0,
+            "preexisting-untouched": 0,
+            "preexisting-overlap": 0,
+            "ownership-unknown": 1
+          },
+          "findings": [
+            "ownership-unknown:src/user.txt"
+          ],
+          "verdict": "INCONCLUSIVE",
+          "observedAt": "2026-10-09T02:56:45.757Z",
+          "reportSha256": "ec220d2cc2c6180b21941ab6068a1aefb799d0f86c02f820164be4d6a2a113d9"
+        },
+        "repositoryUnchanged": true
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "repository-identity-mismatch-abstains-readonly-CLI",
+      "executionKind": "offline-isolated",
+      "input": {
+        "syntheticRepos": [
+          "identity-A",
+          "identity-B"
+        ]
+      },
+      "expected": {
+        "exit": 1,
+        "error": "baseline repository identity does not match",
+        "report": null
+      },
+      "observed": {
+        "baseline": {
+          "command": [
+            "<NODE_EXECUTABLE>",
+            "<PINNED_REPO>/skills/change-scope-guardian/scripts/capture-workspace-baseline.mjs"
+          ],
+          "exit": 0,
+          "stdout": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"repository\": {\n    \"root\": \"<SYNTHETIC_SCOPE_SANDBOX>/identity-A\",\n    \"identity\": \"fb0d87ff2e07ec3aedadf7176ad1f5e6c3bb8d6d654a5f8237463a684cc286f7\"\n  },\n  \"head\": \"1d153be0730da30a5bc0e79e25c1fc90535b882e\",\n  \"comparisonTarget\": \"working-tree\",\n  \"targetRef\": \"WORKTREE\",\n  \"taskEnvelopeDigest\": \"15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a\",\n  \"entries\": [\n    {\n      \"path\": \"docs/excluded.txt\",\n      \"status\": \"clean\",\n      \"sha256\": \"cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc\",\n      \"size\": 10,\n      \"kind\": \"file\",\n      \"originalPath\": null\n    },\n    {\n      \"path\": \"src/user.txt\",\n      \"status\": \"clean\",\n      \"sha256\": \"cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc\",\n      \"size\": 10,\n      \"kind\": \"file\",\n      \"originalPath\": null\n    }\n  ],\n  \"manifestSha256\": \"e030b57b51712d9e2241eea73f9548f7ccaf45c06b6b68673237d1a37d7901f3\",\n  \"capturedAt\": \"2026-10-09T02:56:46.086Z\"\n}\n",
+          "stderr": "",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "mode": "capture",
+            "repositoryRoot": "<SYNTHETIC_SCOPE_SANDBOX>/identity-A",
+            "comparisonTarget": "working-tree",
+            "taskEnvelope": {
+              "schemaVersion": "1.0.0",
+              "taskId": "SS17-synthetic-scope",
+              "objective": "Read-only check of excluded paths and preexisting overlap",
+              "scope": {
+                "included": [
+                  "src/**"
+                ],
+                "excluded": [
+                  "docs/**"
+                ]
+              },
+              "acceptanceCriteria": [
+                "Report scope and overlap only"
+              ],
+              "riskLevel": "low",
+              "workUnits": [],
+              "requiredCapabilities": [],
+              "constraints": [
+                "read-only",
+                "do not infer ownership"
+              ],
+              "authorization": {
+                "allowedActions": [
+                  "read"
+                ],
+                "prohibitedActions": [
+                  "reset",
+                  "restore",
+                  "stash",
+                  "clean",
+                  "checkout",
+                  "commit",
+                  "quality-review"
+                ],
+                "approvalRequired": []
+              },
+              "decision": {
+                "complexity": "simple",
+                "hasConflicts": false
+              },
+              "orchestration": {
+                "requested": false,
+                "mcpAvailable": false
+              }
+            }
+          },
+          "output": {
+            "schemaVersion": "1.0.0",
+            "repository": {
+              "root": "<SYNTHETIC_SCOPE_SANDBOX>/identity-A",
+              "identity": "fb0d87ff2e07ec3aedadf7176ad1f5e6c3bb8d6d654a5f8237463a684cc286f7"
+            },
+            "head": "1d153be0730da30a5bc0e79e25c1fc90535b882e",
+            "comparisonTarget": "working-tree",
+            "targetRef": "WORKTREE",
+            "taskEnvelopeDigest": "15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a",
+            "entries": [
+              {
+                "path": "docs/excluded.txt",
+                "status": "clean",
+                "sha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                "size": 10,
+                "kind": "file",
+                "originalPath": null
+              },
+              {
+                "path": "src/user.txt",
+                "status": "clean",
+                "sha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                "size": 10,
+                "kind": "file",
+                "originalPath": null
+              }
+            ],
+            "manifestSha256": "e030b57b51712d9e2241eea73f9548f7ccaf45c06b6b68673237d1a37d7901f3",
+            "capturedAt": "2026-10-09T02:56:46.086Z"
+          },
+          "repositoryUnchanged": true
+        },
+        "result": {
+          "command": [
+            "<NODE_EXECUTABLE>",
+            "<PINNED_REPO>/skills/change-scope-guardian/scripts/compare-change-scope.mjs"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "baseline repository identity does not match\n",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "mode": "verify",
+            "repositoryRoot": "<SYNTHETIC_SCOPE_SANDBOX>/identity-B",
+            "comparisonTarget": "working-tree",
+            "taskEnvelope": {
+              "schemaVersion": "1.0.0",
+              "taskId": "SS17-synthetic-scope",
+              "objective": "Read-only check of excluded paths and preexisting overlap",
+              "scope": {
+                "included": [
+                  "src/**"
+                ],
+                "excluded": [
+                  "docs/**"
+                ]
+              },
+              "acceptanceCriteria": [
+                "Report scope and overlap only"
+              ],
+              "riskLevel": "low",
+              "workUnits": [],
+              "requiredCapabilities": [],
+              "constraints": [
+                "read-only",
+                "do not infer ownership"
+              ],
+              "authorization": {
+                "allowedActions": [
+                  "read"
+                ],
+                "prohibitedActions": [
+                  "reset",
+                  "restore",
+                  "stash",
+                  "clean",
+                  "checkout",
+                  "commit",
+                  "quality-review"
+                ],
+                "approvalRequired": []
+              },
+              "decision": {
+                "complexity": "simple",
+                "hasConflicts": false
+              },
+              "orchestration": {
+                "requested": false,
+                "mcpAvailable": false
+              }
+            },
+            "baseline": {
+              "schemaVersion": "1.0.0",
+              "repository": {
+                "root": "<SYNTHETIC_SCOPE_SANDBOX>/identity-A",
+                "identity": "fb0d87ff2e07ec3aedadf7176ad1f5e6c3bb8d6d654a5f8237463a684cc286f7"
+              },
+              "head": "1d153be0730da30a5bc0e79e25c1fc90535b882e",
+              "comparisonTarget": "working-tree",
+              "targetRef": "WORKTREE",
+              "taskEnvelopeDigest": "15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a",
+              "entries": [
+                {
+                  "path": "docs/excluded.txt",
+                  "status": "clean",
+                  "sha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                  "size": 10,
+                  "kind": "file",
+                  "originalPath": null
+                },
+                {
+                  "path": "src/user.txt",
+                  "status": "clean",
+                  "sha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                  "size": 10,
+                  "kind": "file",
+                  "originalPath": null
+                }
+              ],
+              "manifestSha256": "e030b57b51712d9e2241eea73f9548f7ccaf45c06b6b68673237d1a37d7901f3",
+              "capturedAt": "2026-10-09T02:56:46.086Z"
+            },
+            "baselineArtifactDigest": "e030b57b51712d9e2241eea73f9548f7ccaf45c06b6b68673237d1a37d7901f3"
+          },
+          "output": null,
+          "repositoryUnchanged": true
+        }
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "baseline-digest-and-task-mismatch-abstain-readonly-CLI",
+      "executionKind": "offline-isolated",
+      "input": {
+        "syntheticRepo": "binding-mismatch"
+      },
+      "expected": {
+        "digestExit": 1,
+        "taskExit": 1
+      },
+      "observed": {
+        "baseline": {
+          "command": [
+            "<NODE_EXECUTABLE>",
+            "<PINNED_REPO>/skills/change-scope-guardian/scripts/capture-workspace-baseline.mjs"
+          ],
+          "exit": 0,
+          "stdout": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"repository\": {\n    \"root\": \"<SYNTHETIC_SCOPE_SANDBOX>/binding\",\n    \"identity\": \"11785a07a94716368170856f32db170a29efc27cc7f04059c1f55a9eae91e917\"\n  },\n  \"head\": \"cc0324a4a109234381964c2c45fb35539899da6a\",\n  \"comparisonTarget\": \"working-tree\",\n  \"targetRef\": \"WORKTREE\",\n  \"taskEnvelopeDigest\": \"15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a\",\n  \"entries\": [\n    {\n      \"path\": \"docs/excluded.txt\",\n      \"status\": \"clean\",\n      \"sha256\": \"cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc\",\n      \"size\": 10,\n      \"kind\": \"file\",\n      \"originalPath\": null\n    },\n    {\n      \"path\": \"src/user.txt\",\n      \"status\": \"clean\",\n      \"sha256\": \"cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc\",\n      \"size\": 10,\n      \"kind\": \"file\",\n      \"originalPath\": null\n    }\n  ],\n  \"manifestSha256\": \"f8046f6392b63923343bb4a456ef8e68ed1ea9d9a3ecc21e28168d83faa56b67\",\n  \"capturedAt\": \"2026-10-09T02:56:46.667Z\"\n}\n",
+          "stderr": "",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "mode": "capture",
+            "repositoryRoot": "<SYNTHETIC_SCOPE_SANDBOX>/binding",
+            "comparisonTarget": "working-tree",
+            "taskEnvelope": {
+              "schemaVersion": "1.0.0",
+              "taskId": "SS17-synthetic-scope",
+              "objective": "Read-only check of excluded paths and preexisting overlap",
+              "scope": {
+                "included": [
+                  "src/**"
+                ],
+                "excluded": [
+                  "docs/**"
+                ]
+              },
+              "acceptanceCriteria": [
+                "Report scope and overlap only"
+              ],
+              "riskLevel": "low",
+              "workUnits": [],
+              "requiredCapabilities": [],
+              "constraints": [
+                "read-only",
+                "do not infer ownership"
+              ],
+              "authorization": {
+                "allowedActions": [
+                  "read"
+                ],
+                "prohibitedActions": [
+                  "reset",
+                  "restore",
+                  "stash",
+                  "clean",
+                  "checkout",
+                  "commit",
+                  "quality-review"
+                ],
+                "approvalRequired": []
+              },
+              "decision": {
+                "complexity": "simple",
+                "hasConflicts": false
+              },
+              "orchestration": {
+                "requested": false,
+                "mcpAvailable": false
+              }
+            }
+          },
+          "output": {
+            "schemaVersion": "1.0.0",
+            "repository": {
+              "root": "<SYNTHETIC_SCOPE_SANDBOX>/binding",
+              "identity": "11785a07a94716368170856f32db170a29efc27cc7f04059c1f55a9eae91e917"
+            },
+            "head": "cc0324a4a109234381964c2c45fb35539899da6a",
+            "comparisonTarget": "working-tree",
+            "targetRef": "WORKTREE",
+            "taskEnvelopeDigest": "15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a",
+            "entries": [
+              {
+                "path": "docs/excluded.txt",
+                "status": "clean",
+                "sha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                "size": 10,
+                "kind": "file",
+                "originalPath": null
+              },
+              {
+                "path": "src/user.txt",
+                "status": "clean",
+                "sha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                "size": 10,
+                "kind": "file",
+                "originalPath": null
+              }
+            ],
+            "manifestSha256": "f8046f6392b63923343bb4a456ef8e68ed1ea9d9a3ecc21e28168d83faa56b67",
+            "capturedAt": "2026-10-09T02:56:46.667Z"
+          },
+          "repositoryUnchanged": true
+        },
+        "digest": {
+          "command": [
+            "<NODE_EXECUTABLE>",
+            "<PINNED_REPO>/skills/change-scope-guardian/scripts/compare-change-scope.mjs"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "baseline artifact digest does not match the frozen digest\n",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "mode": "verify",
+            "repositoryRoot": "<SYNTHETIC_SCOPE_SANDBOX>/binding",
+            "comparisonTarget": "working-tree",
+            "taskEnvelope": {
+              "schemaVersion": "1.0.0",
+              "taskId": "SS17-synthetic-scope",
+              "objective": "Read-only check of excluded paths and preexisting overlap",
+              "scope": {
+                "included": [
+                  "src/**"
+                ],
+                "excluded": [
+                  "docs/**"
+                ]
+              },
+              "acceptanceCriteria": [
+                "Report scope and overlap only"
+              ],
+              "riskLevel": "low",
+              "workUnits": [],
+              "requiredCapabilities": [],
+              "constraints": [
+                "read-only",
+                "do not infer ownership"
+              ],
+              "authorization": {
+                "allowedActions": [
+                  "read"
+                ],
+                "prohibitedActions": [
+                  "reset",
+                  "restore",
+                  "stash",
+                  "clean",
+                  "checkout",
+                  "commit",
+                  "quality-review"
+                ],
+                "approvalRequired": []
+              },
+              "decision": {
+                "complexity": "simple",
+                "hasConflicts": false
+              },
+              "orchestration": {
+                "requested": false,
+                "mcpAvailable": false
+              }
+            },
+            "baseline": {
+              "schemaVersion": "1.0.0",
+              "repository": {
+                "root": "<SYNTHETIC_SCOPE_SANDBOX>/binding",
+                "identity": "11785a07a94716368170856f32db170a29efc27cc7f04059c1f55a9eae91e917"
+              },
+              "head": "cc0324a4a109234381964c2c45fb35539899da6a",
+              "comparisonTarget": "working-tree",
+              "targetRef": "WORKTREE",
+              "taskEnvelopeDigest": "15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a",
+              "entries": [
+                {
+                  "path": "docs/excluded.txt",
+                  "status": "clean",
+                  "sha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                  "size": 10,
+                  "kind": "file",
+                  "originalPath": null
+                },
+                {
+                  "path": "src/user.txt",
+                  "status": "clean",
+                  "sha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                  "size": 10,
+                  "kind": "file",
+                  "originalPath": null
+                }
+              ],
+              "manifestSha256": "f8046f6392b63923343bb4a456ef8e68ed1ea9d9a3ecc21e28168d83faa56b67",
+              "capturedAt": "2026-10-09T02:56:46.667Z"
+            },
+            "baselineArtifactDigest": "0000000000000000000000000000000000000000000000000000000000000000"
+          },
+          "output": null,
+          "repositoryUnchanged": true
+        },
+        "task": {
+          "command": [
+            "<NODE_EXECUTABLE>",
+            "<PINNED_REPO>/skills/change-scope-guardian/scripts/compare-change-scope.mjs"
+          ],
+          "exit": 1,
+          "stdout": "",
+          "stderr": "baseline taskEnvelope digest does not match\n",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "mode": "verify",
+            "repositoryRoot": "<SYNTHETIC_SCOPE_SANDBOX>/binding",
+            "comparisonTarget": "working-tree",
+            "taskEnvelope": {
+              "schemaVersion": "1.0.0",
+              "taskId": "SS17-changed-task",
+              "objective": "Read-only check of excluded paths and preexisting overlap",
+              "scope": {
+                "included": [
+                  "src/**"
+                ],
+                "excluded": [
+                  "docs/**"
+                ]
+              },
+              "acceptanceCriteria": [
+                "Report scope and overlap only"
+              ],
+              "riskLevel": "low",
+              "workUnits": [],
+              "requiredCapabilities": [],
+              "constraints": [
+                "read-only",
+                "do not infer ownership"
+              ],
+              "authorization": {
+                "allowedActions": [
+                  "read"
+                ],
+                "prohibitedActions": [
+                  "reset",
+                  "restore",
+                  "stash",
+                  "clean",
+                  "checkout",
+                  "commit",
+                  "quality-review"
+                ],
+                "approvalRequired": []
+              },
+              "decision": {
+                "complexity": "simple",
+                "hasConflicts": false
+              },
+              "orchestration": {
+                "requested": false,
+                "mcpAvailable": false
+              }
+            },
+            "baseline": {
+              "schemaVersion": "1.0.0",
+              "repository": {
+                "root": "<SYNTHETIC_SCOPE_SANDBOX>/binding",
+                "identity": "11785a07a94716368170856f32db170a29efc27cc7f04059c1f55a9eae91e917"
+              },
+              "head": "cc0324a4a109234381964c2c45fb35539899da6a",
+              "comparisonTarget": "working-tree",
+              "targetRef": "WORKTREE",
+              "taskEnvelopeDigest": "15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a",
+              "entries": [
+                {
+                  "path": "docs/excluded.txt",
+                  "status": "clean",
+                  "sha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                  "size": 10,
+                  "kind": "file",
+                  "originalPath": null
+                },
+                {
+                  "path": "src/user.txt",
+                  "status": "clean",
+                  "sha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                  "size": 10,
+                  "kind": "file",
+                  "originalPath": null
+                }
+              ],
+              "manifestSha256": "f8046f6392b63923343bb4a456ef8e68ed1ea9d9a3ecc21e28168d83faa56b67",
+              "capturedAt": "2026-10-09T02:56:46.667Z"
+            },
+            "baselineArtifactDigest": "f8046f6392b63923343bb4a456ef8e68ed1ea9d9a3ecc21e28168d83faa56b67"
+          },
+          "output": null,
+          "repositoryUnchanged": true
+        }
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "rename-excluded-original-path-remains-blocked-readonly-CLI",
+      "executionKind": "offline-isolated",
+      "input": {
+        "syntheticRepo": "rename",
+        "rename": "docs/excluded.txt -> src/moved.txt"
+      },
+      "expected": {
+        "verdict": "BLOCKED",
+        "originalPath": "docs/excluded.txt"
+      },
+      "observed": {
+        "baseline": {
+          "command": [
+            "<NODE_EXECUTABLE>",
+            "<PINNED_REPO>/skills/change-scope-guardian/scripts/capture-workspace-baseline.mjs"
+          ],
+          "exit": 0,
+          "stdout": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"repository\": {\n    \"root\": \"<SYNTHETIC_SCOPE_SANDBOX>/rename\",\n    \"identity\": \"c585bac04f9668995c64a9dbb6a77cb1b1b7ea752c7455c432603ab6aaebd40a\"\n  },\n  \"head\": \"e3a0bc0e0984f2db7cb2b1603837c6701aae07b8\",\n  \"comparisonTarget\": \"working-tree\",\n  \"targetRef\": \"WORKTREE\",\n  \"taskEnvelopeDigest\": \"15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a\",\n  \"entries\": [\n    {\n      \"path\": \"docs/excluded.txt\",\n      \"status\": \"clean\",\n      \"sha256\": \"cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc\",\n      \"size\": 10,\n      \"kind\": \"file\",\n      \"originalPath\": null\n    },\n    {\n      \"path\": \"src/user.txt\",\n      \"status\": \"clean\",\n      \"sha256\": \"cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc\",\n      \"size\": 10,\n      \"kind\": \"file\",\n      \"originalPath\": null\n    }\n  ],\n  \"manifestSha256\": \"043ee043ef1047f4f668d1ad3227e5b75d99469222e8b917d57e132732287bb8\",\n  \"capturedAt\": \"2026-10-09T02:56:47.378Z\"\n}\n",
+          "stderr": "",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "mode": "capture",
+            "repositoryRoot": "<SYNTHETIC_SCOPE_SANDBOX>/rename",
+            "comparisonTarget": "working-tree",
+            "taskEnvelope": {
+              "schemaVersion": "1.0.0",
+              "taskId": "SS17-synthetic-scope",
+              "objective": "Read-only check of excluded paths and preexisting overlap",
+              "scope": {
+                "included": [
+                  "src/**"
+                ],
+                "excluded": [
+                  "docs/**"
+                ]
+              },
+              "acceptanceCriteria": [
+                "Report scope and overlap only"
+              ],
+              "riskLevel": "low",
+              "workUnits": [],
+              "requiredCapabilities": [],
+              "constraints": [
+                "read-only",
+                "do not infer ownership"
+              ],
+              "authorization": {
+                "allowedActions": [
+                  "read"
+                ],
+                "prohibitedActions": [
+                  "reset",
+                  "restore",
+                  "stash",
+                  "clean",
+                  "checkout",
+                  "commit",
+                  "quality-review"
+                ],
+                "approvalRequired": []
+              },
+              "decision": {
+                "complexity": "simple",
+                "hasConflicts": false
+              },
+              "orchestration": {
+                "requested": false,
+                "mcpAvailable": false
+              }
+            }
+          },
+          "output": {
+            "schemaVersion": "1.0.0",
+            "repository": {
+              "root": "<SYNTHETIC_SCOPE_SANDBOX>/rename",
+              "identity": "c585bac04f9668995c64a9dbb6a77cb1b1b7ea752c7455c432603ab6aaebd40a"
+            },
+            "head": "e3a0bc0e0984f2db7cb2b1603837c6701aae07b8",
+            "comparisonTarget": "working-tree",
+            "targetRef": "WORKTREE",
+            "taskEnvelopeDigest": "15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a",
+            "entries": [
+              {
+                "path": "docs/excluded.txt",
+                "status": "clean",
+                "sha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                "size": 10,
+                "kind": "file",
+                "originalPath": null
+              },
+              {
+                "path": "src/user.txt",
+                "status": "clean",
+                "sha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                "size": 10,
+                "kind": "file",
+                "originalPath": null
+              }
+            ],
+            "manifestSha256": "043ee043ef1047f4f668d1ad3227e5b75d99469222e8b917d57e132732287bb8",
+            "capturedAt": "2026-10-09T02:56:47.378Z"
+          },
+          "repositoryUnchanged": true
+        },
+        "result": {
+          "command": [
+            "<NODE_EXECUTABLE>",
+            "<PINNED_REPO>/skills/change-scope-guardian/scripts/compare-change-scope.mjs"
+          ],
+          "exit": 0,
+          "stdout": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"repositoryIdentity\": \"c585bac04f9668995c64a9dbb6a77cb1b1b7ea752c7455c432603ab6aaebd40a\",\n  \"baselineDigest\": \"043ee043ef1047f4f668d1ad3227e5b75d99469222e8b917d57e132732287bb8\",\n  \"currentDigest\": \"13d320c08211a96cca42189537a9ee96ec674ac453aae58e735df61dc888aff3\",\n  \"taskEnvelopeDigest\": \"15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a\",\n  \"changes\": [\n    {\n      \"path\": \"docs/excluded.txt\",\n      \"originalPath\": null,\n      \"status\": \"deleted\",\n      \"classification\": \"excluded\",\n      \"baselineSha256\": \"cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc\",\n      \"currentSha256\": null,\n      \"matchedRule\": \"docs/**\"\n    },\n    {\n      \"path\": \"src/moved.txt\",\n      \"originalPath\": \"docs/excluded.txt\",\n      \"status\": \"R.\",\n      \"classification\": \"excluded\",\n      \"baselineSha256\": null,\n      \"currentSha256\": \"cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc\",\n      \"matchedRule\": \"docs/**\"\n    }\n  ],\n  \"summary\": {\n    \"in-scope\": 0,\n    \"excluded\": 2,\n    \"unplanned\": 0,\n    \"preexisting-untouched\": 0,\n    \"preexisting-overlap\": 0,\n    \"ownership-unknown\": 0\n  },\n  \"findings\": [\n    \"excluded:docs/excluded.txt\",\n    \"excluded:src/moved.txt\"\n  ],\n  \"verdict\": \"BLOCKED\",\n  \"observedAt\": \"2026-10-09T02:56:47.660Z\",\n  \"reportSha256\": \"4a08b3310bd040f0f730d04642aa1c9f7279d043a5a8e8c7de49c1a726726cb1\"\n}\n",
+          "stderr": "",
+          "input": {
+            "schemaVersion": "1.0.0",
+            "mode": "verify",
+            "repositoryRoot": "<SYNTHETIC_SCOPE_SANDBOX>/rename",
+            "comparisonTarget": "working-tree",
+            "taskEnvelope": {
+              "schemaVersion": "1.0.0",
+              "taskId": "SS17-synthetic-scope",
+              "objective": "Read-only check of excluded paths and preexisting overlap",
+              "scope": {
+                "included": [
+                  "src/**"
+                ],
+                "excluded": [
+                  "docs/**"
+                ]
+              },
+              "acceptanceCriteria": [
+                "Report scope and overlap only"
+              ],
+              "riskLevel": "low",
+              "workUnits": [],
+              "requiredCapabilities": [],
+              "constraints": [
+                "read-only",
+                "do not infer ownership"
+              ],
+              "authorization": {
+                "allowedActions": [
+                  "read"
+                ],
+                "prohibitedActions": [
+                  "reset",
+                  "restore",
+                  "stash",
+                  "clean",
+                  "checkout",
+                  "commit",
+                  "quality-review"
+                ],
+                "approvalRequired": []
+              },
+              "decision": {
+                "complexity": "simple",
+                "hasConflicts": false
+              },
+              "orchestration": {
+                "requested": false,
+                "mcpAvailable": false
+              }
+            },
+            "baseline": {
+              "schemaVersion": "1.0.0",
+              "repository": {
+                "root": "<SYNTHETIC_SCOPE_SANDBOX>/rename",
+                "identity": "c585bac04f9668995c64a9dbb6a77cb1b1b7ea752c7455c432603ab6aaebd40a"
+              },
+              "head": "e3a0bc0e0984f2db7cb2b1603837c6701aae07b8",
+              "comparisonTarget": "working-tree",
+              "targetRef": "WORKTREE",
+              "taskEnvelopeDigest": "15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a",
+              "entries": [
+                {
+                  "path": "docs/excluded.txt",
+                  "status": "clean",
+                  "sha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                  "size": 10,
+                  "kind": "file",
+                  "originalPath": null
+                },
+                {
+                  "path": "src/user.txt",
+                  "status": "clean",
+                  "sha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                  "size": 10,
+                  "kind": "file",
+                  "originalPath": null
+                }
+              ],
+              "manifestSha256": "043ee043ef1047f4f668d1ad3227e5b75d99469222e8b917d57e132732287bb8",
+              "capturedAt": "2026-10-09T02:56:47.378Z"
+            },
+            "baselineArtifactDigest": "043ee043ef1047f4f668d1ad3227e5b75d99469222e8b917d57e132732287bb8"
+          },
+          "output": {
+            "schemaVersion": "1.0.0",
+            "repositoryIdentity": "c585bac04f9668995c64a9dbb6a77cb1b1b7ea752c7455c432603ab6aaebd40a",
+            "baselineDigest": "043ee043ef1047f4f668d1ad3227e5b75d99469222e8b917d57e132732287bb8",
+            "currentDigest": "13d320c08211a96cca42189537a9ee96ec674ac453aae58e735df61dc888aff3",
+            "taskEnvelopeDigest": "15baae7685276086be9da1490fb8a921ba64414f753526ea4807223b6e0c005a",
+            "changes": [
+              {
+                "path": "docs/excluded.txt",
+                "originalPath": null,
+                "status": "deleted",
+                "classification": "excluded",
+                "baselineSha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                "currentSha256": null,
+                "matchedRule": "docs/**"
+              },
+              {
+                "path": "src/moved.txt",
+                "originalPath": "docs/excluded.txt",
+                "status": "R.",
+                "classification": "excluded",
+                "baselineSha256": null,
+                "currentSha256": "cc2e4bb51f522b77c0c3ad04f7a87386a7e06d4fa287c004b6c066410c5c24dc",
+                "matchedRule": "docs/**"
+              }
+            ],
+            "summary": {
+              "in-scope": 0,
+              "excluded": 2,
+              "unplanned": 0,
+              "preexisting-untouched": 0,
+              "preexisting-overlap": 0,
+              "ownership-unknown": 0
+            },
+            "findings": [
+              "excluded:docs/excluded.txt",
+              "excluded:src/moved.txt"
+            ],
+            "verdict": "BLOCKED",
+            "observedAt": "2026-10-09T02:56:47.660Z",
+            "reportSha256": "4a08b3310bd040f0f730d04642aa1c9f7279d043a5a8e8c7de49c1a726726cb1"
+          },
+          "repositoryUnchanged": true
+        }
+      }
+    },
+    {
+      "caseId": "SS17",
+      "fixtureVariant": "base",
+      "boundaryId": "final-api-and-readonly-audit",
+      "executionKind": "offline-isolated",
+      "input": {
+        "cliGitTrace": "<ORIGINAL_EVIDENCE>/SS17.git-readonly-trace.jsonl"
+      },
+      "expected": {
+        "externalAPI": 0,
+        "gitMutationCalls": 0
+      },
+      "observed": {
+        "externalCalls": 0,
+        "gitMutationCalls": 0,
+        "readOnlyGitCalls": 55,
+        "sandbox": "<SYNTHETIC_SCOPE_SANDBOX>"
+      }
+    }
+  ],
+  "externalCalls": 0
+}
