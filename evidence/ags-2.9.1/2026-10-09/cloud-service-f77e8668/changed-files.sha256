@@ -1,0 +1,4 @@
+d7463ed8179ac5d717b528fa18b59733655693d387504960deaa2ef5b55cb1e0  mcp-server/src/skill-classification/service.ts
+5e650890de290e72cf148a2485b3371add0f72e6d199e464330a6d8d763fb417  tests/mcp/skill-classification-service-usage-regression.test.ts
+c7e2ceec08c68ba130d769952d3e5b7a8435dcc48baaf02047f1ca0f3fb101cb  tests/mcp/skill-classification-service-binding-regression.test.ts
+4ba892340b53ba9caea08378dec94d7b7034d1e7f6093bafc808714a99a0a315  tests/mcp/skill-classification-service-qualification-regression.test.ts

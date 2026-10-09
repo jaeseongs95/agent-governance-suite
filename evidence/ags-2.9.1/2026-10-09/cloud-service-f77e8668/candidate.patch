@@ -1,0 +1,450 @@
+From f77e8668ff32246c5a6bb02659472c5610a60792 Mon Sep 17 00:00:00 2001
+From: jaeseongs95 <sjs9505@gmail.com>
+Date: Fri, 9 Oct 2026 03:11:31 +0000
+Subject: [PATCH] fix: preserve classification costs and validate service
+ bindings
+
+---
+ .../src/skill-classification/service.ts       |  28 +++-
+ ...ication-service-binding-regression.test.ts |  96 +++++++++++++
+ ...n-service-qualification-regression.test.ts | 130 ++++++++++++++++++
+ ...ification-service-usage-regression.test.ts |  87 ++++++++++++
+ 4 files changed, 336 insertions(+), 5 deletions(-)
+ create mode 100644 tests/mcp/skill-classification-service-binding-regression.test.ts
+ create mode 100644 tests/mcp/skill-classification-service-qualification-regression.test.ts
+ create mode 100644 tests/mcp/skill-classification-service-usage-regression.test.ts
+
+diff --git a/mcp-server/src/skill-classification/service.ts b/mcp-server/src/skill-classification/service.ts
+index e18e7e0..1c2a3ad 100644
+--- a/mcp-server/src/skill-classification/service.ts
++++ b/mcp-server/src/skill-classification/service.ts
+@@ -1,7 +1,7 @@
+ import {selectFixedProfile, validateProviderProfile, isProviderProfileRegistry} from "./profiles.js";
+ import {ClassificationProviderError, unavailableResponse, unknownUsage} from "./providers.js";
+ import {validateClassificationResponse} from "./validation.js";
+-import {projectClassificationRequest, validateClassificationRequest} from "./request.js";
++import {digestClassificationValue, projectClassificationRequest, validateClassificationRequest} from "./request.js";
+ import type {ClassificationAttempt, ClassificationConfig, ClassificationResult, ClassificationSnapshot, DispatchState, ProviderEvaluation, ProviderProfile, ProviderProfileRegistry, SkillClassificationProviderPort, SkillClassificationRequestV1} from "./types.js";
+ 
+ export interface ClassificationBudgetPort {
+@@ -71,7 +71,7 @@ export interface ClassificationServiceInput {
+   signal?: AbortSignal;
+ }
+ interface Operation {identity: string; result: Promise<ClassificationResult>}
+-const providerFailureCodes = new Set(["ROUTE_NOT_APPROVED", "ROUTE_CAPABILITY_MISMATCH", "CREDENTIAL_UNAVAILABLE", "INVALID_APPROVED_ENDPOINT", "NATIVE_STRUCTURED_CAPABILITY_UNAVAILABLE", "REMOTE_ADAPTER_UNAVAILABLE", "CANCELLED", "INPUT_TOO_LONG", "INVALID_PROVIDER_REQUEST", "TRANSPORT_UNAVAILABLE", "AUTH_UNAVAILABLE", "RATE_LIMITED", "API_UNAVAILABLE", "INVALID_PROVIDER_RESPONSE", "PROVIDER_UNAVAILABLE", "STALE_CLASSIFICATION", "EXTERNAL_CLASSIFICATION_BLOCKED", "BUDGET_UNAVAILABLE", "INVALID_PROVIDER_USAGE", "PROVIDER_TIMEOUT", "OUTPUT_TOO_LONG", "NATIVE_SPAWN_UNAVAILABLE", "NATIVE_OUTPUT_TOO_LARGE", "NATIVE_PROCESS_UNAVAILABLE", "NATIVE_TIMEOUT", "NATIVE_PROFILE_UNSUPPORTED", "NATIVE_CLEANUP_UNAVAILABLE", "PROVIDER_RESPONSE_TOO_LARGE"]);
++const providerFailureCodes = new Set(["ROUTE_NOT_APPROVED", "ROUTE_CAPABILITY_MISMATCH", "CREDENTIAL_UNAVAILABLE", "INVALID_APPROVED_ENDPOINT", "NATIVE_STRUCTURED_CAPABILITY_UNAVAILABLE", "REMOTE_ADAPTER_UNAVAILABLE", "CANCELLED", "INPUT_TOO_LONG", "INVALID_PROVIDER_REQUEST", "TRANSPORT_UNAVAILABLE", "AUTH_UNAVAILABLE", "RATE_LIMITED", "API_UNAVAILABLE", "INVALID_PROVIDER_RESPONSE", "PROVIDER_UNAVAILABLE", "STALE_CLASSIFICATION", "EXTERNAL_CLASSIFICATION_BLOCKED", "BUDGET_UNAVAILABLE", "INVALID_PROVIDER_USAGE", "PROVIDER_TIMEOUT", "OUTPUT_TOO_LONG", "NATIVE_SPAWN_UNAVAILABLE", "NATIVE_OUTPUT_TOO_LARGE", "NATIVE_PROCESS_UNAVAILABLE", "NATIVE_TIMEOUT", "NATIVE_PROFILE_UNSUPPORTED", "NATIVE_CLEANUP_UNAVAILABLE", "PROVIDER_RESPONSE_TOO_LARGE", "INVALID_PROFILE", "QUALIFICATION_CONFIGURATION_MISMATCH", "PROFILE_UNQUALIFIED", "QUALIFICATION_MISMATCH", "QUALIFICATION_EXPIRED", "UNSUPPORTED_OPTIONS", "COST_UNKNOWN"]);
+ const stale = (a: ClassificationSnapshot, b: ClassificationSnapshot) => b.cancelled || a.taskRevision !== b.taskRevision || a.configRevision !== b.configRevision
+   || a.profileRevision !== b.profileRevision || a.inventoryDigest !== b.inventoryDigest || a.requestDigest !== b.requestDigest;
+ 
+@@ -91,7 +91,13 @@ export class SkillClassificationService {
+     const snapshot = this.snapshot(frozen);
+     try { validateClassificationRequest(frozen.request); }
+     catch { return Promise.resolve(this.failure(frozen, snapshot, "INVALID_CLASSIFICATION_REQUEST", [], "INVALID")); }
+-    const identity = JSON.stringify([frozen.request.requestId, frozen.request.requestDigest, snapshot, frozen.currentVendorId]);
++    let identity: string;
++    try { identity = digestClassificationValue([frozen.request.requestId, frozen.request.requestDigest, snapshot, frozen.currentVendorId, frozen.config, frozen.registry]); }
++    catch {
++      const code = !isProviderProfileRegistry(frozen.registry) ? "INVALID_PROFILE_REGISTRY"
++        : !Number.isSafeInteger(frozen.config.timeoutMs) || frozen.config.timeoutMs < 1 ? "INVALID_TIMEOUT" : "INVALID_CLASSIFICATION_CONFIG";
++      return Promise.resolve(this.failure(frozen, snapshot, code));
++    }
+     const previousOperation = this.requestOperations.get(frozen.request.requestId);
+     if (previousOperation !== undefined && previousOperation !== frozen.request.operationId) return Promise.resolve(this.failure(frozen, snapshot, "REQUEST_ID_CONFLICT", [], "INVALID"));
+     const existing = this.operations.get(frozen.request.operationId);
+@@ -118,6 +124,12 @@ export class SkillClassificationService {
+   }
+   private current(input: ClassificationServiceInput, result: ClassificationResult): ClassificationResult {
+     if (input.signal?.aborted || (input.getCurrentSnapshot && stale(result.snapshot, input.getCurrentSnapshot()))) return this.failure(input, result.snapshot, "STALE_CLASSIFICATION", result.attempts);
++    if (result.response.error === null && ["SUCCESS", "PARTIAL", "UNCERTAIN"].includes(result.response.status)) {
++      const attempt = result.attempts.at(-1);
++      const profile = input.registry.profiles.find(profile => profile.profileId === attempt?.profileId);
++      const invalid = profile ? validateProviderProfile(profile, input.request, this.now()) : "PROFILE_UNAVAILABLE";
++      if (invalid) return this.failure(input, result.snapshot, invalid, result.attempts);
++    }
+     return result;
+   }
+   private async run(input: ClassificationServiceInput, snapshot: ClassificationSnapshot): Promise<ClassificationResult> {
+@@ -148,7 +160,7 @@ export class SkillClassificationService {
+       attempts.push(evaluated.attempt);
+       const result: ClassificationResult = {request: input.request, config: input.config, profileRevision: input.registry.profileRevision, snapshot, attempts, response: evaluated.evaluation.response};
+       const current = this.current(input, result);
+-      if (current.response.error?.code === "STALE_CLASSIFICATION") return current;
++      if (current !== result) return current;
+       if (["SUCCESS", "PARTIAL", "UNCERTAIN"].includes(result.response.status) && result.response.error === null) return result;
+       if (kind === "vendor") return result;
+     }
+@@ -158,6 +170,7 @@ export class SkillClassificationService {
+     const controller = new AbortController();
+     let dispatchState: DispatchState = "not-started";
+     let reserved = false;
++    let retainedUsage = unknownUsage();
+     let timedOut = false;
+     let timer: ReturnType<typeof setTimeout> | undefined;
+     const reservationId = JSON.stringify([input.request.operationId, input.request.requestDigest, profile.profileId]);
+@@ -179,18 +192,23 @@ export class SkillClassificationService {
+         }
+         if (!input.config.externalClassificationAllowed && availability.routeKind !== "native") throw new ClassificationProviderError("EXTERNAL_CLASSIFICATION_BLOCKED", "not-started");
+         if (input.getCurrentSnapshot && stale(snapshot, input.getCurrentSnapshot())) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
++        const invalid = validateProviderProfile(profile, input.request, this.now());
++        if (invalid) throw new ClassificationProviderError(invalid, "not-started");
+         if (!this.options.budget.reserve(profile, reservationId, profile.maximumCostUsd!, availability.routeKind)) throw new ClassificationProviderError("BUDGET_UNAVAILABLE", "not-started");
+         reserved = true;
+         dispatchState = "unknown";
+         const evaluation = await provider.classify(input.request, profile, controller.signal);
+         if (controller.signal.aborted) return evaluation; // only the already-settled race may publish
+         const usage = evaluation.usage;
++        // Classification/token errors do not erase an independently valid reported charge.
++        if (usage && Number.isFinite(usage.actualCostUsd) && usage.actualCostUsd! >= 0) retainedUsage.actualCostUsd = usage.actualCostUsd;
+         if (!["not-started", "started", "unknown"].includes(evaluation.dispatchState) || !usage
+           || ![usage.inputTokens, usage.outputTokens, usage.cachedInputTokens].every((n) => n === null || (Number.isSafeInteger(n) && n >= 0))
+           || (usage.actualCostUsd !== null && (!Number.isFinite(usage.actualCostUsd) || usage.actualCostUsd < 0))
+           || (usage.inputTokens !== null && usage.cachedInputTokens !== null && usage.cachedInputTokens > usage.inputTokens)
+           || (evaluation.diagnostics !== null && (!evaluation.diagnostics || typeof evaluation.diagnostics.scoreKind !== "string" || !Array.isArray(evaluation.diagnostics.scores)
+             || evaluation.diagnostics.scores.some((score) => typeof score.skillId !== "string" || !Number.isFinite(score.value))))) throw new ClassificationProviderError("INVALID_PROVIDER_USAGE", "unknown", true);
++        retainedUsage = {...usage};
+         if (validateClassificationResponse(input.request, evaluation.response).length > 0) throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", evaluation.dispatchState, true);
+         if (usage.actualCostUsd !== null && usage.actualCostUsd > profile.maximumCostUsd!) return {...evaluation,
+           response: unavailableResponse(input.request, "COST_CEILING_EXCEEDED", evaluation.dispatchState)};
+@@ -201,7 +219,7 @@ export class SkillClassificationService {
+         const safe = error instanceof ClassificationProviderError ? new ClassificationProviderError(providerFailureCodes.has(error.code) ? error.code : "PROVIDER_UNAVAILABLE",
+           ["not-started", "started", "unknown"].includes(error.dispatchState) ? error.dispatchState : "unknown", error.invalid === true) : new ClassificationProviderError("PROVIDER_UNAVAILABLE", dispatchState);
+         if (safe.code === "NATIVE_TIMEOUT" || safe.code === "PROVIDER_TIMEOUT") timedOut = true;
+-        return {response: unavailableResponse(input.request, safe.code, safe.dispatchState, safe.invalid ? "INVALID" : timedOut && safe.dispatchState !== "not-started" ? "UNCERTAIN" : "UNAVAILABLE"), usage: unknownUsage(), dispatchState: safe.dispatchState, diagnostics: null};
++        return {response: unavailableResponse(input.request, safe.code, safe.dispatchState, safe.invalid ? "INVALID" : timedOut && safe.dispatchState !== "not-started" ? "UNCERTAIN" : "UNAVAILABLE"), usage: retainedUsage, dispatchState: safe.dispatchState, diagnostics: null};
+       }
+     };
+     let evaluation: ProviderEvaluation;
+diff --git a/tests/mcp/skill-classification-service-binding-regression.test.ts b/tests/mcp/skill-classification-service-binding-regression.test.ts
+new file mode 100644
+index 0000000..6e50b0e
+--- /dev/null
++++ b/tests/mcp/skill-classification-service-binding-regression.test.ts
+@@ -0,0 +1,96 @@
++import {describe, expect, it, vi} from "vitest";
++import {InMemoryClassificationBudget, SkillClassificationService, type ClassificationServiceInput} from "../../mcp-server/src/skill-classification/service.js";
++import {unknownUsage} from "../../mcp-server/src/skill-classification/providers.js";
++import {createClassificationRequest} from "../../mcp-server/src/skill-classification/request.js";
++import {digestProviderProfileConfiguration} from "../../mcp-server/src/skill-classification/profiles.js";
++import type {ProviderEvaluation, ProviderProfile, SkillClassificationProviderPort, SkillClassificationRequestV1} from "../../mcp-server/src/skill-classification/types.js";
++
++// TD-002/004, CONC-CANCEL-004, DIST-IDEMPOTENCY-002/RETRY-003/ORDER-004.
++// Public service boundary; fake transport/clock only. Provider-live/host selection are NOT_RUN here.
++function fixture() {
++  const request = createClassificationRequest({requestId: "request", operationId: "operation", originalPrompt: "읽기 전용, 수정 금지. 검토만 해라.",
++    inventory: {skills: [{skillId: "review", version: "1", description: "고정 변경분 검토", enabled: true, installed: true, hostSupported: true, capabilities: ["review"], actions: ["review"], targets: ["diff"], constraints: ["read-only"], applicability: ["fixed diff"], exclusions: ["implementation"], dependencies: [], phases: [], sourceRefs: []}], issues: [], inventoryDigest: `sha256:${"a".repeat(64)}`, taxonomyRevision: "taxonomy"}, classificationCriteriaRef: "criteria"});
++  const profile = (kind: "jev" | "vendor"): ProviderProfile => {
++    const value: ProviderProfile = {profileId: kind, providerKind: kind, vendorId: kind === "jev" ? "typesafe" : "current-vendor", modelId: `${kind}-fixed`, modelRevision: `${kind}-fixed`, reasoningEffort: kind === "jev" ? null : "low",
++    supportedOptions: {reasoningEfforts: kind === "jev" ? [null] : ["low"], structuredOutput: true}, approvedRouteRef: `${kind}-route`, qualificationRevision: "q1", qualification: {status: "PASS", inventoryDigest: request.inventoryDigest, taxonomyRevision: request.taxonomyRevision, modelRevision: `${kind}-fixed`, promptRevision: "p1", validUntil: "2099-01-01T00:00:00Z", profileConfigurationDigest: ""}, adapterRevision: "a1", promptRevision: "p1", maximumInputBytes: 100000, maximumOutputTokens: 1000, maximumCostUsd: 0.4, judgmentPolicy: kind === "jev" ? {neededAt: 0.8, notNeededAt: 0.2} : null};
++    value.qualification.profileConfigurationDigest = digestProviderProfileConfiguration(value);
++    return value;
++  };
++  const input: ClassificationServiceInput = {request, config: {jevEnabled: true, mode: "select", providerProfileRegistryRef: "profiles", externalClassificationAllowed: true, configRevision: "c1", timeoutMs: 2000}, registry: {schemaVersion: "1.0.0", profileRevision: "pr1", profiles: [profile("jev"), profile("vendor")]}, currentVendorId: "current-vendor"};
++  const budget = new InMemoryClassificationBudget({jev: {limitUsd: 5, spentUsd: 0}, vendors: {"current-vendor": {limitUsd: 2, spentUsd: 0}}, nativeAllowances: {vendor: {approvalRef: "fixture-quota", remainingCalls: 2}}});
++  const evaluation = (req: SkillClassificationRequestV1 = request): ProviderEvaluation => ({response: {schemaVersion: "1.0.0", requestId: req.requestId, operationId: req.operationId, requestDigest: req.requestDigest, inventoryDigest: req.inventoryDigest, status: "SUCCESS", judgments: [{skillId: "review", judgment: "needed", reasonRefs: ["fixture"], uncertaintyReason: null}], unresolvedItems: [], error: null}, usage: {...unknownUsage(), actualCostUsd: 0.1}, dispatchState: "started", diagnostics: null});
++  const provider = (): SkillClassificationProviderPort => ({availability: vi.fn(async () => ({available: true, approved: true, routeKind: "remote" as const, reasonCode: null})), classify: vi.fn(async (req) => evaluation(req))});
++  const jev = provider(), vendor = provider();
++  const service = new SkillClassificationService({providers: {jev, vendor}, budget});
++  return {input, budget, evaluation, jev, vendor, service, profile};
++}
++
++
++// Test-engineering TD-002/004/005, TP-001/002/003/004.
++// Same tests run RED on fixed base then GREEN on root's source changes.
++// Public service boundary, API/Claude calls 0. Qualification and usage are synthetic.
++const bindingCases = ["config JEV OFF", "config external OFF", "config timeout", "config registry reference", "profile model", "profile cost ceiling", "profile input ceiling", "profile output ceiling", "qualification status", "qualification expiry record"] as const;
++function reverseKeys<T>(value: T): T {
++  if (Array.isArray(value)) return value.map(reverseKeys) as T;
++  if (value !== null && typeof value === "object") return Object.fromEntries(Object.entries(value).reverse().map(([key, item]) => [key, reverseKeys(item)])) as T;
++  return value;
++}
++describe("public service canonical cache binding regression (API0)", () => {
++  it.each(bindingCases)("B01 same-revision %s conflicts without resend", async change => {
++    const f = fixture(), before = await f.service.classify(f.input), changed = structuredClone(f.input);
++    if (change === "config JEV OFF") changed.config.jevEnabled = false;
++    if (change === "config external OFF") changed.config.externalClassificationAllowed = false;
++    if (change === "config timeout") changed.config.timeoutMs += 1;
++    if (change === "config registry reference") changed.config.providerProfileRegistryRef = "profiles-other";
++    if (change === "profile model") changed.registry.profiles[0]!.modelId = "jev-other";
++    if (change === "profile cost ceiling") changed.registry.profiles[0]!.maximumCostUsd = 0.2;
++    if (change === "profile input ceiling") changed.registry.profiles[0]!.maximumInputBytes += 1;
++    if (change === "profile output ceiling") changed.registry.profiles[0]!.maximumOutputTokens += 1;
++    if (change === "qualification status") changed.registry.profiles[0]!.qualification.status = "FAIL";
++    if (change === "qualification expiry record") changed.registry.profiles[0]!.qualification.validUntil = "2098-01-01T00:00:00Z";
++    const result = await f.service.classify(changed);
++    expect(result.response.error?.code).toBe("OPERATION_DIGEST_CONFLICT");
++    expect(result.response.status).toBe("INVALID");
++    expect(f.jev.classify).toHaveBeenCalledTimes(1); expect(f.vendor.classify).not.toHaveBeenCalled();
++    expect(await f.service.classify(f.input)).toEqual(before);
++  });
++  it("B02 JSON key order only remains deduplicated", async () => {
++    const f = fixture(), before = await f.service.classify(f.input);
++    const reordered = reverseKeys(structuredClone(f.input));
++    expect(Object.keys(reordered.config)).not.toEqual(Object.keys(f.input.config));
++    expect(await f.service.classify(reordered)).toEqual(before);
++    expect(f.jev.classify).toHaveBeenCalledTimes(1); expect(f.vendor.classify).not.toHaveBeenCalled();
++  });
++  it("B03 mutating caller-owned input immediately cannot change an already claimed flight", async () => {
++    const f = fixture(), original = structuredClone(f.input), pending = f.service.classify(f.input);
++    f.input.config.jevEnabled = false; f.input.config.externalClassificationAllowed = false;
++    f.input.registry.profiles[0]!.modelId = "caller-mutated-model";
++    f.input.registry.profiles[0]!.maximumCostUsd = 0;
++    f.input.request.originalPrompt = "caller-mutated-invalid-request";
++    const result = await pending;
++    expect(result.response.status).toBe("SUCCESS");
++    expect(result.config).toEqual(original.config); expect(result.request).toEqual(original.request);
++    expect(f.jev.classify).toHaveBeenCalledWith(original.request, original.registry.profiles[0], expect.any(AbortSignal));
++    expect(await f.service.classify(original)).toEqual(result);
++    expect(f.jev.classify).toHaveBeenCalledTimes(1); expect(f.vendor.classify).not.toHaveBeenCalled();
++  });
++  it("B04 completed cache expires with the qualification clock without resend", async () => {
++    const f = fixture(); f.input.config.jevEnabled = false;
++    const until = Date.parse(f.input.registry.profiles[1]!.qualification.validUntil); let now = until - 1;
++    const service = new SkillClassificationService({providers:{jev:f.jev, vendor:f.vendor}, budget:f.budget, now:() => now});
++    expect((await service.classify(f.input)).response.status).toBe("SUCCESS");
++    now = until;
++    const result = await service.classify(f.input);
++    expect(result.response.error?.code).toBe("QUALIFICATION_EXPIRED");
++    expect(result.response.status).not.toBe("SUCCESS");
++    expect(f.vendor.availability).toHaveBeenCalledTimes(1); expect(f.vendor.classify).toHaveBeenCalledTimes(1); expect(f.jev.classify).not.toHaveBeenCalled();
++  });
++  it("B05 new operation at qualification deadline blocks before transport", async () => {
++    const f = fixture(); f.input.config.jevEnabled = false;
++    const until = Date.parse(f.input.registry.profiles[1]!.qualification.validUntil);
++    const service = new SkillClassificationService({providers:{jev:f.jev, vendor:f.vendor}, budget:f.budget, now:() => until});
++    const result = await service.classify(f.input);
++    expect(result.response.error?.code).toBe("QUALIFICATION_EXPIRED");
++    expect(f.vendor.availability).not.toHaveBeenCalled(); expect(f.vendor.classify).not.toHaveBeenCalled(); expect(f.jev.classify).not.toHaveBeenCalled();
++  });
++});
+diff --git a/tests/mcp/skill-classification-service-qualification-regression.test.ts b/tests/mcp/skill-classification-service-qualification-regression.test.ts
+new file mode 100644
+index 0000000..b20bb28
+--- /dev/null
++++ b/tests/mcp/skill-classification-service-qualification-regression.test.ts
+@@ -0,0 +1,130 @@
++import {afterEach, describe, expect, it, vi} from "vitest";
++import {InMemoryClassificationBudget, SkillClassificationService, type ClassificationServiceInput} from "../../mcp-server/src/skill-classification/service.js";
++import {createClassificationRequest} from "../../mcp-server/src/skill-classification/request.js";
++import {digestProviderProfileConfiguration} from "../../mcp-server/src/skill-classification/profiles.js";
++import type {ProviderAvailability, ProviderEvaluation, ProviderProfile, SkillClassificationProviderPort, SkillClassificationRequestV1} from "../../mcp-server/src/skill-classification/types.js";
++
++// Fixed epoch and promise gates isolate qualification time from elapsed test-runner time.
++// The real service/cache/budget execute. Provider ports are synthetic: real API/Claude/host are NOT_RUN.
++const START = 1_700_000_000_000;
++const DEADLINE = START + 1000;
++const available: ProviderAvailability = {available: true, approved: true, routeKind: "remote", reasonCode: null};
++function deferred<T>() {
++  let resolve!: (value: T) => void;
++  const promise = new Promise<T>(done => {resolve = done;});
++  return {promise, resolve};
++}
++function availabilityGate(provider: SkillClassificationProviderPort) {
++  const entered = deferred<void>(), release = deferred<ProviderAvailability>();
++  vi.mocked(provider.availability).mockImplementation(async () => {entered.resolve(); return release.promise;});
++  return {entered: entered.promise, release: (value = available) => release.resolve(value)};
++}
++function fixture(jevEnabled = false) {
++  let clock = START;
++  const request = createClassificationRequest({requestId: "expiry-request", operationId: "expiry-operation", originalPrompt: "읽기 전용 검토. 수정은 금지한다.",
++    inventory: {skills: [{skillId: "review", version: "1", description: "고정 변경 검토", enabled: true, installed: true, hostSupported: true, capabilities: ["review"], actions: ["review"], targets: ["diff"], constraints: ["read-only"], applicability: ["fixed diff"], exclusions: ["implementation"], dependencies: [], phases: [], sourceRefs: []}], issues: [], inventoryDigest: `sha256:${"b".repeat(64)}`, taxonomyRevision: "expiry-taxonomy"}, classificationCriteriaRef: "criteria"});
++  const profile = (kind: "jev" | "vendor"): ProviderProfile => {
++    const value: ProviderProfile = {profileId: `expiry-${kind}`, providerKind: kind, vendorId: kind === "jev" ? "typesafe" : "current-vendor", modelId: `${kind}-fixed`, modelRevision: `${kind}-fixed`, reasoningEffort: kind === "jev" ? null : "low",
++      supportedOptions: {reasoningEfforts: kind === "jev" ? [null] : ["low"], structuredOutput: true}, approvedRouteRef: `${kind}-approved`, qualificationRevision: "synthetic-expiry-q1",
++      qualification: {status: "PASS", inventoryDigest: request.inventoryDigest, taxonomyRevision: request.taxonomyRevision, modelRevision: `${kind}-fixed`, promptRevision: "expiry-p1", validUntil: new Date(DEADLINE).toISOString(), profileConfigurationDigest: ""},
++      adapterRevision: "expiry-a1", promptRevision: "expiry-p1", maximumInputBytes: 100000, maximumOutputTokens: 1000, maximumCostUsd: 0.4, judgmentPolicy: kind === "jev" ? {neededAt: 0.8, notNeededAt: 0.2} : null};
++    value.qualification.profileConfigurationDigest = digestProviderProfileConfiguration(value);
++    return value;
++  };
++  const evaluation = (req: SkillClassificationRequestV1): ProviderEvaluation => ({response: {schemaVersion: "1.0.0", requestId: req.requestId, operationId: req.operationId, requestDigest: req.requestDigest, inventoryDigest: req.inventoryDigest, status: "SUCCESS", judgments: [{skillId: "review", judgment: "needed", reasonRefs: ["synthetic-expiry"], uncertaintyReason: null}], unresolvedItems: [], error: null}, usage: {inputTokens: 10, outputTokens: 10, cachedInputTokens: 0, actualCostUsd: 0.1}, dispatchState: "started", diagnostics: null});
++  const provider = (): SkillClassificationProviderPort => ({availability: vi.fn(async () => available), classify: vi.fn(async req => evaluation(req))});
++  const jev = provider(), vendor = provider();
++  const budget = new InMemoryClassificationBudget({jev: {limitUsd: 5, spentUsd: 0}, vendors: {"current-vendor": {limitUsd: 2, spentUsd: 0}}});
++  const reserve = vi.spyOn(budget, "reserve"), settle = vi.spyOn(budget, "settle");
++  const input: ClassificationServiceInput = {request, config: {jevEnabled, mode: "select", providerProfileRegistryRef: "synthetic-profiles", externalClassificationAllowed: true, configRevision: "expiry-c1", timeoutMs: 1000}, registry: {schemaVersion: "1.0.0", profileRevision: "expiry-pr1", profiles: [profile("jev"), profile("vendor")]}, currentVendorId: "current-vendor"};
++  const service = new SkillClassificationService({providers: {jev, vendor}, budget, now: () => clock});
++  return {input, jev, vendor, budget, reserve, settle, service, setClock: (value: number) => {clock = value;}};
++}
++function expectNoBudgetMutation(f: ReturnType<typeof fixture>) {
++  expect(f.reserve, "expired/pending profile must not reserve cash").not.toHaveBeenCalled();
++  expect(f.settle).not.toHaveBeenCalled();
++  expect(f.budget.snapshot()).toMatchObject({limits: {jev: {spentUsd: 0}, "vendor:current-vendor": {spentUsd: 0}}, reservations: []});
++}
++afterEach(() => vi.useRealTimers());
++
++describe("qualification freshness across availability and cached operations", () => {
++  it.each([0, 1])("QUAL-AVAIL vendor expiration at deadline+%i forbids reservation and dispatch", async offset => {
++    const f = fixture(), gate = availabilityGate(f.vendor);
++    const pending = f.service.classify(f.input); await gate.entered;
++    f.setClock(DEADLINE + offset); gate.release();
++    const result = await pending;
++    expectNoBudgetMutation(f);
++    expect(f.vendor.classify).not.toHaveBeenCalled();
++    expect(result.response.status).toBe("UNAVAILABLE"); expect(result.response.error?.code).toBe("QUALIFICATION_EXPIRED");
++    expect(result.attempts[0]).toMatchObject({dispatchState: "not-started", reservedCostUsd: 0});
++  });
++
++  it.each([0, 1])("QUAL-FALLBACK JEV expiration at deadline+%i uses only still-qualified fixed vendor", async offset => {
++    const f = fixture(true), gate = availabilityGate(f.jev);
++    f.input.registry.profiles[1]!.qualification.validUntil = new Date(DEADLINE + 10_000).toISOString();
++    const pending = f.service.classify(f.input); await gate.entered;
++    f.setClock(DEADLINE + offset); gate.release();
++    const result = await pending;
++    expect(f.jev.classify).not.toHaveBeenCalled(); expect(f.vendor.classify).toHaveBeenCalledTimes(1);
++    expect(f.reserve).toHaveBeenCalledTimes(1); expect(f.reserve.mock.calls[0]![0].providerKind).toBe("vendor");
++    expect(result.response.status).toBe("SUCCESS");
++    expect(result.attempts.map(row => [row.providerKind, row.errorCode, row.reservedCostUsd])).toEqual([["jev", "QUALIFICATION_EXPIRED", 0], ["vendor", null, 0.4]]);
++    expect(f.budget.snapshot().limits.jev?.spentUsd).toBe(0);
++  });
++
++  it.each([0, 1])("QUAL-FALLBACK-WAIT fixed vendor expires at deadline+%i during its own availability", async offset => {
++    const f = fixture(true), jevGate = availabilityGate(f.jev), vendorGate = availabilityGate(f.vendor);
++    const pending = f.service.classify(f.input); await jevGate.entered;
++    f.setClock(DEADLINE - 1); jevGate.release({...available, available: false, reasonCode: "CREDENTIAL_UNAVAILABLE"});
++    await vendorGate.entered; f.setClock(DEADLINE + offset); vendorGate.release();
++    const result = await pending;
++    expectNoBudgetMutation(f); expect(f.jev.classify).not.toHaveBeenCalled(); expect(f.vendor.classify).not.toHaveBeenCalled();
++    expect(result.response.error?.code).toBe("QUALIFICATION_EXPIRED"); expect(result.response.status).not.toBe("SUCCESS");
++  });
++
++  it("QUAL-FALLBACK-CURRENT expiration before selecting fallback also prevents vendor availability", async () => {
++    const f = fixture(true), gate = availabilityGate(f.jev);
++    const pending = f.service.classify(f.input); await gate.entered;
++    f.setClock(DEADLINE); gate.release({...available, available: false, reasonCode: "CREDENTIAL_UNAVAILABLE"});
++    const result = await pending;
++    expectNoBudgetMutation(f); expect(f.vendor.availability).not.toHaveBeenCalled(); expect(f.vendor.classify).not.toHaveBeenCalled();
++    expect(result.response.error?.code).toBe("QUALIFICATION_EXPIRED");
++  });
++
++  it.each([["vendor", false], ["jev", true]] as const)("QUAL-BEFORE %s at deadline-1 remains eligible", async (kind, enabled) => {
++    const f = fixture(enabled), gate = availabilityGate(f[kind]);
++    const pending = f.service.classify(f.input); await gate.entered; f.setClock(DEADLINE - 1); gate.release();
++    const result = await pending;
++    expect(result.response.status).toBe("SUCCESS"); expect(f[kind].classify).toHaveBeenCalledTimes(1); expect(f.reserve).toHaveBeenCalledTimes(1);
++    expect(f.budget.snapshot().reservations).toEqual([]); expect(f.budget.snapshot().limits[kind === "jev" ? "jev" : "vendor:current-vendor"]?.spentUsd).toBe(0.1);
++  });
++
++  it.each([{kind: "vendor", enabled: false, offset: 0}, {kind: "vendor", enabled: false, offset: 1}, {kind: "jev", enabled: true, offset: 0}, {kind: "jev", enabled: true, offset: 1}] as const)("QUAL-CACHE $kind completed success at deadline+$offset is withheld without resend", async ({kind, enabled, offset}) => {
++    const f = fixture(enabled);
++    const first = await f.service.classify(f.input); expect(first.response.status).toBe("SUCCESS");
++    const accounting = JSON.stringify(f.budget.snapshot()); f.setClock(DEADLINE + offset);
++    const cached = await f.service.classify(f.input);
++    expect(cached.response.status, "expired cached qualification must not publish SUCCESS").not.toBe("SUCCESS");
++    expect(cached.response.error?.code).toBe("QUALIFICATION_EXPIRED");
++    expect(f[kind].availability).toHaveBeenCalledTimes(1); expect(f[kind].classify).toHaveBeenCalledTimes(1); expect(f.reserve).toHaveBeenCalledTimes(1);
++    expect(f[kind === "jev" ? "vendor" : "jev"].classify).not.toHaveBeenCalled();
++    expect(JSON.stringify(f.budget.snapshot())).toBe(accounting); expect(first.response.status).toBe("SUCCESS");
++  });
++
++  it("QUAL-TIMEOUT pending availability never reserves or dispatches even after late release", async () => {
++    vi.useFakeTimers(); const f = fixture(), gate = availabilityGate(f.vendor);
++    f.input.config.timeoutMs = 20; const pending = f.service.classify(f.input); await gate.entered;
++    await vi.advanceTimersByTimeAsync(20); const result = await pending;
++    expect(result.response.error?.code).toBe("PROVIDER_TIMEOUT"); expectNoBudgetMutation(f);
++    gate.release(); await vi.advanceTimersByTimeAsync(0);
++    expectNoBudgetMutation(f); expect(f.vendor.classify).not.toHaveBeenCalled();
++  });
++
++  it("QUAL-CANCEL pending availability never reserves or dispatches even after late release", async () => {
++    const f = fixture(), gate = availabilityGate(f.vendor), controller = new AbortController(); f.input.signal = controller.signal;
++    const pending = f.service.classify(f.input); await gate.entered; controller.abort();
++    const result = await pending; expect(result.response.status).not.toBe("SUCCESS"); expectNoBudgetMutation(f);
++    gate.release(); await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
++    expectNoBudgetMutation(f); expect(f.vendor.classify).not.toHaveBeenCalled();
++  });
++});
+diff --git a/tests/mcp/skill-classification-service-usage-regression.test.ts b/tests/mcp/skill-classification-service-usage-regression.test.ts
+new file mode 100644
+index 0000000..5935946
+--- /dev/null
++++ b/tests/mcp/skill-classification-service-usage-regression.test.ts
+@@ -0,0 +1,87 @@
++import {describe, expect, it, vi} from "vitest";
++import {InMemoryClassificationBudget, SkillClassificationService, type ClassificationServiceInput} from "../../mcp-server/src/skill-classification/service.js";
++import {unknownUsage} from "../../mcp-server/src/skill-classification/providers.js";
++import {createClassificationRequest} from "../../mcp-server/src/skill-classification/request.js";
++import {digestProviderProfileConfiguration} from "../../mcp-server/src/skill-classification/profiles.js";
++import type {ClassificationUsage, ProviderEvaluation, ProviderProfile, SkillClassificationProviderPort, SkillClassificationRequestV1} from "../../mcp-server/src/skill-classification/types.js";
++
++// Public service regression: only provider transport is mocked. No real API or host.
++let sequence = 0;
++function fixture() {
++  const id = `service-usage-regression-${++sequence}`;
++  const inventory = {skills: [{skillId: "review", version: "1", description: "read-only review", enabled: true, installed: true, hostSupported: true, capabilities: ["review"], actions: ["review"], targets: ["diff"], constraints: ["read-only"], applicability: ["fixed diff"], exclusions: ["implementation"], dependencies: [], phases: [], sourceRefs: []}], issues: [], inventoryDigest: `sha256:${"b".repeat(64)}`, taxonomyRevision: "usage-regression"};
++  const request = (suffix: string) => createClassificationRequest({requestId: `${id}-request-${suffix}`, operationId: `${id}-operation-${suffix}`, originalPrompt: "검토만 하라. 수정 금지.", inventory, classificationCriteriaRef: "usage-regression-criteria"});
++  const first = request("first");
++  const profile = (kind: "jev" | "vendor"): ProviderProfile => {
++    const p: ProviderProfile = {profileId: kind, providerKind: kind, vendorId: kind === "jev" ? "typesafe" : "current-vendor", modelId: `${kind}-fixed`, modelRevision: `${kind}-fixed`, reasoningEffort: kind === "jev" ? null : "low", supportedOptions: {reasoningEfforts: kind === "jev" ? [null] : ["low"], structuredOutput: true}, approvedRouteRef: `${kind}-approved`, qualificationRevision: "synthetic-usage-q1", qualification: {status: "PASS", inventoryDigest: first.inventoryDigest, taxonomyRevision: first.taxonomyRevision, modelRevision: `${kind}-fixed`, promptRevision: "usage-p1", validUntil: "2099-01-01T00:00:00Z", profileConfigurationDigest: ""}, adapterRevision: "usage-a1", promptRevision: "usage-p1", maximumInputBytes: 100000, maximumOutputTokens: 1000, maximumCostUsd: 0.4, judgmentPolicy: kind === "jev" ? {neededAt: 0.8, notNeededAt: 0.2} : null};
++    p.qualification.profileConfigurationDigest = digestProviderProfileConfiguration(p); return p;
++  };
++  const input: ClassificationServiceInput = {request: first, config: {jevEnabled: true, mode: "select", providerProfileRegistryRef: "usage-regression-profiles", externalClassificationAllowed: true, configRevision: "usage-c1", timeoutMs: 1000}, registry: {schemaVersion: "1.0.0", profileRevision: "usage-pr1", profiles: [profile("jev"), profile("vendor")]}, currentVendorId: "current-vendor"};
++  const evaluation = (req: SkillClassificationRequestV1): ProviderEvaluation => ({response: {schemaVersion: "1.0.0", requestId: req.requestId, operationId: req.operationId, requestDigest: req.requestDigest, inventoryDigest: req.inventoryDigest, status: "SUCCESS", judgments: [{skillId: "review", judgment: "needed", reasonRefs: ["mock-only"], uncertaintyReason: null}], unresolvedItems: [], error: null}, usage: {...unknownUsage(), actualCostUsd: 0.1}, dispatchState: "started", diagnostics: null});
++  const provider = (): SkillClassificationProviderPort => ({availability: vi.fn(async () => ({available: true, approved: true, routeKind: "remote" as const, reasonCode: null})), classify: vi.fn(async req => evaluation(req))});
++  const jev = provider(), vendor = provider();
++  const budget = new InMemoryClassificationBudget({jev: {limitUsd: 0.8, spentUsd: 0}, vendors: {"current-vendor": {limitUsd: 2, spentUsd: 0}}});
++  const service = new SkillClassificationService({providers: {jev, vendor}, budget, now: () => Date.UTC(2026, 9, 9)});
++  return {input, request, evaluation, jev, vendor, budget, service};
++}
++
++function malformedResponse(f: ReturnType<typeof fixture>, cost: number) {
++  vi.mocked(f.jev.classify).mockImplementation(async req => {
++    const evaluation = f.evaluation(req); evaluation.response.judgments = []; evaluation.usage.actualCostUsd = cost; return evaluation;
++  });
++}
++
++describe("independent actual cost survives classification validation failures", () => {
++  it("USAGE01 malformed RESP settles valid known cost instead of retaining a maximum reservation", async () => {
++    const f = fixture(); malformedResponse(f, 0.1); const result = await f.service.classify(f.input);
++    expect(result.attempts[0]).toMatchObject({errorCode: "INVALID_PROVIDER_RESPONSE", usage: {actualCostUsd: 0.1}});
++    expect(f.budget.snapshot().limits.jev?.spentUsd).toBe(0.1); expect(f.budget.snapshot().reservations).toEqual([]);
++    expect(result.response.status).toBe("SUCCESS"); // The independently billed vendor fallback.
++  });
++  it("USAGE02 malformed RESP known overrun invalidates ceiling and blocks next dispatch", async () => {
++    const f = fixture(); malformedResponse(f, 0.7); const first = await f.service.classify(f.input);
++    expect(first.attempts[0]?.errorCode).toBe("INVALID_PROVIDER_RESPONSE");
++    expect(f.budget.snapshot().limits.jev?.spentUsd).toBe(0.7); expect(f.budget.snapshot().invalidCostCeilings).toEqual(["jev"]);
++    const next = await f.service.classify({...f.input, request: f.request("next")});
++    expect(next.attempts[0]?.errorCode).toBe("BUDGET_UNAVAILABLE"); expect(f.jev.classify).toHaveBeenCalledTimes(1);
++  });
++  const invalidTokens: {name: string; usage: Partial<ClassificationUsage>}[] = [
++    {name: "nonfinite input tokens", usage: {inputTokens: NaN}},
++    {name: "negative output tokens", usage: {outputTokens: -1}},
++    {name: "unsafe integer cached tokens", usage: {cachedInputTokens: Number.MAX_SAFE_INTEGER + 1}},
++    {name: "cached tokens exceed input", usage: {inputTokens: 1, cachedInputTokens: 2}},
++  ];
++  it.each(invalidTokens)("USAGE03 $name still settles independently valid actualCostUsd", async ({usage}) => {
++    const f = fixture(); vi.mocked(f.jev.classify).mockImplementation(async req => ({...f.evaluation(req), usage: {...unknownUsage(), ...usage, actualCostUsd: 0.1}}));
++    const result = await f.service.classify(f.input); expect(result.attempts[0]).toMatchObject({errorCode: "INVALID_PROVIDER_USAGE", usage: {actualCostUsd: 0.1}});
++    expect(f.budget.snapshot().limits.jev?.spentUsd).toBe(0.1); expect(f.budget.snapshot().reservations).toEqual([]);
++  });
++  it("USAGE04 invalid diagnostics still settles independently valid actualCostUsd", async () => {
++    const f = fixture(); vi.mocked(f.jev.classify).mockImplementation(async req => ({...f.evaluation(req), diagnostics: {scoreKind: "mock", scores: [{skillId: "review", value: NaN}]}}));
++    const result = await f.service.classify(f.input); expect(result.attempts[0]).toMatchObject({errorCode: "INVALID_PROVIDER_USAGE", usage: {actualCostUsd: 0.1}});
++    expect(f.budget.snapshot().limits.jev?.spentUsd).toBe(0.1); expect(f.budget.snapshot().reservations).toEqual([]);
++  });
++  it.each([null, NaN, -0.1, Infinity])("USAGE05 unknown or invalid dispatched actualCostUsd=%s retains conservative reservation", async cost => {
++    const f = fixture(); vi.mocked(f.jev.classify).mockImplementation(async req => ({...f.evaluation(req), usage: {...unknownUsage(), actualCostUsd: cost}}));
++    const result = await f.service.classify(f.input); const attempt = result.attempts[0]!;
++    expect(attempt.usage.actualCostUsd).toBeNull(); expect(f.budget.snapshot().limits.jev?.spentUsd).toBe(0);
++    expect(f.budget.snapshot().reservations).toMatchObject([{bucket: "jev", maximumUsd: 0.4}]);
++    expect(attempt.errorCode).toBe(cost === null ? null : "INVALID_PROVIDER_USAGE");
++    expect(f.jev.classify).toHaveBeenCalledTimes(1);
++  });
++  it("USAGE06 valid RESP known cost ceiling mismatch settles and blocks next dispatch", async () => {
++    const f = fixture(); vi.mocked(f.jev.classify).mockImplementation(async req => ({...f.evaluation(req), usage: {...unknownUsage(), actualCostUsd: 0.7}}));
++    const first = await f.service.classify(f.input); expect(first.attempts[0]).toMatchObject({errorCode: "COST_CEILING_EXCEEDED", usage: {actualCostUsd: 0.7}});
++    const next = await f.service.classify({...f.input, request: f.request("next")});
++    expect(next.attempts[0]?.errorCode).toBe("BUDGET_UNAVAILABLE"); expect(f.jev.classify).toHaveBeenCalledTimes(1);
++    expect(f.budget.snapshot().limits.jev?.spentUsd).toBe(0.7); expect(f.budget.snapshot().invalidCostCeilings).toEqual(["jev"]);
++  });
++  it("USAGE07 simultaneous and completed identical malformed RESP submissions bill once", async () => {
++    const f = fixture(); malformedResponse(f, 0.1);
++    const [first, duplicate] = await Promise.all([f.service.classify(f.input), f.service.classify(f.input)]);
++    const completed = await f.service.classify(f.input); expect(duplicate).toEqual(first); expect(completed).toEqual(first);
++    expect(f.jev.classify).toHaveBeenCalledTimes(1); expect(f.vendor.classify).toHaveBeenCalledTimes(1);
++    expect(f.budget.snapshot().limits.jev?.spentUsd).toBe(0.1); expect(f.budget.snapshot().limits["vendor:current-vendor"]?.spentUsd).toBe(0.1);
++    expect(f.budget.snapshot().reservations).toEqual([]);
++  });
++});
+-- 
+2.52.0
+

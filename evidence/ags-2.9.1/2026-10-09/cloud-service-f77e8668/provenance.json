@@ -1,0 +1,121 @@
+{
+  "schemaVersion": "1",
+  "purpose": "Public evidence only; product patch not applied to evidence branch root",
+  "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cloud-service-f77e8668",
+  "publicationBase": "aa57eaa84b6bb6246fad6f81b158c97d37fffb9f",
+  "sourceCandidate": {
+    "commit": "f77e8668ff32246c5a6bb02659472c5610a60792",
+    "parent": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "150e699ccb04f93e50188fca4ac4cd3c4d2819c0",
+    "baseTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3"
+  },
+  "changedFiles": [
+    {
+      "path": "mcp-server/src/skill-classification/service.ts",
+      "sha256": "d7463ed8179ac5d717b528fa18b59733655693d387504960deaa2ef5b55cb1e0"
+    },
+    {
+      "path": "tests/mcp/skill-classification-service-binding-regression.test.ts",
+      "sha256": "c7e2ceec08c68ba130d769952d3e5b7a8435dcc48baaf02047f1ca0f3fb101cb"
+    },
+    {
+      "path": "tests/mcp/skill-classification-service-qualification-regression.test.ts",
+      "sha256": "4ba892340b53ba9caea08378dec94d7b7034d1e7f6093bafc808714a99a0a315"
+    },
+    {
+      "path": "tests/mcp/skill-classification-service-usage-regression.test.ts",
+      "sha256": "5e650890de290e72cf148a2485b3371add0f72e6d199e464330a6d8d763fb417"
+    }
+  ],
+  "changeStatistics": [
+    {
+      "path": "mcp-server/src/skill-classification/service.ts",
+      "insertions": 23,
+      "deletions": 5
+    },
+    {
+      "path": "tests/mcp/skill-classification-service-binding-regression.test.ts",
+      "insertions": 96,
+      "deletions": 0
+    },
+    {
+      "path": "tests/mcp/skill-classification-service-qualification-regression.test.ts",
+      "insertions": 130,
+      "deletions": 0
+    },
+    {
+      "path": "tests/mcp/skill-classification-service-usage-regression.test.ts",
+      "insertions": 87,
+      "deletions": 0
+    }
+  ],
+  "originalRecords": [
+    {
+      "record": "candidate.patch",
+      "bytes": 42624,
+      "sha256": "00271c9240b67c2ce6a451675a4d27af758248c373aa60d647f3eeeddaaf72e6",
+      "publishedOriginal": false
+    },
+    {
+      "record": "changed-files.sha256",
+      "bytes": 513,
+      "sha256": "073830e2f55fd2c3d1ed0fb9be3d2919e4b8ab2aaa051e0b85054117fc4780d8",
+      "publishedOriginal": false
+    },
+    {
+      "record": "summary.json",
+      "bytes": 4023,
+      "sha256": "db5701f46fedc12c4fbef5311391135f5a948a8938b05d87755729cf60e50e85",
+      "publishedOriginal": false
+    },
+    {
+      "record": "audit/report.md",
+      "bytes": 12308,
+      "sha256": "4c9f953b59bd65a61a7d4d5e21706cc9d4ded03514bb26658450f9d3e8573402",
+      "publishedOriginal": false
+    },
+    {
+      "record": "audit/vitest.json",
+      "bytes": 85237,
+      "sha256": "02b6e4c83f9aaed04cad0179faef6baad87286bb7e34f63eb5fb92ea5dfcb476",
+      "publishedOriginal": false
+    },
+    {
+      "record": "audit-spawn-provenance.json",
+      "bytes": 811,
+      "sha256": "c1ddd72d774604faeb3e24cb7c5872ac85f72cce228324036e9e2f6e6e530cdf",
+      "publishedOriginal": false
+    },
+    {
+      "record": "binding/capture-method.json",
+      "bytes": 815,
+      "sha256": "ae60f06ee8445de599c1e951216049c09da01eedc530538d064c723b4bcc48d5",
+      "publishedOriginal": false
+    }
+  ],
+  "publicPatch": {
+    "file": "candidate.patch",
+    "bytes": 42596,
+    "sha256": "03f49623cd69c6280307ff359bdce834048c60d1b8d1bcdd0d8a7a4542919908",
+    "transformation": "Author From header normalized to jaeseongs95 <sjs9505@gmail.com>, observed in fetched public evidence history. Diff body unchanged.",
+    "originalCommitIdentityNote": "Applying this sanitized patch creates a new integration commit; original commit SHA is provenance, not promised output."
+  },
+  "derivatives": {
+    "test-summary.json": "Selected counts/check statuses from summary.json and independent audit/vitest.json; local paths removed; argv output path normalized to a relative file.",
+    "independent-audit.md": "Concise faithful audit/report.md summary including scope, independence, causal witnesses and limitations; private/local identifiers and unnecessary raw logs excluded.",
+    "changed-files.sha256": "Byte-identical to the original changed-file digest list."
+  },
+  "privacyReview": {
+    "allowedIdentitySource": "Public fetched evidence branch author history",
+    "excluded": [
+      "credentials",
+      "environment variable values",
+      "private conversations",
+      "personal local paths",
+      "unnecessary raw logs"
+    ],
+    "syntheticFixtureOnly": true
+  },
+  "existingEvidencePolicy": "Only add files under publicationPath; retain all prior path/mode/blob entries unchanged. Non-force push one evidence ref."
+}

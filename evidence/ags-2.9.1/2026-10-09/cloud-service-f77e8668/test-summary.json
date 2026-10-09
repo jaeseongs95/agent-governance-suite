@@ -1,0 +1,147 @@
+{
+  "target": "f77e8668ff32246c5a6bb02659472c5610a60792",
+  "execution": "Historical API0 runs; no test re-execution for publication",
+  "providerTransport": "synthetic",
+  "actualApiCalls": 0,
+  "claudeCalls": 0,
+  "redGreen": {
+    "usage": {
+      "red": {
+        "passed": 5,
+        "failed": 8
+      },
+      "green": {
+        "passed": 13,
+        "failed": 0
+      }
+    },
+    "binding": {
+      "red": {
+        "passed": 3,
+        "failed": 11
+      },
+      "green": {
+        "passed": 14,
+        "failed": 0
+      }
+    },
+    "qualification": {
+      "red": {
+        "passed": 5,
+        "failed": 10
+      },
+      "green": {
+        "passed": 15,
+        "failed": 0
+      }
+    }
+  },
+  "existingRelated": {
+    "passed": 161,
+    "failed": 0,
+    "files": 7
+  },
+  "uniqueTargetedTests": 203,
+  "independentAuditRerun": {
+    "files": 10,
+    "passed": 203,
+    "failed": 0,
+    "pendingOrSkipped": 0,
+    "exitCode": 0,
+    "perFile": [
+      {
+        "file": "tests/mcp/skill-classification-gateway.test.ts",
+        "passed": 38,
+        "failed": 0,
+        "pendingOrSkipped": 0
+      },
+      {
+        "file": "tests/mcp/skill-classification-profiles.test.ts",
+        "passed": 24,
+        "failed": 0,
+        "pendingOrSkipped": 0
+      },
+      {
+        "file": "tests/mcp/skill-classification-providers.test.ts",
+        "passed": 23,
+        "failed": 0,
+        "pendingOrSkipped": 0
+      },
+      {
+        "file": "tests/mcp/skill-classification-request.test.ts",
+        "passed": 5,
+        "failed": 0,
+        "pendingOrSkipped": 0
+      },
+      {
+        "file": "tests/mcp/skill-classification-runtime.test.ts",
+        "passed": 5,
+        "failed": 0,
+        "pendingOrSkipped": 0
+      },
+      {
+        "file": "tests/mcp/skill-classification-service-binding-regression.test.ts",
+        "passed": 14,
+        "failed": 0,
+        "pendingOrSkipped": 0
+      },
+      {
+        "file": "tests/mcp/skill-classification-service-qualification-regression.test.ts",
+        "passed": 15,
+        "failed": 0,
+        "pendingOrSkipped": 0
+      },
+      {
+        "file": "tests/mcp/skill-classification-service-usage-regression.test.ts",
+        "passed": 13,
+        "failed": 0,
+        "pendingOrSkipped": 0
+      },
+      {
+        "file": "tests/mcp/skill-classification-service.test.ts",
+        "passed": 40,
+        "failed": 0,
+        "pendingOrSkipped": 0
+      },
+      {
+        "file": "tests/mcp/skill-classification-validation.test.ts",
+        "passed": 26,
+        "failed": 0,
+        "pendingOrSkipped": 0
+      }
+    ]
+  },
+  "staticChecks": {
+    "typecheckExitCode": 0,
+    "targetedEslintExitCode": 0,
+    "diffCheckExitCode": 0
+  },
+  "reproductionArgv": [
+    "node",
+    "scripts/run-tests.mjs",
+    "tests/mcp/skill-classification-gateway.test.ts",
+    "tests/mcp/skill-classification-profiles.test.ts",
+    "tests/mcp/skill-classification-providers.test.ts",
+    "tests/mcp/skill-classification-request.test.ts",
+    "tests/mcp/skill-classification-runtime.test.ts",
+    "tests/mcp/skill-classification-service-binding-regression.test.ts",
+    "tests/mcp/skill-classification-service-qualification-regression.test.ts",
+    "tests/mcp/skill-classification-service-usage-regression.test.ts",
+    "tests/mcp/skill-classification-service.test.ts",
+    "tests/mcp/skill-classification-validation.test.ts",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=verification-vitest.json"
+  ],
+  "notRun": [
+    "paid API",
+    "Claude",
+    "real model qualification",
+    "real billing/host E2E",
+    "full1257 suite",
+    "bundle freshness/build/clean-room/runtime generated artifacts",
+    "R14",
+    "global claim redesign"
+  ],
+  "accountingCaveat": "Costs are provider-reported synthetic fixture values; no actual invoice, balance or model cost is established."
+}
