@@ -1,0 +1,506 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS09",
+  "sourceEvidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "title": "기술 키워드가 있는 일반 설명",
+  "originalPrompt": "SQLite WAL이 무엇인지 초보자에게 두 문장으로 설명해 줘. 설계·구현·감사는 요청하지 않아.",
+  "input": {
+    "bytes": 121,
+    "sha256": "0050dc40116897b0a27139bf29a4f1731ad2a267564866ffac866e4c762de73c",
+    "addedNewline": false,
+    "fixtureBindingTraceMatches": true
+  },
+  "publicSourceArtifacts": [
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/README.md",
+      "bytes": 5259,
+      "sha256": "8dc41f49055494ec23c95292cfc3e826592eff20d40e55f18c4521f02f886355",
+      "gitBlob": "57d93e5b1f28a67c00bd5d2832e1fcd7ef47f291",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.engineering-test-result.json",
+      "bytes": 1702,
+      "sha256": "a059dca119014d3740a2d4ed0579161845ef63ea28d9f687c691d232a0f97c60",
+      "gitBlob": "1d135cd0fd558675a2511b764c84b580e91c6987",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.environment.json",
+      "bytes": 448,
+      "sha256": "32fac846de61afe65955073d234fc986aedf5709a8d3b321bdf0323d76f9d5e7",
+      "gitBlob": "4b4d78dee66c10357d3ae6408148858173798b07",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.existing-no-skill-regression.command.json",
+      "bytes": 616,
+      "sha256": "1ecea195be1f978e4ba46634eba6e904015bb3fe5c66d0c80bcbdf4c6cf955c7",
+      "gitBlob": "049e36992b3da31660b6e3a4f7d5ab0469793802",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.existing-no-skill-regression.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.existing-no-skill-regression.stdout.log",
+      "bytes": 476,
+      "sha256": "e16e0264c66887e132478658338d525319cb4de7aa8e9b88ed10af89a9e4a055",
+      "gitBlob": "3c4ddfb6f7691d31f8b50c1af4ad261029354628",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.existing-regression.vitest.json",
+      "bytes": 16621,
+      "sha256": "24928911f1441591a20d41ba4d788bdc45eb23180a0fb6fbdb58e845789fd734",
+      "gitBlob": "0208638cd392c534e5fe567542184d2eb567bc46",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.fixture.json",
+      "bytes": 3957,
+      "sha256": "47fd1c1618259fd3b120aa0bca58dee6d55425d763562ad212ec20dc6d2ee89f",
+      "gitBlob": "dfe5df7df933323787e77904c1c194dd967e8233",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.input-binding.json",
+      "bytes": 2340,
+      "sha256": "13fed3960dc8d2ba3633f183ab4ca195b119c338178ce20de9ce4913c27871d9",
+      "gitBlob": "be3b30eb835601261589cc2cea6eb43f4d4cbd24",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.input.utf8.txt",
+      "bytes": 121,
+      "sha256": "0050dc40116897b0a27139bf29a4f1731ad2a267564866ffac866e4c762de73c",
+      "gitBlob": "82578d33f9c0f59628a82209116c4629d9377e50",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.observed.json",
+      "bytes": 7787771,
+      "sha256": "fec7f54734d04b79aabcaad532c135a6da37397e91f3d2a05277fedcb47240bb",
+      "gitBlob": "16181d0ea575afd362aadca6f68a658e87319030",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.original-recovery.json",
+      "bytes": 6356,
+      "sha256": "04adabaa7cba8e87c4bbb561a9aeefa3a810d89d6f1937c36a2aea9c4b30a653",
+      "gitBlob": "daa3fe278fa5aa406ae4e76ef3f423e963cb9751",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.plan-check.command.json",
+      "bytes": 393,
+      "sha256": "fb9fc94bfd69471e4e6f2e8d4e134ccc18b69e192be1c2a2fc352b5bb9e72c6b",
+      "gitBlob": "f39d78af961fbc79806de0eb5fcf6fb25a5f39f5",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.plan-check.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.plan-check.stdout.log",
+      "bytes": 283,
+      "sha256": "bd0d996b2a164736d598da8b70771bbd11b8dac17291b85cc4126787eb07868d",
+      "gitBlob": "aa22289b66a89f6627d5023b523dc0694d659418",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.plan.json",
+      "bytes": 6334,
+      "sha256": "0f7d0aa2c6decfb191bc50d2f0d6a17e9b80e9d1293f48e5a6d7e9b3530de0c7",
+      "gitBlob": "cd8eda473838ea914afcff56d113aca37172c80e",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.proof-check.command.json",
+      "bytes": 450,
+      "sha256": "fac99157e6b7b6a12221357ad678e51fdbfffceb80eaff74e05fa2bdd4e9d33a",
+      "gitBlob": "59b4e8ead561d44e4c7f45b21e9e94ffcbdb0d0a",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.proof-check.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.proof-check.stdout.log",
+      "bytes": 1702,
+      "sha256": "a059dca119014d3740a2d4ed0579161845ef63ea28d9f687c691d232a0f97c60",
+      "gitBlob": "1d135cd0fd558675a2511b764c84b580e91c6987",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.proof.json",
+      "bytes": 5122,
+      "sha256": "8b0f39abc6b9dd63840735965e2c2367875352791f18e14af8d2932b5fb14ce3",
+      "gitBlob": "003fb0505c75d7ba93d495b29fd2665eab3ae525",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.provenance.json",
+      "bytes": 4083,
+      "sha256": "120fd63fecbb267577eda5ea57c66ad4c1bc5599d18efd21cc4aafd0b81f17eb",
+      "gitBlob": "9784b1f813c3b74523c39fb6acf877fd30e11d0e",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.reproduce.sh",
+      "bytes": 310,
+      "sha256": "28bf86e3ab82ade5bed1f81a7d8eb6ccbc5d46b70842beca30629e518a3bd1f4",
+      "gitBlob": "80fa7f799859e5c33e842b6388c04108b0f2c7f0",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.result.json",
+      "bytes": 31176,
+      "sha256": "a6f8408b8c8a38dca307004b0b6c6a210b3ddf70a77fae26ce93cb19cf13e8af",
+      "gitBlob": "ce74dfec71a43f2e8b726b31b6edd75f73360be6",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.snapshot.command.json",
+      "bytes": 397,
+      "sha256": "c533481a0e2c381026d21a4a327693112073a2160657119b3bac363352bdd8f2",
+      "gitBlob": "e76ab9c542caa7e1456659ee4c9e91ff3fc9e47f",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.snapshot.json",
+      "bytes": 2271,
+      "sha256": "eae33047aaae7eec0cc573ee388006306a6b3bd199631fe069237e888d89c1d7",
+      "gitBlob": "a9bcfea9f41c88e1276e923963bb067d260642f5",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.snapshot.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.snapshot.stdout.log",
+      "bytes": 2271,
+      "sha256": "eae33047aaae7eec0cc573ee388006306a6b3bd199631fe069237e888d89c1d7",
+      "gitBlob": "a9bcfea9f41c88e1276e923963bb067d260642f5",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.test.ts",
+      "bytes": 20727,
+      "sha256": "b787e066105daa8fc8c29ee913329dd2caff4e44fdc13f819ba75ec23ed19e37",
+      "gitBlob": "662f8134a57af39b903fa26616ddf67c8bc0e1e6",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.tests.command.json",
+      "bytes": 476,
+      "sha256": "eea5d215d08bb5997c028abbc27bb6888b1d3ae7c2f6ecab98f42a67d6571d50",
+      "gitBlob": "743daff91daae919094387bd9aade4e70794679c",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.tests.stderr.log",
+      "bytes": 5175,
+      "sha256": "e0db63cab155b69d336cdef0cd340b60d0138e3c72e1979c3be717787c254f71",
+      "gitBlob": "65aa86d4bdd92e863ffe10660db2d6fa37e80535",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.tests.stdout.log",
+      "bytes": 4738,
+      "sha256": "4ada94081102c2b32dcb1c9dc372279cd11fce16f0b22ddb64d70e9fa5e54428",
+      "gitBlob": "d12dcebc6d283518e345c002f8f3af17847920ab",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.typecheck.command.json",
+      "bytes": 571,
+      "sha256": "898085e9c5ca73f2e586612f4cee759274f11f4b89c9baad8abccb8dae6a8d92",
+      "gitBlob": "ee1592e812f603fd7e285331a68f230f50d22d9b",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.typecheck.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.typecheck.stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gitBlob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SS09.vitest.json",
+      "bytes": 13939,
+      "sha256": "5527a4d9f889a1ba0f3f003ea9d19f5aebd89324bcfb369f8112336192d25a5f",
+      "gitBlob": "ff10ecad743146c8656ee6c6ac3fb10ebe49b3e6",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/manifest.json",
+      "bytes": 21387,
+      "sha256": "b58392ededed7798a548c6b829817ceabd0ffd147ba7ca623a3ef8dd599fb43c",
+      "gitBlob": "eaf770025d3298120a4b73bf0264d1e4db50d22e",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/scope-files.json",
+      "bytes": 485,
+      "sha256": "2424913adcedb53b12e92d06e105c6625d3a12f79067b3e4af4620e3ab2c27ca",
+      "gitBlob": "764021967cc48e9eab52733450fb6b9e7b150292",
+      "verified": true
+    },
+    {
+      "path": "evidence/ags-2.9.1/2026-10-09/cases/SS09/SHA256SUMS",
+      "bytes": 3352,
+      "sha256": "e4ded1c583ed052f5cdcfc178a7b1532ab89b28e1c46d8dbb1383792e7923a2e",
+      "gitBlob": "7278068b501e01a485731a3a8deac045f385d22e",
+      "verified": true,
+      "coverage": "metadata digest recorded; not self-covered"
+    }
+  ],
+  "manifestEntriesVerified": 36,
+  "sha256sumCoverageVerified": 37,
+  "historicalReadOnlyProvenance": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "purpose": "Verify original frozen input only; not the live product candidate",
+    "corpusPath": "tests/skill-classification/fixtures.json",
+    "corpusSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "oracleHashMethod": "Historical oracleDigest projection with JavaScript JSON.stringify",
+    "publicSS09EqualsHistoricalCase": true,
+    "sourceRefs": [
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+        "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+        "actualSHA256": "aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+        "verified": true
+      },
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+        "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+        "actualSHA256": "f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+        "verified": true
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+        "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+        "actualSHA256": "96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+        "verified": true
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+        "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+        "actualSHA256": "d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+        "verified": true
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+        "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+        "actualSHA256": "19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+        "verified": true
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+        "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+        "actualSHA256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+        "verified": true
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+        "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+        "actualSHA256": "f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+        "verified": true
+      },
+      {
+        "skillId": "change-scope-guardian",
+        "path": "skills/change-scope-guardian/SKILL.md",
+        "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e",
+        "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+        "actualSHA256": "4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e",
+        "verified": true
+      }
+    ]
+  },
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS09",
+    "fields": {
+      "입력": "“SQLite WAL이 무엇인지 초보자에게 두 문장으로 설명해 줘. 설계·구현·감사는 요청하지 않아.”",
+      "필수추천": "R={}.",
+      "금지추천 또는 행동": "WAL·SQLite라는 단어만으로 CS·P·O·감사를 추천.",
+      "허용선택": "A={}.",
+      "보류조건": "없음. 일반 설명에 필요한 정보를 갖춘 경우다.",
+      "통과기준": "관련 전문 스킬이 필요 없다는 no-skill 판정이며 provider 실패와 혼동하지 않는다.",
+      "증거": "E0, no-skill 사유와 providerOutcome.",
+      "실행종류": "live."
+    },
+    "bodyDigest": "sha256:019edebb93d986d0582ebe6461f434fa279eeed931da9492c13dd65558fbc2b6"
+  },
+  "oracle": {
+    "required": [],
+    "allowed": [],
+    "allowedConditions": {},
+    "forbidden": [
+      "cs-engineering",
+      "ponytail",
+      "orchestrator",
+      "software-security-auditor",
+      "code-review",
+      "test-engineering"
+    ],
+    "notApplicable": [
+      "test-engineering",
+      "korean-prose-editor",
+      "change-scope-guardian"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      },
+      {
+        "skillId": "change-scope-guardian",
+        "path": "skills/change-scope-guardian/SKILL.md",
+        "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+      }
+    ],
+    "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+  },
+  "variants": [
+    "base"
+  ],
+  "missingOriginals": [
+    {
+      "artifact": "TEST-SPEC.seq7.ko.md",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Absent from original fixed repository; only embedded SS09 sourceSpec.fields exists. Not reconstructed."
+    }
+  ],
+  "pastOutcomes": {
+    "hostLive": "NOTRUN",
+    "developmentStatus": "FAIL",
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "agentSelectedSkillIds": null,
+    "hostReceipt": null,
+    "developmentTests": {
+      "pass": 18,
+      "fail": 4,
+      "exit": 1
+    },
+    "existingRegression": {
+      "pass": 1,
+      "skipped": 37,
+      "exit": 0
+    },
+    "offlineNoSkill": "Synthetic provider only; all 24 judgments not-needed; not live acceptance",
+    "findings": [
+      {
+        "dedupKey": "existing-invalid-resp-valid-usage-loss",
+        "status": "REPRODUCED_EXISTING",
+        "rootCause": "Response validation throws after valid usage is available; catch discards usage via unknownUsage; settle conservatively retains the 0.4 reservation instead of accounting confirmed 0.1. No extra cause counted for the three failed assertions."
+      },
+      {
+        "dedupKey": "existing-timeout-overflow",
+        "status": "REPRODUCED_EXISTING",
+        "rootCause": "Validation accepts any positive safe integer timeout and passes it directly to setTimeout. 2147483648 is clamped to 1ms by Node. Fake/real timer failures are one cause."
+      },
+      {
+        "dedupKey": "evaluator-overlapping-fp-categories",
+        "status": "REPRODUCED_EVALUATOR_FINDING_PARENT_DEDUP_PENDING",
+        "rootCause": "Frozen SS09 puts test-engineering in both forbidden and notApplicable; scoreCase sums category lengths rather than distinct false-positive IDs. A single synthetic bad recommendation yields 2 false positives. This is scorer arithmetic evidence, not a live recommendation or accuracy result; keep separate from the known metadata-condition duplication unless parent confirms same cause."
+      }
+    ]
+  },
+  "observedAt": "2026-10-09T07:44:55.566882+00:00"
+}

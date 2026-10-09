@@ -1,0 +1,98 @@
+{
+  "schemaVersion": "1.0.0",
+  "artifactKind": "SS09 Claude host preparation plan; not an executed engineering-test-result",
+  "caseId": "SS09",
+  "title": "기술 키워드가 있는 일반 설명",
+  "status": "PREPARED_WAITING_PARENT",
+  "liveStatus": "NOT_RUN",
+  "entryPoints": [
+    "Claude Code CLI",
+    "get_skill_inventory",
+    "classify_skills",
+    "record_skill_selection"
+  ],
+  "testLevel": "Actual Claude Code host plus provider-live; no synthetic substitution",
+  "requirementsToOracle": {
+    "requiredSkillIds": [],
+    "allowedSkillIds": [],
+    "forbidden": [
+      "cs-engineering",
+      "ponytail",
+      "orchestrator",
+      "software-security-auditor",
+      "code-review",
+      "test-engineering"
+    ],
+    "validAcceptedNoSkill": [],
+    "noSkillReason": "General beginner explanation only; request explicitly excludes design, implementation and audits. WAL/SQLite words alone do not activate specialists.",
+    "providerOutcome": "SUCCESS for a valid no-skill response; failures retain error/status instead of being treated as successful empty selection"
+  },
+  "originalEvidenceRequirements": "E0, no-skill 사유와 providerOutcome.",
+  "variant": "base",
+  "steps": [
+    {
+      "id": "G0",
+      "stage": "gate",
+      "action": "Receive parent-verified exact candidate commit/tree, independent SOURCE decision, remote publication proof, common Claude model/effort/API procedure and preflight outcome. Validate locally before inference.",
+      "state": "WAITING_PARENT"
+    },
+    {
+      "id": "G1",
+      "stage": "installation",
+      "action": "Use a new isolated candidate checkout without rebuilding or editing product/generated files. Verify candidate/plugin/MCP bundle digests, actual installed/enabled/hostSupported inventory and common runtime/qualification/route/budget. Preserve actual hook and session-board observation.",
+      "state": "NOT_RUN"
+    },
+    {
+      "id": "G2",
+      "stage": "input",
+      "action": "Deliver only SS09.input.utf8.txt exact 121 UTF-8 bytes, no appended newline or grading oracle, to actual Claude Code. Preserve original negation, base-only variant and unknown context. Sol manages artifacts; Claude performs host work.",
+      "state": "PREPARED"
+    },
+    {
+      "id": "G3",
+      "stage": "provider",
+      "action": "Claude uses the actual AGS MCP discovery/classify_skills path with the complete same inventory and original prompt. JEV remains off. Capture valid bindings, actual providerOutcome, no-skill reason, all provider calls/usage/cache/retry/failures. Never replace failures with SUCCESS empty choice.",
+      "state": "NOT_RUN"
+    },
+    {
+      "id": "G4",
+      "stage": "selected",
+      "action": "Claude independently chooses IDs and calls record_skill_selection for accepted no-skill []. Claude input hostReceipt remains null; only actual host observation may issue a receipt. Check host, request, inventory and exact-call binding and current task. A proposed [] or agentSelectedSkillIds=null is not accepted selection.",
+      "state": "NOT_RUN"
+    },
+    {
+      "id": "G5",
+      "stage": "answer and evidence",
+      "action": "Observe a two-sentence beginner explanation from Claude, no unsolicited design/implementation/audit or technical-keyword specialist selection. E0, no-skill reason and providerOutcome are original evidence requirements. Record stage states separately; no invented specialist read/apply/verify for empty selection. If scoring needs host stages, retain explicit nonrun state until its frozen rules are satisfied.",
+      "state": "NOT_RUN"
+    },
+    {
+      "id": "G6",
+      "stage": "adjudication",
+      "action": "Use the original frozen required/allowed empty sets and forbidden/notApplicable/unadjudicated sets. Preserve historical overlap test-engineering without modifying oracle; separate scorer defects and provider/runtime failures from semantic selection. Missing direct host evidence prevents live PASS.",
+      "state": "NOT_RUN"
+    },
+    {
+      "id": "G7",
+      "stage": "publication",
+      "action": "Sanitize new report and evidence; scan exact files; publish only a fresh unique run path on existing evidence branch with normal fast-forward update; re-read fixed remote commit files and verify hashes.",
+      "state": "PREPARATION_REPORT_PENDING"
+    }
+  ],
+  "resumeConditions": [
+    "Parent-verified candidate commit/tree and independent SOURCE/remote evidence",
+    "Shared exact Claude model/revision/effort and API-auth method",
+    "Approved current runtime/profile/qualification/provider route and actual host inventory supply",
+    "Parent preflight results including installation/MCP/hooks/task observation and cost/retry policy",
+    "Case soft budget remaining and no unresolved cost"
+  ],
+  "excluded": [
+    "Product fixes",
+    "Generated distribution changes",
+    "Old main or historical c6a8019 as test candidate",
+    "Historical 21-run replay",
+    "Synthetic receipt or outcomes",
+    "JEV inference without allocation",
+    "Any paid call before parent gate"
+  ]
+}
