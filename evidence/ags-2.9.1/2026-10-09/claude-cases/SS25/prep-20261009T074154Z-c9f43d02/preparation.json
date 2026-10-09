@@ -1,0 +1,144 @@
+{
+  "caseId": "SS25",
+  "title": "작업 내용 변경과 stale 결과",
+  "runPath": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS25/prep-20261009T074154Z-c9f43d02",
+  "preparedAt": "2026-10-09T07:46:25.820678+00:00",
+  "preparationStatus": "READY_TO_WAIT",
+  "actualClaudeProductTest": "NOTRUN",
+  "candidate": {
+    "label": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "status": "Parent-reported local candidate only; independent SOURCE/remote publication not yet supplied",
+    "tested": false
+  },
+  "historicalCandidate": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+  },
+  "historicalResult": {
+    "status": "FAIL",
+    "existingRegressionPass": 7,
+    "isolatedPass": 11,
+    "isolatedFail": 6,
+    "isolatedTotal": 17,
+    "actualHost": {
+      "selected": "NOTRUN",
+      "read": "NOTRUN",
+      "applied": "NOTRUN",
+      "verified": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null
+    },
+    "apiCalls": {
+      "JEV": 0,
+      "externalVendor": 0,
+      "Claude": 0,
+      "realNativeHost": 0
+    }
+  },
+  "actualHost": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "agentSelectedSkillIds": null,
+    "hostReceipt": null,
+    "semanticAccuracy": null
+  },
+  "cli": {
+    "path": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+    "resolvedPath": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+    "version": "2.1.286 (Claude Code)",
+    "executable": true,
+    "onPATH": false,
+    "checks": [
+      "--version",
+      "--help"
+    ],
+    "modelApiCalls": 0
+  },
+  "secretCheck": {
+    "CLAUDE_API_KEYEnvironmentEntryPresent": true,
+    "authenticatedApiRouteTested": false,
+    "secretValuePrintedCopiedOrPublished": false
+  },
+  "environment": {
+    "nodeVersion": "v24.19.0",
+    "gitVersion": "2.52.0",
+    "timezone": "Etc/UTC"
+  },
+  "workspaceInstructionRead": {
+    "localSourceCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+    "paths": [
+      {
+        "path": "AGENTS.md",
+        "SHA256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827"
+      },
+      {
+        "path": "CLAUDE.md",
+        "SHA256": "918b1c90559355ef78f33fdf3562f2b021ef8bdfd8a5c8415e5decd44934de55"
+      },
+      {
+        "path": "skills/test-engineering/SKILL.md",
+        "SHA256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "path": "skills/orchestrator/SKILL.md",
+        "SHA256": "0bd44e1a780bb930c69f6880102ac3b4d662de3ecdcd16116a48d870aa971d87"
+      },
+      {
+        "path": "skills/evaluation-validity-auditor/SKILL.md",
+        "SHA256": "eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230"
+      },
+      {
+        "path": "skills/acceptance-evidence-validator/SKILL.md",
+        "SHA256": "1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109"
+      },
+      {
+        "path": "skills/change-scope-guardian/SKILL.md",
+        "SHA256": "4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+      },
+      {
+        "path": "skills/mutation-risk-preflight/SKILL.md",
+        "SHA256": "eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/test-design.md",
+        "SHA256": "fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/test-proof.md",
+        "SHA256": "7ac0a9d5031d32e5d2b3770a080c1629451903184dac1e38e240812c6fc91e1d"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/cli.md",
+        "SHA256": "42d409ec8fd0f39c491dfdeb18da3f3d15d9fb518c82a8d9f69ed0ae87a59f69"
+      }
+    ],
+    "candidateInstructionsMustBeRereadOnResume": true,
+    "workspaceRootAGENTSExists": false,
+    "environmentAgentsSkillsPresent": false,
+    "repositoryAgentsSkillsPresent": false,
+    "evidenceBranchAGENTSExists": false
+  },
+  "productsModified": 0,
+  "generatedDeploymentModified": 0,
+  "productTests": 0,
+  "modelApiCalls": 0,
+  "JEVCalls": 0,
+  "blockers": [
+    "Verified candidate identity and independent SOURCE/remote publication results pending parent",
+    "Shared fixed Claude model/effort and successful API-auth procedure pending parent",
+    "Common preceding checks and approved plugin/MCP/hook installation path pending parent",
+    "Native classification path needs independent host-owned current task state and qualified provider profile/config; no JEV allocation"
+  ],
+  "resumeConditions": [
+    "Parent confirms candidate identity/tree and SOURCE/remote evidence",
+    "Parent supplies common Claude API auth/model configuration and preceding checks",
+    "Confirm permitted host tools/isolated test workspace and budget ledger before first paid call"
+  ],
+  "remotePublicationStatus": "To be verified by fixed pushed commit; final response carries exact commit and readback result."
+}

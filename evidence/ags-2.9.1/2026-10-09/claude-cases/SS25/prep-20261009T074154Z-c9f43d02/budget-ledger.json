@@ -1,0 +1,22 @@
+{
+  "caseId": "SS25",
+  "currency": "USD",
+  "softBudgetUsd": 2,
+  "preparationCallsIncluded": true,
+  "reservedAll39CasesUsd": 78,
+  "consumptionTarget": false,
+  "paidCalls": 0,
+  "failedPaidCalls": 0,
+  "retries": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadInputTokens": 0,
+  "cacheCreationInputTokens": 0,
+  "actualCostUsd": 0,
+  "remainingSoftBudgetUsd": 2,
+  "calls": [],
+  "modelConfigured": false,
+  "JEVAllocated": false,
+  "JEVCalls": 0,
+  "stopPolicy": "Before each authorized call reconcile cumulative failed/successful/preparation/retry/cache cost; set print-mode max-budget-usd to remaining balance under parent recipe. Stop further calls when approaching soft limit or when costs cannot be reconciled. CLI maximum budget is not a guarantee against last-request overrun."
+}

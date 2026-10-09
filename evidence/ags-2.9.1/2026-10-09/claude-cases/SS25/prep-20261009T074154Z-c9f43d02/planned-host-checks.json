@@ -1,0 +1,157 @@
+{
+  "caseId": "SS25",
+  "title": "작업 내용 변경과 stale 결과",
+  "status": "NOTRUN",
+  "originalPrompt": null,
+  "oracle": null,
+  "criteria": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS25",
+    "fields": {
+      "입력": "request A는 SS03, taskRevision=1. B는 SS09, taskRevision=2다. A 응답을 B 완료 뒤 도착시키고 requestDigest가 다른 cache 항목도 제공한다.",
+      "필수추천": "B는 자신의 입력으로만 판정한다.",
+      "금지추천 또는 행동": "A의 구현 추천을 B에 재사용; requestId만 같다는 이유로 다른 digest를 수용.",
+      "허용선택": "A를 stale 또는 무효로 기록하고 B의 결과를 보존한다.",
+      "보류조건": "taskRevision·digest가 없거나 충돌하면 해당 결과 채택 보류.",
+      "통과기준": "A 결과가 B의 raw·combined·상태를 덮지 않는다. revision이 바뀌면 옛 baseline도 재사용하지 않는다. 현재 작업이 유효하면 현행 revision으로 vendor 정책을 다시 적용하고, 취소·목적 변경이면 이전 선택을 중단한다. 실제 선택은 각 요청의 유효한 판단 경로에만 연결된다. B는 별도로 목적 정답을 만족해야 한다.",
+      "증거": "E0·E2, 역순 응답과 cache key 비교.",
+      "실행종류": "mock."
+    },
+    "bodyDigest": "sha256:a92f4b103c9b350a7be9cb56cd59300a75a5a6ceba57d23fa0ff36569cda2144"
+  },
+  "variants": [
+    "reverse-response",
+    "digest-cache-collision",
+    "cancelled-task"
+  ],
+  "steps": [
+    {
+      "id": "G0",
+      "stage": "resume-gate",
+      "expected": "Parent supplies verified candidate and independent SOURCE/remote publication findings, shared fixed Claude model/effort/API procedure and preceding checks; confirm budget balance."
+    },
+    {
+      "id": "G1",
+      "stage": "candidate-binding",
+      "expected": "Use isolated candidate checkout/copy; verify commit fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb and tree 43d2b4e49cdb6993c48d7adc792a3ef17426092e if parent confirms R17; any replacement requires explicit parent identity. Read its AGENTS.md/CLAUDE.md/relevant SKILL.md and freeze input/harness digests. Do not use main/c6a8019 as final candidate."
+    },
+    {
+      "id": "C1",
+      "stage": "actual-Claude-host",
+      "expected": "Launch actual Claude Code under parent-approved API-auth procedure and model configuration, preserving plugin/MCP/hook behavior. Claude, not Sol, executes host work. Capture sanitized init/model/session/version, actual tool-use receipts, exits and final token/cost/cache records."
+    },
+    {
+      "id": "C2",
+      "stage": "mechanical-SS25",
+      "expected": "Claude runs existing SS25 isolated harness in a test-only isolated copy after checking candidate-compatible public entry points. Keep original sourceSpec/fixture/assertion expectations frozen. Record all 17 assertions across reverse-response, digest-cache-collision, cancelled-task. Expected requirements passing is the target; historical exit 1/11 PASS/6 FAIL is only an old defect observation."
+    },
+    {
+      "id": "C3",
+      "stage": "reverse-response",
+      "expected": "A=SS03 revision 1; B=SS09 revision 2; complete B then release A. A stale/invalid cannot overwrite B raw/combined/status; previous revision baseline cannot replay; B independently meets no-skill purpose with SUCCESS distinguished from provider failure."
+    },
+    {
+      "id": "C4",
+      "stage": "digest-cache-collision",
+      "expected": "Different digest under same operation/request identity cannot reuse A; missing/conflicting taskRevision/requestDigest holds adoption, including initial host binding and changes during acceptance await."
+    },
+    {
+      "id": "C5",
+      "stage": "cancelled-task",
+      "expected": "Cancellation before dispatch, during availability, late response/cache replay, AbortSignal, before acceptance and during acceptance await stops prior selection. Current valid task uses current revision/vendor policy; changed purpose stops previous selection."
+    },
+    {
+      "id": "C6",
+      "stage": "host-evidence-boundary",
+      "expected": "Record actual AGENT selection/reasons, read digests, applied obligations/artifacts and candidate-bound verification only when genuinely observed. Mock provider/observeTask/receipt remains synthetic even when Claude runs harness. Actual classification MCP/hook/task-state checks need parent-approved installed path and independent host-owned revision/digest/cancellation source; no JEV or external classification until separately assigned."
+    },
+    {
+      "id": "C7",
+      "stage": "report-and-stop",
+      "expected": "Sol validates receipts and budget, preserves FAIL/BLOCKED/NOTRUN and null versus [], publishes sanitized run evidence/hash index only; re-fetch and reread fixed remote commit. No source fixes or generated deployment changes."
+    }
+  ],
+  "reproductionInput": {
+    "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+    "path": "evidence/ags-2.9.1/2026-10-09/cases/SS25/reproduction/SS25.isolated.test.ts",
+    "SHA256": "0da4685717c69b996752d61846e87306c0cc2d3aa341dd7fb5c6d9f95d8f56bd"
+  },
+  "unchangedHistoricalCommands": {
+    "caseId": "SS25",
+    "kind": "public-derivative-of-existing-command-records",
+    "source": "SS25.result.json",
+    "commands": [
+      {
+        "command": "pnpm exec vitest run tests/mcp/skill-classification-service.test.ts -t \"SS24/25 fences changed (taskRevision|requestDigest)\" --reporter=json --outputFile=./ss25-reproduction/existing-service.json",
+        "exit": 0,
+        "executionKind": "existing-regression-offline-mock",
+        "evidence": [
+          "existing-service.json",
+          "existing-service.log"
+        ],
+        "executedTests": 2
+      },
+      {
+        "command": "pnpm exec vitest run tests/mcp/skill-classification-gateway.test.ts -t \"rejects (missing|taskRevision|requestDigest|cancelled|sourceRef) host task observations between classify and accept\" --reporter=json --outputFile=./ss25-reproduction/existing-gateway.json",
+        "exit": 0,
+        "executionKind": "existing-regression-offline-mock-MCP-Client-Server",
+        "evidence": [
+          "existing-gateway.json",
+          "existing-gateway.log"
+        ],
+        "executedTests": 5
+      },
+      {
+        "command": "pnpm exec vitest run tests/skill-classification/SS25.isolated.test.ts --reporter=json --outputFile=./ss25-reproduction/isolated-tests.json",
+        "exit": 1,
+        "executionKind": "new-variants-offline-mock-public-service-gateway",
+        "evidence": [
+          "isolated-tests.json",
+          "isolated-tests.log",
+          "isolated-observations.json"
+        ],
+        "executedTests": 17,
+        "passed": 11,
+        "failed": 6
+      },
+      {
+        "command": "node_modules/.bin/tsc --ignoreConfig --types node --noEmit --module nodenext --moduleResolution nodenext --target es2023 --skipLibCheck tests/skill-classification/SS25.isolated.test.ts",
+        "exit": 0,
+        "executionKind": "static-test-typecheck",
+        "evidence": [
+          "test-typecheck.log"
+        ]
+      },
+      {
+        "command": "node skills/test-engineering/scripts/run.mjs check-plan --root <CANDIDATE_ROOT> --plan tests/skill-classification/ss25-artifacts/plan.json",
+        "exit": 0,
+        "executionKind": "local-plan-consistency",
+        "evidence": [
+          "engineering-plan-result.json"
+        ]
+      },
+      {
+        "command": "node skills/test-engineering/scripts/run.mjs check-proof --root <CANDIDATE_ROOT> --plan tests/skill-classification/ss25-artifacts/plan.json --proof tests/skill-classification/ss25-artifacts/proof.json",
+        "exit": 1,
+        "executionKind": "local-red-green-proof-consistency",
+        "evidence": [
+          "engineering-test-result.json"
+        ],
+        "verdict": "INCOMPLETE",
+        "reason": "No corrected green candidate or mutation; user prohibited product source changes. All sensitivity pairs truthfully NOT_RUN."
+      },
+      {
+        "command": "git diff --exit-code && git diff --check",
+        "exit": 0,
+        "executionKind": "tracked-source-integrity",
+        "evidence": [
+          "repository-integrity.json"
+        ]
+      }
+    ],
+    "publicationNewTests": 0,
+    "recordedCombinedLogs": "stdout/stderr were redirected with > log 2>&1; split streams not recoverable",
+    "separateExitReceiptFiles": "MISSING_ORIGINAL: recorded exits retained from existing SS25.result.json; no reconstructed receipts"
+  },
+  "warning": "Historical commands are planned references only. No product test has run in this preparation. A real Claude CLI harness execution alone does not provide live provider semantic or native selection evidence."
+}
