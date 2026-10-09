@@ -1,0 +1,23 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/ss22-isolated/SS22.test.ts > SS22 known acceptance recheck gap reproducer > SS22 select must reject cancellation occurring during runtime reread
+AssertionError: cancelled task must not be accepted after await readRuntime: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/ss22-isolated/SS22.test.ts:198:90
+    196|       observed:accepted,taskCancelled:h.task().cancelled,status:accept…
+    197|       existingFinding:'동시성 직전 재검사 공백',syntheticHostBoundary:true});
+    198|     expect(accepted.valid,'cancelled task must not be accepted after a…
+       |                                                                                          ^
+    199|     expect(accepted.agentSelectedSkillIds).toBeNull();
+    200|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+{"harness": "test-subreaper", "ownerPid": "REDACTED_LOCAL_PID", "runnerPid": "REDACTED_LOCAL_PID", "reapedPids": ["REDACTED_LOCAL_PID"], "remainingChildren": false, "runnerExitCode": 1, "cancelled": false}

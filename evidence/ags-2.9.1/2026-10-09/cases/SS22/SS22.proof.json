@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-proof",
+  "planDigest": "sha256:4e54b3596fda3bd0dc4340b32801deb398178ef919eb26365c5e47cb9582d315",
+  "candidate": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-snapshot",
+    "files": [
+      {
+        "path": "mcp-server/src/skill-classification/gateway.ts",
+        "digest": "sha256:80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+        "size": 15017,
+        "lineCount": 156
+      },
+      {
+        "path": "mcp-server/src/skill-classification/service.ts",
+        "digest": "sha256:c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb",
+        "size": 19033,
+        "lineCount": 215
+      },
+      {
+        "path": "mcp-server/src/skill-classification/validation.ts",
+        "digest": "sha256:70f988d9e5d49f8eaef55ca0ff378b4819798ff8141bd09119691c2cffb2891f",
+        "size": 8449,
+        "lineCount": 107
+      },
+      {
+        "path": "tests/skill-classification/evaluation.ts",
+        "digest": "sha256:e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+        "size": 16532,
+        "lineCount": 223
+      },
+      {
+        "path": "tests/skill-classification/fixtures.json",
+        "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "size": 142450,
+        "lineCount": 2912
+      },
+      {
+        "path": "tests/ss22-isolated/SS22.test.ts",
+        "digest": "sha256:62f65e4b69d66f6f3da34b2e15021a2be2daa3975f4c1fa1a2dee65ab18bf998",
+        "size": 15202,
+        "lineCount": 201
+      }
+    ],
+    "digest": "sha256:0690941f7b44fa4acc3f2bd37d796d6e53b2c3652eb00657d57f10e881c9b8bd"
+  },
+  "proofs": [
+    {
+      "caseId": "SS22-isolated",
+      "status": "NOT_RUN",
+      "red": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "green": {
+        "path": "",
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutationPaths": [],
+      "assertionWitness": "",
+      "reason": "Fixed candidate diagnostic ran 13 assertions (12 pass,1 operational assertion fail), but no product mutation or fixed candidate green is authorized; formal red/green sensitivity proof is NOT_RUN. Real host selection also NOTRUN. Actual execution evidence is in SS22-isolated.command.json and logs, not this unexecuted sensitivity record."
+    }
+  ]
+}

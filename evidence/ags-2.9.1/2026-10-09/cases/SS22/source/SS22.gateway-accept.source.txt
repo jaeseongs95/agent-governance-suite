@@ -1,0 +1,29 @@
+110:   async accept(raw: unknown, observation: ExecutionContextV1 | null) {
+111:     const input = selectionInputSchema.parse(raw);
+112:     const operation = this.operations.get(input.operationId);
+113:     if (!operation) throw new Error("UNKNOWN_CLASSIFICATION_OPERATION");
+114:     if (!observation || observation.taskId !== input.decision.requestDigest || observation.source !== "runtime" || !observation.observationId || !observation.actorId) {
+115:       return {valid: false, errors: ["HOST_SELECTION_NOT_OBSERVED"], agentSelectedSkillIds: null};
+116:     }
+117:     const observedTask = this.options.observeTask?.(operation.result.request, observation) ?? null;
+118:     if (!operation.task || !observedTask || observedTask.cancelled || observedTask.taskRevision !== operation.task.taskRevision || observedTask.requestDigest !== operation.task.requestDigest || observedTask.sourceRef !== operation.task.sourceRef || operation.actorId !== observation.actorId) return {valid: false, errors: ["HOST_TASK_CHANGED_OR_NOT_OBSERVED"], agentSelectedSkillIds: null};
+119:     if (!Number.isFinite(Date.parse(observation.expiresAt ?? "")) || Date.parse(observation.expiresAt!) <= (this.options.now?.() ?? new Date()).getTime()) throw new Error("HOST_SELECTION_OBSERVATION_EXPIRED");
+120:     if (input.decision.hostReceipt !== null) throw new Error("CALLER_SELECTION_RECEIPT_REJECTED");
+121:     if (input.decision.agentSelectedSkillIds === null) throw new Error("AGENT_SELECTION_MISSING");
+122:     if (JSON.stringify(operation.explicit) !== JSON.stringify(input.decision.explicitSkillIds) || JSON.stringify(operation.required) !== JSON.stringify(input.decision.ruleRequiredSkillIds)) throw new Error("REQUIRED_SKILL_SNAPSHOT_CHANGED");
+123:     const runtime = await this.options.readRuntime();
+124:     const inventory = await loadSkillInventory({root: this.options.root, ...(runtime.externalSkillRoots ? {externalSkillRoots: runtime.externalSkillRoots} : {})});
+125:     const current: ClassificationSnapshot = {...operation.result.snapshot, inventoryDigest: inventory.inventoryDigest, configRevision: runtime.config.configRevision, profileRevision: runtime.registry.profileRevision};
+126:     const decision: SkillSelectionDecisionV1 = {...input.decision, hostReceipt: {
+127:       receiptId: observation.observationId, host: observation.actorId.split(":")[0]!, requestDigest: input.decision.requestDigest,
+128:       inventoryDigest: inventory.inventoryDigest, agentSelectedSkillIds: [...input.decision.agentSelectedSkillIds], acceptedAt: observation.observedAt,
+129:     }};
+130:     const checked = validateDecision(operation.result, decision, current);
+131:     if (this.options.observeRuntime && operation.runtimeObservation !== this.options.observeRuntime()) {checked.valid = false; checked.errors.push("RUNTIME_SOURCE_CHANGED");}
+132:     if (operation.runtimeDigest !== digestClassificationValue(runtime)) {checked.valid = false; checked.errors.push("RUNTIME_SOURCE_CHANGED");}
+133:     if (inventory.issues.length > 0) {checked.valid = false; checked.errors.push("CURRENT_INVENTORY_INVALID");}
+134:     if (!checked.valid) return {...checked, agentSelectedSkillIds: null};
+135:     if (operation.decision !== null && digestClassificationValue({...operation.decision, hostReceipt: null}) !== digestClassificationValue(input.decision)) throw new Error("SELECTION_ALREADY_RECORDED");
+136:     operation.decision ??= decision;
+137:     return {...checked, decision: operation.decision, admissionStatus: "NOT_EVALUATED", readStatus: "NOT_OBSERVED", appliedStatus: "NOT_OBSERVED", verifiedStatus: "NOT_RUN"};
+138:   }

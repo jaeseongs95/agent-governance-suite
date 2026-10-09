@@ -1,0 +1,1576 @@
+{
+  "caseId": "SS22",
+  "schemaVersion": "ss22-development-result-v1",
+  "overallStatus": "FAIL_OFFLINE; HOST_NOTRUN",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "branchRequested": "codex/skill-classification-2.9.1",
+  "checkoutKind": "detached fixed-commit isolated worktree",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "oracleDigestVerification": "PASS via oracleDigest(corpus), not semantic score",
+  "originalPrompt": null,
+  "oracle": null,
+  "semanticAccuracy": null,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS22",
+    "fields": {
+      "입력": "B={P}, JEV raw={P,CS,T,O}인 SS03 응답, ON+shadow. 같은 입력을 별도 request로 ON+select에서도 실행한다.",
+      "필수추천": "shadow는 raw를 관측하며 B의 CS·T·O 누락을 보여 준다. select에서는 AGENT가 같은 지원 정보와 기준으로 실제 선택하고 그 결과를 기록한다.",
+      "금지추천 또는 행동": "shadow 비교만으로 누락 해결·2.9.2 출시 동작 PASS 선언; shadow adviceApplied=true.",
+      "허용선택": "shadow=observe-only/false, select=selection-adopted/true. selected trace는 각각 실제 경로와 일치해야 한다.",
+      "보류조건": "선택 반영 경계가 관측되지 않으면 select 검증은 NOT_RUN.",
+      "통과기준": "shadow의 B 오류는 품질 실패로 남고 select의 S에는 필수 집합이 있다. 두 모드의 결과를 같은 실행으로 합치지 않는다.",
+      "증거": "E0·E1·E3, 모드별 실제 선택 receipt.",
+      "실행종류": "mock 및 host-live. 출시 판단에는 select의 실동작 근거가 필요하다."
+    },
+    "bodyDigest": "sha256:3c69446b97a7092717920e89ece29b4132088f85f6b19fe050f12ab0e66bf696"
+  },
+  "sourceSpecFileExists": false,
+  "sourceSpecAuthority": "Embedded frozen fields only; SS03 referenced prompt/raw expected IDs reused, no SS03 execution",
+  "variants": [
+    {
+      "variant": "shadow",
+      "status": "PASS_OFFLINE_ONLY; HOST_NOTRUN",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS22-shadow-base",
+        "operationId": "SS22-op-shadow-base",
+        "originalPrompt": "session-handoff를 구현해 줘. 수신 전 종료, ACK 뒤 crash, 같은 메시지 재수신에서 인계가 유실되거나 중복 완료되지 않아야 해. 최소 구현과 회귀 테스트를 함께 설계해 줘.",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "explicitSkillIds": [],
+        "ruleRequiredSkillIds": [],
+        "vendorContext": {
+          "vendorId": "ss22-mock",
+          "reference": "fixture:mock-only"
+        },
+        "publicSynthetic": true
+      },
+      "expected": {
+        "raw": [
+          "ponytail",
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "selected": [
+          "ponytail"
+        ],
+        "adviceApplied": false
+      },
+      "observed": {
+        "raw": [
+          "cs-engineering",
+          "orchestrator",
+          "ponytail",
+          "test-engineering"
+        ],
+        "selected": [
+          "ponytail"
+        ],
+        "adviceApplied": false,
+        "gatewayValidation": {
+          "valid": true,
+          "errors": [],
+          "neededSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "test-engineering"
+          ],
+          "runnableSkillIds": [
+            "ponytail"
+          ],
+          "blockedItems": [],
+          "decision": {
+            "schemaVersion": "1.0.0",
+            "classificationResponseRef": "sha256:1aa1cba305d963891931a7d617eb06b0e79aba4440c62a4d8d171da82125affd",
+            "requestDigest": "sha256:567e450c727906fd4337641185d7a055dd58c109a9634d321a20bb40665456a2",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "taskRevision": null,
+            "configRevision": "ss22-shadow",
+            "profileRevision": "ss22-mock-v1",
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "agentSelectedSkillIds": [
+              "ponytail"
+            ],
+            "selectionReasons": [
+              {
+                "skillId": "ponytail",
+                "reason": "Synthetic boundary input, no real AGENT claim"
+              }
+            ],
+            "applicabilityChecks": [
+              {
+                "skillId": "ponytail",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:SS22"
+                ]
+              }
+            ],
+            "unresolvedSkillReferences": [],
+            "selectionStatus": "SELECTED",
+            "adviceApplied": false,
+            "hostReceipt": {
+              "receiptId": "synthetic-only-SS22-base",
+              "host": "mock-host",
+              "requestDigest": "sha256:567e450c727906fd4337641185d7a055dd58c109a9634d321a20bb40665456a2",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "agentSelectedSkillIds": [
+                "ponytail"
+              ],
+              "acceptedAt": "2026-10-09T02:57:39.923Z"
+            }
+          },
+          "admissionStatus": "NOT_EVALUATED",
+          "readStatus": "NOT_OBSERVED",
+          "appliedStatus": "NOT_OBSERVED",
+          "verifiedStatus": "NOT_RUN"
+        },
+        "baselineQuality": "FAIL",
+        "missingRequired": [
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ]
+      },
+      "baseline": {
+        "skillIds": [
+          "ponytail"
+        ],
+        "qualityStatus": "FAIL",
+        "missingRequired": [
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ]
+      },
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "hostReceipt": null,
+      "executionKind": "new-isolated-offline-mock",
+      "API0": true,
+      "evidence": [
+        "SS22.observations.json",
+        "SS22.vitest.json",
+        "SS22-isolated.command.json"
+      ],
+      "missingInputs": [
+        {
+          "input": "Attached get_skill_inventory/classify_skills/record_skill_selection tools",
+          "observed": "None in active tool catalogue",
+          "supportPath": ".mcp.json -> node mcp-server/dist/server.mjs"
+        },
+        {
+          "input": "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG and approved registry",
+          "observed": "Environment variable unset; readClassificationRuntime(undefined,root) has profiles=[]",
+          "supportPath": "mcp-server/src/index.ts:88; gateway.ts:142",
+          "requiredFields": [
+            "config.jevEnabled",
+            "config.mode",
+            "config.providerProfileRegistryRef",
+            "config.externalClassificationAllowed",
+            "config.configRevision",
+            "config.timeoutMs",
+            "allowRemotePrivateContent",
+            "providerRuntimeRef",
+            "qualified profiles bound to current inventoryDigest/taxonomy/model/prompt/configuration/validUntil"
+          ]
+        },
+        {
+          "input": "Approved provider/native route, verified allowance and budget",
+          "observed": "No configured approved runtime supplied; no credentials loaded",
+          "supportPath": "mcp-server/src/skill-classification/runtime.ts",
+          "requiredFields": [
+            "routeRef/approvalRef/approved/providerKind/vendorId/adapterRevision/modelIds/reasoningEfforts/structuredOutput",
+            "remote: endpoint/credentialEnvName/wireAdapterRef OR native: nativeAdapterRef/capabilityEvidenceRef/retryPolicyVerified",
+            "budget.jev/budget.vendors/budget.nativeAllowances",
+            "nativeAdapterDefinitionsRef if native route"
+          ]
+        },
+        {
+          "input": "Actual host hook and current actor/task observations",
+          "observed": "AGENT_GOVERNANCE_HOST_ATTESTATION unset; no actual signed SS22 call or host receipt",
+          "supportPath": "hooks/hooks.json PreToolUse; mcp-server/src/host-attestation-hook.ts; index.ts:122",
+          "requiredFields": [
+            "session_id/tool_use_id/tool_name/tool_input/transcript_path",
+            "host observed model and reasoning effort",
+            "session-board lastPromptAt for same hostActorId",
+            "current taskRevision/requestDigest/sourceRef and cancellation state",
+            "actual AGENT skill IDs/reasons/applicability checks; caller hostReceipt=null"
+          ]
+        },
+        {
+          "input": "Separate shadow and select actual requests and mode receipts",
+          "observed": "Only fresh offline mocks; actual requests NOTRUN",
+          "requiredFields": [
+            "embedded SS03 prompt preserved",
+            "full installed inventory",
+            "independent requestId/operationId and config mode/revision",
+            "shadow observe-only/false with B={P}",
+            "select independently reasoned actual S including P,CS,T,O, adviceApplied=true"
+          ]
+        }
+      ]
+    },
+    {
+      "variant": "select",
+      "status": "FAIL_OFFLINE_ACCEPTANCE_RACE; HOST_NOTRUN",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS22-select-base",
+        "operationId": "SS22-op-select-base",
+        "originalPrompt": "session-handoff를 구현해 줘. 수신 전 종료, ACK 뒤 crash, 같은 메시지 재수신에서 인계가 유실되거나 중복 완료되지 않아야 해. 최소 구현과 회귀 테스트를 함께 설계해 줘.",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "explicitSkillIds": [],
+        "ruleRequiredSkillIds": [],
+        "vendorContext": {
+          "vendorId": "ss22-mock",
+          "reference": "fixture:mock-only"
+        },
+        "publicSynthetic": true
+      },
+      "expected": {
+        "selected": [
+          "ponytail",
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "adviceApplied": true
+      },
+      "observed": {
+        "gatewayValidation": {
+          "valid": true,
+          "errors": [],
+          "neededSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "test-engineering"
+          ],
+          "runnableSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "test-engineering"
+          ],
+          "blockedItems": [],
+          "decision": {
+            "schemaVersion": "1.0.0",
+            "classificationResponseRef": "sha256:b36f04dc2d8e96135a2f652b11e0894bc2251b71cd6a9ef686bc72753ac63517",
+            "requestDigest": "sha256:e1fc9048c626087fb1aded815ad0d36928c3965e2d25496ff878083ab20079c6",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "taskRevision": null,
+            "configRevision": "ss22-select",
+            "profileRevision": "ss22-mock-v1",
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "agentSelectedSkillIds": [
+              "ponytail",
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "selectionReasons": [
+              {
+                "skillId": "ponytail",
+                "reason": "Synthetic boundary input, no real AGENT claim"
+              },
+              {
+                "skillId": "cs-engineering",
+                "reason": "Synthetic boundary input, no real AGENT claim"
+              },
+              {
+                "skillId": "test-engineering",
+                "reason": "Synthetic boundary input, no real AGENT claim"
+              },
+              {
+                "skillId": "orchestrator",
+                "reason": "Synthetic boundary input, no real AGENT claim"
+              }
+            ],
+            "applicabilityChecks": [
+              {
+                "skillId": "ponytail",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:SS22"
+                ]
+              },
+              {
+                "skillId": "cs-engineering",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:SS22"
+                ]
+              },
+              {
+                "skillId": "test-engineering",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:SS22"
+                ]
+              },
+              {
+                "skillId": "orchestrator",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:SS22"
+                ]
+              }
+            ],
+            "unresolvedSkillReferences": [],
+            "selectionStatus": "SELECTED",
+            "adviceApplied": true,
+            "hostReceipt": {
+              "receiptId": "synthetic-only-SS22-base",
+              "host": "mock-host",
+              "requestDigest": "sha256:e1fc9048c626087fb1aded815ad0d36928c3965e2d25496ff878083ab20079c6",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "agentSelectedSkillIds": [
+                "ponytail",
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "acceptedAt": "2026-10-09T02:57:40.057Z"
+            }
+          },
+          "admissionStatus": "NOT_EVALUATED",
+          "readStatus": "NOT_OBSERVED",
+          "appliedStatus": "NOT_OBSERVED",
+          "verifiedStatus": "NOT_RUN"
+        }
+      },
+      "baseline": {
+        "skillIds": [
+          "ponytail"
+        ],
+        "qualityStatus": "FAIL",
+        "missingRequired": [
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ]
+      },
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      },
+      "hostReceipt": null,
+      "executionKind": "new-isolated-offline-mock",
+      "API0": true,
+      "evidence": [
+        "SS22.observations.json",
+        "SS22.vitest.json",
+        "SS22-isolated.command.json"
+      ],
+      "missingInputs": [
+        {
+          "input": "Attached get_skill_inventory/classify_skills/record_skill_selection tools",
+          "observed": "None in active tool catalogue",
+          "supportPath": ".mcp.json -> node mcp-server/dist/server.mjs"
+        },
+        {
+          "input": "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG and approved registry",
+          "observed": "Environment variable unset; readClassificationRuntime(undefined,root) has profiles=[]",
+          "supportPath": "mcp-server/src/index.ts:88; gateway.ts:142",
+          "requiredFields": [
+            "config.jevEnabled",
+            "config.mode",
+            "config.providerProfileRegistryRef",
+            "config.externalClassificationAllowed",
+            "config.configRevision",
+            "config.timeoutMs",
+            "allowRemotePrivateContent",
+            "providerRuntimeRef",
+            "qualified profiles bound to current inventoryDigest/taxonomy/model/prompt/configuration/validUntil"
+          ]
+        },
+        {
+          "input": "Approved provider/native route, verified allowance and budget",
+          "observed": "No configured approved runtime supplied; no credentials loaded",
+          "supportPath": "mcp-server/src/skill-classification/runtime.ts",
+          "requiredFields": [
+            "routeRef/approvalRef/approved/providerKind/vendorId/adapterRevision/modelIds/reasoningEfforts/structuredOutput",
+            "remote: endpoint/credentialEnvName/wireAdapterRef OR native: nativeAdapterRef/capabilityEvidenceRef/retryPolicyVerified",
+            "budget.jev/budget.vendors/budget.nativeAllowances",
+            "nativeAdapterDefinitionsRef if native route"
+          ]
+        },
+        {
+          "input": "Actual host hook and current actor/task observations",
+          "observed": "AGENT_GOVERNANCE_HOST_ATTESTATION unset; no actual signed SS22 call or host receipt",
+          "supportPath": "hooks/hooks.json PreToolUse; mcp-server/src/host-attestation-hook.ts; index.ts:122",
+          "requiredFields": [
+            "session_id/tool_use_id/tool_name/tool_input/transcript_path",
+            "host observed model and reasoning effort",
+            "session-board lastPromptAt for same hostActorId",
+            "current taskRevision/requestDigest/sourceRef and cancellation state",
+            "actual AGENT skill IDs/reasons/applicability checks; caller hostReceipt=null"
+          ]
+        },
+        {
+          "input": "Separate shadow and select actual requests and mode receipts",
+          "observed": "Only fresh offline mocks; actual requests NOTRUN",
+          "requiredFields": [
+            "embedded SS03 prompt preserved",
+            "full installed inventory",
+            "independent requestId/operationId and config mode/revision",
+            "shadow observe-only/false with B={P}",
+            "select independently reasoned actual S including P,CS,T,O, adviceApplied=true"
+          ]
+        }
+      ]
+    }
+  ],
+  "executionKinds": {
+    "existingRegression": {
+      "executedTests": 2,
+      "passed": 2,
+      "notCaseCoverage": true,
+      "description": "Only existing shadow enforcement boundary filters; unrelated tests skipped"
+    },
+    "newIsolatedOffline": {
+      "tests": 13,
+      "passed": 12,
+      "failed": 1,
+      "exit": 1
+    },
+    "providerLive": "NOTRUN",
+    "hostLive": "NOTRUN"
+  },
+  "API0": true,
+  "apiCalls": {
+    "JEV": 0,
+    "externalVendor": 0,
+    "Claude": 0,
+    "localMockProvider": 13
+  },
+  "historical21RunRerun": false,
+  "stages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "stageInterpretation": "These are actual SS22 target execution stages. Developer source reading and synthetic injected observations/returned receipts never establish target stages.",
+  "commands": [
+    {
+      "name": "SS22-isolated",
+      "command": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss22-isolated/SS22.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=./SS22-output/SS22.vitest.json"
+      ],
+      "cwd": "<fixed-candidate-checkout>",
+      "exit": 1,
+      "startedUnix": 1791514659.2314985,
+      "durationSeconds": 1.9318387508392334,
+      "executionKind": "new-isolated-offline-mock",
+      "externalApiCalls": 0,
+      "stdout": "SS22-isolated.stdout.log",
+      "stderr": "SS22-isolated.stderr.log"
+    },
+    {
+      "command": [
+        "node",
+        "skills/test-engineering/scripts/run.mjs",
+        "check-plan",
+        "--root",
+        "<fixed-candidate-checkout>",
+        "--plan",
+        "tests/ss22-isolated/SS22.plan.json"
+      ],
+      "exit": 0,
+      "executionKind": "local-consistency-check",
+      "externalApiCalls": 0
+    },
+    {
+      "command": [
+        "node",
+        "skills/test-engineering/scripts/run.mjs",
+        "check-proof",
+        "--root",
+        "<fixed-candidate-checkout>",
+        "--plan",
+        "tests/ss22-isolated/SS22.plan.json",
+        "--proof",
+        "tests/ss22-isolated/SS22.proof.json"
+      ],
+      "exit": 1,
+      "executionKind": "local-consistency-check",
+      "externalApiCalls": 0
+    },
+    {
+      "command": [
+        "node",
+        "runtime/engineering-practices/cli.mjs",
+        "snapshot",
+        "--root",
+        "<fixed-candidate-checkout>",
+        "--files",
+        "tests/ss22-isolated/SS22.scope-files.json"
+      ],
+      "exit": 0,
+      "executionKind": "local-consistency-check",
+      "externalApiCalls": 0
+    },
+    {
+      "name": "existing-shadow-mcp",
+      "command": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/mcp/skill-classification-gateway.test.ts",
+        "-t",
+        "accepts settled independent PARTIAL work and enforces shadow adviceApplied=false",
+        "--reporter=verbose"
+      ],
+      "cwd": "<fixed-candidate-checkout>",
+      "exit": 0,
+      "startedUnix": 1791514657.6199393,
+      "durationSeconds": 1.6113560199737549,
+      "executionKind": "existing-regression-offline-mock",
+      "externalApiCalls": 0,
+      "stdout": "existing-shadow-mcp.stdout.log",
+      "stderr": "existing-shadow-mcp.stderr.log",
+      "testsPassed": 1,
+      "testsSkipped": 37
+    },
+    {
+      "name": "existing-shadow-validation",
+      "command": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/mcp/skill-classification-validation.test.ts",
+        "-t",
+        "allows settled independent work despite optional uncertainty, and shadow cannot claim advice applied",
+        "--reporter=verbose"
+      ],
+      "cwd": "<fixed-candidate-checkout>",
+      "exit": 0,
+      "startedUnix": 1791514656.8498237,
+      "durationSeconds": 0.7698736190795898,
+      "executionKind": "existing-regression-offline-mock",
+      "externalApiCalls": 0,
+      "stdout": "existing-shadow-validation.stdout.log",
+      "stderr": "existing-shadow-validation.stderr.log",
+      "testsPassed": 1,
+      "testsSkipped": 25
+    }
+  ],
+  "assertions": [
+    {
+      "name": "SS22 all variants with independent offline boundaries SS22 fixture integrity and operational nulls are preserved",
+      "status": "passed",
+      "failureMessages": []
+    },
+    {
+      "name": "SS22 all variants with independent offline boundaries SS22 shadow observes raw, preserves B omissions and never adopts advice",
+      "status": "passed",
+      "failureMessages": []
+    },
+    {
+      "name": "SS22 all variants with independent offline boundaries SS22 select records supplied full selection only at synthetic acceptance boundary",
+      "status": "passed",
+      "failureMessages": []
+    },
+    {
+      "name": "SS22 all variants with independent offline boundaries SS22 modes use separate request operation and digest, with identical semantic inputs",
+      "status": "passed",
+      "failureMessages": []
+    },
+    {
+      "name": "SS22 all variants with independent offline boundaries SS22 shadow rejects applied advice without silently changing B",
+      "status": "passed",
+      "failureMessages": []
+    },
+    {
+      "name": "SS22 all variants with independent offline boundaries SS22 shadow missing host does not become selected",
+      "status": "passed",
+      "failureMessages": []
+    },
+    {
+      "name": "SS22 all variants with independent offline boundaries SS22 select missing host does not become selected",
+      "status": "passed",
+      "failureMessages": []
+    },
+    {
+      "name": "SS22 all variants with independent offline boundaries SS22 select rejects caller-created receipt",
+      "status": "passed",
+      "failureMessages": []
+    },
+    {
+      "name": "SS22 all variants with independent offline boundaries SS22 null is unobserved; empty array is explicit empty and retains omitted purpose",
+      "status": "passed",
+      "failureMessages": []
+    },
+    {
+      "name": "SS22 all variants with independent offline boundaries SS22 accepted deficient select stays quality-failed and is never rewritten by classifier",
+      "status": "passed",
+      "failureMessages": []
+    },
+    {
+      "name": "SS22 all variants with independent offline boundaries SS22 select acceptance rejects cancellation observed before asynchronous reads",
+      "status": "passed",
+      "failureMessages": []
+    },
+    {
+      "name": "SS22 all variants with independent offline boundaries SS22 mode config change cannot reuse shadow operation for select",
+      "status": "passed",
+      "failureMessages": []
+    },
+    {
+      "name": "SS22 known acceptance recheck gap reproducer SS22 select must reject cancellation occurring during runtime reread",
+      "status": "failed",
+      "failureMessages": [
+        "AssertionError: cancelled task must not be accepted after await readRuntime: expected true to be false // Object.is equality\n    at <fixed-candidate-checkout>/tests/ss22-isolated/SS22.test.ts:198:90\n    at file://<existing-dependencies>/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+      ]
+    }
+  ],
+  "observations": {
+    "caseId": "SS22",
+    "executionKind": "new-isolated-offline-mock",
+    "externalApiCalls": 0,
+    "syntheticHostBoundary": true,
+    "realAgentSelection": false,
+    "records": [
+      {
+        "variant": "shadow",
+        "status": "PASS_OFFLINE_ONLY",
+        "input": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS22-shadow-base",
+          "operationId": "SS22-op-shadow-base",
+          "originalPrompt": "session-handoff를 구현해 줘. 수신 전 종료, ACK 뒤 crash, 같은 메시지 재수신에서 인계가 유실되거나 중복 완료되지 않아야 해. 최소 구현과 회귀 테스트를 함께 설계해 줘.",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "explicitSkillIds": [],
+          "ruleRequiredSkillIds": [],
+          "vendorContext": {
+            "vendorId": "ss22-mock",
+            "reference": "fixture:mock-only"
+          },
+          "publicSynthetic": true
+        },
+        "expected": {
+          "raw": [
+            "ponytail",
+            "cs-engineering",
+            "test-engineering",
+            "orchestrator"
+          ],
+          "selected": [
+            "ponytail"
+          ],
+          "adviceApplied": false
+        },
+        "observed": {
+          "raw": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "test-engineering"
+          ],
+          "selected": [
+            "ponytail"
+          ],
+          "adviceApplied": false,
+          "gatewayValidation": {
+            "valid": true,
+            "errors": [],
+            "neededSkillIds": [
+              "cs-engineering",
+              "orchestrator",
+              "ponytail",
+              "test-engineering"
+            ],
+            "runnableSkillIds": [
+              "ponytail"
+            ],
+            "blockedItems": [],
+            "decision": {
+              "schemaVersion": "1.0.0",
+              "classificationResponseRef": "sha256:1aa1cba305d963891931a7d617eb06b0e79aba4440c62a4d8d171da82125affd",
+              "requestDigest": "sha256:567e450c727906fd4337641185d7a055dd58c109a9634d321a20bb40665456a2",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "taskRevision": null,
+              "configRevision": "ss22-shadow",
+              "profileRevision": "ss22-mock-v1",
+              "explicitSkillIds": [],
+              "ruleRequiredSkillIds": [],
+              "agentSelectedSkillIds": [
+                "ponytail"
+              ],
+              "selectionReasons": [
+                {
+                  "skillId": "ponytail",
+                  "reason": "Synthetic boundary input, no real AGENT claim"
+                }
+              ],
+              "applicabilityChecks": [
+                {
+                  "skillId": "ponytail",
+                  "applies": true,
+                  "excluded": false,
+                  "reasonRefs": [
+                    "fixture:SS22"
+                  ]
+                }
+              ],
+              "unresolvedSkillReferences": [],
+              "selectionStatus": "SELECTED",
+              "adviceApplied": false,
+              "hostReceipt": {
+                "receiptId": "synthetic-only-SS22-base",
+                "host": "mock-host",
+                "requestDigest": "sha256:567e450c727906fd4337641185d7a055dd58c109a9634d321a20bb40665456a2",
+                "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+                "agentSelectedSkillIds": [
+                  "ponytail"
+                ],
+                "acceptedAt": "2026-10-09T02:57:39.923Z"
+              }
+            },
+            "admissionStatus": "NOT_EVALUATED",
+            "readStatus": "NOT_OBSERVED",
+            "appliedStatus": "NOT_OBSERVED",
+            "verifiedStatus": "NOT_RUN"
+          },
+          "baselineQuality": "FAIL",
+          "missingRequired": [
+            "cs-engineering",
+            "test-engineering",
+            "orchestrator"
+          ]
+        },
+        "mockProviderCalls": 1,
+        "stages": {
+          "selected": "NOTRUN",
+          "read": "NOTRUN",
+          "applied": "NOTRUN",
+          "verified": "NOTRUN"
+        }
+      },
+      {
+        "variant": "select",
+        "status": "PASS_OFFLINE_ONLY",
+        "input": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS22-select-base",
+          "operationId": "SS22-op-select-base",
+          "originalPrompt": "session-handoff를 구현해 줘. 수신 전 종료, ACK 뒤 crash, 같은 메시지 재수신에서 인계가 유실되거나 중복 완료되지 않아야 해. 최소 구현과 회귀 테스트를 함께 설계해 줘.",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "explicitSkillIds": [],
+          "ruleRequiredSkillIds": [],
+          "vendorContext": {
+            "vendorId": "ss22-mock",
+            "reference": "fixture:mock-only"
+          },
+          "publicSynthetic": true
+        },
+        "expected": {
+          "selected": [
+            "ponytail",
+            "cs-engineering",
+            "test-engineering",
+            "orchestrator"
+          ],
+          "adviceApplied": true
+        },
+        "observed": {
+          "gatewayValidation": {
+            "valid": true,
+            "errors": [],
+            "neededSkillIds": [
+              "cs-engineering",
+              "orchestrator",
+              "ponytail",
+              "test-engineering"
+            ],
+            "runnableSkillIds": [
+              "cs-engineering",
+              "orchestrator",
+              "ponytail",
+              "test-engineering"
+            ],
+            "blockedItems": [],
+            "decision": {
+              "schemaVersion": "1.0.0",
+              "classificationResponseRef": "sha256:b36f04dc2d8e96135a2f652b11e0894bc2251b71cd6a9ef686bc72753ac63517",
+              "requestDigest": "sha256:e1fc9048c626087fb1aded815ad0d36928c3965e2d25496ff878083ab20079c6",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "taskRevision": null,
+              "configRevision": "ss22-select",
+              "profileRevision": "ss22-mock-v1",
+              "explicitSkillIds": [],
+              "ruleRequiredSkillIds": [],
+              "agentSelectedSkillIds": [
+                "ponytail",
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "selectionReasons": [
+                {
+                  "skillId": "ponytail",
+                  "reason": "Synthetic boundary input, no real AGENT claim"
+                },
+                {
+                  "skillId": "cs-engineering",
+                  "reason": "Synthetic boundary input, no real AGENT claim"
+                },
+                {
+                  "skillId": "test-engineering",
+                  "reason": "Synthetic boundary input, no real AGENT claim"
+                },
+                {
+                  "skillId": "orchestrator",
+                  "reason": "Synthetic boundary input, no real AGENT claim"
+                }
+              ],
+              "applicabilityChecks": [
+                {
+                  "skillId": "ponytail",
+                  "applies": true,
+                  "excluded": false,
+                  "reasonRefs": [
+                    "fixture:SS22"
+                  ]
+                },
+                {
+                  "skillId": "cs-engineering",
+                  "applies": true,
+                  "excluded": false,
+                  "reasonRefs": [
+                    "fixture:SS22"
+                  ]
+                },
+                {
+                  "skillId": "test-engineering",
+                  "applies": true,
+                  "excluded": false,
+                  "reasonRefs": [
+                    "fixture:SS22"
+                  ]
+                },
+                {
+                  "skillId": "orchestrator",
+                  "applies": true,
+                  "excluded": false,
+                  "reasonRefs": [
+                    "fixture:SS22"
+                  ]
+                }
+              ],
+              "unresolvedSkillReferences": [],
+              "selectionStatus": "SELECTED",
+              "adviceApplied": true,
+              "hostReceipt": {
+                "receiptId": "synthetic-only-SS22-base",
+                "host": "mock-host",
+                "requestDigest": "sha256:e1fc9048c626087fb1aded815ad0d36928c3965e2d25496ff878083ab20079c6",
+                "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+                "agentSelectedSkillIds": [
+                  "ponytail",
+                  "cs-engineering",
+                  "test-engineering",
+                  "orchestrator"
+                ],
+                "acceptedAt": "2026-10-09T02:57:40.057Z"
+              }
+            },
+            "admissionStatus": "NOT_EVALUATED",
+            "readStatus": "NOT_OBSERVED",
+            "appliedStatus": "NOT_OBSERVED",
+            "verifiedStatus": "NOT_RUN"
+          }
+        },
+        "mockProviderCalls": 1,
+        "stages": {
+          "selected": "NOTRUN",
+          "read": "NOTRUN",
+          "applied": "NOTRUN",
+          "verified": "NOTRUN"
+        }
+      },
+      {
+        "boundary": "separate-modes",
+        "requestIds": [
+          "SS22-shadow-separate",
+          "SS22-select-separate"
+        ],
+        "requestDigests": [
+          "sha256:8b36fa1dbc6adebdf288c1a50faed36fced286c05d6be386b7672c20b5aa3c1f",
+          "sha256:cde3e2859e74a315e15e688bf16e7c5fce678a546034341fc32d372eb093f1f9"
+        ],
+        "status": "PASS"
+      },
+      {
+        "boundary": "shadow-applied",
+        "status": "PASS",
+        "observed": {
+          "valid": false,
+          "errors": [
+            "SHADOW_ADVICE_APPLIED"
+          ],
+          "neededSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "test-engineering"
+          ],
+          "runnableSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "test-engineering"
+          ],
+          "blockedItems": [],
+          "agentSelectedSkillIds": null
+        }
+      },
+      {
+        "variant": "shadow",
+        "boundary": "missing-host",
+        "status": "PASS",
+        "observed": {
+          "valid": false,
+          "errors": [
+            "HOST_SELECTION_NOT_OBSERVED"
+          ],
+          "agentSelectedSkillIds": null
+        }
+      },
+      {
+        "variant": "select",
+        "boundary": "missing-host",
+        "status": "PASS",
+        "observed": {
+          "valid": false,
+          "errors": [
+            "HOST_SELECTION_NOT_OBSERVED"
+          ],
+          "agentSelectedSkillIds": null
+        }
+      },
+      {
+        "variant": "select",
+        "boundary": "caller-receipt",
+        "status": "PASS",
+        "observed": "CALLER_SELECTION_RECEIPT_REJECTED"
+      },
+      {
+        "variant": "select",
+        "boundary": "null-empty",
+        "status": "PASS",
+        "nullObserved": "AGENT_SELECTION_MISSING",
+        "emptyObserved": {
+          "valid": true,
+          "errors": [],
+          "neededSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "test-engineering"
+          ],
+          "runnableSkillIds": [],
+          "blockedItems": [],
+          "decision": {
+            "schemaVersion": "1.0.0",
+            "classificationResponseRef": "sha256:931bee1a82ad4b36c6348c1d39e84599a9831b65c07c2209b4eb9544665edf05",
+            "requestDigest": "sha256:790054a87025f86ceec8861d9b35a135fcd801e3ac2b051c84fd4d7e87bf3871",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "taskRevision": null,
+            "configRevision": "ss22-select",
+            "profileRevision": "ss22-mock-v1",
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "agentSelectedSkillIds": [],
+            "selectionReasons": [],
+            "applicabilityChecks": [],
+            "unresolvedSkillReferences": [],
+            "selectionStatus": "SELECTED",
+            "adviceApplied": true,
+            "hostReceipt": {
+              "receiptId": "synthetic-only-SS22-null-empty",
+              "host": "mock-host",
+              "requestDigest": "sha256:790054a87025f86ceec8861d9b35a135fcd801e3ac2b051c84fd4d7e87bf3871",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "agentSelectedSkillIds": [],
+              "acceptedAt": "2026-10-09T02:57:40.697Z"
+            }
+          },
+          "admissionStatus": "NOT_EVALUATED",
+          "readStatus": "NOT_OBSERVED",
+          "appliedStatus": "NOT_OBSERVED",
+          "verifiedStatus": "NOT_RUN"
+        },
+        "emptyPurposeStatus": "FAIL",
+        "missingRequired": [
+          "ponytail",
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ]
+      },
+      {
+        "variant": "select",
+        "boundary": "deficient-selection",
+        "status": "PASS",
+        "observed": {
+          "valid": true,
+          "errors": [],
+          "neededSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "test-engineering"
+          ],
+          "runnableSkillIds": [
+            "ponytail"
+          ],
+          "blockedItems": [],
+          "decision": {
+            "schemaVersion": "1.0.0",
+            "classificationResponseRef": "sha256:0f9a34e7938a69ec5aa6dabb0f49c2fc5d01fee60e49671ba92f3de81c46ea29",
+            "requestDigest": "sha256:f19991bd79ebb98a03675cc83186292c6778d227d0a1f76f45f7210a725fac26",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "taskRevision": null,
+            "configRevision": "ss22-select",
+            "profileRevision": "ss22-mock-v1",
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "agentSelectedSkillIds": [
+              "ponytail"
+            ],
+            "selectionReasons": [
+              {
+                "skillId": "ponytail",
+                "reason": "Synthetic boundary input, no real AGENT claim"
+              }
+            ],
+            "applicabilityChecks": [
+              {
+                "skillId": "ponytail",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:SS22"
+                ]
+              }
+            ],
+            "unresolvedSkillReferences": [],
+            "selectionStatus": "SELECTED",
+            "adviceApplied": true,
+            "hostReceipt": {
+              "receiptId": "synthetic-only-SS22-deficient",
+              "host": "mock-host",
+              "requestDigest": "sha256:f19991bd79ebb98a03675cc83186292c6778d227d0a1f76f45f7210a725fac26",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "agentSelectedSkillIds": [
+                "ponytail"
+              ],
+              "acceptedAt": "2026-10-09T02:57:40.797Z"
+            }
+          },
+          "admissionStatus": "NOT_EVALUATED",
+          "readStatus": "NOT_OBSERVED",
+          "appliedStatus": "NOT_OBSERVED",
+          "verifiedStatus": "NOT_RUN"
+        },
+        "purposeStatus": "FAIL",
+        "missingRequired": [
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "note": "AGENT must evaluate purpose; valid=true is not SS22 PASS"
+      },
+      {
+        "variant": "select",
+        "boundary": "cancel-before-read",
+        "status": "PASS",
+        "observed": {
+          "valid": false,
+          "errors": [
+            "HOST_TASK_CHANGED_OR_NOT_OBSERVED"
+          ],
+          "agentSelectedSkillIds": null
+        }
+      },
+      {
+        "boundary": "reuse-after-mode-change",
+        "status": "PASS",
+        "observed": "STALE_CLASSIFICATION_OPERATION"
+      },
+      {
+        "variant": "select",
+        "boundary": "cancel-during-read",
+        "expected": {
+          "valid": false,
+          "selected": null
+        },
+        "observed": {
+          "valid": true,
+          "errors": [],
+          "neededSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "test-engineering"
+          ],
+          "runnableSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "test-engineering"
+          ],
+          "blockedItems": [],
+          "decision": {
+            "schemaVersion": "1.0.0",
+            "classificationResponseRef": "sha256:61a9ddd4c96a1fdbda527a17d0ae037ca788fc352db9c471b4703f018e7dc5b7",
+            "requestDigest": "sha256:492f61bf521dbd428b044a73c6a8b6226240196fdb2aa8255df3925c0940aee8",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "taskRevision": null,
+            "configRevision": "ss22-select",
+            "profileRevision": "ss22-mock-v1",
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "agentSelectedSkillIds": [
+              "ponytail",
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "selectionReasons": [
+              {
+                "skillId": "ponytail",
+                "reason": "Synthetic boundary input, no real AGENT claim"
+              },
+              {
+                "skillId": "cs-engineering",
+                "reason": "Synthetic boundary input, no real AGENT claim"
+              },
+              {
+                "skillId": "test-engineering",
+                "reason": "Synthetic boundary input, no real AGENT claim"
+              },
+              {
+                "skillId": "orchestrator",
+                "reason": "Synthetic boundary input, no real AGENT claim"
+              }
+            ],
+            "applicabilityChecks": [
+              {
+                "skillId": "ponytail",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:SS22"
+                ]
+              },
+              {
+                "skillId": "cs-engineering",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:SS22"
+                ]
+              },
+              {
+                "skillId": "test-engineering",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:SS22"
+                ]
+              },
+              {
+                "skillId": "orchestrator",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:SS22"
+                ]
+              }
+            ],
+            "unresolvedSkillReferences": [],
+            "selectionStatus": "SELECTED",
+            "adviceApplied": true,
+            "hostReceipt": {
+              "receiptId": "synthetic-only-SS22-cancel-during-read",
+              "host": "mock-host",
+              "requestDigest": "sha256:492f61bf521dbd428b044a73c6a8b6226240196fdb2aa8255df3925c0940aee8",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "agentSelectedSkillIds": [
+                "ponytail",
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "acceptedAt": "2026-10-09T02:57:41.075Z"
+            }
+          },
+          "admissionStatus": "NOT_EVALUATED",
+          "readStatus": "NOT_OBSERVED",
+          "appliedStatus": "NOT_OBSERVED",
+          "verifiedStatus": "NOT_RUN"
+        },
+        "taskCancelled": true,
+        "status": "FAIL",
+        "existingFinding": "동시성 직전 재검사 공백",
+        "syntheticHostBoundary": true
+      }
+    ]
+  },
+  "sourceReadEvidence": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827"
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/SKILL.md",
+      "sha256": "eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230"
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "sha256": "96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "sha256": "aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "sha256": "f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/SKILL.md",
+      "sha256": "1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109"
+    },
+    {
+      "path": "skills/orchestrator/references/skill-classification.md",
+      "sha256": "85cfd39b4c3771669747a9ebf61bc8623b510104c4bd6af40c2168781adc3ef8"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/gateway.ts",
+      "sha256": "80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/service.ts",
+      "sha256": "c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/validation.ts",
+      "sha256": "70f988d9e5d49f8eaef55ca0ff378b4819798ff8141bd09119691c2cffb2891f"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/profiles.ts",
+      "sha256": "0add9c19bd0c7a8e45a57be64f4a2ecb503e0305dc9777629fba142a8566d5be"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/inventory.ts",
+      "sha256": "8c7ee54546f17fb1e63368fbfb72668a3c7136570a545ad5f0494f076c91727c"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/request.ts",
+      "sha256": "1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f"
+    },
+    {
+      "path": "mcp-server/src/skill-classification/runtime.ts",
+      "sha256": "33c14b3597a9ed5d3a6103fc52c41ea9ed18c57c96856257b1dc407e3d6e6eea"
+    },
+    {
+      "path": "mcp-server/src/index.ts",
+      "sha256": "bd2d886cd4ef1bb42c8cd00dd22a0428be899c7e21f1e48afe83c280f0104d46"
+    },
+    {
+      "path": "hooks/hooks.json",
+      "sha256": "fd848e2721847c95c03a3d76e2e058ed2420aab9d2ff181a096d5d12a12eba61"
+    },
+    {
+      "path": ".mcp.json",
+      "sha256": "ff4a7b62ae53faec9260e5aaee08aa125b18b77b893337ca388e389df9d8f703"
+    },
+    {
+      "path": "tests/skill-classification/evaluation.ts",
+      "sha256": "e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9"
+    },
+    {
+      "path": "tests/mcp/skill-classification-validation.test.ts",
+      "sha256": "d9b3221cfac0d23e6745b43429b086d706099bb656415a609214d956f6d30411"
+    },
+    {
+      "path": "tests/mcp/skill-classification-gateway.test.ts",
+      "sha256": "e45307b5240f8ed872a0b62e9324a44244e8dafd96de8184c0737d3a4e7c2268"
+    }
+  ],
+  "sourceBindingChecks": [
+    {
+      "skillId": "ponytail",
+      "path": "skills/ponytail/SKILL.md",
+      "expected": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "observed": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "status": "PASS"
+    },
+    {
+      "skillId": "cs-engineering",
+      "path": "skills/cs-engineering/SKILL.md",
+      "expected": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+      "observed": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+      "status": "PASS"
+    },
+    {
+      "skillId": "test-engineering",
+      "path": "skills/test-engineering/SKILL.md",
+      "expected": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "observed": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "status": "PASS"
+    },
+    {
+      "skillId": "orchestrator",
+      "path": "skills/orchestrator/SKILL.md",
+      "expected": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "observed": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "status": "PASS"
+    }
+  ],
+  "agentsSkillsDiscovery": {
+    "<workspace-agent-skills>": "ABSENT",
+    "<fixed-candidate-checkout>/.agents/skills": "ABSENT",
+    ".agents/plugins/marketplace.json": "PRESENT"
+  },
+  "findings": [
+    {
+      "id": "SS22-F01",
+      "severity": "high",
+      "status": "REPRODUCED_OFFLINE",
+      "existingFinding": "동시성 직전 재검사 공백",
+      "deduplication": "Link to existing finding; no new independent root-cause count",
+      "expected": "Cancellation during awaited runtime read rejects selection and keeps selected=null",
+      "observed": "task.cancelled=true but accept returns valid=true and stores S={P,CS,T,O}/adviceApplied=true",
+      "cause": "observeTask checked once before awaits at gateway.ts:117–118; current snapshot at :125 copies original cancelled=false; no latest task observation before :136 decision storage",
+      "source": "mcp-server/src/skill-classification/gateway.ts:117",
+      "evidence": [
+        "SS22-isolated.stdout.log",
+        "SS22-isolated.stderr.log",
+        "SS22.observations.json",
+        "SS22.vitest.json"
+      ],
+      "control": "Cancellation before runtime read rejected; assertion passed",
+      "hostStatus": "NOTRUN"
+    }
+  ],
+  "nonBugsAndLimits": [
+    "Validator accepts supplied B={P} or [] without rewriting; this is support-only behavior, not semantic or SS22 purpose PASS.",
+    "shadow raw correctness does not repair baseline B omissions.",
+    "Mock provider data/qualification/native availability and injected host observation are synthetic; real AGENT choice not exercised.",
+    "No product mutation or green fix; engineering proof checker returns INCOMPLETE/exit1.",
+    "Other known defects not exercised for this case."
+  ],
+  "missingInputs": [
+    {
+      "input": "Attached get_skill_inventory/classify_skills/record_skill_selection tools",
+      "observed": "None in active tool catalogue",
+      "supportPath": ".mcp.json -> node mcp-server/dist/server.mjs"
+    },
+    {
+      "input": "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG and approved registry",
+      "observed": "Environment variable unset; readClassificationRuntime(undefined,root) has profiles=[]",
+      "supportPath": "mcp-server/src/index.ts:88; gateway.ts:142",
+      "requiredFields": [
+        "config.jevEnabled",
+        "config.mode",
+        "config.providerProfileRegistryRef",
+        "config.externalClassificationAllowed",
+        "config.configRevision",
+        "config.timeoutMs",
+        "allowRemotePrivateContent",
+        "providerRuntimeRef",
+        "qualified profiles bound to current inventoryDigest/taxonomy/model/prompt/configuration/validUntil"
+      ]
+    },
+    {
+      "input": "Approved provider/native route, verified allowance and budget",
+      "observed": "No configured approved runtime supplied; no credentials loaded",
+      "supportPath": "mcp-server/src/skill-classification/runtime.ts",
+      "requiredFields": [
+        "routeRef/approvalRef/approved/providerKind/vendorId/adapterRevision/modelIds/reasoningEfforts/structuredOutput",
+        "remote: endpoint/credentialEnvName/wireAdapterRef OR native: nativeAdapterRef/capabilityEvidenceRef/retryPolicyVerified",
+        "budget.jev/budget.vendors/budget.nativeAllowances",
+        "nativeAdapterDefinitionsRef if native route"
+      ]
+    },
+    {
+      "input": "Actual host hook and current actor/task observations",
+      "observed": "AGENT_GOVERNANCE_HOST_ATTESTATION unset; no actual signed SS22 call or host receipt",
+      "supportPath": "hooks/hooks.json PreToolUse; mcp-server/src/host-attestation-hook.ts; index.ts:122",
+      "requiredFields": [
+        "session_id/tool_use_id/tool_name/tool_input/transcript_path",
+        "host observed model and reasoning effort",
+        "session-board lastPromptAt for same hostActorId",
+        "current taskRevision/requestDigest/sourceRef and cancellation state",
+        "actual AGENT skill IDs/reasons/applicability checks; caller hostReceipt=null"
+      ]
+    },
+    {
+      "input": "Separate shadow and select actual requests and mode receipts",
+      "observed": "Only fresh offline mocks; actual requests NOTRUN",
+      "requiredFields": [
+        "embedded SS03 prompt preserved",
+        "full installed inventory",
+        "independent requestId/operationId and config mode/revision",
+        "shadow observe-only/false with B={P}",
+        "select independently reasoned actual S including P,CS,T,O, adviceApplied=true"
+      ]
+    }
+  ],
+  "productSourceChanges": false,
+  "pushPRRelease": false,
+  "evidenceRoot": "./SS22-output",
+  "testFile": "<fixed-candidate-checkout>/tests/ss22-isolated/SS22.test.ts",
+  "evidenceLayers": {
+    "E0": {
+      "status": "PASS_OFFLINE",
+      "fixture": "SS22.fixture.json",
+      "inputSource": "SS22.linked-input.json",
+      "bindings": "commit/tree/fixture/oracle/sourceSkill SHA verified"
+    },
+    "E1": {
+      "status": "PASS_OFFLINE_ONLY",
+      "observations": "SS22.observations.json",
+      "raw": "mock JEV raw={P,CS,T,O}",
+      "providerLive": "NOTRUN"
+    },
+    "E3": {
+      "status": "NOTRUN",
+      "actualHostModeReceipts": {
+        "shadow": null,
+        "select": null
+      },
+      "syntheticTestObservations": "Explicitly marked syntheticHostBoundary=true; never host-live evidence"
+    }
+  },
+  "finalIntegrityChecks": [
+    {
+      "command": [
+        "git",
+        "rev-parse",
+        "HEAD",
+        "HEAD^{tree}"
+      ],
+      "exit": 0,
+      "stdout": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6\n28f2f2ed8a864405320f6d20e7bc5004e8466ad3\n",
+      "stderr": "",
+      "executionKind": "read-only-final-integrity-check"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--exit-code"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "executionKind": "read-only-final-integrity-check"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "executionKind": "read-only-final-integrity-check"
+    },
+    {
+      "command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "exit": 0,
+      "stdout": "?? node_modules\n?? tests/ss22-isolated/\n",
+      "stderr": "",
+      "executionKind": "read-only-final-integrity-check"
+    }
+  ],
+  "publication": {
+    "kind": "redacted-derived-existing-result",
+    "sourceResultFileName": "SS22.result.json",
+    "sourceResultBytes": 56903,
+    "sourceResultSHA256": "2ad819677dd8531d2df750b398a71740792a1daca03c38751c9ff6ca73ffe6e3",
+    "newTests": 0,
+    "newModelApiCalls": 0,
+    "productPatch": "ABSENT",
+    "actualHostReceipts": "MISSING_ORIGINAL",
+    "fullPerVariantMockWireBytes": "MISSING_ORIGINAL",
+    "sourceRunPushPRReleaseFalse": "Historical validation phase field; this evidence publication is a later authorized action",
+    "redactions": [
+      "Local absolute paths replaced by role placeholders",
+      "Unnecessary parallel-developer coordination note omitted"
+    ],
+    "publicationFilesAreNotFreshTestObservations": true
+  }
+}

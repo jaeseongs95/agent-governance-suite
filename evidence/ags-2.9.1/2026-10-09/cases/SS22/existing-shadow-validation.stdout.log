@@ -1,0 +1,9 @@
+
+ RUN  v5.0.0 <fixed-candidate-checkout>
+
+ ✓ tests/mcp/skill-classification-validation.test.ts > AGENT selection public validation (SS08/15/18/23/34/38) > allows settled independent work despite optional uncertainty, and shadow cannot claim advice applied 11ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 25 skipped (26)
+   Start at  02:57:37
+   Duration  258ms (import 48%, transform 43%, tests 8%, worker 2%)

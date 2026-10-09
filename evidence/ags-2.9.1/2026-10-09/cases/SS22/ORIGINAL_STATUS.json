@@ -1,0 +1,25 @@
+{
+  "caseId": "SS22",
+  "productPatch": {
+    "status": "ABSENT",
+    "reason": "Original task prohibited product changes; no existing product patch was produced."
+  },
+  "missingOriginals": [
+    {
+      "artifact": "actual native host shadow/select receipts and target selected/read/applied/verified evidence",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Host execution was NOTRUN."
+    },
+    {
+      "artifact": "full per-variant mock request wire bytes",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Not persisted in the original run; do not reconstruct and claim original wire evidence."
+    }
+  ],
+  "recoveredOriginals": {
+    "manifestEntries": 28,
+    "missingManifestEntries": [],
+    "hashMismatches": []
+  },
+  "noRegeneratedTestResultsOrLogs": true
+}

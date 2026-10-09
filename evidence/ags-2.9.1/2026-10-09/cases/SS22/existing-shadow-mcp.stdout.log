@@ -1,0 +1,9 @@
+
+ RUN  v5.0.0 <fixed-candidate-checkout>
+
+ ✓ tests/mcp/skill-classification-gateway.test.ts > offline classification through actual MCP Client/Server transport > accepts settled independent PARTIAL work and enforces shadow adviceApplied=false 656ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 37 skipped (38)
+   Start at  02:57:37
+   Duration  1.26s (tests 57%, transform 26%, import 16%, worker 1%)

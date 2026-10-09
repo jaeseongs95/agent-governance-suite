@@ -1,0 +1,21 @@
+{
+  "name": "existing-shadow-validation",
+  "command": [
+    "node",
+    "scripts/run-tests.mjs",
+    "tests/mcp/skill-classification-validation.test.ts",
+    "-t",
+    "allows settled independent work despite optional uncertainty, and shadow cannot claim advice applied",
+    "--reporter=verbose"
+  ],
+  "cwd": "<fixed-candidate-checkout>",
+  "exit": 0,
+  "startedUnix": 1791514656.8498237,
+  "durationSeconds": 0.7698736190795898,
+  "executionKind": "existing-regression-offline-mock",
+  "externalApiCalls": 0,
+  "stdout": "existing-shadow-validation.stdout.log",
+  "stderr": "existing-shadow-validation.stderr.log",
+  "testsPassed": 1,
+  "testsSkipped": 25
+}

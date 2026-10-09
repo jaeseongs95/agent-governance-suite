@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:4e54b3596fda3bd0dc4340b32801deb398178ef919eb26365c5e47cb9582d315",
+  "caseIds": [
+    "SS22-isolated"
+  ]
+}

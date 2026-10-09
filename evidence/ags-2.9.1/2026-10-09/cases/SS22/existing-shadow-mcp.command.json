@@ -1,0 +1,21 @@
+{
+  "name": "existing-shadow-mcp",
+  "command": [
+    "node",
+    "scripts/run-tests.mjs",
+    "tests/mcp/skill-classification-gateway.test.ts",
+    "-t",
+    "accepts settled independent PARTIAL work and enforces shadow adviceApplied=false",
+    "--reporter=verbose"
+  ],
+  "cwd": "<fixed-candidate-checkout>",
+  "exit": 0,
+  "startedUnix": 1791514657.6199393,
+  "durationSeconds": 1.6113560199737549,
+  "executionKind": "existing-regression-offline-mock",
+  "externalApiCalls": 0,
+  "stdout": "existing-shadow-mcp.stdout.log",
+  "stderr": "existing-shadow-mcp.stderr.log",
+  "testsPassed": 1,
+  "testsSkipped": 37
+}

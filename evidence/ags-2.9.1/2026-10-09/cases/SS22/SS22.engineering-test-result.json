@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:0690941f7b44fa4acc3f2bd37d796d6e53b2c3652eb00657d57f10e881c9b8bd",
+  "reportDigest": "sha256:a37fb04c26a54a6d253a380b75c781c0a1def7716d8b6b9e027417536386b706",
+  "issues": [
+    "REQUIRED SS22-isolated: NOT_RUN — Fixed candidate diagnostic ran 13 assertions (12 pass,1 operational assertion fail), but no product mutation or fixed candidate green is authorized; formal red/green sensitivity proof is NOT_RUN. Real host selection also NOTRUN. Actual execution evidence is in SS22-isolated.command.json and logs, not this unexecuted sensitivity record."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

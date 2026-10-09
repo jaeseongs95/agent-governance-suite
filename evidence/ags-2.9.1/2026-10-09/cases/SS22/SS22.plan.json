@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS22-fixed-c6a8019",
+  "contractDigest": "sha256:3c69446b97a7092717920e89ece29b4132088f85f6b19fe050f12ab0e66bf696",
+  "requirements": [
+    "SS22-shadow-observe-only",
+    "SS22-select-adoption",
+    "SS22-separate-requests",
+    "SS22-no-synthetic-host-credit",
+    "SS22-acceptance-current-task"
+  ],
+  "scopeFiles": [
+    "tests/ss22-isolated/SS22.test.ts",
+    "mcp-server/src/skill-classification/gateway.ts",
+    "mcp-server/src/skill-classification/validation.ts",
+    "mcp-server/src/skill-classification/service.ts",
+    "tests/skill-classification/fixtures.json",
+    "tests/skill-classification/evaluation.ts"
+  ],
+  "runner": "Existing Vitest through scripts/run-tests.mjs, no build or dependency installation",
+  "environment": "Independent <fixed-candidate-checkout>, Node 24.19.0 pnpm 11.19.0, UTC, mocked provider and host observations; external APIs 0",
+  "cases": [
+    {
+      "id": "SS22-isolated",
+      "requirementIds": [
+        "SS22-shadow-observe-only",
+        "SS22-select-adoption",
+        "SS22-separate-requests",
+        "SS22-no-synthetic-host-credit",
+        "SS22-acceptance-current-task"
+      ],
+      "scenario": "Every SS22 variant plus omission, null-empty, absent host, receipt, mode-switch and cancellation at acceptance boundaries",
+      "entryPoint": "RuntimeSkillClassificationGateway.classify/accept; validateDecision; scoreCase null-oracle guard",
+      "level": "integration",
+      "expectedBehavior": "Separate shadow B={P}/false and select S={P,CS,T,O}/true; baseline omissions stay quality FAIL; no actual selected/read/applied/verified credit; reject cancelled task at acceptance",
+      "oracle": "SS22 embedded sourceSpec.fields; SS03 referenced prompt and required raw IDs only. SS22 oracle=null, no semantic accuracy score.",
+      "testFiles": [
+        "tests/ss22-isolated/SS22.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read-only fixed-candidate diagnostic and known defect reproducer; product mutation/green fix forbidden. Actual AGENT/host behavior remains NOTRUN; no regression sensitivity completion claimed.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/ss22-isolated/SS22.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile=./SS22-output/SS22.vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "All other case executions and whole suite",
+    "Provider/JEV/vendor/Claude API calls",
+    "21-run rerun",
+    "Product modifications/build/push/PR/release",
+    "Real host native attestation or AGENT selection",
+    "Invented SS22 semantic oracle"
+  ]
+}

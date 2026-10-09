@@ -1,0 +1,382 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS22",
+  "publicationKind": "existing-evidence-only",
+  "candidateCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "candidateTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixture": {
+    "repositoryPath": "tests/skill-classification/fixtures.json",
+    "bytes": 142450,
+    "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9"
+  },
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "sourceOriginalManifest": {
+    "fileName": "SS22.evidence-manifest.json",
+    "bytes": 4614,
+    "sha256": "b39690bdec4e2cf6d8c1de0b27570d2a6ffb3d0192cd9b763fa08fe2bc6f0d4b"
+  },
+  "newTests": 0,
+  "modelApiCalls": 0,
+  "payloadFileCount": 23,
+  "payloadTotalBytes": 125144,
+  "hashCoverage": {
+    "manifest": "payload only; excludes manifest.json and SHA256SUMS",
+    "SHA256SUMS": "payload and manifest.json; excludes SHA256SUMS"
+  },
+  "files": [
+    {
+      "path": "ORIGINAL_STATUS.json",
+      "bytes": 782,
+      "sha256": "bef901d6a45b98ecc43f72e8cb7485dbd4aeda63645763fcfd9bba6d06bb7e59",
+      "transformation": "generated-publication-document",
+      "originals": [
+        {
+          "fileName": "SS22.result.json",
+          "bytes": 56903,
+          "sha256": "2ad819677dd8531d2df750b398a71740792a1daca03c38751c9ff6ca73ffe6e3"
+        },
+        {
+          "fileName": "SS22.evidence-manifest.json",
+          "bytes": 4614,
+          "sha256": "b39690bdec4e2cf6d8c1de0b27570d2a6ffb3d0192cd9b763fa08fe2bc6f0d4b"
+        }
+      ]
+    },
+    {
+      "path": "README.md",
+      "bytes": 4212,
+      "sha256": "52f884b030c66c2809b971a020d48d4417da14dd6bdd41dfbfa56a91c4cfc70b",
+      "transformation": "generated-publication-document",
+      "originals": [
+        {
+          "fileName": "SS22.result.json",
+          "bytes": 56903,
+          "sha256": "2ad819677dd8531d2df750b398a71740792a1daca03c38751c9ff6ca73ffe6e3"
+        },
+        {
+          "fileName": "SS22-isolated.command.json",
+          "bytes": 519,
+          "sha256": "8bf2f2e54a4e89696a3cec076c60aae50053852a4ab12a98b8245389754d0400"
+        },
+        {
+          "fileName": "SS22-isolated.stdout.log",
+          "bytes": 2562,
+          "sha256": "7e7f9801bf6a4d8df4ff1a6161d5372a298220b78de3e3478610961ae4f32234"
+        },
+        {
+          "fileName": "SS22.engineering-test-result.json",
+          "bytes": 1072,
+          "sha256": "5a4dd4aa468fe86ec4be441d7e5867602b1721d5acc9e47ec4582be979f892d7"
+        }
+      ]
+    },
+    {
+      "path": "SS22-isolated.command.json",
+      "bytes": 513,
+      "sha256": "db0284cc4b9320088b863594fbfa384ef829801993ee56310a4fbb05d5224ba3",
+      "transformation": "redacted-derived-copy: local paths; irrelevant skipped rows/PIDs and trailing blank lines where present",
+      "originals": [
+        {
+          "fileName": "SS22-isolated.command.json",
+          "bytes": 519,
+          "sha256": "8bf2f2e54a4e89696a3cec076c60aae50053852a4ab12a98b8245389754d0400"
+        }
+      ]
+    },
+    {
+      "path": "SS22-isolated.stderr.log",
+      "bytes": 1160,
+      "sha256": "477672d223e9abf4c2654c32804cee8399d9da435d13fc60d622e4c40ff132b7",
+      "transformation": "redacted-derived-copy: local paths; irrelevant skipped rows/PIDs and trailing blank lines where present",
+      "originals": [
+        {
+          "fileName": "SS22-isolated.stderr.log",
+          "bytes": 1109,
+          "sha256": "56028908e9da2b72b20596dc238a99b02a8c9e44a64421b179a31daae9c61d64"
+        }
+      ]
+    },
+    {
+      "path": "SS22-isolated.stdout.log",
+      "bytes": 2556,
+      "sha256": "043384b7533900770e91a21b64bd93403f0a26bc81932402873a1a0bc96208dd",
+      "transformation": "redacted-derived-copy: local paths; irrelevant skipped rows/PIDs and trailing blank lines where present",
+      "originals": [
+        {
+          "fileName": "SS22-isolated.stdout.log",
+          "bytes": 2562,
+          "sha256": "7e7f9801bf6a4d8df4ff1a6161d5372a298220b78de3e3478610961ae4f32234"
+        }
+      ]
+    },
+    {
+      "path": "SS22.engineering-test-result.json",
+      "bytes": 1072,
+      "sha256": "5a4dd4aa468fe86ec4be441d7e5867602b1721d5acc9e47ec4582be979f892d7",
+      "transformation": "exact-original-bytes",
+      "originals": [
+        {
+          "fileName": "SS22.engineering-test-result.json",
+          "bytes": 1072,
+          "sha256": "5a4dd4aa468fe86ec4be441d7e5867602b1721d5acc9e47ec4582be979f892d7"
+        }
+      ]
+    },
+    {
+      "path": "SS22.fixture.json",
+      "bytes": 1636,
+      "sha256": "fa16eb98f996666b7fec150510b9e4e0684b78082a027836c602c989aae5c45f",
+      "transformation": "exact-original-bytes",
+      "originals": [
+        {
+          "fileName": "SS22.fixture.json",
+          "bytes": 1636,
+          "sha256": "fa16eb98f996666b7fec150510b9e4e0684b78082a027836c602c989aae5c45f"
+        }
+      ]
+    },
+    {
+      "path": "SS22.linked-input.json",
+      "bytes": 1749,
+      "sha256": "171b2e6448bfb900319cb9ceb112dc79edf208a9791fb57dba27252a394aeee9",
+      "transformation": "exact-original-bytes",
+      "originals": [
+        {
+          "fileName": "SS22.linked-input.json",
+          "bytes": 1749,
+          "sha256": "171b2e6448bfb900319cb9ceb112dc79edf208a9791fb57dba27252a394aeee9"
+        }
+      ]
+    },
+    {
+      "path": "SS22.observations.json",
+      "bytes": 19577,
+      "sha256": "d02fe04c62c9ba9e0d7db6e4c4b83c463376069687e457aaa5d61638e21e206b",
+      "transformation": "exact-original-bytes",
+      "originals": [
+        {
+          "fileName": "SS22.observations.json",
+          "bytes": 19577,
+          "sha256": "d02fe04c62c9ba9e0d7db6e4c4b83c463376069687e457aaa5d61638e21e206b"
+        }
+      ]
+    },
+    {
+      "path": "SS22.plan-check.json",
+      "bytes": 221,
+      "sha256": "8a0934cb0f1c596ffce69734a03987001797ad94b3b13f40b8669ca02a36d2f3",
+      "transformation": "exact-original-bytes",
+      "originals": [
+        {
+          "fileName": "SS22.plan-check.json",
+          "bytes": 221,
+          "sha256": "8a0934cb0f1c596ffce69734a03987001797ad94b3b13f40b8669ca02a36d2f3"
+        }
+      ]
+    },
+    {
+      "path": "SS22.plan.json",
+      "bytes": 2741,
+      "sha256": "962bce1b6c089980f260ac670d827f4f9d0cfbb38f9d5c156ad0386485e4cc68",
+      "transformation": "redacted-derived-copy: local paths; irrelevant skipped rows/PIDs and trailing blank lines where present",
+      "originals": [
+        {
+          "fileName": "SS22.plan.json",
+          "bytes": 2747,
+          "sha256": "13961cfb2fee9523d1ec3cc37b0a1e4a7a32db663892d4294875a31ce456b870"
+        }
+      ]
+    },
+    {
+      "path": "SS22.proof.json",
+      "bytes": 2455,
+      "sha256": "f97f19297d1cf6b0d4ba7fa02f1ee7de07bc6c328a1dce91aa6c74788f6ab856",
+      "transformation": "exact-original-bytes",
+      "originals": [
+        {
+          "fileName": "SS22.proof.json",
+          "bytes": 2455,
+          "sha256": "f97f19297d1cf6b0d4ba7fa02f1ee7de07bc6c328a1dce91aa6c74788f6ab856"
+        }
+      ]
+    },
+    {
+      "path": "SS22.result.json",
+      "bytes": 57538,
+      "sha256": "7326e28dae638103cb90c1de7aead54c5b692e2f01fa95db73f38775375ab8c1",
+      "transformation": "redacted-derived-result; preserved prior observations and statuses; publication metadata added",
+      "originals": [
+        {
+          "fileName": "SS22.result.json",
+          "bytes": 56903,
+          "sha256": "2ad819677dd8531d2df750b398a71740792a1daca03c38751c9ff6ca73ffe6e3"
+        }
+      ]
+    },
+    {
+      "path": "SS22.snapshot.json",
+      "bytes": 1419,
+      "sha256": "100dd3f29b3fa4181e0474350e16a1b2ffb66a0c20e332cf66601b6defd1b3dc",
+      "transformation": "exact-original-bytes",
+      "originals": [
+        {
+          "fileName": "SS22.snapshot.json",
+          "bytes": 1419,
+          "sha256": "100dd3f29b3fa4181e0474350e16a1b2ffb66a0c20e332cf66601b6defd1b3dc"
+        }
+      ]
+    },
+    {
+      "path": "SS22.vitest.json",
+      "bytes": 6176,
+      "sha256": "48cabf3babffe9dcc4b1025bd6280088487b5d593a99cf08764f474cfd7b680e",
+      "transformation": "redacted-derived-copy: local paths; irrelevant skipped rows/PIDs and trailing blank lines where present",
+      "originals": [
+        {
+          "fileName": "SS22.vitest.json",
+          "bytes": 6189,
+          "sha256": "196a7cd9fcba49725bc76320deb642b4d69bf83252de2d76135a830e09266691"
+        }
+      ]
+    },
+    {
+      "path": "existing-shadow-mcp.command.json",
+      "bytes": 618,
+      "sha256": "abe020f49b5d1be51ac4dc332d7ca85b232c513a449e4c1a4de9c397b0151825",
+      "transformation": "redacted-derived-copy: local paths; irrelevant skipped rows/PIDs and trailing blank lines where present",
+      "originals": [
+        {
+          "fileName": "existing-shadow-mcp.command.json",
+          "bytes": 613,
+          "sha256": "28341f9a96df9f6222aefae7ccfd9fbb3936a81755be9056a787ad136b602909"
+        }
+      ]
+    },
+    {
+      "path": "existing-shadow-mcp.stderr.log",
+      "bytes": 206,
+      "sha256": "037648f7ea55cd3c8db4d843ca1fb8a96c3acdb52630906e743a7dfd7b2e8c70",
+      "transformation": "redacted-derived-copy: local paths; irrelevant skipped rows/PIDs and trailing blank lines where present",
+      "originals": [
+        {
+          "fileName": "existing-shadow-mcp.stderr.log",
+          "bytes": 155,
+          "sha256": "04296ab82a979a9696236c517728ad85854b0c66257070ce80e900cc63ebfd10"
+        }
+      ]
+    },
+    {
+      "path": "existing-shadow-mcp.stdout.log",
+      "bytes": 409,
+      "sha256": "cb216823f432106aa19cd088445b635bff9cfcb95bdabfbcbbcd57d81ac5a6e6",
+      "transformation": "redacted-derived-copy: local paths; irrelevant skipped rows/PIDs and trailing blank lines where present",
+      "originals": [
+        {
+          "fileName": "existing-shadow-mcp.stdout.log",
+          "bytes": 7980,
+          "sha256": "e6bfea5b1b8e2114327e6ab3c853a0f41def1b78e38cb6a362768ea1579d62a8"
+        }
+      ]
+    },
+    {
+      "path": "existing-shadow-validation.command.json",
+      "bytes": 662,
+      "sha256": "dd42ae5be349577f10bd533ffafaeb5eacbc47ec69abfee2db14940734ca0197",
+      "transformation": "redacted-derived-copy: local paths; irrelevant skipped rows/PIDs and trailing blank lines where present",
+      "originals": [
+        {
+          "fileName": "existing-shadow-validation.command.json",
+          "bytes": 657,
+          "sha256": "647282fd76c156a6e7fc14dd083cf798a6f063d8ab5dd7ed121d0d94b555d532"
+        }
+      ]
+    },
+    {
+      "path": "existing-shadow-validation.stderr.log",
+      "bytes": 206,
+      "sha256": "037648f7ea55cd3c8db4d843ca1fb8a96c3acdb52630906e743a7dfd7b2e8c70",
+      "transformation": "redacted-derived-copy: local paths; irrelevant skipped rows/PIDs and trailing blank lines where present",
+      "originals": [
+        {
+          "fileName": "existing-shadow-validation.stderr.log",
+          "bytes": 155,
+          "sha256": "6b3107cfb6bd9d59e63ababc5b09b402488dda85a9b99e42b064c6854e098d2d"
+        }
+      ]
+    },
+    {
+      "path": "existing-shadow-validation.stdout.log",
+      "bytes": 420,
+      "sha256": "d58b191b9c57fa04f682c9d978d91812584a0898ff6ab8508badf0d79499134e",
+      "transformation": "redacted-derived-copy: local paths; irrelevant skipped rows/PIDs and trailing blank lines where present",
+      "originals": [
+        {
+          "fileName": "existing-shadow-validation.stdout.log",
+          "bytes": 5033,
+          "sha256": "1b6e6dede466996726d3b6eb50c94cdc8fd6c7b2bb571fbe3a3b48047ee09248"
+        }
+      ]
+    },
+    {
+      "path": "reproduce/SS22.test.ts",
+      "bytes": 15191,
+      "sha256": "b058c21a6690209291c594cc4b8eb36c1af370bd9617cd16228e969ba4464988",
+      "transformation": "redacted-derived-copy: local paths; irrelevant skipped rows/PIDs and trailing blank lines where present",
+      "originals": [
+        {
+          "fileName": "SS22.test.ts",
+          "bytes": 15202,
+          "sha256": "62f65e4b69d66f6f3da34b2e15021a2be2daa3975f4c1fa1a2dee65ab18bf998"
+        }
+      ]
+    },
+    {
+      "path": "source/SS22.gateway-accept.source.txt",
+      "bytes": 3625,
+      "sha256": "cefcaa5700b547e0413e5463160f7a9477801cc93f1c04551d3e2ea8489a0035",
+      "transformation": "exact-original-bytes",
+      "originals": [
+        {
+          "fileName": "SS22.gateway-accept.source.txt",
+          "bytes": 3625,
+          "sha256": "cefcaa5700b547e0413e5463160f7a9477801cc93f1c04551d3e2ea8489a0035"
+        }
+      ]
+    }
+  ],
+  "originalRecovery": {
+    "caseId": "SS22",
+    "productPatch": {
+      "status": "ABSENT",
+      "reason": "Original task prohibited product changes; no existing product patch was produced."
+    },
+    "missingOriginals": [
+      {
+        "artifact": "actual native host shadow/select receipts and target selected/read/applied/verified evidence",
+        "status": "MISSING_ORIGINAL",
+        "reason": "Host execution was NOTRUN."
+      },
+      {
+        "artifact": "full per-variant mock request wire bytes",
+        "status": "MISSING_ORIGINAL",
+        "reason": "Not persisted in the original run; do not reconstruct and claim original wire evidence."
+      }
+    ],
+    "recoveredOriginals": {
+      "manifestEntries": 28,
+      "missingManifestEntries": [],
+      "hashMismatches": []
+    },
+    "noRegeneratedTestResultsOrLogs": true
+  },
+  "excludedOriginals": [
+    "SS22.integrity-checks.json",
+    "SS22.plan-check.command.json",
+    "SS22.plan-check.stderr.log",
+    "SS22.proof-check.command.json",
+    "SS22.proof-check.stderr.log",
+    "SS22.snapshot.command.json",
+    "SS22.snapshot.stderr.log"
+  ],
+  "omittedArtifactsReason": "Unneeded local capture/scope output, auxiliary empty stderr and consistency command details are omitted; digest references in existing result remain historical."
+}

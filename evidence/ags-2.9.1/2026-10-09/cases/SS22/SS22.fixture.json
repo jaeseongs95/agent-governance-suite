@@ -1,0 +1,29 @@
+{
+  "caseId": "SS22",
+  "title": "shadow 준비 단계와 실제 채택 구분",
+  "familyId": "mechanical-SS22",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "mock 및 host-live. 출시 판단에는 select의 실동작 근거가 필요하다.",
+  "originalPrompt": null,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS22",
+    "fields": {
+      "입력": "B={P}, JEV raw={P,CS,T,O}인 SS03 응답, ON+shadow. 같은 입력을 별도 request로 ON+select에서도 실행한다.",
+      "필수추천": "shadow는 raw를 관측하며 B의 CS·T·O 누락을 보여 준다. select에서는 AGENT가 같은 지원 정보와 기준으로 실제 선택하고 그 결과를 기록한다.",
+      "금지추천 또는 행동": "shadow 비교만으로 누락 해결·2.9.2 출시 동작 PASS 선언; shadow adviceApplied=true.",
+      "허용선택": "shadow=observe-only/false, select=selection-adopted/true. selected trace는 각각 실제 경로와 일치해야 한다.",
+      "보류조건": "선택 반영 경계가 관측되지 않으면 select 검증은 NOT_RUN.",
+      "통과기준": "shadow의 B 오류는 품질 실패로 남고 select의 S에는 필수 집합이 있다. 두 모드의 결과를 같은 실행으로 합치지 않는다.",
+      "증거": "E0·E1·E3, 모드별 실제 선택 receipt.",
+      "실행종류": "mock 및 host-live. 출시 판단에는 select의 실동작 근거가 필요하다."
+    },
+    "bodyDigest": "sha256:3c69446b97a7092717920e89ece29b4132088f85f6b19fe050f12ab0e66bf696"
+  },
+  "oracle": null,
+  "variants": [
+    "shadow",
+    "select"
+  ]
+}

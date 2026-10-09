@@ -1,0 +1,19 @@
+{
+  "name": "SS22-isolated",
+  "command": [
+    "node",
+    "scripts/run-tests.mjs",
+    "tests/ss22-isolated/SS22.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile=./SS22-output/SS22.vitest.json"
+  ],
+  "cwd": "<fixed-candidate-checkout>",
+  "exit": 1,
+  "startedUnix": 1791514659.2314985,
+  "durationSeconds": 1.9318387508392334,
+  "executionKind": "new-isolated-offline-mock",
+  "externalApiCalls": 0,
+  "stdout": "SS22-isolated.stdout.log",
+  "stderr": "SS22-isolated.stderr.log"
+}

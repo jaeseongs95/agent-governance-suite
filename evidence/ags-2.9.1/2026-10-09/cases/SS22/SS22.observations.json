@@ -1,0 +1,613 @@
+{
+  "caseId": "SS22",
+  "executionKind": "new-isolated-offline-mock",
+  "externalApiCalls": 0,
+  "syntheticHostBoundary": true,
+  "realAgentSelection": false,
+  "records": [
+    {
+      "variant": "shadow",
+      "status": "PASS_OFFLINE_ONLY",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS22-shadow-base",
+        "operationId": "SS22-op-shadow-base",
+        "originalPrompt": "session-handoff를 구현해 줘. 수신 전 종료, ACK 뒤 crash, 같은 메시지 재수신에서 인계가 유실되거나 중복 완료되지 않아야 해. 최소 구현과 회귀 테스트를 함께 설계해 줘.",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "explicitSkillIds": [],
+        "ruleRequiredSkillIds": [],
+        "vendorContext": {
+          "vendorId": "ss22-mock",
+          "reference": "fixture:mock-only"
+        },
+        "publicSynthetic": true
+      },
+      "expected": {
+        "raw": [
+          "ponytail",
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "selected": [
+          "ponytail"
+        ],
+        "adviceApplied": false
+      },
+      "observed": {
+        "raw": [
+          "cs-engineering",
+          "orchestrator",
+          "ponytail",
+          "test-engineering"
+        ],
+        "selected": [
+          "ponytail"
+        ],
+        "adviceApplied": false,
+        "gatewayValidation": {
+          "valid": true,
+          "errors": [],
+          "neededSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "test-engineering"
+          ],
+          "runnableSkillIds": [
+            "ponytail"
+          ],
+          "blockedItems": [],
+          "decision": {
+            "schemaVersion": "1.0.0",
+            "classificationResponseRef": "sha256:1aa1cba305d963891931a7d617eb06b0e79aba4440c62a4d8d171da82125affd",
+            "requestDigest": "sha256:567e450c727906fd4337641185d7a055dd58c109a9634d321a20bb40665456a2",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "taskRevision": null,
+            "configRevision": "ss22-shadow",
+            "profileRevision": "ss22-mock-v1",
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "agentSelectedSkillIds": [
+              "ponytail"
+            ],
+            "selectionReasons": [
+              {
+                "skillId": "ponytail",
+                "reason": "Synthetic boundary input, no real AGENT claim"
+              }
+            ],
+            "applicabilityChecks": [
+              {
+                "skillId": "ponytail",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:SS22"
+                ]
+              }
+            ],
+            "unresolvedSkillReferences": [],
+            "selectionStatus": "SELECTED",
+            "adviceApplied": false,
+            "hostReceipt": {
+              "receiptId": "synthetic-only-SS22-base",
+              "host": "mock-host",
+              "requestDigest": "sha256:567e450c727906fd4337641185d7a055dd58c109a9634d321a20bb40665456a2",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "agentSelectedSkillIds": [
+                "ponytail"
+              ],
+              "acceptedAt": "2026-10-09T02:57:39.923Z"
+            }
+          },
+          "admissionStatus": "NOT_EVALUATED",
+          "readStatus": "NOT_OBSERVED",
+          "appliedStatus": "NOT_OBSERVED",
+          "verifiedStatus": "NOT_RUN"
+        },
+        "baselineQuality": "FAIL",
+        "missingRequired": [
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ]
+      },
+      "mockProviderCalls": 1,
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      }
+    },
+    {
+      "variant": "select",
+      "status": "PASS_OFFLINE_ONLY",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS22-select-base",
+        "operationId": "SS22-op-select-base",
+        "originalPrompt": "session-handoff를 구현해 줘. 수신 전 종료, ACK 뒤 crash, 같은 메시지 재수신에서 인계가 유실되거나 중복 완료되지 않아야 해. 최소 구현과 회귀 테스트를 함께 설계해 줘.",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "explicitSkillIds": [],
+        "ruleRequiredSkillIds": [],
+        "vendorContext": {
+          "vendorId": "ss22-mock",
+          "reference": "fixture:mock-only"
+        },
+        "publicSynthetic": true
+      },
+      "expected": {
+        "selected": [
+          "ponytail",
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "adviceApplied": true
+      },
+      "observed": {
+        "gatewayValidation": {
+          "valid": true,
+          "errors": [],
+          "neededSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "test-engineering"
+          ],
+          "runnableSkillIds": [
+            "cs-engineering",
+            "orchestrator",
+            "ponytail",
+            "test-engineering"
+          ],
+          "blockedItems": [],
+          "decision": {
+            "schemaVersion": "1.0.0",
+            "classificationResponseRef": "sha256:b36f04dc2d8e96135a2f652b11e0894bc2251b71cd6a9ef686bc72753ac63517",
+            "requestDigest": "sha256:e1fc9048c626087fb1aded815ad0d36928c3965e2d25496ff878083ab20079c6",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "taskRevision": null,
+            "configRevision": "ss22-select",
+            "profileRevision": "ss22-mock-v1",
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "agentSelectedSkillIds": [
+              "ponytail",
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "selectionReasons": [
+              {
+                "skillId": "ponytail",
+                "reason": "Synthetic boundary input, no real AGENT claim"
+              },
+              {
+                "skillId": "cs-engineering",
+                "reason": "Synthetic boundary input, no real AGENT claim"
+              },
+              {
+                "skillId": "test-engineering",
+                "reason": "Synthetic boundary input, no real AGENT claim"
+              },
+              {
+                "skillId": "orchestrator",
+                "reason": "Synthetic boundary input, no real AGENT claim"
+              }
+            ],
+            "applicabilityChecks": [
+              {
+                "skillId": "ponytail",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:SS22"
+                ]
+              },
+              {
+                "skillId": "cs-engineering",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:SS22"
+                ]
+              },
+              {
+                "skillId": "test-engineering",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:SS22"
+                ]
+              },
+              {
+                "skillId": "orchestrator",
+                "applies": true,
+                "excluded": false,
+                "reasonRefs": [
+                  "fixture:SS22"
+                ]
+              }
+            ],
+            "unresolvedSkillReferences": [],
+            "selectionStatus": "SELECTED",
+            "adviceApplied": true,
+            "hostReceipt": {
+              "receiptId": "synthetic-only-SS22-base",
+              "host": "mock-host",
+              "requestDigest": "sha256:e1fc9048c626087fb1aded815ad0d36928c3965e2d25496ff878083ab20079c6",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "agentSelectedSkillIds": [
+                "ponytail",
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "acceptedAt": "2026-10-09T02:57:40.057Z"
+            }
+          },
+          "admissionStatus": "NOT_EVALUATED",
+          "readStatus": "NOT_OBSERVED",
+          "appliedStatus": "NOT_OBSERVED",
+          "verifiedStatus": "NOT_RUN"
+        }
+      },
+      "mockProviderCalls": 1,
+      "stages": {
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN"
+      }
+    },
+    {
+      "boundary": "separate-modes",
+      "requestIds": [
+        "SS22-shadow-separate",
+        "SS22-select-separate"
+      ],
+      "requestDigests": [
+        "sha256:8b36fa1dbc6adebdf288c1a50faed36fced286c05d6be386b7672c20b5aa3c1f",
+        "sha256:cde3e2859e74a315e15e688bf16e7c5fce678a546034341fc32d372eb093f1f9"
+      ],
+      "status": "PASS"
+    },
+    {
+      "boundary": "shadow-applied",
+      "status": "PASS",
+      "observed": {
+        "valid": false,
+        "errors": [
+          "SHADOW_ADVICE_APPLIED"
+        ],
+        "neededSkillIds": [
+          "cs-engineering",
+          "orchestrator",
+          "ponytail",
+          "test-engineering"
+        ],
+        "runnableSkillIds": [
+          "cs-engineering",
+          "orchestrator",
+          "ponytail",
+          "test-engineering"
+        ],
+        "blockedItems": [],
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variant": "shadow",
+      "boundary": "missing-host",
+      "status": "PASS",
+      "observed": {
+        "valid": false,
+        "errors": [
+          "HOST_SELECTION_NOT_OBSERVED"
+        ],
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variant": "select",
+      "boundary": "missing-host",
+      "status": "PASS",
+      "observed": {
+        "valid": false,
+        "errors": [
+          "HOST_SELECTION_NOT_OBSERVED"
+        ],
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "variant": "select",
+      "boundary": "caller-receipt",
+      "status": "PASS",
+      "observed": "CALLER_SELECTION_RECEIPT_REJECTED"
+    },
+    {
+      "variant": "select",
+      "boundary": "null-empty",
+      "status": "PASS",
+      "nullObserved": "AGENT_SELECTION_MISSING",
+      "emptyObserved": {
+        "valid": true,
+        "errors": [],
+        "neededSkillIds": [
+          "cs-engineering",
+          "orchestrator",
+          "ponytail",
+          "test-engineering"
+        ],
+        "runnableSkillIds": [],
+        "blockedItems": [],
+        "decision": {
+          "schemaVersion": "1.0.0",
+          "classificationResponseRef": "sha256:931bee1a82ad4b36c6348c1d39e84599a9831b65c07c2209b4eb9544665edf05",
+          "requestDigest": "sha256:790054a87025f86ceec8861d9b35a135fcd801e3ac2b051c84fd4d7e87bf3871",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "taskRevision": null,
+          "configRevision": "ss22-select",
+          "profileRevision": "ss22-mock-v1",
+          "explicitSkillIds": [],
+          "ruleRequiredSkillIds": [],
+          "agentSelectedSkillIds": [],
+          "selectionReasons": [],
+          "applicabilityChecks": [],
+          "unresolvedSkillReferences": [],
+          "selectionStatus": "SELECTED",
+          "adviceApplied": true,
+          "hostReceipt": {
+            "receiptId": "synthetic-only-SS22-null-empty",
+            "host": "mock-host",
+            "requestDigest": "sha256:790054a87025f86ceec8861d9b35a135fcd801e3ac2b051c84fd4d7e87bf3871",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "agentSelectedSkillIds": [],
+            "acceptedAt": "2026-10-09T02:57:40.697Z"
+          }
+        },
+        "admissionStatus": "NOT_EVALUATED",
+        "readStatus": "NOT_OBSERVED",
+        "appliedStatus": "NOT_OBSERVED",
+        "verifiedStatus": "NOT_RUN"
+      },
+      "emptyPurposeStatus": "FAIL",
+      "missingRequired": [
+        "ponytail",
+        "cs-engineering",
+        "test-engineering",
+        "orchestrator"
+      ]
+    },
+    {
+      "variant": "select",
+      "boundary": "deficient-selection",
+      "status": "PASS",
+      "observed": {
+        "valid": true,
+        "errors": [],
+        "neededSkillIds": [
+          "cs-engineering",
+          "orchestrator",
+          "ponytail",
+          "test-engineering"
+        ],
+        "runnableSkillIds": [
+          "ponytail"
+        ],
+        "blockedItems": [],
+        "decision": {
+          "schemaVersion": "1.0.0",
+          "classificationResponseRef": "sha256:0f9a34e7938a69ec5aa6dabb0f49c2fc5d01fee60e49671ba92f3de81c46ea29",
+          "requestDigest": "sha256:f19991bd79ebb98a03675cc83186292c6778d227d0a1f76f45f7210a725fac26",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "taskRevision": null,
+          "configRevision": "ss22-select",
+          "profileRevision": "ss22-mock-v1",
+          "explicitSkillIds": [],
+          "ruleRequiredSkillIds": [],
+          "agentSelectedSkillIds": [
+            "ponytail"
+          ],
+          "selectionReasons": [
+            {
+              "skillId": "ponytail",
+              "reason": "Synthetic boundary input, no real AGENT claim"
+            }
+          ],
+          "applicabilityChecks": [
+            {
+              "skillId": "ponytail",
+              "applies": true,
+              "excluded": false,
+              "reasonRefs": [
+                "fixture:SS22"
+              ]
+            }
+          ],
+          "unresolvedSkillReferences": [],
+          "selectionStatus": "SELECTED",
+          "adviceApplied": true,
+          "hostReceipt": {
+            "receiptId": "synthetic-only-SS22-deficient",
+            "host": "mock-host",
+            "requestDigest": "sha256:f19991bd79ebb98a03675cc83186292c6778d227d0a1f76f45f7210a725fac26",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "agentSelectedSkillIds": [
+              "ponytail"
+            ],
+            "acceptedAt": "2026-10-09T02:57:40.797Z"
+          }
+        },
+        "admissionStatus": "NOT_EVALUATED",
+        "readStatus": "NOT_OBSERVED",
+        "appliedStatus": "NOT_OBSERVED",
+        "verifiedStatus": "NOT_RUN"
+      },
+      "purposeStatus": "FAIL",
+      "missingRequired": [
+        "cs-engineering",
+        "test-engineering",
+        "orchestrator"
+      ],
+      "note": "AGENT must evaluate purpose; valid=true is not SS22 PASS"
+    },
+    {
+      "variant": "select",
+      "boundary": "cancel-before-read",
+      "status": "PASS",
+      "observed": {
+        "valid": false,
+        "errors": [
+          "HOST_TASK_CHANGED_OR_NOT_OBSERVED"
+        ],
+        "agentSelectedSkillIds": null
+      }
+    },
+    {
+      "boundary": "reuse-after-mode-change",
+      "status": "PASS",
+      "observed": "STALE_CLASSIFICATION_OPERATION"
+    },
+    {
+      "variant": "select",
+      "boundary": "cancel-during-read",
+      "expected": {
+        "valid": false,
+        "selected": null
+      },
+      "observed": {
+        "valid": true,
+        "errors": [],
+        "neededSkillIds": [
+          "cs-engineering",
+          "orchestrator",
+          "ponytail",
+          "test-engineering"
+        ],
+        "runnableSkillIds": [
+          "cs-engineering",
+          "orchestrator",
+          "ponytail",
+          "test-engineering"
+        ],
+        "blockedItems": [],
+        "decision": {
+          "schemaVersion": "1.0.0",
+          "classificationResponseRef": "sha256:61a9ddd4c96a1fdbda527a17d0ae037ca788fc352db9c471b4703f018e7dc5b7",
+          "requestDigest": "sha256:492f61bf521dbd428b044a73c6a8b6226240196fdb2aa8255df3925c0940aee8",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "taskRevision": null,
+          "configRevision": "ss22-select",
+          "profileRevision": "ss22-mock-v1",
+          "explicitSkillIds": [],
+          "ruleRequiredSkillIds": [],
+          "agentSelectedSkillIds": [
+            "ponytail",
+            "cs-engineering",
+            "test-engineering",
+            "orchestrator"
+          ],
+          "selectionReasons": [
+            {
+              "skillId": "ponytail",
+              "reason": "Synthetic boundary input, no real AGENT claim"
+            },
+            {
+              "skillId": "cs-engineering",
+              "reason": "Synthetic boundary input, no real AGENT claim"
+            },
+            {
+              "skillId": "test-engineering",
+              "reason": "Synthetic boundary input, no real AGENT claim"
+            },
+            {
+              "skillId": "orchestrator",
+              "reason": "Synthetic boundary input, no real AGENT claim"
+            }
+          ],
+          "applicabilityChecks": [
+            {
+              "skillId": "ponytail",
+              "applies": true,
+              "excluded": false,
+              "reasonRefs": [
+                "fixture:SS22"
+              ]
+            },
+            {
+              "skillId": "cs-engineering",
+              "applies": true,
+              "excluded": false,
+              "reasonRefs": [
+                "fixture:SS22"
+              ]
+            },
+            {
+              "skillId": "test-engineering",
+              "applies": true,
+              "excluded": false,
+              "reasonRefs": [
+                "fixture:SS22"
+              ]
+            },
+            {
+              "skillId": "orchestrator",
+              "applies": true,
+              "excluded": false,
+              "reasonRefs": [
+                "fixture:SS22"
+              ]
+            }
+          ],
+          "unresolvedSkillReferences": [],
+          "selectionStatus": "SELECTED",
+          "adviceApplied": true,
+          "hostReceipt": {
+            "receiptId": "synthetic-only-SS22-cancel-during-read",
+            "host": "mock-host",
+            "requestDigest": "sha256:492f61bf521dbd428b044a73c6a8b6226240196fdb2aa8255df3925c0940aee8",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "agentSelectedSkillIds": [
+              "ponytail",
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "acceptedAt": "2026-10-09T02:57:41.075Z"
+          }
+        },
+        "admissionStatus": "NOT_EVALUATED",
+        "readStatus": "NOT_OBSERVED",
+        "appliedStatus": "NOT_OBSERVED",
+        "verifiedStatus": "NOT_RUN"
+      },
+      "taskCancelled": true,
+      "status": "FAIL",
+      "existingFinding": "동시성 직전 재검사 공백",
+      "syntheticHostBoundary": true
+    }
+  ]
+}
