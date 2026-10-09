@@ -1,0 +1,193 @@
+{
+  "caseId": "SS22",
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "sourcePrefix": "evidence/ags-2.9.1/2026-10-09/cases/SS22/",
+  "checkedAt": "2026-10-09T07:45:51.555293+00:00",
+  "sha256Checks": [
+    {
+      "path": "ORIGINAL_STATUS.json",
+      "bytes": 782,
+      "expectedSHA256": "bef901d6a45b98ecc43f72e8cb7485dbd4aeda63645763fcfd9bba6d06bb7e59",
+      "observedSHA256": "bef901d6a45b98ecc43f72e8cb7485dbd4aeda63645763fcfd9bba6d06bb7e59",
+      "match": true
+    },
+    {
+      "path": "README.md",
+      "bytes": 4212,
+      "expectedSHA256": "52f884b030c66c2809b971a020d48d4417da14dd6bdd41dfbfa56a91c4cfc70b",
+      "observedSHA256": "52f884b030c66c2809b971a020d48d4417da14dd6bdd41dfbfa56a91c4cfc70b",
+      "match": true
+    },
+    {
+      "path": "SS22-isolated.command.json",
+      "bytes": 513,
+      "expectedSHA256": "db0284cc4b9320088b863594fbfa384ef829801993ee56310a4fbb05d5224ba3",
+      "observedSHA256": "db0284cc4b9320088b863594fbfa384ef829801993ee56310a4fbb05d5224ba3",
+      "match": true
+    },
+    {
+      "path": "SS22-isolated.stderr.log",
+      "bytes": 1160,
+      "expectedSHA256": "477672d223e9abf4c2654c32804cee8399d9da435d13fc60d622e4c40ff132b7",
+      "observedSHA256": "477672d223e9abf4c2654c32804cee8399d9da435d13fc60d622e4c40ff132b7",
+      "match": true
+    },
+    {
+      "path": "SS22-isolated.stdout.log",
+      "bytes": 2556,
+      "expectedSHA256": "043384b7533900770e91a21b64bd93403f0a26bc81932402873a1a0bc96208dd",
+      "observedSHA256": "043384b7533900770e91a21b64bd93403f0a26bc81932402873a1a0bc96208dd",
+      "match": true
+    },
+    {
+      "path": "SS22.engineering-test-result.json",
+      "bytes": 1072,
+      "expectedSHA256": "5a4dd4aa468fe86ec4be441d7e5867602b1721d5acc9e47ec4582be979f892d7",
+      "observedSHA256": "5a4dd4aa468fe86ec4be441d7e5867602b1721d5acc9e47ec4582be979f892d7",
+      "match": true
+    },
+    {
+      "path": "SS22.fixture.json",
+      "bytes": 1636,
+      "expectedSHA256": "fa16eb98f996666b7fec150510b9e4e0684b78082a027836c602c989aae5c45f",
+      "observedSHA256": "fa16eb98f996666b7fec150510b9e4e0684b78082a027836c602c989aae5c45f",
+      "match": true
+    },
+    {
+      "path": "SS22.linked-input.json",
+      "bytes": 1749,
+      "expectedSHA256": "171b2e6448bfb900319cb9ceb112dc79edf208a9791fb57dba27252a394aeee9",
+      "observedSHA256": "171b2e6448bfb900319cb9ceb112dc79edf208a9791fb57dba27252a394aeee9",
+      "match": true
+    },
+    {
+      "path": "SS22.observations.json",
+      "bytes": 19577,
+      "expectedSHA256": "d02fe04c62c9ba9e0d7db6e4c4b83c463376069687e457aaa5d61638e21e206b",
+      "observedSHA256": "d02fe04c62c9ba9e0d7db6e4c4b83c463376069687e457aaa5d61638e21e206b",
+      "match": true
+    },
+    {
+      "path": "SS22.plan-check.json",
+      "bytes": 221,
+      "expectedSHA256": "8a0934cb0f1c596ffce69734a03987001797ad94b3b13f40b8669ca02a36d2f3",
+      "observedSHA256": "8a0934cb0f1c596ffce69734a03987001797ad94b3b13f40b8669ca02a36d2f3",
+      "match": true
+    },
+    {
+      "path": "SS22.plan.json",
+      "bytes": 2741,
+      "expectedSHA256": "962bce1b6c089980f260ac670d827f4f9d0cfbb38f9d5c156ad0386485e4cc68",
+      "observedSHA256": "962bce1b6c089980f260ac670d827f4f9d0cfbb38f9d5c156ad0386485e4cc68",
+      "match": true
+    },
+    {
+      "path": "SS22.proof.json",
+      "bytes": 2455,
+      "expectedSHA256": "f97f19297d1cf6b0d4ba7fa02f1ee7de07bc6c328a1dce91aa6c74788f6ab856",
+      "observedSHA256": "f97f19297d1cf6b0d4ba7fa02f1ee7de07bc6c328a1dce91aa6c74788f6ab856",
+      "match": true
+    },
+    {
+      "path": "SS22.result.json",
+      "bytes": 57538,
+      "expectedSHA256": "7326e28dae638103cb90c1de7aead54c5b692e2f01fa95db73f38775375ab8c1",
+      "observedSHA256": "7326e28dae638103cb90c1de7aead54c5b692e2f01fa95db73f38775375ab8c1",
+      "match": true
+    },
+    {
+      "path": "SS22.snapshot.json",
+      "bytes": 1419,
+      "expectedSHA256": "100dd3f29b3fa4181e0474350e16a1b2ffb66a0c20e332cf66601b6defd1b3dc",
+      "observedSHA256": "100dd3f29b3fa4181e0474350e16a1b2ffb66a0c20e332cf66601b6defd1b3dc",
+      "match": true
+    },
+    {
+      "path": "SS22.vitest.json",
+      "bytes": 6176,
+      "expectedSHA256": "48cabf3babffe9dcc4b1025bd6280088487b5d593a99cf08764f474cfd7b680e",
+      "observedSHA256": "48cabf3babffe9dcc4b1025bd6280088487b5d593a99cf08764f474cfd7b680e",
+      "match": true
+    },
+    {
+      "path": "existing-shadow-mcp.command.json",
+      "bytes": 618,
+      "expectedSHA256": "abe020f49b5d1be51ac4dc332d7ca85b232c513a449e4c1a4de9c397b0151825",
+      "observedSHA256": "abe020f49b5d1be51ac4dc332d7ca85b232c513a449e4c1a4de9c397b0151825",
+      "match": true
+    },
+    {
+      "path": "existing-shadow-mcp.stderr.log",
+      "bytes": 206,
+      "expectedSHA256": "037648f7ea55cd3c8db4d843ca1fb8a96c3acdb52630906e743a7dfd7b2e8c70",
+      "observedSHA256": "037648f7ea55cd3c8db4d843ca1fb8a96c3acdb52630906e743a7dfd7b2e8c70",
+      "match": true
+    },
+    {
+      "path": "existing-shadow-mcp.stdout.log",
+      "bytes": 409,
+      "expectedSHA256": "cb216823f432106aa19cd088445b635bff9cfcb95bdabfbcbbcd57d81ac5a6e6",
+      "observedSHA256": "cb216823f432106aa19cd088445b635bff9cfcb95bdabfbcbbcd57d81ac5a6e6",
+      "match": true
+    },
+    {
+      "path": "existing-shadow-validation.command.json",
+      "bytes": 662,
+      "expectedSHA256": "dd42ae5be349577f10bd533ffafaeb5eacbc47ec69abfee2db14940734ca0197",
+      "observedSHA256": "dd42ae5be349577f10bd533ffafaeb5eacbc47ec69abfee2db14940734ca0197",
+      "match": true
+    },
+    {
+      "path": "existing-shadow-validation.stderr.log",
+      "bytes": 206,
+      "expectedSHA256": "037648f7ea55cd3c8db4d843ca1fb8a96c3acdb52630906e743a7dfd7b2e8c70",
+      "observedSHA256": "037648f7ea55cd3c8db4d843ca1fb8a96c3acdb52630906e743a7dfd7b2e8c70",
+      "match": true
+    },
+    {
+      "path": "existing-shadow-validation.stdout.log",
+      "bytes": 420,
+      "expectedSHA256": "d58b191b9c57fa04f682c9d978d91812584a0898ff6ab8508badf0d79499134e",
+      "observedSHA256": "d58b191b9c57fa04f682c9d978d91812584a0898ff6ab8508badf0d79499134e",
+      "match": true
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 13741,
+      "expectedSHA256": "53f01a6b21f95a3d118c6d7f63a12de89b3b8d6ebc2703b0f272621beca48464",
+      "observedSHA256": "53f01a6b21f95a3d118c6d7f63a12de89b3b8d6ebc2703b0f272621beca48464",
+      "match": true
+    },
+    {
+      "path": "reproduce/SS22.test.ts",
+      "bytes": 15191,
+      "expectedSHA256": "b058c21a6690209291c594cc4b8eb36c1af370bd9617cd16228e969ba4464988",
+      "observedSHA256": "b058c21a6690209291c594cc4b8eb36c1af370bd9617cd16228e969ba4464988",
+      "match": true
+    },
+    {
+      "path": "source/SS22.gateway-accept.source.txt",
+      "bytes": 3625,
+      "expectedSHA256": "cefcaa5700b547e0413e5463160f7a9477801cc93f1c04551d3e2ea8489a0035",
+      "observedSHA256": "cefcaa5700b547e0413e5463160f7a9477801cc93f1c04551d3e2ea8489a0035",
+      "match": true
+    }
+  ],
+  "checkedSHA256Entries": 24,
+  "checkedManifestPayloadEntries": 23,
+  "manifestSHA256": "53f01a6b21f95a3d118c6d7f63a12de89b3b8d6ebc2703b0f272621beca48464",
+  "sha256ListSHA256": "066bd254e2367202f81d93ccdcc73808d83205e5c282087bd4d94fb04e31c052",
+  "missingOriginals": [
+    {
+      "artifact": "actual native host shadow/select receipts and target selected/read/applied/verified evidence",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Host execution was NOTRUN."
+    },
+    {
+      "artifact": "full per-variant mock request wire bytes",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Not persisted in the original run; do not reconstruct and claim original wire evidence."
+    }
+  ],
+  "limitation": "Published bytes verified. Historical pre-redaction source-original digests and full-corpus/oracle digests are recorded provenance, not newly recovered originals or a model run."
+}

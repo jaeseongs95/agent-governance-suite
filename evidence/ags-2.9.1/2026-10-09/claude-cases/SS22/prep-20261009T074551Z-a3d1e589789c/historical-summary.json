@@ -1,0 +1,48 @@
+{
+  "caseId": "SS22",
+  "title": "shadow 준비 단계와 실제 채택 구분",
+  "historicalCandidateCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "historicalCandidateTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "overallStatus": "FAIL_OFFLINE; HOST_NOTRUN",
+  "executionKinds": {
+    "existingRegression": {
+      "executedTests": 2,
+      "passed": 2,
+      "notCaseCoverage": true,
+      "description": "Only existing shadow enforcement boundary filters; unrelated tests skipped"
+    },
+    "newIsolatedOffline": {
+      "tests": 13,
+      "passed": 12,
+      "failed": 1,
+      "exit": 1
+    },
+    "providerLive": "NOTRUN",
+    "hostLive": "NOTRUN"
+  },
+  "stages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "apiCalls": {
+    "JEV": 0,
+    "externalVendor": 0,
+    "Claude": 0,
+    "localMockProvider": 13
+  },
+  "semanticAccuracy": null,
+  "originalPrompt": null,
+  "oracle": null,
+  "finding": {
+    "id": "SS22-F01",
+    "expected": "Cancellation during runtime reread rejects selection and leaves selected=null",
+    "historicalObserved": "task.cancelled=true; acceptance valid=true; selection stored",
+    "status": "REPRODUCED_OFFLINE_ON_HISTORICAL_CANDIDATE",
+    "newR17Observation": null
+  },
+  "sourceResultPublishedSHA256": "7326e28dae638103cb90c1de7aead54c5b692e2f01fa95db73f38775375ab8c1",
+  "sourceResultPreRedactionSHA256": "2ad819677dd8531d2df750b398a71740792a1daca03c38751c9ff6ca73ffe6e3",
+  "notCurrentCandidateEvidence": true
+}

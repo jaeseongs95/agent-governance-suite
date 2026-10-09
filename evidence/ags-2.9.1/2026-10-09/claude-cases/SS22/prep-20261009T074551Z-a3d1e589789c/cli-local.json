@@ -1,0 +1,29 @@
+{
+  "checkedAt": "2026-10-09T07:45:51.555293+00:00",
+  "path": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+  "resolvedPath": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+  "version": "2.1.286 (Claude Code)",
+  "sha256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+  "PATHLookupFound": false,
+  "node": "v24.19.0",
+  "git": "git version 2.52.0",
+  "readOnlyActions": [
+    "--version",
+    "--help"
+  ],
+  "availableFlagsFromLocalHelp": [
+    "--print",
+    "--plugin-dir",
+    "--model",
+    "--effort",
+    "--output-format",
+    "--max-budget-usd",
+    "--mcp-config",
+    "--include-hook-events"
+  ],
+  "modelCalls": 0,
+  "authenticationValidated": false,
+  "persistentAuthChanged": false,
+  "permissionsChanged": false,
+  "networkPolicyChanged": false
+}

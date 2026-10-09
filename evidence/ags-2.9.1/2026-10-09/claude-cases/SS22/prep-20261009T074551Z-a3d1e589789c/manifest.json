@@ -1,0 +1,51 @@
+{
+  "kind": "ss22-claude-preparation-only",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 5118,
+      "sha256": "8e2e56aaa937849f0f29149a76e30e5405ad00463c0535f353d7c4acd2869e9f"
+    },
+    {
+      "path": "cli-local.json",
+      "bytes": 838,
+      "sha256": "79e88d4c29dc2aadc57348918367c6a113b8ab519a17dd7b86646bd83f1f6684"
+    },
+    {
+      "path": "historical-summary.json",
+      "bytes": 1535,
+      "sha256": "34cc2e6e68b06b0029aabd5428e9596b0afd73ad632b9c227a401da968fc6c83"
+    },
+    {
+      "path": "input-integrity.json",
+      "bytes": 7833,
+      "sha256": "30ea1019b2c93d39eb28404404a88a910691f5fe182edadbe70a905ecfc62261"
+    },
+    {
+      "path": "inputs/SS22.fixture.json",
+      "bytes": 1636,
+      "sha256": "fa16eb98f996666b7fec150510b9e4e0684b78082a027836c602c989aae5c45f"
+    },
+    {
+      "path": "inputs/SS22.linked-input.json",
+      "bytes": 1749,
+      "sha256": "171b2e6448bfb900319cb9ceb112dc79edf208a9791fb57dba27252a394aeee9"
+    },
+    {
+      "path": "instructions-read.json",
+      "bytes": 4021,
+      "sha256": "bc0af46dba4493e2999e51ace375efc69e7dd3968f4612238f0dab2bbfe40a29"
+    },
+    {
+      "path": "resume-plan.json",
+      "bytes": 4318,
+      "sha256": "810b495a0b9a907d00f10aa9bce35f8d0e7a39e98aa66448df71c390e3a74f73"
+    },
+    {
+      "path": "usage-ledger.json",
+      "bytes": 755,
+      "sha256": "99a85a536c66ca86eab23ca20534f1ba81b07975d3f2a117efd8ac236863e660"
+    }
+  ],
+  "hashCoverage": "All payload files; manifest excludes itself and SHA256SUMS"
+}

@@ -1,0 +1,75 @@
+{
+  "caseId": "SS22",
+  "title": "shadow 준비 단계와 실제 채택 구분",
+  "status": "PREPARED_WAITING_FOR_PARENT",
+  "actualClaudeTest": "NOT_RUN",
+  "candidateProposal": {
+    "label": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "verified": false,
+    "independentSourceVerdict": "PENDING_PARENT",
+    "remotePublication": "PENDING_PARENT"
+  },
+  "frozenAuthority": {
+    "fixture": "inputs/SS22.fixture.json",
+    "linkedPublicSyntheticInput": "inputs/SS22.linked-input.json",
+    "originalPrompt": null,
+    "oracle": null,
+    "sourceSpecFile": "MISSING_ORIGINAL; embedded sourceSpec.fields are authoritative"
+  },
+  "requiredRaw": [
+    "ponytail",
+    "cs-engineering",
+    "test-engineering",
+    "orchestrator"
+  ],
+  "baseline": [
+    "ponytail"
+  ],
+  "variants": [
+    {
+      "mode": "shadow",
+      "expectedSelected": [
+        "ponytail"
+      ],
+      "expectedAdviceApplied": false,
+      "expectedQuality": "FAIL_MISSING_CS_T_O",
+      "expectedExecution": "observe-only"
+    },
+    {
+      "mode": "select",
+      "expectedSelectionContains": [
+        "ponytail",
+        "cs-engineering",
+        "test-engineering",
+        "orchestrator"
+      ],
+      "expectedAdviceApplied": true,
+      "expectedExecution": "selection-adopted",
+      "unobservedAdoptionVerdict": "NOT_RUN"
+    }
+  ],
+  "steps": [
+    "Receive parent-verified candidate commit/tree, independent SOURCE judgment, remote availability, common exact model/effort, API authentication procedure and preflight receipts. Do not substitute main or c6a8019.",
+    "Create a fresh isolated candidate checkout, verify commit/tree and product bytes; reread its AGENTS.md, relevant SKILL.md, Claude overlay and classification runtime documentation without building or editing product outputs.",
+    "Use only the parent-approved API authentication procedure in process scope; never print/copy/publish secret values or modify persistent authentication, permissions or network policy. Verify plugin/MCP tool discovery and live host observation readiness within the same budget.",
+    "Parent must supply a qualified zero-external-call mock for requiredRaw, or separately authorize and allocate JEV. Claude API allowance does not authorize a JEV call. Do not fabricate native observation/receipt.",
+    "Run actual Claude Code shadow and select separately with the same preserved linked synthetic input and full candidate inventory; unique requestId, operationId and session/receipt references per mode. Sol controls environment/evidence; Claude performs host actions and selects skills. Never supply oracle as a hidden answer prompt.",
+    "For shadow, observe raw and preserve baseline B with adviceApplied=false, documenting missing CS/T/O as quality FAIL. For select, obtain Claude actual independent selection reasons/applicability and runtime-produced receipt; S must include P/CS/T/O with adviceApplied=true.",
+    "Capture E0 input/config/inventory bindings, E1 raw response (marked mock if mock), E3 native receipts and actual selected/read/applied/verified actions independently. Null and [] differ; valid=true is not purpose PASS. Missing selection/adoption remains NOT_RUN.",
+    "If the existing cancellation boundary is in authorized scope, Claude exercises the fixed candidate acceptance path in an isolated fixture; required outcome is rejection and selected=null. Historical fail is not the expected correct outcome. No product mutation or green fix.",
+    "Record every call cost/token/cache/retry/failure; stop before another call when near US$2 or accounting is unresolved. Publish sanitized evidence under a new unique SS22 run and reread fixed remote bytes."
+  ],
+  "blockers": [
+    "Verified candidate and independent SOURCE judgment not received",
+    "Candidate remote publication not confirmed",
+    "Common exact Claude model/effort not received",
+    "Common successful API authentication procedure not received",
+    "Parent preflight results not received",
+    "SS22 qualified mock/native host classification configuration not supplied; JEV not allocated",
+    "Original native host receipts absent; cannot reuse synthetic receipts"
+  ],
+  "noProductModifications": true,
+  "noGeneratedDistributionModifications": true
+}

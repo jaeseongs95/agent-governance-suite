@@ -1,0 +1,22 @@
+{
+  "caseId": "SS22",
+  "phase": "PREPARATION_ONLY",
+  "softBudgetUsd": 2,
+  "aggregateReservedBudgetUsd": 78,
+  "aggregateReservedCases": 39,
+  "calls": [],
+  "totals": {
+    "claudeApiCalls": 0,
+    "jevApiCalls": 0,
+    "otherModelApiCalls": 0,
+    "failedCalls": 0,
+    "retries": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "cacheCreationInputTokens": 0,
+    "actualCostUsd": 0
+  },
+  "remainingSoftBudgetUsd": 2,
+  "accountingRule": "Account for preparation, successful, failed, retried and cached API calls. Record unresolved billing as unknown; stop subsequent calls near the soft limit or if remaining capacity cannot be established. The budget is not a spend target. JEV requires a separate allocation."
+}
