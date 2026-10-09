@@ -36,7 +36,7 @@ describe("fixed-profile classification service", () => {
     const result = await f.service.classify(f.input);
     expect(result.response.status).toBe("SUCCESS");
     expect(f.jev.availability).not.toHaveBeenCalled(); expect(f.jev.classify).not.toHaveBeenCalled();
-    expect(f.vendor.classify).toHaveBeenCalledWith(f.input.request, f.input.registry.profiles[1], expect.any(AbortSignal));
+    expect(f.vendor.classify).toHaveBeenCalledWith(f.input.request, f.input.registry.profiles[1], expect.any(AbortSignal), expect.any(Function));
     expect(result.attempts.map(a => [a.modelId, a.reasoningEffort])).toEqual([["vendor-fixed", "low"]]);
     expect(result).not.toHaveProperty("agentSelectedSkillIds");
   });

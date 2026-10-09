@@ -44,7 +44,7 @@ export function createClassificationProviderRuntime(raw: unknown, options: Class
       const {nativeAdapterRef, capabilityEvidenceRef, retryPolicyVerified, ...common} = route;
       const adapter = resolveNativeClassificationAdapter(options.nativeAdapters ?? new Map(), nativeAdapterRef, capabilityEvidenceRef, retryPolicyVerified);
       if (!adapter) continue;
-      routes.push({...common, invokeStructured: (request, profile, signal) => adapter.invokeStructured(request, profile, signal)});
+      routes.push({...common, invokeStructured: (request, profile, signal, beforeDispatch) => adapter.invokeStructured(request, profile, signal, beforeDispatch)});
     }
   }
   return {providers: {

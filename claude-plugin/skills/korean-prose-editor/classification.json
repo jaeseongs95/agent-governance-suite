@@ -17,18 +17,38 @@
       "path": "skills/korean-prose-editor/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "startByte": 0,
+      "endByte": 254
     },
     {
       "path": "skills/korean-prose-editor/SKILL.md",
-      "startLine": 8,
-      "endLine": 16,
-      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      "startLine": 9,
+      "endLine": 11,
+      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "startByte": 0,
+      "endByte": 119
+    },
+    {
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "startLine": 13,
+      "endLine": 15,
+      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "startByte": 0,
+      "endByte": 187
     },
     {
       "path": "skills/korean-prose-editor/references/entry-details.md",
       "startLine": 1,
-      "endLine": 10,
+      "endLine": 5,
+      "digest": "sha256:26ce188795767864370bbd07ae06ba5e164ff802b301656daa3759626996a9a1",
+      "startByte": 0,
+      "endByte": 886
+    },
+    {
+      "path": "skills/korean-prose-editor/references/entry-details.md",
+      "startLine": 7,
+      "endLine": 9,
       "digest": "sha256:26ce188795767864370bbd07ae06ba5e164ff802b301656daa3759626996a9a1"
     }
   ],
@@ -37,19 +57,41 @@
       "path": "skills/korean-prose-editor/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "startByte": 255,
+      "endByte": 335
     },
     {
       "path": "skills/korean-prose-editor/SKILL.md",
-      "startLine": 8,
-      "endLine": 16,
-      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      "startLine": 11,
+      "endLine": 11,
+      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "startByte": 97,
+      "endByte": 246
+    },
+    {
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "startLine": 15,
+      "endLine": 15,
+      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "startByte": 170,
+      "endByte": 277
+    },
+    {
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "startLine": 15,
+      "endLine": 15,
+      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "startByte": 278,
+      "endByte": 383
     },
     {
       "path": "skills/korean-prose-editor/references/entry-details.md",
-      "startLine": 1,
-      "endLine": 10,
-      "digest": "sha256:26ce188795767864370bbd07ae06ba5e164ff802b301656daa3759626996a9a1"
+      "startLine": 5,
+      "endLine": 5,
+      "digest": "sha256:26ce188795767864370bbd07ae06ba5e164ff802b301656daa3759626996a9a1",
+      "startByte": 317,
+      "endByte": 444
     }
   ]
 }

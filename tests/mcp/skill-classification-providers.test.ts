@@ -1,4 +1,4 @@
-import {describe, expect, it, vi} from "vitest";
+import {afterEach, describe, expect, it, vi} from "vitest";
 import {ApprovedRouteClassificationProvider, buildVendorMessages, ClassificationProviderError, jevNoulWireAdapter, unknownUsage, type ApprovedClassificationRoute} from "../../mcp-server/src/skill-classification/providers.js";
 import {createClassificationRequest} from "../../mcp-server/src/skill-classification/request.js";
 import {digestProviderProfileConfiguration} from "../../mcp-server/src/skill-classification/profiles.js";
@@ -15,6 +15,7 @@ function fixture() {
   const provider = new ApprovedRouteClassificationProvider([route], fetcher);
   return {request, profile, key, route, body, fetcher, provider};
 }
+afterEach(() => vi.useRealTimers());
 describe("approved classification wire adapters", () => {
   it("SS20/21 transmits one bound TypeSafe state/questions request using the exact profile model", async () => {
     const f = fixture(); expect((await f.provider.availability(f.profile)).available).toBe(true);
@@ -139,5 +140,139 @@ describe("approved classification wire adapters", () => {
     expect((await provider.availability(f.profile)).routeKind).toBe("native");
     expect((await provider.classify(f.request, f.profile, new AbortController().signal)).response.status).toBe("SUCCESS");
     expect(invokeStructured).toHaveBeenCalledTimes(1); expect(f.key).not.toHaveBeenCalled(); expect(f.fetcher).not.toHaveBeenCalled();
+  });
+
+  it.each([429, 529])("SS32 HTTP %i retains delay-seconds without retrying or exposing raw data", async status => {
+    const f = fixture();
+    f.fetcher.mockResolvedValue(new Response("SECRET_SENTINEL private body", {status, headers: {"retry-after": "15"}}));
+    const error = await f.provider.classify(f.request, f.profile, new AbortController().signal).catch((value: unknown) => value);
+    expect(error).toMatchObject({code: "RATE_LIMITED", dispatchState: "started", rateLimitObservation: {httpStatus: status, retryAfter: {kind: "delay-seconds", seconds: 15}}});
+    expect(f.fetcher).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(error)).not.toContain("SECRET_SENTINEL");
+  });
+  it("SS32 canonical HTTP-date is observation only, even when already past", async () => {
+    const f = fixture();
+    f.fetcher.mockResolvedValue(new Response("", {status: 529, headers: {"retry-after": "Sun, 06 Nov 1994 08:49:37 GMT"}}));
+    const error = await f.provider.classify(f.request, f.profile, new AbortController().signal).catch((value: unknown) => value);
+    expect(error).toMatchObject({rateLimitObservation: {httpStatus: 529, retryAfter: {kind: "http-date", at: "1994-11-06T08:49:37.000Z"}}});
+    expect(f.fetcher).toHaveBeenCalledTimes(1);
+  });
+  it.each(["SECRET_SENTINEL", "15 SECRET_SENTINEL", "-1", "1.5", "9007199254740992", "Mon, 06 Nov 1994 08:49:37 GMT", "Sun, 31 Feb 1994 08:49:37 GMT"])("SS32 unsafe Retry-After %s is suppressed", async header => {
+    const f = fixture(); f.fetcher.mockResolvedValue(new Response("SECRET_SENTINEL", {status: 429, headers: {"retry-after": header}}));
+    const error = await f.provider.classify(f.request, f.profile, new AbortController().signal).catch((value: unknown) => value);
+    expect(error).toMatchObject({rateLimitObservation: {httpStatus: 429, retryAfter: null}});
+    expect(JSON.stringify(error)).not.toContain("SECRET_SENTINEL"); expect(f.fetcher).toHaveBeenCalledTimes(1);
+  });
+  it.each(["0", "00015", "9007199254740991"])("SS32 valid delay-seconds %s remains exact safe numeric observation", async header => {
+    const f = fixture(); f.fetcher.mockResolvedValue(new Response("", {status: 429, headers: {"retry-after": header}}));
+    const error = await f.provider.classify(f.request, f.profile, new AbortController().signal).catch((value: unknown) => value);
+    expect(error).toMatchObject({rateLimitObservation: {httpStatus: 429, retryAfter: {kind: "delay-seconds", seconds: Number(header)}}});
+    expect(f.fetcher).toHaveBeenCalledTimes(1);
+  });
+  it("SS32 absent Retry-After and non-rate-limit responses do not invent observations", async () => {
+    const f = fixture(); f.fetcher.mockResolvedValueOnce(new Response("", {status: 429})).mockResolvedValueOnce(new Response("", {status: 500, headers: {"retry-after": "15"}}));
+    const first = await f.provider.classify(f.request, f.profile, new AbortController().signal).catch((value: unknown) => value);
+    const second = await f.provider.classify(f.request, f.profile, new AbortController().signal).catch((value: unknown) => value);
+    expect(first).toMatchObject({rateLimitObservation: {httpStatus: 429, retryAfter: null}});
+    expect(second).toMatchObject({code: "API_UNAVAILABLE", rateLimitObservation: null});
+    expect(f.fetcher).toHaveBeenCalledTimes(2);
+  });
+  it.each(["approval", "approval-ref", "model", "reasoning", "endpoint", "adapter-revision", "adapter-function", "credential-function", "profile", "qualification", "request"])("PRE %s mutation during credential await prevents transport", async change => {
+    const f = fixture(); let release!: (key: string) => void;
+    f.key.mockImplementation(() => new Promise(resolve => {release = resolve;}));
+    const pending = f.provider.classify(f.request, f.profile, new AbortController().signal);
+    expect(f.key).toHaveBeenCalledTimes(1);
+    if (change === "approval") f.route.approved = false;
+    if (change === "approval-ref") f.route.approvalRef = "changed-approval";
+    if (change === "model") f.route.modelIds = ["different-model"];
+    if (change === "reasoning") f.route.reasoningEfforts = ["unsupported"];
+    if (change === "adapter-revision") f.route.adapterRevision = "different-revision";
+    if (f.route.kind === "remote") {
+      if (change === "endpoint") f.route.endpoint = "https://different.example.invalid/";
+      if (change === "adapter-function") f.route.adapter = {...jevNoulWireAdapter, encode: () => ({changed: true})};
+      if (change === "credential-function") f.route.getCredential = async () => "different-credential";
+    }
+    if (change === "profile") f.profile.maximumOutputTokens++;
+    if (change === "qualification") f.profile.qualification.status = "NOT_RUN";
+    if (change === "request") f.request.originalPrompt = "Different objective";
+    release("SECRET_SENTINEL");
+    await expect(pending).rejects.toMatchObject({code: "STALE_CLASSIFICATION", dispatchState: "not-started"});
+    expect(f.fetcher).not.toHaveBeenCalled();
+  });
+  it("PRE route replacement while awaiting credentials is not the original approved route", async () => {
+    const f = fixture(), routes = [f.route]; let release!: (key: string) => void;
+    f.key.mockImplementation(() => new Promise(resolve => {release = resolve;}));
+    const provider = new ApprovedRouteClassificationProvider(routes, f.fetcher);
+    const pending = provider.classify(f.request, f.profile, new AbortController().signal);
+    routes[0] = {...f.route}; release("SECRET_SENTINEL");
+    await expect(pending).rejects.toMatchObject({code: "STALE_CLASSIFICATION", dispatchState: "not-started"});
+    expect(f.fetcher).not.toHaveBeenCalled();
+  });
+  it("PRE qualification expiring during credential await prevents transport", async () => {
+    vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-09T00:00:00Z"));
+    const f = fixture(); f.profile.qualification.validUntil = "2026-10-09T00:00:01Z";
+    let release!: (key: string) => void; f.key.mockImplementation(() => new Promise(resolve => {release = resolve;}));
+    const pending = f.provider.classify(f.request, f.profile, new AbortController().signal);
+    vi.setSystemTime(new Date("2026-10-09T00:00:01Z")); release("SECRET_SENTINEL");
+    await expect(pending).rejects.toMatchObject({code: "STALE_CLASSIFICATION", dispatchState: "not-started"});
+    expect(f.fetcher).not.toHaveBeenCalled();
+  });
+  it("PRE synchronous encode mutation is fenced immediately before fetch", async () => {
+    const f = fixture();
+    if (f.route.kind === "remote") f.route.adapter = {...jevNoulWireAdapter, encode(request, profile) {f.route.approvalRef = "changed-during-encode"; return jevNoulWireAdapter.encode(request, profile);}};
+    await expect(f.provider.classify(f.request, f.profile, new AbortController().signal)).rejects.toMatchObject({code: "STALE_CLASSIFICATION", dispatchState: "not-started"});
+    expect(f.fetcher).not.toHaveBeenCalled();
+  });
+  it.each(["profile", "request"])("PRE encode cannot change its bound %s snapshot", async changed => {
+    const f = fixture();
+    if (f.route.kind === "remote") f.route.adapter = {...jevNoulWireAdapter, encode(request, profile) {
+      const encoded = jevNoulWireAdapter.encode(request, profile);
+      if (changed === "profile") profile.modelId = "unapproved-premium";
+      else request.originalPrompt = "Changed objective";
+      return encoded;
+    }};
+    await expect(f.provider.classify(f.request, f.profile, new AbortController().signal)).rejects.toMatchObject({code: "STALE_CLASSIFICATION", dispatchState: "not-started"});
+    expect(f.fetcher).not.toHaveBeenCalled();
+  });
+  it("PRE cancellation during credential await is confirmed not-started at this provider boundary", async () => {
+    const f = fixture(), controller = new AbortController(); let release!: (key: string) => void;
+    f.key.mockImplementation(() => new Promise(resolve => {release = resolve;}));
+    const pending = f.provider.classify(f.request, f.profile, controller.signal); controller.abort(); release("SECRET_SENTINEL");
+    await expect(pending).rejects.toMatchObject({code: "CANCELLED", dispatchState: "not-started"});
+    expect(f.fetcher).not.toHaveBeenCalled();
+  });
+  it.each([
+    '"review":{"type":"noul","noul":0.1},"review":{"type":"noul","noul":0.9}',
+    '"review":{"type":"noul","noul":0.1},"revi\\u0065w":{"type":"noul","noul":0.9}',
+    '"review":{"type":"noul","noul":0.9},"review":{"type":"noul","noul":0.9}',
+    '"review":{"type":"noul","noul":0.1,"noul":0.9}',
+    '"review":{"type":"other","type":"noul","noul":0.9}',
+  ])("SS27 ambiguous duplicate wire answer %s is INVALID", async answers => {
+    const f = fixture(); f.fetcher.mockResolvedValue(new Response(`{"model":"fixed-jev","answers":{${answers}},"usage":{"input_tokens":1,"output_tokens":1}}`));
+    await expect(f.provider.classify(f.request, f.profile, new AbortController().signal)).rejects.toMatchObject({code: "INVALID_PROVIDER_RESPONSE", dispatchState: "started", invalid: true});
+    expect(f.fetcher).toHaveBeenCalledTimes(1);
+  });
+  it("SS27 duplicate answers containers cannot hide contradictory earlier answers", async () => {
+    const f = fixture(); f.fetcher.mockResolvedValue(new Response('{"model":"fixed-jev","answers":{"review":{"type":"noul","noul":0.1}},"answ\\u0065rs":{"review":{"type":"noul","noul":0.9}},"usage":{"input_tokens":1,"output_tokens":1}}'));
+    await expect(f.provider.classify(f.request, f.profile, new AbortController().signal)).rejects.toMatchObject({code: "INVALID_PROVIDER_RESPONSE", invalid: true});
+    expect(f.fetcher).toHaveBeenCalledTimes(1);
+  });
+  it("SS27 unique escaped answer keys and JSON-looking text are accepted unchanged", async () => {
+    const f = fixture();
+    const body = {...f.body, answers: {review: {type: "noul", noul: 0.9, note: '} [ "review": { "noul": 0.1, "noul": 0.9 }'}}, metadata: {answers: {review: 1}, text: "opaque"}};
+    f.fetcher.mockResolvedValue(new Response(JSON.stringify(body).replace('"review":', '"revi\\u0065w":')));
+    expect((await f.provider.classify(f.request, f.profile, new AbortController().signal)).response.judgments[0]?.judgment).toBe("needed");
+    expect(f.fetcher).toHaveBeenCalledTimes(1);
+  });
+  it("SS27 unrelated metadata duplicates retain JSON.parse semantics, not a global new JSON policy", async () => {
+    const f = fixture(); f.fetcher.mockResolvedValue(new Response('{"model":"fixed-jev","answers":{"review":{"type":"noul","noul":0.9,"metadata":{"noul":0,"noul":1}}},"usage":{"input_tokens":1,"output_tokens":1},"metadata":{"note":"first","note":"last"}}'));
+    expect((await f.provider.classify(f.request, f.profile, new AbortController().signal)).response.status).toBe("SUCCESS");
+  });
+  it("SS27 a decorated JEV adapter retains its raw answer-key check", async () => {
+    const f = fixture(); const decode = vi.fn(jevNoulWireAdapter.decode);
+    if (f.route.kind === "remote") f.route.adapter = {...jevNoulWireAdapter, decode};
+    f.fetcher.mockResolvedValue(new Response('{"model":"fixed-jev","answers":{"review":{"type":"noul","no\\u0075l":0.1,"noul":0.9}},"usage":{"input_tokens":1,"output_tokens":1}}'));
+    await expect(f.provider.classify(f.request, f.profile, new AbortController().signal)).rejects.toMatchObject({code: "INVALID_PROVIDER_RESPONSE", invalid: true});
+    expect(decode).not.toHaveBeenCalled(); expect(f.fetcher).toHaveBeenCalledTimes(1);
   });
 });

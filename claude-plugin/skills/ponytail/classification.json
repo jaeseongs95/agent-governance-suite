@@ -17,21 +17,59 @@
     {
       "path": "skills/ponytail/SKILL.md",
       "startLine": 3,
-      "endLine": 16,
+      "endLine": 13,
+      "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "startByte": 0,
+      "endByte": 753
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "startLine": 114,
+      "endLine": 116,
+      "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "startByte": 0,
+      "endByte": 246
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "startLine": 126,
+      "endLine": 126,
       "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
     }
   ],
   "exclusions": [
     {
       "path": "skills/ponytail/SKILL.md",
-      "startLine": 3,
+      "startLine": 13,
       "endLine": 16,
+      "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "startByte": 69,
+      "endByte": 242
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "startLine": 116,
+      "endLine": 116,
+      "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "startByte": 232,
+      "endByte": 297
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "startLine": 118,
+      "endLine": 119,
       "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
     },
     {
       "path": "skills/ponytail/SKILL.md",
-      "startLine": 114,
-      "endLine": 127,
+      "startLine": 120,
+      "endLine": 122,
+      "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "startLine": 123,
+      "endLine": 124,
       "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
     }
   ]

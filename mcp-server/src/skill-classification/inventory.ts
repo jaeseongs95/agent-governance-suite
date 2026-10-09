@@ -6,7 +6,9 @@ import type { SkillInventory, SkillMetadata } from "./types.js";
 import { digestClassificationValue } from "./request.js";
 
 const strings = z.array(z.string().min(1));
-const span = z.object({ path: z.string().min(1), startLine: z.number().int().positive(), endLine: z.number().int().positive(), digest: z.string().regex(/^sha256:[a-f0-9]{64}$/) }).strict();
+// Optional half-open UTF-8 bounds select a clause within the untrimmed joined lines.
+// They remain in digest-bound local metadata; the public REQ/wire shape is unchanged.
+const span = z.object({ path: z.string().min(1), startLine: z.number().int().positive(), endLine: z.number().int().positive(), digest: z.string().regex(/^sha256:[a-f0-9]{64}$/), startByte: z.number().int().nonnegative().optional(), endByte: z.number().int().nonnegative().optional() }).strict();
 const classification = z.object({
   schemaVersion: z.literal("1.0.0"), taxonomyRevision: z.string().min(1),
   actions: strings.min(1), targets: strings.min(1), constraints: strings, dependencies: strings,
@@ -17,6 +19,7 @@ const provider = z.object({
   requiredInputArtifacts: strings, producedArtifacts: strings,
   inputBindings: z.array(z.object({ targetArtifact: z.string(), sources: strings, operation: z.string() }).passthrough()),
   gate: z.record(z.string(), z.unknown()),
+  preconditions: strings.optional(),
 }).passthrough();
 const descriptor = z.object({ skillId: z.string().min(1), version: z.string().min(1), path: z.string(), enabled: z.boolean(), providers: z.array(provider).min(1), dependencies: strings.optional() }).passthrough();
 const projectionPath = "skills/classification-projection.json";
@@ -199,16 +202,25 @@ async function readInventory(options: InventoryOptions, directSkillDirectory = f
           if (source.digest !== digest) throw new Error("STALE_SOURCE");
           const lines = bytes.toString("utf8").split(/\r?\n/);
           if (source.endLine < source.startLine || source.endLine > lines.length) throw new Error("SOURCE_RANGE_INVALID");
-          const value = lines.slice(source.startLine - 1, source.endLine).join("\n").trim();
+          const selected = Buffer.from(lines.slice(source.startLine - 1, source.endLine).join("\n"), "utf8");
+          let value: string;
+          if (source.startByte !== undefined || source.endByte !== undefined) {
+            if (source.startByte === undefined || source.endByte === undefined || source.startByte >= source.endByte || source.endByte > selected.length) throw new Error("SOURCE_RANGE_INVALID");
+            try { value = new TextDecoder("utf-8", { fatal: true }).decode(selected.subarray(source.startByte, source.endByte)).trim(); }
+            catch (error) { throw new Error("SOURCE_RANGE_INVALID", { cause: error }); }
+          } else value = selected.toString("utf8").trim();
           if (!value) throw new Error("MISSING_APPLICABILITY_OR_EXCLUSION");
-          result.push(value);
+          if (!result.includes(value)) result.push(value);
           sourceRefs.set(source.path, digest);
-          sourceMap.push({ field, ...source });
+          sourceMap.push({ field, path: source.path, startLine: source.startLine, endLine: source.endLine, digest: source.digest });
         }
         return result;
       };
       const applicability = await resolveSpans(metadata.applicability, "applicability");
       const exclusions = await resolveSpans(metadata.exclusions, "exclusions");
+      const preconditions = entry?.providers.flatMap(item => (item.preconditions ?? []).map(precondition => JSON.stringify({ phase: item.phase, capabilities: item.capabilities, precondition }))) ?? [];
+      for (const condition of preconditions) if (!applicability.includes(condition)) applicability.push(condition);
+      if (preconditions.length) sourceMap.push({ field: "applicability", path: "skills/registry.json", digest: allSources.get("skills/registry.json")! });
       const capabilities = entry ? [...new Set(entry.providers.flatMap((item) => item.capabilities))] : metadata.capabilities;
       if (!capabilities?.length || (!entry && !head.version)) throw new Error("MISSING_CAPABILITY_OR_VERSION");
       if (entry && metadata.capabilities && digestClassificationValue(capabilities) !== digestClassificationValue(metadata.capabilities)) throw new Error("SOURCE_CONFLICT");

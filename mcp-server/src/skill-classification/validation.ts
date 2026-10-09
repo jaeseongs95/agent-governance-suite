@@ -77,7 +77,12 @@ export function validateDecision(result: ClassificationResult, decision: SkillSe
   }
   if (current.cancelled) errors.push("TASK_CANCELLED");
   const inventory = new Map(result.request.skills.map(skill => [skill.skillId, skill]));
+  // Availability applies to required advice even when the AGENT does not select it.
   const selected = decision.agentSelectedSkillIds;
+  for (const id of new Set([...needed, ...(selected ?? [])])) {
+    const skill = inventory.get(id);
+    if (skill && (!skill.enabled || !skill.installed || !skill.hostSupported)) blockedItems.push({skillId: id, reasonCode: !skill.enabled ? "DISABLED" : !skill.installed ? "NOT_INSTALLED" : "HOST_UNSUPPORTED"});
+  }
   if (selected === null) {
     if (["SELECTED", "PARTIAL"].includes(decision.selectionStatus) || decision.hostReceipt !== null || decision.adviceApplied) errors.push("SELECTION_NOT_OBSERVED");
   } else {
@@ -96,7 +101,6 @@ export function validateDecision(result: ClassificationResult, decision: SkillSe
       if (checks.length !== 1 || checks[0]?.applies !== true || checks[0]?.excluded !== false || checks[0]?.reasonRefs.length === 0) errors.push(`APPLICABILITY_UNRESOLVED:${id}`);
       if (!decision.selectionReasons.some(reason => reason.skillId === id)) errors.push(`SELECTION_REASON_MISSING:${id}`);
       for (const dependency of skill.dependencies) if (!selected.includes(dependency)) errors.push(`DEPENDENCY_OMITTED:${id}:${dependency}`);
-      if (!skill.enabled || !skill.installed || !skill.hostSupported) blockedItems.push({skillId: id, reasonCode: !skill.enabled ? "DISABLED" : !skill.installed ? "NOT_INSTALLED" : "HOST_UNSUPPORTED"});
     }
     if (decision.selectionStatus === "SELECTED" && (blockedItems.length > 0 || decision.unresolvedSkillReferences.length > 0)) errors.push("UNRESOLVED_SELECTION_MARKED_COMPLETE");
   }

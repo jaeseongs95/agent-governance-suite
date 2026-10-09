@@ -18,18 +18,34 @@
       "path": "skills/session-board/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a"
+      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",
+      "startByte": 0,
+      "endByte": 373
     },
     {
       "path": "skills/session-board/SKILL.md",
-      "startLine": 8,
-      "endLine": 22,
+      "startLine": 9,
+      "endLine": 11,
+      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",
+      "startByte": 0,
+      "endByte": 257
+    },
+    {
+      "path": "skills/session-board/SKILL.md",
+      "startLine": 13,
+      "endLine": 21,
       "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a"
     },
     {
       "path": "skills/session-board/references/entry-details.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:e8ea65d5d3d372fe70ba0fe7cdba18d965704450f2a7084b27ce885695e68660"
+    },
+    {
+      "path": "skills/session-board/references/entry-details.md",
       "startLine": 7,
-      "endLine": 13,
+      "endLine": 9,
       "digest": "sha256:e8ea65d5d3d372fe70ba0fe7cdba18d965704450f2a7084b27ce885695e68660"
     }
   ],
@@ -38,18 +54,34 @@
       "path": "skills/session-board/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a"
+      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",
+      "startByte": 374,
+      "endByte": 430
     },
     {
       "path": "skills/session-board/SKILL.md",
-      "startLine": 8,
-      "endLine": 22,
-      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a"
+      "startLine": 11,
+      "endLine": 11,
+      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",
+      "startByte": 241,
+      "endByte": 382
     },
     {
       "path": "skills/session-board/references/entry-details.md",
-      "startLine": 7,
-      "endLine": 13,
+      "startLine": 10,
+      "endLine": 10,
+      "digest": "sha256:e8ea65d5d3d372fe70ba0fe7cdba18d965704450f2a7084b27ce885695e68660"
+    },
+    {
+      "path": "skills/session-board/references/entry-details.md",
+      "startLine": 11,
+      "endLine": 11,
+      "digest": "sha256:e8ea65d5d3d372fe70ba0fe7cdba18d965704450f2a7084b27ce885695e68660"
+    },
+    {
+      "path": "skills/session-board/references/entry-details.md",
+      "startLine": 12,
+      "endLine": 12,
       "digest": "sha256:e8ea65d5d3d372fe70ba0fe7cdba18d965704450f2a7084b27ce885695e68660"
     }
   ]

@@ -1,8 +1,11 @@
 import {selectFixedProfile, validateProviderProfile, isProviderProfileRegistry} from "./profiles.js";
-import {ClassificationProviderError, unavailableResponse, unknownUsage} from "./providers.js";
+import {ClassificationProviderError, unavailableResponse, unknownUsage, sanitizeRateLimitObservation} from "./providers.js";
 import {validateClassificationResponse} from "./validation.js";
-import {projectClassificationRequest, validateClassificationRequest} from "./request.js";
+import {digestClassificationValue, projectClassificationRequest, validateClassificationRequest} from "./request.js";
 import type {ClassificationAttempt, ClassificationConfig, ClassificationResult, ClassificationSnapshot, DispatchState, ProviderEvaluation, ProviderProfile, ProviderProfileRegistry, SkillClassificationProviderPort, SkillClassificationRequestV1} from "./types.js";
+
+/** https://nodejs.org/api/timers.html#settimeoutcallback-delay-args */
+export const MAX_CLASSIFICATION_TIMEOUT_MS = 2_147_483_647;
 
 export interface ClassificationBudgetPort {
   reserve(profile: ProviderProfile, reservationId: string, maximumUsd: number, routeKind?: "native" | "remote"): boolean;
@@ -71,7 +74,7 @@ export interface ClassificationServiceInput {
   signal?: AbortSignal;
 }
 interface Operation {identity: string; result: Promise<ClassificationResult>}
-const providerFailureCodes = new Set(["ROUTE_NOT_APPROVED", "ROUTE_CAPABILITY_MISMATCH", "CREDENTIAL_UNAVAILABLE", "INVALID_APPROVED_ENDPOINT", "NATIVE_STRUCTURED_CAPABILITY_UNAVAILABLE", "REMOTE_ADAPTER_UNAVAILABLE", "CANCELLED", "INPUT_TOO_LONG", "INVALID_PROVIDER_REQUEST", "TRANSPORT_UNAVAILABLE", "AUTH_UNAVAILABLE", "RATE_LIMITED", "API_UNAVAILABLE", "INVALID_PROVIDER_RESPONSE", "PROVIDER_UNAVAILABLE", "STALE_CLASSIFICATION", "EXTERNAL_CLASSIFICATION_BLOCKED", "BUDGET_UNAVAILABLE", "INVALID_PROVIDER_USAGE", "PROVIDER_TIMEOUT", "OUTPUT_TOO_LONG", "NATIVE_SPAWN_UNAVAILABLE", "NATIVE_OUTPUT_TOO_LARGE", "NATIVE_PROCESS_UNAVAILABLE", "NATIVE_TIMEOUT", "NATIVE_PROFILE_UNSUPPORTED", "NATIVE_CLEANUP_UNAVAILABLE", "PROVIDER_RESPONSE_TOO_LARGE"]);
+const providerFailureCodes = new Set(["ROUTE_NOT_APPROVED", "ROUTE_CAPABILITY_MISMATCH", "CREDENTIAL_UNAVAILABLE", "INVALID_APPROVED_ENDPOINT", "NATIVE_STRUCTURED_CAPABILITY_UNAVAILABLE", "REMOTE_ADAPTER_UNAVAILABLE", "CANCELLED", "INPUT_TOO_LONG", "INVALID_PROVIDER_REQUEST", "TRANSPORT_UNAVAILABLE", "AUTH_UNAVAILABLE", "RATE_LIMITED", "API_UNAVAILABLE", "INVALID_PROVIDER_RESPONSE", "PROVIDER_UNAVAILABLE", "STALE_CLASSIFICATION", "EXTERNAL_CLASSIFICATION_BLOCKED", "BUDGET_UNAVAILABLE", "INVALID_PROVIDER_USAGE", "PROVIDER_TIMEOUT", "OUTPUT_TOO_LONG", "NATIVE_SPAWN_UNAVAILABLE", "NATIVE_OUTPUT_TOO_LARGE", "NATIVE_PROCESS_UNAVAILABLE", "NATIVE_TIMEOUT", "NATIVE_PROFILE_UNSUPPORTED", "NATIVE_CLEANUP_UNAVAILABLE", "PROVIDER_RESPONSE_TOO_LARGE", "INVALID_PROFILE", "QUALIFICATION_CONFIGURATION_MISMATCH", "PROFILE_UNQUALIFIED", "QUALIFICATION_MISMATCH", "QUALIFICATION_EXPIRED", "UNSUPPORTED_OPTIONS", "COST_UNKNOWN"]);
 const stale = (a: ClassificationSnapshot, b: ClassificationSnapshot) => b.cancelled || a.taskRevision !== b.taskRevision || a.configRevision !== b.configRevision
   || a.profileRevision !== b.profileRevision || a.inventoryDigest !== b.inventoryDigest || a.requestDigest !== b.requestDigest;
 
@@ -91,7 +94,13 @@ export class SkillClassificationService {
     const snapshot = this.snapshot(frozen);
     try { validateClassificationRequest(frozen.request); }
     catch { return Promise.resolve(this.failure(frozen, snapshot, "INVALID_CLASSIFICATION_REQUEST", [], "INVALID")); }
-    const identity = JSON.stringify([frozen.request.requestId, frozen.request.requestDigest, snapshot, frozen.currentVendorId]);
+    let identity: string;
+    try { identity = digestClassificationValue([frozen.request.requestId, frozen.request.requestDigest, snapshot, frozen.currentVendorId, frozen.config, frozen.registry]); }
+    catch {
+      const code = !isProviderProfileRegistry(frozen.registry) ? "INVALID_PROFILE_REGISTRY"
+        : !Number.isSafeInteger(frozen.config.timeoutMs) || (frozen.config.timeoutMs < 1 || frozen.config.timeoutMs > MAX_CLASSIFICATION_TIMEOUT_MS) ? "INVALID_TIMEOUT" : "INVALID_CLASSIFICATION_CONFIG";
+      return Promise.resolve(this.failure(frozen, snapshot, code));
+    }
     const previousOperation = this.requestOperations.get(frozen.request.requestId);
     if (previousOperation !== undefined && previousOperation !== frozen.request.operationId) return Promise.resolve(this.failure(frozen, snapshot, "REQUEST_ID_CONFLICT", [], "INVALID"));
     const existing = this.operations.get(frozen.request.operationId);
@@ -118,13 +127,19 @@ export class SkillClassificationService {
   }
   private current(input: ClassificationServiceInput, result: ClassificationResult): ClassificationResult {
     if (input.signal?.aborted || (input.getCurrentSnapshot && stale(result.snapshot, input.getCurrentSnapshot()))) return this.failure(input, result.snapshot, "STALE_CLASSIFICATION", result.attempts);
+    if (result.response.error === null && ["SUCCESS", "PARTIAL", "UNCERTAIN"].includes(result.response.status)) {
+      const attempt = result.attempts.at(-1);
+      const profile = input.registry.profiles.find(profile => profile.profileId === attempt?.profileId);
+      const invalid = profile ? validateProviderProfile(profile, input.request, this.now()) : "PROFILE_UNAVAILABLE";
+      if (invalid) return this.failure(input, result.snapshot, invalid, result.attempts);
+    }
     return result;
   }
   private async run(input: ClassificationServiceInput, snapshot: ClassificationSnapshot): Promise<ClassificationResult> {
     const attempts: ClassificationAttempt[] = [];
     if (snapshot.cancelled) return this.failure(input, snapshot, "CANCELLED");
     if (input.config.mode !== "shadow" && input.config.mode !== "select") return this.failure(input, snapshot, "UNSUPPORTED_MODE");
-    if (!Number.isSafeInteger(input.config.timeoutMs) || input.config.timeoutMs < 1) return this.failure(input, snapshot, "INVALID_TIMEOUT");
+    if (!Number.isSafeInteger(input.config.timeoutMs) || (input.config.timeoutMs < 1 || input.config.timeoutMs > MAX_CLASSIFICATION_TIMEOUT_MS)) return this.failure(input, snapshot, "INVALID_TIMEOUT");
     if (!isProviderProfileRegistry(input.registry)) return this.failure(input, snapshot, "INVALID_PROFILE_REGISTRY");
     for (const kind of input.config.jevEnabled ? ["jev", "vendor"] as const : ["vendor"] as const) {
       if (input.signal?.aborted || (input.getCurrentSnapshot && stale(snapshot, input.getCurrentSnapshot()))) return this.failure(input, snapshot, "STALE_CLASSIFICATION", attempts);
@@ -148,7 +163,7 @@ export class SkillClassificationService {
       attempts.push(evaluated.attempt);
       const result: ClassificationResult = {request: input.request, config: input.config, profileRevision: input.registry.profileRevision, snapshot, attempts, response: evaluated.evaluation.response};
       const current = this.current(input, result);
-      if (current.response.error?.code === "STALE_CLASSIFICATION") return current;
+      if (current !== result) return current;
       if (["SUCCESS", "PARTIAL", "UNCERTAIN"].includes(result.response.status) && result.response.error === null) return result;
       if (kind === "vendor") return result;
     }
@@ -158,6 +173,7 @@ export class SkillClassificationService {
     const controller = new AbortController();
     let dispatchState: DispatchState = "not-started";
     let reserved = false;
+    let retainedUsage = unknownUsage();
     let timedOut = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const reservationId = JSON.stringify([input.request.operationId, input.request.requestDigest, profile.profileId]);
@@ -179,18 +195,30 @@ export class SkillClassificationService {
         }
         if (!input.config.externalClassificationAllowed && availability.routeKind !== "native") throw new ClassificationProviderError("EXTERNAL_CLASSIFICATION_BLOCKED", "not-started");
         if (input.getCurrentSnapshot && stale(snapshot, input.getCurrentSnapshot())) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
+        const invalid = validateProviderProfile(profile, input.request, this.now());
+        if (invalid) throw new ClassificationProviderError(invalid, "not-started");
         if (!this.options.budget.reserve(profile, reservationId, profile.maximumCostUsd!, availability.routeKind)) throw new ClassificationProviderError("BUDGET_UNAVAILABLE", "not-started");
         reserved = true;
         dispatchState = "unknown";
-        const evaluation = await provider.classify(input.request, profile, controller.signal);
+        const beforeDispatch = () => {
+          if (controller.signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
+          if (input.getCurrentSnapshot && stale(snapshot, input.getCurrentSnapshot())) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
+          if (validateProviderProfile(profile, input.request, this.now()) !== null) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
+        };
+        const evaluation = await provider.classify(input.request, profile, controller.signal, beforeDispatch);
         if (controller.signal.aborted) return evaluation; // only the already-settled race may publish
         const usage = evaluation.usage;
+        // Classification/token errors do not erase an independently valid reported charge.
+        if (usage && Number.isFinite(usage.actualCostUsd) && usage.actualCostUsd! >= 0) retainedUsage.actualCostUsd = usage.actualCostUsd;
         if (!["not-started", "started", "unknown"].includes(evaluation.dispatchState) || !usage
           || ![usage.inputTokens, usage.outputTokens, usage.cachedInputTokens].every((n) => n === null || (Number.isSafeInteger(n) && n >= 0))
           || (usage.actualCostUsd !== null && (!Number.isFinite(usage.actualCostUsd) || usage.actualCostUsd < 0))
           || (usage.inputTokens !== null && usage.cachedInputTokens !== null && usage.cachedInputTokens > usage.inputTokens)
           || (evaluation.diagnostics !== null && (!evaluation.diagnostics || typeof evaluation.diagnostics.scoreKind !== "string" || !Array.isArray(evaluation.diagnostics.scores)
-            || evaluation.diagnostics.scores.some((score) => typeof score.skillId !== "string" || !Number.isFinite(score.value))))) throw new ClassificationProviderError("INVALID_PROVIDER_USAGE", "unknown", true);
+            || evaluation.diagnostics.scoreKind.length === 0 || evaluation.diagnostics.scoreKind.length > 128
+            || new Set(evaluation.diagnostics.scores.map(score => score.skillId)).size !== evaluation.diagnostics.scores.length
+            || evaluation.diagnostics.scores.some((score) => !input.request.skills.some(skill => skill.skillId === score.skillId) || !Number.isFinite(score.value))))) throw new ClassificationProviderError("INVALID_PROVIDER_USAGE", "unknown", true);
+        retainedUsage = {...usage};
         if (validateClassificationResponse(input.request, evaluation.response).length > 0) throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", evaluation.dispatchState, true);
         if (usage.actualCostUsd !== null && usage.actualCostUsd > profile.maximumCostUsd!) return {...evaluation,
           response: unavailableResponse(input.request, "COST_CEILING_EXCEEDED", evaluation.dispatchState)};
@@ -199,9 +227,9 @@ export class SkillClassificationService {
         return evaluation;
       } catch (error) {
         const safe = error instanceof ClassificationProviderError ? new ClassificationProviderError(providerFailureCodes.has(error.code) ? error.code : "PROVIDER_UNAVAILABLE",
-          ["not-started", "started", "unknown"].includes(error.dispatchState) ? error.dispatchState : "unknown", error.invalid === true) : new ClassificationProviderError("PROVIDER_UNAVAILABLE", dispatchState);
+          ["not-started", "started", "unknown"].includes(error.dispatchState) ? error.dispatchState : "unknown", error.invalid === true, error.code === "RATE_LIMITED" ? sanitizeRateLimitObservation(error.rateLimitObservation) : null) : new ClassificationProviderError("PROVIDER_UNAVAILABLE", dispatchState);
         if (safe.code === "NATIVE_TIMEOUT" || safe.code === "PROVIDER_TIMEOUT") timedOut = true;
-        return {response: unavailableResponse(input.request, safe.code, safe.dispatchState, safe.invalid ? "INVALID" : timedOut && safe.dispatchState !== "not-started" ? "UNCERTAIN" : "UNAVAILABLE"), usage: unknownUsage(), dispatchState: safe.dispatchState, diagnostics: null};
+        return {response: unavailableResponse(input.request, safe.code, safe.dispatchState, safe.invalid ? "INVALID" : timedOut && safe.dispatchState !== "not-started" ? "UNCERTAIN" : "UNAVAILABLE"), usage: retainedUsage, dispatchState: safe.dispatchState, diagnostics: null, rateLimitObservation: safe.rateLimitObservation};
       }
     };
     let evaluation: ProviderEvaluation;
@@ -209,7 +237,7 @@ export class SkillClassificationService {
     finally { if (timer !== undefined) clearTimeout(timer); input.signal?.removeEventListener("abort", cancel); }
     if (reserved) this.options.budget.settle(reservationId, evaluation.usage.actualCostUsd, evaluation.dispatchState);
     const attempt: ClassificationAttempt = {providerKind: profile.providerKind, profileId: profile.profileId, modelId: profile.modelId, reasoningEffort: profile.reasoningEffort,
-      dispatchState: evaluation.dispatchState, status: evaluation.response.status, errorCode: evaluation.response.error?.code ?? null, timedOut, usage: evaluation.usage, reservedCostUsd: reserved ? profile.maximumCostUsd! : 0};
+      dispatchState: evaluation.dispatchState, status: evaluation.response.status, errorCode: evaluation.response.error?.code ?? null, timedOut, usage: evaluation.usage, reservedCostUsd: reserved ? profile.maximumCostUsd! : 0, diagnostics: structuredClone(evaluation.diagnostics), rateLimitObservation: evaluation.response.error?.code === "RATE_LIMITED" ? sanitizeRateLimitObservation(evaluation.rateLimitObservation) : null};
     return {evaluation, attempt};
   }
 }

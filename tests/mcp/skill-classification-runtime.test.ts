@@ -2,9 +2,9 @@ import {describe, expect, it, vi} from "vitest";
 import {createClassificationProviderRuntime, type ClassificationProviderRuntimeConfig} from "../../mcp-server/src/skill-classification/runtime.js";
 import {createClassificationRequest} from "../../mcp-server/src/skill-classification/request.js";
 import {SkillClassificationService} from "../../mcp-server/src/skill-classification/service.js";
-import {unknownUsage} from "../../mcp-server/src/skill-classification/providers.js";
+import {ClassificationProviderError, sanitizeRateLimitObservation, unknownUsage} from "../../mcp-server/src/skill-classification/providers.js";
 import {digestProviderProfileConfiguration} from "../../mcp-server/src/skill-classification/profiles.js";
-import type {ProviderProfile} from "../../mcp-server/src/skill-classification/types.js";
+import type {ProviderProfile, SkillClassificationRequestV1} from "../../mcp-server/src/skill-classification/types.js";
 
 function fixture() {
   const request = createClassificationRequest({requestId: "r", operationId: "o", originalPrompt: "공개 합성 설명", inventory: {skills: [], issues: [], inventoryDigest: `sha256:${"a".repeat(64)}`, taxonomyRevision: "t1"}, classificationCriteriaRef: "criteria"});
@@ -14,6 +14,23 @@ function fixture() {
   return {request, profile, config};
 }
 describe("trusted provider runtime composition", () => {
+  it("forwards the final state fence across runtime composition after a native adapter await", async () => {
+    const f = fixture(); f.config.routes = [{routeRef: "approved", approvalRef: "synthetic-only", approved: true, providerKind: "jev", vendorId: "typesafe", adapterRevision: "a1", modelIds: ["fixed-jev"], reasoningEfforts: [null], structuredOutput: true, kind: "native", nativeAdapterRef: "native", capabilityEvidenceRef: "synthetic", retryPolicyVerified: true}];
+    const effect = vi.fn();
+    const invokeStructured = async (request: SkillClassificationRequestV1, _profile: ProviderProfile, _signal: AbortSignal, beforeDispatch?: () => void) => {
+      await Promise.resolve(); beforeDispatch?.(); effect();
+      return {response: {schemaVersion: "1.0.0" as const, requestId: request.requestId, operationId: request.operationId, requestDigest: request.requestDigest, inventoryDigest: request.inventoryDigest, status: "SUCCESS" as const, judgments: [], unresolvedItems: [], error: null}, usage: unknownUsage(), dispatchState: "started" as const, diagnostics: null};
+    };
+    const runtime = createClassificationProviderRuntime(f.config, {nativeAdapters: new Map([["native", {capabilityEvidenceRef: "synthetic", retryPolicy: "no-retry", invokeStructured}]])});
+    await expect(runtime.providers.jev.classify(f.request, f.profile, new AbortController().signal, () => {throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");})).rejects.toMatchObject({code: "STALE_CLASSIFICATION", dispatchState: "not-started"});
+    expect(effect).not.toHaveBeenCalled();
+  });
+  it("keeps only canonical rate-limit observations and removes raw or malformed provider metadata", () => {
+    expect(sanitizeRateLimitObservation({httpStatus: 429, retryAfter: {kind: "delay-seconds", seconds: 0}})).toEqual({httpStatus: 429, retryAfter: {kind: "delay-seconds", seconds: 0}});
+    expect(sanitizeRateLimitObservation({httpStatus: 529, retryAfter: {kind: "http-date", at: "2026-10-09T00:00:00.000Z"}})).toEqual({httpStatus: 529, retryAfter: {kind: "http-date", at: "2026-10-09T00:00:00.000Z"}});
+    expect(sanitizeRateLimitObservation({httpStatus: 429, retryAfter: null})).toEqual({httpStatus: 429, retryAfter: null});
+    for (const value of [null, [], {httpStatus: 500, retryAfter: null}, {httpStatus: 429, retryAfter: null, body: "PRIVATE_SENTINEL"}, {httpStatus: 429, retryAfter: "PRIVATE_SENTINEL"}, {httpStatus: 429, retryAfter: {kind: "delay-seconds", seconds: -1}}, {httpStatus: 429, retryAfter: {kind: "delay-seconds", seconds: Number.MAX_SAFE_INTEGER + 1}}, {httpStatus: 429, retryAfter: {kind: "delay-seconds", seconds: 1, header: "PRIVATE_SENTINEL"}}, {httpStatus: 429, retryAfter: {kind: "http-date", at: "2026-10-09"}}]) expect(sanitizeRateLimitObservation(value)).toBeNull();
+  });
   it("SS19 explicit configuration preserves OFF zero JEV credential lookups", async () => {
     const f = fixture(); const key = vi.fn(async () => "SECRET_SENTINEL"); const fetcher = vi.fn<typeof fetch>();
     const runtime = createClassificationProviderRuntime(f.config, {getCredentialByEnvName: key, fetcher});

@@ -16,6 +16,7 @@ import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { RuntimeSkillClassificationGateway, type ClassificationRuntimeSnapshot, type CurrentClassificationTask } from "../../mcp-server/src/skill-classification/gateway.js";
 import { loadSkillInventory } from "../../mcp-server/src/skill-classification/inventory.js";
+import { loadHostObservedInventory, type HostSkillDiscoverySnapshot } from "../../mcp-server/src/skill-classification/host-discovery-adapter.js";
 import { createClassificationRequest, digestClassificationValue } from "../../mcp-server/src/skill-classification/request.js";
 import { digestProviderProfileConfiguration } from "../../mcp-server/src/skill-classification/profiles.js";
 import { InMemoryClassificationBudget, SkillClassificationService } from "../../mcp-server/src/skill-classification/service.js";
@@ -60,7 +61,12 @@ function decision(advice: Advice, selected: string[] | null, request = input()):
 
 async function harness(options: { root?: string; needed?: string[]; uncertain?: string[]; mode?: "shadow" | "select"; attest?: boolean; taskObserved?: boolean; withJev?: boolean } = {}) {
   const root = options.root ?? repository;
-  const inventory = await loadSkillInventory({ root });
+  const localInventory = await loadSkillInventory({ root });
+  const observedAt = new Date();
+  const host: HostSkillDiscoverySnapshot = { schemaVersion: "1.0.0", sourceRef: "fixture:trusted-host-discovery", revision: "host-1", observedAt: observedAt.toISOString(),
+    expiresAt: new Date(observedAt.getTime() + 300_000).toISOString(), skills: localInventory.skills.map(skill => ({ skillId: skill.skillId, installed: true, hostSupported: true, enabled: true, root: null })) };
+  const observeHostSkills = async () => host;
+  const { inventory } = await loadHostObservedInventory({ root, observeHostSkills });
   expect(inventory.issues).toEqual([]);
   const profile: ProviderProfile = { profileId: "vendor-mock", providerKind: "vendor", vendorId: "mock-vendor", modelId: "mock-fixed", modelRevision: "mock-fixed-v1", reasoningEffort: "low",
     supportedOptions: { reasoningEfforts: ["low"], structuredOutput: true }, approvedRouteRef: "fixture:approved-native-route", qualificationRevision: "mock-quality-only",
@@ -97,7 +103,7 @@ async function harness(options: { root?: string; needed?: string[]; uncertain?: 
       return taskStates.get(request.requestId)!;
     });
   const gateway = new RuntimeSkillClassificationGateway({ root, service, readRuntime,
-    observeRuntime: () => digestClassificationValue({ runtime, additionalSource: runtimeBytes.additionalSource }), observeTask });
+    observeRuntime: () => digestClassificationValue({ runtime, additionalSource: runtimeBytes.additionalSource }), observeTask, observeHostSkills });
   const validator = new ContractValidator(), store = new InMemoryWorkflowStore();
   const attestation = options.attest === false ? null : new HostAttestationProvider(store, adapter);
   const workflow = new WorkflowService(new FileSkillRegistry(path.join(repository, "skills/registry.json"), validator), validator, store, null, attestation);

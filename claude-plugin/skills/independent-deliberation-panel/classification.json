@@ -17,12 +17,30 @@
       "path": "skills/independent-deliberation-panel/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab"
+      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab",
+      "startByte": 0,
+      "endByte": 165
     },
     {
       "path": "skills/independent-deliberation-panel/SKILL.md",
-      "startLine": 8,
-      "endLine": 18,
+      "startLine": 9,
+      "endLine": 11,
+      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab",
+      "startByte": 0,
+      "endByte": 140
+    },
+    {
+      "path": "skills/independent-deliberation-panel/SKILL.md",
+      "startLine": 13,
+      "endLine": 15,
+      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab",
+      "startByte": 0,
+      "endByte": 292
+    },
+    {
+      "path": "skills/independent-deliberation-panel/SKILL.md",
+      "startLine": 17,
+      "endLine": 17,
       "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab"
     }
   ],
@@ -31,12 +49,30 @@
       "path": "skills/independent-deliberation-panel/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab"
+      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab",
+      "startByte": 166,
+      "endByte": 232
     },
     {
       "path": "skills/independent-deliberation-panel/SKILL.md",
-      "startLine": 8,
-      "endLine": 18,
+      "startLine": 11,
+      "endLine": 11,
+      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab",
+      "startByte": 107,
+      "endByte": 445
+    },
+    {
+      "path": "skills/independent-deliberation-panel/SKILL.md",
+      "startLine": 15,
+      "endLine": 15,
+      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab",
+      "startByte": 275,
+      "endByte": 483
+    },
+    {
+      "path": "skills/independent-deliberation-panel/SKILL.md",
+      "startLine": 41,
+      "endLine": 41,
       "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab"
     }
   ]

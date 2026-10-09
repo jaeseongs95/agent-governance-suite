@@ -16,13 +16,33 @@
       "path": "skills/instruction-scope-resolver/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb"
+      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
+      "startByte": 0,
+      "endByte": 162
     },
     {
       "path": "skills/instruction-scope-resolver/SKILL.md",
-      "startLine": 8,
-      "endLine": 18,
-      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb"
+      "startLine": 9,
+      "endLine": 11,
+      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
+      "startByte": 0,
+      "endByte": 120
+    },
+    {
+      "path": "skills/instruction-scope-resolver/SKILL.md",
+      "startLine": 13,
+      "endLine": 15,
+      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
+      "startByte": 0,
+      "endByte": 149
+    },
+    {
+      "path": "skills/instruction-scope-resolver/SKILL.md",
+      "startLine": 17,
+      "endLine": 17,
+      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
+      "startByte": 0,
+      "endByte": 63
     }
   ],
   "exclusions": [
@@ -30,13 +50,33 @@
       "path": "skills/instruction-scope-resolver/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb"
+      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
+      "startByte": 163,
+      "endByte": 240
     },
     {
       "path": "skills/instruction-scope-resolver/SKILL.md",
-      "startLine": 8,
-      "endLine": 18,
-      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb"
+      "startLine": 11,
+      "endLine": 11,
+      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
+      "startByte": 91,
+      "endByte": 208
+    },
+    {
+      "path": "skills/instruction-scope-resolver/SKILL.md",
+      "startLine": 15,
+      "endLine": 15,
+      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
+      "startByte": 132,
+      "endByte": 278
+    },
+    {
+      "path": "skills/instruction-scope-resolver/SKILL.md",
+      "startLine": 17,
+      "endLine": 17,
+      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
+      "startByte": 64,
+      "endByte": 204
     }
   ]
 }

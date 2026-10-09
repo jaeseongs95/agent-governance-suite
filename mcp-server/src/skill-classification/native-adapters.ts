@@ -9,7 +9,7 @@ import type {ProviderEvaluation, ProviderProfile, SkillClassificationRequestV1, 
 export interface NativeClassificationAdapter {
   capabilityEvidenceRef: string;
   retryPolicy: "no-retry";
-  invokeStructured(request: SkillClassificationRequestV1, profile: ProviderProfile, signal: AbortSignal): Promise<ProviderEvaluation>;
+  invokeStructured(request: SkillClassificationRequestV1, profile: ProviderProfile, signal: AbortSignal, beforeDispatch?: () => void): Promise<ProviderEvaluation>;
 }
 export type NativeClassificationAdapterRegistry = ReadonlyMap<string, NativeClassificationAdapter>;
 
@@ -159,7 +159,7 @@ export function createNativeClassificationAdapters(definitions: readonly NativeC
       if (definition.host !== "codex" || definition.isolationArgs[i] !== "--disable" || !/^[A-Za-z0-9_]+$/u.test(definition.isolationArgs[i + 1] ?? "")) throw new Error("INVALID_NATIVE_ISOLATION_ARGUMENT");
     }
     const fixed = structuredClone(definition);
-    adapters.set(fixed.adapterId, {capabilityEvidenceRef: fixed.capabilityEvidenceRef, retryPolicy: "no-retry", async invokeStructured(request, profile, signal) {
+    adapters.set(fixed.adapterId, {capabilityEvidenceRef: fixed.capabilityEvidenceRef, retryPolicy: "no-retry", async invokeStructured(request, profile, signal, beforeDispatch) {
       if (signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
       if (profile.providerKind !== "vendor" || !/^[A-Za-z0-9][A-Za-z0-9._:/-]*$/u.test(profile.modelId) || !profile.reasoningEffort
         || !profile.supportedOptions.structuredOutput || !profile.supportedOptions.reasoningEfforts.includes(profile.reasoningEffort)
@@ -176,6 +176,7 @@ export function createNativeClassificationAdapters(definitions: readonly NativeC
           args.push("--output-schema", schemaPath, "-");
         }
         if (signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
+        beforeDispatch?.();
         const output = await runner({executable: fixed.executable, args, cwd: fixed.workingDirectory, input, timeoutMs: fixed.timeoutMs, maximumOutputBytes: fixed.maximumOutputBytes}, signal);
         if (signal.aborted) throw new ClassificationProviderError("CANCELLED", "unknown");
         if (Buffer.byteLength(output.stdout, "utf8") > fixed.maximumOutputBytes) throw new ClassificationProviderError("NATIVE_OUTPUT_TOO_LARGE", "unknown");

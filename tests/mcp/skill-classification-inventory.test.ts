@@ -4,6 +4,9 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { loadSkillInventory } from "../../mcp-server/src/skill-classification/inventory.js";
+import { createClassificationRequest, projectClassificationRequest } from "../../mcp-server/src/skill-classification/request.js";
+import { jevNoulWireAdapter } from "../../mcp-server/src/skill-classification/providers.js";
+import type { ProviderProfile } from "../../mcp-server/src/skill-classification/types.js";
 
 const roots: string[] = [];
 const hash = (text: string) => `sha256:${createHash("sha256").update(text).digest("hex")}`;
@@ -104,5 +107,113 @@ describe("classification inventory source authority (SS26/SS37)", () => {
     expect(missing.issues).toContainEqual({ skillId: "skill-z17", code: "MISSING_OR_INVALID_METADATA", field: "classification.json" });
     expect(missing.inventoryDigest).not.toBe(union.inventoryDigest);
     expect((await loadSkillInventory({ root, externalSkillRoots: [path.join(external, "unavailable")] })).issues).toContainEqual({ skillId: null, code: "EXTERNAL_SKILL_UNAVAILABLE", field: "externalSkillRoots[0]" });
+  });
+});
+
+describe("signed source evidence and selection context regression", () => {
+  it("keeps all 24 skills while separating applicable evidence from exclusions", async () => {
+    const inventory = await loadSkillInventory({ root: process.cwd() });
+    expect(inventory.issues).toEqual([]);
+    expect(inventory.skills).toHaveLength(24);
+    for (const skill of inventory.skills) {
+      expect(skill.applicability, skill.skillId).not.toEqual(skill.exclusions);
+      expect(skill.applicability.filter(text => skill.exclusions.includes(text)), skill.skillId).toEqual([]);
+      expect(new Set(skill.applicability).size, skill.skillId).toBe(skill.applicability.length);
+      expect(new Set(skill.exclusions).size, skill.skillId).toBe(skill.exclusions.length);
+    }
+    const tests = inventory.skills.find(skill => skill.skillId === "test-engineering")!;
+    expect(tests.exclusions.join("\n")).not.toContain("테스트 설계·구현·회귀 보호가 요청되면 사용한다.");
+    const ponytail = inventory.skills.find(skill => skill.skillId === "ponytail")!;
+    expect(ponytail.applicability.join("\n")).not.toContain("Do NOT use for code review");
+    expect(ponytail.exclusions.join("\n")).not.toContain("Use on ANY");
+  });
+
+  it.each([
+    ["software-security-auditor", "감사자는 새 재현 코드를 작성·실행하지 않고"],
+    ["independent-audit-gate", "감사자는 새 재현 코드를 직접 작성하거나 실행하지 않는다"],
+    ["session-board", "공유 checkout 수정 전에"],
+    ["recovery-strategy-selector", "원본 diagnosis request·외부 동결 digest"],
+    ["blocker-diagnostician", "read-only 검사도 명시적 허용 없이는"],
+    ["independent-deliberation-panel", "worker를 한 명도 instantiate하지 않는다"],
+  ])("preserves %s omitted context through common REQ and JEV", async (skillId, needle) => {
+    const inventory = await loadSkillInventory({ root: process.cwd() });
+    expect(inventory.issues).toEqual([]);
+    const originalPrompt = "인용: ‘수정한다’\r\n실제 요청: 읽기 전용. e\u0301  끝: 수정·push 금지.";
+    const request = createClassificationRequest({ requestId: "metadata-context", operationId: "metadata-context", originalPrompt, inventory, classificationCriteriaRef: "criteria:metadata-regression" });
+    const projected = projectClassificationRequest(request);
+    const wire = jevNoulWireAdapter.encode(request, { modelId: "synthetic-local-only" } as ProviderProfile) as { state: { originalPrompt: string }; questions: Record<string, { instructions: { skill: unknown } }> };
+    expect(wire.state.originalPrompt).toBe(originalPrompt);
+    expect(Object.keys(wire.questions)).toHaveLength(24);
+    for (const skill of [inventory.skills.find(s => s.skillId === skillId), request.skills.find(s => s.skillId === skillId), projected.payload.skills.find(s => s.skillId === skillId), wire.questions[skillId]!.instructions.skill]) expect(JSON.stringify(skill)).toContain(needle);
+  });
+
+  it("preserves every registry precondition as verbatim source evidence", async () => {
+    const registry = JSON.parse(await readFile("skills/registry.json", "utf8")) as { skills: { skillId: string; providers: { phase: string; capabilities: string[]; preconditions: string[] }[] }[] };
+    const inventory = await loadSkillInventory({ root: process.cwd() });
+    expect(inventory.issues).toEqual([]);
+    for (const entry of registry.skills) {
+      const skill = inventory.skills.find(s => s.skillId === entry.skillId)!;
+      for (const provider of entry.providers) for (const precondition of provider.preconditions) {
+        const bound = skill.applicability.filter(text => text.startsWith("{")).map(text => JSON.parse(text));
+        expect(bound, entry.skillId).toContainEqual({ phase: provider.phase, capabilities: provider.capabilities, precondition });
+      }
+      if (entry.providers.some(provider => provider.preconditions.length)) expect(skill.sourceMap).toContainEqual(expect.objectContaining({ field: "applicability", path: "skills/registry.json" }));
+    }
+  });
+
+  it.each([
+    ["orchestrator", "skills/orchestrator/SKILL.md", 18],
+    ["orchestrator", "skills/orchestrator/SKILL.md", 19],
+    ["orchestrator", "skills/orchestrator/SKILL.md", 26],
+    ["evaluation-validity-auditor", "skills/evaluation-validity-auditor/references/entry-details.md", 5],
+    ["evaluation-validity-auditor", "skills/evaluation-validity-auditor/references/entry-details.md", 6],
+    ["korean-prose-editor", "skills/korean-prose-editor/references/entry-details.md", 9],
+    ["korean-prose-editor", "skills/korean-prose-editor/references/entry-details.md", 3],
+    ["session-board", "skills/session-board/SKILL.md", 19],
+    ["session-board", "skills/session-board/SKILL.md", 21],
+  ])("retains contextual subject/phase/antecedent for %s:%s:%i", async (skillId, sourcePath, lineNumber) => {
+    const line = (await readFile(String(sourcePath), "utf8")).split("\n")[Number(lineNumber) - 1]!.trim();
+    const inventory = await loadSkillInventory({ root: process.cwd() });
+    const skill = inventory.skills.find(candidate => candidate.skillId === skillId)!;
+    expect(skill.applicability.join("\n")).toContain(line);
+    expect(skill.exclusions.some(text => line.includes(text))).toBe(false);
+  });
+
+  it("keeps the update-session tool antecedent together with its subagent restriction", async () => {
+    const context = (await readFile("skills/session-board/SKILL.md", "utf8")).split("\n").slice(14, 19).join("\n").trim();
+    const inventory = await loadSkillInventory({ root: process.cwd() });
+    const skill = inventory.skills.find(candidate => candidate.skillId === "session-board")!;
+    expect(skill.applicability.join("\n")).toContain(context);
+  });
+
+  it("extracts UTF-8 clause ranges without copying or rewriting source prose", async () => {
+    const root = await fixture(); await addSkill(root);
+    const skillFile = path.join(root, "skills/skill-z17/SKILL.md");
+    const text = await readFile(skillFile, "utf8");
+    const positive = "중복·유실 불변조건 분석.", negative = "일반 설명에는 사용하지 않는다.";
+    const line = text.split("\n")[2]!;
+    const source = (phrase: string) => ({ path: "skills/skill-z17/SKILL.md", startLine: 3, endLine: 3, digest: hash(text), startByte: Buffer.byteLength(line.slice(0, line.indexOf(phrase))), endByte: Buffer.byteLength(line.slice(0, line.indexOf(phrase) + phrase.length)) });
+    await metadata(root, value => { value.applicability = [source(positive), source(positive)]; value.exclusions = [source(negative)]; });
+    const inventory = await loadSkillInventory({ root });
+    expect(inventory.issues).toEqual([]);
+    expect(inventory.skills[0]).toMatchObject({ applicability: [positive], exclusions: [negative] });
+    expect(await readFile(skillFile, "utf8")).toBe(text);
+    const request = createClassificationRequest({ requestId: "utf8-clause", operationId: "utf8-clause", originalPrompt: "읽기 전용", inventory, classificationCriteriaRef: "criteria" });
+    expect(() => projectClassificationRequest(request)).not.toThrow();
+  });
+
+  it.each([
+    { startByte: 1 },
+    { endByte: 8 },
+    { startByte: 0, endByte: 0 },
+    { startByte: 10, endByte: 3 },
+    { startByte: 0, endByte: 10000 },
+    { startByte: 14, endByte: 15 },
+  ])("rejects invalid/partial/mid-codepoint clause bounds %j", async range => {
+    const root = await fixture(); await addSkill(root);
+    await metadata(root, value => { value.applicability = [{ ...(value.applicability as object[])[0], startLine: 3, endLine: 3, ...range }]; });
+    const inventory = await loadSkillInventory({ root });
+    expect(inventory.skills).toEqual([]);
+    expect(inventory.issues).toContainEqual({ skillId: "skill-z17", code: "SOURCE_RANGE_INVALID", field: "applicability" });
   });
 });

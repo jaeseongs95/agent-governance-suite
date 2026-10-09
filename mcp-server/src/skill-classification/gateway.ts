@@ -1,10 +1,13 @@
 import { readFile } from "node:fs/promises";
+import {readFileSync, realpathSync, statSync} from "node:fs";
+import {createHash} from "node:crypto";
 import path from "node:path";
 import { z } from "zod";
 import type { ExecutionContextV1 } from "../../../contracts/types.js";
-import { loadSkillInventory } from "./inventory.js";
+import { loadHostObservedInventory, type ObservedHostInventory } from "./host-discovery-adapter.js";
 import { createClassificationRequest, digestClassificationValue } from "./request.js";
-import { SkillClassificationService } from "./service.js";
+import {validateProviderProfile} from "./profiles.js";
+import { SkillClassificationService, MAX_CLASSIFICATION_TIMEOUT_MS } from "./service.js";
 import { decisionSchema, validateDecision } from "./validation.js";
 import type { ClassificationConfig, ClassificationResult, ClassificationSnapshot, ProviderProfileRegistry, SkillSelectionDecisionV1, SkillClassificationRequestV1 } from "./types.js";
 
@@ -19,11 +22,38 @@ export const classificationInputSchema = z.strictObject({
   publicSynthetic: z.boolean(),
 });
 export const selectionInputSchema = z.strictObject({schemaVersion: z.literal("1.0.0"), operationId: z.string().min(1), decision: decisionSchema});
-export interface ClassificationRuntimeSnapshot {config: ClassificationConfig; registry: ProviderProfileRegistry; allowRemotePrivateContent: boolean; approvedPublicRequestDigests?: string[]; providerRuntimeRef?: string | null; nativeAdapterDefinitionsRef?: string | null; externalSkillRoots?: string[]}
+export interface ClassificationRuntimeSnapshot {config: ClassificationConfig; registry: ProviderProfileRegistry; allowRemotePrivateContent: boolean; approvedPublicRequestDigests?: string[]; providerRuntimeRef?: string | null; nativeAdapterDefinitionsRef?: string | null; externalSkillRoots?: string[]; hostDiscoveryRef?: string | null}
 export interface CurrentClassificationTask {taskRevision: string | null; requestDigest: string; cancelled: boolean; sourceRef: string}
-interface OperationIdentity {intakeDigest: string; runtimeDigest: string; runtimeObservation: string | null; task: CurrentClassificationTask | null}
+interface OperationIdentity {intakeDigest: string; runtimeDigest: string; runtimeObservation: string | null; hostDiscoveryDigest: string | null; task: CurrentClassificationTask | null}
 interface StoredOperation extends OperationIdentity {result: ClassificationResult; explicit: string[]; required: string[]; decision: SkillSelectionDecisionV1 | null; actorId: string | null}
 interface PendingOperation extends OperationIdentity {result: Promise<ClassificationResult>}
+
+/** The loader owns these references. Canonical virtual bytes are fenced by the actual projection reference. */
+function sourceFence(root: string, request: SkillClassificationRequestV1): () => boolean {
+  try {
+    const references = new Map<string, string>();
+    for (const skill of request.skills) for (const source of skill.sourceRefs) {
+      if (source.path.startsWith("canonical:")) continue;
+      const prior = references.get(source.path);
+      if (prior !== undefined && prior !== source.digest) return () => false;
+      references.set(source.path, source.digest);
+    }
+    if (references.size > 1024) return () => false;
+    const pins = [...references].map(([reference, digest]) => {const file = path.resolve(root, reference); return {file, real: realpathSync(file), digest};});
+    return () => {
+      try {
+        let totalBytes = 0;
+        return pins.every(pin => {
+          if (realpathSync(pin.file) !== pin.real) return false;
+          const status = statSync(pin.real);
+          totalBytes += status.size;
+          return status.isFile() && totalBytes <= 8 * 1024 * 1024
+            && `sha256:${createHash("sha256").update(readFileSync(pin.real)).digest("hex")}` === pin.digest;
+        });
+      } catch {return false;}
+    };
+  } catch {return () => false;}
+}
 export interface SkillClassificationGateway {
   inventory(): Promise<unknown>;
   classify(input: unknown, observation?: ExecutionContextV1 | null): Promise<unknown>;
@@ -40,25 +70,35 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
     readRuntime: () => Promise<ClassificationRuntimeSnapshot>;
     observeTask?: (request: SkillClassificationRequestV1, observation: ExecutionContextV1 | null) => CurrentClassificationTask | null;
     observeRuntime?: () => string | null;
+    /** Server-owned observer; callers cannot supply host membership or enablement. */
+    observeHostSkills?: () => Promise<unknown>;
     maximumOperations?: number;
     now?: () => Date;
   }) {}
+  private loadInventory(runtime: Pick<ClassificationRuntimeSnapshot, "externalSkillRoots" | "hostDiscoveryRef">): Promise<ObservedHostInventory> {
+    return loadHostObservedInventory({root: this.options.root, ...(this.options.now ? {now: this.options.now} : {}),
+      ...(runtime.externalSkillRoots ? {externalSkillRoots: runtime.externalSkillRoots} : {}),
+      ...(runtime.hostDiscoveryRef !== undefined ? {hostDiscoveryRef: runtime.hostDiscoveryRef} : {}),
+      ...(this.options.observeHostSkills ? {observeHostSkills: this.options.observeHostSkills} : {})});
+  }
   async inventory() {
     try {
       const runtime = structuredClone(await this.options.readRuntime());
-      return await loadSkillInventory({root: this.options.root, ...(runtime.externalSkillRoots ? {externalSkillRoots: runtime.externalSkillRoots} : {})});
+      const {inventory, discovery} = await this.loadInventory(runtime);
+      return {...inventory, discovery};
     } catch {
-      const inventory = await loadSkillInventory({root: this.options.root});
+      const {inventory, discovery} = await this.loadInventory({});
       inventory.issues.push({skillId: null, code: "CONFIGURED_DISCOVERY_UNAVAILABLE", field: "classificationConfig"});
-      return inventory;
+      inventory.inventoryDigest = digestClassificationValue({inventoryDigest: inventory.inventoryDigest, issues: inventory.issues});
+      return {...inventory, discovery: {...discovery, status: discovery.status === "UNAVAILABLE" ? "UNAVAILABLE" as const : "INCOMPLETE" as const}};
     }
   }
   async classify(raw: unknown, observation: ExecutionContextV1 | null = null) {
     const input = classificationInputSchema.parse(raw);
     const runtimeObservation = this.options.observeRuntime?.() ?? null;
     const runtime = structuredClone(await this.options.readRuntime());
-    const inventory = await loadSkillInventory({root: this.options.root, ...(runtime.externalSkillRoots ? {externalSkillRoots: runtime.externalSkillRoots} : {})});
-    if (inventory.issues.length > 0) return {status: "NEEDS_INPUT", errors: inventory.issues, response: null, agentSelectedSkillIds: null};
+    const {inventory, discovery, observationDigest: hostDiscoveryDigest, expiresAt: hostExpiresAt} = await this.loadInventory(runtime);
+    if (inventory.issues.length > 0) return {status: "NEEDS_INPUT", errors: inventory.issues, discovery, response: null, agentSelectedSkillIds: null};
     const request = createClassificationRequest({requestId: input.requestId, operationId: input.operationId, originalPrompt: input.originalPrompt,
       confirmedContext: input.confirmedContext, contextSources: input.contextSources, inventory, classificationCriteriaRef: "skills/orchestrator/references/skill-classification.md"});
     // Approval binds every transmitted context and inventory byte, not just the prompt.
@@ -77,27 +117,30 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
     const pending = this.pendingOperations.get(input.operationId);
     const reserved = existing ?? pending;
     if (reserved && reserved.intakeDigest !== intakeDigest) throw new Error("OPERATION_DIGEST_CONFLICT");
-    if (reserved && (reserved.runtimeDigest !== runtimeDigest || reserved.runtimeObservation !== runtimeObservation
+    if (reserved && (reserved.runtimeDigest !== runtimeDigest || reserved.runtimeObservation !== runtimeObservation || reserved.hostDiscoveryDigest !== hostDiscoveryDigest
       || (reserved.task && (!task || task.cancelled || reserved.task.sourceRef !== task.sourceRef || reserved.task.taskRevision !== task.taskRevision || reserved.task.requestDigest !== task.requestDigest)))) throw new Error("STALE_CLASSIFICATION_OPERATION");
     if (!reserved && this.operations.size + this.pendingOperations.size >= (this.options.maximumOperations ?? 256)) throw new Error("OPERATION_CAPACITY_EXCEEDED");
     const snapshot: ClassificationSnapshot = {taskRevision: request.confirmedContext.taskRevision, requestDigest: request.requestDigest, inventoryDigest: request.inventoryDigest, configRevision: runtime.config.configRevision, profileRevision: runtime.registry.profileRevision, cancelled: task?.cancelled ?? false};
+    const sourcesCurrent = sourceFence(this.options.root, request);
     const invoke = () => this.options.service.classify({request, config: runtime.config, registry: runtime.registry, currentVendorId: input.vendorContext.vendorId,
       getCurrentSnapshot: () => {
         const current = this.options.observeTask?.(request, observation) ?? null;
-        return {...snapshot, cancelled: (this.options.observeRuntime !== undefined && runtimeObservation !== this.options.observeRuntime())
+        const sourcesUnchanged = sourcesCurrent();
+        return {...snapshot, cancelled: !sourcesUnchanged || (hostExpiresAt !== null && Date.parse(hostExpiresAt) <= (this.options.now?.() ?? new Date()).getTime())
+          || (this.options.observeRuntime !== undefined && runtimeObservation !== this.options.observeRuntime())
           || (task !== null && (current === null || current.cancelled || current.sourceRef !== task.sourceRef || current.requestDigest !== task.requestDigest || current.taskRevision !== task.taskRevision))};
       },
     });
     let result: ClassificationResult;
-    if (existing) result = existing.result;
+    if (existing) result = await invoke();
     else if (pending) result = await pending.result;
     else {
       // Reserve synchronously before invoking any asynchronous provider. Followers
       // can join this exact intake but cannot replace its actor/vendor/obligations.
-      const flight: PendingOperation = {intakeDigest, runtimeDigest, runtimeObservation, task, result: Promise.resolve().then(invoke).then(value => {
+      const flight: PendingOperation = {intakeDigest, runtimeDigest, runtimeObservation, hostDiscoveryDigest, task, result: Promise.resolve().then(invoke).then(value => {
         this.pendingOperations.delete(input.operationId);
         this.operations.set(input.operationId, {result: value, explicit: [...input.explicitSkillIds], required: [...input.ruleRequiredSkillIds],
-          decision: null, intakeDigest, runtimeDigest, runtimeObservation, task, actorId});
+          decision: null, intakeDigest, runtimeDigest, runtimeObservation, hostDiscoveryDigest, task, actorId});
         return value;
       }).finally(() => { if (this.pendingOperations.get(input.operationId) === flight) this.pendingOperations.delete(input.operationId); })};
       this.pendingOperations.set(input.operationId, flight);
@@ -105,7 +148,7 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
     }
     const completed = this.operations.get(input.operationId);
     return {result, classificationResponseRef: digestClassificationValue(result.response), agentSelectedSkillIds: completed?.decision?.agentSelectedSkillIds ?? null,
-      selectionStatus: completed?.decision?.selectionStatus ?? "PROPOSED", adviceApplied: completed?.decision?.adviceApplied ?? false};
+      selectionStatus: completed?.decision?.selectionStatus ?? "PROPOSED", adviceApplied: completed?.decision?.adviceApplied ?? false, discovery};
   }
   async accept(raw: unknown, observation: ExecutionContextV1 | null) {
     const input = selectionInputSchema.parse(raw);
@@ -120,8 +163,8 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
     if (input.decision.hostReceipt !== null) throw new Error("CALLER_SELECTION_RECEIPT_REJECTED");
     if (input.decision.agentSelectedSkillIds === null) throw new Error("AGENT_SELECTION_MISSING");
     if (JSON.stringify(operation.explicit) !== JSON.stringify(input.decision.explicitSkillIds) || JSON.stringify(operation.required) !== JSON.stringify(input.decision.ruleRequiredSkillIds)) throw new Error("REQUIRED_SKILL_SNAPSHOT_CHANGED");
-    const runtime = await this.options.readRuntime();
-    const inventory = await loadSkillInventory({root: this.options.root, ...(runtime.externalSkillRoots ? {externalSkillRoots: runtime.externalSkillRoots} : {})});
+    const runtime = structuredClone(await this.options.readRuntime());
+    const {inventory, discovery, observationDigest, expiresAt} = await this.loadInventory(runtime);
     const current: ClassificationSnapshot = {...operation.result.snapshot, inventoryDigest: inventory.inventoryDigest, configRevision: runtime.config.configRevision, profileRevision: runtime.registry.profileRevision};
     const decision: SkillSelectionDecisionV1 = {...input.decision, hostReceipt: {
       receiptId: observation.observationId, host: observation.actorId.split(":")[0]!, requestDigest: input.decision.requestDigest,
@@ -130,11 +173,26 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
     const checked = validateDecision(operation.result, decision, current);
     if (this.options.observeRuntime && operation.runtimeObservation !== this.options.observeRuntime()) {checked.valid = false; checked.errors.push("RUNTIME_SOURCE_CHANGED");}
     if (operation.runtimeDigest !== digestClassificationValue(runtime)) {checked.valid = false; checked.errors.push("RUNTIME_SOURCE_CHANGED");}
+    if (operation.hostDiscoveryDigest !== observationDigest) {checked.valid = false; checked.errors.push("HOST_DISCOVERY_CHANGED");}
+    if (expiresAt !== null && Date.parse(expiresAt) <= (this.options.now?.() ?? new Date()).getTime()) {checked.valid = false; checked.errors.push("HOST_DISCOVERY_EXPIRED");}
     if (inventory.issues.length > 0) {checked.valid = false; checked.errors.push("CURRENT_INVENTORY_INVALID");}
     if (!checked.valid) return {...checked, agentSelectedSkillIds: null};
     if (operation.decision !== null && digestClassificationValue({...operation.decision, hostReceipt: null}) !== digestClassificationValue(input.decision)) throw new Error("SELECTION_ALREADY_RECORDED");
+    // No await between this current-task fence and the in-memory selection commit.
+    const finalTask = this.options.observeTask?.(operation.result.request, observation) ?? null;
+    if (!finalTask || finalTask.cancelled || finalTask.taskRevision !== operation.task.taskRevision || finalTask.requestDigest !== operation.task.requestDigest || finalTask.sourceRef !== operation.task.sourceRef) {
+      return {valid: false, errors: ["HOST_TASK_CHANGED_OR_NOT_OBSERVED"], agentSelectedSkillIds: null};
+    }
+    // Recheck the exact attempted profile after every await and before accepting.
+    const successful = operation.result.response.error === null && ["SUCCESS", "PARTIAL", "UNCERTAIN"].includes(operation.result.response.status);
+    if (successful) {
+      const attempt = operation.result.attempts.at(-1);
+      const profile = runtime.registry.profiles.find(profile => profile.profileId === attempt?.profileId);
+      const invalid = profile ? validateProviderProfile(profile, operation.result.request, (this.options.now?.() ?? new Date()).getTime()) : "PROFILE_UNAVAILABLE";
+      if (invalid) return {valid: false, errors: [invalid], agentSelectedSkillIds: null};
+    }
     operation.decision ??= decision;
-    return {...checked, decision: operation.decision, admissionStatus: "NOT_EVALUATED", readStatus: "NOT_OBSERVED", appliedStatus: "NOT_OBSERVED", verifiedStatus: "NOT_RUN"};
+    return {...checked, decision: operation.decision, discovery, admissionStatus: "NOT_EVALUATED", readStatus: "NOT_OBSERVED", appliedStatus: "NOT_OBSERVED", verifiedStatus: "NOT_RUN"};
   }
 }
 
@@ -145,12 +203,13 @@ export async function readClassificationRuntime(file: string | undefined, root: 
   const absolute = path.resolve(root, file);
   const bytes = await readFile(absolute);
   if (bytes.length > 1024 * 1024) throw new Error("CLASSIFICATION_CONFIG_TOO_LARGE");
-  const raw = z.strictObject({config: z.strictObject({jevEnabled: z.boolean(), mode: z.enum(["shadow", "select"]), providerProfileRegistryRef: z.string().min(1), externalClassificationAllowed: z.boolean(), configRevision: z.string().min(1), timeoutMs: z.number().int().positive()}), allowRemotePrivateContent: z.boolean(), approvedPublicRequestDigests: z.array(z.string().regex(/^sha256:[a-f0-9]{64}$/u)).optional(), providerRuntimeRef: z.string().min(1).nullable().optional(), nativeAdapterDefinitionsRef: z.string().min(1).nullable().optional(), externalSkillRoots: z.array(z.string().min(1)).optional()}).parse(JSON.parse(bytes.toString("utf8")));
+  const raw = z.strictObject({config: z.strictObject({jevEnabled: z.boolean(), mode: z.enum(["shadow", "select"]), providerProfileRegistryRef: z.string().min(1), externalClassificationAllowed: z.boolean(), configRevision: z.string().min(1), timeoutMs: z.number().int().positive().max(MAX_CLASSIFICATION_TIMEOUT_MS)}), allowRemotePrivateContent: z.boolean(), approvedPublicRequestDigests: z.array(z.string().regex(/^sha256:[a-f0-9]{64}$/u)).optional(), providerRuntimeRef: z.string().min(1).nullable().optional(), nativeAdapterDefinitionsRef: z.string().min(1).nullable().optional(), externalSkillRoots: z.array(z.string().min(1)).optional(), hostDiscoveryRef: z.string().min(1).nullable().optional()}).parse(JSON.parse(bytes.toString("utf8")));
   const {loadProviderProfileRegistry} = await import("./profiles.js");
   const registry = await loadProviderProfileRegistry(path.resolve(path.dirname(absolute), raw.config.providerProfileRegistryRef));
   return {config: raw.config, allowRemotePrivateContent: raw.allowRemotePrivateContent, registry,
     ...(raw.approvedPublicRequestDigests ? {approvedPublicRequestDigests: raw.approvedPublicRequestDigests} : {}),
     ...(raw.providerRuntimeRef !== undefined ? {providerRuntimeRef: raw.providerRuntimeRef === null ? null : path.resolve(path.dirname(absolute), raw.providerRuntimeRef)} : {}),
     ...(raw.nativeAdapterDefinitionsRef !== undefined ? {nativeAdapterDefinitionsRef: raw.nativeAdapterDefinitionsRef === null ? null : path.resolve(path.dirname(absolute), raw.nativeAdapterDefinitionsRef)} : {}),
+    ...(raw.hostDiscoveryRef !== undefined ? {hostDiscoveryRef: raw.hostDiscoveryRef === null ? null : path.resolve(path.dirname(absolute), raw.hostDiscoveryRef)} : {}),
     ...(raw.externalSkillRoots ? {externalSkillRoots: raw.externalSkillRoots.map(directory => path.resolve(path.dirname(absolute), directory))} : {})};
 }

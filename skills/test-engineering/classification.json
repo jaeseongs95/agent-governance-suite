@@ -17,13 +17,33 @@
       "path": "skills/test-engineering/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "startByte": 0,
+      "endByte": 231
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "startByte": 339,
+      "endByte": 340
     },
     {
       "path": "skills/test-engineering/SKILL.md",
       "startLine": 11,
-      "endLine": 13,
-      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      "endLine": 12,
+      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "startByte": 0,
+      "endByte": 89
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "startLine": 12,
+      "endLine": 12,
+      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "startByte": 188,
+      "endByte": 304
     }
   ],
   "exclusions": [
@@ -31,13 +51,17 @@
       "path": "skills/test-engineering/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "startByte": 232,
+      "endByte": 339
     },
     {
       "path": "skills/test-engineering/SKILL.md",
-      "startLine": 11,
-      "endLine": 13,
-      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      "startLine": 12,
+      "endLine": 12,
+      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "startByte": 70,
+      "endByte": 187
     }
   ]
 }

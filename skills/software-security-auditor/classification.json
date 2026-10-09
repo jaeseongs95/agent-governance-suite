@@ -19,13 +19,17 @@
       "path": "skills/software-security-auditor/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "startByte": 0,
+      "endByte": 182
     },
     {
       "path": "skills/software-security-auditor/SKILL.md",
-      "startLine": 8,
-      "endLine": 12,
-      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      "startLine": 9,
+      "endLine": 11,
+      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "startByte": 0,
+      "endByte": 106
     }
   ],
   "exclusions": [
@@ -33,12 +37,30 @@
       "path": "skills/software-security-auditor/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "startByte": 183,
+      "endByte": 300
     },
     {
       "path": "skills/software-security-auditor/SKILL.md",
-      "startLine": 8,
-      "endLine": 12,
+      "startLine": 11,
+      "endLine": 11,
+      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "startByte": 78,
+      "endByte": 168
+    },
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "startLine": 11,
+      "endLine": 11,
+      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "startByte": 169,
+      "endByte": 283
+    },
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "startLine": 18,
+      "endLine": 18,
       "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
     }
   ]

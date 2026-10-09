@@ -16,24 +16,60 @@
       "path": "skills/coordinate-subagents/SKILL.md",
       "startLine": 3,
       "endLine": 3,
+      "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0",
+      "startByte": 0,
+      "endByte": 236
+    },
+    {
+      "path": "skills/coordinate-subagents/SKILL.md",
+      "startLine": 9,
+      "endLine": 9,
       "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0"
     },
     {
       "path": "skills/coordinate-subagents/SKILL.md",
-      "startLine": 8,
-      "endLine": 21,
+      "startLine": 13,
+      "endLine": 17,
+      "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0"
+    },
+    {
+      "path": "skills/coordinate-subagents/SKILL.md",
+      "startLine": 19,
+      "endLine": 20,
       "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0"
     },
     {
       "path": "skills/coordinate-subagents/references/entry-details.md",
       "startLine": 1,
-      "endLine": 22,
+      "endLine": 14,
+      "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/entry-details.md",
+      "startLine": 18,
+      "endLine": 19,
       "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604"
     },
     {
       "path": "skills/coordinate-subagents/references/entry-details.md",
       "startLine": 23,
-      "endLine": 33,
+      "endLine": 28,
+      "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604",
+      "startByte": 0,
+      "endByte": 496
+    },
+    {
+      "path": "skills/coordinate-subagents/references/entry-details.md",
+      "startLine": 30,
+      "endLine": 30,
+      "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604",
+      "startByte": 0,
+      "endByte": 147
+    },
+    {
+      "path": "skills/coordinate-subagents/references/entry-details.md",
+      "startLine": 32,
+      "endLine": 32,
       "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604"
     }
   ],
@@ -42,25 +78,49 @@
       "path": "skills/coordinate-subagents/SKILL.md",
       "startLine": 3,
       "endLine": 3,
+      "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0",
+      "startByte": 237,
+      "endByte": 342
+    },
+    {
+      "path": "skills/coordinate-subagents/SKILL.md",
+      "startLine": 11,
+      "endLine": 11,
       "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0"
     },
     {
       "path": "skills/coordinate-subagents/SKILL.md",
-      "startLine": 8,
-      "endLine": 21,
+      "startLine": 18,
+      "endLine": 18,
       "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0"
     },
     {
       "path": "skills/coordinate-subagents/references/entry-details.md",
-      "startLine": 1,
-      "endLine": 22,
+      "startLine": 16,
+      "endLine": 16,
       "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604"
     },
     {
       "path": "skills/coordinate-subagents/references/entry-details.md",
-      "startLine": 23,
-      "endLine": 33,
+      "startLine": 21,
+      "endLine": 21,
       "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604"
+    },
+    {
+      "path": "skills/coordinate-subagents/references/entry-details.md",
+      "startLine": 28,
+      "endLine": 28,
+      "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604",
+      "startByte": 351,
+      "endByte": 480
+    },
+    {
+      "path": "skills/coordinate-subagents/references/entry-details.md",
+      "startLine": 30,
+      "endLine": 30,
+      "digest": "sha256:2a21a37d152cb8854b2a973ed61887bcdd766e16f64a592c4375e1de7df39604",
+      "startByte": 148,
+      "endByte": 483
     }
   ]
 }

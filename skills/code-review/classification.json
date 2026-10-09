@@ -16,13 +16,33 @@
       "path": "skills/code-review/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "startByte": 0,
+      "endByte": 206
+    },
+    {
+      "path": "skills/code-review/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "startByte": 375,
+      "endByte": 376
     },
     {
       "path": "skills/code-review/SKILL.md",
       "startLine": 11,
-      "endLine": 13,
-      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      "endLine": 12,
+      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "startByte": 0,
+      "endByte": 66
+    },
+    {
+      "path": "skills/code-review/SKILL.md",
+      "startLine": 12,
+      "endLine": 12,
+      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "startByte": 165,
+      "endByte": 264
     }
   ],
   "exclusions": [
@@ -30,13 +50,25 @@
       "path": "skills/code-review/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "startByte": 207,
+      "endByte": 375
     },
     {
       "path": "skills/code-review/SKILL.md",
-      "startLine": 11,
-      "endLine": 13,
-      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      "startLine": 12,
+      "endLine": 12,
+      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "startByte": 47,
+      "endByte": 164
+    },
+    {
+      "path": "skills/code-review/SKILL.md",
+      "startLine": 12,
+      "endLine": 12,
+      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "startByte": 265,
+      "endByte": 377
     }
   ]
 }

@@ -107,15 +107,22 @@ export interface ClassificationUsage {
   cachedInputTokens: number | null;
   actualCostUsd: number | null;
 }
+export interface ClassificationRateLimitObservation {
+  httpStatus: 429 | 529;
+  retryAfter: {kind: "delay-seconds"; seconds: number} | {kind: "http-date"; at: string} | null;
+}
+export interface ClassificationScoreDiagnostics {scoreKind: string; scores: {skillId: string; value: number}[]}
 export interface ProviderEvaluation {
   response: SkillClassificationResponseV1;
   usage: ClassificationUsage;
   dispatchState: DispatchState;
-  diagnostics: {scoreKind: string; scores: {skillId: string; value: number}[]} | null;
+  diagnostics: ClassificationScoreDiagnostics | null;
+  rateLimitObservation?: ClassificationRateLimitObservation | null;
 }
 export interface SkillClassificationProviderPort {
   availability(profile: ProviderProfile): Promise<ProviderAvailability>;
-  classify(request: SkillClassificationRequestV1, profile: ProviderProfile, signal: AbortSignal): Promise<ProviderEvaluation>;
+  /** Synchronous trusted state fence, consumed immediately before the actual side effect. */
+  classify(request: SkillClassificationRequestV1, profile: ProviderProfile, signal: AbortSignal, beforeDispatch?: () => void): Promise<ProviderEvaluation>;
 }
 export interface ClassificationAttempt {
   providerKind: "jev" | "vendor";
@@ -128,6 +135,8 @@ export interface ClassificationAttempt {
   timedOut: boolean;
   usage: ClassificationUsage;
   reservedCostUsd: number;
+  diagnostics?: ClassificationScoreDiagnostics | null;
+  rateLimitObservation?: ClassificationRateLimitObservation | null;
 }
 export interface ClassificationSnapshot {
   taskRevision: string | null;
