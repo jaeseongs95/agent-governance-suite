@@ -1,0 +1,13 @@
+{
+  "scopeVerdict": "PASS",
+  "scopeLimitation": "Preparation evidence scope only; not product acceptance or independent audit",
+  "publicationPreflightVerdict": "READY",
+  "explicitUserPublicationAuthorization": true,
+  "preflightReceiptValid": true,
+  "rollbackReversePatchCheckExit": 0,
+  "productSourceWorkingTreeUnchanged": true,
+  "productOrApiTrialPerformed": false,
+  "baselineEvidenceCommit": "81470edc3f8256ff6ce4fb4e988427215fa29800",
+  "uniqueRunPath": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS34/prep-20261009T074324Z-7920ea6b/",
+  "publicData": "Only sanitized reports, already-public source bytes, evidence and hash lists; no original chat or credential contents"
+}

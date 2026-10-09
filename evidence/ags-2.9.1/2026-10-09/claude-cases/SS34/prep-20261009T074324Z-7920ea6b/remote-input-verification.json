@@ -1,0 +1,138 @@
+{
+  "sourceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "checks": [
+    {
+      "path": "README.md",
+      "url": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS34/README.md",
+      "bytes": 5459,
+      "sha256": "153a4a457953e48c8e70f0b34deac879d4154f3f8b620df5939ce933aad81a0c",
+      "matchesFixedGitBlob": true
+    },
+    {
+      "path": "SHA256SUMS",
+      "url": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS34/SHA256SUMS",
+      "bytes": 1569,
+      "sha256": "e150b9135c8fafca36715c24714c21d311ecdef75ee9762f471d5cd6867ffe76",
+      "matchesFixedGitBlob": true
+    },
+    {
+      "path": "SS34.command.json",
+      "url": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS34/SS34.command.json",
+      "bytes": 502,
+      "sha256": "dbac8f17dcfa19a15ac4f46cddaad4416d4f4866f86dea5fe637f41fff4a5d31",
+      "matchesFixedGitBlob": true
+    },
+    {
+      "path": "SS34.engineering-test-result.json",
+      "url": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS34/SS34.engineering-test-result.json",
+      "bytes": 5692,
+      "sha256": "cdb62b99760a414897ca4bde8a5e6ac0856710eb4b59f44e3a93783af1b0c2c4",
+      "matchesFixedGitBlob": true
+    },
+    {
+      "path": "SS34.evidence-check-commands.json",
+      "url": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS34/SS34.evidence-check-commands.json",
+      "bytes": 472,
+      "sha256": "0d7e1d310619bb5ac3313066e55c9bf6774b6b0a3d4853d15f8804ee2b3c1951",
+      "matchesFixedGitBlob": true
+    },
+    {
+      "path": "SS34.fixture.json",
+      "url": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS34/SS34.fixture.json",
+      "bytes": 2517,
+      "sha256": "a544c140804ffcb7bc06971c3b16020cbee64ca8cdf4a1a343e0e3f40b426e1d",
+      "matchesFixedGitBlob": true
+    },
+    {
+      "path": "SS34.observations.json",
+      "url": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS34/SS34.observations.json",
+      "bytes": 46942,
+      "sha256": "726254312c89127854395671a460a6df2fb45d100b04956a822aea5f46e78b86",
+      "matchesFixedGitBlob": true
+    },
+    {
+      "path": "SS34.original-manifest.json",
+      "url": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS34/SS34.original-manifest.json",
+      "bytes": 2642,
+      "sha256": "ca11e66405213f013d0cc1f557a787c540d6e6f8482f5e82dc696fb1ce8fb06b",
+      "matchesFixedGitBlob": true
+    },
+    {
+      "path": "SS34.plan.json",
+      "url": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS34/SS34.plan.json",
+      "bytes": 22709,
+      "sha256": "286ab5a13ad6f4f407a335afc91bfff6e7830da8633afaff41e126e413082edf",
+      "matchesFixedGitBlob": true
+    },
+    {
+      "path": "SS34.proof-check.stderr.log",
+      "url": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS34/SS34.proof-check.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesFixedGitBlob": true
+    },
+    {
+      "path": "SS34.proof.json",
+      "url": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS34/SS34.proof.json",
+      "bytes": 13328,
+      "sha256": "e38fe50320928b3dcc079f43d4c9305192d534faf10f7821fa7f4e9257d11c4d",
+      "matchesFixedGitBlob": true
+    },
+    {
+      "path": "SS34.result.json",
+      "url": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS34/SS34.result.json",
+      "bytes": 22426,
+      "sha256": "8cfa5bae7d5f40baa058ac6eb8f2d9dafd25945475dd3105fb144a1b9f39809f",
+      "matchesFixedGitBlob": true
+    },
+    {
+      "path": "SS34.snapshot.json",
+      "url": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS34/SS34.snapshot.json",
+      "bytes": 1241,
+      "sha256": "bd09f291e4a073204cf1f1965a2de02bf903cf2b50f2c72a943323292d49d618",
+      "matchesFixedGitBlob": true
+    },
+    {
+      "path": "SS34.snapshot.stderr.log",
+      "url": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS34/SS34.snapshot.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchesFixedGitBlob": true
+    },
+    {
+      "path": "SS34.stderr.log",
+      "url": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS34/SS34.stderr.log",
+      "bytes": 5975,
+      "sha256": "243273aa04e84ec38a6848ec71000eecd6095d2642a7cf5846da1115b41a9f18",
+      "matchesFixedGitBlob": true
+    },
+    {
+      "path": "SS34.stdout.log",
+      "url": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS34/SS34.stdout.log",
+      "bytes": 3646,
+      "sha256": "23bf70bf6fc71f3d95a2fdc71cbaeaa4ec8ce1865b32e2e99667a1bcca95069b",
+      "matchesFixedGitBlob": true
+    },
+    {
+      "path": "SS34.vitest.json",
+      "url": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS34/SS34.vitest.json",
+      "bytes": 15586,
+      "sha256": "9c63819498536b89eb54a8fd9826dfa3430933d0bc3040dcfe243fcc69b19a75",
+      "matchesFixedGitBlob": true
+    },
+    {
+      "path": "manifest.json",
+      "url": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS34/manifest.json",
+      "bytes": 14546,
+      "sha256": "f881b83ca5d934d48d11e7488de10af065024d5090125a3090cf0794556a1753",
+      "matchesFixedGitBlob": true
+    },
+    {
+      "path": "reproduce/SS34.delegated.test.ts",
+      "url": "https://raw.githubusercontent.com/jaeseongs95/agent-governance-suite/af579e2caa8c09b380bdf88b5e9c675b0b0b9c68/evidence/ags-2.9.1/2026-10-09/cases/SS34/reproduce/SS34.delegated.test.ts",
+      "bytes": 16146,
+      "sha256": "7b2027888e0b9a60f1f9dd2e340a13e89d63364968042d758a1cda9e372af233",
+      "matchesFixedGitBlob": true
+    }
+  ]
+}

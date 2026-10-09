@@ -1,0 +1,77 @@
+{
+  "caseId": "SS34",
+  "status": "PREPARATION_COMPLETE_EXECUTION_BLOCKED",
+  "candidate": {
+    "name": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "provenance": "User-provided local fixed report only; not independently verified here",
+    "independentSourceVerdict": "AWAITING_PARENT",
+    "remotePublicationVerification": "AWAITING_PARENT",
+    "candidateTested": false
+  },
+  "requiredBeforeFirstPaidCall": [
+    "Parent sends independently verified current candidate commit/tree and fixed remote evidence; no main or c6a8019 substitution",
+    "Parent sends common exact Claude model ID, supported effort and API authentication invocation used successfully",
+    "Parent sends preflight outcome and permitted per-run settings/plugin/MCP/hook configuration without credentials",
+    "Parent supplies/freezes operator-owned host task and read-only artifact targets: originalPrompt remains null; no fabricated original input",
+    "Current Claude main-session host identity/attestation, actual tool exposure, independent admission and environment binding are available",
+    "Parent confirms any classification config/route/quota if classification is required; JEV remains forbidden until separately assigned",
+    "Current cost ledger is complete and expected call fits remaining soft budget"
+  ],
+  "executionSteps": [
+    {
+      "step": 1,
+      "action": "Create isolated scratch execution directory for the exact verified R17 tree, record immutable source and plugin/runtime hashes, and read its AGENTS.md and relevant Claude SKILL.md/references. Do not build/regenerate or modify product code."
+    },
+    {
+      "step": 2,
+      "action": "Apply only parent-provided API-authentication procedure to process-scoped settings; do not print/copy/publish keys or change persistent auth, permissions or network policies. Record model/effort/CLI/settings digests. Do not silently use --bare or --safe-mode to suppress required AGS hooks."
+    },
+    {
+      "step": 3,
+      "action": "Start actual Claude Code on the frozen operator-owned host task. Claude performs host tool calls; Sol manages fixtures, sanitized evidence, hashes and scoring only. Capture actual MCP exposure and current main-session host attestation without parent/subagent metadata substitution."
+    },
+    {
+      "step": 4,
+      "action": "Record raw recommendation and actual accepted host selection separately, using current request/inventory bindings and caller hostReceipt=null. Record needed/runnable independently. HTTP success, CLI presence and reported skill names do not establish selected."
+    },
+    {
+      "step": 5,
+      "action": "Capture actual skill/reference file read operations and digests. Promote only to read until current obligations connect to actual artifacts. Acquire independent execution admission before any applicable skill execution."
+    },
+    {
+      "step": 6,
+      "action": "Have Claude produce/read-only-review actual CS artifacts in the authorized scratch area. Record obligation IDs, candidate bindings and all descriptor-required capability phases. applied requires this evidence; no synthetic receipts or mock:// references establish host success."
+    },
+    {
+      "step": 7,
+      "action": "Run only planned verification against the same immutable candidate and environment. Capture argv/exit/status/sanitized artifacts and digests. verified requires direct planned evidence. No automatic independent-audit PASS."
+    },
+    {
+      "step": 8,
+      "action": "Evaluate all eight frozen variants and previously documented binding boundaries without changing expectations. Missing-K/shortened-phase-list and no-admission tests use isolated trace validation, never unauthorized real execution. Classify mock checks separately from actual host work."
+    },
+    {
+      "step": 9,
+      "action": "Keep NOT_OBSERVED/NOT_RUN for unsupported stages and record operational-evaluator errors without a synthetic semantic oracle. Publish sanitized evidence/hash manifests under a new unique SS34 run only, then read fixed remote files and compare byte hashes."
+    }
+  ],
+  "notYetCreated": [
+    "Executable API invocation/harness depending on common parent settings",
+    "Actual current-session receipts",
+    "Actual source candidate skill/reference digests",
+    "Actual admission receipt",
+    "Actual CS obligation/artifact/verification bundle"
+  ],
+  "forbidden": [
+    "product code edits",
+    "generated distribution edits",
+    "paid calls before parent prerequisites",
+    "JEV calls without separate allocation",
+    "persistent auth/settings/permission/network changes",
+    "force push",
+    "overwrite other work",
+    "secret/personal data/original chat publication"
+  ]
+}

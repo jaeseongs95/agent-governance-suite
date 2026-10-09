@@ -1,0 +1,52 @@
+{
+  "checkedAt": "2026-10-09T07:45:04.232344+00:00",
+  "sourceOfTooling": "local checkout; no candidate tested",
+  "commands": [
+    {
+      "argv": [
+        "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "2.1.286 (Claude Code)",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "node",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "v24.19.0",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "pnpm",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "11.19.0",
+      "stderr": ""
+    }
+  ],
+  "claudeExecutableSha256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+  "helpExit": 0,
+  "helpSha256": "13dd71866e4b6fde1a11de6fa26bd4f5866308794307ff0fb37804c03db8e0b2",
+  "confirmedFlags": [
+    "--plugin-dir",
+    "--mcp-config",
+    "--strict-mcp-config",
+    "--settings",
+    "--setting-sources",
+    "--model",
+    "--effort",
+    "--output-format",
+    "--max-budget-usd",
+    "--permission-mode",
+    "--bare"
+  ],
+  "keyInspected": false,
+  "authVerified": false,
+  "modelApiCalls": 0
+}

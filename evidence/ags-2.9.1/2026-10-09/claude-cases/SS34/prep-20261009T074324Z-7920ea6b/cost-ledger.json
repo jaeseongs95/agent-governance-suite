@@ -1,0 +1,44 @@
+{
+  "caseId": "SS34",
+  "currency": "USD",
+  "softBudget": 2.0,
+  "includesPreparation": true,
+  "totalReservedAcross39Cases": 78.0,
+  "reservationIsNotSpendTarget": true,
+  "spentUsd": 0.0,
+  "calls": [],
+  "totals": {
+    "claudeApiAttempts": 0,
+    "jevApiAttempts": 0,
+    "externalVendorApiAttempts": 0,
+    "failedAttempts": 0,
+    "retries": 0,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0
+  },
+  "resumeAccounting": {
+    "perAttemptFields": [
+      "timestamp",
+      "provider",
+      "modelId",
+      "requestId if non-sensitive",
+      "status",
+      "exit",
+      "elapsedMs",
+      "retryNumber",
+      "inputTokens",
+      "outputTokens",
+      "cacheCreationInputTokens",
+      "cacheReadInputTokens",
+      "actualCostUsd",
+      "cumulativeUsd",
+      "pricingSource",
+      "costKnown"
+    ],
+    "stopRule": "Before each next call, include all attempts, failures, retries and caches. Stop and report if near USD 2 or cost is unknown; do not assume failed calls are free. The CLI --max-budget-usd is an additional per-session guard, not a replacement for the cumulative ledger.",
+    "noAutomaticRetriesBeforeAccounting": true,
+    "jevAllocation": "NOT_ASSIGNED: do not invoke"
+  }
+}
