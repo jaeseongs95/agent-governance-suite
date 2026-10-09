@@ -1,0 +1,532 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS07",
+  "title": "보안 감사만 요청",
+  "status": "INCOMPLETE_WITH_EXISTING_DEFECTS",
+  "scope": "SS07 only; one frozen base variant; no other source case or whole-suite executions",
+  "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+  "targetBranch": "codex/skill-classification-2.9.1",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "identityCheck": "PASS: recomputed commit/tree/fixtureSHA/oracleDigest and all 8 SS07 oracle sourceRefs",
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "availableInRepo": false,
+    "basis": "embedded originalPrompt/sourceSpec.fields only; no missing source text or answer invented",
+    "fields": {
+      "입력": "“고정된 CLI·MCP 소스와 설정에서 경로 traversal과 권한 검사 누락을 보안 감사해 줘. 읽기 전용이며 수정과 운영 서비스 능동 검사는 금지야.”",
+      "필수추천": "R={SEC}.",
+      "금지추천 또는 행동": "P·CR·독립 완료 감사의 자동 추가; 운영 공격 실행·자동 수정·릴리스 승인.",
+      "허용선택": "A={}.",
+      "보류조건": "대상 소스가 없으면 감사 실행을 보류하고 요청할 자료를 명시한다.",
+      "통과기준": "SEC를 추천하고 일반 리뷰로 대체하지 않는다. 조사 산출물과 안전 보장을 구분한다.",
+      "증거": "E0, 명시 보안 감사 행동과 제한.",
+      "실행종류": "live."
+    }
+  },
+  "variants": [
+    {
+      "variantId": "base",
+      "offlineStatus": "COMPLETE_WITH_3_EXISTING_DEFECT_FAILURES",
+      "providerLive": "NOTRUN",
+      "hostLive": "NOTRUN",
+      "agentSelectionStatus": "NOTRUN",
+      "input": {
+        "originalPrompt": "고정된 CLI·MCP 소스와 설정에서 경로 traversal과 권한 검사 누락을 보안 감사해 줘. 읽기 전용이며 수정과 운영 서비스 능동 검사는 금지야.",
+        "requestRef": "SS07.request.json",
+        "requestDigest": "sha256:0c46740e5d3cbcd2784498e4c375701f0c6bd1584e68eb5aed330d2eefe2f5d5",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        }
+      },
+      "expected": {
+        "required": [
+          "software-security-auditor"
+        ],
+        "allowed": [],
+        "allowedConditions": {},
+        "forbidden": [
+          "ponytail",
+          "code-review",
+          "independent-audit-gate"
+        ],
+        "notApplicable": [
+          "test-engineering",
+          "cs-engineering",
+          "orchestrator",
+          "korean-prose-editor"
+        ],
+        "unadjudicated": [
+          "acceptance-evidence-validator",
+          "blocker-diagnostician",
+          "change-scope-guardian",
+          "codex-token-usage-analyzer",
+          "context-continuity",
+          "coordinate-subagents",
+          "evaluation-validity-auditor",
+          "independent-deliberation-panel",
+          "instruction-scope-resolver",
+          "iteration-frame-auditor",
+          "model-effort-advisor",
+          "mutation-risk-preflight",
+          "recovery-strategy-selector",
+          "session-board",
+          "task-contract",
+          "workspace-convention-profiler"
+        ],
+        "expectedSelection": "SELECTED",
+        "explicitSkillIds": [],
+        "ruleRequiredSkillIds": [],
+        "requiredReasons": [],
+        "sourceRefs": [
+          {
+            "skillId": "software-security-auditor",
+            "path": "skills/software-security-auditor/SKILL.md",
+            "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+          },
+          {
+            "skillId": "ponytail",
+            "path": "skills/ponytail/SKILL.md",
+            "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+          },
+          {
+            "skillId": "code-review",
+            "path": "skills/code-review/SKILL.md",
+            "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+          },
+          {
+            "skillId": "independent-audit-gate",
+            "path": "skills/independent-audit-gate/SKILL.md",
+            "digest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8"
+          },
+          {
+            "skillId": "test-engineering",
+            "path": "skills/test-engineering/SKILL.md",
+            "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+          },
+          {
+            "skillId": "cs-engineering",
+            "path": "skills/cs-engineering/SKILL.md",
+            "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+          },
+          {
+            "skillId": "orchestrator",
+            "path": "skills/orchestrator/SKILL.md",
+            "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+          },
+          {
+            "skillId": "korean-prose-editor",
+            "path": "skills/korean-prose-editor/SKILL.md",
+            "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+          }
+        ],
+        "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+      },
+      "observed": {
+        "actualClassification": null,
+        "agentSelectedSkillIds": null,
+        "hostReceipt": null,
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN",
+        "semanticAccuracy": null,
+        "offlineEvidenceRef": "SS07.observations.json",
+        "note": "Synthetic exact-SEC response tests evaluator/support contracts only; reading SKILL.md in this development task does not count as SS07 host read receipt."
+      },
+      "boundaryCheckCount": 16,
+      "passedChecks": 13,
+      "failedChecks": 3,
+      "evidence": [
+        "SS07.fixture.json",
+        "SS07.request.json",
+        "SS07.inventory.json",
+        "SS07.observations.json",
+        "SS07.vitest.json",
+        "SS07.test.stdout",
+        "SS07.test.stderr"
+      ]
+    }
+  ],
+  "runTypes": {
+    "existingRegression": {
+      "status": "NOTRUN",
+      "testsExecuted": 0,
+      "reason": "No explicit SS07 regression found; no other case tests, suite, bootstrap, selfcheck or past 21-run batch executed."
+    },
+    "newIsolatedBoundaries": {
+      "executionKind": "offline-mock/offline-static/offline-runtime/offline-cli/offline-contract",
+      "status": "FAIL",
+      "tests": 16,
+      "passes": 13,
+      "failures": 3,
+      "command": "node node_modules/vitest/vitest.mjs run tests/ss07-isolated/SS07.test.ts --reporter=verbose --reporter=json --outputFile.json=[EVIDENCE_DIR]/SS07.vitest.json",
+      "exit": 1,
+      "assertions": [
+        {
+          "name": "SS07 only: frozen base and additional isolated boundaries SS07 provenance and every declared variant",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "name": "SS07 only: frozen base and additional isolated boundaries SS07 original bytes, prohibition clauses, full inventory and unknown context survive projection",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "name": "SS07 only: frozen base and additional isolated boundaries SS07 exact SEC mock is an evaluator control, not AGENT selection",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "name": "SS07 only: frozen base and additional isolated boundaries SS07 rejects automatic forbidden addition ponytail",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "name": "SS07 only: frozen base and additional isolated boundaries SS07 rejects automatic forbidden addition code-review",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "name": "SS07 only: frozen base and additional isolated boundaries SS07 rejects automatic forbidden addition independent-audit-gate",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "name": "SS07 only: frozen base and additional isolated boundaries SS07 general review replacement and all-skills output both fail despite structural validity",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "name": "SS07 only: frozen base and additional isolated boundaries SS07 raw recommendation never becomes selection and unobserved accept is rejected",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "name": "SS07 only: frozen base and additional isolated boundaries SS07 null and empty stay distinct; exact set without host receipt fails selected layer",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "name": "SS07 only: frozen base and additional isolated boundaries SS07 unconfigured environment has zero attempts and no selected set",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "name": "SS07 only: frozen base and additional isolated boundaries SS07 missing target cannot be fabricated into audit evidence",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "name": "SS07 only: frozen base and additional isolated boundaries SS07 complete investigation can contain a vulnerability; reproduction remains unauthorized",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "name": "SS07 only: frozen base and additional isolated boundaries SS07 DEFECT existing metadata-condition-duplication: applicability and exclusions must differ",
+          "status": "failed",
+          "failureMessages": [
+            "AssertionError: expected [ …(2) ] to not deeply equal [ …(2) ]\n    at [REPO]/tests/ss07-isolated/SS07.test.ts:179:36\n    at file://[TEST_DEPENDENCY_STACK]\n    at file://[TEST_DEPENDENCY_STACK]\n    at file://[TEST_DEPENDENCY_STACK]\n    at new Promise (<anonymous>)\n    at runWithCancel (file://[TEST_DEPENDENCY_STACK])\n    at file://[TEST_DEPENDENCY_STACK]\n    at new Promise (<anonymous>)\n    at runWithTimeout (file://[TEST_DEPENDENCY_STACK])\n    at file://[TEST_DEPENDENCY_STACK]"
+          ]
+        },
+        {
+          "name": "SS07 only: frozen base and additional isolated boundaries SS07 DEFECT existing valid-cost-lost-on-invalid-RESP: known cost must survive invalid recommendation",
+          "status": "failed",
+          "failureMessages": [
+            "AssertionError: expected null to be 0.1 // Object.is equality\n    at [REPO]/tests/ss07-isolated/SS07.test.ts:186:118\n    at file://[TEST_DEPENDENCY_STACK]"
+          ]
+        },
+        {
+          "name": "SS07 only: frozen base and additional isolated boundaries SS07 DEFECT existing timeout-overflow: reject 2147483648 before dispatch",
+          "status": "failed",
+          "failureMessages": [
+            "AssertionError: expected 'PROVIDER_TIMEOUT' to be 'INVALID_TIMEOUT' // Object.is equality\n    at [REPO]/tests/ss07-isolated/SS07.test.ts:193:38\n    at file://[TEST_DEPENDENCY_STACK]"
+          ]
+        },
+        {
+          "name": "SS07 only: frozen base and additional isolated boundaries SS07 API guard stayed at zero",
+          "status": "passed",
+          "failureMessages": []
+        }
+      ]
+    },
+    "providerLive": {
+      "status": "NOTRUN",
+      "actualResponse": null
+    },
+    "hostLive": {
+      "status": "NOTRUN",
+      "agentSelectedSkillIds": null,
+      "hostReceipt": null
+    }
+  },
+  "API0": {
+    "jev": 0,
+    "externalVendorAPI": 0,
+    "claude": 0,
+    "nativeClassificationModelInvocations": 0,
+    "guardedFetchAttempts": 0,
+    "mockVendorPortDispatches": 3,
+    "past21CompletedRunsReexecuted": 0,
+    "note": "Local Codex version/help only; synthetic provider ports never invoke a real transport, credential lookup or native model."
+  },
+  "knownFindings": [
+    {
+      "id": "known-metadata-condition-duplication",
+      "status": "REPRODUCED_EXISTING",
+      "checkStatus": "FAIL",
+      "existingFindingLink": "metadata조건중복",
+      "newRootCauseCount": 0,
+      "executionKind": "offline-static",
+      "source": "skills/software-security-auditor/classification.json:17",
+      "explanation": "Applicability and exclusions refer to identical SKILL.md line 3 and lines 8–12. Resolved inventory arrays are identical; ambiguous positive/negative taxonomy, not proof of live misclassification.",
+      "expected": "applicability/exclusion clauses separately represented",
+      "observedRef": "SS07.observations.json#/raw/12"
+    },
+    {
+      "id": "known-valid-cost-loss",
+      "status": "REPRODUCED_EXISTING",
+      "checkStatus": "FAIL",
+      "existingFindingLink": "유효비용이invalidRESP와함께유실",
+      "newRootCauseCount": 0,
+      "executionKind": "offline-mock",
+      "source": "mcp-server/src/skill-classification/service.ts:194",
+      "explanation": "Missing SEC judgment makes RESP invalid; throw/catch returns unknownUsage(), discarding valid actualCostUsd=0.1. Budget spent remains 0 and conservative 0.4 reservation remains. No real charge occurred.",
+      "expected": "INVALID_PROVIDER_RESPONSE, actualCostUsd=0.1; settle known cost",
+      "observedRef": "SS07.observations.json#/raw/13"
+    },
+    {
+      "id": "known-timeout-overflow",
+      "status": "REPRODUCED_EXISTING",
+      "checkStatus": "FAIL",
+      "existingFindingLink": "timeoutoverflow",
+      "newRootCauseCount": 0,
+      "executionKind": "offline-mock",
+      "source": "mcp-server/src/skill-classification/service.ts:127",
+      "explanation": "No upper-bound check before setTimeout; Node reduces 2147483648ms to 1ms. One mocked vendor dispatch occurs and PROVIDER_TIMEOUT replaces pre-dispatch invalid-timeout rejection.",
+      "expected": "INVALID_TIMEOUT; attempts=[], provider calls=0",
+      "observedRef": "SS07.observations.json#/raw/14"
+    }
+  ],
+  "otherKnownBoundaries": {
+    "host-active-state-supply-gap": {
+      "reproduction": "NOTRUN",
+      "staticObservation": "gateway RuntimeSnapshot and inventory call do not supply installedSkillIds/hostSupportedSkillIds from actual host; local source inventory flags are defaults, not host evidence. No actual disabled host tested.",
+      "source": "mcp-server/src/skill-classification/gateway.ts:42; inventory.ts:219"
+    },
+    "pre-concurrency-recheck-gap": {
+      "reproduction": "NOTRUN",
+      "note": "No valid host-observed accept/concurrency trial; no fabricated receipt or new duplicate finding count."
+    }
+  },
+  "missingInputs": [
+    "Actual security target root, relative CLI/MCP/config files, fixed bytes/baseRef, inclusion/exclusion scope and trust/permission model",
+    "Approved AGENT_GOVERNANCE_CLASSIFICATION_CONFIG and centrally qualified profile bound to current inventory/taxonomy/prompt/model/profile revisions",
+    "Approved native/runtime definition, route/capability evidence, no-retry/isolation evidence and confirmed separate native allowance/cost ledger",
+    "Actual installed/enabled/host-supported skill observations and approved external skill roots where relevant",
+    "Actual host-signed execution observation for classify/record selection and current session-board prompt task binding; independent read/applied/verified evidence for same candidate"
+  ],
+  "hostSupport": {
+    "agsMcpSelectionToolsExposed": [],
+    "classificationEnv": "UNSET",
+    "localUnconfiguredObservation": "PROFILE_UNAVAILABLE; attempts=[]; selected=null",
+    "codexExecutable": "[CODEX_EXECUTABLE]",
+    "codexVersion": "0.159.0-alpha.3",
+    "helpInspected": true,
+    "adapterFlagsPresentInHelp": [
+      "--json",
+      "--sandbox",
+      "--ephemeral",
+      "--ignore-user-config",
+      "--skip-git-repo-check",
+      "--model",
+      "--config",
+      "--disable",
+      "--output-schema"
+    ],
+    "sourcePath": "mcp-server/src/skill-classification/native-adapters.ts:createNativeClassificationAdapters",
+    "path": "Approved installation -> AGENT_GOVERNANCE_CLASSIFICATION_CONFIG -> profile registry/providerRuntimeRef/nativeAdapterDefinitionsRef -> get_skill_inventory/classify_skills -> AGENT reasoning -> record_skill_selection with hostReceipt=null and trusted host hook -> separately observed read/apply/verify. Current environment has CLI parsing support but no qualified/configured/exposed AGS live route.",
+    "qualification": "NOTRUN",
+    "liveModel": "NOTRUN"
+  },
+  "instructions": {
+    "AGENTS": "read pinned repo AGENTS.md",
+    "skills": "test-engineering applied for development; SEC and forbidden role SKILLs read as case source evidence",
+    "agentsSkillDirectories": {
+      "[HOST_WORKSPACE]/.agents/skills": "ABSENT",
+      "[REPO]/.agents/skills": "ABSENT"
+    },
+    "productSourcesModified": false,
+    "push": false,
+    "PR": false,
+    "release": false,
+    "followup": "Revalidate SS07 on an explicitly supplied next candidate in this task; current fixed source remains unchanged."
+  },
+  "commands": [
+    {
+      "executionKind": "offline-plan-check",
+      "cwd": "[REPO]",
+      "argv": [
+        "node",
+        "skills/test-engineering/scripts/run.mjs",
+        "check-plan",
+        "--root",
+        "[EVIDENCE_DIR]",
+        "--plan",
+        "SS07.plan.json"
+      ],
+      "command": "node skills/test-engineering/scripts/run.mjs check-plan --root [EVIDENCE_DIR] --plan SS07.plan.json",
+      "exit": 0,
+      "startedAt": "2026-10-09T03:01:34.076790+00:00",
+      "finishedAt": "2026-10-09T03:01:34.174799+00:00",
+      "stdout": "SS07.plan-check.stdout",
+      "stderr": "SS07.plan-check.stderr",
+      "API0": true
+    },
+    {
+      "executionKind": "offline-isolated-tests",
+      "cwd": "[REPO]",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/ss07-isolated/SS07.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=[EVIDENCE_DIR]/SS07.vitest.json"
+      ],
+      "command": "node node_modules/vitest/vitest.mjs run tests/ss07-isolated/SS07.test.ts --reporter=verbose --reporter=json --outputFile.json=[EVIDENCE_DIR]/SS07.vitest.json",
+      "exit": 1,
+      "startedAt": "2026-10-09T03:01:34.175059+00:00",
+      "finishedAt": "2026-10-09T03:01:35.319344+00:00",
+      "stdout": "SS07.test.stdout",
+      "stderr": "SS07.test.stderr",
+      "API0": true
+    },
+    {
+      "executionKind": "local-support-inspection",
+      "argv": [
+        "[CODEX_EXECUTABLE]",
+        "--version"
+      ],
+      "command": "[CODEX_EXECUTABLE] --version",
+      "cwd": "[REPO]",
+      "exit": 0,
+      "stdout": "SS07.host-version.stdout",
+      "stderr": "SS07.host-version.stderr",
+      "API0": true
+    },
+    {
+      "executionKind": "local-support-inspection",
+      "argv": [
+        "[CODEX_EXECUTABLE]",
+        "exec",
+        "--help"
+      ],
+      "command": "[CODEX_EXECUTABLE] exec --help",
+      "cwd": "[REPO]",
+      "exit": 0,
+      "stdout": "SS07.host-help.stdout",
+      "stderr": "SS07.host-help.stderr",
+      "API0": true
+    },
+    {
+      "executionKind": "local-support-inspection",
+      "argv": [
+        "git",
+        "diff",
+        "--exit-code"
+      ],
+      "command": "git diff --exit-code",
+      "cwd": "[REPO]",
+      "exit": 0,
+      "stdout": "SS07.tracked-diff.stdout",
+      "stderr": "SS07.tracked-diff.stderr",
+      "API0": true
+    },
+    {
+      "executionKind": "local-support-inspection",
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "command": "git diff --check",
+      "cwd": "[REPO]",
+      "exit": 0,
+      "stdout": "SS07.diff-check.stdout",
+      "stderr": "SS07.diff-check.stderr",
+      "API0": true
+    }
+  ],
+  "limitations": [
+    "Offline checks are not live classification accuracy or real AGENT skill selection.",
+    "Synthetic security report checks only report contracts, not truth of vulnerability findings or safety of any real CLI/MCP target.",
+    "No product fix/green candidate permitted, so red-green sensitivity proof NOTRUN; check-plan READY validates only plan structure.",
+    "Actual host selected/read/applied/verified each remain NOTRUN; unknown null is never converted into accepted []."
+  ],
+  "completedAt": "2026-10-09T03:04:24.945572+00:00",
+  "originalEvidenceHashes": {
+    "SS07.observations.json": "sha256:234bd2eb64c85e35bc49676412a76c5bf18573635ff577f1c5c604a55b661402",
+    "SS07.host-version.stdout": "sha256:158f4415765f804622953bb1c3fff91172fa05c5885eec0478773fb97bdee883",
+    "SS07.test.stderr": "sha256:c4d2228fc2236f8c4d833ba1f5a47f82c89f5d7969edd4b28849933a315913c5",
+    "SS07.commands.json": "sha256:5f9bee2a76956fcbd82360ed4c241ef2402a1ceefca804eb528d77269c4193a2",
+    "SS07.diff-check.stderr": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "SS07.plan-check.stdout": "sha256:9c6862f9f41e64bc2a8b917e818928809664d331dcf2947e4e931f73df1b5f0b",
+    "SS07.tracked-diff.stdout": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "SS07.inventory.json": "sha256:4b04dbe7f8825b50d7154fcd0b03c25fd333d30f3765ed5f9d3cc7c15a88c5f1",
+    "SS07.fixture.json": "sha256:b0180ab3048fb61245e3ed891b48d23041d0d2bccdf775a00167ae9d4be18b0b",
+    "SS07.source-hashes.json": "sha256:43b41491ee5ae2dea437596e30cbc5330add98a9c43cdc79658a043bf6e275b0",
+    "SS07.host-version.stderr": "sha256:d47a06d59aba2814c3fb7460049fc2ccbfc834196c956d6c6558e8be8b079e24",
+    "SS07.test.ts": "sha256:fa02e22d81c61c947132b3f32edc2289fade2818af2213d3a3b44923f05ea31f",
+    "SS07.vitest.json": "sha256:3ec6158618e24f573f9b985b37c58d612eeeaf4086a34cefc0bbb5d61ec13656",
+    "SS07.diff-check.stdout": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "SS07.tracked-diff.stderr": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "SS07.host-help.stdout": "sha256:0e82cfde0122715250e93dc65866caa956b2ac5b9d0b20ec4ad4f9e81486509e",
+    "SS07.request.json": "sha256:51c3cbd63e0162bb0cac02137a539b2cae0253043cb6b3afa8eb5c61bce47d73",
+    "SS07.host-help.stderr": "sha256:d47a06d59aba2814c3fb7460049fc2ccbfc834196c956d6c6558e8be8b079e24",
+    "SS07.plan.json": "sha256:1a46df7bf7a7c85fbfd26c27186699645cc99a1971d93d24d2bbb4819df14ca1",
+    "SS07.test.stdout": "sha256:ad2e65bbff520f03f4140fae6591d00ef8442eeeae7788fbe875ec47739927ac",
+    "SS07.plan-check.stderr": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "publication": {
+    "sourceArtifact": "SS07.result.json",
+    "sourceBytes": 24768,
+    "sourceSHA256": "bb1f9634511c97d004f0254a2b91629af9b74b033161340862aad825e3e8b85f",
+    "treatment": "sanitized local paths; observations/log references remapped; all original outcomes retained",
+    "newTests": 0,
+    "newModelAPICalls": 0,
+    "patch": "NO_PATCH_EXISTED",
+    "missingOriginals": [
+      {
+        "artifact": "TEST-SPEC.seq7.ko.md",
+        "state": "MISSING_ORIGINAL",
+        "reason": "Source specification file was absent in original fixed repository; embedded fixture only."
+      }
+    ],
+    "reproducibility": "Reproduction files are sanitized derivatives; no reproduction executed during publication.",
+    "artifactMap": {
+      "SS07.fixture.json": "inputs/fixture.json",
+      "SS07.request.json": "inputs/request.json",
+      "SS07.inventory.json": "inputs/inventory.json",
+      "SS07.observations.json": "observations.public.json",
+      "SS07.vitest.json": "logs/vitest.public.json",
+      "SS07.test.stdout": "logs/test.stdout.public.log",
+      "SS07.test.stderr": "logs/test.stderr.public.log",
+      "SS07.commands.json": "commands.public.json",
+      "SS07.source-hashes.json": "inputs/source-hashes.json",
+      "SS07.test.ts": "reproduce/SS07.test.ts",
+      "SS07.plan.json": "reproduce/plan.public.json",
+      "SS07.report.md": "README.md"
+    }
+  }
+}

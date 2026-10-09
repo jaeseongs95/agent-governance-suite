@@ -1,0 +1,354 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS07",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cases/SS07/",
+  "candidate": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+  },
+  "inputBytes": {
+    "requestOriginal": {
+      "bytes": 254881,
+      "sha256": "51c3cbd63e0162bb0cac02137a539b2cae0253043cb6b3afa8eb5c61bce47d73"
+    },
+    "requestDigest": "sha256:0c46740e5d3cbcd2784498e4c375701f0c6bd1584e68eb5aed330d2eefe2f5d5",
+    "promptUTF8": {
+      "bytes": 182,
+      "sha256": "556baefc0f9e03dcdb8c46a363b7d226412aed14071c71d634be607c023242a5",
+      "promptDigest": "sha256:556baefc0f9e03dcdb8c46a363b7d226412aed14071c71d634be607c023242a5"
+    },
+    "fixtureOriginal": {
+      "bytes": 4119,
+      "sha256": "b0180ab3048fb61245e3ed891b48d23041d0d2bccdf775a00167ae9d4be18b0b"
+    }
+  },
+  "existingResults": {
+    "tests": 16,
+    "PASS": 13,
+    "FAIL": 3,
+    "testExit": 1,
+    "providerLive": "NOTRUN",
+    "hostLive": "NOTRUN",
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "agentSelectedSkillIds": null,
+    "hostReceipt": null
+  },
+  "publicationExecutions": {
+    "newTests": 0,
+    "newModelAPICalls": 0,
+    "pastRunReexecutions": 0
+  },
+  "patch": "NO_PATCH_EXISTED",
+  "missingOriginals": [
+    {
+      "artifact": "TEST-SPEC.seq7.ko.md",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Absent in original fixed repo; no source invented."
+    }
+  ],
+  "originalArtifactInventory": {
+    "SS07.observations.json": {
+      "bytes": 1443935,
+      "sha256": "234bd2eb64c85e35bc49676412a76c5bf18573635ff577f1c5c604a55b661402"
+    },
+    "SS07.host-version.stdout": {
+      "bytes": 26,
+      "sha256": "158f4415765f804622953bb1c3fff91172fa05c5885eec0478773fb97bdee883"
+    },
+    "SS07.test.stderr": {
+      "bytes": 1953,
+      "sha256": "c4d2228fc2236f8c4d833ba1f5a47f82c89f5d7969edd4b28849933a315913c5"
+    },
+    "SS07.commands.json": {
+      "bytes": 2670,
+      "sha256": "5f9bee2a76956fcbd82360ed4c241ef2402a1ceefca804eb528d77269c4193a2"
+    },
+    "SS07.diff-check.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "SS07.plan-check.stdout": {
+      "bytes": 236,
+      "sha256": "9c6862f9f41e64bc2a8b917e818928809664d331dcf2947e4e931f73df1b5f0b"
+    },
+    "SS07.tracked-diff.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "SS07.inventory.json": {
+      "bytes": 254106,
+      "sha256": "4b04dbe7f8825b50d7154fcd0b03c25fd333d30f3765ed5f9d3cc7c15a88c5f1"
+    },
+    "SS07.fixture.json": {
+      "bytes": 4119,
+      "sha256": "b0180ab3048fb61245e3ed891b48d23041d0d2bccdf775a00167ae9d4be18b0b"
+    },
+    "SS07.source-hashes.json": {
+      "bytes": 2343,
+      "sha256": "43b41491ee5ae2dea437596e30cbc5330add98a9c43cdc79658a043bf6e275b0"
+    },
+    "SS07.host-version.stderr": {
+      "bytes": 103,
+      "sha256": "d47a06d59aba2814c3fb7460049fc2ccbfc834196c956d6c6558e8be8b079e24"
+    },
+    "SS07.test.ts": {
+      "bytes": 19910,
+      "sha256": "fa02e22d81c61c947132b3f32edc2289fade2818af2213d3a3b44923f05ea31f"
+    },
+    "SS07.vitest.json": {
+      "bytes": 9704,
+      "sha256": "3ec6158618e24f573f9b985b37c58d612eeeaf4086a34cefc0bbb5d61ec13656"
+    },
+    "SS07.diff-check.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "SS07.tracked-diff.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "SS07.host-help.stdout": {
+      "bytes": 4031,
+      "sha256": "0e82cfde0122715250e93dc65866caa956b2ac5b9d0b20ec4ad4f9e81486509e"
+    },
+    "SS07.request.json": {
+      "bytes": 254881,
+      "sha256": "51c3cbd63e0162bb0cac02137a539b2cae0253043cb6b3afa8eb5c61bce47d73"
+    },
+    "SS07.host-help.stderr": {
+      "bytes": 103,
+      "sha256": "d47a06d59aba2814c3fb7460049fc2ccbfc834196c956d6c6558e8be8b079e24"
+    },
+    "SS07.result.json": {
+      "bytes": 24768,
+      "sha256": "bb1f9634511c97d004f0254a2b91629af9b74b033161340862aad825e3e8b85f"
+    },
+    "SS07.plan.json": {
+      "bytes": 2948,
+      "sha256": "1a46df7bf7a7c85fbfd26c27186699645cc99a1971d93d24d2bbb4819df14ca1"
+    },
+    "SS07.report.md": {
+      "bytes": 3950,
+      "sha256": "146df31e48f1ba059dedddd652240ed2c4c02e556b49240067d3e9039a78e45b"
+    },
+    "SS07.test.stdout": {
+      "bytes": 3263,
+      "sha256": "ad2e65bbff520f03f4140fae6591d00ef8442eeeae7788fbe875ec47739927ac"
+    },
+    "SS07.plan-check.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 4307,
+      "sha256": "b1c3d2421a3ff07f8d3b1613e250254131d2cba3553026b7629c285446dcd4cc",
+      "treatment": "new-public-packaging-summary-only; derived-from-existing-results-no-new-observation",
+      "derivedFrom": [
+        {
+          "artifact": "SS07.result.json",
+          "bytes": 24768,
+          "sha256": "bb1f9634511c97d004f0254a2b91629af9b74b033161340862aad825e3e8b85f"
+        },
+        {
+          "artifact": "SS07.report.md",
+          "bytes": 3950,
+          "sha256": "146df31e48f1ba059dedddd652240ed2c4c02e556b49240067d3e9039a78e45b"
+        },
+        {
+          "artifact": "SS07.observations.json",
+          "bytes": 1443935,
+          "sha256": "234bd2eb64c85e35bc49676412a76c5bf18573635ff577f1c5c604a55b661402"
+        }
+      ]
+    },
+    {
+      "path": "commands.public.json",
+      "bytes": 2514,
+      "sha256": "dee7beb51d1be6cd2f43b432afdb29e912465bc6cfed74f01bcf53516747fa1e",
+      "treatment": "sanitized-cwd-and-absolute-command-paths; original exits retained",
+      "original": {
+        "artifact": "SS07.commands.json",
+        "bytes": 2670,
+        "sha256": "5f9bee2a76956fcbd82360ed4c241ef2402a1ceefca804eb528d77269c4193a2"
+      }
+    },
+    {
+      "path": "inputs/fixture.json",
+      "bytes": 4119,
+      "sha256": "b0180ab3048fb61245e3ed891b48d23041d0d2bccdf775a00167ae9d4be18b0b",
+      "treatment": "exact-original-bytes",
+      "original": {
+        "artifact": "SS07.fixture.json",
+        "bytes": 4119,
+        "sha256": "b0180ab3048fb61245e3ed891b48d23041d0d2bccdf775a00167ae9d4be18b0b"
+      }
+    },
+    {
+      "path": "inputs/inventory.json",
+      "bytes": 254106,
+      "sha256": "4b04dbe7f8825b50d7154fcd0b03c25fd333d30f3765ed5f9d3cc7c15a88c5f1",
+      "treatment": "exact-original-bytes",
+      "original": {
+        "artifact": "SS07.inventory.json",
+        "bytes": 254106,
+        "sha256": "4b04dbe7f8825b50d7154fcd0b03c25fd333d30f3765ed5f9d3cc7c15a88c5f1"
+      }
+    },
+    {
+      "path": "inputs/original-prompt.utf8.txt",
+      "bytes": 182,
+      "sha256": "556baefc0f9e03dcdb8c46a363b7d226412aed14071c71d634be607c023242a5",
+      "treatment": "exact-UTF8-string-extracted-from-original-request-no-added-newline",
+      "derivedFrom": [
+        {
+          "artifact": "SS07.request.json",
+          "bytes": 254881,
+          "sha256": "51c3cbd63e0162bb0cac02137a539b2cae0253043cb6b3afa8eb5c61bce47d73"
+        }
+      ]
+    },
+    {
+      "path": "inputs/projection.json",
+      "bytes": 159531,
+      "sha256": "39760453580fae75e271bfe67ebe47556f830c020f0572695bff7da19f620e13",
+      "treatment": "derived-original-projection-object-reserialized",
+      "derivedFrom": [
+        {
+          "artifact": "SS07.observations.json",
+          "bytes": 1443935,
+          "sha256": "234bd2eb64c85e35bc49676412a76c5bf18573635ff577f1c5c604a55b661402"
+        }
+      ]
+    },
+    {
+      "path": "inputs/request.json",
+      "bytes": 254881,
+      "sha256": "51c3cbd63e0162bb0cac02137a539b2cae0253043cb6b3afa8eb5c61bce47d73",
+      "treatment": "exact-original-bytes",
+      "original": {
+        "artifact": "SS07.request.json",
+        "bytes": 254881,
+        "sha256": "51c3cbd63e0162bb0cac02137a539b2cae0253043cb6b3afa8eb5c61bce47d73"
+      }
+    },
+    {
+      "path": "inputs/source-hashes.json",
+      "bytes": 2343,
+      "sha256": "43b41491ee5ae2dea437596e30cbc5330add98a9c43cdc79658a043bf6e275b0",
+      "treatment": "exact-original-bytes",
+      "original": {
+        "artifact": "SS07.source-hashes.json",
+        "bytes": 2343,
+        "sha256": "43b41491ee5ae2dea437596e30cbc5330add98a9c43cdc79658a043bf6e275b0"
+      }
+    },
+    {
+      "path": "logs/plan-check.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "treatment": "sanitized-local-paths-only; no result or exit alteration",
+      "original": {
+        "artifact": "SS07.plan-check.stderr",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "path": "logs/plan-check.stdout.log",
+      "bytes": 236,
+      "sha256": "9c6862f9f41e64bc2a8b917e818928809664d331dcf2947e4e931f73df1b5f0b",
+      "treatment": "sanitized-local-paths-only; no result or exit alteration",
+      "original": {
+        "artifact": "SS07.plan-check.stdout",
+        "bytes": 236,
+        "sha256": "9c6862f9f41e64bc2a8b917e818928809664d331dcf2947e4e931f73df1b5f0b"
+      }
+    },
+    {
+      "path": "logs/test.stderr.public.log",
+      "bytes": 1953,
+      "sha256": "c4d2228fc2236f8c4d833ba1f5a47f82c89f5d7969edd4b28849933a315913c5",
+      "treatment": "sanitized-local-paths-only; no result or exit alteration",
+      "original": {
+        "artifact": "SS07.test.stderr",
+        "bytes": 1953,
+        "sha256": "c4d2228fc2236f8c4d833ba1f5a47f82c89f5d7969edd4b28849933a315913c5"
+      }
+    },
+    {
+      "path": "logs/test.stdout.public.log",
+      "bytes": 3235,
+      "sha256": "3a316a7ebbad3308493254070a9bad1a5fb24e3482b3d87256edc3d111a92fb0",
+      "treatment": "sanitized-local-paths-only; no result or exit alteration",
+      "original": {
+        "artifact": "SS07.test.stdout",
+        "bytes": 3263,
+        "sha256": "ad2e65bbff520f03f4140fae6591d00ef8442eeeae7788fbe875ec47739927ac"
+      }
+    },
+    {
+      "path": "logs/vitest.public.json",
+      "bytes": 10738,
+      "sha256": "889b7a036fd405f4e66ef214e3743b3d46bbc6af53bb56680a5f4cdd226e5662",
+      "treatment": "sanitized-local-paths-and-test-dependency-stack-paths; assertions/status/durations preserved",
+      "original": {
+        "artifact": "SS07.vitest.json",
+        "bytes": 9704,
+        "sha256": "3ec6158618e24f573f9b985b37c58d612eeeaf4086a34cefc0bbb5d61ec13656"
+      }
+    },
+    {
+      "path": "observations.public.json",
+      "bytes": 37916,
+      "sha256": "e8da86c335416226dbdefec2ffe91c61c9d8e0f1ce710ccfd4ec153b30753dcc",
+      "treatment": "sanitized-local-paths-and-deduplicated-request-payload-references",
+      "original": {
+        "artifact": "SS07.observations.json",
+        "bytes": 1443935,
+        "sha256": "234bd2eb64c85e35bc49676412a76c5bf18573635ff577f1c5c604a55b661402"
+      }
+    },
+    {
+      "path": "reproduce/SS07.test.ts",
+      "bytes": 20027,
+      "sha256": "028e28910a1034b15fafd36529b4e3d813ae76fd949fabbc8fd6a78a9dff15ae",
+      "treatment": "portable-path-derivative; evidence directory via SS07_EVIDENCE_DIR; temporary paths via os.tmpdir; original assertions unchanged; NOT_EXECUTED",
+      "original": {
+        "artifact": "SS07.test.ts",
+        "bytes": 19910,
+        "sha256": "fa02e22d81c61c947132b3f32edc2289fade2818af2213d3a3b44923f05ea31f"
+      }
+    },
+    {
+      "path": "reproduce/plan.public.json",
+      "bytes": 2938,
+      "sha256": "98dc10be194b996ff142c0e6d6616c18225edb9ce3958d1e22d7e790a81cf875",
+      "treatment": "sanitized-paths; archived original plan derivative, not revalidated",
+      "original": {
+        "artifact": "SS07.plan.json",
+        "bytes": 2948,
+        "sha256": "1a46df7bf7a7c85fbfd26c27186699645cc99a1971d93d24d2bbb4819df14ca1"
+      }
+    },
+    {
+      "path": "result.public.json",
+      "bytes": 24355,
+      "sha256": "f3268053b972da71ab541a664f613a1677f7ea11db2aa21bff970ebaf75ebbd7",
+      "treatment": "sanitized-paths-and-explicit-original-to-public-artifact-map",
+      "original": {
+        "artifact": "SS07.result.json",
+        "bytes": 24768,
+        "sha256": "bb1f9634511c97d004f0254a2b91629af9b74b033161340862aad825e3e8b85f"
+      }
+    }
+  ],
+  "hashPolicy": "manifest excludes itself and SHA256SUMS; SHA256SUMS includes manifest and payload but excludes itself; outer verification reports both hashes separately."
+}

@@ -1,0 +1,97 @@
+[
+  {
+    "executionKind": "offline-plan-check",
+    "cwd": "[REPO]",
+    "argv": [
+      "node",
+      "skills/test-engineering/scripts/run.mjs",
+      "check-plan",
+      "--root",
+      "[EVIDENCE_DIR]",
+      "--plan",
+      "SS07.plan.json"
+    ],
+    "command": "node skills/test-engineering/scripts/run.mjs check-plan --root [EVIDENCE_DIR] --plan SS07.plan.json",
+    "exit": 0,
+    "startedAt": "2026-10-09T03:01:34.076790+00:00",
+    "finishedAt": "2026-10-09T03:01:34.174799+00:00",
+    "stdout": "SS07.plan-check.stdout",
+    "stderr": "SS07.plan-check.stderr",
+    "API0": true
+  },
+  {
+    "executionKind": "offline-isolated-tests",
+    "cwd": "[REPO]",
+    "argv": [
+      "node",
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "tests/ss07-isolated/SS07.test.ts",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile.json=[EVIDENCE_DIR]/SS07.vitest.json"
+    ],
+    "command": "node node_modules/vitest/vitest.mjs run tests/ss07-isolated/SS07.test.ts --reporter=verbose --reporter=json --outputFile.json=[EVIDENCE_DIR]/SS07.vitest.json",
+    "exit": 1,
+    "startedAt": "2026-10-09T03:01:34.175059+00:00",
+    "finishedAt": "2026-10-09T03:01:35.319344+00:00",
+    "stdout": "SS07.test.stdout",
+    "stderr": "SS07.test.stderr",
+    "API0": true
+  },
+  {
+    "executionKind": "local-support-inspection",
+    "argv": [
+      "[CODEX_EXECUTABLE]",
+      "--version"
+    ],
+    "command": "[CODEX_EXECUTABLE] --version",
+    "cwd": "[REPO]",
+    "exit": 0,
+    "stdout": "SS07.host-version.stdout",
+    "stderr": "SS07.host-version.stderr",
+    "API0": true
+  },
+  {
+    "executionKind": "local-support-inspection",
+    "argv": [
+      "[CODEX_EXECUTABLE]",
+      "exec",
+      "--help"
+    ],
+    "command": "[CODEX_EXECUTABLE] exec --help",
+    "cwd": "[REPO]",
+    "exit": 0,
+    "stdout": "SS07.host-help.stdout",
+    "stderr": "SS07.host-help.stderr",
+    "API0": true
+  },
+  {
+    "executionKind": "local-support-inspection",
+    "argv": [
+      "git",
+      "diff",
+      "--exit-code"
+    ],
+    "command": "git diff --exit-code",
+    "cwd": "[REPO]",
+    "exit": 0,
+    "stdout": "SS07.tracked-diff.stdout",
+    "stderr": "SS07.tracked-diff.stderr",
+    "API0": true
+  },
+  {
+    "executionKind": "local-support-inspection",
+    "argv": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "command": "git diff --check",
+    "cwd": "[REPO]",
+    "exit": 0,
+    "stdout": "SS07.diff-check.stdout",
+    "stderr": "SS07.diff-check.stderr",
+    "API0": true
+  }
+]

@@ -1,0 +1,254 @@
+{
+  "numTotalTestSuites": 2,
+  "numPassedTestSuites": 0,
+  "numFailedTestSuites": 2,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 16,
+  "numPassedTests": 13,
+  "numFailedTests": 3,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1791514894455,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "SS07 only: frozen base and additional isolated boundaries"
+          ],
+          "fullName": "SS07 only: frozen base and additional isolated boundaries SS07 provenance and every declared variant",
+          "status": "passed",
+          "title": "SS07 provenance and every declared variant",
+          "duration": 8.755383000000052,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS07 only: frozen base and additional isolated boundaries"
+          ],
+          "fullName": "SS07 only: frozen base and additional isolated boundaries SS07 original bytes, prohibition clauses, full inventory and unknown context survive projection",
+          "status": "passed",
+          "title": "SS07 original bytes, prohibition clauses, full inventory and unknown context survive projection",
+          "duration": 5.786721000000057,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS07 only: frozen base and additional isolated boundaries"
+          ],
+          "fullName": "SS07 only: frozen base and additional isolated boundaries SS07 exact SEC mock is an evaluator control, not AGENT selection",
+          "status": "passed",
+          "title": "SS07 exact SEC mock is an evaluator control, not AGENT selection",
+          "duration": 1.9079420000000482,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS07 only: frozen base and additional isolated boundaries"
+          ],
+          "fullName": "SS07 only: frozen base and additional isolated boundaries SS07 rejects automatic forbidden addition ponytail",
+          "status": "passed",
+          "title": "SS07 rejects automatic forbidden addition ponytail",
+          "duration": 0.23150699999996505,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS07 only: frozen base and additional isolated boundaries"
+          ],
+          "fullName": "SS07 only: frozen base and additional isolated boundaries SS07 rejects automatic forbidden addition code-review",
+          "status": "passed",
+          "title": "SS07 rejects automatic forbidden addition code-review",
+          "duration": 0.16621900000006917,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS07 only: frozen base and additional isolated boundaries"
+          ],
+          "fullName": "SS07 only: frozen base and additional isolated boundaries SS07 rejects automatic forbidden addition independent-audit-gate",
+          "status": "passed",
+          "title": "SS07 rejects automatic forbidden addition independent-audit-gate",
+          "duration": 0.2995300000000043,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS07 only: frozen base and additional isolated boundaries"
+          ],
+          "fullName": "SS07 only: frozen base and additional isolated boundaries SS07 general review replacement and all-skills output both fail despite structural validity",
+          "status": "passed",
+          "title": "SS07 general review replacement and all-skills output both fail despite structural validity",
+          "duration": 0.41763700000001336,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS07 only: frozen base and additional isolated boundaries"
+          ],
+          "fullName": "SS07 only: frozen base and additional isolated boundaries SS07 raw recommendation never becomes selection and unobserved accept is rejected",
+          "status": "passed",
+          "title": "SS07 raw recommendation never becomes selection and unobserved accept is rejected",
+          "duration": 68.02675999999997,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS07 only: frozen base and additional isolated boundaries"
+          ],
+          "fullName": "SS07 only: frozen base and additional isolated boundaries SS07 null and empty stay distinct; exact set without host receipt fails selected layer",
+          "status": "passed",
+          "title": "SS07 null and empty stay distinct; exact set without host receipt fails selected layer",
+          "duration": 1.0265399999999545,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS07 only: frozen base and additional isolated boundaries"
+          ],
+          "fullName": "SS07 only: frozen base and additional isolated boundaries SS07 unconfigured environment has zero attempts and no selected set",
+          "status": "passed",
+          "title": "SS07 unconfigured environment has zero attempts and no selected set",
+          "duration": 48.83812399999999,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS07 only: frozen base and additional isolated boundaries"
+          ],
+          "fullName": "SS07 only: frozen base and additional isolated boundaries SS07 missing target cannot be fabricated into audit evidence",
+          "status": "passed",
+          "title": "SS07 missing target cannot be fabricated into audit evidence",
+          "duration": 114.45939399999997,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS07 only: frozen base and additional isolated boundaries"
+          ],
+          "fullName": "SS07 only: frozen base and additional isolated boundaries SS07 complete investigation can contain a vulnerability; reproduction remains unauthorized",
+          "status": "passed",
+          "title": "SS07 complete investigation can contain a vulnerability; reproduction remains unauthorized",
+          "duration": 4.597886999999901,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS07 only: frozen base and additional isolated boundaries"
+          ],
+          "fullName": "SS07 only: frozen base and additional isolated boundaries SS07 DEFECT existing metadata-condition-duplication: applicability and exclusions must differ",
+          "status": "failed",
+          "title": "SS07 DEFECT existing metadata-condition-duplication: applicability and exclusions must differ",
+          "duration": 5.072970000000055,
+          "failureMessages": [
+            "AssertionError: expected [ …(2) ] to not deeply equal [ …(2) ]\n    at [REPO]/tests/ss07-isolated/SS07.test.ts:179:36\n    at file://[TEST_DEPENDENCY_STACK]\n    at file://[TEST_DEPENDENCY_STACK]\n    at file://[TEST_DEPENDENCY_STACK]\n    at new Promise (<anonymous>)\n    at runWithCancel (file://[TEST_DEPENDENCY_STACK])\n    at file://[TEST_DEPENDENCY_STACK]\n    at new Promise (<anonymous>)\n    at runWithTimeout (file://[TEST_DEPENDENCY_STACK])\n    at file://[TEST_DEPENDENCY_STACK]"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS07 only: frozen base and additional isolated boundaries"
+          ],
+          "fullName": "SS07 only: frozen base and additional isolated boundaries SS07 DEFECT existing valid-cost-lost-on-invalid-RESP: known cost must survive invalid recommendation",
+          "status": "failed",
+          "title": "SS07 DEFECT existing valid-cost-lost-on-invalid-RESP: known cost must survive invalid recommendation",
+          "duration": 9.151618999999982,
+          "failureMessages": [
+            "AssertionError: expected null to be 0.1 // Object.is equality\n    at [REPO]/tests/ss07-isolated/SS07.test.ts:186:118\n    at file://[TEST_DEPENDENCY_STACK]"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS07 only: frozen base and additional isolated boundaries"
+          ],
+          "fullName": "SS07 only: frozen base and additional isolated boundaries SS07 DEFECT existing timeout-overflow: reject 2147483648 before dispatch",
+          "status": "failed",
+          "title": "SS07 DEFECT existing timeout-overflow: reject 2147483648 before dispatch",
+          "duration": 10.413081000000034,
+          "failureMessages": [
+            "AssertionError: expected 'PROVIDER_TIMEOUT' to be 'INVALID_TIMEOUT' // Object.is equality\n    at [REPO]/tests/ss07-isolated/SS07.test.ts:193:38\n    at file://[TEST_DEPENDENCY_STACK]"
+          ],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        },
+        {
+          "ancestorTitles": [
+            "SS07 only: frozen base and additional isolated boundaries"
+          ],
+          "fullName": "SS07 only: frozen base and additional isolated boundaries SS07 API guard stayed at zero",
+          "status": "passed",
+          "title": "SS07 API guard stayed at zero",
+          "duration": 0.11067600000001221,
+          "failureMessages": [],
+          "meta": {},
+          "tags": [],
+          "benchmarks": []
+        }
+      ],
+      "startTime": 1791514894994,
+      "endTime": 1791514895275.1106,
+      "status": "failed",
+      "message": "",
+      "name": "[REPO]/tests/ss07-isolated/SS07.test.ts"
+    }
+  ]
+}

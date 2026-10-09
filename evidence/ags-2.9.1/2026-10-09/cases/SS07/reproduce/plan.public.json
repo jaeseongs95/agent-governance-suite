@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS07",
+  "contractDigest": "sha256:e2f1e8f80ff8d8d5ce1c313718b474ea93566bb3d669bccabc0e1a6dd4c1df8c",
+  "requirements": [
+    "SS07 required SEC and forbidden automatic additions",
+    "SS07 preserve original prompt and absence of target",
+    "SS07 actual selected/read/applied/verified require separate evidence",
+    "SS07 investigation output is not safety guarantee",
+    "SS07 isolated support boundary defects remain visible"
+  ],
+  "scopeFiles": [
+    "tests/ss07-isolated/SS07.test.ts"
+  ],
+  "runner": "Existing repository Vitest direct file invocation; no build/full suite",
+  "environment": "Independent Cloud Linux; Node 24.19.0; UTC; inherited installed test dependencies; synthetic ports only; fetch guard; no external APIs",
+  "cases": [
+    {
+      "id": "SS07-base-offline-boundaries",
+      "requirementIds": [
+        "SS07 required SEC and forbidden automatic additions",
+        "SS07 preserve original prompt and absence of target",
+        "SS07 actual selected/read/applied/verified require separate evidence",
+        "SS07 investigation output is not safety guarantee",
+        "SS07 isolated support boundary defects remain visible"
+      ],
+      "scenario": "Read entire frozen base case; original prompt through real request/inventory/gateway; hand-labelled response mutations; missing target CLI; investigation semantics; known metadata/cost/timeout defects",
+      "entryPoint": "createClassificationRequest/projectClassificationRequest/loadSkillInventory/RuntimeSkillClassificationGateway/SkillClassificationService/SEC CLI/scoreCase",
+      "level": "integration",
+      "expectedBehavior": "Original bytes/full inventory retained; only SEC matches frozen oracle; no raw answer becomes accepted selection; missing source blocked; forbidden actions rejected; known defects must remain FAIL",
+      "oracle": "Frozen SS07 embedded fields/oracle and security/selection contract at c6a8019; synthetic expected response is only an evaluator control",
+      "testFiles": [
+        "tests/ss07-isolated/SS07.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "No product modification allowed; inspect assertion failures and deterministic negative controls; no repaired green or independent proof claimed",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/ss07-isolated/SS07.test.ts",
+        "--reporter=verbose",
+        "--reporter=json",
+        "--outputFile.json=[EVIDENCE_DIR]/SS07.vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "All other SS cases and full regression suites",
+    "Past 21 completed runs",
+    "JEV/vendor API/Claude invocations",
+    "Real security target audit: root/files absent",
+    "Host-live choice/attestation/stage receipts",
+    "Product mutation, build, push, PR, release"
+  ]
+}

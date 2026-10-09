@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:818004a89f5152b1989f31272a4529a83866aab1e456f4ca507b1b4ac69b3d19",
+  "caseIds": [
+    "SS07-base-offline-boundaries"
+  ]
+}

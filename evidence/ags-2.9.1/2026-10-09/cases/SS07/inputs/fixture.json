@@ -1,0 +1,110 @@
+{
+  "caseId": "SS07",
+  "title": "보안 감사만 요청",
+  "familyId": "security-audit",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "live.",
+  "originalPrompt": "고정된 CLI·MCP 소스와 설정에서 경로 traversal과 권한 검사 누락을 보안 감사해 줘. 읽기 전용이며 수정과 운영 서비스 능동 검사는 금지야.",
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS07",
+    "fields": {
+      "입력": "“고정된 CLI·MCP 소스와 설정에서 경로 traversal과 권한 검사 누락을 보안 감사해 줘. 읽기 전용이며 수정과 운영 서비스 능동 검사는 금지야.”",
+      "필수추천": "R={SEC}.",
+      "금지추천 또는 행동": "P·CR·독립 완료 감사의 자동 추가; 운영 공격 실행·자동 수정·릴리스 승인.",
+      "허용선택": "A={}.",
+      "보류조건": "대상 소스가 없으면 감사 실행을 보류하고 요청할 자료를 명시한다.",
+      "통과기준": "SEC를 추천하고 일반 리뷰로 대체하지 않는다. 조사 산출물과 안전 보장을 구분한다.",
+      "증거": "E0, 명시 보안 감사 행동과 제한.",
+      "실행종류": "live."
+    },
+    "bodyDigest": "sha256:53ced609126820e6f4392afa07a942e8935d4ddcd95f6a10eeffedebe011d85a"
+  },
+  "oracle": {
+    "required": [
+      "software-security-auditor"
+    ],
+    "allowed": [],
+    "allowedConditions": {},
+    "forbidden": [
+      "ponytail",
+      "code-review",
+      "independent-audit-gate"
+    ],
+    "notApplicable": [
+      "test-engineering",
+      "cs-engineering",
+      "orchestrator",
+      "korean-prose-editor"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "change-scope-guardian",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "independent-audit-gate",
+        "path": "skills/independent-audit-gate/SKILL.md",
+        "digest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      }
+    ],
+    "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+  },
+  "variants": [
+    "base"
+  ]
+}

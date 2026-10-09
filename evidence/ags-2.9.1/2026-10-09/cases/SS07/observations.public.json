@@ -1,0 +1,1127 @@
+{
+  "caseId": "SS07",
+  "apiAttempts": 0,
+  "raw": [
+    {
+      "caseId": "SS07",
+      "variant": "base",
+      "boundaryId": "provenance",
+      "input": {
+        "path": "TEST-SPEC.seq7.ko.md",
+        "section": "SS07",
+        "fields": {
+          "입력": "“고정된 CLI·MCP 소스와 설정에서 경로 traversal과 권한 검사 누락을 보안 감사해 줘. 읽기 전용이며 수정과 운영 서비스 능동 검사는 금지야.”",
+          "필수추천": "R={SEC}.",
+          "금지추천 또는 행동": "P·CR·독립 완료 감사의 자동 추가; 운영 공격 실행·자동 수정·릴리스 승인.",
+          "허용선택": "A={}.",
+          "보류조건": "대상 소스가 없으면 감사 실행을 보류하고 요청할 자료를 명시한다.",
+          "통과기준": "SEC를 추천하고 일반 리뷰로 대체하지 않는다. 조사 산출물과 안전 보장을 구분한다.",
+          "증거": "E0, 명시 보안 감사 행동과 제한.",
+          "실행종류": "live."
+        },
+        "bodyDigest": "sha256:53ced609126820e6f4392afa07a942e8935d4ddcd95f6a10eeffedebe011d85a"
+      },
+      "expected": "fixed commit/tree/fixture/oracle and variants=[base]",
+      "observed": {
+        "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+        "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+        "fixtureSHA": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "oracleSHA": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+        "variants": [
+          "base"
+        ]
+      },
+      "executionKind": "offline-static"
+    },
+    {
+      "caseId": "SS07",
+      "variant": "base",
+      "boundaryId": "projection",
+      "input": {
+        "prompt": "고정된 CLI·MCP 소스와 설정에서 경로 traversal과 권한 검사 누락을 보안 감사해 줘. 읽기 전용이며 수정과 운영 서비스 능동 검사는 금지야.",
+        "context": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        }
+      },
+      "expected": "exact originalPrompt; all 24 IDs; unknown context=null",
+      "observed": {
+        "payload": {
+          "publicationRef": "inputs/projection.json#/payload",
+          "originalPromptPreserved": true
+        },
+        "projectionRevision": "1.0.0",
+        "payloadBytes": 124625,
+        "preservedFields": [
+          "originalPrompt",
+          "confirmedContext",
+          "taxonomyRevision",
+          "classificationCriteriaRef",
+          "skills.* except sourceRefs/sourceMap"
+        ],
+        "omittedFields": [
+          "schemaVersion",
+          "requestId",
+          "operationId",
+          "promptDigest",
+          "contextSources",
+          "inventoryDigest",
+          "requestDigest",
+          "skills.*.sourceRefs",
+          "skills.*.sourceMap"
+        ]
+      },
+      "executionKind": "offline-mock"
+    },
+    {
+      "caseId": "SS07",
+      "variant": "base",
+      "boundaryId": "exact-SEC-control",
+      "input": {
+        "caseId": "SS07",
+        "layer": "vendorRaw",
+        "state": "PASS",
+        "skillIds": [
+          "software-security-auditor"
+        ],
+        "selectionStatus": "SELECTED",
+        "reasonCodes": [],
+        "selectionReasons": [],
+        "executionKind": "offline-mock",
+        "host": null,
+        "hostReceipt": null,
+        "requestDigest": "sha256:0c46740e5d3cbcd2784498e4c375701f0c6bd1584e68eb5aed330d2eefe2f5d5",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+        "conditionDigest": "sha256:556baefc0f9e03dcdb8c46a363b7d226412aed14071c71d634be607c023242a5",
+        "stageEvidence": {
+          "read": false,
+          "applied": false,
+          "verified": false
+        }
+      },
+      "expected": "raw oracle PASS, selected/read/applied/verified NOTRUN",
+      "observed": {
+        "caseId": "SS07",
+        "verdict": "PASS",
+        "missingRequired": [],
+        "forbidden": [],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 1,
+        "falsePositives": 0,
+        "requiredHits": 1,
+        "answered": true,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": []
+      },
+      "executionKind": "offline-mock"
+    },
+    {
+      "caseId": "SS07",
+      "variant": "base",
+      "boundaryId": "forbidden-ponytail",
+      "input": [
+        "software-security-auditor",
+        "ponytail"
+      ],
+      "expected": {
+        "verdict": "FAIL",
+        "forbidden": [
+          "ponytail"
+        ]
+      },
+      "observed": {
+        "caseId": "SS07",
+        "verdict": "FAIL",
+        "missingRequired": [],
+        "forbidden": [
+          "ponytail"
+        ],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 1,
+        "falsePositives": 1,
+        "requiredHits": 1,
+        "answered": true,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": []
+      },
+      "executionKind": "offline-mock"
+    },
+    {
+      "caseId": "SS07",
+      "variant": "base",
+      "boundaryId": "forbidden-code-review",
+      "input": [
+        "software-security-auditor",
+        "code-review"
+      ],
+      "expected": {
+        "verdict": "FAIL",
+        "forbidden": [
+          "code-review"
+        ]
+      },
+      "observed": {
+        "caseId": "SS07",
+        "verdict": "FAIL",
+        "missingRequired": [],
+        "forbidden": [
+          "code-review"
+        ],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 1,
+        "falsePositives": 1,
+        "requiredHits": 1,
+        "answered": true,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": []
+      },
+      "executionKind": "offline-mock"
+    },
+    {
+      "caseId": "SS07",
+      "variant": "base",
+      "boundaryId": "forbidden-independent-audit-gate",
+      "input": [
+        "software-security-auditor",
+        "independent-audit-gate"
+      ],
+      "expected": {
+        "verdict": "FAIL",
+        "forbidden": [
+          "independent-audit-gate"
+        ]
+      },
+      "observed": {
+        "caseId": "SS07",
+        "verdict": "FAIL",
+        "missingRequired": [],
+        "forbidden": [
+          "independent-audit-gate"
+        ],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 1,
+        "falsePositives": 1,
+        "requiredHits": 1,
+        "answered": true,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": []
+      },
+      "executionKind": "offline-mock"
+    },
+    {
+      "caseId": "SS07",
+      "variant": "base",
+      "boundaryId": "replacement-and-select-all",
+      "input": [
+        [
+          "code-review"
+        ],
+        [
+          "acceptance-evidence-validator",
+          "blocker-diagnostician",
+          "change-scope-guardian",
+          "code-review",
+          "codex-token-usage-analyzer",
+          "context-continuity",
+          "coordinate-subagents",
+          "cs-engineering",
+          "evaluation-validity-auditor",
+          "independent-audit-gate",
+          "independent-deliberation-panel",
+          "instruction-scope-resolver",
+          "iteration-frame-auditor",
+          "korean-prose-editor",
+          "model-effort-advisor",
+          "mutation-risk-preflight",
+          "orchestrator",
+          "ponytail",
+          "recovery-strategy-selector",
+          "session-board",
+          "software-security-auditor",
+          "task-contract",
+          "test-engineering",
+          "workspace-convention-profiler"
+        ]
+      ],
+      "expected": "both FAIL; raw semantic error never repaired by contract validator",
+      "observed": {
+        "replacement": {
+          "caseId": "SS07",
+          "verdict": "FAIL",
+          "missingRequired": [
+            "software-security-auditor"
+          ],
+          "forbidden": [
+            "code-review"
+          ],
+          "unnecessary": [],
+          "unadjudicated": [],
+          "truePositives": 0,
+          "falsePositives": 1,
+          "requiredHits": 0,
+          "answered": true,
+          "abstained": false,
+          "unnecessaryAbstention": false,
+          "reasons": []
+        },
+        "all": {
+          "caseId": "SS07",
+          "verdict": "FAIL",
+          "missingRequired": [],
+          "forbidden": [
+            "code-review",
+            "independent-audit-gate",
+            "ponytail"
+          ],
+          "unnecessary": [
+            "cs-engineering",
+            "korean-prose-editor",
+            "orchestrator",
+            "test-engineering"
+          ],
+          "unadjudicated": [
+            "acceptance-evidence-validator",
+            "blocker-diagnostician",
+            "change-scope-guardian",
+            "codex-token-usage-analyzer",
+            "context-continuity",
+            "coordinate-subagents",
+            "evaluation-validity-auditor",
+            "independent-deliberation-panel",
+            "instruction-scope-resolver",
+            "iteration-frame-auditor",
+            "model-effort-advisor",
+            "mutation-risk-preflight",
+            "recovery-strategy-selector",
+            "session-board",
+            "task-contract",
+            "workspace-convention-profiler"
+          ],
+          "truePositives": 1,
+          "falsePositives": 7,
+          "requiredHits": 1,
+          "answered": true,
+          "abstained": false,
+          "unnecessaryAbstention": false,
+          "reasons": []
+        }
+      },
+      "executionKind": "offline-mock"
+    },
+    {
+      "caseId": "SS07",
+      "variant": "base",
+      "boundaryId": "support-not-selection",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS07-base",
+        "operationId": "SS07-base",
+        "originalPrompt": "고정된 CLI·MCP 소스와 설정에서 경로 traversal과 권한 검사 누락을 보안 감사해 줘. 읽기 전용이며 수정과 운영 서비스 능동 검사는 금지야.",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "explicitSkillIds": [],
+        "ruleRequiredSkillIds": [],
+        "vendorContext": {
+          "vendorId": "offline-test",
+          "reference": "synthetic-only"
+        },
+        "publicSynthetic": true
+      },
+      "expected": {
+        "selected": null,
+        "accept": "HOST_SELECTION_NOT_OBSERVED"
+      },
+      "observed": {
+        "classification": {
+          "result": {
+            "request": {
+              "publicationRef": "inputs/request.json",
+              "originalRequestDigest": "sha256:0c46740e5d3cbcd2784498e4c375701f0c6bd1584e68eb5aed330d2eefe2f5d5"
+            },
+            "config": {
+              "jevEnabled": false,
+              "mode": "select",
+              "providerProfileRegistryRef": "test-only",
+              "externalClassificationAllowed": true,
+              "configRevision": "mock",
+              "timeoutMs": 1000
+            },
+            "profileRevision": "mock",
+            "snapshot": {
+              "taskRevision": null,
+              "configRevision": "mock",
+              "profileRevision": "mock",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "requestDigest": "sha256:0c46740e5d3cbcd2784498e4c375701f0c6bd1584e68eb5aed330d2eefe2f5d5",
+              "cancelled": false
+            },
+            "attempts": [
+              {
+                "providerKind": "vendor",
+                "profileId": "SS07-mock",
+                "modelId": "synthetic-only",
+                "reasoningEffort": "low",
+                "dispatchState": "started",
+                "status": "SUCCESS",
+                "errorCode": null,
+                "timedOut": false,
+                "usage": {
+                  "inputTokens": null,
+                  "outputTokens": null,
+                  "cachedInputTokens": null,
+                  "actualCostUsd": 0.1
+                },
+                "reservedCostUsd": 0.4
+              }
+            ],
+            "response": {
+              "schemaVersion": "1.0.0",
+              "requestId": "SS07-base",
+              "operationId": "SS07-base",
+              "requestDigest": "sha256:0c46740e5d3cbcd2784498e4c375701f0c6bd1584e68eb5aed330d2eefe2f5d5",
+              "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+              "status": "SUCCESS",
+              "judgments": [
+                {
+                  "skillId": "acceptance-evidence-validator",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "blocker-diagnostician",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "change-scope-guardian",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "code-review",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "codex-token-usage-analyzer",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "context-continuity",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "coordinate-subagents",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "cs-engineering",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "evaluation-validity-auditor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "independent-audit-gate",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "independent-deliberation-panel",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "instruction-scope-resolver",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "iteration-frame-auditor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "model-effort-advisor",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "mutation-risk-preflight",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "orchestrator",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "ponytail",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "recovery-strategy-selector",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "session-board",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "judgment": "needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "task-contract",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "test-engineering",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                },
+                {
+                  "skillId": "workspace-convention-profiler",
+                  "judgment": "not-needed",
+                  "reasonRefs": [
+                    "SS07:synthetic-test-answer"
+                  ],
+                  "uncertaintyReason": null
+                }
+              ],
+              "unresolvedItems": [],
+              "error": null
+            }
+          },
+          "classificationResponseRef": "sha256:fef012f43f62e1ce3b08fa1d3868e99c2fed3ead1a5fa59edcfc4db393a7c7a4",
+          "agentSelectedSkillIds": null,
+          "selectionStatus": "PROPOSED",
+          "adviceApplied": false
+        },
+        "accept": {
+          "valid": false,
+          "errors": [
+            "HOST_SELECTION_NOT_OBSERVED"
+          ],
+          "agentSelectedSkillIds": null
+        }
+      },
+      "executionKind": "offline-mock"
+    },
+    {
+      "caseId": "SS07",
+      "variant": "base",
+      "boundaryId": "null-empty-stage-evidence",
+      "input": {
+        "selectedUnknown": null,
+        "validEmptyExample": [],
+        "hostReceipt": null
+      },
+      "expected": "null != []; no receipt FAIL; actual notRun=1",
+      "observed": {
+        "noReceipt": {
+          "caseId": "SS07",
+          "verdict": "FAIL",
+          "missingRequired": [],
+          "forbidden": [],
+          "unnecessary": [],
+          "unadjudicated": [],
+          "truePositives": 1,
+          "falsePositives": 0,
+          "requiredHits": 1,
+          "answered": false,
+          "abstained": false,
+          "unnecessaryAbstention": false,
+          "reasons": [
+            "HOST_SELECTION_RECEIPT_MISSING_OR_MISMATCH"
+          ]
+        },
+        "unknown": {
+          "caseId": "SS07",
+          "verdict": "FAIL",
+          "missingRequired": [
+            "software-security-auditor"
+          ],
+          "forbidden": [],
+          "unnecessary": [],
+          "unadjudicated": [],
+          "truePositives": 0,
+          "falsePositives": 0,
+          "requiredHits": 0,
+          "answered": false,
+          "abstained": true,
+          "unnecessaryAbstention": true,
+          "reasons": [
+            "UNEXPECTED_OR_UNEXPLAINED_ABSTENTION"
+          ]
+        },
+        "empty": {
+          "caseId": "SS07",
+          "verdict": "FAIL",
+          "missingRequired": [
+            "software-security-auditor"
+          ],
+          "forbidden": [],
+          "unnecessary": [],
+          "unadjudicated": [],
+          "truePositives": 0,
+          "falsePositives": 0,
+          "requiredHits": 0,
+          "answered": true,
+          "abstained": false,
+          "unnecessaryAbstention": false,
+          "reasons": []
+        },
+        "actual": {
+          "layer": "selected",
+          "denominator": 1,
+          "executed": 0,
+          "passes": 0,
+          "failures": 0,
+          "blocked": 0,
+          "notRun": 1,
+          "reviewRequired": 0,
+          "requiredTotal": 1,
+          "requiredHits": 0,
+          "requiredRecall": 0,
+          "truePositives": 0,
+          "falsePositives": 0,
+          "unadjudicatedCount": 0,
+          "precision": null,
+          "forbiddenViolations": 0,
+          "forbiddenViolationRate": 0,
+          "unnecessarySelections": 0,
+          "exactPurposeSuccessRate": 0,
+          "coverage": 0,
+          "abstentions": 0,
+          "abstentionRate": 0,
+          "unnecessaryAbstentionRate": 0,
+          "stageCoverage": {
+            "read": 0,
+            "applied": 0,
+            "verified": 0
+          },
+          "verdict": "INCOMPLETE_OR_FAIL",
+          "scores": [
+            {
+              "caseId": "SS07",
+              "verdict": "NOT_RUN",
+              "missingRequired": [
+                "software-security-auditor"
+              ],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 0,
+              "falsePositives": 0,
+              "requiredHits": 0,
+              "answered": false,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": []
+            }
+          ]
+        }
+      },
+      "executionKind": "offline-mock"
+    },
+    {
+      "caseId": "SS07",
+      "variant": "base",
+      "boundaryId": "unconfigured-path",
+      "input": {
+        "configRef": null,
+        "originalPrompt": "고정된 CLI·MCP 소스와 설정에서 경로 traversal과 권한 검사 누락을 보안 감사해 줘. 읽기 전용이며 수정과 운영 서비스 능동 검사는 금지야."
+      },
+      "expected": "PROFILE_UNAVAILABLE, attempts=[], selected=null",
+      "observed": {
+        "result": {
+          "request": {
+            "publicationRef": "inputs/request.json",
+            "originalRequestDigest": "sha256:0c46740e5d3cbcd2784498e4c375701f0c6bd1584e68eb5aed330d2eefe2f5d5"
+          },
+          "config": {
+            "jevEnabled": true,
+            "mode": "select",
+            "providerProfileRegistryRef": "unconfigured",
+            "externalClassificationAllowed": false,
+            "configRevision": "unconfigured",
+            "timeoutMs": 30000
+          },
+          "profileRevision": "unconfigured",
+          "snapshot": {
+            "taskRevision": null,
+            "configRevision": "unconfigured",
+            "profileRevision": "unconfigured",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "requestDigest": "sha256:0c46740e5d3cbcd2784498e4c375701f0c6bd1584e68eb5aed330d2eefe2f5d5",
+            "cancelled": false
+          },
+          "attempts": [],
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS07-base",
+            "operationId": "SS07-base",
+            "requestDigest": "sha256:0c46740e5d3cbcd2784498e4c375701f0c6bd1584e68eb5aed330d2eefe2f5d5",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "status": "UNAVAILABLE",
+            "judgments": [],
+            "unresolvedItems": [
+              {
+                "skillId": null,
+                "reasonCode": "PROFILE_UNAVAILABLE"
+              }
+            ],
+            "error": {
+              "code": "PROFILE_UNAVAILABLE",
+              "retryable": false,
+              "dispatchState": "not-started"
+            }
+          }
+        },
+        "classificationResponseRef": "sha256:c62765bf7a4ba6456154bada0ae25ecaaf8eaba6ba7b0bb4a51507525389c3c5",
+        "agentSelectedSkillIds": null,
+        "selectionStatus": "PROPOSED",
+        "adviceApplied": false
+      },
+      "executionKind": "offline-runtime"
+    },
+    {
+      "caseId": "SS07",
+      "variant": "base",
+      "boundaryId": "missing-target",
+      "input": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "target": {
+            "identifier": "SS07-synthetic-missing-source",
+            "baseRef": null,
+            "files": [
+              {
+                "path": "missing-cli.mjs",
+                "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              }
+            ]
+          },
+          "mode": "repository",
+          "profiles": [
+            "cli-mcp"
+          ],
+          "excluded": [],
+          "environment": "isolated synthetic SS07 boundary",
+          "authorization": {
+            "localReproduction": false,
+            "constraints": [
+              "read-only",
+              "no modifications",
+              "no active production probing"
+            ]
+          },
+          "checks": [
+            {
+              "id": "SS07-traversal",
+              "description": "path traversal"
+            },
+            {
+              "id": "SS07-authz",
+              "description": "missing permission check"
+            }
+          ],
+          "providedEvidence": []
+        },
+        "argv": [
+          "[NODE_EXECUTABLE]",
+          "[REPO]/skills/software-security-auditor/scripts/cli.mjs",
+          "snapshot",
+          "--input",
+          "[OWNED_MISSING_TARGET_DIR]/request.json",
+          "--target-root",
+          "[OWNED_MISSING_TARGET_DIR]"
+        ]
+      },
+      "expected": "exit 2 INVALID_INPUT ENOENT; SEC need remains; actual audit NOTRUN",
+      "observed": {
+        "exit": 2,
+        "stdout": "{\"valid\":false,\"code\":\"INVALID_INPUT\",\"errors\":[\"ENOENT: no such file or directory, lstat '[OWNED_MISSING_TARGET_DIR]/missing-cli.mjs'\"]}\n",
+        "stderr": ""
+      },
+      "executionKind": "offline-cli"
+    },
+    {
+      "caseId": "SS07",
+      "variant": "base",
+      "boundaryId": "investigation-not-safety",
+      "input": {
+        "schemaVersion": "1.0.0",
+        "target": {
+          "identifier": "SS07-synthetic-contract-only",
+          "baseRef": null,
+          "files": [
+            {
+              "path": "cli.mjs",
+              "digest": "sha256:da24a9ab3bd825eb458dc37b4373ff8ce96b62b9a3211241242fb4d5736f0d8d"
+            }
+          ]
+        },
+        "mode": "repository",
+        "profiles": [
+          "cli-mcp"
+        ],
+        "excluded": [],
+        "environment": "isolated synthetic SS07 boundary",
+        "authorization": {
+          "localReproduction": false,
+          "constraints": [
+            "read-only"
+          ]
+        },
+        "checks": [
+          {
+            "id": "SS07-traversal",
+            "description": "path traversal"
+          },
+          {
+            "id": "SS07-authz",
+            "description": "missing permission checks"
+          }
+        ],
+        "providedEvidence": []
+      },
+      "expected": "complete accepts high finding; unauthorized reproduction rejected; blocked accepted",
+      "observed": {
+        "complete": [],
+        "unauthorized": [
+          "UNAUTHORIZED_REPRODUCTION"
+        ],
+        "blocked": [],
+        "schemaValid": true
+      },
+      "executionKind": "offline-contract"
+    },
+    {
+      "caseId": "SS07",
+      "variant": "base",
+      "boundaryId": "known-metadata-condition-duplication",
+      "input": {
+        "classificationPath": "skills/software-security-auditor/classification.json"
+      },
+      "expected": "applicability/exclusion clauses separately represented",
+      "observed": {
+        "applicability": [
+          "description: 소스·설정과 허용된 로컬 재현으로 웹·API 및 CLI·MCP의 공격 경로와 방어 통제를 감사하고 취약점·근거·검사 공백을 보고한다. 일반 코드 리뷰, 자동 수정, 운영 서비스 능동 검사나 릴리스 승인에는 사용하지 않는다.",
+          "# Software Security Auditor\n\n보안 분석을 요청했거나 수용 기준이 요구할 때 사용한다. 보안 관련 파일이 있다는 이유만으로 일반 작업에 추가하지 않는다. 조사 완료와 소프트웨어 안전 판정은 다르다. 수정·승인·배포 권한을 만들지 않는다."
+        ],
+        "exclusions": [
+          "description: 소스·설정과 허용된 로컬 재현으로 웹·API 및 CLI·MCP의 공격 경로와 방어 통제를 감사하고 취약점·근거·검사 공백을 보고한다. 일반 코드 리뷰, 자동 수정, 운영 서비스 능동 검사나 릴리스 승인에는 사용하지 않는다.",
+          "# Software Security Auditor\n\n보안 분석을 요청했거나 수용 기준이 요구할 때 사용한다. 보안 관련 파일이 있다는 이유만으로 일반 작업에 추가하지 않는다. 조사 완료와 소프트웨어 안전 판정은 다르다. 수정·승인·배포 권한을 만들지 않는다."
+        ],
+        "identical": true
+      },
+      "executionKind": "offline-static"
+    },
+    {
+      "caseId": "SS07",
+      "variant": "base",
+      "boundaryId": "known-valid-cost-loss",
+      "input": {
+        "missingJudgment": "software-security-auditor",
+        "suppliedUsage": {
+          "actualCostUsd": 0.1
+        }
+      },
+      "expected": "INVALID_PROVIDER_RESPONSE, actualCostUsd=0.1; settle known cost",
+      "observed": {
+        "result": {
+          "request": {
+            "publicationRef": "inputs/request.json",
+            "originalRequestDigest": "sha256:0c46740e5d3cbcd2784498e4c375701f0c6bd1584e68eb5aed330d2eefe2f5d5"
+          },
+          "config": {
+            "jevEnabled": false,
+            "mode": "select",
+            "providerProfileRegistryRef": "test-only",
+            "externalClassificationAllowed": true,
+            "configRevision": "mock",
+            "timeoutMs": 1000
+          },
+          "profileRevision": "mock",
+          "snapshot": {
+            "taskRevision": null,
+            "configRevision": "mock",
+            "profileRevision": "mock",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "requestDigest": "sha256:0c46740e5d3cbcd2784498e4c375701f0c6bd1584e68eb5aed330d2eefe2f5d5",
+            "cancelled": false
+          },
+          "attempts": [
+            {
+              "providerKind": "vendor",
+              "profileId": "SS07-mock",
+              "modelId": "synthetic-only",
+              "reasoningEffort": "low",
+              "dispatchState": "started",
+              "status": "INVALID",
+              "errorCode": "INVALID_PROVIDER_RESPONSE",
+              "timedOut": false,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": null
+              },
+              "reservedCostUsd": 0.4
+            }
+          ],
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS07-base",
+            "operationId": "SS07-base",
+            "requestDigest": "sha256:0c46740e5d3cbcd2784498e4c375701f0c6bd1584e68eb5aed330d2eefe2f5d5",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "status": "INVALID",
+            "judgments": [],
+            "unresolvedItems": [
+              {
+                "skillId": null,
+                "reasonCode": "INVALID_PROVIDER_RESPONSE"
+              }
+            ],
+            "error": {
+              "code": "INVALID_PROVIDER_RESPONSE",
+              "retryable": false,
+              "dispatchState": "started"
+            }
+          }
+        },
+        "budget": {
+          "limits": {
+            "jev": {
+              "limitUsd": null,
+              "spentUsd": null
+            },
+            "vendor:offline-test": {
+              "limitUsd": 1,
+              "spentUsd": 0
+            }
+          },
+          "nativeAllowances": {},
+          "invalidCostCeilings": [],
+          "reservations": [
+            {
+              "id": "[\"SS07-base\",\"sha256:0c46740e5d3cbcd2784498e4c375701f0c6bd1584e68eb5aed330d2eefe2f5d5\",\"SS07-mock\"]",
+              "bucket": "vendor:offline-test",
+              "maximumUsd": 0.4,
+              "profileId": "SS07-mock",
+              "nativeProfileId": null
+            }
+          ]
+        }
+      },
+      "executionKind": "offline-mock"
+    },
+    {
+      "caseId": "SS07",
+      "variant": "base",
+      "boundaryId": "known-timeout-overflow",
+      "input": {
+        "timeoutMs": 2147483648,
+        "originalPrompt": "고정된 CLI·MCP 소스와 설정에서 경로 traversal과 권한 검사 누락을 보안 감사해 줘. 읽기 전용이며 수정과 운영 서비스 능동 검사는 금지야."
+      },
+      "expected": "INVALID_TIMEOUT; attempts=[], provider calls=0",
+      "observed": {
+        "result": {
+          "request": {
+            "publicationRef": "inputs/request.json",
+            "originalRequestDigest": "sha256:0c46740e5d3cbcd2784498e4c375701f0c6bd1584e68eb5aed330d2eefe2f5d5"
+          },
+          "config": {
+            "jevEnabled": false,
+            "mode": "select",
+            "providerProfileRegistryRef": "test-only",
+            "externalClassificationAllowed": true,
+            "configRevision": "mock",
+            "timeoutMs": 2147483648
+          },
+          "profileRevision": "mock",
+          "snapshot": {
+            "taskRevision": null,
+            "configRevision": "mock",
+            "profileRevision": "mock",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "requestDigest": "sha256:0c46740e5d3cbcd2784498e4c375701f0c6bd1584e68eb5aed330d2eefe2f5d5",
+            "cancelled": false
+          },
+          "attempts": [
+            {
+              "providerKind": "vendor",
+              "profileId": "SS07-mock",
+              "modelId": "synthetic-only",
+              "reasoningEffort": "low",
+              "dispatchState": "unknown",
+              "status": "UNCERTAIN",
+              "errorCode": "PROVIDER_TIMEOUT",
+              "timedOut": true,
+              "usage": {
+                "inputTokens": null,
+                "outputTokens": null,
+                "cachedInputTokens": null,
+                "actualCostUsd": null
+              },
+              "reservedCostUsd": 0.4
+            }
+          ],
+          "response": {
+            "schemaVersion": "1.0.0",
+            "requestId": "SS07-base",
+            "operationId": "SS07-base",
+            "requestDigest": "sha256:0c46740e5d3cbcd2784498e4c375701f0c6bd1584e68eb5aed330d2eefe2f5d5",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "status": "UNCERTAIN",
+            "judgments": [],
+            "unresolvedItems": [
+              {
+                "skillId": null,
+                "reasonCode": "PROVIDER_TIMEOUT"
+              }
+            ],
+            "error": {
+              "code": "PROVIDER_TIMEOUT",
+              "retryable": false,
+              "dispatchState": "unknown"
+            }
+          }
+        },
+        "mockCalls": 1
+      },
+      "executionKind": "offline-mock"
+    },
+    {
+      "caseId": "SS07",
+      "variant": "base",
+      "boundaryId": "API0",
+      "input": {
+        "guard": "global fetch throws; no native CLI/provider transports configured"
+      },
+      "expected": 0,
+      "observed": 0,
+      "executionKind": "offline-mock"
+    }
+  ],
+  "actualHostObservation": {
+    "executionKind": "host-live",
+    "state": "NOT_RUN",
+    "agentSelectedSkillIds": null,
+    "hostReceipt": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  }
+}

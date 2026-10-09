@@ -1,0 +1,29 @@
+
+ RUN  v5.0.0 [REPO]
+
+ ✓ tests/ss07-isolated/SS07.test.ts > SS07 only: frozen base and additional isolated boundaries > SS07 provenance and every declared variant 9ms
+ ✓ tests/ss07-isolated/SS07.test.ts > SS07 only: frozen base and additional isolated boundaries > SS07 original bytes, prohibition clauses, full inventory and unknown context survive projection 6ms
+ ✓ tests/ss07-isolated/SS07.test.ts > SS07 only: frozen base and additional isolated boundaries > SS07 exact SEC mock is an evaluator control, not AGENT selection 2ms
+ ✓ tests/ss07-isolated/SS07.test.ts > SS07 only: frozen base and additional isolated boundaries > SS07 rejects automatic forbidden addition ponytail 0ms
+ ✓ tests/ss07-isolated/SS07.test.ts > SS07 only: frozen base and additional isolated boundaries > SS07 rejects automatic forbidden addition code-review 0ms
+ ✓ tests/ss07-isolated/SS07.test.ts > SS07 only: frozen base and additional isolated boundaries > SS07 rejects automatic forbidden addition independent-audit-gate 0ms
+ ✓ tests/ss07-isolated/SS07.test.ts > SS07 only: frozen base and additional isolated boundaries > SS07 general review replacement and all-skills output both fail despite structural validity 0ms
+ ✓ tests/ss07-isolated/SS07.test.ts > SS07 only: frozen base and additional isolated boundaries > SS07 raw recommendation never becomes selection and unobserved accept is rejected 68ms
+ ✓ tests/ss07-isolated/SS07.test.ts > SS07 only: frozen base and additional isolated boundaries > SS07 null and empty stay distinct; exact set without host receipt fails selected layer 1ms
+ ✓ tests/ss07-isolated/SS07.test.ts > SS07 only: frozen base and additional isolated boundaries > SS07 unconfigured environment has zero attempts and no selected set 49ms
+ ✓ tests/ss07-isolated/SS07.test.ts > SS07 only: frozen base and additional isolated boundaries > SS07 missing target cannot be fabricated into audit evidence 114ms
+ ✓ tests/ss07-isolated/SS07.test.ts > SS07 only: frozen base and additional isolated boundaries > SS07 complete investigation can contain a vulnerability; reproduction remains unauthorized 5ms
+ × tests/ss07-isolated/SS07.test.ts > SS07 only: frozen base and additional isolated boundaries > SS07 DEFECT existing metadata-condition-duplication: applicability and exclusions must differ 5ms
+   → expected [ …(2) ] to not deeply equal [ …(2) ]
+ × tests/ss07-isolated/SS07.test.ts > SS07 only: frozen base and additional isolated boundaries > SS07 DEFECT existing valid-cost-lost-on-invalid-RESP: known cost must survive invalid recommendation 9ms
+   → expected null to be 0.1 // Object.is equality
+ × tests/ss07-isolated/SS07.test.ts > SS07 only: frozen base and additional isolated boundaries > SS07 DEFECT existing timeout-overflow: reject 2147483648 before dispatch 10ms
+   → expected 'PROVIDER_TIMEOUT' to be 'INVALID_TIMEOUT' // Object.is equality
+ ✓ tests/ss07-isolated/SS07.test.ts > SS07 only: frozen base and additional isolated boundaries > SS07 API guard stayed at zero 0ms
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 13 passed (16)
+   Start at  03:01:34
+   Duration  827ms (tests 52%, transform 26%, import 22%)
+
+JSON report written to [EVIDENCE_DIR]/SS07.vitest.json
