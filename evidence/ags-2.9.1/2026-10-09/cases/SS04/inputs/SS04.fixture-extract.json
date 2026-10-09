@@ -1,0 +1,105 @@
+{
+  "caseId": "SS04",
+  "title": "SQLite WAL과 oldbroker 전환",
+  "familyId": "runtime-transition",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "live와 mock. 현장 원인 조사 결과와 별도로 판정한다.",
+  "originalPrompt": "Design a minimal transition from oldbroker to the SQLite WAL-backed runtime. Account for concurrent writers, crash recovery and duplicate delivery, and specify regression tests. Do not migrate the production database.",
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS04",
+    "fields": {
+      "입력": "“Design a minimal transition from oldbroker to the SQLite WAL-backed runtime. Account for concurrent writers, crash recovery and duplicate delivery, and specify regression tests. Do not migrate the production database.”",
+      "필수추천": "R={CS, T, O}.",
+      "금지추천 또는 행동": "CS 생략; 마이그레이션 계획을 운영 DB 변경 승인으로 해석; 단어 WAL만으로 안전 판정.",
+      "허용선택": "A={P}. 구체적인 코드 설계까지 포함하는 것으로 정답을 동결할 때 허용한다. 전환의 개념·요구 분석만 뜻한다면 P를 필수로 강제하지 않는다.",
+      "보류조건": "실제 DB 구조와 후보 정보 부족은 후속 설계의 입력 부족이며, CS 추천을 생략할 이유가 아니다.",
+      "통과기준": "CS·T·O를 동시에 추천하고 운영 변경을 실행하지 않는다. SS03과 다른 의미군으로 관리한다.",
+      "증거": "E0, 쓰기 경쟁·복구·중복 전달 요구와 추천의 대응.",
+      "실행종류": "live와 mock. 현장 원인 조사 결과와 별도로 판정한다."
+    },
+    "bodyDigest": "sha256:08961807e837c0ea62cb1f7ca9665b2327cebf6678304329dda22cd694dfc3f4"
+  },
+  "oracle": {
+    "required": [
+      "cs-engineering",
+      "test-engineering",
+      "orchestrator"
+    ],
+    "allowed": [
+      "ponytail"
+    ],
+    "allowedConditions": {},
+    "forbidden": [],
+    "notApplicable": [
+      "code-review",
+      "software-security-auditor",
+      "korean-prose-editor"
+    ],
+    "unadjudicated": [
+      "acceptance-evidence-validator",
+      "blocker-diagnostician",
+      "change-scope-guardian",
+      "codex-token-usage-analyzer",
+      "context-continuity",
+      "coordinate-subagents",
+      "evaluation-validity-auditor",
+      "independent-audit-gate",
+      "independent-deliberation-panel",
+      "instruction-scope-resolver",
+      "iteration-frame-auditor",
+      "model-effort-advisor",
+      "mutation-risk-preflight",
+      "recovery-strategy-selector",
+      "session-board",
+      "task-contract",
+      "workspace-convention-profiler"
+    ],
+    "expectedSelection": "SELECTED",
+    "explicitSkillIds": [],
+    "ruleRequiredSkillIds": [],
+    "requiredReasons": [],
+    "sourceRefs": [
+      {
+        "skillId": "cs-engineering",
+        "path": "skills/cs-engineering/SKILL.md",
+        "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+      },
+      {
+        "skillId": "test-engineering",
+        "path": "skills/test-engineering/SKILL.md",
+        "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      },
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+      },
+      {
+        "skillId": "code-review",
+        "path": "skills/code-review/SKILL.md",
+        "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      },
+      {
+        "skillId": "software-security-auditor",
+        "path": "skills/software-security-auditor/SKILL.md",
+        "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+      },
+      {
+        "skillId": "korean-prose-editor",
+        "path": "skills/korean-prose-editor/SKILL.md",
+        "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+      },
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md",
+        "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+      }
+    ],
+    "boundaryDecision": "P is allowed for concrete transition code design; not required"
+  },
+  "variants": [
+    "base"
+  ]
+}

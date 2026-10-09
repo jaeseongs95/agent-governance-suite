@@ -1,0 +1,18 @@
+{
+  "caseId": "SS04",
+  "executionKind": "existing-offline-mock-regression",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/skill-classification/evaluation.test.ts",
+    "-t",
+    "^.*reports allowed alternatives as disagreement and unmatched as missing coverage$",
+    "--reporter=json",
+    "--outputFile=<evidence-output>/existing-regression.json"
+  ],
+  "cwd": "<candidate-root>",
+  "exitCode": 0,
+  "API0": true,
+  "startedOrCompletedAt": "2026-10-09T02:55:37.063381+00:00"
+}

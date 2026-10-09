@@ -1,0 +1,44 @@
+{
+  "caseId": "SS04",
+  "kind": "offline-development-test-plan",
+  "frozenVariants": [
+    "base"
+  ],
+  "entryPoints": [
+    "scoreCase",
+    "aggregate",
+    "loadSkillInventory",
+    "createClassificationRequest",
+    "projectClassificationRequest",
+    "RuntimeSkillClassificationGateway.classify",
+    "SkillClassificationService.classify"
+  ],
+  "scope": "SS04 only; no product edits, no DB migration, no provider/host live, no 21-case bootstrap replay",
+  "oracle": "embedded SS04 sourceSpec.fields and frozen oracle",
+  "requirements": {
+    "R": [
+      "cs-engineering",
+      "test-engineering",
+      "orchestrator"
+    ],
+    "A": [
+      "ponytail"
+    ],
+    "incompatible": [
+      "code-review",
+      "software-security-auditor",
+      "korean-prose-editor"
+    ],
+    "noAbstention": "unknown DB details do not justify omitting CS",
+    "prohibition": "Do not migrate the production database.",
+    "finalSelection": "AGENT only, actual host receipt absent => selected null/NOT_RUN"
+  },
+  "controls": "required omissions, optional P, extras, select-all, alias, null/empty, no receipt, original prohibition/full inventory projection, missing profile, invalid RESP cost, cancellation at reserve",
+  "mockBoundary": "provider availability/classify callbacks only, no fetch/native child; all registry qualification values explicitly fictional test data",
+  "redGreen": "known defects expected to produce red; product fix forbidden, green rerun deferred to successor candidate",
+  "environment": {
+    "node": "v24.19.0",
+    "runner": "existing Vitest; direct node executable bypasses pnpm home-store bootstrap error",
+    "dependencyLockMatched": true
+  }
+}

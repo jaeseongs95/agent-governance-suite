@@ -1,0 +1,293 @@
+{
+  "schemaVersion": "SS04-publication-manifest/1",
+  "caseId": "SS04",
+  "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+  "branch": "evidence",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cases/SS04/",
+  "productCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "productTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "originalFixture": {
+    "artifactName": "tests/skill-classification/fixtures.json",
+    "bytes": 142450,
+    "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "publishedWholeFixture": false
+  },
+  "frozenOracleLogicalSha256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "exactInputUtf8": {
+    "path": "inputs/originalPrompt.txt",
+    "bytes": 217,
+    "sha256": "2288c3c42196e715d437359c2b064d16c18d87c68e989b47b708084df5f2bd5b",
+    "trailingNewline": false
+  },
+  "frozenVariants": [
+    "base"
+  ],
+  "originalResults": {
+    "existingRegression": {
+      "kind": "offline-mock",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 14,
+      "limit": "existing test uses mock-only receipts; no real host receipt or selection; only the SS04 alternatives test was run"
+    },
+    "newIsolatedControls": {
+      "kind": "offline-mock",
+      "total": 27,
+      "passed": 25,
+      "failed": 2,
+      "testFile": "tests/ss04-isolated/SS04.test.ts"
+    },
+    "providerLive": "NOT_RUN",
+    "hostLive": "NOT_RUN"
+  },
+  "hostStages": {
+    "selected": "NOT_RUN",
+    "read": "NOT_RUN",
+    "applied": "NOT_RUN",
+    "verified": "NOT_RUN"
+  },
+  "originalApiCalls": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0,
+    "nativeHostInvocations": 0,
+    "past21RunReplays": 0,
+    "fetchAttemptsInIsolatedTests": 0
+  },
+  "newTestsExecuted": 0,
+  "newApiCalls": 0,
+  "patch": {
+    "status": "NONE",
+    "reason": "No patch artifact exists in the original evidence or isolated-test directory. Original product tracked diff is empty. Existing test source is supplied separately; no patch was generated."
+  },
+  "originalRecoveryMissing": [
+    {
+      "artifact": "runnerRecovery original stdout",
+      "status": "MISSING_ORIGINAL"
+    },
+    {
+      "artifact": "runnerRecovery original stderr",
+      "status": "MISSING_ORIGINAL"
+    }
+  ],
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 3341,
+      "sha256": "57bfc7b800515e001897fc7d7ea5e484db87297061503395773ac6f0010b0ebf",
+      "transformation": "new publication documentation; no test execution"
+    },
+    {
+      "path": "SS04.result.public.json",
+      "bytes": 2802476,
+      "sha256": "a7d4bc24ce2e53ff1ea88b150f6d8a3b9eec3345ea4ffe4272ac2d97a7afadb3",
+      "transformation": "sanitized existing result; private local paths replaced, evidence inventory renamed to originalEvidenceInventory, publication lineage appended; all existing input/expected/observed/status and null/empty values preserved",
+      "original": {
+        "artifactName": "SS04.result.json",
+        "bytes": 2800870,
+        "sha256": "c369af68aef3c29feaa0c807338cc77723810c9f20a89db7eac13c7198e72c6a",
+        "recoveryStatus": "RECOVERED"
+      }
+    },
+    {
+      "path": "commands/existing-regression.original-sanitized.json",
+      "bytes": 517,
+      "sha256": "bd8e630c306e4aca1a7bb33ee2152793188f5f6fe69f7668913bfe78396493d4",
+      "transformation": "sanitized existing artifact: private absolute local paths replaced with role placeholders; original outcomes/exit codes preserved",
+      "original": {
+        "artifactName": "existing-regression.command.json",
+        "bytes": 529,
+        "sha256": "d7342554f024b61e97ff1f8b48a34dfa45ad8966c5cb5f5da0a678e478115b7a",
+        "recoveryStatus": "RECOVERED"
+      }
+    },
+    {
+      "path": "commands/isolated-tests.original-sanitized.json",
+      "bytes": 392,
+      "sha256": "49ab2705e592d693fb8078a32f71f7dc246241fbc4b237a51ae91143b40c071f",
+      "transformation": "sanitized existing artifact: private absolute local paths replaced with role placeholders; original outcomes/exit codes preserved",
+      "original": {
+        "artifactName": "isolated-tests.command.json",
+        "bytes": 404,
+        "sha256": "df8a6a329118fce0d9c2fd63751a2d83b122678909a87ca118a7fbeaf29b9ebd",
+        "recoveryStatus": "RECOVERED"
+      }
+    },
+    {
+      "path": "inputs/SS04.fixture-extract.json",
+      "bytes": 4371,
+      "sha256": "faccfed9f9cbeaa48594109fbf510c644e174f3f83ca3f5aee03c0120686472f",
+      "transformation": "derived SS04-only JSON extraction from original fixture; values unchanged, serialization differs",
+      "original": {
+        "artifactName": "fixtures.json",
+        "bytes": 142450,
+        "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "recoveryStatus": "RECOVERED"
+      }
+    },
+    {
+      "path": "inputs/SS04.oracle.json",
+      "bytes": 2364,
+      "sha256": "b0c7357f89969b570884194b0a0265add6904e9bf43582d7daeb016377789fee",
+      "transformation": "derived SS04-only oracle JSON extraction; artifact byte digest is distinct from the frozen whole-corpus logical oracleDigest",
+      "original": {
+        "artifactName": "fixtures.json",
+        "bytes": 142450,
+        "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "recoveryStatus": "RECOVERED"
+      }
+    },
+    {
+      "path": "inputs/originalPrompt.txt",
+      "bytes": 217,
+      "sha256": "2288c3c42196e715d437359c2b064d16c18d87c68e989b47b708084df5f2bd5b",
+      "transformation": "exact UTF-8 bytes of existing SS04 originalPrompt field extracted without a trailing newline; not the full fixture file",
+      "original": {
+        "artifactName": "fixtures.json",
+        "bytes": 142450,
+        "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "recoveryStatus": "RECOVERED"
+      }
+    },
+    {
+      "path": "logs/existing-regression.report.public.json",
+      "bytes": 5886,
+      "sha256": "2c7755b1cafd8d8cc852e696a09c07451efa1af5705148a1de3e5278e2ab58fd",
+      "transformation": "sanitized existing artifact: private absolute local paths replaced with role placeholders; original outcomes/exit codes preserved",
+      "original": {
+        "artifactName": "existing-regression.json",
+        "bytes": 5891,
+        "sha256": "d80dfc80d9cde543517cc5b6b3498da9e3480089dc80b70bbd04402b9360d760",
+        "recoveryStatus": "RECOVERED"
+      }
+    },
+    {
+      "path": "logs/existing-regression.stderr.public.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "identity; original bytes preserved",
+      "original": {
+        "artifactName": "existing-regression.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "recoveryStatus": "RECOVERED"
+      }
+    },
+    {
+      "path": "logs/existing-regression.stdout.public.txt",
+      "bytes": 66,
+      "sha256": "e73f6703d8987e7bca805fe676b455ae84e0957e678f256a679fce7d4ba9f662",
+      "transformation": "sanitized existing artifact: private absolute local paths replaced with role placeholders; original outcomes/exit codes preserved",
+      "original": {
+        "artifactName": "existing-regression.stdout.txt",
+        "bytes": 73,
+        "sha256": "9def18a9be9fddedd35159c718c1cfa71dd347626f74ed34b34f6d322c2520d3",
+        "recoveryStatus": "RECOVERED"
+      }
+    },
+    {
+      "path": "logs/isolated-tests.report.public.json",
+      "bytes": 10207,
+      "sha256": "bd81d4f959f6ba982ed6358732d73d9e17dbf27ad83ac38e18b8e73a850f1b5e",
+      "transformation": "sanitized existing artifact: private absolute local paths replaced with role placeholders; original outcomes/exit codes preserved",
+      "original": {
+        "artifactName": "isolated-tests.json",
+        "bytes": 10262,
+        "sha256": "c521798717cff94b4ed6a98c3cbeecc729174f2a73e8aecf545fcf5182ed9d91",
+        "recoveryStatus": "RECOVERED"
+      }
+    },
+    {
+      "path": "logs/isolated-tests.stderr.public.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "transformation": "identity; original bytes preserved",
+      "original": {
+        "artifactName": "isolated-tests.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "recoveryStatus": "RECOVERED"
+      }
+    },
+    {
+      "path": "logs/isolated-tests.stdout.public.txt",
+      "bytes": 61,
+      "sha256": "9a6df628b60c98cc40569de35642e81e04728f1879079f9b4cd4d7a5a840a871",
+      "transformation": "sanitized existing artifact: private absolute local paths replaced with role placeholders; original outcomes/exit codes preserved",
+      "original": {
+        "artifactName": "isolated-tests.stdout.txt",
+        "bytes": 68,
+        "sha256": "8f2b77beb3bff88e9efcebb46e7744d0dc99fa434050fffe9a32c43f42c631c3",
+        "recoveryStatus": "RECOVERED"
+      }
+    },
+    {
+      "path": "repro/README.md",
+      "bytes": 3114,
+      "sha256": "96d6b956c88603a71bd59bd6d70cff239d45bb38c65c75ddae44a96a963df068",
+      "transformation": "new publication documentation; no test execution"
+    },
+    {
+      "path": "repro/SS04.test.ts",
+      "bytes": 16176,
+      "sha256": "f36f5582d1a3290ec2794b3abd6cb11331894a4e7cdcf269439864ae46c4534f",
+      "transformation": "portable sanitized copy of existing test: only hardcoded evidence output destination changed to SS04-output/isolated-observations.json; tests were not executed or otherwise changed",
+      "original": {
+        "artifactName": "SS04.test.ts",
+        "bytes": 16189,
+        "sha256": "acfb197f5bd6b470cebadc3e17c0a537a9d26d372881be70c16a13a97bdc345a",
+        "recoveryStatus": "RECOVERED"
+      }
+    },
+    {
+      "path": "results/SS04.plan.public.json",
+      "bytes": 1674,
+      "sha256": "33c4b743a9cdea38f4c19d52c3099beb8e0bc637f57b46ab7648c6f347fb3142",
+      "transformation": "identity; original bytes preserved",
+      "original": {
+        "artifactName": "SS04.plan.json",
+        "bytes": 1674,
+        "sha256": "33c4b743a9cdea38f4c19d52c3099beb8e0bc637f57b46ab7648c6f347fb3142",
+        "recoveryStatus": "RECOVERED"
+      }
+    },
+    {
+      "path": "results/isolated-observations.public.json",
+      "bytes": 2023836,
+      "sha256": "60b50c804c45b5762e3b019807a6981c852309c260c2e941f66f88371cd04c03",
+      "transformation": "identity; original bytes preserved",
+      "original": {
+        "artifactName": "isolated-observations.json",
+        "bytes": 2023836,
+        "sha256": "60b50c804c45b5762e3b019807a6981c852309c260c2e941f66f88371cd04c03",
+        "recoveryStatus": "RECOVERED"
+      }
+    },
+    {
+      "path": "results/provenance.public.json",
+      "bytes": 3355,
+      "sha256": "6415e04a2e0e730267f143c3e30b44412b98bf01b9d68b89f25bb438b22a384c",
+      "transformation": "sanitized existing artifact: private absolute local paths replaced with role placeholders; original outcomes/exit codes preserved",
+      "original": {
+        "artifactName": "provenance.json",
+        "bytes": 3365,
+        "sha256": "f19541a01d54a6588a367267e028da00223054a5bc46bc2ea8f9c80744d58a4e",
+        "recoveryStatus": "RECOVERED"
+      }
+    }
+  ],
+  "payloadFileCount": 18,
+  "payloadTotalBytes": 4878053,
+  "publishedFileCountIncludingMetadata": 20,
+  "hashPolicy": {
+    "manifestExcludes": [
+      "manifest.json",
+      "SHA256SUMS"
+    ],
+    "sha256sumsIncludes": "all payload files and manifest.json",
+    "sha256sumsExcludes": [
+      "SHA256SUMS"
+    ],
+    "metadataSelfDigests": "reported separately after remote verification"
+  }
+}

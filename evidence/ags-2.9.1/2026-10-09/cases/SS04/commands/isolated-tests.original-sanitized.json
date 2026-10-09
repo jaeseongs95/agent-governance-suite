@@ -1,0 +1,16 @@
+{
+  "caseId": "SS04",
+  "executionKind": "new-isolated-offline-mock",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/ss04-isolated/SS04.test.ts",
+    "--reporter=json",
+    "--outputFile=<evidence-output>/isolated-tests.json"
+  ],
+  "cwd": "<candidate-root>",
+  "exitCode": 1,
+  "API0": true,
+  "startedOrCompletedAt": "2026-10-09T02:55:37.910083+00:00"
+}
