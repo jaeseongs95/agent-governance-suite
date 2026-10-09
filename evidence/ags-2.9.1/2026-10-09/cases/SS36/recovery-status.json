@@ -1,0 +1,29 @@
+{
+  "caseId": "SS36",
+  "missingOriginals": [
+    {
+      "artifact": "separate stdout and stderr for retained executions",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Original shell captures used merged streams (2>&1); merged originals and exit records retained."
+    },
+    {
+      "artifact": "intermediate 11-test green Vitest report and observations",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Final 12-test execution superseded those paths; intermediate originals unavailable, not reconstructed."
+    }
+  ],
+  "patch": {
+    "status": "NONE_CREATED",
+    "reason": "No product source patch existed. No patch synthesized for publication."
+  },
+  "unexecutedPublicReproduction": true,
+  "newTests": 0,
+  "apiCalls": {
+    "jev": 0,
+    "vendor": 0,
+    "claude": 0,
+    "codex": 0
+  },
+  "sourceFixtureOriginalPrompt": null,
+  "sourceFixtureOracle": null
+}

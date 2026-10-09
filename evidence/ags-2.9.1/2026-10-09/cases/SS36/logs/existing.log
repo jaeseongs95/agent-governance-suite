@@ -1,0 +1,2 @@
+JSON report written to <EVIDENCE_DIR>/existing-vitest.json
+{"harness": "test-subreaper", "ownerPid": 888, "runnerPid": 890, "reapedPids": [890], "remainingChildren": false, "runnerExitCode": 0, "cancelled": false}

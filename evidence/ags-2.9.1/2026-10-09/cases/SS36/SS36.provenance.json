@@ -1,0 +1,188 @@
+{
+  "caseId": "SS36",
+  "status": "PASS",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "sourceChecks": [
+    {
+      "skillId": "acceptance-evidence-validator",
+      "path": "skills/acceptance-evidence-validator/SKILL.md",
+      "digest": "sha256:1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109",
+      "observed": "sha256:1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109",
+      "status": "PASS"
+    },
+    {
+      "skillId": "blocker-diagnostician",
+      "path": "skills/blocker-diagnostician/SKILL.md",
+      "digest": "sha256:5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e",
+      "observed": "sha256:5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e",
+      "status": "PASS"
+    },
+    {
+      "skillId": "change-scope-guardian",
+      "path": "skills/change-scope-guardian/SKILL.md",
+      "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e",
+      "observed": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e",
+      "status": "PASS"
+    },
+    {
+      "skillId": "code-review",
+      "path": "skills/code-review/SKILL.md",
+      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "observed": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "status": "PASS"
+    },
+    {
+      "skillId": "codex-token-usage-analyzer",
+      "path": "skills/codex-token-usage-analyzer/SKILL.md",
+      "digest": "sha256:81e119d5c8ef11d8f2c928f8c3c9d518941643ae9c88c03cdb8a6ece09f80f1f",
+      "observed": "sha256:81e119d5c8ef11d8f2c928f8c3c9d518941643ae9c88c03cdb8a6ece09f80f1f",
+      "status": "PASS"
+    },
+    {
+      "skillId": "context-continuity",
+      "path": "skills/context-continuity/SKILL.md",
+      "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022",
+      "observed": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022",
+      "status": "PASS"
+    },
+    {
+      "skillId": "coordinate-subagents",
+      "path": "skills/coordinate-subagents/SKILL.md",
+      "digest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0",
+      "observed": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0",
+      "status": "PASS"
+    },
+    {
+      "skillId": "cs-engineering",
+      "path": "skills/cs-engineering/SKILL.md",
+      "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+      "observed": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+      "status": "PASS"
+    },
+    {
+      "skillId": "evaluation-validity-auditor",
+      "path": "skills/evaluation-validity-auditor/SKILL.md",
+      "digest": "sha256:eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230",
+      "observed": "sha256:eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230",
+      "status": "PASS"
+    },
+    {
+      "skillId": "independent-audit-gate",
+      "path": "skills/independent-audit-gate/SKILL.md",
+      "digest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8",
+      "observed": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8",
+      "status": "PASS"
+    },
+    {
+      "skillId": "independent-deliberation-panel",
+      "path": "skills/independent-deliberation-panel/SKILL.md",
+      "digest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab",
+      "observed": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab",
+      "status": "PASS"
+    },
+    {
+      "skillId": "instruction-scope-resolver",
+      "path": "skills/instruction-scope-resolver/SKILL.md",
+      "digest": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
+      "observed": "sha256:5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
+      "status": "PASS"
+    },
+    {
+      "skillId": "iteration-frame-auditor",
+      "path": "skills/iteration-frame-auditor/SKILL.md",
+      "digest": "sha256:e83cf0abff280adfca9f12c35afd67e3787c75ce4e7866f7d1e402f59211945f",
+      "observed": "sha256:e83cf0abff280adfca9f12c35afd67e3787c75ce4e7866f7d1e402f59211945f",
+      "status": "PASS"
+    },
+    {
+      "skillId": "korean-prose-editor",
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "observed": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "status": "PASS"
+    },
+    {
+      "skillId": "model-effort-advisor",
+      "path": "skills/model-effort-advisor/SKILL.md",
+      "digest": "sha256:55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106",
+      "observed": "sha256:55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106",
+      "status": "PASS"
+    },
+    {
+      "skillId": "mutation-risk-preflight",
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "digest": "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe",
+      "observed": "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe",
+      "status": "PASS"
+    },
+    {
+      "skillId": "orchestrator",
+      "path": "skills/orchestrator/SKILL.md",
+      "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "observed": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "status": "PASS"
+    },
+    {
+      "skillId": "ponytail",
+      "path": "skills/ponytail/SKILL.md",
+      "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "observed": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "status": "PASS"
+    },
+    {
+      "skillId": "recovery-strategy-selector",
+      "path": "skills/recovery-strategy-selector/SKILL.md",
+      "digest": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25",
+      "observed": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25",
+      "status": "PASS"
+    },
+    {
+      "skillId": "session-board",
+      "path": "skills/session-board/SKILL.md",
+      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",
+      "observed": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",
+      "status": "PASS"
+    },
+    {
+      "skillId": "software-security-auditor",
+      "path": "skills/software-security-auditor/SKILL.md",
+      "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "observed": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "status": "PASS"
+    },
+    {
+      "skillId": "task-contract",
+      "path": "skills/task-contract/SKILL.md",
+      "digest": "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100",
+      "observed": "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100",
+      "status": "PASS"
+    },
+    {
+      "skillId": "test-engineering",
+      "path": "skills/test-engineering/SKILL.md",
+      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "observed": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "status": "PASS"
+    },
+    {
+      "skillId": "workspace-convention-profiler",
+      "path": "skills/workspace-convention-profiler/SKILL.md",
+      "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7",
+      "observed": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7",
+      "status": "PASS"
+    }
+  ],
+  "productGitStatus": "CLEAN",
+  "sourceSpecFileExists": false,
+  "repositoryAgentsSkillsExists": false,
+  "workspaceAgentsSkillsExists": false,
+  "classificationConfigConfigured": false,
+  "apiCalls": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0
+  }
+}

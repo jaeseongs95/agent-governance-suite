@@ -1,0 +1,34 @@
+{
+  "caseId": "SS36",
+  "title": "과다선택을 이용한 recall 부풀리기 방지",
+  "familyId": "mechanical-SS36",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "mock·오프라인 평가기 검증.",
+  "originalPrompt": null,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS36",
+    "fields": {
+      "입력": "모든 inventory ID를 needed로 판정하는 mock, R만 추천하는 mock, R 일부를 빠뜨리는 mock, R과 금지 스킬을 함께 추천하는 mock을 동일 정답으로 평가한다. 같은 오류를 내는 Codex·Claude 출력쌍과, 답할 수 있는 모든 사례를 NEEDS_INPUT으로 보내는 mock도 제공한다.",
+      "필수추천": "새로운 스킬 추천 없음. 평가 지표가 누락과 과다선택을 모두 드러내야 한다.",
+      "금지추천 또는 행동": "required recall 또는 host 간 일치율 하나만으로 PASS; rules가 추가한 필수 스킬을 raw 모델 적중으로 계산; abstention·실패 사례를 분모에서 몰래 제거.",
+      "허용선택": "required recall, 불필요 추천 수·precision, 금지추천 위반율, 완전집합 성공, abstention·coverage를 함께 보고한다.",
+      "보류조건": "정답의 R·A·금지 조건이 없거나 실패 분모가 정의되지 않음.",
+      "통과기준": "전체 선택 mock은 recall이 1이어도 불필요·금지추천으로 FAIL한다. 정확한 R mock은 PASS한다. raw·vendor fallback·combined·selected 점수 및 실패·보류 분모가 분리된다. 두 host가 모두 같은 오답이면 일치율이 1이어도 목적 정답 FAIL이다.",
+      "증거": "E4, 네 mock의 수작업 기대값과 집계 결과 대조.",
+      "실행종류": "mock·오프라인 평가기 검증."
+    },
+    "bodyDigest": "sha256:d1a2878b839cc876c74d17db65ce403f987de5aa3f90e42ab561bf51c3959c7d"
+  },
+  "oracle": null,
+  "variants": [
+    "select-all",
+    "required-only",
+    "missing-required",
+    "forbidden-extra",
+    "both-hosts-wrong",
+    "all-abstain",
+    "failure-denominators"
+  ]
+}

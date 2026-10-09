@@ -1,0 +1,4117 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS36",
+  "status": "PASS",
+  "statusScope": "SS36 offline evaluator specification verification only; no semantic accuracy or host acceptance claim",
+  "createdAt": "2026-10-09T03:00:50.779738+00:00",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "frozenOracleVerified": true,
+  "sourceSkillsDigestVerification": {
+    "verified": 24,
+    "evidence": "SS36.provenance.json"
+  },
+  "originalPrompt": null,
+  "oracle": null,
+  "semanticAccuracy": null,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS36",
+    "fields": {
+      "입력": "모든 inventory ID를 needed로 판정하는 mock, R만 추천하는 mock, R 일부를 빠뜨리는 mock, R과 금지 스킬을 함께 추천하는 mock을 동일 정답으로 평가한다. 같은 오류를 내는 Codex·Claude 출력쌍과, 답할 수 있는 모든 사례를 NEEDS_INPUT으로 보내는 mock도 제공한다.",
+      "필수추천": "새로운 스킬 추천 없음. 평가 지표가 누락과 과다선택을 모두 드러내야 한다.",
+      "금지추천 또는 행동": "required recall 또는 host 간 일치율 하나만으로 PASS; rules가 추가한 필수 스킬을 raw 모델 적중으로 계산; abstention·실패 사례를 분모에서 몰래 제거.",
+      "허용선택": "required recall, 불필요 추천 수·precision, 금지추천 위반율, 완전집합 성공, abstention·coverage를 함께 보고한다.",
+      "보류조건": "정답의 R·A·금지 조건이 없거나 실패 분모가 정의되지 않음.",
+      "통과기준": "전체 선택 mock은 recall이 1이어도 불필요·금지추천으로 FAIL한다. 정확한 R mock은 PASS한다. raw·vendor fallback·combined·selected 점수 및 실패·보류 분모가 분리된다. 두 host가 모두 같은 오답이면 일치율이 1이어도 목적 정답 FAIL이다.",
+      "증거": "E4, 네 mock의 수작업 기대값과 집계 결과 대조.",
+      "실행종류": "mock·오프라인 평가기 검증."
+    },
+    "bodyDigest": "sha256:d1a2878b839cc876c74d17db65ce403f987de5aa3f90e42ab561bf51c3959c7d"
+  },
+  "executionKind": "offline-mock",
+  "API0": true,
+  "apiCalls": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0
+  },
+  "executionClasses": {
+    "existingRegression": {
+      "status": "PASS",
+      "executedTests": 5,
+      "skippedTests": 10,
+      "evidence": "existing-vitest.json"
+    },
+    "newVariations": {
+      "status": "PASS",
+      "variantsVerified": 7,
+      "totalAssertionsTests": 12,
+      "evidence": "isolated-vitest.json"
+    },
+    "actualHost": {
+      "status": "NOTRUN",
+      "requiredForSS36": false
+    }
+  },
+  "variants": [
+    {
+      "input": {
+        "cases": [
+          {
+            "caseId": "SS36-evaluator-control",
+            "familyId": "mechanical-SS36",
+            "oracle": {
+              "required": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "allowed": [],
+              "allowedConditions": {},
+              "forbidden": [
+                "ponytail"
+              ],
+              "notApplicable": [
+                "code-review",
+                "software-security-auditor",
+                "korean-prose-editor"
+              ],
+              "unadjudicated": [
+                "acceptance-evidence-validator",
+                "blocker-diagnostician",
+                "change-scope-guardian",
+                "codex-token-usage-analyzer",
+                "context-continuity",
+                "coordinate-subagents",
+                "evaluation-validity-auditor",
+                "independent-audit-gate",
+                "independent-deliberation-panel",
+                "instruction-scope-resolver",
+                "iteration-frame-auditor",
+                "model-effort-advisor",
+                "mutation-risk-preflight",
+                "recovery-strategy-selector",
+                "session-board",
+                "task-contract",
+                "workspace-convention-profiler"
+              ],
+              "expectedSelection": "SELECTED",
+              "explicitSkillIds": [],
+              "ruleRequiredSkillIds": [],
+              "requiredReasons": [],
+              "sourceRefs": [
+                {
+                  "skillId": "cs-engineering",
+                  "path": "skills/cs-engineering/SKILL.md",
+                  "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+                },
+                {
+                  "skillId": "test-engineering",
+                  "path": "skills/test-engineering/SKILL.md",
+                  "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+                },
+                {
+                  "skillId": "orchestrator",
+                  "path": "skills/orchestrator/SKILL.md",
+                  "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+                },
+                {
+                  "skillId": "ponytail",
+                  "path": "skills/ponytail/SKILL.md",
+                  "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+                },
+                {
+                  "skillId": "code-review",
+                  "path": "skills/code-review/SKILL.md",
+                  "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "path": "skills/software-security-auditor/SKILL.md",
+                  "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "path": "skills/korean-prose-editor/SKILL.md",
+                  "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+                }
+              ],
+              "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+            }
+          }
+        ],
+        "observations": [
+          {
+            "caseId": "SS36-evaluator-control",
+            "layer": "jevRaw",
+            "state": "PASS",
+            "skillIds": [
+              "acceptance-evidence-validator",
+              "blocker-diagnostician",
+              "change-scope-guardian",
+              "code-review",
+              "codex-token-usage-analyzer",
+              "context-continuity",
+              "coordinate-subagents",
+              "cs-engineering",
+              "evaluation-validity-auditor",
+              "independent-audit-gate",
+              "independent-deliberation-panel",
+              "instruction-scope-resolver",
+              "iteration-frame-auditor",
+              "korean-prose-editor",
+              "model-effort-advisor",
+              "mutation-risk-preflight",
+              "orchestrator",
+              "ponytail",
+              "recovery-strategy-selector",
+              "session-board",
+              "software-security-auditor",
+              "task-contract",
+              "test-engineering",
+              "workspace-convention-profiler"
+            ],
+            "selectionStatus": "SELECTED",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          }
+        ]
+      },
+      "expected": {
+        "denominator": 1,
+        "requiredTotal": 3,
+        "requiredHits": 3,
+        "requiredRecall": 1,
+        "truePositives": 3,
+        "falsePositives": 4,
+        "unadjudicatedCount": 17,
+        "precision": null,
+        "unnecessarySelections": 3,
+        "forbiddenViolations": 1,
+        "forbiddenViolationRate": 1,
+        "passes": 0,
+        "failures": 1,
+        "exactPurposeSuccessRate": 0,
+        "coverage": 1,
+        "verdict": "INCOMPLETE_OR_FAIL"
+      },
+      "observed": {
+        "denominator": 1,
+        "executed": 1,
+        "passes": 0,
+        "failures": 1,
+        "blocked": 0,
+        "notRun": 0,
+        "requiredTotal": 3,
+        "requiredHits": 3,
+        "requiredRecall": 1,
+        "truePositives": 3,
+        "falsePositives": 4,
+        "unadjudicatedCount": 17,
+        "precision": null,
+        "unnecessarySelections": 3,
+        "forbiddenViolations": 1,
+        "forbiddenViolationRate": 1,
+        "exactPurposeSuccessRate": 0,
+        "coverage": 1,
+        "abstentions": 0,
+        "abstentionRate": 0,
+        "unnecessaryAbstentionRate": 0,
+        "stageCoverage": {
+          "read": 0,
+          "applied": 0,
+          "verified": 0
+        },
+        "verdict": "INCOMPLETE_OR_FAIL",
+        "scores": [
+          {
+            "caseId": "SS36-evaluator-control",
+            "verdict": "FAIL",
+            "missingRequired": [],
+            "forbidden": [
+              "ponytail"
+            ],
+            "unnecessary": [
+              "code-review",
+              "korean-prose-editor",
+              "software-security-auditor"
+            ],
+            "unadjudicated": [
+              "acceptance-evidence-validator",
+              "blocker-diagnostician",
+              "change-scope-guardian",
+              "codex-token-usage-analyzer",
+              "context-continuity",
+              "coordinate-subagents",
+              "evaluation-validity-auditor",
+              "independent-audit-gate",
+              "independent-deliberation-panel",
+              "instruction-scope-resolver",
+              "iteration-frame-auditor",
+              "model-effort-advisor",
+              "mutation-risk-preflight",
+              "recovery-strategy-selector",
+              "session-board",
+              "task-contract",
+              "workspace-convention-profiler"
+            ],
+            "truePositives": 3,
+            "falsePositives": 4,
+            "requiredHits": 3,
+            "answered": true,
+            "abstained": false,
+            "unnecessaryAbstention": false,
+            "reasons": []
+          }
+        ]
+      },
+      "executionKind": "offline-mock",
+      "variantId": "select-all",
+      "status": "PASS",
+      "commandId": "isolated-final",
+      "exit": 0,
+      "reason": "Mock verdict and independently calculated metrics match expectations; PASS is evaluator behavior verification, not the mock selection outcome."
+    },
+    {
+      "input": {
+        "cases": [
+          {
+            "caseId": "SS36-evaluator-control",
+            "familyId": "mechanical-SS36",
+            "oracle": {
+              "required": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "allowed": [],
+              "allowedConditions": {},
+              "forbidden": [
+                "ponytail"
+              ],
+              "notApplicable": [
+                "code-review",
+                "software-security-auditor",
+                "korean-prose-editor"
+              ],
+              "unadjudicated": [
+                "acceptance-evidence-validator",
+                "blocker-diagnostician",
+                "change-scope-guardian",
+                "codex-token-usage-analyzer",
+                "context-continuity",
+                "coordinate-subagents",
+                "evaluation-validity-auditor",
+                "independent-audit-gate",
+                "independent-deliberation-panel",
+                "instruction-scope-resolver",
+                "iteration-frame-auditor",
+                "model-effort-advisor",
+                "mutation-risk-preflight",
+                "recovery-strategy-selector",
+                "session-board",
+                "task-contract",
+                "workspace-convention-profiler"
+              ],
+              "expectedSelection": "SELECTED",
+              "explicitSkillIds": [],
+              "ruleRequiredSkillIds": [],
+              "requiredReasons": [],
+              "sourceRefs": [
+                {
+                  "skillId": "cs-engineering",
+                  "path": "skills/cs-engineering/SKILL.md",
+                  "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+                },
+                {
+                  "skillId": "test-engineering",
+                  "path": "skills/test-engineering/SKILL.md",
+                  "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+                },
+                {
+                  "skillId": "orchestrator",
+                  "path": "skills/orchestrator/SKILL.md",
+                  "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+                },
+                {
+                  "skillId": "ponytail",
+                  "path": "skills/ponytail/SKILL.md",
+                  "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+                },
+                {
+                  "skillId": "code-review",
+                  "path": "skills/code-review/SKILL.md",
+                  "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "path": "skills/software-security-auditor/SKILL.md",
+                  "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "path": "skills/korean-prose-editor/SKILL.md",
+                  "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+                }
+              ],
+              "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+            }
+          }
+        ],
+        "observations": [
+          {
+            "caseId": "SS36-evaluator-control",
+            "layer": "jevRaw",
+            "state": "PASS",
+            "skillIds": [
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "selectionStatus": "SELECTED",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          }
+        ]
+      },
+      "expected": {
+        "denominator": 1,
+        "requiredHits": 3,
+        "requiredRecall": 1,
+        "precision": 1,
+        "falsePositives": 0,
+        "unadjudicatedCount": 0,
+        "unnecessarySelections": 0,
+        "forbiddenViolations": 0,
+        "exactPurposeSuccessRate": 1,
+        "coverage": 1,
+        "passes": 1,
+        "verdict": "PASS"
+      },
+      "observed": {
+        "denominator": 1,
+        "executed": 1,
+        "passes": 1,
+        "failures": 0,
+        "blocked": 0,
+        "notRun": 0,
+        "requiredTotal": 3,
+        "requiredHits": 3,
+        "requiredRecall": 1,
+        "truePositives": 3,
+        "falsePositives": 0,
+        "unadjudicatedCount": 0,
+        "precision": 1,
+        "unnecessarySelections": 0,
+        "forbiddenViolations": 0,
+        "forbiddenViolationRate": 0,
+        "exactPurposeSuccessRate": 1,
+        "coverage": 1,
+        "abstentions": 0,
+        "abstentionRate": 0,
+        "unnecessaryAbstentionRate": 0,
+        "stageCoverage": {
+          "read": 0,
+          "applied": 0,
+          "verified": 0
+        },
+        "verdict": "PASS",
+        "scores": [
+          {
+            "caseId": "SS36-evaluator-control",
+            "verdict": "PASS",
+            "missingRequired": [],
+            "forbidden": [],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 3,
+            "falsePositives": 0,
+            "requiredHits": 3,
+            "answered": true,
+            "abstained": false,
+            "unnecessaryAbstention": false,
+            "reasons": []
+          }
+        ]
+      },
+      "executionKind": "offline-mock",
+      "variantId": "required-only",
+      "status": "PASS",
+      "commandId": "isolated-final",
+      "exit": 0,
+      "reason": "Mock verdict and independently calculated metrics match expectations; PASS is evaluator behavior verification, not the mock selection outcome."
+    },
+    {
+      "input": {
+        "cases": [
+          {
+            "caseId": "SS36-evaluator-control",
+            "familyId": "mechanical-SS36",
+            "oracle": {
+              "required": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "allowed": [],
+              "allowedConditions": {},
+              "forbidden": [
+                "ponytail"
+              ],
+              "notApplicable": [
+                "code-review",
+                "software-security-auditor",
+                "korean-prose-editor"
+              ],
+              "unadjudicated": [
+                "acceptance-evidence-validator",
+                "blocker-diagnostician",
+                "change-scope-guardian",
+                "codex-token-usage-analyzer",
+                "context-continuity",
+                "coordinate-subagents",
+                "evaluation-validity-auditor",
+                "independent-audit-gate",
+                "independent-deliberation-panel",
+                "instruction-scope-resolver",
+                "iteration-frame-auditor",
+                "model-effort-advisor",
+                "mutation-risk-preflight",
+                "recovery-strategy-selector",
+                "session-board",
+                "task-contract",
+                "workspace-convention-profiler"
+              ],
+              "expectedSelection": "SELECTED",
+              "explicitSkillIds": [],
+              "ruleRequiredSkillIds": [],
+              "requiredReasons": [],
+              "sourceRefs": [
+                {
+                  "skillId": "cs-engineering",
+                  "path": "skills/cs-engineering/SKILL.md",
+                  "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+                },
+                {
+                  "skillId": "test-engineering",
+                  "path": "skills/test-engineering/SKILL.md",
+                  "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+                },
+                {
+                  "skillId": "orchestrator",
+                  "path": "skills/orchestrator/SKILL.md",
+                  "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+                },
+                {
+                  "skillId": "ponytail",
+                  "path": "skills/ponytail/SKILL.md",
+                  "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+                },
+                {
+                  "skillId": "code-review",
+                  "path": "skills/code-review/SKILL.md",
+                  "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "path": "skills/software-security-auditor/SKILL.md",
+                  "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "path": "skills/korean-prose-editor/SKILL.md",
+                  "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+                }
+              ],
+              "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+            }
+          }
+        ],
+        "observations": [
+          {
+            "caseId": "SS36-evaluator-control",
+            "layer": "jevRaw",
+            "state": "PASS",
+            "skillIds": [
+              "orchestrator"
+            ],
+            "selectionStatus": "SELECTED",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          }
+        ]
+      },
+      "expected": {
+        "denominator": 1,
+        "requiredHits": 1,
+        "requiredRecall": 0.3333333333333333,
+        "precision": 1,
+        "failures": 1,
+        "exactPurposeSuccessRate": 0,
+        "scores": [
+          {
+            "missingRequired": [
+              "cs-engineering",
+              "test-engineering"
+            ],
+            "verdict": "FAIL"
+          }
+        ],
+        "verdict": "INCOMPLETE_OR_FAIL"
+      },
+      "observed": {
+        "denominator": 1,
+        "executed": 1,
+        "passes": 0,
+        "failures": 1,
+        "blocked": 0,
+        "notRun": 0,
+        "requiredTotal": 3,
+        "requiredHits": 1,
+        "requiredRecall": 0.3333333333333333,
+        "truePositives": 1,
+        "falsePositives": 0,
+        "unadjudicatedCount": 0,
+        "precision": 1,
+        "unnecessarySelections": 0,
+        "forbiddenViolations": 0,
+        "forbiddenViolationRate": 0,
+        "exactPurposeSuccessRate": 0,
+        "coverage": 1,
+        "abstentions": 0,
+        "abstentionRate": 0,
+        "unnecessaryAbstentionRate": 0,
+        "stageCoverage": {
+          "read": 0,
+          "applied": 0,
+          "verified": 0
+        },
+        "verdict": "INCOMPLETE_OR_FAIL",
+        "scores": [
+          {
+            "caseId": "SS36-evaluator-control",
+            "verdict": "FAIL",
+            "missingRequired": [
+              "cs-engineering",
+              "test-engineering"
+            ],
+            "forbidden": [],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 1,
+            "falsePositives": 0,
+            "requiredHits": 1,
+            "answered": true,
+            "abstained": false,
+            "unnecessaryAbstention": false,
+            "reasons": []
+          }
+        ]
+      },
+      "executionKind": "offline-mock",
+      "variantId": "missing-required",
+      "status": "PASS",
+      "commandId": "isolated-final",
+      "exit": 0,
+      "reason": "Mock verdict and independently calculated metrics match expectations; PASS is evaluator behavior verification, not the mock selection outcome."
+    },
+    {
+      "input": {
+        "cases": [
+          {
+            "caseId": "SS36-evaluator-control",
+            "familyId": "mechanical-SS36",
+            "oracle": {
+              "required": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "allowed": [],
+              "allowedConditions": {},
+              "forbidden": [
+                "ponytail"
+              ],
+              "notApplicable": [
+                "code-review",
+                "software-security-auditor",
+                "korean-prose-editor"
+              ],
+              "unadjudicated": [
+                "acceptance-evidence-validator",
+                "blocker-diagnostician",
+                "change-scope-guardian",
+                "codex-token-usage-analyzer",
+                "context-continuity",
+                "coordinate-subagents",
+                "evaluation-validity-auditor",
+                "independent-audit-gate",
+                "independent-deliberation-panel",
+                "instruction-scope-resolver",
+                "iteration-frame-auditor",
+                "model-effort-advisor",
+                "mutation-risk-preflight",
+                "recovery-strategy-selector",
+                "session-board",
+                "task-contract",
+                "workspace-convention-profiler"
+              ],
+              "expectedSelection": "SELECTED",
+              "explicitSkillIds": [],
+              "ruleRequiredSkillIds": [],
+              "requiredReasons": [],
+              "sourceRefs": [
+                {
+                  "skillId": "cs-engineering",
+                  "path": "skills/cs-engineering/SKILL.md",
+                  "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+                },
+                {
+                  "skillId": "test-engineering",
+                  "path": "skills/test-engineering/SKILL.md",
+                  "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+                },
+                {
+                  "skillId": "orchestrator",
+                  "path": "skills/orchestrator/SKILL.md",
+                  "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+                },
+                {
+                  "skillId": "ponytail",
+                  "path": "skills/ponytail/SKILL.md",
+                  "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+                },
+                {
+                  "skillId": "code-review",
+                  "path": "skills/code-review/SKILL.md",
+                  "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "path": "skills/software-security-auditor/SKILL.md",
+                  "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "path": "skills/korean-prose-editor/SKILL.md",
+                  "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+                }
+              ],
+              "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+            }
+          }
+        ],
+        "observations": [
+          {
+            "caseId": "SS36-evaluator-control",
+            "layer": "jevRaw",
+            "state": "PASS",
+            "skillIds": [
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator",
+              "ponytail"
+            ],
+            "selectionStatus": "SELECTED",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          }
+        ]
+      },
+      "expected": {
+        "denominator": 1,
+        "requiredHits": 3,
+        "requiredRecall": 1,
+        "truePositives": 3,
+        "falsePositives": 1,
+        "precision": 0.75,
+        "forbiddenViolations": 1,
+        "forbiddenViolationRate": 1,
+        "failures": 1,
+        "exactPurposeSuccessRate": 0,
+        "scores": [
+          {
+            "forbidden": [
+              "ponytail"
+            ],
+            "verdict": "FAIL"
+          }
+        ],
+        "verdict": "INCOMPLETE_OR_FAIL"
+      },
+      "observed": {
+        "denominator": 1,
+        "executed": 1,
+        "passes": 0,
+        "failures": 1,
+        "blocked": 0,
+        "notRun": 0,
+        "requiredTotal": 3,
+        "requiredHits": 3,
+        "requiredRecall": 1,
+        "truePositives": 3,
+        "falsePositives": 1,
+        "unadjudicatedCount": 0,
+        "precision": 0.75,
+        "unnecessarySelections": 0,
+        "forbiddenViolations": 1,
+        "forbiddenViolationRate": 1,
+        "exactPurposeSuccessRate": 0,
+        "coverage": 1,
+        "abstentions": 0,
+        "abstentionRate": 0,
+        "unnecessaryAbstentionRate": 0,
+        "stageCoverage": {
+          "read": 0,
+          "applied": 0,
+          "verified": 0
+        },
+        "verdict": "INCOMPLETE_OR_FAIL",
+        "scores": [
+          {
+            "caseId": "SS36-evaluator-control",
+            "verdict": "FAIL",
+            "missingRequired": [],
+            "forbidden": [
+              "ponytail"
+            ],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 3,
+            "falsePositives": 1,
+            "requiredHits": 3,
+            "answered": true,
+            "abstained": false,
+            "unnecessaryAbstention": false,
+            "reasons": []
+          }
+        ]
+      },
+      "executionKind": "offline-mock",
+      "variantId": "forbidden-extra",
+      "status": "PASS",
+      "commandId": "isolated-final",
+      "exit": 0,
+      "reason": "Mock verdict and independently calculated metrics match expectations; PASS is evaluator behavior verification, not the mock selection outcome."
+    },
+    {
+      "input": {
+        "cases": [
+          {
+            "caseId": "SS14",
+            "familyId": "mechanical-SS36",
+            "oracle": {
+              "required": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "allowed": [],
+              "allowedConditions": {},
+              "forbidden": [
+                "ponytail"
+              ],
+              "notApplicable": [
+                "code-review",
+                "software-security-auditor",
+                "korean-prose-editor"
+              ],
+              "unadjudicated": [
+                "acceptance-evidence-validator",
+                "blocker-diagnostician",
+                "change-scope-guardian",
+                "codex-token-usage-analyzer",
+                "context-continuity",
+                "coordinate-subagents",
+                "evaluation-validity-auditor",
+                "independent-audit-gate",
+                "independent-deliberation-panel",
+                "instruction-scope-resolver",
+                "iteration-frame-auditor",
+                "model-effort-advisor",
+                "mutation-risk-preflight",
+                "recovery-strategy-selector",
+                "session-board",
+                "task-contract",
+                "workspace-convention-profiler"
+              ],
+              "expectedSelection": "SELECTED",
+              "explicitSkillIds": [],
+              "ruleRequiredSkillIds": [],
+              "requiredReasons": [],
+              "sourceRefs": [
+                {
+                  "skillId": "cs-engineering",
+                  "path": "skills/cs-engineering/SKILL.md",
+                  "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+                },
+                {
+                  "skillId": "test-engineering",
+                  "path": "skills/test-engineering/SKILL.md",
+                  "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+                },
+                {
+                  "skillId": "orchestrator",
+                  "path": "skills/orchestrator/SKILL.md",
+                  "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+                },
+                {
+                  "skillId": "ponytail",
+                  "path": "skills/ponytail/SKILL.md",
+                  "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+                },
+                {
+                  "skillId": "code-review",
+                  "path": "skills/code-review/SKILL.md",
+                  "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "path": "skills/software-security-auditor/SKILL.md",
+                  "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "path": "skills/korean-prose-editor/SKILL.md",
+                  "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+                }
+              ],
+              "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+            }
+          }
+        ],
+        "trial": {
+          "pairId": "SS14/jev-on/1",
+          "caseId": "SS14",
+          "path": "jev-on",
+          "repetition": 1,
+          "codex": {
+            "caseId": "SS14",
+            "layer": "selected",
+            "state": "PASS",
+            "skillIds": [
+              "cs-engineering"
+            ],
+            "selectionStatus": "SELECTED",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": {
+              "receiptId": "MOCK-NOT-HOST-EVIDENCE",
+              "host": "codex",
+              "requestDigest": "mock-request",
+              "inventoryDigest": "mock-inventory",
+              "agentSelectedSkillIds": [
+                "cs-engineering"
+              ],
+              "acceptedAt": "2000-01-01T00:00:00Z"
+            },
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          "claude": {
+            "caseId": "SS14",
+            "layer": "selected",
+            "state": "PASS",
+            "skillIds": [
+              "cs-engineering"
+            ],
+            "selectionStatus": "SELECTED",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "claude",
+            "hostReceipt": {
+              "receiptId": "MOCK-NOT-HOST-EVIDENCE",
+              "host": "claude",
+              "requestDigest": "mock-request",
+              "inventoryDigest": "mock-inventory",
+              "agentSelectedSkillIds": [
+                "cs-engineering"
+              ],
+              "acceptedAt": "2000-01-01T00:00:00Z"
+            },
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          }
+        }
+      },
+      "expected": {
+        "suppliedPairs": 1,
+        "comparedPairs": 1,
+        "exactSetAgreement": 1,
+        "completedPurposeRate": 0,
+        "issues": [],
+        "record": {
+          "status": "FAIL",
+          "codexGolden": "FAIL",
+          "claudeGolden": "FAIL"
+        },
+        "verdict": "INCOMPLETE_OR_FAIL"
+      },
+      "observed": {
+        "suppliedPairs": 1,
+        "comparedPairs": 1,
+        "exactSetAgreement": 1,
+        "completedPurposeRate": 0,
+        "issues": [],
+        "record": {
+          "pairId": "SS14/jev-on/1",
+          "caseId": "SS14",
+          "path": "jev-on",
+          "repetition": 1,
+          "codex": null,
+          "claude": null,
+          "status": "FAIL",
+          "agreement": true,
+          "codexGolden": "FAIL",
+          "claudeGolden": "FAIL"
+        },
+        "verdict": "INCOMPLETE_OR_FAIL"
+      },
+      "executionKind": "offline-mock",
+      "note": "Other 119 fixed matrix slots untouched; no host calls. Mock receipts do not establish actual selected evidence.",
+      "variantId": "both-hosts-wrong",
+      "status": "PASS",
+      "commandId": "isolated-final",
+      "exit": 0,
+      "reason": "Mock verdict and independently calculated metrics match expectations; PASS is evaluator behavior verification, not the mock selection outcome."
+    },
+    {
+      "input": {
+        "cases": [
+          {
+            "caseId": "SS36-evaluator-control",
+            "familyId": "mechanical-SS36",
+            "oracle": {
+              "required": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "allowed": [],
+              "allowedConditions": {},
+              "forbidden": [
+                "ponytail"
+              ],
+              "notApplicable": [
+                "code-review",
+                "software-security-auditor",
+                "korean-prose-editor"
+              ],
+              "unadjudicated": [
+                "acceptance-evidence-validator",
+                "blocker-diagnostician",
+                "change-scope-guardian",
+                "codex-token-usage-analyzer",
+                "context-continuity",
+                "coordinate-subagents",
+                "evaluation-validity-auditor",
+                "independent-audit-gate",
+                "independent-deliberation-panel",
+                "instruction-scope-resolver",
+                "iteration-frame-auditor",
+                "model-effort-advisor",
+                "mutation-risk-preflight",
+                "recovery-strategy-selector",
+                "session-board",
+                "task-contract",
+                "workspace-convention-profiler"
+              ],
+              "expectedSelection": "SELECTED",
+              "explicitSkillIds": [],
+              "ruleRequiredSkillIds": [],
+              "requiredReasons": [],
+              "sourceRefs": [
+                {
+                  "skillId": "cs-engineering",
+                  "path": "skills/cs-engineering/SKILL.md",
+                  "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+                },
+                {
+                  "skillId": "test-engineering",
+                  "path": "skills/test-engineering/SKILL.md",
+                  "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+                },
+                {
+                  "skillId": "orchestrator",
+                  "path": "skills/orchestrator/SKILL.md",
+                  "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+                },
+                {
+                  "skillId": "ponytail",
+                  "path": "skills/ponytail/SKILL.md",
+                  "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+                },
+                {
+                  "skillId": "code-review",
+                  "path": "skills/code-review/SKILL.md",
+                  "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "path": "skills/software-security-auditor/SKILL.md",
+                  "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "path": "skills/korean-prose-editor/SKILL.md",
+                  "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+                }
+              ],
+              "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+            }
+          },
+          {
+            "caseId": "SS36-evaluator-control-2",
+            "familyId": "mechanical-SS36",
+            "oracle": {
+              "required": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "allowed": [],
+              "allowedConditions": {},
+              "forbidden": [
+                "ponytail"
+              ],
+              "notApplicable": [
+                "code-review",
+                "software-security-auditor",
+                "korean-prose-editor"
+              ],
+              "unadjudicated": [
+                "acceptance-evidence-validator",
+                "blocker-diagnostician",
+                "change-scope-guardian",
+                "codex-token-usage-analyzer",
+                "context-continuity",
+                "coordinate-subagents",
+                "evaluation-validity-auditor",
+                "independent-audit-gate",
+                "independent-deliberation-panel",
+                "instruction-scope-resolver",
+                "iteration-frame-auditor",
+                "model-effort-advisor",
+                "mutation-risk-preflight",
+                "recovery-strategy-selector",
+                "session-board",
+                "task-contract",
+                "workspace-convention-profiler"
+              ],
+              "expectedSelection": "SELECTED",
+              "explicitSkillIds": [],
+              "ruleRequiredSkillIds": [],
+              "requiredReasons": [],
+              "sourceRefs": [
+                {
+                  "skillId": "cs-engineering",
+                  "path": "skills/cs-engineering/SKILL.md",
+                  "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+                },
+                {
+                  "skillId": "test-engineering",
+                  "path": "skills/test-engineering/SKILL.md",
+                  "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+                },
+                {
+                  "skillId": "orchestrator",
+                  "path": "skills/orchestrator/SKILL.md",
+                  "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+                },
+                {
+                  "skillId": "ponytail",
+                  "path": "skills/ponytail/SKILL.md",
+                  "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+                },
+                {
+                  "skillId": "code-review",
+                  "path": "skills/code-review/SKILL.md",
+                  "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "path": "skills/software-security-auditor/SKILL.md",
+                  "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "path": "skills/korean-prose-editor/SKILL.md",
+                  "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+                }
+              ],
+              "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+            }
+          }
+        ],
+        "observations": [
+          {
+            "caseId": "SS36-evaluator-control",
+            "layer": "jevRaw",
+            "state": "PASS",
+            "skillIds": null,
+            "selectionStatus": "NEEDS_INPUT",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          {
+            "caseId": "SS36-evaluator-control-2",
+            "layer": "jevRaw",
+            "state": "PASS",
+            "skillIds": null,
+            "selectionStatus": "NEEDS_INPUT",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          }
+        ]
+      },
+      "expected": {
+        "denominator": 2,
+        "requiredTotal": 6,
+        "requiredHits": 0,
+        "requiredRecall": 0,
+        "precision": null,
+        "passes": 0,
+        "failures": 2,
+        "coverage": 0,
+        "abstentions": 2,
+        "abstentionRate": 1,
+        "unnecessaryAbstentionRate": 1,
+        "exactPurposeSuccessRate": 0,
+        "verdict": "INCOMPLETE_OR_FAIL"
+      },
+      "observed": {
+        "denominator": 2,
+        "executed": 2,
+        "passes": 0,
+        "failures": 2,
+        "blocked": 0,
+        "notRun": 0,
+        "requiredTotal": 6,
+        "requiredHits": 0,
+        "requiredRecall": 0,
+        "truePositives": 0,
+        "falsePositives": 0,
+        "unadjudicatedCount": 0,
+        "precision": null,
+        "unnecessarySelections": 0,
+        "forbiddenViolations": 0,
+        "forbiddenViolationRate": 0,
+        "exactPurposeSuccessRate": 0,
+        "coverage": 0,
+        "abstentions": 2,
+        "abstentionRate": 1,
+        "unnecessaryAbstentionRate": 1,
+        "stageCoverage": {
+          "read": 0,
+          "applied": 0,
+          "verified": 0
+        },
+        "verdict": "INCOMPLETE_OR_FAIL",
+        "scores": [
+          {
+            "caseId": "SS36-evaluator-control",
+            "verdict": "FAIL",
+            "missingRequired": [
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "forbidden": [],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 0,
+            "falsePositives": 0,
+            "requiredHits": 0,
+            "answered": false,
+            "abstained": true,
+            "unnecessaryAbstention": true,
+            "reasons": [
+              "UNEXPECTED_OR_UNEXPLAINED_ABSTENTION"
+            ]
+          },
+          {
+            "caseId": "SS36-evaluator-control-2",
+            "verdict": "FAIL",
+            "missingRequired": [
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "forbidden": [],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 0,
+            "falsePositives": 0,
+            "requiredHits": 0,
+            "answered": false,
+            "abstained": true,
+            "unnecessaryAbstention": true,
+            "reasons": [
+              "UNEXPECTED_OR_UNEXPLAINED_ABSTENTION"
+            ]
+          }
+        ]
+      },
+      "executionKind": "offline-mock",
+      "variantId": "all-abstain",
+      "status": "PASS",
+      "commandId": "isolated-final",
+      "exit": 0,
+      "reason": "Mock verdict and independently calculated metrics match expectations; PASS is evaluator behavior verification, not the mock selection outcome."
+    },
+    {
+      "input": {
+        "cases": [
+          {
+            "caseId": "SS36-denominator-0",
+            "familyId": "mechanical-SS36",
+            "oracle": {
+              "required": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "allowed": [],
+              "allowedConditions": {},
+              "forbidden": [
+                "ponytail"
+              ],
+              "notApplicable": [
+                "code-review",
+                "software-security-auditor",
+                "korean-prose-editor"
+              ],
+              "unadjudicated": [
+                "acceptance-evidence-validator",
+                "blocker-diagnostician",
+                "change-scope-guardian",
+                "codex-token-usage-analyzer",
+                "context-continuity",
+                "coordinate-subagents",
+                "evaluation-validity-auditor",
+                "independent-audit-gate",
+                "independent-deliberation-panel",
+                "instruction-scope-resolver",
+                "iteration-frame-auditor",
+                "model-effort-advisor",
+                "mutation-risk-preflight",
+                "recovery-strategy-selector",
+                "session-board",
+                "task-contract",
+                "workspace-convention-profiler"
+              ],
+              "expectedSelection": "SELECTED",
+              "explicitSkillIds": [],
+              "ruleRequiredSkillIds": [],
+              "requiredReasons": [],
+              "sourceRefs": [
+                {
+                  "skillId": "cs-engineering",
+                  "path": "skills/cs-engineering/SKILL.md",
+                  "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+                },
+                {
+                  "skillId": "test-engineering",
+                  "path": "skills/test-engineering/SKILL.md",
+                  "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+                },
+                {
+                  "skillId": "orchestrator",
+                  "path": "skills/orchestrator/SKILL.md",
+                  "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+                },
+                {
+                  "skillId": "ponytail",
+                  "path": "skills/ponytail/SKILL.md",
+                  "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+                },
+                {
+                  "skillId": "code-review",
+                  "path": "skills/code-review/SKILL.md",
+                  "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "path": "skills/software-security-auditor/SKILL.md",
+                  "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "path": "skills/korean-prose-editor/SKILL.md",
+                  "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+                }
+              ],
+              "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+            }
+          },
+          {
+            "caseId": "SS36-denominator-1",
+            "familyId": "mechanical-SS36",
+            "oracle": {
+              "required": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "allowed": [],
+              "allowedConditions": {},
+              "forbidden": [
+                "ponytail"
+              ],
+              "notApplicable": [
+                "code-review",
+                "software-security-auditor",
+                "korean-prose-editor"
+              ],
+              "unadjudicated": [
+                "acceptance-evidence-validator",
+                "blocker-diagnostician",
+                "change-scope-guardian",
+                "codex-token-usage-analyzer",
+                "context-continuity",
+                "coordinate-subagents",
+                "evaluation-validity-auditor",
+                "independent-audit-gate",
+                "independent-deliberation-panel",
+                "instruction-scope-resolver",
+                "iteration-frame-auditor",
+                "model-effort-advisor",
+                "mutation-risk-preflight",
+                "recovery-strategy-selector",
+                "session-board",
+                "task-contract",
+                "workspace-convention-profiler"
+              ],
+              "expectedSelection": "SELECTED",
+              "explicitSkillIds": [],
+              "ruleRequiredSkillIds": [],
+              "requiredReasons": [],
+              "sourceRefs": [
+                {
+                  "skillId": "cs-engineering",
+                  "path": "skills/cs-engineering/SKILL.md",
+                  "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+                },
+                {
+                  "skillId": "test-engineering",
+                  "path": "skills/test-engineering/SKILL.md",
+                  "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+                },
+                {
+                  "skillId": "orchestrator",
+                  "path": "skills/orchestrator/SKILL.md",
+                  "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+                },
+                {
+                  "skillId": "ponytail",
+                  "path": "skills/ponytail/SKILL.md",
+                  "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+                },
+                {
+                  "skillId": "code-review",
+                  "path": "skills/code-review/SKILL.md",
+                  "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "path": "skills/software-security-auditor/SKILL.md",
+                  "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "path": "skills/korean-prose-editor/SKILL.md",
+                  "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+                }
+              ],
+              "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+            }
+          },
+          {
+            "caseId": "SS36-denominator-2",
+            "familyId": "mechanical-SS36",
+            "oracle": {
+              "required": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "allowed": [],
+              "allowedConditions": {},
+              "forbidden": [
+                "ponytail"
+              ],
+              "notApplicable": [
+                "code-review",
+                "software-security-auditor",
+                "korean-prose-editor"
+              ],
+              "unadjudicated": [
+                "acceptance-evidence-validator",
+                "blocker-diagnostician",
+                "change-scope-guardian",
+                "codex-token-usage-analyzer",
+                "context-continuity",
+                "coordinate-subagents",
+                "evaluation-validity-auditor",
+                "independent-audit-gate",
+                "independent-deliberation-panel",
+                "instruction-scope-resolver",
+                "iteration-frame-auditor",
+                "model-effort-advisor",
+                "mutation-risk-preflight",
+                "recovery-strategy-selector",
+                "session-board",
+                "task-contract",
+                "workspace-convention-profiler"
+              ],
+              "expectedSelection": "SELECTED",
+              "explicitSkillIds": [],
+              "ruleRequiredSkillIds": [],
+              "requiredReasons": [],
+              "sourceRefs": [
+                {
+                  "skillId": "cs-engineering",
+                  "path": "skills/cs-engineering/SKILL.md",
+                  "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+                },
+                {
+                  "skillId": "test-engineering",
+                  "path": "skills/test-engineering/SKILL.md",
+                  "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+                },
+                {
+                  "skillId": "orchestrator",
+                  "path": "skills/orchestrator/SKILL.md",
+                  "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+                },
+                {
+                  "skillId": "ponytail",
+                  "path": "skills/ponytail/SKILL.md",
+                  "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+                },
+                {
+                  "skillId": "code-review",
+                  "path": "skills/code-review/SKILL.md",
+                  "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "path": "skills/software-security-auditor/SKILL.md",
+                  "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "path": "skills/korean-prose-editor/SKILL.md",
+                  "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+                }
+              ],
+              "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+            }
+          },
+          {
+            "caseId": "SS36-denominator-3",
+            "familyId": "mechanical-SS36",
+            "oracle": {
+              "required": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "allowed": [],
+              "allowedConditions": {},
+              "forbidden": [
+                "ponytail"
+              ],
+              "notApplicable": [
+                "code-review",
+                "software-security-auditor",
+                "korean-prose-editor"
+              ],
+              "unadjudicated": [
+                "acceptance-evidence-validator",
+                "blocker-diagnostician",
+                "change-scope-guardian",
+                "codex-token-usage-analyzer",
+                "context-continuity",
+                "coordinate-subagents",
+                "evaluation-validity-auditor",
+                "independent-audit-gate",
+                "independent-deliberation-panel",
+                "instruction-scope-resolver",
+                "iteration-frame-auditor",
+                "model-effort-advisor",
+                "mutation-risk-preflight",
+                "recovery-strategy-selector",
+                "session-board",
+                "task-contract",
+                "workspace-convention-profiler"
+              ],
+              "expectedSelection": "SELECTED",
+              "explicitSkillIds": [],
+              "ruleRequiredSkillIds": [],
+              "requiredReasons": [],
+              "sourceRefs": [
+                {
+                  "skillId": "cs-engineering",
+                  "path": "skills/cs-engineering/SKILL.md",
+                  "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+                },
+                {
+                  "skillId": "test-engineering",
+                  "path": "skills/test-engineering/SKILL.md",
+                  "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+                },
+                {
+                  "skillId": "orchestrator",
+                  "path": "skills/orchestrator/SKILL.md",
+                  "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+                },
+                {
+                  "skillId": "ponytail",
+                  "path": "skills/ponytail/SKILL.md",
+                  "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+                },
+                {
+                  "skillId": "code-review",
+                  "path": "skills/code-review/SKILL.md",
+                  "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "path": "skills/software-security-auditor/SKILL.md",
+                  "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "path": "skills/korean-prose-editor/SKILL.md",
+                  "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+                }
+              ],
+              "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+            }
+          },
+          {
+            "caseId": "SS36-denominator-4",
+            "familyId": "mechanical-SS36",
+            "oracle": {
+              "required": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "allowed": [],
+              "allowedConditions": {},
+              "forbidden": [
+                "ponytail"
+              ],
+              "notApplicable": [
+                "code-review",
+                "software-security-auditor",
+                "korean-prose-editor"
+              ],
+              "unadjudicated": [
+                "acceptance-evidence-validator",
+                "blocker-diagnostician",
+                "change-scope-guardian",
+                "codex-token-usage-analyzer",
+                "context-continuity",
+                "coordinate-subagents",
+                "evaluation-validity-auditor",
+                "independent-audit-gate",
+                "independent-deliberation-panel",
+                "instruction-scope-resolver",
+                "iteration-frame-auditor",
+                "model-effort-advisor",
+                "mutation-risk-preflight",
+                "recovery-strategy-selector",
+                "session-board",
+                "task-contract",
+                "workspace-convention-profiler"
+              ],
+              "expectedSelection": "SELECTED",
+              "explicitSkillIds": [],
+              "ruleRequiredSkillIds": [],
+              "requiredReasons": [],
+              "sourceRefs": [
+                {
+                  "skillId": "cs-engineering",
+                  "path": "skills/cs-engineering/SKILL.md",
+                  "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+                },
+                {
+                  "skillId": "test-engineering",
+                  "path": "skills/test-engineering/SKILL.md",
+                  "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+                },
+                {
+                  "skillId": "orchestrator",
+                  "path": "skills/orchestrator/SKILL.md",
+                  "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+                },
+                {
+                  "skillId": "ponytail",
+                  "path": "skills/ponytail/SKILL.md",
+                  "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+                },
+                {
+                  "skillId": "code-review",
+                  "path": "skills/code-review/SKILL.md",
+                  "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "path": "skills/software-security-auditor/SKILL.md",
+                  "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "path": "skills/korean-prose-editor/SKILL.md",
+                  "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+                }
+              ],
+              "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+            }
+          }
+        ],
+        "observations": [
+          {
+            "caseId": "SS36-denominator-0",
+            "layer": "jevRaw",
+            "state": "PASS",
+            "skillIds": [
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "selectionStatus": "SELECTED",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          {
+            "caseId": "SS36-denominator-1",
+            "layer": "jevRaw",
+            "state": "FAIL",
+            "skillIds": null,
+            "selectionStatus": "NEEDS_INPUT",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          {
+            "caseId": "SS36-denominator-2",
+            "layer": "jevRaw",
+            "state": "BLOCKED",
+            "skillIds": null,
+            "selectionStatus": "NEEDS_INPUT",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          {
+            "caseId": "SS36-denominator-3",
+            "layer": "jevRaw",
+            "state": "NOT_RUN",
+            "skillIds": null,
+            "selectionStatus": "NEEDS_INPUT",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          }
+        ]
+      },
+      "expected": {
+        "denominator": 5,
+        "executed": 3,
+        "requiredTotal": 15,
+        "requiredHits": 3,
+        "requiredRecall": 0.2,
+        "passes": 1,
+        "failures": 1,
+        "blocked": 1,
+        "notRun": 2,
+        "coverage": 0.2,
+        "abstentions": 0,
+        "abstentionRate": 0,
+        "exactPurposeSuccessRate": 0.2,
+        "verdict": "INCOMPLETE_OR_FAIL"
+      },
+      "observed": {
+        "denominator": 5,
+        "executed": 3,
+        "passes": 1,
+        "failures": 1,
+        "blocked": 1,
+        "notRun": 2,
+        "requiredTotal": 15,
+        "requiredHits": 3,
+        "requiredRecall": 0.2,
+        "truePositives": 3,
+        "falsePositives": 0,
+        "unadjudicatedCount": 0,
+        "precision": 1,
+        "unnecessarySelections": 0,
+        "forbiddenViolations": 0,
+        "forbiddenViolationRate": 0,
+        "exactPurposeSuccessRate": 0.2,
+        "coverage": 0.2,
+        "abstentions": 0,
+        "abstentionRate": 0,
+        "unnecessaryAbstentionRate": 0,
+        "stageCoverage": {
+          "read": 0,
+          "applied": 0,
+          "verified": 0
+        },
+        "verdict": "INCOMPLETE_OR_FAIL",
+        "scores": [
+          {
+            "caseId": "SS36-denominator-0",
+            "verdict": "PASS",
+            "missingRequired": [],
+            "forbidden": [],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 3,
+            "falsePositives": 0,
+            "requiredHits": 3,
+            "answered": true,
+            "abstained": false,
+            "unnecessaryAbstention": false,
+            "reasons": []
+          },
+          {
+            "caseId": "SS36-denominator-1",
+            "verdict": "FAIL",
+            "missingRequired": [
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "forbidden": [],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 0,
+            "falsePositives": 0,
+            "requiredHits": 0,
+            "answered": false,
+            "abstained": false,
+            "unnecessaryAbstention": false,
+            "reasons": [
+              "EXECUTION_DID_NOT_SUCCEED"
+            ]
+          },
+          {
+            "caseId": "SS36-denominator-2",
+            "verdict": "BLOCKED",
+            "missingRequired": [
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "forbidden": [],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 0,
+            "falsePositives": 0,
+            "requiredHits": 0,
+            "answered": false,
+            "abstained": false,
+            "unnecessaryAbstention": false,
+            "reasons": [
+              "EXECUTION_DID_NOT_SUCCEED"
+            ]
+          },
+          {
+            "caseId": "SS36-denominator-3",
+            "verdict": "NOT_RUN",
+            "missingRequired": [
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "forbidden": [],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 0,
+            "falsePositives": 0,
+            "requiredHits": 0,
+            "answered": false,
+            "abstained": false,
+            "unnecessaryAbstention": false,
+            "reasons": []
+          },
+          {
+            "caseId": "SS36-denominator-4",
+            "verdict": "NOT_RUN",
+            "missingRequired": [
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "forbidden": [],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 0,
+            "falsePositives": 0,
+            "requiredHits": 0,
+            "answered": false,
+            "abstained": false,
+            "unnecessaryAbstention": false,
+            "reasons": []
+          }
+        ]
+      },
+      "executionKind": "offline-mock",
+      "variantId": "failure-denominators",
+      "status": "PASS",
+      "commandId": "isolated-final",
+      "exit": 0,
+      "reason": "Mock verdict and independently calculated metrics match expectations; PASS is evaluator behavior verification, not the mock selection outcome."
+    }
+  ],
+  "additionalBoundaries": {
+    "no-SS36-semantic-oracle": {
+      "denominator": 0,
+      "executed": 0,
+      "passes": 0,
+      "failures": 0,
+      "blocked": 0,
+      "notRun": 0,
+      "requiredTotal": 0,
+      "requiredHits": 0,
+      "requiredRecall": null,
+      "truePositives": 0,
+      "falsePositives": 0,
+      "unadjudicatedCount": 0,
+      "precision": null,
+      "unnecessarySelections": 0,
+      "forbiddenViolations": 0,
+      "forbiddenViolationRate": null,
+      "exactPurposeSuccessRate": null,
+      "coverage": null,
+      "abstentions": 0,
+      "abstentionRate": null,
+      "unnecessaryAbstentionRate": null,
+      "stageCoverage": {
+        "read": null,
+        "applied": null,
+        "verified": null
+      },
+      "verdict": "INCOMPLETE_OR_FAIL",
+      "scores": []
+    },
+    "layer-separation": {
+      "input": [
+        {
+          "caseId": "SS36-evaluator-control",
+          "layer": "jevRaw",
+          "state": "PASS",
+          "skillIds": [
+            "cs-engineering"
+          ],
+          "selectionStatus": "SELECTED",
+          "reasonCodes": [],
+          "selectionReasons": [],
+          "executionKind": "offline-mock",
+          "host": "codex",
+          "hostReceipt": null,
+          "requestDigest": "mock-request",
+          "inventoryDigest": "mock-inventory",
+          "conditionDigest": "mock-condition",
+          "stageEvidence": {
+            "read": false,
+            "applied": false,
+            "verified": false
+          }
+        },
+        {
+          "caseId": "SS36-evaluator-control",
+          "layer": "vendorRaw",
+          "state": "PASS",
+          "skillIds": [
+            "cs-engineering"
+          ],
+          "selectionStatus": "SELECTED",
+          "reasonCodes": [],
+          "selectionReasons": [],
+          "executionKind": "offline-mock",
+          "host": "codex",
+          "hostReceipt": null,
+          "requestDigest": "mock-request",
+          "inventoryDigest": "mock-inventory",
+          "conditionDigest": "mock-condition",
+          "stageEvidence": {
+            "read": false,
+            "applied": false,
+            "verified": false
+          }
+        },
+        {
+          "caseId": "SS36-evaluator-control",
+          "layer": "combined",
+          "state": "PASS",
+          "skillIds": [
+            "cs-engineering",
+            "test-engineering",
+            "orchestrator"
+          ],
+          "selectionStatus": "SELECTED",
+          "reasonCodes": [],
+          "selectionReasons": [],
+          "executionKind": "offline-mock",
+          "host": "codex",
+          "hostReceipt": null,
+          "requestDigest": "mock-request",
+          "inventoryDigest": "mock-inventory",
+          "conditionDigest": "mock-condition",
+          "stageEvidence": {
+            "read": false,
+            "applied": false,
+            "verified": false
+          }
+        },
+        {
+          "caseId": "SS36-evaluator-control",
+          "layer": "selected",
+          "state": "PASS",
+          "skillIds": [
+            "cs-engineering",
+            "test-engineering",
+            "orchestrator"
+          ],
+          "selectionStatus": "SELECTED",
+          "reasonCodes": [],
+          "selectionReasons": [],
+          "executionKind": "offline-mock",
+          "host": "codex",
+          "hostReceipt": {
+            "receiptId": "MOCK-NOT-HOST-EVIDENCE",
+            "host": "codex",
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "agentSelectedSkillIds": [
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "acceptedAt": "2000-01-01T00:00:00Z"
+          },
+          "requestDigest": "mock-request",
+          "inventoryDigest": "mock-inventory",
+          "conditionDigest": "mock-condition",
+          "stageEvidence": {
+            "read": false,
+            "applied": false,
+            "verified": false
+          }
+        }
+      ],
+      "expected": {
+        "jevRaw": {
+          "requiredRecall": 0.3333333333333333,
+          "verdict": "INCOMPLETE_OR_FAIL"
+        },
+        "vendorRaw": {
+          "requiredRecall": 0.3333333333333333,
+          "verdict": "INCOMPLETE_OR_FAIL"
+        },
+        "combined": {
+          "requiredRecall": 1,
+          "verdict": "PASS"
+        },
+        "selected": {
+          "requiredRecall": 1,
+          "verdict": "PASS",
+          "stageCoverage": {
+            "read": 0,
+            "applied": 0,
+            "verified": 0
+          }
+        }
+      },
+      "observed": {
+        "jevRaw": {
+          "layer": "jevRaw",
+          "denominator": 1,
+          "executed": 1,
+          "passes": 0,
+          "failures": 1,
+          "blocked": 0,
+          "notRun": 0,
+          "reviewRequired": 0,
+          "requiredTotal": 3,
+          "requiredHits": 1,
+          "requiredRecall": 0.3333333333333333,
+          "truePositives": 1,
+          "falsePositives": 0,
+          "unadjudicatedCount": 0,
+          "precision": 1,
+          "forbiddenViolations": 0,
+          "forbiddenViolationRate": 0,
+          "unnecessarySelections": 0,
+          "exactPurposeSuccessRate": 0,
+          "coverage": 1,
+          "abstentions": 0,
+          "abstentionRate": 0,
+          "unnecessaryAbstentionRate": 0,
+          "stageCoverage": {
+            "read": 0,
+            "applied": 0,
+            "verified": 0
+          },
+          "verdict": "INCOMPLETE_OR_FAIL",
+          "scores": [
+            {
+              "caseId": "SS36-evaluator-control",
+              "verdict": "FAIL",
+              "missingRequired": [
+                "test-engineering",
+                "orchestrator"
+              ],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 1,
+              "falsePositives": 0,
+              "requiredHits": 1,
+              "answered": true,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": []
+            }
+          ]
+        },
+        "vendorRaw": {
+          "layer": "vendorRaw",
+          "denominator": 1,
+          "executed": 1,
+          "passes": 0,
+          "failures": 1,
+          "blocked": 0,
+          "notRun": 0,
+          "reviewRequired": 0,
+          "requiredTotal": 3,
+          "requiredHits": 1,
+          "requiredRecall": 0.3333333333333333,
+          "truePositives": 1,
+          "falsePositives": 0,
+          "unadjudicatedCount": 0,
+          "precision": 1,
+          "forbiddenViolations": 0,
+          "forbiddenViolationRate": 0,
+          "unnecessarySelections": 0,
+          "exactPurposeSuccessRate": 0,
+          "coverage": 1,
+          "abstentions": 0,
+          "abstentionRate": 0,
+          "unnecessaryAbstentionRate": 0,
+          "stageCoverage": {
+            "read": 0,
+            "applied": 0,
+            "verified": 0
+          },
+          "verdict": "INCOMPLETE_OR_FAIL",
+          "scores": [
+            {
+              "caseId": "SS36-evaluator-control",
+              "verdict": "FAIL",
+              "missingRequired": [
+                "test-engineering",
+                "orchestrator"
+              ],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 1,
+              "falsePositives": 0,
+              "requiredHits": 1,
+              "answered": true,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": []
+            }
+          ]
+        },
+        "combined": {
+          "layer": "combined",
+          "denominator": 1,
+          "executed": 1,
+          "passes": 1,
+          "failures": 0,
+          "blocked": 0,
+          "notRun": 0,
+          "reviewRequired": 0,
+          "requiredTotal": 3,
+          "requiredHits": 3,
+          "requiredRecall": 1,
+          "truePositives": 3,
+          "falsePositives": 0,
+          "unadjudicatedCount": 0,
+          "precision": 1,
+          "forbiddenViolations": 0,
+          "forbiddenViolationRate": 0,
+          "unnecessarySelections": 0,
+          "exactPurposeSuccessRate": 1,
+          "coverage": 1,
+          "abstentions": 0,
+          "abstentionRate": 0,
+          "unnecessaryAbstentionRate": 0,
+          "stageCoverage": {
+            "read": 0,
+            "applied": 0,
+            "verified": 0
+          },
+          "verdict": "PASS",
+          "scores": [
+            {
+              "caseId": "SS36-evaluator-control",
+              "verdict": "PASS",
+              "missingRequired": [],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 3,
+              "falsePositives": 0,
+              "requiredHits": 3,
+              "answered": true,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": []
+            }
+          ]
+        },
+        "selected": {
+          "layer": "selected",
+          "denominator": 1,
+          "executed": 1,
+          "passes": 1,
+          "failures": 0,
+          "blocked": 0,
+          "notRun": 0,
+          "reviewRequired": 0,
+          "requiredTotal": 3,
+          "requiredHits": 3,
+          "requiredRecall": 1,
+          "truePositives": 3,
+          "falsePositives": 0,
+          "unadjudicatedCount": 0,
+          "precision": 1,
+          "forbiddenViolations": 0,
+          "forbiddenViolationRate": 0,
+          "unnecessarySelections": 0,
+          "exactPurposeSuccessRate": 1,
+          "coverage": 1,
+          "abstentions": 0,
+          "abstentionRate": 0,
+          "unnecessaryAbstentionRate": 0,
+          "stageCoverage": {
+            "read": 0,
+            "applied": 0,
+            "verified": 0
+          },
+          "verdict": "PASS",
+          "scores": [
+            {
+              "caseId": "SS36-evaluator-control",
+              "verdict": "PASS",
+              "missingRequired": [],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 3,
+              "falsePositives": 0,
+              "requiredHits": 3,
+              "answered": true,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": []
+            }
+          ]
+        }
+      }
+    },
+    "all-layer-failure-denominators": {
+      "input": {
+        "cases": [
+          {
+            "caseId": "SS36-layer-denominator-0",
+            "familyId": "mechanical-SS36",
+            "oracle": {
+              "required": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "allowed": [],
+              "allowedConditions": {},
+              "forbidden": [
+                "ponytail"
+              ],
+              "notApplicable": [
+                "code-review",
+                "software-security-auditor",
+                "korean-prose-editor"
+              ],
+              "unadjudicated": [
+                "acceptance-evidence-validator",
+                "blocker-diagnostician",
+                "change-scope-guardian",
+                "codex-token-usage-analyzer",
+                "context-continuity",
+                "coordinate-subagents",
+                "evaluation-validity-auditor",
+                "independent-audit-gate",
+                "independent-deliberation-panel",
+                "instruction-scope-resolver",
+                "iteration-frame-auditor",
+                "model-effort-advisor",
+                "mutation-risk-preflight",
+                "recovery-strategy-selector",
+                "session-board",
+                "task-contract",
+                "workspace-convention-profiler"
+              ],
+              "expectedSelection": "SELECTED",
+              "explicitSkillIds": [],
+              "ruleRequiredSkillIds": [],
+              "requiredReasons": [],
+              "sourceRefs": [
+                {
+                  "skillId": "cs-engineering",
+                  "path": "skills/cs-engineering/SKILL.md",
+                  "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+                },
+                {
+                  "skillId": "test-engineering",
+                  "path": "skills/test-engineering/SKILL.md",
+                  "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+                },
+                {
+                  "skillId": "orchestrator",
+                  "path": "skills/orchestrator/SKILL.md",
+                  "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+                },
+                {
+                  "skillId": "ponytail",
+                  "path": "skills/ponytail/SKILL.md",
+                  "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+                },
+                {
+                  "skillId": "code-review",
+                  "path": "skills/code-review/SKILL.md",
+                  "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "path": "skills/software-security-auditor/SKILL.md",
+                  "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "path": "skills/korean-prose-editor/SKILL.md",
+                  "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+                }
+              ],
+              "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+            }
+          },
+          {
+            "caseId": "SS36-layer-denominator-1",
+            "familyId": "mechanical-SS36",
+            "oracle": {
+              "required": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "allowed": [],
+              "allowedConditions": {},
+              "forbidden": [
+                "ponytail"
+              ],
+              "notApplicable": [
+                "code-review",
+                "software-security-auditor",
+                "korean-prose-editor"
+              ],
+              "unadjudicated": [
+                "acceptance-evidence-validator",
+                "blocker-diagnostician",
+                "change-scope-guardian",
+                "codex-token-usage-analyzer",
+                "context-continuity",
+                "coordinate-subagents",
+                "evaluation-validity-auditor",
+                "independent-audit-gate",
+                "independent-deliberation-panel",
+                "instruction-scope-resolver",
+                "iteration-frame-auditor",
+                "model-effort-advisor",
+                "mutation-risk-preflight",
+                "recovery-strategy-selector",
+                "session-board",
+                "task-contract",
+                "workspace-convention-profiler"
+              ],
+              "expectedSelection": "SELECTED",
+              "explicitSkillIds": [],
+              "ruleRequiredSkillIds": [],
+              "requiredReasons": [],
+              "sourceRefs": [
+                {
+                  "skillId": "cs-engineering",
+                  "path": "skills/cs-engineering/SKILL.md",
+                  "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+                },
+                {
+                  "skillId": "test-engineering",
+                  "path": "skills/test-engineering/SKILL.md",
+                  "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+                },
+                {
+                  "skillId": "orchestrator",
+                  "path": "skills/orchestrator/SKILL.md",
+                  "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+                },
+                {
+                  "skillId": "ponytail",
+                  "path": "skills/ponytail/SKILL.md",
+                  "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+                },
+                {
+                  "skillId": "code-review",
+                  "path": "skills/code-review/SKILL.md",
+                  "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "path": "skills/software-security-auditor/SKILL.md",
+                  "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "path": "skills/korean-prose-editor/SKILL.md",
+                  "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+                }
+              ],
+              "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+            }
+          },
+          {
+            "caseId": "SS36-layer-denominator-2",
+            "familyId": "mechanical-SS36",
+            "oracle": {
+              "required": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "allowed": [],
+              "allowedConditions": {},
+              "forbidden": [
+                "ponytail"
+              ],
+              "notApplicable": [
+                "code-review",
+                "software-security-auditor",
+                "korean-prose-editor"
+              ],
+              "unadjudicated": [
+                "acceptance-evidence-validator",
+                "blocker-diagnostician",
+                "change-scope-guardian",
+                "codex-token-usage-analyzer",
+                "context-continuity",
+                "coordinate-subagents",
+                "evaluation-validity-auditor",
+                "independent-audit-gate",
+                "independent-deliberation-panel",
+                "instruction-scope-resolver",
+                "iteration-frame-auditor",
+                "model-effort-advisor",
+                "mutation-risk-preflight",
+                "recovery-strategy-selector",
+                "session-board",
+                "task-contract",
+                "workspace-convention-profiler"
+              ],
+              "expectedSelection": "SELECTED",
+              "explicitSkillIds": [],
+              "ruleRequiredSkillIds": [],
+              "requiredReasons": [],
+              "sourceRefs": [
+                {
+                  "skillId": "cs-engineering",
+                  "path": "skills/cs-engineering/SKILL.md",
+                  "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+                },
+                {
+                  "skillId": "test-engineering",
+                  "path": "skills/test-engineering/SKILL.md",
+                  "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+                },
+                {
+                  "skillId": "orchestrator",
+                  "path": "skills/orchestrator/SKILL.md",
+                  "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+                },
+                {
+                  "skillId": "ponytail",
+                  "path": "skills/ponytail/SKILL.md",
+                  "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+                },
+                {
+                  "skillId": "code-review",
+                  "path": "skills/code-review/SKILL.md",
+                  "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "path": "skills/software-security-auditor/SKILL.md",
+                  "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "path": "skills/korean-prose-editor/SKILL.md",
+                  "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+                }
+              ],
+              "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+            }
+          },
+          {
+            "caseId": "SS36-layer-denominator-3",
+            "familyId": "mechanical-SS36",
+            "oracle": {
+              "required": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "allowed": [],
+              "allowedConditions": {},
+              "forbidden": [
+                "ponytail"
+              ],
+              "notApplicable": [
+                "code-review",
+                "software-security-auditor",
+                "korean-prose-editor"
+              ],
+              "unadjudicated": [
+                "acceptance-evidence-validator",
+                "blocker-diagnostician",
+                "change-scope-guardian",
+                "codex-token-usage-analyzer",
+                "context-continuity",
+                "coordinate-subagents",
+                "evaluation-validity-auditor",
+                "independent-audit-gate",
+                "independent-deliberation-panel",
+                "instruction-scope-resolver",
+                "iteration-frame-auditor",
+                "model-effort-advisor",
+                "mutation-risk-preflight",
+                "recovery-strategy-selector",
+                "session-board",
+                "task-contract",
+                "workspace-convention-profiler"
+              ],
+              "expectedSelection": "SELECTED",
+              "explicitSkillIds": [],
+              "ruleRequiredSkillIds": [],
+              "requiredReasons": [],
+              "sourceRefs": [
+                {
+                  "skillId": "cs-engineering",
+                  "path": "skills/cs-engineering/SKILL.md",
+                  "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+                },
+                {
+                  "skillId": "test-engineering",
+                  "path": "skills/test-engineering/SKILL.md",
+                  "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+                },
+                {
+                  "skillId": "orchestrator",
+                  "path": "skills/orchestrator/SKILL.md",
+                  "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+                },
+                {
+                  "skillId": "ponytail",
+                  "path": "skills/ponytail/SKILL.md",
+                  "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+                },
+                {
+                  "skillId": "code-review",
+                  "path": "skills/code-review/SKILL.md",
+                  "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "path": "skills/software-security-auditor/SKILL.md",
+                  "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "path": "skills/korean-prose-editor/SKILL.md",
+                  "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+                }
+              ],
+              "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+            }
+          },
+          {
+            "caseId": "SS36-layer-denominator-4",
+            "familyId": "mechanical-SS36",
+            "oracle": {
+              "required": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "allowed": [],
+              "allowedConditions": {},
+              "forbidden": [
+                "ponytail"
+              ],
+              "notApplicable": [
+                "code-review",
+                "software-security-auditor",
+                "korean-prose-editor"
+              ],
+              "unadjudicated": [
+                "acceptance-evidence-validator",
+                "blocker-diagnostician",
+                "change-scope-guardian",
+                "codex-token-usage-analyzer",
+                "context-continuity",
+                "coordinate-subagents",
+                "evaluation-validity-auditor",
+                "independent-audit-gate",
+                "independent-deliberation-panel",
+                "instruction-scope-resolver",
+                "iteration-frame-auditor",
+                "model-effort-advisor",
+                "mutation-risk-preflight",
+                "recovery-strategy-selector",
+                "session-board",
+                "task-contract",
+                "workspace-convention-profiler"
+              ],
+              "expectedSelection": "SELECTED",
+              "explicitSkillIds": [],
+              "ruleRequiredSkillIds": [],
+              "requiredReasons": [],
+              "sourceRefs": [
+                {
+                  "skillId": "cs-engineering",
+                  "path": "skills/cs-engineering/SKILL.md",
+                  "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+                },
+                {
+                  "skillId": "test-engineering",
+                  "path": "skills/test-engineering/SKILL.md",
+                  "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+                },
+                {
+                  "skillId": "orchestrator",
+                  "path": "skills/orchestrator/SKILL.md",
+                  "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+                },
+                {
+                  "skillId": "ponytail",
+                  "path": "skills/ponytail/SKILL.md",
+                  "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+                },
+                {
+                  "skillId": "code-review",
+                  "path": "skills/code-review/SKILL.md",
+                  "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+                },
+                {
+                  "skillId": "software-security-auditor",
+                  "path": "skills/software-security-auditor/SKILL.md",
+                  "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+                },
+                {
+                  "skillId": "korean-prose-editor",
+                  "path": "skills/korean-prose-editor/SKILL.md",
+                  "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+                }
+              ],
+              "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+            }
+          }
+        ],
+        "observations": [
+          {
+            "caseId": "SS36-layer-denominator-0",
+            "layer": "jevRaw",
+            "state": "PASS",
+            "skillIds": [
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "selectionStatus": "SELECTED",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          {
+            "caseId": "SS36-layer-denominator-1",
+            "layer": "jevRaw",
+            "state": "PASS",
+            "skillIds": null,
+            "selectionStatus": "NEEDS_INPUT",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          {
+            "caseId": "SS36-layer-denominator-2",
+            "layer": "jevRaw",
+            "state": "FAIL",
+            "skillIds": null,
+            "selectionStatus": "NEEDS_INPUT",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          {
+            "caseId": "SS36-layer-denominator-3",
+            "layer": "jevRaw",
+            "state": "BLOCKED",
+            "skillIds": null,
+            "selectionStatus": "NEEDS_INPUT",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          {
+            "caseId": "SS36-layer-denominator-0",
+            "layer": "vendorRaw",
+            "state": "PASS",
+            "skillIds": [
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "selectionStatus": "SELECTED",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          {
+            "caseId": "SS36-layer-denominator-1",
+            "layer": "vendorRaw",
+            "state": "PASS",
+            "skillIds": null,
+            "selectionStatus": "NEEDS_INPUT",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          {
+            "caseId": "SS36-layer-denominator-2",
+            "layer": "vendorRaw",
+            "state": "FAIL",
+            "skillIds": null,
+            "selectionStatus": "NEEDS_INPUT",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          {
+            "caseId": "SS36-layer-denominator-3",
+            "layer": "vendorRaw",
+            "state": "BLOCKED",
+            "skillIds": null,
+            "selectionStatus": "NEEDS_INPUT",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          {
+            "caseId": "SS36-layer-denominator-0",
+            "layer": "combined",
+            "state": "PASS",
+            "skillIds": [
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "selectionStatus": "SELECTED",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          {
+            "caseId": "SS36-layer-denominator-1",
+            "layer": "combined",
+            "state": "PASS",
+            "skillIds": null,
+            "selectionStatus": "NEEDS_INPUT",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          {
+            "caseId": "SS36-layer-denominator-2",
+            "layer": "combined",
+            "state": "FAIL",
+            "skillIds": null,
+            "selectionStatus": "NEEDS_INPUT",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          {
+            "caseId": "SS36-layer-denominator-3",
+            "layer": "combined",
+            "state": "BLOCKED",
+            "skillIds": null,
+            "selectionStatus": "NEEDS_INPUT",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          {
+            "caseId": "SS36-layer-denominator-0",
+            "layer": "selected",
+            "state": "PASS",
+            "skillIds": [
+              "cs-engineering",
+              "test-engineering",
+              "orchestrator"
+            ],
+            "selectionStatus": "SELECTED",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": {
+              "receiptId": "MOCK-NOT-HOST-EVIDENCE",
+              "host": "codex",
+              "requestDigest": "mock-request",
+              "inventoryDigest": "mock-inventory",
+              "agentSelectedSkillIds": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "acceptedAt": "2000-01-01T00:00:00Z"
+            },
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          {
+            "caseId": "SS36-layer-denominator-1",
+            "layer": "selected",
+            "state": "PASS",
+            "skillIds": null,
+            "selectionStatus": "NEEDS_INPUT",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          {
+            "caseId": "SS36-layer-denominator-2",
+            "layer": "selected",
+            "state": "FAIL",
+            "skillIds": null,
+            "selectionStatus": "NEEDS_INPUT",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          },
+          {
+            "caseId": "SS36-layer-denominator-3",
+            "layer": "selected",
+            "state": "BLOCKED",
+            "skillIds": null,
+            "selectionStatus": "NEEDS_INPUT",
+            "reasonCodes": [],
+            "selectionReasons": [],
+            "executionKind": "offline-mock",
+            "host": "codex",
+            "hostReceipt": null,
+            "requestDigest": "mock-request",
+            "inventoryDigest": "mock-inventory",
+            "conditionDigest": "mock-condition",
+            "stageEvidence": {
+              "read": false,
+              "applied": false,
+              "verified": false
+            }
+          }
+        ]
+      },
+      "expected": {
+        "denominator": 5,
+        "executed": 4,
+        "passes": 1,
+        "failures": 2,
+        "blocked": 1,
+        "notRun": 1,
+        "requiredTotal": 15,
+        "requiredHits": 3,
+        "requiredRecall": 0.2,
+        "coverage": 0.2,
+        "abstentions": 1,
+        "abstentionRate": 0.2,
+        "unnecessaryAbstentionRate": 0.2,
+        "exactPurposeSuccessRate": 0.2,
+        "verdict": "INCOMPLETE_OR_FAIL"
+      },
+      "observed": {
+        "jevRaw": {
+          "layer": "jevRaw",
+          "denominator": 5,
+          "executed": 4,
+          "passes": 1,
+          "failures": 2,
+          "blocked": 1,
+          "notRun": 1,
+          "reviewRequired": 0,
+          "requiredTotal": 15,
+          "requiredHits": 3,
+          "requiredRecall": 0.2,
+          "truePositives": 3,
+          "falsePositives": 0,
+          "unadjudicatedCount": 0,
+          "precision": 1,
+          "forbiddenViolations": 0,
+          "forbiddenViolationRate": 0,
+          "unnecessarySelections": 0,
+          "exactPurposeSuccessRate": 0.2,
+          "coverage": 0.2,
+          "abstentions": 1,
+          "abstentionRate": 0.2,
+          "unnecessaryAbstentionRate": 0.2,
+          "stageCoverage": {
+            "read": 0,
+            "applied": 0,
+            "verified": 0
+          },
+          "verdict": "INCOMPLETE_OR_FAIL",
+          "scores": [
+            {
+              "caseId": "SS36-layer-denominator-0",
+              "verdict": "PASS",
+              "missingRequired": [],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 3,
+              "falsePositives": 0,
+              "requiredHits": 3,
+              "answered": true,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": []
+            },
+            {
+              "caseId": "SS36-layer-denominator-1",
+              "verdict": "FAIL",
+              "missingRequired": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 0,
+              "falsePositives": 0,
+              "requiredHits": 0,
+              "answered": false,
+              "abstained": true,
+              "unnecessaryAbstention": true,
+              "reasons": [
+                "UNEXPECTED_OR_UNEXPLAINED_ABSTENTION"
+              ]
+            },
+            {
+              "caseId": "SS36-layer-denominator-2",
+              "verdict": "FAIL",
+              "missingRequired": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 0,
+              "falsePositives": 0,
+              "requiredHits": 0,
+              "answered": false,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": [
+                "EXECUTION_DID_NOT_SUCCEED"
+              ]
+            },
+            {
+              "caseId": "SS36-layer-denominator-3",
+              "verdict": "BLOCKED",
+              "missingRequired": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 0,
+              "falsePositives": 0,
+              "requiredHits": 0,
+              "answered": false,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": [
+                "EXECUTION_DID_NOT_SUCCEED"
+              ]
+            },
+            {
+              "caseId": "SS36-layer-denominator-4",
+              "verdict": "NOT_RUN",
+              "missingRequired": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 0,
+              "falsePositives": 0,
+              "requiredHits": 0,
+              "answered": false,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": []
+            }
+          ]
+        },
+        "vendorRaw": {
+          "layer": "vendorRaw",
+          "denominator": 5,
+          "executed": 4,
+          "passes": 1,
+          "failures": 2,
+          "blocked": 1,
+          "notRun": 1,
+          "reviewRequired": 0,
+          "requiredTotal": 15,
+          "requiredHits": 3,
+          "requiredRecall": 0.2,
+          "truePositives": 3,
+          "falsePositives": 0,
+          "unadjudicatedCount": 0,
+          "precision": 1,
+          "forbiddenViolations": 0,
+          "forbiddenViolationRate": 0,
+          "unnecessarySelections": 0,
+          "exactPurposeSuccessRate": 0.2,
+          "coverage": 0.2,
+          "abstentions": 1,
+          "abstentionRate": 0.2,
+          "unnecessaryAbstentionRate": 0.2,
+          "stageCoverage": {
+            "read": 0,
+            "applied": 0,
+            "verified": 0
+          },
+          "verdict": "INCOMPLETE_OR_FAIL",
+          "scores": [
+            {
+              "caseId": "SS36-layer-denominator-0",
+              "verdict": "PASS",
+              "missingRequired": [],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 3,
+              "falsePositives": 0,
+              "requiredHits": 3,
+              "answered": true,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": []
+            },
+            {
+              "caseId": "SS36-layer-denominator-1",
+              "verdict": "FAIL",
+              "missingRequired": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 0,
+              "falsePositives": 0,
+              "requiredHits": 0,
+              "answered": false,
+              "abstained": true,
+              "unnecessaryAbstention": true,
+              "reasons": [
+                "UNEXPECTED_OR_UNEXPLAINED_ABSTENTION"
+              ]
+            },
+            {
+              "caseId": "SS36-layer-denominator-2",
+              "verdict": "FAIL",
+              "missingRequired": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 0,
+              "falsePositives": 0,
+              "requiredHits": 0,
+              "answered": false,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": [
+                "EXECUTION_DID_NOT_SUCCEED"
+              ]
+            },
+            {
+              "caseId": "SS36-layer-denominator-3",
+              "verdict": "BLOCKED",
+              "missingRequired": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 0,
+              "falsePositives": 0,
+              "requiredHits": 0,
+              "answered": false,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": [
+                "EXECUTION_DID_NOT_SUCCEED"
+              ]
+            },
+            {
+              "caseId": "SS36-layer-denominator-4",
+              "verdict": "NOT_RUN",
+              "missingRequired": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 0,
+              "falsePositives": 0,
+              "requiredHits": 0,
+              "answered": false,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": []
+            }
+          ]
+        },
+        "combined": {
+          "layer": "combined",
+          "denominator": 5,
+          "executed": 4,
+          "passes": 1,
+          "failures": 2,
+          "blocked": 1,
+          "notRun": 1,
+          "reviewRequired": 0,
+          "requiredTotal": 15,
+          "requiredHits": 3,
+          "requiredRecall": 0.2,
+          "truePositives": 3,
+          "falsePositives": 0,
+          "unadjudicatedCount": 0,
+          "precision": 1,
+          "forbiddenViolations": 0,
+          "forbiddenViolationRate": 0,
+          "unnecessarySelections": 0,
+          "exactPurposeSuccessRate": 0.2,
+          "coverage": 0.2,
+          "abstentions": 1,
+          "abstentionRate": 0.2,
+          "unnecessaryAbstentionRate": 0.2,
+          "stageCoverage": {
+            "read": 0,
+            "applied": 0,
+            "verified": 0
+          },
+          "verdict": "INCOMPLETE_OR_FAIL",
+          "scores": [
+            {
+              "caseId": "SS36-layer-denominator-0",
+              "verdict": "PASS",
+              "missingRequired": [],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 3,
+              "falsePositives": 0,
+              "requiredHits": 3,
+              "answered": true,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": []
+            },
+            {
+              "caseId": "SS36-layer-denominator-1",
+              "verdict": "FAIL",
+              "missingRequired": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 0,
+              "falsePositives": 0,
+              "requiredHits": 0,
+              "answered": false,
+              "abstained": true,
+              "unnecessaryAbstention": true,
+              "reasons": [
+                "UNEXPECTED_OR_UNEXPLAINED_ABSTENTION"
+              ]
+            },
+            {
+              "caseId": "SS36-layer-denominator-2",
+              "verdict": "FAIL",
+              "missingRequired": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 0,
+              "falsePositives": 0,
+              "requiredHits": 0,
+              "answered": false,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": [
+                "EXECUTION_DID_NOT_SUCCEED"
+              ]
+            },
+            {
+              "caseId": "SS36-layer-denominator-3",
+              "verdict": "BLOCKED",
+              "missingRequired": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 0,
+              "falsePositives": 0,
+              "requiredHits": 0,
+              "answered": false,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": [
+                "EXECUTION_DID_NOT_SUCCEED"
+              ]
+            },
+            {
+              "caseId": "SS36-layer-denominator-4",
+              "verdict": "NOT_RUN",
+              "missingRequired": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 0,
+              "falsePositives": 0,
+              "requiredHits": 0,
+              "answered": false,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": []
+            }
+          ]
+        },
+        "selected": {
+          "layer": "selected",
+          "denominator": 5,
+          "executed": 4,
+          "passes": 1,
+          "failures": 2,
+          "blocked": 1,
+          "notRun": 1,
+          "reviewRequired": 0,
+          "requiredTotal": 15,
+          "requiredHits": 3,
+          "requiredRecall": 0.2,
+          "truePositives": 3,
+          "falsePositives": 0,
+          "unadjudicatedCount": 0,
+          "precision": 1,
+          "forbiddenViolations": 0,
+          "forbiddenViolationRate": 0,
+          "unnecessarySelections": 0,
+          "exactPurposeSuccessRate": 0.2,
+          "coverage": 0.2,
+          "abstentions": 1,
+          "abstentionRate": 0.2,
+          "unnecessaryAbstentionRate": 0.2,
+          "stageCoverage": {
+            "read": 0,
+            "applied": 0,
+            "verified": 0
+          },
+          "verdict": "INCOMPLETE_OR_FAIL",
+          "scores": [
+            {
+              "caseId": "SS36-layer-denominator-0",
+              "verdict": "PASS",
+              "missingRequired": [],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 3,
+              "falsePositives": 0,
+              "requiredHits": 3,
+              "answered": true,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": []
+            },
+            {
+              "caseId": "SS36-layer-denominator-1",
+              "verdict": "FAIL",
+              "missingRequired": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 0,
+              "falsePositives": 0,
+              "requiredHits": 0,
+              "answered": false,
+              "abstained": true,
+              "unnecessaryAbstention": true,
+              "reasons": [
+                "UNEXPECTED_OR_UNEXPLAINED_ABSTENTION"
+              ]
+            },
+            {
+              "caseId": "SS36-layer-denominator-2",
+              "verdict": "FAIL",
+              "missingRequired": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 0,
+              "falsePositives": 0,
+              "requiredHits": 0,
+              "answered": false,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": [
+                "EXECUTION_DID_NOT_SUCCEED"
+              ]
+            },
+            {
+              "caseId": "SS36-layer-denominator-3",
+              "verdict": "BLOCKED",
+              "missingRequired": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 0,
+              "falsePositives": 0,
+              "requiredHits": 0,
+              "answered": false,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": [
+                "EXECUTION_DID_NOT_SUCCEED"
+              ]
+            },
+            {
+              "caseId": "SS36-layer-denominator-4",
+              "verdict": "NOT_RUN",
+              "missingRequired": [
+                "cs-engineering",
+                "test-engineering",
+                "orchestrator"
+              ],
+              "forbidden": [],
+              "unnecessary": [],
+              "unadjudicated": [],
+              "truePositives": 0,
+              "falsePositives": 0,
+              "requiredHits": 0,
+              "answered": false,
+              "abstained": false,
+              "unnecessaryAbstention": false,
+              "reasons": []
+            }
+          ]
+        }
+      }
+    },
+    "null-versus-empty": {
+      "input": {
+        "noSkill": {
+          "caseId": "SS36-empty-control",
+          "familyId": "mechanical-SS36",
+          "oracle": {
+            "required": [],
+            "allowed": [],
+            "allowedConditions": {},
+            "forbidden": [
+              "cs-engineering",
+              "ponytail",
+              "orchestrator",
+              "software-security-auditor",
+              "code-review",
+              "test-engineering"
+            ],
+            "notApplicable": [
+              "test-engineering",
+              "korean-prose-editor",
+              "change-scope-guardian"
+            ],
+            "unadjudicated": [
+              "acceptance-evidence-validator",
+              "blocker-diagnostician",
+              "codex-token-usage-analyzer",
+              "context-continuity",
+              "coordinate-subagents",
+              "evaluation-validity-auditor",
+              "independent-audit-gate",
+              "independent-deliberation-panel",
+              "instruction-scope-resolver",
+              "iteration-frame-auditor",
+              "model-effort-advisor",
+              "mutation-risk-preflight",
+              "recovery-strategy-selector",
+              "session-board",
+              "task-contract",
+              "workspace-convention-profiler"
+            ],
+            "expectedSelection": "SELECTED",
+            "explicitSkillIds": [],
+            "ruleRequiredSkillIds": [],
+            "requiredReasons": [],
+            "sourceRefs": [
+              {
+                "skillId": "cs-engineering",
+                "path": "skills/cs-engineering/SKILL.md",
+                "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+              },
+              {
+                "skillId": "ponytail",
+                "path": "skills/ponytail/SKILL.md",
+                "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+              },
+              {
+                "skillId": "orchestrator",
+                "path": "skills/orchestrator/SKILL.md",
+                "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+              },
+              {
+                "skillId": "software-security-auditor",
+                "path": "skills/software-security-auditor/SKILL.md",
+                "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+              },
+              {
+                "skillId": "code-review",
+                "path": "skills/code-review/SKILL.md",
+                "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+              },
+              {
+                "skillId": "test-engineering",
+                "path": "skills/test-engineering/SKILL.md",
+                "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+              },
+              {
+                "skillId": "korean-prose-editor",
+                "path": "skills/korean-prose-editor/SKILL.md",
+                "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+              },
+              {
+                "skillId": "change-scope-guardian",
+                "path": "skills/change-scope-guardian/SKILL.md",
+                "digest": "sha256:4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e"
+              }
+            ],
+            "boundaryDecision": "Frozen before model outputs; absent target does not erase request-type need"
+          }
+        },
+        "emptyObservation": {
+          "caseId": "SS36-empty-control",
+          "layer": "jevRaw",
+          "state": "PASS",
+          "skillIds": [],
+          "selectionStatus": "SELECTED",
+          "reasonCodes": [],
+          "selectionReasons": [],
+          "executionKind": "offline-mock",
+          "host": "codex",
+          "hostReceipt": null,
+          "requestDigest": "mock-request",
+          "inventoryDigest": "mock-inventory",
+          "conditionDigest": "mock-condition",
+          "stageEvidence": {
+            "read": false,
+            "applied": false,
+            "verified": false
+          }
+        },
+        "nullObservation": {
+          "caseId": "SS36-empty-control",
+          "layer": "jevRaw",
+          "state": "PASS",
+          "skillIds": null,
+          "selectionStatus": "NEEDS_INPUT",
+          "reasonCodes": [],
+          "selectionReasons": [],
+          "executionKind": "offline-mock",
+          "host": "codex",
+          "hostReceipt": null,
+          "requestDigest": "mock-request",
+          "inventoryDigest": "mock-inventory",
+          "conditionDigest": "mock-condition",
+          "stageEvidence": {
+            "read": false,
+            "applied": false,
+            "verified": false
+          }
+        }
+      },
+      "expected": {
+        "empty": {
+          "verdict": "PASS",
+          "answered": true,
+          "abstained": false
+        },
+        "unknown": {
+          "verdict": "FAIL",
+          "answered": false,
+          "abstained": true,
+          "unnecessaryAbstention": true
+        }
+      },
+      "observed": {
+        "empty": {
+          "caseId": "SS36-empty-control",
+          "verdict": "PASS",
+          "missingRequired": [],
+          "forbidden": [],
+          "unnecessary": [],
+          "unadjudicated": [],
+          "truePositives": 0,
+          "falsePositives": 0,
+          "requiredHits": 0,
+          "answered": true,
+          "abstained": false,
+          "unnecessaryAbstention": false,
+          "reasons": []
+        },
+        "unknown": {
+          "caseId": "SS36-empty-control",
+          "verdict": "FAIL",
+          "missingRequired": [],
+          "forbidden": [],
+          "unnecessary": [],
+          "unadjudicated": [],
+          "truePositives": 0,
+          "falsePositives": 0,
+          "requiredHits": 0,
+          "answered": false,
+          "abstained": true,
+          "unnecessaryAbstention": true,
+          "reasons": [
+            "UNEXPECTED_OR_UNEXPLAINED_ABSTENTION"
+          ]
+        }
+      }
+    },
+    "receipt-absence": {
+      "input": {
+        "caseId": "SS36-evaluator-control",
+        "layer": "selected",
+        "state": "PASS",
+        "skillIds": [
+          "cs-engineering",
+          "test-engineering",
+          "orchestrator"
+        ],
+        "selectionStatus": "SELECTED",
+        "reasonCodes": [],
+        "selectionReasons": [],
+        "executionKind": "offline-mock",
+        "host": "codex",
+        "hostReceipt": null,
+        "requestDigest": "mock-request",
+        "inventoryDigest": "mock-inventory",
+        "conditionDigest": "mock-condition",
+        "stageEvidence": {
+          "read": true,
+          "applied": true,
+          "verified": true
+        }
+      },
+      "expected": {
+        "coverage": 0,
+        "failures": 1,
+        "stageCoverage": {
+          "read": 0,
+          "applied": 0,
+          "verified": 0
+        },
+        "scores": [
+          {
+            "verdict": "FAIL",
+            "reasons": [
+              "HOST_SELECTION_RECEIPT_MISSING_OR_MISMATCH"
+            ]
+          }
+        ],
+        "verdict": "INCOMPLETE_OR_FAIL"
+      },
+      "observed": {
+        "denominator": 1,
+        "executed": 1,
+        "passes": 0,
+        "failures": 1,
+        "blocked": 0,
+        "notRun": 0,
+        "requiredTotal": 3,
+        "requiredHits": 3,
+        "requiredRecall": 1,
+        "truePositives": 3,
+        "falsePositives": 0,
+        "unadjudicatedCount": 0,
+        "precision": 1,
+        "unnecessarySelections": 0,
+        "forbiddenViolations": 0,
+        "forbiddenViolationRate": 0,
+        "exactPurposeSuccessRate": 0,
+        "coverage": 0,
+        "abstentions": 0,
+        "abstentionRate": 0,
+        "unnecessaryAbstentionRate": 0,
+        "stageCoverage": {
+          "read": 0,
+          "applied": 0,
+          "verified": 0
+        },
+        "verdict": "INCOMPLETE_OR_FAIL",
+        "scores": [
+          {
+            "caseId": "SS36-evaluator-control",
+            "verdict": "FAIL",
+            "missingRequired": [],
+            "forbidden": [],
+            "unnecessary": [],
+            "unadjudicated": [],
+            "truePositives": 3,
+            "falsePositives": 0,
+            "requiredHits": 3,
+            "answered": false,
+            "abstained": false,
+            "unnecessaryAbstention": false,
+            "reasons": [
+              "HOST_SELECTION_RECEIPT_MISSING_OR_MISMATCH"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "commands": [
+    {
+      "id": "dependency-install-initial",
+      "cwd": "<PINNED_REPO>",
+      "command": "pnpm install --frozen-lockfile",
+      "exit": 254,
+      "executionKind": "dependency-setup",
+      "evidence": "install.log",
+      "note": "Local pnpm data directory unavailable; not a product failure."
+    },
+    {
+      "id": "dependency-install",
+      "cwd": "<PINNED_REPO>",
+      "command": "XDG_DATA_HOME=<REDACTED_ENV_VALUE> pnpm install --frozen-lockfile --store-dir <PACKAGE_STORE>",
+      "exit": 0,
+      "executionKind": "dependency-setup",
+      "evidence": "install-retry.log"
+    },
+    {
+      "id": "existing-regression",
+      "cwd": "<PINNED_REPO>",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/skill-classification/evaluation.test.ts",
+        "-t",
+        "rejects select-all despite recall 1|detects each missing label and forbidden extra independently|preserves all failure and abstention denominators|never credits rules or final agent correction as raw or vendor quality|fails two equally wrong hosts even when measured agreement is 1",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_DIR>/existing-vitest.json"
+      ],
+      "exit": 0,
+      "executionKind": "existing-offline-regression",
+      "evidence": [
+        "existing-vitest.json",
+        "existing.log"
+      ],
+      "testsPassed": 5,
+      "testsSkipped": 10
+    },
+    {
+      "id": "initial-isolated-test-authoring-error",
+      "cwd": "<EVIDENCE_DIR>",
+      "argv": [
+        "node",
+        "<PINNED_REPO>/node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "<EVIDENCE_DIR>/vitest.config.mjs",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_DIR>/isolated-vitest.json"
+      ],
+      "exit": 1,
+      "executionKind": "new-offline-variation",
+      "evidence": [
+        "initial-isolated-vitest.json",
+        "initial-SS36.test.ts",
+        "initial-SS36.observations.json"
+      ],
+      "testsPassed": 8,
+      "testsFailed": 3,
+      "note": "Tester mistakenly treated frozen SS03 notApplicable IDs as forbidden. No product failure. Preserved records, replaced control with unmodified frozen SS14 oracle."
+    },
+    {
+      "id": "isolated-final",
+      "cwd": "<EVIDENCE_DIR>",
+      "argv": [
+        "node",
+        "<PINNED_REPO>/node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "<EVIDENCE_DIR>/vitest.config.mjs",
+        "--reporter=json",
+        "--outputFile=<EVIDENCE_DIR>/isolated-vitest.json"
+      ],
+      "exit": 0,
+      "executionKind": "new-offline-variation",
+      "evidence": [
+        "isolated-vitest.json",
+        "isolated.log",
+        "SS36.observations.json"
+      ],
+      "testsPassed": 12,
+      "testsFailed": 0
+    },
+    {
+      "id": "provenance",
+      "cwd": "<EVIDENCE_DIR>",
+      "argv": [
+        "node",
+        "--import",
+        "<PINNED_REPO>/node_modules/tsx/dist/loader.mjs",
+        "<EVIDENCE_DIR>/verify-provenance.mts"
+      ],
+      "exit": 0,
+      "executionKind": "offline-provenance-verification",
+      "evidence": [
+        "SS36.provenance.json",
+        "provenance.log"
+      ]
+    }
+  ],
+  "actualHostStages": {
+    "selected": {
+      "status": "NOTRUN",
+      "actualEvidence": null
+    },
+    "read": {
+      "status": "NOTRUN",
+      "actualEvidence": null
+    },
+    "applied": {
+      "status": "NOTRUN",
+      "actualEvidence": null
+    },
+    "verified": {
+      "status": "NOTRUN",
+      "actualEvidence": null
+    }
+  },
+  "mockReceiptPolicy": "MOCK-NOT-HOST-EVIDENCE exists only in unit-test inputs. No actual AGENT selection, host attestation or acceptance issued.",
+  "controlOracleProvenance": "Frozen SS14 oracle borrowed solely as evaluator input for ALL seven SS36 variants; never an SS36 semantic oracle or SS14 model run",
+  "noOtherCaseExecution": "Frozen semantic oracles are borrowed as evaluator parameters only. No SS14/SS03 or other case provider/host execution. scorePairs API supplies one offline pair; other fixed matrix slots remain untouched.",
+  "sourceSpecAvailability": {
+    "pathExists": false,
+    "used": "Only embedded frozen sourceSpec.fields; no absent source answers invented."
+  },
+  "agentsSkills": {
+    "workspacePathExists": false,
+    "repositoryPathExists": false,
+    "repositoryAgentsContents": [
+      ".agents/plugins/marketplace.json"
+    ]
+  },
+  "missingInputs": [
+    "Actual host classification/selection MCP connection: get_skill_inventory, classify_skills, record_skill_selection are absent from currently exposed tools.",
+    "Approved installed classification config via AGENT_GOVERNANCE_CLASSIFICATION_CONFIG and its bound profile registry/provider or native adapter definitions; env is currently unset.",
+    "Host-owned signed tool-call observation and current actor/session prompt in session board, bound request/inventory/task/config/profile revisions; caller receipt must remain null.",
+    "For provider-enabled testing only: approved public request digest or allowed transmission, qualified vendor/route/model/effort, current budget and credential source; provider calls remain prohibited for this assignment.",
+    "Actual SKILL body read refs, application obligation artifacts and candidate-bound verification evidence for selected/read/applied/verified; no test-created receipts substitute these."
+  ],
+  "hostSupportedPath": {
+    "cli": "<HOST_INSTALL>/bin/codex (codex-cli 0.159.0-alpha.3; version-only read)",
+    "repoServer": "<PINNED_REPO>/mcp-server/dist/server.mjs",
+    "configuration": "<PINNED_REPO>/.mcp.json (host-attestation configuration (literal environment value omitted))",
+    "hostHook": "<PINNED_REPO>/mcp-server/dist/host-attestation-hook.mjs",
+    "selectionBoundary": "<PINNED_REPO>/mcp-server/src/skill-classification/gateway.ts:110",
+    "currentConnection": "AGS tools absent; no live invocation attempted"
+  },
+  "remainingBlockers": {
+    "SS36OfflineVerification": [],
+    "actualHostOnly": [
+      "Actual host classification/selection MCP connection: get_skill_inventory, classify_skills, record_skill_selection are absent from currently exposed tools.",
+      "Approved installed classification config via AGENT_GOVERNANCE_CLASSIFICATION_CONFIG and its bound profile registry/provider or native adapter definitions; env is currently unset.",
+      "Host-owned signed tool-call observation and current actor/session prompt in session board, bound request/inventory/task/config/profile revisions; caller receipt must remain null.",
+      "For provider-enabled testing only: approved public request digest or allowed transmission, qualified vendor/route/model/effort, current budget and credential source; provider calls remain prohibited for this assignment.",
+      "Actual SKILL body read refs, application obligation artifacts and candidate-bound verification evidence for selected/read/applied/verified; no test-created receipts substitute these."
+    ]
+  },
+  "findings": [],
+  "knownDefectLinks": {
+    "reproduced": [],
+    "note": "Cost preservation, timeout overflow, metadata-condition duplication, host active-state supply and pre-concurrency recheck defects were not exercised or reproduced by the SS36 evaluator vectors; no duplicate defect counting."
+  },
+  "initialFailures": "Preserved initial test-authoring error (3 assertions); corrected test control selection only. No frozen fixture/oracle/product source changed.",
+  "testProof": "Concrete bad outputs are rejected by public evaluator exports; no product mutation/red-green performed due explicit no-product-source-modification scope. Formal engineering-practices contract qualification and independent acceptance audit NOTRUN.",
+  "productMutation": {
+    "trackedChanges": false,
+    "push": false,
+    "PR": false,
+    "release": false,
+    "bootstrapRun": false,
+    "prior21RunRepeated": false
+  },
+  "evidenceDirectory": "<EVIDENCE_DIR>",
+  "publicationPreparation": {
+    "newTests": 0,
+    "newHostRuns": 0,
+    "newProviderCalls": 0,
+    "actualPublishStatus": "NOT_RECORDED_IN_HISTORICAL_TEST_RESULT",
+    "patchStatus": "NONE_CREATED",
+    "separateStdoutStderr": "MISSING_ORIGINAL: only merged streams were retained",
+    "historicalIntermediate11TestReport": "MISSING_ORIGINAL: superseded by final 12-test report; not reconstructed",
+    "redaction": "Public path placeholders and environment-literal redaction; source SHA and byte counts are recorded in manifest.json."
+  }
+}

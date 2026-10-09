@@ -1,0 +1,350 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS36",
+  "publicationScope": "evidence/ags-2.9.1/2026-10-09/cases/SS36/",
+  "candidate": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+    "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+  },
+  "inputBytesPolicy": "Original complete frozen fixture, SS36 extract/control oracle and original mock observations are retained; original input/oracle null stays null. Source SHA values are hashes of original bytes, not the redacted result.",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 3920,
+      "sha256": "b61ec4fd2def1594d45a128b43ad3a251253cd0a3b4c9fe85f7a1c8058767bb7",
+      "kind": "publication-metadata",
+      "original": null,
+      "transformation": "NEW_PUBLICATION_METADATA_NOT_TEST_EVIDENCE"
+    },
+    {
+      "path": "SS36.commands.json",
+      "bytes": 2964,
+      "sha256": "2dbbf2835db464cd38a179f5668ac83783f15ef381a8332a56781d2688502bcc",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "SS36.commands.json",
+        "bytes": 3102,
+        "sha256": "26d9385207696abf9b6b7d96d66541561d553b8b375fccee56dd34b86d693c11"
+      },
+      "transformation": "LOCAL_PATH_AND_ENV_LITERAL_REDACTION"
+    },
+    {
+      "path": "SS36.control-oracle.json",
+      "bytes": 3436,
+      "sha256": "fd58d02ba9f0370b0375457980cf86fe184f7b8ff33125d44e2ed815154d135d",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "SS36.control-oracle.json",
+        "bytes": 3436,
+        "sha256": "fd58d02ba9f0370b0375457980cf86fe184f7b8ff33125d44e2ed815154d135d"
+      },
+      "transformation": "NONE_BYTE_IDENTICAL"
+    },
+    {
+      "path": "SS36.fixture-extract.json",
+      "bytes": 2087,
+      "sha256": "a00f52469928d8a2d239028e120b8c0b5dcfe524d56768334dc02b4fd97b666c",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "SS36.fixture-extract.json",
+        "bytes": 2087,
+        "sha256": "a00f52469928d8a2d239028e120b8c0b5dcfe524d56768334dc02b4fd97b666c"
+      },
+      "transformation": "NONE_BYTE_IDENTICAL"
+    },
+    {
+      "path": "SS36.observations.json",
+      "bytes": 132965,
+      "sha256": "6af2cdc4fd37438898b27c327624c737db44a16e61f09c953419f125455b740d",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "SS36.observations.json",
+        "bytes": 132965,
+        "sha256": "6af2cdc4fd37438898b27c327624c737db44a16e61f09c953419f125455b740d"
+      },
+      "transformation": "NONE_BYTE_IDENTICAL"
+    },
+    {
+      "path": "SS36.plan.json",
+      "bytes": 3740,
+      "sha256": "dae43e3314acfd7ce1aec562ce18cdad1427a19eb66a28c458309bb38352dd7d",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "SS36.plan.json",
+        "bytes": 3740,
+        "sha256": "dae43e3314acfd7ce1aec562ce18cdad1427a19eb66a28c458309bb38352dd7d"
+      },
+      "transformation": "NONE_BYTE_IDENTICAL"
+    },
+    {
+      "path": "SS36.provenance.json",
+      "bytes": 8198,
+      "sha256": "6a5b930ccb6d4dd01a612bc827f42eea42ec6bcad644e89e7753096480113d5e",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "SS36.provenance.json",
+        "bytes": 8198,
+        "sha256": "6a5b930ccb6d4dd01a612bc827f42eea42ec6bcad644e89e7753096480113d5e"
+      },
+      "transformation": "NONE_BYTE_IDENTICAL"
+    },
+    {
+      "path": "SS36.result.json",
+      "bytes": 145725,
+      "sha256": "331db920046361dd2306b8158d62c8cd388bd642969e11bd728f855cb949f9ef",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "SS36.result.json",
+        "bytes": 145326,
+        "sha256": "2cc555f5a29312a2d720a5ec8ecc81bc7ff9332f1411cc02f99705473209d207"
+      },
+      "transformation": "LOCAL_PATH_AND_ENV_LITERAL_REDACTION; result adds explicitly labeled publication metadata"
+    },
+    {
+      "path": "archive/initial-SS36.control-oracle.json",
+      "bytes": 3378,
+      "sha256": "cb581ef374552442b4c9c209150cc9e31f99385bc23efe5b327b4de0eed509f1",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "initial-SS36.control-oracle.json",
+        "bytes": 3378,
+        "sha256": "cb581ef374552442b4c9c209150cc9e31f99385bc23efe5b327b4de0eed509f1"
+      },
+      "transformation": "NONE_BYTE_IDENTICAL"
+    },
+    {
+      "path": "archive/initial-SS36.observations.json",
+      "bytes": 86386,
+      "sha256": "cbcf518cb937f8cb9686e7d07e0fd86cb3640c5b84eaa5ad4ee812c63e91b409",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "initial-SS36.observations.json",
+        "bytes": 86386,
+        "sha256": "cbcf518cb937f8cb9686e7d07e0fd86cb3640c5b84eaa5ad4ee812c63e91b409"
+      },
+      "transformation": "NONE_BYTE_IDENTICAL"
+    },
+    {
+      "path": "archive/initial-SS36.plan.json",
+      "bytes": 3329,
+      "sha256": "f72d0fe656888a5f6009c3a1e47e5cb78a1b114f370b547107ab391f5d77464d",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "initial-SS36.plan.json",
+        "bytes": 3329,
+        "sha256": "f72d0fe656888a5f6009c3a1e47e5cb78a1b114f370b547107ab391f5d77464d"
+      },
+      "transformation": "NONE_BYTE_IDENTICAL"
+    },
+    {
+      "path": "archive/initial-SS36.test.ts",
+      "bytes": 11687,
+      "sha256": "2ca12dc6be209fb139e4e26b3e72a27d50f68e06ff0059da64766167be9a70e2",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "initial-SS36.test.ts",
+        "bytes": 11728,
+        "sha256": "195b9231f19d0ed96183e5c13d4f74fcc8dcce0eee4dda80b038c5b6f54aa6e1"
+      },
+      "transformation": "LOCAL_PATH_AND_ENV_LITERAL_REDACTION"
+    },
+    {
+      "path": "archive/initial-isolated-vitest.json",
+      "bytes": 9509,
+      "sha256": "a9834fe994fa72b39182bba4b01e37b7daf68705c99d00d906e6bbf9e28ea8a4",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "initial-isolated-vitest.json",
+        "bytes": 9716,
+        "sha256": "f8471f5d2bb608aede0f6571faa2d52d2a89e5be5886c5d019cf44334f9a15e4"
+      },
+      "transformation": "LOCAL_PATH_AND_ENV_LITERAL_REDACTION"
+    },
+    {
+      "path": "archive/initial-isolated.log",
+      "bytes": 59,
+      "sha256": "d2c6568dd0ed47ff507af54c0b8927aa481e345806f9b7738566307b62c2e4d3",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "initial-isolated.log",
+        "bytes": 69,
+        "sha256": "cc39490df2580fd59d757fdec6565f266274f94044b50fb158ee3f6e058c6676"
+      },
+      "transformation": "LOCAL_PATH_AND_ENV_LITERAL_REDACTION"
+    },
+    {
+      "path": "archive/original-SHA256SUMS",
+      "bytes": 1988,
+      "sha256": "5829cbe277e6ae6b1fedea226d1dbec6c5017756d2c1c75650bce3ac579cb16d",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "SHA256SUMS",
+        "bytes": 1988,
+        "sha256": "5829cbe277e6ae6b1fedea226d1dbec6c5017756d2c1c75650bce3ac579cb16d"
+      },
+      "transformation": "NONE_BYTE_IDENTICAL"
+    },
+    {
+      "path": "archive/verify-provenance.mts.txt",
+      "bytes": 2167,
+      "sha256": "c16f5277d8cd4081234f8a0fb4926404302bd9dbea3012c040fbd79dc8a73469",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "verify-provenance.mts",
+        "bytes": 2185,
+        "sha256": "f364f0069825f023ad4289bee2f32f758977c82efa6f035071a250a5f8be37cf"
+      },
+      "transformation": "LOCAL_PATH_REDACTION; archival original code, not an executable public reproduction"
+    },
+    {
+      "path": "frozen-fixtures.json",
+      "bytes": 142450,
+      "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "fixtures.json",
+        "bytes": 142450,
+        "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9"
+      },
+      "transformation": "NONE_BYTE_IDENTICAL; from pinned public candidate, not new test output"
+    },
+    {
+      "path": "logs/existing.log",
+      "bytes": 214,
+      "sha256": "e2e8e3e83ca7e90d4ecb8150f42682a9505651ea14e57ec50dae0fcc45aef15c",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "existing.log",
+        "bytes": 224,
+        "sha256": "521cc42a9c28d68ed77769dcf7dddd2357017eb2ea19c674a8a4388fec683d69"
+      },
+      "transformation": "LOCAL_PATH_AND_ENV_LITERAL_REDACTION"
+    },
+    {
+      "path": "logs/install-retry.log",
+      "bytes": 1542,
+      "sha256": "745edcfeeab9687c361ce9fa48948463a01bd556111e38859f532c07d57dbccb",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "install-retry.log",
+        "bytes": 1549,
+        "sha256": "0a9c0f434d0877a2be454eff7e8b35f77eea8864b05f9dde9537cbc6675d8f26"
+      },
+      "transformation": "LOCAL_PATH_AND_ENV_LITERAL_REDACTION"
+    },
+    {
+      "path": "logs/install.log",
+      "bytes": 1186,
+      "sha256": "4d915f5e8322e15e4f2a2657d257aaacc7b54b5cdcd64c7921a03726d67603aa",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "install.log",
+        "bytes": 1150,
+        "sha256": "1e9e0fa9727ab49afebc7d87e1aac49241f82f923be113d17b71326c3ffb40be"
+      },
+      "transformation": "LOCAL_PATH_AND_ENV_LITERAL_REDACTION"
+    },
+    {
+      "path": "logs/isolated.log",
+      "bytes": 59,
+      "sha256": "d2c6568dd0ed47ff507af54c0b8927aa481e345806f9b7738566307b62c2e4d3",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "isolated.log",
+        "bytes": 69,
+        "sha256": "cc39490df2580fd59d757fdec6565f266274f94044b50fb158ee3f6e058c6676"
+      },
+      "transformation": "LOCAL_PATH_AND_ENV_LITERAL_REDACTION"
+    },
+    {
+      "path": "logs/provenance.log",
+      "bytes": 190,
+      "sha256": "686c278e318cc7459708e501d4bda44b0b5785828415239dc6d582f746f2eebe",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "provenance.log",
+        "bytes": 190,
+        "sha256": "686c278e318cc7459708e501d4bda44b0b5785828415239dc6d582f746f2eebe"
+      },
+      "transformation": "NONE_BYTE_IDENTICAL"
+    },
+    {
+      "path": "recovery-status.json",
+      "bytes": 881,
+      "sha256": "d716159a4b9c4e1579c60ea5b71106e989addae89beee62c41b8e192af3ab744",
+      "kind": "publication-metadata",
+      "original": null,
+      "transformation": "NEW_PUBLICATION_METADATA_NOT_TEST_EVIDENCE"
+    },
+    {
+      "path": "reports/existing-vitest.json",
+      "bytes": 6000,
+      "sha256": "ab31c2927b3e3376644a2f74958790f0a3b04d05f8fd7fd0479944c98ab56ef5",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "existing-vitest.json",
+        "bytes": 6007,
+        "sha256": "db2af2a6b3d7360f5998cc33345b4b19e138bfb026fc6de28bb3b3c3ce03e09c"
+      },
+      "transformation": "LOCAL_PATH_AND_ENV_LITERAL_REDACTION"
+    },
+    {
+      "path": "reports/isolated-vitest.json",
+      "bytes": 5105,
+      "sha256": "399653d77c5aa87d437c935c4db0174f706e3d73eb832b375899cf18b06302ce",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "isolated-vitest.json",
+        "bytes": 5115,
+        "sha256": "c8bfffd5cafb713282079d5de1f87ce1cba569ae9e52c16ca09128475bad58aa"
+      },
+      "transformation": "LOCAL_PATH_AND_ENV_LITERAL_REDACTION"
+    },
+    {
+      "path": "reproduce/SS36.test.ts",
+      "bytes": 13017,
+      "sha256": "2df634d8f246d312dac1e110d76098fb9a0e627340e0e0c490bd5bd7d1f5db9b",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "SS36.test.ts",
+        "bytes": 12753,
+        "sha256": "8db5028ef539390a6bd315c8b0b3b518f10281bbe14c1bbc4383ba2797e315ec"
+      },
+      "transformation": "REPRODUCTION_PATH_ADAPTATION_ONLY; original assertions retained; public copy NOT_RUN"
+    },
+    {
+      "path": "reproduce/vitest.config.mjs",
+      "bytes": 142,
+      "sha256": "74a7ab128d4185ed6b929ac2162ec018f0650b7b8b611c0c255124d54d273609",
+      "kind": "original-evidence-public-copy",
+      "original": {
+        "name": "vitest.config.mjs",
+        "bytes": 132,
+        "sha256": "7adf8fae91ab0465e3d37f5c1e0d5b646cbc3f23890f78ddae913fc43e5392ec"
+      },
+      "transformation": "REPRODUCTION_PATH_ADAPTATION_ONLY; public copy NOT_RUN"
+    }
+  ],
+  "excludedFromFileTable": [
+    "manifest.json",
+    "SHA256SUMS"
+  ],
+  "hashPolicy": "manifest files table covers payloads; SHA256SUMS also covers manifest.json and excludes itself; no circular hash.",
+  "missingOriginals": [
+    {
+      "artifact": "separate stdout and stderr for retained executions",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Original shell captures used merged streams (2>&1); merged originals and exit records retained."
+    },
+    {
+      "artifact": "intermediate 11-test green Vitest report and observations",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Final 12-test execution superseded those paths; intermediate originals unavailable, not reconstructed."
+    }
+  ],
+  "patchStatus": "NONE_CREATED",
+  "newTests": 0,
+  "newProviderOrHostCalls": 0
+}

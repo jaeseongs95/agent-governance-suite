@@ -1,0 +1,31 @@
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import assert from 'node:assert/strict';
+import { oracleDigest } from '<PINNED_REPO>/tests/skill-classification/evaluation.ts';
+const root = '<PINNED_REPO>';
+const bytes = readFileSync(`${root}/tests/skill-classification/fixtures.json`);
+const corpus = JSON.parse(bytes.toString());
+const sha = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
+const git = (...args: string[]) => execFileSync('git', ['-C', root, ...args], {encoding: 'utf8'}).trim();
+const commit = git('rev-parse', 'HEAD'); const tree = git('rev-parse', 'HEAD^{tree}');
+assert.equal(commit, 'c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6');
+assert.equal(tree, '28f2f2ed8a864405320f6d20e7bc5004e8466ad3');
+assert.equal(sha(bytes), '17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9');
+assert.equal(oracleDigest(corpus), 'sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055');
+const sourceChecks = corpus.sourceSkills.map((s: any) => {
+  const observed = `sha256:${sha(readFileSync(`${root}/${s.path}`))}`;
+  assert.equal(observed, s.digest); return {...s, observed, status: 'PASS'};
+});
+assert.equal(git('status', '--porcelain'), '');
+git('diff', '--check');
+const evidence = {caseId: 'SS36', status: 'PASS', commit, tree,
+  fixtureSHA256: sha(bytes), oracleSHA256: oracleDigest(corpus).slice(7), sourceChecks,
+  productGitStatus: 'CLEAN', sourceSpecFileExists: existsSync(`${root}/TEST-SPEC.seq7.ko.md`),
+  repositoryAgentsSkillsExists: existsSync(`${root}/.agents/skills`),
+  workspaceAgentsSkillsExists: existsSync('<WORKSPACE_AGENT_CONFIG>/skills'),
+  classificationConfigConfigured: !!process.env.AGENT_GOVERNANCE_CLASSIFICATION_CONFIG,
+  apiCalls: {jev: 0, externalVendor: 0, claude: 0}};
+assert.equal(evidence.sourceSpecFileExists, false);
+writeFileSync('<EVIDENCE_DIR>/SS36.provenance.json', JSON.stringify(evidence, null, 2) + '\n');
+console.log(JSON.stringify({caseId: 'SS36', status: 'PASS', commit, tree, sourceDigestsVerified: sourceChecks.length, productGitStatus: 'CLEAN'}));

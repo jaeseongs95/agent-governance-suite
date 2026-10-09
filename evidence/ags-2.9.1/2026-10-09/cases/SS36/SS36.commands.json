@@ -1,0 +1,101 @@
+[
+  {
+    "id": "dependency-install-initial",
+    "cwd": "<PINNED_REPO>",
+    "command": "pnpm install --frozen-lockfile",
+    "exit": 254,
+    "executionKind": "dependency-setup",
+    "evidence": "install.log",
+    "note": "Local pnpm data directory unavailable; not a product failure."
+  },
+  {
+    "id": "dependency-install",
+    "cwd": "<PINNED_REPO>",
+    "command": "XDG_DATA_HOME=<REDACTED_ENV_VALUE> pnpm install --frozen-lockfile --store-dir <PACKAGE_STORE>",
+    "exit": 0,
+    "executionKind": "dependency-setup",
+    "evidence": "install-retry.log"
+  },
+  {
+    "id": "existing-regression",
+    "cwd": "<PINNED_REPO>",
+    "argv": [
+      "node",
+      "scripts/run-tests.mjs",
+      "tests/skill-classification/evaluation.test.ts",
+      "-t",
+      "rejects select-all despite recall 1|detects each missing label and forbidden extra independently|preserves all failure and abstention denominators|never credits rules or final agent correction as raw or vendor quality|fails two equally wrong hosts even when measured agreement is 1",
+      "--reporter=json",
+      "--outputFile=<EVIDENCE_DIR>/existing-vitest.json"
+    ],
+    "exit": 0,
+    "executionKind": "existing-offline-regression",
+    "evidence": [
+      "existing-vitest.json",
+      "existing.log"
+    ],
+    "testsPassed": 5,
+    "testsSkipped": 10
+  },
+  {
+    "id": "initial-isolated-test-authoring-error",
+    "cwd": "<EVIDENCE_DIR>",
+    "argv": [
+      "node",
+      "<PINNED_REPO>/node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "<EVIDENCE_DIR>/vitest.config.mjs",
+      "--reporter=json",
+      "--outputFile=<EVIDENCE_DIR>/isolated-vitest.json"
+    ],
+    "exit": 1,
+    "executionKind": "new-offline-variation",
+    "evidence": [
+      "initial-isolated-vitest.json",
+      "initial-SS36.test.ts",
+      "initial-SS36.observations.json"
+    ],
+    "testsPassed": 8,
+    "testsFailed": 3,
+    "note": "Tester mistakenly treated frozen SS03 notApplicable IDs as forbidden. No product failure. Preserved records, replaced control with unmodified frozen SS14 oracle."
+  },
+  {
+    "id": "isolated-final",
+    "cwd": "<EVIDENCE_DIR>",
+    "argv": [
+      "node",
+      "<PINNED_REPO>/node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "<EVIDENCE_DIR>/vitest.config.mjs",
+      "--reporter=json",
+      "--outputFile=<EVIDENCE_DIR>/isolated-vitest.json"
+    ],
+    "exit": 0,
+    "executionKind": "new-offline-variation",
+    "evidence": [
+      "isolated-vitest.json",
+      "isolated.log",
+      "SS36.observations.json"
+    ],
+    "testsPassed": 12,
+    "testsFailed": 0
+  },
+  {
+    "id": "provenance",
+    "cwd": "<EVIDENCE_DIR>",
+    "argv": [
+      "node",
+      "--import",
+      "<PINNED_REPO>/node_modules/tsx/dist/loader.mjs",
+      "<EVIDENCE_DIR>/verify-provenance.mts"
+    ],
+    "exit": 0,
+    "executionKind": "offline-provenance-verification",
+    "evidence": [
+      "SS36.provenance.json",
+      "provenance.log"
+    ]
+  }
+]
