@@ -1,0 +1,57 @@
+
+ RUN  v5.0.0 <CANDIDATE_ROOT>
+
+ ✓ tests/skill-classification/SS18.independent.test.ts > SS18 independent base and additional boundaries > SS18 base freezes source and separates raw failure, rules, combined need and AGENT choice 205ms
+ ✓ tests/skill-classification/SS18.independent.test.ts > SS18 independent base and additional boundaries > SS18 extra rejects missing SEC instead of rewriting raw or selected 158ms
+ ✓ tests/skill-classification/SS18.independent.test.ts > SS18 independent base and additional boundaries > SS18 extra does not auto-create missing O from SEC rule 124ms
+ ✓ tests/skill-classification/SS18.independent.test.ts > SS18 independent base and additional boundaries > SS18 extra rejects attempted mandatory-rule removal 88ms
+ ✓ tests/skill-classification/SS18.independent.test.ts > SS18 independent base and additional boundaries > SS18 extra keeps unresolved conflict null distinct from empty 125ms
+ ✓ tests/skill-classification/SS18.independent.test.ts > SS18 independent base and additional boundaries > SS18 extra rejects absent host observation and caller-fabricated receipt 91ms
+ ✓ tests/skill-classification/SS18.independent.test.ts > SS18 independent base and additional boundaries > SS18 extra rejects changed rule revision before acceptance 90ms
+ × tests/skill-classification/SS18.independent.test.ts > SS18 independent base and additional boundaries > SS18 extra observes task cancellation during asynchronous acceptance read 120ms
+   → Cancelled SS18 task must not accept mandatory security selection: expected true to be false // Object.is equality
+ × tests/skill-classification/SS18.independent.test.ts > SS18 independent base and additional boundaries > SS18 extra requires host-supported SEC observation at gateway inventory boundary 139ms
+   → SS18 mandatory SEC host state needs a trusted supplier; static installed-tree default is insufficient: expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/skill-classification/SS18.independent.test.ts > SS18 independent base and additional boundaries > SS18 extra observes task cancellation during asynchronous acceptance read
+AssertionError: Cancelled SS18 task must not accept mandatory security selection: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/skill-classification/SS18.independent.test.ts:136:94
+    134|     const result = await h.accept(h.decision([P, SEC, O]));
+    135|     record("acceptance-cancellation-race", {cancellationDuring: "await…
+    136|     expect(result.valid, "Cancelled SS18 task must not accept mandator…
+       |                                                                                              ^
+    137|   });
+    138|   it("SS18 extra requires host-supported SEC observation at gateway in…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/skill-classification/SS18.independent.test.ts > SS18 independent base and additional boundaries > SS18 extra requires host-supported SEC observation at gateway inventory boundary
+AssertionError: SS18 mandatory SEC host state needs a trusted supplier; static installed-tree default is insufficient: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/skill-classification/SS18.independent.test.ts:146:140
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 passed (9)
+   Start at  02:56:36
+   Duration  1.43s (tests 85%, transform 9%, import 6%)
+
+JSON report written to <EVIDENCE_ROOT>/independent-vitest.json

@@ -1,0 +1,61 @@
+{
+  "caseId": "SS18",
+  "patch": {
+    "status": "NONE",
+    "reason": "No existing patch file and no product change in original assignment. No patch was fabricated."
+  },
+  "missingOriginals": [
+    {
+      "item": "Separate stdout stream bytes for original executions",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Original shell redirected stdout and stderr into combined files; no stream split can be recovered."
+    },
+    {
+      "item": "Separate stderr stream bytes for original executions",
+      "status": "MISSING_ORIGINAL",
+      "reason": "Only combined captures exist. No new log is fabricated."
+    },
+    {
+      "item": "Original transmitted provider wire/input byte file",
+      "status": "MISSING_ORIGINAL",
+      "reason": "The input object is preserved in observations; exact transport bytes were not separately captured. Derived JSON is explicitly labelled."
+    },
+    {
+      "item": "Native host selected/read/applied/verified receipt",
+      "status": "NOT_RUN",
+      "reason": "No actual host trial was performed; synthetic gateway receipts remain test doubles."
+    }
+  ],
+  "omittedExistingOriginals": [
+    {
+      "name": "SHA256.manifest.json",
+      "bytes": 3774,
+      "sha256": "48230616b83768fcec63734ab4a3850dcef0ddcdf376fb28bfb03aff2ee01289",
+      "reason": "Retained privately; bulky harness/invocation diagnostic or redundant private-source manifest. Outcomes and diagnostic reasons remain in public result."
+    },
+    {
+      "name": "harness-error-vitest.json",
+      "bytes": 12533,
+      "sha256": "1c83a9ba5b0d38169173fcd1b27b6dc392d2d348f1d137a761891a7ef3693d95",
+      "reason": "Retained privately; bulky harness/invocation diagnostic or redundant private-source manifest. Outcomes and diagnostic reasons remain in public result."
+    },
+    {
+      "name": "harness-error.log",
+      "bytes": 28688,
+      "sha256": "ad17f6af4469e6c0a45be44aa62cd3c52dc88e3a46937df08c2ebf464a570d18",
+      "reason": "Retained privately; bulky harness/invocation diagnostic or redundant private-source manifest. Outcomes and diagnostic reasons remain in public result."
+    },
+    {
+      "name": "scoped-types-invocation-error.log",
+      "bytes": 142,
+      "sha256": "5b766b55df5bc15c215149742c8fe88d72a584cb45f5422c7edca1594b6d0cb5",
+      "reason": "Retained privately; bulky harness/invocation diagnostic or redundant private-source manifest. Outcomes and diagnostic reasons remain in public result."
+    },
+    {
+      "name": "scoped-types-missing-type-option.log",
+      "bytes": 7067,
+      "sha256": "796f097c54daef74480ec73e79685ce8e933549693038e1c4e9978ab8ed505e9",
+      "reason": "Retained privately; bulky harness/invocation diagnostic or redundant private-source manifest. Outcomes and diagnostic reasons remain in public result."
+    }
+  ]
+}

@@ -1,0 +1,237 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS18-only-offline",
+  "contractDigest": "sha256:0174d79079d578a2c1ad1c7c916b04114b3fe542f645798674c88ea9857ad69c",
+  "requirements": [
+    "SS18.raw-rules-agent-separation",
+    "SS18.mandatory-snapshot-and-conflict",
+    "SS18.host-observation-fences"
+  ],
+  "scopeFiles": [
+    "tests/skill-classification/SS18.independent.test.ts",
+    "tests/skill-classification/fixtures.json",
+    "tests/skill-classification/evaluation.ts",
+    "mcp-server/src/skill-classification/gateway.ts",
+    "mcp-server/src/skill-classification/validation.ts",
+    "mcp-server/src/skill-classification/inventory.ts",
+    "mcp-server/src/skill-classification/service.ts"
+  ],
+  "runner": "Existing Vitest 5; direct invocation without product bundle build",
+  "environment": "Node24.19.0 pnpm11.19.0 Linux UTC; offline test doubles only; existing dependency symlink; no remote calls",
+  "cases": [
+    {
+      "id": "base",
+      "requirementIds": [
+        "SS18.raw-rules-agent-separation"
+      ],
+      "scenario": "Frozen input/full inventory, raw P failure and mandatory SEC preservation; synthetic final P SEC O remains separate",
+      "entryPoint": "RuntimeSkillClassificationGateway.classify/accept/inventory; validateDecision; scoreCase",
+      "level": "integration",
+      "expectedBehavior": "Frozen input/full inventory, raw P failure and mandatory SEC preservation; synthetic final P SEC O remains separate",
+      "oracle": "SS18 embedded sourceSpec.fields + frozen oracle sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055; skill-classification.md trusted host/status contract",
+      "testFiles": [
+        "tests/skill-classification/SS18.independent.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read-only candidate verification; synthetic input perturbations cover negative paths. No product mutation or fixed green candidate is authorized; actual agent behavior NOTRUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS18.independent.test.ts"
+      ]
+    },
+    {
+      "id": "missing-SEC",
+      "requirementIds": [
+        "SS18.raw-rules-agent-separation"
+      ],
+      "scenario": "Reject SEC omission; do not repair raw or selected",
+      "entryPoint": "RuntimeSkillClassificationGateway.classify/accept/inventory; validateDecision; scoreCase",
+      "level": "integration",
+      "expectedBehavior": "Reject SEC omission; do not repair raw or selected",
+      "oracle": "SS18 embedded sourceSpec.fields + frozen oracle sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055; skill-classification.md trusted host/status contract",
+      "testFiles": [
+        "tests/skill-classification/SS18.independent.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read-only candidate verification; synthetic input perturbations cover negative paths. No product mutation or fixed green candidate is authorized; actual agent behavior NOTRUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS18.independent.test.ts"
+      ]
+    },
+    {
+      "id": "no-auto-O",
+      "requirementIds": [
+        "SS18.raw-rules-agent-separation"
+      ],
+      "scenario": "No automatic orchestrator invention: mechanical combined P SEC is semantic FAIL",
+      "entryPoint": "RuntimeSkillClassificationGateway.classify/accept/inventory; validateDecision; scoreCase",
+      "level": "integration",
+      "expectedBehavior": "No automatic orchestrator invention: mechanical combined P SEC is semantic FAIL",
+      "oracle": "SS18 embedded sourceSpec.fields + frozen oracle sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055; skill-classification.md trusted host/status contract",
+      "testFiles": [
+        "tests/skill-classification/SS18.independent.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read-only candidate verification; synthetic input perturbations cover negative paths. No product mutation or fixed green candidate is authorized; actual agent behavior NOTRUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS18.independent.test.ts"
+      ]
+    },
+    {
+      "id": "rule-removal",
+      "requirementIds": [
+        "SS18.mandatory-snapshot-and-conflict"
+      ],
+      "scenario": "Reject changed mandatory-rule snapshot",
+      "entryPoint": "RuntimeSkillClassificationGateway.classify/accept/inventory; validateDecision; scoreCase",
+      "level": "integration",
+      "expectedBehavior": "Reject changed mandatory-rule snapshot",
+      "oracle": "SS18 embedded sourceSpec.fields + frozen oracle sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055; skill-classification.md trusted host/status contract",
+      "testFiles": [
+        "tests/skill-classification/SS18.independent.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read-only candidate verification; synthetic input perturbations cover negative paths. No product mutation or fixed green candidate is authorized; actual agent behavior NOTRUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS18.independent.test.ts"
+      ]
+    },
+    {
+      "id": "conflict-hold",
+      "requirementIds": [
+        "SS18.mandatory-snapshot-and-conflict"
+      ],
+      "scenario": "Unresolved conflict stays null NEEDS_INPUT; [] does not satisfy mandatory SEC",
+      "entryPoint": "RuntimeSkillClassificationGateway.classify/accept/inventory; validateDecision; scoreCase",
+      "level": "integration",
+      "expectedBehavior": "Unresolved conflict stays null NEEDS_INPUT; [] does not satisfy mandatory SEC",
+      "oracle": "SS18 embedded sourceSpec.fields + frozen oracle sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055; skill-classification.md trusted host/status contract",
+      "testFiles": [
+        "tests/skill-classification/SS18.independent.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read-only candidate verification; synthetic input perturbations cover negative paths. No product mutation or fixed green candidate is authorized; actual agent behavior NOTRUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS18.independent.test.ts"
+      ]
+    },
+    {
+      "id": "host-boundary",
+      "requirementIds": [
+        "SS18.host-observation-fences"
+      ],
+      "scenario": "No host observation and caller-forged receipts cannot create accepted selection",
+      "entryPoint": "RuntimeSkillClassificationGateway.classify/accept/inventory; validateDecision; scoreCase",
+      "level": "integration",
+      "expectedBehavior": "No host observation and caller-forged receipts cannot create accepted selection",
+      "oracle": "SS18 embedded sourceSpec.fields + frozen oracle sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055; skill-classification.md trusted host/status contract",
+      "testFiles": [
+        "tests/skill-classification/SS18.independent.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read-only candidate verification; synthetic input perturbations cover negative paths. No product mutation or fixed green candidate is authorized; actual agent behavior NOTRUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS18.independent.test.ts"
+      ]
+    },
+    {
+      "id": "rule-revision",
+      "requirementIds": [
+        "SS18.mandatory-snapshot-and-conflict"
+      ],
+      "scenario": "Changed rule/task revision before acceptance rejects stale selection",
+      "entryPoint": "RuntimeSkillClassificationGateway.classify/accept/inventory; validateDecision; scoreCase",
+      "level": "integration",
+      "expectedBehavior": "Changed rule/task revision before acceptance rejects stale selection",
+      "oracle": "SS18 embedded sourceSpec.fields + frozen oracle sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055; skill-classification.md trusted host/status contract",
+      "testFiles": [
+        "tests/skill-classification/SS18.independent.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read-only candidate verification; synthetic input perturbations cover negative paths. No product mutation or fixed green candidate is authorized; actual agent behavior NOTRUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS18.independent.test.ts"
+      ]
+    },
+    {
+      "id": "acceptance-cancellation-race",
+      "requirementIds": [
+        "SS18.host-observation-fences"
+      ],
+      "scenario": "Cancellation during asynchronous runtime read must fence acceptance",
+      "entryPoint": "RuntimeSkillClassificationGateway.classify/accept/inventory; validateDecision; scoreCase",
+      "level": "integration",
+      "expectedBehavior": "Cancellation during asynchronous runtime read must fence acceptance",
+      "oracle": "SS18 embedded sourceSpec.fields + frozen oracle sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055; skill-classification.md trusted host/status contract",
+      "testFiles": [
+        "tests/skill-classification/SS18.independent.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read-only candidate verification; synthetic input perturbations cover negative paths. No product mutation or fixed green candidate is authorized; actual agent behavior NOTRUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS18.independent.test.ts"
+      ]
+    },
+    {
+      "id": "host-state-supply-gap",
+      "requirementIds": [
+        "SS18.host-observation-fences"
+      ],
+      "scenario": "Trusted host-supported observation for mandatory SEC must reach gateway inventory",
+      "entryPoint": "RuntimeSkillClassificationGateway.classify/accept/inventory; validateDecision; scoreCase",
+      "level": "integration",
+      "expectedBehavior": "Trusted host-supported observation for mandatory SEC must reach gateway inventory",
+      "oracle": "SS18 embedded sourceSpec.fields + frozen oracle sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055; skill-classification.md trusted host/status contract",
+      "testFiles": [
+        "tests/skill-classification/SS18.independent.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Read-only candidate verification; synthetic input perturbations cover negative paths. No product mutation or fixed green candidate is authorized; actual agent behavior NOTRUN.",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "tests/skill-classification/SS18.independent.test.ts"
+      ]
+    }
+  ],
+  "exclusions": [
+    "Other SS cases and full suite",
+    "All JEV/external-vendor/Claude calls and 21-case bootstrap reruns",
+    "Product edits/push/PR/releases",
+    "Native AGENT selected/read/applied/verified evidence and independent audit"
+  ]
+}

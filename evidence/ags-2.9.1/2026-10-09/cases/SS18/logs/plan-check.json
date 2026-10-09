@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:b075f60e2a6d1dedbb16e7d03377ca073390bc9701fbaf91d3441ef850bdb761",
+  "caseIds": [
+    "base",
+    "missing-SEC",
+    "no-auto-O",
+    "rule-removal",
+    "conflict-hold",
+    "host-boundary",
+    "rule-revision",
+    "acceptance-cancellation-race",
+    "host-state-supply-gap"
+  ]
+}

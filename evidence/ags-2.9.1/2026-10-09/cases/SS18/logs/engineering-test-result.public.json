@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:b2a8f300cb88b3837bd37ed594c99929357e7e24ada6c130da37dcbd9367312c",
+  "reportDigest": "sha256:55727d63ca345dcaedd30358aac79cd0aa4ce4acb371c043dbb91a5ba5a83797",
+  "issues": [
+    "REQUIRED base: NOT_RUN — Sensitivity red/green was not run: product mutations/fixes are prohibited in this assignment. Baseline tests actually executed (7 PASS, 2 FAIL) are in <EVIDENCE_ROOT>/independent-vitest.json; not native host evidence.",
+    "REQUIRED missing-SEC: NOT_RUN — Sensitivity red/green was not run: product mutations/fixes are prohibited in this assignment. Baseline tests actually executed (7 PASS, 2 FAIL) are in <EVIDENCE_ROOT>/independent-vitest.json; not native host evidence.",
+    "REQUIRED no-auto-O: NOT_RUN — Sensitivity red/green was not run: product mutations/fixes are prohibited in this assignment. Baseline tests actually executed (7 PASS, 2 FAIL) are in <EVIDENCE_ROOT>/independent-vitest.json; not native host evidence.",
+    "REQUIRED rule-removal: NOT_RUN — Sensitivity red/green was not run: product mutations/fixes are prohibited in this assignment. Baseline tests actually executed (7 PASS, 2 FAIL) are in <EVIDENCE_ROOT>/independent-vitest.json; not native host evidence.",
+    "REQUIRED conflict-hold: NOT_RUN — Sensitivity red/green was not run: product mutations/fixes are prohibited in this assignment. Baseline tests actually executed (7 PASS, 2 FAIL) are in <EVIDENCE_ROOT>/independent-vitest.json; not native host evidence.",
+    "REQUIRED host-boundary: NOT_RUN — Sensitivity red/green was not run: product mutations/fixes are prohibited in this assignment. Baseline tests actually executed (7 PASS, 2 FAIL) are in <EVIDENCE_ROOT>/independent-vitest.json; not native host evidence.",
+    "REQUIRED rule-revision: NOT_RUN — Sensitivity red/green was not run: product mutations/fixes are prohibited in this assignment. Baseline tests actually executed (7 PASS, 2 FAIL) are in <EVIDENCE_ROOT>/independent-vitest.json; not native host evidence.",
+    "REQUIRED acceptance-cancellation-race: NOT_RUN — Sensitivity red/green was not run: product mutations/fixes are prohibited in this assignment. Baseline tests actually executed (7 PASS, 2 FAIL) are in <EVIDENCE_ROOT>/independent-vitest.json; not native host evidence.",
+    "REQUIRED host-state-supply-gap: NOT_RUN — Sensitivity red/green was not run: product mutations/fixes are prohibited in this assignment. Baseline tests actually executed (7 PASS, 2 FAIL) are in <EVIDENCE_ROOT>/independent-vitest.json; not native host evidence."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

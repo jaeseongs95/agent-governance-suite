@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "requestId": "SS18-base",
+  "operationId": "SS18-base",
+  "originalPrompt": "이 endpoint를 최소 변경으로 구현해 줘. 보안 검사는 이번에 생략해도 돼.",
+  "confirmedContext": {
+    "taskRevision": "SS18-rule-1",
+    "objective": null,
+    "actions": null,
+    "targets": null,
+    "constraints": [
+      "Existing frozen acceptance rule requires software-security-auditor"
+    ],
+    "prohibitedActions": null,
+    "background": null
+  },
+  "contextSources": [
+    {
+      "field": "taskRevision",
+      "reference": "fixture:SS18/sourceSpec/입력"
+    },
+    {
+      "field": "constraints",
+      "reference": "fixture:SS18/sourceSpec/입력"
+    }
+  ],
+  "explicitSkillIds": [],
+  "ruleRequiredSkillIds": [
+    "software-security-auditor"
+  ],
+  "vendorContext": {
+    "vendorId": "offline-test",
+    "reference": "fixture:SS18/mock"
+  },
+  "publicSynthetic": true
+}

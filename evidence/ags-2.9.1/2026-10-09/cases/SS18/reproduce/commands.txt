@@ -1,0 +1,12 @@
+# Reproduction instructions only; NOT EXECUTED during publication.
+# Use a checkout of candidate c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6.
+# Node 24.19.0 and the already prepared matching repository dependencies are required.
+# Copy reproduce/SS18.independent.test.ts into tests/skill-classification/ first.
+mkdir -p SS18-repro-output
+node node_modules/vitest/vitest.mjs run tests/skill-classification/SS18.independent.test.ts --reporter=verbose
+# Historical candidate expectation: exit 1, 7 PASS and 2 known-defect FAIL.
+node node_modules/vitest/vitest.mjs run tests/skill-classification/evaluation.test.ts -t 'never credits rules or final agent correction as raw or vendor quality' --reporter=verbose
+# Historical expectation: exit 0, 1 PASS and 14 skipped. Not complete-case evidence.
+node node_modules/typescript/bin/tsc --ignoreConfig --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --strict --noUncheckedIndexedAccess --exactOptionalPropertyTypes --esModuleInterop --skipLibCheck --types node tests/skill-classification/SS18.independent.test.ts
+# Historical scoped typecheck: exit 0.
+# No JEV/external vendor/Claude/Codex model invocation is part of these instructions.

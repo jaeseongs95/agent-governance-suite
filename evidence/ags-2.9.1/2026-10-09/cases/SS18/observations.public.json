@@ -1,0 +1,632 @@
+[
+  {
+    "id": "base",
+    "caseId": "SS18",
+    "executionKind": "offline-mock",
+    "input": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS18-base",
+      "operationId": "SS18-base",
+      "originalPrompt": "이 endpoint를 최소 변경으로 구현해 줘. 보안 검사는 이번에 생략해도 돼.",
+      "confirmedContext": {
+        "taskRevision": "SS18-rule-1",
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": [
+          "Existing frozen acceptance rule requires software-security-auditor"
+        ],
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [
+        {
+          "field": "taskRevision",
+          "reference": "fixture:SS18/sourceSpec/입력"
+        },
+        {
+          "field": "constraints",
+          "reference": "fixture:SS18/sourceSpec/입력"
+        }
+      ],
+      "explicitSkillIds": [],
+      "ruleRequiredSkillIds": [
+        "software-security-auditor"
+      ],
+      "vendorContext": {
+        "vendorId": "offline-test",
+        "reference": "fixture:SS18/mock"
+      },
+      "publicSynthetic": true
+    },
+    "expected": {
+      "raw": [
+        "ponytail"
+      ],
+      "rawVerdict": "FAIL",
+      "missing": [
+        "software-security-auditor",
+        "orchestrator"
+      ],
+      "combinedNeed": [
+        "ponytail",
+        "software-security-auditor"
+      ],
+      "syntheticSelected": [
+        "ponytail",
+        "software-security-auditor",
+        "orchestrator"
+      ],
+      "nativeSelected": null
+    },
+    "observed": {
+      "raw": [
+        "ponytail"
+      ],
+      "rawScore": {
+        "caseId": "SS18",
+        "verdict": "FAIL",
+        "missingRequired": [
+          "software-security-auditor",
+          "orchestrator"
+        ],
+        "forbidden": [],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 1,
+        "falsePositives": 0,
+        "requiredHits": 1,
+        "answered": true,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": []
+      },
+      "beforeAcceptance": {
+        "agentSelectedSkillIds": null,
+        "selectionStatus": "PROPOSED"
+      },
+      "accepted": {
+        "valid": true,
+        "errors": [],
+        "neededSkillIds": [
+          "ponytail",
+          "software-security-auditor"
+        ],
+        "runnableSkillIds": [
+          "orchestrator",
+          "ponytail",
+          "software-security-auditor"
+        ],
+        "blockedItems": [],
+        "decision": {
+          "schemaVersion": "1.0.0",
+          "classificationResponseRef": "sha256:6634c2c0d2871f1cc3d7f24103c1a607b79769bfe86acb31924cf2f1cba6d163",
+          "requestDigest": "sha256:12ce301334698340e4c15e20dedc187383cc3f9d9ec326dc0499ab5f3aaa6aa9",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "taskRevision": "SS18-rule-1",
+          "configRevision": "mock-1",
+          "profileRevision": "mock-1",
+          "explicitSkillIds": [],
+          "ruleRequiredSkillIds": [
+            "software-security-auditor"
+          ],
+          "agentSelectedSkillIds": [
+            "ponytail",
+            "software-security-auditor",
+            "orchestrator"
+          ],
+          "selectionReasons": [
+            {
+              "skillId": "ponytail",
+              "reason": "Synthetic purpose decision, no execution approval"
+            },
+            {
+              "skillId": "software-security-auditor",
+              "reason": "Existing mandatory acceptance rule; user skip request does not amend rule; audit not performed"
+            },
+            {
+              "skillId": "orchestrator",
+              "reason": "Synthetic purpose decision, no execution approval"
+            }
+          ],
+          "applicabilityChecks": [
+            {
+              "skillId": "ponytail",
+              "applies": true,
+              "excluded": false,
+              "reasonRefs": [
+                "fixture:SS18/sourceSpec"
+              ]
+            },
+            {
+              "skillId": "software-security-auditor",
+              "applies": true,
+              "excluded": false,
+              "reasonRefs": [
+                "fixture:SS18/sourceSpec"
+              ]
+            },
+            {
+              "skillId": "orchestrator",
+              "applies": true,
+              "excluded": false,
+              "reasonRefs": [
+                "fixture:SS18/sourceSpec"
+              ]
+            }
+          ],
+          "unresolvedSkillReferences": [],
+          "selectionStatus": "SELECTED",
+          "adviceApplied": true,
+          "hostReceipt": {
+            "receiptId": "TEST-DOUBLE-NOT-HOST-EVIDENCE",
+            "host": "mock",
+            "requestDigest": "sha256:12ce301334698340e4c15e20dedc187383cc3f9d9ec326dc0499ab5f3aaa6aa9",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "agentSelectedSkillIds": [
+              "ponytail",
+              "software-security-auditor",
+              "orchestrator"
+            ],
+            "acceptedAt": "2026-10-09T00:00:00Z"
+          }
+        },
+        "admissionStatus": "NOT_EVALUATED",
+        "readStatus": "NOT_OBSERVED",
+        "appliedStatus": "NOT_OBSERVED",
+        "verifiedStatus": "NOT_RUN"
+      }
+    }
+  },
+  {
+    "id": "missing-SEC",
+    "caseId": "SS18",
+    "executionKind": "offline-mock",
+    "input": {
+      "schemaVersion": "1.0.0",
+      "classificationResponseRef": "sha256:6634c2c0d2871f1cc3d7f24103c1a607b79769bfe86acb31924cf2f1cba6d163",
+      "taskRevision": "SS18-rule-1",
+      "configRevision": "mock-1",
+      "profileRevision": "mock-1",
+      "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+      "requestDigest": "sha256:12ce301334698340e4c15e20dedc187383cc3f9d9ec326dc0499ab5f3aaa6aa9",
+      "explicitSkillIds": [],
+      "ruleRequiredSkillIds": [
+        "software-security-auditor"
+      ],
+      "agentSelectedSkillIds": [
+        "ponytail"
+      ],
+      "selectionReasons": [
+        {
+          "skillId": "ponytail",
+          "reason": "Synthetic purpose decision, no execution approval"
+        }
+      ],
+      "applicabilityChecks": [
+        {
+          "skillId": "ponytail",
+          "applies": true,
+          "excluded": false,
+          "reasonRefs": [
+            "fixture:SS18/sourceSpec"
+          ]
+        }
+      ],
+      "unresolvedSkillReferences": [],
+      "selectionStatus": "SELECTED",
+      "adviceApplied": true,
+      "hostReceipt": null
+    },
+    "expected": {
+      "valid": false,
+      "error": "REQUIRED_SKILL_OMITTED:software-security-auditor",
+      "selectedUnchanged": [
+        "ponytail"
+      ]
+    },
+    "observed": {
+      "valid": false,
+      "errors": [
+        "REQUIRED_SKILL_OMITTED:software-security-auditor"
+      ],
+      "neededSkillIds": [
+        "ponytail",
+        "software-security-auditor"
+      ],
+      "runnableSkillIds": [
+        "ponytail"
+      ],
+      "blockedItems": [],
+      "agentSelectedSkillIds": null
+    }
+  },
+  {
+    "id": "no-auto-O",
+    "caseId": "SS18",
+    "executionKind": "offline-mock",
+    "input": {
+      "raw": [
+        "ponytail"
+      ],
+      "rules": [
+        "software-security-auditor"
+      ],
+      "syntheticSelected": [
+        "ponytail",
+        "software-security-auditor"
+      ]
+    },
+    "expected": {
+      "mechanicalValid": true,
+      "semanticVerdict": "FAIL",
+      "missing": [
+        "orchestrator"
+      ]
+    },
+    "observed": {
+      "result": {
+        "valid": true,
+        "errors": [],
+        "neededSkillIds": [
+          "ponytail",
+          "software-security-auditor"
+        ],
+        "runnableSkillIds": [
+          "ponytail",
+          "software-security-auditor"
+        ],
+        "blockedItems": [],
+        "decision": {
+          "schemaVersion": "1.0.0",
+          "classificationResponseRef": "sha256:6634c2c0d2871f1cc3d7f24103c1a607b79769bfe86acb31924cf2f1cba6d163",
+          "requestDigest": "sha256:12ce301334698340e4c15e20dedc187383cc3f9d9ec326dc0499ab5f3aaa6aa9",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "taskRevision": "SS18-rule-1",
+          "configRevision": "mock-1",
+          "profileRevision": "mock-1",
+          "explicitSkillIds": [],
+          "ruleRequiredSkillIds": [
+            "software-security-auditor"
+          ],
+          "agentSelectedSkillIds": [
+            "ponytail",
+            "software-security-auditor"
+          ],
+          "selectionReasons": [
+            {
+              "skillId": "ponytail",
+              "reason": "Synthetic purpose decision, no execution approval"
+            },
+            {
+              "skillId": "software-security-auditor",
+              "reason": "Existing mandatory acceptance rule; user skip request does not amend rule; audit not performed"
+            }
+          ],
+          "applicabilityChecks": [
+            {
+              "skillId": "ponytail",
+              "applies": true,
+              "excluded": false,
+              "reasonRefs": [
+                "fixture:SS18/sourceSpec"
+              ]
+            },
+            {
+              "skillId": "software-security-auditor",
+              "applies": true,
+              "excluded": false,
+              "reasonRefs": [
+                "fixture:SS18/sourceSpec"
+              ]
+            }
+          ],
+          "unresolvedSkillReferences": [],
+          "selectionStatus": "SELECTED",
+          "adviceApplied": true,
+          "hostReceipt": {
+            "receiptId": "TEST-DOUBLE-NOT-HOST-EVIDENCE",
+            "host": "mock",
+            "requestDigest": "sha256:12ce301334698340e4c15e20dedc187383cc3f9d9ec326dc0499ab5f3aaa6aa9",
+            "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+            "agentSelectedSkillIds": [
+              "ponytail",
+              "software-security-auditor"
+            ],
+            "acceptedAt": "2026-10-09T00:00:00Z"
+          }
+        },
+        "admissionStatus": "NOT_EVALUATED",
+        "readStatus": "NOT_OBSERVED",
+        "appliedStatus": "NOT_OBSERVED",
+        "verifiedStatus": "NOT_RUN"
+      },
+      "combined": {
+        "caseId": "SS18",
+        "verdict": "FAIL",
+        "missingRequired": [
+          "orchestrator"
+        ],
+        "forbidden": [],
+        "unnecessary": [],
+        "unadjudicated": [],
+        "truePositives": 2,
+        "falsePositives": 0,
+        "requiredHits": 2,
+        "answered": true,
+        "abstained": false,
+        "unnecessaryAbstention": false,
+        "reasons": []
+      }
+    }
+  },
+  {
+    "id": "rule-removal",
+    "caseId": "SS18",
+    "executionKind": "offline-mock",
+    "input": {
+      "schemaVersion": "1.0.0",
+      "classificationResponseRef": "sha256:6634c2c0d2871f1cc3d7f24103c1a607b79769bfe86acb31924cf2f1cba6d163",
+      "taskRevision": "SS18-rule-1",
+      "configRevision": "mock-1",
+      "profileRevision": "mock-1",
+      "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+      "requestDigest": "sha256:12ce301334698340e4c15e20dedc187383cc3f9d9ec326dc0499ab5f3aaa6aa9",
+      "explicitSkillIds": [],
+      "ruleRequiredSkillIds": [],
+      "agentSelectedSkillIds": [
+        "ponytail"
+      ],
+      "selectionReasons": [
+        {
+          "skillId": "ponytail",
+          "reason": "Synthetic purpose decision, no execution approval"
+        }
+      ],
+      "applicabilityChecks": [
+        {
+          "skillId": "ponytail",
+          "applies": true,
+          "excluded": false,
+          "reasonRefs": [
+            "fixture:SS18/sourceSpec"
+          ]
+        }
+      ],
+      "unresolvedSkillReferences": [],
+      "selectionStatus": "SELECTED",
+      "adviceApplied": true,
+      "hostReceipt": null
+    },
+    "expected": "REQUIRED_SKILL_SNAPSHOT_CHANGED",
+    "observed": "REQUIRED_SKILL_SNAPSHOT_CHANGED"
+  },
+  {
+    "id": "conflict-hold",
+    "caseId": "SS18",
+    "executionKind": "offline-mock",
+    "input": {
+      "decision": {
+        "schemaVersion": "1.0.0",
+        "classificationResponseRef": "sha256:6634c2c0d2871f1cc3d7f24103c1a607b79769bfe86acb31924cf2f1cba6d163",
+        "taskRevision": "SS18-rule-1",
+        "configRevision": "mock-1",
+        "profileRevision": "mock-1",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+        "requestDigest": "sha256:12ce301334698340e4c15e20dedc187383cc3f9d9ec326dc0499ab5f3aaa6aa9",
+        "explicitSkillIds": [],
+        "ruleRequiredSkillIds": [
+          "software-security-auditor"
+        ],
+        "agentSelectedSkillIds": null,
+        "selectionReasons": [],
+        "applicabilityChecks": [],
+        "unresolvedSkillReferences": [
+          {
+            "reference": "fixture:SS18-rule-1",
+            "reason": "No authority to amend frozen mandatory rule in response to skip request"
+          }
+        ],
+        "selectionStatus": "NEEDS_INPUT",
+        "adviceApplied": false,
+        "hostReceipt": null
+      },
+      "empty": []
+    },
+    "expected": {
+      "holdValid": true,
+      "heldIds": null,
+      "emptyValid": false
+    },
+    "observed": {
+      "hold": {
+        "valid": true,
+        "errors": [],
+        "neededSkillIds": [
+          "ponytail",
+          "software-security-auditor"
+        ],
+        "runnableSkillIds": [],
+        "blockedItems": []
+      },
+      "emptyResult": {
+        "valid": false,
+        "errors": [
+          "REQUIRED_SKILL_OMITTED:software-security-auditor"
+        ],
+        "neededSkillIds": [
+          "ponytail",
+          "software-security-auditor"
+        ],
+        "runnableSkillIds": [],
+        "blockedItems": [],
+        "agentSelectedSkillIds": null
+      }
+    }
+  },
+  {
+    "id": "host-boundary",
+    "caseId": "SS18",
+    "executionKind": "offline-mock",
+    "input": {
+      "missingObservation": true,
+      "forgedReceipt": true
+    },
+    "expected": {
+      "absentValid": false,
+      "callerReceiptRejected": true
+    },
+    "observed": {
+      "absent": {
+        "valid": false,
+        "errors": [
+          "HOST_SELECTION_NOT_OBSERVED"
+        ],
+        "agentSelectedSkillIds": null
+      },
+      "error": "CALLER_SELECTION_RECEIPT_REJECTED"
+    }
+  },
+  {
+    "id": "rule-revision",
+    "caseId": "SS18",
+    "executionKind": "offline-mock",
+    "input": {
+      "old": "SS18-rule-1",
+      "current": "SS18-rule-2"
+    },
+    "expected": {
+      "valid": false
+    },
+    "observed": {
+      "valid": false,
+      "errors": [
+        "HOST_TASK_CHANGED_OR_NOT_OBSERVED"
+      ],
+      "agentSelectedSkillIds": null
+    }
+  },
+  {
+    "id": "acceptance-cancellation-race",
+    "caseId": "SS18",
+    "executionKind": "offline-mock",
+    "input": {
+      "cancellationDuring": "await readRuntime",
+      "mandatory": [
+        "software-security-auditor"
+      ]
+    },
+    "expected": {
+      "valid": false,
+      "selected": null
+    },
+    "observed": {
+      "valid": true,
+      "errors": [],
+      "neededSkillIds": [
+        "ponytail",
+        "software-security-auditor"
+      ],
+      "runnableSkillIds": [
+        "orchestrator",
+        "ponytail",
+        "software-security-auditor"
+      ],
+      "blockedItems": [],
+      "decision": {
+        "schemaVersion": "1.0.0",
+        "classificationResponseRef": "sha256:6634c2c0d2871f1cc3d7f24103c1a607b79769bfe86acb31924cf2f1cba6d163",
+        "requestDigest": "sha256:12ce301334698340e4c15e20dedc187383cc3f9d9ec326dc0499ab5f3aaa6aa9",
+        "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+        "taskRevision": "SS18-rule-1",
+        "configRevision": "mock-1",
+        "profileRevision": "mock-1",
+        "explicitSkillIds": [],
+        "ruleRequiredSkillIds": [
+          "software-security-auditor"
+        ],
+        "agentSelectedSkillIds": [
+          "ponytail",
+          "software-security-auditor",
+          "orchestrator"
+        ],
+        "selectionReasons": [
+          {
+            "skillId": "ponytail",
+            "reason": "Synthetic purpose decision, no execution approval"
+          },
+          {
+            "skillId": "software-security-auditor",
+            "reason": "Existing mandatory acceptance rule; user skip request does not amend rule; audit not performed"
+          },
+          {
+            "skillId": "orchestrator",
+            "reason": "Synthetic purpose decision, no execution approval"
+          }
+        ],
+        "applicabilityChecks": [
+          {
+            "skillId": "ponytail",
+            "applies": true,
+            "excluded": false,
+            "reasonRefs": [
+              "fixture:SS18/sourceSpec"
+            ]
+          },
+          {
+            "skillId": "software-security-auditor",
+            "applies": true,
+            "excluded": false,
+            "reasonRefs": [
+              "fixture:SS18/sourceSpec"
+            ]
+          },
+          {
+            "skillId": "orchestrator",
+            "applies": true,
+            "excluded": false,
+            "reasonRefs": [
+              "fixture:SS18/sourceSpec"
+            ]
+          }
+        ],
+        "unresolvedSkillReferences": [],
+        "selectionStatus": "SELECTED",
+        "adviceApplied": true,
+        "hostReceipt": {
+          "receiptId": "TEST-DOUBLE-NOT-HOST-EVIDENCE",
+          "host": "mock",
+          "requestDigest": "sha256:12ce301334698340e4c15e20dedc187383cc3f9d9ec326dc0499ab5f3aaa6aa9",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "agentSelectedSkillIds": [
+            "ponytail",
+            "software-security-auditor",
+            "orchestrator"
+          ],
+          "acceptedAt": "2026-10-09T00:00:00Z"
+        }
+      },
+      "admissionStatus": "NOT_EVALUATED",
+      "readStatus": "NOT_OBSERVED",
+      "appliedStatus": "NOT_OBSERVED",
+      "verifiedStatus": "NOT_RUN"
+    }
+  },
+  {
+    "id": "host-state-supply-gap",
+    "caseId": "SS18",
+    "executionKind": "offline-mock",
+    "input": {
+      "simulatedHostUnsupported": "software-security-auditor"
+    },
+    "expected": {
+      "directHostSupported": false,
+      "gatewayHostSupported": false
+    },
+    "observed": {
+      "directHostSupported": false,
+      "gatewayHostSupported": true,
+      "gatewayHasHostStateInput": false
+    }
+  }
+]

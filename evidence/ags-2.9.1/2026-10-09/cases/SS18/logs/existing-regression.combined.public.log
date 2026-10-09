@@ -1,0 +1,9 @@
+
+ RUN  v5.0.0 <CANDIDATE_ROOT>
+
+ ✓ tests/skill-classification/evaluation.test.ts > independent hand-calculated evaluator controls > never credits rules or final agent correction as raw or vendor quality 2ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 14 skipped (15)
+   Start at  02:54:17
+   Duration  178ms (transform 70%, import 20%, tests 5%, worker 4%)
