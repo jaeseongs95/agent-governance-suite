@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS37",
+  "run": "prep-20261009T074756Z-da052e30",
+  "status": "PREPARED_WAITING_PARENT",
+  "productTest": "NOT_RUN",
+  "sourceEvidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS37/prep-20261009T074756Z-da052e30",
+  "payloadFileCount": 11,
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 4200,
+      "sha256": "7195206f912529c6717bbf27df283e2bd3af996107b16901a959f7c933a963d0"
+    },
+    {
+      "path": "call-ledger.json",
+      "bytes": 1725,
+      "sha256": "8bec61f812edb6b45f8409a82de015a6a39600f1aebd0acf424d2aea64961701"
+    },
+    {
+      "path": "environment-observation.json",
+      "bytes": 1621,
+      "sha256": "834069fab6e6f9681c04acd7619e26174fab49da096155736576da444b95a2ba"
+    },
+    {
+      "path": "expected-results.json",
+      "bytes": 10793,
+      "sha256": "d6ecc3bef4cf9f8abdd65138962da335edb5c92c2bb36c718ccdd57d9d0dfaad"
+    },
+    {
+      "path": "input/frozen-SS37.source.json",
+      "bytes": 6209,
+      "sha256": "665d32c1332d896ea3ed0a7d6efb432bec47a0f810d5b4252035b9ab65bafb9f"
+    },
+    {
+      "path": "input/original-prompt.utf8.txt",
+      "bytes": 58,
+      "sha256": "f24bf139711e4d311ddcf82528b97be91e9fd6349a4319c915a8cb036bc2075e"
+    },
+    {
+      "path": "instruction-provenance.json",
+      "bytes": 4209,
+      "sha256": "e4871bde413d37bed70218d5c6049a8ae1fe348e6729032272472ae22171fb31"
+    },
+    {
+      "path": "preparation-result.json",
+      "bytes": 2174,
+      "sha256": "33ece7d4b685a7204d873d279578d0398ab72406299abca96679809358091386"
+    },
+    {
+      "path": "publication-preflight.json",
+      "bytes": 7024,
+      "sha256": "3de332ec6523e2f6dae5725cb5725de66f245b9df2ea4cc239e86235caaa68aa"
+    },
+    {
+      "path": "resume-plan.json",
+      "bytes": 4502,
+      "sha256": "c5722e977bc4f60d3f80b1c06c0b8a895489bac4d59ad5e9bf77d558c62bab3e"
+    },
+    {
+      "path": "source-integrity.json",
+      "bytes": 17798,
+      "sha256": "e4f04bbca274bde74a9098eb4bde2e50d1ec14ccece7629294cd383324878189"
+    }
+  ],
+  "hashPolicy": {
+    "manifestExcludes": [
+      "manifest.json",
+      "SHA256SUMS"
+    ],
+    "SHA256SUMSIncludes": "all payload plus manifest; excludes itself"
+  },
+  "secretPatternScan": "no detected credential/private-key assignments; human-reviewed generated reports and only previously public synthetic source input",
+  "originalChatOrPrivateDataIncluded": false,
+  "productFilesChanged": false
+}

@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS37",
+  "phase": "PREPARATION_ONLY",
+  "softBudgetUSD": 2,
+  "spentUSD": 0,
+  "reservedUnknownCostUSD": 0,
+  "remainingUSD": 2,
+  "ClaudeApiCalls": 0,
+  "JevApiCalls": 0,
+  "otherVendorCalls": 0,
+  "preparationApiCalls": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadInputTokens": 0,
+  "cacheCreationInputTokens": 0,
+  "retries": 0,
+  "failedCalls": 0,
+  "calls": [],
+  "nonbillableCliInspections": [
+    {
+      "argv": [
+        "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+        "--version"
+      ],
+      "exitCode": 0
+    },
+    {
+      "argv": [
+        "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+        "--help"
+      ],
+      "exitCode": 0
+    }
+  ],
+  "futureCallRecordFields": [
+    "callIndex",
+    "startedAt",
+    "endedAt",
+    "provider",
+    "resolvedModelId",
+    "effort",
+    "configDigest",
+    "candidateCommit",
+    "candidateTree",
+    "variantId",
+    "retryOf",
+    "attempt",
+    "status",
+    "exitCode",
+    "inputTokens",
+    "outputTokens",
+    "cacheReadInputTokens",
+    "cacheCreationInputTokens",
+    "totalCostUSD",
+    "modelUsage",
+    "providerUsageEvidenceSHA256",
+    "reservedUnknownCostUSD"
+  ],
+  "stopPolicy": "Count all preparation, retry, failed and cache usage. Before next call, spent plus unknown reservations plus estimated next-call ceiling must remain within USD2 with margin. Stop and report when approaching cap; do not treat amount as spending goal. Do not reset per-case accounting between variants. Unknown timeout cost remains reserved. CLI max-budget-usd is supplemental, not a universal guarantee against concurrent or hidden route cost.",
+  "JEV": "NOT_ALLOCATED_DO_NOT_START"
+}

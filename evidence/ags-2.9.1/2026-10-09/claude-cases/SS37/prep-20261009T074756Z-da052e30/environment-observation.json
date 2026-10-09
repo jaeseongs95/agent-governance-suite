@@ -1,0 +1,46 @@
+{
+  "observedAt": "2026-10-09T07:50:03.506269+00:00",
+  "cli": {
+    "path": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+    "resolvedPath": "/workspace/cloud-tools/claude/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+    "version": "2.1.286 (Claude Code)",
+    "sha256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+    "PATHCommandDiscovery": "not found; absolute path executable exists",
+    "versionAndHelpOnly": true,
+    "featuresObservedInLocalHelp": [
+      "--print",
+      "--output-format stream-json",
+      "--verbose",
+      "--model",
+      "--effort",
+      "--max-budget-usd",
+      "--plugin-dir",
+      "--mcp-config",
+      "--strict-mcp-config",
+      "--settings",
+      "--setting-sources",
+      "--include-hook-events"
+    ],
+    "executionFlagsChosen": false
+  },
+  "nodeVersion": "v24.19.0",
+  "apiCredential": {
+    "CLAUDE_API_KEYPresentNonempty": true,
+    "valueInspectedOrCopiedOrPublished": false,
+    "apiAuthenticationVerified": false,
+    "endpointPolicyFromDelegation": "api.anthropic.com",
+    "mappingProcedure": "AWAIT_PARENT_SUCCESSFUL_COMMON_PROCEDURE"
+  },
+  "productCheckout": {
+    "localReferenceHEAD": "56fef8bd189377b80f4020f506e717ab292b260a",
+    "usedAsFinalCandidate": false,
+    "productOrGeneratedFilesModified": false
+  },
+  "agentsSkillsDirectories": {
+    "/workspace/.agents/skills": "ABSENT",
+    "/workspace/agent-governance-suite/.agents/skills": "ABSENT"
+  },
+  "permanentAuthPermissionsNetworkPolicyChanges": false,
+  "productTestsOrBuildsExecuted": false,
+  "AGSPluginMCPHookAndInventoryLiveVerified": false
+}

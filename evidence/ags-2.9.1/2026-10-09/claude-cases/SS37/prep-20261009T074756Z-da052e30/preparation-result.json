@@ -1,0 +1,60 @@
+{
+  "caseId": "SS37",
+  "title": "분류 metadata 확장과 전체 노출",
+  "run": "prep-20261009T074756Z-da052e30",
+  "status": "PREPARED_WAITING_PARENT",
+  "productVerdict": "NOT_RUN",
+  "preparationIntegrity": "ALL_MATCH",
+  "hostStages": {
+    "selected": "NOT_RUN",
+    "read": "NOT_RUN",
+    "applied": "NOT_RUN",
+    "verified": "NOT_RUN",
+    "agentSelectedSkillIds": null,
+    "hostReceipt": null
+  },
+  "sourceEvidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "inputPromptSHA256": "f24bf139711e4d311ddcf82528b97be91e9fd6349a4319c915a8cb036bc2075e",
+  "historicalResult": {
+    "candidateCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "verdict": "FAIL",
+    "counts": {
+      "existingRegression": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 17,
+        "evidenceFile": "existing-vitest.json"
+      },
+      "isolatedOriginal": {
+        "passed": 10,
+        "failed": 5,
+        "skipped": 0,
+        "evidenceFile": "isolated-vitest.json"
+      },
+      "supplement": {
+        "passed": 2,
+        "failed": 0,
+        "skipped": 15,
+        "evidenceFile": "supplement-vitest.json"
+      }
+    },
+    "sensitivityProof": "INCOMPLETE",
+    "semanticSelection": "NOTRUN",
+    "hostLive": "NOTRUN",
+    "knownRootCauses": 2,
+    "failedAssertions": 5,
+    "notCurrentCandidateTest": true
+  },
+  "paidApiCalls": 0,
+  "apiCostUSD": 0,
+  "softBudgetUSD": 2,
+  "productModified": false,
+  "blockers": [
+    "Parent-verified final candidate/independent SOURCE/remote publication not received",
+    "Shared Claude model/effort/authentication procedure and preflight results not received",
+    "Candidate AGS inventory route, connected tools and real hook/session receipts unverified",
+    "Full source criterion requires two approved real host inventories; this is one Claude session preparation",
+    "Approved public synthetic queue context and executable negative-control plan pending execution package"
+  ],
+  "resumeCondition": "Parent sends verified candidate, shared model/auth/config and passed preflight within aggregate USD2 SS37 budget; then actual Claude host work may begin. JEV requires separate allocation."
+}

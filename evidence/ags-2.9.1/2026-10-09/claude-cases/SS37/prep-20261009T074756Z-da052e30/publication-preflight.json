@@ -1,0 +1,144 @@
+{
+  "phase": "publication-only, not product test or independent SOURCE judgment",
+  "scopeBaselineFrozenDigest": "8974e22c3398aa2276b05887bda462863e7964fa7181dbc415ba039276198ef2",
+  "scopeCheckVerdict": "PASS",
+  "scopeCheckedPayloadCount": 10,
+  "scopeCheckTiming": "Initial ten payload files, before this summary and manifest/hash-list additions; final staged diff must contain additions only in unique run.",
+  "publicPath": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS37/prep-20261009T074756Z-da052e30",
+  "remoteEvidenceBase": "dd35aefe52bd2c1328545a0e18ddeaef6aa69d09",
+  "uniqueRunAbsentAtRemoteBase": true,
+  "preflight": {
+    "schemaVersion": "1.0.0",
+    "operationId": "SS37-publish-prep-20261009T074756Z-da052e30",
+    "actionDigest": "sha256:6469318f741c3b16048a6670f337ad42dc70ffd6771a714d1d205e5e1fbcd41e",
+    "targetDigest": "sha256:173002df12fe7963ecb00c6c49c271b3688ac14680f1a8d444bc90f4b349ec3c",
+    "classification": {
+      "actionClass": "publish",
+      "reversibility": "reversible",
+      "externalImpact": true,
+      "dataLossPotential": false,
+      "permissionImpact": false
+    },
+    "checks": [
+      {
+        "checkId": "target-specificity",
+        "state": "passed",
+        "evidenceRefs": [],
+        "message": "모든 대상이 구체적으로 식별됐습니다."
+      },
+      {
+        "checkId": "scope-match",
+        "state": "passed",
+        "evidenceRefs": [
+          "local-publication-authorization-summary"
+        ],
+        "message": "대상이 작업 범위 안에 있습니다."
+      },
+      {
+        "checkId": "authorization-match",
+        "state": "passed",
+        "evidenceRefs": [
+          "local-publication-authorization-summary"
+        ],
+        "message": "행동, 대상과 환경이 허용 범위에 있습니다."
+      },
+      {
+        "checkId": "current-state",
+        "state": "passed",
+        "evidenceRefs": [
+          "pinned-remote-evidence-base-and-absent-run"
+        ],
+        "message": "현재 fingerprint가 예상값과 일치합니다."
+      },
+      {
+        "checkId": "approval",
+        "state": "passed",
+        "evidenceRefs": [
+          "explicit-delegated-user-publication-instruction-scoped-summary"
+        ],
+        "message": "승인 상태: observed"
+      },
+      {
+        "checkId": "recovery",
+        "state": "passed",
+        "evidenceRefs": [
+          "git-commit:dd35aefe52bd2c1328545a0e18ddeaef6aa69d09",
+          "git-revert-only-this-run",
+          "isolated-index-rollback-proof-sha256:3ca656252e01c9401c1a41ae5b95459a9dec34812da2dd33f65c7c5c622abefe"
+        ],
+        "message": "복구 또는 명시적 비가역성 수용 근거가 있습니다."
+      },
+      {
+        "checkId": "blast-radius",
+        "state": "passed",
+        "evidenceRefs": [],
+        "message": "예상 영향 범위가 모든 대상을 포함합니다."
+      }
+    ],
+    "approval": {
+      "required": true,
+      "status": "observed",
+      "evidenceRefs": [
+        "explicit-delegated-user-publication-instruction-scoped-summary"
+      ]
+    },
+    "recovery": {
+      "available": true,
+      "restoreTested": true,
+      "irreversibilityAccepted": false,
+      "evidenceRefs": [
+        "git-commit:dd35aefe52bd2c1328545a0e18ddeaef6aa69d09",
+        "git-revert-only-this-run",
+        "isolated-index-rollback-proof-sha256:3ca656252e01c9401c1a41ae5b95459a9dec34812da2dd33f65c7c5c622abefe"
+      ]
+    },
+    "blastRadius": {
+      "affectedTargets": 1,
+      "affectedUsers": 0,
+      "external": true,
+      "description": "Append only public synthetic SS37 preparation evidence; no product files or pre-existing worker paths modified."
+    },
+    "unresolved": [],
+    "invalidationTriggers": [
+      "action 또는 planned tool 변경",
+      "target 또는 environment 변경",
+      "current-state evidence 또는 fingerprint 변경",
+      "scope 또는 authorization 변경",
+      "승인 evidence의 만료 또는 범위 변경",
+      "복구 계획 변경",
+      "예상 blast radius 변경"
+    ],
+    "validUntil": "2026-10-09T08:06:52.246Z",
+    "observedAt": "2026-10-09T07:51:52.246Z",
+    "verdict": "READY"
+  },
+  "priorUtilityAttempt": "NEEDS_REDESIGN because restore proof was absent; resolved by isolated alternate-index recovery verification. No external publication attempted in that state.",
+  "authority": "Explicit delegated user authorization for unique SS37 sanitized evidence publication. No new product release authority.",
+  "sensitiveContentPolicy": "Only public synthetic source input and prepared sanitized reports/hashes. No credentials, original chat, personal data or raw authentication logs.",
+  "rollbackProof": {
+    "kind": "isolated-index-append-remove-recovery-proof",
+    "baseCommit": "dd35aefe52bd2c1328545a0e18ddeaef6aa69d09",
+    "baseTree": "a0a9e89c3933cafae1cebfafa75e55358753b1ea",
+    "appendTree": "1e15fe713960028acb728112b039cef3f6faadf4",
+    "restoredTree": "a0a9e89c3933cafae1cebfafa75e55358753b1ea",
+    "restoredExactly": true,
+    "addedPaths": [
+      "evidence/ags-2.9.1/2026-10-09/claude-cases/SS37/prep-20261009T074756Z-da052e30/README.md",
+      "evidence/ags-2.9.1/2026-10-09/claude-cases/SS37/prep-20261009T074756Z-da052e30/call-ledger.json",
+      "evidence/ags-2.9.1/2026-10-09/claude-cases/SS37/prep-20261009T074756Z-da052e30/environment-observation.json",
+      "evidence/ags-2.9.1/2026-10-09/claude-cases/SS37/prep-20261009T074756Z-da052e30/expected-results.json",
+      "evidence/ags-2.9.1/2026-10-09/claude-cases/SS37/prep-20261009T074756Z-da052e30/input/frozen-SS37.source.json",
+      "evidence/ags-2.9.1/2026-10-09/claude-cases/SS37/prep-20261009T074756Z-da052e30/input/original-prompt.utf8.txt",
+      "evidence/ags-2.9.1/2026-10-09/claude-cases/SS37/prep-20261009T074756Z-da052e30/instruction-provenance.json",
+      "evidence/ags-2.9.1/2026-10-09/claude-cases/SS37/prep-20261009T074756Z-da052e30/preparation-result.json",
+      "evidence/ags-2.9.1/2026-10-09/claude-cases/SS37/prep-20261009T074756Z-da052e30/resume-plan.json",
+      "evidence/ags-2.9.1/2026-10-09/claude-cases/SS37/prep-20261009T074756Z-da052e30/source-integrity.json"
+    ],
+    "workingTreeModified": false,
+    "remoteMutated": false,
+    "limitation": "Proves ordinary tracked-file append/removal restores tree while preserving all preexisting files; does not unpublish already exposed public bytes."
+  },
+  "rollback": "If separately authorized, ordinary revert limited to this publication; no force push; already public bytes cannot be unexposed by rollback.",
+  "incomingRemoteChanges": "Ordinary fast-forward incorporated other workers committed evidence. Initial older-baseline working-tree comparison classified 218 incoming committed clean paths as unplanned. They are preserved unchanged; final scope comparison uses a separately frozen clean index baseline at the fetched remote parent before staging our 13 additions.",
+  "finalIndexBaselineFrozenDigest": "d55ffe5c4c83e5c9c9314c36286419c10101f1fbed57994a100b1683658ba628"
+}

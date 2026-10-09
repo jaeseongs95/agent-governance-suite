@@ -1,0 +1,79 @@
+{
+  "caseId": "SS37",
+  "phase": "PREPARATION_ONLY",
+  "productExecution": "NOT_RUN",
+  "candidateRequested": {
+    "label": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "verificationStatus": "UNCONFIRMED_LOCAL_FIXED_REPORT_ONLY",
+    "independentSOURCE": "AWAIT_PARENT",
+    "remotePublication": "AWAIT_PARENT"
+  },
+  "sharedModel": null,
+  "effort": null,
+  "authProcedure": null,
+  "sharedPreflightResult": null,
+  "approvedClassificationConfigProfileRoute": null,
+  "approvedSyntheticQueueWorkContext": null,
+  "secondApprovedHostEvidence": null,
+  "steps": [
+    {
+      "id": "resume-gate",
+      "action": "Receive parent-verified final R17 candidate publication, independent SOURCE decision and shared model/effort/auth/preflight package. If parent replaces candidate, obtain explicit replacement pin. Verify commit/tree and candidate instructions in isolated product checkout; do not use main or historical candidate.",
+      "status": "BLOCKED_WAITING_PARENT"
+    },
+    {
+      "id": "mock-fixture-plan",
+      "action": "Use exact public SS37 metadataRoleCases and embedded source fields. Prepare only isolated evaluation fixtures, never alter real registry or product code; preserve all eight variants plus declared boundaries and negative controls. Freeze variant input/test digests before actual execution.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "host-inventory",
+      "action": "Actual Claude must inspect installed/active/supported inventory, official registry, MCP exposure and selector-request inventory. Record IDs, four-list differences, metadata/source/install/policy revisions and digests. Flag missing classification metadata and missing infrastructure outside registry. Synthetic variants enter evaluation inputs only.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "classification",
+      "action": "Actual Claude Code must call approved AGS get_skill_inventory/classify_skills through the connected candidate plugin and preserve public prompt and descriptor projection. Avoid injecting required/forbidden expected labels into the target model prompt. JEV stays off unless separately allocated. No invented default profile or route.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "selection",
+      "action": "Claude must make final metadata-grounded choice and record_skill_selection. Observe neutral ID, role swap and ID rename expectations; preserve dependencies; diagnose hidden IDs/metadata gaps with NEEDS_INPUT. Client hostReceipt stays null; only real hooks may attest.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "host-work",
+      "action": "Claude must actually read selected applicable skill bodies/references and carry out authorized read-only queue invariant analysis against approved public synthetic context. Sol manages evidence and environment only. Record selected/read/applied/verified independently with task/session/artifact binding; absence remains null/NOT_RUN.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "score",
+      "action": "Compare observed responses and hook/receipt evidence with frozen expected-results. Separate mock, local-source and host-live coverage. Keep fails, skips, runner errors, budget stops and missing second host distinct. Do not issue full SS37 PASS without all original required coverage including two approved real hosts.",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "publish",
+      "action": "Sanitize output, usage and receipt evidence; retain hashes only for private raw evidence. Append a new unique run path on evidence branch; push ordinary fast-forward, preserving concurrent workers. Re-read remote files at exact resulting commit and compare bytes/hashes.",
+      "status": "NOT_RUN"
+    }
+  ],
+  "futureArgvSkeleton": [
+    "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+    "--print",
+    "--verbose",
+    "--output-format",
+    "stream-json",
+    "--model",
+    "PARENT_VERIFIED_MODEL_ID",
+    "--effort",
+    "PARENT_VERIFIED_EFFORT",
+    "--max-budget-usd",
+    "REMAINING_APPROVED_CALL_CAP",
+    "--plugin-dir",
+    "VERIFIED_CANDIDATE_CLAUDE_PLUGIN_PATH"
+  ],
+  "argvSkeletonIsNotExecutableAuthorization": true,
+  "doNotChooseFlagsBeforeParentProcedure": "Session-local API authentication, settings sources, hooks/MCP config and tool permissions must preserve actual host integration and policy; bare/safe-mode or disabling skills/hooks could invalidate SS37."
+}
