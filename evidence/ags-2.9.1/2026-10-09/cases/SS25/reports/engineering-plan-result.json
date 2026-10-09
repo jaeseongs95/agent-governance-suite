@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:c0842b5ed75877663992243e5cd4de50f2cf8f0cbef5be4868077fffea8d2d3f",
+  "caseIds": [
+    "SS25/reverse-response",
+    "SS25/digest-cache-collision",
+    "SS25/cancelled-task"
+  ]
+}

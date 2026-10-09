@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:49106b843697b7b9a0fd2c52d7bd9124e9455a36b6fc7f085e9fb4548ae17c5c",
+  "reportDigest": "sha256:99b4eedb2d4ee96513878d0bad045ee725da52acf28abfa4f3bdf919090493e5",
+  "issues": [
+    "REQUIRED SS25/reverse-response: NOT_RUN — Red/green sensitivity pair NOT_RUN: product modification prohibited and no corrected green candidate supplied. Existing final Vitest observations provide operational PASS/FAIL evidence separately; unsigned synthetic host receipts are not actual AGENT selection.",
+    "REQUIRED SS25/digest-cache-collision: NOT_RUN — Red/green sensitivity pair NOT_RUN: product modification prohibited and no corrected green candidate supplied. Existing final Vitest observations provide operational PASS/FAIL evidence separately; unsigned synthetic host receipts are not actual AGENT selection.",
+    "REQUIRED SS25/cancelled-task: NOT_RUN — Red/green sensitivity pair NOT_RUN: product modification prohibited and no corrected green candidate supplied. Existing final Vitest observations provide operational PASS/FAIL evidence separately; unsigned synthetic host receipts are not actual AGENT selection."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

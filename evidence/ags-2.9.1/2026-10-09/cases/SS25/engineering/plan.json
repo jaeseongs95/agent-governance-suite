@@ -1,0 +1,118 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS25",
+  "contractDigest": "sha256:e8751432e53a9a40499f0551967c8105fbff0fb8792185a9afcc0620051dce5b",
+  "requirements": [
+    "SS25-REVERSE",
+    "SS25-CACHE",
+    "SS25-CANCEL",
+    "SS25-ADOPTION-BINDING"
+  ],
+  "scopeFiles": [
+    "tests/skill-classification/SS25.isolated.test.ts",
+    "tests/skill-classification/fixtures.json",
+    "tests/skill-classification/evaluation.ts",
+    "mcp-server/src/skill-classification/service.ts",
+    "mcp-server/src/skill-classification/gateway.ts",
+    "mcp-server/src/skill-classification/request.ts",
+    "mcp-server/src/skill-classification/validation.ts",
+    "mcp-server/src/skill-classification/inventory.ts",
+    "mcp-server/src/skill-classification/profiles.ts",
+    "mcp-server/src/skill-classification/providers.ts",
+    "mcp-server/src/skill-classification/types.ts",
+    "mcp-server/src/skill-classification/digest.ts",
+    "mcp-server/src/index.ts"
+  ],
+  "runner": "Existing Vitest 5.0.0, public service and gateway integration boundaries",
+  "environment": "Independent SS25 Cloud; Node24.19.0 pnpm11.19.0 UTC; real FS/inventory; deterministic barriers, no random; provider and host observations synthetic; fetch forbidden",
+  "cases": [
+    {
+      "id": "SS25/reverse-response",
+      "requirementIds": [
+        "SS25-REVERSE",
+        "SS25-ADOPTION-BINDING"
+      ],
+      "scenario": "SS03/rev1 is delayed while SS09/rev2 finishes under c2. Retain B response, status and synthetic empty-set acceptance; hold null or conflicting revision.",
+      "entryPoint": "SkillClassificationService.classify and RuntimeSkillClassificationGateway.classify/accept",
+      "level": "integration",
+      "expectedBehavior": "A 결과가 B의 raw·combined·상태를 덮지 않는다. revision이 바뀌면 옛 baseline도 재사용하지 않는다. 현재 작업이 유효하면 현행 revision으로 vendor 정책을 다시 적용하고, 취소·목적 변경이면 이전 선택을 중단한다. 실제 선택은 각 요청의 유효한 판단 경로에만 연결된다. B는 별도로 목적 정답을 만족해야 한다. taskRevision·digest가 없거나 충돌하면 해당 결과 채택 보류.",
+      "oracle": "Embedded SS25 sourceSpec.fields only; fixture oracle=null. A=SS03 and B=SS09 inputs and injected responses are not model quality evidence.",
+      "testFiles": [
+        "tests/skill-classification/SS25.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "red-green",
+      "sensitivityReason": "Exploratory tests established assertion failures; product changes and mutations prohibited, so corrected candidate green is NOT_RUN. Plan freezes final test before final replay.",
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/skill-classification/SS25.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=./ss25-reproduction/isolated-tests.json"
+      ]
+    },
+    {
+      "id": "SS25/digest-cache-collision",
+      "requirementIds": [
+        "SS25-CACHE",
+        "SS25-ADOPTION-BINDING"
+      ],
+      "scenario": "Same request/operation IDs with changed prompt/revision/digest; forged response and absent digest; initial task digest conflict and digest change during acceptance.",
+      "entryPoint": "SkillClassificationService.classify and RuntimeSkillClassificationGateway.classify/accept",
+      "level": "integration",
+      "expectedBehavior": "A 결과가 B의 raw·combined·상태를 덮지 않는다. revision이 바뀌면 옛 baseline도 재사용하지 않는다. 현재 작업이 유효하면 현행 revision으로 vendor 정책을 다시 적용하고, 취소·목적 변경이면 이전 선택을 중단한다. 실제 선택은 각 요청의 유효한 판단 경로에만 연결된다. B는 별도로 목적 정답을 만족해야 한다. taskRevision·digest가 없거나 충돌하면 해당 결과 채택 보류.",
+      "oracle": "Embedded SS25 sourceSpec.fields only; fixture oracle=null. A=SS03 and B=SS09 inputs and injected responses are not model quality evidence.",
+      "testFiles": [
+        "tests/skill-classification/SS25.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "red-green",
+      "sensitivityReason": "Exploratory tests established assertion failures; product changes and mutations prohibited, so corrected candidate green is NOT_RUN. Plan freezes final test before final replay.",
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/skill-classification/SS25.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=./ss25-reproduction/isolated-tests.json"
+      ]
+    },
+    {
+      "id": "SS25/cancelled-task",
+      "requirementIds": [
+        "SS25-CANCEL"
+      ],
+      "scenario": "Cancellation before dispatch, during availability, during provider work, before accept and during the accept readRuntime await; abort and cache replay.",
+      "entryPoint": "SkillClassificationService.classify and RuntimeSkillClassificationGateway.classify/accept",
+      "level": "integration",
+      "expectedBehavior": "A 결과가 B의 raw·combined·상태를 덮지 않는다. revision이 바뀌면 옛 baseline도 재사용하지 않는다. 현재 작업이 유효하면 현행 revision으로 vendor 정책을 다시 적용하고, 취소·목적 변경이면 이전 선택을 중단한다. 실제 선택은 각 요청의 유효한 판단 경로에만 연결된다. B는 별도로 목적 정답을 만족해야 한다. taskRevision·digest가 없거나 충돌하면 해당 결과 채택 보류.",
+      "oracle": "Embedded SS25 sourceSpec.fields only; fixture oracle=null. A=SS03 and B=SS09 inputs and injected responses are not model quality evidence.",
+      "testFiles": [
+        "tests/skill-classification/SS25.isolated.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "red-green",
+      "sensitivityReason": "Exploratory tests established assertion failures; product changes and mutations prohibited, so corrected candidate green is NOT_RUN. Plan freezes final test before final replay.",
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/skill-classification/SS25.isolated.test.ts",
+        "--reporter=json",
+        "--outputFile=./ss25-reproduction/isolated-tests.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "No other original case or full suite run; SS03/SS09 are embedded input only.",
+    "No JEV/external vendor API/Claude execution and no completed21 rerun.",
+    "No product edits/push/PR/release; no mutation or corrected green candidate.",
+    "Provider semantic quality and actual host AGENT selected/read/applied/verified NOTRUN.",
+    "SS25 oracle is null; no operational semantic accuracy invented."
+  ]
+}

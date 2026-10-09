@@ -1,0 +1,432 @@
+{
+  "caseId": "SS25",
+  "status": "FAIL",
+  "executionKind": "offline-mock",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "oracleVerifiedBy": "SS25 fixture/oracle binding test uses evaluation.oracleDigest(corpus)",
+  "originalPrompt": null,
+  "oracle": null,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS25",
+    "fields": {
+      "입력": "request A는 SS03, taskRevision=1. B는 SS09, taskRevision=2다. A 응답을 B 완료 뒤 도착시키고 requestDigest가 다른 cache 항목도 제공한다.",
+      "필수추천": "B는 자신의 입력으로만 판정한다.",
+      "금지추천 또는 행동": "A의 구현 추천을 B에 재사용; requestId만 같다는 이유로 다른 digest를 수용.",
+      "허용선택": "A를 stale 또는 무효로 기록하고 B의 결과를 보존한다.",
+      "보류조건": "taskRevision·digest가 없거나 충돌하면 해당 결과 채택 보류.",
+      "통과기준": "A 결과가 B의 raw·combined·상태를 덮지 않는다. revision이 바뀌면 옛 baseline도 재사용하지 않는다. 현재 작업이 유효하면 현행 revision으로 vendor 정책을 다시 적용하고, 취소·목적 변경이면 이전 선택을 중단한다. 실제 선택은 각 요청의 유효한 판단 경로에만 연결된다. B는 별도로 목적 정답을 만족해야 한다.",
+      "증거": "E0·E2, 역순 응답과 cache key 비교.",
+      "실행종류": "mock."
+    },
+    "bodyDigest": "sha256:a92f4b103c9b350a7be9cb56cd59300a75a5a6ceba57d23fa0ff36569cda2144"
+  },
+  "sourceSpecFileExists": false,
+  "sourceAuthority": "Embedded sourceSpec.fields only; external missing TEST-SPEC not fabricated",
+  "scope": "SS25 only; SS03/SS09 fixture bytes consumed solely as A/B inputs, not separate test cases",
+  "variants": [
+    {
+      "variant": "reverse-response",
+      "status": "FAIL",
+      "executionKind": "offline-mock",
+      "checks": [
+        {
+          "id": "reverse-response",
+          "testTitle": "SS25 reverse-response: B finishes before A and survives A stale completion",
+          "status": "PASS",
+          "expected": "A stale; B raw/combined SUCCESS empty-needed survives; synthetic no-skill acceptance []; real selected null",
+          "observedRef": "isolated-observations.json#/0/observed",
+          "failure": null
+        },
+        {
+          "id": "null-task-revision",
+          "testTitle": "SS25 missing taskRevision must hold synthetic acceptance",
+          "status": "FAIL",
+          "expected": "revision absent => adoption held per embedded SS25 sourceSpec",
+          "observedRef": "isolated-observations.json#/10/observed",
+          "failure": "AssertionError: SS25 missing taskRevision must prevent adoption: expected true to be false // Object.is equality"
+        },
+        {
+          "id": "initial-taskRevision-conflict",
+          "testTitle": "SS25 initial observed taskRevision conflict must hold synthetic acceptance",
+          "status": "FAIL",
+          "expected": "observed task and request conflict => adoption held",
+          "observedRef": "isolated-observations.json#/11/observed",
+          "failure": "AssertionError: SS25 conflicting initial host binding must prevent adoption: expected true to be false // Object.is equality"
+        },
+        {
+          "id": "accept-race-taskRevision",
+          "testTitle": "SS25 taskRevision changes during synthetic accept await must hold",
+          "status": "FAIL",
+          "expected": "changed task after initial host check but before commit => adoption held",
+          "observedRef": "isolated-observations.json#/14/observed",
+          "failure": "AssertionError: SS25 must recheck current task immediately before selection write: expected true to be false // Object.is equality"
+        }
+      ],
+      "actualHost": {
+        "status": "NOTRUN",
+        "selected": null,
+        "read": null,
+        "applied": null,
+        "verified": null
+      },
+      "semanticAccuracy": null
+    },
+    {
+      "variant": "digest-cache-collision",
+      "status": "FAIL",
+      "executionKind": "offline-mock",
+      "checks": [
+        {
+          "id": "digest-cache-collision",
+          "testTitle": "SS25 digest-cache-collision: changed prompt under same operation/request ID cannot reuse A",
+          "status": "PASS",
+          "expected": "OPERATION_DIGEST_CONFLICT; original cache unchanged; 1 mock dispatch",
+          "observedRef": "isolated-observations.json#/1/observed",
+          "failure": null
+        },
+        {
+          "id": "digest-cache-request-id",
+          "testTitle": "SS25 digest-cache-collision: reused request ID with new operation is rejected",
+          "status": "PASS",
+          "expected": "REQUEST_ID_CONFLICT and no second dispatch",
+          "observedRef": "isolated-observations.json#/2/observed",
+          "failure": null
+        },
+        {
+          "id": "response-digest",
+          "testTitle": "SS25 digest-cache-collision: provider response with wrong digest is invalid",
+          "status": "PASS",
+          "expected": "INVALID_PROVIDER_RESPONSE; no cached foreign success",
+          "observedRef": "isolated-observations.json#/3/observed",
+          "failure": null
+        },
+        {
+          "id": "missing-digest",
+          "testTitle": "SS25 digest-cache-collision: missing digest holds before dispatch",
+          "status": "PASS",
+          "expected": "INVALID_CLASSIFICATION_REQUEST; 0 dispatch",
+          "observedRef": "isolated-observations.json#/4/observed",
+          "failure": null
+        },
+        {
+          "id": "initial-requestDigest-conflict",
+          "testTitle": "SS25 initial observed requestDigest conflict must hold synthetic acceptance",
+          "status": "FAIL",
+          "expected": "observed task and request conflict => adoption held",
+          "observedRef": "isolated-observations.json#/12/observed",
+          "failure": "AssertionError: SS25 conflicting initial host binding must prevent adoption: expected true to be false // Object.is equality"
+        },
+        {
+          "id": "accept-race-requestDigest",
+          "testTitle": "SS25 requestDigest changes during synthetic accept await must hold",
+          "status": "FAIL",
+          "expected": "changed task after initial host check but before commit => adoption held",
+          "observedRef": "isolated-observations.json#/15/observed",
+          "failure": "AssertionError: SS25 must recheck current task immediately before selection write: expected true to be false // Object.is equality"
+        }
+      ],
+      "actualHost": {
+        "status": "NOTRUN",
+        "selected": null,
+        "read": null,
+        "applied": null,
+        "verified": null
+      },
+      "semanticAccuracy": null
+    },
+    {
+      "variant": "cancelled-task",
+      "status": "FAIL",
+      "executionKind": "offline-mock",
+      "checks": [
+        {
+          "id": "cancel-before-dispatch",
+          "testTitle": "SS25 cancelled-task: cancelled current snapshot holds before dispatch",
+          "status": "PASS",
+          "expected": "STALE_CLASSIFICATION; 0 availability/dispatch",
+          "observedRef": "isolated-observations.json#/5/observed",
+          "failure": null
+        },
+        {
+          "id": "cancel-during-availability",
+          "testTitle": "SS25 cancelled-task: cancellation during availability blocks dispatch",
+          "status": "PASS",
+          "expected": "STALE_CLASSIFICATION; 0 dispatch",
+          "observedRef": "isolated-observations.json#/6/observed",
+          "failure": null
+        },
+        {
+          "id": "cancel-late-and-replay",
+          "testTitle": "SS25 cancelled-task: late completed result and cache replay are held",
+          "status": "PASS",
+          "expected": "STALE_CLASSIFICATION both times, one dispatch",
+          "observedRef": "isolated-observations.json#/7/observed",
+          "failure": null
+        },
+        {
+          "id": "cancel-abort-signal",
+          "testTitle": "SS25 cancelled-task: aborted in-flight signal never publishes late advice",
+          "status": "PASS",
+          "expected": "STALE_CLASSIFICATION and late result cannot overwrite",
+          "observedRef": "isolated-observations.json#/8/observed",
+          "failure": null
+        },
+        {
+          "id": "cancel-before-accept",
+          "testTitle": "SS25 cancelled-task: cancellation before synthetic accept rejects selection",
+          "status": "PASS",
+          "expected": "invalid HOST_TASK_CHANGED_OR_NOT_OBSERVED with null selected",
+          "observedRef": "isolated-observations.json#/9/observed",
+          "failure": null
+        },
+        {
+          "id": "accept-race-cancelled",
+          "testTitle": "SS25 cancelled changes during synthetic accept await must hold",
+          "status": "FAIL",
+          "expected": "changed task after initial host check but before commit => adoption held",
+          "observedRef": "isolated-observations.json#/13/observed",
+          "failure": "AssertionError: SS25 must recheck current task immediately before selection write: expected true to be false // Object.is equality"
+        }
+      ],
+      "actualHost": {
+        "status": "NOTRUN",
+        "selected": null,
+        "read": null,
+        "applied": null,
+        "verified": null
+      },
+      "semanticAccuracy": null
+    }
+  ],
+  "bindingCheck": {
+    "id": "frozen-binding",
+    "testTitle": "SS25 fixture/oracle binding only, no invented operational accuracy score",
+    "status": "PASS",
+    "expected": "SS25 originalPrompt/oracle null; 3 variants; frozen oracle matches",
+    "observedRef": "isolated-observations.json#/16/observed",
+    "failure": null
+  },
+  "existingRegressions": [
+    {
+      "evidence": "existing-service.json",
+      "passed": 2,
+      "failed": 0,
+      "titles": [
+        "SS24/25 fences changed taskRevision before accepting delayed responses",
+        "SS24/25 fences changed requestDigest before accepting delayed responses"
+      ]
+    },
+    {
+      "evidence": "existing-gateway.json",
+      "passed": 5,
+      "failed": 0,
+      "titles": [
+        "rejects missing host task observations between classify and accept",
+        "rejects taskRevision host task observations between classify and accept",
+        "rejects requestDigest host task observations between classify and accept",
+        "rejects cancelled host task observations between classify and accept",
+        "rejects sourceRef host task observations between classify and accept"
+      ]
+    }
+  ],
+  "counts": {
+    "existing": {
+      "pass": 7,
+      "fail": 0
+    },
+    "isolated": {
+      "pass": 11,
+      "fail": 6,
+      "total": 17
+    },
+    "reproducedRootCauses": 2,
+    "newRootCauses": 1,
+    "knownRootCauseReproduced": 1,
+    "knownHostSupplierGapStaticOnly": 1
+  },
+  "findings": [
+    {
+      "id": "SS25-F1",
+      "status": "REPRODUCED_OFFLINE",
+      "severity": "HIGH",
+      "rootCause": "Missing initial task/request binding and required revision validation",
+      "relatedKnownFinding": null,
+      "newRootCause": true,
+      "witnessChecks": [
+        "null-task-revision",
+        "initial-taskRevision-conflict",
+        "initial-requestDigest-conflict"
+      ],
+      "expected": "Hold adoption if taskRevision/digest absent or conflicting, per embedded sourceSpec",
+      "observed": "syntheticAcceptance.valid=true, decision.agentSelectedSkillIds=[] and receipt generated despite absent/conflicting initial task binding",
+      "sourceRefs": [
+        "mcp-server/src/skill-classification/gateway.ts:68",
+        "mcp-server/src/skill-classification/gateway.ts:118",
+        "mcp-server/src/skill-classification/validation.ts:18",
+        "mcp-server/src/skill-classification/validation.ts:75"
+      ],
+      "counting": "One cause, three witnesses; null and conflicts not counted as independent defects"
+    },
+    {
+      "id": "SS25-F2",
+      "status": "REPRODUCED_OFFLINE",
+      "severity": "HIGH",
+      "rootCause": "No current-task recheck after accept async runtime/inventory reads before decision write",
+      "relatedKnownFinding": "동시성 직전 재검사 공백",
+      "newRootCause": false,
+      "witnessChecks": [
+        "accept-race-cancelled",
+        "accept-race-taskRevision",
+        "accept-race-requestDigest"
+      ],
+      "expected": "Recheck and hold task changed/cancelled before writing acceptance",
+      "observed": "All three return valid=true while host-owned synthetic task changed during readRuntime await",
+      "sourceRefs": [
+        "mcp-server/src/skill-classification/gateway.ts:117",
+        "mcp-server/src/skill-classification/gateway.ts:124",
+        "mcp-server/src/skill-classification/gateway.ts:141"
+      ],
+      "counting": "Same known root cause, three witnesses; no new duplicate count"
+    },
+    {
+      "id": "SS25-S1",
+      "status": "STATIC_SOURCE_SUPPORTED_HOST_LIVE_NOTRUN",
+      "severity": "HIGH",
+      "rootCause": "Bundled host task observer copies caller request revision/digest and always supplies cancelled=false",
+      "relatedKnownFinding": "host 활성상태 공급 공백",
+      "newRootCause": false,
+      "witnessChecks": [],
+      "observed": "index.ts observeTask obtains only board lastPromptAt; supplies request.confirmedContext.taskRevision/request.requestDigest/cancelled:false. This does not independently observe cancellation/revision/digest. No actual host trial claimed.",
+      "sourceRefs": [
+        "mcp-server/src/index.ts:120",
+        "mcp-server/src/index.ts:126"
+      ],
+      "counting": "Link to known supplier gap only; no additional reproduced root cause"
+    }
+  ],
+  "commands": [
+    {
+      "command": "pnpm exec vitest run tests/mcp/skill-classification-service.test.ts -t \"SS24/25 fences changed (taskRevision|requestDigest)\" --reporter=json --outputFile=./ss25-reproduction/existing-service.json",
+      "exit": 0,
+      "executionKind": "existing-regression-offline-mock",
+      "evidence": [
+        "existing-service.json",
+        "existing-service.log"
+      ],
+      "executedTests": 2
+    },
+    {
+      "command": "pnpm exec vitest run tests/mcp/skill-classification-gateway.test.ts -t \"rejects (missing|taskRevision|requestDigest|cancelled|sourceRef) host task observations between classify and accept\" --reporter=json --outputFile=./ss25-reproduction/existing-gateway.json",
+      "exit": 0,
+      "executionKind": "existing-regression-offline-mock-MCP-Client-Server",
+      "evidence": [
+        "existing-gateway.json",
+        "existing-gateway.log"
+      ],
+      "executedTests": 5
+    },
+    {
+      "command": "pnpm exec vitest run tests/skill-classification/SS25.isolated.test.ts --reporter=json --outputFile=./ss25-reproduction/isolated-tests.json",
+      "exit": 1,
+      "executionKind": "new-variants-offline-mock-public-service-gateway",
+      "evidence": [
+        "isolated-tests.json",
+        "isolated-tests.log",
+        "isolated-observations.json"
+      ],
+      "executedTests": 17,
+      "passed": 11,
+      "failed": 6
+    },
+    {
+      "command": "node_modules/.bin/tsc --ignoreConfig --types node --noEmit --module nodenext --moduleResolution nodenext --target es2023 --skipLibCheck tests/skill-classification/SS25.isolated.test.ts",
+      "exit": 0,
+      "executionKind": "static-test-typecheck",
+      "evidence": [
+        "test-typecheck.log"
+      ]
+    },
+    {
+      "command": "node skills/test-engineering/scripts/run.mjs check-plan --root <CANDIDATE_ROOT> --plan tests/skill-classification/ss25-artifacts/plan.json",
+      "exit": 0,
+      "executionKind": "local-plan-consistency",
+      "evidence": [
+        "engineering-plan-result.json"
+      ]
+    },
+    {
+      "command": "node skills/test-engineering/scripts/run.mjs check-proof --root <CANDIDATE_ROOT> --plan tests/skill-classification/ss25-artifacts/plan.json --proof tests/skill-classification/ss25-artifacts/proof.json",
+      "exit": 1,
+      "executionKind": "local-red-green-proof-consistency",
+      "evidence": [
+        "engineering-test-result.json"
+      ],
+      "verdict": "INCOMPLETE",
+      "reason": "No corrected green candidate or mutation; user prohibited product source changes. All sensitivity pairs truthfully NOT_RUN."
+    },
+    {
+      "command": "git diff --exit-code && git diff --check",
+      "exit": 0,
+      "executionKind": "tracked-source-integrity",
+      "evidence": [
+        "repository-integrity.json"
+      ]
+    }
+  ],
+  "API0": true,
+  "apiCalls": {
+    "JEV": 0,
+    "externalVendor": 0,
+    "Claude": 0,
+    "realNativeHost": 0
+  },
+  "mockBoundary": "Providers mocked; host observations and acceptance receipts synthetic. New tests set fetch to throw; no vendor/native execution, credentials or external provider runtime used. Existing service regression uses mocked JEV only.",
+  "prior21RunsRerun": false,
+  "realHost": {
+    "status": "NOTRUN",
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "agentSelectedSkillIds": null,
+    "hostReceipt": null,
+    "supportPath": ".mcp.json node mcp-server/dist/server.mjs, AGENT_GOVERNANCE_HOST_ATTESTATION=codex; hooks/hooks.json PreToolUse host-attestation-hook; configuration env and gateway/runtime/native adapter files",
+    "codexExecutablePresent": "<CODEX_EXECUTABLE>",
+    "claudeCommandOnPATH": false,
+    "missingInputs": [
+      "No callable AGS get_skill_inventory/classify_skills/record_skill_selection tool in current tool inventory.",
+      "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG absent; qualified fixed current-vendor profile registry and provider runtime not supplied.",
+      "Current taskRevision/requestDigest/cancellation require independent host-owned source; bundled index.ts observer does not supply them independently.",
+      "Need supported host plugin/MCP install and genuine PreToolUse signed observations for classify_skills and record_skill_selection.",
+      "For native path: approved adapter executable/cwd/profile, capability/no-retry/isolation evidence and exact isolationArgs plus confirmed native allowance/budget. Native CLI existence alone insufficient.",
+      "For selected/read/applied/verified: genuine AGENT choices/reasons/applicability, current receipt, source read digests, obligations/artifact/phase evidence and candidate-bound verification."
+    ]
+  },
+  "semanticAccuracy": null,
+  "BQuality": "Injected SS09 no-skill response preserves operational data and synthetic [] acceptance. Real B model semantic quality and AGENT selection NOTRUN. Raw/combined are service response/gateway result; no separate combined predictor claimed.",
+  "nullEmptyArrayPolicy": "Actual agentSelectedSkillIds=null remains unobserved. Synthetic [] in test output is accepted no-skill set only within offline fixture, never promoted to actual selection.",
+  "engineeringSensitivity": "NOTRUN/INCOMPLETE: no product mutations or corrected candidate green; operational assertion failures remain FAIL.",
+  "exploratoryHarnessCorrection": "Initial isolated invocation had strict createClassificationRequest input shape error: 16 tests did not reach product assertions, one binding check passed. Corrected test helper only; initial-harness-error.json/log retained and not counted as product defect evidence. Two initial typecheck invocations omitted required TS6 --ignoreConfig/types node; final command passed.",
+  "productsModified": false,
+  "pushPRRelease": false,
+  "instructionsRead": [
+    "AGENTS.md",
+    "skills/test-engineering/SKILL.md",
+    "skills/orchestrator/SKILL.md",
+    "skills/coordinate-subagents/SKILL.md",
+    "skills/orchestrator/references/skill-classification.md",
+    "skills/orchestrator/references/engineering-practices/test-design.md",
+    "skills/orchestrator/references/engineering-practices/test-proof.md",
+    "skills/orchestrator/references/engineering-practices/cli.md"
+  ],
+  "agentsSkills": {
+    "repo": false,
+    "environment": false
+  },
+  "testFile": "<CANDIDATE_ROOT>/tests/skill-classification/SS25.isolated.test.ts",
+  "testSHA256": "6a2b969381e36969b86914fb36bd29150ab0189bdc4130f0a1e716cddc9c77f2"
+}

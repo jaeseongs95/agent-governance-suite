@@ -1,0 +1,77 @@
+{
+  "caseId": "SS25",
+  "kind": "public-derivative-of-existing-command-records",
+  "source": "SS25.result.json",
+  "commands": [
+    {
+      "command": "pnpm exec vitest run tests/mcp/skill-classification-service.test.ts -t \"SS24/25 fences changed (taskRevision|requestDigest)\" --reporter=json --outputFile=./ss25-reproduction/existing-service.json",
+      "exit": 0,
+      "executionKind": "existing-regression-offline-mock",
+      "evidence": [
+        "existing-service.json",
+        "existing-service.log"
+      ],
+      "executedTests": 2
+    },
+    {
+      "command": "pnpm exec vitest run tests/mcp/skill-classification-gateway.test.ts -t \"rejects (missing|taskRevision|requestDigest|cancelled|sourceRef) host task observations between classify and accept\" --reporter=json --outputFile=./ss25-reproduction/existing-gateway.json",
+      "exit": 0,
+      "executionKind": "existing-regression-offline-mock-MCP-Client-Server",
+      "evidence": [
+        "existing-gateway.json",
+        "existing-gateway.log"
+      ],
+      "executedTests": 5
+    },
+    {
+      "command": "pnpm exec vitest run tests/skill-classification/SS25.isolated.test.ts --reporter=json --outputFile=./ss25-reproduction/isolated-tests.json",
+      "exit": 1,
+      "executionKind": "new-variants-offline-mock-public-service-gateway",
+      "evidence": [
+        "isolated-tests.json",
+        "isolated-tests.log",
+        "isolated-observations.json"
+      ],
+      "executedTests": 17,
+      "passed": 11,
+      "failed": 6
+    },
+    {
+      "command": "node_modules/.bin/tsc --ignoreConfig --types node --noEmit --module nodenext --moduleResolution nodenext --target es2023 --skipLibCheck tests/skill-classification/SS25.isolated.test.ts",
+      "exit": 0,
+      "executionKind": "static-test-typecheck",
+      "evidence": [
+        "test-typecheck.log"
+      ]
+    },
+    {
+      "command": "node skills/test-engineering/scripts/run.mjs check-plan --root <CANDIDATE_ROOT> --plan tests/skill-classification/ss25-artifacts/plan.json",
+      "exit": 0,
+      "executionKind": "local-plan-consistency",
+      "evidence": [
+        "engineering-plan-result.json"
+      ]
+    },
+    {
+      "command": "node skills/test-engineering/scripts/run.mjs check-proof --root <CANDIDATE_ROOT> --plan tests/skill-classification/ss25-artifacts/plan.json --proof tests/skill-classification/ss25-artifacts/proof.json",
+      "exit": 1,
+      "executionKind": "local-red-green-proof-consistency",
+      "evidence": [
+        "engineering-test-result.json"
+      ],
+      "verdict": "INCOMPLETE",
+      "reason": "No corrected green candidate or mutation; user prohibited product source changes. All sensitivity pairs truthfully NOT_RUN."
+    },
+    {
+      "command": "git diff --exit-code && git diff --check",
+      "exit": 0,
+      "executionKind": "tracked-source-integrity",
+      "evidence": [
+        "repository-integrity.json"
+      ]
+    }
+  ],
+  "publicationNewTests": 0,
+  "recordedCombinedLogs": "stdout/stderr were redirected with > log 2>&1; split streams not recoverable",
+  "separateExitReceiptFiles": "MISSING_ORIGINAL: recorded exits retained from existing SS25.result.json; no reconstructed receipts"
+}
