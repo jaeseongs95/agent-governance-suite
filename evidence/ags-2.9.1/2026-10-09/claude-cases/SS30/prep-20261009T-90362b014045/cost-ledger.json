@@ -1,0 +1,23 @@
+{
+  "caseId": "SS30",
+  "phase": "preparation",
+  "currency": "USD",
+  "softBudgetUsd": 2,
+  "spentUsd": 0,
+  "remainingSoftBudgetUsd": 2,
+  "apiCallCount": 0,
+  "failedAPICallCount": 0,
+  "retryCount": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "cacheReadInputTokens": 0,
+  "cacheCreationInputTokens": 0,
+  "apiCacheCostUsd": 0,
+  "JEVCallCount": 0,
+  "calls": [],
+  "localNonAPICommands": [
+    "claude --version",
+    "claude --help"
+  ],
+  "accountingPolicy": "Record every preparation and test API attempt including failures, retries, model, input/output/cache tokens, reported actual cost and unknown usage; stop before the next call when near the case soft budget or cost cannot be bounded. No automatic retries. JEV requires separate allocation. The aggregate reservation of 78 USD for 39 cases is not a spending target or an SS30 allowance."
+}
