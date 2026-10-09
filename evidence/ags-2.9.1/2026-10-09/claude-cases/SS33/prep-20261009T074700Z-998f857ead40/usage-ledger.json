@@ -1,0 +1,28 @@
+{
+  "caseId": "SS33",
+  "currency": "USD",
+  "caseSoftBudgetUsd": 2,
+  "total39CasesReservationUsd": 78,
+  "thisRunPaidCalls": 0,
+  "thisRunActualCostUsd": 0,
+  "thisRunInputTokens": 0,
+  "thisRunOutputTokens": 0,
+  "thisRunCacheReadTokens": 0,
+  "thisRunCacheCreationTokens": 0,
+  "thisRunRetries": 0,
+  "thisRunFailedPaidCalls": 0,
+  "thisRunOutstandingReservationsUsd": 0,
+  "events": [],
+  "inheritedUsageAcrossEarlierAttempts": "UNKNOWN_PENDING_PARENT_ACCOUNTING",
+  "jevCalls": 0,
+  "jevAssignment": "NOT_ASSIGNED",
+  "rules": [
+    "The USD2 case budget includes all preparation/auth smoke, failures, retries and cache usage.",
+    "Before a call confirm authoritative prior actual usage, in-flight/unknown reservations and conservative per-call maximum.",
+    "Stop before next call when actual usage plus outstanding/unknown reservations plus next-call upper bound approaches USD2.",
+    "Unknown cost remains unknown; retain its conservative reservation and hold further calls.",
+    "Record provider-reported usage and cost even when output validation fails; retain invoice uncertainty separately.",
+    "JEV mock five-dollar invariant is historical test specification, not permission to spend; zero live JEV calls until individually assigned.",
+    "No top-up or automatic model fallback/retry without parent-approved configuration and accounting."
+  ]
+}

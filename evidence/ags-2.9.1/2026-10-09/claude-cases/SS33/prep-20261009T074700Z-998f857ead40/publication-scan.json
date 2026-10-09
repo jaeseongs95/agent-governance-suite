@@ -1,0 +1,9 @@
+{
+  "scope": "All deliverable files preceding this scan, including input-derived expectations",
+  "filesChecked": 14,
+  "syntheticMarkerOccurrencesOutsideAllowedFixture": 0,
+  "credentialLikePatternMatches": 0,
+  "rawChatPublished": false,
+  "rawPrivateResponsesPublished": false,
+  "scopeLimitation": "Pattern scan of authored deliverables only; no live host logs or remote systems exist for this run."
+}

@@ -1,0 +1,7 @@
+{
+  "operationId": "ss33-prep-publication-998f857ead40",
+  "action": "publish",
+  "environment": "external",
+  "target": "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/evidence/ags-2.9.1/2026-10-09/claude-cases/SS33/prep-20261009T074700Z-998f857ead40",
+  "authorization": "Explicit delegation authorizes sanitized reports, evidence and hashes in a unique SS33 run on the existing evidence branch; no product files, other runs, force push, secrets, personal data or original chat."
+}

@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS33",
+  "title": "비밀값 보호와 분리된 예산",
+  "runPath": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS33/prep-20261009T074700Z-998f857ead40",
+  "createdAt": "2026-10-09T07:47:00.061437+00:00",
+  "preparationStatus": "READY_TO_HAND_OFF",
+  "executionGate": "WAITING_FOR_PARENT_CANDIDATE_AND_COMMON_SETTINGS",
+  "hostStatus": "NOTRUN",
+  "productTestsExecuted": 0,
+  "apiCalls": {
+    "claude": 0,
+    "jev": 0,
+    "vendor": 0
+  },
+  "candidateFromDelegation": {
+    "label": "R17",
+    "commit": "fa1e250c1cbc4f8f446f2e2ddeb516f4e439edbb",
+    "tree": "43d2b4e49cdb6993c48d7adc792a3ef17426092e",
+    "independentSourceDecision": "NOT_RECEIVED",
+    "remotePublicationVerification": "NOT_RECEIVED",
+    "tested": false
+  },
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "sourceTitle": "비밀값 보호와 분리된 예산",
+  "originalPrompt": null,
+  "oracle": null,
+  "accuracyScore": null,
+  "selected": "NOTRUN",
+  "read": "NOTRUN",
+  "applied": "NOTRUN",
+  "verified": "NOTRUN",
+  "cli": {
+    "path": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+    "version": "2.1.286 (Claude Code)",
+    "pathLookupFound": false,
+    "localVersionExitCode": 0,
+    "localHelpExitCode": 0,
+    "apiAuthenticatedExecution": "NOTRUN"
+  },
+  "nodeVersion": "v24.19.0",
+  "pnpmVersion": "11.19.0",
+  "keyHandling": "No secret values read, printed, copied, persisted or published; parent-provided ephemeral authentication procedure pending.",
+  "permanentSettingsChanged": false,
+  "networkPolicyChanged": false,
+  "productSourcesOrGeneratedDistributionsModified": false,
+  "historicalResults": {
+    "offlineStatus": "FAIL",
+    "hostStatus": "NOTRUN",
+    "regression": {
+      "passed": 9,
+      "skipped": 36,
+      "failed": 0
+    },
+    "finalIsolated": {
+      "tests": 16,
+      "passed": 13,
+      "failed": 3
+    },
+    "initialIsolated": {
+      "tests": 14,
+      "passed": 12,
+      "failed": 2
+    }
+  },
+  "blockers": [
+    "Verified product candidate commit/tree with independent SOURCE decision and pinned remote verification not received.",
+    "Common Claude model, effort, ephemeral API authentication and successful common preflight not received.",
+    "SS33 host operational input/full-payload digest requires parent approval: canonical originalPrompt and oracle are null.",
+    "Approved active AGS MCP configuration, provider profile/qualification and isolation proof not received.",
+    "E0/E1 definitions absent from embedded spec; external original TEST-SPEC.seq7.ko.md missing.",
+    "Current authoritative prior usage and unknown/in-flight reservations require common accounting before any paid call.",
+    "JEV individual assignment absent: no JEV calls allowed."
+  ]
+}

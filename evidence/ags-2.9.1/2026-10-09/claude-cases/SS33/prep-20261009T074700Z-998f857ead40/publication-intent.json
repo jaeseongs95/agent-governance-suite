@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "1.0.0",
+  "operationId": "ss33-prep-publication-998f857ead40",
+  "actionClass": "publish",
+  "targets": [
+    {
+      "locator": "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/evidence/ags-2.9.1/2026-10-09/claude-cases/SS33/prep-20261009T074700Z-998f857ead40",
+      "targetType": "unique-evidence-run-directory",
+      "environment": "external",
+      "expectedFingerprint": "sha256:9c420bffed7066205c188aceecdfb5e97ff2b1f91b9cd56c4c7ee20a4a7f5626"
+    }
+  ],
+  "plannedCommandOrTool": {
+    "tool": "git",
+    "action": "Non-force fast-forward push adding only sanitized SS33 preparation run files to refs/heads/evidence"
+  },
+  "scopeRef": {
+    "locator": "publication-authorization.json",
+    "digest": "sha256:cef3966d92228d8964c320fffaca8287514a3de3c3e139ac379ad627fa035f16",
+    "includedTargets": [
+      "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/evidence/ags-2.9.1/2026-10-09/claude-cases/SS33/prep-20261009T074700Z-998f857ead40"
+    ],
+    "excludedTargets": []
+  },
+  "authorizationRef": {
+    "locator": "publication-authorization.json",
+    "digest": "sha256:cef3966d92228d8964c320fffaca8287514a3de3c3e139ac379ad627fa035f16",
+    "allowedActions": [
+      "publish"
+    ],
+    "allowedTargets": [
+      "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/evidence/ags-2.9.1/2026-10-09/claude-cases/SS33/prep-20261009T074700Z-998f857ead40"
+    ],
+    "environments": [
+      "external"
+    ]
+  },
+  "approvalEvidenceRefs": [
+    {
+      "locator": "publication-authorization.json",
+      "digest": "sha256:cef3966d92228d8964c320fffaca8287514a3de3c3e139ac379ad627fa035f16",
+      "operationId": "ss33-prep-publication-998f857ead40",
+      "actionClass": "publish",
+      "targetLocators": [
+        "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/evidence/ags-2.9.1/2026-10-09/claude-cases/SS33/prep-20261009T074700Z-998f857ead40"
+      ],
+      "environments": [
+        "external"
+      ],
+      "expiresAt": "2026-10-09T09:48:32.699498+00:00"
+    }
+  ],
+  "currentStateEvidenceRefs": [
+    {
+      "locator": "publication-current-state.json",
+      "digest": "sha256:7db2bd849f0978745e2af1b875e22ffaeb3e1078f1aa1b659331b6fa6fa5b982",
+      "targetLocator": "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/evidence/ags-2.9.1/2026-10-09/claude-cases/SS33/prep-20261009T074700Z-998f857ead40",
+      "fingerprint": "sha256:9c420bffed7066205c188aceecdfb5e97ff2b1f91b9cd56c4c7ee20a4a7f5626"
+    }
+  ],
+  "recoveryPlan": {
+    "available": true,
+    "method": "Scoped forward commit removing only this added run; no force push. Verified in disposable Git index. Public copies remain possible.",
+    "backupRef": "publication-current-state.json",
+    "restoreProcedureRef": "recovery-check.json",
+    "restoreTestEvidenceRef": "recovery-check.json",
+    "irreversibilityAccepted": false
+  },
+  "expectedBlastRadius": {
+    "affectedTargets": 1,
+    "affectedUsers": 0,
+    "external": true,
+    "description": "One unique SS33 sanitized preparation directory; candidate and all existing paths remain byte-identical."
+  }
+}

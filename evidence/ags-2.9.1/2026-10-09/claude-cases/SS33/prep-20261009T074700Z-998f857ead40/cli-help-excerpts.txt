@@ -1,0 +1,20 @@
+  --bare                                Minimal mode: skip hooks (those defined
+                                        apiKeyHelper via --settings (OAuth and
+                                        (CLAUDE.md dirs), --mcp-config,
+                                        --settings, --agents, --plugin-dir.
+  --effort <level>                      Effort level for the current session
+                                        --print and --output-format=stream-json)
+                                        --output-format=stream-json)
+                                        --output-format=stream-json)
+  --max-budget-usd <amount>             Maximum dollar amount to spend on API
+  --mcp-config <configs...>             Load MCP servers from JSON files or
+  --model <model>                       Model for the current session. Provide
+  --no-session-persistence              Disable session persistence - sessions
+  --output-format <format>              Output format (only works with --print):
+  --plugin-dir <path>                   Load a plugin from a directory or .zip
+                                        --plugin-dir A --plugin-dir B.zip)
+                                        --output-format=stream-json)
+                                        (managed settings and --settings still
+                                        apply; add --strict-mcp-config to skip
+  --settings <file-or-json>             Path to a settings JSON file or a JSON
+  --strict-mcp-config                   Only use MCP servers from --mcp-config,

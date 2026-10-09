@@ -1,0 +1,56 @@
+{
+  "checkoutCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+  "role": "Preparation/publication guidance only; not final-candidate qualification",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827"
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "sha256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/test-design.md",
+      "sha256": "fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/SKILL.md",
+      "sha256": "eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230"
+    },
+    {
+      "path": "skills/acceptance-evidence-validator/SKILL.md",
+      "sha256": "1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109"
+    },
+    {
+      "path": "skills/session-board/SKILL.md",
+      "sha256": "b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "sha256": "eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/entry-details.md",
+      "sha256": "13dc04ff9d74e17f2d0bb6d69583a2c502dc5c69766d9a4ed91a59c0c5741154"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/risk-matrix.md",
+      "sha256": "0377275e0487f9823bed76cd3541e0caa5f3bf030ea407fee5ad17b0f761c801"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/approval-and-authority.md",
+      "sha256": "471afb623db2b67f45465f924eec5426d470dafa0c92bcad14b7bd16d0c16334"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/recovery-requirements.md",
+      "sha256": "60a0bded3a1453092e2d02469393e39f3709f0810e0e4c076628854c4d7d54af"
+    }
+  ],
+  "agentsSkillsChecks": {
+    "workspace": false,
+    "repo": false
+  },
+  "testEngineeringScope": "Test preparation only, no implementation or candidate execution",
+  "sessionBoard": "Delegated case task: per session-board rule a subagent does not update the parent main-session row."
+}

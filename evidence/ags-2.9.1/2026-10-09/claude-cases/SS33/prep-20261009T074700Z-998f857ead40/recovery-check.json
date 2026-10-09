@@ -1,0 +1,11 @@
+{
+  "method": "Forward follow-up commit removing only this new run directory; never force-push/reset remote ref. Public copies cannot be recalled.",
+  "baseEvidenceCommit": "81470edc3f8256ff6ce4fb4e988427215fa29800",
+  "baseTree": "fa9e25f9d200e1ee620dc1d76660dfd8000c8606",
+  "disposableAddedTree": "007b9ad3c1cfe5b0e488d6d832544966105ae756",
+  "restoredTree": "fa9e25f9d200e1ee620dc1d76660dfd8000c8606",
+  "restoreTestedInDisposableIndex": true,
+  "restoredTreeEqualsBase": true,
+  "externalDeletionPerformed": false,
+  "productMutationPerformed": false
+}
