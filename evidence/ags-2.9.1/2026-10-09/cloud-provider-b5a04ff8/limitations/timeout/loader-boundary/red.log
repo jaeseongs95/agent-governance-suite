@@ -1,0 +1,2 @@
+JSON report written to /workspace/ags-timeout-fix-evidence/red-results.json
+{"harness": "test-subreaper", "ownerPid": 1646, "runnerPid": 1647, "reapedPids": [1647], "remainingChildren": false, "runnerExitCode": 1, "cancelled": false}

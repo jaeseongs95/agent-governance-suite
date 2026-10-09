@@ -1,0 +1,18 @@
+{
+  "baseCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "baseTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "branch": "codex/cloud-provider-boundary-fix",
+  "writeFiles": ["mcp-server/src/skill-classification/providers.ts", "tests/mcp/skill-classification-providers.test.ts"],
+  "requirements": [
+    "SS32: preserve sanitized Retry-After observations for HTTP429/529 without any retries",
+    "Recheck cancellation + approval route identity/config + profile binding/qualification expiry after credential awaits and synchronous encode, immediately before fetch",
+    "SS27: duplicate or contradictory JEV answer keys rejected as INVALID, while standard JSON.parse remains syntax authority and unrelated JSON follows existing semantics"
+  ],
+  "entryPoint": "ApprovedRouteClassificationProvider.classify",
+  "runner": "Existing Vitest through unchanged scripts/run-tests.mjs",
+  "clock": "Fixed Date clock for expiration tests; no long waits or paid providers",
+  "cases": ["429/529 numeric and HTTP-date Retry-After", "invalid/secret header suppressed", "no extra fetch/retry", "credential-await route approval/model/effort/endpoint/adapter mutation", "profile mutation/expiration", "cancellation and encode-time mutation before dispatch", "duplicate answers field/skill key/escaped skill key/type/noul", "unrelated JSON duplicates remain standard", "native/mock compatibility"],
+  "excluded": ["types/service snapshot callback wiring (proposal only)", "service forwarding of sanitized Retry-After metadata (proposal only)", "SS31 cost0/refund changes", "R14 five files", "R13 harness two files", "bundle generation", "real API and Claude calls", "remote push/PR/release"],
+  "paidApiCalls": 0,
+  "claudeCalls": 0
+}

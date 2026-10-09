@@ -1,0 +1,2 @@
+JSON report written to /workspace/ags-provider-fix-evidence/regression-results.json
+{"harness": "test-subreaper", "ownerPid": 2616, "runnerPid": 2617, "reapedPids": [2617], "remainingChildren": false, "runnerExitCode": 0, "cancelled": false}

@@ -1,0 +1,11 @@
+import {writeFileSync} from 'node:fs';
+import {captureSnapshot} from '/workspace/ags-cloud-provider-fix/runtime/engineering-practices/core.mjs';
+import {runCommand} from '/workspace/ags-cloud-provider-fix/runtime/engineering-practices/runner.mjs';
+const phase=process.argv[2];
+if(!['red','green'].includes(phase))throw new Error('Use red or green');
+const root=phase==='red'?'/workspace/ags-cloud-provider-red':'/workspace/ags-cloud-provider-fix';
+const snapshot=captureSnapshot(root,['mcp-server/src/skill-classification/providers.ts','tests/mcp/skill-classification-providers.test.ts','vitest.config.mjs']);
+const argv=['node','scripts/run-tests.mjs','tests/mcp/skill-classification-providers.test.ts','--reporter=verbose'];
+const receipt=runCommand(root,snapshot,argv,{timeoutMs:30000,environmentNote:'Isolated R13 clones; Linux Node24.19.0; matching-lock shared dependencies; only mock fetch/native callbacks; real paid API/Claude0; fake Date only qualification expiry test'});
+writeFileSync(`/workspace/ags-provider-fix-evidence/${phase}-receipt.json`,JSON.stringify(receipt,null,2));
+console.log(JSON.stringify({phase,status:receipt.status,exitCode:receipt.exitCode,snapshot:receipt.snapshot.digest,after:receipt.afterDigest}));

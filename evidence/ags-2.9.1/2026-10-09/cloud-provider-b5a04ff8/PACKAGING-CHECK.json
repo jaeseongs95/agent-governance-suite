@@ -1,0 +1,26 @@
+{
+  "kind": "publication-packaging-check",
+  "candidateCommit": "b5a04ff82f9863383de00d75de5841af5223041b",
+  "candidateTree": "f82f927c49ba368e17843abc8548ef9cea60107c",
+  "baseCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "baseTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "candidateClean": true,
+  "candidateDiffMatchesExistingBytes": true,
+  "gitApplyCheck": {
+    "argv": [
+      "git",
+      "apply",
+      "--check",
+      "patches/candidate.diff"
+    ],
+    "base": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "patchApplied": false
+  },
+  "newProductImplementation": false,
+  "testsRerun": false,
+  "remoteWrites": false,
+  "note": "Read-only Git checks, byte copies and patch applicability inspection; original test results remain historical."
+}

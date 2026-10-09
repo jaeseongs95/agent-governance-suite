@@ -1,0 +1,59 @@
+[
+  {
+    "cwd": "/workspace/ags-cloud-provider-fix",
+    "argv": [
+      "git",
+      "status",
+      "--porcelain"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "cwd": "/workspace/ags-cloud-provider-fix",
+    "argv": [
+      "git",
+      "rev-parse",
+      "HEAD",
+      "HEAD^{tree}"
+    ],
+    "exitCode": 0,
+    "stdout": "b5a04ff82f9863383de00d75de5841af5223041b\nf82f927c49ba368e17843abc8548ef9cea60107c\n",
+    "stderr": ""
+  },
+  {
+    "cwd": "/workspace/ags-cloud-provider-fix",
+    "argv": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "cwd": "/workspace/ags-classifier-audit",
+    "argv": [
+      "git",
+      "status",
+      "--porcelain"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "cwd": "/workspace/ags-classifier-audit",
+    "argv": [
+      "git",
+      "rev-parse",
+      "HEAD",
+      "HEAD^{tree}"
+    ],
+    "exitCode": 0,
+    "stdout": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6\n28f2f2ed8a864405320f6d20e7bc5004e8466ad3\n",
+    "stderr": ""
+  }
+]

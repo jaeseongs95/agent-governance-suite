@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "cloud-provider-boundary-fix",
+  "contractDigest": "sha256:e20ac37248867dfad5f1520561affc76f38f12ad47f47dbcaf99445ef0caf7a2",
+  "requirements": [
+    "SS32_RETRY_AFTER",
+    "PRE_DISPATCH_BINDING",
+    "SS27_DUPLICATE_ANSWER"
+  ],
+  "scopeFiles": [
+    "mcp-server/src/skill-classification/providers.ts",
+    "tests/mcp/skill-classification-providers.test.ts",
+    "vitest.config.mjs"
+  ],
+  "runner": "Existing scripts/run-tests.mjs -> Vitest verbose; unchanged harness",
+  "environment": "Linux Node24.19.0; same argv/dependencies; all transports mocked; fake Date only one expiry case",
+  "cases": [
+    {
+      "id": "SS32_RETRY_AFTER",
+      "requirementIds": [
+        "SS32_RETRY_AFTER"
+      ],
+      "scenario": "429/529 only sanitized Retry-After observation, no retries",
+      "entryPoint": "ApprovedRouteClassificationProvider.classify",
+      "level": "integration",
+      "expectedBehavior": "429/529 only sanitized Retry-After observation, no retries",
+      "oracle": "Delegated requirements + fixed SS27/SS32 fixture semantics; independent input/header/duplicate/mutation fixtures",
+      "testFiles": [
+        "tests/mcp/skill-classification-providers.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "red-green",
+      "sensitivityReason": "Same final test bytes failed against R13 provider source and pass against the candidate; only providers.ts differs.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/mcp/skill-classification-providers.test.ts",
+        "--reporter=verbose"
+      ]
+    },
+    {
+      "id": "PRE_DISPATCH_BINDING",
+      "requirementIds": [
+        "PRE_DISPATCH_BINDING"
+      ],
+      "scenario": "Route, request, profile, qualification expiry and signal checked after credential await and before fetch",
+      "entryPoint": "ApprovedRouteClassificationProvider.classify",
+      "level": "integration",
+      "expectedBehavior": "Route, request, profile, qualification expiry and signal checked after credential await and before fetch",
+      "oracle": "Delegated requirements + fixed SS27/SS32 fixture semantics; independent input/header/duplicate/mutation fixtures",
+      "testFiles": [
+        "tests/mcp/skill-classification-providers.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "red-green",
+      "sensitivityReason": "Same final test bytes failed against R13 provider source and pass against the candidate; only providers.ts differs.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/mcp/skill-classification-providers.test.ts",
+        "--reporter=verbose"
+      ]
+    },
+    {
+      "id": "SS27_DUPLICATE_ANSWER",
+      "requirementIds": [
+        "SS27_DUPLICATE_ANSWER"
+      ],
+      "scenario": "Reject duplicate JEV answers/skill/type/noul binding without changing unrelated JSON",
+      "entryPoint": "ApprovedRouteClassificationProvider.classify",
+      "level": "integration",
+      "expectedBehavior": "Reject duplicate JEV answers/skill/type/noul binding without changing unrelated JSON",
+      "oracle": "Delegated requirements + fixed SS27/SS32 fixture semantics; independent input/header/duplicate/mutation fixtures",
+      "testFiles": [
+        "tests/mcp/skill-classification-providers.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "red-green",
+      "sensitivityReason": "Same final test bytes failed against R13 provider source and pass against the candidate; only providers.ts differs.",
+      "argv": [
+        "node",
+        "scripts/run-tests.mjs",
+        "tests/mcp/skill-classification-providers.test.ts",
+        "--reporter=verbose"
+      ]
+    }
+  ],
+  "exclusions": [
+    "External task/config snapshot closure port connection is proposed but not implemented (types/service owners).",
+    "Sanitized metadata is retained on provider error; service attempt forwarding is proposed but not implemented.",
+    "No paid API/Claude/extra LLM calls.",
+    "No SS31 cost0 assertion or reservation refund.",
+    "No whole R13/R14 suite, build/bundle generation, remote push/PR/release."
+  ]
+}

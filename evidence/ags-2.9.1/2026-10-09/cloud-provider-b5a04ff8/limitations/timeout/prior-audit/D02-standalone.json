@@ -1,0 +1,214 @@
+{
+  "id": "D02",
+  "source": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3"
+  },
+  "clock": "real Node timer",
+  "configurationAcceptedBy": "readClassificationRuntime",
+  "elapsedMs": 5.233926999999994,
+  "transportCalls": 1,
+  "realPaidApiCalls": 0,
+  "realClaudeCalls": 0,
+  "providerEvaluations": [],
+  "first": {
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "request-0",
+      "operationId": "operation-0",
+      "originalPrompt": "읽기 전용 검토. \"수정\"은 인용이며 실행 금지. 끝의 금지와 RAW 원문을 보존하라.",
+      "promptDigest": "sha256:22506eeca039a0ddf1d0a9417cac630abb92f90cd6e1a3ebb35c1b8649a304af",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "review",
+          "version": "1",
+          "description": "Synthetic review",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "review"
+          ],
+          "actions": [
+            "review"
+          ],
+          "targets": [
+            "diff"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "fixed diff"
+          ],
+          "exclusions": [
+            "implementation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "security",
+          "version": "1",
+          "description": "Synthetic security",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "security"
+          ],
+          "actions": [
+            "security"
+          ],
+          "targets": [
+            "diff"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "fixed diff"
+          ],
+          "exclusions": [
+            "implementation"
+          ],
+          "dependencies": [
+            "review"
+          ],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "planning",
+          "version": "1",
+          "description": "Synthetic planning",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "planning"
+          ],
+          "actions": [
+            "planning"
+          ],
+          "targets": [
+            "diff"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "fixed diff"
+          ],
+          "exclusions": [
+            "implementation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "synthetic-taxonomy",
+      "classificationCriteriaRef": "skills/orchestrator/references/skill-classification.md",
+      "requestDigest": "sha256:6085dbaab10f5d9d2db980930ab3084b9a938f9321b1c770a010d826100506b0"
+    },
+    "config": {
+      "jevEnabled": false,
+      "mode": "select",
+      "providerProfileRegistryRef": "D02-profiles.json",
+      "externalClassificationAllowed": true,
+      "configRevision": "config-1",
+      "timeoutMs": 2147483648
+    },
+    "profileRevision": "profiles-1",
+    "snapshot": {
+      "taskRevision": null,
+      "configRevision": "config-1",
+      "profileRevision": "profiles-1",
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "requestDigest": "sha256:6085dbaab10f5d9d2db980930ab3084b9a938f9321b1c770a010d826100506b0",
+      "cancelled": false
+    },
+    "attempts": [
+      {
+        "providerKind": "vendor",
+        "profileId": "vendor",
+        "modelId": "synthetic-vendor-fixed",
+        "reasoningEffort": "low",
+        "dispatchState": "unknown",
+        "status": "UNCERTAIN",
+        "errorCode": "PROVIDER_TIMEOUT",
+        "timedOut": true,
+        "usage": {
+          "inputTokens": null,
+          "outputTokens": null,
+          "cachedInputTokens": null,
+          "actualCostUsd": null
+        },
+        "reservedCostUsd": 0.4
+      }
+    ],
+    "response": {
+      "schemaVersion": "1.0.0",
+      "requestId": "request-0",
+      "operationId": "operation-0",
+      "requestDigest": "sha256:6085dbaab10f5d9d2db980930ab3084b9a938f9321b1c770a010d826100506b0",
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status": "UNCERTAIN",
+      "judgments": [],
+      "unresolvedItems": [
+        {
+          "skillId": null,
+          "reasonCode": "PROVIDER_TIMEOUT"
+        }
+      ],
+      "error": {
+        "code": "PROVIDER_TIMEOUT",
+        "retryable": false,
+        "dispatchState": "unknown"
+      }
+    }
+  },
+  "afterFirst": {
+    "limits": {
+      "jev": {
+        "limitUsd": 5,
+        "spentUsd": 0
+      },
+      "vendor:existing-vendor": {
+        "limitUsd": 5,
+        "spentUsd": 0
+      }
+    },
+    "nativeAllowances": {
+      "vendor": {
+        "approvalRef": "synthetic-native-allowance",
+        "remainingCalls": 10
+      }
+    },
+    "invalidCostCeilings": [],
+    "reservations": [
+      {
+        "id": "[\"operation-0\",\"sha256:6085dbaab10f5d9d2db980930ab3084b9a938f9321b1c770a010d826100506b0\",\"vendor\"]",
+        "bucket": "vendor:existing-vendor",
+        "maximumUsd": 0.4,
+        "profileId": "vendor",
+        "nativeProfileId": null
+      }
+    ]
+  },
+  "second": null,
+  "reproduced": true
+}

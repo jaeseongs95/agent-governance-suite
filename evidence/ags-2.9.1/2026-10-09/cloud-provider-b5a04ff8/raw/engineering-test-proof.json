@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-proof",
+  "planDigest": "sha256:ddd35a6b2a1187c3a6fae3ef8ac62b4145f461e889715292180f57f7d4329091",
+  "candidate": {
+    "schemaVersion": "1.0.0",
+    "kind": "engineering-snapshot",
+    "files": [
+      {
+        "path": "mcp-server/src/skill-classification/providers.ts",
+        "digest": "sha256:b8136ca3451aa2b2f2b2e8d2ffccd2b38d71e0edbaf1b6a22f702f345181846d",
+        "size": 17605,
+        "lineCount": 233
+      },
+      {
+        "path": "tests/mcp/skill-classification-providers.test.ts",
+        "digest": "sha256:605eada6cbcaf074a877496671a227abbfc389a7c55faf915350b342feb73468",
+        "size": 26733,
+        "lineCount": 278
+      },
+      {
+        "path": "vitest.config.mjs",
+        "digest": "sha256:cfcc4d27a36e48897ecd19d376decbb8683fc42c8489babcc89846fe9df98fdb",
+        "size": 374,
+        "lineCount": 11
+      }
+    ],
+    "digest": "sha256:0a6c6b24b0a93f08f1b19ac226a251b63172fb4e9bc1cf67851c04ad2d4ac62d"
+  },
+  "proofs": [
+    {
+      "caseId": "SS32_RETRY_AFTER",
+      "status": "DEMONSTRATED",
+      "red": {
+        "path": ".provider-proof/red-receipt.json",
+        "digest": "sha256:bb46e54fd770537da0f3049074653e873e1d7008ba25099509daf82515b4e000"
+      },
+      "green": {
+        "path": ".provider-proof/green-receipt.json",
+        "digest": "sha256:a35bd349067109efc7a93f63fd40cfd34b539a7c2111f7183a458066b6676e55"
+      },
+      "mutationPaths": [
+        "mcp-server/src/skill-classification/providers.ts"
+      ],
+      "assertionWitness": "rateLimitObservation",
+      "reason": "The same 63-case test suite/argv/test digest/config fails on R13 and passes on this candidate. Inspect individual assertion output for causal details; baseline compatibility is separately retained."
+    },
+    {
+      "caseId": "PRE_DISPATCH_BINDING",
+      "status": "DEMONSTRATED",
+      "red": {
+        "path": ".provider-proof/red-receipt.json",
+        "digest": "sha256:bb46e54fd770537da0f3049074653e873e1d7008ba25099509daf82515b4e000"
+      },
+      "green": {
+        "path": ".provider-proof/green-receipt.json",
+        "digest": "sha256:a35bd349067109efc7a93f63fd40cfd34b539a7c2111f7183a458066b6676e55"
+      },
+      "mutationPaths": [
+        "mcp-server/src/skill-classification/providers.ts"
+      ],
+      "assertionWitness": "PRE approval mutation during credential await prevents transport",
+      "reason": "The same 63-case test suite/argv/test digest/config fails on R13 and passes on this candidate. Inspect individual assertion output for causal details; baseline compatibility is separately retained."
+    },
+    {
+      "caseId": "SS27_DUPLICATE_ANSWER",
+      "status": "DEMONSTRATED",
+      "red": {
+        "path": ".provider-proof/red-receipt.json",
+        "digest": "sha256:bb46e54fd770537da0f3049074653e873e1d7008ba25099509daf82515b4e000"
+      },
+      "green": {
+        "path": ".provider-proof/green-receipt.json",
+        "digest": "sha256:a35bd349067109efc7a93f63fd40cfd34b539a7c2111f7183a458066b6676e55"
+      },
+      "mutationPaths": [
+        "mcp-server/src/skill-classification/providers.ts"
+      ],
+      "assertionWitness": "SS27 ambiguous duplicate wire answer",
+      "reason": "The same 63-case test suite/argv/test digest/config fails on R13 and passes on this candidate. Inspect individual assertion output for causal details; baseline compatibility is separately retained."
+    }
+  ]
+}

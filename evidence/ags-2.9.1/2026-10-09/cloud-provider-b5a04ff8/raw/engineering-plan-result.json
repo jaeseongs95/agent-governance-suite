@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:ddd35a6b2a1187c3a6fae3ef8ac62b4145f461e889715292180f57f7d4329091",
+  "caseIds": [
+    "SS32_RETRY_AFTER",
+    "PRE_DISPATCH_BINDING",
+    "SS27_DUPLICATE_ANSWER"
+  ]
+}

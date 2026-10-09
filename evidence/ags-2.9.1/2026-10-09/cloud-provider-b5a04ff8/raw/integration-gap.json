@@ -1,0 +1,290 @@
+{
+  "paidApiCalls": 0,
+  "claudeCalls": 0,
+  "records": [
+    {
+      "snapshotChange": false,
+      "fetchCalls": 1,
+      "keyLookups": 2,
+      "providerObservation": {
+        "httpStatus": 429,
+        "retryAfter": {
+          "kind": "delay-seconds",
+          "seconds": 15
+        }
+      },
+      "serviceAttemptHasObservation": false,
+      "result": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "synthetic",
+          "operationId": "synthetic",
+          "originalPrompt": "Read-only synthetic review",
+          "promptDigest": "sha256:89ceee371d8f3217fa70b953f3ac68a5c5ab3db702cfe79f7a895557438f7a9b",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "Synthetic review",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "review"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic",
+          "classificationCriteriaRef": "criteria",
+          "requestDigest": "sha256:b7d561e692ac89b14337ae893cb0c88623ce7ac2ab00d9ed3d129457af52fd8f"
+        },
+        "config": {
+          "jevEnabled": true,
+          "mode": "select",
+          "providerProfileRegistryRef": "synthetic",
+          "externalClassificationAllowed": true,
+          "configRevision": "c1",
+          "timeoutMs": 1000
+        },
+        "profileRevision": "p1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "c1",
+          "profileRevision": "p1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:b7d561e692ac89b14337ae893cb0c88623ce7ac2ab00d9ed3d129457af52fd8f",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "jev",
+            "profileId": "jev",
+            "modelId": "synthetic-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "UNAVAILABLE",
+            "errorCode": "RATE_LIMITED",
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "synthetic",
+          "operationId": "synthetic",
+          "requestDigest": "sha256:b7d561e692ac89b14337ae893cb0c88623ce7ac2ab00d9ed3d129457af52fd8f",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "PROFILE_UNAVAILABLE"
+            }
+          ],
+          "error": {
+            "code": "PROFILE_UNAVAILABLE",
+            "retryable": false,
+            "dispatchState": "not-started"
+          }
+        }
+      },
+      "budget": {
+        "limits": {
+          "jev": {
+            "limitUsd": 5,
+            "spentUsd": 0
+          }
+        },
+        "nativeAllowances": {},
+        "invalidCostCeilings": [],
+        "reservations": [
+          {
+            "id": "[\"synthetic\",\"sha256:b7d561e692ac89b14337ae893cb0c88623ce7ac2ab00d9ed3d129457af52fd8f\",\"jev\"]",
+            "bucket": "jev",
+            "maximumUsd": 0.4,
+            "profileId": "jev",
+            "nativeProfileId": null
+          }
+        ]
+      }
+    },
+    {
+      "snapshotChange": true,
+      "fetchCalls": 1,
+      "keyLookups": 2,
+      "providerObservation": {
+        "httpStatus": 429,
+        "retryAfter": {
+          "kind": "delay-seconds",
+          "seconds": 15
+        }
+      },
+      "serviceAttemptHasObservation": false,
+      "result": {
+        "request": {
+          "schemaVersion": "1.0.0",
+          "requestId": "synthetic",
+          "operationId": "synthetic",
+          "originalPrompt": "Read-only synthetic review",
+          "promptDigest": "sha256:89ceee371d8f3217fa70b953f3ac68a5c5ab3db702cfe79f7a895557438f7a9b",
+          "confirmedContext": {
+            "taskRevision": null,
+            "objective": null,
+            "actions": null,
+            "targets": null,
+            "constraints": null,
+            "prohibitedActions": null,
+            "background": null
+          },
+          "contextSources": [],
+          "skills": [
+            {
+              "skillId": "review",
+              "version": "1",
+              "description": "Synthetic review",
+              "enabled": true,
+              "installed": true,
+              "hostSupported": true,
+              "capabilities": [
+                "review"
+              ],
+              "actions": [
+                "review"
+              ],
+              "targets": [
+                "diff"
+              ],
+              "constraints": [
+                "read-only"
+              ],
+              "applicability": [
+                "review"
+              ],
+              "exclusions": [
+                "implementation"
+              ],
+              "dependencies": [],
+              "phases": [],
+              "sourceRefs": []
+            }
+          ],
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "taxonomyRevision": "synthetic",
+          "classificationCriteriaRef": "criteria",
+          "requestDigest": "sha256:b7d561e692ac89b14337ae893cb0c88623ce7ac2ab00d9ed3d129457af52fd8f"
+        },
+        "config": {
+          "jevEnabled": true,
+          "mode": "select",
+          "providerProfileRegistryRef": "synthetic",
+          "externalClassificationAllowed": true,
+          "configRevision": "c1",
+          "timeoutMs": 1000
+        },
+        "profileRevision": "p1",
+        "snapshot": {
+          "taskRevision": null,
+          "configRevision": "c1",
+          "profileRevision": "p1",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requestDigest": "sha256:b7d561e692ac89b14337ae893cb0c88623ce7ac2ab00d9ed3d129457af52fd8f",
+          "cancelled": false
+        },
+        "attempts": [
+          {
+            "providerKind": "jev",
+            "profileId": "jev",
+            "modelId": "synthetic-fixed",
+            "reasoningEffort": null,
+            "dispatchState": "started",
+            "status": "UNAVAILABLE",
+            "errorCode": "RATE_LIMITED",
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "synthetic",
+          "operationId": "synthetic",
+          "requestDigest": "sha256:b7d561e692ac89b14337ae893cb0c88623ce7ac2ab00d9ed3d129457af52fd8f",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "STALE_CLASSIFICATION"
+            }
+          ],
+          "error": {
+            "code": "STALE_CLASSIFICATION",
+            "retryable": false,
+            "dispatchState": "not-started"
+          }
+        }
+      },
+      "budget": {
+        "limits": {
+          "jev": {
+            "limitUsd": 5,
+            "spentUsd": 0
+          }
+        },
+        "nativeAllowances": {},
+        "invalidCostCeilings": [],
+        "reservations": [
+          {
+            "id": "[\"synthetic\",\"sha256:b7d561e692ac89b14337ae893cb0c88623ce7ac2ab00d9ed3d129457af52fd8f\",\"jev\"]",
+            "bucket": "jev",
+            "maximumUsd": 0.4,
+            "profileId": "jev",
+            "nativeProfileId": null
+          }
+        ]
+      }
+    }
+  ]
+}

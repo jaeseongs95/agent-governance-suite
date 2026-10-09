@@ -1,0 +1,865 @@
+
+ RUN  v5.0.0 /workspace/ags-cloud-provider-red
+
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS20/21 transmits one bound TypeSafe state/questions request using the exact profile model 32ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS30/32 HTTP 401 is sanitized and is never retried 2ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS30/32 HTTP 403 is sanitized and is never retried 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS30/32 HTTP 429 is sanitized and is never retried 3ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS30/32 HTTP 529 is sanitized and is never retried 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS30/32 HTTP 500 is sanitized and is never retried 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27/28 rejects unknown-id responses rather than producing no-skill 2ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27/28 rejects missing-id responses rather than producing no-skill 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27/28 rejects wrong-type responses rather than producing no-skill 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27/28 rejects nan responses rather than producing no-skill 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27/28 rejects out-of-range responses rather than producing no-skill 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27/28 rejects wrong-model responses rather than producing no-skill 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27/28 rejects malformed responses rather than producing no-skill 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS29 intermediate Noul is UNCERTAIN; low calibrated not-needed remains explicit 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS28 input over limit never sends and never silently drops its trailing prohibition 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS28 counts actual UTF-8 stream bytes before parsing despite a false Content-Length 2ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS28 accepts an exact byte ceiling without trusting an oversized Content-Length 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS28 multiple individually small chunks cannot evade the cumulative byte ceiling 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS28 malformed bounded JSON and invalid UTF-8 never become classification success 3ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS28 partial stream failure is sanitized and releases its reader 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS39 rejects missing approval, unsupported models/options and absent credentials before transport 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS39 supplied vendor wire mapping sees fixed model/effort and preserves meaningful metadata 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS39 native success requires an actual invoked structured capability with its approved evidence 1ms
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 HTTP 429 retains delay-seconds without retrying or exposing raw data 6ms
+   → expected Error: RATE_LIMITED { …(3) } to match object { code: 'RATE_LIMITED', …(2) }
+(1 matching property omitted from actual)
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 HTTP 529 retains delay-seconds without retrying or exposing raw data 1ms
+   → expected Error: RATE_LIMITED { …(3) } to match object { code: 'RATE_LIMITED', …(2) }
+(1 matching property omitted from actual)
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 canonical HTTP-date is observation only, even when already past 2ms
+   → expected Error: RATE_LIMITED { …(3) } to match object { rateLimitObservation: { …(2) } }
+(3 matching properties omitted from actual)
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After SECRET_SENTINEL is suppressed 1ms
+   → expected Error: RATE_LIMITED { …(3) } to match object { rateLimitObservation: { …(2) } }
+(3 matching properties omitted from actual)
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After 15 SECRET_SENTINEL is suppressed 1ms
+   → expected Error: RATE_LIMITED { …(3) } to match object { rateLimitObservation: { …(2) } }
+(3 matching properties omitted from actual)
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After -1 is suppressed 1ms
+   → expected Error: RATE_LIMITED { …(3) } to match object { rateLimitObservation: { …(2) } }
+(3 matching properties omitted from actual)
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After 1.5 is suppressed 1ms
+   → expected Error: RATE_LIMITED { …(3) } to match object { rateLimitObservation: { …(2) } }
+(3 matching properties omitted from actual)
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After 9007199254740992 is suppressed 1ms
+   → expected Error: RATE_LIMITED { …(3) } to match object { rateLimitObservation: { …(2) } }
+(3 matching properties omitted from actual)
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After Mon, 06 Nov 1994 08:49:37 GMT is suppressed 1ms
+   → expected Error: RATE_LIMITED { …(3) } to match object { rateLimitObservation: { …(2) } }
+(3 matching properties omitted from actual)
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After Sun, 31 Feb 1994 08:49:37 GMT is suppressed 1ms
+   → expected Error: RATE_LIMITED { …(3) } to match object { rateLimitObservation: { …(2) } }
+(3 matching properties omitted from actual)
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 valid delay-seconds 0 remains exact safe numeric observation 1ms
+   → expected Error: RATE_LIMITED { …(3) } to match object { rateLimitObservation: { …(2) } }
+(3 matching properties omitted from actual)
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 valid delay-seconds 00015 remains exact safe numeric observation 1ms
+   → expected Error: RATE_LIMITED { …(3) } to match object { rateLimitObservation: { …(2) } }
+(3 matching properties omitted from actual)
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 valid delay-seconds 9007199254740991 remains exact safe numeric observation 1ms
+   → expected Error: RATE_LIMITED { …(3) } to match object { rateLimitObservation: { …(2) } }
+(3 matching properties omitted from actual)
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 absent Retry-After and non-rate-limit responses do not invent observations 1ms
+   → expected Error: RATE_LIMITED { …(3) } to match object { rateLimitObservation: { …(2) } }
+(3 matching properties omitted from actual)
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE approval mutation during credential await prevents transport 2ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE approval-ref mutation during credential await prevents transport 1ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE model mutation during credential await prevents transport 3ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE reasoning mutation during credential await prevents transport 1ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE endpoint mutation during credential await prevents transport 2ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE adapter-revision mutation during credential await prevents transport 4ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE adapter-function mutation during credential await prevents transport 1ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE credential-function mutation during credential await prevents transport 1ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE profile mutation during credential await prevents transport 1ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE qualification mutation during credential await prevents transport 1ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE request mutation during credential await prevents transport 1ms
+   → expected Error: INVALID_PROVIDER_REQUEST { …(3) } to match object { code: 'STALE_CLASSIFICATION', …(1) }
+(1 matching property omitted from actual)
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE route replacement while awaiting credentials is not the original approved route 2ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE qualification expiring during credential await prevents transport 3ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE synchronous encode mutation is fenced immediately before fetch 1ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE encode cannot change its bound profile snapshot 1ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE encode cannot change its bound request snapshot 1ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE cancellation during credential await is confirmed not-started at this provider boundary 1ms
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 ambiguous duplicate wire answer "review":{"type":"noul","noul":0.1},"review":{"type":"noul","noul":0.9} is INVALID 1ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 ambiguous duplicate wire answer "review":{"type":"noul","noul":0.1},"revi\u0065w":{"type":"noul","noul":0.9} is INVALID 1ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 ambiguous duplicate wire answer "review":{"type":"noul","noul":0.9},"review":{"type":"noul","noul":0.9} is INVALID 1ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 ambiguous duplicate wire answer "review":{"type":"noul","noul":0.1,"noul":0.9} is INVALID 1ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 ambiguous duplicate wire answer "review":{"type":"other","type":"noul","noul":0.9} is INVALID 1ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 duplicate answers containers cannot hide contradictory earlier answers 1ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 unique escaped answer keys and JSON-looking text are accepted unchanged 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 unrelated metadata duplicates retain JSON.parse semantics, not a global new JSON policy 1ms
+ × tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 a decorated JEV adapter retains its raw answer-key check 1ms
+   → promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+
+ Test Files  1 failed (1)
+      Tests  37 failed | 26 passed (63)
+   Start at  03:25:37
+   Duration  538ms (tests 43%, transform 32%, import 24%, worker 1%)
+
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 37 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 HTTP 429 retains delay-seconds without retrying or exposing raw data
+AssertionError: expected Error: RATE_LIMITED { …(3) } to match object { code: 'RATE_LIMITED', …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
++ ClassificationProviderError {
+    "code": "RATE_LIMITED",
+    "dispatchState": "started",
+-   "rateLimitObservation": {
+-     "httpStatus": 429,
+-     "retryAfter": {
+-       "kind": "delay-seconds",
+-       "seconds": 15,
+-     },
+-   },
+  }
+
+ ❯ tests/mcp/skill-classification-providers.test.ts:149:19
+    147|     f.fetcher.mockResolvedValue(new Response("SECRET_SENTINEL private …
+    148|     const error = await f.provider.classify(f.request, f.profile, new …
+    149|     expect(error).toMatchObject({code: "RATE_LIMITED", dispatchState: …
+       |                   ^
+    150|     expect(f.fetcher).toHaveBeenCalledTimes(1);
+    151|     expect(JSON.stringify(error)).not.toContain("SECRET_SENTINEL");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/37]⎯
+
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 HTTP 529 retains delay-seconds without retrying or exposing raw data
+AssertionError: expected Error: RATE_LIMITED { …(3) } to match object { code: 'RATE_LIMITED', …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
++ ClassificationProviderError {
+    "code": "RATE_LIMITED",
+    "dispatchState": "started",
+-   "rateLimitObservation": {
+-     "httpStatus": 529,
+-     "retryAfter": {
+-       "kind": "delay-seconds",
+-       "seconds": 15,
+-     },
+-   },
+  }
+
+ ❯ tests/mcp/skill-classification-providers.test.ts:149:19
+    147|     f.fetcher.mockResolvedValue(new Response("SECRET_SENTINEL private …
+    148|     const error = await f.provider.classify(f.request, f.profile, new …
+    149|     expect(error).toMatchObject({code: "RATE_LIMITED", dispatchState: …
+       |                   ^
+    150|     expect(f.fetcher).toHaveBeenCalledTimes(1);
+    151|     expect(JSON.stringify(error)).not.toContain("SECRET_SENTINEL");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/37]⎯
+
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 canonical HTTP-date is observation only, even when already past
+AssertionError: expected Error: RATE_LIMITED { …(3) } to match object { rateLimitObservation: { …(2) } }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "rateLimitObservation": {
+-     "httpStatus": 529,
+-     "retryAfter": {
+-       "at": "1994-11-06T08:49:37.000Z",
+-       "kind": "http-date",
+-     },
+-   },
++ ClassificationProviderError {
++   "message": "RATE_LIMITED",
++   "code": "RATE_LIMITED",
++   "dispatchState": "started",
++   "invalid": false,
+  }
+
+ ❯ tests/mcp/skill-classification-providers.test.ts:157:19
+    155|     f.fetcher.mockResolvedValue(new Response("", {status: 529, headers…
+    156|     const error = await f.provider.classify(f.request, f.profile, new …
+    157|     expect(error).toMatchObject({rateLimitObservation: {httpStatus: 52…
+       |                   ^
+    158|     expect(f.fetcher).toHaveBeenCalledTimes(1);
+    159|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/37]⎯
+
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After SECRET_SENTINEL is suppressed
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After 15 SECRET_SENTINEL is suppressed
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After -1 is suppressed
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After 1.5 is suppressed
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After 9007199254740992 is suppressed
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After Mon, 06 Nov 1994 08:49:37 GMT is suppressed
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After Sun, 31 Feb 1994 08:49:37 GMT is suppressed
+AssertionError: expected Error: RATE_LIMITED { …(3) } to match object { rateLimitObservation: { …(2) } }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "rateLimitObservation": {
+-     "httpStatus": 429,
+-     "retryAfter": null,
+-   },
++ ClassificationProviderError {
++   "message": "RATE_LIMITED",
++   "code": "RATE_LIMITED",
++   "dispatchState": "started",
++   "invalid": false,
+  }
+
+ ❯ tests/mcp/skill-classification-providers.test.ts:163:19
+    161|     const f = fixture(); f.fetcher.mockResolvedValue(new Response("SEC…
+    162|     const error = await f.provider.classify(f.request, f.profile, new …
+    163|     expect(error).toMatchObject({rateLimitObservation: {httpStatus: 42…
+       |                   ^
+    164|     expect(JSON.stringify(error)).not.toContain("SECRET_SENTINEL"); ex…
+    165|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/37]⎯
+
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 valid delay-seconds 0 remains exact safe numeric observation
+AssertionError: expected Error: RATE_LIMITED { …(3) } to match object { rateLimitObservation: { …(2) } }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "rateLimitObservation": {
+-     "httpStatus": 429,
+-     "retryAfter": {
+-       "kind": "delay-seconds",
+-       "seconds": 0,
+-     },
+-   },
++ ClassificationProviderError {
++   "message": "RATE_LIMITED",
++   "code": "RATE_LIMITED",
++   "dispatchState": "started",
++   "invalid": false,
+  }
+
+ ❯ tests/mcp/skill-classification-providers.test.ts:169:19
+    167|     const f = fixture(); f.fetcher.mockResolvedValue(new Response("", …
+    168|     const error = await f.provider.classify(f.request, f.profile, new …
+    169|     expect(error).toMatchObject({rateLimitObservation: {httpStatus: 42…
+       |                   ^
+    170|     expect(f.fetcher).toHaveBeenCalledTimes(1);
+    171|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/37]⎯
+
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 valid delay-seconds 00015 remains exact safe numeric observation
+AssertionError: expected Error: RATE_LIMITED { …(3) } to match object { rateLimitObservation: { …(2) } }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "rateLimitObservation": {
+-     "httpStatus": 429,
+-     "retryAfter": {
+-       "kind": "delay-seconds",
+-       "seconds": 15,
+-     },
+-   },
++ ClassificationProviderError {
++   "message": "RATE_LIMITED",
++   "code": "RATE_LIMITED",
++   "dispatchState": "started",
++   "invalid": false,
+  }
+
+ ❯ tests/mcp/skill-classification-providers.test.ts:169:19
+    167|     const f = fixture(); f.fetcher.mockResolvedValue(new Response("", …
+    168|     const error = await f.provider.classify(f.request, f.profile, new …
+    169|     expect(error).toMatchObject({rateLimitObservation: {httpStatus: 42…
+       |                   ^
+    170|     expect(f.fetcher).toHaveBeenCalledTimes(1);
+    171|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/37]⎯
+
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 valid delay-seconds 9007199254740991 remains exact safe numeric observation
+AssertionError: expected Error: RATE_LIMITED { …(3) } to match object { rateLimitObservation: { …(2) } }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "rateLimitObservation": {
+-     "httpStatus": 429,
+-     "retryAfter": {
+-       "kind": "delay-seconds",
+-       "seconds": 9007199254740991,
+-     },
+-   },
++ ClassificationProviderError {
++   "message": "RATE_LIMITED",
++   "code": "RATE_LIMITED",
++   "dispatchState": "started",
++   "invalid": false,
+  }
+
+ ❯ tests/mcp/skill-classification-providers.test.ts:169:19
+    167|     const f = fixture(); f.fetcher.mockResolvedValue(new Response("", …
+    168|     const error = await f.provider.classify(f.request, f.profile, new …
+    169|     expect(error).toMatchObject({rateLimitObservation: {httpStatus: 42…
+       |                   ^
+    170|     expect(f.fetcher).toHaveBeenCalledTimes(1);
+    171|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/37]⎯
+
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 absent Retry-After and non-rate-limit responses do not invent observations
+AssertionError: expected Error: RATE_LIMITED { …(3) } to match object { rateLimitObservation: { …(2) } }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "rateLimitObservation": {
+-     "httpStatus": 429,
+-     "retryAfter": null,
+-   },
++ ClassificationProviderError {
++   "message": "RATE_LIMITED",
++   "code": "RATE_LIMITED",
++   "dispatchState": "started",
++   "invalid": false,
+  }
+
+ ❯ tests/mcp/skill-classification-providers.test.ts:176:19
+    174|     const first = await f.provider.classify(f.request, f.profile, new …
+    175|     const second = await f.provider.classify(f.request, f.profile, new…
+    176|     expect(first).toMatchObject({rateLimitObservation: {httpStatus: 42…
+       |                   ^
+    177|     expect(second).toMatchObject({code: "API_UNAVAILABLE", rateLimitOb…
+    178|     expect(f.fetcher).toHaveBeenCalledTimes(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/37]⎯
+
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE approval mutation during credential await prevents transport
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE approval-ref mutation during credential await prevents transport
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE model mutation during credential await prevents transport
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE reasoning mutation during credential await prevents transport
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE endpoint mutation during credential await prevents transport
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE adapter-revision mutation during credential await prevents transport
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE adapter-function mutation during credential await prevents transport
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE credential-function mutation during credential await prevents transport
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE profile mutation during credential await prevents transport
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE qualification mutation during credential await prevents transport
+AssertionError: promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "diagnostics": {
++     "scoreKind": "noul_probability",
++     "scores": [
++       {
++         "skillId": "review",
++         "value": 0.82,
++       },
++     ],
++   },
++   "dispatchState": "started",
++   "response": {
++     "error": null,
++     "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "judgments": [
++       {
++         "judgment": "needed",
++         "reasonRefs": [
++           "profile:jev:p1",
++         ],
++         "skillId": "review",
++         "uncertaintyReason": null,
++       },
++     ],
++     "operationId": "o",
++     "requestDigest": "sha256:025c760db29a1b9da38c487014f3450e75fec1f5e69eec2ccf756804e41a9840",
++     "requestId": "r",
++     "schemaVersion": "1.0.0",
++     "status": "SUCCESS",
++     "unresolvedItems": [],
++   },
++   "usage": {
++     "actualCostUsd": null,
++     "cachedInputTokens": null,
++     "inputTokens": 354,
++     "outputTokens": 58,
++   },
+  }
+
+ ❯ tests/mcp/skill-classification-providers.test.ts:199:26
+    197|     if (change === "request") f.request.originalPrompt = "Different ob…
+    198|     release("SECRET_SENTINEL");
+    199|     await expect(pending).rejects.toMatchObject({code: "STALE_CLASSIFI…
+       |                          ^
+    200|     expect(f.fetcher).not.toHaveBeenCalled();
+    201|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/37]⎯
+
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE request mutation during credential await prevents transport
+AssertionError: expected Error: INVALID_PROVIDER_REQUEST { …(3) } to match object { code: 'STALE_CLASSIFICATION', …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "STALE_CLASSIFICATION",
++ ClassificationProviderError {
++   "code": "INVALID_PROVIDER_REQUEST",
+    "dispatchState": "not-started",
+  }
+
+ ❯ tests/mcp/skill-classification-providers.test.ts:199:26
+    197|     if (change === "request") f.request.originalPrompt = "Different ob…
+    198|     release("SECRET_SENTINEL");
+    199|     await expect(pending).rejects.toMatchObject({code: "STALE_CLASSIFI…
+       |                          ^
+    200|     expect(f.fetcher).not.toHaveBeenCalled();
+    201|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/37]⎯
+
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE route replacement while awaiting credentials is not the original approved route
+AssertionError: promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "diagnostics": {
++     "scoreKind": "noul_probability",
++     "scores": [
++       {
++         "skillId": "review",
++         "value": 0.82,
++       },
++     ],
++   },
++   "dispatchState": "started",
++   "response": {
++     "error": null,
++     "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "judgments": [
++       {
++         "judgment": "needed",
++         "reasonRefs": [
++           "profile:jev:p1",
++         ],
++         "skillId": "review",
++         "uncertaintyReason": null,
++       },
++     ],
++     "operationId": "o",
++     "requestDigest": "sha256:025c760db29a1b9da38c487014f3450e75fec1f5e69eec2ccf756804e41a9840",
++     "requestId": "r",
++     "schemaVersion": "1.0.0",
++     "status": "SUCCESS",
++     "unresolvedItems": [],
++   },
++   "usage": {
++     "actualCostUsd": null,
++     "cachedInputTokens": null,
++     "inputTokens": 354,
++     "outputTokens": 58,
++   },
+  }
+
+ ❯ tests/mcp/skill-classification-providers.test.ts:208:26
+    206|     const pending = provider.classify(f.request, f.profile, new AbortC…
+    207|     routes[0] = {...f.route}; release("SECRET_SENTINEL");
+    208|     await expect(pending).rejects.toMatchObject({code: "STALE_CLASSIFI…
+       |                          ^
+    209|     expect(f.fetcher).not.toHaveBeenCalled();
+    210|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/37]⎯
+
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE qualification expiring during credential await prevents transport
+AssertionError: promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "diagnostics": {
++     "scoreKind": "noul_probability",
++     "scores": [
++       {
++         "skillId": "review",
++         "value": 0.82,
++       },
++     ],
++   },
++   "dispatchState": "started",
++   "response": {
++     "error": null,
++     "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "judgments": [
++       {
++         "judgment": "needed",
++         "reasonRefs": [
++           "profile:jev:p1",
++         ],
++         "skillId": "review",
++         "uncertaintyReason": null,
++       },
++     ],
++     "operationId": "o",
++     "requestDigest": "sha256:025c760db29a1b9da38c487014f3450e75fec1f5e69eec2ccf756804e41a9840",
++     "requestId": "r",
++     "schemaVersion": "1.0.0",
++     "status": "SUCCESS",
++     "unresolvedItems": [],
++   },
++   "usage": {
++     "actualCostUsd": null,
++     "cachedInputTokens": null,
++     "inputTokens": 354,
++     "outputTokens": 58,
++   },
+  }
+
+ ❯ tests/mcp/skill-classification-providers.test.ts:217:26
+    215|     const pending = f.provider.classify(f.request, f.profile, new Abor…
+    216|     vi.setSystemTime(new Date("2026-10-09T00:00:01Z")); release("SECRE…
+    217|     await expect(pending).rejects.toMatchObject({code: "STALE_CLASSIFI…
+       |                          ^
+    218|     expect(f.fetcher).not.toHaveBeenCalled();
+    219|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/37]⎯
+
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE synchronous encode mutation is fenced immediately before fetch
+AssertionError: promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "diagnostics": {
++     "scoreKind": "noul_probability",
++     "scores": [
++       {
++         "skillId": "review",
++         "value": 0.82,
++       },
++     ],
++   },
++   "dispatchState": "started",
++   "response": {
++     "error": null,
++     "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "judgments": [
++       {
++         "judgment": "needed",
++         "reasonRefs": [
++           "profile:jev:p1",
++         ],
++         "skillId": "review",
++         "uncertaintyReason": null,
++       },
++     ],
++     "operationId": "o",
++     "requestDigest": "sha256:025c760db29a1b9da38c487014f3450e75fec1f5e69eec2ccf756804e41a9840",
++     "requestId": "r",
++     "schemaVersion": "1.0.0",
++     "status": "SUCCESS",
++     "unresolvedItems": [],
++   },
++   "usage": {
++     "actualCostUsd": null,
++     "cachedInputTokens": null,
++     "inputTokens": 354,
++     "outputTokens": 58,
++   },
+  }
+
+ ❯ tests/mcp/skill-classification-providers.test.ts:223:90
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/37]⎯
+
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE encode cannot change its bound profile snapshot
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE encode cannot change its bound request snapshot
+AssertionError: promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "diagnostics": {
++     "scoreKind": "noul_probability",
++     "scores": [
++       {
++         "skillId": "review",
++         "value": 0.82,
++       },
++     ],
++   },
++   "dispatchState": "started",
++   "response": {
++     "error": null,
++     "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "judgments": [
++       {
++         "judgment": "needed",
++         "reasonRefs": [
++           "profile:jev:p1",
++         ],
++         "skillId": "review",
++         "uncertaintyReason": null,
++       },
++     ],
++     "operationId": "o",
++     "requestDigest": "sha256:025c760db29a1b9da38c487014f3450e75fec1f5e69eec2ccf756804e41a9840",
++     "requestId": "r",
++     "schemaVersion": "1.0.0",
++     "status": "SUCCESS",
++     "unresolvedItems": [],
++   },
++   "usage": {
++     "actualCostUsd": null,
++     "cachedInputTokens": null,
++     "inputTokens": 354,
++     "outputTokens": 58,
++   },
+  }
+
+ ❯ tests/mcp/skill-classification-providers.test.ts:234:90
+    232|       return encoded;
+    233|     }};
+    234|     await expect(f.provider.classify(f.request, f.profile, new AbortCo…
+       |                                                                                          ^
+    235|     expect(f.fetcher).not.toHaveBeenCalled();
+    236|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/37]⎯
+
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 ambiguous duplicate wire answer "review":{"type":"noul","noul":0.1},"review":{"type":"noul","noul":0.9} is INVALID
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 ambiguous duplicate wire answer "review":{"type":"noul","noul":0.1},"revi\u0065w":{"type":"noul","noul":0.9} is INVALID
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 ambiguous duplicate wire answer "review":{"type":"noul","noul":0.9},"review":{"type":"noul","noul":0.9} is INVALID
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 ambiguous duplicate wire answer "review":{"type":"noul","noul":0.1,"noul":0.9} is INVALID
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 ambiguous duplicate wire answer "review":{"type":"other","type":"noul","noul":0.9} is INVALID
+AssertionError: promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "diagnostics": {
++     "scoreKind": "noul_probability",
++     "scores": [
++       {
++         "skillId": "review",
++         "value": 0.9,
++       },
++     ],
++   },
++   "dispatchState": "started",
++   "response": {
++     "error": null,
++     "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "judgments": [
++       {
++         "judgment": "needed",
++         "reasonRefs": [
++           "profile:jev:p1",
++         ],
++         "skillId": "review",
++         "uncertaintyReason": null,
++       },
++     ],
++     "operationId": "o",
++     "requestDigest": "sha256:025c760db29a1b9da38c487014f3450e75fec1f5e69eec2ccf756804e41a9840",
++     "requestId": "r",
++     "schemaVersion": "1.0.0",
++     "status": "SUCCESS",
++     "unresolvedItems": [],
++   },
++   "usage": {
++     "actualCostUsd": null,
++     "cachedInputTokens": null,
++     "inputTokens": 1,
++     "outputTokens": 1,
++   },
+  }
+
+ ❯ tests/mcp/skill-classification-providers.test.ts:252:90
+    250|   ])("SS27 ambiguous duplicate wire answer %s is INVALID", async answe…
+    251|     const f = fixture(); f.fetcher.mockResolvedValue(new Response(`{"m…
+    252|     await expect(f.provider.classify(f.request, f.profile, new AbortCo…
+       |                                                                                          ^
+    253|     expect(f.fetcher).toHaveBeenCalledTimes(1);
+    254|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/37]⎯
+
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 duplicate answers containers cannot hide contradictory earlier answers
+AssertionError: promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "diagnostics": {
++     "scoreKind": "noul_probability",
++     "scores": [
++       {
++         "skillId": "review",
++         "value": 0.9,
++       },
++     ],
++   },
++   "dispatchState": "started",
++   "response": {
++     "error": null,
++     "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "judgments": [
++       {
++         "judgment": "needed",
++         "reasonRefs": [
++           "profile:jev:p1",
++         ],
++         "skillId": "review",
++         "uncertaintyReason": null,
++       },
++     ],
++     "operationId": "o",
++     "requestDigest": "sha256:025c760db29a1b9da38c487014f3450e75fec1f5e69eec2ccf756804e41a9840",
++     "requestId": "r",
++     "schemaVersion": "1.0.0",
++     "status": "SUCCESS",
++     "unresolvedItems": [],
++   },
++   "usage": {
++     "actualCostUsd": null,
++     "cachedInputTokens": null,
++     "inputTokens": 1,
++     "outputTokens": 1,
++   },
+  }
+
+ ❯ tests/mcp/skill-classification-providers.test.ts:257:90
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/37]⎯
+
+ FAIL  tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 a decorated JEV adapter retains its raw answer-key check
+AssertionError: promise resolved "{ response: { …(9) }, …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "diagnostics": {
++     "scoreKind": "noul_probability",
++     "scores": [
++       {
++         "skillId": "review",
++         "value": 0.9,
++       },
++     ],
++   },
++   "dispatchState": "started",
++   "response": {
++     "error": null,
++     "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
++     "judgments": [
++       {
++         "judgment": "needed",
++         "reasonRefs": [
++           "profile:jev:p1",
++         ],
++         "skillId": "review",
++         "uncertaintyReason": null,
++       },
++     ],
++     "operationId": "o",
++     "requestDigest": "sha256:025c760db29a1b9da38c487014f3450e75fec1f5e69eec2ccf756804e41a9840",
++     "requestId": "r",
++     "schemaVersion": "1.0.0",
++     "status": "SUCCESS",
++     "unresolvedItems": [],
++   },
++   "usage": {
++     "actualCostUsd": null,
++     "cachedInputTokens": null,
++     "inputTokens": 1,
++     "outputTokens": 1,
++   },
+  }
+
+ ❯ tests/mcp/skill-classification-providers.test.ts:275:90
+    273|     if (f.route.kind === "remote") f.route.adapter = {...jevNoulWireAd…
+    274|     f.fetcher.mockResolvedValue(new Response('{"model":"fixed-jev","an…
+    275|     await expect(f.provider.classify(f.request, f.profile, new AbortCo…
+       |                                                                                          ^
+    276|     expect(decode).not.toHaveBeenCalled(); expect(f.fetcher).toHaveBee…
+    277|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/37]⎯
+
+{"harness": "test-subreaper", "ownerPid": 2460, "runnerPid": 2461, "reapedPids": [2461], "remainingChildren": false, "runnerExitCode": 1, "cancelled": false}

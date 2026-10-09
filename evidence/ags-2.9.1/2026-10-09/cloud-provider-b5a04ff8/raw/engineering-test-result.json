@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "CONSISTENT",
+  "targetDigest": "sha256:0a6c6b24b0a93f08f1b19ac226a251b63172fb4e9bc1cf67851c04ad2d4ac62d",
+  "reportDigest": "sha256:ed863e4b7ad8015e4975ff7d1b39e00bfa3ba211c659b7147355c073c31afa81",
+  "issues": [],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

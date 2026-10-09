@@ -1,0 +1,30 @@
+{
+  "scope": "All publication file bytes, including exact code diff and synthetic raw logs",
+  "potentialMatches": [],
+  "checks": [
+    "email",
+    "credential_prefix",
+    "private_key_header",
+    "private_chat_identifier"
+  ],
+  "excluded": [
+    "Original candidate-commit.patch (personal author name/email)",
+    "Timeout test-only-commit.patch (personal author name/email)",
+    "Private conversations/chat transcripts",
+    "Initial 60-case results (superseded, not final 63-case evidence)"
+  ],
+  "preserved": [
+    "Exact candidate.diff",
+    "Exact source/base and source/candidate Git blobs",
+    "Selected raw test receipts/logs and synthetic inputs"
+  ],
+  "syntheticSentinels": [
+    "SYNTHETIC_ONLY",
+    "SECRET_SENTINEL"
+  ],
+  "limitations": [
+    "Pattern scanning is not an exhaustive proof that arbitrary hidden secrets do not exist.",
+    "Workspace paths and process identifiers retained as non-personal test execution provenance.",
+    "No actual credential environment was read or exported."
+  ]
+}

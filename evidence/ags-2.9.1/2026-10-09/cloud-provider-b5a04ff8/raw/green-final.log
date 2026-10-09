@@ -1,0 +1,74 @@
+
+ RUN  v5.0.0 /workspace/ags-cloud-provider-fix
+
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS20/21 transmits one bound TypeSafe state/questions request using the exact profile model 36ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS30/32 HTTP 401 is sanitized and is never retried 4ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS30/32 HTTP 403 is sanitized and is never retried 2ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS30/32 HTTP 429 is sanitized and is never retried 2ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS30/32 HTTP 529 is sanitized and is never retried 2ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS30/32 HTTP 500 is sanitized and is never retried 2ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27/28 rejects unknown-id responses rather than producing no-skill 2ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27/28 rejects missing-id responses rather than producing no-skill 2ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27/28 rejects wrong-type responses rather than producing no-skill 2ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27/28 rejects nan responses rather than producing no-skill 2ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27/28 rejects out-of-range responses rather than producing no-skill 2ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27/28 rejects wrong-model responses rather than producing no-skill 3ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27/28 rejects malformed responses rather than producing no-skill 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS29 intermediate Noul is UNCERTAIN; low calibrated not-needed remains explicit 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS28 input over limit never sends and never silently drops its trailing prohibition 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS28 counts actual UTF-8 stream bytes before parsing despite a false Content-Length 3ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS28 accepts an exact byte ceiling without trusting an oversized Content-Length 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS28 multiple individually small chunks cannot evade the cumulative byte ceiling 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS28 malformed bounded JSON and invalid UTF-8 never become classification success 2ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS28 partial stream failure is sanitized and releases its reader 2ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS39 rejects missing approval, unsupported models/options and absent credentials before transport 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS39 supplied vendor wire mapping sees fixed model/effort and preserves meaningful metadata 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS39 native success requires an actual invoked structured capability with its approved evidence 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 HTTP 429 retains delay-seconds without retrying or exposing raw data 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 HTTP 529 retains delay-seconds without retrying or exposing raw data 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 canonical HTTP-date is observation only, even when already past 2ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After SECRET_SENTINEL is suppressed 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After 15 SECRET_SENTINEL is suppressed 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After -1 is suppressed 2ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After 1.5 is suppressed 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After 9007199254740992 is suppressed 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After Mon, 06 Nov 1994 08:49:37 GMT is suppressed 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 unsafe Retry-After Sun, 31 Feb 1994 08:49:37 GMT is suppressed 2ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 valid delay-seconds 0 remains exact safe numeric observation 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 valid delay-seconds 00015 remains exact safe numeric observation 2ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 valid delay-seconds 9007199254740991 remains exact safe numeric observation 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS32 absent Retry-After and non-rate-limit responses do not invent observations 2ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE approval mutation during credential await prevents transport 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE approval-ref mutation during credential await prevents transport 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE model mutation during credential await prevents transport 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE reasoning mutation during credential await prevents transport 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE endpoint mutation during credential await prevents transport 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE adapter-revision mutation during credential await prevents transport 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE adapter-function mutation during credential await prevents transport 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE credential-function mutation during credential await prevents transport 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE profile mutation during credential await prevents transport 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE qualification mutation during credential await prevents transport 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE request mutation during credential await prevents transport 0ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE route replacement while awaiting credentials is not the original approved route 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE qualification expiring during credential await prevents transport 3ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE synchronous encode mutation is fenced immediately before fetch 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE encode cannot change its bound profile snapshot 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE encode cannot change its bound request snapshot 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > PRE cancellation during credential await is confirmed not-started at this provider boundary 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 ambiguous duplicate wire answer "review":{"type":"noul","noul":0.1},"review":{"type":"noul","noul":0.9} is INVALID 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 ambiguous duplicate wire answer "review":{"type":"noul","noul":0.1},"revi\u0065w":{"type":"noul","noul":0.9} is INVALID 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 ambiguous duplicate wire answer "review":{"type":"noul","noul":0.9},"review":{"type":"noul","noul":0.9} is INVALID 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 ambiguous duplicate wire answer "review":{"type":"noul","noul":0.1,"noul":0.9} is INVALID 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 ambiguous duplicate wire answer "review":{"type":"other","type":"noul","noul":0.9} is INVALID 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 duplicate answers containers cannot hide contradictory earlier answers 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 unique escaped answer keys and JSON-looking text are accepted unchanged 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 unrelated metadata duplicates retain JSON.parse semantics, not a global new JSON policy 1ms
+ ✓ tests/mcp/skill-classification-providers.test.ts > approved classification wire adapters > SS27 a decorated JEV adapter retains its raw answer-key check 1ms
+
+ Test Files  1 passed (1)
+      Tests  63 passed (63)
+   Start at  03:25:38
+   Duration  376ms (tests 46%, transform 28%, import 25%, worker 1%)
+
+
+{"harness": "test-subreaper", "ownerPid": 2507, "runnerPid": 2508, "reapedPids": [2508], "remainingChildren": false, "runnerExitCode": 0, "cancelled": false}

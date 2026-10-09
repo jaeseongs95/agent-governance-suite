@@ -1,0 +1,137 @@
+{
+  "baseCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "baseTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "branch": "codex/cloud-provider-boundary-fix",
+  "commit": "b5a04ff82f9863383de00d75de5841af5223041b",
+  "tree": "f82f927c49ba368e17843abc8548ef9cea60107c",
+  "changedFiles": [
+    "mcp-server/src/skill-classification/providers.ts",
+    "tests/mcp/skill-classification-providers.test.ts"
+  ],
+  "files": [
+    {
+      "path": "mcp-server/src/skill-classification/providers.ts",
+      "sha256": "b8136ca3451aa2b2f2b2e8d2ffccd2b38d71e0edbaf1b6a22f702f345181846d",
+      "r13Sha256": "f191c46db32f38248ebdd23be725b426a0b3020e0bb464b36bcc57521983651c",
+      "matchesR13": false,
+      "excluded": false
+    },
+    {
+      "path": "tests/mcp/skill-classification-providers.test.ts",
+      "sha256": "605eada6cbcaf074a877496671a227abbfc389a7c55faf915350b342feb73468",
+      "r13Sha256": "4dcb29e1b6e30460a4dbfb70fc2d6e3eab2b90ea66d933dfe33a7acfd56c2f11",
+      "matchesR13": false,
+      "excluded": false
+    },
+    {
+      "path": "vitest.config.mjs",
+      "sha256": "cfcc4d27a36e48897ecd19d376decbb8683fc42c8489babcc89846fe9df98fdb",
+      "r13Sha256": "cfcc4d27a36e48897ecd19d376decbb8683fc42c8489babcc89846fe9df98fdb",
+      "matchesR13": true,
+      "excluded": false
+    },
+    {
+      "path": "mcp-server/src/skill-classification/gateway.ts",
+      "sha256": "80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+      "r13Sha256": "80eac1b6c9ea91f5e3841baaa021940b9f5c787d190745e8f2a3c6924034db4b",
+      "matchesR13": true,
+      "excluded": true
+    },
+    {
+      "path": "mcp-server/src/skill-classification/service.ts",
+      "sha256": "c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb",
+      "r13Sha256": "c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb",
+      "matchesR13": true,
+      "excluded": true
+    },
+    {
+      "path": "mcp-server/src/skill-classification/inventory.ts",
+      "sha256": "8c7ee54546f17fb1e63368fbfb72668a3c7136570a545ad5f0494f076c91727c",
+      "r13Sha256": "8c7ee54546f17fb1e63368fbfb72668a3c7136570a545ad5f0494f076c91727c",
+      "matchesR13": true,
+      "excluded": true
+    },
+    {
+      "path": "mcp-server/src/skill-classification/types.ts",
+      "sha256": "a5a238741eb34d5af50eb2e67e1d20f97dfebc30cdfc29c77ec7ae618f1319b5",
+      "r13Sha256": "a5a238741eb34d5af50eb2e67e1d20f97dfebc30cdfc29c77ec7ae618f1319b5",
+      "matchesR13": true,
+      "excluded": true
+    },
+    {
+      "path": "tests/skill-classification/evaluation.ts",
+      "sha256": "e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+      "r13Sha256": "e14b692dd4809252d88fb9573ba27652df82b2bad5afe0e5f386091961e13df9",
+      "matchesR13": true,
+      "excluded": true
+    },
+    {
+      "path": "tests/skill-classification/evaluation.test.ts",
+      "sha256": "0ab579c0eacbb2b0e70e0bcd381f4c8bfc33d9422439768beb49eaf240ad32bf",
+      "r13Sha256": "0ab579c0eacbb2b0e70e0bcd381f4c8bfc33d9422439768beb49eaf240ad32bf",
+      "matchesR13": true,
+      "excluded": true
+    },
+    {
+      "path": "tests/skill-classification/live-bootstrap/bootstrap.mts",
+      "sha256": "1e258ae50a0e25d9c2a01a1ff186df1cce73c0693995ea7cef2be3cd187e791c",
+      "r13Sha256": "1e258ae50a0e25d9c2a01a1ff186df1cce73c0693995ea7cef2be3cd187e791c",
+      "matchesR13": true,
+      "excluded": true
+    },
+    {
+      "path": "tests/skill-classification/live-bootstrap/contract-selfcheck.mts",
+      "sha256": "fb5ac964d31c2dbce0a37d3d593fdeef8ceecf4be3b2661bb4c3b3d17776e751",
+      "r13Sha256": "fb5ac964d31c2dbce0a37d3d593fdeef8ceecf4be3b2661bb4c3b3d17776e751",
+      "matchesR13": true,
+      "excluded": true
+    },
+    {
+      "path": "tests/skill-classification/live-bootstrap/component-manifest.json",
+      "sha256": "b88ed698626c9b6af09c3d1ff11aebd48226a776d00cde4299491dbb0db88429",
+      "r13Sha256": "b88ed698626c9b6af09c3d1ff11aebd48226a776d00cde4299491dbb0db88429",
+      "matchesR13": true,
+      "excluded": true
+    },
+    {
+      "path": "scripts/run-tests.mjs",
+      "sha256": "1da67c219b54d39a7106425f52e2bdd8abe7ab90081cafc111fd6d40d4516140",
+      "r13Sha256": "1da67c219b54d39a7106425f52e2bdd8abe7ab90081cafc111fd6d40d4516140",
+      "matchesR13": true,
+      "excluded": true
+    },
+    {
+      "path": "scripts/test-subreaper.py",
+      "sha256": "808cd0c131866af24b0e3759403018e909a89617baa7ab72edead0ae4c543ca7",
+      "r13Sha256": "808cd0c131866af24b0e3759403018e909a89617baa7ab72edead0ae4c543ca7",
+      "matchesR13": true,
+      "excluded": true
+    }
+  ],
+  "sameTestDigest": true,
+  "sameArgv": true,
+  "onlyProductionDelta": "mcp-server/src/skill-classification/providers.ts",
+  "red": {
+    "status": "FAIL",
+    "exitCode": 1,
+    "counts": {
+      "pass": 26,
+      "fail": 37,
+      "total": 63
+    }
+  },
+  "green": {
+    "status": "PASS",
+    "exitCode": 0,
+    "counts": {
+      "pass": 63,
+      "fail": 0,
+      "total": 63
+    }
+  },
+  "regression": {
+    "pass": 100
+  },
+  "paidApiCalls": 0,
+  "claudeCalls": 0
+}

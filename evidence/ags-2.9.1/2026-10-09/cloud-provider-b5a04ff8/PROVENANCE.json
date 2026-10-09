@@ -1,0 +1,291 @@
+[
+  {
+    "path": "patches/candidate.diff",
+    "origin": "git diff --binary c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6 b5a04ff82f9863383de00d75de5841af5223041b; exact existing candidate.diff",
+    "bytes": 24938,
+    "sha256": "b1c150a06a499b1791e2744fadc8a999236e5eb7dcd9ce7ad27f41357d52466d",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/red-receipt.json",
+    "origin": "existing provider evidence/red-receipt.json",
+    "bytes": 46131,
+    "sha256": "bb46e54fd770537da0f3049074653e873e1d7008ba25099509daf82515b4e000",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/green-receipt.json",
+    "origin": "existing provider evidence/green-receipt.json",
+    "bytes": 13354,
+    "sha256": "a35bd349067109efc7a93f63fd40cfd34b539a7c2111f7183a458066b6676e55",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/red-final.log",
+    "origin": "existing provider evidence/red-final.log",
+    "bytes": 42226,
+    "sha256": "cae7d18aa2d461d20fb216ca0641eadd2c6c3bb54168611c55b3509f0c8f4f47",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/green-final.log",
+    "origin": "existing provider evidence/green-final.log",
+    "bytes": 11245,
+    "sha256": "7a42dd76504844647680bb249ba4b8e40c3e30fa131347f3f15645013ca42c5d",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/regression-results.json",
+    "origin": "existing provider evidence/regression-results.json",
+    "bytes": 40616,
+    "sha256": "249f73299576a4e4cdae20ebdfe8b5457ee5a9803b6774e490d2e93c640d935d",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/regression.log",
+    "origin": "existing provider evidence/regression.log",
+    "bytes": 242,
+    "sha256": "a0465ba35202ae2c459ada91c97187f958ed30721daf50913cb9e91398bdbca4",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/typecheck.log",
+    "origin": "existing provider evidence/typecheck.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/lint.log",
+    "origin": "existing provider evidence/lint.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/integration-gap.json",
+    "origin": "existing provider evidence/integration-gap.json",
+    "bytes": 9055,
+    "sha256": "ad71f7ea52d9544bd42e76b2a5fb642c1c989f5f0b8576818cf094f15be3895c",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/integration-gap.log",
+    "origin": "existing provider evidence/integration-gap.log",
+    "bytes": 414,
+    "sha256": "ae858a80ca587f05f5e8434da3c30bc8cd1a0d3ddf460d1e6dde2d78a515ff0f",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/integration-gap.mts",
+    "origin": "existing provider evidence/integration-gap.mts",
+    "bytes": 4845,
+    "sha256": "634b803ae09ed2c073c216055c134846811adc5b7cd1abc9e90f77f5e18c7e3c",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/capture-run.mjs",
+    "origin": "existing provider evidence/capture-run.mjs",
+    "bytes": 1235,
+    "sha256": "446d191886e368c5f8e7022110903fd66bb41ce41eb69f6a48e21c1945b6604a",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/finalize-proof.mjs",
+    "origin": "existing provider evidence/finalize-proof.mjs",
+    "bytes": 5891,
+    "sha256": "a4164bcfb20a1af3ca7b36a937b3273f5d6982b87a2e1becde8f0633a06af9c3",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/test-plan.json",
+    "origin": "existing provider evidence/test-plan.json",
+    "bytes": 1730,
+    "sha256": "bc91922b4c660b6e69298e74110e3444fa5318c25b2807f065fd89d8d71daf2b",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/engineering-test-plan.json",
+    "origin": "existing provider evidence/engineering-test-plan.json",
+    "bytes": 4159,
+    "sha256": "fa5e87de52289b09891cdc62f1ce0718185f5c6836f327497af12bafb4e43b65",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/engineering-test-proof.json",
+    "origin": "existing provider evidence/engineering-test-proof.json",
+    "bytes": 3425,
+    "sha256": "4936e7504c1d7a4328ca13291a3168d7d54e256abc0078b5bd77b33fc0309ee4",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/engineering-plan-result.json",
+    "origin": "existing provider evidence/engineering-plan-result.json",
+    "bytes": 281,
+    "sha256": "43cd36f959e0bae9bf9998c90f8ed91ed988b796a03244ad1ee8c19de7a38286",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/engineering-test-result.json",
+    "origin": "existing provider evidence/engineering-test-result.json",
+    "bytes": 689,
+    "sha256": "5813b8a3088318ba6ba81cb9846053e7dd41010fadd142af9e4c9701d9058fff",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/source-manifest.json",
+    "origin": "existing provider evidence/source-manifest.json",
+    "bytes": 5033,
+    "sha256": "7baab03f3f420df3c5f07dd29d3202d47759a443185c6e57ade88fc24aa2ff29",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/git-final.json",
+    "origin": "existing provider evidence/git-final.json",
+    "bytes": 1099,
+    "sha256": "f0a70c2681d9a0e951913a2f5df45270aa113ba3919d6a76a20a86d689b1c03e",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/hashes.json",
+    "origin": "existing provider evidence/hashes.json",
+    "bytes": 4018,
+    "sha256": "96424940c3baa95f9602245f190c37c228a7f1009e914a81be6142553b503861",
+    "transformation": "none"
+  },
+  {
+    "path": "raw/REPORT.ko.md",
+    "origin": "existing provider evidence/REPORT.ko.md",
+    "bytes": 8957,
+    "sha256": "93cb24baa4506ec08a2493216fa24f9aa3a0f3b7b5e76b5fe5b1e933872ef518",
+    "transformation": "none"
+  },
+  {
+    "path": "review/interface-proposal.md",
+    "origin": "existing provider evidence/interface-proposal.md",
+    "bytes": 2596,
+    "sha256": "4c738dae95b372033c3cdba3cbf6fd5c2b0082d9764bc438d09f2766e7f3ab2c",
+    "transformation": "none"
+  },
+  {
+    "path": "source/candidate/mcp-server/src/skill-classification/providers.ts",
+    "origin": "git blob b5a04ff82f9863383de00d75de5841af5223041b:mcp-server/src/skill-classification/providers.ts",
+    "bytes": 17605,
+    "sha256": "b8136ca3451aa2b2f2b2e8d2ffccd2b38d71e0edbaf1b6a22f702f345181846d",
+    "transformation": "none"
+  },
+  {
+    "path": "source/candidate/tests/mcp/skill-classification-providers.test.ts",
+    "origin": "git blob b5a04ff82f9863383de00d75de5841af5223041b:tests/mcp/skill-classification-providers.test.ts",
+    "bytes": 26733,
+    "sha256": "605eada6cbcaf074a877496671a227abbfc389a7c55faf915350b342feb73468",
+    "transformation": "none"
+  },
+  {
+    "path": "source/candidate/vitest.config.mjs",
+    "origin": "git blob b5a04ff82f9863383de00d75de5841af5223041b:vitest.config.mjs",
+    "bytes": 374,
+    "sha256": "cfcc4d27a36e48897ecd19d376decbb8683fc42c8489babcc89846fe9df98fdb",
+    "transformation": "none"
+  },
+  {
+    "path": "source/base/mcp-server/src/skill-classification/providers.ts",
+    "origin": "git blob c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6:mcp-server/src/skill-classification/providers.ts",
+    "bytes": 12898,
+    "sha256": "f191c46db32f38248ebdd23be725b426a0b3020e0bb464b36bcc57521983651c",
+    "transformation": "none"
+  },
+  {
+    "path": "source/base/tests/mcp/skill-classification-providers.test.ts",
+    "origin": "git blob c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6:tests/mcp/skill-classification-providers.test.ts",
+    "bytes": 15320,
+    "sha256": "4dcb29e1b6e30460a4dbfb70fc2d6e3eab2b90ea66d933dfe33a7acfd56c2f11",
+    "transformation": "none"
+  },
+  {
+    "path": "source/base/vitest.config.mjs",
+    "origin": "git blob c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6:vitest.config.mjs",
+    "bytes": 374,
+    "sha256": "cfcc4d27a36e48897ecd19d376decbb8683fc42c8489babcc89846fe9df98fdb",
+    "transformation": "none"
+  },
+  {
+    "path": "limitations/timeout/prior-audit/D02-standalone.json",
+    "origin": "prior pinned base timeout audit/D02-standalone.json",
+    "bytes": 5900,
+    "sha256": "f86e305c90ba67a5582da015c64d3a81594239924ed3db9f54b9e0615a2d583a",
+    "transformation": "none"
+  },
+  {
+    "path": "limitations/timeout/prior-audit/D02-standalone.log",
+    "origin": "prior pinned base timeout audit/D02-standalone.log",
+    "bytes": 318,
+    "sha256": "799c8ecfd8e78ded74271f6af08ca6375a2e9ebd3985f5238cb16cf429f42529",
+    "transformation": "none"
+  },
+  {
+    "path": "limitations/timeout/prior-audit/D02-config.json",
+    "origin": "prior pinned base timeout audit/D02-config.json",
+    "bytes": 218,
+    "sha256": "c8352ada252495e607d690f4c9d64f8365fc03e974e4fdf53a6e5d5f850a3403",
+    "transformation": "none"
+  },
+  {
+    "path": "limitations/timeout/prior-audit/D02-profiles.json",
+    "origin": "prior pinned base timeout audit/D02-profiles.json",
+    "bytes": 1772,
+    "sha256": "9c75d3cc0cd4ba5c9459b4234c0a233bdfbc82a290ef2fdf7abd9fb4082cee74",
+    "transformation": "none"
+  },
+  {
+    "path": "limitations/timeout/loader-boundary/red-results.json",
+    "origin": "prior timeout test-only candidate c93577fb/red-results.json",
+    "bytes": 10745,
+    "sha256": "f92136f0040a84c4708f0b661ea85609038cee2969d3e28005b8d64eefb9d5ff",
+    "transformation": "none"
+  },
+  {
+    "path": "limitations/timeout/loader-boundary/red.log",
+    "origin": "prior timeout test-only candidate c93577fb/red.log",
+    "bytes": 234,
+    "sha256": "61b6ad55f3e589c2c4e40cbc4cbf7dde85112709578b31b14b1499ba9cfacc4d",
+    "transformation": "none"
+  },
+  {
+    "path": "limitations/timeout/loader-boundary/source-and-commit.json",
+    "origin": "prior timeout test-only candidate c93577fb/source-and-commit.json",
+    "bytes": 3353,
+    "sha256": "534a58b51e78a62a4c4b2eeff7defef315ff1f3c703f606e847fbf7fcdbd799b",
+    "transformation": "none"
+  },
+  {
+    "path": "limitations/timeout/loader-boundary/skill-classification-timeout-config.test.ts",
+    "origin": "prior timeout test-only candidate c93577fb:tests/mcp/skill-classification-timeout-config.test.ts",
+    "bytes": 3084,
+    "sha256": "0a7c3343ad9f57e4b19a7d6ab9265ea05c829fe3eddf1631e0770d38acbf1ddb",
+    "transformation": "none"
+  },
+  {
+    "path": "PACKAGING-CHECK.json",
+    "origin": "new packaging metadata only",
+    "bytes": 830,
+    "sha256": "439709e3de43ca0f822e5843ae5320116d940c44c1e56ac2b0804758440e8207",
+    "transformation": "none"
+  },
+  {
+    "path": "README.ko.md",
+    "origin": "new publication summary; existing test results only",
+    "bytes": 6896,
+    "sha256": "c75a8c7807c3236b0757ea7f1607e923faf8909e851f7cf0a71741198d52eb98",
+    "transformation": "Publication status paragraph updated after latest authorization; no raw/code change",
+    "originalSha256": "b21bcf10f8d9c129a3ef783b1a5b04410d867a8a20e5f695e0e787f5f85f9fea",
+    "originalBytes": 6581
+  },
+  {
+    "path": "review/independent-static-review.md",
+    "origin": "Fresh separate auditor publication_review; direct static source/raw evidence inspection only",
+    "bytes": 12185,
+    "sha256": "da2db7af64692a59e5a7d535ddc90b5598cc372b328600d6614af5bda8c86f98",
+    "transformation": "none"
+  }
+]

@@ -1,0 +1,142 @@
+[
+  {
+    "file": "REPORT.ko.md",
+    "sha256": "93cb24baa4506ec08a2493216fa24f9aa3a0f3b7b5e76b5fe5b1e933872ef518",
+    "bytes": 8957
+  },
+  {
+    "file": "candidate-commit.patch",
+    "sha256": "24e2afb1bfe1a558bcf50e3c0ad62be15d21d622a4d59795689e1ac8f8bc43be",
+    "bytes": 25394
+  },
+  {
+    "file": "candidate.diff",
+    "sha256": "b1c150a06a499b1791e2744fadc8a999236e5eb7dcd9ce7ad27f41357d52466d",
+    "bytes": 24938
+  },
+  {
+    "file": "capture-run.mjs",
+    "sha256": "446d191886e368c5f8e7022110903fd66bb41ce41eb69f6a48e21c1945b6604a",
+    "bytes": 1235
+  },
+  {
+    "file": "engineering-plan-result.json",
+    "sha256": "43cd36f959e0bae9bf9998c90f8ed91ed988b796a03244ad1ee8c19de7a38286",
+    "bytes": 281
+  },
+  {
+    "file": "engineering-test-plan.json",
+    "sha256": "fa5e87de52289b09891cdc62f1ce0718185f5c6836f327497af12bafb4e43b65",
+    "bytes": 4159
+  },
+  {
+    "file": "engineering-test-proof.json",
+    "sha256": "4936e7504c1d7a4328ca13291a3168d7d54e256abc0078b5bd77b33fc0309ee4",
+    "bytes": 3425
+  },
+  {
+    "file": "engineering-test-result.json",
+    "sha256": "5813b8a3088318ba6ba81cb9846053e7dd41010fadd142af9e4c9701d9058fff",
+    "bytes": 689
+  },
+  {
+    "file": "finalize-proof.mjs",
+    "sha256": "a4164bcfb20a1af3ca7b36a937b3273f5d6982b87a2e1becde8f0633a06af9c3",
+    "bytes": 5891
+  },
+  {
+    "file": "git-final.json",
+    "sha256": "f0a70c2681d9a0e951913a2f5df45270aa113ba3919d6a76a20a86d689b1c03e",
+    "bytes": 1099
+  },
+  {
+    "file": "green-final.log",
+    "sha256": "7a42dd76504844647680bb249ba4b8e40c3e30fa131347f3f15645013ca42c5d",
+    "bytes": 11245
+  },
+  {
+    "file": "green-receipt.json",
+    "sha256": "a35bd349067109efc7a93f63fd40cfd34b539a7c2111f7183a458066b6676e55",
+    "bytes": 13354
+  },
+  {
+    "file": "initial-green-results.json",
+    "sha256": "40c18b4f02e9cb96d6199e3e4e583b554dc6cd27d3eb5b98cadbdbe32e32a19e",
+    "bytes": 23260
+  },
+  {
+    "file": "initial-green.log",
+    "sha256": "7ca37d101083ede3f51d3d3436f91b4eb00790cf4dfca394cce257cdfc12d849",
+    "bytes": 237
+  },
+  {
+    "file": "initial-red-results.json",
+    "sha256": "7abfeda73e80046730b0543b7e60b0fd11348d28fdbbd3383958d82bf31bf54c",
+    "bytes": 72305
+  },
+  {
+    "file": "initial-red.log",
+    "sha256": "57fc511ff4f9d825393899e3113bc7e458223f12e6b35c4c89b1da211dae52dd",
+    "bytes": 235
+  },
+  {
+    "file": "integration-gap.json",
+    "sha256": "ad71f7ea52d9544bd42e76b2a5fb642c1c989f5f0b8576818cf094f15be3895c",
+    "bytes": 9055
+  },
+  {
+    "file": "integration-gap.log",
+    "sha256": "ae858a80ca587f05f5e8434da3c30bc8cd1a0d3ddf460d1e6dde2d78a515ff0f",
+    "bytes": 414
+  },
+  {
+    "file": "integration-gap.mts",
+    "sha256": "634b803ae09ed2c073c216055c134846811adc5b7cd1abc9e90f77f5e18c7e3c",
+    "bytes": 4845
+  },
+  {
+    "file": "interface-proposal.md",
+    "sha256": "4c738dae95b372033c3cdba3cbf6fd5c2b0082d9764bc438d09f2766e7f3ab2c",
+    "bytes": 2596
+  },
+  {
+    "file": "lint.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "file": "red-final.log",
+    "sha256": "cae7d18aa2d461d20fb216ca0641eadd2c6c3bb54168611c55b3509f0c8f4f47",
+    "bytes": 42226
+  },
+  {
+    "file": "red-receipt.json",
+    "sha256": "bb46e54fd770537da0f3049074653e873e1d7008ba25099509daf82515b4e000",
+    "bytes": 46131
+  },
+  {
+    "file": "regression-results.json",
+    "sha256": "249f73299576a4e4cdae20ebdfe8b5457ee5a9803b6774e490d2e93c640d935d",
+    "bytes": 40616
+  },
+  {
+    "file": "regression.log",
+    "sha256": "a0465ba35202ae2c459ada91c97187f958ed30721daf50913cb9e91398bdbca4",
+    "bytes": 242
+  },
+  {
+    "file": "source-manifest.json",
+    "sha256": "7baab03f3f420df3c5f07dd29d3202d47759a443185c6e57ade88fc24aa2ff29",
+    "bytes": 5033
+  },
+  {
+    "file": "test-plan.json",
+    "sha256": "bc91922b4c660b6e69298e74110e3444fa5318c25b2807f065fd89d8d71daf2b",
+    "bytes": 1730
+  },
+  {
+    "file": "typecheck.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  }
+]
