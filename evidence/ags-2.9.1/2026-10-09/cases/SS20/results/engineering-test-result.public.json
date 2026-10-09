@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:883093ee9fe3e3e7211320ae33e920a716706150e57ec6ada1b815d39b6e4c80",
+  "reportDigest": "sha256:716407d58d75438e13617735ca1d28bec39ed97c282a62815ba505957572c3e5",
+  "issues": [
+    "REQUIRED SS20/invalid-resp-known-cost: NOT_RUN — Known product defect reproduced with assertion failure; product edits forbidden, repaired green NOT_RUN.",
+    "REQUIRED SS20/timeout-overflow: NOT_RUN — Known product defect reproduced with assertion failure; product edits forbidden, repaired green NOT_RUN."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

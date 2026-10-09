@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:77164b8360314dbb48fdcd7ae1941c854775e377dfba9928b7c9416467b8e0fa",
+  "caseIds": [
+    "SS20/normal",
+    "SS20/missing-profile",
+    "SS20/unavailable-model",
+    "SS20/unsupported-option",
+    "SS20/route-option-mismatch",
+    "SS20/qualification-missing",
+    "SS20/qualification-expired",
+    "SS20/route-unapproved",
+    "SS20/budget-unknown",
+    "SS20/credential-missing",
+    "SS20/vendor-auth-failure",
+    "SS20/invalid-resp-known-cost",
+    "SS20/timeout-overflow"
+  ]
+}

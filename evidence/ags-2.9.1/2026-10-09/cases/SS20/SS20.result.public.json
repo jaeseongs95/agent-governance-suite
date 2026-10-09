@@ -1,0 +1,1080 @@
+{
+  "caseId": "SS20",
+  "targetRelease": "2.9.1",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "branch": "origin/codex/skill-classification-2.9.1 contains fixed commit; detached checkout",
+  "fixtureSHA": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS20",
+    "fields": {
+      "입력": "SS03을 JEV OFF와 승인된 사용자 vendor profile로 실행한다. 정상 vendor 공통 RESP, profile 없음, 모델 미가용, 지원 옵션 불일치를 각각 주입한다.",
+      "필수추천": "정상 응답에서 P·CS·T·O의 분류 지원을 받고 AGENT가 실제 선택한다. 해당 profile의 model·reasoning을 사용한다.",
+      "금지추천 또는 행동": "JEV키 조회·JEV 호출; vendor 실패를 이유로 JEV 재활성화; 다른 모델·벤더·reasoning으로 자동 상향; adapter 응답을 AGENT 선택으로 복사.",
+      "허용선택": "승인된 고정 vendor route의 한 분류 시도와 별도 AGENT 선택. 미지원은 구체적 사유로 보류한다.",
+      "보류조건": "profile·qualification·옵션·승인 route가 없거나 실행 예산이 허용되지 않음.",
+      "통과기준": "정상 vendor 분류 1회·JEV 0회이며 실제 model/effort가 중앙 profile과 같다. 실패 변형도 JEV 0회다. 공통 RESP 구조와 실제 AGENT 최종 선택을 각각 확인한다.",
+      "증거": "E0·E1·E3·E4, profile revision·비밀 제거된 전송 옵션·RESP·실제 선택 receipt.",
+      "실행종류": "mock 필수, 승인된 vendor 경로의 host/provider-live는 별도 수행한다."
+    },
+    "bodyDigest": "sha256:06cc29e74c1cd4c1e4b7c77fc2e82b5339e39d69edb51f8aa6a2103bb2d4c306"
+  },
+  "originalPrompt": null,
+  "inputPrompt": {
+    "caseId": "SS03",
+    "purpose": "SS20 specified input only",
+    "originalPrompt": "session-handoff를 구현해 줘. 수신 전 종료, ACK 뒤 crash, 같은 메시지 재수신에서 인계가 유실되거나 중복 완료되지 않아야 해. 최소 구현과 회귀 테스트를 함께 설계해 줘."
+  },
+  "oracle": null,
+  "semanticAccuracy": null,
+  "exactSetAccuracy": null,
+  "overallStatus": "INCOMPLETE_WITH_KNOWN_DEFECT_REPRODUCTIONS",
+  "offlineRequiredVariants": "PASS_4_OF_4",
+  "executionKind": "offline-mock",
+  "API0": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0,
+    "hostLive": 0,
+    "actualCredentialLookups": 0,
+    "previous21RunReruns": 0
+  },
+  "lifecycle": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "agentSelectedSkillIds": null,
+    "hostReceipt": null
+  },
+  "variants": [
+    {
+      "variant": "normal",
+      "status": "PASS",
+      "command": "pnpm exec vitest run tests/ss20-isolated/SS20.test.ts --reporter=json --outputFile=results/isolated-vitest.public.json",
+      "exit": 1,
+      "exitMeaning": "Whole targeted file exit 1 from two derived known-defect assertions; this variant passed.",
+      "executionKind": "offline-mock",
+      "inputRef": "observations.public.json#/records/0/input",
+      "expected": {
+        "status": "SUCCESS",
+        "errorCode": null,
+        "vendorTransport": 1,
+        "jevCalls": 0,
+        "model": "SS20-fixed-model",
+        "effort": "low",
+        "selected": null
+      },
+      "observed": {
+        "responseStatus": "SUCCESS",
+        "error": null,
+        "counts": {
+          "jevAvailability": 0,
+          "jevClassify": 0,
+          "jevCredential": 0,
+          "vendorAvailability": 1,
+          "vendorClassify": 1,
+          "vendorCredential": 2,
+          "mockFetch": 1
+        },
+        "attempts": [
+          {
+            "providerKind": "vendor",
+            "profileId": "SS20-synthetic-vendor",
+            "modelId": "SS20-fixed-model",
+            "reasoningEffort": "low",
+            "dispatchState": "started",
+            "status": "SUCCESS",
+            "errorCode": null,
+            "timedOut": false,
+            "usage": {
+              "inputTokens": 100,
+              "outputTokens": 80,
+              "cachedInputTokens": null,
+              "actualCostUsd": 0.1
+            },
+            "reservedCostUsd": 0.4
+          }
+        ],
+        "responseValidationErrors": [],
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN",
+        "agentSelectedSkillIds": null,
+        "hostReceipt": null
+      },
+      "evidenceRef": "observations.public.json#/records/0",
+      "evidenceSHA": "sha256:00f7683379efd47eec8aa17bf13b94a3994b94fe3e81da633e3836d015ab7e93",
+      "API0": {
+        "jev": 0,
+        "vendor": 0,
+        "claude": 0,
+        "host": 0
+      },
+      "missingInputs": [
+        "Approved real vendor fixed profile/qualification/route/budget",
+        "Live provider RESP",
+        "Host-signed actual AGENT choice observation/receipt",
+        "Target skill read/application/verification observations"
+      ]
+    },
+    {
+      "variant": "missing-profile",
+      "status": "PASS",
+      "command": "pnpm exec vitest run tests/ss20-isolated/SS20.test.ts --reporter=json --outputFile=results/isolated-vitest.public.json",
+      "exit": 1,
+      "exitMeaning": "Whole targeted file exit 1 from two derived known-defect assertions; this variant passed.",
+      "executionKind": "offline-mock",
+      "inputRef": "observations.public.json#/records/1/input",
+      "expected": {
+        "status": "UNAVAILABLE",
+        "errorCode": "PROFILE_UNAVAILABLE",
+        "vendorTransport": 0,
+        "jevCalls": 0,
+        "model": "SS20-fixed-model",
+        "effort": "low",
+        "selected": null
+      },
+      "observed": {
+        "responseStatus": "UNAVAILABLE",
+        "error": {
+          "code": "PROFILE_UNAVAILABLE",
+          "retryable": false,
+          "dispatchState": "not-started"
+        },
+        "counts": {
+          "jevAvailability": 0,
+          "jevClassify": 0,
+          "jevCredential": 0,
+          "vendorAvailability": 0,
+          "vendorClassify": 0,
+          "vendorCredential": 0,
+          "mockFetch": 0
+        },
+        "attempts": [],
+        "responseValidationErrors": [],
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN",
+        "agentSelectedSkillIds": null,
+        "hostReceipt": null
+      },
+      "evidenceRef": "observations.public.json#/records/1",
+      "evidenceSHA": "sha256:00f7683379efd47eec8aa17bf13b94a3994b94fe3e81da633e3836d015ab7e93",
+      "API0": {
+        "jev": 0,
+        "vendor": 0,
+        "claude": 0,
+        "host": 0
+      },
+      "missingInputs": [
+        "Approved real vendor fixed profile/qualification/route/budget",
+        "Live provider RESP",
+        "Host-signed actual AGENT choice observation/receipt",
+        "Target skill read/application/verification observations"
+      ]
+    },
+    {
+      "variant": "unavailable-model",
+      "status": "PASS",
+      "command": "pnpm exec vitest run tests/ss20-isolated/SS20.test.ts --reporter=json --outputFile=results/isolated-vitest.public.json",
+      "exit": 1,
+      "exitMeaning": "Whole targeted file exit 1 from two derived known-defect assertions; this variant passed.",
+      "executionKind": "offline-mock",
+      "inputRef": "observations.public.json#/records/2/input",
+      "expected": {
+        "status": "UNAVAILABLE",
+        "errorCode": "ROUTE_CAPABILITY_MISMATCH",
+        "vendorTransport": 0,
+        "jevCalls": 0,
+        "model": "SS20-fixed-model",
+        "effort": "low",
+        "selected": null
+      },
+      "observed": {
+        "responseStatus": "UNAVAILABLE",
+        "error": {
+          "code": "ROUTE_CAPABILITY_MISMATCH",
+          "retryable": false,
+          "dispatchState": "not-started"
+        },
+        "counts": {
+          "jevAvailability": 0,
+          "jevClassify": 0,
+          "jevCredential": 0,
+          "vendorAvailability": 1,
+          "vendorClassify": 0,
+          "vendorCredential": 0,
+          "mockFetch": 0
+        },
+        "attempts": [
+          {
+            "providerKind": "vendor",
+            "profileId": "SS20-synthetic-vendor",
+            "modelId": "SS20-fixed-model",
+            "reasoningEffort": "low",
+            "dispatchState": "not-started",
+            "status": "UNAVAILABLE",
+            "errorCode": "ROUTE_CAPABILITY_MISMATCH",
+            "timedOut": false,
+            "usage": {
+              "inputTokens": null,
+              "outputTokens": null,
+              "cachedInputTokens": null,
+              "actualCostUsd": null
+            },
+            "reservedCostUsd": 0
+          }
+        ],
+        "responseValidationErrors": [],
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN",
+        "agentSelectedSkillIds": null,
+        "hostReceipt": null
+      },
+      "evidenceRef": "observations.public.json#/records/2",
+      "evidenceSHA": "sha256:00f7683379efd47eec8aa17bf13b94a3994b94fe3e81da633e3836d015ab7e93",
+      "API0": {
+        "jev": 0,
+        "vendor": 0,
+        "claude": 0,
+        "host": 0
+      },
+      "missingInputs": [
+        "Approved real vendor fixed profile/qualification/route/budget",
+        "Live provider RESP",
+        "Host-signed actual AGENT choice observation/receipt",
+        "Target skill read/application/verification observations"
+      ]
+    },
+    {
+      "variant": "unsupported-option",
+      "status": "PASS",
+      "command": "pnpm exec vitest run tests/ss20-isolated/SS20.test.ts --reporter=json --outputFile=results/isolated-vitest.public.json",
+      "exit": 1,
+      "exitMeaning": "Whole targeted file exit 1 from two derived known-defect assertions; this variant passed.",
+      "executionKind": "offline-mock",
+      "inputRef": "observations.public.json#/records/3/input",
+      "expected": {
+        "status": "UNAVAILABLE",
+        "errorCode": "UNSUPPORTED_OPTIONS",
+        "vendorTransport": 0,
+        "jevCalls": 0,
+        "model": "SS20-fixed-model",
+        "effort": "low",
+        "selected": null
+      },
+      "observed": {
+        "responseStatus": "UNAVAILABLE",
+        "error": {
+          "code": "UNSUPPORTED_OPTIONS",
+          "retryable": false,
+          "dispatchState": "not-started"
+        },
+        "counts": {
+          "jevAvailability": 0,
+          "jevClassify": 0,
+          "jevCredential": 0,
+          "vendorAvailability": 0,
+          "vendorClassify": 0,
+          "vendorCredential": 0,
+          "mockFetch": 0
+        },
+        "attempts": [],
+        "responseValidationErrors": [],
+        "selected": "NOTRUN",
+        "read": "NOTRUN",
+        "applied": "NOTRUN",
+        "verified": "NOTRUN",
+        "agentSelectedSkillIds": null,
+        "hostReceipt": null
+      },
+      "evidenceRef": "observations.public.json#/records/3",
+      "evidenceSHA": "sha256:00f7683379efd47eec8aa17bf13b94a3994b94fe3e81da633e3836d015ab7e93",
+      "API0": {
+        "jev": 0,
+        "vendor": 0,
+        "claude": 0,
+        "host": 0
+      },
+      "missingInputs": [
+        "Approved real vendor fixed profile/qualification/route/budget",
+        "Live provider RESP",
+        "Host-signed actual AGENT choice observation/receipt",
+        "Target skill read/application/verification observations"
+      ]
+    }
+  ],
+  "derivedBoundaries": [
+    {
+      "variant": "route-option-mismatch",
+      "status": "PASS",
+      "expected": {
+        "status": "UNAVAILABLE",
+        "errorCode": "ROUTE_CAPABILITY_MISMATCH",
+        "mockVendorSends": 0,
+        "jevCalls": 0,
+        "autoUpgrade": false,
+        "selected": null
+      },
+      "observed": {
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS20-route-option-mismatch",
+          "operationId": "SS20-route-option-mismatch",
+          "requestDigest": "sha256:8838ddcbbb79b029bd3d581571f6fd2dd404326018a658e95982324c1fd2bb1f",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "ROUTE_CAPABILITY_MISMATCH"
+            }
+          ],
+          "error": {
+            "code": "ROUTE_CAPABILITY_MISMATCH",
+            "retryable": false,
+            "dispatchState": "not-started"
+          }
+        },
+        "counts": {
+          "jevAvailability": 0,
+          "jevClassify": 0,
+          "jevCredential": 0,
+          "vendorAvailability": 1,
+          "vendorClassify": 0,
+          "vendorCredential": 0,
+          "mockFetch": 0
+        },
+        "budget": {
+          "limits": {
+            "jev": {
+              "limitUsd": 5,
+              "spentUsd": 0
+            },
+            "vendor:SS20-synthetic-vendor": {
+              "limitUsd": 2,
+              "spentUsd": 0
+            }
+          },
+          "nativeAllowances": {},
+          "invalidCostCeilings": [],
+          "reservations": []
+        },
+        "decodedUsage": []
+      },
+      "assertionError": null,
+      "evidenceRef": "observations.public.json#/records/4"
+    },
+    {
+      "variant": "qualification-missing",
+      "status": "PASS",
+      "expected": {
+        "status": "UNAVAILABLE",
+        "errorCode": "PROFILE_UNQUALIFIED",
+        "mockVendorSends": 0,
+        "jevCalls": 0,
+        "autoUpgrade": false,
+        "selected": null
+      },
+      "observed": {
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS20-qualification-missing",
+          "operationId": "SS20-qualification-missing",
+          "requestDigest": "sha256:cd18436eb5adf8a81710e686aea3b44fbf2dd5c41ba5caecdcf3e2266ebd8ea2",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "PROFILE_UNQUALIFIED"
+            }
+          ],
+          "error": {
+            "code": "PROFILE_UNQUALIFIED",
+            "retryable": false,
+            "dispatchState": "not-started"
+          }
+        },
+        "counts": {
+          "jevAvailability": 0,
+          "jevClassify": 0,
+          "jevCredential": 0,
+          "vendorAvailability": 0,
+          "vendorClassify": 0,
+          "vendorCredential": 0,
+          "mockFetch": 0
+        },
+        "budget": {
+          "limits": {
+            "jev": {
+              "limitUsd": 5,
+              "spentUsd": 0
+            },
+            "vendor:SS20-synthetic-vendor": {
+              "limitUsd": 2,
+              "spentUsd": 0
+            }
+          },
+          "nativeAllowances": {},
+          "invalidCostCeilings": [],
+          "reservations": []
+        },
+        "decodedUsage": []
+      },
+      "assertionError": null,
+      "evidenceRef": "observations.public.json#/records/5"
+    },
+    {
+      "variant": "qualification-expired",
+      "status": "PASS",
+      "expected": {
+        "status": "UNAVAILABLE",
+        "errorCode": "QUALIFICATION_EXPIRED",
+        "mockVendorSends": 0,
+        "jevCalls": 0,
+        "autoUpgrade": false,
+        "selected": null
+      },
+      "observed": {
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS20-qualification-expired",
+          "operationId": "SS20-qualification-expired",
+          "requestDigest": "sha256:80d6631fea031681e25d0f2ade6a9fa0360929dc56d4dcf6f757e6f8e79f3309",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "QUALIFICATION_EXPIRED"
+            }
+          ],
+          "error": {
+            "code": "QUALIFICATION_EXPIRED",
+            "retryable": false,
+            "dispatchState": "not-started"
+          }
+        },
+        "counts": {
+          "jevAvailability": 0,
+          "jevClassify": 0,
+          "jevCredential": 0,
+          "vendorAvailability": 0,
+          "vendorClassify": 0,
+          "vendorCredential": 0,
+          "mockFetch": 0
+        },
+        "budget": {
+          "limits": {
+            "jev": {
+              "limitUsd": 5,
+              "spentUsd": 0
+            },
+            "vendor:SS20-synthetic-vendor": {
+              "limitUsd": 2,
+              "spentUsd": 0
+            }
+          },
+          "nativeAllowances": {},
+          "invalidCostCeilings": [],
+          "reservations": []
+        },
+        "decodedUsage": []
+      },
+      "assertionError": null,
+      "evidenceRef": "observations.public.json#/records/6"
+    },
+    {
+      "variant": "route-unapproved",
+      "status": "PASS",
+      "expected": {
+        "status": "UNAVAILABLE",
+        "errorCode": "ROUTE_NOT_APPROVED",
+        "mockVendorSends": 0,
+        "jevCalls": 0,
+        "autoUpgrade": false,
+        "selected": null
+      },
+      "observed": {
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS20-route-unapproved",
+          "operationId": "SS20-route-unapproved",
+          "requestDigest": "sha256:3d768ef264a477989bd9fbbffc0d0c6ec5f100564ea96e0a99eb35bbcea7f573",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "ROUTE_NOT_APPROVED"
+            }
+          ],
+          "error": {
+            "code": "ROUTE_NOT_APPROVED",
+            "retryable": false,
+            "dispatchState": "not-started"
+          }
+        },
+        "counts": {
+          "jevAvailability": 0,
+          "jevClassify": 0,
+          "jevCredential": 0,
+          "vendorAvailability": 1,
+          "vendorClassify": 0,
+          "vendorCredential": 0,
+          "mockFetch": 0
+        },
+        "budget": {
+          "limits": {
+            "jev": {
+              "limitUsd": 5,
+              "spentUsd": 0
+            },
+            "vendor:SS20-synthetic-vendor": {
+              "limitUsd": 2,
+              "spentUsd": 0
+            }
+          },
+          "nativeAllowances": {},
+          "invalidCostCeilings": [],
+          "reservations": []
+        },
+        "decodedUsage": []
+      },
+      "assertionError": null,
+      "evidenceRef": "observations.public.json#/records/7"
+    },
+    {
+      "variant": "budget-unknown",
+      "status": "PASS",
+      "expected": {
+        "status": "UNAVAILABLE",
+        "errorCode": "BUDGET_UNAVAILABLE",
+        "mockVendorSends": 0,
+        "jevCalls": 0,
+        "autoUpgrade": false,
+        "selected": null
+      },
+      "observed": {
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS20-budget-unknown",
+          "operationId": "SS20-budget-unknown",
+          "requestDigest": "sha256:41067a9f7ec3692b8a1ea5419d07a1fbdb65641d488177066b8c4000f69ddf57",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "BUDGET_UNAVAILABLE"
+            }
+          ],
+          "error": {
+            "code": "BUDGET_UNAVAILABLE",
+            "retryable": false,
+            "dispatchState": "not-started"
+          }
+        },
+        "counts": {
+          "jevAvailability": 0,
+          "jevClassify": 0,
+          "jevCredential": 0,
+          "vendorAvailability": 1,
+          "vendorClassify": 0,
+          "vendorCredential": 1,
+          "mockFetch": 0
+        },
+        "budget": {
+          "limits": {
+            "jev": {
+              "limitUsd": 5,
+              "spentUsd": 0
+            },
+            "vendor:SS20-synthetic-vendor": {
+              "limitUsd": 2,
+              "spentUsd": null
+            }
+          },
+          "nativeAllowances": {},
+          "invalidCostCeilings": [],
+          "reservations": []
+        },
+        "decodedUsage": []
+      },
+      "assertionError": null,
+      "evidenceRef": "observations.public.json#/records/8"
+    },
+    {
+      "variant": "credential-missing",
+      "status": "PASS",
+      "expected": {
+        "status": "UNAVAILABLE",
+        "errorCode": "CREDENTIAL_UNAVAILABLE",
+        "mockVendorSends": 0,
+        "jevCalls": 0,
+        "autoUpgrade": false,
+        "selected": null
+      },
+      "observed": {
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS20-credential-missing",
+          "operationId": "SS20-credential-missing",
+          "requestDigest": "sha256:87d2b72ad1e9538cb6328a2ec8ee8a42163e7fd5018a6c0ec0d3bc399d090536",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "CREDENTIAL_UNAVAILABLE"
+            }
+          ],
+          "error": {
+            "code": "CREDENTIAL_UNAVAILABLE",
+            "retryable": false,
+            "dispatchState": "not-started"
+          }
+        },
+        "counts": {
+          "jevAvailability": 0,
+          "jevClassify": 0,
+          "jevCredential": 0,
+          "vendorAvailability": 1,
+          "vendorClassify": 0,
+          "vendorCredential": 1,
+          "mockFetch": 0
+        },
+        "budget": {
+          "limits": {
+            "jev": {
+              "limitUsd": 5,
+              "spentUsd": 0
+            },
+            "vendor:SS20-synthetic-vendor": {
+              "limitUsd": 2,
+              "spentUsd": 0
+            }
+          },
+          "nativeAllowances": {},
+          "invalidCostCeilings": [],
+          "reservations": []
+        },
+        "decodedUsage": []
+      },
+      "assertionError": null,
+      "evidenceRef": "observations.public.json#/records/9"
+    },
+    {
+      "variant": "vendor-auth-failure",
+      "status": "PASS",
+      "expected": {
+        "status": "UNAVAILABLE",
+        "errorCode": "AUTH_UNAVAILABLE",
+        "mockVendorSends": 1,
+        "jevCalls": 0,
+        "autoUpgrade": false,
+        "selected": null
+      },
+      "observed": {
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS20-vendor-auth-failure",
+          "operationId": "SS20-vendor-auth-failure",
+          "requestDigest": "sha256:72b4a1dd5082a8d92263ce9715491215232f0c850387d174069088925bd8cb18",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "UNAVAILABLE",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "AUTH_UNAVAILABLE"
+            }
+          ],
+          "error": {
+            "code": "AUTH_UNAVAILABLE",
+            "retryable": false,
+            "dispatchState": "started"
+          }
+        },
+        "counts": {
+          "jevAvailability": 0,
+          "jevClassify": 0,
+          "jevCredential": 0,
+          "vendorAvailability": 1,
+          "vendorClassify": 1,
+          "vendorCredential": 2,
+          "mockFetch": 1
+        },
+        "budget": {
+          "limits": {
+            "jev": {
+              "limitUsd": 5,
+              "spentUsd": 0
+            },
+            "vendor:SS20-synthetic-vendor": {
+              "limitUsd": 2,
+              "spentUsd": 0
+            }
+          },
+          "nativeAllowances": {},
+          "invalidCostCeilings": [],
+          "reservations": [
+            {
+              "id": "[\"SS20-vendor-auth-failure\",\"sha256:72b4a1dd5082a8d92263ce9715491215232f0c850387d174069088925bd8cb18\",\"SS20-synthetic-vendor\"]",
+              "bucket": "vendor:SS20-synthetic-vendor",
+              "maximumUsd": 0.4,
+              "profileId": "SS20-synthetic-vendor",
+              "nativeProfileId": null
+            }
+          ]
+        },
+        "decodedUsage": []
+      },
+      "assertionError": null,
+      "evidenceRef": "observations.public.json#/records/10"
+    },
+    {
+      "variant": "invalid-resp-known-cost",
+      "status": "FAIL",
+      "expected": {
+        "errorCode": "INVALID_PROVIDER_RESPONSE",
+        "spentUsd": 0.7,
+        "invalidCostCeilings": [
+          "SS20-synthetic-vendor"
+        ],
+        "mockVendorSends": 1,
+        "jevCalls": 0,
+        "knownRootCause": "valid-cost-lost-with-invalid-RESP"
+      },
+      "observed": {
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS20-invalid-resp-known-cost",
+          "operationId": "SS20-invalid-resp-known-cost",
+          "requestDigest": "sha256:2b37f878fe5ff3e9ea541ae4f9f58cb9bd95f43d0c8efdd0c58890e214d41dce",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "INVALID",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "INVALID_PROVIDER_RESPONSE"
+            }
+          ],
+          "error": {
+            "code": "INVALID_PROVIDER_RESPONSE",
+            "retryable": false,
+            "dispatchState": "started"
+          }
+        },
+        "counts": {
+          "jevAvailability": 0,
+          "jevClassify": 0,
+          "jevCredential": 0,
+          "vendorAvailability": 1,
+          "vendorClassify": 1,
+          "vendorCredential": 2,
+          "mockFetch": 1
+        },
+        "budget": {
+          "limits": {
+            "jev": {
+              "limitUsd": 5,
+              "spentUsd": 0
+            },
+            "vendor:SS20-synthetic-vendor": {
+              "limitUsd": 2,
+              "spentUsd": 0
+            }
+          },
+          "nativeAllowances": {},
+          "invalidCostCeilings": [],
+          "reservations": [
+            {
+              "id": "[\"SS20-invalid-resp-known-cost\",\"sha256:2b37f878fe5ff3e9ea541ae4f9f58cb9bd95f43d0c8efdd0c58890e214d41dce\",\"SS20-synthetic-vendor\"]",
+              "bucket": "vendor:SS20-synthetic-vendor",
+              "maximumUsd": 0.4,
+              "profileId": "SS20-synthetic-vendor",
+              "nativeProfileId": null
+            }
+          ]
+        },
+        "decodedUsage": [
+          {
+            "inputTokens": 100,
+            "outputTokens": 80,
+            "cachedInputTokens": null,
+            "actualCostUsd": 0.7
+          }
+        ]
+      },
+      "assertionError": "expected +0 to be 0.7 // Object.is equality",
+      "evidenceRef": "observations.public.json#/records/11"
+    },
+    {
+      "variant": "timeout-overflow",
+      "status": "FAIL",
+      "expected": {
+        "errorCode": "INVALID_TIMEOUT",
+        "mockVendorSends": 0,
+        "jevCalls": 0,
+        "knownRootCause": "timeout-overflow"
+      },
+      "observed": {
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS20-timeout-overflow",
+          "operationId": "SS20-timeout-overflow",
+          "requestDigest": "sha256:b946a6c6732708c0cdb817f9e2757349dedc053189e702acc949f7c87047fddf",
+          "inventoryDigest": "sha256:b7aa250a96c14ebc7132d3a0c20895ef6a07ec023a85ec1cb6cc04e4eaa7dc82",
+          "status": "UNCERTAIN",
+          "judgments": [],
+          "unresolvedItems": [
+            {
+              "skillId": null,
+              "reasonCode": "PROVIDER_TIMEOUT"
+            }
+          ],
+          "error": {
+            "code": "PROVIDER_TIMEOUT",
+            "retryable": false,
+            "dispatchState": "unknown"
+          }
+        },
+        "counts": {
+          "jevAvailability": 0,
+          "jevClassify": 0,
+          "jevCredential": 0,
+          "vendorAvailability": 1,
+          "vendorClassify": 1,
+          "vendorCredential": 2,
+          "mockFetch": 1
+        },
+        "budget": {
+          "limits": {
+            "jev": {
+              "limitUsd": 5,
+              "spentUsd": 0
+            },
+            "vendor:SS20-synthetic-vendor": {
+              "limitUsd": 2,
+              "spentUsd": 0
+            }
+          },
+          "nativeAllowances": {},
+          "invalidCostCeilings": [],
+          "reservations": [
+            {
+              "id": "[\"SS20-timeout-overflow\",\"sha256:b946a6c6732708c0cdb817f9e2757349dedc053189e702acc949f7c87047fddf\",\"SS20-synthetic-vendor\"]",
+              "bucket": "vendor:SS20-synthetic-vendor",
+              "maximumUsd": 0.4,
+              "profileId": "SS20-synthetic-vendor",
+              "nativeProfileId": null
+            }
+          ]
+        },
+        "decodedUsage": []
+      },
+      "assertionError": "expected 'PROVIDER_TIMEOUT' to be 'INVALID_TIMEOUT' // Object.is equality",
+      "evidenceRef": "observations.public.json#/records/12"
+    }
+  ],
+  "knownFindings": [
+    {
+      "rootCause": "valid-cost-lost-with-invalid-RESP",
+      "status": "REPRODUCED",
+      "severity": "HIGH",
+      "newlyCountedRootCause": false,
+      "input": "JEV OFF vendor bound RESP with wrong requestDigest and valid actualCostUsd=0.70; maximumCostUsd=0.40.",
+      "expected": "Reject invalid RESP while preserving known expense and disabling breached ceiling.",
+      "observed": "INVALID_PROVIDER_RESPONSE; usage.actualCostUsd=null, spentUsd=0, reservation=0.40, invalidCostCeilings=[] despite decodedProviderEvaluations cost 0.70.",
+      "causeRefs": [
+        "mcp-server/src/skill-classification/service.ts:194",
+        "mcp-server/src/skill-classification/service.ts:204",
+        "mcp-server/src/skill-classification/service.ts:210"
+      ],
+      "green": "NOTRUN; product edits forbidden"
+    },
+    {
+      "rootCause": "timeout-overflow",
+      "status": "REPRODUCED",
+      "severity": "HIGH",
+      "newlyCountedRootCause": false,
+      "input": "JEV OFF config.timeoutMs=2147483648; approved synthetic vendor mock fetch awaits abort.",
+      "expected": "Reject unsafe timer range before transport or use bounded scheduling.",
+      "observed": "Node TimeoutOverflowWarning resets duration to 1ms; vendor mock sends=1 then UNCERTAIN/PROVIDER_TIMEOUT; 0.40 reservation retained.",
+      "causeRefs": [
+        "mcp-server/src/skill-classification/service.ts:127",
+        "mcp-server/src/skill-classification/service.ts:166"
+      ],
+      "green": "NOTRUN; product edits forbidden"
+    }
+  ],
+  "existingRegression": {
+    "executionKind": "offline-mock",
+    "status": "PASS",
+    "passed": 2,
+    "skipped": 61,
+    "completeSS20Coverage": false,
+    "notes": "Existing SS20/21 named provider test actually uses JEV with one review candidate; it was inspected only, not treated as SS20.",
+    "executedTests": [
+      "SS19/39 OFF never looks up JEV credentials and passes exactly the fixed vendor profile",
+      "SS39 supplied vendor wire mapping sees fixed model/effort and preserves meaningful metadata"
+    ]
+  },
+  "commands": [
+    {
+      "command": "pnpm install --frozen-lockfile --offline --ignore-scripts",
+      "exit": 254,
+      "kind": "setup",
+      "status": "SETUP_ERROR",
+      "reason": "pnpm tried unavailable <unavailable-pnpm-data-directory>; resolved using writable XDG_DATA_HOME."
+    },
+    {
+      "command": "XDG_DATA_HOME=<pnpm-data-directory> pnpm install --frozen-lockfile --offline --ignore-scripts --store-dir <pnpm-store-directory>",
+      "exit": 0,
+      "kind": "offline-setup",
+      "downloaded": 0,
+      "reused": 217
+    },
+    {
+      "command": "pnpm exec vitest run tests/mcp/skill-classification-service.test.ts tests/mcp/skill-classification-providers.test.ts --testNamePattern 'SS19/39 OFF never looks up|SS39 supplied vendor wire mapping' --reporter=json --outputFile=results/existing-regression.public.json",
+      "exit": 0,
+      "kind": "existing-offline-regression",
+      "passed": 2,
+      "skipped": 61
+    },
+    {
+      "command": "pnpm exec vitest run tests/ss20-isolated/SS20.test.ts --reporter=json --outputFile=results/isolated-vitest.public.json",
+      "exit": 1,
+      "kind": "initial-harness-error",
+      "productEvidence": false,
+      "reason": "Test fixture passed gateway-only fields to strict createClassificationRequest. Corrected only test code. All failures happened before provider execution.",
+      "evidence": "results/harness-initial-error.public.json"
+    },
+    {
+      "command": "pnpm exec vitest run tests/ss20-isolated/SS20.test.ts --reporter=json --outputFile=results/isolated-vitest.public.json",
+      "exit": 1,
+      "kind": "isolated-offline-SS20-r1",
+      "passed": 11,
+      "failed": 2,
+      "evidence": "isolated-r1-vitest.json"
+    },
+    {
+      "command": "pnpm exec vitest run tests/ss20-isolated/SS20.test.ts --reporter=json --outputFile=results/isolated-vitest.public.json",
+      "exit": 1,
+      "kind": "isolated-offline-SS20-final",
+      "passed": 11,
+      "failed": 2,
+      "reasonForRepeat": "Added capture of raw adapter-decoded evaluation to prove known billed cost was lost; no product change.",
+      "testSHA": "sha256:9ab7b3b20039d0968e1342c1d3c542dc7d81af9a2eee690694d59feacc663e57",
+      "evidence": "results/isolated-vitest.public.json"
+    },
+    {
+      "command": "git diff --check; git diff --name-only HEAD",
+      "exit": 0,
+      "kind": "source-integrity",
+      "trackedProductChanges": []
+    },
+    {
+      "command": "node skills/test-engineering/scripts/run.mjs check-plan --root <workspace-root> --plan SS20-evidence/engineering-test-plan.json",
+      "exit": 0,
+      "kind": "local-plan-consistency",
+      "result": "READY; descriptive plan only, not host acceptance"
+    },
+    {
+      "command": "node skills/test-engineering/scripts/run.mjs check-proof --root <workspace-root> --plan SS20-evidence/engineering-test-plan.json --proof SS20-evidence/engineering-test-proof.json",
+      "exit": 1,
+      "kind": "local-sensitivity-consistency",
+      "result": "INCOMPLETE; repaired green absent for two known defect cases. Does not erase ordinary test PASS/FAIL evidence."
+    }
+  ],
+  "hostLive": {
+    "status": "NOTRUN",
+    "currentEnvironment": {
+      "codexExecutable": "<redacted-local-executable>",
+      "claudeExecutableFound": false,
+      "classificationConfigPresent": false
+    },
+    "supportedPaths": [
+      {
+        "path": "MCP get_skill_inventory -> classify_skills -> AGENT final decision -> record_skill_selection",
+        "evidence": "mcp-server/src/server.ts:387-398,584-606; gateway.ts accept requires runtime actor/task/expiry observation and rejects caller receipt."
+      },
+      {
+        "path": "Native vendor adapter via nativeAdapterDefinitionsRef/providerRuntimeRef",
+        "evidence": "mcp-server/src/index.ts:88-106; native-adapters.ts:145-190",
+        "requirements": [
+          "Approved Codex executable, workingDirectory, exact model/effort capability evidence",
+          "Verified retry0 and isolation evidence",
+          "Native allowance and known maximum cost/qualification",
+          "Host hook signed observations/session-board active task"
+        ]
+      },
+      {
+        "path": "Remote vendor adapter registered explicitly through createClassificationProviderRuntime(options.wireAdapters)",
+        "evidence": "runtime.ts:38-44; index.ts:106 supplies nativeAdapters only",
+        "limitation": "Remote vendor wire protocol is not built in; stock MCP startup does not register vendor wireAdapters. Mock success used an explicit synthetic adapter and is not deployed route proof."
+      }
+    ],
+    "missingInputs": [
+      "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG and central profile registry bound to current request/inventory/taxonomy/model/prompt/config digests",
+      "Qualified approved same-vendor route and exact model/effort supported by current host",
+      "External transmission authorization or confirmed native allowance; current budget/known cost ceiling",
+      "Configured registered vendor adapter (native currently supported by MCP startup; remote factory needs explicit adapter registration)",
+      "Signed host hook and current actor/session/task with actual final AGENT decision and read/application/verification artifacts"
+    ],
+    "noAuthorizationRequestMade": "Assignment requires external API and Claude calls=0. Independent offline validation completed; no paid/live attempt made."
+  },
+  "nonExecutedKnownGaps": [
+    "Metadata condition duplication: NOTRUN outside SS20 scoped execution",
+    "Host active-state supply gap: NOTRUN host-live; gateway does not receive installed/enabled discovery from active host here",
+    "Immediate pre-concurrency recheck gap: NOTRUN; no manufactured runtime observation/receipt"
+  ],
+  "evidence": {
+    "publicFileManifest": "manifest.json",
+    "originalRefsStatus": "Original evidence paths were local and are not public; original bytes/digests and excluded artifacts are recorded in manifest.json.",
+    "finalObservationFile": "observations.public.json",
+    "finalVitestFile": "results/isolated-vitest.public.json"
+  },
+  "integrity": {
+    "trackedSourceUnchanged": true,
+    "sourceSpecFileAbsent": true,
+    "source": "Embedded sourceSpec fields only",
+    "noPush": true,
+    "noPR": true,
+    "noRelease": true,
+    "noBootstrapRun": true
+  },
+  "reportingLimits": [
+    "Injected four-skill needed judgments test adapter plumbing only, not provider classification accuracy.",
+    "null selected remains null; empty unavailable judgments [] do not become selected [].",
+    "Guidance skill reads by this developer and inventory source reads are not the SS20 host read/application/verification observations.",
+    "No repaired green or release acceptance claimed."
+  ],
+  "publication": {
+    "artifactKind": "SANITIZED_PUBLIC_DERIVATIVE",
+    "originalResultSHA256": "0f49d645c05d743b647d14e37aa5ce48edd444af556bb488ceca072e95f0ea20",
+    "newTests": 0,
+    "newLiveCalls": 0,
+    "reproductionExecuted": false,
+    "patchStatus": "NO_EXISTING_PRODUCT_PATCH",
+    "stdoutStderrStatus": "MISSING_ORIGINAL separately: only original combined redirected streams exist",
+    "normalPromptUTF8Bytes": 220,
+    "normalPromptUTF8SHA256": "3dd99a26ff73a9e8b8a933ec3ac9f67845003f0910fa3c0d56978e0a6d55a972"
+  }
+}

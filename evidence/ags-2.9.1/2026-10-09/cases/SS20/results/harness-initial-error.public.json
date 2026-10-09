@@ -1,0 +1,22 @@
+{
+  "status": "HARNESS_ERROR_NOT_PRODUCT_EVIDENCE",
+  "numTotalTests": 13,
+  "numPassedTests": 0,
+  "numFailedTests": 13,
+  "success": false,
+  "firstOriginalFailure": {
+    "ancestorTitles": [
+      "SS20 vendor separation: four frozen variants"
+    ],
+    "fullName": "SS20 vendor separation: four frozen variants SS20 normal",
+    "status": "failed",
+    "title": "SS20 normal",
+    "duration": 77.88322700000003,
+    "failureMessages": [
+      "ZodError: [\n  {\n    \"code\": \"unrecognized_keys\",\n    \"keys\": [\n      \"schemaVersion\",\n      \"explicitSkillIds\",\n      \"ruleRequiredSkillIds\",\n      \"vendorContext\",\n      \"publicSynthetic\"\n    ],\n    \"path\": [],\n    \"message\": \"Unrecognized keys: \\\"schemaVersion\\\", \\\"explicitSkillIds\\\", \\\"ruleRequiredSkillIds\\\", \\\"vendorContext\\\", \\\"publicSynthetic\\\"\"\n  }\n]\n    at createClassificationRequest (mcp-server/src/skill-classification/request.ts:48:15)\n    at fixture (tests/ss20-isolated/SS20.test.ts:41:19)\n    at check (tests/ss20-isolated/SS20.test.ts:93:13)\n    at tests/ss20-isolated/SS20.test.ts:122:5\n    at file://node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+    ],
+    "meta": {},
+    "tags": [],
+    "benchmarks": []
+  }
+}

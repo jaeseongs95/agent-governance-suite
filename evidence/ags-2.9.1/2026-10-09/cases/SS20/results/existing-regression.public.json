@@ -1,0 +1,36 @@
+{
+  "numTotalTests": 63,
+  "numPassedTests": 2,
+  "numFailedTests": 0,
+  "numPendingTests": 61,
+  "success": true,
+  "startTime": 1791514479469,
+  "executedAssertions": [
+    {
+      "ancestorTitles": [
+        "approved classification wire adapters"
+      ],
+      "fullName": "approved classification wire adapters SS39 supplied vendor wire mapping sees fixed model/effort and preserves meaningful metadata",
+      "status": "passed",
+      "title": "SS39 supplied vendor wire mapping sees fixed model/effort and preserves meaningful metadata",
+      "duration": 30.49657499999998,
+      "failureMessages": [],
+      "meta": {},
+      "tags": [],
+      "benchmarks": []
+    },
+    {
+      "ancestorTitles": [
+        "fixed-profile classification service"
+      ],
+      "fullName": "fixed-profile classification service SS19/39 OFF never looks up JEV credentials and passes exactly the fixed vendor profile",
+      "status": "passed",
+      "title": "SS19/39 OFF never looks up JEV credentials and passes exactly the fixed vendor profile",
+      "duration": 14.24295699999999,
+      "failureMessages": [],
+      "meta": {},
+      "tags": [],
+      "benchmarks": []
+    }
+  ]
+}

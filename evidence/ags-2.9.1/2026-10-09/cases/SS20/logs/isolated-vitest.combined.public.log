@@ -1,0 +1,15 @@
+Already up to date
+Done in 343ms using pnpm v11.19.0
+
+   ╭──────────────────────────────────────────╮
+   │                                          │
+   │   Update available! 11.19.0 → 12.10.1.   │
+   │   Changelog: https://pnpm.io/v/12.10.1   │
+   │     To update, run: pnpm add -g pnpm     │
+   │                                          │
+   ╰──────────────────────────────────────────╯
+
+(node:1195) TimeoutOverflowWarning: 2147483648 does not fit into a 32-bit signed integer.
+Timeout duration was set to 1.
+(Use `node --trace-warnings ...` to show where the warning was created)
+JSON report written to isolated-vitest.json

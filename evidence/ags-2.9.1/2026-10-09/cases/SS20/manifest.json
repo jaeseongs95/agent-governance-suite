@@ -1,0 +1,234 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS20",
+  "kind": "sanitized-existing-evidence-publication",
+  "candidateCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "candidateTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "inputPrompt": {
+    "bytes": 220,
+    "SHA256": "3dd99a26ff73a9e8b8a933ec3ac9f67845003f0910fa3c0d56978e0a6d55a972",
+    "encoding": "UTF-8",
+    "addedNewline": false
+  },
+  "newTests": 0,
+  "newLiveAPICalls": 0,
+  "missingOriginals": [
+    "separate stdout/stderr",
+    "raw original serialized HTTP wire bytes",
+    "standalone installation logs"
+  ],
+  "patchStatus": "NO_EXISTING_PRODUCT_PATCH",
+  "files": [
+    {
+      "publicPath": "observations.public.json",
+      "publicBytes": 4784706,
+      "publicSHA256": "8464ad1d75c5bf99dbad65f7ba91c4a5828de7ba150a9314b42cfe629eb8fd0b",
+      "transformation": "sanitized copy; original recorded PASS/FAIL/NOTRUN and null/[] retained; local paths and synthetic credential string removed",
+      "originalName": "observations.json",
+      "originalBytes": 4783536,
+      "originalSHA256": "00f7683379efd47eec8aa17bf13b94a3994b94fe3e81da633e3836d015ab7e93",
+      "originalStatus": "RECOVERED"
+    },
+    {
+      "publicPath": "results/isolated-vitest.public.json",
+      "publicBytes": 5366,
+      "publicSHA256": "47830ba0e902824a5236d0c6f687da1062bc1fc24b4a70998122b7a003416e87",
+      "transformation": "sanitized copy; original recorded PASS/FAIL/NOTRUN and null/[] retained; local paths and synthetic credential string removed",
+      "originalName": "isolated-vitest.json",
+      "originalBytes": 5555,
+      "originalSHA256": "3c97a08151cc8f5fd7fcaa82a97f857e685381eb47c3d8cd64cd191b30bd8a88",
+      "originalStatus": "RECOVERED"
+    },
+    {
+      "publicPath": "logs/isolated-vitest.combined.public.log",
+      "publicBytes": 826,
+      "publicSHA256": "3ae95bc3369601ecbd666d70bb04768c72fa95efa7f35a1be08287bb9444319d",
+      "transformation": "sanitized copy; original recorded PASS/FAIL/NOTRUN and null/[] retained; local paths and synthetic credential string removed",
+      "originalName": "isolated-vitest.log",
+      "originalBytes": 851,
+      "originalSHA256": "51bd8a4e40e28215388930a69d5fda21e2578577769b59fddcf4a2fe14dcb4f4",
+      "originalStatus": "RECOVERED"
+    },
+    {
+      "publicPath": "logs/existing-regression.combined.public.log",
+      "publicBytes": 637,
+      "publicSHA256": "a4e38c86b32ec5d8508fefba4e6377d12a723ad8b04dd41926600bbda3bf9b37",
+      "transformation": "sanitized copy; original recorded PASS/FAIL/NOTRUN and null/[] retained; local paths and synthetic credential string removed",
+      "originalName": "existing-regression.log",
+      "originalBytes": 662,
+      "originalSHA256": "23c02fea9a516fb20f0bd95b560ac9554ef836add665ba67fab40d9593cd41e6",
+      "originalStatus": "RECOVERED"
+    },
+    {
+      "publicPath": "results/engineering-test-result.public.json",
+      "publicBytes": 1010,
+      "publicSHA256": "5aae022f78a48943981be834779e993b6c722ec453ee85acd4fc3281d537ea8e",
+      "transformation": "sanitized copy; original recorded PASS/FAIL/NOTRUN and null/[] retained; local paths and synthetic credential string removed",
+      "originalName": "engineering-test-result.json",
+      "originalBytes": 1010,
+      "originalSHA256": "5aae022f78a48943981be834779e993b6c722ec453ee85acd4fc3281d537ea8e",
+      "originalStatus": "RECOVERED"
+    },
+    {
+      "publicPath": "results/engineering-plan-result.public.json",
+      "publicBytes": 594,
+      "publicSHA256": "98478ec64131fdb3d93d3dfeb19e6488454d0f48fafb7ff465199a89fbb7da02",
+      "transformation": "sanitized copy; original recorded PASS/FAIL/NOTRUN and null/[] retained; local paths and synthetic credential string removed",
+      "originalName": "engineering-plan-result.json",
+      "originalBytes": 594,
+      "originalSHA256": "98478ec64131fdb3d93d3dfeb19e6488454d0f48fafb7ff465199a89fbb7da02",
+      "originalStatus": "RECOVERED"
+    },
+    {
+      "publicPath": "results/source-snapshot.public.json",
+      "publicBytes": 2689,
+      "publicSHA256": "4fa3d923cb67c45b89cdd27efe26312d3b403da88472b94a2bd2b86b4aab63f3",
+      "transformation": "sanitized copy; original recorded PASS/FAIL/NOTRUN and null/[] retained; local paths and synthetic credential string removed",
+      "originalName": "source-snapshot.json",
+      "originalBytes": 2809,
+      "originalSHA256": "1db0d2e9fa397912ba018d4b2d49bdd80afd1f856df6d01d6036eee21aca9aa4",
+      "originalStatus": "RECOVERED"
+    },
+    {
+      "publicPath": "results/existing-regression.public.json",
+      "publicBytes": 1180,
+      "publicSHA256": "7a21279d500761ef057e86e051040975019c660e65bdb78d89b1dcae85cab9fd",
+      "transformation": "selected executed assertions only; 2 passed and 61 skipped retained; unrelated skipped assertion bodies omitted; local paths removed",
+      "originalName": "existing-regression.json",
+      "originalBytes": 22996,
+      "originalSHA256": "619bca6a8ceba89f0b15c9e84a6292ae8621adb4b2285bfb1c3b03219f6ed512",
+      "originalStatus": "RECOVERED"
+    },
+    {
+      "publicPath": "results/harness-initial-error.public.json",
+      "publicBytes": 1361,
+      "publicSHA256": "59b8b8aaed60c1bbe4753ee947d964b8302d925d83dcf7c1ed7e4ca82dfb371f",
+      "transformation": "original initial harness error summary and first actual failure retained; duplicate failure stacks omitted; local paths removed",
+      "originalName": "harness-initial-error.json",
+      "originalBytes": 16937,
+      "originalSHA256": "c5b2bfd0df1abb95bd8d4c627b248434c291a1ef2c0bb4871402e3b55f151e6d",
+      "originalStatus": "RECOVERED"
+    },
+    {
+      "publicPath": "logs/harness-initial-error.combined.public.log",
+      "publicBytes": 633,
+      "publicSHA256": "0b11972fec40ff2d12bfb6e2741cd14a3e26c9737461227052f36ea00e449656",
+      "transformation": "sanitized copy; original recorded PASS/FAIL/NOTRUN and null/[] retained; local paths and synthetic credential string removed",
+      "originalName": "harness-initial-error.log",
+      "originalBytes": 658,
+      "originalSHA256": "e7340cdcf48b8e050527fd9eeb6b0119cc6a6bb9640a45c58d692e75b94de870",
+      "originalStatus": "RECOVERED"
+    },
+    {
+      "publicPath": "reproduce/SS20.test.ts",
+      "publicBytes": 19068,
+      "publicSHA256": "1559cf3e2b157c845e99bf745f880b32d5f16ca019e72f76fb625de2d97da616",
+      "transformation": "public reproduction derivative: local output directory replaced with configurable SS20_EVIDENCE_DIR/default relative output; synthetic credential string redacted; assertions unchanged; NOT EXECUTED",
+      "originalName": "SS20.test.ts",
+      "originalBytes": 19024,
+      "originalSHA256": "9ab7b3b20039d0968e1342c1d3c542dc7d81af9a2eee690694d59feacc663e57",
+      "originalStatus": "RECOVERED"
+    },
+    {
+      "publicPath": "inputs/SS20.embedded-source.json",
+      "publicBytes": 1886,
+      "publicSHA256": "daa228eb299bdf6e3aeda6a5d27fa84150f7b355b3edcf6420051b487e5096da",
+      "transformation": "extract SS20 case only from frozen fixture; JSON reserialization; originalPrompt/oracle null and all variants unchanged",
+      "originalName": "fixtures.json",
+      "originalBytes": 142450,
+      "originalSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "originalStatus": "RECOVERED"
+    },
+    {
+      "publicPath": "inputs/original-prompt.utf8.txt",
+      "publicBytes": 220,
+      "publicSHA256": "3dd99a26ff73a9e8b8a933ec3ac9f67845003f0910fa3c0d56978e0a6d55a972",
+      "transformation": "exact UTF-8 bytes of fixture SS03.originalPrompt string, the input specified by SS20; no added newline; SS03 was not separately executed",
+      "originalName": "fixtures.json",
+      "originalBytes": 142450,
+      "originalSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "originalStatus": "RECOVERED"
+    },
+    {
+      "publicPath": "inputs/normal.request.public.json",
+      "publicBytes": 255014,
+      "publicSHA256": "2cad2a14431a8c6e867456de9a35a313ce384bfcdcdc09f1ed90e045fd03c5a6",
+      "transformation": "extract recorded normal request object including full inventory; JSON representation reserialized and local paths removed; not an original wire byte capture",
+      "originalName": "observations.json",
+      "originalBytes": 4783536,
+      "originalSHA256": "00f7683379efd47eec8aa17bf13b94a3994b94fe3e81da633e3836d015ab7e93",
+      "originalStatus": "RECOVERED"
+    },
+    {
+      "publicPath": "SS20.result.public.json",
+      "publicBytes": 38567,
+      "publicSHA256": "bdfca397f37d0bda6c3c7daec5f38382405475da3631469f9cc48e451d53f3a8",
+      "transformation": "sanitized original result; original statuses/commit/tree/fixture/oracle SHA and limits unchanged; public artifact references mapped; publication metadata added; original evidence digests retained in manifest",
+      "originalName": "SS20.result.json",
+      "originalBytes": 40154,
+      "originalSHA256": "0f49d645c05d743b647d14e37aa5ce48edd444af556bb488ceca072e95f0ea20",
+      "originalStatus": "RECOVERED"
+    },
+    {
+      "publicPath": "README.md",
+      "publicBytes": 4989,
+      "publicSHA256": "31034162d7f835e05ecb6e87c3881a699fc339ffeb15d8b3993d5f8fc827108a",
+      "transformation": "new publication documentation; no execution evidence created",
+      "originalStatus": "NOT_APPLICABLE_NEW_PUBLICATION_DOCUMENT"
+    }
+  ],
+  "retainedButUnpublishedOriginals": [
+    {
+      "originalName": "engineering-test-plan.json",
+      "originalBytes": 17980,
+      "originalSHA256": "49f4d0d7b817cc65e2217940875a1dd86d9d9498dcb1698973e99a3d722e23a2",
+      "publicationStatus": "NOT_PUBLISHED",
+      "reason": "superseded/duplicated local intermediate or local-path-bearing packaging script; original retained, not required for final evidence"
+    },
+    {
+      "originalName": "engineering-test-proof.json",
+      "originalBytes": 10569,
+      "originalSHA256": "56a433246e7414b1c7275f59985be9ce83e9bc7c69a5943322fa1243128a4050",
+      "publicationStatus": "NOT_PUBLISHED",
+      "reason": "superseded/duplicated local intermediate or local-path-bearing packaging script; original retained, not required for final evidence"
+    },
+    {
+      "originalName": "finalize.mjs",
+      "originalBytes": 14562,
+      "originalSHA256": "4277a779a9b1768d1224f61f6048e41e58577eef74afcbeb8f278148898042b5",
+      "publicationStatus": "NOT_PUBLISHED",
+      "reason": "superseded/duplicated local intermediate or local-path-bearing packaging script; original retained, not required for final evidence"
+    },
+    {
+      "originalName": "harness-initial-empty-observations.json",
+      "originalBytes": 2506,
+      "originalSHA256": "3e4bf91240f2c99a3eedff6654f087101b681ea4de5091551ce69939b99a4a87",
+      "publicationStatus": "NOT_PUBLISHED",
+      "reason": "superseded/duplicated local intermediate or local-path-bearing packaging script; original retained, not required for final evidence"
+    },
+    {
+      "originalName": "isolated-r1-observations.json",
+      "originalBytes": 4767885,
+      "originalSHA256": "24d9df2b36e9a5b2b8da80853d101994494f3bba7912bdea7ef958b9b13db36e",
+      "publicationStatus": "NOT_PUBLISHED",
+      "reason": "superseded/duplicated local intermediate or local-path-bearing packaging script; original retained, not required for final evidence"
+    },
+    {
+      "originalName": "isolated-r1-vitest.json",
+      "originalBytes": 5543,
+      "originalSHA256": "a40fb12e9d3729d03e1b7f69ac951eda52895a4989468e2c6633baa98bba8fa0",
+      "publicationStatus": "NOT_PUBLISHED",
+      "reason": "superseded/duplicated local intermediate or local-path-bearing packaging script; original retained, not required for final evidence"
+    },
+    {
+      "originalName": "isolated-r1-vitest.log",
+      "originalBytes": 851,
+      "originalSHA256": "51e4e717abc74c94473a88ab3fc1bf30a6668a93bf9c6a265eb4d65e802d9145",
+      "publicationStatus": "NOT_PUBLISHED",
+      "reason": "superseded/duplicated local intermediate or local-path-bearing packaging script; original retained, not required for final evidence"
+    }
+  ],
+  "hashScope": "manifest lists payload files excluding itself and SHA256SUMS; SHA256SUMS lists payload plus manifest, excluding itself"
+}

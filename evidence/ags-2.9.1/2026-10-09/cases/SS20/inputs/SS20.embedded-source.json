@@ -1,0 +1,31 @@
+{
+  "caseId": "SS20",
+  "title": "vendor adapter의 JEV 분리",
+  "familyId": "mechanical-SS20",
+  "publicSynthetic": true,
+  "status": "NOT_RUN",
+  "executionKind": "mock 필수, 승인된 vendor 경로의 host/provider-live는 별도 수행한다.",
+  "originalPrompt": null,
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "section": "SS20",
+    "fields": {
+      "입력": "SS03을 JEV OFF와 승인된 사용자 vendor profile로 실행한다. 정상 vendor 공통 RESP, profile 없음, 모델 미가용, 지원 옵션 불일치를 각각 주입한다.",
+      "필수추천": "정상 응답에서 P·CS·T·O의 분류 지원을 받고 AGENT가 실제 선택한다. 해당 profile의 model·reasoning을 사용한다.",
+      "금지추천 또는 행동": "JEV키 조회·JEV 호출; vendor 실패를 이유로 JEV 재활성화; 다른 모델·벤더·reasoning으로 자동 상향; adapter 응답을 AGENT 선택으로 복사.",
+      "허용선택": "승인된 고정 vendor route의 한 분류 시도와 별도 AGENT 선택. 미지원은 구체적 사유로 보류한다.",
+      "보류조건": "profile·qualification·옵션·승인 route가 없거나 실행 예산이 허용되지 않음.",
+      "통과기준": "정상 vendor 분류 1회·JEV 0회이며 실제 model/effort가 중앙 profile과 같다. 실패 변형도 JEV 0회다. 공통 RESP 구조와 실제 AGENT 최종 선택을 각각 확인한다.",
+      "증거": "E0·E1·E3·E4, profile revision·비밀 제거된 전송 옵션·RESP·실제 선택 receipt.",
+      "실행종류": "mock 필수, 승인된 vendor 경로의 host/provider-live는 별도 수행한다."
+    },
+    "bodyDigest": "sha256:06cc29e74c1cd4c1e4b7c77fc2e82b5339e39d69edb51f8aa6a2103bb2d4c306"
+  },
+  "oracle": null,
+  "variants": [
+    "normal",
+    "missing-profile",
+    "unavailable-model",
+    "unsupported-option"
+  ]
+}
