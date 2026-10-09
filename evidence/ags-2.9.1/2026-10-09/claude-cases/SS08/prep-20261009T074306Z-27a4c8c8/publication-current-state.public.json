@@ -1,0 +1,8 @@
+{
+  "branch": "evidence",
+  "baseCommit": "11add68ef23cede027879c9f89f037d461ffc422",
+  "ownedPath": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS08/prep-20261009T074306Z-27a4c8c8",
+  "pathExistsAtRemoteBase": false,
+  "fingerprint": "sha256:15211d808f2966243de69e5cf8c23402758f384bc79f17d3cc9b38c69ad63266",
+  "checkedUsing": "Fresh git fetch origin evidence followed by exact ls-tree check"
+}

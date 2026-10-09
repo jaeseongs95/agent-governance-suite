@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "1.0.0",
+  "operationId": "prep-20261009T074306Z-27a4c8c8",
+  "actionClass": "publish",
+  "targets": [
+    {
+      "locator": "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/evidence/ags-2.9.1/2026-10-09/claude-cases/SS08/prep-20261009T074306Z-27a4c8c8",
+      "targetType": "repository-subdirectory",
+      "environment": "external",
+      "expectedFingerprint": "sha256:15211d808f2966243de69e5cf8c23402758f384bc79f17d3cc9b38c69ad63266"
+    }
+  ],
+  "plannedCommandOrTool": {
+    "tool": "git push origin HEAD:refs/heads/evidence",
+    "action": "Append only sanitized SS08 evidence in the exact owned new run path; normal fast-forward only"
+  },
+  "scopeRef": {
+    "locator": "publication-authorization.public.json",
+    "digest": "sha256:499d51e92ee2f62433ae4cd52b29f20832179c6233dcbd6fe74063db376d5cd4",
+    "includedTargets": [
+      "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/evidence/ags-2.9.1/2026-10-09/claude-cases/SS08/prep-20261009T074306Z-27a4c8c8"
+    ],
+    "excludedTargets": []
+  },
+  "authorizationRef": {
+    "locator": "publication-authorization.public.json",
+    "digest": "sha256:499d51e92ee2f62433ae4cd52b29f20832179c6233dcbd6fe74063db376d5cd4",
+    "allowedActions": [
+      "publish"
+    ],
+    "allowedTargets": [
+      "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/evidence/ags-2.9.1/2026-10-09/claude-cases/SS08/prep-20261009T074306Z-27a4c8c8"
+    ],
+    "environments": [
+      "external"
+    ]
+  },
+  "approvalEvidenceRefs": [
+    {
+      "locator": "publication-authorization.public.json",
+      "digest": "sha256:499d51e92ee2f62433ae4cd52b29f20832179c6233dcbd6fe74063db376d5cd4",
+      "operationId": "prep-20261009T074306Z-27a4c8c8",
+      "actionClass": "publish",
+      "targetLocators": [
+        "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/evidence/ags-2.9.1/2026-10-09/claude-cases/SS08/prep-20261009T074306Z-27a4c8c8"
+      ],
+      "environments": [
+        "external"
+      ],
+      "expiresAt": "2026-10-09T08:45:08.370011+00:00"
+    }
+  ],
+  "currentStateEvidenceRefs": [
+    {
+      "locator": "publication-current-state.public.json",
+      "digest": "sha256:eb8af311a1071eb09ced2d3e420a5dda58bf447fd13734f72173d824bf180438",
+      "targetLocator": "https://github.com/jaeseongs95/agent-governance-suite/tree/evidence/evidence/ags-2.9.1/2026-10-09/claude-cases/SS08/prep-20261009T074306Z-27a4c8c8",
+      "fingerprint": "sha256:15211d808f2966243de69e5cf8c23402758f384bc79f17d3cc9b38c69ad63266"
+    }
+  ],
+  "recoveryPlan": {
+    "available": true,
+    "method": "Scoped compensating commit; no force push or shared reset",
+    "backupRef": "git:11add68ef23cede027879c9f89f037d461ffc422",
+    "restoreProcedureRef": "publication-recovery.public.json",
+    "restoreTestEvidenceRef": "publication-recovery.public.json",
+    "irreversibilityAccepted": false
+  },
+  "expectedBlastRadius": {
+    "affectedTargets": 1,
+    "affectedUsers": 0,
+    "external": true,
+    "description": "Append one SS08 preparation evidence directory to existing public evidence branch; no product or other case changes"
+  }
+}

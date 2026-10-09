@@ -1,0 +1,83 @@
+{
+  "caseId": "SS08",
+  "run": "prep-20261009T074306Z-27a4c8c8",
+  "publicationKind": "Claude preparation only; actual trial NOTRUN",
+  "baseEvidenceCommit": "11add68ef23cede027879c9f89f037d461ffc422",
+  "frozenInputEvidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "productCodeOrGeneratedFilesChanged": false,
+  "modelApiCalls": 0,
+  "actualCostUsd": 0,
+  "payloads": [
+    {
+      "path": "REPORT.md",
+      "bytes": 5075,
+      "sha256": "8ee2814b38106ba0fad9e834724e075ab14920b412b87d21ed96560a4e41f0f5"
+    },
+    {
+      "path": "cost-ledger.public.json",
+      "bytes": 1141,
+      "sha256": "fe21b207e39def214aeb0a0b8fa9b380ce5194c5765bce0ee21f234d1cf1477d"
+    },
+    {
+      "path": "environment.public.json",
+      "bytes": 2364,
+      "sha256": "13aff63989bea68de9f86b071a4382dfd2d6b7e4865af19ffded66d9db5f44f7"
+    },
+    {
+      "path": "historical-results.public.json",
+      "bytes": 4369,
+      "sha256": "8c67979f7852a65a61034c341119840650b7af698d59818e8c31572044b613d5"
+    },
+    {
+      "path": "inputs/SS08.originalPrompt.utf8.txt",
+      "bytes": 137,
+      "sha256": "92b030041d6deb5424cb8e9f4dc1c8a531b05814fec7e85d6839c4f4be07c1c7"
+    },
+    {
+      "path": "inputs/SS08.source.json",
+      "bytes": 4035,
+      "sha256": "b06da7e4ff34fb68a01ffa979e5290c2ac5efcace295511df5169009f77cf26d"
+    },
+    {
+      "path": "publication-authorization.public.json",
+      "bytes": 706,
+      "sha256": "499d51e92ee2f62433ae4cd52b29f20832179c6233dcbd6fe74063db376d5cd4"
+    },
+    {
+      "path": "publication-current-state.public.json",
+      "bytes": 396,
+      "sha256": "eb8af311a1071eb09ced2d3e420a5dda58bf447fd13734f72173d824bf180438"
+    },
+    {
+      "path": "publication-intent.public.json",
+      "bytes": 3162,
+      "sha256": "88b09cfc1098c256b46b97544763a22543ad58aebb654b0a2264602adbb82f2c"
+    },
+    {
+      "path": "publication-preflight.public.json",
+      "bytes": 3034,
+      "sha256": "7ae06705d9360c1dab66b4da88b317b4dbb121caddd4bc57300c678d04b89643"
+    },
+    {
+      "path": "publication-receipt-check.public.json",
+      "bytes": 389,
+      "sha256": "e2ff2097b15187a618660af0f9585ee8cccea1f16687466d0f08f7aad91cdf52"
+    },
+    {
+      "path": "publication-recovery.public.json",
+      "bytes": 887,
+      "sha256": "2105a9cb369cd9b3044a6803277406d9903909d103b61423d15b35229dda9b7c"
+    },
+    {
+      "path": "resume-plan.public.json",
+      "bytes": 6768,
+      "sha256": "fffe08801878f672f0f9d2786064ad4d123263963a1105cc751d86843a318ff2"
+    },
+    {
+      "path": "source-integrity.public.json",
+      "bytes": 14890,
+      "sha256": "c2be3c331741b02e64e100e50cca28e5947e04a1bae1002981480f3346566966"
+    }
+  ],
+  "hashPolicy": "Manifest covers payloads, excluding manifest and SHA256SUMS. SHA256SUMS covers payloads and manifest, excluding itself."
+}

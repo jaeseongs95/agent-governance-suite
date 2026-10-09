@@ -1,0 +1,369 @@
+{
+  "caseId": "SS08",
+  "title": "이름으로 지정한 스킬",
+  "evidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "evidenceRoot": "evidence/ags-2.9.1/2026-10-09/cases/SS08/",
+  "readMethod": "Fresh public Git clone; exact git show commit:path into a separate local snapshot",
+  "originalPromptEqualsSourceJson": true,
+  "filesReadAndHashed": [
+    {
+      "path": "README.md",
+      "bytes": 4280,
+      "sha256": "e0e24f61720629298f282140a45aeb86f41abb8fd9840c44196b7bd61819bbc6",
+      "manifestMatches": true
+    },
+    {
+      "path": "SHA256SUMS",
+      "bytes": 2328,
+      "sha256": "1d4c2d6370eda26d9e5f3efc975b0b44864272e5e794f6c9336f4d8519388c32",
+      "manifestMatches": null
+    },
+    {
+      "path": "SS08.result.public.json",
+      "bytes": 3196618,
+      "sha256": "f04335700dcf0158c7a602f620ef280921e9395a0b8a0ed24d30ef7ab7e1cdc6",
+      "manifestMatches": true
+    },
+    {
+      "path": "commands/environment.public.json",
+      "bytes": 309,
+      "sha256": "20170d5baf54eda5ae584ec688818ba529acad2e372e6a032e9c5d95eddf5418",
+      "manifestMatches": true
+    },
+    {
+      "path": "commands/existing.public.json",
+      "bytes": 529,
+      "sha256": "4db784caaf7a155e7267ab5706d76a9440bc7063edba4fe085bf06df05166d06",
+      "manifestMatches": true
+    },
+    {
+      "path": "commands/isolated.public.json",
+      "bytes": 515,
+      "sha256": "c5ebbea87e7c828d3d9f08e60e31ac4f85fad65963236e2c7b0f43f325e4ba94",
+      "manifestMatches": true
+    },
+    {
+      "path": "commands/isolated.v1.public.json",
+      "bytes": 421,
+      "sha256": "ad09556b73de8bb5ef295d8db9b6ad4f55539833f91868124fac738293c0fd71",
+      "manifestMatches": true
+    },
+    {
+      "path": "host-readiness.public.json",
+      "bytes": 2061,
+      "sha256": "cf67289ecb76946d4caaa029403c8385b0b3caee4d806f34fd9007fe9f279246",
+      "manifestMatches": true
+    },
+    {
+      "path": "inputs/SS08.originalPrompt.utf8.txt",
+      "bytes": 137,
+      "sha256": "92b030041d6deb5424cb8e9f4dc1c8a531b05814fec7e85d6839c4f4be07c1c7",
+      "manifestMatches": true
+    },
+    {
+      "path": "inputs/SS08.source.json",
+      "bytes": 4035,
+      "sha256": "b06da7e4ff34fb68a01ffa979e5290c2ac5efcace295511df5169009f77cf26d",
+      "manifestMatches": true
+    },
+    {
+      "path": "logs/environment-probe.combined.public.log",
+      "bytes": 443,
+      "sha256": "4e3476994801388d191258cc3e0d6055647c2dd05782af0c1b93a47a64ca69e4",
+      "manifestMatches": true
+    },
+    {
+      "path": "logs/existing-vitest.combined.public.log",
+      "bytes": 5676,
+      "sha256": "9ff179b8b0a13b81bfcbaf2c61c70f9e5e720d757670fc96c34c88f0189e7e78",
+      "manifestMatches": true
+    },
+    {
+      "path": "logs/existing-vitest.public.json",
+      "bytes": 14378,
+      "sha256": "05c4df0c671116bf00ce177673817c9daee88f2c9b063ec30b7e99a17e0f4b6b",
+      "manifestMatches": true
+    },
+    {
+      "path": "logs/isolated-vitest.combined.public.log",
+      "bytes": 5819,
+      "sha256": "3706ffba543b0d7bff7acb27449c5686a3fd641d65a28d9782d92638477d6c6f",
+      "manifestMatches": true
+    },
+    {
+      "path": "logs/isolated-vitest.public.json",
+      "bytes": 10627,
+      "sha256": "c36ba68776821c0eafb05a47af347516814ed2ef5e7933176898ad976a71421f",
+      "manifestMatches": true
+    },
+    {
+      "path": "logs/isolated-vitest.v1.combined.public.log",
+      "bytes": 4873,
+      "sha256": "b378adae9ea760d9c484b423c52abcaf30a6ca0a6b78212929bd82e35dd133f9",
+      "manifestMatches": true
+    },
+    {
+      "path": "logs/isolated-vitest.v1.public.json",
+      "bytes": 9728,
+      "sha256": "fdf1e53de73f79948df1d43e2f36b45c20fd87280a7029b490c64f32b0fb20e3",
+      "manifestMatches": true
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 12859,
+      "sha256": "dcbcc40223aa33087a2d07729b5079347e5da1b0b02b3c6d1aa19ad42dbc242f",
+      "manifestMatches": null
+    },
+    {
+      "path": "observations/environment.public.json",
+      "bytes": 287756,
+      "sha256": "444dd83e445fb078de666ede5c8bd9f7e6990643963c4c1576fe59705dff2d6b",
+      "manifestMatches": true
+    },
+    {
+      "path": "observations/probe-observations.public.json",
+      "bytes": 2878004,
+      "sha256": "266ced7db4877c5413f7f2b4d848bfda5eefc6a9857291b7f7a434f6b2c890b9",
+      "manifestMatches": true
+    },
+    {
+      "path": "original-recovery.json",
+      "bytes": 984,
+      "sha256": "72ffeb4e842c30e017128c9172812a8d6b697c72227b48e5e26da3933dcfbfe1",
+      "manifestMatches": true
+    },
+    {
+      "path": "plan.public.json",
+      "bytes": 2494,
+      "sha256": "65a849b9ac5415dd0dd935b2bbba581f5e396af182ca4b7edf58a662d0718fbc",
+      "manifestMatches": true
+    },
+    {
+      "path": "reproduction/commands.txt",
+      "bytes": 378,
+      "sha256": "1b6167ceec46861e4c0bae1ae19be54ada4d5c9848b76a88335c9a630c6a6b13",
+      "manifestMatches": true
+    },
+    {
+      "path": "reproduction/ss08.development.public.test.ts",
+      "bytes": 18739,
+      "sha256": "d0da334d7cef1b6d9e0086e8bcfc05bf62ec360edfd30efbc9fcf321683a25b7",
+      "manifestMatches": true
+    },
+    {
+      "path": "source-evidence.txt",
+      "bytes": 14700,
+      "sha256": "a82a4ff4640acdc7b4e27fbb3d2455a6f4f6f1f3aebb492d643ec8026a5e667f",
+      "manifestMatches": true
+    }
+  ],
+  "publishedChecksumVerification": [
+    {
+      "path": "README.md",
+      "expectedSha256": "e0e24f61720629298f282140a45aeb86f41abb8fd9840c44196b7bd61819bbc6",
+      "actualSha256": "e0e24f61720629298f282140a45aeb86f41abb8fd9840c44196b7bd61819bbc6",
+      "matches": true
+    },
+    {
+      "path": "SS08.result.public.json",
+      "expectedSha256": "f04335700dcf0158c7a602f620ef280921e9395a0b8a0ed24d30ef7ab7e1cdc6",
+      "actualSha256": "f04335700dcf0158c7a602f620ef280921e9395a0b8a0ed24d30ef7ab7e1cdc6",
+      "matches": true
+    },
+    {
+      "path": "commands/environment.public.json",
+      "expectedSha256": "20170d5baf54eda5ae584ec688818ba529acad2e372e6a032e9c5d95eddf5418",
+      "actualSha256": "20170d5baf54eda5ae584ec688818ba529acad2e372e6a032e9c5d95eddf5418",
+      "matches": true
+    },
+    {
+      "path": "commands/existing.public.json",
+      "expectedSha256": "4db784caaf7a155e7267ab5706d76a9440bc7063edba4fe085bf06df05166d06",
+      "actualSha256": "4db784caaf7a155e7267ab5706d76a9440bc7063edba4fe085bf06df05166d06",
+      "matches": true
+    },
+    {
+      "path": "commands/isolated.public.json",
+      "expectedSha256": "c5ebbea87e7c828d3d9f08e60e31ac4f85fad65963236e2c7b0f43f325e4ba94",
+      "actualSha256": "c5ebbea87e7c828d3d9f08e60e31ac4f85fad65963236e2c7b0f43f325e4ba94",
+      "matches": true
+    },
+    {
+      "path": "commands/isolated.v1.public.json",
+      "expectedSha256": "ad09556b73de8bb5ef295d8db9b6ad4f55539833f91868124fac738293c0fd71",
+      "actualSha256": "ad09556b73de8bb5ef295d8db9b6ad4f55539833f91868124fac738293c0fd71",
+      "matches": true
+    },
+    {
+      "path": "host-readiness.public.json",
+      "expectedSha256": "cf67289ecb76946d4caaa029403c8385b0b3caee4d806f34fd9007fe9f279246",
+      "actualSha256": "cf67289ecb76946d4caaa029403c8385b0b3caee4d806f34fd9007fe9f279246",
+      "matches": true
+    },
+    {
+      "path": "inputs/SS08.originalPrompt.utf8.txt",
+      "expectedSha256": "92b030041d6deb5424cb8e9f4dc1c8a531b05814fec7e85d6839c4f4be07c1c7",
+      "actualSha256": "92b030041d6deb5424cb8e9f4dc1c8a531b05814fec7e85d6839c4f4be07c1c7",
+      "matches": true
+    },
+    {
+      "path": "inputs/SS08.source.json",
+      "expectedSha256": "b06da7e4ff34fb68a01ffa979e5290c2ac5efcace295511df5169009f77cf26d",
+      "actualSha256": "b06da7e4ff34fb68a01ffa979e5290c2ac5efcace295511df5169009f77cf26d",
+      "matches": true
+    },
+    {
+      "path": "logs/environment-probe.combined.public.log",
+      "expectedSha256": "4e3476994801388d191258cc3e0d6055647c2dd05782af0c1b93a47a64ca69e4",
+      "actualSha256": "4e3476994801388d191258cc3e0d6055647c2dd05782af0c1b93a47a64ca69e4",
+      "matches": true
+    },
+    {
+      "path": "logs/existing-vitest.combined.public.log",
+      "expectedSha256": "9ff179b8b0a13b81bfcbaf2c61c70f9e5e720d757670fc96c34c88f0189e7e78",
+      "actualSha256": "9ff179b8b0a13b81bfcbaf2c61c70f9e5e720d757670fc96c34c88f0189e7e78",
+      "matches": true
+    },
+    {
+      "path": "logs/existing-vitest.public.json",
+      "expectedSha256": "05c4df0c671116bf00ce177673817c9daee88f2c9b063ec30b7e99a17e0f4b6b",
+      "actualSha256": "05c4df0c671116bf00ce177673817c9daee88f2c9b063ec30b7e99a17e0f4b6b",
+      "matches": true
+    },
+    {
+      "path": "logs/isolated-vitest.combined.public.log",
+      "expectedSha256": "3706ffba543b0d7bff7acb27449c5686a3fd641d65a28d9782d92638477d6c6f",
+      "actualSha256": "3706ffba543b0d7bff7acb27449c5686a3fd641d65a28d9782d92638477d6c6f",
+      "matches": true
+    },
+    {
+      "path": "logs/isolated-vitest.public.json",
+      "expectedSha256": "c36ba68776821c0eafb05a47af347516814ed2ef5e7933176898ad976a71421f",
+      "actualSha256": "c36ba68776821c0eafb05a47af347516814ed2ef5e7933176898ad976a71421f",
+      "matches": true
+    },
+    {
+      "path": "logs/isolated-vitest.v1.combined.public.log",
+      "expectedSha256": "b378adae9ea760d9c484b423c52abcaf30a6ca0a6b78212929bd82e35dd133f9",
+      "actualSha256": "b378adae9ea760d9c484b423c52abcaf30a6ca0a6b78212929bd82e35dd133f9",
+      "matches": true
+    },
+    {
+      "path": "logs/isolated-vitest.v1.public.json",
+      "expectedSha256": "fdf1e53de73f79948df1d43e2f36b45c20fd87280a7029b490c64f32b0fb20e3",
+      "actualSha256": "fdf1e53de73f79948df1d43e2f36b45c20fd87280a7029b490c64f32b0fb20e3",
+      "matches": true
+    },
+    {
+      "path": "manifest.json",
+      "expectedSha256": "dcbcc40223aa33087a2d07729b5079347e5da1b0b02b3c6d1aa19ad42dbc242f",
+      "actualSha256": "dcbcc40223aa33087a2d07729b5079347e5da1b0b02b3c6d1aa19ad42dbc242f",
+      "matches": true
+    },
+    {
+      "path": "observations/environment.public.json",
+      "expectedSha256": "444dd83e445fb078de666ede5c8bd9f7e6990643963c4c1576fe59705dff2d6b",
+      "actualSha256": "444dd83e445fb078de666ede5c8bd9f7e6990643963c4c1576fe59705dff2d6b",
+      "matches": true
+    },
+    {
+      "path": "observations/probe-observations.public.json",
+      "expectedSha256": "266ced7db4877c5413f7f2b4d848bfda5eefc6a9857291b7f7a434f6b2c890b9",
+      "actualSha256": "266ced7db4877c5413f7f2b4d848bfda5eefc6a9857291b7f7a434f6b2c890b9",
+      "matches": true
+    },
+    {
+      "path": "original-recovery.json",
+      "expectedSha256": "72ffeb4e842c30e017128c9172812a8d6b697c72227b48e5e26da3933dcfbfe1",
+      "actualSha256": "72ffeb4e842c30e017128c9172812a8d6b697c72227b48e5e26da3933dcfbfe1",
+      "matches": true
+    },
+    {
+      "path": "plan.public.json",
+      "expectedSha256": "65a849b9ac5415dd0dd935b2bbba581f5e396af182ca4b7edf58a662d0718fbc",
+      "actualSha256": "65a849b9ac5415dd0dd935b2bbba581f5e396af182ca4b7edf58a662d0718fbc",
+      "matches": true
+    },
+    {
+      "path": "reproduction/commands.txt",
+      "expectedSha256": "1b6167ceec46861e4c0bae1ae19be54ada4d5c9848b76a88335c9a630c6a6b13",
+      "actualSha256": "1b6167ceec46861e4c0bae1ae19be54ada4d5c9848b76a88335c9a630c6a6b13",
+      "matches": true
+    },
+    {
+      "path": "reproduction/ss08.development.public.test.ts",
+      "expectedSha256": "d0da334d7cef1b6d9e0086e8bcfc05bf62ec360edfd30efbc9fcf321683a25b7",
+      "actualSha256": "d0da334d7cef1b6d9e0086e8bcfc05bf62ec360edfd30efbc9fcf321683a25b7",
+      "matches": true
+    },
+    {
+      "path": "source-evidence.txt",
+      "expectedSha256": "a82a4ff4640acdc7b4e27fbb3d2455a6f4f6f1f3aebb492d643ec8026a5e667f",
+      "actualSha256": "a82a4ff4640acdc7b4e27fbb3d2455a6f4f6f1f3aebb492d643ec8026a5e667f",
+      "matches": true
+    }
+  ],
+  "checksumEntries": 24,
+  "checksumMismatches": 0,
+  "manifestPayloadsVerified": 23,
+  "manifestMismatches": 0,
+  "historicalFixtureAndOracle": {
+    "kind": "read-only historical provenance hashing; no product/model test",
+    "fixtureSha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "oracleSha256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+    "ss08EmbeddedSourceMatchesFixture": true
+  },
+  "historicalSkillSourceChecks": [
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "historicalSourceCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "expectedDigest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+      "actualDigest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+      "matches": true
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "historicalSourceCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "expectedDigest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "actualDigest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "matches": true
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "historicalSourceCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "expectedDigest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "actualDigest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "matches": true
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "historicalSourceCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "expectedDigest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "actualDigest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927",
+      "matches": true
+    },
+    {
+      "path": "skills/code-review/SKILL.md",
+      "historicalSourceCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "expectedDigest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "actualDigest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd",
+      "matches": true
+    },
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "historicalSourceCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "expectedDigest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "actualDigest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5",
+      "matches": true
+    },
+    {
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "historicalSourceCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+      "expectedDigest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "actualDigest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7",
+      "matches": true
+    }
+  ],
+  "externalTestSpec": "MISSING_ORIGINAL; embedded sourceSpec fields preserved without invention",
+  "limitation": "Historical provenance checks only. No product behavior retest, no R17 candidate verification, no unpublished original hash verification."
+}

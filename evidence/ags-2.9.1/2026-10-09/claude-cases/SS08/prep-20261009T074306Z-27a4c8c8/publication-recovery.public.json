@@ -1,0 +1,12 @@
+{
+  "kind": "Read-only publication recovery simulation in isolated temporary Git index",
+  "baseCommit": "11add68ef23cede027879c9f89f037d461ffc422",
+  "baseTree": "c7b5643e742f1c887498870077c7349b24e4e8be",
+  "simulatedAppendTree": "15badd8d4e5544b158bf2e66c70708c1b63e884b",
+  "restoredTree": "c7b5643e742f1c887498870077c7349b24e4e8be",
+  "restoredTreeMatchesBase": true,
+  "scope": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS08/prep-20261009T074306Z-27a4c8c8",
+  "simulatedFileCount": 16,
+  "restoreProcedure": "If needed, create a compensating commit removing only this run path from the then-current evidence head. Preserve all unrelated and concurrent files. Do not force push or reset shared history.",
+  "limitations": "Temporary index validates scoped removal on the captured base. No actual remote rollback was executed; a future rollback needs fresh current-head review."
+}

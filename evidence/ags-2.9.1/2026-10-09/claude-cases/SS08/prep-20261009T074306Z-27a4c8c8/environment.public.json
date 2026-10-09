@@ -1,0 +1,64 @@
+{
+  "observedAt": "2026-10-09T07:43:06.029507+00:00",
+  "cli": {
+    "path": "/workspace/cloud-tools/claude/node_modules/.bin/claude",
+    "exists": true,
+    "version": "2.1.286 (Claude Code)",
+    "versionExitCode": 0,
+    "resolvedBinarySha256": "fe503f65c6289d59c23e5b21ae44f03583f997dd33a2cbfc75ab4f96fb8fc73f",
+    "pathLookupFound": false,
+    "helpExitCode": 0,
+    "helpSha256": "13dd71866e4b6fde1a11de6fa26bd4f5866308794307ff0fb37804c03db8e0b2",
+    "verifiedFlags": [
+      "--print",
+      "--output-format",
+      "--model",
+      "--effort",
+      "--plugin-dir",
+      "--settings",
+      "--mcp-config",
+      "--max-budget-usd"
+    ],
+    "authExecuted": false,
+    "modelRequestExecuted": false
+  },
+  "nodeVersion": "v24.19.0",
+  "pnpmVersion": "11.19.0",
+  "workspaceAgentsSkillsPresent": false,
+  "repoAgentsSkillsPresent": false,
+  "instructionsRead": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827"
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "sha256": "aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "sha256": "eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/entry-details.md",
+      "sha256": "13dc04ff9d74e17f2d0bb6d69583a2c502dc5c69766d9a4ed91a59c0c5741154"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/risk-matrix.md",
+      "sha256": "0377275e0487f9823bed76cd3541e0caa5f3bf030ea407fee5ad17b0f761c801"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/approval-and-authority.md",
+      "sha256": "471afb623db2b67f45465f924eec5426d470dafa0c92bcad14b7bd16d0c16334"
+    },
+    {
+      "path": "skills/mutation-risk-preflight/references/recovery-requirements.md",
+      "sha256": "60a0bded3a1453092e2d02469393e39f3709f0810e0e4c076628854c4d7d54af"
+    }
+  ],
+  "instructionSourceCommit": "56fef8bd189377b80f4020f506e717ab292b260a",
+  "instructionSourceRole": "Preparation/publication procedure only; not tested product candidate",
+  "secrets": "No credential value read, printed, copied, hashed, logged, or published",
+  "persistentSettingsPermissionsNetworkPolicyChanged": false,
+  "candidateCheckoutPrepared": false
+}

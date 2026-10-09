@@ -1,0 +1,102 @@
+{
+  "caseId": "SS08",
+  "sourceEvidenceCommit": "af579e2caa8c09b380bdf88b5e9c675b0b0b9c68",
+  "historicalCandidate": {
+    "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3"
+  },
+  "historicalOverallStatus": "FAIL",
+  "historicalQualification": "NOTRUN",
+  "isolatedFinal": {
+    "pass": 13,
+    "fail": 4,
+    "totalTests": 17,
+    "observationRecords": 18,
+    "exitCode": 1
+  },
+  "historicalHostStages": {
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN"
+  },
+  "historicalActualObservation": {
+    "agentSelectedSkillIds": null,
+    "hostReceipt": null,
+    "readRefs": null,
+    "appliedArtifacts": null,
+    "verifiedEvidence": null
+  },
+  "knownRootCauseReproductions": [
+    {
+      "rootCause": "existing:host-active-state-supply-gap",
+      "probeId": "known-host-state-supply-gap",
+      "newRootCause": false,
+      "severity": "host availability correctness",
+      "expected": "host discovery absent CS => installed=false,hostSupported=false",
+      "observed": "loader with host observation returns false/false; gateway defaults true/true and has no supply path",
+      "source": "mcp-server/src/skill-classification/gateway.ts:49,60,124; inventory.ts:218,219",
+      "limitation": "offline supply-path comparison; no real host discovery invocation"
+    },
+    {
+      "rootCause": "existing:concurrency-pre-acceptance-recheck-gap",
+      "probeId": "known-acceptance-recheck-gap",
+      "newRootCause": false,
+      "severity": "high: cancelled task accepted",
+      "expected": "task cancelled during async acceptance => reject and preserve null",
+      "observed": "valid=true and synthetic cs-engineering selection recorded after task cancelled",
+      "source": "mcp-server/src/skill-classification/gateway.ts:117,123,125,136",
+      "limitation": "direct gateway boundary and synthetic observation; server attestation signing not exercised"
+    },
+    {
+      "rootCause": "existing:valid-cost-lost-with-invalid-RESP",
+      "probeId": "known-invalid-RESP-cost-loss",
+      "newRootCause": false,
+      "severity": "cost accounting",
+      "expected": "usage.actualCostUsd=0.1 preserved and settled",
+      "observed": "INVALID_PROVIDER_RESPONSE; actualCostUsd=null; spentUsd=0; reservation 0.4 remains",
+      "source": "mcp-server/src/skill-classification/service.ts:194,204,210",
+      "limitation": "0.1 is mocked usage; actual API spend=0"
+    },
+    {
+      "rootCause": "existing:timeout-overflow",
+      "probeId": "known-timeout-overflow",
+      "newRootCause": false,
+      "severity": "timeout correctness",
+      "expected": "2147483648ms must not timeout before 10ms mock availability",
+      "observed": "Node TimeoutOverflowWarning clamps to 1ms, PROVIDER_TIMEOUT before provider classification",
+      "source": "mcp-server/src/skill-classification/service.ts:128,166",
+      "limitation": "real Node timer; no model/API dispatch"
+    }
+  ],
+  "rawFailureCorrectionRule": "Raw omission remains a raw failure even if explicit-CS selection is corrected",
+  "notRunHere": true,
+  "newClaudeVerdict": "NOTRUN",
+  "originalRecovery": {
+    "caseId": "SS08",
+    "status": "PARTIAL_ORIGINAL_RECOVERY",
+    "recovered": "All packaged original result/commands/combined logs/input and final test source exist",
+    "MISSING_ORIGINAL": [
+      "stdout captured separately from stderr",
+      "stderr captured separately from stdout",
+      "exact executed v1 test source snapshot",
+      "external sourceSpec.path TEST-SPEC.seq7.ko.md"
+    ],
+    "notMissingButAbsent": {
+      "productPatch": "NONE; no product source changed",
+      "patchFile": "NONE; no original patch file exists"
+    },
+    "intentionallyNotPublished": [
+      "private conversation sourceThreadId",
+      "local absolute paths",
+      "redundant v1 full probe JSON",
+      "original environment-probe source tied to private filesystem; existing output and command retained",
+      "original archive with private paths",
+      "original SHA256SUMS: originals recorded individually in public manifest"
+    ],
+    "fabricatedLogsResultsPatches": false,
+    "newTests": 0,
+    "newModelAPICalls": 0
+  },
+  "limitation": "Previous failure counts and mock cost are historical observations, not expected answers, new defects, real model accuracy, or real spending"
+}

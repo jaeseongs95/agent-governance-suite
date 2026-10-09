@@ -1,0 +1,17 @@
+{
+  "kind": "Sanitized authorization scope summary, not original chat",
+  "operationId": "prep-20261009T074306Z-27a4c8c8",
+  "actionClass": "publish",
+  "repository": "jaeseongs95/agent-governance-suite",
+  "branch": "evidence",
+  "ownedNewPath": "evidence/ags-2.9.1/2026-10-09/claude-cases/SS08/prep-20261009T074306Z-27a4c8c8",
+  "explicitUserAuthorization": "Publish only sanitized SS08 reports/evidence/hash lists under a unique claude-cases/SS08 run path on the existing evidence branch, then re-read fixed remote files.",
+  "prohibited": [
+    "Product/generated changes",
+    "Overwriting other work",
+    "Force push",
+    "Secret values",
+    "Personal data",
+    "Original chat publication"
+  ]
+}

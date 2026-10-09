@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "1.0.0",
+  "operationId": "prep-20261009T074306Z-27a4c8c8",
+  "actionDigest": "sha256:a7c6444f4f2fde599f790287c0ed0efb68dc61b9cd4c36286525cd671f9babad",
+  "targetDigest": "sha256:5fc240bf74e4efc8e173948f8e5810befb025a15947150e68672a46d91a6458f",
+  "classification": {
+    "actionClass": "publish",
+    "reversibility": "reversible",
+    "externalImpact": true,
+    "dataLossPotential": false,
+    "permissionImpact": false
+  },
+  "checks": [
+    {
+      "checkId": "target-specificity",
+      "state": "passed",
+      "evidenceRefs": [],
+      "message": "모든 대상이 구체적으로 식별됐습니다."
+    },
+    {
+      "checkId": "scope-match",
+      "state": "passed",
+      "evidenceRefs": [
+        "publication-authorization.public.json"
+      ],
+      "message": "대상이 작업 범위 안에 있습니다."
+    },
+    {
+      "checkId": "authorization-match",
+      "state": "passed",
+      "evidenceRefs": [
+        "publication-authorization.public.json"
+      ],
+      "message": "행동, 대상과 환경이 허용 범위에 있습니다."
+    },
+    {
+      "checkId": "current-state",
+      "state": "passed",
+      "evidenceRefs": [
+        "publication-current-state.public.json"
+      ],
+      "message": "현재 fingerprint가 예상값과 일치합니다."
+    },
+    {
+      "checkId": "approval",
+      "state": "passed",
+      "evidenceRefs": [
+        "publication-authorization.public.json"
+      ],
+      "message": "승인 상태: observed"
+    },
+    {
+      "checkId": "recovery",
+      "state": "passed",
+      "evidenceRefs": [
+        "git:11add68ef23cede027879c9f89f037d461ffc422",
+        "publication-recovery.public.json"
+      ],
+      "message": "복구 또는 명시적 비가역성 수용 근거가 있습니다."
+    },
+    {
+      "checkId": "blast-radius",
+      "state": "passed",
+      "evidenceRefs": [],
+      "message": "예상 영향 범위가 모든 대상을 포함합니다."
+    }
+  ],
+  "approval": {
+    "required": true,
+    "status": "observed",
+    "evidenceRefs": [
+      "publication-authorization.public.json"
+    ]
+  },
+  "recovery": {
+    "available": true,
+    "restoreTested": true,
+    "irreversibilityAccepted": false,
+    "evidenceRefs": [
+      "git:11add68ef23cede027879c9f89f037d461ffc422",
+      "publication-recovery.public.json"
+    ]
+  },
+  "blastRadius": {
+    "affectedTargets": 1,
+    "affectedUsers": 0,
+    "external": true,
+    "description": "Append one SS08 preparation evidence directory to existing public evidence branch; no product or other case changes"
+  },
+  "unresolved": [],
+  "invalidationTriggers": [
+    "action 또는 planned tool 변경",
+    "target 또는 environment 변경",
+    "current-state evidence 또는 fingerprint 변경",
+    "scope 또는 authorization 변경",
+    "승인 evidence의 만료 또는 범위 변경",
+    "복구 계획 변경",
+    "예상 blast radius 변경"
+  ],
+  "validUntil": "2026-10-09T08:00:08.498Z",
+  "observedAt": "2026-10-09T07:45:08.498Z",
+  "verdict": "READY"
+}
