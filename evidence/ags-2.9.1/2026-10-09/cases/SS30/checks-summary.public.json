@@ -1,0 +1,80 @@
+{
+  "variants": [
+    {
+      "variantId": "401",
+      "status": "PASS_OFFLINE",
+      "probeCount": 2
+    },
+    {
+      "variantId": "403",
+      "status": "PASS_OFFLINE",
+      "probeCount": 2
+    },
+    {
+      "variantId": "5xx",
+      "status": "PASS_OFFLINE",
+      "probeCount": 2
+    },
+    {
+      "variantId": "not-dispatched",
+      "status": "PASS_OFFLINE",
+      "probeCount": 3
+    },
+    {
+      "variantId": "refusal",
+      "status": "FAIL",
+      "probeCount": 5
+    },
+    {
+      "variantId": "empty",
+      "status": "PASS_OFFLINE",
+      "probeCount": 2
+    },
+    {
+      "variantId": "malformed",
+      "status": "PASS_OFFLINE",
+      "probeCount": 2
+    },
+    {
+      "variantId": "missing-questions",
+      "status": "FAIL",
+      "probeCount": 3
+    }
+  ],
+  "counts": [
+    {
+      "executionKind": "existing-regression",
+      "totalCollected": 63,
+      "executed": 7,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 56
+    },
+    {
+      "executionKind": "new-offline-mock",
+      "totalCollected": 21,
+      "executed": 21,
+      "passed": 19,
+      "failed": 2,
+      "skipped": 0
+    }
+  ],
+  "assertionFailures": [
+    {
+      "title": "SS30 RED known valid cost is retained when candidate judgment is missing",
+      "failureMessages": [
+        "AssertionError: expected { providerKind: 'jev', …(9) } to match object { status: 'INVALID', …(2) }\n(10 matching properties omitted from actual)\n    at Proxy.<anonymous> (file://<DEPENDENCY_REPO>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/index.OVGXnVRj.js:2040:10)\n    at Proxy.<anonymous> (file://<DEPENDENCY_REPO>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/index.OVGXnVRj.js:1934:14)\n    at Proxy.methodWrapper (file://<DEPENDENCY_REPO>/node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)\n    at <REPO_ROOT>/evidence/SS30/SS30.test.ts:119:32\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file://<DEPENDENCY_REPO>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+      ]
+    },
+    {
+      "title": "SS30 RED semantic uncertainty must bind the uncertain skill to unresolvedItems",
+      "failureMessages": [
+        "AssertionError: expected 0 to be greater than 0\n    at <REPO_ROOT>/evidence/SS30/SS30.test.ts:128:74\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file://<DEPENDENCY_REPO>/node_modules/.pnpm/vitest@5.0.0_@types+node@26.5.0_vite@8.2.2_@types+node@26.5.0_esbuild@0.28.2_tsx@4.23.13_/node_modules/vitest/dist/chunks/run.CQOUYP-x.js:2783:20"
+      ]
+    }
+  ],
+  "selected": "NOTRUN",
+  "read": "NOTRUN",
+  "applied": "NOTRUN",
+  "verified": "NOTRUN"
+}

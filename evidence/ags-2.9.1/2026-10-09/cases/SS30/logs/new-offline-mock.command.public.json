@@ -1,0 +1,25 @@
+{
+  "id": "new-offline-mock",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "evidence/SS30/SS30.test.ts",
+    "--reporter=json",
+    "--outputFile=evidence/SS30/new-vitest.json"
+  ],
+  "startedAt": "2026-10-09T02:58:10.169Z",
+  "finishedAt": "2026-10-09T02:58:10.859Z",
+  "exitCode": 1,
+  "signal": null,
+  "status": "FAIL",
+  "executionKind": "new-offline-mock",
+  "API0": true,
+  "stdout": "JSON report written to <REPO_ROOT>/evidence/SS30/new-vitest.json\n",
+  "stderr": "",
+  "environment": {
+    "node": "v24.19.0",
+    "timezone": "Etc/UTC"
+  },
+  "hostAttestation": false
+}

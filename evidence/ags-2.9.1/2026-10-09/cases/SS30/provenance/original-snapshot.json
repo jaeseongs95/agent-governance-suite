@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-snapshot",
+  "files": [
+    {
+      "path": "evidence/SS30/SS30.test.ts",
+      "digest": "sha256:e081bb8480388b5498368304459652d89586c0906da57f800097883080bf95fc",
+      "size": 13678,
+      "lineCount": 131
+    },
+    {
+      "path": "evidence/SS30/run.mjs",
+      "digest": "sha256:e37a85380a0b5d0618b34a704d33c1743316e365c23a49339bb904766d8bec8e",
+      "size": 7934,
+      "lineCount": 70
+    },
+    {
+      "path": "mcp-server/src/skill-classification/profiles.ts",
+      "digest": "sha256:0add9c19bd0c7a8e45a57be64f4a2ecb503e0305dc9777629fba142a8566d5be",
+      "size": 6859,
+      "lineCount": 81
+    },
+    {
+      "path": "mcp-server/src/skill-classification/providers.ts",
+      "digest": "sha256:f191c46db32f38248ebdd23be725b426a0b3020e0bb464b36bcc57521983651c",
+      "size": 12898,
+      "lineCount": 162
+    },
+    {
+      "path": "mcp-server/src/skill-classification/request.ts",
+      "digest": "sha256:1d5760c49da40aba50038daa7d44c7239d24ce2c67b4ab45ba30ed7f44db109f",
+      "size": 7093,
+      "lineCount": 99
+    },
+    {
+      "path": "mcp-server/src/skill-classification/service.ts",
+      "digest": "sha256:c58fb8c5629ba1f16a9476cdaca8e89d4cd4c0d72d59dd01c45521465020d8eb",
+      "size": 19033,
+      "lineCount": 215
+    },
+    {
+      "path": "mcp-server/src/skill-classification/types.ts",
+      "digest": "sha256:a5a238741eb34d5af50eb2e67e1d20f97dfebc30cdfc29c77ec7ae618f1319b5",
+      "size": 5949,
+      "lineCount": 173
+    },
+    {
+      "path": "mcp-server/src/skill-classification/validation.ts",
+      "digest": "sha256:70f988d9e5d49f8eaef55ca0ff378b4819798ff8141bd09119691c2cffb2891f",
+      "size": 8449,
+      "lineCount": 107
+    },
+    {
+      "path": "tests/mcp/skill-classification-providers.test.ts",
+      "digest": "sha256:4dcb29e1b6e30460a4dbfb70fc2d6e3eab2b90ea66d933dfe33a7acfd56c2f11",
+      "size": 15320,
+      "lineCount": 143
+    },
+    {
+      "path": "tests/mcp/skill-classification-service.test.ts",
+      "digest": "sha256:01457f8c9d3391297eb1a025aa73c811d00dd61b6a5cc351f2f0ecb9b6aacbc7",
+      "size": 23233,
+      "lineCount": 217
+    },
+    {
+      "path": "tests/skill-classification/fixtures.json",
+      "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+      "size": 142450,
+      "lineCount": 2912
+    }
+  ],
+  "digest": "sha256:4426a543f06490058c2d2e98a33a4cee039b28d96b66bd5f67fa87f4587a99cb"
+}

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-result",
+  "verdict": "INCOMPLETE",
+  "targetDigest": "sha256:4426a543f06490058c2d2e98a33a4cee039b28d96b66bd5f67fa87f4587a99cb",
+  "reportDigest": "sha256:5e24a2be068f05a66e257fe0fdec02c1de16ca89bed56c06aa8bac0dfa839e93",
+  "issues": [
+    "REQUIRED SS30:401: NOT_RUN — Candidate tests were executed and two real assertion failures captured. Regression sensitivity red/green or mutation proof was not performed: product edits are prohibited and no fixed green candidate is provided.",
+    "REQUIRED SS30:403: NOT_RUN — Candidate tests were executed and two real assertion failures captured. Regression sensitivity red/green or mutation proof was not performed: product edits are prohibited and no fixed green candidate is provided.",
+    "REQUIRED SS30:5xx: NOT_RUN — Candidate tests were executed and two real assertion failures captured. Regression sensitivity red/green or mutation proof was not performed: product edits are prohibited and no fixed green candidate is provided.",
+    "REQUIRED SS30:not-dispatched: NOT_RUN — Candidate tests were executed and two real assertion failures captured. Regression sensitivity red/green or mutation proof was not performed: product edits are prohibited and no fixed green candidate is provided.",
+    "REQUIRED SS30:refusal: NOT_RUN — Candidate tests were executed and two real assertion failures captured. Regression sensitivity red/green or mutation proof was not performed: product edits are prohibited and no fixed green candidate is provided.",
+    "REQUIRED SS30:empty: NOT_RUN — Candidate tests were executed and two real assertion failures captured. Regression sensitivity red/green or mutation proof was not performed: product edits are prohibited and no fixed green candidate is provided.",
+    "REQUIRED SS30:malformed: NOT_RUN — Candidate tests were executed and two real assertion failures captured. Regression sensitivity red/green or mutation proof was not performed: product edits are prohibited and no fixed green candidate is provided.",
+    "REQUIRED SS30:missing-questions: NOT_RUN — Candidate tests were executed and two real assertion failures captured. Regression sensitivity red/green or mutation proof was not performed: product edits are prohibited and no fixed green candidate is provided."
+  ],
+  "limitations": [
+    "This is an unsigned local consistency check, not host attestation or an independent audit.",
+    "Snapshots bind only explicitly declared files; environment, dependencies outside scope and omitted Git changes require separate review.",
+    "Semantic correctness, test oracle quality, assertion causality and review completeness remain reviewer responsibilities."
+  ]
+}

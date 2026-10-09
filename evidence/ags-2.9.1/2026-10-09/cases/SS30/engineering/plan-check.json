@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-plan-result",
+  "verdict": "READY",
+  "planDigest": "sha256:4fc4241281ce8fb8e9007095945cca8a449d7be7e853a53c55cea6979f7a7103",
+  "caseIds": [
+    "SS30:401",
+    "SS30:403",
+    "SS30:5xx",
+    "SS30:not-dispatched",
+    "SS30:refusal",
+    "SS30:empty",
+    "SS30:malformed",
+    "SS30:missing-questions"
+  ]
+}

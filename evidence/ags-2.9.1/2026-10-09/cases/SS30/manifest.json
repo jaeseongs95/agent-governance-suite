@@ -1,0 +1,290 @@
+{
+  "schemaVersion": "1.0.0",
+  "caseId": "SS30",
+  "kind": "public-evidence-file-manifest",
+  "hashAlgorithm": "SHA256",
+  "selfHashPolicy": "manifest and SHA256SUMS excluded from manifest; SHA256SUMS includes manifest but excludes itself",
+  "files": [
+    {
+      "path": "PATCH_STATUS.md",
+      "bytes": 423,
+      "sha256": "b2db4b364d3b0e76bc871a16afa6767ea3bf3d7b15b827f533f7b0715efefa38",
+      "sourceKind": "new-publication-metadata",
+      "originalFile": null,
+      "originalBytes": null,
+      "originalSHA256": null,
+      "transformations": [
+        "Packaging metadata or non-executed reproduction instructions only; no new test observations."
+      ]
+    },
+    {
+      "path": "README.md",
+      "bytes": 3269,
+      "sha256": "d13dfb68b5cee69200f63c1d256c27c2deddbf67f3b764acec4fadbd4a9a32aa",
+      "sourceKind": "new-publication-metadata",
+      "originalFile": null,
+      "originalBytes": null,
+      "originalSHA256": null,
+      "transformations": [
+        "Packaging metadata or non-executed reproduction instructions only; no new test observations."
+      ]
+    },
+    {
+      "path": "REPORT.public.ko.md",
+      "bytes": 7512,
+      "sha256": "5bd2139ea760d6fc68edb45a3364be47d117d5f2de77b74308be8f36d636440d",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/REPORT.ko.md",
+      "originalBytes": 7524,
+      "originalSHA256": "35fe5c0fed51dbac7e7c9e8c88cc4d3a5b33b47b50b01f89c3c1b8e72bf6dc5c",
+      "publicIsExactOriginal": false,
+      "transformations": [
+        "Personal local paths replaced by descriptive placeholders; no environment values queried or added."
+      ]
+    },
+    {
+      "path": "SS30.public.result.json",
+      "bytes": 234641,
+      "sha256": "ee236ed4b74e9fc91b3c7435d527774a33d54684f5a4690358d8f66e6bc6a882",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/SS30.result.json",
+      "originalBytes": 234473,
+      "originalSHA256": "84e81f6f3b604c95ee367120d292487d12851caae8137219ca4610b56e681078",
+      "publicIsExactOriginal": false,
+      "transformations": [
+        "Personal local paths replaced by descriptive placeholders; no environment values queried or added."
+      ]
+    },
+    {
+      "path": "checks-summary.public.json",
+      "bytes": 2973,
+      "sha256": "600a9fe99ec2f575fa8e72efa1e96a7def200194be273bea9c05db584424a657",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/checks-summary.json",
+      "originalBytes": 3077,
+      "originalSHA256": "894d94fedbd49a82587e25267d73d3cc33ad502f1a09af10664574cd91745efe",
+      "publicIsExactOriginal": false,
+      "transformations": [
+        "Personal local paths replaced by descriptive placeholders; no environment values queried or added."
+      ]
+    },
+    {
+      "path": "engineering/engineering-test-plan.json",
+      "bytes": 10679,
+      "sha256": "26cae2bff7637172217074c55f868727a5589364b135b68bc5a9d5aee508c26d",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/engineering-test-plan.json",
+      "originalBytes": 10679,
+      "originalSHA256": "26cae2bff7637172217074c55f868727a5589364b135b68bc5a9d5aee508c26d",
+      "publicIsExactOriginal": true,
+      "transformations": []
+    },
+    {
+      "path": "engineering/engineering-test-proof.json",
+      "bytes": 7863,
+      "sha256": "ed3e8836be50599d77605213e90fc9a49bd2f476f257a937258c0269eb668428",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/engineering-test-proof.json",
+      "originalBytes": 7863,
+      "originalSHA256": "ed3e8836be50599d77605213e90fc9a49bd2f476f257a937258c0269eb668428",
+      "publicIsExactOriginal": true,
+      "transformations": []
+    },
+    {
+      "path": "engineering/engineering-test-result.json",
+      "bytes": 2736,
+      "sha256": "3ae55c888073a643cdce2fa1aeeb60360915c29f134a7e08792936ec093f2512",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/engineering-test-result.json",
+      "originalBytes": 2736,
+      "originalSHA256": "3ae55c888073a643cdce2fa1aeeb60360915c29f134a7e08792936ec093f2512",
+      "publicIsExactOriginal": true,
+      "transformations": []
+    },
+    {
+      "path": "engineering/plan-check.json",
+      "bytes": 365,
+      "sha256": "b786e3947a0eceb97e0f4d5ad2aafe9ca31e482b57771913d86d550db6f1996b",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/plan-check.json",
+      "originalBytes": 365,
+      "originalSHA256": "b786e3947a0eceb97e0f4d5ad2aafe9ca31e482b57771913d86d550db6f1996b",
+      "publicIsExactOriginal": true,
+      "transformations": []
+    },
+    {
+      "path": "inputs-expectations-observations.json",
+      "bytes": 178902,
+      "sha256": "099749ab3d6b994765aed5bcf4609dd2305f53235a6d08819d948e97d5efb298",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/observations.json",
+      "originalBytes": 178902,
+      "originalSHA256": "099749ab3d6b994765aed5bcf4609dd2305f53235a6d08819d948e97d5efb298",
+      "publicIsExactOriginal": true,
+      "transformations": []
+    },
+    {
+      "path": "inputs/source.SS30.json",
+      "bytes": 2310,
+      "sha256": "73c7cf4024f55cdf22823c086aa1c457f03b554ff47e62836acc57d585cbc588",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/source.json",
+      "originalBytes": 2310,
+      "originalSHA256": "73c7cf4024f55cdf22823c086aa1c457f03b554ff47e62836acc57d585cbc588",
+      "publicIsExactOriginal": true,
+      "transformations": []
+    },
+    {
+      "path": "logs/existing-regression.command.public.json",
+      "bytes": 859,
+      "sha256": "b6c928ae9b00d7c20f9da0a5f7bbce9d44f5e159403ab46098d56c0df1867b7f",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/existing-regression.command.json",
+      "originalBytes": 871,
+      "originalSHA256": "28dcd14218c34d520eea208410d18c2494f91047ebf14ace24f79cc1b16da16c",
+      "publicIsExactOriginal": false,
+      "transformations": [
+        "Personal local paths replaced by descriptive placeholders; no environment values queried or added."
+      ]
+    },
+    {
+      "path": "logs/existing-regression.setup-error.public.json",
+      "bytes": 3849,
+      "sha256": "7d89db98ff0898b4f3511fac39307723ee5fc9c80078b6ef77934bec77cf21a5",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/existing-regression.setup-error.json",
+      "originalBytes": 3765,
+      "originalSHA256": "ab7528f822f49ec466b00d7c82cfbffeeaaf0d5c3cbe2deb6862d00118affced",
+      "publicIsExactOriginal": false,
+      "transformations": [
+        "Personal local paths replaced by descriptive placeholders; no environment values queried or added."
+      ]
+    },
+    {
+      "path": "logs/existing-vitest.public.json",
+      "bytes": 32298,
+      "sha256": "7a4630726aba4f80ec558f5ee91b464555c05876237cfec609c90f5f6a7adb9c",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/existing-vitest.json",
+      "originalBytes": 23148,
+      "originalSHA256": "34abe3571512909456dc6979e1fe53f6d684738cf724f218cc754fba32ddf60d",
+      "publicIsExactOriginal": false,
+      "transformations": [
+        "Personal local paths replaced by descriptive placeholders; no environment values queried or added.",
+        "56 unexecuted assertion records omitted; original aggregate counts retained. Only the 7 executed SS30 regression assertions remain."
+      ]
+    },
+    {
+      "path": "logs/new-offline-mock.command.public.json",
+      "bytes": 612,
+      "sha256": "c7d73ea0429f220521dc3ac9e1699f3add795b9e22fcaf6742a745dd00f0ca44",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/new-offline-mock.command.json",
+      "originalBytes": 624,
+      "originalSHA256": "506570d198d1fa359500ba36e2cbcece24cb70f4017be596365d61b330511348",
+      "publicIsExactOriginal": false,
+      "transformations": [
+        "Personal local paths replaced by descriptive placeholders; no environment values queried or added."
+      ]
+    },
+    {
+      "path": "logs/new-offline-mock.setup-error.public.json",
+      "bytes": 3607,
+      "sha256": "8c93354d51d0e523905c42e341b8005e694cba105f5e8ac64c90dd1c8550f5d3",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/new-offline-mock.setup-error.json",
+      "originalBytes": 3523,
+      "originalSHA256": "65f95ce3bcb770693d17564e03cd50296f12d6329bae039d3d4c9f5514ac3623",
+      "publicIsExactOriginal": false,
+      "transformations": [
+        "Personal local paths replaced by descriptive placeholders; no environment values queried or added."
+      ]
+    },
+    {
+      "path": "logs/new-vitest.public.json",
+      "bytes": 8422,
+      "sha256": "8906c0f15437883a2cc70e11aea0db9b2859d339244b23fd367cff72e0efe110",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/new-vitest.json",
+      "originalBytes": 8538,
+      "originalSHA256": "c3fd6c9bbdeb8d18062b01f6edac372831e41756b823e98a223d183c860c209c",
+      "publicIsExactOriginal": false,
+      "transformations": [
+        "Personal local paths replaced by descriptive placeholders; no environment values queried or added."
+      ]
+    },
+    {
+      "path": "provenance/original-artifact-digests.json",
+      "bytes": 1922,
+      "sha256": "c173c0f70055f693575e59d2c2ca627e852399c2900fba34f4c1a25624055cc4",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/artifact-digests.json",
+      "originalBytes": 1922,
+      "originalSHA256": "c173c0f70055f693575e59d2c2ca627e852399c2900fba34f4c1a25624055cc4",
+      "publicIsExactOriginal": true,
+      "transformations": []
+    },
+    {
+      "path": "provenance/original-snapshot.json",
+      "bytes": 2450,
+      "sha256": "bd970cf66e844b04e239fa9c952c65545c9fb1b4239c951d83bc80d9a01afcdb",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/snapshot.json",
+      "originalBytes": 2450,
+      "originalSHA256": "bd970cf66e844b04e239fa9c952c65545c9fb1b4239c951d83bc80d9a01afcdb",
+      "publicIsExactOriginal": true,
+      "transformations": []
+    },
+    {
+      "path": "provenance/publication.json",
+      "bytes": 6166,
+      "sha256": "7a57bf3c80de830b100578f966f2177569de6ef1659d4245a8072e8d0ccea605",
+      "sourceKind": "new-publication-metadata",
+      "originalFile": null,
+      "originalBytes": null,
+      "originalSHA256": null,
+      "transformations": [
+        "Packaging metadata or non-executed reproduction instructions only; no new test observations."
+      ]
+    },
+    {
+      "path": "reproduce/SS30.test.ts",
+      "bytes": 13678,
+      "sha256": "e081bb8480388b5498368304459652d89586c0906da57f800097883080bf95fc",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/SS30.test.ts",
+      "originalBytes": 13678,
+      "originalSHA256": "e081bb8480388b5498368304459652d89586c0906da57f800097883080bf95fc",
+      "publicIsExactOriginal": true,
+      "transformations": []
+    },
+    {
+      "path": "reproduce/finalize.mjs",
+      "bytes": 8245,
+      "sha256": "224a1fbc74b86779651bd3e4923186ab94d576dacb7de35ba529d42a42fcddf8",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/finalize.mjs",
+      "originalBytes": 8245,
+      "originalSHA256": "224a1fbc74b86779651bd3e4923186ab94d576dacb7de35ba529d42a42fcddf8",
+      "publicIsExactOriginal": true,
+      "transformations": []
+    },
+    {
+      "path": "reproduce/run.mjs",
+      "bytes": 7940,
+      "sha256": "62dbd5e0270e7ee5f84bedd5b13674f023a20b67e4f89ad9894116f393b1a0f9",
+      "sourceKind": "existing-artifact",
+      "originalFile": "evidence/SS30/run.mjs",
+      "originalBytes": 7934,
+      "originalSHA256": "e37a85380a0b5d0618b34a704d33c1743316e365c23a49339bb904766d8bec8e",
+      "publicIsExactOriginal": false,
+      "transformations": [
+        "Personal local paths replaced by descriptive placeholders; no environment values queried or added."
+      ]
+    }
+  ],
+  "missingOriginals": [],
+  "patchStatus": "NO_PATCH_EXISTS",
+  "publicationNewTests": 0,
+  "publicationAPI0": true
+}

@@ -1,0 +1,241 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "SS30",
+  "contractDigest": "sha256:db59f152bd0c106b861086275218c8ee361a388ea17b605034a92c6a5164c13d",
+  "requirements": [
+    "SS30:401",
+    "SS30:403",
+    "SS30:5xx",
+    "SS30:not-dispatched",
+    "SS30:refusal",
+    "SS30:empty",
+    "SS30:malformed",
+    "SS30:missing-questions"
+  ],
+  "scopeFiles": [
+    "tests/skill-classification/fixtures.json",
+    "tests/mcp/skill-classification-providers.test.ts",
+    "tests/mcp/skill-classification-service.test.ts",
+    "mcp-server/src/skill-classification/providers.ts",
+    "mcp-server/src/skill-classification/service.ts",
+    "mcp-server/src/skill-classification/validation.ts",
+    "mcp-server/src/skill-classification/request.ts",
+    "mcp-server/src/skill-classification/profiles.ts",
+    "mcp-server/src/skill-classification/types.ts",
+    "evidence/SS30/SS30.test.ts",
+    "evidence/SS30/run.mjs"
+  ],
+  "runner": "existing Vitest 5 runner; transport/credential boundary mocked",
+  "environment": "Node v24.19.0; independent SS30 worktree; UTC; no live provider or host calls",
+  "cases": [
+    {
+      "id": "SS30:401",
+      "requirementIds": [
+        "SS30:401"
+      ],
+      "scenario": "Inject 401; retain failure diagnostics; test vendor fallback and final failure",
+      "entryPoint": "ApprovedRouteClassificationProvider.classify -> SkillClassificationService.classify",
+      "level": "integration",
+      "expectedBehavior": "Embedded SS30 failure mapping, no retries or hidden no-skill; failure and fallback distinct attempts; semantic uncertainty bound to unresolvedItems",
+      "oracle": "SS30 embedded sourceSpec.fields only; oracle=null; synthetic probes do not establish classification accuracy",
+      "testFiles": [
+        "evidence/SS30/SS30.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observe fixed candidate behavior and assertion failures; no product mutations or green fix authorized; no regression sensitivity guarantee",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "evidence/SS30/SS30.test.ts",
+        "--reporter=json",
+        "--outputFile=evidence/SS30/new-vitest.json"
+      ]
+    },
+    {
+      "id": "SS30:403",
+      "requirementIds": [
+        "SS30:403"
+      ],
+      "scenario": "Inject 403; retain failure diagnostics; test vendor fallback and final failure",
+      "entryPoint": "ApprovedRouteClassificationProvider.classify -> SkillClassificationService.classify",
+      "level": "integration",
+      "expectedBehavior": "Embedded SS30 failure mapping, no retries or hidden no-skill; failure and fallback distinct attempts; semantic uncertainty bound to unresolvedItems",
+      "oracle": "SS30 embedded sourceSpec.fields only; oracle=null; synthetic probes do not establish classification accuracy",
+      "testFiles": [
+        "evidence/SS30/SS30.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observe fixed candidate behavior and assertion failures; no product mutations or green fix authorized; no regression sensitivity guarantee",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "evidence/SS30/SS30.test.ts",
+        "--reporter=json",
+        "--outputFile=evidence/SS30/new-vitest.json"
+      ]
+    },
+    {
+      "id": "SS30:5xx",
+      "requirementIds": [
+        "SS30:5xx"
+      ],
+      "scenario": "Inject 5xx; retain failure diagnostics; test vendor fallback and final failure",
+      "entryPoint": "ApprovedRouteClassificationProvider.classify -> SkillClassificationService.classify",
+      "level": "integration",
+      "expectedBehavior": "Embedded SS30 failure mapping, no retries or hidden no-skill; failure and fallback distinct attempts; semantic uncertainty bound to unresolvedItems",
+      "oracle": "SS30 embedded sourceSpec.fields only; oracle=null; synthetic probes do not establish classification accuracy",
+      "testFiles": [
+        "evidence/SS30/SS30.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observe fixed candidate behavior and assertion failures; no product mutations or green fix authorized; no regression sensitivity guarantee",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "evidence/SS30/SS30.test.ts",
+        "--reporter=json",
+        "--outputFile=evidence/SS30/new-vitest.json"
+      ]
+    },
+    {
+      "id": "SS30:not-dispatched",
+      "requirementIds": [
+        "SS30:not-dispatched"
+      ],
+      "scenario": "Inject not-dispatched; retain failure diagnostics; test vendor fallback and final failure",
+      "entryPoint": "ApprovedRouteClassificationProvider.classify -> SkillClassificationService.classify",
+      "level": "integration",
+      "expectedBehavior": "Embedded SS30 failure mapping, no retries or hidden no-skill; failure and fallback distinct attempts; semantic uncertainty bound to unresolvedItems",
+      "oracle": "SS30 embedded sourceSpec.fields only; oracle=null; synthetic probes do not establish classification accuracy",
+      "testFiles": [
+        "evidence/SS30/SS30.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observe fixed candidate behavior and assertion failures; no product mutations or green fix authorized; no regression sensitivity guarantee",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "evidence/SS30/SS30.test.ts",
+        "--reporter=json",
+        "--outputFile=evidence/SS30/new-vitest.json"
+      ]
+    },
+    {
+      "id": "SS30:refusal",
+      "requirementIds": [
+        "SS30:refusal"
+      ],
+      "scenario": "Inject refusal; retain failure diagnostics; test vendor fallback and final failure",
+      "entryPoint": "ApprovedRouteClassificationProvider.classify -> SkillClassificationService.classify",
+      "level": "integration",
+      "expectedBehavior": "Embedded SS30 failure mapping, no retries or hidden no-skill; failure and fallback distinct attempts; semantic uncertainty bound to unresolvedItems",
+      "oracle": "SS30 embedded sourceSpec.fields only; oracle=null; synthetic probes do not establish classification accuracy",
+      "testFiles": [
+        "evidence/SS30/SS30.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observe fixed candidate behavior and assertion failures; no product mutations or green fix authorized; no regression sensitivity guarantee",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "evidence/SS30/SS30.test.ts",
+        "--reporter=json",
+        "--outputFile=evidence/SS30/new-vitest.json"
+      ]
+    },
+    {
+      "id": "SS30:empty",
+      "requirementIds": [
+        "SS30:empty"
+      ],
+      "scenario": "Inject empty; retain failure diagnostics; test vendor fallback and final failure",
+      "entryPoint": "ApprovedRouteClassificationProvider.classify -> SkillClassificationService.classify",
+      "level": "integration",
+      "expectedBehavior": "Embedded SS30 failure mapping, no retries or hidden no-skill; failure and fallback distinct attempts; semantic uncertainty bound to unresolvedItems",
+      "oracle": "SS30 embedded sourceSpec.fields only; oracle=null; synthetic probes do not establish classification accuracy",
+      "testFiles": [
+        "evidence/SS30/SS30.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observe fixed candidate behavior and assertion failures; no product mutations or green fix authorized; no regression sensitivity guarantee",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "evidence/SS30/SS30.test.ts",
+        "--reporter=json",
+        "--outputFile=evidence/SS30/new-vitest.json"
+      ]
+    },
+    {
+      "id": "SS30:malformed",
+      "requirementIds": [
+        "SS30:malformed"
+      ],
+      "scenario": "Inject malformed; retain failure diagnostics; test vendor fallback and final failure",
+      "entryPoint": "ApprovedRouteClassificationProvider.classify -> SkillClassificationService.classify",
+      "level": "integration",
+      "expectedBehavior": "Embedded SS30 failure mapping, no retries or hidden no-skill; failure and fallback distinct attempts; semantic uncertainty bound to unresolvedItems",
+      "oracle": "SS30 embedded sourceSpec.fields only; oracle=null; synthetic probes do not establish classification accuracy",
+      "testFiles": [
+        "evidence/SS30/SS30.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observe fixed candidate behavior and assertion failures; no product mutations or green fix authorized; no regression sensitivity guarantee",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "evidence/SS30/SS30.test.ts",
+        "--reporter=json",
+        "--outputFile=evidence/SS30/new-vitest.json"
+      ]
+    },
+    {
+      "id": "SS30:missing-questions",
+      "requirementIds": [
+        "SS30:missing-questions"
+      ],
+      "scenario": "Inject missing-questions; retain failure diagnostics; test vendor fallback and final failure",
+      "entryPoint": "ApprovedRouteClassificationProvider.classify -> SkillClassificationService.classify",
+      "level": "integration",
+      "expectedBehavior": "Embedded SS30 failure mapping, no retries or hidden no-skill; failure and fallback distinct attempts; semantic uncertainty bound to unresolvedItems",
+      "oracle": "SS30 embedded sourceSpec.fields only; oracle=null; synthetic probes do not establish classification accuracy",
+      "testFiles": [
+        "evidence/SS30/SS30.test.ts"
+      ],
+      "required": true,
+      "sensitivity": "manual-review",
+      "sensitivityReason": "Observe fixed candidate behavior and assertion failures; no product mutations or green fix authorized; no regression sensitivity guarantee",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "evidence/SS30/SS30.test.ts",
+        "--reporter=json",
+        "--outputFile=evidence/SS30/new-vitest.json"
+      ]
+    }
+  ],
+  "exclusions": [
+    "Other original cases and whole suite",
+    "Past 21 live runs",
+    "JEV/vendor/Claude live calls",
+    "Product edits, push, PR, release",
+    "Host selection receipt fabrication",
+    "Semantic golden score because SS30 oracle is null"
+  ]
+}

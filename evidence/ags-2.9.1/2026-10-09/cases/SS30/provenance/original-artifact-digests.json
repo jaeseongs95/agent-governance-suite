@@ -1,0 +1,21 @@
+{
+  "REPORT.ko.md": "sha256:35fe5c0fed51dbac7e7c9e8c88cc4d3a5b33b47b50b01f89c3c1b8e72bf6dc5c",
+  "SS30.result.json": "sha256:84e81f6f3b604c95ee367120d292487d12851caae8137219ca4610b56e681078",
+  "SS30.test.ts": "sha256:e081bb8480388b5498368304459652d89586c0906da57f800097883080bf95fc",
+  "checks-summary.json": "sha256:894d94fedbd49a82587e25267d73d3cc33ad502f1a09af10664574cd91745efe",
+  "engineering-test-plan.json": "sha256:26cae2bff7637172217074c55f868727a5589364b135b68bc5a9d5aee508c26d",
+  "engineering-test-proof.json": "sha256:ed3e8836be50599d77605213e90fc9a49bd2f476f257a937258c0269eb668428",
+  "engineering-test-result.json": "sha256:3ae55c888073a643cdce2fa1aeeb60360915c29f134a7e08792936ec093f2512",
+  "existing-regression.command.json": "sha256:28dcd14218c34d520eea208410d18c2494f91047ebf14ace24f79cc1b16da16c",
+  "existing-regression.setup-error.json": "sha256:ab7528f822f49ec466b00d7c82cfbffeeaaf0d5c3cbe2deb6862d00118affced",
+  "existing-vitest.json": "sha256:34abe3571512909456dc6979e1fe53f6d684738cf724f218cc754fba32ddf60d",
+  "finalize.mjs": "sha256:224a1fbc74b86779651bd3e4923186ab94d576dacb7de35ba529d42a42fcddf8",
+  "new-offline-mock.command.json": "sha256:506570d198d1fa359500ba36e2cbcece24cb70f4017be596365d61b330511348",
+  "new-offline-mock.setup-error.json": "sha256:65f95ce3bcb770693d17564e03cd50296f12d6329bae039d3d4c9f5514ac3623",
+  "new-vitest.json": "sha256:c3fd6c9bbdeb8d18062b01f6edac372831e41756b823e98a223d183c860c209c",
+  "observations.json": "sha256:099749ab3d6b994765aed5bcf4609dd2305f53235a6d08819d948e97d5efb298",
+  "plan-check.json": "sha256:b786e3947a0eceb97e0f4d5ad2aafe9ca31e482b57771913d86d550db6f1996b",
+  "run.mjs": "sha256:e37a85380a0b5d0618b34a704d33c1743316e365c23a49339bb904766d8bec8e",
+  "snapshot.json": "sha256:bd970cf66e844b04e239fa9c952c65545c9fb1b4239c951d83bc80d9a01afcdb",
+  "source.json": "sha256:73c7cf4024f55cdf22823c086aa1c457f03b554ff47e62836acc57d585cbc588"
+}

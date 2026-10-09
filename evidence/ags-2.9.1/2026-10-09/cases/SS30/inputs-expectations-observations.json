@@ -1,0 +1,5985 @@
+[
+  {
+    "caseId": "SS30",
+    "variantId": "401",
+    "path": "JEV-to-vendor",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "http": 401,
+      "body": "[synthetic secret body redacted]",
+      "credentialDisappearsAfterAvailability": false
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-401-true",
+      "operationId": "SS30-401-true",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:cbe9ee7b0396a46f80c673bbf1fdbb9a5a3804911085f1d59841a66411bb1596"
+    },
+    "expected": {
+      "failureStatus": "UNAVAILABLE",
+      "errorCode": "AUTH_UNAVAILABLE",
+      "dispatchState": "started",
+      "finalStatus": "SUCCESS",
+      "agentSelectedSkillIds": null
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-401-true",
+        "operationId": "SS30-401-true",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:cbe9ee7b0396a46f80c673bbf1fdbb9a5a3804911085f1d59841a66411bb1596"
+      },
+      "config": {
+        "jevEnabled": true,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:cbe9ee7b0396a46f80c673bbf1fdbb9a5a3804911085f1d59841a66411bb1596",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "jev",
+          "profileId": "jev",
+          "modelId": "jev-fixed",
+          "reasoningEffort": null,
+          "dispatchState": "started",
+          "status": "UNAVAILABLE",
+          "errorCode": "AUTH_UNAVAILABLE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        },
+        {
+          "providerKind": "vendor",
+          "profileId": "vendor",
+          "modelId": "vendor-fixed",
+          "reasoningEffort": "low",
+          "dispatchState": "started",
+          "status": "SUCCESS",
+          "errorCode": null,
+          "timedOut": false,
+          "usage": {
+            "inputTokens": 10,
+            "outputTokens": 2,
+            "cachedInputTokens": null,
+            "actualCostUsd": 0.1
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-401-true",
+        "operationId": "SS30-401-true",
+        "requestDigest": "sha256:cbe9ee7b0396a46f80c673bbf1fdbb9a5a3804911085f1d59841a66411bb1596",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "SUCCESS",
+        "judgments": [
+          {
+            "skillId": "alpha",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "beta",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          }
+        ],
+        "unresolvedItems": [],
+        "error": null
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0.1
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": [
+        {
+          "id": "[\"SS30-401-true\",\"sha256:cbe9ee7b0396a46f80c673bbf1fdbb9a5a3804911085f1d59841a66411bb1596\",\"jev\"]",
+          "bucket": "jev",
+          "maximumUsd": 0.4,
+          "profileId": "jev",
+          "nativeProfileId": null
+        }
+      ]
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true,
+    "mockFetchCalls": 1,
+    "mockVendorCalls": 1
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "401",
+    "path": "vendor-failure-final",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "http": 401,
+      "body": "[synthetic secret body redacted]",
+      "credentialDisappearsAfterAvailability": false
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-401-false",
+      "operationId": "SS30-401-false",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:5e18ff545618b84d153e39ca21b8c41f9401f53839f1de958668b8609b685def"
+    },
+    "expected": {
+      "failureStatus": "UNAVAILABLE",
+      "errorCode": "AUTH_UNAVAILABLE",
+      "dispatchState": "started",
+      "finalStatus": "UNAVAILABLE",
+      "agentSelectedSkillIds": null
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-401-false",
+        "operationId": "SS30-401-false",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:5e18ff545618b84d153e39ca21b8c41f9401f53839f1de958668b8609b685def"
+      },
+      "config": {
+        "jevEnabled": false,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:5e18ff545618b84d153e39ca21b8c41f9401f53839f1de958668b8609b685def",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "vendor",
+          "profileId": "vendor",
+          "modelId": "vendor-fixed",
+          "reasoningEffort": "low",
+          "dispatchState": "started",
+          "status": "UNAVAILABLE",
+          "errorCode": "AUTH_UNAVAILABLE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-401-false",
+        "operationId": "SS30-401-false",
+        "requestDigest": "sha256:5e18ff545618b84d153e39ca21b8c41f9401f53839f1de958668b8609b685def",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "UNAVAILABLE",
+        "judgments": [],
+        "unresolvedItems": [
+          {
+            "skillId": null,
+            "reasonCode": "AUTH_UNAVAILABLE"
+          }
+        ],
+        "error": {
+          "code": "AUTH_UNAVAILABLE",
+          "retryable": false,
+          "dispatchState": "started"
+        }
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": [
+        {
+          "id": "[\"SS30-401-false\",\"sha256:5e18ff545618b84d153e39ca21b8c41f9401f53839f1de958668b8609b685def\",\"vendor\"]",
+          "bucket": "vendor:current-vendor",
+          "maximumUsd": 0.4,
+          "profileId": "vendor",
+          "nativeProfileId": null
+        }
+      ]
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true,
+    "mockFetchCalls": 1,
+    "mockVendorCalls": 0
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "403",
+    "path": "JEV-to-vendor",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "http": 403,
+      "body": "[synthetic secret body redacted]",
+      "credentialDisappearsAfterAvailability": false
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-403-true",
+      "operationId": "SS30-403-true",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:6994fe157104f4db21f5beeb3c4e0db82f8ff01578b9c2c174acc6f9da005e3d"
+    },
+    "expected": {
+      "failureStatus": "UNAVAILABLE",
+      "errorCode": "AUTH_UNAVAILABLE",
+      "dispatchState": "started",
+      "finalStatus": "SUCCESS",
+      "agentSelectedSkillIds": null
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-403-true",
+        "operationId": "SS30-403-true",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:6994fe157104f4db21f5beeb3c4e0db82f8ff01578b9c2c174acc6f9da005e3d"
+      },
+      "config": {
+        "jevEnabled": true,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:6994fe157104f4db21f5beeb3c4e0db82f8ff01578b9c2c174acc6f9da005e3d",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "jev",
+          "profileId": "jev",
+          "modelId": "jev-fixed",
+          "reasoningEffort": null,
+          "dispatchState": "started",
+          "status": "UNAVAILABLE",
+          "errorCode": "AUTH_UNAVAILABLE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        },
+        {
+          "providerKind": "vendor",
+          "profileId": "vendor",
+          "modelId": "vendor-fixed",
+          "reasoningEffort": "low",
+          "dispatchState": "started",
+          "status": "SUCCESS",
+          "errorCode": null,
+          "timedOut": false,
+          "usage": {
+            "inputTokens": 10,
+            "outputTokens": 2,
+            "cachedInputTokens": null,
+            "actualCostUsd": 0.1
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-403-true",
+        "operationId": "SS30-403-true",
+        "requestDigest": "sha256:6994fe157104f4db21f5beeb3c4e0db82f8ff01578b9c2c174acc6f9da005e3d",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "SUCCESS",
+        "judgments": [
+          {
+            "skillId": "alpha",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "beta",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          }
+        ],
+        "unresolvedItems": [],
+        "error": null
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0.1
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": [
+        {
+          "id": "[\"SS30-403-true\",\"sha256:6994fe157104f4db21f5beeb3c4e0db82f8ff01578b9c2c174acc6f9da005e3d\",\"jev\"]",
+          "bucket": "jev",
+          "maximumUsd": 0.4,
+          "profileId": "jev",
+          "nativeProfileId": null
+        }
+      ]
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true,
+    "mockFetchCalls": 1,
+    "mockVendorCalls": 1
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "403",
+    "path": "vendor-failure-final",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "http": 403,
+      "body": "[synthetic secret body redacted]",
+      "credentialDisappearsAfterAvailability": false
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-403-false",
+      "operationId": "SS30-403-false",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:30b2e8b978357b4303677999d8d970609820ef4e207e15c83af15c63c4b7cdf5"
+    },
+    "expected": {
+      "failureStatus": "UNAVAILABLE",
+      "errorCode": "AUTH_UNAVAILABLE",
+      "dispatchState": "started",
+      "finalStatus": "UNAVAILABLE",
+      "agentSelectedSkillIds": null
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-403-false",
+        "operationId": "SS30-403-false",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:30b2e8b978357b4303677999d8d970609820ef4e207e15c83af15c63c4b7cdf5"
+      },
+      "config": {
+        "jevEnabled": false,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:30b2e8b978357b4303677999d8d970609820ef4e207e15c83af15c63c4b7cdf5",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "vendor",
+          "profileId": "vendor",
+          "modelId": "vendor-fixed",
+          "reasoningEffort": "low",
+          "dispatchState": "started",
+          "status": "UNAVAILABLE",
+          "errorCode": "AUTH_UNAVAILABLE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-403-false",
+        "operationId": "SS30-403-false",
+        "requestDigest": "sha256:30b2e8b978357b4303677999d8d970609820ef4e207e15c83af15c63c4b7cdf5",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "UNAVAILABLE",
+        "judgments": [],
+        "unresolvedItems": [
+          {
+            "skillId": null,
+            "reasonCode": "AUTH_UNAVAILABLE"
+          }
+        ],
+        "error": {
+          "code": "AUTH_UNAVAILABLE",
+          "retryable": false,
+          "dispatchState": "started"
+        }
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": [
+        {
+          "id": "[\"SS30-403-false\",\"sha256:30b2e8b978357b4303677999d8d970609820ef4e207e15c83af15c63c4b7cdf5\",\"vendor\"]",
+          "bucket": "vendor:current-vendor",
+          "maximumUsd": 0.4,
+          "profileId": "vendor",
+          "nativeProfileId": null
+        }
+      ]
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true,
+    "mockFetchCalls": 1,
+    "mockVendorCalls": 0
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "5xx",
+    "path": "JEV-to-vendor",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "http": 500,
+      "body": "[synthetic secret body redacted]",
+      "credentialDisappearsAfterAvailability": false
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-5xx-true",
+      "operationId": "SS30-5xx-true",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:1b2800cbf732b5cb54e3138c183d2bf922500281f54974a0058e96841fad0310"
+    },
+    "expected": {
+      "failureStatus": "UNAVAILABLE",
+      "errorCode": "API_UNAVAILABLE",
+      "dispatchState": "started",
+      "finalStatus": "SUCCESS",
+      "agentSelectedSkillIds": null
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-5xx-true",
+        "operationId": "SS30-5xx-true",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:1b2800cbf732b5cb54e3138c183d2bf922500281f54974a0058e96841fad0310"
+      },
+      "config": {
+        "jevEnabled": true,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:1b2800cbf732b5cb54e3138c183d2bf922500281f54974a0058e96841fad0310",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "jev",
+          "profileId": "jev",
+          "modelId": "jev-fixed",
+          "reasoningEffort": null,
+          "dispatchState": "started",
+          "status": "UNAVAILABLE",
+          "errorCode": "API_UNAVAILABLE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        },
+        {
+          "providerKind": "vendor",
+          "profileId": "vendor",
+          "modelId": "vendor-fixed",
+          "reasoningEffort": "low",
+          "dispatchState": "started",
+          "status": "SUCCESS",
+          "errorCode": null,
+          "timedOut": false,
+          "usage": {
+            "inputTokens": 10,
+            "outputTokens": 2,
+            "cachedInputTokens": null,
+            "actualCostUsd": 0.1
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-5xx-true",
+        "operationId": "SS30-5xx-true",
+        "requestDigest": "sha256:1b2800cbf732b5cb54e3138c183d2bf922500281f54974a0058e96841fad0310",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "SUCCESS",
+        "judgments": [
+          {
+            "skillId": "alpha",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "beta",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          }
+        ],
+        "unresolvedItems": [],
+        "error": null
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0.1
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": [
+        {
+          "id": "[\"SS30-5xx-true\",\"sha256:1b2800cbf732b5cb54e3138c183d2bf922500281f54974a0058e96841fad0310\",\"jev\"]",
+          "bucket": "jev",
+          "maximumUsd": 0.4,
+          "profileId": "jev",
+          "nativeProfileId": null
+        }
+      ]
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true,
+    "mockFetchCalls": 1,
+    "mockVendorCalls": 1
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "5xx",
+    "path": "vendor-failure-final",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "http": 500,
+      "body": "[synthetic secret body redacted]",
+      "credentialDisappearsAfterAvailability": false
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-5xx-false",
+      "operationId": "SS30-5xx-false",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:8ee4dd92ddfacd60b6465d6d1c72cfdcf5b3112d99f75d130b12c17122c6d392"
+    },
+    "expected": {
+      "failureStatus": "UNAVAILABLE",
+      "errorCode": "API_UNAVAILABLE",
+      "dispatchState": "started",
+      "finalStatus": "UNAVAILABLE",
+      "agentSelectedSkillIds": null
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-5xx-false",
+        "operationId": "SS30-5xx-false",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:8ee4dd92ddfacd60b6465d6d1c72cfdcf5b3112d99f75d130b12c17122c6d392"
+      },
+      "config": {
+        "jevEnabled": false,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:8ee4dd92ddfacd60b6465d6d1c72cfdcf5b3112d99f75d130b12c17122c6d392",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "vendor",
+          "profileId": "vendor",
+          "modelId": "vendor-fixed",
+          "reasoningEffort": "low",
+          "dispatchState": "started",
+          "status": "UNAVAILABLE",
+          "errorCode": "API_UNAVAILABLE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-5xx-false",
+        "operationId": "SS30-5xx-false",
+        "requestDigest": "sha256:8ee4dd92ddfacd60b6465d6d1c72cfdcf5b3112d99f75d130b12c17122c6d392",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "UNAVAILABLE",
+        "judgments": [],
+        "unresolvedItems": [
+          {
+            "skillId": null,
+            "reasonCode": "API_UNAVAILABLE"
+          }
+        ],
+        "error": {
+          "code": "API_UNAVAILABLE",
+          "retryable": false,
+          "dispatchState": "started"
+        }
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": [
+        {
+          "id": "[\"SS30-5xx-false\",\"sha256:8ee4dd92ddfacd60b6465d6d1c72cfdcf5b3112d99f75d130b12c17122c6d392\",\"vendor\"]",
+          "bucket": "vendor:current-vendor",
+          "maximumUsd": 0.4,
+          "profileId": "vendor",
+          "nativeProfileId": null
+        }
+      ]
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true,
+    "mockFetchCalls": 1,
+    "mockVendorCalls": 0
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "not-dispatched",
+    "path": "JEV-to-vendor",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "http": null,
+      "body": null,
+      "credentialDisappearsAfterAvailability": true
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-not-dispatched-true",
+      "operationId": "SS30-not-dispatched-true",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:e06f02a7fde8db6f7fd28974a7a8082787322a33a6cb5ce9e7bd128e3f2693bf"
+    },
+    "expected": {
+      "failureStatus": "UNAVAILABLE",
+      "errorCode": "CREDENTIAL_UNAVAILABLE",
+      "dispatchState": "not-started",
+      "finalStatus": "SUCCESS",
+      "agentSelectedSkillIds": null
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-not-dispatched-true",
+        "operationId": "SS30-not-dispatched-true",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:e06f02a7fde8db6f7fd28974a7a8082787322a33a6cb5ce9e7bd128e3f2693bf"
+      },
+      "config": {
+        "jevEnabled": true,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:e06f02a7fde8db6f7fd28974a7a8082787322a33a6cb5ce9e7bd128e3f2693bf",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "jev",
+          "profileId": "jev",
+          "modelId": "jev-fixed",
+          "reasoningEffort": null,
+          "dispatchState": "not-started",
+          "status": "UNAVAILABLE",
+          "errorCode": "CREDENTIAL_UNAVAILABLE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        },
+        {
+          "providerKind": "vendor",
+          "profileId": "vendor",
+          "modelId": "vendor-fixed",
+          "reasoningEffort": "low",
+          "dispatchState": "started",
+          "status": "SUCCESS",
+          "errorCode": null,
+          "timedOut": false,
+          "usage": {
+            "inputTokens": 10,
+            "outputTokens": 2,
+            "cachedInputTokens": null,
+            "actualCostUsd": 0.1
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-not-dispatched-true",
+        "operationId": "SS30-not-dispatched-true",
+        "requestDigest": "sha256:e06f02a7fde8db6f7fd28974a7a8082787322a33a6cb5ce9e7bd128e3f2693bf",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "SUCCESS",
+        "judgments": [
+          {
+            "skillId": "alpha",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "beta",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          }
+        ],
+        "unresolvedItems": [],
+        "error": null
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0.1
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": []
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true,
+    "mockFetchCalls": 0,
+    "mockVendorCalls": 1
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "not-dispatched",
+    "path": "vendor-failure-final",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "http": null,
+      "body": null,
+      "credentialDisappearsAfterAvailability": true
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-not-dispatched-false",
+      "operationId": "SS30-not-dispatched-false",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:b6d264eeaae85f16d29e5116dd4bb224656a8c8cb540222456b20fe7b518d411"
+    },
+    "expected": {
+      "failureStatus": "UNAVAILABLE",
+      "errorCode": "CREDENTIAL_UNAVAILABLE",
+      "dispatchState": "not-started",
+      "finalStatus": "UNAVAILABLE",
+      "agentSelectedSkillIds": null
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-not-dispatched-false",
+        "operationId": "SS30-not-dispatched-false",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:b6d264eeaae85f16d29e5116dd4bb224656a8c8cb540222456b20fe7b518d411"
+      },
+      "config": {
+        "jevEnabled": false,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:b6d264eeaae85f16d29e5116dd4bb224656a8c8cb540222456b20fe7b518d411",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "vendor",
+          "profileId": "vendor",
+          "modelId": "vendor-fixed",
+          "reasoningEffort": "low",
+          "dispatchState": "not-started",
+          "status": "UNAVAILABLE",
+          "errorCode": "CREDENTIAL_UNAVAILABLE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-not-dispatched-false",
+        "operationId": "SS30-not-dispatched-false",
+        "requestDigest": "sha256:b6d264eeaae85f16d29e5116dd4bb224656a8c8cb540222456b20fe7b518d411",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "UNAVAILABLE",
+        "judgments": [],
+        "unresolvedItems": [
+          {
+            "skillId": null,
+            "reasonCode": "CREDENTIAL_UNAVAILABLE"
+          }
+        ],
+        "error": {
+          "code": "CREDENTIAL_UNAVAILABLE",
+          "retryable": false,
+          "dispatchState": "not-started"
+        }
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": []
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true,
+    "mockFetchCalls": 0,
+    "mockVendorCalls": 0
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "refusal",
+    "path": "JEV-to-vendor",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "http": 200,
+      "body": "{\"refusal\":\"synthetic refusal\"}",
+      "credentialDisappearsAfterAvailability": false
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-refusal-true",
+      "operationId": "SS30-refusal-true",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:3f33d287db59b54418eb6843ac10027a36e4476823b0900c83b56a59b52dad6e"
+    },
+    "expected": {
+      "failureStatus": "INVALID",
+      "errorCode": "INVALID_PROVIDER_RESPONSE",
+      "dispatchState": "started",
+      "finalStatus": "SUCCESS",
+      "agentSelectedSkillIds": null
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-refusal-true",
+        "operationId": "SS30-refusal-true",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:3f33d287db59b54418eb6843ac10027a36e4476823b0900c83b56a59b52dad6e"
+      },
+      "config": {
+        "jevEnabled": true,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:3f33d287db59b54418eb6843ac10027a36e4476823b0900c83b56a59b52dad6e",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "jev",
+          "profileId": "jev",
+          "modelId": "jev-fixed",
+          "reasoningEffort": null,
+          "dispatchState": "started",
+          "status": "INVALID",
+          "errorCode": "INVALID_PROVIDER_RESPONSE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        },
+        {
+          "providerKind": "vendor",
+          "profileId": "vendor",
+          "modelId": "vendor-fixed",
+          "reasoningEffort": "low",
+          "dispatchState": "started",
+          "status": "SUCCESS",
+          "errorCode": null,
+          "timedOut": false,
+          "usage": {
+            "inputTokens": 10,
+            "outputTokens": 2,
+            "cachedInputTokens": null,
+            "actualCostUsd": 0.1
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-refusal-true",
+        "operationId": "SS30-refusal-true",
+        "requestDigest": "sha256:3f33d287db59b54418eb6843ac10027a36e4476823b0900c83b56a59b52dad6e",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "SUCCESS",
+        "judgments": [
+          {
+            "skillId": "alpha",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "beta",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          }
+        ],
+        "unresolvedItems": [],
+        "error": null
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0.1
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": [
+        {
+          "id": "[\"SS30-refusal-true\",\"sha256:3f33d287db59b54418eb6843ac10027a36e4476823b0900c83b56a59b52dad6e\",\"jev\"]",
+          "bucket": "jev",
+          "maximumUsd": 0.4,
+          "profileId": "jev",
+          "nativeProfileId": null
+        }
+      ]
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true,
+    "mockFetchCalls": 1,
+    "mockVendorCalls": 1
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "refusal",
+    "path": "vendor-failure-final",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "http": 200,
+      "body": "{\"refusal\":\"synthetic refusal\"}",
+      "credentialDisappearsAfterAvailability": false
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-refusal-false",
+      "operationId": "SS30-refusal-false",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:f74a6535e15e5b08444f496f85a8e5d9bd7437e665f1f71d97b768dd6571c0ca"
+    },
+    "expected": {
+      "failureStatus": "INVALID",
+      "errorCode": "INVALID_PROVIDER_RESPONSE",
+      "dispatchState": "started",
+      "finalStatus": "INVALID",
+      "agentSelectedSkillIds": null
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-refusal-false",
+        "operationId": "SS30-refusal-false",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:f74a6535e15e5b08444f496f85a8e5d9bd7437e665f1f71d97b768dd6571c0ca"
+      },
+      "config": {
+        "jevEnabled": false,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:f74a6535e15e5b08444f496f85a8e5d9bd7437e665f1f71d97b768dd6571c0ca",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "vendor",
+          "profileId": "vendor",
+          "modelId": "vendor-fixed",
+          "reasoningEffort": "low",
+          "dispatchState": "started",
+          "status": "INVALID",
+          "errorCode": "INVALID_PROVIDER_RESPONSE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-refusal-false",
+        "operationId": "SS30-refusal-false",
+        "requestDigest": "sha256:f74a6535e15e5b08444f496f85a8e5d9bd7437e665f1f71d97b768dd6571c0ca",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "INVALID",
+        "judgments": [],
+        "unresolvedItems": [
+          {
+            "skillId": null,
+            "reasonCode": "INVALID_PROVIDER_RESPONSE"
+          }
+        ],
+        "error": {
+          "code": "INVALID_PROVIDER_RESPONSE",
+          "retryable": false,
+          "dispatchState": "started"
+        }
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": [
+        {
+          "id": "[\"SS30-refusal-false\",\"sha256:f74a6535e15e5b08444f496f85a8e5d9bd7437e665f1f71d97b768dd6571c0ca\",\"vendor\"]",
+          "bucket": "vendor:current-vendor",
+          "maximumUsd": 0.4,
+          "profileId": "vendor",
+          "nativeProfileId": null
+        }
+      ]
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true,
+    "mockFetchCalls": 1,
+    "mockVendorCalls": 0
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "empty",
+    "path": "JEV-to-vendor",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "http": 200,
+      "body": "",
+      "credentialDisappearsAfterAvailability": false
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-empty-true",
+      "operationId": "SS30-empty-true",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:49f665237086d2dbc67395696fbed6d1a65c2f1dfdd7e29eec6b94418ad825f6"
+    },
+    "expected": {
+      "failureStatus": "INVALID",
+      "errorCode": "INVALID_PROVIDER_RESPONSE",
+      "dispatchState": "started",
+      "finalStatus": "SUCCESS",
+      "agentSelectedSkillIds": null
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-empty-true",
+        "operationId": "SS30-empty-true",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:49f665237086d2dbc67395696fbed6d1a65c2f1dfdd7e29eec6b94418ad825f6"
+      },
+      "config": {
+        "jevEnabled": true,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:49f665237086d2dbc67395696fbed6d1a65c2f1dfdd7e29eec6b94418ad825f6",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "jev",
+          "profileId": "jev",
+          "modelId": "jev-fixed",
+          "reasoningEffort": null,
+          "dispatchState": "started",
+          "status": "INVALID",
+          "errorCode": "INVALID_PROVIDER_RESPONSE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        },
+        {
+          "providerKind": "vendor",
+          "profileId": "vendor",
+          "modelId": "vendor-fixed",
+          "reasoningEffort": "low",
+          "dispatchState": "started",
+          "status": "SUCCESS",
+          "errorCode": null,
+          "timedOut": false,
+          "usage": {
+            "inputTokens": 10,
+            "outputTokens": 2,
+            "cachedInputTokens": null,
+            "actualCostUsd": 0.1
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-empty-true",
+        "operationId": "SS30-empty-true",
+        "requestDigest": "sha256:49f665237086d2dbc67395696fbed6d1a65c2f1dfdd7e29eec6b94418ad825f6",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "SUCCESS",
+        "judgments": [
+          {
+            "skillId": "alpha",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "beta",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          }
+        ],
+        "unresolvedItems": [],
+        "error": null
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0.1
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": [
+        {
+          "id": "[\"SS30-empty-true\",\"sha256:49f665237086d2dbc67395696fbed6d1a65c2f1dfdd7e29eec6b94418ad825f6\",\"jev\"]",
+          "bucket": "jev",
+          "maximumUsd": 0.4,
+          "profileId": "jev",
+          "nativeProfileId": null
+        }
+      ]
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true,
+    "mockFetchCalls": 1,
+    "mockVendorCalls": 1
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "empty",
+    "path": "vendor-failure-final",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "http": 200,
+      "body": "",
+      "credentialDisappearsAfterAvailability": false
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-empty-false",
+      "operationId": "SS30-empty-false",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:27d199ed2c425207b5539d062b657b474bcd4127af8294bcd430c5e96df3c922"
+    },
+    "expected": {
+      "failureStatus": "INVALID",
+      "errorCode": "INVALID_PROVIDER_RESPONSE",
+      "dispatchState": "started",
+      "finalStatus": "INVALID",
+      "agentSelectedSkillIds": null
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-empty-false",
+        "operationId": "SS30-empty-false",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:27d199ed2c425207b5539d062b657b474bcd4127af8294bcd430c5e96df3c922"
+      },
+      "config": {
+        "jevEnabled": false,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:27d199ed2c425207b5539d062b657b474bcd4127af8294bcd430c5e96df3c922",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "vendor",
+          "profileId": "vendor",
+          "modelId": "vendor-fixed",
+          "reasoningEffort": "low",
+          "dispatchState": "started",
+          "status": "INVALID",
+          "errorCode": "INVALID_PROVIDER_RESPONSE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-empty-false",
+        "operationId": "SS30-empty-false",
+        "requestDigest": "sha256:27d199ed2c425207b5539d062b657b474bcd4127af8294bcd430c5e96df3c922",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "INVALID",
+        "judgments": [],
+        "unresolvedItems": [
+          {
+            "skillId": null,
+            "reasonCode": "INVALID_PROVIDER_RESPONSE"
+          }
+        ],
+        "error": {
+          "code": "INVALID_PROVIDER_RESPONSE",
+          "retryable": false,
+          "dispatchState": "started"
+        }
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": [
+        {
+          "id": "[\"SS30-empty-false\",\"sha256:27d199ed2c425207b5539d062b657b474bcd4127af8294bcd430c5e96df3c922\",\"vendor\"]",
+          "bucket": "vendor:current-vendor",
+          "maximumUsd": 0.4,
+          "profileId": "vendor",
+          "nativeProfileId": null
+        }
+      ]
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true,
+    "mockFetchCalls": 1,
+    "mockVendorCalls": 0
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "malformed",
+    "path": "JEV-to-vendor",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "http": 200,
+      "body": "{\"answers\":",
+      "credentialDisappearsAfterAvailability": false
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-malformed-true",
+      "operationId": "SS30-malformed-true",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:6364e80f08ce173f85e46afc7c39dd433962d88a2edbf007f1a56e0e463552a1"
+    },
+    "expected": {
+      "failureStatus": "INVALID",
+      "errorCode": "INVALID_PROVIDER_RESPONSE",
+      "dispatchState": "started",
+      "finalStatus": "SUCCESS",
+      "agentSelectedSkillIds": null
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-malformed-true",
+        "operationId": "SS30-malformed-true",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:6364e80f08ce173f85e46afc7c39dd433962d88a2edbf007f1a56e0e463552a1"
+      },
+      "config": {
+        "jevEnabled": true,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:6364e80f08ce173f85e46afc7c39dd433962d88a2edbf007f1a56e0e463552a1",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "jev",
+          "profileId": "jev",
+          "modelId": "jev-fixed",
+          "reasoningEffort": null,
+          "dispatchState": "started",
+          "status": "INVALID",
+          "errorCode": "INVALID_PROVIDER_RESPONSE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        },
+        {
+          "providerKind": "vendor",
+          "profileId": "vendor",
+          "modelId": "vendor-fixed",
+          "reasoningEffort": "low",
+          "dispatchState": "started",
+          "status": "SUCCESS",
+          "errorCode": null,
+          "timedOut": false,
+          "usage": {
+            "inputTokens": 10,
+            "outputTokens": 2,
+            "cachedInputTokens": null,
+            "actualCostUsd": 0.1
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-malformed-true",
+        "operationId": "SS30-malformed-true",
+        "requestDigest": "sha256:6364e80f08ce173f85e46afc7c39dd433962d88a2edbf007f1a56e0e463552a1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "SUCCESS",
+        "judgments": [
+          {
+            "skillId": "alpha",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "beta",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          }
+        ],
+        "unresolvedItems": [],
+        "error": null
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0.1
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": [
+        {
+          "id": "[\"SS30-malformed-true\",\"sha256:6364e80f08ce173f85e46afc7c39dd433962d88a2edbf007f1a56e0e463552a1\",\"jev\"]",
+          "bucket": "jev",
+          "maximumUsd": 0.4,
+          "profileId": "jev",
+          "nativeProfileId": null
+        }
+      ]
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true,
+    "mockFetchCalls": 1,
+    "mockVendorCalls": 1
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "malformed",
+    "path": "vendor-failure-final",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "http": 200,
+      "body": "{\"answers\":",
+      "credentialDisappearsAfterAvailability": false
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-malformed-false",
+      "operationId": "SS30-malformed-false",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:95065689a7aab272ee8deb21f7189cab76221b1f440d8c03ae512614e56b1c45"
+    },
+    "expected": {
+      "failureStatus": "INVALID",
+      "errorCode": "INVALID_PROVIDER_RESPONSE",
+      "dispatchState": "started",
+      "finalStatus": "INVALID",
+      "agentSelectedSkillIds": null
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-malformed-false",
+        "operationId": "SS30-malformed-false",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:95065689a7aab272ee8deb21f7189cab76221b1f440d8c03ae512614e56b1c45"
+      },
+      "config": {
+        "jevEnabled": false,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:95065689a7aab272ee8deb21f7189cab76221b1f440d8c03ae512614e56b1c45",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "vendor",
+          "profileId": "vendor",
+          "modelId": "vendor-fixed",
+          "reasoningEffort": "low",
+          "dispatchState": "started",
+          "status": "INVALID",
+          "errorCode": "INVALID_PROVIDER_RESPONSE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-malformed-false",
+        "operationId": "SS30-malformed-false",
+        "requestDigest": "sha256:95065689a7aab272ee8deb21f7189cab76221b1f440d8c03ae512614e56b1c45",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "INVALID",
+        "judgments": [],
+        "unresolvedItems": [
+          {
+            "skillId": null,
+            "reasonCode": "INVALID_PROVIDER_RESPONSE"
+          }
+        ],
+        "error": {
+          "code": "INVALID_PROVIDER_RESPONSE",
+          "retryable": false,
+          "dispatchState": "started"
+        }
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": [
+        {
+          "id": "[\"SS30-malformed-false\",\"sha256:95065689a7aab272ee8deb21f7189cab76221b1f440d8c03ae512614e56b1c45\",\"vendor\"]",
+          "bucket": "vendor:current-vendor",
+          "maximumUsd": 0.4,
+          "profileId": "vendor",
+          "nativeProfileId": null
+        }
+      ]
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true,
+    "mockFetchCalls": 1,
+    "mockVendorCalls": 0
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "missing-questions",
+    "path": "JEV-to-vendor",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "http": 200,
+      "body": "{\"model\":\"jev-fixed\",\"answers\":{\"alpha\":{\"type\":\"noul\",\"noul\":0.9}},\"usage\":{\"input_tokens\":10,\"output_tokens\":2}}",
+      "credentialDisappearsAfterAvailability": false
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-missing-questions-true",
+      "operationId": "SS30-missing-questions-true",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:b4e3b03318e400b32c09d80f02e039344fdd5912460d6e6cbe0757978835d820"
+    },
+    "expected": {
+      "failureStatus": "INVALID",
+      "errorCode": "INVALID_PROVIDER_RESPONSE",
+      "dispatchState": "started",
+      "finalStatus": "SUCCESS",
+      "agentSelectedSkillIds": null
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-missing-questions-true",
+        "operationId": "SS30-missing-questions-true",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:b4e3b03318e400b32c09d80f02e039344fdd5912460d6e6cbe0757978835d820"
+      },
+      "config": {
+        "jevEnabled": true,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:b4e3b03318e400b32c09d80f02e039344fdd5912460d6e6cbe0757978835d820",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "jev",
+          "profileId": "jev",
+          "modelId": "jev-fixed",
+          "reasoningEffort": null,
+          "dispatchState": "started",
+          "status": "INVALID",
+          "errorCode": "INVALID_PROVIDER_RESPONSE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        },
+        {
+          "providerKind": "vendor",
+          "profileId": "vendor",
+          "modelId": "vendor-fixed",
+          "reasoningEffort": "low",
+          "dispatchState": "started",
+          "status": "SUCCESS",
+          "errorCode": null,
+          "timedOut": false,
+          "usage": {
+            "inputTokens": 10,
+            "outputTokens": 2,
+            "cachedInputTokens": null,
+            "actualCostUsd": 0.1
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-missing-questions-true",
+        "operationId": "SS30-missing-questions-true",
+        "requestDigest": "sha256:b4e3b03318e400b32c09d80f02e039344fdd5912460d6e6cbe0757978835d820",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "SUCCESS",
+        "judgments": [
+          {
+            "skillId": "alpha",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "beta",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          }
+        ],
+        "unresolvedItems": [],
+        "error": null
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0.1
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": [
+        {
+          "id": "[\"SS30-missing-questions-true\",\"sha256:b4e3b03318e400b32c09d80f02e039344fdd5912460d6e6cbe0757978835d820\",\"jev\"]",
+          "bucket": "jev",
+          "maximumUsd": 0.4,
+          "profileId": "jev",
+          "nativeProfileId": null
+        }
+      ]
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true,
+    "mockFetchCalls": 1,
+    "mockVendorCalls": 1
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "missing-questions",
+    "path": "vendor-failure-final",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "http": 200,
+      "body": "{\"model\":\"vendor-fixed\",\"answers\":{\"alpha\":{\"type\":\"noul\",\"noul\":0.9}},\"usage\":{\"input_tokens\":10,\"output_tokens\":2}}",
+      "credentialDisappearsAfterAvailability": false
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-missing-questions-false",
+      "operationId": "SS30-missing-questions-false",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:995ed389271006eda399ece6cdaeaf49c6b43abfc7e3f3d71cda736eab20281f"
+    },
+    "expected": {
+      "failureStatus": "INVALID",
+      "errorCode": "INVALID_PROVIDER_RESPONSE",
+      "dispatchState": "started",
+      "finalStatus": "INVALID",
+      "agentSelectedSkillIds": null
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-missing-questions-false",
+        "operationId": "SS30-missing-questions-false",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:995ed389271006eda399ece6cdaeaf49c6b43abfc7e3f3d71cda736eab20281f"
+      },
+      "config": {
+        "jevEnabled": false,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:995ed389271006eda399ece6cdaeaf49c6b43abfc7e3f3d71cda736eab20281f",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "vendor",
+          "profileId": "vendor",
+          "modelId": "vendor-fixed",
+          "reasoningEffort": "low",
+          "dispatchState": "started",
+          "status": "INVALID",
+          "errorCode": "INVALID_PROVIDER_RESPONSE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-missing-questions-false",
+        "operationId": "SS30-missing-questions-false",
+        "requestDigest": "sha256:995ed389271006eda399ece6cdaeaf49c6b43abfc7e3f3d71cda736eab20281f",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "INVALID",
+        "judgments": [],
+        "unresolvedItems": [
+          {
+            "skillId": null,
+            "reasonCode": "INVALID_PROVIDER_RESPONSE"
+          }
+        ],
+        "error": {
+          "code": "INVALID_PROVIDER_RESPONSE",
+          "retryable": false,
+          "dispatchState": "started"
+        }
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": [
+        {
+          "id": "[\"SS30-missing-questions-false\",\"sha256:995ed389271006eda399ece6cdaeaf49c6b43abfc7e3f3d71cda736eab20281f\",\"vendor\"]",
+          "bucket": "vendor:current-vendor",
+          "maximumUsd": 0.4,
+          "profileId": "vendor",
+          "nativeProfileId": null
+        }
+      ]
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true,
+    "mockFetchCalls": 1,
+    "mockVendorCalls": 0
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "not-dispatched",
+    "path": "fetch-rejection-extra-boundary",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "fetchRejects": true
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-transport-rejection-false",
+      "operationId": "SS30-transport-rejection-false",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:c6d39827041d2b76b71fc60fe461cc4f77c6e650abc4dfde987c5d2171bd39cb"
+    },
+    "expected": {
+      "status": "UNAVAILABLE",
+      "code": "TRANSPORT_UNAVAILABLE",
+      "dispatchState": "unknown"
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-transport-rejection-false",
+        "operationId": "SS30-transport-rejection-false",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:c6d39827041d2b76b71fc60fe461cc4f77c6e650abc4dfde987c5d2171bd39cb"
+      },
+      "config": {
+        "jevEnabled": false,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:c6d39827041d2b76b71fc60fe461cc4f77c6e650abc4dfde987c5d2171bd39cb",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "vendor",
+          "profileId": "vendor",
+          "modelId": "vendor-fixed",
+          "reasoningEffort": "low",
+          "dispatchState": "unknown",
+          "status": "UNAVAILABLE",
+          "errorCode": "TRANSPORT_UNAVAILABLE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-transport-rejection-false",
+        "operationId": "SS30-transport-rejection-false",
+        "requestDigest": "sha256:c6d39827041d2b76b71fc60fe461cc4f77c6e650abc4dfde987c5d2171bd39cb",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "UNAVAILABLE",
+        "judgments": [],
+        "unresolvedItems": [
+          {
+            "skillId": null,
+            "reasonCode": "TRANSPORT_UNAVAILABLE"
+          }
+        ],
+        "error": {
+          "code": "TRANSPORT_UNAVAILABLE",
+          "retryable": false,
+          "dispatchState": "unknown"
+        }
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": [
+        {
+          "id": "[\"SS30-transport-rejection-false\",\"sha256:c6d39827041d2b76b71fc60fe461cc4f77c6e650abc4dfde987c5d2171bd39cb\",\"vendor\"]",
+          "bucket": "vendor:current-vendor",
+          "maximumUsd": 0.4,
+          "profileId": "vendor",
+          "nativeProfileId": null
+        }
+      ]
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "refusal",
+    "path": "common-RESP-UNCERTAIN",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "evaluation": {
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS30-semantic-refusal-UNCERTAIN-true",
+          "operationId": "SS30-semantic-refusal-UNCERTAIN-true",
+          "requestDigest": "sha256:fa1faee06736783ea56cf0d7c859bb16cbc737e57f4e9a12bfccced6966bb177",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "UNCERTAIN",
+          "judgments": [
+            {
+              "skillId": "alpha",
+              "judgment": "uncertain",
+              "reasonRefs": [],
+              "uncertaintyReason": "MODEL_REFUSAL"
+            },
+            {
+              "skillId": "beta",
+              "judgment": "uncertain",
+              "reasonRefs": [],
+              "uncertaintyReason": "MODEL_REFUSAL"
+            }
+          ],
+          "unresolvedItems": [
+            {
+              "skillId": "alpha",
+              "reasonCode": "MODEL_REFUSAL"
+            },
+            {
+              "skillId": "beta",
+              "reasonCode": "MODEL_REFUSAL"
+            }
+          ],
+          "error": null
+        },
+        "usage": {
+          "inputTokens": 10,
+          "outputTokens": 2,
+          "cachedInputTokens": null,
+          "actualCostUsd": 0.1
+        },
+        "dispatchState": "started",
+        "diagnostics": null
+      }
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-semantic-refusal-UNCERTAIN-true",
+      "operationId": "SS30-semantic-refusal-UNCERTAIN-true",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:fa1faee06736783ea56cf0d7c859bb16cbc737e57f4e9a12bfccced6966bb177"
+    },
+    "expected": {
+      "status": "UNCERTAIN",
+      "error": null,
+      "unresolvedCount": 2,
+      "fallbackCalls": 0
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-semantic-refusal-UNCERTAIN-true",
+        "operationId": "SS30-semantic-refusal-UNCERTAIN-true",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:fa1faee06736783ea56cf0d7c859bb16cbc737e57f4e9a12bfccced6966bb177"
+      },
+      "config": {
+        "jevEnabled": true,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:fa1faee06736783ea56cf0d7c859bb16cbc737e57f4e9a12bfccced6966bb177",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "jev",
+          "profileId": "jev",
+          "modelId": "jev-fixed",
+          "reasoningEffort": null,
+          "dispatchState": "started",
+          "status": "UNCERTAIN",
+          "errorCode": null,
+          "timedOut": false,
+          "usage": {
+            "inputTokens": 10,
+            "outputTokens": 2,
+            "cachedInputTokens": null,
+            "actualCostUsd": 0.1
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-semantic-refusal-UNCERTAIN-true",
+        "operationId": "SS30-semantic-refusal-UNCERTAIN-true",
+        "requestDigest": "sha256:fa1faee06736783ea56cf0d7c859bb16cbc737e57f4e9a12bfccced6966bb177",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "UNCERTAIN",
+        "judgments": [
+          {
+            "skillId": "alpha",
+            "judgment": "uncertain",
+            "reasonRefs": [],
+            "uncertaintyReason": "MODEL_REFUSAL"
+          },
+          {
+            "skillId": "beta",
+            "judgment": "uncertain",
+            "reasonRefs": [],
+            "uncertaintyReason": "MODEL_REFUSAL"
+          }
+        ],
+        "unresolvedItems": [
+          {
+            "skillId": "alpha",
+            "reasonCode": "MODEL_REFUSAL"
+          },
+          {
+            "skillId": "beta",
+            "reasonCode": "MODEL_REFUSAL"
+          }
+        ],
+        "error": null
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0.1
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": []
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "refusal",
+    "path": "common-RESP-PARTIAL",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "evaluation": {
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS30-semantic-refusal-PARTIAL-true",
+          "operationId": "SS30-semantic-refusal-PARTIAL-true",
+          "requestDigest": "sha256:af61ddf29df5de938a11703554427bedb877e5619b7b39d87123b57e20303509",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "PARTIAL",
+          "judgments": [
+            {
+              "skillId": "alpha",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-only"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "beta",
+              "judgment": "uncertain",
+              "reasonRefs": [],
+              "uncertaintyReason": "MODEL_REFUSAL"
+            }
+          ],
+          "unresolvedItems": [
+            {
+              "skillId": "beta",
+              "reasonCode": "MODEL_REFUSAL"
+            }
+          ],
+          "error": null
+        },
+        "usage": {
+          "inputTokens": 10,
+          "outputTokens": 2,
+          "cachedInputTokens": null,
+          "actualCostUsd": 0.1
+        },
+        "dispatchState": "started",
+        "diagnostics": null
+      }
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-semantic-refusal-PARTIAL-true",
+      "operationId": "SS30-semantic-refusal-PARTIAL-true",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:af61ddf29df5de938a11703554427bedb877e5619b7b39d87123b57e20303509"
+    },
+    "expected": {
+      "status": "PARTIAL",
+      "error": null,
+      "unresolvedCount": 1,
+      "fallbackCalls": 0
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-semantic-refusal-PARTIAL-true",
+        "operationId": "SS30-semantic-refusal-PARTIAL-true",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:af61ddf29df5de938a11703554427bedb877e5619b7b39d87123b57e20303509"
+      },
+      "config": {
+        "jevEnabled": true,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:af61ddf29df5de938a11703554427bedb877e5619b7b39d87123b57e20303509",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "jev",
+          "profileId": "jev",
+          "modelId": "jev-fixed",
+          "reasoningEffort": null,
+          "dispatchState": "started",
+          "status": "PARTIAL",
+          "errorCode": null,
+          "timedOut": false,
+          "usage": {
+            "inputTokens": 10,
+            "outputTokens": 2,
+            "cachedInputTokens": null,
+            "actualCostUsd": 0.1
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-semantic-refusal-PARTIAL-true",
+        "operationId": "SS30-semantic-refusal-PARTIAL-true",
+        "requestDigest": "sha256:af61ddf29df5de938a11703554427bedb877e5619b7b39d87123b57e20303509",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "PARTIAL",
+        "judgments": [
+          {
+            "skillId": "alpha",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "beta",
+            "judgment": "uncertain",
+            "reasonRefs": [],
+            "uncertaintyReason": "MODEL_REFUSAL"
+          }
+        ],
+        "unresolvedItems": [
+          {
+            "skillId": "beta",
+            "reasonCode": "MODEL_REFUSAL"
+          }
+        ],
+        "error": null
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0.1
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": []
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "missing-questions",
+    "path": "known-cost-invalid-response",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "evaluation": {
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS30-known-cost-invalid-response-true",
+          "operationId": "SS30-known-cost-invalid-response-true",
+          "requestDigest": "sha256:797ff178da5c8540f3989dfd97643bbac7efe12806652325c0f3aad73868828b",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "SUCCESS",
+          "judgments": [
+            {
+              "skillId": "alpha",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-only"
+              ],
+              "uncertaintyReason": null
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        },
+        "usage": {
+          "inputTokens": 10,
+          "outputTokens": 2,
+          "cachedInputTokens": null,
+          "actualCostUsd": 0.1
+        },
+        "dispatchState": "started",
+        "diagnostics": null
+      }
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-known-cost-invalid-response-true",
+      "operationId": "SS30-known-cost-invalid-response-true",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:797ff178da5c8540f3989dfd97643bbac7efe12806652325c0f3aad73868828b"
+    },
+    "expected": {
+      "errorCode": "INVALID_PROVIDER_RESPONSE",
+      "actualCostUsd": 0.1,
+      "jevSpent": 0.1,
+      "pendingReservations": 0
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-known-cost-invalid-response-true",
+        "operationId": "SS30-known-cost-invalid-response-true",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:797ff178da5c8540f3989dfd97643bbac7efe12806652325c0f3aad73868828b"
+      },
+      "config": {
+        "jevEnabled": true,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:797ff178da5c8540f3989dfd97643bbac7efe12806652325c0f3aad73868828b",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "jev",
+          "profileId": "jev",
+          "modelId": "jev-fixed",
+          "reasoningEffort": null,
+          "dispatchState": "started",
+          "status": "INVALID",
+          "errorCode": "INVALID_PROVIDER_RESPONSE",
+          "timedOut": false,
+          "usage": {
+            "inputTokens": null,
+            "outputTokens": null,
+            "cachedInputTokens": null,
+            "actualCostUsd": null
+          },
+          "reservedCostUsd": 0.4
+        },
+        {
+          "providerKind": "vendor",
+          "profileId": "vendor",
+          "modelId": "vendor-fixed",
+          "reasoningEffort": "low",
+          "dispatchState": "started",
+          "status": "SUCCESS",
+          "errorCode": null,
+          "timedOut": false,
+          "usage": {
+            "inputTokens": 10,
+            "outputTokens": 2,
+            "cachedInputTokens": null,
+            "actualCostUsd": 0.1
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-known-cost-invalid-response-true",
+        "operationId": "SS30-known-cost-invalid-response-true",
+        "requestDigest": "sha256:797ff178da5c8540f3989dfd97643bbac7efe12806652325c0f3aad73868828b",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "SUCCESS",
+        "judgments": [
+          {
+            "skillId": "alpha",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "beta",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          }
+        ],
+        "unresolvedItems": [],
+        "error": null
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0.1
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": [
+        {
+          "id": "[\"SS30-known-cost-invalid-response-true\",\"sha256:797ff178da5c8540f3989dfd97643bbac7efe12806652325c0f3aad73868828b\",\"jev\"]",
+          "bucket": "jev",
+          "maximumUsd": 0.4,
+          "profileId": "jev",
+          "nativeProfileId": null
+        }
+      ]
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true,
+    "existingFinding": "valid-cost-lost-with-invalid-RESP"
+  },
+  {
+    "caseId": "SS30",
+    "variantId": "refusal",
+    "path": "unbound-unresolvedItems",
+    "executionKind": "new-offline-mock",
+    "input": {
+      "evaluation": {
+        "response": {
+          "schemaVersion": "1.0.0",
+          "requestId": "SS30-unbound-refusal-true",
+          "operationId": "SS30-unbound-refusal-true",
+          "requestDigest": "sha256:1c5e706d7ef3c8fb1211eaf17948eee816ae3b3e37c39231b61ae49a441bb043",
+          "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "status": "PARTIAL",
+          "judgments": [
+            {
+              "skillId": "alpha",
+              "judgment": "not-needed",
+              "reasonRefs": [
+                "synthetic-only"
+              ],
+              "uncertaintyReason": null
+            },
+            {
+              "skillId": "beta",
+              "judgment": "uncertain",
+              "reasonRefs": [],
+              "uncertaintyReason": "MODEL_REFUSAL"
+            }
+          ],
+          "unresolvedItems": [],
+          "error": null
+        },
+        "usage": {
+          "inputTokens": 10,
+          "outputTokens": 2,
+          "cachedInputTokens": null,
+          "actualCostUsd": 0.1
+        },
+        "dispatchState": "started",
+        "diagnostics": null
+      }
+    },
+    "request": {
+      "schemaVersion": "1.0.0",
+      "requestId": "SS30-unbound-refusal-true",
+      "operationId": "SS30-unbound-refusal-true",
+      "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+      "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+      "confirmedContext": {
+        "taskRevision": null,
+        "objective": null,
+        "actions": null,
+        "targets": null,
+        "constraints": null,
+        "prohibitedActions": null,
+        "background": null
+      },
+      "contextSources": [],
+      "skills": [
+        {
+          "skillId": "alpha",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        },
+        {
+          "skillId": "beta",
+          "version": "1",
+          "description": "synthetic error-classification probe",
+          "enabled": true,
+          "installed": true,
+          "hostSupported": true,
+          "capabilities": [
+            "synthetic"
+          ],
+          "actions": [
+            "inspect"
+          ],
+          "targets": [
+            "fixture"
+          ],
+          "constraints": [
+            "read-only"
+          ],
+          "applicability": [
+            "synthetic fixture"
+          ],
+          "exclusions": [
+            "product mutation"
+          ],
+          "dependencies": [],
+          "phases": [],
+          "sourceRefs": []
+        }
+      ],
+      "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "taxonomyRevision": "SS30-synthetic",
+      "classificationCriteriaRef": "embedded-SS30",
+      "requestDigest": "sha256:1c5e706d7ef3c8fb1211eaf17948eee816ae3b3e37c39231b61ae49a441bb043"
+    },
+    "expected": {
+      "invalidCommonRESP": true,
+      "fallbackCalls": 1
+    },
+    "observed": {
+      "request": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-unbound-refusal-true",
+        "operationId": "SS30-unbound-refusal-true",
+        "originalPrompt": "합성 시험: alpha와 beta의 분류 응답 계약만 확인한다. 제품 수정 금지.",
+        "promptDigest": "sha256:ffaf988bfe3609d9ce0c077cec7e7f1e249230810700cbf12e445677ab5dbe52",
+        "confirmedContext": {
+          "taskRevision": null,
+          "objective": null,
+          "actions": null,
+          "targets": null,
+          "constraints": null,
+          "prohibitedActions": null,
+          "background": null
+        },
+        "contextSources": [],
+        "skills": [
+          {
+            "skillId": "alpha",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          },
+          {
+            "skillId": "beta",
+            "version": "1",
+            "description": "synthetic error-classification probe",
+            "enabled": true,
+            "installed": true,
+            "hostSupported": true,
+            "capabilities": [
+              "synthetic"
+            ],
+            "actions": [
+              "inspect"
+            ],
+            "targets": [
+              "fixture"
+            ],
+            "constraints": [
+              "read-only"
+            ],
+            "applicability": [
+              "synthetic fixture"
+            ],
+            "exclusions": [
+              "product mutation"
+            ],
+            "dependencies": [],
+            "phases": [],
+            "sourceRefs": []
+          }
+        ],
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "taxonomyRevision": "SS30-synthetic",
+        "classificationCriteriaRef": "embedded-SS30",
+        "requestDigest": "sha256:1c5e706d7ef3c8fb1211eaf17948eee816ae3b3e37c39231b61ae49a441bb043"
+      },
+      "config": {
+        "jevEnabled": true,
+        "mode": "select",
+        "providerProfileRegistryRef": "synthetic-profiles",
+        "externalClassificationAllowed": true,
+        "configRevision": "SS30-synthetic-c1",
+        "timeoutMs": 1000
+      },
+      "profileRevision": "synthetic-pr1",
+      "snapshot": {
+        "taskRevision": null,
+        "configRevision": "SS30-synthetic-c1",
+        "profileRevision": "synthetic-pr1",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requestDigest": "sha256:1c5e706d7ef3c8fb1211eaf17948eee816ae3b3e37c39231b61ae49a441bb043",
+        "cancelled": false
+      },
+      "attempts": [
+        {
+          "providerKind": "jev",
+          "profileId": "jev",
+          "modelId": "jev-fixed",
+          "reasoningEffort": null,
+          "dispatchState": "started",
+          "status": "PARTIAL",
+          "errorCode": null,
+          "timedOut": false,
+          "usage": {
+            "inputTokens": 10,
+            "outputTokens": 2,
+            "cachedInputTokens": null,
+            "actualCostUsd": 0.1
+          },
+          "reservedCostUsd": 0.4
+        }
+      ],
+      "response": {
+        "schemaVersion": "1.0.0",
+        "requestId": "SS30-unbound-refusal-true",
+        "operationId": "SS30-unbound-refusal-true",
+        "requestDigest": "sha256:1c5e706d7ef3c8fb1211eaf17948eee816ae3b3e37c39231b61ae49a441bb043",
+        "inventoryDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": "PARTIAL",
+        "judgments": [
+          {
+            "skillId": "alpha",
+            "judgment": "not-needed",
+            "reasonRefs": [
+              "synthetic-only"
+            ],
+            "uncertaintyReason": null
+          },
+          {
+            "skillId": "beta",
+            "judgment": "uncertain",
+            "reasonRefs": [],
+            "uncertaintyReason": "MODEL_REFUSAL"
+          }
+        ],
+        "unresolvedItems": [],
+        "error": null
+      }
+    },
+    "budget": {
+      "limits": {
+        "jev": {
+          "limitUsd": 5,
+          "spentUsd": 0.1
+        },
+        "vendor:current-vendor": {
+          "limitUsd": 2,
+          "spentUsd": 0
+        }
+      },
+      "nativeAllowances": {},
+      "invalidCostCeilings": [],
+      "reservations": []
+    },
+    "agentSelectedSkillIds": null,
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "API0": true
+  }
+]

@@ -1,0 +1,185 @@
+{
+  "caseId": "SS30",
+  "publicationKind": "sanitized packaging of prior observations; no new execution",
+  "candidateCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "candidateTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixture": {
+    "path": "tests/skill-classification/fixtures.json",
+    "bytes": 142450,
+    "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "publishedCopy": false,
+    "reason": "Full fixture contains other cases; pinned repository provides original bytes."
+  },
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "originalPrompt": null,
+  "oracle": null,
+  "inputBytesReferences": [
+    "inputs/source.SS30.json",
+    "inputs-expectations-observations.json"
+  ],
+  "existingResults": {
+    "overall": "FAIL",
+    "existingRegression": {
+      "PASS": 7,
+      "FAIL": 0,
+      "skipped": 56
+    },
+    "newOfflineChecksPreviouslyExecuted": {
+      "PASS": 19,
+      "FAIL": 2
+    },
+    "sensitivityProof": "NOT_RUN",
+    "engineeringProofVerdict": "INCOMPLETE",
+    "selected": "NOTRUN",
+    "read": "NOTRUN",
+    "applied": "NOTRUN",
+    "verified": "NOTRUN",
+    "hostLive": "NOTRUN"
+  },
+  "callsThisPublication": {
+    "JEV": 0,
+    "vendor": 0,
+    "Claude": 0,
+    "CodexAPI": 0,
+    "newTests": 0,
+    "pastLiveRunsRepeated": 0
+  },
+  "existingProductPatch": {
+    "state": "NO_PATCH_EXISTS",
+    "files": []
+  },
+  "missingOriginals": [],
+  "originalArtifacts": [
+    {
+      "file": "evidence/SS30/REPORT.ko.md",
+      "recovery": "RECOVERED",
+      "bytes": 7524,
+      "sha256": "35fe5c0fed51dbac7e7c9e8c88cc4d3a5b33b47b50b01f89c3c1b8e72bf6dc5c"
+    },
+    {
+      "file": "evidence/SS30/SS30.result.json",
+      "recovery": "RECOVERED",
+      "bytes": 234473,
+      "sha256": "84e81f6f3b604c95ee367120d292487d12851caae8137219ca4610b56e681078"
+    },
+    {
+      "file": "evidence/SS30/SS30.test.ts",
+      "recovery": "RECOVERED",
+      "bytes": 13678,
+      "sha256": "e081bb8480388b5498368304459652d89586c0906da57f800097883080bf95fc"
+    },
+    {
+      "file": "evidence/SS30/artifact-digests.json",
+      "recovery": "RECOVERED",
+      "bytes": 1922,
+      "sha256": "c173c0f70055f693575e59d2c2ca627e852399c2900fba34f4c1a25624055cc4"
+    },
+    {
+      "file": "evidence/SS30/checks-summary.json",
+      "recovery": "RECOVERED",
+      "bytes": 3077,
+      "sha256": "894d94fedbd49a82587e25267d73d3cc33ad502f1a09af10664574cd91745efe"
+    },
+    {
+      "file": "evidence/SS30/engineering-test-plan.json",
+      "recovery": "RECOVERED",
+      "bytes": 10679,
+      "sha256": "26cae2bff7637172217074c55f868727a5589364b135b68bc5a9d5aee508c26d"
+    },
+    {
+      "file": "evidence/SS30/engineering-test-proof.json",
+      "recovery": "RECOVERED",
+      "bytes": 7863,
+      "sha256": "ed3e8836be50599d77605213e90fc9a49bd2f476f257a937258c0269eb668428"
+    },
+    {
+      "file": "evidence/SS30/engineering-test-result.json",
+      "recovery": "RECOVERED",
+      "bytes": 2736,
+      "sha256": "3ae55c888073a643cdce2fa1aeeb60360915c29f134a7e08792936ec093f2512"
+    },
+    {
+      "file": "evidence/SS30/existing-regression.command.json",
+      "recovery": "RECOVERED",
+      "bytes": 871,
+      "sha256": "28dcd14218c34d520eea208410d18c2494f91047ebf14ace24f79cc1b16da16c"
+    },
+    {
+      "file": "evidence/SS30/existing-regression.setup-error.json",
+      "recovery": "RECOVERED",
+      "bytes": 3765,
+      "sha256": "ab7528f822f49ec466b00d7c82cfbffeeaaf0d5c3cbe2deb6862d00118affced"
+    },
+    {
+      "file": "evidence/SS30/existing-vitest.json",
+      "recovery": "RECOVERED",
+      "bytes": 23148,
+      "sha256": "34abe3571512909456dc6979e1fe53f6d684738cf724f218cc754fba32ddf60d"
+    },
+    {
+      "file": "evidence/SS30/finalize.mjs",
+      "recovery": "RECOVERED",
+      "bytes": 8245,
+      "sha256": "224a1fbc74b86779651bd3e4923186ab94d576dacb7de35ba529d42a42fcddf8"
+    },
+    {
+      "file": "evidence/SS30/new-offline-mock.command.json",
+      "recovery": "RECOVERED",
+      "bytes": 624,
+      "sha256": "506570d198d1fa359500ba36e2cbcece24cb70f4017be596365d61b330511348"
+    },
+    {
+      "file": "evidence/SS30/new-offline-mock.setup-error.json",
+      "recovery": "RECOVERED",
+      "bytes": 3523,
+      "sha256": "65f95ce3bcb770693d17564e03cd50296f12d6329bae039d3d4c9f5514ac3623"
+    },
+    {
+      "file": "evidence/SS30/new-vitest.json",
+      "recovery": "RECOVERED",
+      "bytes": 8538,
+      "sha256": "c3fd6c9bbdeb8d18062b01f6edac372831e41756b823e98a223d183c860c209c"
+    },
+    {
+      "file": "evidence/SS30/observations.json",
+      "recovery": "RECOVERED",
+      "bytes": 178902,
+      "sha256": "099749ab3d6b994765aed5bcf4609dd2305f53235a6d08819d948e97d5efb298"
+    },
+    {
+      "file": "evidence/SS30/plan-check.json",
+      "recovery": "RECOVERED",
+      "bytes": 365,
+      "sha256": "b786e3947a0eceb97e0f4d5ad2aafe9ca31e482b57771913d86d550db6f1996b"
+    },
+    {
+      "file": "evidence/SS30/run.mjs",
+      "recovery": "RECOVERED",
+      "bytes": 7934,
+      "sha256": "e37a85380a0b5d0618b34a704d33c1743316e365c23a49339bb904766d8bec8e"
+    },
+    {
+      "file": "evidence/SS30/snapshot.json",
+      "recovery": "RECOVERED",
+      "bytes": 2450,
+      "sha256": "bd970cf66e844b04e239fa9c952c65545c9fb1b4239c951d83bc80d9a01afcdb"
+    },
+    {
+      "file": "evidence/SS30/source.json",
+      "recovery": "RECOVERED",
+      "bytes": 2310,
+      "sha256": "73c7cf4024f55cdf22823c086aa1c457f03b554ff47e62836acc57d585cbc588"
+    }
+  ],
+  "sanitization": {
+    "markers": [
+      "<REPO_ROOT>",
+      "<DEPENDENCY_REPO>",
+      "<WORKSPACE_ROOT>",
+      "<USER_HOME>",
+      "<RUNTIME_ROOT>"
+    ],
+    "privacy": "No credentials, environment-variable values, personal conversations or unnecessary original logs were imported. Literal SYNTHETIC_KEY and SECRET_SENTINEL in previously existing test code are explicitly nonsecret synthetic test markers; they are not actual credentials.",
+    "binding": "Original digests refer to recovered bytes. Public digests refer to separately listed public bytes. Original engineering/snapshot digests are provenance, not reissued validations of sanitized artifacts."
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "id": "existing-regression",
+  "argv": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "tests/mcp/skill-classification-providers.test.ts",
+    "tests/mcp/skill-classification-service.test.ts",
+    "-t",
+    "SS30/32 HTTP (401|403|500) |SS28/30/32 (AUTH_UNAVAILABLE|API_UNAVAILABLE) |SS30 missing key availability|SS27/30 malformed and incomplete",
+    "--reporter=json",
+    "--outputFile=evidence/SS30/existing-vitest.json"
+  ],
+  "startedAt": "2026-10-09T02:58:09.428Z",
+  "finishedAt": "2026-10-09T02:58:10.168Z",
+  "exitCode": 0,
+  "signal": null,
+  "status": "PASS",
+  "executionKind": "existing-regression",
+  "API0": true,
+  "stdout": "JSON report written to <REPO_ROOT>/evidence/SS30/existing-vitest.json\n",
+  "stderr": "",
+  "environment": {
+    "node": "v24.19.0",
+    "timezone": "Etc/UTC"
+  },
+  "hostAttestation": false
+}

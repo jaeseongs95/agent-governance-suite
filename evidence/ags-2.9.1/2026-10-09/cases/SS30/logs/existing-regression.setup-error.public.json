@@ -1,0 +1,30 @@
+{
+  "id": "existing-regression",
+  "argv": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "tests/mcp/skill-classification-providers.test.ts",
+    "tests/mcp/skill-classification-service.test.ts",
+    "-t",
+    "SS30/32 HTTP (401|403|500) |SS28/30/32 (AUTH_UNAVAILABLE|API_UNAVAILABLE) |SS30 missing key availability|SS27/30 malformed and incomplete",
+    "--reporter=json",
+    "--outputFile=evidence/SS30/existing-vitest.json"
+  ],
+  "startedAt": "2026-10-09T02:57:46.930Z",
+  "finishedAt": "2026-10-09T02:57:47.938Z",
+  "exitCode": 1,
+  "signal": null,
+  "status": "SPAWN_ERROR",
+  "executionKind": "existing-regression",
+  "API0": true,
+  "stdout": "[ENOENT] ENOENT: no such file or directory, mkdir '<USER_HOME>/.local/share/pnpm'\n\npnpm: ENOENT: no such file or directory, mkdir '<USER_HOME>/.local/share/pnpm'\n    at async Object.mkdir (node:internal/fs/promises:916:10)\n    at async createNewStoreController (file://<RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/pnpm.mjs:164333:5)\n    at async installDeps (file://<RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/pnpm.mjs:200323:17)\n    at async Object.handler5 (file://<RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/pnpm.mjs:201478:3)\n    at async file://<RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/pnpm.mjs:314767:19\n    at async main4 (file://<RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/pnpm.mjs:314735:30)\n    at async runPnpm (file://<RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/pnpm.mjs:315030:5)\n    at async file://<RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/pnpm.mjs:315023:3\n[ERROR] Command failed with exit code 254: <RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/bin/node <RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/bin/pnpm.mjs install\n\npnpm: Command failed with exit code 254: <RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/bin/node <RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/bin/pnpm.mjs install\n    at getFinalError (file://<RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/pnpm.mjs:88973:14)\n    at makeError (file://<RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/pnpm.mjs:91280:21)\n    at getSyncResult (file://<RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/pnpm.mjs:93124:10)\n    at spawnSubprocessSync (file://<RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/pnpm.mjs:93084:14)\n    at execaCoreSync (file://<RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/pnpm.mjs:93014:23)\n    at callBoundExeca (file://<RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/pnpm.mjs:95542:23)\n    at boundExeca (file://<RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/pnpm.mjs:95519:49)\n    at sync2 (file://<RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/pnpm.mjs:95678:10)\n    at runPnpmCli (file://<RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/pnpm.mjs:252207:5)\n    at runDepsStatusCheck (file://<RUNTIME_ROOT>/runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/pnpm.mjs:253973:7)\n",
+  "stderr": "",
+  "environment": {
+    "node": "v24.19.0",
+    "timezone": "Etc/UTC"
+  },
+  "hostAttestation": false,
+  "reason": "pnpm workspace dependency status attempted setup; no test collected"
+}
