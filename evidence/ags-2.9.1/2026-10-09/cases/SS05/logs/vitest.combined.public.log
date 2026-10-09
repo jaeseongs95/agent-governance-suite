@@ -1,0 +1,143 @@
+
+ RUN  v5.0.0 <TEST_REPO>
+
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 frozen base and offline evaluator controls > base: binds full embedded source, single variant, frozen oracle and source refs 3ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 frozen base and offline evaluator controls > base: projects exact negated prompt, full inventory, and unknown context 22ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 frozen base and offline evaluator controls > new: preserves confirmed [] separately from unknown null 15ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 frozen base and offline evaluator controls > new evaluator control: exact-R 1ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 frozen base and offline evaluator controls > new evaluator control: omit-code-review 0ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 frozen base and offline evaluator controls > new evaluator control: omit-cs-engineering 0ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 frozen base and offline evaluator controls > new evaluator control: omit-orchestrator 0ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 frozen base and offline evaluator controls > new evaluator control: forbid-ponytail 0ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 frozen base and offline evaluator controls > new evaluator control: forbid-test-engineering 0ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 frozen base and offline evaluator controls > new evaluator control: inapplicable-software-security-auditor 0ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 frozen base and offline evaluator controls > new evaluator control: inapplicable-korean-prose-editor 0ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 frozen base and offline evaluator controls > new evaluator control: unadjudicated-extra 0ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 frozen base and offline evaluator controls > new evaluator control: unknown-alias 0ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 frozen base and offline evaluator controls > new evaluator control: unknown-abstention 0ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 frozen base and offline evaluator controls > new evaluator control: confirmed-no-skill 0ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 frozen base and offline evaluator controls > new evaluator control: select-all 0ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 frozen base and offline evaluator controls > base: absent observation remains NOT_RUN 0ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 frozen base and offline evaluator controls > new: correct injected advice cannot count as selected without host receipt 0ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 frozen base and offline evaluator controls > new: stage self declarations without host evidence earn zero coverage 1ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 isolated product support boundaries; no actual host > base: unconfigured service returns unavailable without inventing selection 59ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 isolated product support boundaries; no actual host > new: successful mock classification keeps selected null 53ms
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 isolated product support boundaries; no actual host > new: absence of runtime host observation rejects selection 53ms
+(node:979) TimeoutOverflowWarning: 2147483648 does not fit into a 32-bit signed integer.
+Timeout duration was set to 1.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 isolated product support boundaries; no actual host > positive control: valid RESP settles the same cost correctly 14ms
+ × tests/skill-classification/SS05-isolated.test.ts > SS05 isolated product support boundaries; no actual host > known defect repro: valid cost survives invalid RESP 20ms
+   → expected { …(4) } to deeply equal { …(4) }
+ × tests/skill-classification/SS05-isolated.test.ts > SS05 isolated product support boundaries; no actual host > known defect repro: oversized timeout must fail before dispatch 16ms
+   → expected { code: 'PROVIDER_TIMEOUT', …(1) } to deeply equal { code: 'INVALID_TIMEOUT', …(1) }
+ × tests/skill-classification/SS05-isolated.test.ts > SS05 isolated product support boundaries; no actual host > known gap repro: gateway inventory must honor host unavailable skill 58ms
+   → expected { gatewayCR: true } to deeply equal { gatewayCR: false }
+ × tests/skill-classification/SS05-isolated.test.ts > SS05 isolated product support boundaries; no actual host > known gap repro: cancellation during accept await must deny commit 76ms
+   → expected { valid: true } to deeply equal { valid: false }
+ ✓ tests/skill-classification/SS05-isolated.test.ts > SS05 isolated product support boundaries; no actual host > positive control: cancellation before accept is rejected 48ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/skill-classification/SS05-isolated.test.ts > SS05 isolated product support boundaries; no actual host > known defect repro: valid cost survives invalid RESP
+AssertionError: expected { …(4) } to deeply equal { …(4) }
+
+- Expected
++ Received
+
+  {
+-   "actualCostUsd": 0.1,
++   "actualCostUsd": null,
+    "code": "INVALID_PROVIDER_RESPONSE",
+-   "reserved": 0,
+-   "spentUsd": 0.1,
++   "reserved": 1,
++   "spentUsd": 0,
+  }
+
+ ❯ check tests/skill-classification/SS05-isolated.test.ts:40:20
+     38|   const status = JSON.stringify(observed) === JSON.stringify(expected)…
+     39|   rows.push({id, caseId: "SS05", input, expected, observed, status, ex…
+     40|   expect(observed).toEqual(expected);
+       |                    ^
+     41| }
+     42| function observation(ids: string[] | null, layer: Observation["layer"]…
+ ❯ tests/skill-classification/SS05-isolated.test.ts:158:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/skill-classification/SS05-isolated.test.ts > SS05 isolated product support boundaries; no actual host > known defect repro: oversized timeout must fail before dispatch
+AssertionError: expected { code: 'PROVIDER_TIMEOUT', …(1) } to deeply equal { code: 'INVALID_TIMEOUT', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "code": "INVALID_TIMEOUT",
+-   "mockDispatches": 0,
++   "code": "PROVIDER_TIMEOUT",
++   "mockDispatches": 1,
+  }
+
+ ❯ check tests/skill-classification/SS05-isolated.test.ts:40:20
+     38|   const status = JSON.stringify(observed) === JSON.stringify(expected)…
+     39|   rows.push({id, caseId: "SS05", input, expected, observed, status, ex…
+     40|   expect(observed).toEqual(expected);
+       |                    ^
+     41| }
+     42| function observation(ids: string[] | null, layer: Observation["layer"]…
+ ❯ tests/skill-classification/SS05-isolated.test.ts:166:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/skill-classification/SS05-isolated.test.ts > SS05 isolated product support boundaries; no actual host > known gap repro: gateway inventory must honor host unavailable skill
+AssertionError: expected { gatewayCR: true } to deeply equal { gatewayCR: false }
+
+- Expected
++ Received
+
+  {
+-   "gatewayCR": false,
++   "gatewayCR": true,
+  }
+
+ ❯ check tests/skill-classification/SS05-isolated.test.ts:40:20
+     38|   const status = JSON.stringify(observed) === JSON.stringify(expected)…
+     39|   rows.push({id, caseId: "SS05", input, expected, observed, status, ex…
+     40|   expect(observed).toEqual(expected);
+       |                    ^
+     41| }
+     42| function observation(ids: string[] | null, layer: Observation["layer"]…
+ ❯ tests/skill-classification/SS05-isolated.test.ts:173:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/skill-classification/SS05-isolated.test.ts > SS05 isolated product support boundaries; no actual host > known gap repro: cancellation during accept await must deny commit
+AssertionError: expected { valid: true } to deeply equal { valid: false }
+
+- Expected
++ Received
+
+  {
+-   "valid": false,
++   "valid": true,
+  }
+
+ ❯ check tests/skill-classification/SS05-isolated.test.ts:40:20
+     38|   const status = JSON.stringify(observed) === JSON.stringify(expected)…
+     39|   rows.push({id, caseId: "SS05", input, expected, observed, status, ex…
+     40|   expect(observed).toEqual(expected);
+       |                    ^
+     41| }
+     42| function observation(ids: string[] | null, layer: Observation["layer"]…
+ ❯ tests/skill-classification/SS05-isolated.test.ts:183:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 24 passed (28)
+   Start at  02:57:23
+   Duration  853ms (tests 66%, transform 22%, import 12%)
+
+JSON report written to <TEST_REPO>/evidence/SS05/vitest-results.json

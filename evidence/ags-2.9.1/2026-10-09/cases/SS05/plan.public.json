@@ -1,0 +1,47 @@
+{
+  "caseId": "SS05",
+  "frozenVariants": [
+    "base"
+  ],
+  "scope": "SS05 only; no full suite, model APIs, host live or old 21-run replay",
+  "runner": "existing Vitest",
+  "entryPoints": [
+    "loadSkillInventory",
+    "createClassificationRequest",
+    "projectClassificationRequest",
+    "scoreCase",
+    "aggregate",
+    "RuntimeSkillClassificationGateway",
+    "SkillClassificationService"
+  ],
+  "oracle": "Embedded SS05 fields plus fixed oracle and skill instructions. Injected correct/incorrect judgments test scorer behavior; they are not semantic predictions.",
+  "requirements": [
+    "CR+CS+O recommendation",
+    "P/T forbidden",
+    "null distinct from []",
+    "missing/truncated diff: defer review but retain recommendation",
+    "AGENT final selection needs actual host observation",
+    "selected/read/applied/verified need actual evidence"
+  ],
+  "missingInput": [
+    "SS05 fixed diff or base/head snapshot",
+    "approved current classification config/profile/route/budget",
+    "native hook and task observation for actual selected stage"
+  ],
+  "mockBoundaries": [
+    "classification provider callback",
+    "runtime snapshot",
+    "host context in cancellation race control"
+  ],
+  "knownRootCauses": [
+    "valid cost lost with invalid RESP",
+    "timeout overflow",
+    "host state supply gap",
+    "precommit concurrency recheck gap"
+  ],
+  "exceptions": [
+    "No meaningful code mutation/red-green: product edits prohibited; frozen existing defect executions produce red only.",
+    "Existing mixed SS04/05/06 assertion not executed to avoid other case execution.",
+    "Missing/truncated diff is a host behavior condition; offline packaging cannot prove live review abstention."
+  ]
+}

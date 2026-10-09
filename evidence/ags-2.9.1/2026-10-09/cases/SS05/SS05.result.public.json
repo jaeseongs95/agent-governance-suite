@@ -1,0 +1,1321 @@
+{
+  "schemaVersion": "developer-evidence-1.0.0",
+  "caseId": "SS05",
+  "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+  "targetBranch": "codex/skill-classification-2.9.1",
+  "checkout": "<TEST_REPO>",
+  "checkoutMode": "isolated clone, detached fixed commit",
+  "commit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "tree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "oracleHashVerifiedBy": "base-integrity control computes evaluation.oracleDigest; declaration alone is not accepted",
+  "executionKind": "offline-mock",
+  "command": {
+    "argv": [
+      "node_modules/.bin/vitest",
+      "run",
+      "tests/skill-classification/SS05-isolated.test.ts",
+      "--reporter=verbose",
+      "--reporter=json",
+      "--outputFile.json=evidence/SS05/vitest-results.json"
+    ],
+    "cwd": "<TEST_REPO>",
+    "exitCode": 1,
+    "executionKind": "offline-mock",
+    "startUnixSeconds": 1791514642.7565732,
+    "endUnixSeconds": 1791514643.9297595,
+    "testSHA256": "ef02b1e35060262fb90b5b065af3635abee7bf104f3dae9be8e108a378884223",
+    "purpose": "Final run after adding fetch deny guard and same-cost / cancellation-before-await positive controls; initial run retained.",
+    "API0": {
+      "jev": 0,
+      "externalVendor": 0,
+      "claude": 0
+    }
+  },
+  "API0": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0
+  },
+  "blockedFetchAttempts": 0,
+  "old21RunReexecutions": 0,
+  "otherCaseExecutions": 0,
+  "fullSuiteExecutions": 0,
+  "status": "OFFLINE_SUPPORT_FAIL_HOST_NOT_RUN",
+  "caseOverallPASS": false,
+  "variants": [
+    {
+      "variantId": "base",
+      "source": "frozen fixture",
+      "originalPrompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.",
+      "sourceSpec": {
+        "path": "TEST-SPEC.seq7.ko.md",
+        "section": "SS05",
+        "fields": {
+          "입력": "“이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.”",
+          "필수추천": "R={CR, CS, O}.",
+          "금지추천 또는 행동": "P·T를 구현 요청으로 붙임; diff나 사용자 파일 수정; 코드 리뷰를 독립 감사 PASS로 표시.",
+          "허용선택": "A={}.",
+          "보류조건": "diff가 없거나 잘리면 리뷰 실행은 보류한다. 변경분 리뷰와 CS 불변조건 검토가 필요하다는 추천은 보존한다.",
+          "통과기준": "부정 제약을 지키면서 CR과 CS를 함께 추천하고 P를 제외한다.",
+          "증거": "E0, actual action=read-only review와 제외 조건 기록.",
+          "실행종류": "live."
+        },
+        "bodyDigest": "sha256:68b3d056de3755d0fbc2e88497b8c00c42b43c1e82c420f155881eb1dcf8bd3e"
+      },
+      "oracle": {
+        "required": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "allowed": [],
+        "allowedConditions": {},
+        "forbidden": [
+          "ponytail",
+          "test-engineering"
+        ],
+        "notApplicable": [
+          "software-security-auditor",
+          "korean-prose-editor"
+        ],
+        "unadjudicated": [
+          "acceptance-evidence-validator",
+          "blocker-diagnostician",
+          "change-scope-guardian",
+          "codex-token-usage-analyzer",
+          "context-continuity",
+          "coordinate-subagents",
+          "evaluation-validity-auditor",
+          "independent-audit-gate",
+          "independent-deliberation-panel",
+          "instruction-scope-resolver",
+          "iteration-frame-auditor",
+          "model-effort-advisor",
+          "mutation-risk-preflight",
+          "recovery-strategy-selector",
+          "session-board",
+          "task-contract",
+          "workspace-convention-profiler"
+        ],
+        "expectedSelection": "SELECTED",
+        "explicitSkillIds": [],
+        "ruleRequiredSkillIds": [],
+        "requiredReasons": [],
+        "sourceRefs": [
+          {
+            "skillId": "code-review",
+            "path": "skills/code-review/SKILL.md",
+            "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+          },
+          {
+            "skillId": "cs-engineering",
+            "path": "skills/cs-engineering/SKILL.md",
+            "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+          },
+          {
+            "skillId": "orchestrator",
+            "path": "skills/orchestrator/SKILL.md",
+            "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+          },
+          {
+            "skillId": "ponytail",
+            "path": "skills/ponytail/SKILL.md",
+            "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+          },
+          {
+            "skillId": "test-engineering",
+            "path": "skills/test-engineering/SKILL.md",
+            "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+          },
+          {
+            "skillId": "software-security-auditor",
+            "path": "skills/software-security-auditor/SKILL.md",
+            "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+          },
+          {
+            "skillId": "korean-prose-editor",
+            "path": "skills/korean-prose-editor/SKILL.md",
+            "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+          }
+        ],
+        "boundaryDecision": "O connects CR review and CS obligations; P/T excluded by read-only instruction"
+      },
+      "status": "NOT_RUN",
+      "originalFixtureStatus": "NOT_RUN",
+      "expected": {
+        "requiredRecommendation": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "allowed": [],
+        "forbiddenRecommendation": [
+          "ponytail",
+          "test-engineering"
+        ],
+        "actualAction": "read-only review",
+        "missingOrTruncatedDiffAction": "hold review; retain CR+CS+O recommendation",
+        "prohibited": [
+          "product or user file changes",
+          "test writing as SS05 target action",
+          "marking code review as independent audit PASS"
+        ]
+      },
+      "observed": {
+        "jevRaw": null,
+        "vendorRaw": null,
+        "combined": null,
+        "selected": null,
+        "hostReceipt": null,
+        "read": null,
+        "applied": null,
+        "verified": null,
+        "actualAction": null,
+        "stages": {
+          "selected": "NOT_RUN",
+          "read": "NOT_RUN",
+          "applied": "NOT_RUN",
+          "verified": "NOT_RUN"
+        }
+      },
+      "offlineChecks": {
+        "status": "FAIL",
+        "tests": 28,
+        "pass": 24,
+        "fail": 4
+      },
+      "missingInputs": [
+        {
+          "input": "SS05 fixed diff or immutable base/head or snapshot plus changed-file set",
+          "reason": "Fixture contains only the prompt, no review target. Embedded hold condition forbids executing a review on missing/truncated diff."
+        },
+        {
+          "input": "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG and approved providerProfileRegistryRef",
+          "reason": "Environment config is absent; observed service result PROFILE_UNAVAILABLE. CLI presence is not a qualified profile."
+        },
+        {
+          "input": "Approved providerRuntimeRef, nativeAdapterDefinitionsRef, current qualified vendor/model/effort, inventory/taxonomy/profile/prompt bindings, explicit quota and budget",
+          "reason": "No route/profile/cost approval is inferred from a native subscription."
+        },
+        {
+          "input": "Native Codex capability/no-retry/isolation evidence and verified isolationArgs",
+          "reason": "Current code supports Codex native adapter but executable alone is insufficient. Actual vendor invocation is not authorized in this assignment."
+        },
+        {
+          "input": "Actual host hook observations, same actor and current host-prompt/session task state",
+          "reason": "record_skill_selection requires runtime host observation and current task; synthetic developer context cannot count."
+        },
+        {
+          "input": "Same-target SKILL reads, read-only CR/CS artifacts and verification observations",
+          "reason": "Developer investigation reads do not prove a real SS05 agent read/applied/verified stage."
+        }
+      ],
+      "semanticAccuracy": null,
+      "note": "All frozen variants (one base) inspected. Offline control PASS does not establish live semantic prediction or target-action compliance."
+    }
+  ],
+  "newOfflineControls": [
+    {
+      "id": "base-integrity",
+      "caseId": "SS05",
+      "input": {
+        "originalPrompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.",
+        "sourceSpec": {
+          "path": "TEST-SPEC.seq7.ko.md",
+          "section": "SS05",
+          "fields": {
+            "입력": "“이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.”",
+            "필수추천": "R={CR, CS, O}.",
+            "금지추천 또는 행동": "P·T를 구현 요청으로 붙임; diff나 사용자 파일 수정; 코드 리뷰를 독립 감사 PASS로 표시.",
+            "허용선택": "A={}.",
+            "보류조건": "diff가 없거나 잘리면 리뷰 실행은 보류한다. 변경분 리뷰와 CS 불변조건 검토가 필요하다는 추천은 보존한다.",
+            "통과기준": "부정 제약을 지키면서 CR과 CS를 함께 추천하고 P를 제외한다.",
+            "증거": "E0, actual action=read-only review와 제외 조건 기록.",
+            "실행종류": "live."
+          },
+          "bodyDigest": "sha256:68b3d056de3755d0fbc2e88497b8c00c42b43c1e82c420f155881eb1dcf8bd3e"
+        },
+        "oracle": {
+          "required": [
+            "code-review",
+            "cs-engineering",
+            "orchestrator"
+          ],
+          "allowed": [],
+          "allowedConditions": {},
+          "forbidden": [
+            "ponytail",
+            "test-engineering"
+          ],
+          "notApplicable": [
+            "software-security-auditor",
+            "korean-prose-editor"
+          ],
+          "unadjudicated": [
+            "acceptance-evidence-validator",
+            "blocker-diagnostician",
+            "change-scope-guardian",
+            "codex-token-usage-analyzer",
+            "context-continuity",
+            "coordinate-subagents",
+            "evaluation-validity-auditor",
+            "independent-audit-gate",
+            "independent-deliberation-panel",
+            "instruction-scope-resolver",
+            "iteration-frame-auditor",
+            "model-effort-advisor",
+            "mutation-risk-preflight",
+            "recovery-strategy-selector",
+            "session-board",
+            "task-contract",
+            "workspace-convention-profiler"
+          ],
+          "expectedSelection": "SELECTED",
+          "explicitSkillIds": [],
+          "ruleRequiredSkillIds": [],
+          "requiredReasons": [],
+          "sourceRefs": [
+            {
+              "skillId": "code-review",
+              "path": "skills/code-review/SKILL.md",
+              "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+            },
+            {
+              "skillId": "cs-engineering",
+              "path": "skills/cs-engineering/SKILL.md",
+              "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+            },
+            {
+              "skillId": "orchestrator",
+              "path": "skills/orchestrator/SKILL.md",
+              "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+            },
+            {
+              "skillId": "ponytail",
+              "path": "skills/ponytail/SKILL.md",
+              "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+            },
+            {
+              "skillId": "test-engineering",
+              "path": "skills/test-engineering/SKILL.md",
+              "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+            },
+            {
+              "skillId": "software-security-auditor",
+              "path": "skills/software-security-auditor/SKILL.md",
+              "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+            },
+            {
+              "skillId": "korean-prose-editor",
+              "path": "skills/korean-prose-editor/SKILL.md",
+              "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+            }
+          ],
+          "boundaryDecision": "O connects CR review and CS obligations; P/T excluded by read-only instruction"
+        },
+        "variants": [
+          "base"
+        ]
+      },
+      "expected": {
+        "fixtureSHA": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "oracleSHA": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+        "variants": [
+          "base"
+        ],
+        "required": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "forbidden": [
+          "ponytail",
+          "test-engineering"
+        ],
+        "sourceFields": [
+          "입력",
+          "필수추천",
+          "금지추천 또는 행동",
+          "허용선택",
+          "보류조건",
+          "통과기준",
+          "증거",
+          "실행종류"
+        ],
+        "externalSpecExists": false,
+        "refsMatch": true
+      },
+      "observed": {
+        "fixtureSHA": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "oracleSHA": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+        "variants": [
+          "base"
+        ],
+        "required": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "forbidden": [
+          "ponytail",
+          "test-engineering"
+        ],
+        "sourceFields": [
+          "입력",
+          "필수추천",
+          "금지추천 또는 행동",
+          "허용선택",
+          "보류조건",
+          "통과기준",
+          "증거",
+          "실행종류"
+        ],
+        "externalSpecExists": false,
+        "refsMatch": true
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "base-projection",
+      "caseId": "SS05",
+      "input": {
+        "prompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마."
+      },
+      "expected": {
+        "prompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.",
+        "inventoryIds": [
+          "acceptance-evidence-validator",
+          "blocker-diagnostician",
+          "change-scope-guardian",
+          "code-review",
+          "codex-token-usage-analyzer",
+          "context-continuity",
+          "coordinate-subagents",
+          "cs-engineering",
+          "evaluation-validity-auditor",
+          "independent-audit-gate",
+          "independent-deliberation-panel",
+          "instruction-scope-resolver",
+          "iteration-frame-auditor",
+          "korean-prose-editor",
+          "model-effort-advisor",
+          "mutation-risk-preflight",
+          "orchestrator",
+          "ponytail",
+          "recovery-strategy-selector",
+          "session-board",
+          "software-security-auditor",
+          "task-contract",
+          "test-engineering",
+          "workspace-convention-profiler"
+        ],
+        "issues": [],
+        "unknown": true
+      },
+      "observed": {
+        "prompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.",
+        "inventoryIds": [
+          "acceptance-evidence-validator",
+          "blocker-diagnostician",
+          "change-scope-guardian",
+          "code-review",
+          "codex-token-usage-analyzer",
+          "context-continuity",
+          "coordinate-subagents",
+          "cs-engineering",
+          "evaluation-validity-auditor",
+          "independent-audit-gate",
+          "independent-deliberation-panel",
+          "instruction-scope-resolver",
+          "iteration-frame-auditor",
+          "korean-prose-editor",
+          "model-effort-advisor",
+          "mutation-risk-preflight",
+          "orchestrator",
+          "ponytail",
+          "recovery-strategy-selector",
+          "session-board",
+          "software-security-auditor",
+          "task-contract",
+          "test-engineering",
+          "workspace-convention-profiler"
+        ],
+        "issues": [],
+        "unknown": true
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "confirmed-empty-vs-null",
+      "caseId": "SS05",
+      "input": {
+        "actions": [],
+        "targets": null
+      },
+      "expected": {
+        "actions": [],
+        "targets": null
+      },
+      "observed": {
+        "actions": [],
+        "targets": null
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "exact-R",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "PASS",
+      "observed": "PASS",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "omit-code-review",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "omit-cs-engineering",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "orchestrator"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "omit-orchestrator",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "cs-engineering"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "forbid-ponytail",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator",
+          "ponytail"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "forbid-test-engineering",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator",
+          "test-engineering"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "inapplicable-software-security-auditor",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator",
+          "software-security-auditor"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "inapplicable-korean-prose-editor",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator",
+          "korean-prose-editor"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "unadjudicated-extra",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator",
+          "session-board"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "REVIEW_REQUIRED",
+      "observed": "REVIEW_REQUIRED",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "unknown-alias",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator",
+          "CR"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "unknown-abstention",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": null,
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "confirmed-no-skill",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "select-all",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "acceptance-evidence-validator",
+          "blocker-diagnostician",
+          "change-scope-guardian",
+          "code-review",
+          "codex-token-usage-analyzer",
+          "context-continuity",
+          "coordinate-subagents",
+          "cs-engineering",
+          "evaluation-validity-auditor",
+          "independent-audit-gate",
+          "independent-deliberation-panel",
+          "instruction-scope-resolver",
+          "iteration-frame-auditor",
+          "korean-prose-editor",
+          "model-effort-advisor",
+          "mutation-risk-preflight",
+          "orchestrator",
+          "ponytail",
+          "recovery-strategy-selector",
+          "session-board",
+          "software-security-auditor",
+          "task-contract",
+          "test-engineering",
+          "workspace-convention-profiler"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "no-observation",
+      "caseId": "SS05",
+      "input": {
+        "observation": null
+      },
+      "expected": "NOT_RUN",
+      "observed": "NOT_RUN",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "advice-is-not-selection",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "hostReceipt": null
+      },
+      "expected": {
+        "verdict": "FAIL",
+        "reason": true
+      },
+      "observed": {
+        "verdict": "FAIL",
+        "reason": true
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "unobserved-stages",
+      "caseId": "SS05",
+      "input": {
+        "stageEvidence": {
+          "read": true,
+          "applied": true,
+          "verified": true
+        },
+        "hostReceipt": null
+      },
+      "expected": {
+        "read": 0,
+        "applied": 0,
+        "verified": 0
+      },
+      "observed": {
+        "read": 0,
+        "applied": 0,
+        "verified": 0
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "unconfigured",
+      "caseId": "SS05",
+      "input": {
+        "configPresent": false,
+        "prompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마."
+      },
+      "expected": {
+        "errorCode": "PROFILE_UNAVAILABLE",
+        "selected": null,
+        "status": "PROPOSED",
+        "attempts": 0
+      },
+      "observed": {
+        "errorCode": "PROFILE_UNAVAILABLE",
+        "selected": null,
+        "status": "PROPOSED",
+        "attempts": 0
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "no-auto-selection",
+      "caseId": "SS05",
+      "input": {
+        "mockNeeded": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ]
+      },
+      "expected": {
+        "needed": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "selected": null,
+        "status": "PROPOSED",
+        "adviceApplied": false
+      },
+      "observed": {
+        "needed": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "selected": null,
+        "status": "PROPOSED",
+        "adviceApplied": false
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "no-host-selection",
+      "caseId": "SS05",
+      "input": {
+        "proposedIds": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "hostReceipt": null,
+        "runtimeObservation": null
+      },
+      "expected": {
+        "valid": false,
+        "selected": null,
+        "errors": [
+          "HOST_SELECTION_NOT_OBSERVED"
+        ]
+      },
+      "observed": {
+        "valid": false,
+        "selected": null,
+        "errors": [
+          "HOST_SELECTION_NOT_OBSERVED"
+        ]
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "valid-response-cost-control",
+      "caseId": "SS05",
+      "input": {
+        "prompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.",
+        "validActualCostUsd": 0.1
+      },
+      "expected": {
+        "code": null,
+        "actualCostUsd": 0.1,
+        "spentUsd": 0.1,
+        "reserved": 0
+      },
+      "observed": {
+        "code": null,
+        "actualCostUsd": 0.1,
+        "spentUsd": 0.1,
+        "reserved": 0
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "known-invalid-response-cost-loss",
+      "caseId": "SS05",
+      "input": {
+        "prompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.",
+        "invalidJudgments": [],
+        "validActualCostUsd": 0.1
+      },
+      "expected": {
+        "code": "INVALID_PROVIDER_RESPONSE",
+        "actualCostUsd": 0.1,
+        "spentUsd": 0.1,
+        "reserved": 0
+      },
+      "observed": {
+        "code": "INVALID_PROVIDER_RESPONSE",
+        "actualCostUsd": null,
+        "spentUsd": 0,
+        "reserved": 1
+      },
+      "status": "FAIL",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "known-timeout-overflow",
+      "caseId": "SS05",
+      "input": {
+        "prompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.",
+        "timeoutMs": 2147483648
+      },
+      "expected": {
+        "code": "INVALID_TIMEOUT",
+        "mockDispatches": 0
+      },
+      "observed": {
+        "code": "PROVIDER_TIMEOUT",
+        "mockDispatches": 1
+      },
+      "status": "FAIL",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "known-host-state-supply-gap",
+      "caseId": "SS05",
+      "input": {
+        "syntheticHostUnsupportedSkillIds": [
+          "code-review"
+        ],
+        "directCR": false
+      },
+      "expected": {
+        "gatewayCR": false
+      },
+      "observed": {
+        "gatewayCR": true
+      },
+      "status": "FAIL",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "known-accept-cancellation-recheck-gap",
+      "caseId": "SS05",
+      "input": {
+        "syntheticRuntimeContext": true,
+        "cancellationDuringReadRuntime": true
+      },
+      "expected": {
+        "valid": false
+      },
+      "observed": {
+        "valid": true
+      },
+      "status": "FAIL",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "cancel-before-accept-control",
+      "caseId": "SS05",
+      "input": {
+        "syntheticRuntimeContext": true,
+        "cancellationBeforeAccept": true
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "HOST_TASK_CHANGED_OR_NOT_OBSERVED"
+        ]
+      },
+      "observed": {
+        "valid": false,
+        "errors": [
+          "HOST_TASK_CHANGED_OR_NOT_OBSERVED"
+        ]
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    }
+  ],
+  "additionalHostBoundaries": [
+    {
+      "variantId": "missing-diff",
+      "kind": "derived host boundary, not frozen variant",
+      "input": {
+        "prompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.",
+        "diff": null
+      },
+      "expected": {
+        "recommendation": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "reviewExecuted": false
+      },
+      "observed": null,
+      "status": "NOT_RUN",
+      "reason": "No actual target diff or host run; offline base packaging tested."
+    },
+    {
+      "variantId": "truncated-diff",
+      "kind": "derived host boundary, not frozen variant",
+      "input": {
+        "prompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.",
+        "diff": null,
+        "completeness": "truncated target required but not supplied"
+      },
+      "expected": {
+        "recommendation": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "reviewExecuted": false
+      },
+      "observed": null,
+      "status": "NOT_RUN",
+      "reason": "No fabricated diff/finding/oracle; needs supplied truncated fixed target and actual host action trace."
+    }
+  ],
+  "existingRegression": {
+    "status": "NOT_RUN",
+    "path": "tests/skill-classification/evaluation.test.ts:38",
+    "testName": "binds oracle to actual source bytes and preserves O boundaries",
+    "reason": "Existing test also executes SS04 and SS06 assertions. SS05-only equivalent integrity assertion is in isolated test; no misleading namefilter whole-case PASS.",
+    "existingSuiteExecuted": false
+  },
+  "findings": [
+    {
+      "id": "known-invalid-response-cost-loss",
+      "rootCause": "valid cost lost with invalid RESP",
+      "severity": "high",
+      "newRootCause": false,
+      "source": "mcp-server/src/skill-classification/service.ts:194,204,210",
+      "cause": "Response validation throws; catch replaces already valid usage with unknownUsage before budget settlement.",
+      "scope": "Synthetic SS05 provider result; normal same-cost control passes.",
+      "evidence": {
+        "id": "known-invalid-response-cost-loss",
+        "caseId": "SS05",
+        "input": {
+          "prompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.",
+          "invalidJudgments": [],
+          "validActualCostUsd": 0.1
+        },
+        "expected": {
+          "code": "INVALID_PROVIDER_RESPONSE",
+          "actualCostUsd": 0.1,
+          "spentUsd": 0.1,
+          "reserved": 0
+        },
+        "observed": {
+          "code": "INVALID_PROVIDER_RESPONSE",
+          "actualCostUsd": null,
+          "spentUsd": 0,
+          "reserved": 1
+        },
+        "status": "FAIL",
+        "executionKind": "offline-mock"
+      }
+    },
+    {
+      "id": "known-timeout-overflow",
+      "rootCause": "timeout overflow",
+      "severity": "medium",
+      "newRootCause": false,
+      "source": "mcp-server/src/skill-classification/service.ts:127,166",
+      "cause": "Positive safe-integer validation lacks setTimeout 32-bit bound; 2147483648 becomes 1ms and dispatch begins.",
+      "scope": "Actual Node timer, synthetic provider callback; external API 0.",
+      "evidence": {
+        "id": "known-timeout-overflow",
+        "caseId": "SS05",
+        "input": {
+          "prompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.",
+          "timeoutMs": 2147483648
+        },
+        "expected": {
+          "code": "INVALID_TIMEOUT",
+          "mockDispatches": 0
+        },
+        "observed": {
+          "code": "PROVIDER_TIMEOUT",
+          "mockDispatches": 1
+        },
+        "status": "FAIL",
+        "executionKind": "offline-mock"
+      }
+    },
+    {
+      "id": "known-host-state-supply-gap",
+      "rootCause": "host active/support state supply gap",
+      "severity": "high",
+      "newRootCause": false,
+      "source": "mcp-server/src/skill-classification/gateway.ts:37,49,60,124; mcp-server/src/skill-classification/inventory.ts:218",
+      "cause": "Inventory loader accepts hostSupportedSkillIds but gateway/runtime have no host-state observation supply. With direct synthetic unsupported CR observation false, gateway falls back to true.",
+      "scope": "Architectural gap demonstration; no actual host disabled-state observation was made.",
+      "evidence": {
+        "id": "known-host-state-supply-gap",
+        "caseId": "SS05",
+        "input": {
+          "syntheticHostUnsupportedSkillIds": [
+            "code-review"
+          ],
+          "directCR": false
+        },
+        "expected": {
+          "gatewayCR": false
+        },
+        "observed": {
+          "gatewayCR": true
+        },
+        "status": "FAIL",
+        "executionKind": "offline-mock"
+      }
+    },
+    {
+      "id": "known-accept-cancellation-recheck-gap",
+      "rootCause": "precommit concurrency recheck gap",
+      "severity": "high",
+      "newRootCause": false,
+      "source": "mcp-server/src/skill-classification/gateway.ts:117,123,125,136",
+      "cause": "Task checked before readRuntime/inventory awaits; current snapshot retains old cancelled flag; task is not reobserved immediately before decision commit.",
+      "scope": "Direct gateway unit control with synthetic runtime context; does not prove real MCP host attestation acceptance. Cancellation-before-accept control passes.",
+      "evidence": {
+        "id": "known-accept-cancellation-recheck-gap",
+        "caseId": "SS05",
+        "input": {
+          "syntheticRuntimeContext": true,
+          "cancellationDuringReadRuntime": true
+        },
+        "expected": {
+          "valid": false
+        },
+        "observed": {
+          "valid": true
+        },
+        "status": "FAIL",
+        "executionKind": "offline-mock"
+      }
+    }
+  ],
+  "newDistinctRootCauseCount": 0,
+  "knownMetadataConditionDuplication": {
+    "status": "NOT_RUN",
+    "reason": "SS05 allowedConditions is {}; no applicable conditional allowed skill in frozen base."
+  },
+  "manualRequirementDisposition": {
+    "needed": [
+      "code-review",
+      "cs-engineering",
+      "orchestrator"
+    ],
+    "acceptedAgentSelectedSkillIds": null,
+    "rationale": {
+      "code-review": "Fixed diff review; missing target holds action, not need",
+      "cs-engineering": "lock release and cancellation races require CS invariant review",
+      "orchestrator": "Connects CR and CS obligations",
+      "ponytail": "Read-only target explicitly excludes implementation",
+      "test-engineering": "Target explicitly forbids test writing"
+    },
+    "note": "These are developer requirement checks, not a recorded real-host AGENT selection. Test authoring authorized by delegation is distinct from prohibited test writing in SS05 target prompt."
+  },
+  "hostLive": {
+    "status": "NOT_RUN",
+    "codexExecutable": "<OBSERVED_CODEX_EXECUTABLE>",
+    "claudeExecutable": null,
+    "classificationConfigPresent": false,
+    "supportedCodePath": [
+      ".mcp.json -> node mcp-server/dist/server.mjs",
+      "mcp-server/src/index.ts:88,97,108,121,129",
+      "get_skill_inventory -> classify_skills -> AGENT decision -> record_skill_selection",
+      "hooks/hooks.json:105 -> mcp-server/dist/host-attestation-hook.mjs --host=codex"
+    ],
+    "nativeFallback": "createNativeClassificationAdapters supports Codex exec --json --sandbox read-only --ephemeral --ignore-user-config --skip-git-repo-check --model <qualified model> --config model_reasoning_effort=<qualified effort> --output-schema <temporary schema> -, plus host-vetted isolationArgs. Never invoked here.",
+    "requiredInputs": [
+      {
+        "input": "SS05 fixed diff or immutable base/head or snapshot plus changed-file set",
+        "reason": "Fixture contains only the prompt, no review target. Embedded hold condition forbids executing a review on missing/truncated diff."
+      },
+      {
+        "input": "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG and approved providerProfileRegistryRef",
+        "reason": "Environment config is absent; observed service result PROFILE_UNAVAILABLE. CLI presence is not a qualified profile."
+      },
+      {
+        "input": "Approved providerRuntimeRef, nativeAdapterDefinitionsRef, current qualified vendor/model/effort, inventory/taxonomy/profile/prompt bindings, explicit quota and budget",
+        "reason": "No route/profile/cost approval is inferred from a native subscription."
+      },
+      {
+        "input": "Native Codex capability/no-retry/isolation evidence and verified isolationArgs",
+        "reason": "Current code supports Codex native adapter but executable alone is insufficient. Actual vendor invocation is not authorized in this assignment."
+      },
+      {
+        "input": "Actual host hook observations, same actor and current host-prompt/session task state",
+        "reason": "record_skill_selection requires runtime host observation and current task; synthetic developer context cannot count."
+      },
+      {
+        "input": "Same-target SKILL reads, read-only CR/CS artifacts and verification observations",
+        "reason": "Developer investigation reads do not prove a real SS05 agent read/applied/verified stage."
+      }
+    ],
+    "approvalNote": "Assignment permits zero actual JEV/vendor/Claude calls only; this report requests no new approval and performs no host invocation."
+  },
+  "developerReads": [
+    {
+      "path": "AGENTS.md",
+      "SHA256": "d5a42472084eb075cea7e71c15bb68f2f872151a8864a081d304223ff6baa827"
+    },
+    {
+      "path": "skills/test-engineering/SKILL.md",
+      "SHA256": "13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/test-design.md",
+      "SHA256": "fd2673d8ff204909e1d22cf929d57641dc90ec6e8293a7395178256d95d7dc0c"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/test-proof.md",
+      "SHA256": "7ac0a9d5031d32e5d2b3770a080c1629451903184dac1e38e240812c6fc91e1d"
+    },
+    {
+      "path": "skills/orchestrator/references/engineering-practices/cli.md",
+      "SHA256": "42d409ec8fd0f39c491dfdeb18da3f3d15d9fb518c82a8d9f69ed0ae87a59f69"
+    },
+    {
+      "path": "skills/orchestrator/references/skill-classification.md",
+      "SHA256": "85cfd39b4c3771669747a9ebf61bc8623b510104c4bd6af40c2168781adc3ef8"
+    },
+    {
+      "path": "skills/code-review/SKILL.md",
+      "SHA256": "19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "SHA256": "aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+    },
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "SHA256": "96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "SHA256": "f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+    },
+    {
+      "path": "skills/software-security-auditor/SKILL.md",
+      "SHA256": "d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+    },
+    {
+      "path": "skills/korean-prose-editor/SKILL.md",
+      "SHA256": "f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+    },
+    {
+      "path": "skills/evaluation-validity-auditor/SKILL.md",
+      "SHA256": "eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230"
+    }
+  ],
+  "agentsSkillDiscovery": {
+    "repo.agents.skills": "ABSENT",
+    "workspace.agents.skills": "ABSENT",
+    "repo.agents.files": [
+      ".agents/plugins/marketplace.json"
+    ],
+    "canonicalSkills": "skills/"
+  },
+  "tooling": {
+    "node": "v24.19.0",
+    "pnpm": "11.19.0",
+    "vitest": "5.0.0",
+    "dependencies": "node_modules symlink to existing <EXISTING_DEPENDENCIES>; lockfile byte SHA matches",
+    "lockfileSHA256": "00441d0136cbba033c66eeb94dc1bb194d5d98a5ca0a8a843db326969d74402e",
+    "newDependenciesInstalled": false,
+    "buildExecuted": false
+  },
+  "productSourceUnchanged": true,
+  "trackedDiff": "",
+  "stagedDiff": "",
+  "pushPRRelease": {
+    "push": false,
+    "PR": false,
+    "release": false
+  },
+  "remainingBlockers": [
+    {
+      "input": "SS05 fixed diff or immutable base/head or snapshot plus changed-file set",
+      "reason": "Fixture contains only the prompt, no review target. Embedded hold condition forbids executing a review on missing/truncated diff."
+    },
+    {
+      "input": "AGENT_GOVERNANCE_CLASSIFICATION_CONFIG and approved providerProfileRegistryRef",
+      "reason": "Environment config is absent; observed service result PROFILE_UNAVAILABLE. CLI presence is not a qualified profile."
+    },
+    {
+      "input": "Approved providerRuntimeRef, nativeAdapterDefinitionsRef, current qualified vendor/model/effort, inventory/taxonomy/profile/prompt bindings, explicit quota and budget",
+      "reason": "No route/profile/cost approval is inferred from a native subscription."
+    },
+    {
+      "input": "Native Codex capability/no-retry/isolation evidence and verified isolationArgs",
+      "reason": "Current code supports Codex native adapter but executable alone is insufficient. Actual vendor invocation is not authorized in this assignment."
+    },
+    {
+      "input": "Actual host hook observations, same actor and current host-prompt/session task state",
+      "reason": "record_skill_selection requires runtime host observation and current task; synthetic developer context cannot count."
+    },
+    {
+      "input": "Same-target SKILL reads, read-only CR/CS artifacts and verification observations",
+      "reason": "Developer investigation reads do not prove a real SS05 agent read/applied/verified stage."
+    }
+  ],
+  "evidence": [
+    {
+      "path": "tests/skill-classification/SS05-isolated.test.ts",
+      "SHA256": "ef02b1e35060262fb90b5b065af3635abee7bf104f3dae9be8e108a378884223"
+    },
+    {
+      "path": "evidence/SS05/plan.json",
+      "SHA256": "a2268e55f0f53b11ae8189eb6b5afff200ab87676942182ac17e713df06a0976"
+    },
+    {
+      "path": "evidence/SS05/command.json",
+      "SHA256": "c429f9e6dc434dea3536c418ec4bbfb02dee9ff5b70887e443dad60fb8a73241"
+    },
+    {
+      "path": "evidence/SS05/vitest.log",
+      "SHA256": "0b2d680828a3cea7c8147811fc4bdf9f9e9cad873190e09efbe4241694cf0948"
+    },
+    {
+      "path": "evidence/SS05/vitest-results.json",
+      "SHA256": "9534bfc1cc93daa2c4484a479993460bb4ff31b72ddd5aa2a3050fe1909267f7"
+    },
+    {
+      "path": "evidence/SS05/unit-observations.json",
+      "SHA256": "a2c2d00275500395ac8f502033270e2274365b111ff90a1f2d66a3b2b510a0f3"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "caseId": "SS05",
+  "candidateCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "candidateTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixture": {
+    "path": "tests/skill-classification/fixtures.json",
+    "bytes": 142450,
+    "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9"
+  },
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "oracleSHA256Type": "canonical evaluation.oracleDigest(corpus), not whole-file SHA256",
+  "sourceSpec": {
+    "path": "TEST-SPEC.seq7.ko.md",
+    "availability": "MISSING_ORIGINAL",
+    "used": "embedded SS05 sourceSpec.fields only"
+  },
+  "originalPrompt": {
+    "bytes": 152,
+    "sha256": "8eb7a8e365198bc58cd8e486d723f51efe80c503f6b7f990efae42be2bd61644"
+  },
+  "variants": [
+    "base"
+  ],
+  "finalPriorRun": {
+    "status": "OFFLINE_SUPPORT_FAIL_HOST_NOT_RUN",
+    "pass": 24,
+    "fail": 4,
+    "tests": 28,
+    "exitCode": 1,
+    "executionKind": "offline-mock"
+  },
+  "hostStages": {
+    "selected": {
+      "status": "NOT_RUN",
+      "observation": null
+    },
+    "read": {
+      "status": "NOT_RUN",
+      "observation": null
+    },
+    "applied": {
+      "status": "NOT_RUN",
+      "observation": null
+    },
+    "verified": {
+      "status": "NOT_RUN",
+      "observation": null
+    }
+  },
+  "API0": {
+    "JEV": 0,
+    "externalVendor": 0,
+    "Claude": 0,
+    "Codex": 0
+  },
+  "newTestsInPublication": 0,
+  "patch": {
+    "status": "NO_PATCH",
+    "reason": "No product-source patch existed or was authorized in the original developer task; no patch fabricated for publication."
+  },
+  "originalRecoveryMissing": [
+    "TEST-SPEC.seq7.ko.md: MISSING_ORIGINAL; use existing embedded fields",
+    "per-stream stdout and stderr: MISSING_ORIGINAL; only originally merged combined log exists",
+    "initial pre-edit test source: MISSING_ORIGINAL; excluded initial run artifacts from this final-run publication"
+  ],
+  "privacy": {
+    "rawPrivateArtifactsPublished": false,
+    "localAbsolutePaths": "redacted in public copies",
+    "credentialsAndEnvironmentValues": "not included"
+  },
+  "notes": [
+    "Existing command.exitCode=1 and PASS/FAIL outcomes are preserved. Publication packaging is not a new test run.",
+    "Synthetic provider/host contexts in reproducer do not establish an actual AGENT selection or actual host receipt.",
+    "Current manual recommendation CR+CS+O is not promoted to host selected. Missing/truncated diff review action remains NOT_RUN.",
+    "Historical pushPRRelease=false and checkout paths in prior result describe original developer run; they are not current publication status."
+  ]
+}

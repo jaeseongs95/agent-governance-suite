@@ -1,0 +1,760 @@
+{
+  "caseId": "SS05",
+  "executionKind": "offline-mock",
+  "API0": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0
+  },
+  "warning": "Injected judgments and synthetic runtime contexts are controls, never real AGENT selections or host receipts.",
+  "blockedFetchAttempts": 0,
+  "rows": [
+    {
+      "id": "base-integrity",
+      "caseId": "SS05",
+      "input": {
+        "originalPrompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.",
+        "sourceSpec": {
+          "path": "TEST-SPEC.seq7.ko.md",
+          "section": "SS05",
+          "fields": {
+            "입력": "“이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.”",
+            "필수추천": "R={CR, CS, O}.",
+            "금지추천 또는 행동": "P·T를 구현 요청으로 붙임; diff나 사용자 파일 수정; 코드 리뷰를 독립 감사 PASS로 표시.",
+            "허용선택": "A={}.",
+            "보류조건": "diff가 없거나 잘리면 리뷰 실행은 보류한다. 변경분 리뷰와 CS 불변조건 검토가 필요하다는 추천은 보존한다.",
+            "통과기준": "부정 제약을 지키면서 CR과 CS를 함께 추천하고 P를 제외한다.",
+            "증거": "E0, actual action=read-only review와 제외 조건 기록.",
+            "실행종류": "live."
+          },
+          "bodyDigest": "sha256:68b3d056de3755d0fbc2e88497b8c00c42b43c1e82c420f155881eb1dcf8bd3e"
+        },
+        "oracle": {
+          "required": [
+            "code-review",
+            "cs-engineering",
+            "orchestrator"
+          ],
+          "allowed": [],
+          "allowedConditions": {},
+          "forbidden": [
+            "ponytail",
+            "test-engineering"
+          ],
+          "notApplicable": [
+            "software-security-auditor",
+            "korean-prose-editor"
+          ],
+          "unadjudicated": [
+            "acceptance-evidence-validator",
+            "blocker-diagnostician",
+            "change-scope-guardian",
+            "codex-token-usage-analyzer",
+            "context-continuity",
+            "coordinate-subagents",
+            "evaluation-validity-auditor",
+            "independent-audit-gate",
+            "independent-deliberation-panel",
+            "instruction-scope-resolver",
+            "iteration-frame-auditor",
+            "model-effort-advisor",
+            "mutation-risk-preflight",
+            "recovery-strategy-selector",
+            "session-board",
+            "task-contract",
+            "workspace-convention-profiler"
+          ],
+          "expectedSelection": "SELECTED",
+          "explicitSkillIds": [],
+          "ruleRequiredSkillIds": [],
+          "requiredReasons": [],
+          "sourceRefs": [
+            {
+              "skillId": "code-review",
+              "path": "skills/code-review/SKILL.md",
+              "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+            },
+            {
+              "skillId": "cs-engineering",
+              "path": "skills/cs-engineering/SKILL.md",
+              "digest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646"
+            },
+            {
+              "skillId": "orchestrator",
+              "path": "skills/orchestrator/SKILL.md",
+              "digest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8"
+            },
+            {
+              "skillId": "ponytail",
+              "path": "skills/ponytail/SKILL.md",
+              "digest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd"
+            },
+            {
+              "skillId": "test-engineering",
+              "path": "skills/test-engineering/SKILL.md",
+              "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+            },
+            {
+              "skillId": "software-security-auditor",
+              "path": "skills/software-security-auditor/SKILL.md",
+              "digest": "sha256:d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5"
+            },
+            {
+              "skillId": "korean-prose-editor",
+              "path": "skills/korean-prose-editor/SKILL.md",
+              "digest": "sha256:f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7"
+            }
+          ],
+          "boundaryDecision": "O connects CR review and CS obligations; P/T excluded by read-only instruction"
+        },
+        "variants": [
+          "base"
+        ]
+      },
+      "expected": {
+        "fixtureSHA": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "oracleSHA": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+        "variants": [
+          "base"
+        ],
+        "required": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "forbidden": [
+          "ponytail",
+          "test-engineering"
+        ],
+        "sourceFields": [
+          "입력",
+          "필수추천",
+          "금지추천 또는 행동",
+          "허용선택",
+          "보류조건",
+          "통과기준",
+          "증거",
+          "실행종류"
+        ],
+        "externalSpecExists": false,
+        "refsMatch": true
+      },
+      "observed": {
+        "fixtureSHA": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "oracleSHA": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+        "variants": [
+          "base"
+        ],
+        "required": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "forbidden": [
+          "ponytail",
+          "test-engineering"
+        ],
+        "sourceFields": [
+          "입력",
+          "필수추천",
+          "금지추천 또는 행동",
+          "허용선택",
+          "보류조건",
+          "통과기준",
+          "증거",
+          "실행종류"
+        ],
+        "externalSpecExists": false,
+        "refsMatch": true
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "base-projection",
+      "caseId": "SS05",
+      "input": {
+        "prompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마."
+      },
+      "expected": {
+        "prompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.",
+        "inventoryIds": [
+          "acceptance-evidence-validator",
+          "blocker-diagnostician",
+          "change-scope-guardian",
+          "code-review",
+          "codex-token-usage-analyzer",
+          "context-continuity",
+          "coordinate-subagents",
+          "cs-engineering",
+          "evaluation-validity-auditor",
+          "independent-audit-gate",
+          "independent-deliberation-panel",
+          "instruction-scope-resolver",
+          "iteration-frame-auditor",
+          "korean-prose-editor",
+          "model-effort-advisor",
+          "mutation-risk-preflight",
+          "orchestrator",
+          "ponytail",
+          "recovery-strategy-selector",
+          "session-board",
+          "software-security-auditor",
+          "task-contract",
+          "test-engineering",
+          "workspace-convention-profiler"
+        ],
+        "issues": [],
+        "unknown": true
+      },
+      "observed": {
+        "prompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.",
+        "inventoryIds": [
+          "acceptance-evidence-validator",
+          "blocker-diagnostician",
+          "change-scope-guardian",
+          "code-review",
+          "codex-token-usage-analyzer",
+          "context-continuity",
+          "coordinate-subagents",
+          "cs-engineering",
+          "evaluation-validity-auditor",
+          "independent-audit-gate",
+          "independent-deliberation-panel",
+          "instruction-scope-resolver",
+          "iteration-frame-auditor",
+          "korean-prose-editor",
+          "model-effort-advisor",
+          "mutation-risk-preflight",
+          "orchestrator",
+          "ponytail",
+          "recovery-strategy-selector",
+          "session-board",
+          "software-security-auditor",
+          "task-contract",
+          "test-engineering",
+          "workspace-convention-profiler"
+        ],
+        "issues": [],
+        "unknown": true
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "confirmed-empty-vs-null",
+      "caseId": "SS05",
+      "input": {
+        "actions": [],
+        "targets": null
+      },
+      "expected": {
+        "actions": [],
+        "targets": null
+      },
+      "observed": {
+        "actions": [],
+        "targets": null
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "exact-R",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "PASS",
+      "observed": "PASS",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "omit-code-review",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "omit-cs-engineering",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "orchestrator"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "omit-orchestrator",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "cs-engineering"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "forbid-ponytail",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator",
+          "ponytail"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "forbid-test-engineering",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator",
+          "test-engineering"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "inapplicable-software-security-auditor",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator",
+          "software-security-auditor"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "inapplicable-korean-prose-editor",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator",
+          "korean-prose-editor"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "unadjudicated-extra",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator",
+          "session-board"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "REVIEW_REQUIRED",
+      "observed": "REVIEW_REQUIRED",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "unknown-alias",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator",
+          "CR"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "unknown-abstention",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": null,
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "confirmed-no-skill",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "select-all",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "acceptance-evidence-validator",
+          "blocker-diagnostician",
+          "change-scope-guardian",
+          "code-review",
+          "codex-token-usage-analyzer",
+          "context-continuity",
+          "coordinate-subagents",
+          "cs-engineering",
+          "evaluation-validity-auditor",
+          "independent-audit-gate",
+          "independent-deliberation-panel",
+          "instruction-scope-resolver",
+          "iteration-frame-auditor",
+          "korean-prose-editor",
+          "model-effort-advisor",
+          "mutation-risk-preflight",
+          "orchestrator",
+          "ponytail",
+          "recovery-strategy-selector",
+          "session-board",
+          "software-security-auditor",
+          "task-contract",
+          "test-engineering",
+          "workspace-convention-profiler"
+        ],
+        "layer": "combined",
+        "actualProviderCall": false
+      },
+      "expected": "FAIL",
+      "observed": "FAIL",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "no-observation",
+      "caseId": "SS05",
+      "input": {
+        "observation": null
+      },
+      "expected": "NOT_RUN",
+      "observed": "NOT_RUN",
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "advice-is-not-selection",
+      "caseId": "SS05",
+      "input": {
+        "injectedIds": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "hostReceipt": null
+      },
+      "expected": {
+        "verdict": "FAIL",
+        "reason": true
+      },
+      "observed": {
+        "verdict": "FAIL",
+        "reason": true
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "unobserved-stages",
+      "caseId": "SS05",
+      "input": {
+        "stageEvidence": {
+          "read": true,
+          "applied": true,
+          "verified": true
+        },
+        "hostReceipt": null
+      },
+      "expected": {
+        "read": 0,
+        "applied": 0,
+        "verified": 0
+      },
+      "observed": {
+        "read": 0,
+        "applied": 0,
+        "verified": 0
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "unconfigured",
+      "caseId": "SS05",
+      "input": {
+        "configPresent": false,
+        "prompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마."
+      },
+      "expected": {
+        "errorCode": "PROFILE_UNAVAILABLE",
+        "selected": null,
+        "status": "PROPOSED",
+        "attempts": 0
+      },
+      "observed": {
+        "errorCode": "PROFILE_UNAVAILABLE",
+        "selected": null,
+        "status": "PROPOSED",
+        "attempts": 0
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "no-auto-selection",
+      "caseId": "SS05",
+      "input": {
+        "mockNeeded": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ]
+      },
+      "expected": {
+        "needed": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "selected": null,
+        "status": "PROPOSED",
+        "adviceApplied": false
+      },
+      "observed": {
+        "needed": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "selected": null,
+        "status": "PROPOSED",
+        "adviceApplied": false
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "no-host-selection",
+      "caseId": "SS05",
+      "input": {
+        "proposedIds": [
+          "code-review",
+          "cs-engineering",
+          "orchestrator"
+        ],
+        "hostReceipt": null,
+        "runtimeObservation": null
+      },
+      "expected": {
+        "valid": false,
+        "selected": null,
+        "errors": [
+          "HOST_SELECTION_NOT_OBSERVED"
+        ]
+      },
+      "observed": {
+        "valid": false,
+        "selected": null,
+        "errors": [
+          "HOST_SELECTION_NOT_OBSERVED"
+        ]
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "valid-response-cost-control",
+      "caseId": "SS05",
+      "input": {
+        "prompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.",
+        "validActualCostUsd": 0.1
+      },
+      "expected": {
+        "code": null,
+        "actualCostUsd": 0.1,
+        "spentUsd": 0.1,
+        "reserved": 0
+      },
+      "observed": {
+        "code": null,
+        "actualCostUsd": 0.1,
+        "spentUsd": 0.1,
+        "reserved": 0
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "known-invalid-response-cost-loss",
+      "caseId": "SS05",
+      "input": {
+        "prompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.",
+        "invalidJudgments": [],
+        "validActualCostUsd": 0.1
+      },
+      "expected": {
+        "code": "INVALID_PROVIDER_RESPONSE",
+        "actualCostUsd": 0.1,
+        "spentUsd": 0.1,
+        "reserved": 0
+      },
+      "observed": {
+        "code": "INVALID_PROVIDER_RESPONSE",
+        "actualCostUsd": null,
+        "spentUsd": 0,
+        "reserved": 1
+      },
+      "status": "FAIL",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "known-timeout-overflow",
+      "caseId": "SS05",
+      "input": {
+        "prompt": "이 고정 diff의 lock 해제 순서와 cancellation 경합을 읽기 전용으로 리뷰해 줘. 구현하거나 테스트 코드를 작성하지 마.",
+        "timeoutMs": 2147483648
+      },
+      "expected": {
+        "code": "INVALID_TIMEOUT",
+        "mockDispatches": 0
+      },
+      "observed": {
+        "code": "PROVIDER_TIMEOUT",
+        "mockDispatches": 1
+      },
+      "status": "FAIL",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "known-host-state-supply-gap",
+      "caseId": "SS05",
+      "input": {
+        "syntheticHostUnsupportedSkillIds": [
+          "code-review"
+        ],
+        "directCR": false
+      },
+      "expected": {
+        "gatewayCR": false
+      },
+      "observed": {
+        "gatewayCR": true
+      },
+      "status": "FAIL",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "known-accept-cancellation-recheck-gap",
+      "caseId": "SS05",
+      "input": {
+        "syntheticRuntimeContext": true,
+        "cancellationDuringReadRuntime": true
+      },
+      "expected": {
+        "valid": false
+      },
+      "observed": {
+        "valid": true
+      },
+      "status": "FAIL",
+      "executionKind": "offline-mock"
+    },
+    {
+      "id": "cancel-before-accept-control",
+      "caseId": "SS05",
+      "input": {
+        "syntheticRuntimeContext": true,
+        "cancellationBeforeAccept": true
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "HOST_TASK_CHANGED_OR_NOT_OBSERVED"
+        ]
+      },
+      "observed": {
+        "valid": false,
+        "errors": [
+          "HOST_TASK_CHANGED_OR_NOT_OBSERVED"
+        ]
+      },
+      "status": "PASS",
+      "executionKind": "offline-mock"
+    }
+  ]
+}

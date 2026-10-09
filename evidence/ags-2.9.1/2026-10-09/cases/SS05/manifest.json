@@ -1,0 +1,244 @@
+{
+  "schemaVersion": "public-evidence-manifest-1.0.0",
+  "caseId": "SS05",
+  "publicationPath": "evidence/ags-2.9.1/2026-10-09/cases/SS05/",
+  "candidateCommit": "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+  "candidateTree": "28f2f2ed8a864405320f6d20e7bc5004e8466ad3",
+  "fixtureSHA256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+  "oracleSHA256": "5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055",
+  "inputBytes": 152,
+  "inputSHA256": "8eb7a8e365198bc58cd8e486d723f51efe80c503f6b7f990efae42be2bd61644",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 3693,
+      "sha256": "8abc9e83ec2bdc6c0deb4c16a5d4df1966fef84048f4d7e30c445605ceffecb8",
+      "originKind": "publication-metadata",
+      "transformations": []
+    },
+    {
+      "path": "SS05.result.public.json",
+      "bytes": 44982,
+      "sha256": "2258d9fe43613e9bd37bf3f18d7da0ea8e5a7c86c1307f9dae4b31207b5e1338",
+      "originKind": "sanitized-existing-artifact",
+      "transformations": [
+        {
+          "kind": "local-path-redaction",
+          "replacement": "<TEST_REPO>"
+        },
+        {
+          "kind": "local-path-redaction",
+          "replacement": "<EXISTING_DEPENDENCIES>"
+        },
+        {
+          "kind": "local-path-redaction",
+          "replacement": "<OBSERVED_CODEX_EXECUTABLE>"
+        }
+      ],
+      "original": {
+        "artifact": "evidence/SS05/SS05.result.json",
+        "bytes": 45016,
+        "sha256": "2a6964e26843415f086e00b1ca87141ece27d00e2138c8d19d32bef282db3151",
+        "availability": "RECOVERED"
+      }
+    },
+    {
+      "path": "command.public.json",
+      "bytes": 679,
+      "sha256": "6881353c4336d47bcc40b1ccf8111039c440e3b29a2d66e794aec2a6440c41bc",
+      "originKind": "sanitized-existing-artifact",
+      "transformations": [
+        {
+          "kind": "local-path-redaction",
+          "replacement": "<TEST_REPO>"
+        }
+      ],
+      "original": {
+        "artifact": "evidence/SS05/command.json",
+        "bytes": 688,
+        "sha256": "c429f9e6dc434dea3536c418ec4bbfb02dee9ff5b70887e443dad60fb8a73241",
+        "availability": "RECOVERED"
+      }
+    },
+    {
+      "path": "inputs/SS05.fixture.case.json",
+      "bytes": 3933,
+      "sha256": "f678e261d14b18cf1266c78fbbef4b1cb3f0db62c6ed33317c788e9fd89f8f8e",
+      "originKind": "extracted-existing-input",
+      "transformations": [
+        {
+          "kind": "extract-case-no-field-changes",
+          "sourceCaseId": "SS05"
+        }
+      ],
+      "original": {
+        "artifact": "tests/skill-classification/fixtures.json",
+        "bytes": 142450,
+        "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "availability": "RECOVERED"
+      }
+    },
+    {
+      "path": "inputs/originalPrompt.txt",
+      "bytes": 152,
+      "sha256": "8eb7a8e365198bc58cd8e486d723f51efe80c503f6b7f990efae42be2bd61644",
+      "originKind": "extracted-existing-input",
+      "transformations": [
+        {
+          "kind": "extract-originalPrompt-exact-utf8",
+          "sourceCaseId": "SS05",
+          "newlineAdded": false
+        }
+      ],
+      "original": {
+        "artifact": "tests/skill-classification/fixtures.json",
+        "bytes": 142450,
+        "sha256": "17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+        "availability": "RECOVERED"
+      }
+    },
+    {
+      "path": "logs/vitest.combined.public.log",
+      "bytes": 9216,
+      "sha256": "f3da4ed0d1e6ea1fff20e5c6417023bdc2322204f8212a1094b53e953ed927b3",
+      "originKind": "sanitized-existing-artifact",
+      "transformations": [
+        {
+          "kind": "local-path-redaction",
+          "replacement": "<TEST_REPO>"
+        }
+      ],
+      "original": {
+        "artifact": "evidence/SS05/vitest.log",
+        "bytes": 9234,
+        "sha256": "0b2d680828a3cea7c8147811fc4bdf9f9e9cad873190e09efbe4241694cf0948",
+        "availability": "RECOVERED"
+      }
+    },
+    {
+      "path": "observations.public.json",
+      "bytes": 21386,
+      "sha256": "a2c2d00275500395ac8f502033270e2274365b111ff90a1f2d66a3b2b510a0f3",
+      "originKind": "existing-artifact-exact-bytes",
+      "transformations": [],
+      "original": {
+        "artifact": "evidence/SS05/unit-observations.json",
+        "bytes": 21386,
+        "sha256": "a2c2d00275500395ac8f502033270e2274365b111ff90a1f2d66a3b2b510a0f3",
+        "availability": "RECOVERED"
+      }
+    },
+    {
+      "path": "plan.public.json",
+      "bytes": 1719,
+      "sha256": "a2268e55f0f53b11ae8189eb6b5afff200ab87676942182ac17e713df06a0976",
+      "originKind": "existing-artifact-exact-bytes",
+      "transformations": [],
+      "original": {
+        "artifact": "evidence/SS05/plan.json",
+        "bytes": 1719,
+        "sha256": "a2268e55f0f53b11ae8189eb6b5afff200ab87676942182ac17e713df06a0976",
+        "availability": "RECOVERED"
+      }
+    },
+    {
+      "path": "prior-integrity.public.json",
+      "bytes": 674,
+      "sha256": "b69b48fa1886432dbddc2b2f1d7d30f8ccd861658b7af1d5dce6fa232151d4de",
+      "originKind": "existing-artifact-exact-bytes",
+      "transformations": [],
+      "original": {
+        "artifact": "evidence/SS05/final-integrity.json",
+        "bytes": 674,
+        "sha256": "b69b48fa1886432dbddc2b2f1d7d30f8ccd861658b7af1d5dce6fa232151d4de",
+        "availability": "RECOVERED"
+      }
+    },
+    {
+      "path": "prior-report.public.md",
+      "bytes": 5620,
+      "sha256": "9b00894c8d60e73c4cab8c5734411862868961a7f4f353ca5d897c507436a493",
+      "originKind": "sanitized-existing-artifact",
+      "transformations": [
+        {
+          "kind": "local-path-redaction",
+          "replacement": "<TEST_REPO>"
+        },
+        {
+          "kind": "local-path-redaction",
+          "replacement": "<EXISTING_DEPENDENCIES>"
+        },
+        {
+          "kind": "local-path-redaction",
+          "replacement": "<OBSERVED_CODEX_EXECUTABLE>"
+        }
+      ],
+      "original": {
+        "artifact": "evidence/SS05/report.md",
+        "bytes": 5645,
+        "sha256": "e6b82b3df3583339e909ee9de3950e4b52af738ecc601176086028c034427804",
+        "availability": "RECOVERED"
+      }
+    },
+    {
+      "path": "provenance.json",
+      "bytes": 2654,
+      "sha256": "24b78f32d3092e610351d6e692a845ee6fadbeb417f20216f71679712a84702f",
+      "originKind": "publication-metadata",
+      "transformations": []
+    },
+    {
+      "path": "reproduce/SS05-isolated.test.ts",
+      "bytes": 19562,
+      "sha256": "ef02b1e35060262fb90b5b065af3635abee7bf104f3dae9be8e108a378884223",
+      "originKind": "existing-artifact-exact-bytes",
+      "transformations": [],
+      "original": {
+        "artifact": "tests/skill-classification/SS05-isolated.test.ts",
+        "bytes": 19562,
+        "sha256": "ef02b1e35060262fb90b5b065af3635abee7bf104f3dae9be8e108a378884223",
+        "availability": "RECOVERED"
+      }
+    },
+    {
+      "path": "vitest-results.public.json",
+      "bytes": 12502,
+      "sha256": "66b6aa83f176fc68493f7c979c153f5b2c530e8fdbabebe2a00a5b1c6301fd4e",
+      "originKind": "sanitized-existing-artifact",
+      "transformations": [
+        {
+          "kind": "local-path-redaction",
+          "replacement": "<TEST_REPO>"
+        },
+        {
+          "kind": "local-path-redaction",
+          "replacement": "<EXISTING_DEPENDENCIES>"
+        }
+      ],
+      "original": {
+        "artifact": "evidence/SS05/vitest-results.json",
+        "bytes": 12675,
+        "sha256": "9534bfc1cc93daa2c4484a479993460bb4ff31b72ddd5aa2a3050fe1909267f7",
+        "availability": "RECOVERED"
+      }
+    }
+  ],
+  "excludedSelfHashes": [
+    "manifest.json",
+    "SHA256SUMS"
+  ],
+  "hashBoundary": "files lists payload only; SHA256SUMS covers payload and manifest, excludes itself",
+  "originalRecoveryMissing": [
+    "TEST-SPEC.seq7.ko.md: MISSING_ORIGINAL; use existing embedded fields",
+    "per-stream stdout and stderr: MISSING_ORIGINAL; only originally merged combined log exists",
+    "initial pre-edit test source: MISSING_ORIGINAL; excluded initial run artifacts from this final-run publication"
+  ],
+  "patchStatus": "NO_PATCH",
+  "newTests": 0,
+  "API0": {
+    "JEV": 0,
+    "externalVendor": 0,
+    "Claude": 0,
+    "Codex": 0
+  }
+}

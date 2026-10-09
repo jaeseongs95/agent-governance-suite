@@ -1,0 +1,38 @@
+{
+  "tracked-diff": {
+    "argv": [
+      "git",
+      "diff",
+      "--exit-code"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "staged-diff": {
+    "argv": [
+      "git",
+      "diff",
+      "--cached",
+      "--exit-code"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "diff-whitespace": {
+    "argv": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "status": "?? evidence/\n?? node_modules\n?? tests/skill-classification/SS05-isolated.test.ts\n",
+  "commit": [
+    "c6a8019be30e4bf5ee9a36147ca45ae28b0f75b6",
+    "28f2f2ed8a864405320f6d20e7bc5004e8466ad3"
+  ]
+}

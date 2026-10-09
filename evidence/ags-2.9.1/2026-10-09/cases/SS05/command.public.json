@@ -1,0 +1,22 @@
+{
+  "argv": [
+    "node_modules/.bin/vitest",
+    "run",
+    "tests/skill-classification/SS05-isolated.test.ts",
+    "--reporter=verbose",
+    "--reporter=json",
+    "--outputFile.json=evidence/SS05/vitest-results.json"
+  ],
+  "cwd": "<TEST_REPO>",
+  "exitCode": 1,
+  "executionKind": "offline-mock",
+  "startUnixSeconds": 1791514642.7565732,
+  "endUnixSeconds": 1791514643.9297595,
+  "testSHA256": "ef02b1e35060262fb90b5b065af3635abee7bf104f3dae9be8e108a378884223",
+  "purpose": "Final run after adding fetch deny guard and same-cost / cancellation-before-await positive controls; initial run retained.",
+  "API0": {
+    "jev": 0,
+    "externalVendor": 0,
+    "claude": 0
+  }
+}
