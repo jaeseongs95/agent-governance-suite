@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   applyReplacements,
   applySkillAdaptation,
+  checkClaudePlugin,
   DUAL_HOST_FILES,
   EXCLUDED_SKILLS,
   findCodexOnlyWording,
@@ -344,6 +345,59 @@ describe("generated Claude plugin", () => {
 });
 
 describe("Claude overlay safeguards", () => {
+  // Shared-source changes may leave the committed plugin behind until release.
+  // Exercise the release check in an isolated installation tree instead of
+  // imposing source freshness on every shared-source development change.
+  const evaluationSchema = "contracts/skill-classification-evaluation-configuration.v1.schema.json";
+  const serverBundle = "mcp-server/dist/server.mjs";
+
+  async function distributionFixture() {
+    const directory = await mkdtemp(path.join(tmpdir(), "claude-plugin-distribution-"));
+    temporaryDirectories.push(directory);
+    const write = async (file, content) => {
+      await mkdir(path.dirname(path.join(directory, file)), { recursive: true });
+      await writeFile(path.join(directory, file), content);
+    };
+    for (const file of [evaluationSchema, serverBundle]) await write(file, await readFile(path.join(root, file)));
+    await write("release/version.json", JSON.stringify({ version: "2.9.1" }));
+    await write("skills/registry.json", JSON.stringify({ skills: [] }));
+    await write("hooks/hooks.json", JSON.stringify({ hooks: { SessionStart: [] } }));
+    await write("claude-overlay/hooks/hooks.json", JSON.stringify({ hooks: { SessionStart: [] } }));
+    await write("claude-overlay/.claude-plugin/plugin.json", JSON.stringify({ name: "agent-governance-suite" }));
+    for (const args of [["init"], ["add", "."]]) {
+      const result = spawnSync("git", args, { cwd: directory, encoding: "utf8" });
+      expect(result.status, result.stderr).toBe(0);
+    }
+    const refresh = async () => {
+      for (const [file, content] of await renderClaudePlugin(directory)) await write(`${OUTPUT_DIRECTORY}/${file}`, content);
+    };
+    await refresh();
+    return { directory, refresh, write };
+  }
+
+  it("ships the evaluation configuration contract and server bytes without development dependencies", async () => {
+    const { directory } = await distributionFixture();
+    for (const file of [evaluationSchema, serverBundle]) {
+      expect(await readFile(path.join(directory, OUTPUT_DIRECTORY, file))).toEqual(await readFile(path.join(root, file)));
+    }
+    expect(await readdir(directory)).not.toContain("node_modules");
+    expect(await checkClaudePlugin(directory)).toEqual([]);
+  });
+
+  it.each([
+    ["missing evaluation configuration contract", evaluationSchema, "missing"],
+    ["stale server bundle", serverBundle, "stale"],
+  ])("detects and repairs a %s through normal rendering", async (_name, file, problem) => {
+    const { directory, refresh, write } = await distributionFixture();
+    const installed = `${OUTPUT_DIRECTORY}/${file}`;
+    if (problem === "missing") await rm(path.join(directory, installed));
+    else await write(installed, "// stale installed bundle\n");
+    expect(await checkClaudePlugin(directory)).toEqual([`${problem} file ${installed}`]);
+    await refresh();
+    expect(await checkClaudePlugin(directory)).toEqual([]);
+    expect(await readFile(path.join(directory, installed))).toEqual(await readFile(path.join(root, file)));
+  });
+
   it("does not render Codex-only OpenAI agent metadata", async () => {
     const files = await renderClaudePlugin(root);
     expect([...files.keys()].filter((file) => /^skills\/[^/]+\/agents\/openai\.yaml$/u.test(file))).toEqual([]);
