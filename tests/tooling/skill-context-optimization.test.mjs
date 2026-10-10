@@ -61,6 +61,31 @@ describe("skill context optimization", () => {
       vi.resetModules();
     }
   });
+  it("rejects altered reviewed resolver output-contract bytes through the public checker", async () => {
+    vi.doMock("node:fs", () => ({
+      readdirSync,
+      readFileSync: (file, ...args) => {
+        const bytes = readFileSync(file, ...args);
+        if (String(file).replaceAll("\\", "/").endsWith("/skills/instruction-scope-resolver/references/entry-details.md")) {
+          const altered = Buffer.from(bytes);
+          altered[altered.length - 1] ^= 1;
+          return altered;
+        }
+        return bytes;
+      },
+    }));
+    try {
+      vi.resetModules();
+      const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      const report = checker.checkSkillContextOptimization();
+      expect(report.pass).toBe(false);
+      expect(report.errors).toContain("instruction-scope-resolver: reviewed output-contract bytes differ: skills/instruction-scope-resolver/references/entry-details.md");
+      expect(report.errors).toContain("instruction-scope-resolver: reconstructed reviewed output contract differs");
+    } finally {
+      vi.doUnmock("node:fs");
+      vi.resetModules();
+    }
+  });
   it("rejects an unreviewed integration path reported by Git without modifying the source tree", async () => {
     const { execFileSync } = await import("node:child_process");
     vi.doMock("node:child_process", () => ({

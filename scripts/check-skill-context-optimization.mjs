@@ -74,7 +74,7 @@ const REVIEWED_IMPLEMENTATION_R2 = Object.freeze({
 const REVIEWED_RESOLVER_OUTPUT_CONTRACT = Object.freeze({
   revision: "2.9.1-instruction-scope-resolver-output-contract",
   sourceCommit: "852f562046d98bb7561846cba3a11fb7d8b6fc73",
-  approvalReference: "(1) scoped original AGS 2.9.1 user request; (2) Dot delegated judgment during the user's absence until 2026-10-10T23:00Z (Dot msgs 24896812, bd6c246d, cdff315e, 4dfba65a), not a new direct human approval; (3) independent review R169 conditional acceptance and R173 PRE PASS by auditor 8bb9313d",
+  approvalReference: "(1) scoped original AGS 2.9.1 user request, request identifier unconfirmed; (2) Dot delegated judgment within the existing project scope, based on user Sentinel_67f178f8ffac8191906809c9fde9fec8 at 2026-10-10T15:18Z (away until 2026-10-11 08:00 KST), ending 2026-10-10T23:00Z (Dot msgs 24896812, bd6c246d, cdff315e, 4dfba65a, 44702963); not a new direct human approval and not a separate safety approval; (3) independent review R169 conditional acceptance and R173 PRE PASS by auditor 8bb9313d",
   authorityEffect: "none",
   reconstructedSha256: "bf7c308854632be2aa20010ca1007fc082322ae7d1582f26d6a762fe14f45c07",
   hashes: Object.freeze({
