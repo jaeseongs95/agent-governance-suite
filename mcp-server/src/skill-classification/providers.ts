@@ -1,4 +1,4 @@
-import type {ClassificationRateLimitObservation, ClassificationUsage, DispatchState, ProviderAvailability, ProviderEvaluation, ProviderProfile, SkillClassificationProviderPort, SkillClassificationRequestV1, SkillClassificationResponseV1} from "./types.js";
+import type {ClassificationRateLimitObservation, ClassificationUsage, DispatchState, ProviderAvailability, ProviderConfiguration, ProviderEvaluation, ProviderProfile, SkillClassificationProviderPort, SkillClassificationRequestV1, SkillClassificationResponseV1} from "./types.js";
 import {digestClassificationValue, projectClassificationRequest} from "./request.js";
 import {validateProviderProfile} from "./profiles.js";
 
@@ -41,8 +41,8 @@ export function unavailableResponse(request: SkillClassificationRequestV1, code:
 }
 
 export interface ClassificationWireAdapter {
-  encode(request: SkillClassificationRequestV1, profile: ProviderProfile): unknown;
-  decode(body: unknown, request: SkillClassificationRequestV1, profile: ProviderProfile): ProviderEvaluation;
+  encode(request: SkillClassificationRequestV1, profile: ProviderConfiguration): unknown;
+  decode(body: unknown, request: SkillClassificationRequestV1, profile: ProviderConfiguration): ProviderEvaluation;
   /** Optional wire-specific ambiguity check; JSON.parse remains the syntax authority. */
   validateRawResponse?(bodyText: string): void;
 }

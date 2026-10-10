@@ -8055,6 +8055,7 @@ var profiles_exports = {};
 __export(profiles_exports, {
   digestProviderProfileConfiguration: () => digestProviderProfileConfiguration,
   estimateTokenCostUsd: () => estimateTokenCostUsd,
+  isProviderConfiguration: () => isProviderConfiguration,
   isProviderProfileRegistry: () => isProviderProfileRegistry,
   loadProviderProfileRegistry: () => loadProviderProfileRegistry,
   selectFixedProfile: () => selectFixedProfile,
@@ -8071,6 +8072,21 @@ async function loadProviderProfileRegistry(path20) {
 function object3(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
+function isProviderConfiguration(profile) {
+  if (!object3(profile) || !onlyKeys(profile, configurationKeys)) return false;
+  for (const field of ["profileId", "vendorId", "modelId", "modelRevision", "approvedRouteRef", "qualificationRevision", "adapterRevision", "promptRevision"]) if (!text2(profile[field])) return false;
+  if (profile.providerKind !== "jev" && profile.providerKind !== "vendor") return false;
+  if (profile.reasoningEffort !== null && !text2(profile.reasoningEffort)) return false;
+  if (!positiveInteger(profile.maximumInputBytes) || !positiveInteger(profile.maximumOutputTokens)) return false;
+  if (profile.maximumCostUsd !== null && (typeof profile.maximumCostUsd !== "number" || !Number.isFinite(profile.maximumCostUsd) || profile.maximumCostUsd < 0)) return false;
+  if (!object3(profile.supportedOptions) || !onlyKeys(profile.supportedOptions, ["structuredOutput", "reasoningEfforts"]) || typeof profile.supportedOptions.structuredOutput !== "boolean" || !Array.isArray(profile.supportedOptions.reasoningEfforts) || !profile.supportedOptions.reasoningEfforts.every((effort) => effort === null || text2(effort))) return false;
+  if (profile.judgmentPolicy !== null) {
+    if (!object3(profile.judgmentPolicy) || !onlyKeys(profile.judgmentPolicy, ["neededAt", "notNeededAt"])) return false;
+    const { neededAt, notNeededAt } = profile.judgmentPolicy;
+    if (typeof neededAt !== "number" || typeof notNeededAt !== "number" || !Number.isFinite(neededAt) || !Number.isFinite(notNeededAt) || neededAt > 1 || notNeededAt < 0 || notNeededAt >= neededAt) return false;
+  }
+  return true;
+}
 function digestProviderProfileConfiguration(profile) {
   return digestClassificationValue(Object.fromEntries(Object.entries(profile).filter(([key]) => key !== "qualification")));
 }
@@ -8078,23 +8094,9 @@ function isProviderProfileRegistry(value) {
   if (!object3(value) || !onlyKeys(value, ["schemaVersion", "profileRevision", "profiles"]) || value.schemaVersion !== "1.0.0" || !text2(value.profileRevision) || !Array.isArray(value.profiles)) return false;
   const ids2 = /* @__PURE__ */ new Set();
   return value.profiles.every((profile) => {
-    if (!object3(profile)) return false;
-    if (!onlyKeys(profile, ["profileId", "providerKind", "vendorId", "modelId", "modelRevision", "reasoningEffort", "supportedOptions", "approvedRouteRef", "qualificationRevision", "qualification", "adapterRevision", "promptRevision", "maximumInputBytes", "maximumOutputTokens", "maximumCostUsd", "judgmentPolicy"])) return false;
-    for (const field of ["profileId", "vendorId", "modelId", "modelRevision", "approvedRouteRef", "qualificationRevision", "adapterRevision", "promptRevision"]) {
-      if (!text2(profile[field])) return false;
-    }
-    if (profile.providerKind !== "jev" && profile.providerKind !== "vendor") return false;
-    if (profile.reasoningEffort !== null && !text2(profile.reasoningEffort)) return false;
-    if (!positiveInteger(profile.maximumInputBytes) || !positiveInteger(profile.maximumOutputTokens)) return false;
-    if (profile.maximumCostUsd !== null && (typeof profile.maximumCostUsd !== "number" || !Number.isFinite(profile.maximumCostUsd) || profile.maximumCostUsd < 0)) return false;
-    if (!object3(profile.supportedOptions) || !onlyKeys(profile.supportedOptions, ["structuredOutput", "reasoningEfforts"]) || typeof profile.supportedOptions.structuredOutput !== "boolean" || !Array.isArray(profile.supportedOptions.reasoningEfforts) || !profile.supportedOptions.reasoningEfforts.every((effort) => effort === null || text2(effort))) return false;
+    if (!object3(profile) || !onlyKeys(profile, [...configurationKeys, "qualification"]) || !isProviderConfiguration(Object.fromEntries(Object.entries(profile).filter(([key]) => key !== "qualification")))) return false;
     const q2 = profile.qualification;
     if (!object3(q2) || !onlyKeys(q2, ["status", "inventoryDigest", "taxonomyRevision", "modelRevision", "promptRevision", "validUntil", "profileConfigurationDigest"]) || !["PASS", "FAIL", "NOT_RUN"].includes(String(q2.status)) || !["inventoryDigest", "taxonomyRevision", "modelRevision", "promptRevision", "validUntil"].every((field) => text2(q2[field])) || typeof q2.profileConfigurationDigest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(q2.profileConfigurationDigest)) return false;
-    if (profile.judgmentPolicy !== null) {
-      if (!object3(profile.judgmentPolicy) || !onlyKeys(profile.judgmentPolicy, ["neededAt", "notNeededAt"])) return false;
-      const { neededAt, notNeededAt } = profile.judgmentPolicy;
-      if (typeof neededAt !== "number" || typeof notNeededAt !== "number" || !Number.isFinite(neededAt) || !Number.isFinite(notNeededAt) || neededAt > 1 || notNeededAt < 0 || notNeededAt >= neededAt) return false;
-    }
     const id = String(profile.profileId);
     if (ids2.has(id)) return false;
     ids2.add(id);
@@ -8123,7 +8125,7 @@ function estimateTokenCostUsd(prices, inputTokens, cachedInputTokens, outputToke
   if (terms.some(([tokens2, price]) => tokens2 > 0 && (price === null || !Number.isFinite(price) || price < 0))) return null;
   return terms.reduce((total, [tokens2, price]) => total + (tokens2 === 0 ? 0 : tokens2 * price / 1e3), 0);
 }
-var text2, positiveInteger, onlyKeys;
+var text2, positiveInteger, onlyKeys, configurationKeys;
 var init_profiles = __esm({
   "mcp-server/src/skill-classification/profiles.ts"() {
     "use strict";
@@ -8131,6 +8133,7 @@ var init_profiles = __esm({
     text2 = (value) => typeof value === "string" && value.length > 0;
     positiveInteger = (value) => Number.isSafeInteger(value) && Number(value) > 0;
     onlyKeys = (value, keys) => Object.keys(value).every((key) => keys.includes(key));
+    configurationKeys = ["profileId", "providerKind", "vendorId", "modelId", "modelRevision", "reasoningEffort", "supportedOptions", "approvedRouteRef", "qualificationRevision", "adapterRevision", "promptRevision", "maximumInputBytes", "maximumOutputTokens", "maximumCostUsd", "judgmentPolicy"];
   }
 });
 

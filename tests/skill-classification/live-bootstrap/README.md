@@ -1,6 +1,16 @@
 # 공개 qualification bootstrap 시험 접점
 
-동결 r2에서 파생된 개발 시험 접점이다. 제품 기준 commit/tree와 각 파일·fixture oracle의 결속은 `component-manifest.json`에 있다. 현재 revision과 원 r2는 별도 후보이며 strict TypeScript·모의 효과 검사와 SHA로 구분한다. production profile·설정·선택을 변경하지 않으며 새 의존성을 설치하지 않는다.
+동결 r2에서 파생된 개발 시험 접점이다. `component-manifest.json`은 이전 후보의 commit/tree·파일·fixture oracle을 보존하는 역사 자료이며 새 schema3 파일의 현재 digest를 나타내지 않는다. 현재 후보는 Git 변경과 실행별 검증 근거로 구분한다. production profile·설정·선택을 변경하지 않으며 새 의존성을 설치하지 않는다.
+
+새 schema3는 `ProviderEvaluationConfigurationV1` 준비 설정을 production qualification에서 분리한다. `preparedAt`은 출처 시각이며 준비물에 임의의 만료를 부여하지 않는다. 상태는 `NOT_RUN`, `productionRegistryUsable`은 `false`로 고정한다. 모델·프롬프트·inventory·taxonomy·설정 fingerprint가 달라지면 준비물을 다시 만든다. `config.prepared.blocked.example.json`은 실제 승인·route·budget 없이 차단되는 예제다.
+
+schema3 증거의 `expiryPolicy`가 `immutable-preparation`이면 만료 필드를 받지 않는다. `issuer` 증거의 실제 `validUntil`과 기존 schema1/2 및 production qualification의 만료 검사는 그대로 적용한다. 실행 timeout은 credential 조회·encode를 포함한 요청 실행 시작부터 별도로 계산한다. 같은 schema3 run 안에서는 관측한 시각을 단조롭게 유지해 시계 후퇴로 이미 관측한 만료를 되살리지 않는다. 실행 전이나 다른 프로세스에서 관측한 시각까지 공유하는 전역 시계 보장은 아니다. 과거 증거의 만료를 제거하거나 새 정책으로 자동 변환하지 않는다.
+
+발신에는 준비물과 별개의 최신 `currentAuthority` 원자료가 필요하다. 승인·취소·owner·revision·budget revision·예약 원장·lock·결속된 소스·증거를 credential 대기와 encode 뒤 및 실제 transport 직전에 대조한다. 모의 fixture는 실제 운영 승인이 아니다. 선택한 전체 요청을 먼저 예약하고, 독점 lock 아래 durable attempt claim과 UNKNOWN journal을 저장한 뒤 전송한다. persistent lock이나 기존 원장이 남은 run은 자동 재개·재송신하지 않는다. 운영자가 lock만 지워도 기존 원장이 재실행을 차단한다.
+
+지원 범위는 같은 canonical 로컬 `outputDirectory`를 공유하는 실행이다. 서로 다른 run·계정·전역 범위의 원자성은 `UNSUPPORTED`이며 해당 scope는 환경값 조회와 발신 전에 차단한다. 로컬 파일의 상태 검사는 비협조적 외부 writer와의 전역 CAS나 전원 장애 시 모든 파일시스템의 내구성을 보증하지 않는다.
+
+schema3는 byte 한도 안의 안전한 JEV raw 응답과 usage를 오류 경로에서도 가능한 만큼 보존한다. 중복 JSON 키, credential·endpoint echo, 잘못된 UTF-8·JSON 또는 계약 밖 body는 raw를 생략하고 `providerObservation.omissionReason`, `partial`, `byteCount`로 제한을 남긴다. 안전하게 파싱된 usage와 실제 청구액은 구분하며 UNKNOWN 예약을 usage 추정으로 해제하지 않는다. 임의 인코딩의 비밀값 탐지까지 보증하지 않는다.
 
 최초 평가는 `NOT_RUN` 후보와 승인된 공개 corpus·profile·route·예산·증거를 결속한 helper 내부 전송으로 수행한다. 기존 JEV wire codec을 재사용하며 운영 provider의 `PASS` 검사와 구분한다. config·request·profile snapshot, credential 대기와 encode 이후의 만료·취소 검사, HTTPS·redirect 거부, 실제 응답 byte 한도와 엄격한 UTF-8·JSON 검사를 유지한다. 후보 자격과 증거의 가장 빠른 만료 시각에 예약을 중단하고, timeout 뒤 늦은 응답은 원장을 갱신하지 않는다. 평가 결과 자체는 qualification이나 실제 host 적용 완료를 뜻하지 않는다.
 

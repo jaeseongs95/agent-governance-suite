@@ -87,6 +87,16 @@ export interface ProviderProfileRegistry {
   profileRevision: string;
   profiles: ProviderProfile[];
 }
+/** Wire configuration is shared; evaluation preparation never creates production qualification. */
+export type ProviderConfiguration = Omit<ProviderProfile, "qualification">;
+export interface ProviderEvaluationConfigurationV1 {
+  schemaVersion: "1.0.0";
+  configuration: ProviderConfiguration;
+  configurationDigest: string;
+  evaluationState: {status: "NOT_RUN"; inventoryDigest: string; taxonomyRevision: string; modelRevision: string; promptRevision: string};
+  preparedAt: string;
+  productionRegistryUsable: false;
+}
 export interface ClassificationConfig {
   jevEnabled: boolean;
   mode: "shadow" | "select";

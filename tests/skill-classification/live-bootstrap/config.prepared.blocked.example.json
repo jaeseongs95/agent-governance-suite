@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "3.0.0",
+  "runId": "prepared-evaluation-example",
+  "repo": "/absolute/repo",
+  "outputDirectory": "/absolute/private/evaluation-run",
+  "endpointEnv": "AGS_JEV_ENDPOINT",
+  "credentialEnv": "JEV_API_KEY",
+  "approvedEndpointDigest": null,
+  "approvedRouteRef": null,
+  "approvalRef": null,
+  "profile": null,
+  "limits": null,
+  "prices": null,
+  "budget": null,
+  "evidence": {
+    "route": null,
+    "price": null,
+    "priorLedger": null,
+    "remaining": null,
+    "hardTokenCaps": null,
+    "operatorAuthorization": null
+  },
+  "reservationMode": "reviewed-estimate",
+  "estimator": null,
+  "currentAuthority": null
+}
