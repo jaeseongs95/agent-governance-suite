@@ -69,6 +69,19 @@ const REVIEWED_IMPLEMENTATION_R2 = Object.freeze({
   "skills/session-board/scripts/board-store.d.mts": "d4a156f0a4f3a83fdaf655daf3fe88efd14c427c79ffceb1b8012d14c38a0098"
 }),
 });
+// Reviewed resolver output-contract revision. Pin only these exact bytes; the
+// historical optimization baseline and every other check stay unchanged.
+const REVIEWED_RESOLVER_OUTPUT_CONTRACT = Object.freeze({
+  revision: "2.9.1-instruction-scope-resolver-output-contract",
+  sourceCommit: "852f562046d98bb7561846cba3a11fb7d8b6fc73",
+  approvalReference: "(1) scoped original AGS 2.9.1 user request; (2) Dot delegated judgment during the user's absence until 2026-10-10T23:00Z (Dot msgs 24896812, bd6c246d, cdff315e, 4dfba65a), not a new direct human approval; (3) independent review R169 conditional acceptance and R173 PRE PASS by auditor 8bb9313d",
+  authorityEffect: "none",
+  reconstructedSha256: "bf7c308854632be2aa20010ca1007fc082322ae7d1582f26d6a762fe14f45c07",
+  hashes: Object.freeze({
+    "skills/instruction-scope-resolver/SKILL.md": "5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
+    "skills/instruction-scope-resolver/references/entry-details.md": "57ba0ed8a184aa35aca5a84d101ada4dc94ee01126cff800712d9fd19f4caa74",
+  }),
+});
 // Historical scope pins for this reviewed change, never a runtime selector
 // allowlist. The classification loader continues to discover descriptors dynamically.
 const CLASSIFICATION_UPDATE = Object.freeze({
@@ -284,6 +297,16 @@ export function checkSkillContextOptimization() {
       }
       if (candidate.length > REVIEWED_IMPLEMENTATION_R1.modelInitialMaxBytes) errors.push("model-effort-advisor: initial load exceeds its reviewed limit");
       if (!frontmatter(candidate).equals(frontmatter(baseline))) errors.push("model-effort-advisor: frontmatter changed");
+    } else if (skillId === "instruction-scope-resolver") {
+      for (const [reviewedPath, sha256] of Object.entries(REVIEWED_RESOLVER_OUTPUT_CONTRACT.hashes)) {
+        if (createHash("sha256").update(readFileSync(join(ROOT, reviewedPath))).digest("hex") !== sha256) {
+          errors.push(`instruction-scope-resolver: reviewed output-contract bytes differ: ${reviewedPath}`);
+        }
+      }
+      if (createHash("sha256").update(reconstructed).digest("hex") !== REVIEWED_RESOLVER_OUTPUT_CONTRACT.reconstructedSha256) {
+        errors.push("instruction-scope-resolver: reconstructed reviewed output contract differs");
+      }
+      if (!frontmatter(candidate).equals(frontmatter(baseline))) errors.push("instruction-scope-resolver: frontmatter changed");
     } else {
       if (!reconstructed.equals(expectedBaseline)) errors.push(`${skillId}: SKILL.md plus entry-details.md does not reconstruct the baseline byte-for-byte`);
       if (!frontmatter(candidate).equals(frontmatter(baseline))) errors.push(`${skillId}: frontmatter changed`);
@@ -354,6 +377,7 @@ export function checkSkillContextOptimization() {
     policyBaselineUpdates: [{ skillId: "orchestrator", ...ORCHESTRATOR_INTAKE }],
     reviewedImplementationUpdates: [REVIEWED_IMPLEMENTATION_R1],
     activeReviewedImplementationUpdates: [REVIEWED_IMPLEMENTATION_R2],
+    reviewedOutputContractUpdates: [REVIEWED_RESOLVER_OUTPUT_CONTRACT],
     reviewedClassificationUpdates: [CLASSIFICATION_UPDATE],
     runtimeBaselineUpdates: Object.entries(NODE24_README_MINIMUMS).map(([skillId, before]) => ({ skillId, before, after: "Node.js 24.0.0 이상" })),
     pass: errors.length === 0,
