@@ -82,6 +82,19 @@ const REVIEWED_RESOLVER_OUTPUT_CONTRACT = Object.freeze({
     "skills/instruction-scope-resolver/references/entry-details.md": "57ba0ed8a184aa35aca5a84d101ada4dc94ee01126cff800712d9fd19f4caa74",
   }),
 });
+// Preserve the output-contract history; validate only the exact current N successor bytes.
+const REVIEWED_RESOLVER_N_DESC_RULE = Object.freeze({
+  revision: "2.9.1-instruction-scope-resolver-n-desc-rule-r8.3",
+  baseCommit: "b2b8c70253822f67d9829dca7ff5a042a9c1fa67",
+  supersedes: "2.9.1-instruction-scope-resolver-output-contract",
+  approvalReference: "(1) scoped direct user approval chosen in Chief session bd8adeae on 2026-10-14 between 07:28Z and 07:40Z (Dot 8f240921) for one local candidate commit on b2b8c702 changing six files, without push, build, test or release; (2) independent reviews R-330, R-331 and R-335; the delegated judgment that ended 2026-10-10T23:00Z is not reused",
+  authorityEffect: "none",
+  reconstructedSha256: "95237f9845686a05e91caad97f65832d60981596efbb99f91c032fb70ac8254d",
+  hashes: Object.freeze({
+    "skills/instruction-scope-resolver/SKILL.md": "5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb",
+    "skills/instruction-scope-resolver/references/entry-details.md": "f40835131e257fff01e5913ae979d55af4546ed503e925e74dad716b432f90c3",
+  }),
+});
 // Historical scope pins for this reviewed change, never a runtime selector
 // allowlist. The classification loader continues to discover descriptors dynamically.
 const CLASSIFICATION_UPDATE = Object.freeze({
@@ -298,12 +311,12 @@ export function checkSkillContextOptimization() {
       if (candidate.length > REVIEWED_IMPLEMENTATION_R1.modelInitialMaxBytes) errors.push("model-effort-advisor: initial load exceeds its reviewed limit");
       if (!frontmatter(candidate).equals(frontmatter(baseline))) errors.push("model-effort-advisor: frontmatter changed");
     } else if (skillId === "instruction-scope-resolver") {
-      for (const [reviewedPath, sha256] of Object.entries(REVIEWED_RESOLVER_OUTPUT_CONTRACT.hashes)) {
+      for (const [reviewedPath, sha256] of Object.entries(REVIEWED_RESOLVER_N_DESC_RULE.hashes)) {
         if (createHash("sha256").update(readFileSync(join(ROOT, reviewedPath))).digest("hex") !== sha256) {
           errors.push(`instruction-scope-resolver: reviewed output-contract bytes differ: ${reviewedPath}`);
         }
       }
-      if (createHash("sha256").update(reconstructed).digest("hex") !== REVIEWED_RESOLVER_OUTPUT_CONTRACT.reconstructedSha256) {
+      if (createHash("sha256").update(reconstructed).digest("hex") !== REVIEWED_RESOLVER_N_DESC_RULE.reconstructedSha256) {
         errors.push("instruction-scope-resolver: reconstructed reviewed output contract differs");
       }
       if (!frontmatter(candidate).equals(frontmatter(baseline))) errors.push("instruction-scope-resolver: frontmatter changed");
@@ -378,6 +391,7 @@ export function checkSkillContextOptimization() {
     reviewedImplementationUpdates: [REVIEWED_IMPLEMENTATION_R1],
     activeReviewedImplementationUpdates: [REVIEWED_IMPLEMENTATION_R2],
     reviewedOutputContractUpdates: [REVIEWED_RESOLVER_OUTPUT_CONTRACT],
+    activeReviewedOutputContractUpdates: [REVIEWED_RESOLVER_N_DESC_RULE],
     reviewedClassificationUpdates: [CLASSIFICATION_UPDATE],
     runtimeBaselineUpdates: Object.entries(NODE24_README_MINIMUMS).map(([skillId, before]) => ({ skillId, before, after: "Node.js 24.0.0 이상" })),
     pass: errors.length === 0,
