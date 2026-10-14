@@ -1,5 +1,5 @@
 import {createHash} from "node:crypto";
-import {mkdir, mkdtemp, rm, writeFile} from "node:fs/promises";
+import {mkdir, mkdtemp, readFile, realpath, rm, writeFile} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import path from "node:path";
 import {afterEach, describe, expect, it} from "vitest";
@@ -32,7 +32,12 @@ describe("trusted host discovery adapter source and freshness boundaries", () =>
     expect(result.discovery.status).toBe("COMPLETE");
     expect(result.inventory.skills.map(skill => skill.skillId)).toEqual(["neutral-k7", "neutral-w29"]);
     expect(result.inventory.skills[1]).toMatchObject({actions: ["read-only-analysis"], installed: true, hostSupported: true, enabled: true});
-    expect(result.inventory.skills[1]!.sourceRefs.some(ref => ref.path.includes(external.directory.replaceAll("\\", "/")) && ref.digest.startsWith("sha256:"))).toBe(true);
+    const canonicalDirectory = await realpath(external.directory);
+    const expectedRefs = await Promise.all(["classification.json", "SKILL.md"].map(async file => ({
+      path: path.join(canonicalDirectory, file).replaceAll("\\", "/"),
+      digest: "sha256:" + createHash("sha256").update(await readFile(path.join(canonicalDirectory, file))).digest("hex"),
+    })));
+    expect(result.inventory.skills[1]!.sourceRefs).toEqual(expectedRefs);
   });
   it("host enablement cannot override a disabled registry policy", async () => {
     const local = await fixture("neutral-k7", true);

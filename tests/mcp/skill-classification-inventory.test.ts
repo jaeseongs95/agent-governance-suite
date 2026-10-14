@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, readdir, realpath, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -95,7 +95,12 @@ describe("classification inventory source authority (SS26/SS37)", () => {
     const union = await loadSkillInventory({ root, externalSkillRoots, installedSkillIds: ["local", "skill-z17"] });
     expect(union.issues).toEqual([]);
     expect(union.skills.map((skill) => skill.skillId)).toEqual(["local", "skill-z17"]);
-    expect(union.skills[1]?.sourceRefs[0]?.path).toContain(external.replaceAll("\\", "/"));
+    const canonicalDirectory = await realpath(externalSkillRoots[0]!);
+    const expectedRefs = await Promise.all(["classification.json", "SKILL.md"].map(async file => ({
+      path: path.join(canonicalDirectory, file).replaceAll("\\", "/"),
+      digest: "sha256:" + createHash("sha256").update(await readFile(path.join(canonicalDirectory, file))).digest("hex"),
+    })));
+    expect(union.skills[1]!.sourceRefs).toEqual(expectedRefs);
     await metadata(root, (value) => { value.dependencies = ["skill-z17"]; }, "local");
     expect((await loadSkillInventory({ root, externalSkillRoots })).issues).toEqual([]);
     await addSkill(root);
