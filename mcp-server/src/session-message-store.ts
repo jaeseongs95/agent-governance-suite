@@ -316,7 +316,16 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     if (this.shared) nowMs = this.shared.time(nowMs);
     const now = iso(nowMs);
     const acknowledgedBefore = iso(nowMs - 3600_000);
-    this.database.prepare("DELETE FROM messages WHERE expires_at <= ? OR (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)").run(now, acknowledgedBefore);
+    // Reuse the already-admitted message row as the ACK slot. Only receipt-backed public
+    // messages outlive their payload TTL; receipt limits/deadlines bound these metadata rows.
+    this.database.prepare(`DELETE FROM messages WHERE (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
+      OR (expires_at <= ? AND (acknowledged_at IS NULL OR NOT EXISTS (
+        SELECT 1 FROM prepared_messages p WHERE p.message_id = messages.message_id AND p.receipt IS NOT NULL
+          AND p.sender_host = messages.sender_host AND p.sender_session_id = messages.sender_session_id
+          AND p.target_host = messages.target_host AND p.target_session_id = messages.target_session_id AND p.expires_at > ?)))`)
+      .run(acknowledgedBefore, now, now);
+    this.database.prepare("UPDATE messages SET body = '', body_bytes = 0 WHERE acknowledged_at IS NOT NULL AND expires_at <= ?")
+      .run(now);
     this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ?").run(now);
     this.database.prepare("DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?").run(now);
     this.retireUnobservedWakes(nowMs);

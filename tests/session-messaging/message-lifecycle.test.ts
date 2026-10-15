@@ -106,10 +106,10 @@ it("keeps the first immutable receipt and does not enqueue or wake after ACK/pru
   expect(store.acknowledge(target, [draft.messageId], 3003)).toBe(0);
   expect(store.status(sender, draft.messageId, 3003)?.acknowledgedAt).toBe(new Date(3002).toISOString());
   store.prune(32_000);
-  expect(count(store)).toBe(0);
+  expect(count(store)).toBe(1);
   expect(store.submitPrepared(sender, draft.messageId, 33_000)).toEqual({ ...first, duplicate: true, autoWake: { ...first.autoWake, checkedAt: new Date(33_000).toISOString() } });
-  expect(count(store)).toBe(0);
-  expect(store.status(sender, draft.messageId, 33_000)).toMatchObject({ state: "submitted", deliveryState: "unknown" });
+  expect(count(store)).toBe(1);
+  expect(store.status(sender, draft.messageId, 33_000)).toMatchObject({ state: "acknowledged", acknowledgedAt: new Date(3002).toISOString() });
   store.prune(3_632_000);
   expect(() => store.submitPrepared(sender, draft.messageId, 3_632_000)).toThrow(/unavailable/u);
   expect(count(store)).toBe(0);

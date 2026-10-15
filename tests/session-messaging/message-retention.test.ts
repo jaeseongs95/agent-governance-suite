@@ -1,4 +1,4 @@
-import { spawn, type ChildProcess } from "node:child_process";
+import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { once } from "node:events";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -338,9 +338,9 @@ it("byte-limit send rejection carries global details and releases exactly at the
   expect(rows(store)).toBe(1);
 });
 
-it("rolls back the whole ACK when the receipt update fails inside the same transaction", () => {
+it("ACK-A rollback: receipt failure rolls back the whole ACK before short-TTL retention", () => {
   const store = fixture();
-  const sent = sendNew(store, hot, 1000, 86400);
+  const sent = sendNew(store, hot, 1000, 30);
   const before = receiptExpiry(store, sent.messageId);
   // Fault injection through the test database only; product code has no test path.
   store.database.exec(`CREATE TRIGGER retention_fail_receipt BEFORE UPDATE OF expires_at ON prepared_messages
@@ -351,6 +351,11 @@ it("rolls back the whole ACK when the receipt update fails inside the same trans
   expect(store.status(hot, sent.messageId, 2001)).toMatchObject({ state: "queued", acknowledgedAt: null });
   store.database.exec("DROP TRIGGER retention_fail_receipt");
   expect(store.acknowledge(target, [sent.messageId], 3000)).toBe(1);
+  expect(receiptExpiry(store, sent.messageId)).toBe(iso(3000 + H));
+  store.prune(31_000);
+  expect(store.status(hot, sent.messageId, 31_000)).toMatchObject({ state: "acknowledged", acknowledgedAt: iso(3000) });
+  expect(store.database.prepare("SELECT body, body_bytes FROM messages WHERE message_id = ?").get(sent.messageId)).toMatchObject({ body: "", body_bytes: 0 });
+  expect(store.acknowledge(target, [sent.messageId], 31_001)).toBe(0);
   expect(receiptExpiry(store, sent.messageId)).toBe(iso(3000 + H));
 });
 
@@ -384,3 +389,137 @@ it("when earliestReleaseAt is after the draft expiry, the guidance leads to a ne
   expect(sent).toMatchObject({ ok: true, data: { duplicate: false } });
   expect(Number(scalar(store, "SELECT count(*) AS value FROM messages WHERE body = 'the intent'"))).toBe(1);
 }, 30_000);
+
+it("ACK-A E/R: preserves receipt-backed ACK metadata after payload expiry without replay", () => {
+  const store = fixture();
+  const body = "ACK-A public payload";
+  const draft = store.prepare({ sender: hot, target, body, ttlSeconds: 30 }, 1000);
+  const sent = store.submitPrepared(hot, draft.messageId, 2000);
+  const E = 32_000, A = 3002, R = 3_603_002;
+  expect(sent.expiresAt).toBe(iso(E));
+  expect(store.claim(target, 3001)).toHaveLength(1);
+  expect(store.acknowledge(target, [sent.messageId], A)).toBe(1);
+  const firstReceipt = scalar(store, "SELECT receipt AS value FROM prepared_messages WHERE message_id = ?", sent.messageId);
+  const wakes = scalar(store, "SELECT count(*) AS value FROM wake_nonces");
+  for (const now of [E - 1, E, E + 1, R - 1]) {
+    store.prune(now);
+    expect(rows(store)).toBe(1);
+    expect(store.database.prepare("SELECT body, body_bytes, acknowledged_at, first_delivered_at, delivery_attempts FROM messages WHERE message_id = ?").get(sent.messageId)).toMatchObject({
+      body: now < E ? body : "", body_bytes: now < E ? Buffer.byteLength(body) : 0,
+      acknowledged_at: iso(A), first_delivered_at: iso(3001), delivery_attempts: 1,
+    });
+    expect(store.status(hot, sent.messageId, now)).toMatchObject({ state: "acknowledged", acknowledgedAt: iso(A), firstDeliveredAt: iso(3001), deliveryAttempts: 1 });
+    expect(store.pendingCount(target, now)).toBe(0);
+    expect(store.claim(target, now)).toEqual([]);
+    if (now === E + 1) {
+      expect(store.submitPrepared(hot, sent.messageId, now)).toMatchObject({ messageId: sent.messageId, createdAt: sent.createdAt, expiresAt: sent.expiresAt, duplicate: true });
+      expect(scalar(store, "SELECT receipt AS value FROM prepared_messages WHERE message_id = ?", sent.messageId)).toBe(firstReceipt);
+      expect(scalar(store, "SELECT count(*) AS value FROM wake_nonces")).toBe(wakes);
+      expect(store.acknowledge(target, [sent.messageId], now)).toBe(0);
+    }
+    expect(receiptExpiry(store, sent.messageId)).toBe(iso(R));
+  }
+  store.prune(R);
+  expect(rows(store)).toBe(0);
+  expect(receipts(store)).toBe(0);
+  expect(store.status(hot, sent.messageId, R)).toBeNull();
+  expect(() => store.submitPrepared(hot, sent.messageId, R)).toThrow(/unavailable/u);
+});
+
+it.each(["absent", "null-receipt", "expired-before", "expired-at", "sender_host", "sender_session_id", "target_host", "target_session_id"] as const)("ACK-A negative receipt: %s is deleted exactly at E", (variant) => {
+  const store = fixture();
+  const sent = sendNew(store, hot, 1000, 30);
+  const E = 31_000;
+  expect(store.acknowledge(target, [sent.messageId], 1002)).toBe(1);
+  if (variant === "absent") store.database.prepare("DELETE FROM prepared_messages WHERE message_id = ?").run(sent.messageId);
+  else if (variant === "null-receipt") store.database.prepare("UPDATE prepared_messages SET receipt = NULL WHERE message_id = ?").run(sent.messageId);
+  else if (variant === "expired-before" || variant === "expired-at") store.database.prepare("UPDATE prepared_messages SET expires_at = ? WHERE message_id = ?").run(iso(variant === "expired-before" ? E - 1 : E), sent.messageId);
+  else store.database.prepare(`UPDATE prepared_messages SET ${variant} = ? WHERE message_id = ?`).run("mismatched-identity", sent.messageId);
+  store.prune(E - 1);
+  expect(rows(store)).toBe(1);
+  store.prune(E);
+  expect(rows(store)).toBe(0);
+});
+
+it.each(["sender", "global"] as const)("ACK-A capacity: short-TTL metadata preserves %s quota until exact R", (scope) => {
+  const store = fixture();
+  const senders = scope === "sender" ? [hot] : Array.from({ length: 4 }, (_, index) => ({ host: "test-host", sessionId: `ack-a-cap-${index}` }));
+  const ids = senders.flatMap((sender) => Array.from({ length: SENDER_LIMIT }, () => sendNew(store, sender, 1000, 30).messageId));
+  const bytes = scalar(store, "SELECT sum(record_bytes) AS value FROM prepared_messages");
+  for (let index = 0; index < ids.length; index += 50) expect(store.acknowledge(target, ids.slice(index, index + 50), 2000)).toBe(50);
+  const E = 31_000, R = 3_602_000;
+  store.prune(E);
+  expect(rows(store)).toBe(scope === "sender" ? 250 : 1000);
+  expect(receipts(store)).toBe(ids.length);
+  expect(scalar(store, "SELECT sum(record_bytes) AS value FROM prepared_messages")).toBe(bytes);
+  expect(scalar(store, "SELECT sum(body_bytes) AS value FROM messages")).toBe(0);
+  expect(scalar(store, "SELECT count(*) AS value FROM messages WHERE acknowledged_at IS NULL AND expires_at > ?", iso(E))).toBe(0);
+  expect(store.pendingCount(target, E)).toBe(0);
+  expect(store.claim(target, E)).toEqual([]);
+  const deniedSender = scope === "sender" ? hot : other;
+  const denied = rejection(() => store.prepare({ sender: deniedSender, target, body: "still held", ttlSeconds: 30 }, R - 1));
+  expect(denied.details).toEqual({ scope, earliestReleaseAt: iso(R) });
+  expect(receipts(store)).toBe(ids.length);
+  store.prune(R);
+  expect(rows(store)).toBe(0);
+  expect(receipts(store)).toBe(0);
+  expect(sendNew(store, deniedSender, R, 30).duplicate).toBe(false);
+});
+
+it("ACK-A active spool: retained ACK metadata does not take the next unACK's claim slot", () => {
+  const store = fixture();
+  const retained = sendNew(store, hot, 1000, 30);
+  expect(store.acknowledge(target, [retained.messageId], 1002)).toBe(1);
+  store.prune(31_000);
+  const fresh = sendNew(store, other, 31_001, 30);
+  expect(rows(store)).toBe(2);
+  expect(scalar(store, "SELECT count(*) AS value FROM messages WHERE acknowledged_at IS NULL AND expires_at > ?", iso(31_002))).toBe(1);
+  expect(scalar(store, "SELECT sum(body_bytes) AS value FROM messages WHERE acknowledged_at IS NULL AND expires_at > ?", iso(31_002))).toBe(Buffer.byteLength("Synthetic retention message"));
+  expect(store.pendingCount(target, 31_002)).toBe(1);
+  expect(store.claim(target, 31_002).map((message) => message.messageId)).toEqual([fresh.messageId]);
+  expect(store.database.prepare("SELECT body, body_bytes FROM messages WHERE message_id = ?").get(retained.messageId)).toMatchObject({ body: "", body_bytes: 0 });
+});
+
+it("ACK-A ordering/reopen: distinguishes committed ACK-first from prune-first across two connections", async () => {
+  const database = path.join(await directory(), "ack-a-order.sqlite3");
+  const left = fixture(database), right = fixture(database);
+  const acknowledged = sendNew(left, hot, 1000, 30);
+  const unacknowledged = sendNew(left, other, 1000, 30);
+  expect(left.acknowledge(target, [acknowledged.messageId], 1002)).toBe(1);
+  right.prune(31_000);
+  expect(right.status(hot, acknowledged.messageId, 31_000)).toMatchObject({ state: "acknowledged", acknowledgedAt: iso(1002) });
+  expect(left.acknowledge(target, [unacknowledged.messageId], 31_000)).toBe(0);
+  expect(right.status(other, unacknowledged.messageId, 31_000)).toMatchObject({ state: "submitted", deliveryState: "unknown" });
+  expect(right.acknowledge(target, [acknowledged.messageId], 31_001)).toBe(0);
+  expect(receiptExpiry(left, acknowledged.messageId)).toBe(iso(3_601_002));
+  for (const store of [left, right]) { store.close(); stores.splice(stores.indexOf(store), 1); }
+  const reopened = fixture(database);
+  expect(reopened.status(hot, acknowledged.messageId, 31_002)).toMatchObject({ state: "acknowledged", acknowledgedAt: iso(1002) });
+  expect(receiptExpiry(reopened, acknowledged.messageId)).toBe(iso(3_601_002));
+  expect(reopened.database.prepare("SELECT body, body_bytes FROM messages WHERE message_id = ?").get(acknowledged.messageId)).toMatchObject({ body: "", body_bytes: 0 });
+});
+
+it("ACK-A prune crash: standalone DELETE commits before payload UPDATE and reopen safely reprunes", async () => {
+  const database = path.join(await directory(), "ack-a-crash.sqlite3");
+  const store = fixture(database);
+  const retained = sendNew(store, hot, 1000, 30);
+  const expired = sendNew(store, other, 1000, 30);
+  expect(store.acknowledge(target, [retained.messageId], 1002)).toBe(1);
+  store.close(); stores.splice(stores.indexOf(store), 1);
+  const module = new URL("../../mcp-server/src/session-message-store.ts", import.meta.url).href;
+  const code = `import {SessionMessageStore} from ${JSON.stringify(module)}; const store=new SessionMessageStore(${JSON.stringify(database)}); store.database.function("ack_a_crash",()=>process.exit(71)); store.database.exec("CREATE TRIGGER ack_a_crash_payload BEFORE UPDATE OF body ON messages BEGIN SELECT ack_a_crash(); END;"); store.prune(31000); store.close();`;
+  const interrupted = spawnSync(process.execPath, ["--import", "tsx", "--input-type=module", "--eval", code], { cwd: fileURLToPath(new URL("../../", import.meta.url)), encoding: "utf8", timeout: 10_000 });
+  expect(interrupted.error, interrupted.stderr).toBeUndefined();
+  expect(interrupted.signal, interrupted.stderr).toBeNull();
+  expect(interrupted.status, interrupted.stderr).toBe(71);
+  const reopened = fixture(database);
+  expect(reopened.database.prepare("SELECT body, body_bytes, acknowledged_at FROM messages WHERE message_id = ?").get(retained.messageId)).toMatchObject({ body: "Synthetic retention message", body_bytes: Buffer.byteLength("Synthetic retention message"), acknowledged_at: iso(1002) });
+  expect(scalar(reopened, "SELECT count(*) AS value FROM messages WHERE message_id = ?", expired.messageId)).toBe(0);
+  reopened.database.exec("DROP TRIGGER ack_a_crash_payload");
+  reopened.prune(31_001);
+  reopened.prune(31_002);
+  expect(rows(reopened)).toBe(1);
+  expect(reopened.database.prepare("SELECT body, body_bytes FROM messages WHERE message_id = ?").get(retained.messageId)).toMatchObject({ body: "", body_bytes: 0 });
+  expect(reopened.claim(target, 31_003)).toEqual([]);
+  expect(receiptExpiry(reopened, retained.messageId)).toBe(iso(3_601_002));
+});

@@ -64,7 +64,7 @@ describe("native legacy APIs on one inactive authority connection", () => {
     expect(store.claim(target, now)).toHaveLength(1); expect(store.acknowledge({ ...target, sessionId: "wrong" }, [draft.messageId], now)).toBe(0);
     expect(store.acknowledge(target, [draft.messageId, draft.messageId], now)).toBe(1); expect(store.acknowledge(target, [draft.messageId], now)).toBe(0);
     expect(store.status(sender, draft.messageId, now)?.state).toBe("acknowledged");
-    now = 30101; expect(store.status(sender, draft.messageId, now)).toMatchObject({ state: "submitted", deliveryState: "unknown", messageId: draft.messageId }); expect(store.claim(target, now)).toEqual([]);
+    now = 30101; expect(store.status(sender, draft.messageId, now)).toMatchObject({ state: "acknowledged", messageId: draft.messageId }); expect(store.claim(target, now)).toEqual([]);
     console.log("B2-RAW receipt", JSON.stringify({ first, replay, afterExpiry: store.status(sender, draft.messageId, now), counts: value.owner.inspect().counts }));
   });
   it("B2-LEGACY-04: valid later clock plus stale revision cannot resurrect the native workflow lease", () => {
