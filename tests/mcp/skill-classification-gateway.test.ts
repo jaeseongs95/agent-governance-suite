@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { concurrentRequestTimeoutMs, concurrentWaitMs, heldClassificationCalls, heldProviderTimeoutMs } from "./held-classification-calls.js";
 import type { ApiResultV1, ExecutionContextV1 } from "../../contracts/types.js";
 import { HOST_ATTESTATION_FIELD, HostAttestationProvider, hostActorId, issueHostAttestation, type HostExecutionAdapter } from "../../mcp-server/src/host-attestation.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
@@ -59,7 +60,7 @@ function decision(advice: Advice, selected: string[] | null, request = input()):
     unresolvedSkillReferences: [], selectionStatus: selected === null ? "NEEDS_INPUT" : "SELECTED", adviceApplied: selected !== null, hostReceipt: null };
 }
 
-async function harness(options: { root?: string; needed?: string[]; uncertain?: string[]; mode?: "shadow" | "select"; attest?: boolean; taskObserved?: boolean; withJev?: boolean } = {}) {
+async function harness(options: { root?: string; needed?: string[]; uncertain?: string[]; mode?: "shadow" | "select"; attest?: boolean; taskObserved?: boolean; withJev?: boolean; providerTimeoutMs?: number; requestTimeoutMs?: number } = {}) {
   const root = options.root ?? repository;
   const localInventory = await loadSkillInventory({ root });
   const observedAt = new Date();
@@ -73,7 +74,7 @@ async function harness(options: { root?: string; needed?: string[]; uncertain?: 
     qualification: { status: "PASS", inventoryDigest: inventory.inventoryDigest, taxonomyRevision: inventory.taxonomyRevision, modelRevision: "mock-fixed-v1", promptRevision: "prompt-1", validUntil: "2099-01-01T00:00:00Z", profileConfigurationDigest: `sha256:${"0".repeat(64)}` },
     adapterRevision: "adapter-1", promptRevision: "prompt-1", maximumInputBytes: 2_000_000, maximumOutputTokens: 1000, maximumCostUsd: 0, judgmentPolicy: null };
   const runtime: ClassificationRuntimeSnapshot = { config: { jevEnabled: false, mode: options.mode ?? "select", providerProfileRegistryRef: "fixture:profiles", externalClassificationAllowed: false,
-    configRevision: "config-1", timeoutMs: 2000 }, registry: { schemaVersion: "1.0.0", profileRevision: "profile-1", profiles: [profile] }, allowRemotePrivateContent: false };
+    configRevision: "config-1", timeoutMs: options.providerTimeoutMs ?? 2000 }, registry: { schemaVersion: "1.0.0", profileRevision: "profile-1", profiles: [profile] }, allowRemotePrivateContent: false };
   if (options.withJev) {
     runtime.config.jevEnabled = true;
     runtime.registry.profiles.unshift({ ...structuredClone(profile), profileId: "jev-mock", providerKind: "jev", vendorId: "typesafe",
@@ -121,7 +122,8 @@ async function harness(options: { root?: string; needed?: string[]; uncertain?: 
     expect(token).not.toBeNull(); return { ...args, [HOST_ATTESTATION_FIELD]: token };
   };
   const call = async <T>(name: string, args: Record<string, unknown>, expectClassificationFailure = false, sessionId = "synthetic-session"): Promise<ApiResultV1<T>> => {
-    const response = await client.callTool({ name, arguments: name === "classify_skills" && options.attest !== false ? sign(args, undefined, name, sessionId) : args });
+    const response = await client.callTool({ name, arguments: name === "classify_skills" && options.attest !== false ? sign(args, undefined, name, sessionId) : args }, undefined,
+      options.requestTimeoutMs === undefined ? undefined : { timeout: options.requestTimeoutMs });
     const text = response.content as { type: string; text?: string }[];
     const result = JSON.parse(text.find(x => x.type === "text")!.text!) as ApiResultV1<T>;
     if (!expectClassificationFailure && name === "classify_skills" && result.error === null && result.data && typeof result.data === "object" && "result" in result.data) {
@@ -136,28 +138,42 @@ async function harness(options: { root?: string; needed?: string[]; uncertain?: 
 
 describe("offline classification through actual MCP Client/Server transport", () => {
   it.each(["availability", "classification"] as const)("joins only identical concurrent intake while %s is pending", async stage => {
-    const h = await harness(), request = input("identical-flight"), entered = barrier(), release = barrier();
+    const h = await harness({ providerTimeoutMs: heldProviderTimeoutMs, requestTimeoutMs: concurrentRequestTimeoutMs }), request = input("identical-flight"), entered = barrier(), release = barrier();
     if (stage === "availability") h.availability.mockImplementation(async () => { entered.open(); await release.promise; return { available: true, approved: true, routeKind: "native", reasonCode: null }; });
     else { const evaluate = h.classify.getMockImplementation()!; h.classify.mockImplementation(async req => { entered.open(); await release.promise; return evaluate(req); }); }
-    const first = h.call<Advice>("classify_skills", request); await entered.promise;
-    const second = h.call<Advice>("classify_skills", request);
-    try { await vi.waitFor(() => expect(new Set(h.observeTask.mock.calls.flatMap(([, obs]) => obs ? [obs.observationId] : [])).size).toBe(2)); }
-    finally { release.open(); }
-    const [a, b] = await Promise.all([first, second]);
+    const [a, b] = await heldClassificationCalls(
+      () => h.call<Advice>("classify_skills", request), entered.promise,
+      () => h.call<Advice>("classify_skills", request), release.open,
+      () => vi.waitFor(() => expect(new Set(h.observeTask.mock.calls.flatMap(([, obs]) => obs ? [obs.observationId] : [])).size).toBe(2), { timeout: concurrentWaitMs }),
+    );
     expect(a.error).toBeNull(); expect(b.error).toBeNull(); expect(a.data).toEqual(b.data);
     expect(h.availability).toHaveBeenCalledTimes(1); expect(h.classify).toHaveBeenCalledTimes(1);
   });
+  it("drains both concurrent calls before cleanup when the observation assertion fails", async () => {
+    const h = await harness({ providerTimeoutMs: heldProviderTimeoutMs, requestTimeoutMs: concurrentRequestTimeoutMs });
+    const request = input("assertion-failure-drain"), entered = barrier(), release = barrier();
+    h.availability.mockImplementation(async () => { entered.open(); await release.promise; return { available: true, approved: true, routeKind: "native", reasonCode: null }; });
+    const completed: ApiResultV1<Advice>[] = [];
+    const call = async () => { const result = await h.call<Advice>("classify_skills", request); completed.push(result); return result; };
+    const failure = new Error("synthetic observation assertion failure"), close = vi.spyOn(h.client, "close");
+    await expect(heldClassificationCalls(call, entered.promise, call, release.open, async () => { throw failure; })).rejects.toBe(failure);
+    expect(completed).toHaveLength(2);
+    expect(completed.map(result => result.error)).toEqual([null, null]);
+    expect(close).not.toHaveBeenCalled();
+    await cleanup.pop()!();
+    expect(close).toHaveBeenCalledTimes(1);
+  });
   it.each((["availability", "classification"] as const).flatMap(stage => (["explicit", "rule", "actor", "vendor"] as const).map(change => ({ stage, change }))))("rejects overlapping $change intake during $stage without replacing the first obligations", async ({ stage, change }) => {
-    const h = await harness(), request = { ...input("conflicting-flight"), explicitSkillIds: ["cs-engineering"] }, entered = barrier(), release = barrier();
+    const h = await harness({ providerTimeoutMs: heldProviderTimeoutMs, requestTimeoutMs: concurrentRequestTimeoutMs }), request = { ...input("conflicting-flight"), explicitSkillIds: ["cs-engineering"] }, entered = barrier(), release = barrier();
     if (stage === "availability") h.availability.mockImplementation(async () => { entered.open(); await release.promise; return { available: true, approved: true, routeKind: "native", reasonCode: null }; });
     else { const evaluate = h.classify.getMockImplementation()!; h.classify.mockImplementation(async req => { entered.open(); await release.promise; return evaluate(req); }); }
-    const first = h.call<Advice>("classify_skills", request); await entered.promise;
     const changed = { ...request, ...(change === "explicit" ? { explicitSkillIds: [] } : change === "rule" ? { ruleRequiredSkillIds: ["software-security-auditor"] } :
       change === "vendor" ? { vendorContext: { vendorId: "other-synthetic-vendor", reference: "fixture:other-vendor" } } : {}) };
-    const second = h.call<Advice>("classify_skills", changed, false, change === "actor" ? "other-synthetic-session" : "synthetic-session");
-    try { await vi.waitFor(() => expect(new Set(h.observeTask.mock.calls.flatMap(([, obs]) => obs ? [obs.observationId] : [])).size).toBe(2)); }
-    finally { release.open(); }
-    const [a, b] = await Promise.all([first, second]);
+    const [a, b] = await heldClassificationCalls(
+      () => h.call<Advice>("classify_skills", request), entered.promise,
+      () => h.call<Advice>("classify_skills", changed, false, change === "actor" ? "other-synthetic-session" : "synthetic-session"), release.open,
+      () => vi.waitFor(() => expect(new Set(h.observeTask.mock.calls.flatMap(([, obs]) => obs ? [obs.observationId] : [])).size).toBe(2), { timeout: concurrentWaitMs }),
+    );
     expect(a.error).toBeNull();
     expect.soft(b.error?.code).toBe("INVALID_INPUT"); expect.soft(b.data).toBeNull();
     expect.soft(h.availability).toHaveBeenCalledTimes(1); expect.soft(h.classify).toHaveBeenCalledTimes(1);
