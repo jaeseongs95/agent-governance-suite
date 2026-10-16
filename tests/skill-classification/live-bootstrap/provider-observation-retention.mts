@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {readFile, writeFile} from "node:fs/promises";
 import path from "node:path";
 import {setImmediate as nextTurn} from "node:timers/promises";
-import {bindMockAuthorityAndEvidence, mockEnv, mockResponse, readyMock} from "./prepared-fixture.mjs";
+import {bindMockAuthorityAndEvidence, mockEnv, mockResponse, readyMock, readyMockFromBinding, type FixtureBinding} from "./prepared-fixture.mjs";
 
 type Api = typeof import("./bootstrap.mts");
 type Body = {model: string; answers: Record<string, {type: string; noul: unknown}>; usage: {input_tokens: number; output_tokens: number}};
@@ -32,10 +32,23 @@ const escapedString = (text: string) => '"' + [...text].map(char => "\\u" + char
 /** Caller owns a fresh temporary root and its cleanup. No import-time execution or real provider call. */
 export async function checkProviderObservationRetention(api: Api, repo: string, root: string): Promise<string[]> {
   const checked: string[] = [];
+  let fixtureBinding: FixtureBinding | null = null;
+  let createProfile: Parameters<typeof readyMockFromBinding>[5] | null = null;
+  let firstCaseId: string | null = null;
   for (const spec of cases) {
     const output = path.join(root, "retention-" + spec.id);
-    const {config, prepared} = await readyMock(api, repo, output, "retention-" + spec.id, {requests: 1,
-      ...(spec.id === "timeout-safe-chunk" ? {timeoutMs: 30000} : {})});
+    const options = {requests: 1, ...(spec.id === "timeout-safe-chunk" ? {timeoutMs: 30000} : {})};
+    let config: Awaited<ReturnType<typeof readyMockFromBinding>>;
+    if (fixtureBinding === null) {
+      const first = await readyMock(api, repo, output, "retention-" + spec.id, options);
+      config = first.config;
+      fixtureBinding = Object.freeze({inventoryDigest: first.prepared.inventory.inventoryDigest, taxonomyRevision: first.prepared.inventory.taxonomyRevision});
+      createProfile = first.prepared.api.evaluationConfig.createProviderEvaluationConfiguration;
+      firstCaseId = first.prepared.requests[0]!.caseId;
+    } else {
+      assert(createProfile && firstCaseId);
+      config = await readyMockFromBinding(api, repo, output, "retention-" + spec.id, fixtureBinding, createProfile, options);
+    }
     if (spec.id === "byte-cap") {
       config.limits!.responseBytes = 32;
       await bindMockAuthorityAndEvidence(api, config);
@@ -139,7 +152,7 @@ export async function checkProviderObservationRetention(api: Api, repo: string, 
     assert.equal(result.transportAttempts, 1, spec.id);
     assert.equal(result.qualificationStatus, "NOT_RUN", spec.id);
     assert.equal(result.productionProfileWritten, false, spec.id);
-    const stored = await readFile(path.join(output, prepared.requests[0]!.caseId + ".raw.json"), "utf8");
+    const stored = await readFile(path.join(output, firstCaseId! + ".raw.json"), "utf8");
     const raw = JSON.parse(stored) as Raw;
     if (spec.error !== undefined) assert.equal(raw.errorCode, spec.error, spec.id);
     assert.equal(raw.transportAttempts, 1, spec.id);
@@ -187,7 +200,7 @@ export async function checkProviderObservationRetention(api: Api, repo: string, 
       await nextTurn();
       await nextTurn();
       assert.deepEqual(await readFile(path.join(output, "ledger.json")), beforeLateLedger, spec.id);
-      assert.equal(await readFile(path.join(output, prepared.requests[0]!.caseId + ".raw.json"), "utf8"), stored, spec.id);
+      assert.equal(await readFile(path.join(output, firstCaseId! + ".raw.json"), "utf8"), stored, spec.id);
       assert.equal(calls, 1, spec.id);
       assert.equal(cancellations, 1, spec.id);
     }

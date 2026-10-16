@@ -26,26 +26,28 @@ async function mockedEvidence(value: BootstrapConfig) {
     value.evidence[kind] = {path: relative, digest: hash(bytes)};
   }
 }
-async function readyMock(runId: string, timeoutMs = 1000) {
-  const value = config(runId); const initial = await prepare(value);
-  value.approvedEndpointDigest = hash("https://mock.invalid/classify"); value.approvedRouteRef = "mock-only"; value.approvalRef = "offline-test-not-approval";
-  value.limits = {requests: 21, inputBytes: 1024 * 1024, inputTokens: 100000, outputTokens: 10000, responseBytes: 128000, timeoutMs, runUsd: 1};
-  value.prices = {billingMode: "fixed-per-call", inputUsdPer1k: 0, outputUsdPer1k: 0, fixedCallMaxUsd: 0.001};
-  value.budget = {totalLimitUsd: 1, verifiedPriorSpendUsd: 0, priorUnknownReservedUsd: 0, currentRemainingUsd: 1,
-    observedAt: new Date(Date.now() - 1000).toISOString(), validUntil: new Date(Date.now() + 60000).toISOString()};
-  value.profile = {profileId: "mock-profile", providerKind: "jev", vendorId: "mock-vendor", modelId: "mock-model", modelRevision: "mock-model-revision",
-    reasoningEffort: null, supportedOptions: {reasoningEfforts: [null], structuredOutput: true}, approvedRouteRef: value.approvedRouteRef,
-    qualificationRevision: "mock-not-qualified", qualification: {status: "NOT_RUN", inventoryDigest: initial.inventory.inventoryDigest,
-      taxonomyRevision: initial.inventory.taxonomyRevision, modelRevision: "mock-model-revision", promptRevision: "mock-question-v1",
-      validUntil: new Date(Date.now() + 60000).toISOString(), profileConfigurationDigest: ""}, adapterRevision: "mock-adapter-v1", promptRevision: "mock-question-v1",
-    maximumInputBytes: value.limits.inputBytes, maximumOutputTokens: value.limits.outputTokens, maximumCostUsd: 0.001, judgmentPolicy: {neededAt: 0.8, notNeededAt: 0.2}};
-  (value.profile.qualification as Record<string, unknown>).profileConfigurationDigest = initial.api.profiles.digestProviderProfileConfiguration(value.profile);
-  await mockedEvidence(value);
-  return value;
-}
 const passed: string[] = [];
 try {
   const absent = config("missing-evidence"); const prepared = await prepare(absent);
+  const fixtureBinding = Object.freeze({inventoryDigest: prepared.inventory.inventoryDigest, taxonomyRevision: prepared.inventory.taxonomyRevision});
+  const digestProfile = prepared.api.profiles.digestProviderProfileConfiguration;
+  async function readyMock(runId: string, timeoutMs = 1000) {
+    const value = config(runId);
+    value.approvedEndpointDigest = hash("https://mock.invalid/classify"); value.approvedRouteRef = "mock-only"; value.approvalRef = "offline-test-not-approval";
+    value.limits = {requests: 21, inputBytes: 1024 * 1024, inputTokens: 100000, outputTokens: 10000, responseBytes: 128000, timeoutMs, runUsd: 1};
+    value.prices = {billingMode: "fixed-per-call", inputUsdPer1k: 0, outputUsdPer1k: 0, fixedCallMaxUsd: 0.001};
+    value.budget = {totalLimitUsd: 1, verifiedPriorSpendUsd: 0, priorUnknownReservedUsd: 0, currentRemainingUsd: 1,
+      observedAt: new Date(Date.now() - 1000).toISOString(), validUntil: new Date(Date.now() + 60000).toISOString()};
+    value.profile = {profileId: "mock-profile", providerKind: "jev", vendorId: "mock-vendor", modelId: "mock-model", modelRevision: "mock-model-revision",
+      reasoningEffort: null, supportedOptions: {reasoningEfforts: [null], structuredOutput: true}, approvedRouteRef: value.approvedRouteRef,
+      qualificationRevision: "mock-not-qualified", qualification: {status: "NOT_RUN", inventoryDigest: fixtureBinding.inventoryDigest,
+        taxonomyRevision: fixtureBinding.taxonomyRevision, modelRevision: "mock-model-revision", promptRevision: "mock-question-v1",
+        validUntil: new Date(Date.now() + 60000).toISOString(), profileConfigurationDigest: ""}, adapterRevision: "mock-adapter-v1", promptRevision: "mock-question-v1",
+      maximumInputBytes: value.limits.inputBytes, maximumOutputTokens: value.limits.outputTokens, maximumCostUsd: 0.001, judgmentPolicy: {neededAt: 0.8, notNeededAt: 0.2}};
+    (value.profile.qualification as Record<string, unknown>).profileConfigurationDigest = digestProfile(value.profile);
+    await mockedEvidence(value);
+    return value;
+  }
   assert.equal(prepared.requests.length, 21); assert.equal(prepared.cases.filter((row: any) => row.oracle !== null).length, 18);
   assert.equal(new Set(prepared.requests.map((row: any) => row.request.operationId)).size, 21);
   for (const row of prepared.requests) {

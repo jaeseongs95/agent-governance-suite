@@ -36,9 +36,11 @@ export async function bindMockAuthorityAndEvidence(api: Api, config: PreparedBoo
   await writeFile(path.join(config.outputDirectory, "authority.json"), authority);
   config.currentAuthority.reference = {path: "authority.json", digest: hash(authority)};
 }
-export async function readyMock(api: Api, repo: string, outputDirectory: string, runId: string,
-  options: {requests?: number; timeoutMs?: number; preparedAt?: string; issuerExpiry?: IssuerExpiry} = {}) {
-  await mkdir(outputDirectory, {recursive: true});
+type FixtureOptions = {requests?: number; timeoutMs?: number; preparedAt?: string; issuerExpiry?: IssuerExpiry};
+export type FixtureBinding = Readonly<Pick<SkillClassificationRequestV1, "inventoryDigest" | "taxonomyRevision">>;
+type CreateProfile = Awaited<ReturnType<Api["prepare"]>>["api"]["evaluationConfig"]["createProviderEvaluationConfiguration"];
+
+function mockConfig(repo: string, outputDirectory: string, runId: string, options: FixtureOptions) {
   const preparedAt = options.preparedAt ?? "2020-01-01T00:00:00.000Z";
   const config: PreparedBootstrapConfig = {schemaVersion: "3.0.0", runId, repo, outputDirectory,
     endpointEnv: "AGS_BOOTSTRAP_ENDPOINT", credentialEnv: "AGS_BOOTSTRAP_JEV_KEY",
@@ -51,16 +53,36 @@ export async function readyMock(api: Api, repo: string, outputDirectory: string,
       priorRunConfirmedSpendUsd: 0, priorRunUnknownReservedUsd: 0, accountBalanceUsd: null, accountPriorSpendUsd: null,
       accountUnknownReservedUsd: null, observedAt: preparedAt},
     evidence: {route: null, price: null, priorLedger: null, remaining: null, hardTokenCaps: null, operatorAuthorization: null}};
-  const prepared = await api.prepare(config);
-  config.profile = prepared.api.evaluationConfig.createProviderEvaluationConfiguration({
+  return {config, preparedAt};
+}
+
+function mockProfile(config: PreparedBootstrapConfig, binding: FixtureBinding, preparedAt: string, createProfile: CreateProfile) {
+  return createProfile({
     profileId: "mock-profile", providerKind: "jev", vendorId: "mock-vendor", modelId: "mock-model",
     modelRevision: "mock-model-revision", reasoningEffort: null, supportedOptions: {reasoningEfforts: [null], structuredOutput: true},
     approvedRouteRef: "mock-only", qualificationRevision: "mock-not-qualified", adapterRevision: "mock-adapter-v1",
     promptRevision: "mock-question-v1", maximumInputBytes: config.limits!.inputBytes,
     maximumOutputTokens: config.limits!.outputTokens, maximumCostUsd: 0.001, judgmentPolicy: {neededAt: 0.8, notNeededAt: 0.2}
-  }, prepared.inventory, preparedAt);
+  }, binding, preparedAt);
+}
+
+export async function readyMock(api: Api, repo: string, outputDirectory: string, runId: string, options: FixtureOptions = {}) {
+  await mkdir(outputDirectory, {recursive: true});
+  const {config, preparedAt} = mockConfig(repo, outputDirectory, runId, options);
+  const prepared = await api.prepare(config);
+  config.profile = mockProfile(config, prepared.inventory, preparedAt, prepared.api.evaluationConfig.createProviderEvaluationConfiguration);
   await bindMockAuthorityAndEvidence(api, config, options.issuerExpiry);
   return {config, prepared};
+}
+
+/** Fixture authoring only. The caller still uses the original run, which freshly prepares and validates this binding. */
+export async function readyMockFromBinding(api: Api, repo: string, outputDirectory: string, runId: string,
+  binding: FixtureBinding, createProfile: CreateProfile, options: FixtureOptions = {}) {
+  await mkdir(outputDirectory, {recursive: true});
+  const {config, preparedAt} = mockConfig(repo, outputDirectory, runId, options);
+  config.profile = mockProfile(config, binding, preparedAt, createProfile);
+  await bindMockAuthorityAndEvidence(api, config, options.issuerExpiry);
+  return config;
 }
 
 /** Synthetic reviewed-estimate fixture. Its wire observations configure admission; this is not a gold cost/quality oracle. */
