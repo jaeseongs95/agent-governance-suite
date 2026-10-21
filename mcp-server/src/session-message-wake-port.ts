@@ -45,13 +45,35 @@ export function resolveGeminiAgentApi(environment: NodeJS.ProcessEnv = process.e
   }
   return { command: "agentapi", argsPrefix: [] };
 }
-function ringGemini(sessionId: string, message: string, environment: NodeJS.ProcessEnv = process.env): Promise<WakeDispatchOutcome> {
+async function ringGemini(sessionId: string, message: string, environment: NodeJS.ProcessEnv = process.env): Promise<WakeDispatchOutcome> {
+  const { command, argsPrefix } = resolveGeminiAgentApi(environment);
+  let targetProjectId: string | undefined;
+  try {
+    const meta = await new Promise<string>((metaResolve, metaReject) => {
+      execFile(command, [...argsPrefix, "get-conversation-metadata", sessionId],
+        { windowsHide: true, timeout: 5_000, env: environment }, (err, stdout) => err ? metaReject(err) : metaResolve(stdout));
+    });
+    const parsed = JSON.parse(meta) as Record<string, unknown>;
+    const response = parsed.response as Record<string, unknown> | undefined;
+    const conversationMetadata = response?.conversationMetadata as Record<string, unknown> | undefined;
+    const metadata = conversationMetadata?.metadata as Record<string, unknown> | undefined;
+    if (typeof metadata?.projectId === "string") {
+      targetProjectId = metadata.projectId;
+    }
+  } catch {
+    // If metadata retrieval fails, proceed with the default environment.
+  }
+  const childEnv = { ...environment };
+  if (targetProjectId) {
+    childEnv.ANTIGRAVITY_PROJECT_ID = targetProjectId;
+  }
+  delete childEnv.ANTIGRAVITY_SOURCE_METADATA;
+
   return new Promise((resolve) => {
     let spawned = false;
-    const { command, argsPrefix } = resolveGeminiAgentApi(environment);
     const args = [...argsPrefix, "send-message", sessionId, message];
     const child = execFile(command, args,
-      { windowsHide: true, timeout: 10_000 }, (error) => resolve(geminiWakeOutcome(error, spawned)));
+      { windowsHide: true, timeout: 10_000, env: childEnv }, (error) => resolve(geminiWakeOutcome(error, spawned)));
     child.once("spawn", () => { spawned = true; });
     child.once("error", (error) => resolve(geminiWakeOutcome(error, spawned)));
   });

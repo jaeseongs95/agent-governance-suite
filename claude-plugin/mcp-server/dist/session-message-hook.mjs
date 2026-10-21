@@ -371,15 +371,39 @@ function resolveGeminiAgentApi(environment = process.env) {
   }
   return { command: "agentapi", argsPrefix: [] };
 }
-function ringGemini(sessionId, message, environment = process.env) {
+async function ringGemini(sessionId, message, environment = process.env) {
+  const { command, argsPrefix } = resolveGeminiAgentApi(environment);
+  let targetProjectId;
+  try {
+    const meta = await new Promise((metaResolve, metaReject) => {
+      execFile(
+        command,
+        [...argsPrefix, "get-conversation-metadata", sessionId],
+        { windowsHide: true, timeout: 5e3, env: environment },
+        (err, stdout) => err ? metaReject(err) : metaResolve(stdout)
+      );
+    });
+    const parsed = JSON.parse(meta);
+    const response = parsed.response;
+    const conversationMetadata = response?.conversationMetadata;
+    const metadata = conversationMetadata?.metadata;
+    if (typeof metadata?.projectId === "string") {
+      targetProjectId = metadata.projectId;
+    }
+  } catch {
+  }
+  const childEnv = { ...environment };
+  if (targetProjectId) {
+    childEnv.ANTIGRAVITY_PROJECT_ID = targetProjectId;
+  }
+  delete childEnv.ANTIGRAVITY_SOURCE_METADATA;
   return new Promise((resolve) => {
     let spawned = false;
-    const { command, argsPrefix } = resolveGeminiAgentApi(environment);
     const args = [...argsPrefix, "send-message", sessionId, message];
     const child = execFile(
       command,
       args,
-      { windowsHide: true, timeout: 1e4 },
+      { windowsHide: true, timeout: 1e4, env: childEnv },
       (error) => resolve(geminiWakeOutcome(error, spawned))
     );
     child.once("spawn", () => {
