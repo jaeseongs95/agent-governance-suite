@@ -30371,7 +30371,7 @@ function resolveToolSchemaProfile(environment = process.env) {
 }
 function resolveHostAttestation(environment = process.env) {
   const host = environment.AGENT_GOVERNANCE_HOST_ATTESTATION;
-  return host === "claude-code" || host === "codex" ? host : null;
+  return host === "claude-code" || host === "codex" || host === "gemini" ? host : null;
 }
 
 // mcp-server/src/schema-validator.ts
@@ -39064,6 +39064,24 @@ var codexExecutionAdapter = {
   host: "codex",
   modelClassForModel: (model) => Object.hasOwn(CODEX_CLASSES, model) ? CODEX_CLASSES[model] : null
 };
+var GEMINI_CLASSES = {
+  "flash-lite": "lightweight",
+  "flash_lite": "lightweight",
+  "flash-8b": "lightweight",
+  flash: "general",
+  pro: "deep",
+  ultra: "frontier"
+};
+var GEMINI_MODEL_ID = /^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\.)?(?:google[./-])?(?:models\/)?(?:gemini-(?:\d+(?:\.\d+)?-)?)(flash-lite|flash_lite|flash-8b|flash|pro|ultra)(?:[-@:.]|$)|^(flash-lite|flash_lite|flash|pro|ultra)$/u;
+function modelClassForGeminiModel(model) {
+  const match = GEMINI_MODEL_ID.exec(model);
+  const family = match?.[1] ?? match?.[2];
+  return family ? GEMINI_CLASSES[family] ?? null : null;
+}
+var geminiExecutionAdapter = {
+  host: "gemini",
+  modelClassForModel: modelClassForGeminiModel
+};
 
 // mcp-server/src/state-cleanup-service.ts
 import { createHash as createHash13, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
@@ -43926,7 +43944,7 @@ async function main() {
   const attestationHost = resolveHostAttestation();
   const hostAttestation = attestationHost ? new HostAttestationProvider(
     store,
-    attestationHost === "codex" ? codexExecutionAdapter : claudeCodeExecutionAdapter
+    attestationHost === "codex" ? codexExecutionAdapter : attestationHost === "claude-code" ? claudeCodeExecutionAdapter : geminiExecutionAdapter
   ) : null;
   const trust = new TrustService(trustStore);
   const service = new WorkflowService(

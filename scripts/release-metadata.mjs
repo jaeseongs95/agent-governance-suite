@@ -58,6 +58,7 @@ export async function expectedReleaseFiles() {
   return [
     await updateJson("package.json", (document) => { document.version = version; }),
     await updateJson(".codex-plugin/plugin.json", (document) => { document.version = version; }),
+    await updateJson(".gemini-plugin/plugin.json", (document) => { document.version = version; }),
     await updateJson(".agents/plugins/marketplace.json", (document) => {
       const entries = document.plugins?.filter((entry) => entry.name === "agent-governance-suite") ?? [];
       if (entries.length !== 1) throw new Error("marketplace plugin entry must occur exactly once");

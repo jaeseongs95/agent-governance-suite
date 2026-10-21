@@ -918,7 +918,7 @@ function codexQueueEnabled(environment, diagnose) {
 function hostDeliveryProfile(host, environment = process.env, diagnose = (reason) => {
   console.error(`[agent-governance-suite] Codex queue settings: ${reason}; using codex-deferred.`);
 }) {
-  const transport = host === "claude-code" ? "claude-inbox" : codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred";
+  const transport = host === "claude-code" ? "claude-inbox" : host === "gemini" ? "codex-deferred" : codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred";
   return { transport, capabilities: transportDeliveryCapabilities(transport), blocksEmptyWakePrompt: host === "codex" };
 }
 function nativePeerWait(observation) {

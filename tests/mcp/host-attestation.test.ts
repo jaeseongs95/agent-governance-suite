@@ -21,8 +21,15 @@ import {
   hostActorId,
   HostAttestationProvider,
   type HostExecutionAdapter,
+  issueHostAttestation,
 } from "../../mcp-server/src/host-attestation.js";
-import { claudeCodeExecutionAdapter, codexExecutionAdapter, modelClassForClaudeModel } from "../../mcp-server/src/host-execution-adapters.js";
+import {
+  claudeCodeExecutionAdapter,
+  codexExecutionAdapter,
+  geminiExecutionAdapter,
+  modelClassForClaudeModel,
+  modelClassForGeminiModel,
+} from "../../mcp-server/src/host-execution-adapters.js";
 import {
   claudeCodeActorId,
   findToolUseObservation,
@@ -119,6 +126,22 @@ function attest(store: WorkflowStore, tool: string, input: Record<string, unknow
     if (!updated[HOST_ATTESTATION_FIELD]) throw new Error("Codex hook did not attest the call");
     return updated;
   }
+  if (options.adapter === geminiExecutionAdapter) {
+    const model = options.model ?? "gemini-2.5-pro";
+    const token = issueHostAttestation(store, geminiExecutionAdapter, {
+      tool,
+      input,
+      model,
+      reasoningEffort: options.effort ?? "high",
+      actorId: hostActorId("gemini", SESSION),
+      sessionId: SESSION,
+      turnId: "gemini-turn",
+      toolUseId,
+      ...(options.now ? { now: options.now } : {}),
+    });
+    if (!token) throw new Error("Gemini attestation did not attest the call");
+    return { ...input, [HOST_ATTESTATION_FIELD]: token };
+  }
   const transcript = `${transcriptLine("toolu_other")}\n${transcriptLine(toolUseId, options)}\n`;
   const output = handleHostAttestationHook(
     {
@@ -212,6 +235,7 @@ describe("Claude Code host attestation through the MCP boundary", () => {
     { adapter: claudeCodeExecutionAdapter, model: "claude-opus-5", modelClass: "deep", stageModel: "claude-fable-5-1" },
     { adapter: codexExecutionAdapter, model: "gpt-6-astra", modelClass: "frontier", stageModel: "gpt-6-astra" },
     { adapter: codexExecutionAdapter, model: "gpt-6-sol", modelClass: "general", stageModel: "gpt-6-astra" },
+    { adapter: geminiExecutionAdapter, model: "gemini-2.5-pro", modelClass: "deep", stageModel: "gemini-ultra" },
   ])("completes an orchestrated workflow with $adapter.host observations", async ({ adapter, model, modelClass, stageModel }) => {
     const { store, call } = await harness(true, adapter);
     const planned = await call<WorkflowPlanV1>("plan_workflow", attest(store, "plan_workflow", planArguments("attest-complete"), { adapter, model }));
@@ -306,7 +330,7 @@ describe("Claude Code host attestation through the MCP boundary", () => {
     expect(planned.error?.code).toBe("BINDING_REQUIRED");
   });
 
-  it.each([claudeCodeExecutionAdapter, codexExecutionAdapter])("rejects different calls, signatures, replays and expiry for $host", async (adapter) => {
+  it.each([claudeCodeExecutionAdapter, codexExecutionAdapter, geminiExecutionAdapter])("rejects different calls, signatures, replays and expiry for $host", async (adapter) => {
     const { store, call } = await harness(true, adapter);
 
     const attested = attest(store, "plan_workflow", planArguments("tampered"), { adapter });
@@ -577,6 +601,24 @@ describe("host attestation configuration", () => {
     expect(resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: "codex" })).toBe("codex");
     expect(resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: "unconfigured-host" })).toBeNull();
     expect(resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: "claude-code" })).toBe("claude-code");
+    expect(resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: "gemini" })).toBe("gemini");
+  });
+
+  it("maps Gemini model families to the routing preset classes", () => {
+    expect(modelClassForGeminiModel("gemini-2.5-flash-lite")).toBe("lightweight");
+    expect(modelClassForGeminiModel("gemini-1.5-flash-8b")).toBe("lightweight");
+    expect(modelClassForGeminiModel("gemini-2.5-flash")).toBe("general");
+    expect(modelClassForGeminiModel("gemini-3.8-flash")).toBe("general");
+    expect(modelClassForGeminiModel("gemini-2.5-pro")).toBe("deep");
+    expect(modelClassForGeminiModel("gemini-3.8-pro")).toBe("deep");
+    expect(modelClassForGeminiModel("gemini-ultra")).toBe("frontier");
+    expect(modelClassForGeminiModel("models/gemini-2.5-flash")).toBe("general");
+    expect(modelClassForGeminiModel("flash_lite")).toBe("lightweight");
+    expect(modelClassForGeminiModel("flash")).toBe("general");
+    expect(modelClassForGeminiModel("pro")).toBe("deep");
+    expect(modelClassForGeminiModel("ultra")).toBe("frontier");
+    expect(modelClassForGeminiModel("unknown-gemini")).toBeNull();
+    expect(modelClassForGeminiModel("gpt-6-astra")).toBeNull();
   });
 
   it("maps Claude model families to the routing preset classes", () => {

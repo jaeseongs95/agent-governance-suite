@@ -29,3 +29,24 @@ export const claudeCodeExecutionAdapter: HostExecutionAdapter = {
 export const codexExecutionAdapter: HostExecutionAdapter = {
   host: "codex", modelClassForModel: (model) => Object.hasOwn(CODEX_CLASSES, model) ? CODEX_CLASSES[model]! : null,
 };
+
+const GEMINI_CLASSES: Readonly<Record<string, ModelClassV1>> = {
+  "flash-lite": "lightweight",
+  "flash_lite": "lightweight",
+  "flash-8b": "lightweight",
+  flash: "general",
+  pro: "deep",
+  ultra: "frontier",
+};
+
+const GEMINI_MODEL_ID = /^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\.)?(?:google[./-])?(?:models\/)?(?:gemini-(?:\d+(?:\.\d+)?-)?)(flash-lite|flash_lite|flash-8b|flash|pro|ultra)(?:[-@:.]|$)|^(flash-lite|flash_lite|flash|pro|ultra)$/u;
+
+export function modelClassForGeminiModel(model: string): ModelClassV1 | null {
+  const match = GEMINI_MODEL_ID.exec(model);
+  const family = match?.[1] ?? match?.[2];
+  return family ? GEMINI_CLASSES[family] ?? null : null;
+}
+
+export const geminiExecutionAdapter: HostExecutionAdapter = {
+  host: "gemini", modelClassForModel: modelClassForGeminiModel,
+};

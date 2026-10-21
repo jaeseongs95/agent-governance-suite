@@ -70,6 +70,12 @@ describe("packaged model routing", () => {
     expect(resolveModelSelection({ provider: "anthropic-claude-code", role: "discovery", profile: "economy", highRisk: false,
       supported: [{ model: "haiku", modelClass: "lightweight", efforts: ["low"] }],
     }).selection).toEqual({ model: "haiku", effort: "low" });
+    expect(resolveModelSelection({ provider: "google-gemini", role: "discovery", profile: "economy", highRisk: false,
+      supported: [{ model: "flash-lite", modelClass: "lightweight", efforts: ["low"] }],
+    }).selection).toEqual({ model: "flash-lite", effort: "low" });
+    expect(resolveModelSelection({ provider: "google-gemini", role: "general-implementation", profile: "balanced", highRisk: false,
+      supported: [{ model: "flash", modelClass: "general", efforts: ["high"] }],
+    }).selection).toEqual({ model: "flash", effort: "high" });
   });
 
   it("preserves partial overrides with an unknown provider", () => {

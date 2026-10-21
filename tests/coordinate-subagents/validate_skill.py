@@ -456,7 +456,7 @@ def validate_routing_presets() -> None:
     document = load_routing_presets()
     roles = {"discovery", "general-implementation", "complex-reasoning", "independent-audit"}
     profiles = {"economy", "balanced", "quality"}
-    providers = {"openai-codex", "anthropic-claude-code"}
+    providers = {"openai-codex", "anthropic-claude-code", "google-gemini"}
     require(document.get("schema_version") == 1, "routing presets must declare schema_version 1")
     require(document.get("default_profile") == "balanced", "routing presets must default to balanced")
     require(set(document.get("roles", [])) == roles, "routing preset roles differ from the required set")
@@ -479,10 +479,11 @@ def validate_routing_presets() -> None:
 
     provider_documents = document.get("providers")
     require(isinstance(provider_documents, dict) and set(provider_documents) == providers,
-            "routing presets must contain exactly the Codex and Claude Code adapters")
+            "routing presets must contain the supported host adapters")
     expected_fields = {
         "openai-codex": ("model", "reasoning_effort"),
         "anthropic-claude-code": ("model", "effort"),
+        "google-gemini": ("model", "effort"),
     }
     claude_aliases = {"haiku", "sonnet", "opus", "fable"}
     for provider_name, provider in provider_documents.items():

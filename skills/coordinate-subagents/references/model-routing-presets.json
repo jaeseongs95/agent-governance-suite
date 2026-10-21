@@ -94,6 +94,35 @@
           "independent-audit": {"model": "fable", "effort": "xhigh", "model_class": "frontier"}
         }
       }
+    },
+    "google-gemini": {
+      "application": {
+        "model_field": "model",
+        "effort_field": "effort",
+        "model_delivery": ["invoke-argument", "subagent-frontmatter"],
+        "effort_delivery": ["subagent-frontmatter"],
+        "verification": "host-task-view"
+      },
+      "profiles": {
+        "economy": {
+          "discovery": {"model": "flash-lite", "effort": "low", "model_class": "lightweight"},
+          "general-implementation": {"model": "flash", "effort": "medium", "model_class": "general"},
+          "complex-reasoning": {"model": "pro", "effort": "medium", "model_class": "deep"},
+          "independent-audit": {"model": "pro", "effort": "high", "model_class": "deep"}
+        },
+        "balanced": {
+          "discovery": {"model": "flash-lite", "effort": "high", "model_class": "lightweight"},
+          "general-implementation": {"model": "flash", "effort": "high", "model_class": "general"},
+          "complex-reasoning": {"model": "pro", "effort": "high", "model_class": "deep"},
+          "independent-audit": {"model": "ultra", "effort": "high", "model_class": "frontier"}
+        },
+        "quality": {
+          "discovery": {"model": "flash", "effort": "high", "model_class": "general"},
+          "general-implementation": {"model": "pro", "effort": "high", "model_class": "deep"},
+          "complex-reasoning": {"model": "ultra", "effort": "xhigh", "model_class": "frontier"},
+          "independent-audit": {"model": "ultra", "effort": "xhigh", "model_class": "frontier"}
+        }
+      }
     }
   }
 }

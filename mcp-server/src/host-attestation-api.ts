@@ -15,4 +15,4 @@ export function openHostAttestation(databasePath: string, adapter: HostExecution
 
 export { hostActorId } from "./host-attestation.js";
 export type { HostExecutionAdapter, HostObservation } from "./host-attestation.js";
-export { claudeCodeExecutionAdapter, codexExecutionAdapter } from "./host-execution-adapters.js";
+export { claudeCodeExecutionAdapter, codexExecutionAdapter, geminiExecutionAdapter } from "./host-execution-adapters.js";

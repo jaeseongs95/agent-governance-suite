@@ -6,7 +6,7 @@ import { normalizePeerWaitTargets } from "./peer-wait-policy.js";
 import type { DeliveryCapabilities, InputObservation, InputObservationKind } from "./input-observation.js";
 import { transportDeliveryCapabilities, type SessionMessageTransport } from "./session-message-relay.js";
 
-export type SupportedHookHost = "codex" | "claude-code";
+export type SupportedHookHost = "codex" | "claude-code" | "gemini";
 export type HostLifecycle = "start" | "end" | "none";
 
 export interface AdaptedHostInput {
@@ -126,7 +126,9 @@ export function hostDeliveryProfile(host: SupportedHookHost, environment: NodeJS
   diagnose: (reason: string) => void = (reason) => { console.error(`[agent-governance-suite] Codex queue settings: ${reason}; using codex-deferred.`); }): HostDeliveryProfile {
   const transport: SessionMessageTransport = host === "claude-code"
     ? "claude-inbox"
-    : codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred";
+    : host === "gemini"
+      ? "codex-deferred"
+      : codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred";
   return { transport, capabilities: transportDeliveryCapabilities(transport), blocksEmptyWakePrompt: host === "codex" };
 }
 

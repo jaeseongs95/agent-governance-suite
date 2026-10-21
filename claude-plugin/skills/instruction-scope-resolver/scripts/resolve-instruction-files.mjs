@@ -96,7 +96,12 @@ async function selectedInstruction(directory, authorizedRoots) {
   if (!(await exists(directory))) return null;
   const stats = await lstat(directory);
   if (!stats.isDirectory()) return null;
-  for (const [filename, kind] of [["AGENTS.override.md", "override"], ["AGENTS.md", "agents"]]) {
+  for (const [filename, kind] of [
+    ["GEMINI.override.md", "override"],
+    ["AGENTS.override.md", "override"],
+    ["GEMINI.md", "agents"],
+    ["AGENTS.md", "agents"],
+  ]) {
     const candidate = path.join(directory, filename);
     if (!(await exists(candidate))) continue;
     const actual = await realpath(candidate);

@@ -4,7 +4,7 @@
 
 **AI 세션의 작업·협업·검증을 하나의 흐름으로.**
 
-Agent Governance Suite(AGS)는 Codex와 Claude Code에서 AI 작업을 지속적으로 운영하기 위한 로컬 플러그인입니다. 목표와 담당 범위를 정하고, 각자의 맥락을 가진 세션들이 직접 협업하며, 결과를 검증한 근거를 남기도록 돕습니다.
+Agent Governance Suite(AGS)는 Codex, Claude Code, Gemini에서 AI 작업을 지속적으로 운영하기 위한 로컬 플러그인입니다. 목표와 담당 범위를 정하고, 각자의 맥락을 가진 세션들이 직접 협업하며, 결과를 검증한 근거를 남기도록 돕습니다.
 
 한 세션에 맡긴 조사·구현·검토부터 여러 세션이 역할을 나누는 장기 작업까지 사용할 수 있습니다. 전문 스킬이 작업 방법과 판단 기준을 제공하고, 로컬 실행 계층이 세션 간 연락, 작업 기록, 필수 단계와 완료 조건의 검사를 담당합니다.
 
@@ -61,6 +61,17 @@ codex plugin add agent-governance-suite@agent-governance
 <!-- release-install:end -->
 
 설치 후 새 Codex 세션을 시작합니다. `/hooks`에서 설치된 훅을 검토하고 신뢰해야 문맥 보존, 세션 현황판과 실행 관측 훅이 동작합니다. 훅 정의가 바뀌면 다시 검토합니다.
+
+### Gemini / Antigravity
+
+Antigravity 또는 Gemini CLI 환경에서 설치 및 사용할 수 있습니다.
+
+```bash
+agy plugin marketplace add jaeseongs95/agent-governance-suite
+agy plugin install agent-governance-suite@agent-governance
+```
+
+또는 워크스페이스 루트의 `mcp_config.json`을 통해 로컬 MCP 서버(`AGENT_GOVERNANCE_HOST_ATTESTATION=gemini`)를 바로 연동할 수 있습니다. `GEMINI.md`와 `AGENTS.md` 지침이 자동으로 로드됩니다.
 
 ## 빠른 시작
 

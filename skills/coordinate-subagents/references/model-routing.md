@@ -48,6 +48,12 @@ Before dispatch, check the installed Claude Code version, organization allowlist
 
 Use the official Claude Code documentation for [model configuration](https://code.claude.com/docs/en/model-config) and [custom subagents](https://code.claude.com/docs/en/sub-agents) when current support or precedence is uncertain.
 
+## Apply the Google Gemini adapter
+
+For Google Gemini and Antigravity, prefer stable aliases such as `flash-lite`, `flash`, `pro`, and `ultra`. For subagent invocation via `invoke_subagent`, deliver the selected model using the `Model` argument (`inherit`, `flash_lite`, `flash`, `pro`) or specify it in the subagent definition frontmatter.
+
+For high-risk work, enforce the `general` model floor (`flash` or higher) and `high` effort. Verify actual dispatch against the host task view or invocation result.
+
 ## Apply runtime constraints
 
 <!-- policy-contract: routing.settings-supported -->

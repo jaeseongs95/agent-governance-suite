@@ -4,7 +4,7 @@
 
 **Connect AI work, collaboration, and verification into one continuous workflow.**
 
-Agent Governance Suite (AGS) is a local plugin for running ongoing AI work in Codex and Claude Code. It helps define goals and ownership, lets sessions collaborate directly from their own working context, and records the evidence used to verify their results.
+Agent Governance Suite (AGS) is a local plugin for running ongoing AI work in Codex, Claude Code, and Gemini. It helps define goals and ownership, lets sessions collaborate directly from their own working context, and records the evidence used to verify their results.
 
 Use it for investigation, implementation, and review within one session, or for long-running work shared across sessions with distinct responsibilities. Specialist skills provide methods and judgment criteria. The local runtime handles inter-session communication, work records, and checks on required stages and completion conditions.
 
@@ -61,6 +61,17 @@ codex plugin add agent-governance-suite@agent-governance
 <!-- release-install:end -->
 
 Start a new Codex session after installation. Review and trust the installed hooks in `/hooks` to enable context continuity, the session board, and execution observation. Review them again when their definitions change.
+
+### Gemini / Antigravity
+
+Run in Antigravity or Gemini CLI:
+
+```bash
+agy plugin marketplace add jaeseongs95/agent-governance-suite
+agy plugin install agent-governance-suite@agent-governance
+```
+
+Or connect the local MCP server directly in your workspace using `mcp_config.json` with `AGENT_GOVERNANCE_HOST_ATTESTATION=gemini`. `GEMINI.md` and `AGENTS.md` instructions are loaded automatically.
 
 ## Quick start
 

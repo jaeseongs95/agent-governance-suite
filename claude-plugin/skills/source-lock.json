@@ -7,7 +7,7 @@
       "version": "1.1.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:783714ac6aa38b6df7504c211b67dcaadf38188744da819ebd72f4a5665c312b",
+      "integratedChecksum": "sha256:e947e2c30aa38ebf93fb069fbb81135ef6d80f662978fcea95441cc768962018",
       "checksumScope": "relative paths and normalized text bytes under skills/coordinate-subagents"
     },
     {
@@ -79,7 +79,7 @@
       "version": "1.0.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:78a56f17968cd388983e5d700fbdbd4ec5d065ded8cbbeb6e3470825ac463783",
+      "integratedChecksum": "sha256:7f0ba646f240188d8b3843cee39e122c00a2d5b01726769c9b8027091e89723e",
       "checksumScope": "relative paths and normalized text bytes under skills/instruction-scope-resolver"
     },
     {

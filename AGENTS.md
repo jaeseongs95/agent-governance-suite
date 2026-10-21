@@ -7,6 +7,9 @@
 ```text
 .codex-plugin/plugin.json        # 플러그인 매니페스트
 .claude-plugin/marketplace.json  # Claude Code 마켓플레이스 배포 정보
+.gemini-plugin/plugin.json       # Gemini / Antigravity 플러그인 매니페스트
+mcp_config.json                  # Gemini / Antigravity MCP 서버 설정
+GEMINI.md                        # Gemini / Antigravity 프로젝트 지침
 claude-overlay/                  # Claude 전용 파일과 스킬별 Claude 보정(adaptations/)
 claude-plugin/                   # 생성된 Claude Code 플러그인(직접 수정 금지)
 .agents/plugins/marketplace.json # 마켓플레이스 배포 정보
@@ -21,7 +24,7 @@ tests/                           # 계약·회귀·런타임 테스트
 
 전문 스킬은 한 가지 역할과 독립 호출 가치를 유지한다. 오케스트레이터는 요청 분류, 실행 순서, 공통 입출력, 중간 검증과 결과 통합만 맡는다. 필수 순서와 불변조건은 지침만으로 두지 말고 스크립트, schema 또는 MCP 실행 계층에서 강제한다.
 
-공용 스킬, 계약, MCP 도구와 런타임은 특정 AI 제품이나 호스트 API를 전제로 하지 않는다. 호스트 이름은 확장 가능한 식별자로 다루고, Codex·Claude Code·Grok·Spark 등 제품별 훅, 신원 관측, 깨우기와 배포 형식은 adapter 또는 overlay 경계에만 둔다. 새 호스트를 지원할 때 공용 계약을 복제하거나 제품명을 박아 넣지 말고 같은 계약에 얇은 adapter를 추가한다. 제품 자체의 로그처럼 본질적으로 호스트 전용인 기능은 이름과 적용 범위에 그 제약을 명시한다.
+공용 스킬, 계약, MCP 도구와 런타임은 특정 AI 제품이나 호스트 API를 전제로 하지 않는다. 호스트 이름은 확장 가능한 식별자로 다루고, Codex·Claude Code·Gemini·Grok·Spark 등 제품별 훅, 신원 관측, 깨우기와 배포 형식은 adapter 또는 overlay 경계에만 둔다. 새 호스트를 지원할 때 공용 계약을 복제하거나 제품명을 박아 넣지 말고 같은 계약에 얇은 adapter를 추가한다. 제품 자체의 로그처럼 본질적으로 호스트 전용인 기능은 이름과 적용 범위에 그 제약을 명시한다.
 
 ## 기준 상태
 
@@ -72,7 +75,7 @@ Claude Code 배포물은 Codex 플러그인과 서로 영향을 주지 않아야
 
 ## 변경과 릴리스
 
-새 스킬이나 기능은 구현을 시작하기 전에 `codex/<작업명>` 형식(Claude Code 세션에서는 `claude/<작업명>`)의 전용 브랜치를 만들고, 해당 브랜치나 연결된 worktree에서 작업한다. 사용자가 브랜치 이름을 지정하면 그 이름을 따른다.
+새 스킬이나 기능은 구현을 시작하기 전에 `codex/<작업명>` 형식(Claude Code 세션에서는 `claude/<작업명>`, Gemini 세션에서는 `gemini/<작업명>`)의 전용 브랜치를 만들고, 해당 브랜치나 연결된 worktree에서 작업한다. 사용자가 브랜치 이름을 지정하면 그 이름을 따른다.
 
 작업 전 `git status`, 관련 worktree와 적용 지침을 확인한다. 미추적 파일, 다른 작업의 커밋과 변경은 사용자 소유로 보고 보존한다. 파일과 외부 상태는 한 작업자만 쓰게 하고, 별도 worktree의 결과는 commit과 검증 근거로 통합한다.
 

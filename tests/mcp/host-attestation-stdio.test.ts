@@ -25,6 +25,7 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
     { host: "codex", model: "gpt-6-astra", ingress: "hook" },
     { host: "codex", model: "gpt-6-sol", ingress: "hook" },
     { host: "codex", model: "gpt-6-astra", ingress: "wrapper" },
+    { host: "gemini", model: "gemini-2.5-pro", ingress: "wrapper" },
   ])("completes guarded STDIO and keeps restart replay rejection for $host/$ingress/$model", async ({ host, model, ingress }) => {
     const isolated = await mkdtemp(path.join(tmpdir(), "ags-attestation-stdio-"));
     const state = path.join(isolated, "state");
@@ -55,8 +56,8 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
       seed.close();
       const api = await import(pathToFileURL(path.join(isolated, "mcp-server", "dist", "host-attestation-api.mjs")).href) as
         typeof import("../../mcp-server/src/host-attestation-api.js");
-      expect(Object.keys(api).sort()).toEqual(["claudeCodeExecutionAdapter", "codexExecutionAdapter", "hostActorId", "openHostAttestation"]);
-      if (ingress === "wrapper") wrapper = api.openHostAttestation(database, api.codexExecutionAdapter);
+      expect(Object.keys(api).sort()).toEqual(["claudeCodeExecutionAdapter", "codexExecutionAdapter", "geminiExecutionAdapter", "hostActorId", "openHostAttestation"]);
+      if (ingress === "wrapper") wrapper = api.openHostAttestation(database, host === "gemini" ? api.geminiExecutionAdapter : api.codexExecutionAdapter);
       const connect = async () => {
         const transport = new StdioClientTransport({ command: process.execPath,
           args: [path.join(isolated, "mcp-server", "dist", "server.mjs")], cwd: isolated, env: environment, stderr: "pipe" });

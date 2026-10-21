@@ -190,7 +190,7 @@ export function resolveToolSchemaProfile(
  */
 export function resolveHostAttestation(
   environment: NodeJS.ProcessEnv = process.env,
-): "claude-code" | "codex" | null {
+): "claude-code" | "codex" | "gemini" | null {
   const host = environment.AGENT_GOVERNANCE_HOST_ATTESTATION;
-  return host === "claude-code" || host === "codex" ? host : null;
+  return host === "claude-code" || host === "codex" || host === "gemini" ? host : null;
 }

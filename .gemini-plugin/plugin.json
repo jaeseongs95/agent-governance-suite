@@ -1,0 +1,8 @@
+{
+  "name": "agent-governance-suite",
+  "displayName": "Agent Governance Suite",
+  "version": "2.9.1",
+  "description": "Route governance and engineering specialists through declarative provider contracts, a local MCP convergence guard, opt-in task continuity, and an MCP-assisted Korean prose workflow.",
+  "skills": "./skills/",
+  "mcpServers": "./mcp_config.json"
+}

@@ -63,6 +63,19 @@ test("ignores a whitespace override and marks a planned path absent", async (t) 
   assert.match(result.findings[0], /future nested instructions/u);
 });
 
+test("resolves GEMINI.override.md and GEMINI.md in precedence hierarchy", async (t) => {
+  const root = await workspace();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await writeFile(path.join(root, "GEMINI.md"), "gemini root\n");
+  await writeFile(path.join(root, "AGENTS.md"), "agents root\n");
+  await writeFile(path.join(root, "src", "GEMINI.override.md"), "gemini override\n");
+  await writeFile(path.join(root, "src", "AGENTS.override.md"), "agents override\n");
+  const result = await resolveInstructionFiles(request(root));
+  assert.equal(result.verdict, "ANALYSIS_REQUIRED");
+  assert.equal(result.targets[0].instructionChain[0].path.endsWith("GEMINI.md"), true);
+  assert.equal(result.targets[0].instructionChain[1].path.endsWith("GEMINI.override.md"), true);
+});
+
 test("deduplicates the manifest while keeping per-target chains", async (t) => {
   const root = await workspace();
   t.after(() => rm(root, { recursive: true, force: true }));

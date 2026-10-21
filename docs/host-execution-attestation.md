@@ -8,9 +8,10 @@
 | --- | --- | --- |
 | Codex Hook | `.mcp.json`의 `AGENT_GOVERNANCE_HOST_ATTESTATION=codex`, `PreToolUse`의 `--host=codex` | 정확한 session/turn/model/call과 같은 턴의 effort가 필요 |
 | Claude Code Hook | Claude manifest의 `AGENT_GOVERNANCE_HOST_ATTESTATION=claude-code`, launcher의 `PreToolUse`와 session model을 기록하는 `SessionStart`·`PostModelSwitch` | 기존 main/subagent 모델·effort 경로 유지 |
+| Gemini Adapter | `mcp_config.json`의 `AGENT_GOVERNANCE_HOST_ATTESTATION=gemini`, wrapper 또는 `openHostAttestation` | Flash-Lite/Flash/Pro/Ultra 패밀리 매핑 적용 |
 | Hook 없는 host wrapper | 공개 `mcp-server/dist/host-attestation-api.mjs`의 `openHostAttestation` | host-owned 관측 callback과 같은 workflow DB를 연결해야 함 |
 
-`AGENT_GOVERNANCE_HOST_ATTESTATION`이 없거나 `claude-code`·`codex` 밖의 값이면 서버는 실행 관측 provider 없이 시작하며, strict orchestration은 `provider-not-configured` 진단과 함께 `BINDING_REQUIRED`로 거절된다.
+`AGENT_GOVERNANCE_HOST_ATTESTATION`이 없거나 `claude-code`·`codex`·`gemini` 밖의 값이면 서버는 실행 관측 provider 없이 시작하며, strict orchestration은 `provider-not-configured` 진단과 함께 `BINDING_REQUIRED`로 거절된다.
 
 Codex 공식 [Hooks 문서](https://learn.chatgpt.com/docs/hooks)는 현재 `model`, `session_id`, `transcript_path`와 `PreToolUse`의 `turn_id`, `tool_use_id`, `tool_input`, `updatedInput`을 정의한다. effort는 같은 턴의 host-recorded `turn_context`에서 읽는다. 이 transcript 형식은 안정된 host API가 아니므로 모양이 바뀌거나 관측이 없으면 추정하지 않는다.
 
@@ -20,7 +21,7 @@ Codex adapter는 첫 256 KiB에서 `session_meta.id`를, 마지막 8 MiB에서 �
 
 Codex subagent Hook의 session ID는 parent일 수 있다. `agent_id`, subagent metadata 또는 session/turn 불일치를 발견하면 parent의 모델·effort를 빌려 쓰지 않는다. 현재 adapter는 독립된 child 신원을 증명하지 못하는 subagent 경로를 지원 완료로 표시하지 않는다.
 
-모델 class는 추론이 아닌 명시적 제품 정책이다. Codex adapter는 기존 preset의 `gpt-6-astra=frontier`, `gpt-5.6-sol=deep`, `gpt-5.6-terra=general`, `gpt-5.6-luna=lightweight`를 사용한다. 이번 지원 정책은 host tool metadata의 workhorse/easier-task 역할 설명을 근거로 `gpt-6-sol=general`, `gpt-6-luna=lightweight`를 보수적으로 추가한다. 이는 품질 실측이나 5.6 후계 등급의 자동 복제가 아니다. `deep` 이상을 요구하는 단계는 Sol에서 거절되며 이를 통과시키려고 관측값이나 정책 하한을 높이거나 낮추지 않는다. 정확한 ID 외의 알 수 없는 모델은 `host-model-policy-unsupported`다. Claude의 Haiku/Sonnet/Opus/Fable mapping은 그대로 유지한다. `reasoningEffort`가 없거나 지원 목록 밖이면 필수 관측 누락이며 다른 모델·턴의 값으로 보충하지 않는다.
+모델 class는 추론이 아닌 명시적 제품 정책이다. Codex adapter는 기존 preset의 `gpt-6-astra=frontier`, `gpt-5.6-sol=deep`, `gpt-5.6-terra=general`, `gpt-5.6-luna=lightweight`를 사용한다. 이번 지원 정책은 host tool metadata의 workhorse/easier-task 역할 설명을 근거로 `gpt-6-sol=general`, `gpt-6-luna=lightweight`를 보수적으로 추가한다. 이는 품질 실측이나 5.6 후계 등급의 자동 복제가 아니다. `deep` 이상을 요구하는 단계는 Sol에서 거절되며 이를 통과시키려고 관측값이나 정책 하한을 높이거나 낮추지 않는다. 정확한 ID 외의 알 수 없는 모델은 `host-model-policy-unsupported`다. Claude의 Haiku/Sonnet/Opus/Fable mapping은 그대로 유지한다. Gemini adapter는 `flash-lite`=lightweight, `flash`=general, `pro`=deep, `ultra`=frontier 매핑을 적용한다. `reasoningEffort`가 없거나 지원 목록 밖이면 필수 관측 누락이며 다른 모델·턴의 값으로 보충하지 않는다.
 
 ## Hook 없는 호스트
 
