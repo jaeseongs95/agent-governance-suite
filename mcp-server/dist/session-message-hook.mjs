@@ -4,13 +4,15 @@
 import { spawn as spawn2 } from "node:child_process";
 import { createHash as createHash3, randomUUID as randomUUID3 } from "node:crypto";
 import { readFileSync as readFileSync2 } from "node:fs";
-import path5 from "node:path";
+import path6 from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // mcp-server/src/session-message-wake-port.ts
 import { execFile } from "node:child_process";
 import { createHash, randomUUID as randomUUID2 } from "node:crypto";
+import { existsSync } from "node:fs";
 import net from "node:net";
+import path3 from "node:path";
 
 // mcp-server/src/trust-store.ts
 import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
@@ -351,6 +353,41 @@ function codexWakeOutcome(error, spawned) {
 function claudeWakeOutcome(hadError, connected, wrote) {
   return !hadError && wrote ? "submitted" : connected || wrote ? "accepted-or-unknown" : "definite-failure";
 }
+function geminiWakeOutcome(error, spawned) {
+  return !error ? "submitted" : spawned ? "accepted-or-unknown" : "definite-failure";
+}
+function resolveGeminiAgentApi(environment = process.env) {
+  if (environment.ANTIGRAVITY_AGENTAPI_EXE) {
+    return { command: environment.ANTIGRAVITY_AGENTAPI_EXE, argsPrefix: ["agentapi"] };
+  }
+  const homeDir = environment.USERPROFILE || environment.HOME || "";
+  const batPath = path3.join(homeDir, ".gemini", "antigravity", "bin", "agentapi.bat");
+  const shPath = path3.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
+  if (process.platform === "win32" && existsSync(batPath)) {
+    return { command: batPath, argsPrefix: [] };
+  }
+  if (existsSync(shPath)) {
+    return { command: shPath, argsPrefix: [] };
+  }
+  return { command: "agentapi", argsPrefix: [] };
+}
+function ringGemini(sessionId, message, environment = process.env) {
+  return new Promise((resolve) => {
+    let spawned = false;
+    const { command, argsPrefix } = resolveGeminiAgentApi(environment);
+    const args = [...argsPrefix, "send-message", sessionId, message];
+    const child = execFile(
+      command,
+      args,
+      { windowsHide: true, timeout: 1e4 },
+      (error) => resolve(geminiWakeOutcome(error, spawned))
+    );
+    child.once("spawn", () => {
+      spawned = true;
+    });
+    child.once("error", (error) => resolve(geminiWakeOutcome(error, spawned)));
+  });
+}
 function ringCodex(sessionId, message) {
   return new Promise((resolve) => {
     let spawned = false;
@@ -407,6 +444,10 @@ var ports = /* @__PURE__ */ new Map([
   ["codex-deferred", {
     capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" },
     dispatch: async () => "definite-failure"
+  }],
+  ["gemini-queue", {
+    capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" },
+    dispatch: (target, message) => ringGemini(target.sessionId, message)
   }]
 ]);
 function transportWakePort(transport) {
@@ -459,10 +500,10 @@ function recordWakeHookObservation(observation, nowMs = Date.now()) {
 }
 
 // mcp-server/src/session-message-client.ts
-import { existsSync } from "node:fs";
+import { existsSync as existsSync2 } from "node:fs";
 import { chmod, mkdir, readFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
-import path3 from "node:path";
+import path4 from "node:path";
 import { performance } from "node:perf_hooks";
 import tls from "node:tls";
 import { fileURLToPath } from "node:url";
@@ -504,9 +545,9 @@ var deadlineMetadata = /* @__PURE__ */ new WeakMap();
 function statePaths(stateDirectory = resolveSessionMessageStateDirectory()) {
   return {
     stateDirectory,
-    endpoint: path3.join(stateDirectory, "endpoint.json"),
-    token: path3.join(stateDirectory, "broker.token"),
-    certificate: path3.join(stateDirectory, "broker-cert.pem")
+    endpoint: path4.join(stateDirectory, "endpoint.json"),
+    token: path4.join(stateDirectory, "broker.token"),
+    certificate: path4.join(stateDirectory, "broker-cert.pem")
   };
 }
 function deadlineError(message) {
@@ -711,7 +752,7 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
       throwIfAborted(signal);
       assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
       const adjacentBroker = fileURLToPath(new URL("./session-message-broker.mjs", import.meta.url));
-      const brokerPath = existsSync(adjacentBroker) ? adjacentBroker : fileURLToPath(new URL("../dist/session-message-broker.mjs", import.meta.url));
+      const brokerPath = existsSync2(adjacentBroker) ? adjacentBroker : fileURLToPath(new URL("../dist/session-message-broker.mjs", import.meta.url));
       const child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
         detached: true,
         windowsHide: true,
@@ -801,7 +842,7 @@ function processStartToken(pid, platform = process.platform) {
 // mcp-server/src/host-input-adapter.ts
 import { createHash as createHash2 } from "node:crypto";
 import { closeSync, constants, fstatSync, openSync, readSync, statSync } from "node:fs";
-import path4 from "node:path";
+import path5 from "node:path";
 
 // mcp-server/src/peer-wait-policy.ts
 function identityKey(identity) {
@@ -881,12 +922,12 @@ function codexQueueEnabled(environment, diagnose) {
   }
   const directory = environment.PLUGIN_DATA;
   if (directory === void 0) return false;
-  if (!path4.isAbsolute(directory) || process.platform === "win32" && ["\\", "/"].includes(path4.parse(directory).root)) {
+  if (!path5.isAbsolute(directory) || process.platform === "win32" && ["\\", "/"].includes(path5.parse(directory).root)) {
     return disabled("invalid-plugin-data");
   }
   try {
     if (!statSync(directory).isDirectory()) return disabled("invalid-plugin-data");
-    const descriptor = openSync(path4.join(directory, "session-messaging.json"), constants.O_RDONLY | constants.O_NONBLOCK);
+    const descriptor = openSync(path5.join(directory, "session-messaging.json"), constants.O_RDONLY | constants.O_NONBLOCK);
     try {
       const stat = fstatSync(descriptor);
       if (!stat.isFile()) return disabled("invalid-file-type");
@@ -915,10 +956,59 @@ function codexQueueEnabled(environment, diagnose) {
     return error.code === "ENOENT" ? false : disabled("read-failed");
   }
 }
+function geminiQueueEnabled(environment, diagnose) {
+  const disabled = (reason) => {
+    diagnose(reason);
+    return false;
+  };
+  const explicit = environment.AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE;
+  if (explicit !== void 0) {
+    if (explicit === "1") return true;
+    return explicit === "0" ? false : disabled("invalid-environment");
+  }
+  if (environment.ANTIGRAVITY_AGENTAPI_EXE || environment.ANTIGRAVITY_CONVERSATION_ID || environment.ANTIGRAVITY_AGENT) {
+    return true;
+  }
+  const directory = environment.PLUGIN_DATA;
+  if (directory === void 0) return false;
+  if (!path5.isAbsolute(directory) || process.platform === "win32" && ["\\", "/"].includes(path5.parse(directory).root)) {
+    return disabled("invalid-plugin-data");
+  }
+  try {
+    if (!statSync(directory).isDirectory()) return disabled("invalid-plugin-data");
+    const descriptor = openSync(path5.join(directory, "session-messaging.json"), constants.O_RDONLY | constants.O_NONBLOCK);
+    try {
+      const stat = fstatSync(descriptor);
+      if (!stat.isFile()) return disabled("invalid-file-type");
+      if (stat.size > 4096) return disabled("too-large");
+      const bytes = Buffer.alloc(4097);
+      let length = 0;
+      while (length < bytes.length) {
+        const count = readSync(descriptor, bytes, length, bytes.length - length, null);
+        if (count === 0) break;
+        length += count;
+      }
+      if (length > 4096) return disabled("too-large");
+      let settings;
+      try {
+        settings = record(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes.subarray(0, length))));
+      } catch {
+        return disabled("invalid-settings");
+      }
+      const gemini = record(settings.gemini);
+      if (settings.schemaVersion !== "1.0.0" || typeof gemini.queueWake !== "boolean") return disabled("invalid-settings");
+      return gemini.queueWake;
+    } finally {
+      closeSync(descriptor);
+    }
+  } catch (error) {
+    return error.code === "ENOENT" ? false : disabled("read-failed");
+  }
+}
 function hostDeliveryProfile(host, environment = process.env, diagnose = (reason) => {
-  console.error(`[agent-governance-suite] Codex queue settings: ${reason}; using codex-deferred.`);
+  console.error(`[agent-governance-suite] ${host} queue settings: ${reason}; using codex-deferred.`);
 }) {
-  const transport = host === "claude-code" ? "claude-inbox" : host === "gemini" ? "codex-deferred" : codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred";
+  const transport = host === "claude-code" ? "claude-inbox" : host === "gemini" ? geminiQueueEnabled(environment, diagnose) ? "gemini-queue" : "codex-deferred" : codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred";
   return { transport, capabilities: transportDeliveryCapabilities(transport), blocksEmptyWakePrompt: host === "codex" };
 }
 function nativePeerWait(observation) {
@@ -1167,7 +1257,7 @@ async function runSessionMessageHook(host, raw, explicitHostPid) {
     return "";
   }
 }
-if (path5.resolve(process.argv[1] ?? "") === fileURLToPath2(import.meta.url)) {
+if (path6.resolve(process.argv[1] ?? "") === fileURLToPath2(import.meta.url)) {
   let raw = "";
   try {
     raw = readFileSync2(0, "utf8");

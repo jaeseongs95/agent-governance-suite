@@ -28,7 +28,8 @@ import { runSessionMessageCli } from "../../mcp-server/src/session-message-cli.j
 import { handleSessionMessageHook, sessionMessageEnvelope, sessionMessageTransport } from "../../mcp-server/src/session-message-hook.js";
 import { runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
-import { claudeWakeOutcome, codexWakeOutcome, relayIdentityDecision, ringClaude, shouldReleaseWake, transportWakeCapabilities, wakeBackoffDelay, wakeRetryState } from "../../mcp-server/src/session-message-relay.js";
+import { claudeWakeOutcome, codexWakeOutcome, geminiWakeOutcome, relayIdentityDecision, ringClaude, shouldReleaseWake, transportWakeCapabilities, wakeBackoffDelay, wakeRetryState } from "../../mcp-server/src/session-message-relay.js";
+import { resolveGeminiAgentApi } from "../../mcp-server/src/session-message-wake-port.js";
 import { MESSAGE_BODY_MAX_BYTES, PRESENCE_LEASE_MS, SessionMessageStore, WAKE_RETIRE_GRACE_MS, WAKE_TTL_MS } from "../../mcp-server/src/session-message-store.js";
 import { processIdentityState } from "../../mcp-server/src/process-identity.js";
 import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "../../mcp-server/src/session-message-protocol.js";
@@ -781,9 +782,21 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(sessionMessageTransport("codex", { AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "0" })).toBe("codex-deferred");
     expect(sessionMessageTransport("codex", { AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" })).toBe("codex-queue");
     expect(sessionMessageTransport("claude-code", { AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" })).toBe("claude-inbox");
+    expect(sessionMessageTransport("gemini", {})).toBe("codex-deferred");
+    expect(sessionMessageTransport("gemini", { AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE: "1" })).toBe("gemini-queue");
+    expect(sessionMessageTransport("gemini", { ANTIGRAVITY_AGENT: "1" })).toBe("gemini-queue");
+    expect(sessionMessageTransport("gemini", { ANTIGRAVITY_AGENT: "1", AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE: "0" })).toBe("codex-deferred");
     expect(transportWakeCapabilities("codex-deferred")).toEqual({ wakeVisibility: "none", canWakeSilently: false });
     expect(transportWakeCapabilities("codex-queue")).toEqual({ wakeVisibility: "user-message", canWakeSilently: false });
     expect(transportWakeCapabilities("claude-inbox")).toEqual({ wakeVisibility: "silent", canWakeSilently: true });
+    expect(transportWakeCapabilities("gemini-queue")).toEqual({ wakeVisibility: "user-message", canWakeSilently: false });
+    expect(geminiWakeOutcome(null, true)).toBe("submitted");
+    expect(geminiWakeOutcome(new Error("fail"), true)).toBe("accepted-or-unknown");
+    expect(geminiWakeOutcome(new Error("fail"), false)).toBe("definite-failure");
+    expect(resolveGeminiAgentApi({ ANTIGRAVITY_AGENTAPI_EXE: "C:/bin/ls.exe" })).toEqual({
+      command: "C:/bin/ls.exe",
+      argsPrefix: ["agentapi"],
+    });
   });
 
   it("resolves plugin queue settings only after explicit ENV and only for Codex", async () => {

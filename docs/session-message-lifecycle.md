@@ -110,6 +110,7 @@ receipt는 `authorityEffect: none`이다. 이 검사는 협력하는 로컬 hook
 | claude-inbox | peer-wake·tool-boundary·turn-end, silent next | 실제 peer-wake hook 관측 필요 |
 | codex-queue | peer-wake·tool-boundary, user-message | 실제 peer-wake hook 관측 필요 |
 | codex-deferred | tool-boundary만, idle wake 없음 | idle 알림 발송 0 |
+| gemini-queue | peer-wake·tool-boundary, user-message | 실제 peer-wake hook 관측 필요 |
 
 공통 relay는 outcome/capability/dispatch port만 사용한다. transport 등록과 vendor SDK·protocol은 adapter 모듈에 둔다. 다른 vendor도 같은 port를 주입할 수 있으며 공통 알림 상태에 vendor 분기를 추가하지 않는다. 이 경로는 host queue 목록·취소·삭제를 호출하지 않는다.
 

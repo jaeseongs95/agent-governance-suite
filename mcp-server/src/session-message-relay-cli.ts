@@ -12,5 +12,5 @@ const transport = argument("--transport");
 const parentPid = Number.parseInt(argument("--parent-pid") ?? "", 10);
 const parentStartToken = argument("--parent-start-token");
 
-if (!host || !sessionId || !instanceId || (transport !== "codex-deferred" && transport !== "codex-queue" && transport !== "claude-inbox") || !Number.isInteger(parentPid) || !parentStartToken) process.exitCode = 2;
+if (!host || !sessionId || !instanceId || (transport !== "codex-deferred" && transport !== "codex-queue" && transport !== "claude-inbox" && transport !== "gemini-queue") || !Number.isInteger(parentPid) || !parentStartToken) process.exitCode = 2;
 else void runSessionMessageRelay({ host, sessionId, instanceId, transport, parentPid, parentStartToken }).catch(() => { process.exitCode = 1; });

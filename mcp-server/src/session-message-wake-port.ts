@@ -1,6 +1,8 @@
 import { execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
 import net from "node:net";
+import path from "node:path";
 import type { DeliveryCapabilities, InputObservation } from "./input-observation.js";
 import type { SessionIdentity } from "./session-message-store.js";
 import { TrustStore } from "./trust-store.js";
@@ -24,6 +26,35 @@ export function codexWakeOutcome(error: unknown, spawned: boolean): WakeDispatch
 }
 export function claudeWakeOutcome(hadError: boolean, connected: boolean, wrote: boolean): WakeDispatchOutcome {
   return !hadError && wrote ? "submitted" : connected || wrote ? "accepted-or-unknown" : "definite-failure";
+}
+export function geminiWakeOutcome(error: unknown, spawned: boolean): WakeDispatchOutcome {
+  return !error ? "submitted" : spawned ? "accepted-or-unknown" : "definite-failure";
+}
+export function resolveGeminiAgentApi(environment: NodeJS.ProcessEnv = process.env): { command: string; argsPrefix: string[] } {
+  if (environment.ANTIGRAVITY_AGENTAPI_EXE) {
+    return { command: environment.ANTIGRAVITY_AGENTAPI_EXE, argsPrefix: ["agentapi"] };
+  }
+  const homeDir = environment.USERPROFILE || environment.HOME || "";
+  const batPath = path.join(homeDir, ".gemini", "antigravity", "bin", "agentapi.bat");
+  const shPath = path.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
+  if (process.platform === "win32" && existsSync(batPath)) {
+    return { command: batPath, argsPrefix: [] };
+  }
+  if (existsSync(shPath)) {
+    return { command: shPath, argsPrefix: [] };
+  }
+  return { command: "agentapi", argsPrefix: [] };
+}
+function ringGemini(sessionId: string, message: string, environment: NodeJS.ProcessEnv = process.env): Promise<WakeDispatchOutcome> {
+  return new Promise((resolve) => {
+    let spawned = false;
+    const { command, argsPrefix } = resolveGeminiAgentApi(environment);
+    const args = [...argsPrefix, "send-message", sessionId, message];
+    const child = execFile(command, args,
+      { windowsHide: true, timeout: 10_000 }, (error) => resolve(geminiWakeOutcome(error, spawned)));
+    child.once("spawn", () => { spawned = true; });
+    child.once("error", (error) => resolve(geminiWakeOutcome(error, spawned)));
+  });
 }
 function ringCodex(sessionId: string, message: string): Promise<WakeDispatchOutcome> {
   return new Promise((resolve) => {
@@ -69,6 +100,8 @@ const ports: ReadonlyMap<string, WakeDispatchPort> = new Map<string, WakeDispatc
     dispatch: (target, message) => ringCodex(target.sessionId, message) }],
   ["codex-deferred", { capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" },
     dispatch: async () => "definite-failure" }],
+  ["gemini-queue", { capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" },
+    dispatch: (target, message) => ringGemini(target.sessionId, message) }],
 ]);
 export function transportWakePort(transport: string): WakeDispatchPort {
   const port = ports.get(transport);

@@ -368,7 +368,9 @@ function processIdentityState(pid, expectedStartToken, readStartToken = processS
 
 // mcp-server/src/session-message-wake-port.ts
 import { execFile } from "node:child_process";
+import { existsSync as existsSync2 } from "node:fs";
 import net from "node:net";
+import path3 from "node:path";
 
 // mcp-server/src/trust-store.ts
 import { DatabaseSync } from "node:sqlite";
@@ -382,6 +384,41 @@ function codexWakeOutcome(error, spawned) {
 }
 function claudeWakeOutcome(hadError, connected, wrote) {
   return !hadError && wrote ? "submitted" : connected || wrote ? "accepted-or-unknown" : "definite-failure";
+}
+function geminiWakeOutcome(error, spawned) {
+  return !error ? "submitted" : spawned ? "accepted-or-unknown" : "definite-failure";
+}
+function resolveGeminiAgentApi(environment = process.env) {
+  if (environment.ANTIGRAVITY_AGENTAPI_EXE) {
+    return { command: environment.ANTIGRAVITY_AGENTAPI_EXE, argsPrefix: ["agentapi"] };
+  }
+  const homeDir = environment.USERPROFILE || environment.HOME || "";
+  const batPath = path3.join(homeDir, ".gemini", "antigravity", "bin", "agentapi.bat");
+  const shPath = path3.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
+  if (process.platform === "win32" && existsSync2(batPath)) {
+    return { command: batPath, argsPrefix: [] };
+  }
+  if (existsSync2(shPath)) {
+    return { command: shPath, argsPrefix: [] };
+  }
+  return { command: "agentapi", argsPrefix: [] };
+}
+function ringGemini(sessionId2, message, environment = process.env) {
+  return new Promise((resolve) => {
+    let spawned = false;
+    const { command, argsPrefix } = resolveGeminiAgentApi(environment);
+    const args = [...argsPrefix, "send-message", sessionId2, message];
+    const child = execFile(
+      command,
+      args,
+      { windowsHide: true, timeout: 1e4 },
+      (error) => resolve(geminiWakeOutcome(error, spawned))
+    );
+    child.once("spawn", () => {
+      spawned = true;
+    });
+    child.once("error", (error) => resolve(geminiWakeOutcome(error, spawned)));
+  });
 }
 function ringCodex(sessionId2, message) {
   return new Promise((resolve) => {
@@ -439,6 +476,10 @@ var ports = /* @__PURE__ */ new Map([
   ["codex-deferred", {
     capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" },
     dispatch: async () => "definite-failure"
+  }],
+  ["gemini-queue", {
+    capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" },
+    dispatch: (target, message) => ringGemini(target.sessionId, message)
   }]
 ]);
 function transportWakePort(transport2) {
@@ -584,7 +625,7 @@ var instanceId = argument("--instance-id");
 var transport = argument("--transport");
 var parentPid = Number.parseInt(argument("--parent-pid") ?? "", 10);
 var parentStartToken = argument("--parent-start-token");
-if (!host || !sessionId || !instanceId || transport !== "codex-deferred" && transport !== "codex-queue" && transport !== "claude-inbox" || !Number.isInteger(parentPid) || !parentStartToken) process.exitCode = 2;
+if (!host || !sessionId || !instanceId || transport !== "codex-deferred" && transport !== "codex-queue" && transport !== "claude-inbox" && transport !== "gemini-queue" || !Number.isInteger(parentPid) || !parentStartToken) process.exitCode = 2;
 else void runSessionMessageRelay({ host, sessionId, instanceId, transport, parentPid, parentStartToken }).catch(() => {
   process.exitCode = 1;
 });

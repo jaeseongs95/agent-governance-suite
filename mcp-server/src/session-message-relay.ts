@@ -4,7 +4,7 @@ import { newWakeNonce, sessionMessageRequest, wakeMessage } from "./session-mess
 import { processExists, processIdentityState, type ProcessIdentityState } from "./process-identity.js";
 import { transportWakePort, transportDeliveryCapabilities, wakeBackoffDelay, type WakeDispatchPort, type WakeDispatchOutcome } from "./session-message-wake-port.js";
 import type { WakeReservation } from "./session-message-store.js";
-export { transportDeliveryCapabilities, wakeBackoffDelay, codexWakeOutcome, claudeWakeOutcome, ringClaude,
+export { transportDeliveryCapabilities, wakeBackoffDelay, codexWakeOutcome, claudeWakeOutcome, geminiWakeOutcome, ringClaude,
   type WakeDispatchOutcome } from "./session-message-wake-port.js";
 
 const LOOP_MS = 5000;

@@ -492,6 +492,7 @@ test('W05-r2 hook-before-outcome, adapter exception and new vendor use the same 
 test('W05-r2 both host capabilities preserve submission/observation distinction and deferred idle wake zero', async () => {
   assert.deepEqual(transportDeliveryCapabilities('claude-inbox'), { supportedInjection: ['peer-wake', 'tool-boundary', 'turn-end'], idleWake: 'silent' });
   assert.deepEqual(transportDeliveryCapabilities('codex-queue'), { supportedInjection: ['peer-wake', 'tool-boundary'], idleWake: 'user-message' });
+  assert.deepEqual(transportDeliveryCapabilities('gemini-queue'), { supportedInjection: ['peer-wake', 'tool-boundary'], idleWake: 'user-message' });
   assert.deepEqual(transportDeliveryCapabilities('codex-deferred'), { supportedInjection: ['tool-boundary'], idleWake: 'none' });
   assert.throws(() => transportDeliveryCapabilities('missing-adapter'), /unavailable/);
   let calls = 0;
