@@ -6,6 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import "../../mcp-server/src/builtin-hook-host-adapters.js";
 import { nativePeerWait, adaptHostInput } from "../../mcp-server/src/host-input-adapter.js";
 import { PeerWaitPolicy } from "../../mcp-server/src/peer-wait-policy.js";
 import { dispatchSessionMessageBrokerOperation as dispatch } from "../../mcp-server/src/session-message-broker.js";
@@ -151,7 +152,8 @@ describe("peer wait policy boundaries", () => {
 
   it("does not promote supplied capability, ACK or old relay registration to resume", () => {
     const store = storeFixture();
-    store.acknowledge(target, ["outgoing-peer"]);
+    expect(store.claim(target).map(message => message.messageId)).toContain("outgoing-peer");
+    expect(store.acknowledge(target, ["outgoing-peer"])).toBe(1);
     expect(decision(store, 60_000, { resumeObserved: true, approved: true, capabilities: { idleWake: "silent" } })).toMatchObject({ action: "bounded", resume: "unknown" });
   });
 

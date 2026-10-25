@@ -50,6 +50,10 @@ async function launch(mode: string) {
     };
     async function fileState(name: string) {
       try {
+        if (name === "broker.lock") {
+          const owners = await readdir(path.join(directory, name));
+          return { exists: true, kind: "directory", owners };
+        }
         const file = await open(path.join(directory, name), "r");
         try {
           const buffer = Buffer.alloc(4096);
@@ -81,7 +85,7 @@ it("retries transient endpoint publication failures and serves the published end
   expect(JSON.parse(await readFile(path.join(directory, "endpoint.json"), "utf8")).pid).toBe(child.pid);
   await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toMatchObject({
     protocolVersion: "1.0.0",
-    capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy"],
+    capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start"],
   });
   expect((await readdir(directory)).filter((name) => name.endsWith(".tmp"))).toEqual([]);
 });
@@ -106,7 +110,7 @@ it.each(["permanent", "ENOSPC", "credentials", "database"])("releases startup re
   await waitForSessionMessageBrokerReady(directory, recovered, 3000);
   await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toMatchObject({
     protocolVersion: "1.0.0",
-    capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy"],
+    capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start"],
   });
 });
 
@@ -166,4 +170,53 @@ it("isolates socket resets and a lost send response while preserving the broker 
   await expect(requestSessionMessageOnce("claim", { target }, directory)).resolves.toMatchObject({ messages: [{ messageId: draft.messageId, body: "One immutable message" }] });
   await expect(requestSessionMessageOnce("acknowledge", { target, messageIds: [draft.messageId] }, directory)).resolves.toEqual({ acknowledged: 1 });
   expect(JSON.parse(await readFile(countsPath, "utf8"))).toMatchObject({ send: 2, responseDrops: 1 });
+});
+
+it.each(["empty-directory", "legacy-empty-file", "legacy-pid-file"] as const)(
+  "reports preserved unsupported lock state through the packaged CLI (%s)", async mode => {
+    const directory = await mkdtemp(path.join(tmpdir(), "broker-lock-diagnostic-"));
+    directories.push(directory);
+    const lockPath = path.join(directory, "broker.lock");
+    const legacyBytes = mode === "legacy-pid-file" ? "999999\n" : "";
+    if (mode === "empty-directory") await mkdir(lockPath);
+    else await writeFile(lockPath, legacyBytes, "utf8");
+    await writeFile(path.join(directory, "endpoint.json"), "previous endpoint\n", "utf8");
+    const child = spawn(process.execPath, [broker, "--state-directory", directory], {
+      windowsHide: true, stdio: ["ignore", "pipe", "pipe"], timeout: 5000,
+    });
+    children.push(child);
+    let stdout = "", stderr = "";
+    child.stdout!.on("data", (chunk: Buffer) => { stdout += chunk.toString(); });
+    child.stderr!.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
+    const [exitCode, signal] = await once(child, "close");
+    expect(signal).toBeNull();
+    expect(exitCode).toBe(1);
+    const code = mode === "empty-directory" ? "BROKER_LOCK_EMPTY_DIRECTORY" : "BROKER_LOCK_UNSUPPORTED_PATH";
+    expect(stderr).toBe(`Session message broker startup failed (${code}).\n`);
+    expect(stdout).toBe("");
+    expect(await readFile(path.join(directory, "endpoint.json"), "utf8")).toBe("previous endpoint\n");
+    if (mode === "empty-directory") expect(await readdir(lockPath)).toEqual([]);
+    else expect(await readFile(lockPath, "utf8")).toBe(legacyBytes);
+    expect((await readdir(directory)).sort()).toEqual(["broker.lock", "endpoint.json"]);
+  });
+
+it("a successfully probed live owner keeps the CLI contention outcome", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "broker-live-contention-"));
+  directories.push(directory);
+  const owner = "owner-" + process.pid + "-" + "a".repeat(32);
+  await mkdir(path.join(directory, "broker.lock", owner), { recursive: true });
+  const child = spawn(process.execPath, [broker, "--state-directory", directory], {
+    windowsHide: true, stdio: ["ignore", "pipe", "pipe"], timeout: 5000,
+  });
+  children.push(child);
+  let stdout = "", stderr = "";
+  child.stdout!.on("data", (chunk: Buffer) => { stdout += chunk.toString(); });
+  child.stderr!.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
+  const [exitCode, signal] = await once(child, "close");
+  expect(signal).toBeNull();
+  expect(exitCode).toBe(0);
+  expect(stdout).toBe("");
+  expect(stderr).toBe("");
+  expect(await readdir(path.join(directory, "broker.lock"))).toEqual([owner]);
+  expect(await readdir(directory)).toEqual(["broker.lock"]);
 });

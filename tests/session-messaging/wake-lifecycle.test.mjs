@@ -675,3 +675,60 @@ test('public wake binding requires a fresh presence birth after lease expiry', (
     canWakeSilently: true, deliveryCapabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' } }, expiry + 1);
   assert.notEqual(f.store.presence(target, expiry + 1).startedAt, new Date(f.now).toISOString());
 });
+
+function observedThenCurrent(f) {
+  body(f.store, 'already-observed-body', f.now);
+  const old = begin(f.store, f.now);
+  f.store.recordManagedWakeOutcome(old, 'submitted', f.now + 2);
+  const oldReceipt = observe(f, old, f.now + 3);
+  assert.deepEqual(hostClaim(f, oldReceipt, f.now + 4).messages.map(message => message.messageId), ['already-observed-body']);
+  f.store.acknowledge(target, ['already-observed-body'], f.now + 5);
+  const oldRow = f.store.database.prepare('SELECT * FROM wake_nonces WHERE attempt_id = ?').get(old.attemptId);
+  body(f.store, 'current-body', f.now + 6);
+  const current = begin(f.store, f.now + 7, reservation('current-after-observed-nonce-abcdefghijklmnop'));
+  f.store.recordManagedWakeOutcome(current, 'submitted', f.now + 9);
+  return { old, current, oldRow, oldReceipt };
+}
+
+test('fresh verified observed A plus current B receipt claims only B once and preserves A', () => {
+  const f = fixture(); const { old, current, oldRow } = observedThenCurrent(f);
+  const mixed = observe(f, current, f.now + 10, {
+    prompt: '[agent-governance-suite:wake:' + old.nonce + ']\n[agent-governance-suite:wake:' + current.nonce + ']',
+  });
+  const claimed = hostClaim(f, mixed, f.now + 11);
+  assert.equal(claimed.recognized, true);
+  assert.deepEqual(claimed.messages.map(message => message.messageId), ['current-body']);
+  assert.equal(claimed.binding.attemptId, current.attemptId);
+  assert.equal(f.store.managedWakeStatus(target, f.now + 11).state, 'observed');
+  assert.deepEqual(f.store.database.prepare('SELECT * FROM wake_nonces WHERE attempt_id = ?').get(old.attemptId), oldRow);
+  assert.equal(hostClaim(f, mixed, f.now + 12).recognized, false);
+  assert.deepEqual(hostClaim(f, observe(f, current, f.now + 13), f.now + 14).messages, []);
+});
+
+test.each(['terminal-only', 'unknown', 'stale-receipt', 'digest-mismatch', 'wrong-target', 'native-input', 'old-generation'])('observed A cannot grant body authority when B is invalid: %s', variant => {
+  const f = fixture(); const { old, current, oldRow, oldReceipt } = observedThenCurrent(f);
+  let prompt = '[agent-governance-suite:wake:' + old.nonce + ']';
+  if (variant !== 'terminal-only') prompt += '\n[agent-governance-suite:wake:'
+    + (variant === 'unknown' ? 'unknown-current-nonce-abcdefghijklmnop' : current.nonce) + ']';
+  if (variant === 'native-input') prompt += '\nordinary user text';
+  if (variant === 'old-generation') {
+    f.store.endPresence(target, 'fixture rebirth', 'instance-1', f.now + 10);
+    f.store.startPresence({ ...target, instanceId: 'instance-2', transport: 'portable',
+      wakeVisibility: 'silent', canWakeSilently: true,
+      deliveryCapabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' } }, f.now + 11);
+  }
+  const received = variant === 'native-input'
+    ? { observation: adaptHostInput({ hook_event_name: 'UserPromptSubmit', session_id: target.sessionId,
+      agent_id: '', prompt }, target.host).observation, sourceReceiptId: oldReceipt.sourceReceiptId }
+    : observe(f, current, f.now + 12, { prompt });
+  if (variant === 'stale-receipt') received.sourceReceiptId = oldReceipt.sourceReceiptId;
+  if (variant === 'digest-mismatch') received.observation = { ...received.observation, wakeCandidates: [old.nonce, 'forged-current-nonce-abcdefghijklmnop'] };
+  const result = variant === 'wrong-target'
+    ? f.store.claimHostWake({ ...target, sessionId: 'wrong-target' }, received.observation, received.sourceReceiptId, wakeHookObservationReader, f.now + 13)
+    : hostClaim(f, received, f.now + 13);
+  assert.equal(result.recognized, false);
+  assert.deepEqual(result.messages, []);
+  assert.equal(f.store.pendingCount(target, f.now + 13), 1);
+  assert.deepEqual(f.store.database.prepare('SELECT * FROM wake_nonces WHERE attempt_id = ?').get(old.attemptId), oldRow);
+  if (variant !== 'old-generation') assert.equal(f.store.managedWakeStatus(target, f.now + 13).state, 'submitted');
+});

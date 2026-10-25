@@ -31,6 +31,8 @@ export interface RelayOptions {
   transport: SessionMessageTransport;
   parentPid: number;
   parentStartToken: string;
+  /** Optional verified startup reservation; absence retains legacy acquisition. */
+  relayId?: string;
 }
 
 export function transportWakeCapabilities(transport: SessionMessageTransport): {
@@ -81,7 +83,8 @@ export async function dispatchManagedWake(options: Pick<RelayOptions, "host" | "
 
 export async function runSessionMessageRelay(options: RelayOptions, port: WakeDispatchPort = transportWakePort(options.transport)): Promise<void> {
   const target = { host: options.host, sessionId: options.sessionId };
-  const relayId = randomUUID();
+  if (options.relayId !== undefined && (!/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(options.relayId) || !/^host-process-v1:[0-9a-f]{64}$/u.test(options.instanceId) || !options.relayId.endsWith(":"+options.instanceId.slice("host-process-v1:".length)))) throw new Error("Invalid relay startup reservation.");
+  const relayId = options.relayId ?? randomUUID();
   let acquired = false;
   let acquisitionUnknowns = 0;
   for (let attempt = 0; attempt < 6; attempt += 1) {
@@ -98,6 +101,7 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
           pid: process.pid,
           parentPid: options.parentPid,
           instanceId: options.instanceId,
+          ...(options.relayId ? {parentStartToken:options.parentStartToken}:{}),
         });
         acquired = result.acquired;
         if (acquired) break;
@@ -157,11 +161,11 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
     }
   } finally {
     try {
-      await sessionMessageRequest("presence-end", {
-        target,
-        instanceId: options.instanceId,
-        reason: "host-process-ended",
-      }, undefined, { totalTimeoutMs: 3_000 });
+      if (options.relayId) {
+        await sessionMessageRequest("release-verified-relay",{target,transport:options.transport,relayId,instanceId:options.instanceId,pid:process.pid},undefined,{totalTimeoutMs:3000,noOperationReplay:true});
+      } else {
+        await sessionMessageRequest("presence-end",{target,instanceId:options.instanceId,reason:"host-process-ended"},undefined,{totalTimeoutMs:3000});
+      }
     } catch { /* Lease expiry still provides an unreachable fallback. */ }
   }
 }

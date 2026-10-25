@@ -5,6 +5,7 @@ import { writeFileSync } from "node:fs";
 const createServer = tls.createServer;
 let dropped = false;
 const counts = {};
+const operations = [];
 tls.createServer = function (options, listener) {
   return createServer.call(this, options, (socket) => {
     let operation;
@@ -15,6 +16,10 @@ tls.createServer = function (options, listener) {
       try {
         operation = JSON.parse(buffer.split("\n")[0]).operation;
         counts[operation] = (counts[operation] ?? 0) + 1;
+        if (process.env.AGS_MESSAGE_SEQUENCE_PATH) {
+          operations.push(operation);
+          writeFileSync(process.env.AGS_MESSAGE_SEQUENCE_PATH, JSON.stringify(operations), "utf8");
+        }
         writeFileSync(process.env.AGS_MESSAGE_COUNTS_PATH, JSON.stringify(counts), "utf8");
       } catch { /* Product owns malformed input handling. */ }
       buffer = "";

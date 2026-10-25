@@ -3,11 +3,14 @@ import { once } from "node:events";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { performance } from "node:perf_hooks";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { afterEach, expect, it, vi } from "vitest";
 import { SessionMessageStore, MESSAGE_DRAFT_TTL_MS } from "../../mcp-server/src/session-message-store.js";
 import { dispatchSessionMessageBrokerOperation as dispatch } from "../../mcp-server/src/session-message-broker.js";
 import { requestSessionMessageOnce, sessionMessageRequest, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
+import { runSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
+import { TrustStore } from "../../mcp-server/src/trust-store.js";
 
 const sender = { host: "test-host", sessionId: "issued-owner" };
 const target = { host: "test-host", sessionId: "issued-recipient" };
@@ -139,7 +142,8 @@ it("applies global draft, receipt and byte backpressure without evicting valid r
     const owner = { ...sender, sessionId: `receipt-owner-${index}` };
     const draft = store.prepare({ sender: owner, target, body: "x" }, 602_000);
     store.submitPrepared(owner, draft.messageId, 602_000);
-    store.acknowledge(target, [draft.messageId], 602_000);
+    expect(store.claim(target, 602_000).map(message => message.messageId)).toEqual([draft.messageId]);
+    expect(store.acknowledge(target, [draft.messageId], 602_000)).toBe(1);
   };
   for (let index = 0; index < 999; index++) fillReceipt(index);
   // Prepared while one global receipt slot remains; the slot is then taken before this draft is sent.
@@ -171,7 +175,7 @@ it("applies global draft, receipt and byte backpressure without evicting valid r
 async function directory() { const value = await mkdtemp(path.join(tmpdir(), "ags-issued-")); directories.push(value); return value; }
 async function launch(drop = "") {
   const state = await directory();
-  const child = spawn(process.execPath, ["--import", new URL("./fixtures/message-response-loss.mjs", import.meta.url).href, path.join(root, "mcp-server/dist/session-message-broker.mjs"), "--state-directory", state], { windowsHide: true, stdio: "ignore", env: { ...process.env, AGS_DROP_MESSAGE_OPERATION: drop, AGS_MESSAGE_COUNTS_PATH: path.join(state, "operation-counts.json") } }); children.push(child);
+  const child = spawn(process.execPath, ["--import", new URL("./fixtures/message-response-loss.mjs", import.meta.url).href, path.join(root, "mcp-server/dist/session-message-broker.mjs"), "--state-directory", state], { windowsHide: true, stdio: "ignore", env: { ...process.env, AGS_DROP_MESSAGE_OPERATION: drop, AGS_MESSAGE_COUNTS_PATH: path.join(state, "operation-counts.json"), AGS_MESSAGE_SEQUENCE_PATH: path.join(state, "operation-sequence.json") } }); children.push(child);
   await waitForSessionMessageBrokerReady(state, child, 5000); return { state, child };
 }
 it("packaged TLS cycles use one request instead of three or two without changing pending state", async () => {
@@ -225,6 +229,64 @@ it("a real send reply loss retries the known ID once and survives broker restart
   expect(count(store)).toBe(1);
 }, 15_000);
 
+it.each([false, true])("claim response loss preserves legacy retry but opt-in no replay=%s claims at most one body", async (noOperationReplay) => {
+  const { state } = await launch("claim");
+  const drafts = [];
+  for (const body of ["Synthetic A", "Synthetic B"]) {
+    const draft = await requestSessionMessageOnce<{ messageId: string }>("prepare", { sender, target, body, ttlSeconds: 60 }, state);
+    await requestSessionMessageOnce("send", { sender, messageId: draft.messageId }, state);
+    drafts.push(draft);
+  }
+  const sequence = async () => JSON.parse(await readFile(path.join(state, "operation-sequence.json"), "utf8")) as string[];
+  const store = fixture(path.join(state, "session-messages.sqlite3"));
+  // Set two distinct synthetic creation instants; scheduling cannot decide the expected claim order.
+  drafts.forEach((draft, index) => store.database.prepare("UPDATE messages SET created_at = ? WHERE message_id = ?")
+    .run(new Date(Date.now() - 2000 + index * 1000).toISOString(), draft.messageId));
+  const before = (await sequence()).length;
+  const onOperationWrite = vi.fn();
+  const pending = sessionMessageRequest<{ messages: { messageId: string }[] }>("claim", { target, maxMessages: 1 }, state,
+    { totalTimeoutMs: 7000, ...(noOperationReplay ? { noOperationReplay, deadlineMonotonicMs: performance.now() + 7000, onOperationWrite } : {}) });
+  if (noOperationReplay) await expect(pending).rejects.toThrow();
+  else expect((await pending).messages).toMatchObject([{ messageId: drafts[1]!.messageId }]);
+  const operations = (await sequence()).slice(before);
+  expect(operations.filter((operation) => operation === "claim")).toHaveLength(noOperationReplay ? 1 : 2);
+  if (noOperationReplay) {
+    expect(operations).toEqual(["ping", "claim"]);
+    expect(onOperationWrite).toHaveBeenCalledTimes(1);
+  }
+  expect(JSON.parse(await readFile(path.join(state, "operation-counts.json"), "utf8"))).toMatchObject({ claim: noOperationReplay ? 1 : 2, responseDrops: 1 });
+  expect(store.status(sender, drafts[0]!.messageId)).toMatchObject({ state: "delivered", deliveryAttempts: 1, acknowledgedAt: null });
+  expect(store.status(sender, drafts[1]!.messageId)).toMatchObject({ state: noOperationReplay ? "queued" : "delivered", deliveryAttempts: noOperationReplay ? 0 : 1, acknowledgedAt: null });
+}, 15_000);
+
+it.each(["lost-reply", "success", "receipt-failure"])("the actual hook retains claim phases across real TLS and receipt handling: %s", async (mode) => {
+  const { state } = await launch(mode === "lost-reply" ? "claim-turn-end" : "");
+  const recipient = { host: "claude-code", sessionId: "budgeted-tls-recipient" };
+  const draft = await requestSessionMessageOnce<{ messageId: string }>("prepare", { sender, target: recipient, body: "Synthetic budgeted hook body", ttlSeconds: 60 }, state);
+  await requestSessionMessageOnce("send", { sender, messageId: draft.messageId }, state);
+  const phases: { phase: string; messageIds: readonly string[] }[] = [];
+  vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", state);
+  vi.stubEnv("AGENT_GOVERNANCE_TRUST_DB_PATH", path.join(state, "trust.sqlite3"));
+  const close = vi.spyOn(TrustStore.prototype, "close");
+  const verify = mode === "receipt-failure" ? vi.spyOn(TrustStore.prototype, "verify").mockReturnValue(false) : undefined;
+  try {
+    const output = await runSessionMessageHook("claude-code", JSON.stringify({ hook_event_name: "Stop", session_id: recipient.sessionId }), undefined, {
+      executionBudget: { deadlineMonotonicMs: performance.now() + 7000, postClaimReserveMs: 500 },
+      onClaimState: (value) => { phases.push(value); },
+    });
+    expect(phases).toEqual(mode === "lost-reply" ? [{ phase: "request-attempted", messageIds: [] }] : [
+      { phase: "request-attempted", messageIds: [] }, { phase: "response-received", messageIds: [draft.messageId] },
+    ]);
+    if (mode === "success") expect(output).toContain("Synthetic budgeted hook body");
+    else expect(output).toBe("");
+    expect(close).toHaveBeenCalledTimes(mode === "lost-reply" ? 0 : 1);
+    const counts = JSON.parse(await readFile(path.join(state, "operation-counts.json"), "utf8"));
+    expect(counts["claim-turn-end"]).toBe(1); expect(counts.acknowledge ?? 0).toBe(0);
+    const store = fixture(path.join(state, "session-messages.sqlite3"));
+    expect(store.status(sender, draft.messageId)).toMatchObject({ state: "delivered", deliveryAttempts: 1, acknowledgedAt: null });
+  } finally { verify?.mockRestore(); close.mockRestore(); vi.unstubAllEnvs(); }
+}, 15_000);
+
 it("two independent processes submit one ID atomically and enforce sender preparation capacity", async () => {
   const state = await directory(); const database = path.join(state, "race.sqlite3"); const store = fixture(database);
   const draft = prepare(store);
@@ -269,4 +331,59 @@ it("packaged CLI discovers prepare/send and rejects old or unknown send with zer
   const unknown = cli("send", { sender, messageId: "unknown-issued-id" });
   expect(unknown.status).toBe(1); expect(JSON.parse(unknown.stdout).error).toMatch(/delivery may be unknown/u);
   expect(JSON.parse(cli("pending", { target }).stdout).data.count).toBe(1);
+}, 15_000);
+
+// r11 integration: use the adapter's default generated-module import, with no sessionMessageHook injection.
+// The two source-only unit suites alone cannot establish that the built consumer accepts fourth options.
+it.each(['success', 'lost-reply'])('r11 adapter consumes actual built common fourth options over real TLS: %s', async (mode) => {
+  const { state } = await launch(mode === 'lost-reply' ? 'claim-deferred' : '');
+  const recipient = { host: 'gemini', sessionId: 'r11-built-consumer-recipient' };
+  const drafts: { messageId: string }[] = [];
+  for (const body of ['Synthetic r11 A', 'Synthetic r11 B']) {
+    const draft = await requestSessionMessageOnce<{ messageId: string }>('prepare', { sender, target: recipient, body, ttlSeconds: 60 }, state);
+    await requestSessionMessageOnce('send', { sender, messageId: draft.messageId }, state);
+    drafts.push(draft);
+  }
+  const store = fixture(path.join(state, 'session-messages.sqlite3'));
+  drafts.forEach((draft, index) => store.database.prepare('UPDATE messages SET created_at = ? WHERE message_id = ?')
+    .run(new Date(Date.now() - 2000 + index * 1000).toISOString(), draft.messageId));
+  vi.stubEnv('AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR', state);
+  vi.stubEnv('AGENT_GOVERNANCE_TRUST_DB_PATH', path.join(state, 'r11-trust.sqlite3'));
+  vi.stubEnv('AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE', '0');
+  try {
+    const { executeAntigravityHookEvent, createClaimStateTracker, finalizeConnectorOutput } = await import(
+      pathToFileURL(path.join(root, 'antigravity-connector/hooks/antigravity-hook-runner.mjs')).href);
+    const phases: { phase: string; messageIds: readonly string[] }[] = [];
+    const tracker = createClaimStateTracker((value: { phase: string; messageIds: readonly string[] }) => { phases.push(value); });
+    const output = await executeAntigravityHookEvent({ conversationId: recipient.sessionId, agent_id: '' }, 'PreInvocation', 'session-message', {
+      entryMonotonicMs: performance.now(), totalBudgetMs: 7000, postClaimReserveMs: 500, claimTracker: tracker,
+    });
+    expect(phases).toEqual(mode === 'lost-reply' ? [{ phase: 'request-attempted', messageIds: [] }] : [
+      { phase: 'request-attempted', messageIds: [] }, { phase: 'response-received', messageIds: [drafts[0]!.messageId] },
+    ]);
+    expect(tracker.getSnapshot().state).toBe(mode === 'lost-reply' ? 'claim-result-unknown' : 'after-claim-before-output');
+    if (mode === 'success') expect(JSON.stringify(output)).toContain('Synthetic r11 A');
+    else expect(output).toEqual({});
+    const counts = JSON.parse(await readFile(path.join(state, 'operation-counts.json'), 'utf8'));
+    expect(counts['claim-deferred']).toBe(1); expect(counts.acknowledge ?? 0).toBe(0);
+    expect(store.status(sender, drafts[0]!.messageId)).toMatchObject({ state: 'delivered', deliveryAttempts: 1, acknowledgedAt: null });
+    expect(store.status(sender, drafts[1]!.messageId)).toMatchObject({ state: 'queued', deliveryAttempts: 0, acknowledgedAt: null });
+    const diagnostics: string[] = [];
+    let writes = 0;
+    finalizeConnectorOutput(mode === 'success' ? JSON.stringify(output) : '', tracker, {
+      env: {}, writeStdout: (_text: string, callback: (error: Error | null) => void) => { writes++; callback(null); },
+      writeStderr: (line: string) => { diagnostics.push(line); },
+    });
+    expect(writes).toBe(mode === 'success' ? 1 : 0);
+    expect(tracker.getSnapshot().state).toBe(mode === 'success' ? 'stdout-written-not-consumed' : 'claim-result-unknown');
+    expect(tracker.getSnapshot().hostConsumedConfirmed).toBe(false);
+    expect(diagnostics.length).toBe(mode === 'lost-reply' ? 1 : 0);
+    if (diagnostics.length) {
+      const diagnostic = JSON.parse(diagnostics[0]!).agsAntigravityHookDiagnostic;
+      expect(Object.keys(diagnostic).sort()).toEqual(['claimState', 'hostConsumedConfirmed', 'messageCount', 'observerError', 'reentered']);
+      expect(diagnostic).toMatchObject({ claimState: 'claim-result-unknown', hostConsumedConfirmed: false, messageCount: 0 });
+      expect(diagnostics.join('')).not.toContain('Synthetic r11');
+      for (const draft of drafts) expect(diagnostics.join('')).not.toContain(draft.messageId);
+    }
+  } finally { vi.unstubAllEnvs(); }
 }, 15_000);

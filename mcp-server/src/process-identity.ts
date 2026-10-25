@@ -2,8 +2,9 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
 /** Returns an OS process creation token when the platform exposes one without native dependencies. */
-export function processStartToken(pid: number, platform: NodeJS.Platform = process.platform): string | null {
+export function processStartToken(pid: number, platform: NodeJS.Platform = process.platform, timeoutMs?: number): string | null {
   if (!Number.isInteger(pid) || pid < 1) return null;
+  if (timeoutMs !== undefined && (!Number.isFinite(timeoutMs) || timeoutMs < 1)) return null;
   try {
     if (platform === "win32") {
       return execFileSync("powershell.exe", [
@@ -11,14 +12,14 @@ export function processStartToken(pid: number, platform: NodeJS.Platform = proce
         "-NonInteractive",
         "-Command",
         `(Get-Process -Id ${pid} -ErrorAction Stop).StartTime.ToUniversalTime().ToString('o')`,
-      ], { encoding: "utf8", windowsHide: true, timeout: 5000, stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
+      ], { encoding: "utf8", windowsHide: true, timeout: Math.min(5000, Math.floor(timeoutMs ?? 5000)), stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
     }
     if (platform === "linux") {
       const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
       const fields = stat.slice(stat.lastIndexOf(")") + 2).trim().split(/\s+/u);
       return fields[19] ?? null;
     }
-    return execFileSync("ps", ["-p", String(pid), "-o", "lstart="], { encoding: "utf8", timeout: 3000, stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
+    return execFileSync("ps", ["-p", String(pid), "-o", "lstart="], { encoding: "utf8", timeout: Math.min(3000, Math.floor(timeoutMs ?? 3000)), stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
   } catch {
     return null;
   }

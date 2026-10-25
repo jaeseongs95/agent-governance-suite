@@ -1,5 +1,5 @@
 import { mkdtempSync } from "node:fs";
-import { copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { copyFile, lstat, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
 import { createHash } from "node:crypto";
@@ -24,6 +24,7 @@ import {
   waitForSessionMessageBrokerReady,
 } from "../../mcp-server/src/session-message-client.js";
 import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/session-message-broker.js";
+import { acquireBrokerProcessLock, releaseBrokerProcessLock } from "../../mcp-server/src/broker-process-lock.js";
 import { runSessionMessageCli } from "../../mcp-server/src/session-message-cli.js";
 import { handleSessionMessageHook, sessionMessageEnvelope, sessionMessageTransport } from "../../mcp-server/src/session-message-hook.js";
 import { runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
@@ -70,14 +71,37 @@ async function optionalFile(target: string): Promise<string | null> {
   }
 }
 
+async function brokerLockPid(target: string): Promise<number | null> {
+  try {
+    const info = await lstat(target);
+    if (info.isSymbolicLink()) throw new Error("The test broker lock must not be a link.");
+    if (info.isDirectory()) {
+      const entries = await readdir(target, { withFileTypes: true });
+      const match = entries.length === 1 && entries[0]!.isDirectory()
+        && !entries[0]!.isSymbolicLink() ? /^owner-([1-9][0-9]*)-[a-f0-9]{32}$/u.exec(entries[0]!.name) : null;
+      if (!match) throw new Error("The test broker lock owner is invalid.");
+      const pid = Number(match[1]);
+      if (!Number.isSafeInteger(pid)) throw new Error("The test broker PID is invalid.");
+      return pid;
+    }
+    // The deliberately silent legacy fixture below still publishes its own known PID file.
+    const value = (await readFile(target, "utf8")).trim();
+    if (!/^[1-9][0-9]*$/u.test(value)) throw new Error("The legacy test broker PID is invalid.");
+    return Number(value);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw error;
+  }
+}
+
 async function terminateBroker(stateDirectory: string): Promise<void> {
   const endpointPath = path.join(stateDirectory, "endpoint.json");
   const lockPath = path.join(stateDirectory, "broker.lock");
   const rawEndpoint = await optionalFile(endpointPath);
-  const rawLock = rawEndpoint === null ? await optionalFile(lockPath) : null;
-  if (rawEndpoint === null && rawLock === null) return;
+  const lockPid = rawEndpoint === null ? await brokerLockPid(lockPath) : null;
+  if (rawEndpoint === null && lockPid === null) return;
   const pid = rawEndpoint === null
-    ? Number(rawLock?.trim())
+    ? (lockPid ?? 0)
     : (JSON.parse(rawEndpoint) as { pid: number }).pid;
   if (!Number.isInteger(pid) || pid < 1) throw new Error("The test broker PID is invalid.");
   try { process.kill(pid, "SIGTERM"); }
@@ -551,7 +575,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     ]);
     await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toMatchObject({
       protocolVersion: SESSION_MESSAGE_PROTOCOL,
-      capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy"],
+      capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start"],
     });
   });
 
@@ -627,7 +651,10 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       readFile(path.join(directory, "broker-cert.pem"), "utf8"),
     ]);
     await terminateBroker(directory);
-    await rm(path.join(directory, "broker.lock"), { force: true });
+    // Windows SIGTERM may terminate before cleanup. Reclaim only a proven-dead owner.
+    const fixtureLock = acquireBrokerProcessLock(path.join(directory, "broker.lock"));
+    if (fixtureLock === null) throw new Error("The test broker lock still has a live owner.");
+    releaseBrokerProcessLock(fixtureLock);
 
     const sockets = new Set<tls.TLSSocket>();
     const timers = new Set<NodeJS.Timeout>();
@@ -858,7 +885,10 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(hostDeliveryProfile("codex", { PLUGIN_DATA: file }, diagnose).transport).toBe("codex-deferred");
     expect(diagnose).toHaveBeenLastCalledWith("invalid-plugin-data");
     expect(hostDeliveryProfile("codex", { PLUGIN_DATA: `${directory}\u0000` }, diagnose).transport).toBe("codex-deferred");
-    expect(diagnose).toHaveBeenLastCalledWith("read-failed");
+    expect(diagnose).toHaveBeenLastCalledWith("read-failed", expect.objectContaining({
+      phase: "directory-stat", cleanup: "not-acquired",
+      failure: expect.objectContaining({ code: "QUEUE_SETTINGS_DIRECTORY_STAT_FAILED" }),
+    }));
     await writeFile(file, valid);
     for (const relative of [path.relative(path.dirname(directory), directory), "", ...(process.platform === "win32" ? ["\\relative-root", "/relative-root"] : [])]) {
       diagnose.mockClear();
@@ -1180,13 +1210,16 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       const store = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
       const now = Date.now();
       try {
+        // A legacy nonce must remain unconsumed: claim before reservation, with its lease already expired.
+        const sentAt = scenario === "legacy" ? now - 120_001 : now;
+        store.send({ sender: { host: "portable", sessionId: "empty-sender" }, target, messageId: `body-${scenario}`, body: `body-${scenario}` }, sentAt);
+        if (scenario === "legacy") expect(store.claim(target, sentAt).map(message => message.messageId)).toEqual([`body-${scenario}`]);
         store.startPresence({ ...target, instanceId: "empty-instance", transport: "codex-queue", wakeVisibility: "user-message",
           canWakeSilently: false, deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" } }, now);
         store.acquireRelay({ ...target, transport: "codex-queue", relayId: "empty-relay", pid: process.pid, parentPid: process.pid }, now);
-        store.send({ sender: { host: "portable", sessionId: "empty-sender" }, target, messageId: `body-${scenario}`, body: `body-${scenario}` }, now);
         if (scenario === "legacy") {
           expect(store.reserveWake(target, nonce, now)).toBe(true);
-          store.acknowledge(target, [`body-${scenario}`], now + 1);
+          expect(store.acknowledge(target, [`body-${scenario}`], now + 1)).toBe(1);
         } else {
           const reserved = store.reserveManagedWake({ ...target, nonce, instanceId: "empty-instance", transport: "codex-queue", relayId: "empty-relay" }, now);
           const started = store.startManagedWake(reserved.attempt!, now + 1);

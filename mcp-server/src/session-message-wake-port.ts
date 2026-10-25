@@ -30,52 +30,61 @@ export function claudeWakeOutcome(hadError: boolean, connected: boolean, wrote: 
 export function geminiWakeOutcome(error: unknown, spawned: boolean): WakeDispatchOutcome {
   return !error ? "submitted" : spawned ? "accepted-or-unknown" : "definite-failure";
 }
-export function resolveGeminiAgentApi(environment: NodeJS.ProcessEnv = process.env): { command: string; argsPrefix: string[] } {
-  if (environment.ANTIGRAVITY_AGENTAPI_EXE) {
-    return { command: environment.ANTIGRAVITY_AGENTAPI_EXE, argsPrefix: ["agentapi"] };
+export function resolveGeminiAgentApi(
+  environment: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = process.platform,
+): { command: string; argsPrefix: string[] } | null {
+  const configured = environment.ANTIGRAVITY_AGENTAPI_EXE;
+  if (configured) {
+    if (platform === "win32") {
+      const root = path.win32.parse(configured).root;
+      if (!path.win32.isAbsolute(configured) || root === "\\" || root === "/"
+        || path.win32.extname(configured).toLowerCase() !== ".exe") return null;
+    }
+    return { command: configured, argsPrefix: ["agentapi"] };
   }
+  // Batch shims need a verified launcher contract; never interpret peer text as shell code.
+  if (platform === "win32") return null;
   const homeDir = environment.USERPROFILE || environment.HOME || "";
-  const batPath = path.join(homeDir, ".gemini", "antigravity", "bin", "agentapi.bat");
-  const shPath = path.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
-  if (process.platform === "win32" && existsSync(batPath)) {
-    return { command: batPath, argsPrefix: [] };
-  }
-  if (existsSync(shPath)) {
-    return { command: shPath, argsPrefix: [] };
-  }
-  return { command: "agentapi", argsPrefix: [] };
+  const command = path.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
+  return { command: existsSync(command) ? command : "agentapi", argsPrefix: [] };
 }
 async function ringGemini(sessionId: string, message: string, environment: NodeJS.ProcessEnv = process.env): Promise<WakeDispatchOutcome> {
-  const { command, argsPrefix } = resolveGeminiAgentApi(environment);
-  let targetProjectId: string | undefined;
+  const childEnv: NodeJS.ProcessEnv = { ...environment };
+  const sourceProjectId = childEnv.ANTIGRAVITY_PROJECT_ID;
+  if (typeof sourceProjectId !== "string" || !sourceProjectId.trim()) return "definite-failure";
+  const launch = resolveGeminiAgentApi(childEnv);
+  if (!launch) return "definite-failure";
+  const { command, argsPrefix } = launch;
+  let targetProjectId: string;
   try {
-    const meta = await new Promise<string>((metaResolve, metaReject) => {
+    const meta = await new Promise<string>((resolve, reject) => {
       execFile(command, [...argsPrefix, "get-conversation-metadata", sessionId],
-        { windowsHide: true, timeout: 5_000, env: environment }, (err, stdout) => err ? metaReject(err) : metaResolve(stdout));
+        { windowsHide: true, timeout: 5_000, env: childEnv, shell: false, windowsVerbatimArguments: false },
+        (error, stdout) => error ? reject(error) : resolve(stdout));
     });
-    const parsed = JSON.parse(meta) as Record<string, unknown>;
-    const response = parsed.response as Record<string, unknown> | undefined;
-    const conversationMetadata = response?.conversationMetadata as Record<string, unknown> | undefined;
-    const metadata = conversationMetadata?.metadata as Record<string, unknown> | undefined;
-    if (typeof metadata?.projectId === "string") {
-      targetProjectId = metadata.projectId;
-    }
+    const parsed = JSON.parse(meta) as {
+      response?: { conversationMetadata?: { metadata?: { projectId?: unknown } } };
+    };
+    const projectId = parsed.response?.conversationMetadata?.metadata?.projectId;
+    if (typeof projectId !== "string" || !projectId.trim()) return "definite-failure";
+    targetProjectId = projectId;
   } catch {
-    // If metadata retrieval fails, proceed with the default environment.
+    // Metadata failure happens before any send-message process is started.
+    return "definite-failure";
   }
-  const childEnv = { ...environment };
-  if (targetProjectId) {
-    childEnv.ANTIGRAVITY_PROJECT_ID = targetProjectId;
-  }
-  delete childEnv.ANTIGRAVITY_SOURCE_METADATA;
-
+  if (sourceProjectId !== targetProjectId) return "definite-failure";
   return new Promise((resolve) => {
     let spawned = false;
-    const args = [...argsPrefix, "send-message", sessionId, message];
-    const child = execFile(command, args,
-      { windowsHide: true, timeout: 10_000, env: childEnv }, (error) => resolve(geminiWakeOutcome(error, spawned)));
-    child.once("spawn", () => { spawned = true; });
-    child.once("error", (error) => resolve(geminiWakeOutcome(error, spawned)));
+    try {
+      const child = execFile(command, [...argsPrefix, "send-message", sessionId, message],
+        { windowsHide: true, timeout: 10_000, env: childEnv, shell: false, windowsVerbatimArguments: false },
+        (error) => resolve(geminiWakeOutcome(error, spawned)));
+      child.once("spawn", () => { spawned = true; });
+      child.once("error", (error) => resolve(geminiWakeOutcome(error, spawned)));
+    } catch {
+      resolve("definite-failure");
+    }
   });
 }
 function ringCodex(sessionId: string, message: string): Promise<WakeDispatchOutcome> {

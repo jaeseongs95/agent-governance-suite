@@ -1,5 +1,5 @@
 import { createHash, createPublicKey, randomBytes, timingSafeEqual, X509Certificate } from "node:crypto";
-import { closeSync, existsSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import tls from "node:tls";
@@ -14,15 +14,23 @@ import { createWakeHookObservationReader, verifyHistoricalWakeObservation, type 
 import type { InputObservation, InputObservationKind } from "./input-observation.js";
 import { PeerWaitPolicy, normalizePeerWaitTargets } from "./peer-wait-policy.js";
 import { createSelfSignedCertificate } from "./self-signed-certificate.js";
+import { processStartToken } from "./process-identity.js";
+import { acquireBrokerProcessLockWhenReady, ownsBrokerProcessLock, releaseBrokerProcessLock } from "./broker-process-lock.js";
+import { performance } from "node:perf_hooks";
 
 const IDLE_EXIT_MS = 60_000;
-export const SESSION_MESSAGE_BROKER_CAPABILITIES = ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy"] as const;
+export const SESSION_MESSAGE_BROKER_CAPABILITIES = ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start"] as const;
 
 interface BrokerRequest {
   protocolVersion: string;
   token: string;
   operation: string;
   payload: Record<string, unknown>;
+}
+
+function brokerFailureCode(error: unknown): string {
+  const code = (error as NodeJS.ErrnoException | null)?.code;
+  return typeof code === "string" && /^[A-Z0-9_]+$/u.test(code) ? code : "STARTUP_FAILED";
 }
 
 function argument(name: string): string | null {
@@ -92,25 +100,6 @@ function alive(pid: number): boolean {
   } catch {
     return false;
   }
-}
-
-function acquireProcessLock(lockPath: string): number | null {
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    try {
-      const descriptor = openSync(lockPath, "wx", 0o600);
-      writeFileSync(descriptor, `${process.pid}\n`, "utf8");
-      return descriptor;
-    } catch {
-      try {
-        const owner = Number.parseInt(readFileSync(lockPath, "utf8").trim(), 10);
-        if (Number.isInteger(owner) && alive(owner)) return null;
-        rmSync(lockPath, { force: true });
-      } catch {
-        return null;
-      }
-    }
-  }
-  return null;
 }
 
 async function credentials(stateDirectory: string): Promise<{ key: string; certificate: string; token: string; fingerprint256: string }> {
@@ -327,9 +316,50 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       return { ...decision, peers: targets.map((target, index) => ({ target, related: states[index]!.related, stateDigest: states[index]!.fingerprint })) };
     }
     case "pending": return { count: store.pendingCount(identity(payload.target)) };
+    case "ensure-relay": {
+      const target = identity(payload.target);
+      const parentPid = integer(payload.parentPid,"parentPid");
+      const parentStartToken = string(payload.parentStartToken,"parentStartToken");
+      const timeout = integer(payload.identityTimeoutMs,"identityTimeoutMs");
+      if (parentPid < 1 || !parentStartToken.trim() || parentStartToken.length > 200 || timeout < 1 || timeout > 8000) throw new Error("Invalid relay host observation or budget.");
+      const transport = string(payload.transport,"transport");
+      const previous = store.relayOwner(target,transport);
+      const deadline = performance.now() + timeout;
+      if (processStartToken(parentPid,process.platform,Math.max(1,Math.floor(deadline-performance.now()))) !== parentStartToken || performance.now() >= deadline) throw new Error("Relay host generation is unverified.");
+      const instanceId = "host-process-v1:" + createHash("sha256").update(JSON.stringify([target.host,target.sessionId,parentPid,parentStartToken])).digest("hex");
+      const wakeVisibility = string(payload.wakeVisibility,"wakeVisibility");
+      const idleWake = string(payload.idleWake,"idleWake");
+      if (!["silent","user-message","none"].includes(wakeVisibility) || !["silent","user-message","none"].includes(idleWake)) throw new Error("Invalid relay delivery capabilities.");
+      let confirmedDead: {relayId: string; pid: number} | undefined;
+      if (previous && previous.pid > 0) {
+        try { process.kill(previous.pid,0); }
+        catch (error) {
+          if (error && typeof error === "object" && "code" in error && error.code === "ESRCH") confirmedDead = {relayId:previous.relayId,pid:previous.pid};
+        }
+      }
+      if (performance.now() >= deadline) throw new Error("Relay ensure budget expired.");
+      return store.prepareVerifiedRelay({...target,instanceId,transport,parentPid,expectedOwner:previous,
+        wakeVisibility:wakeVisibility as "silent" | "user-message" | "none",canWakeSilently:boolean(payload.canWakeSilently,"canWakeSilently"),
+        deliveryCapabilities:{supportedInjection:supportedInjection(payload.supportedInjection),idleWake:idleWake as "silent" | "user-message" | "none"},
+        ...(confirmedDead ? {confirmedDead}:{}),
+        ...(optionalString(payload,"collaborationId") ? {collaborationId:optionalString(payload,"collaborationId")!}:{}),
+        ...(optionalString(payload,"workspaceId") ? {workspaceId:optionalString(payload,"workspaceId")!}:{}),
+        ...(optionalString(payload,"role") ? {role:optionalString(payload,"role")!}:{})});
+    }
+    case "release-verified-relay": return {released:store.releaseVerifiedRelay({...identity(payload.target),
+      transport:string(payload.transport,"transport"),relayId:string(payload.relayId,"relayId"),instanceId:string(payload.instanceId,"instanceId"),pid:integer(payload.pid,"pid")})};
     case "acquire-relay": {
       const target = identity(payload.target);
-      const acquired = store.acquireRelay({
+      const relayId = string(payload.relayId,"relayId");
+      const parentPid = integer(payload.parentPid,"parentPid");
+      const reserved = relayId.startsWith("verified-relay-v1:");
+      if (reserved) {
+        const parentStartToken = string(payload.parentStartToken,"parentStartToken");
+        const expected = "host-process-v1:" + createHash("sha256").update(JSON.stringify([target.host,target.sessionId,parentPid,parentStartToken])).digest("hex");
+        if (parentPid < 1 || !parentStartToken.trim() || string(payload.instanceId,"instanceId") !== expected || processStartToken(parentPid) !== parentStartToken) return {acquired:false};
+      }
+      const acquired = reserved ? store.activateVerifiedRelay({...target,transport:string(payload.transport,"transport"),relayId,
+        pid:integer(payload.pid,"pid"),parentPid,instanceId:string(payload.instanceId,"instanceId")}) : store.acquireRelay({
         ...target,
         transport: string(payload.transport, "transport"),
         relayId: string(payload.relayId, "relayId"),
@@ -453,8 +483,8 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
   await mkdir(stateDirectory, { recursive: true, mode: 0o700 });
   try { await chmod(stateDirectory, 0o700); } catch { /* Windows ACLs remain governed by the user profile. */ }
   const lockPath = path.join(stateDirectory, "broker.lock");
-  const lockDescriptor = acquireProcessLock(lockPath);
-  if (lockDescriptor === null) return "already-running";
+  const processLock = await acquireBrokerProcessLockWhenReady(lockPath);
+  if (processLock === null) return "already-running";
   const endpointPath = path.join(stateDirectory, "endpoint.json");
   const databasePath = path.join(stateDirectory, "session-messages.sqlite3");
   let store: SessionMessageStore | undefined;
@@ -472,14 +502,17 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
     for (const socket of sockets) socket.destroy();
     try { server?.close(); } catch { /* Already closed. */ }
     try { store?.close(); } catch { /* Already closed. */ }
-    if (published) {
-      try { rmSync(endpointPath, { force: true }); } catch { /* Best effort. */ }
+    try {
+      if (published && ownsBrokerProcessLock(processLock)) rmSync(endpointPath, { force: true });
+    } catch (error) {
+      process.stderr.write(`Session message broker endpoint cleanup failed (${brokerFailureCode(error)}).\n`);
     }
     if (temporary) {
       try { rmSync(temporary, { force: true }); } catch { /* Best effort. */ }
     }
-    try { closeSync(lockDescriptor); } catch { /* Best effort. */ }
-    try { rmSync(lockPath, { force: true }); } catch { /* Best effort. */ }
+    try { releaseBrokerProcessLock(processLock); } catch (error) {
+      process.stderr.write(`Session message broker lock release failed (${brokerFailureCode(error)}).\n`);
+    }
     process.off("exit", cleanup);
     process.off("SIGTERM", onSignal);
     process.off("SIGINT", onSignal);
@@ -565,8 +598,7 @@ if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
   else void startSessionMessageBroker(path.resolve(stateDirectory)).then((result) => {
     if (result === "already-running") process.exit(0);
   }).catch((error: unknown) => {
-    const code = (error as NodeJS.ErrnoException)?.code;
-    const safeCode = typeof code === "string" && /^[A-Z0-9_]+$/u.test(code) ? code : "STARTUP_FAILED";
+    const safeCode = brokerFailureCode(error);
     process.stderr.write(`Session message broker startup failed (${safeCode}).\n`);
     process.exitCode = 1;
   });

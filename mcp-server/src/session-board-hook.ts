@@ -1,3 +1,4 @@
+import { hookFailureContext, hookFailureReason } from "./hook-error-diagnostics.js";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,8 +16,14 @@ import {
 } from "../../skills/session-board/scripts/board-store.mjs";
 import { resolveSessionBoardDatabasePath } from "./runtime-config.js";
 import { sessionMessageRequest } from "./session-message-client.js";
-import { adaptHostInput } from "./host-input-adapter.js";
+import { adaptHostInput, resolveHookHost } from "./host-input-adapter.js";
 import { isObservedSubagent } from "./input-observation.js";
+
+function reportBoardFailure(phase: "host-entry" | "stdout", cause: unknown): void {
+  try { console.error("[agent-governance-suite] board-hook-failure " + JSON.stringify({
+    phase, reason: hookFailureReason(cause) ?? "UNEXPECTED_FAILURE", context: hookFailureContext(cause),
+  })); } catch { /* Diagnostics cannot change the fail-open behavior. */ }
+}
 
 type HookInput = Record<string, unknown>;
 type Board = ReturnType<typeof openBoard>;
@@ -116,5 +123,22 @@ export async function runSessionBoardHook(
 if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
   let raw = "";
   try { raw = readFileSync(0, "utf8"); } catch { /* Fail open. */ }
-  void runSessionBoardHook("codex", raw).then((output) => { if (output) process.stdout.write(output); });
+  try {
+    const host = resolveHookHost(process.argv.slice(2), "codex");
+    void runSessionBoardHook(host, raw).then((output) => {
+      if (!output) return;
+      let reported = false;
+      const outputFailed = (cause: unknown) => {
+        if (reported) return;
+        reported = true;
+        reportBoardFailure("stdout", cause);
+      };
+      process.stdout.on("error", outputFailed);
+      try { process.stdout.write(output, (cause) => { if (cause) outputFailed(cause); }); }
+      catch (cause) { outputFailed(cause); }
+    }).catch((cause) => reportBoardFailure("stdout", cause));
+  } catch (cause) {
+    // Invalid explicit hosts still issue no binding and touch no board.
+    reportBoardFailure("host-entry", cause);
+  }
 }

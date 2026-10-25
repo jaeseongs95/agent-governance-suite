@@ -326,7 +326,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       .run(acknowledgedBefore, now, now);
     this.database.prepare("UPDATE messages SET body = '', body_bytes = 0 WHERE acknowledged_at IS NOT NULL AND expires_at <= ?")
       .run(now);
-    this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ?").run(now);
+    this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ? AND relay_id NOT LIKE 'verified-relay-v1:%'").run(now);
     this.database.prepare("DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?").run(now);
     this.retireUnobservedWakes(nowMs);
     this.database.prepare(`DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted', 'expired-unobserved')
@@ -657,8 +657,11 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     }
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.acknowledge(target, messageIds, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
+    // A committed claim is required, including legacy claims without newer delivery metadata.
+    // Lease expiry governs redelivery, not whether a recipient may finish processing and ACK.
     const statement = this.database.prepare(`UPDATE messages SET acknowledged_at = ?, claim_until = NULL
-      WHERE message_id = ? AND target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL`);
+      WHERE message_id = ? AND target_host = ? AND target_session_id = ?
+        AND claimed_at IS NOT NULL AND acknowledged_at IS NULL`);
     // Only the first ACK shortens the receipt, and min() never extends it.
     const receipt = this.database.prepare("UPDATE prepared_messages SET expires_at = min(expires_at, ?) WHERE message_id = ? AND receipt IS NOT NULL");
     let count = 0;
@@ -725,7 +728,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     boundedIdentity(target);
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.liveRelay(target, transport, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
-    const row = this.database.prepare("SELECT relay_id, pid, parent_pid, updated_at FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lease_until > ?")
+    const row = this.database.prepare("SELECT relay_id, pid, parent_pid, updated_at FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lease_until > ? AND pid > 0")
       .get(target.host, target.sessionId, transport, iso(nowMs)) as { relay_id: string; pid: number; parent_pid: number; updated_at: string } | undefined;
     return row ? { relayId: row.relay_id, pid: row.pid, parentPid: row.parent_pid, updatedAt: row.updated_at } : null;
   }
@@ -777,6 +780,73 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     return row.count;
   }
 
+  /** Retained startup reservation metadata; not a relay liveness view. */
+  relayOwner(target: SessionIdentity, transport: string): {relayId: string; pid: number; parentPid: number; instanceId: string | null} | null {
+    boundedIdentity(target);
+    const row = this.database.prepare("SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host=? AND session_id=? AND transport=?")
+      .get(target.host,target.sessionId,transport) as {relay_id: string; pid: number; parent_pid: number} | undefined;
+    const generation = row?.relay_id.match(/^verified-relay-v1:[0-9a-f-]{36}:([0-9a-f]{64})$/u)?.[1];
+    return row ? {relayId:row.relay_id,pid:row.pid,parentPid:row.parent_pid,instanceId:generation ? "host-process-v1:"+generation:null} : null;
+  }
+
+  /** Unknown pid=0 grants are never automatically TTL-retried. */
+  prepareVerifiedRelay(input: Parameters<SessionMessageStore["startPresence"]>[0] & {
+    parentPid: number; expectedOwner: ReturnType<SessionMessageStore["relayOwner"]>; confirmedDead?: {relayId: string; pid: number};
+  }, nowMs = Date.now()): {spawn: boolean; relayId: string | null; instanceId: string} {
+    boundedIdentity(input);
+    if (!Number.isInteger(input.parentPid) || input.parentPid < 1 || !/^host-process-v1:[0-9a-f]{64}$/u.test(input.instanceId)) throw new Error("Invalid verified relay generation.");
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.prepareVerifiedRelay(input,nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
+      const previous = this.relayOwner(input,input.transport);
+      const expected = input.expectedOwner;
+      if (previous === null ? expected !== null : !expected || previous.relayId !== expected.relayId || previous.pid !== expected.pid || previous.parentPid !== expected.parentPid || previous.instanceId !== expected.instanceId) {
+        return {spawn:false,relayId:null,instanceId:input.instanceId};
+      }
+      if (previous?.relayId.startsWith("verified-relay-v1:") && previous.instanceId === null) return {spawn:false,relayId:null,instanceId:input.instanceId};
+      // A retained grant owns its generation independently of expiring presence rows.
+      if (previous && previous.instanceId === input.instanceId && previous.parentPid === input.parentPid) {
+        const dead = previous.pid > 0 && input.confirmedDead?.pid === previous.pid && input.confirmedDead.relayId === previous.relayId;
+        if (!dead) return {spawn:false,relayId:previous.relayId,instanceId:input.instanceId};
+      }
+      const relayId = "verified-relay-v1:" + randomUUID() + ":" + input.instanceId.slice("host-process-v1:".length);
+      this.startPresence(input,nowMs);
+      this.database.prepare("INSERT INTO relay_leases(host,session_id,transport,relay_id,pid,parent_pid,lease_until,updated_at) VALUES(?,?,?,?,0,?,'9999-12-31T23:59:59.999Z',?) ON CONFLICT(host,session_id,transport) DO UPDATE SET relay_id=excluded.relay_id,pid=0,parent_pid=excluded.parent_pid,lease_until=excluded.lease_until,updated_at=excluded.updated_at")
+        .run(input.host,input.sessionId,input.transport,relayId,input.parentPid,iso(nowMs));
+      return {spawn:true,relayId,instanceId:input.instanceId};
+    });
+  }
+
+  activateVerifiedRelay(input: SessionIdentity & {transport: string; relayId: string; instanceId: string; pid: number; parentPid: number}, nowMs = Date.now()): boolean {
+    boundedIdentity(input);
+    if (!/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(input.relayId) || !Number.isInteger(input.pid) || input.pid < 1 || !Number.isInteger(input.parentPid) || input.parentPid < 1) throw new Error("Invalid verified relay activation.");
+    if (!/^host-process-v1:[0-9a-f]{64}$/u.test(input.instanceId) || !input.relayId.endsWith(":"+input.instanceId.slice("host-process-v1:".length))) return false;
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.activateVerifiedRelay(input,nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
+      const presence = this.presence(input,nowMs);
+      if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport) return false;
+      return this.database.prepare("UPDATE relay_leases SET pid=?,lease_until=?,updated_at=? WHERE host=? AND session_id=? AND transport=? AND relay_id=? AND parent_pid=? AND (pid=0 OR pid=?)")
+        .run(input.pid,iso(nowMs+RELAY_LEASE_MS),iso(nowMs),input.host,input.sessionId,input.transport,input.relayId,input.parentPid,input.pid).changes === 1;
+    });
+  }
+
+  releaseVerifiedRelay(input: SessionIdentity & {transport: string; relayId: string; instanceId: string; pid: number}, nowMs = Date.now()): boolean {
+    boundedIdentity(input);
+    if (!/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(input.relayId) || !Number.isInteger(input.pid) || input.pid < 1 || !/^host-process-v1:[0-9a-f]{64}$/u.test(input.instanceId)) throw new Error("Invalid verified relay release.");
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.releaseVerifiedRelay(input,nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
+      const owner = this.relayOwner(input,input.transport);
+      if (!owner || owner.instanceId !== input.instanceId) return false;
+      const removed = this.database.prepare("DELETE FROM relay_leases WHERE host=? AND session_id=? AND transport=? AND relay_id=? AND pid=?")
+        .run(input.host,input.sessionId,input.transport,input.relayId,input.pid).changes === 1;
+      const presence = this.presence(input,nowMs);
+      if (removed && presence.instanceId === input.instanceId && presence.transport === input.transport) this.endPresence(input,"host-process-ended",input.instanceId,nowMs);
+      return removed;
+    });
+  }
+
   acquireRelay(input: SessionIdentity & { transport: string; relayId: string; pid: number; parentPid: number }, nowMs = Date.now()): boolean {
     boundedIdentity(input);
     if (!input.transport || input.transport.length > 64 || !input.relayId || input.relayId.length > 128) throw new Error("Invalid relay identity.");
@@ -791,9 +861,10 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       ON CONFLICT (host, session_id, transport) DO UPDATE SET
         relay_id = excluded.relay_id, pid = excluded.pid, parent_pid = excluded.parent_pid,
         lease_until = excluded.lease_until, updated_at = excluded.updated_at
-      WHERE relay_leases.lease_until <= excluded.updated_at
+      WHERE relay_leases.relay_id NOT LIKE 'verified-relay-v1:%' AND (
+        relay_leases.lease_until <= excluded.updated_at
         OR relay_leases.relay_id = excluded.relay_id
-        OR relay_leases.parent_pid = excluded.parent_pid`)
+        OR relay_leases.parent_pid = excluded.parent_pid)`)
       .run(input.host, input.sessionId, input.transport, input.relayId, input.pid, input.parentPid, until, now);
     return result.changes === 1;
   }
@@ -802,7 +873,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.heartbeatRelay(input, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
     const result = this.database.prepare(`UPDATE relay_leases SET lease_until = ?, updated_at = ?
-      WHERE host = ? AND session_id = ? AND transport = ? AND relay_id = ?`)
+      WHERE host = ? AND session_id = ? AND transport = ? AND relay_id = ? AND pid > 0`)
       .run(iso(nowMs + RELAY_LEASE_MS), iso(nowMs), input.host, input.sessionId, input.transport, input.relayId);
     return result.changes === 1;
   }
@@ -1101,9 +1172,16 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       if (!reader.verifyObservation(target, observation, receiptId, nowMs)) {  return rejected; }
       const rows = digests.map((digest) => this.database.prepare("SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?")
         .get(digest, target.host, target.sessionId) as Record<string, unknown> | undefined);
-      if (rows.some((row) => !row || !["legacy", "started", "submitted", "unknown", "expired-unobserved"].includes(String(row.state)))) {
+      // A proven, already consumed arrival may recur beside a new marker in a
+      // fresh receipt. It is inert history, never authority for another body.
+      const alreadyObserved = (row: Record<string, unknown>) => row.state === "observed"
+        && typeof row.observed_at === "string" && typeof row.consumed_at === "string"
+        && typeof row.nonce === "string" && row.nonce_digest === nonceDigest(row.nonce);
+      if (rows.some((row) => !row || (!alreadyObserved(row)
+        && !["legacy", "started", "submitted", "unknown", "expired-unobserved"].includes(String(row.state))))) {
          return rejected;
       }
+      if (rows.every((row) => alreadyObserved(row!))) return rejected;
       this.recordActivity(target, nowMs);
       const presence = this.presence(target, nowMs);
       // A retired attempt stays retired; its verified late arrival is recorded as evidence only and it takes no part
@@ -1111,8 +1189,8 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       this.database.prepare(`UPDATE wake_nonces SET late_observed_at = coalesce(late_observed_at, ?)
         WHERE host = ? AND session_id = ? AND state = 'expired-unobserved' AND nonce_digest IN (SELECT value FROM json_each(?))`)
         .run(iso(nowMs), target.host, target.sessionId, JSON.stringify(digests));
-      const live = rows.filter((row) => row!.state !== "expired-unobserved");
-      if (live.length === 0) {  return { ...rejected, retired: true }; }
+      const live = rows.filter((row) => row!.state !== "expired-unobserved" && !alreadyObserved(row!));
+      if (live.length === 0) return rows.every((row) => row!.state === "expired-unobserved") ? { ...rejected, retired: true } : rejected;
       const valid = live.every((row) => row!.state === "legacy" ? row!.consumed_at === null && String(row!.expires_at) > iso(nowMs)
         : row!.instance_id === presence.instanceId && row!.birth_generation === presence.startedAt
           && row!.transport === presence.transport && presence.state === "online"

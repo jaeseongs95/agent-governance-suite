@@ -380,7 +380,8 @@ test('autoWake is advisory and reports each delivery path state', () => {
   assert.equal(sent.autoWake.state, 'latched');
   assert.equal(f.store.submitPrepared(sender, sent.messageId, overdue + 1).autoWake.state, 'latched');
   assert.equal(f.store.status(sender, sent.messageId, overdue + 2).autoWake.state, 'latched');
-  f.store.acknowledge(target, [sent.messageId], overdue + 3);
+  assert.ok(f.store.claim(target, overdue + 3).some(message => message.messageId === sent.messageId));
+  assert.equal(f.store.acknowledge(target, [sent.messageId], overdue + 3), 1);
   assert.equal(f.store.status(sender, sent.messageId, overdue + 4).autoWake, null);
   const retireAt = Date.parse(expiresAt) + WAKE_RETIRE_GRACE_MS;
   keepAlive(f.store, 'instance-1', 'relay-1', retireAt);

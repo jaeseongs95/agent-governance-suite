@@ -11,6 +11,9 @@ const instanceId = argument("--instance-id");
 const transport = argument("--transport");
 const parentPid = Number.parseInt(argument("--parent-pid") ?? "", 10);
 const parentStartToken = argument("--parent-start-token");
+const relayIdArguments = process.argv.filter(value => value === "--relay-id").length;
+const relayId = argument("--relay-id");
+const invalidRelayId = relayIdArguments > 1 || (relayIdArguments === 1 && (!relayId || !/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(relayId)));
 
-if (!host || !sessionId || !instanceId || (transport !== "codex-deferred" && transport !== "codex-queue" && transport !== "claude-inbox" && transport !== "gemini-queue") || !Number.isInteger(parentPid) || !parentStartToken) process.exitCode = 2;
-else void runSessionMessageRelay({ host, sessionId, instanceId, transport, parentPid, parentStartToken }).catch(() => { process.exitCode = 1; });
+if (invalidRelayId || !host || !sessionId || !instanceId || (transport !== "codex-deferred" && transport !== "codex-queue" && transport !== "claude-inbox" && transport !== "gemini-queue") || !Number.isInteger(parentPid) || !parentStartToken) process.exitCode = 2;
+else void runSessionMessageRelay({ host, sessionId, instanceId, transport, parentPid, parentStartToken, ...(relayId ? {relayId}:{}) }).catch(() => { process.exitCode = 1; });
