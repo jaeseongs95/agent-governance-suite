@@ -1180,6 +1180,16 @@ function adaptBuiltinHookInput(input, host) {
     }
   };
 }
+function adaptCodexHookInput(input, host) {
+  const adapted = adaptBuiltinHookInput(input, host);
+  if (adapted.lifecycle === "none") return adapted;
+  if (Object.hasOwn(input, "agent_type")) {
+    adapted.observation.actor = { kind: "unknown", observedBy: "".concat(host, ":root-lifecycle-conflict"), assurance: "unknown" };
+  } else if (!Object.hasOwn(input, "agent_id")) {
+    adapted.observation.actor = { kind: "main", observedBy: "".concat(host, ":native-root-lifecycle"), assurance: "observed" };
+  }
+  return adapted;
+}
 var GOVERNANCE_TOOL_PREFIXES = /* @__PURE__ */ new Set([
   "mcp__agent_governance_suite__",
   "mcp__agent-governance-suite__",
@@ -1297,7 +1307,7 @@ function geminiQueueEnabled(environment, diagnose, defaultQueueWake) {
 }
 var builtinHookHostAdapters = /* @__PURE__ */ new Map([
   ["codex", {
-    adaptInput: adaptBuiltinHookInput,
+    adaptInput: adaptCodexHookInput,
     ownsTool: ownsGovernanceTool,
     deliveryProfile: (environment, diagnose) => deliveryProfile(codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred", true),
     processPid: (pid) => pid,

@@ -1178,6 +1178,16 @@ function adaptBuiltinHookInput(input2, host) {
     }
   };
 }
+function adaptCodexHookInput(input2, host) {
+  const adapted = adaptBuiltinHookInput(input2, host);
+  if (adapted.lifecycle === "none") return adapted;
+  if (Object.hasOwn(input2, "agent_type")) {
+    adapted.observation.actor = { kind: "unknown", observedBy: "".concat(host, ":root-lifecycle-conflict"), assurance: "unknown" };
+  } else if (!Object.hasOwn(input2, "agent_id")) {
+    adapted.observation.actor = { kind: "main", observedBy: "".concat(host, ":native-root-lifecycle"), assurance: "observed" };
+  }
+  return adapted;
+}
 var GOVERNANCE_TOOL_PREFIXES = /* @__PURE__ */ new Set([
   "mcp__agent_governance_suite__",
   "mcp__agent-governance-suite__",
@@ -1295,7 +1305,7 @@ function geminiQueueEnabled(environment, diagnose, defaultQueueWake) {
 }
 var builtinHookHostAdapters = /* @__PURE__ */ new Map([
   ["codex", {
-    adaptInput: adaptBuiltinHookInput,
+    adaptInput: adaptCodexHookInput,
     ownsTool: ownsGovernanceTool,
     deliveryProfile: (environment, diagnose) => deliveryProfile(codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred", true),
     processPid: (pid) => pid,
@@ -21268,65 +21278,117 @@ function mentionsToolUseId(line, toolUseId) {
   return decoded.includes(toolUseId);
 }
 function hasIncompleteIssuer(line, toolUseId) {
-  const closers = [];
+  try {
+    const entry = record5(JSON.parse(line));
+    const content = record5(entry?.message)?.content;
+    return entry?.type !== "user" && entry?.type !== "system" && Array.isArray(content) && content.some((value) => record5(value)?.type === "tool_use" && !text4(record5(value)?.id));
+  } catch {
+  }
+  const frames = [];
+  let hasBlock = false;
   let inString = false;
   let escaped = false;
   let stringStart = -1;
+  let stringField = null;
+  let lastTokenWasString = false;
+  let field = null;
+  let rootType = null;
+  let blockType = null;
+  let blockId = null;
+  let typeStart = -1;
+  let idStart = -1;
+  const snapshot = (end) => ({ end, closing: frames.map((frame) => frame.closing).reverse().join("") });
   for (let index = 0; index < line.length; index += 1) {
     const char = line[index];
+    const parent = frames.at(-1)?.role;
     if (inString) {
       if (escaped) escaped = false;
       else if (char === "\\") escaped = true;
-      else if (char === '"') inString = false;
-    } else if (char === '"') {
-      inString = true;
-      stringStart = index;
-    } else if (char === "{") closers.push("}");
-    else if (char === "[") closers.push("]");
-    else if ((char === "}" || char === "]") && closers.pop() !== char) return false;
-  }
-  if (closers.length === 0) return false;
-  let fragment = line.trimEnd();
-  let prefix = "";
-  const unfinished = "!".repeat(line.length + 1);
-  if (inString) {
-    const tail = line.slice(stringStart + 1);
-    try {
-      prefix = JSON.parse('"' + tail + '"');
-    } catch {
-      const incompleteEscape = /\\(?:u[0-9a-fA-F]{0,3})?$/u.exec(tail)?.[0];
-      if (!incompleteEscape) return false;
+      else if (char === '"') {
+        inString = false;
+        lastTokenWasString = true;
+        if (parent === "root" && stringField === "type") rootType = snapshot(index + 1);
+        if (parent === "block" && stringField === "type") blockType = snapshot(index + 1);
+        if (parent === "block" && stringField === "id") blockId = snapshot(index + 1);
+      }
+      continue;
+    }
+    if (!char?.trim()) continue;
+    if (char === ":" && lastTokenWasString) {
       try {
-        prefix = JSON.parse('"' + tail.slice(0, -incompleteEscape.length) + '"');
+        field = JSON.parse(line.slice(stringStart, index).trimEnd());
       } catch {
-        return false;
+        field = null;
+      }
+      if (parent === "block" && field === "id") idStart = index;
+      if (parent === "block" && field === "type") typeStart = index;
+    } else {
+      const valueField = field;
+      field = null;
+      if (char === '"') {
+        inString = true;
+        stringStart = index;
+        stringField = valueField;
+      } else if (char === "{" || char === "[") {
+        const role = char === "{" && frames.length === 0 ? "root" : char === "{" && parent === "root" && valueField === "message" ? "message" : char === "[" && parent === "message" && valueField === "content" ? "content" : char === "{" && parent === "content" ? "block" : "other";
+        frames.push({ closing: char === "{" ? "}" : "]", role });
+        if (role === "block") {
+          hasBlock = true;
+          blockType = null;
+          blockId = null;
+          typeStart = -1;
+          idStart = -1;
+        }
+      } else if ((char === "}" || char === "]") && frames.pop()?.closing !== char) break;
+    }
+    lastTokenWasString = false;
+  }
+  if (!hasBlock) return false;
+  if (rootType) {
+    try {
+      const entry = record5(JSON.parse(line.slice(0, rootType.end) + rootType.closing));
+      if (entry?.type === "user" || entry?.type === "system") return false;
+    } catch {
+    }
+  }
+  let partial2 = null;
+  if (inString && frames.at(-1)?.role === "block" && (stringField === "id" || stringField === "type")) {
+    const tail = line.slice(stringStart + 1);
+    let value = null;
+    try {
+      value = JSON.parse('"' + tail + '"');
+    } catch {
+      const escape = /\\(?:u[0-9a-fA-F]{0,3})?$/u.exec(tail)?.[0];
+      if (escape) {
+        try {
+          value = JSON.parse('"' + tail.slice(0, -escape.length) + '"');
+        } catch {
+        }
       }
     }
-    fragment = line.slice(0, stringStart) + JSON.stringify(unfinished);
-  } else if (fragment.endsWith(",")) fragment = fragment.slice(0, -1);
-  else if (fragment.endsWith(":")) fragment += "null";
-  if (!inString) {
-    const partialValue = /(?:^|[[:,])\s*(t|tr|tru|f|fa|fal|fals|n|nu|nul|-|-?(?:0|[1-9]\d*)\.|-?(?:0|[1-9]\d*)(?:\.\d+)?[eE][+-]?)$/u.exec(fragment)?.[1];
-    if (partialValue) fragment = fragment.slice(0, -partialValue.length) + "null";
+    if (value !== null) partial2 = { ...snapshot(line.length), partial: stringField, value, start: stringStart };
   }
-  const closing = closers.reverse().join("");
-  let entry;
-  try {
-    entry = record5(JSON.parse(fragment + closing));
-  } catch {
+  const proofs = [partial2, blockId, blockType].filter((value) => value !== null).sort((left, right) => right.end - left.end);
+  for (const proof of proofs) {
     try {
-      entry = record5(JSON.parse(fragment + ":null" + closing));
+      const prefix = proof.partial ? line.slice(0, proof.start) + JSON.stringify(proof.value) : line.slice(0, proof.end);
+      const entry = record5(JSON.parse(prefix + proof.closing));
+      if (entry?.type === "user" || entry?.type === "system") return false;
+      const content = record5(entry?.message)?.content;
+      if (Array.isArray(content) && content.some((value) => record5(value)?.type === "tool_use" && !text4(record5(value)?.id))) return true;
+      const block = Array.isArray(content) ? record5(content.at(-1)) : null;
+      if (!block) continue;
+      const type = typeStart > proof.end ? null : text4(block.type);
+      const id = idStart > proof.end ? null : text4(block.id);
+      if (type === "text" || type === "tool_result") return false;
+      if (proof.partial === "id" && id !== null) return toolUseId.startsWith(id);
+      if (id !== null && id !== toolUseId) return false;
+      if (proof.partial === "type" && type !== null) return "tool_use".startsWith(type);
+      return true;
     } catch {
-      return false;
     }
   }
-  if (!entry || entry.type === "user" || entry.type === "system") return false;
-  const content = record5(entry.message)?.content;
-  const block = Array.isArray(content) ? record5(content.at(-1)) : null;
-  if (!block || block.type === "text" || block.type === "tool_result") return false;
-  if (block.id === unfinished) return toolUseId.startsWith(prefix);
-  if (text4(block.id)) return false;
-  return block.type === "tool_use" || block.type === unfinished && "tool_use".startsWith(prefix);
+  return true;
 }
 function probeIssuingMessage(transcript, toolUseId) {
   for (const line of transcript.split("\n")) {
