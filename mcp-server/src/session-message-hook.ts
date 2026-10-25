@@ -18,7 +18,7 @@ import { adaptHostInput, hostDeliveryProfile, isGovernanceHookTool, nativePeerWa
 
 // Addons register and consume this exact bundled namespace; other bundles/processes have separate registries.
 export { registerHookHostAdapter } from "./host-input-adapter.js";
-import { isObservedSubagent, supportsInjection } from "./input-observation.js";
+import { supportsInjection } from "./input-observation.js";
 import type { PeerWaitDecision } from "./peer-wait-policy.js";
 import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "./session-message-protocol.js";
 
@@ -267,7 +267,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   const observation = adapted.observation;
   const sessionId = observation.sessionId;
   if (!sessionId) return {};
-  const subagent = isObservedSubagent(observation);
+  const main = observation.actor.kind === "main" && observation.actor.assurance === "observed";
   const profile = hostDeliveryProfile(host, process.env, undefined, options.defaultQueueWake);
   const target = { host, sessionId };
   // This path opens a second provenance store before claiming; it is not budget-enabled yet.
@@ -325,8 +325,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     }
   }
   if (adapted.lifecycle === "start") {
-    if (subagent) return {};
-    if (options.ensureRelay && (observation.actor.kind !== "main" || observation.actor.assurance !== "observed")) return {};
+    if (!main) return {};
     // Snapshot the adapter observation before presence awaits; later mutation cannot adopt a new generation.
     const hostProcess = options.hostProcess ? { pid: options.hostProcess.pid, startToken: options.hostProcess.startToken } : undefined;
     if (options.ensureRelay) {
@@ -361,7 +360,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     return {};
   }
   if (adapted.lifecycle === "end") {
-    if (!subagent) {
+    if (main) {
       try { await request("clear-deferred", { target }); }
       catch (error) { reportHookFailure("clear-deferred", error); }
     }
@@ -407,7 +406,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
       },
     };
   }
-  if (subagent) return {};
+  if (!main) return {};
 
   if (options.recoverExistingSession && observation.actor.kind === "main" && observation.actor.assurance === "observed"
     && (observation.kind === "user-input" || observation.kind === "turn-end"
