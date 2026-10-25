@@ -267,7 +267,10 @@ function invalid(message: string): WorkflowContractError {
   return new WorkflowContractError("BINDING_INVALID", message);
 }
 
-function verifyToken(store: WorkflowStore, adapter: HostExecutionAdapter, token: string): HostAttestationPayloadV1 {
+function verifyToken(store: WorkflowStore, adapter: HostExecutionAdapter, token: string): {
+  payload: HostAttestationPayloadV1;
+  capability: ResolvedModelCapabilityV1;
+} {
   const [prefix, encodedPayload, signature, ...rest] = token.split(".");
   if (prefix !== TOKEN_PREFIX || !encodedPayload || !signature || rest.length > 0) {
     throw invalid("Host attestation token is malformed.");
@@ -310,7 +313,7 @@ function verifyToken(store: WorkflowStore, adapter: HostExecutionAdapter, token:
   ) {
     throw invalid("Host attestation token payload is not a supported observation for the configured adapter.");
   }
-  return value as unknown as HostAttestationPayloadV1;
+  return { payload: value as unknown as HostAttestationPayloadV1, capability };
 }
 
 /**
@@ -345,7 +348,7 @@ export class HostAttestationProvider implements TrustedExecutionContextProvider 
       ...(this.adapter.policyRevision ? { policyRevision: this.adapter.policyRevision } : {}),
       status: "missing-call-observation",
       required: ["host-owned model", "reasoningEffort", "session", "current tool call", "signed input binding"],
-      connection: "Enable the host PreToolUse adapter, or supply host-owned observations through HostAttestationProvider.runObserved; caller executionContext is not trusted.",
+      connection: "This call has no signed host observation. Check the host-owned adapter observation diagnostic for the current model, reasoning effort, session and call; adapter configuration alone does not prove an observation.",
     };
   }
 
@@ -365,7 +368,7 @@ export class HostAttestationProvider implements TrustedExecutionContextProvider 
     this.lastVerifiedCapability = null;
     const current = this.current;
     if (!current?.token) return null;
-    const payload = verifyToken(this.store, this.adapter, current.token);
+    const { payload, capability } = verifyToken(this.store, this.adapter, current.token);
     if (payload.tool !== current.tool || payload.inputDigest !== convergenceDigest(current.input)) {
       throw invalid("Host attestation token was issued for a different tool call.");
     }
@@ -373,11 +376,7 @@ export class HostAttestationProvider implements TrustedExecutionContextProvider 
     // A stage call carries no task ID; its run, stage and revision bind the task.
     const taskId = payload.phase === "stage" ? binding.taskId : payload.taskId;
     if (!taskId) throw invalid("Host attestation token is missing its task binding.");
-    this.lastVerifiedCapability = resolveAdapterModelCapability(
-      this.adapter,
-      payload.model,
-      payload.provenance ?? `${this.adapter.host}:runtime`,
-    );
+    this.lastVerifiedCapability = capability;
     return {
       schemaVersion: CONTRACT_VERSION,
       model: payload.model,

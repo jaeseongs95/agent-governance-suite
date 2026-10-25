@@ -131,3 +131,59 @@ describe("Claude launcher stage diagnostics", () => {
     expect(diagnostics(result.stderr)).toEqual([]);
   });
 });
+
+describe("attestation launcher diagnostic proposal (parent-owned shared test)", () => {
+  const launcher = "host-attestation-hook.mjs";
+  const raw = JSON.stringify({ hook_event_name: "PreToolUse", session_id: "PRIVATE_SESSION",
+    tool_input: { taskId: "fixture-task", _hostAttestation: "PRIVATE_FORGED_TOKEN" } });
+  const fallback = { hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { taskId: "fixture-task" } } };
+  const invoke = (directory, dataDirectory) => {
+    const env = { ...process.env };
+    delete env.CLAUDE_PLUGIN_DATA;
+    if (dataDirectory !== undefined) env.CLAUDE_PLUGIN_DATA = dataDirectory;
+    return spawnSync(process.execPath, [path.join(directory, "hooks", launcher)], {
+      input: raw, encoding: "utf8", env, windowsHide: true,
+    });
+  };
+
+  it("keeps missing plugin data quiet, strips caller token, and exits 0", async () => {
+    const directory = await install(launcher, null);
+    const result = invoke(directory);
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout)).toEqual(fallback);
+    expect(diagnostics(result.stderr)).toEqual([]);
+  });
+
+  it("reports data-directory failure without path or input and retains stripped fail-open output", async () => {
+    const directory = await install(launcher, null);
+    const data = path.join(directory, "data-file");
+    await writeFile(data, "fixture");
+    const result = invoke(directory, data);
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout)).toEqual(fallback);
+    expect(diagnostics(result.stderr)).toEqual([{ launcher: "host-attestation-hook", stage: "data-directory", code: "EEXIST" }]);
+    expect(result.stderr).not.toContain(directory);
+    expect(result.stderr).not.toContain("PRIVATE_");
+  });
+
+  for (const [label, bundle, status] of [["missing shared bundle", null, 1], ["failed shared hook", "process.exit(3);\n", 3]]) {
+    it(`reports ${label} status while stripping the token and exiting 0`, async () => {
+      const directory = await install(launcher, bundle);
+      const result = invoke(directory, path.join(directory, "data"));
+      expect(result.status).toBe(0);
+      expect(JSON.parse(result.stdout)).toEqual(fallback);
+      expect(diagnostics(result.stderr)).toEqual([{ launcher: "host-attestation-hook", stage: "hook-exit", status }]);
+      expect(JSON.stringify(diagnostics(result.stderr))).not.toContain("PRIVATE_");
+      expect(JSON.stringify(diagnostics(result.stderr))).not.toContain(directory);
+    });
+  }
+
+  it("passes successful hook output through without a launcher diagnostic", async () => {
+    const output = { hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { fixture: true } } };
+    const directory = await install(launcher, `process.stdout.write(${JSON.stringify(JSON.stringify(output))});\n`);
+    const result = invoke(directory, path.join(directory, "data"));
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout)).toEqual(output);
+    expect(diagnostics(result.stderr)).toEqual([]);
+  });
+});

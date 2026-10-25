@@ -1,5 +1,4 @@
 import type { ModelClassV1, ReasoningEffortV1 } from "../../contracts/types.js";
-import { REASONING_EFFORT } from "../../contracts/types.js";
 import defaultModelRoutingPresets from "../../skills/coordinate-subagents/references/model-routing-presets.json" with { type: "json" };
 import type { HostExecutionAdapter, ResolvedModelCapabilityV1 } from "./host-attestation.js";
 
@@ -58,9 +57,7 @@ function resolveFromProviderCatalog(
     ?? minimumEfforts[canonicalKey]
     ?? entry.minimum_effort
     ?? null;
-  const supportedEfforts = entry.supported_efforts && entry.supported_efforts.length > 0
-    ? entry.supported_efforts
-    : REASONING_EFFORT;
+  const supportedEfforts = entry.supported_efforts ?? [];
 
   return {
     provider: providerId,

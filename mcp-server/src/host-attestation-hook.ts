@@ -1,6 +1,6 @@
-import { hookFailureContext, hookFailureReason, retainHookFailureSecondary } from "./hook-error-diagnostics.js";
+import { hookFailureContext, hookFailureReason, retainHookFailureSecondary, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
 import "./builtin-hook-host-adapters.js";
-import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync, writeSync } from "node:fs";
+import { closeSync, fstatSync, mkdirSync, openSync, readFileSync, readSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -22,10 +22,9 @@ import { resolveWorkflowDatabasePath } from "./runtime-config.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import type { WorkflowStore } from "./workflow-store.js";
 import { hookAttestationKind, resolveHookHost } from "./host-input-adapter.js";
+import { HOST_SKILL_OBSERVATION_FIELD } from "./skill-classification/host-discovery-adapter.js";
 
 type HookInput = Record<string, unknown>;
-
-const HOST_SKILL_OBSERVATION_FIELD = "_hostSkillObservation";
 
 /** Caller claims cannot become host-owned observations or signed tool arguments. */
 function withoutCallerHostClaims(input: HookInput): HookInput {
@@ -35,8 +34,8 @@ function withoutCallerHostClaims(input: HookInput): HookInput {
 }
 
 type HookObservationFailureCode = "TRANSCRIPT_READ_FAILED" | "CURRENT_CALL_INVALID_JSON"
-  | "SESSION_MODEL_READ_FAILED" | "SESSION_MODEL_INVALID" | "SESSION_MODEL_WRITE_FAILED"
-  | "INVALID_HOOK_INPUT" | "CURRENT_CALL_INVALID_SHAPE";
+  | "SESSION_MODEL_READ_FAILED" | "SESSION_MODEL_INVALID" | "SESSION_MODEL_WRITE_FAILED" | "INVALID_HOOK_INPUT" | "CURRENT_CALL_INVALID_SHAPE"
+  | "TRANSCRIPT_LIMIT_EXCEEDED";
 
 /** The failed step is the code; the actual I/O or parse error is kept as the cause. */
 class HookObservationFailure extends Error {
@@ -48,7 +47,7 @@ class HookObservationFailure extends Error {
 }
 
 function reportObservationFailure(phase: string, reason: string, cause?: unknown): void {
-  try { writeSync(2, JSON.stringify({ component: "host-attestation-hook", phase, reason,
+  try { writeFailureDiagnostic(JSON.stringify({ component: "host-attestation-hook", phase, reason,
     ...(cause === undefined ? {} : { context: hookFailureContext(cause) }) }) + "\n"); }
   catch { /* Diagnostics cannot authorize a call or block argument stripping. */ }
 }
@@ -83,13 +82,42 @@ function text(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
 
+export const CLAUDE_TRANSCRIPT_MAX_BYTES = 8 * 1024 * 1024;
+
 function readTextOrNull(file: string): string | null {
+  let descriptor: number | null = null;
+  let failure: HookObservationFailure | null = null;
+  let content: string | null = null;
   try {
-    return readFileSync(file, "utf8");
+    descriptor = openSync(file, "r");
+    const stats = fstatSync(descriptor);
+    if (!stats.isFile()) {
+      // Retain the native directory-read cause with a bounded read; reject other non-files.
+      if (stats.isDirectory()) readSync(descriptor, Buffer.alloc(1), 0, 1, 0);
+      throw new HookObservationFailure("TRANSCRIPT_READ_FAILED");
+    }
+    if (stats.size > CLAUDE_TRANSCRIPT_MAX_BYTES) throw new HookObservationFailure("TRANSCRIPT_LIMIT_EXCEEDED");
+    // Include one growth sentinel; a partial history must never authorize a model fallback.
+    const buffer = Buffer.alloc(CLAUDE_TRANSCRIPT_MAX_BYTES + 1);
+    const bytes = readSync(descriptor, buffer, 0, buffer.length, 0);
+    if (bytes > CLAUDE_TRANSCRIPT_MAX_BYTES) throw new HookObservationFailure("TRANSCRIPT_LIMIT_EXCEEDED");
+    if (bytes < stats.size) throw new HookObservationFailure("TRANSCRIPT_READ_FAILED");
+    content = buffer.subarray(0, bytes).toString("utf8");
   } catch (cause) {
-    if ((cause as NodeJS.ErrnoException).code === "ENOENT") return null;
-    throw new HookObservationFailure("TRANSCRIPT_READ_FAILED", cause);
+    if ((cause as NodeJS.ErrnoException).code !== "ENOENT") {
+      failure = cause instanceof HookObservationFailure ? cause : new HookObservationFailure("TRANSCRIPT_READ_FAILED", cause);
+    }
+  } finally {
+    if (descriptor !== null) {
+      try { closeSync(descriptor); }
+      catch (cleanup) {
+        if (failure) retainHookFailureSecondary(failure, cleanup);
+        else failure = new HookObservationFailure("TRANSCRIPT_READ_FAILED", cleanup);
+      }
+    }
   }
+  if (failure) throw failure;
+  return content;
 }
 
 const digest = hostIdentityDigest;
@@ -176,8 +204,8 @@ export function findLatestAssistantObservation(
     const at = Date.parse(text(entry.timestamp) ?? "");
     if (Number.isNaN(at) || at > nowMs) continue;
     const model = text(record(entry.message)?.model);
-    // Synthetic or unknown-model messages are not a model the actor ran on.
-    if (!model || !resolveAdapterModelCapability(adapter, model, `${adapter.host}:transcript-latest`)) continue;
+    // Retain the harness placeholder control, but never replace an actual unknown model with an older one.
+    if (!model || (model === "<synthetic>" && !resolveAdapterModelCapability(adapter, model, `${adapter.host}:transcript-latest`))) continue;
     return { model, at };
   }
   return null;
@@ -427,11 +455,66 @@ export function handleCodexHostAttestationHook(
   };
 }
 
+export interface HookAttestationStrategyContext {
+  databasePath: string;
+  openStore(): WorkflowStore;
+}
+
+export interface HookAttestationStrategy {
+  observe(input: HookInput, context: HookAttestationStrategyContext): Record<string, unknown>;
+  unavailable?(input: HookInput, failure: Readonly<{ phase: string; reason: string }>): Record<string, unknown>;
+}
+
+const attestationStrategies = new Map<string, Readonly<HookAttestationStrategy>>();
+
+/** Trusted installation composition, never selected or registered from hook payloads. */
+export function registerHookAttestationStrategy(kind: string, strategy: HookAttestationStrategy): void {
+  if (typeof kind !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(kind)
+    || !strategy || typeof strategy.observe !== "function"
+    || (strategy.unavailable !== undefined && typeof strategy.unavailable !== "function")) {
+    throw new Error("INVALID_HOOK_ATTESTATION_STRATEGY");
+  }
+  if (attestationStrategies.has(kind)) throw new Error("DUPLICATE_HOOK_ATTESTATION_STRATEGY");
+  attestationStrategies.set(kind, Object.freeze({ ...strategy }));
+}
+
+export function handleRegisteredHostAttestationHook(
+  kind: string, input: HookInput, context: HookAttestationStrategyContext,
+): Record<string, unknown> {
+  return attestationStrategies.get(kind)?.observe(input, context) ?? withoutCallerAttestation(input);
+}
+
+registerHookAttestationStrategy("claude-hook", {
+  observe(input, context) {
+    const modelDirectory = path.join(path.dirname(context.databasePath), "host-models");
+    const update = sessionModelUpdate(input);
+    if (update) {
+      writeSessionModel(modelDirectory, update.sessionId, update.record);
+      return {};
+    }
+    return handleHostAttestationHook(input, context.openStore(), {
+      readSessionModel: (sessionId) => readSessionModel(modelDirectory, sessionId),
+    });
+  },
+});
+
+registerHookAttestationStrategy("codex-rollout", {
+  observe: (input, context) => handleCodexHostAttestationHook(input, context.openStore()),
+  unavailable(input, failure) {
+    const output = withoutCallerAttestation(input);
+    if (attestedToolInput(input)) {
+      output.systemMessage = `AGS execution observation unavailable: ${failure.phase}:${failure.reason}. No caller attestation is trusted.`;
+      if (record(output.hookSpecificOutput)) (output.hookSpecificOutput as Record<string, unknown>).permissionDecision = "allow";
+    }
+    return output;
+  },
+});
+
 async function main(): Promise<void> {
-  let store: SqliteWorkflowStore | null = null;
+  const resources: { store: SqliteWorkflowStore | null } = { store: null };
   let input: HookInput = {};
   let output: Record<string, unknown>;
-  let codex = false;
+  let strategy: Readonly<HookAttestationStrategy> | undefined;
   let phase = "stdin";
   try {
     const raw = readFileSync(0, "utf8");
@@ -442,25 +525,23 @@ async function main(): Promise<void> {
     phase = "host-entry";
     const host = resolveHookHost(process.argv.slice(2), "claude-code");
     const attestationKind = hookAttestationKind(host);
-    if (!attestationKind) {
+    strategy = attestationKind ? attestationStrategies.get(attestationKind) : undefined;
+    if (!strategy || !attestationKind) {
       // Official effort and actual call identity are unavailable: issue no token or discovery snapshot.
       output = withoutCallerAttestation(input);
       if (Object.keys(output).length > 0) process.stdout.write(JSON.stringify(output));
       return;
     }
-    codex = attestationKind === "codex-rollout";
     phase = "storage";
     const databasePath = resolveWorkflowDatabasePath();
-    const modelDirectory = path.join(path.dirname(databasePath), "host-models");
-    const update = codex ? null : sessionModelUpdate(input);
-    if (update) {
-      writeSessionModel(modelDirectory, update.sessionId, update.record);
-      return;
-    }
-    store = new SqliteWorkflowStore(databasePath);
-    phase = "observation";
-    output = codex ? handleCodexHostAttestationHook(input, store)
-      : handleHostAttestationHook(input, store, { readSessionModel: (sessionId) => readSessionModel(modelDirectory, sessionId) });
+    output = handleRegisteredHostAttestationHook(attestationKind, input, {
+      databasePath,
+      openStore() {
+        resources.store ??= new SqliteWorkflowStore(databasePath);
+        phase = "observation";
+        return resources.store;
+      },
+    });
   } catch (cause) {
     // Failure stays distinct from normal absence, without logging native input or raw errors.
     const reason = hookFailureReason(cause) ?? (cause instanceof HookObservationFailure ? cause.code
@@ -468,12 +549,10 @@ async function main(): Promise<void> {
     reportObservationFailure(phase, reason, cause);
     // Without a token the server fails closed with BINDING_REQUIRED; never block the tool call here.
     output = withoutCallerAttestation(input);
-    if (codex && attestedToolInput(input)) {
-      output.systemMessage = `AGS execution observation unavailable: ${phase}:${reason}. No caller attestation is trusted.`;
-      if (record(output.hookSpecificOutput)) (output.hookSpecificOutput as Record<string, unknown>).permissionDecision = "allow";
-    }
+    try { output = strategy?.unavailable?.(input, { phase, reason }) ?? output; }
+    catch { /* An unavailable adapter cannot prevent caller-claim stripping. */ }
   } finally {
-    try { store?.close(); } catch { reportObservationFailure("store-close", "STORE_CLOSE_FAILED"); }
+    try { resources.store?.close(); } catch (cause) { reportObservationFailure("store-close", "STORE_CLOSE_FAILED", cause); }
   }
   if (Object.keys(output).length > 0) process.stdout.write(JSON.stringify(output));
 }
