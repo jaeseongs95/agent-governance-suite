@@ -33,8 +33,8 @@ export function runStageValidator(label: string, script: string, args: string[],
   }
   let parsed: Record<string, unknown> | null = null;
   try { parsed = JSON.parse(stdout) as Record<string, unknown>; } catch { /* judged below */ }
-  // An allowed status with no JSON but a stderr message (e.g. node failing to load the script) is a CLI failure too.
-  if (!okStatuses.includes(checked.status ?? -1) || (!parsed && stderr.trim())) {
+  // An allowed non-zero status needs a JSON report; stderr also identifies load failures without a report.
+  if (!okStatuses.includes(checked.status ?? -1) || (!parsed && (checked.status !== 0 || stderr.trim()))) {
     const cause = childError(stdout, stderr);
     const code = cause && (ERROR_CODE as readonly string[]).includes(cause.code) ? cause.code as ErrorCode : "GATE_FAILED";
     throw new WorkflowContractError(code, cause?.message || `${label} validator exited with status ${checked.status}.`,

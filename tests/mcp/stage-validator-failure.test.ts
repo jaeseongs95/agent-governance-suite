@@ -25,9 +25,9 @@ function fakeRoot(script: string, body: string) {
 }
 
 const targets = [
-  {name: "CS", script: "skills/cs-engineering/scripts/validate.mjs",
+  {name: "CS", emptyReportExitStatus: 3, script: "skills/cs-engineering/scripts/validate.mjs",
     run: (root: string) => assertCsStageBundle(root, digest, stageResult("cs-review-bundle", path.join(root, "bundle.json")), validator)},
-  {name: "engineering", script: "runtime/engineering-practices/cli.mjs",
+  {name: "engineering", emptyReportExitStatus: 1, script: "runtime/engineering-practices/cli.mjs",
     run: (root: string) => assertEngineeringStageBundle(root, digest, "change-code-review", stageResult("engineering-stage-bundle", path.join(root, "bundle.json")), validator)},
 ];
 
@@ -36,7 +36,7 @@ function caught(run: () => void): WorkflowContractError {
   throw new Error("expected WorkflowContractError");
 }
 
-describe.each(targets)("$name stage validator process failures keep their cause", ({script, run}) => {
+describe.each(targets)("$name stage validator process failures keep their cause", ({script, run, emptyReportExitStatus}) => {
   test("missing CLI script reports the exit failure, not bad JSON", () => {
     const error = caught(() => run(fakeRoot("unused.mjs", "")));
     expect(error.code).toBe("GATE_FAILED");
@@ -48,6 +48,13 @@ describe.each(targets)("$name stage validator process failures keep their cause"
     expect(error.code).toBe("GATE_FAILED");
     expect(error.message).not.toContain("bounded JSON");
     expect(error.details).toMatchObject({step: "exit", status: 5});
+  });
+
+  test("an allowed non-zero exit without JSON is still an exit failure", () => {
+    const error = caught(() => run(fakeRoot(script, `process.exitCode = ${emptyReportExitStatus};`)));
+    expect(error.code).toBe("GATE_FAILED");
+    expect(error.message).not.toContain("bounded JSON");
+    expect(error.details).toMatchObject({step: "exit", status: emptyReportExitStatus});
   });
 
   test("CLI-reported error code and message are preserved", () => {
