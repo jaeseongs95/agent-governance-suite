@@ -105,6 +105,7 @@ export async function collectOSMutations({ sourceRoot, planFile, outputRoot, dea
     const entry = { caseId: item.id, status: 'NOT_RUN', red: { ...empty }, green: { ...empty },
       mutationPaths: [], assertionWitness: '', reason: 'No valid red/green evidence collected.' };
     proof.proofs.push(entry);
+    let failureStage = 'PREPARATION';
     try {
       assert(deadline - Date.now() >= 95_000, 'Insufficient bounded budget for one red/green pair');
       const caseRoot = path.join(scratch, item.id);
@@ -119,20 +120,25 @@ export async function collectOSMutations({ sourceRoot, planFile, outputRoot, dea
       await fs.symlink(path.join(sourceRoot, 'node_modules'), path.join(redRoot, 'node_modules'), 'junction');
       await fs.writeFile(path.join(redRoot, production), mutateLock(original, item.id), 'utf8');
       const redSnapshot = captureSnapshot(redRoot, plan.scopeFiles);
+      failureStage = 'RED_EXECUTION';
       const red = runCommand(redRoot, redSnapshot, item.argv, { timeoutMs: 45_000, environmentNote });
       const redRef = await write(`${item.id}.red.receipt.json`, red);
       observation.redStatus = red.status;
       // Green is recorded even when red did not hit the intended oracle; it cannot repair an invalid red.
+      failureStage = 'GREEN_EXECUTION';
       const green = runCommand(sourceRoot, candidate, item.argv, { timeoutMs: 45_000, environmentNote });
       const greenRef = await write(`${item.id}.green.receipt.json`, green);
       observation.greenStatus = green.status;
+      failureStage = 'REPORT_READ';
       const redReportBytes = await fs.readFile(path.join(caseRoot, `${item.id}.vitest.json`));
       const greenReportBytes = await fs.readFile(path.join(path.dirname(sourceRoot), `${item.id}.vitest.json`));
       await fs.writeFile(path.join(outputRoot, `${item.id}.red.vitest.json`), redReportBytes, { flag: 'wx' });
       await fs.writeFile(path.join(outputRoot, `${item.id}.green.vitest.json`), greenReportBytes, { flag: 'wx' });
       const redReport = JSON.parse(redReportBytes.toString('utf8'));
       const greenReport = JSON.parse(greenReportBytes.toString('utf8'));
+      failureStage = 'RED_WITNESS';
       const witness = assertionWitness(item.id, redReport, red);
+      failureStage = 'GREEN_WITNESS';
       assert.equal(green.status, 'PASS');
       assert.equal(greenReport.numFailedTests, 0);
       assert.equal(greenReport.numFailedTestSuites, 0);
@@ -148,6 +154,7 @@ export async function collectOSMutations({ sourceRoot, planFile, outputRoot, dea
         green: { total: greenReport.numTotalTests, passed: greenReport.numPassedTests, pending: greenReport.numPendingTests } };
     } catch (error) {
       observation.status = 'INVALID_OR_INCOMPLETE_EVIDENCE';
+      observation.failureStage = failureStage;
       observation.error = error.message;
       entry.reason = `No admissible proof: ${error.message}. Any actual receipts remain separate observations; no red evidence is inferred.`;
     }

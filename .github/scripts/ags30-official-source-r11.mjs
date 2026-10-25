@@ -47,6 +47,26 @@ export function summarizeSuiteLoading(report, progressText, source) {
     conclusion: 'OBSERVATION_ONLY_NOT_A_SUITE_LOAD_PASS_OR_NEW_GATE' };
 }
 
+export function osProofFailure(evidence) {
+  if (evidence?.verdict === 'CONSISTENT') return null;
+  const codes = { PREPARATION: 'OS_CASE_PREPARATION_FAILED', RED_EXECUTION: 'OS_RED_EXECUTION_FAILED',
+    GREEN_EXECUTION: 'OS_GREEN_EXECUTION_FAILED', REPORT_READ: 'OS_REPORT_UNAVAILABLE',
+    RED_WITNESS: 'OS_RED_WITNESS_REJECTED', GREEN_WITNESS: 'OS_GREEN_WITNESS_REJECTED' };
+  const statuses = ['PASS', 'FAIL', 'INPUT_CHANGED', 'TIMED_OUT', 'SPAWN_ERROR'];
+  return { phase: '07-os-mutation-proof', status: 'FAIL', code: 'OS_PROOF_NOT_CONSISTENT',
+    verdict: ['INCOMPLETE', 'INCONSISTENT'].includes(evidence?.verdict) ? evidence.verdict : 'UNVERIFIED',
+    cases: ['OS-001', 'OS-002', 'OS-003'].map(caseId => {
+      const matches = Array.isArray(evidence?.cases) ? evidence.cases.filter(row => row?.caseId === caseId) : [];
+      const row = matches.length === 1 ? matches[0] : {};
+      const status = ['NOT_RUN', 'DEMONSTRATED', 'INVALID_OR_INCOMPLETE_EVIDENCE'].includes(row.status) ? row.status : 'UNVERIFIED';
+      const stage = typeof row.failureStage === 'string' && Object.hasOwn(codes, row.failureStage) ? row.failureStage : 'UNVERIFIED';
+      return { caseId, status, redStatus: statuses.includes(row.redStatus) ? row.redStatus : 'UNVERIFIED',
+        greenStatus: statuses.includes(row.greenStatus) ? row.greenStatus : 'UNVERIFIED',
+        failureStage: status === 'DEMONSTRATED' ? null : stage,
+        code: status === 'DEMONSTRATED' ? null : codes[stage] ?? 'OS_CASE_FAILURE_UNCLASSIFIED' };
+    }) };
+}
+
 export function assertRows(rows) {
   assert(Array.isArray(rows) && rows.length > 0);
   const seen = new Set();
@@ -541,6 +561,8 @@ async function main() {
       outputRoot: path.join(output, 'os-proof'), deadline, wholeSourcePortableId: config.portableId });
     record.mutationSensitivity = osEvidence;
     record.formalEngineeringProof = osEvidence.verdict;
+    const proofFailure = osProofFailure(osEvidence);
+    if (proofFailure) record.aggregateFailures = [...(record.aggregateFailures ?? []), proofFailure];
     if (osEvidence.verdict !== 'CONSISTENT') testsPass = false;
     // Independent collection is evidence in its own right, including when full Vitest never emits JSON.
     const nodeRunner = 'import {listNodeTestFiles,runTests} from ' + JSON.stringify(pathToFileURL(path.join(source, 'scripts/run-tests.mjs')).href) + '; const files=listNodeTestFiles(); if(!files.length)throw Error("No Node suites"); console.log(JSON.stringify({files})); process.exitCode=await runTests(files,[process.execPath,"--test"]);';
@@ -742,7 +764,8 @@ async function main() {
     console.log(JSON.stringify({ status: record.status, sourceFreshness: record.sourceFreshness,
       runtimeValidation: record.runtimeValidation ?? 'NOT_RUN', bytes, artifactOk,
       phases: record.phases.map(({name,status,exitCode,errorCode}) => ({name,status,exitCode,errorCode})),
-      failureType: record.failure?.name ?? null, failureCode: record.failure?.code ?? null }));
+      failureType: record.failure?.name ?? null, failureCode: record.failure?.code ?? null,
+      aggregateFailures: record.aggregateFailures ?? [] }));
     if (record.status !== 'SELECTED_CHECKS_PASS' || !artifactOk) process.exitCode = 1;
   }
 }
