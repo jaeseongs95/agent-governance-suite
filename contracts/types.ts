@@ -371,6 +371,16 @@ export interface PrepareStateCleanupRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
 }
 
+/** Counts from the signed workflow preview, never execution-time deletion results. */
+export interface StateCleanupRootProtectionV1 {
+  previewCreatedAt: string;
+  activeRoots: number;
+  linkedNonTerminalRoots: number;
+  linkedRecentRoots: number;
+  linkedMissingReceiptRoots: number;
+  totalProtectedRoots: number;
+}
+
 export interface StateCleanupPlanV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   planId: string;
@@ -399,6 +409,7 @@ export interface StateCleanupPlanV1 {
   candidateDigest: Sha256Digest;
   protection: "os-managed-unverified" | "filesystem-mode-0600";
   planToken: string;
+  rootProtection?: StateCleanupRootProtectionV1;
 }
 
 export interface ExecuteStateCleanupRequestV1 {
@@ -416,6 +427,7 @@ export interface StateCleanupReceiptV1 {
     workflow: { status: "completed" | "skipped" | "failed"; backupPath: string | null; deletedRoots: number; deletedRuns: number; error: string | null };
     continuity: { status: "completed" | "skipped" | "unavailable" | "failed"; backupPath: string | null; deletedSnapshots: number; deletedTasks: number; error: string | null };
   };
+  rootProtection?: StateCleanupRootProtectionV1;
   backupRetention: "manual-deletion-only";
   protection: "os-managed-unverified" | "filesystem-mode-0600";
 }

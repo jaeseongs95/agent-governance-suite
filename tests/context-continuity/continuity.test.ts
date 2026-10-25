@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { mkdtemp, rm } from "node:fs/promises";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type {
   CheckpointContextRequestV1,
@@ -18,12 +18,18 @@ import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 
+import { createInactiveSharedStores } from "../../mcp-server/src/inactive-shared-stores.js";
+
+const sharedOwners = new Set<ReturnType<typeof createInactiveSharedStores>["owner"]>();
 const temporaryDirectories: string[] = [];
 const stores = new Set<SqliteContinuityStore>();
 
 afterEach(async () => {
+  vi.restoreAllMocks();
   for (const store of stores) store.close();
   stores.clear();
+  for (const owner of sharedOwners) owner.close();
+  sharedOwners.clear();
   await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
 });
 
@@ -471,5 +477,246 @@ describe("workflow projection and fail-open lifecycle", () => {
     expect(stored.task_correlation).toMatch(/^hmac-sha256:[a-f0-9]{64}$/u);
     expect(stored.turn_hash).toMatch(/^hmac-sha256:[a-f0-9]{64}$/u);
     expect(JSON.stringify(stored)).not.toContain("raw-secret");
+  });
+});
+
+
+// Explicit step barriers exercise distinct SQLite connections; no timer ordering assumptions.
+async function twoContinuityConnections() {
+  const directory = await mkdtemp(join(tmpdir(), "continuity-current-race-"));
+  temporaryDirectories.push(directory);
+  const databasePath = join(directory, "continuity.sqlite3");
+  return { databasePath, first: createService(databasePath), second: createService(databasePath) };
+}
+function directLoadInput(service: ContinuityService, session: string) {
+  const candidate = service.candidateForSession(session);
+  expect(candidate.decision).toBe("DEFER");
+  return { schemaVersion: "1.0.0" as const, candidateToken: candidate.restoreToken!,
+    epoch: candidate.summary!.epoch, revision: candidate.summary!.revision, digest: candidate.summary!.snapshotDigest };
+}
+function clearAfterMetadataRead(first: ContinuityService, second: ContinuityService, session: string) {
+  const original = first.store.getTask.bind(first.store);
+  vi.spyOn(first.store, "getTask").mockImplementationOnce((correlation) => {
+    const stale = original(correlation);
+    second.clearSession(session);
+    return stale;
+  });
+}
+
+describe("current continuity authority versus historical payload", () => {
+  for (const operation of ["checkpoint", "replay", "load", "purge"] as const) {
+    it(operation + ": clear committed after metadata read rejects stale authority without body or mutation", async () => {
+      const { first, second } = await twoContinuityConnections();
+      const session = "preflight-" + operation;
+      const snapshot = directCheckpoint(first, session).data!;
+      const loadInput = directLoadInput(first, session);
+      const checkpoint = operation === "replay" ? checkpointInput() : checkpointInput({ requestId: "after-read", expectedRevision: 1 });
+      const checkpointRequest = bound(first, session, "checkpoint_context", checkpoint);
+      const loadRequest = bound(first, session, "load_context", loadInput);
+      const purgeRequest = bound(first, session, "purge_direct_context", {
+        schemaVersion: "1.0.0" as const, requestId: "purge-after-read", expectedEpoch: 1, expectedRevision: 1,
+      });
+      clearAfterMetadataRead(first, second, session);
+      const result = operation === "load" ? first.loadContext(loadRequest)
+        : operation === "purge" ? first.purgeDirectContext(purgeRequest) : first.checkpointContext(checkpointRequest);
+      expect(result.ok).toBe(false);
+      expect(result.error?.code).toBe("BINDING_INVALID");
+      expect(result.data).toBeNull();
+      expect(JSON.stringify(result)).not.toContain(snapshot.core.objective);
+      const correlation = first.correlateSession(session);
+      expect(second.store.getTask(correlation)?.currentEpoch).toBe(2);
+      expect(second.store.getSnapshot(correlation, 1)).toEqual(snapshot);
+      expect(second.store.getSnapshot(correlation, 2)).toBeNull();
+      expect(second.store.getRequest(correlation, 1, first.hashOpaque("request", "after-read"))).toBeNull();
+      expect(second.store.getRequest(correlation, 1, first.hashOpaque("request", "purge-after-read"))).toBeNull();
+      expect(second.store.getTask(correlation)?.pendingSource).toBeNull();
+    });
+  }
+
+  it("inspect rechecks its binding epoch after stale metadata without publishing an old candidate", async () => {
+    const { first, second } = await twoContinuityConnections();
+    directCheckpoint(first, "inspect-race");
+    const request = bound(first, "inspect-race", "inspect_context", { schemaVersion: "1.0.0" as const });
+    clearAfterMetadataRead(first, second, "inspect-race");
+    const result = first.inspectContext(request);
+    expect(result.data?.decision).toBe("REJECT");
+    expect(result.data?.restoreToken).toBeNull();
+    expect(result.data?.summary).toBeNull();
+  });
+
+  for (const change of ["clear", "root"] as const) {
+    for (const replay of [false, true]) {
+      it(change + " before checkpoint transaction rejects " + (replay ? "replay" : "write"), async () => {
+        const { first, second } = await twoContinuityConnections();
+        const session = "transaction-" + change + replay;
+        const snapshot = directCheckpoint(first, session).data!;
+        const correlation = first.correlateSession(session);
+        const input = replay ? checkpointInput() : checkpointInput({ requestId: "new-receipt", expectedRevision: 1 });
+        const request = bound(first, session, "checkpoint_context", input);
+        const original = first.store.checkpoint.bind(first.store);
+        vi.spyOn(first.store, "checkpoint").mockImplementationOnce((...args) => {
+          if (change === "clear") second.clearSession(session);
+          else expect(second.store.bindRoot(correlation, 1, "root-after-read", "2026-09-13T01:00:00.000Z")).toBe(true);
+          return original(...args);
+        });
+        const result = first.checkpointContext(request);
+        expect(result.error?.code).toBe(change === "clear" ? "BINDING_INVALID" : "SNAPSHOT_CONFLICT");
+        expect(result.data).toBeNull();
+        expect(second.store.getSnapshot(correlation, 1)).toEqual(snapshot);
+        expect(second.store.getRequest(correlation, 1, first.hashOpaque("request", "new-receipt"))).toBeNull();
+      });
+    }
+  }
+
+  it("clear after idempotent receipt lookup cannot return the historical payload", async () => {
+    const { first, second } = await twoContinuityConnections();
+    const snapshot = directCheckpoint(first, "replay-body").data!;
+    const request = bound(first, "replay-body", "checkpoint_context", checkpointInput());
+    const original = first.store.checkpoint.bind(first.store);
+    vi.spyOn(first.store, "checkpoint").mockImplementationOnce((...args) => {
+      const replay = original(...args);
+      expect(replay.kind).toBe("replay");
+      second.clearSession("replay-body");
+      return replay;
+    });
+    const result = first.checkpointContext(request);
+    expect(result.error?.code).toBe("BINDING_INVALID");
+    expect(result.data).toBeNull();
+    expect(second.store.getSnapshot(first.correlateSession("replay-body"), 1)).toEqual(snapshot);
+  });
+
+  it("root-bound missing projection never falls back to a direct body and explicit purge remains available", async () => {
+    const { first, second } = await twoContinuityConnections();
+    const session = "missing-root";
+    const snapshot = directCheckpoint(first, session).data!;
+    const load = bound(first, session, "load_context", directLoadInput(first, session));
+    const correlation = first.correlateSession(session);
+    expect(second.store.bindRoot(correlation, 1, "root-without-projection", "2026-09-13T01:00:00.000Z")).toBe(true);
+    expect(first.loadContext(load).error?.code).toBe("SNAPSHOT_CONFLICT");
+    expect(first.candidateForSession(session)).toMatchObject({ decision: "REJECT", summary: null, restoreToken: null });
+    first.markPreCompact(session);
+    expect(first.compactContext(session)).toBeNull();
+    expect(first.store.getTask(correlation)?.pendingSource).toBeNull();
+    expect(first.store.getSnapshot(correlation, 1)).toEqual(snapshot);
+    const purge = { schemaVersion: "1.0.0" as const, requestId: "root-purge", expectedEpoch: 1, expectedRevision: 1 };
+    expect(first.purgeDirectContext(bound(first, session, "purge_direct_context", purge)).data?.purged).toBe(true);
+    expect(first.store.getTask(correlation)?.rootId).toBe("root-without-projection");
+  });
+
+  it("purge transaction rejects a stale current binding but a newly bound request can purge the old epoch", async () => {
+    const { first, second } = await twoContinuityConnections();
+    directCheckpoint(first, "purge-authority");
+    const correlation = first.correlateSession("purge-authority");
+    const input = { schemaVersion: "1.0.0" as const, requestId: "purge-guard", expectedEpoch: 1, expectedRevision: 1 };
+    const request = bound(first, "purge-authority", "purge_direct_context", input);
+    const original = first.store.purge.bind(first.store);
+    vi.spyOn(first.store, "purge").mockImplementationOnce((...args) => {
+      second.clearSession("purge-authority");
+      return original(...args);
+    });
+    expect(first.purgeDirectContext(request).error?.code).toBe("BINDING_INVALID");
+    expect(first.store.getSnapshot(correlation, 1)).not.toBeNull();
+    expect(first.purgeDirectContext(bound(first, "purge-authority", "purge_direct_context", input)).data?.purged).toBe(true);
+    expect(first.store.getSnapshot(correlation, 1)).toBeNull();
+    expect(first.store.getTask(correlation)?.currentEpoch).toBe(2);
+  });
+
+  it("pending markers reject wrong root, direct source after binding, suppression, and stale epoch", () => {
+    const service = createService();
+    const task = service.ensureSession("marker-guards");
+    const c = task.taskCorrelation;
+    const now = "2026-09-13T01:00:00.000Z";
+    const digest = convergenceDigest("marker");
+    expect(service.store.bindRoot(c, 1, "root-a", now)).toBe(true);
+    expect(service.store.setPendingMarker(c, 1, "direct", 1, digest, null, now)).toBe(false);
+    expect(service.store.setPendingMarker(c, 1, "workflow", 1, digest, "root-b", now)).toBe(false);
+    expect(service.store.setPendingMarker(c, 1, "workflow", 1, digest, "root-a", now)).toBe(true);
+    expect(service.store.bindRoot(c, 1, "root-b", now)).toBe(true);
+    expect(service.store.consumeWorkflowMarker(c, 1, "root-a", 1, digest, now)).toBe(false);
+    expect(service.store.setPendingMarker(c, 1, "workflow", 1, digest, "root-b", now)).toBe(true);
+    expect(service.store.setSuppressed(c, 1, now)).toBe(true);
+    expect(service.store.consumeWorkflowMarker(c, 1, "root-b", 1, digest, now)).toBe(false);
+    expect(service.store.setPendingMarker(c, 1, "workflow", 1, digest, "root-b", now)).toBe(false);
+    service.clearSession("marker-guards");
+    expect(service.store.setPendingMarker(c, 1, "direct", 1, digest, null, now)).toBe(false);
+    expect(service.store.getTask(c)?.pendingSource).toBeNull();
+  });
+
+  it("a different root committed before workflow marker consumption prevents injection", () => {
+    const workflow = new InMemoryWorkflowStore();
+    const root = workflowRoot();
+    workflow.insertConvergenceRoot(root);
+    const service = createService(":memory:", workflow);
+    const c = service.ensureSession("consume-root").taskCorrelation;
+    expect(service.store.bindRoot(c, 1, root.rootId, root.updatedAt)).toBe(true);
+    service.markPreCompact("consume-root");
+    expect(service.store.getTask(c)).toMatchObject({ pendingSource: "workflow", pendingRootId: root.rootId,
+      pendingRevision: root.revision, pendingConsumed: false });
+    expect(service.store.getTask(c)?.pendingDigest).toMatch(/^sha256:/u);
+    const consume = service.store.consumeWorkflowMarker.bind(service.store);
+    let switched = false;
+    const consumeSpy = vi.spyOn(service.store, "consumeWorkflowMarker").mockImplementationOnce((...args) => {
+      switched = service.store.bindRoot(c, 1, "different-root", root.updatedAt);
+      return consume(...args);
+    });
+    expect(service.compactContext("consume-root")).toBeNull();
+    expect(consumeSpy).toHaveBeenCalledTimes(1);
+    expect(switched).toBe(true);
+    expect(service.store.getTask(c)).toMatchObject({ rootId: "different-root", pendingConsumed: false });
+  });
+
+  it("current read holds the SQLite writer barrier; the identical competing statement succeeds afterwards", async () => {
+    const { first, databasePath } = await twoContinuityConnections();
+    const snapshot = directCheckpoint(first, "writer-barrier").data!;
+    const c = first.correlateSession("writer-barrier");
+    const competing = new DatabaseSync(databasePath);
+    try {
+      competing.exec("PRAGMA busy_timeout = 0");
+      const rotate = competing.prepare("UPDATE continuity_tasks SET current_epoch = current_epoch + 1 WHERE task_correlation = ?");
+      const selected = first.store.readCurrentState(c, 1, "direct", () => {
+        expect(() => rotate.run(c)).toThrow(/locked|busy/iu);
+        return first.store.getSnapshot(c, 1);
+      });
+      expect(selected).toMatchObject({ kind: "available", value: snapshot });
+      expect(rotate.run(c).changes).toBe(1);
+      expect(first.store.readCurrentState(c, 1, "direct", () => { throw new Error("stale callback must not run"); })).toEqual({ kind: "epoch-mismatch" });
+      expect(first.store.getSnapshot(c, 1)).toEqual(snapshot);
+    } finally { competing.close(); }
+  });
+
+  it("shared workflow and continuity reads use the owner transaction without poisoning rollback", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "continuity-shared-"));
+    temporaryDirectories.push(directory);
+    const now = new Date("2026-09-13T01:00:00.000Z");
+    const bundle = createInactiveSharedStores({ directory, mode: "fixture-only", clock: () => now.getTime(),
+      syntheticKeys: { workflow: Buffer.alloc(32, 1).toString("base64url"), continuity: Buffer.alloc(32, 2).toString("base64url"), trust: Buffer.alloc(32, 3).toString("base64url") } });
+    sharedOwners.add(bundle.owner);
+    const service = new ContinuityService(bundle.continuity, new ContractValidator(), bundle.workflow, () => now);
+    const root = workflowRoot();
+    expect(bundle.workflow.insertConvergenceRoot(root)).toBeNull();
+    const c = service.ensureSession("shared-workflow").taskCorrelation;
+    expect(bundle.continuity.bindRoot(c, 1, root.rootId, now.toISOString())).toBe(true);
+    expect(service.candidateForSession("shared-workflow").summary?.source).toBe("workflow");
+    const candidate = service.candidateForSession("shared-workflow");
+    const input = { schemaVersion: "1.0.0" as const, candidateToken: candidate.restoreToken!,
+      epoch: candidate.summary!.epoch, revision: candidate.summary!.revision, digest: candidate.summary!.snapshotDigest };
+    expect(service.loadContext(bound(service, "shared-workflow", "load_context", input)).ok).toBe(true);
+    service.markPreCompact("shared-workflow");
+    expect(service.compactContext("shared-workflow")).toContain("decision=INJECT");
+    const beforeRollback = bundle.continuity.getTask(c);
+    let callbackReached = false;
+    let nestedWriteSucceeded = false;
+    expect(() => bundle.owner.transaction(() => {
+      bundle.continuity.readCurrentState(c, 1, "workflow", () => {
+        callbackReached = true;
+        nestedWriteSucceeded = bundle.continuity.setPendingMarker(c, 1, "workflow", 99, convergenceDigest("rollback-only"), root.rootId, now.toISOString());
+        throw new Error("fixed-current-read-fault");
+      });
+    })).toThrow();
+    expect(callbackReached).toBe(true);
+    expect(nestedWriteSucceeded).toBe(true);
+    expect(bundle.continuity.getTask(c)).toEqual(beforeRollback);
+    expect(service.candidateForSession("shared-workflow").summary?.source).toBe("workflow");
+    expect(bundle.workflow.getConvergenceSnapshot(root.rootId)?.root).toEqual(root);
   });
 });

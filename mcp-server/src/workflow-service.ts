@@ -360,14 +360,22 @@ export class WorkflowService {
           );
         }
         const priorLease = attempts.at(-1)!;
-        const priorProposal = snapshot.proposals.find((item) => convergenceDigest(item) === priorLease.proposalDigest);
         const sameTarget = proposedDigests.targetDigest === priorLease.targetDigest;
         // Evidence burnt by an earlier rejection stays burnt for the whole root: a new epoch
         // forces priorFailure to null, so an epoch-scoped set would let it back in.
         const burned = (root.retryRejections ?? [])
           .filter((item) => item.reason === "stale-evidence")
           .flatMap((item) => item.evidenceRefs);
-        const oldEvidence = new Set([...(priorProposal?.priorFailure?.evidenceRefs ?? []), ...burned]);
+        const usedProposals = new Set(snapshot.leases
+          .filter((lease) => lease.state === "consumed")
+          .map((lease) => lease.proposalDigest));
+        const oldEvidence = new Set([
+          ...snapshot.proposals
+            .filter((item) => usedProposals.has(convergenceDigest(item)))
+            .flatMap((item) => item.priorFailure?.evidenceRefs ?? []),
+          ...snapshot.outcomes.flatMap((outcome) => outcome.evidenceRefs),
+          ...burned,
+        ]);
         const hasNewEvidence = proposal.priorFailure.evidenceRefs.some((reference) => !oldEvidence.has(reference));
         if (sameTarget && !hasNewEvidence) {
           this.rejectRetry(

@@ -20,7 +20,6 @@ import { PluginUpdateService } from "./plugin-update-service.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import { WorkflowService } from "./workflow-service.js";
 import { HostAttestationProvider } from "./host-attestation.js";
-import { claudeCodeExecutionAdapter, codexExecutionAdapter, geminiExecutionAdapter } from "./host-execution-adapters.js";
 import { StateCleanupService } from "./state-cleanup-service.js";
 import { SqliteKoreanProseGlossary } from "./korean-prose-glossary.js";
 import { TrustStore } from "./trust-store.js";
@@ -28,13 +27,14 @@ import { TrustService } from "./trust-service.js";
 import path from "node:path";
 import { RuntimeSkillClassificationGateway, readClassificationRuntime } from "./skill-classification/gateway.js";
 import { InMemoryClassificationBudget, SkillClassificationService } from "./skill-classification/service.js";
-import { loadClassificationProviderRuntime } from "./skill-classification/runtime.js";
+import { loadClassificationProviderRuntime, reportClassificationInitializationFailure } from "./skill-classification/runtime.js";
 import { readFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { digestClassificationValue } from "./skill-classification/request.js";
 import { listSessions, openBoard } from "../../skills/session-board/scripts/board-store.mjs";
 import { hostActorId } from "./host-attestation.js";
 import { createNativeClassificationAdapters, type NativeClassificationAdapterDefinition } from "./skill-classification/native-adapters.js";
+import { bindNativeClassificationDefinitions } from "./skill-classification/native-cli-strategies.js";
 
 async function main(): Promise<void> {
   const registryPath = resolveRegistryPath();
@@ -56,15 +56,8 @@ async function main(): Promise<void> {
   });
 
   const validator = new ContractValidator();
-  const attestationHost = resolveHostAttestation();
-  const hostAttestation = attestationHost ? new HostAttestationProvider(
-    store,
-    attestationHost === "codex"
-      ? codexExecutionAdapter
-      : attestationHost === "claude-code"
-        ? claudeCodeExecutionAdapter
-        : geminiExecutionAdapter,
-  ) : null;
+  const executionAdapter = resolveHostAttestation();
+  const hostAttestation = executionAdapter ? new HostAttestationProvider(store, executionAdapter) : null;
   // Neither bundled host currently exposes a cryptographically distinct direct-human approval event.
   const trust = new TrustService(trustStore);
   const service = new WorkflowService(
@@ -107,9 +100,12 @@ async function main(): Promise<void> {
     if (nativeDefinitionBytes && nativeDefinitionBytes.length > 1024 * 1024) throw new Error("NATIVE_ADAPTER_DEFINITIONS_TOO_LARGE");
     nativeDefinitionDigest = nativeDefinitionBytes ? digestClassificationValue(nativeDefinitionBytes.toString("utf8")) : null;
     const nativeDefinitions: NativeClassificationAdapterDefinition[] = nativeDefinitionBytes ? JSON.parse(nativeDefinitionBytes.toString("utf8")) as NativeClassificationAdapterDefinition[] : [];
-    const nativeAdapters = createNativeClassificationAdapters(nativeDefinitions);
+    const nativeAdapters = createNativeClassificationAdapters(bindNativeClassificationDefinitions(nativeDefinitions));
     if (providerRuntimeRef) providerRuntime = await loadClassificationProviderRuntime(providerRuntimeRef, {nativeAdapters});
-  } catch { initializationFailed = true; }
+  } catch (error) {
+    initializationFailed = true;
+    reportClassificationInitializationFailure(error);
+  }
   const classification = new RuntimeSkillClassificationGateway({root: classificationRoot,
     observeRuntime: () => {
       try {

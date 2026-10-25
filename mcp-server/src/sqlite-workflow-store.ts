@@ -49,6 +49,8 @@ export interface WorkflowCleanupPreview {
   roots: WorkflowCleanupCandidates["workflowRoots"];
   standaloneRuns: WorkflowCleanupCandidates["standaloneWorkflowRuns"];
   protectedActiveRoots: number;
+  rootProtection: Omit<NonNullable<StateCleanupPlanV1["rootProtection"]>, "previewCreatedAt">;
+  linkedRuns: Array<{ rootId: string; runs: WorkflowCleanupCandidates["standaloneWorkflowRuns"] }>;
 }
 
 interface ConvergenceRootRow {
@@ -532,6 +534,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   }
 
   previewCleanup(cutoff: string): WorkflowCleanupPreview {
+    return this.guard("Cannot preview workflow state cleanup.", {}, () => this.transaction(() => {
     const roots = this.database.prepare(`
       SELECT root_id, revision, state, updated_at
       FROM convergence_roots
@@ -539,15 +542,40 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       ORDER BY root_id
     `).all(cutoff) as unknown as Array<{ root_id: string; revision: number; state: string; updated_at: string }>;
     const linkedRuns = this.database.prepare(`
-      SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY run_id
+      SELECT links.run_id, runs.revision, runs.state, runs.updated_at
+      FROM workflow_attempt_links links LEFT JOIN workflow_runs runs ON runs.run_id = links.run_id
+      WHERE links.root_id = ? ORDER BY links.run_id
     `);
-    const rootCandidates = roots.map((root) => ({
-      rootId: root.root_id,
-      revision: root.revision,
-      state: root.state,
-      updatedAt: root.updated_at,
-      runIds: (linkedRuns.all(root.root_id) as unknown as Array<{ run_id: string }>).map((row) => row.run_id),
-    }));
+    const linkedSnapshots: WorkflowCleanupPreview["linkedRuns"] = [];
+    const rootCandidates: WorkflowCleanupPreview["roots"] = [];
+    let linkedNonTerminalRoots = 0;
+    let linkedRecentRoots = 0;
+    let linkedMissingReceiptRoots = 0;
+    let protectedLinkedRoots = 0;
+    for (const root of roots) {
+      const rows = linkedRuns.all(root.root_id) as unknown as Array<{ run_id: string; revision: number | null; state: string | null; updated_at: string | null }>;
+      // A terminal root cannot authorize deletion of an active, recent or missing linked receipt.
+      const reasons = new Set<"missing" | "non-terminal" | "recent">();
+      for (const row of rows) {
+        if (row.revision === null || row.state === null || row.updated_at === null) {
+          reasons.add("missing");
+          continue;
+        }
+        if (!["failed", "passed", "blocked"].includes(row.state)) reasons.add("non-terminal");
+        if (row.updated_at > cutoff) reasons.add("recent");
+      }
+      if (reasons.size > 0) {
+        if (reasons.has("non-terminal")) linkedNonTerminalRoots++;
+        if (reasons.has("recent")) linkedRecentRoots++;
+        if (reasons.has("missing")) linkedMissingReceiptRoots++;
+        protectedLinkedRoots++;
+        continue;
+      }
+      const runs = rows.map(row => ({ runId: row.run_id, revision: row.revision!, state: row.state!, updatedAt: row.updated_at! }));
+      rootCandidates.push({ rootId: root.root_id, revision: root.revision, state: root.state,
+        updatedAt: root.updated_at, runIds: runs.map(run => run.runId) });
+      linkedSnapshots.push({ rootId: root.root_id, runs });
+    }
     const runs = this.database.prepare(`
       SELECT run_id, revision, state, updated_at
       FROM workflow_runs
@@ -569,7 +597,13 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
         updatedAt: run.updated_at,
       })),
       protectedActiveRoots: protectedRow.count,
+      rootProtection: {
+        activeRoots: protectedRow.count, linkedNonTerminalRoots, linkedRecentRoots, linkedMissingReceiptRoots,
+        totalProtectedRoots: protectedRow.count + protectedLinkedRoots,
+      },
+      linkedRuns: linkedSnapshots,
     };
+    }));
   }
 
   claimCleanupPlan(planId: string, planDigest: string, claimedAt: string): boolean {
@@ -617,6 +651,16 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
         `).all(root.rootId) as unknown as Array<{ run_id: string }>).map((item) => item.run_id);
         if (JSON.stringify(actualRunIds) !== JSON.stringify(root.runIds)) {
           throw new WorkflowContractError("STALE_REVISION", "A cleanup root's linked runs changed after preview.", { rootId: root.rootId });
+        }
+        const expected = preview.linkedRuns.find(item => item.rootId === root.rootId);
+        if (!expected || JSON.stringify(expected.runs.map(run => run.runId)) !== JSON.stringify(root.runIds)) {
+          throw new WorkflowContractError("STALE_REVISION", "A cleanup root's linked receipt snapshot is missing.", { rootId: root.rootId });
+        }
+        for (const run of expected.runs) {
+          const row = verifyRun.get(run.runId) as { state: string; revision: number; updated_at: string } | undefined;
+          if (!row || row.state !== run.state || row.revision !== run.revision || row.updated_at !== run.updatedAt) {
+            throw new WorkflowContractError("STALE_REVISION", "A cleanup linked workflow run changed after preview.", { rootId: root.rootId, runId: run.runId });
+          }
         }
       }
       for (const run of preview.standaloneRuns) {

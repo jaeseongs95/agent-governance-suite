@@ -1,3 +1,5 @@
+import type { HostExecutionAdapter } from "./host-attestation.js";
+import { defaultExecutionAdapters } from "./host-execution-adapters.js";
 import { realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
@@ -184,13 +186,14 @@ export function resolveToolSchemaProfile(
   return environment.AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE === "anthropic" ? "anthropic" : "default";
 }
 
-/**
- * Enables a supported host attestation adapter. An unset or unknown value keeps the server without a
- * trusted execution provider, so strict orchestration stays BINDING_REQUIRED.
- */
+/** Selects an actual trusted adapter; the environment supplies only a lookup key, never authority. */
 export function resolveHostAttestation(
   environment: NodeJS.ProcessEnv = process.env,
-): "claude-code" | "codex" | "gemini" | null {
+  adapters: ReadonlyMap<string, HostExecutionAdapter> = defaultExecutionAdapters,
+): HostExecutionAdapter | null {
   const host = environment.AGENT_GOVERNANCE_HOST_ATTESTATION;
-  return host === "claude-code" || host === "codex" || host === "gemini" ? host : null;
+  if (!host) return null;
+  const adapter = adapters.get(host);
+  return adapter && adapter.host === host && typeof adapter.modelClassForModel === "function"
+    && (adapter.resolveModel === undefined || typeof adapter.resolveModel === "function") ? adapter : null;
 }

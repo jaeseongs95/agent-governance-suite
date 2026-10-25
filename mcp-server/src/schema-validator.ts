@@ -149,6 +149,9 @@ export class ContractValidator {
     this.validators = Object.fromEntries(
       Object.entries(contractSchemas).map(([name, schema]) => [name, ajv.getSchema(schema.$id as string)!]),
     );
+    this.validators.stateCleanupRootProtection = ajv.compile({
+      $ref: `${contractSchemas.stateCleanupPlan.$id as string}#/properties/rootProtection`,
+    });
   }
 
   private assert<T>(name: keyof ContractValidator["validators"], value: unknown): T {
@@ -298,6 +301,10 @@ export class ContractValidator {
 
   stateCleanupPlan(value: unknown): StateCleanupPlanV1 {
     return this.assert<StateCleanupPlanV1>("stateCleanupPlan", value);
+  }
+
+  stateCleanupRootProtection(value: unknown): NonNullable<StateCleanupPlanV1["rootProtection"]> {
+    return this.assert<NonNullable<StateCleanupPlanV1["rootProtection"]>>("stateCleanupRootProtection", value);
   }
 
   stateCleanupReceipt(value: unknown): StateCleanupReceiptV1 {

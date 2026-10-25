@@ -1,4 +1,5 @@
 import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
+import { types as utilTypes } from "node:util";
 import { chmodSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -11,6 +12,7 @@ import {
   WorkflowContractError,
 } from "../../contracts/types.js";
 import { canonicalJson } from "./convergence-logic.js";
+import { retainFailureCause, retainFailureSecondary, tagProducerFailure } from "./failure-diagnostics.js";
 
 type UnsignedInputSource = Omit<InputSourceReceiptV1, "schemaVersion" | "receiptId" | "integrityToken">;
 interface ReceiptRow { receipt_json: string }
@@ -47,7 +49,12 @@ export class TrustStore {
   private readonly syntheticSecret: string | undefined;
   private closed = false;
 
-  constructor(input: string | SharedModuleContext, syntheticSecret?: string) {
+  constructor(input: string | SharedModuleContext, syntheticSecret?: string, options: { busyTimeoutMs?: number } = {}) {
+    const busyTimeoutMs = options.busyTimeoutMs ?? 5000;
+    if (!Number.isInteger(busyTimeoutMs) || busyTimeoutMs < 0 || busyTimeoutMs > 2_147_483_647
+      || (typeof input !== "string" && options.busyTimeoutMs !== undefined)) {
+      throw new WorkflowContractError("INVALID_INPUT", "A standalone trust store requires a valid busy timeout.");
+    }
     this.shared = typeof input === "string" ? undefined : input;
     this.databasePath = typeof input === "string" ? input : input.databasePath;
     this.syntheticSecret = syntheticSecret;
@@ -64,18 +71,24 @@ export class TrustStore {
     if (databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true, mode: 0o700 });
     this.database = new DatabaseSync(databasePath);
     try {
-      this.database.exec("PRAGMA busy_timeout = 5000;");
+      this.database.exec(`PRAGMA busy_timeout = ${busyTimeoutMs};`);
       this.database.exec("PRAGMA synchronous = FULL;");
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
       this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
       if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", "The stored trust key differs from the explicit synthetic namespace.");
-      if (this.signingKey.length !== 32) throw new Error("Stored trust signing key is invalid.");
+      if (this.signingKey.length !== 32) throw tagProducerFailure(new Error("Stored trust signing key is invalid."), "TRUST_SIGNING_KEY_INVALID");
       if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync(path.resolve(databasePath), 0o600);
     } catch (cause) {
-      try { this.database.close(); } catch { /* Preserve initialization failure. */ }
-      if (cause instanceof WorkflowContractError) throw cause;
-      throw this.storageError("Cannot initialize the trust database.", cause);
+      let closeFailed = false;
+      let closeFailure: unknown;
+      try { this.database.close(); } catch (closeError) {
+        closeFailed = true;
+        closeFailure = utilTypes.isNativeError(closeError) ? tagProducerFailure(closeError, "TRUST_CLOSE_FAILED") : closeError;
+      }
+      const failure = cause instanceof WorkflowContractError ? cause : this.storageError("Cannot initialize the trust database.", cause);
+      if (closeFailed) retainFailureSecondary(failure, closeFailure);
+      throw failure;
     }
   }
 
@@ -123,11 +136,11 @@ export class TrustStore {
           && prior.authorityEffect === receipt.authorityEffect
           && canonicalJson(prior.attestation, "Source attestation") === canonicalJson(receipt.attestation, "Source attestation");
         if (sameSecurityMetadata) return structuredClone(prior);
-        throw new WorkflowContractError("REQUEST_CONFLICT", "The input event was already recorded with different content or provenance metadata.", {
+        throw tagProducerFailure(new WorkflowContractError("REQUEST_CONFLICT", "The input event was already recorded with different content or provenance metadata.", {
           host: receipt.host,
           sessionId: receipt.sessionId,
           eventId: receipt.eventId,
-        });
+        }), "TRUST_SOURCE_EVENT_CONFLICT");
       }
       this.database.prepare(`
         INSERT INTO input_source_receipts (
@@ -191,7 +204,8 @@ export class TrustStore {
 
   close(): void {
     if (this.closed) return;
-    this.database.close();
+    try { this.database.close(); }
+    catch (cause) { throw utilTypes.isNativeError(cause) ? tagProducerFailure(cause, "TRUST_CLOSE_FAILED") : cause; }
     this.closed = true;
   }
 
@@ -207,11 +221,11 @@ export class TrustStore {
   private initializeSchema(): void {
     const version = this.shared?.getSchemaVersion() ?? (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
     if (version > SCHEMA_VERSION) {
-      throw new WorkflowContractError("INVALID_INPUT", "Trust database schema is newer than this server supports.", {
+      throw tagProducerFailure(new WorkflowContractError("INVALID_INPUT", "Trust database schema is newer than this server supports.", {
         databasePath: this.databasePath,
         supportedVersion: SCHEMA_VERSION,
         actualVersion: version,
-      });
+      }), "TRUST_SCHEMA_UNSUPPORTED");
     }
     this.transaction(() => {
     this.database.exec(`
@@ -257,7 +271,9 @@ export class TrustStore {
       this.database.exec("COMMIT;");
       return result;
     } catch (cause) {
-      try { this.database.exec("ROLLBACK;"); } catch { /* Preserve the original failure. */ }
+      try { this.database.exec("ROLLBACK;"); } catch (rollbackError) {
+        retainFailureSecondary(cause, utilTypes.isNativeError(rollbackError) ? tagProducerFailure(rollbackError, "TRUST_ROLLBACK_FAILED") : rollbackError);
+      }
       throw cause;
     }
   }
@@ -272,10 +288,10 @@ export class TrustStore {
   }
 
   private storageError(message: string, cause: unknown, details: Record<string, unknown> = {}): WorkflowContractError {
-    return new WorkflowContractError("INVALID_INPUT", message, {
+    return retainFailureCause(tagProducerFailure(new WorkflowContractError("INVALID_INPUT", message, {
       ...details,
       databasePath: this.databasePath,
       cause: cause instanceof Error ? cause.message : String(cause),
-    });
+    }), "TRUST_STORAGE_FAILED"), cause);
   }
 }

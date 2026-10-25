@@ -16,6 +16,7 @@ import {
   continuityUnavailableReason,
   type ContinuityUnavailableReason,
   type ContinuityTaskRecord,
+  type ContinuityCurrentRead,
   isBodyFreeRequestReceipt,
   SqliteContinuityStore,
 } from "./continuity-store.js";
@@ -195,7 +196,8 @@ export class ContinuityService implements ContinuityGateway {
       const task = this.currentTask(binding);
       if (task.rootId) throw new WorkflowContractError("SNAPSHOT_CONFLICT", "Direct checkpoints are disabled after a workflow root is bound.", { rootId: task.rootId });
       const now = this.now().toISOString();
-      const current = this.store.getSnapshot(binding.c, binding.e);
+      const current = this.currentReadValue(this.store.readCurrentState(binding.c, binding.e, "direct",
+        () => this.store.getSnapshot(binding.c, binding.e), true));
       const base = {
         schemaVersion: "1.0.0" as const,
         source: "direct" as const,
@@ -212,9 +214,12 @@ export class ContinuityService implements ContinuityGateway {
       const requestHash = this.hashOpaque("request", request.requestId);
       const commandDigest = convergenceDigest(withoutBinding(request as unknown as Record<string, unknown>));
       const stored = this.store.checkpoint(binding.c, binding.e, request.expectedRevision, requestHash, commandDigest, snapshot);
+      if (stored.kind === "epoch-mismatch") return failure("BINDING_INVALID", "Continuity task binding is stale.");
+      if (stored.kind === "source-conflict") return failure("SNAPSHOT_CONFLICT", "Direct checkpoints are disabled after a workflow root is bound.");
       if (stored.kind === "replay") {
         const receipt = JSON.parse(stored.request.resultJson) as Partial<CheckpointReplayReceiptV1>;
-        const replaySnapshot = this.store.getSnapshot(binding.c, binding.e);
+        const replaySnapshot = this.currentReadValue(this.store.readCurrentState(binding.c, binding.e, "direct",
+          () => this.store.getSnapshot(binding.c, binding.e), true));
         if (
           receipt.kind !== "checkpoint" || receipt.epoch !== binding.e ||
           !replaySnapshot || replaySnapshot.revision !== receipt.revision ||
@@ -234,7 +239,8 @@ export class ContinuityService implements ContinuityGateway {
     return this.guard(() => {
       const request = this.validator!.inspectContextRequest(value);
       const binding = this.verifyToolBinding("inspect_context", request, request._continuityBinding);
-      return ok(this.candidateFor(binding.c));
+      this.currentTask(binding);
+      return ok(this.candidateFor(binding.c, binding.e));
     });
   }
 
@@ -250,7 +256,8 @@ export class ContinuityService implements ContinuityGateway {
       const task = this.currentTask(binding);
       if (task.suppressed) throw new WorkflowContractError("SNAPSHOT_NOT_FOUND", "Restore is suppressed for the current epoch.");
       if (candidate.s === "direct") {
-        const snapshot = this.store.getSnapshot(binding.c, binding.e);
+        const snapshot = this.currentReadValue(this.store.readCurrentState(binding.c, binding.e, "direct",
+          () => this.store.getSnapshot(binding.c, binding.e)));
         if (!snapshot || snapshot.revision !== candidate.r || snapshot.snapshotDigest !== candidate.d) {
           throw new WorkflowContractError("STALE_REVISION", "The direct restore candidate is stale.");
         }
@@ -258,7 +265,8 @@ export class ContinuityService implements ContinuityGateway {
         if (convergenceDigest(base) !== snapshotDigest) throw new WorkflowContractError("INTEGRITY_FAILED", "The direct snapshot digest is invalid.");
         return ok<ContinuitySnapshotV1 | WorkflowContinuityCardV1>(snapshot);
       }
-      const card = this.workflowProjection(task);
+      const card = this.currentReadValue(this.store.readCurrentState(binding.c, binding.e, "workflow",
+        (current) => this.workflowProjection(current)));
       if (!card || card.revision !== candidate.r || card.snapshotDigest !== candidate.d) {
         throw new WorkflowContractError("STALE_REVISION", "The workflow restore candidate is stale.");
       }
@@ -298,7 +306,8 @@ export class ContinuityService implements ContinuityGateway {
         purgeRequestHash: requestHash,
       });
       const now = this.now().toISOString();
-      const purged = this.store.purge(binding.c, request.expectedEpoch, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now);
+      const purged = this.store.purge(binding.c, request.expectedEpoch, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now, binding.e);
+      if (purged.kind === "epoch-mismatch") return failure("BINDING_INVALID", "Continuity task binding is stale.");
       if (purged.kind === "replay") {
         let replay: ContinuityPurgeResultV1 | null = null;
         try { replay = purgeReceipt(JSON.parse(purged.request.resultJson) as unknown); } catch { /* Reject malformed stored state below. */ }
@@ -354,10 +363,12 @@ export class ContinuityService implements ContinuityGateway {
     if (task.suppressed || task.pendingConsumed) return null;
     const summary = this.summary(task);
     if (!summary || task.pendingRevision !== summary.revision || task.pendingDigest !== summary.snapshotDigest || task.pendingSource !== summary.source) return null;
-    if (summary.source === "direct") return this.formatCandidate(this.candidateFor(task.taskCorrelation));
-    const card = this.workflowProjection(task);
+    if (summary.source === "direct") return this.formatCandidate(this.candidateFor(task.taskCorrelation, task.currentEpoch));
+    const selected = this.store.readCurrentState(task.taskCorrelation, task.currentEpoch, "workflow",
+      (current) => this.workflowProjection(current));
+    const card = selected.kind === "available" ? selected.value : null;
     if (!card || task.pendingRootId !== card.rootId) return null;
-    if (!this.store.consumeWorkflowMarker(task.taskCorrelation, task.currentEpoch, card.revision, card.snapshotDigest, this.now().toISOString())) return null;
+    if (!this.store.consumeWorkflowMarker(task.taskCorrelation, task.currentEpoch, card.rootId, card.revision, card.snapshotDigest, this.now().toISOString())) return null;
     return this.formatWorkflowCard(card);
   }
 
@@ -390,9 +401,9 @@ export class ContinuityService implements ContinuityGateway {
     ].join("\n");
   }
 
-  private candidateFor(taskCorrelation: string): ContinuityCandidateV1 {
+  private candidateFor(taskCorrelation: string, expectedEpoch?: number): ContinuityCandidateV1 {
     const task = this.store.getTask(taskCorrelation);
-    if (!task) return { schemaVersion: "1.0.0", decision: "REJECT", reasonCodes: ["NO_TASK_BINDING"], summary: null, restoreToken: null };
+    if (!task || (expectedEpoch !== undefined && task.currentEpoch !== expectedEpoch)) return { schemaVersion: "1.0.0", decision: "REJECT", reasonCodes: ["NO_TASK_BINDING"], summary: null, restoreToken: null };
     if (task.suppressed) return { schemaVersion: "1.0.0", decision: "REJECT", reasonCodes: ["RESTORE_SUPPRESSED"], summary: null, restoreToken: null };
     const summary = this.summary(task);
     if (!summary) return { schemaVersion: "1.0.0", decision: "REJECT", reasonCodes: ["NO_RESTORE_CANDIDATE"], summary: null, restoreToken: null };
@@ -405,19 +416,25 @@ export class ContinuityService implements ContinuityGateway {
   }
 
   private summary(task: ContinuityTaskRecord): ContinuitySummaryV1 | null {
-    const card = task.rootId ? this.workflowProjection(task) : null;
-    if (card) return {
-      schemaVersion: "1.0.0", source: "workflow", taskCorrelation: task.taskCorrelation,
-      epoch: task.currentEpoch, revision: card.revision, status: card.rootState,
-      snapshotDigest: card.snapshotDigest, updatedAt: card.updatedAt,
-    };
-    const snapshot = this.store.getSnapshot(task.taskCorrelation, task.currentEpoch);
-    if (!snapshot) return null;
-    return {
-      schemaVersion: "1.0.0", source: "direct", taskCorrelation: task.taskCorrelation,
-      epoch: task.currentEpoch, revision: snapshot.revision, status: snapshot.status,
-      snapshotDigest: snapshot.snapshotDigest, updatedAt: snapshot.updatedAt,
-    };
+    const selected = this.store.readCurrentState<ContinuitySummaryV1 | null>(
+      task.taskCorrelation, task.currentEpoch, "either", (current) => {
+        if (current.rootId) {
+          const card = this.workflowProjection(current);
+          // Projection unavailable never re-authorizes historical direct payload.
+          return card ? {
+            schemaVersion: "1.0.0", source: "workflow", taskCorrelation: current.taskCorrelation,
+            epoch: current.currentEpoch, revision: card.revision, status: card.rootState,
+            snapshotDigest: card.snapshotDigest, updatedAt: card.updatedAt,
+          } : null;
+        }
+        const snapshot = this.store.getSnapshot(current.taskCorrelation, current.currentEpoch);
+        return snapshot ? {
+          schemaVersion: "1.0.0", source: "direct", taskCorrelation: current.taskCorrelation,
+          epoch: current.currentEpoch, revision: snapshot.revision, status: snapshot.status,
+          snapshotDigest: snapshot.snapshotDigest, updatedAt: snapshot.updatedAt,
+        } : null;
+      });
+    return selected.kind === "available" ? selected.value : null;
   }
 
   private workflowProjection(task: ContinuityTaskRecord): WorkflowContinuityCardV1 | null {
@@ -458,6 +475,13 @@ export class ContinuityService implements ContinuityGateway {
       updatedAt: snapshot.root.updatedAt,
     };
     return { ...base, snapshotDigest: convergenceDigest(base) };
+  }
+
+  private currentReadValue<T>(result: ContinuityCurrentRead<T>): T {
+    if (result.kind === "epoch-mismatch") throw new WorkflowContractError("BINDING_INVALID", "Continuity task binding is stale.");
+    if (result.kind === "source-conflict") throw new WorkflowContractError("SNAPSHOT_CONFLICT", "The continuity source changed.");
+    if (result.kind === "suppressed") throw new WorkflowContractError("SNAPSHOT_NOT_FOUND", "Restore is suppressed for the current epoch.");
+    return result.value;
   }
 
   private currentTask(binding: ToolBindingPayload): ContinuityTaskRecord {

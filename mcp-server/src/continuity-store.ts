@@ -24,6 +24,12 @@ export interface StoredRequest {
   resultJson: string;
 }
 
+export type ContinuityCurrentRead<T> =
+  | { kind: "available"; task: ContinuityTaskRecord; value: T }
+  | { kind: "epoch-mismatch" }
+  | { kind: "source-conflict" }
+  | { kind: "suppressed" };
+
 export interface ContinuityTombstoneRecord {
   revision: number;
   payloadDigest: string;
@@ -243,6 +249,22 @@ export class SqliteContinuityStore {
     }, taskCorrelation);
   }
 
+  /** Synchronous critical read; clear/root changes cannot commit between guard and body.
+   * Historical getSnapshot remains available for authorized old-epoch purge.
+   */
+  readCurrentState<T>(
+    taskCorrelation: string, epoch: number, source: "direct" | "workflow" | "either",
+    read: (task: ContinuityTaskRecord) => T, allowSuppressed = false,
+  ): ContinuityCurrentRead<T> {
+    return this.transaction<ContinuityCurrentRead<T>>("Cannot read current continuity state.", () => {
+      const task = this.readTask(taskCorrelation);
+      if (!task || task.currentEpoch !== epoch) return { kind: "epoch-mismatch" };
+      if ((source === "direct" && task.rootId !== null) || (source === "workflow" && task.rootId === null)) return { kind: "source-conflict" };
+      if (task.suppressed && !allowSuppressed) return { kind: "suppressed" };
+      return { kind: "available", task, value: read(task) };
+    }, taskCorrelation);
+  }
+
   getSnapshot(taskCorrelation: string, epoch: number): ContinuitySnapshotV1 | null {
     const row = this.database.prepare(`
       SELECT snapshot_json FROM continuity_snapshots WHERE task_correlation = ? AND epoch = ?
@@ -275,8 +297,11 @@ export class SqliteContinuityStore {
     requestHash: string,
     commandDigest: string,
     snapshot: ContinuitySnapshotV1,
-  ): { kind: "stored" } | { kind: "stale"; actualRevision: number } | { kind: "replay"; request: StoredRequest } | { kind: "conflict" } {
+  ): { kind: "stored" } | { kind: "stale"; actualRevision: number } | { kind: "replay"; request: StoredRequest } | { kind: "conflict" } | { kind: "epoch-mismatch" } | { kind: "source-conflict" } {
     return this.transaction("Cannot store the continuity checkpoint.", () => {
+      const task = this.readTask(taskCorrelation);
+      if (!task || task.currentEpoch !== epoch) return { kind: "epoch-mismatch" };
+      if (task.rootId !== null) return { kind: "source-conflict" };
       const replay = this.getRequest(taskCorrelation, epoch, requestHash);
       if (replay) return replay.commandDigest === commandDigest ? { kind: "replay", request: replay } : { kind: "conflict" };
       const current = this.getSnapshot(taskCorrelation, epoch);
@@ -313,8 +338,12 @@ export class SqliteContinuityStore {
     commandDigest: string,
     tombstoneDigest: string,
     now: string,
-  ): { kind: "purged" } | { kind: "stale"; actualRevision: number } | { kind: "replay"; request: StoredRequest } | { kind: "conflict" } {
+    authorityEpoch: number,
+  ): { kind: "purged" } | { kind: "stale"; actualRevision: number } | { kind: "replay"; request: StoredRequest } | { kind: "conflict" } | { kind: "epoch-mismatch" } {
     return this.transaction("Cannot purge the continuity checkpoint.", () => {
+      // Current request authority and explicit historical target are different epochs.
+      const task = this.readTask(taskCorrelation);
+      if (!task || task.currentEpoch !== authorityEpoch) return { kind: "epoch-mismatch" };
       const replay = this.getRequest(taskCorrelation, epoch, requestHash);
       if (replay) return replay.commandDigest === commandDigest ? { kind: "replay", request: replay } : { kind: "conflict" };
       const current = this.getSnapshot(taskCorrelation, epoch);
@@ -359,6 +388,9 @@ export class SqliteContinuityStore {
     now: string,
   ): boolean {
     return this.transaction("Cannot mark pending continuity restore.", () => {
+      const task = this.readTask(taskCorrelation);
+      if (!task || task.currentEpoch !== epoch || task.suppressed) return false;
+      if (source === "direct" ? task.rootId !== null || rootId !== null : !rootId || task.rootId !== rootId) return false;
       const result = this.database.prepare(`
         UPDATE continuity_tasks SET pending_source = ?, pending_revision = ?, pending_digest = ?,
           pending_root_id = ?, pending_consumed = 0, updated_at = ?
@@ -368,13 +400,14 @@ export class SqliteContinuityStore {
     }, taskCorrelation);
   }
 
-  consumeWorkflowMarker(taskCorrelation: string, epoch: number, revision: number, digest: string, now: string): boolean {
+  consumeWorkflowMarker(taskCorrelation: string, epoch: number, rootId: string, revision: number, digest: string, now: string): boolean {
     return this.transaction("Cannot consume continuity restore.", () => {
       const result = this.database.prepare(`
         UPDATE continuity_tasks SET pending_consumed = 1, last_auto_injected_revision = ?, updated_at = ?
-        WHERE task_correlation = ? AND current_epoch = ? AND pending_source = 'workflow'
+        WHERE task_correlation = ? AND current_epoch = ? AND suppressed = 0
+          AND root_id = ? AND pending_root_id = ? AND pending_source = 'workflow'
           AND pending_revision = ? AND pending_digest = ? AND pending_consumed = 0
-      `).run(revision, now, taskCorrelation, epoch, revision, digest);
+      `).run(revision, now, taskCorrelation, epoch, rootId, rootId, revision, digest);
       return result.changes === 1;
     }, taskCorrelation);
   }

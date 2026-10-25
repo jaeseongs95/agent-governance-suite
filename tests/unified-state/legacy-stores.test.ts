@@ -49,8 +49,9 @@ describe("native legacy APIs on one inactive authority connection", () => {
     expect(store.checkpoint(image.taskCorrelation, 1, 0, "original-request", "original-digest", image)).toMatchObject({ kind: "replay" });
     expect(store.checkpoint(image.taskCorrelation, 1, 0, "original-request", "changed-digest", image)).toEqual({ kind: "conflict" });
     expect(store.checkpoint(image.taskCorrelation, 1, 0, "new-request", "new-digest", image)).toEqual({ kind: "stale", actualRevision: 1 });
+    expect(store.bindRoot(image.taskCorrelation, 1, "original-root", iso(100))).toBe(true);
     expect(store.setPendingMarker(image.taskCorrelation, 1, "workflow", 1, image.snapshotDigest, "original-root", iso(100))).toBe(true);
-    expect(store.consumeWorkflowMarker(image.taskCorrelation, 1, 1, "wrong-digest", iso(100))).toBe(false); expect(store.consumeWorkflowMarker(image.taskCorrelation, 1, 1, image.snapshotDigest, iso(100))).toBe(true); expect(store.consumeWorkflowMarker(image.taskCorrelation, 1, 1, image.snapshotDigest, iso(100))).toBe(false);
+    expect(store.consumeWorkflowMarker(image.taskCorrelation, 1, "original-root", 1, "wrong-digest", iso(100))).toBe(false); expect(store.consumeWorkflowMarker(image.taskCorrelation, 1, "original-root", 1, image.snapshotDigest, iso(100))).toBe(true); expect(store.consumeWorkflowMarker(image.taskCorrelation, 1, "original-root", 1, image.snapshotDigest, iso(100))).toBe(false);
     expect(store.rotateEpoch(image.taskCorrelation, iso(101)).currentEpoch).toBe(2); expect(store.setPendingMarker(image.taskCorrelation, 1, "workflow", 1, image.snapshotDigest, null, iso(102))).toBe(false);
     expect(store.getSnapshot(image.taskCorrelation, 1)).toEqual(image); expect(store.getRequest(image.taskCorrelation, 1, "original-request")?.commandDigest).toBe("original-digest");
     expect(() => store.backupTo(path.join(path.dirname(value.owner.databasePath), "no-backup.sqlite3"))).toThrow(/SHARED_BACKUP_OWNER_REQUIRED/u);

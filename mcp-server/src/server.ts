@@ -22,7 +22,7 @@ import {
   workflowStatusSummary,
 } from "./response-projections.js";
 import { WorkflowService } from "./workflow-service.js";
-import type { HostAttestationProvider } from "./host-attestation.js";
+import { HOST_ATTESTATION_FIELD, HOST_ATTESTATION_TOOLS, type HostAttestationProvider } from "./host-attestation.js";
 import { StateCleanupService } from "./state-cleanup-service.js";
 import { type KoreanProseGlossaryGateway, UnavailableKoreanProseGlossary } from "./korean-prose-glossary.js";
 import { ContractValidator } from "./schema-validator.js";
@@ -581,7 +581,9 @@ export function createMcpServer(
     let updateStatus: PluginUpdateStatusV1 | null = null;
     let result: ApiResultV1<unknown>;
 
-    if (["get_skill_inventory", "classify_skills", "record_skill_selection"].includes(request.params.name)) {
+    if (!hostAttestation && HOST_ATTESTATION_TOOLS.has(request.params.name) && Object.hasOwn(args, HOST_ATTESTATION_FIELD)) {
+      result = apiError("BINDING_REQUIRED", "Host attestation is not configured for this server; a hook token cannot be verified.");
+    } else if (["get_skill_inventory", "classify_skills", "record_skill_selection"].includes(request.params.name)) {
       if (!classification) result = apiError("MCP_UNAVAILABLE", "Skill classification is not configured for this server.");
       else {
         try {

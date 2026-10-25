@@ -31,6 +31,8 @@ interface CleanupTokenPayload {
   cutoffs: StateCleanupPlanV1["cutoffs"];
   candidates: StateCleanupPlanV1["candidates"];
   candidateDigest: Sha256Digest;
+  linkedRuns: WorkflowCleanupPreview["linkedRuns"];
+  rootProtection?: StateCleanupPlanV1["rootProtection"];
   databases: {
     workflow: { path: string; schemaVersion: number };
     continuity: { path: string; schemaVersion: number } | null;
@@ -82,7 +84,8 @@ export class StateCleanupService {
         continuityRecord: new Date(created.getTime() - POLICY.continuityRecordRetentionDays * DAY_MS).toISOString(),
       };
       const { workflow, continuity, protectedContinuityTasks, candidates } = this.currentCandidates(cutoffs);
-      const candidateDigest = digest(candidates);
+      const candidateDigest = digest({ candidates, linkedRuns: workflow.linkedRuns });
+      const rootProtection = { previewCreatedAt: createdAt, ...workflow.rootProtection };
       const payload: CleanupTokenPayload = {
         schemaVersion: "1.0.0",
         planId: randomUUID(),
@@ -92,6 +95,8 @@ export class StateCleanupService {
         cutoffs,
         candidates,
         candidateDigest,
+        linkedRuns: workflow.linkedRuns,
+        rootProtection,
         databases: this.databaseIdentities(),
       };
       const plan: StateCleanupPlanV1 = {
@@ -113,6 +118,7 @@ export class StateCleanupService {
         candidateDigest,
         protection: protection(),
         planToken: this.sign(payload),
+        rootProtection,
       };
       this.validator.stateCleanupPlan(plan);
       return { schemaVersion: "1.0.0", ok: true, data: plan, error: null };
@@ -132,8 +138,9 @@ export class StateCleanupService {
       this.assertDatabaseIdentity(payload);
       const current = this.currentCandidates(payload.cutoffs);
       const candidates = current.candidates;
-      const currentDigest = digest(candidates);
-      if (currentDigest !== payload.candidateDigest || JSON.stringify(candidates) !== JSON.stringify(payload.candidates)) {
+      const currentDigest = digest({ candidates, linkedRuns: current.workflow.linkedRuns });
+      if (currentDigest !== payload.candidateDigest || JSON.stringify(candidates) !== JSON.stringify(payload.candidates)
+        || JSON.stringify(current.workflow.linkedRuns) !== JSON.stringify(payload.linkedRuns)) {
         throw new WorkflowContractError("STALE_REVISION", "State cleanup candidates changed after preview.", {
           planId: payload.planId,
           expectedDigest: payload.candidateDigest,
@@ -159,11 +166,7 @@ export class StateCleanupService {
           workflowResult.backupPath = this.backupPath(this.workflowStore.databasePath, "workflows", payload.planId);
           this.workflowStore.backupTo(workflowResult.backupPath);
           this.protectBackup(workflowResult.backupPath);
-          const deleted = this.workflowStore.executeCleanup({
-            roots: candidates.workflowRoots,
-            standaloneRuns: candidates.standaloneWorkflowRuns,
-            protectedActiveRoots: current.workflow.protectedActiveRoots,
-          });
+          const deleted = this.workflowStore.executeCleanup(current.workflow);
           workflowResult.status = "completed";
           workflowResult.deletedRoots = deleted.roots;
           workflowResult.deletedRuns = deleted.runs;
@@ -205,6 +208,7 @@ export class StateCleanupService {
         executedAt: now.toISOString(),
         candidateDigest: payload.candidateDigest,
         databases: { workflow: workflowResult, continuity: continuityResult },
+        ...(payload.rootProtection === undefined ? {} : { rootProtection: payload.rootProtection }),
         backupRetention: "manual-deletion-only",
         protection: protection(),
       };
@@ -271,13 +275,25 @@ export class StateCleanupService {
     if (actual.toString("base64url") !== signature || actual.length !== expected.length || !timingSafeEqual(actual, expected)) {
       throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token signature is invalid.");
     }
+    let payload: CleanupTokenPayload;
     try {
       const payloadBytes = Buffer.from(encoded, "base64url");
       if (payloadBytes.toString("base64url") !== encoded) throw new Error("non-canonical token payload");
-      return JSON.parse(payloadBytes.toString("utf8")) as CleanupTokenPayload;
+      const parsed: unknown = JSON.parse(payloadBytes.toString("utf8"));
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("invalid payload object");
+      payload = parsed as CleanupTokenPayload;
     } catch {
       throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token payload is invalid.");
     }
+    if (Object.prototype.hasOwnProperty.call(payload, "rootProtection")) {
+      let observed: NonNullable<CleanupTokenPayload["rootProtection"]>;
+      try { observed = this.validator.stateCleanupRootProtection(payload.rootProtection); }
+      catch { throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan root protection diagnostics are invalid."); }
+      if (observed.previewCreatedAt !== payload.createdAt) {
+        throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan root protection preview timestamp does not match.");
+      }
+    }
+    return payload;
   }
 
   private assertDatabaseIdentity(payload: CleanupTokenPayload): void {

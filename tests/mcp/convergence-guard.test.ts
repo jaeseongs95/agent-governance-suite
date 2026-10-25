@@ -697,6 +697,132 @@ describe("local MCP convergence guard", () => {
     expect(rejected.error?.details).toMatchObject({ route: "diagnose" });
   });
 
+  it("requires evidence beyond the latest terminal outcome for an unchanged target", async () => {
+    const { service } = await createHarness();
+    const root = openRoot(service);
+    const attempt = claimAndStart(service, root);
+    let current = recordFailureAndStatus(service, root.rootId, attempt.receipt);
+    expect(current.outcomes.at(-1)?.evidenceRefs).toContain("tests/results/failure.json");
+
+    const rejected = service.claimWorkflowAttempt(proposal(service, current.root, {
+      priorFailure: latestFailure(current, "tests/results/failure.json"),
+    }));
+    expect(rejected.error?.code).toBe("NEW_EVIDENCE_REQUIRED");
+    expect(rejected.error?.details).toMatchObject({ route: "diagnose" });
+    current = status(service, root.rootId);
+    expect(current.attemptsUsedInEpoch).toBe(1);
+    expect(current.leases).toHaveLength(1);
+
+    const accepted = service.claimWorkflowAttempt(proposal(service, current.root, {
+      priorFailure: latestFailure(current, "test:new-observation-after-failure"),
+    }));
+    expect(accepted.error).toBeNull();
+    expect(accepted.data?.ordinal).toBe(2);
+  });
+
+  it("remembers earlier outcome evidence across a store restart", async () => {
+    const harness = await createHarness();
+    const root = openRoot(harness.service);
+    let attempt = claimAndStart(harness.service, root);
+    const firstFailure = failedStage(attempt.receipt);
+    firstFailure.evidence[0]!.locator = "test:outcome-e1";
+    expect(harness.service.recordStageResult(firstFailure).error).toBeNull();
+    let current = status(harness.service, root.rootId);
+    attempt = claimAndStart(harness.service, current.root, {
+      priorFailure: latestFailure(current, "test:diagnostic-e2"),
+    });
+    const secondFailure = failedStage(attempt.receipt);
+    secondFailure.evidence[0]!.locator = "test:outcome-e2";
+    expect(harness.service.recordStageResult(secondFailure).error).toBeNull();
+    current = status(harness.service, root.rootId);
+    expect(current.outcomes.map((item) => item.evidenceRefs)).toEqual([
+      ["test:outcome-e1"], ["test:outcome-e2"],
+    ]);
+
+    closeStore(harness.store);
+    const restarted = serviceFor(harness.registryPath, trackStore(harness.databasePath));
+    current = status(restarted, root.rootId);
+    const before = current;
+    const rejected = restarted.claimWorkflowAttempt(proposal(restarted, current.root, {
+      priorFailure: latestFailure(current, "test:outcome-e1"),
+    }));
+    expect(rejected.error?.code).toBe("NEW_EVIDENCE_REQUIRED");
+    current = status(restarted, root.rootId);
+    expect(current.attemptsUsedInEpoch).toBe(before.attemptsUsedInEpoch);
+    expect(current.leases).toHaveLength(before.leases.length);
+    expect(current.root.retryRejections?.at(-1)?.reason).toBe("stale-evidence");
+  });
+
+  it("does not recycle consumed proposal evidence after an epoch change", async () => {
+    const { service } = await createHarness();
+    const root = openRoot(service);
+    let attempt = claimAndStart(service, root);
+    let current = recordFailureAndStatus(service, root.rootId, attempt.receipt);
+    for (const evidenceRef of ["test:proposal-e1", "test:proposal-e2"]) {
+      attempt = claimAndStart(service, current.root, {
+        priorFailure: latestFailure(current, evidenceRef),
+      });
+      current = recordFailureAndStatus(service, root.rootId, attempt.receipt);
+    }
+    expect(current.root.retryRejections ?? []).toEqual([]);
+    expect(current.root.state).toBe("needs-review");
+    const nextFrame = frame({ targetVersion: "proposal-history-epoch-2" });
+    const resolved = service.resolveConvergenceGate({
+      schemaVersion: "1.0.0",
+      rootId: root.rootId,
+      expectedRevision: current.root.revision,
+      review: review(current, {
+        classification: "semantics-preserving",
+        route: "resume-new-epoch",
+        proposedFrame: nextFrame,
+      }, "proposal-history-review"),
+    });
+    expect(resolved.error).toBeNull();
+    current = status(service, root.rootId);
+    expect(current.currentEpoch).toBe(2);
+    attempt = claimAndStart(service, current.root, { frame: nextFrame, priorFailure: null });
+    current = recordFailureAndStatus(service, root.rootId, attempt.receipt);
+    const rejected = service.claimWorkflowAttempt(proposal(service, current.root, {
+      frame: nextFrame,
+      priorFailure: latestFailure(current, "test:proposal-e1"),
+    }));
+    expect(rejected.error?.code).toBe("NEW_EVIDENCE_REQUIRED");
+    current = status(service, root.rootId);
+    expect(current.attemptsUsedInEpoch).toBe(1);
+
+    const changedTarget = service.claimWorkflowAttempt(proposal(service, current.root, {
+      frame: frame({ targetVersion: "proposal-history-changed-target" }),
+      priorFailure: latestFailure(current, "test:proposal-e1"),
+    }));
+    expect(changedTarget.error).toBeNull();
+    expect(changedTarget.data?.epoch).toBe(2);
+  });
+
+  it("does not burn proposal evidence when its lease expired before starting", async () => {
+    const { service } = await createHarness();
+    const root = openRoot(service);
+    const attempt = claimAndStart(service, root);
+    let current = recordFailureAndStatus(service, root.rootId, attempt.receipt);
+    vi.useFakeTimers();
+    try {
+      const unstarted = service.claimWorkflowAttempt(proposal(service, current.root, {
+        priorFailure: latestFailure(current, "test:unstarted-proposal-evidence"),
+      }));
+      expect(unstarted.error).toBeNull();
+      vi.advanceTimersByTime(301_000);
+      current = status(service, root.rootId);
+      expect(current.leases.at(-1)?.state).toBe("expired");
+      const retried = service.claimWorkflowAttempt(proposal(service, current.root, {
+        priorFailure: latestFailure(current, "test:unstarted-proposal-evidence"),
+      }));
+      expect(retried.error).toBeNull();
+      expect(retried.data?.ordinal).toBe(2);
+      expect(status(service, root.rootId).attemptsUsedInEpoch).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("records a rejected retry on the root without spending attempt budget", async () => {
     const harness = await createHarness();
     const root = openRoot(harness.service);
