@@ -45,8 +45,8 @@
         "selector": "/output/route",
         "values": {
           "resume-new-epoch": { "state": "passed", "errorRequired": false },
-          "diagnose": { "state": "passed", "errorRequired": false },
-          "panel": { "state": "passed", "errorRequired": false },
+          "diagnose": { "state": "needs-redesign", "errorRequired": false },
+          "panel": { "state": "needs-redesign", "errorRequired": false },
           "needs-user": { "state": "needs-input", "errorRequired": false },
           "stop": { "state": "blocked", "errorRequired": false }
         },

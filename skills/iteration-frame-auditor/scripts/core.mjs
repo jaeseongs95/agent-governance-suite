@@ -142,6 +142,7 @@ export function validateReview(review, comparison = null, request = null, frozen
     validateRequest(request);
   } catch (error) {
     errors.push(`request cannot substantiate review: ${error instanceof Error ? error.message : String(error)}`);
+    if (error instanceof InputError && error.details) errors.push(`request validation details: ${JSON.stringify(error.details)}`);
     return errors;
   }
 

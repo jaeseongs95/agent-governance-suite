@@ -214,16 +214,6 @@ export function analyzeAcceptance(input) {
   const criteria = input.taskEnvelope.acceptanceCriteria.map((statement, index) => {
     const id = criterionId(index);
     const override = overrides.get(id);
-    if (override) {
-      return {
-        criterionId: id,
-        statement,
-        status: "not-applicable",
-        evidenceRefs: [override.authorityRef],
-        observedResult: "Excluded by explicit authority.",
-        rationale: override.rationale
-      };
-    }
     const evidence = allCurrentEvidence.filter((item) => item.criterionIds.includes(id));
     const refuting = evidence.filter((item) => item.direction === "refutes");
     const supporting = evidence.filter((item) => item.direction === "supports");
@@ -235,6 +225,16 @@ export function analyzeAcceptance(input) {
         evidenceRefs: refuting.map((item) => item.evidenceId),
         observedResult: refuting.map((item) => item.observedResult).join("; "),
         rationale: "Current target evidence contradicts this acceptance criterion."
+      };
+    }
+    if (override) {
+      return {
+        criterionId: id,
+        statement,
+        status: "not-applicable",
+        evidenceRefs: [override.authorityRef],
+        observedResult: "Excluded by explicit authority.",
+        rationale: override.rationale
       };
     }
     if (staleCommandCriteria.has(id)) {
