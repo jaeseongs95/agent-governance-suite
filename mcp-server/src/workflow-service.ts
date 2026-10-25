@@ -106,6 +106,9 @@ const HIGH_ASSURANCE_CAPABILITIES = new Set<string>([
   "mutation-risk-preflight",
 ]);
 
+/** Schema-validator detail keys that are safe to carry on a wrapped gate failure. */
+const SCHEMA_CAUSE_DETAIL_KEYS = ["schemaPath", "expectedDigest", "actualDigest", "validationErrors"] as const;
+
 const TRUSTED_EXECUTION_MAX_AGE_MS = 5 * 60 * 1000;
 const TRUSTED_EXECUTION_CLOCK_SKEW_MS = 5 * 1000;
 const PLAN_INTEGRITY_TOKEN = /^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$/u;
@@ -1215,8 +1218,17 @@ export class WorkflowService {
         "deliberation decision record",
       );
     } catch (error) {
+      // The public gate code stays GATE_FAILED, but the original code and an allow-listed subset of its
+      // details are kept so a schema changed after planning stays distinguishable from an output violation.
+      const contractError = error instanceof WorkflowContractError ? error : null;
+      const causeDetails: Record<string, unknown> = {};
+      for (const key of SCHEMA_CAUSE_DETAIL_KEYS) {
+        if (contractError?.details && Object.hasOwn(contractError.details, key)) causeDetails[key] = contractError.details[key];
+      }
       throw new WorkflowContractError("GATE_FAILED", "Deliberation requires a schema-valid DecisionRecord.v1.", {
         stageId: stage.stageId,
+        causeCode: contractError?.code ?? null,
+        causeDetails: Object.keys(causeDetails).length > 0 ? causeDetails : null,
         cause: error instanceof Error ? error.message : String(error),
       });
     }
