@@ -10,6 +10,7 @@ import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js"
 import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 import { TrustStore } from "../../mcp-server/src/trust-store.js";
 import { openBoard, setSummary, readSession } from "../../skills/session-board/scripts/board-store.mjs";
+import { WorkflowContractError } from "../../contracts/types.js";
 
 const directories: string[] = [];
 const owners = new Set<InactiveSharedConnection>();
@@ -45,7 +46,9 @@ describe("explicit inactive factory boundary", () => {
   });
   it("B2-FACTORY-05: invalid authority clock leaves original schema and time without a successful write", () => {
     const input = options(); const value = createInactiveSharedStores({ ...input, clock: () => Number.NaN }); owners.add(value.owner);
-    let rejected; try { value.workflow.nextRunSequence(); } catch (error) { rejected = error; } expect(rejected).toMatchObject({ code: "INVALID_INPUT", details: { cause: "A nonnegative safe integer clock is required." } }); expect(value.owner.inspect().time).toBe(0); expect(value.owner.inspect().counts.workflow_metadata).toBe(1);
+    let rejected; try { value.workflow.nextRunSequence(); } catch (error) { rejected = error; }
+    expect(rejected).toBeInstanceOf(WorkflowContractError);
+    expect(rejected).toMatchObject({ code: "MCP_UNAVAILABLE", details: { cause: "A nonnegative safe integer clock is required." } }); expect(value.owner.inspect().time).toBe(0); expect(value.owner.inspect().counts.workflow_metadata).toBe(1);
   });
   it("B2-FACTORY-06: original standalone path APIs remain available using separate explicit synthetic temp files", () => {
     const input = options(); const workflow = new SqliteWorkflowStore(path.join(input.directory, "standalone-workflow.sqlite3")); const continuity = new SqliteContinuityStore(path.join(input.directory, "standalone-continuity.sqlite3")); const messaging = new SessionMessageStore(path.join(input.directory, "standalone-message.sqlite3")); const trust = new TrustStore(path.join(input.directory, "standalone-trust.sqlite3"), keys.trust); const board = openBoard(path.join(input.directory, "standalone-board.sqlite3"));

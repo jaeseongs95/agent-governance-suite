@@ -7,6 +7,7 @@ import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { InactiveSharedConnection } from "../../runtime/unified-state/shared-connection.mjs";
 import { createInactiveSharedStores } from "../../mcp-server/src/inactive-shared-stores.js";
+import { WorkflowContractError } from "../../contracts/types.js";
 
 const directories: string[] = [];
 const owners = new Set<InactiveSharedConnection>();
@@ -36,7 +37,9 @@ describe("inactive native shared connection", () => {
     value.messaging.close(); expect(() => statement.get()).toThrow(/borrowed module handle is closed/u);
     expect(value.workflow.nextRunSequence()).toBe(1); value.trust.close(); expect(value.continuity.ensureTask("survivor", "1970-01-01T00:00:00.100Z").currentEpoch).toBe(1);
     value.board.close(); expect(value.workflow.nextRunSequence()).toBe(2); value.owner.close();
-    let rejected; try { value.workflow.nextRunSequence(); } catch (error) { rejected = error; } expect(rejected).toMatchObject({ code: "INVALID_INPUT", details: { cause: "The shared owner is closed." } });
+    let rejected; try { value.workflow.nextRunSequence(); } catch (error) { rejected = error; }
+    expect(rejected).toBeInstanceOf(WorkflowContractError);
+    expect(rejected).toMatchObject({ code: "MCP_UNAVAILABLE", details: { cause: "The shared owner is closed." } });
   });
   it("B2-OWNER-07: native process crash rolls back queue/receipt; committed response loss replays the original ID", () => {
     const dir = directory(); const first = bundle(dir); const sender = { host: "crash-sender", sessionId: "s" }; const target = { host: "crash-recipient", sessionId: "t" };
