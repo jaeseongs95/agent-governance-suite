@@ -6,17 +6,18 @@ import { build } from "esbuild";
 import { ROOT } from "./lib.mjs";
 
 export const RUNTIME_BUNDLES = Object.freeze([
-  Object.freeze({
-    id: "mcp-server",
-    entry: "mcp-server/src/index.ts",
-    output: "mcp-server/dist/server.mjs",
-    executable: true,
-  }),
+  // Generate shared runtime before bundling consumers that import it.
   Object.freeze({
     id: "skill-schema-runtime",
     entry: "scripts/schema-runtime-entry.mjs",
     output: "runtime/schema-validation.mjs",
     executable: false,
+  }),
+  Object.freeze({
+    id: "mcp-server",
+    entry: "mcp-server/src/index.ts",
+    output: "mcp-server/dist/server.mjs",
+    executable: true,
   }),
   Object.freeze({
     id: "continuity-hook",
