@@ -74,11 +74,13 @@ it("does not let a legacy acquire replace pending or expired verified ownership"
   expect(store.relayOwner(target, "gemini-queue")?.relayId).toBe(id);
 });
 
-it.each(["codex-deferred", "claude-inbox"])("preserves legacy same-parent lease replacement for %s", (transport) => {
+it.each(["codex-deferred", "claude-inbox"])("rejects legacy same-parent live owner replacement for %s", (transport) => {
   const { store } = fixture();
   expect(store.acquireRelay({ ...target, transport, relayId: "legacy-first", pid: 200, parentPid: 100 }, now)).toBe(true);
-  expect(store.acquireRelay({ ...target, transport, relayId: "legacy-next", pid: 201, parentPid: 100 }, now + 1)).toBe(true);
-  expect(store.liveRelay(target, transport, now + 2)?.relayId).toBe("legacy-next");
+  expect(store.acquireRelay({ ...target, transport, relayId: "legacy-next", pid: 201, parentPid: 100 }, now + 1)).toBe(false);
+  expect(store.liveRelay(target, transport, now + 2)?.relayId).toBe("legacy-first");
+  expect(store.acquireRelay({ ...target, transport, relayId: "legacy-next", pid: 201, parentPid: 100 }, now + 15_000)).toBe(true);
+  expect(store.liveRelay(target, transport, now + 15_001)?.relayId).toBe("legacy-next");
 });
 
 it("replaces a positively dead exact child and fences stale activation/heartbeat/cleanup", () => {

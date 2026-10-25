@@ -179,10 +179,11 @@ describe("session message spool", () => {
     expect(reopened.pendingCount(spark, 125_000)).toBe(0);
 
     expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-a", pid: 1, parentPid: 1 }, 200_000)).toBe(true);
-    expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-c", pid: 3, parentPid: 1 }, 200_500)).toBe(true);
-    expect(reopened.heartbeatRelay({ ...spark, transport: "generic", relayId: "relay-a" }, 200_600)).toBe(false);
+    expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-c", pid: 3, parentPid: 1 }, 200_500)).toBe(false);
+    expect(reopened.heartbeatRelay({ ...spark, transport: "generic", relayId: "relay-a" }, 200_600)).toBe(true);
     expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-b", pid: 2, parentPid: 2 }, 201_000)).toBe(false);
     expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-b", pid: 2, parentPid: 2 }, 216_000)).toBe(true);
+    expect(reopened.heartbeatRelay({ ...spark, transport: "generic", relayId: "relay-a" }, 216_001)).toBe(false);
     reopened.send({ messageId: "wake-validation", sender: grok, target: spark, body: "wake" }, 219_000);
     expect(reopened.reserveWake(spark, "nonce-abcdefghijklmnop", 220_000)).toBe(true);
     expect(reopened.consumeWake(spark, "nonce-abcdefghijklmnop", 221_000)).toBe(true);

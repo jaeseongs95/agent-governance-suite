@@ -33,7 +33,7 @@ async function controller() {
   async function start(id: string, gates: Gate[] = [], marker?: string) {
     const config = path.join(root, id + ".config.json");
     await writeFile(config, JSON.stringify({root, id, lockPath, modulePath, gates, marker}), {flag: "wx"});
-    const child = spawn(process.execPath, ["--experimental-strip-types", workerFile, config], {
+    const child = spawn(process.execPath, ["--import", "tsx", workerFile, config], {
       stdio: ["ignore", "pipe", "pipe"], windowsHide: true
     });
     const w: Worker = {id, child, exited: false, spawned: false, spawnFailed: false, output: "", outputBytes: 0, outputLimitHit: false, done: Promise.resolve({code: null, signal: null})};

@@ -405,6 +405,11 @@ export async function sessionMessageRequest<T>(
       return requestSessionMessageOnce<T>(operation, payload, stateDirectory, remainingMilliseconds(deadline, signal), signal,
         { enforceDeadline: true, ...(options.onOperationWrite ? { onOperationWrite: options.onOperationWrite } : {}) });
     }
+    let operationWriteAttempted = false;
+    const onOperationWrite = () => {
+      operationWriteAttempted = true;
+      return options.onOperationWrite?.();
+    };
     try {
       return await requestSessionMessageOnce<T>(
         operation,
@@ -412,12 +417,12 @@ export async function sessionMessageRequest<T>(
         stateDirectory,
         remainingMilliseconds(deadline, signal),
         signal,
-        { enforceDeadline: options.deadlineMonotonicMs !== undefined },
+        { enforceDeadline: options.deadlineMonotonicMs !== undefined, onOperationWrite },
       );
     } catch (error) {
       try {
         throwIfAborted(signal);
-        if (error instanceof BrokerRequestRejected) throw error;
+        if (error instanceof BrokerRequestRejected || operationWriteAttempted) throw error;
         await ensureSessionMessageBroker(
           stateDirectory,
           remainingMilliseconds(deadline, signal),
@@ -426,7 +431,7 @@ export async function sessionMessageRequest<T>(
         );
         throwIfAborted(signal);
         return await requestSessionMessageOnce<T>(operation, payload, stateDirectory, remainingMilliseconds(deadline, signal), signal,
-          { enforceDeadline: options.deadlineMonotonicMs !== undefined });
+          { enforceDeadline: options.deadlineMonotonicMs !== undefined, onOperationWrite });
       } catch (recoveryError) { throw retainFailureSecondary(recoveryError, error); }
     }
   }, absoluteDeadline);

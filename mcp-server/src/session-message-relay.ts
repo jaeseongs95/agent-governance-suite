@@ -69,16 +69,28 @@ export async function dispatchManagedWake(options: Pick<RelayOptions, "host" | "
   relayId: string, port: WakeDispatchPort, request: typeof sessionMessageRequest = sessionMessageRequest): Promise<boolean> {
   if (port.capabilities.idleWake === "none" || !port.capabilities.supportedInjection.includes("peer-wake")) return false;
   const target = { host: options.host, sessionId: options.sessionId };
-  const reserved = await request<WakeReservation>("reserve-wake", { target, nonce: newWakeNonce(),
-    instanceId: options.instanceId, transport: options.transport, relayId, resume: true });
-  if (!reserved.dispatch || !reserved.attempt) return false;
-  const started = await request<WakeReservation>("start-wake", { attempt: reserved.attempt });
-  if (!started.dispatch || !started.attempt) return false;
-  let outcome: WakeDispatchOutcome = "accepted-or-unknown";
-  try { outcome = await port.dispatch(target, wakeMessage(started.attempt.nonce)); }
-  catch { /* A thrown adapter cannot prove that no bytes were submitted. */ }
-  await request("record-wake-outcome", { attempt: started.attempt, outcome });
-  return true;
+  let renewal: Promise<void> | null = null;
+  const heartbeat = setInterval(() => {
+    if (renewal) return;
+    renewal = request("relay-tick", { target, transport: options.transport, relayId,
+      instanceId: options.instanceId, includePending: false }).then(() => {}, () => {})
+      .finally(() => { renewal = null; });
+  }, LOOP_MS);
+  try {
+    const reserved = await request<WakeReservation>("reserve-wake", { target, nonce: newWakeNonce(),
+      instanceId: options.instanceId, transport: options.transport, relayId, resume: true });
+    if (!reserved.dispatch || !reserved.attempt) return false;
+    const started = await request<WakeReservation>("start-wake", { attempt: reserved.attempt });
+    if (!started.dispatch || !started.attempt) return false;
+    let outcome: WakeDispatchOutcome = "accepted-or-unknown";
+    try { outcome = await port.dispatch(target, wakeMessage(started.attempt.nonce)); }
+    catch { /* A thrown adapter cannot prove that no bytes were submitted. */ }
+    await request("record-wake-outcome", { attempt: started.attempt, outcome });
+    return true;
+  } finally {
+    clearInterval(heartbeat);
+    if (renewal) await renewal;
+  }
 }
 
 export async function runSessionMessageRelay(options: RelayOptions, port: WakeDispatchPort = transportWakePort(options.transport)): Promise<void> {

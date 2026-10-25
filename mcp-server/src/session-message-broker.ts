@@ -332,7 +332,13 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       if (!["silent","user-message","none"].includes(wakeVisibility) || !["silent","user-message","none"].includes(idleWake)) throw new Error("Invalid relay delivery capabilities.");
       let confirmedDead: {relayId: string; pid: number} | undefined;
       if (previous && previous.pid > 0) {
-        try { process.kill(previous.pid,0); }
+        try {
+          process.kill(previous.pid,0);
+          if (typeof previous.relayStartToken === "string") {
+            const actual = processStartToken(previous.pid, process.platform, Math.max(1, Math.floor(deadline - performance.now())));
+            if (actual !== null && actual !== previous.relayStartToken) confirmedDead = {relayId:previous.relayId,pid:previous.pid};
+          }
+        }
         catch (error) {
           if (error && typeof error === "object" && "code" in error && error.code === "ESRCH") confirmedDead = {relayId:previous.relayId,pid:previous.pid};
         }
@@ -358,12 +364,15 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
         const expected = "host-process-v1:" + createHash("sha256").update(JSON.stringify([target.host,target.sessionId,parentPid,parentStartToken])).digest("hex");
         if (parentPid < 1 || !parentStartToken.trim() || string(payload.instanceId,"instanceId") !== expected || processStartToken(parentPid) !== parentStartToken) return {acquired:false};
       }
+      const pid = integer(payload.pid,"pid");
+      const relayStartToken = reserved ? processStartToken(pid) : null;
+      if (reserved && relayStartToken === null) return {acquired:false};
       const acquired = reserved ? store.activateVerifiedRelay({...target,transport:string(payload.transport,"transport"),relayId,
-        pid:integer(payload.pid,"pid"),parentPid,instanceId:string(payload.instanceId,"instanceId")}) : store.acquireRelay({
+        pid,relayStartToken,parentPid,instanceId:string(payload.instanceId,"instanceId")}) : store.acquireRelay({
         ...target,
         transport: string(payload.transport, "transport"),
         relayId: string(payload.relayId, "relayId"),
-        pid: integer(payload.pid, "pid"),
+        pid,
         parentPid: integer(payload.parentPid, "parentPid"),
       });
       observePeerRelay(store, payload, acquired);
@@ -432,7 +441,7 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       if (["instanceId", "relayId", "transport", "resume"].some((key) => Object.hasOwn(payload, key))) {
         return store.reserveManagedWake({ ...target, nonce, instanceId: string(payload.instanceId, "instanceId"),
           relayId: string(payload.relayId, "relayId"), transport: string(payload.transport, "transport"),
-          ...(payload.resume === undefined ? {} : { resume: boolean(payload.resume, "resume") }) }, Date.now());
+          ...(payload.resume === undefined ? {} : { resume: boolean(payload.resume, "resume") }) });
       }
       const shouldDispatch = store.reserveWake(target, nonce);
       const runtime = peerWaitRuntime(store);
@@ -444,7 +453,7 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       }
       return { dispatch: shouldDispatch };
     }
-    case "start-wake": return store.startManagedWake(wakeAttempt(payload.attempt), Date.now());
+    case "start-wake": return store.startManagedWake(wakeAttempt(payload.attempt));
     case "record-wake-outcome": {
       const outcome = string(payload.outcome, "outcome");
       if (outcome !== "submitted" && outcome !== "definite-failure" && outcome !== "accepted-or-unknown") throw new Error("Invalid wake dispatch outcome.");
@@ -531,7 +540,6 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
       verifyHistoricalWakeObservation(target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs, trustDatabasePath);
     let lastActivity = Date.now();
     const activeServer = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
-      lastActivity = Date.now();
       const readLine = sessionMessageLineReader(SESSION_MESSAGE_MAX_REQUEST_BYTES);
       // A failed client must not terminate the broker or undo a committed request.
       socket.on("error", () => socket.destroy());
@@ -548,6 +556,8 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
           if (request.protocolVersion !== SESSION_MESSAGE_PROTOCOL || !tokenMatches(request.token ?? "", token)) throw new Error("Broker authentication failed.");
           const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload) ? request.payload : {};
           const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, wakeHookObservationReader, historicalWakeVerifier);
+          // Relay leases are maintained while the host is idle; maintenance is not user activity.
+          if (!["ping", "relay-tick", "heartbeat-relay", "presence-heartbeat"].includes(request.operation)) lastActivity = Date.now();
           socket.end(`${JSON.stringify({ ok: true, data })}\n`);
         } catch (error) {
           // Older clients ignore the optional details field.

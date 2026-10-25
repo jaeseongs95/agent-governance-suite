@@ -7,6 +7,7 @@ const ports = vi.hoisted(() => ({
 }));
 vi.mock("node:fs", () => ports);
 vi.mock("node:timers/promises", () => ({ setTimeout: ports.delay }));
+vi.mock("../../mcp-server/src/process-identity.js", () => ({ processStartToken: () => "synthetic-process-birth" }));
 import { acquireBrokerProcessLock, acquireBrokerProcessLockWhenReady, ownsBrokerProcessLock, releaseBrokerProcessLock } from "../../mcp-server/src/broker-process-lock.js";
 
 type Kind = "directory" | "file" | "link";
@@ -99,7 +100,7 @@ it.each(["posix", "windows"] as const)("publishes one completed owner and releas
     }
   };
   const lease = acquireBrokerProcessLock(lockPath)!;
-  expect(lease.owner).toMatch(/^owner-[1-9][0-9]*-[a-f0-9]{32}$/u);
+  expect(lease.owner).toMatch(/^owner-[1-9][0-9]*-[a-f0-9]{32}-[a-f0-9]{64}$/u);
   expect(Object.isFrozen(lease)).toBe(true);
   expect(ownsBrokerProcessLock(lease)).toBe(true);
   fs.before = null;

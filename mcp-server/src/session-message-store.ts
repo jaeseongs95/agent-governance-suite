@@ -191,6 +191,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       relay_id TEXT NOT NULL,
       pid INTEGER NOT NULL,
       parent_pid INTEGER NOT NULL,
+      relay_start_token TEXT,
       lease_until TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       PRIMARY KEY (host, session_id, transport)
@@ -242,6 +243,10 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       CREATE INDEX IF NOT EXISTS prepared_messages_expiry ON prepared_messages (expires_at);
       CREATE INDEX IF NOT EXISTS prepared_messages_owner ON prepared_messages (sender_host, sender_session_id, receipt);`);
       const messageColumns = this.database.prepare("PRAGMA table_info(messages)").all() as Array<{ name: string }>;
+      const relayColumns = this.database.prepare("PRAGMA table_info(relay_leases)").all() as Array<{ name: string }>;
+      if (!relayColumns.some((column) => column.name === "relay_start_token")) {
+        this.database.exec("ALTER TABLE relay_leases ADD COLUMN relay_start_token TEXT;");
+      }
       if (!messageColumns.some((column) => column.name === "delivery_attempts")) {
         this.database.exec("ALTER TABLE messages ADD COLUMN delivery_attempts INTEGER NOT NULL DEFAULT 0;");
       }
@@ -781,12 +786,12 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   }
 
   /** Retained startup reservation metadata; not a relay liveness view. */
-  relayOwner(target: SessionIdentity, transport: string): {relayId: string; pid: number; parentPid: number; instanceId: string | null} | null {
+  relayOwner(target: SessionIdentity, transport: string): {relayId: string; pid: number; parentPid: number; instanceId: string | null; relayStartToken: string | null} | null {
     boundedIdentity(target);
-    const row = this.database.prepare("SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host=? AND session_id=? AND transport=?")
-      .get(target.host,target.sessionId,transport) as {relay_id: string; pid: number; parent_pid: number} | undefined;
+    const row = this.database.prepare("SELECT relay_id, pid, parent_pid, relay_start_token FROM relay_leases WHERE host=? AND session_id=? AND transport=?")
+      .get(target.host,target.sessionId,transport) as {relay_id: string; pid: number; parent_pid: number; relay_start_token: string | null} | undefined;
     const generation = row?.relay_id.match(/^verified-relay-v1:[0-9a-f-]{36}:([0-9a-f]{64})$/u)?.[1];
-    return row ? {relayId:row.relay_id,pid:row.pid,parentPid:row.parent_pid,instanceId:generation ? "host-process-v1:"+generation:null} : null;
+    return row ? {relayId:row.relay_id,pid:row.pid,parentPid:row.parent_pid,instanceId:generation ? "host-process-v1:"+generation:null,relayStartToken:row.relay_start_token} : null;
   }
 
   /** Unknown pid=0 grants are never automatically TTL-retried. */
@@ -800,7 +805,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     return this.transaction(() => {
       const previous = this.relayOwner(input,input.transport);
       const expected = input.expectedOwner;
-      if (previous === null ? expected !== null : !expected || previous.relayId !== expected.relayId || previous.pid !== expected.pid || previous.parentPid !== expected.parentPid || previous.instanceId !== expected.instanceId) {
+      if (previous === null ? expected !== null : !expected || previous.relayId !== expected.relayId || previous.pid !== expected.pid || previous.parentPid !== expected.parentPid || previous.instanceId !== expected.instanceId || previous.relayStartToken !== expected.relayStartToken) {
         return {spawn:false,relayId:null,instanceId:input.instanceId};
       }
       if (previous?.relayId.startsWith("verified-relay-v1:") && previous.instanceId === null) return {spawn:false,relayId:null,instanceId:input.instanceId};
@@ -811,23 +816,25 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       }
       const relayId = "verified-relay-v1:" + randomUUID() + ":" + input.instanceId.slice("host-process-v1:".length);
       this.startPresence(input,nowMs);
-      this.database.prepare("INSERT INTO relay_leases(host,session_id,transport,relay_id,pid,parent_pid,lease_until,updated_at) VALUES(?,?,?,?,0,?,'9999-12-31T23:59:59.999Z',?) ON CONFLICT(host,session_id,transport) DO UPDATE SET relay_id=excluded.relay_id,pid=0,parent_pid=excluded.parent_pid,lease_until=excluded.lease_until,updated_at=excluded.updated_at")
+      this.database.prepare("INSERT INTO relay_leases(host,session_id,transport,relay_id,pid,parent_pid,lease_until,updated_at) VALUES(?,?,?,?,0,?,'9999-12-31T23:59:59.999Z',?) ON CONFLICT(host,session_id,transport) DO UPDATE SET relay_id=excluded.relay_id,pid=0,parent_pid=excluded.parent_pid,relay_start_token=NULL,lease_until=excluded.lease_until,updated_at=excluded.updated_at")
         .run(input.host,input.sessionId,input.transport,relayId,input.parentPid,iso(nowMs));
       return {spawn:true,relayId,instanceId:input.instanceId};
     });
   }
 
-  activateVerifiedRelay(input: SessionIdentity & {transport: string; relayId: string; instanceId: string; pid: number; parentPid: number}, nowMs = Date.now()): boolean {
+  activateVerifiedRelay(input: SessionIdentity & {transport: string; relayId: string; instanceId: string; pid: number; parentPid: number; relayStartToken?: string | null}, nowMs = Date.now()): boolean {
     boundedIdentity(input);
     if (!/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(input.relayId) || !Number.isInteger(input.pid) || input.pid < 1 || !Number.isInteger(input.parentPid) || input.parentPid < 1) throw new Error("Invalid verified relay activation.");
     if (!/^host-process-v1:[0-9a-f]{64}$/u.test(input.instanceId) || !input.relayId.endsWith(":"+input.instanceId.slice("host-process-v1:".length))) return false;
+    const relayStartToken = input.relayStartToken ?? null;
+    if (relayStartToken !== null && (typeof relayStartToken !== "string" || !relayStartToken.trim() || relayStartToken.length > 200 || relayStartToken.includes("\0"))) throw new Error("Invalid relay process token.");
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.activateVerifiedRelay(input,nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
     return this.transaction(() => {
       const presence = this.presence(input,nowMs);
       if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport) return false;
-      return this.database.prepare("UPDATE relay_leases SET pid=?,lease_until=?,updated_at=? WHERE host=? AND session_id=? AND transport=? AND relay_id=? AND parent_pid=? AND (pid=0 OR pid=?)")
-        .run(input.pid,iso(nowMs+RELAY_LEASE_MS),iso(nowMs),input.host,input.sessionId,input.transport,input.relayId,input.parentPid,input.pid).changes === 1;
+      return this.database.prepare("UPDATE relay_leases SET pid=?,relay_start_token=?,lease_until=?,updated_at=? WHERE host=? AND session_id=? AND transport=? AND relay_id=? AND parent_pid=? AND (pid=0 OR (pid=? AND relay_start_token IS ?))")
+        .run(input.pid,relayStartToken,iso(nowMs+RELAY_LEASE_MS),iso(nowMs),input.host,input.sessionId,input.transport,input.relayId,input.parentPid,input.pid,relayStartToken).changes === 1;
     });
   }
 
@@ -863,8 +870,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         lease_until = excluded.lease_until, updated_at = excluded.updated_at
       WHERE relay_leases.relay_id NOT LIKE 'verified-relay-v1:%' AND (
         relay_leases.lease_until <= excluded.updated_at
-        OR relay_leases.relay_id = excluded.relay_id
-        OR relay_leases.parent_pid = excluded.parent_pid)`)
+        OR relay_leases.relay_id = excluded.relay_id)`)
       .run(input.host, input.sessionId, input.transport, input.relayId, input.pid, input.parentPid, until, now);
     return result.changes === 1;
   }
@@ -981,15 +987,16 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       generation: String(row.birth_generation), attemptId: String(row.attempt_id), dispatchEpoch: Number(row.dispatch_epoch) };
   }
 
-  reserveManagedWake(input: WakeRelayBinding & { nonce: string; resume?: boolean }, nowMs = Date.now()): WakeReservation {
+  reserveManagedWake(input: WakeRelayBinding & { nonce: string; resume?: boolean }, atMs?: number): WakeReservation {
     boundedIdentity(input);
     if (!/^[A-Za-z0-9_-]{22,128}$/u.test(input.nonce)) throw new Error("Invalid wake nonce.");
     for (const value of [input.instanceId, input.relayId, input.transport]) {
       if (typeof value !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(value)) throw new Error("Invalid wake relay binding.");
     }
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.reserveManagedWake(input, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.reserveManagedWake(input, atMs));
     return this.transaction(() => {
+      // Production time is sampled after the writer lock; fixtures may supply an explicit clock.
+      const nowMs = this.shared ? this.shared.time(atMs ?? Date.now()) : atMs ?? Date.now();
       this.prune(nowMs);
       let attempt: WakeAttempt | null = null;
       let active = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ?
@@ -1045,10 +1052,10 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   }
 
   /** CAS succeeds once. The caller must not call a host adapter without this committed start. */
-  startManagedWake(attempt: WakeAttempt, nowMs = Date.now()): WakeReservation {
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.startManagedWake(attempt, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+  startManagedWake(attempt: WakeAttempt, atMs?: number): WakeReservation {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.startManagedWake(attempt, atMs));
     return this.transaction(() => {
+      const nowMs = this.shared ? this.shared.time(atMs ?? Date.now()) : atMs ?? Date.now();
       const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
         AND state = 'reserved' AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND attempt_id = ? AND dispatch_epoch = ?`)
         .get(nonceDigest(attempt.nonce), attempt.host, attempt.sessionId, attempt.instanceId, attempt.generation,
@@ -1339,7 +1346,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     if (this.shared) return this.shared.transaction(operation);
     this.database.exec("BEGIN IMMEDIATE");
     try { const result = operation(); this.database.exec("COMMIT"); return result; }
-    catch (error) { this.database.exec("ROLLBACK"); throw error; }
+    catch (error) { try { this.database.exec("ROLLBACK"); } catch { /* Preserve the domain or commit failure. */ } throw error; }
   }
 
 }

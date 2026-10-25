@@ -17,7 +17,7 @@
     "basisAt": {
       "type": ["string", "null"],
       "format": "date-time",
-      "description": "Time of the stored fact behind reason: relay lease renewal, wake injection expiry, retry deadline, presence lease end or birth. Null when no presence was ever recorded."
+      "description": "Time of the stored fact behind reason: relay lease renewal, presence heartbeat when a relay lease is missing, wake injection expiry, retry deadline, presence lease end or birth. Null when no presence was ever recorded."
     },
     "checkedAt": { "type": "string", "format": "date-time" },
     "authorityEffect": { "const": "none" }

@@ -30,6 +30,10 @@ const store = new SessionMessageStore(database);
 process.send({ type: 'ready' });
 process.once('message', async (input) => {
   try {
+    // Explicit command clocks keep lease-expiry scenarios deterministic across independent fixture processes.
+    if (input && typeof input === 'object' && Number.isSafeInteger(input.now) && input.now >= 0) {
+      Date.now = () => input.now;
+    }
     if (mode === 'open-only') {
       process.send({ type: 'result', version: store.database.prepare('PRAGMA user_version').get().user_version });
     } else if (mode === 'retire-then-exit') {
@@ -43,7 +47,8 @@ process.once('message', async (input) => {
       else if (input.kind === 'start') result = store.startManagedWake(input.attempt, input.now);
       else {
         if (input.kind === 'generation') store.startPresence(current, input.now);
-        store.acquireRelay({ ...current, pid: process.pid, parentPid: Number(parentPid) }, input.now);
+        const acquired = store.acquireRelay({ ...current, pid: process.pid, parentPid: Number(parentPid) }, input.now);
+        if (input.kind === 'generation' && !acquired) throw new Error('Fixture generation did not acquire the expired relay lease.');
         result = store.reserveManagedWake({ ...current, nonce: `fixture-${relayId}-nonce-abcdefghijklmnop`, resume: true }, input.now);
         if (input.kind === 'effect' && result.dispatch) {
           result = store.startManagedWake(result.attempt, input.now + 1);
@@ -72,7 +77,8 @@ process.once('message', async (input) => {
       store.acknowledge(target, messages.map(message => message.messageId));
       process.send({ type: 'result', claimed: messages.map(message => message.messageId) });
     } else {
-      store.acquireRelay({ ...target, transport: 'portable', relayId, pid: process.pid, parentPid: Number(parentPid) });
+      const acquired = store.acquireRelay({ ...target, transport: 'portable', relayId, pid: process.pid, parentPid: Number(parentPid) });
+      if (mode.startsWith('crash-') && !acquired) throw new Error('Fixture crash worker did not acquire the expired relay lease.');
       const request = async (operation, payload) => {
         if (mode === 'crash-before-start' && operation === 'start-wake') process.exit(17);
         if (mode === 'crash-after-effect' && operation === 'record-wake-outcome') process.exit(19);
