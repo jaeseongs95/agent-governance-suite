@@ -525,6 +525,7 @@ async function main() {
     record.sourceFreshness = classifyInitial(initial.receipt, initial.stderr.toString('utf8'), config.generated);
     if (record.sourceFreshness === 'UNEXPECTED_FAILURE') throw new Error('Unexpected initial freshness failure; generation blocked');
     const drift = await pnpm('05a-claude-drift', ['claude:drift'], 90_000);
+    const claudeReleaseCheck = await pnpm('05a1-claude-release-check', ['claude:check'], 90_000);
     const lint = await pnpm('05b-full-lint', ['lint'], 120_000);
     mustPass(await pnpm('06-official-build', ['build'], 180_000));
     const afterBuild = await tree(source);
@@ -541,7 +542,20 @@ async function main() {
       await fs.mkdir(path.dirname(destination), { recursive: true });
       await fs.copyFile(path.join(source, row.relativePath), destination);
     }
-    let testsPass = lint.receipt.status === 'PASS' && drift.receipt.status === 'PASS';
+    record.claudePackaging = { status: 'SKIP_NOT_LINUX_SHARD_1', reason: 'One packaging export across the existing eight jobs' };
+    if (process.platform === 'linux' && shardIndex === 1) {
+      const packaging = await command('06a-claude-package', process.execPath,
+        [path.join(source, '.github/scripts/ags30-claude-package-r01.mjs'), source, output], source, 90_000);
+      record.claudePackaging = { status: packaging.receipt.status === 'PASS' ? 'GENERATED_NOT_ACCEPTED' : 'FAIL',
+        archiveMember: 'claude-package.actual.tar.gz', manifestMember: 'claude-package.manifest.json', wholeAcceptance: 'NOT_CLAIMED' };
+      if (packaging.receipt.status === 'PASS') {
+        const packageManifest = JSON.parse(await fs.readFile(path.join(output, 'claude-package.manifest.json'), 'utf8'));
+        record.claudePackaging.status = packageManifest.status;
+        record.claudePackaging.archiveMember = packageManifest.archive.member;
+      }
+    }
+    let testsPass = lint.receipt.status === 'PASS' && drift.receipt.status === 'PASS'
+      && claudeReleaseCheck.receipt.status === 'PASS' && !['FAIL', 'NOT_RETURNED_CAP'].includes(record.claudePackaging.status);
     let independentNodeStatus = 'DELEGATED_SHARD_1';
     if (shardIndex === 1) {
     mustPass(await command('07a-path-normalization', process.execPath, ['--test', 'tests/mutation-risk-preflight/path-normalization.node-test.mjs'], source, 60_000));
@@ -713,7 +727,7 @@ async function main() {
     repositoryChecks.gitDiffCheck = diffCheck.receipt.status;
     if (diffCheck.receipt.status !== 'PASS') testsPass = false;
     const finalFreshness = await pnpm('09-final-freshness', ['bundle:check'], 120_000);
-    record.fullValidation = { claudeDrift: drift.receipt.status, repositoryChecks, lint: lint.receipt.status, officialTest: full.receipt.status, independentNodeSuites: independentNodeStatus, counts: fullCounts, suiteLoading };
+    record.fullValidation = { claudeDrift: drift.receipt.status, claudeReleaseCheck: claudeReleaseCheck.receipt.status, repositoryChecks, lint: lint.receipt.status, officialTest: full.receipt.status, independentNodeSuites: independentNodeStatus, counts: fullCounts, suiteLoading };
     const after = await tree(source);
     await writeJson('source-after.json', { files: after.length, portableId: portable(after), rows: after });
     sameNonGenerated(before, after);
