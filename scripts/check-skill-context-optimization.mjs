@@ -138,19 +138,44 @@ const CLASSIFICATION_UPDATE = Object.freeze({
 // Exact implementation bytes integrated after the historical optimization.
 // This validates source identity only; it grants no review or execution authority.
 const CURRENT_IMPLEMENTATION_PINS = Object.freeze({
-  revision: "3.0.0-source-integration-r07",
+  revision: "3.0.0-source-integration-r16-repairs",
   authorityEffect: "none",
   hashes: Object.freeze({
-  "skills/change-scope-guardian/scripts/lib.mjs": "cb4929462212ec338200e34dd2397dcf2d7e980c7e4d55f0fe8cf8670cf015f1",
+  "skills/acceptance-evidence-validator/scripts/check-repository.mjs": "29cde6044e0c874df4d5b7503445d22e0479b0d855227231f43b2a939838abdc",
+  "skills/acceptance-evidence-validator/scripts/core.d.mts": "5ad79b91fd34d6d4f07321b1011e2b48b5311a89296d10c360ed108ed92f45cf",
+  "skills/acceptance-evidence-validator/scripts/core.mjs": "6147dfdd2b62b971b5965f6decc41544a1e77fa0f06b115ab003ef487c415393",
+  "skills/acceptance-evidence-validator/scripts/schema-validation.mjs": "bdcf2686ba65e38175f17f8c04167e5b822e22390ae2c9415084b9cd57f20eae",
+  "skills/blocker-diagnostician/scripts/check-repository.mjs": "fae24b9cc8186afdd484476e0107e796093e8369d2ec9ab9d4edbc5feb5279a8",
+  "skills/change-scope-guardian/scripts/lib.mjs": "5c7b40ebb6064e6c76d5b29074c517eca2074ea47c0c7e6519ddb02f3872e985",
+  "skills/change-scope-guardian/scripts/schema-validator.mjs": "ff48309ac4549d1fce4df6a4748331504719af6352152df7cbbc371054379dfb",
+  "skills/codex-token-usage-analyzer/scripts/core.mjs": "99873c0891969d8055efa8d765abf80405863966287da9ac147695c9c1597e7e",
+  "skills/codex-token-usage-analyzer/scripts/schema-validation.mjs": "06a35eb68b3d67e9fbcc1bbe8fe3fa57e51e792173aee3c8aeec80537616cc90",
   "skills/coordinate-subagents/references/model-routing-presets.json": "f47d4f6f404256d7020bf84b5d2ba6daea46014e187db13e0268c4c15c98d99d",
   "skills/coordinate-subagents/references/model-routing.md": "08d6b87efe41c2c7ed901f33a81324a787eda37e41badc2e29c6c1c4de572e9e",
   "skills/coordinate-subagents/scripts/model-catalog-adapter.d.mts": "936efbf8e7bbcef4f0c452ec4e4fe876c6f9ecb53a82df3d7d60de63bd684026",
   "skills/coordinate-subagents/scripts/model-catalog-adapter.mjs": "c6e74b706f89882cfa94e5269c8fb77c9011b731b9ee136d5396ecaa7f828834",
   "skills/coordinate-subagents/scripts/model-routing.d.mts": "4afbbfc1167ee637d1aab74bbfe4ec55241931d33fa55442b94dcea8d8e93fbe",
   "skills/coordinate-subagents/scripts/model-routing.mjs": "ee3e7084ca52cef9a14d8eb5d3b4f79bcb3c91098ca0d1fd6bac30ad64e29b7e",
+  "skills/evaluation-validity-auditor/scripts/check-repository.mjs": "e00e96e27843e08b8885d38c181e33cc26a2730f6dca2f524a1584786b074454",
+  "skills/independent-deliberation-panel/scripts/run_evals.py": "91b43afc879001917d0a49c4209beeea4a98ffad0b64163ebd85f778d7269f20",
+  "skills/independent-deliberation-panel/scripts/validate_decision_record.py": "2a40a0a298e21505693ef9539754fae65e7ce16567adf32168e3e5b0debd9cc9",
   "skills/instruction-scope-resolver/references/gemini-instructions.md": "fb03a623c11627f8fed8cfad07d6c492fcd4a710dd73b25963840f8524b18a56",
-  "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs": "acd50c403b09d05cea0e7a453535963ed6e3eb720b598b37e7cd1c46a648876d",
-  "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": "41d00a76a894b27a06ca11f8a566cf46487c1959fb06bb367d8f7af797da38ba"
+  "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs": "ff696ff9c2b8e19dba88b9ad8f140966d810b6ee5086d2ccd376ae6afc20b27b",
+  "skills/iteration-frame-auditor/integration/skill-descriptor.json": "44b5fa664b83708b62f664606910558e09837f3bb84a232fdfe8b5e82e4fb1f1",
+  "skills/iteration-frame-auditor/scripts/core.mjs": "efb17e2f3ab93074fd36c4464dcfd6848f4f1627757dacc47196c18bd40345f6",
+  "skills/korean-prose-editor/contracts/protected-manifest.schema.json": "cb518ab89e3a6b2ad422f5015f58843291505cf6a7360a4983a18b974cec25c7",
+  "skills/korean-prose-editor/contracts/receipt.schema.json": "2ad9e132c19e58c9fcdc2a15fce4715c840766ebce638722f11ee47173a688f4",
+  "skills/korean-prose-editor/scripts/finalizer-core.mjs": "44e898697c65fa8bc8e678dda878da50af9129172f054f366ea5f64191ed71ed",
+  "skills/korean-prose-editor/scripts/protected-spans.mjs": "b28573ebad7fa0f0842d6aa83b6c52ad239fa9a8ac74f9eb28feb3c4a64be232",
+  "skills/mutation-risk-preflight/references/recovery-requirements.md": "41c5284d8dd1c5c9f1f7c6d8e090f8a2af36677fbb0bc8b21e18cbcf2d1754ed",
+  "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": "530bc651aa8ee506eba0a160f8e1989711b2257c16df449394f0e22b2023ed9c",
+  "skills/mutation-risk-preflight/scripts/schema-validation.mjs": "4cce85dc38941f216349a8ac89fa230f2d40ea55d05ccb17b3d030bdd7a141d2",
+  "skills/mutation-risk-preflight/scripts/validate-skill.mjs": "06da56be6a8eeb85c78fea914e437e30eb56ab1ffa5369d897255093d58c64dd",
+  "skills/recovery-strategy-selector/scripts/schema-validation.mjs": "a18cbdd934c0cc49f59ed2b33b6756ebeddaaeb1d4b58315041462b82e94151b",
+  "skills/task-contract/scripts/validate-task-contract.mjs": "18d2a516da23c58bd7e2b1317d10a42be5f25becdac2562f0ed161c724c5528b",
+  "skills/workspace-convention-profiler/scripts/profile-workspace.mjs": "392276006eb7658af3c9704de5c50ce36acce6f678e32a4f4a629562cbea5608",
+  "skills/workspace-convention-profiler/scripts/schema-validation.mjs": "d27f1dac298004831a2c1c04e0c07a24ad1c7021d3e56bf051ebaa73a71557f6",
+  "skills/workspace-convention-profiler/scripts/validate-skill.mjs": "7e6e3d72f8848a0761753ca3d1bcf0821ad0a242419420db13f3e628e6694034"
 }),
 });
 
