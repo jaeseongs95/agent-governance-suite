@@ -343,6 +343,12 @@ async function writeTree(directory, files) {
   }
 }
 
+/** Names the failed operation and a bounded error code so an access or I/O failure is not mistaken for a missing file. */
+function describeFileFailure(operation, error) {
+  const code = typeof error?.code === "string" && /^[A-Z0-9_]{1,32}$/u.test(error.code) ? error.code : "unknown";
+  return `${operation} ${code}`;
+}
+
 /** Compares the committed claude-plugin/ tree with a fresh render. */
 export async function checkClaudePlugin(root = ROOT) {
   const expected = await renderClaudePlugin(root);
@@ -350,8 +356,9 @@ export async function checkClaudePlugin(root = ROOT) {
   let actualPaths;
   try {
     actualPaths = await walk(outputRoot);
-  } catch {
-    return [`${OUTPUT_DIRECTORY}/ is missing; run pnpm claude:build`];
+  } catch (error) {
+    if (error?.code === "ENOENT") return [`${OUTPUT_DIRECTORY}/ is missing; run pnpm claude:build`];
+    return [`${OUTPUT_DIRECTORY}/ is unreadable (${describeFileFailure("readdir", error)}); fix access to it before comparing`];
   }
   const problems = [];
   for (const relativePath of actualPaths) {
@@ -361,8 +368,10 @@ export async function checkClaudePlugin(root = ROOT) {
     let actual;
     try {
       actual = await readFile(path.join(outputRoot, ...relativePath.split("/")));
-    } catch {
-      problems.push(`missing file ${OUTPUT_DIRECTORY}/${relativePath}`);
+    } catch (error) {
+      problems.push(error?.code === "ENOENT"
+        ? `missing file ${OUTPUT_DIRECTORY}/${relativePath}`
+        : `unreadable file ${OUTPUT_DIRECTORY}/${relativePath} (${describeFileFailure("readFile", error)}); not compared`);
       continue;
     }
     if (!actual.equals(content)) problems.push(`stale file ${OUTPUT_DIRECTORY}/${relativePath}`);
@@ -393,8 +402,8 @@ export async function reportClaudePluginDrift(root = ROOT) {
     const problems = [`render failed: ${error instanceof Error ? error.message : String(error)}`];
     try {
       problems.push(...await findHookEventDrift(root));
-    } catch {
-      // The hook files are unreadable as well; the render failure already says why.
+    } catch (hookError) {
+      problems.push(`hook event drift not checked: ${hookError instanceof Error ? hookError.message : String(hookError)}`);
     }
     return problems;
   }

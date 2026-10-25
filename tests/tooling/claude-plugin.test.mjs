@@ -375,6 +375,18 @@ describe("Claude overlay safeguards", () => {
     return { directory, refresh, write };
   }
 
+  it("separates unreadable installed files from missing ones", async () => {
+    const { directory } = await distributionFixture();
+    const installed = `${OUTPUT_DIRECTORY}/${evaluationSchema}`;
+    await rm(path.join(directory, installed));
+    await mkdir(path.join(directory, installed));
+    expect(await checkClaudePlugin(directory)).toEqual([`unreadable file ${installed} (readFile EISDIR); not compared`]);
+    await rm(path.join(directory, OUTPUT_DIRECTORY), { recursive: true });
+    await writeFile(path.join(directory, OUTPUT_DIRECTORY), "not a directory");
+    const [problem] = await checkClaudePlugin(directory);
+    expect(problem).toBe(`${OUTPUT_DIRECTORY}/ is unreadable (readdir ENOTDIR); fix access to it before comparing`);
+  });
+
   it("ships the evaluation configuration contract and server bytes without development dependencies", async () => {
     const { directory } = await distributionFixture();
     for (const file of [evaluationSchema, serverBundle]) {
@@ -478,8 +490,9 @@ describe("Claude overlay safeguards", () => {
     const directory = await mkdtemp(path.join(tmpdir(), "claude-plugin-drift-"));
     temporaryDirectories.push(directory);
     const problems = await reportClaudePluginDrift(directory);
-    expect(problems).toHaveLength(1);
+    expect(problems).toHaveLength(2);
     expect(problems[0]).toMatch(/^render failed: /u);
+    expect(problems[1]).toMatch(/^hook event drift not checked: .*ENOENT/u);
   });
 
   it("still reports missing hook events when the Claude plugin cannot be rendered", async () => {
