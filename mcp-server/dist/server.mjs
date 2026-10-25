@@ -37620,11 +37620,11 @@ function validateDecisionRecordSemantics(record4) {
     if (typeof judgeId === "string" && (reviewerIds.has(judgeId) || reused.has(judgeId))) {
       errors.push("Judge must be fresh and not reused");
     }
-    if (stage === "HIGH" && assurance === "independent" && run.capability_shortfall !== true && reviewerIds.size < 4) {
+    if (stage === "HIGH" && (run.strict === true || assurance === "independent") && run.capability_shortfall !== true && reviewerIds.size < 4) {
       errors.push("HIGH requires at least four eligible completed reviewers");
     }
     if (stage === "CRITICAL") {
-      if (assurance === "independent" && run.capability_shortfall !== true && (reviewerIds.size < 5 || reviewerIds.size > 6)) {
+      if ((run.strict === true || assurance === "independent") && run.capability_shortfall !== true && (reviewerIds.size < 5 || reviewerIds.size > 6)) {
         errors.push("CRITICAL requires five or six reviewers");
       }
       const roles = [...reviewerIds].map((id2) => String(workerById.get(id2)?.role ?? "").toLowerCase()).join(" ");
