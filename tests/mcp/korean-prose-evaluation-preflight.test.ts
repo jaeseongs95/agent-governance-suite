@@ -46,6 +46,23 @@ describe("Korean prose evaluation preflight", () => {
     });
   });
 
+  it("keeps an unreadable metadata file distinct from invalid JSON", async () => {
+    const root = await createFrozenRun();
+    const metaPath = path.join(root, "evals", "runs", "run-1", "verification-meta.json");
+    await rm(metaPath, { force: true });
+    await mkdir(metaPath);
+
+    const failure = await preflightKoreanProseEvaluation("record", 1, root).catch((error: unknown) => error);
+    expect(failure).toMatchObject({ code: "EISDIR" });
+    expect(failure).not.toMatchObject({ name: "EvaluationPreflightError" });
+
+    await rm(metaPath, { recursive: true });
+    await writeFile(metaPath, "{ not json", "utf8");
+    await expect(preflightKoreanProseEvaluation("record", 1, root)).rejects.toMatchObject({
+      code: "INVALID_JSONL",
+    });
+  });
+
   it("blocks recording when the verification actor reuses another role", async () => {
     const root = await createFrozenRun();
     const metaPath = path.join(root, "evals", "runs", "run-1", "verification-meta.json");
