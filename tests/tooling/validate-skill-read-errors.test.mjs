@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { copyFile, mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { afterEach, expect, it } from "vitest";
 
 const repository = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -25,7 +25,7 @@ function probe(root, source) {
   return JSON.parse(result.stdout);
 }
 const validateSkillProbe = (name) =>
-  `import { validateSkill } from ${JSON.stringify(path.join(repository, "scripts", "validate-skill.mjs"))};
+  `import { validateSkill } from ${JSON.stringify(pathToFileURL(path.join(repository, "scripts", "validate-skill.mjs")).href)};
    console.log(JSON.stringify(await validateSkill(${JSON.stringify(name)})));`;
 
 it("validate-skill은 ENOENT만 SKILL.md 누락으로 보고하고 다른 읽기 실패는 code로 구분한다", async () => {
@@ -63,7 +63,7 @@ it("readSkillVersion은 VERSION이 없을 때만 neither 오류를 내고 읽기
   const source = path.join(repository, "scripts", "source-lock.mjs");
   const messages = probe(
     root,
-    `import { readSkillVersion } from ${JSON.stringify(source)};
+    `import { readSkillVersion } from ${JSON.stringify(pathToFileURL(source).href)};
      const out = {};
      for (const name of ["absent", "unreadable"]) {
        try { await readSkillVersion(${JSON.stringify(path.join(root, "skills"))} + "/" + name); }

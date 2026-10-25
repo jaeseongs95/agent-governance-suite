@@ -61,7 +61,9 @@ describe.each(targets)("$name stage validator process failures keep their cause"
   test("a signal-terminated validator is reported as terminated", () => {
     const error = caught(() => run(fakeRoot(script, "process.kill(process.pid, 'SIGKILL');")));
     expect(error.code).toBe("GATE_FAILED");
-    expect(error.details).toMatchObject({step: "terminated", signal: "SIGKILL"});
+    expect(error.details).toMatchObject(process.platform === "win32"
+      ? {step: "exit", status: 1}
+      : {step: "terminated", signal: "SIGKILL"});
   });
 
   test("a successful exit with non-JSON output is still INVALID_INPUT", () => {

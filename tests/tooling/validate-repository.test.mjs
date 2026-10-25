@@ -35,8 +35,13 @@ describe("validate-repository access failures", () => {
       await writeFile(path.join(root, ".codex-plugin"), "not a directory");
     });
     expect(status).toBe(1);
-    expect(stderr).toContain("cannot access .codex-plugin/plugin.json (ENOTDIR)");
-    expect(stderr).not.toContain("missing required file: .codex-plugin/plugin.json");
+    if (process.platform === "win32") {
+      // Windows access maps an intermediate non-directory to ENOENT.
+      expect(stderr).toContain("missing required file: .codex-plugin/plugin.json");
+    } else {
+      expect(stderr).toContain("cannot access .codex-plugin/plugin.json (ENOTDIR)");
+      expect(stderr).not.toContain("missing required file: .codex-plugin/plugin.json");
+    }
     expect(stderr).toContain("missing required file: .mcp.json");
   });
 });
