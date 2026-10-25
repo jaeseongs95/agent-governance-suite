@@ -705,13 +705,14 @@ describe("host attestation configuration", () => {
       expect(stage).not.toHaveBeenCalled();
       expect(classification.classify).not.toHaveBeenCalled();
       expect(classification.accept).not.toHaveBeenCalled();
-      // Field absence keeps the previous schema/service dispatch, including its original error.
+      // Without the field, malformed classification input is rejected before gateway dispatch.
+      // Workflow tools retain their existing service-level validation path.
       const plain = await server.call(tool, input);
       expect(plain).toMatchObject({ ok: false, error: { code: tool === "plan_workflow" ? "BINDING_REQUIRED" : "INVALID_INPUT" } });
       if (tool === "plan_workflow") expect(plan).toHaveBeenCalledTimes(1);
       if (tool === "record_stage_result") expect(stage).toHaveBeenCalledTimes(1);
-      if (tool === "classify_skills") expect(classification.classify).toHaveBeenCalledTimes(1);
-      if (tool === "record_skill_selection") expect(classification.accept).toHaveBeenCalledTimes(1);
+      if (tool === "classify_skills") expect(classification.classify).not.toHaveBeenCalled();
+      if (tool === "record_skill_selection") expect(classification.accept).not.toHaveBeenCalled();
     },
   );
 
