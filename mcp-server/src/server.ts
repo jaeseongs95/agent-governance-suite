@@ -71,6 +71,7 @@ const planWorkflowInputSchema = {
         schemaVersion: { const: "1.0.0" },
         taskEnvelope: taskEnvelopeInputSchema,
         evaluationAuditPurpose: { enum: ["design-readiness", "quality-or-release"] },
+        requiredAuditPhase: { enum: ["pre-execution", "post-execution", "pre-deploy", "post-deploy"] },
       },
       allOf: [{
         if: {
@@ -347,12 +348,13 @@ function usesInlineReferences(profile: ToolSchemaProfile): boolean {
 
 const planWorkflowInlineInputSchema: ObjectSchema = {
   type: "object",
-  description: "Send either a TaskEnvelope.v1 object at the top level, or { schemaVersion, taskEnvelope, evaluationAuditPurpose? }. The server validates the exact PlanWorkflowRequest.v1 contract.",
+  description: "Send either a TaskEnvelope.v1 object at the top level, or { schemaVersion, taskEnvelope, evaluationAuditPurpose?, requiredAuditPhase? }. The server validates the exact PlanWorkflowRequest.v1 contract.",
   additionalProperties: false,
   properties: {
     ...structuredClone(taskEnvelopeInputSchema.properties ?? {}),
     taskEnvelope: structuredClone(taskEnvelopeInputSchema),
     evaluationAuditPurpose: { enum: ["design-readiness", "quality-or-release"] },
+    requiredAuditPhase: { enum: ["pre-execution", "post-execution", "pre-deploy", "post-deploy"] },
   },
 };
 

@@ -573,11 +573,13 @@ export interface TaskEnvelopeV1 {
 }
 
 export type EvaluationAuditPurposeV1 = "design-readiness" | "quality-or-release";
+export type AuditPhaseV1 = "pre-execution" | "post-execution" | "pre-deploy" | "post-deploy";
 
 export interface AssuredPlanWorkflowRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   taskEnvelope: TaskEnvelopeV1;
   evaluationAuditPurpose?: EvaluationAuditPurposeV1;
+  requiredAuditPhase?: AuditPhaseV1;
 }
 
 export type PlanWorkflowRequestV1 = TaskEnvelopeV1 | AssuredPlanWorkflowRequestV1;
@@ -692,6 +694,7 @@ export interface PlannedStageV1 {
   order: number;
   requiredCapability: string;
   evaluationAuditPurpose?: EvaluationAuditPurposeV1;
+  requiredAuditPhase?: AuditPhaseV1;
   satisfiedCapabilities: string[];
   skillId: string;
   phase: string;

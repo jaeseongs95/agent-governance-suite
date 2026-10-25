@@ -153,6 +153,9 @@
             "quality-or-release"
           ]
         },
+        "requiredAuditPhase": {
+          "enum": ["pre-execution", "post-execution", "pre-deploy", "post-deploy"]
+        },
         "satisfiedCapabilities": {
           "type": "array",
           "minItems": 1,
