@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "AgsCommitProvenance.v1",
+  "revision": "r01",
+  "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
+  "taskRefSource": {
+    "kind": "coordinator-technical-metadata",
+    "messageId": "7bfa114c-7929-4812-867b-a1e7b1651731",
+    "authorityEffect": "none"
+  },
+  "formalDefectIds": null,
+  "rows": [
+    {
+      "commit": "f96d2045f04d8a8aacac5aef7f186fcab53aeffe",
+      "unit": "capability-attestation",
+      "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
+      "formalDefectId": null,
+      "auditRefs": []
+    },
+    {
+      "commit": "5994a8ffc709551c52f45bdea3855bc036512f7f",
+      "unit": "peer-lifecycle",
+      "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
+      "formalDefectId": null,
+      "auditRefs": []
+    },
+    {
+      "commit": "d14b9a789297c05900149b3530a43433cd62dc0d",
+      "unit": "state-continuity",
+      "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
+      "formalDefectId": null,
+      "auditRefs": []
+    },
+    {
+      "commit": "6b7c6f92c75fd7816d98b85315b7d51ad3ae9b36",
+      "unit": "classification",
+      "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
+      "formalDefectId": null,
+      "auditRefs": []
+    },
+    {
+      "commit": "29a576ebda4cd40fa1f61de64f10e1e943be835f",
+      "unit": "tooling",
+      "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
+      "formalDefectId": null,
+      "auditRefs": []
+    },
+    {
+      "commit": "193bf17ecfda856eb2b65dedf42a097fd00bb374",
+      "unit": "official-source-ci-r11",
+      "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
+      "formalDefectId": null,
+      "auditRefs": [
+        "Audit#4048",
+        "R11 run40197942971 common matrix job concurrency finding"
+      ]
+    },
+    {
+      "commit": "5315422d36ceec84636c4eaafc2a77fc9479326b",
+      "unit": "pending-matrix-concurrency-fix-r12",
+      "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
+      "formalDefectId": null,
+      "auditRefs": [
+        "Audit#4048",
+        "R11 run40197942971 common matrix job concurrency finding"
+      ]
+    },
+    {
+      "commit": "e86c33cf2bb21d01953760f70216940533cd69c9",
+      "unit": "adapter-transport-and-v6",
+      "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
+      "formalDefectId": null,
+      "auditRefs": []
+    }
+  ],
+  "limitations": [
+    "Historical commits are preserved; mapping is current metadata and not retroactive execution or approval evidence.",
+    "R11 cancelled, R12 outcomes and new source e86 are separate candidates.",
+    "Unconfirmed defect IDs remain null."
+  ]
+}

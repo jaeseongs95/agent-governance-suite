@@ -1,20 +1,20 @@
 {
   "schemaVersion": "AgsBoundedCiExecutionConfig.v1",
-  "unit": "AGS30-OFFICIAL-SOURCE-COMPLETE-SHARDS-20261025-R12",
-  "nonce": "bac7e4ee-68db-4c33-b0dc-8669ff59418e",
+  "unit": "AGS30-OFFICIAL-ADAPTER-V6-COMPLETE-SHARDS-20261025-R13",
+  "nonce": "cdcde1c5-09f5-4fbb-bc1f-9742105a0c55",
   "repository": "jaeseongs95/agent-governance-suite",
   "repositoryId": 1362118877,
   "branch": "release-3.0",
   "node": "24.22.1",
   "pnpm": "11.19.0",
   "archive": {
-    "entries": 1647
+    "entries": 1658
   },
   "transport": {
-    "bytes": 330550,
-    "sha256": "6ae84e29d6b2060c48392e861c72ef98fdc95dc8b4d3b52b66953ddd518e51fe"
+    "bytes": 332344,
+    "sha256": "c69de1e83e3a86005975d13c43061c82f7a8fb5d9120fb04662326abb1e470e0"
   },
-  "portableId": "747d28622c066bc251f6016b88c5507b9b3b895318f633136a194699ca042a60",
+  "portableId": "8e41a959c2e3d0867443df2a762c81b9534748b993bab0ce5e3c8b359ab92ec6",
   "generated": [
     "mcp-server/dist/server.mjs",
     "runtime/schema-validation.mjs",
@@ -49,23 +49,19 @@
   ],
   "artifactMaximumBytesPerJob": 8388608,
   "provenance": {
-    "sourceCommit": "29a576ebda4cd40fa1f61de64f10e1e943be835f",
-    "sourceTree": "6ece3fc5171e4b2cb5ad51a41ef500fad8e3a99c",
-    "portableId": "747d28622c066bc251f6016b88c5507b9b3b895318f633136a194699ca042a60",
-    "originalPrivateR10Run": 40192541721,
-    "originalR10ResultsPreserved": true,
-    "previousCiDefect": {
-      "unit": "AGS30-OFFICIAL-SOURCE-COMPLETE-SHARDS-20261025-R11",
-      "runId": 40197942971,
-      "head": "193bf17ecfda856eb2b65dedf42a097fd00bb374",
-      "status": "PARTIAL_MATRIX_CANCELLED_UNSUITABLE_FOR_FULL_ACCEPTANCE",
-      "productSourceUnchanged": true
-    }
+    "sourceCommit": "e86c33cf2bb21d01953760f70216940533cd69c9",
+    "sourceTree": "8d6d304a52aff192e639717d53b1be866cfb50b2",
+    "portableId": "8e41a959c2e3d0867443df2a762c81b9534748b993bab0ce5e3c8b359ab92ec6",
+    "previousProductSource": "29a576ebda4cd40fa1f61de64f10e1e943be835f",
+    "originalR11Run": 40197942971,
+    "originalR12Run": 40199415878,
+    "originalResultsPreserved": true,
+    "productChange": "trusted transport boundary and separate v6 prompt557819"
   },
   "limitations": [
     "Actual official source commit with CI-only wrapper commit; all product blobs must match.",
-    "8 unique OS/shard jobs, max-parallel2,15min/job12min collector,480s full suite,8MiB/job1day,one push/run/retry0.",
-    "Original R10 failure preserved; new OS004/005 and v5-long regressions execute in full shard union.",
+    "8 unique OS/shard jobs/maxParallel2/15min/8MiB1day/read40/down8GET8/retry0AI0",
+    "Prior outcomes are immutable. New v6/transport cases join original full suite; no paid-model quality claim.",
     "Existing125 paid JEV proof and model quality not claimed. No live credentials attached.",
     "Generated runtime returned as candidate; installed/native real host/full acceptance not claimed."
   ],
@@ -79,8 +75,8 @@
   },
   "gitContext": {
     "repository": "https://github.com/jaeseongs95/agent-governance-suite.git",
-    "checkoutCommit": "29a576ebda4cd40fa1f61de64f10e1e943be835f",
-    "sourceTree": "6ece3fc5171e4b2cb5ad51a41ef500fad8e3a99c",
+    "checkoutCommit": "e86c33cf2bb21d01953760f70216940533cd69c9",
+    "sourceTree": "8d6d304a52aff192e639717d53b1be866cfb50b2",
     "skillBaseline": "7bc7753012227938be2a46f68bf3e29d29d5ef34"
   },
   "ownershipHelpers": {
@@ -121,6 +117,9 @@
   },
   "liveExternalAiCalls": 0,
   "ciOnlyOverrides": [
-    ".github/workflows/ci.yml"
+    ".github/workflows/ci.yml",
+    ".github/scripts/ags30-official-source-r11.mjs",
+    ".github/ci/ags30-r11/execution-config.json",
+    ".github/ci/ags30-r11/source-manifest.json"
   ]
 }

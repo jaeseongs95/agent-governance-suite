@@ -87,7 +87,7 @@ export async function finalizePartial(output, githubOutput, outcome, cap = 8 * 1
 
 async function finalizeFromRunner() {
   assert(['Linux', 'Windows'].includes(process.env.RUNNER_OS));
-  const work = path.join(path.resolve(process.env.RUNNER_TEMP), `ags30-bac7e4ee-68db-4c33-b0dc-8669ff59418e-${process.env.RUNNER_OS}`);
+  const work = path.join(path.resolve(process.env.RUNNER_TEMP), `ags30-cdcde1c5-09f5-4fbb-bc1f-9742105a0c55-${process.env.RUNNER_OS}`);
   try { await fs.mkdir(work); } catch (error) { if (error.code !== 'EEXIST') throw error; }
   const info = await fs.lstat(work);
   assert(info.isDirectory() && !info.isSymbolicLink(), 'Unsafe work directory');
@@ -240,7 +240,7 @@ async function main() {
       before.filter(r => !generated.has(r.relativePath) && !optional.has(r.relativePath)), 'Non-generated source changed');
   }
   try {
-    assert.equal(config.nonce, 'bac7e4ee-68db-4c33-b0dc-8669ff59418e');
+    assert.equal(config.nonce, 'cdcde1c5-09f5-4fbb-bc1f-9742105a0c55');
     for (const [name, expected] of Object.entries(config.ownershipHelpers)) {
       const helper = await fs.readFile(new URL('./' + name, import.meta.url));
       assert.equal(helper.length, expected.bytes); assert.equal(sha(helper), expected.sha256);
@@ -285,7 +285,7 @@ async function main() {
     const decodeBlob = line => { const tab = line.indexOf('\t'); return [line.slice(tab + 1), line.slice(0, tab)]; };
     const workflowMap = new Map(workflowBlobs.map(decodeBlob));
     for (const line of sourceBlobs) { const [file, identity] = decodeBlob(line); if (!config.ciOnlyOverrides.includes(file)) assert.equal(workflowMap.get(file), identity, 'Workflow product blob differs: ' + file); }
-    assert.deepEqual(config.ciOnlyOverrides, ['.github/workflows/ci.yml']);
+    assert.deepEqual(config.ciOnlyOverrides, [".github/workflows/ci.yml",".github/scripts/ags30-official-source-r11.mjs",".github/ci/ags30-r11/execution-config.json",".github/ci/ags30-r11/source-manifest.json"]);
     for (const file of workflowMap.keys()) assert(tracked.includes(file) || file.startsWith('.github/scripts/') || file.startsWith('.github/ci/'), 'Unexpected workflow-only product path: ' + file);
     await writeJson('git-context.json', { repository: config.gitContext.repository, head, sourceTree, workflowHead: process.env.GITHUB_SHA,
       skillBaseline: config.gitContext.skillBaseline, trackedFiles: tracked.length, candidatePortableId: config.portableId,

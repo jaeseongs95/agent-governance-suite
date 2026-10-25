@@ -1,10 +1,8 @@
 {
-  "schemaVersion": "AgsSourceTransportManifest.v1",
-  "files": 1647,
-  "bytes": 15261290,
-  "portableId": "747d28622c066bc251f6016b88c5507b9b3b895318f633136a194699ca042a60",
-  "portableAlgorithm": "sha256 of sorted UTF16 ordinal relativePath + TAB + decimal bytes + TAB + lowercase sha256 + LF, UTF8; own algorithm not substituted for historicalportableIDs",
-  "generatedRuntime": "PRESERVED_STALE_NOT_RUNTIME_CANDIDATE",
+  "schemaVersion": "PortableSourceManifest.v1",
+  "files": 1658,
+  "bytes": 15712557,
+  "portableId": "8e41a959c2e3d0867443df2a762c81b9534748b993bab0ce5e3c8b359ab92ec6",
   "rows": [
     {
       "relativePath": ".agents/plugins/marketplace.json",
@@ -57,14 +55,69 @@
       "sha256": "345d4a86bf234a50112607aad8e012704b04291c565613b36528db1b23997fad"
     },
     {
+      "relativePath": ".github/ci/ags30-r11/execution-config.json",
+      "bytes": 5165,
+      "sha256": "86b45eecdf4f553935252946b3986fbfc90d2d3cb27d78cd2491db04b1f69390"
+    },
+    {
+      "relativePath": ".github/ci/ags30-r11/os-test-plan.json",
+      "bytes": 6643,
+      "sha256": "49c22a0727f94b4a8c69c7de7da0730b50769cc4b5f9e8bdabb87d4dc2d12a6e"
+    },
+    {
+      "relativePath": ".github/ci/ags30-r11/source-manifest.json",
+      "bytes": 330550,
+      "sha256": "6ae84e29d6b2060c48392e861c72ef98fdc95dc8b4d3b52b66953ddd518e51fe"
+    },
+    {
       "relativePath": ".github/pull_request_template.md",
       "bytes": 384,
       "sha256": "b28089ec3b47d965ae1ab9dede86b692a4fb5f6fd392dba91db35b13295e0a25"
     },
     {
+      "relativePath": ".github/scripts/ags30-linux-subreaper-r06.py",
+      "bytes": 10177,
+      "sha256": "808cd0c131866af24b0e3759403018e909a89617baa7ab72edead0ae4c543ca7"
+    },
+    {
+      "relativePath": ".github/scripts/ags30-official-source-r11.mjs",
+      "bytes": 42071,
+      "sha256": "ce27a8d88cf0af20af9fc6e12781ae7aa572ead84f9ac052d45a9314fd4892e0"
+    },
+    {
+      "relativePath": ".github/scripts/ags30-os-mutation-r01.mjs",
+      "bytes": 11039,
+      "sha256": "74482213e0dc3c6185af9de82c1cadb6c17c1d1e8b16d0379bca59be31691ca8"
+    },
+    {
+      "relativePath": ".github/scripts/ags30-owned-command-check-r06.mjs",
+      "bytes": 2839,
+      "sha256": "7d23b792fb6afe731008d4b9d65a74c0b3d30900012e1a854f11a9590eb999f2"
+    },
+    {
+      "relativePath": ".github/scripts/ags30-owned-command-r06.py",
+      "bytes": 3267,
+      "sha256": "7b39a46ac775f2991d768c00268a8a4798e393c86805a6e0580ab1017e44bb66"
+    },
+    {
+      "relativePath": ".github/scripts/ags30-progress-r06.mjs",
+      "bytes": 2884,
+      "sha256": "7e6ed2ebf0df49ee48f828862287ec96a3db2102ab3a5661631e4da506a5d542"
+    },
+    {
+      "relativePath": ".github/scripts/ags30-shard-evidence-r09.mjs",
+      "bytes": 3773,
+      "sha256": "23265fcbcc446715c49a41aee7ef1358039df77d0d0a76841eceea613937ed03"
+    },
+    {
+      "relativePath": ".github/scripts/ags30-wake-mixed-red-r07.mjs",
+      "bytes": 3723,
+      "sha256": "09dffa6be54f2892743d721357cd522c3e6c84c0beaebfcd9ce056630f92cb43"
+    },
+    {
       "relativePath": ".github/workflows/ci.yml",
-      "bytes": 6995,
-      "sha256": "2fd0cb8c3e51e0949a6da0b03ceae2a0ad99d5e835da1c2dfade1ebb2b1e0baa"
+      "bytes": 8841,
+      "sha256": "87fa644f9d087df64c065a321bd3b5fd228dd1c521e9e6d6500e08c93287a05d"
     },
     {
       "relativePath": ".github/workflows/upstream-sync.yml",
@@ -4043,8 +4096,8 @@
     },
     {
       "relativePath": "mcp-server/src/skill-classification/providers.ts",
-      "bytes": 30841,
-      "sha256": "aaddf95b97d508b546af13dc3d5d38310e454a68252a27da15df544f2c0d56eb"
+      "bytes": 43955,
+      "sha256": "3c053c3e610ed95d648098adb6c82fc7a643f600236edafda79102288fdb9695"
     },
     {
       "relativePath": "mcp-server/src/skill-classification/request.ts",
@@ -4053,8 +4106,8 @@
     },
     {
       "relativePath": "mcp-server/src/skill-classification/runtime.ts",
-      "bytes": 6825,
-      "sha256": "b410068182227ab10d0ac1a5e3336a2d7bf38eb2ca2d88a407e1359396c44164"
+      "bytes": 5772,
+      "sha256": "41843787e2c0fb04e31b5c50e6c3b4287e28486795d62ff5724eaab23bdc2e07"
     },
     {
       "relativePath": "mcp-server/src/skill-classification/service.ts",
@@ -7313,8 +7366,8 @@
     },
     {
       "relativePath": "tests/mcp/skill-classification-providers.test.ts",
-      "bytes": 55312,
-      "sha256": "8a96f02f193c1138f0639df293e57af76d36c0c6bc337a11a118b1a3b8fdee1e"
+      "bytes": 70541,
+      "sha256": "41164c7fd20b64d9e479dca62c3c81318e06091ce1edbc6e2b4b1c5f048aa2a2"
     },
     {
       "relativePath": "tests/mcp/skill-classification-request.test.ts",
