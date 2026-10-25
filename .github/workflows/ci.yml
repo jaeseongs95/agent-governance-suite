@@ -205,7 +205,7 @@ jobs:
         if: ${{ always() && steps.finalize.outputs.artifact_ok == 'true' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: ags30-official-r16-888942b5-${{ runner.os }}-shard-${{ matrix.shard }}
+          name: ags30-official-r17-2a2a440b-${{ runner.os }}-shard-${{ matrix.shard }}
           path: ${{ steps.finalize.outputs.result_path }}
           if-no-files-found: error
           retention-days: 1

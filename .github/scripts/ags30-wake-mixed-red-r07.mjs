@@ -7,7 +7,7 @@ const [source, output] = process.argv.slice(2);
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const file = path.join(source, 'mcp-server/src/session-message-store.ts');
 const original = await fs.readFile(file);
-assert.equal(hash(original), 'b1fd130953ec8a3d6e5b0bb32331437ea57cf7fb3267ce95f24af9167ffe6685');
+assert.equal(hash(original), '566d1aa3596db588e788ad18e120fb20a99595e29b9309cf17b26f1f0859c7bd');
 const baseline = Buffer.from(original.toString('utf8')
   .replace("// A proven, already consumed arrival may recur beside a new marker in a\n      // fresh receipt. It is inert history, never authority for another body.\n      const alreadyObserved = (row: Record<string, unknown>) => row.state === \"observed\"\n        && typeof row.observed_at === \"string\" && typeof row.consumed_at === \"string\"\n        && typeof row.nonce === \"string\" && row.nonce_digest === nonceDigest(row.nonce);\n      if (rows.some((row) => !row || (!alreadyObserved(row)\n        && ![\"legacy\", \"started\", \"submitted\", \"unknown\", \"expired-unobserved\"].includes(String(row.state))))) {", "if (rows.some((row) => !row || ![\"legacy\", \"started\", \"submitted\", \"unknown\", \"expired-unobserved\"].includes(String(row.state)))) {")
   .replace('      if (rows.every((row) => alreadyObserved(row!))) return rejected;\n', '')
@@ -15,7 +15,7 @@ const baseline = Buffer.from(original.toString('utf8')
     'const live = rows.filter((row) => row!.state !== "expired-unobserved");')
   .replace('if (live.length === 0) return rows.every((row) => row!.state === "expired-unobserved") ? { ...rejected, retired: true } : rejected;',
     'if (live.length === 0) {  return { ...rejected, retired: true }; }'));
-assert.equal(hash(baseline), 'aa8ceb7d9eadb35edf9a60a5282214dc21d57aadf6904a1afad43b25e2a098fe');
+assert.equal(hash(baseline), '34ab525ca0be47bfa78a9c6d2c9e0efafcf7da3376692a32c2a0d04805bf3ab9');
 const name = 'fresh verified observed A plus current B receipt claims only B once and preserves A';
 const report = path.join(output, '07e-wake-mixed-red.vitest.json');
 let result;
