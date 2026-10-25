@@ -14,6 +14,18 @@ const safePath = value => typeof value === 'string' && value.length > 0 &&
 const portable = rows => sha(Buffer.from([...rows].sort((a, b) => ordinal(a.relativePath, b.relativePath))
   .map(r => `${r.relativePath}\t${r.bytes}\t${r.sha256}\n`).join(''), 'utf8'));
 
+export function deriveExecutionIdentity(config, environment = process.env) {
+  assert(typeof config.unit === 'string' && config.unit.length > 0, 'Missing execution unit');
+  assert(typeof config.nonce === 'string' && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(config.nonce), 'Invalid execution nonce');
+  assert(['Linux', 'Windows'].includes(environment.RUNNER_OS));
+  assert(typeof environment.RUNNER_TEMP === 'string' && environment.RUNNER_TEMP.length > 0);
+  const shardIndex = Number(environment.AGS_CI_SHARD_INDEX);
+  assert(Number.isInteger(shardIndex) && shardIndex >= 1 && shardIndex <= config.shardCount && config.shardCount === 4);
+  return Object.freeze({ unit: config.unit, nonce: config.nonce, shardIndex, shardRef: `${shardIndex}/${config.shardCount}`,
+    work: path.join(path.resolve(environment.RUNNER_TEMP), `ags30-${config.nonce}-${environment.RUNNER_OS}`),
+    artifactName: `ags30-official-${config.nonce}-${environment.RUNNER_OS}-shard-${shardIndex}` });
+}
+
 export function classifyInitial(receipt, stderr, generated) {
   if (receipt.status === 'PASS') return 'PASS';
   if (receipt.status !== 'FAIL' || receipt.exitCode !== 1 || receipt.signal || receipt.errorCode) return 'UNEXPECTED_FAILURE';
@@ -275,14 +287,16 @@ export async function finalizePartial(output, githubOutput, outcome, cap = 8 * 1
 }
 
 async function finalizeFromRunner() {
-  assert(['Linux', 'Windows'].includes(process.env.RUNNER_OS));
-  const work = path.join(path.resolve(process.env.RUNNER_TEMP), `ags30-c0a5adbc-aff1-4aed-a0b2-2e35ebb9f90f-${process.env.RUNNER_OS}`);
+  const config = JSON.parse(await fs.readFile(new URL('../ci/ags30-r11/execution-config.json', import.meta.url), 'utf8'));
+  const identity = deriveExecutionIdentity(config);
+  const work = identity.work;
   try { await fs.mkdir(work); } catch (error) { if (error.code !== 'EEXIST') throw error; }
   const info = await fs.lstat(work);
   assert(info.isDirectory() && !info.isSymbolicLink(), 'Unsafe work directory');
   const output = path.join(work, 'result');
   try { await fs.mkdir(output); } catch (error) { if (error.code !== 'EEXIST') throw error; }
   const result = await finalizePartial(output, process.env.GITHUB_OUTPUT, process.argv[3] ?? 'unknown');
+  await fs.appendFile(process.env.GITHUB_OUTPUT, `artifact_name=${identity.artifactName}\n`);
   console.log(JSON.stringify(result));
   if (!result.artifactOk) process.exitCode = 1;
 }
@@ -338,16 +352,14 @@ async function main() {
   const configPath = path.resolve(process.argv[2]);
   const dataRoot = path.dirname(configPath);
   const config = JSON.parse(await fs.readFile(configPath, 'utf8'));
-  const shardIndex = Number(process.env.AGS_CI_SHARD_INDEX);
-  assert(Number.isInteger(shardIndex) && shardIndex >= 1 && shardIndex <= config.shardCount && config.shardCount === 4);
-  const shardRef = `${shardIndex}/${config.shardCount}`;
-  const work = path.join(path.resolve(process.env.RUNNER_TEMP), `ags30-${config.nonce}-${process.env.RUNNER_OS}`);
+  const identity = deriveExecutionIdentity(config);
+  const { shardIndex, shardRef, work } = identity;
   // mkdir without recursive is the create-once guard; reruns cannot reuse this workspace.
   await fs.mkdir(work);
   const output = path.join(work, 'result');
   const source = path.join(work, 'source');
   await fs.mkdir(output);
-  const record = { schemaVersion: 'AgsBoundedCiResult.v1', unit: config.unit, nonce: config.nonce,
+  const record = { schemaVersion: 'AgsBoundedCiResult.v1', unit: identity.unit, nonce: identity.nonce,
     startedAt: new Date().toISOString(), shardIndex, shardCount: config.shardCount, status: 'FAIL', sourceFreshness: 'NOT_RUN',
     runtimeCandidate: 'NOT_GENERATED', originalJev: { tasks: 3, cases: 125, acceptanceCriteria: 10, completionIncrease: 0 },
     mutationSensitivity: 'NOT_RUN', formalEngineeringProof: 'NOT_COLLECTED', phases: [] };
@@ -431,7 +443,6 @@ async function main() {
       before.filter(r => !generated.has(r.relativePath) && !optional.has(r.relativePath)), 'Non-generated source changed');
   }
   try {
-    assert.equal(config.nonce, 'c0a5adbc-aff1-4aed-a0b2-2e35ebb9f90f');
     for (const [name, expected] of Object.entries(config.ownershipHelpers)) {
       const helper = await fs.readFile(new URL('./' + name, import.meta.url));
       assert.equal(helper.length, expected.bytes); assert.equal(sha(helper), expected.sha256);
