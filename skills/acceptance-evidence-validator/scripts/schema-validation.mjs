@@ -1,17 +1,9 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { Ajv2020 } from "../../../runtime/schema-validation.mjs";
-
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const load = (relative) => JSON.parse(readFileSync(path.join(root, relative), "utf8"));
-
-const taskEnvelopeSchema = load("../../contracts/task-envelope.v1.schema.json");
-const inputSchema = load("contracts/acceptance-evidence-input.v1.schema.json");
-const reportSchema = load("contracts/acceptance-evidence-report.v1.schema.json");
-const reportValidationSchema = load("contracts/acceptance-report-validation.v1.schema.json");
-const providerResultSchema = load("integration/provider-result.v1.schema.json");
+import taskEnvelopeSchema from "../../../contracts/task-envelope.v1.schema.json" with { type: "json" };
+import inputSchema from "../contracts/acceptance-evidence-input.v1.schema.json" with { type: "json" };
+import reportSchema from "../contracts/acceptance-evidence-report.v1.schema.json" with { type: "json" };
+import reportValidationSchema from "../contracts/acceptance-report-validation.v1.schema.json" with { type: "json" };
+import providerResultSchema from "../integration/provider-result.v1.schema.json" with { type: "json" };
 
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 const taskEnvelopeAlias = structuredClone(taskEnvelopeSchema);

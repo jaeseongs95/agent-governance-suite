@@ -8,7 +8,7 @@ import type { ExecutionContextV1, ProviderArtifactV1, SkillDescriptorV2, StageRe
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
-import { canonicalJson } from "../../skills/acceptance-evidence-validator/scripts/core.mjs";
+import { analyzeAcceptance, canonicalJson } from "../../skills/acceptance-evidence-validator/scripts/core.mjs";
 
 const directories: string[] = [];
 const CONTEXT: ExecutionContextV1 = {
@@ -164,8 +164,7 @@ function stageResult(
 
 /** The frozen AcceptanceEvidenceInput.v1 the report is derived from. */
 function frozenRequest(target: string = DECLARED_TARGET, withEvidence = true): Record<string, unknown> {
-  const envelope: Partial<TaskEnvelopeV1> = structuredClone(taskEnvelope);
-  delete envelope.artifactContracts;
+  const envelope = structuredClone(taskEnvelope);
   return {
     schemaVersion: "1.0.0",
     taskEnvelope: envelope,
@@ -227,6 +226,34 @@ afterEach(async () => {
 });
 
 describe("acceptance evidence report semantics at the MCP gate", () => {
+  it.each(["criteria", "artifact-contract"] as const)("rejects replacing the request file and digest with changed %s for the same task and target", async (mutation) => {
+    const { service, receipt, directory } = await startedRun();
+    const original = frozenRequest();
+    expect((original.taskEnvelope as TaskEnvelopeV1).artifactContracts).toEqual(taskEnvelope.artifactContracts);
+    const request = await requestArtifact(directory, original);
+    const weaker = structuredClone(original);
+    const envelope = weaker.taskEnvelope as TaskEnvelopeV1;
+    if (mutation === "criteria") envelope.acceptanceCriteria = ["A weaker requirement."];
+    else envelope.artifactContracts![0]!.produced[0]!.schemaId = "weaker/v0";
+    expect((weaker.taskEnvelope as TaskEnvelopeV1).taskId).toBe(receipt.plan.taskId);
+    expect(weaker.target).toEqual(original.target);
+    const text = canonicalJson(weaker);
+    await writeFile(request.locator, text, "utf8");
+    const swapped = { ...request, digest: createHash("sha256").update(text, "utf8").digest("hex") };
+    expect(swapped.digest).not.toBe(request.digest);
+    const report = analyzeAcceptance(weaker);
+    expect(report.verdict).toBe("PASS");
+    const rejected = service.recordStageResult(stageResult(receipt, report, [swapped]));
+    expect(rejected.error?.code).toBe("BINDING_INVALID");
+    expect(rejected.error?.details).toMatchObject({ taskBound: false });
+    expect(service.getWorkflowStatus(receipt.runId).data).toMatchObject({ revision: 0, stageResults: [] });
+    await writeFile(request.locator, canonicalJson(original), "utf8");
+    const accepted = service.recordStageResult(stageResult(receipt, validReport(), [request]));
+    expect(accepted.ok, JSON.stringify(accepted.error)).toBe(true);
+    const finalized = service.finalizeWorkflow(receipt.runId, accepted.data!.revision);
+    expect(finalized.ok, JSON.stringify(finalized.error)).toBe(true);
+  });
+
   it("rejects a PASS verdict over an unsatisfied criterion, then accepts the report derived from the frozen request", async () => {
     const { service, receipt, directory } = await startedRun();
     const request = await requestArtifact(directory, frozenRequest());

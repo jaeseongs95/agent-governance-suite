@@ -711,7 +711,7 @@ export class WorkflowService {
           ? result
           : { ...result, output: { ...result.output, output: loadedOutput } };
         this.assertPlannedInputsAvailable(receipt, target, result.state === "passed");
-        this.assertResultSemantics(target, checked, receipt.plan.taskId);
+        this.assertResultSemantics(target, checked, receipt.plan.taskId, receipt.plan.taskDigest);
         if (target.requiredCapability === "cs-implementation-review") {
           assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
         }
@@ -780,7 +780,7 @@ export class WorkflowService {
           const checked = result.outputFile
             ? {...result, output:{...result.output, output:loadStageOutputFile(result.outputFile)}}
             : result;
-          this.assertResultSemantics(stage, checked, receipt.plan.taskId);
+          this.assertResultSemantics(stage, checked, receipt.plan.taskId, receipt.plan.taskDigest);
           if (stage.requiredCapability === "cs-implementation-review") {
             assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
           }
@@ -1052,7 +1052,7 @@ export class WorkflowService {
     return ordered;
   }
 
-  private assertResultSemantics(stage: PlannedStageV1, result: StageResultV1, taskId: string): void {
+  private assertResultSemantics(stage: PlannedStageV1, result: StageResultV1, taskId: string, taskDigest: string | undefined): void {
     const providerResult = this.validator.providerResult(
       this.registry.rootDirectory,
       stage.resultSchema,
@@ -1061,7 +1061,7 @@ export class WorkflowService {
     );
     if (providerResult.kind === "output") {
       // The skill's own semantic validator, selected by the stage's declared gate validator or capability.
-      assertProviderSemantics({ taskId, stage, result, output: providerResult.output });
+      assertProviderSemantics({ taskId, taskDigest, stage, result, output: providerResult.output });
     }
     const rule = this.mappedState(stage, providerResult);
     if (result.state !== rule.state) {

@@ -307,7 +307,7 @@ export function validateTaskEnvelope(value) {
   const stringArray = (array, label, allowEmpty = true) => {
     if (!Array.isArray(array) || (!allowEmpty && array.length === 0) || array.some((item) => typeof item !== "string" || item.length === 0) || new Set(array).size !== array.length) throw new Error(`${label} is invalid`);
   };
-  exactKeys(value, ["schemaVersion", "taskId", "objective", "scope", "acceptanceCriteria", "riskLevel", "workUnits", "requiredCapabilities", "constraints", "authorization", "decision", "orchestration"], "TaskEnvelope.v1");
+  // The shared schema above owns root fields, including optional extensions.
   if (value.schemaVersion !== "1.0.0" || typeof value.taskId !== "string" || !value.taskId || typeof value.objective !== "string" || !value.objective) throw new Error("TaskEnvelope.v1 identity fields are invalid");
   exactKeys(value.scope, ["included", "excluded"], "TaskEnvelope.v1 scope");
   stringArray(value.scope.included, "TaskEnvelope.v1 scope.included");
