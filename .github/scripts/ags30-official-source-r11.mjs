@@ -227,7 +227,7 @@ async function main() {
       const observations = stderr.toString('utf8').split(/\r?\n/).flatMap(line => {
         try { return [JSON.parse(line)]; } catch { return []; }
       });
-      const owner = observations.filter(item => item.ownerPid === ownerPid).at(-1);
+      const owner = observations.filter(item => item?.ownerPid === ownerPid).at(-1);
       const drained = result.lifecycle?.directClose !== null && (process.platform === 'win32'
         ? owner?.harness === 'windows-job-owner' && owner.jobEstablishedBeforeSpawn === true
         : owner?.harness === 'test-subreaper' && owner.remainingChildren === false && owner.runnerExitCode !== null);
