@@ -95,7 +95,7 @@ export interface ContinuityGateway {
   loadContext(value: unknown): ApiResultV1<ContinuitySnapshotV1 | WorkflowContinuityCardV1>;
   suppressContextRestore(value: unknown): ApiResultV1<{ schemaVersion: "1.0.0"; suppressed: true; epoch: number }>;
   purgeDirectContext(value: unknown): ApiResultV1<ContinuityPurgeResultV1>;
-  bindOpenedRoot(value: unknown, rootId: string): void;
+  bindOpenedRoot(value: unknown, rootId: string): boolean;
 }
 
 function ok<T>(data: T): ApiResultV1<T> {
@@ -123,7 +123,10 @@ function boundedText(value: string, maxLength: number): string {
 }
 
 function boundedStrings(values: string[], maxItems: number, maxLength: number): string[] {
-  return values.slice(0, maxItems).map((value) => boundedText(value, maxLength));
+  return values.slice(0, maxItems).map((value, index) => {
+    const omitted = values.length > maxItems && index === maxItems - 1 ? ` [+${values.length - maxItems} omitted]` : "";
+    return boundedText(value, maxLength - omitted.length) + omitted;
+  });
 }
 
 function encode(value: unknown): string {
@@ -334,14 +337,15 @@ export class ContinuityService implements ContinuityGateway {
     });
   }
 
-  bindOpenedRoot(value: unknown, rootId: string): void {
+  bindOpenedRoot(value: unknown, rootId: string): boolean {
     try {
       const args = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
       const token = typeof args._continuityBinding === "string" ? args._continuityBinding : "";
       const binding = this.verifyToolBinding("open_convergence_root", args, token);
-      this.store.bindRoot(binding.c, binding.e, rootId, this.now().toISOString());
+      return this.store.bindRoot(binding.c, binding.e, rootId, this.now().toISOString());
     } catch {
-      // Correlation is best effort and never changes the workflow result.
+      // The committed workflow result is independent; callers must observe missing correlation.
+      return false;
     }
   }
 
@@ -550,5 +554,5 @@ export class UnavailableContinuityService implements ContinuityGateway {
   loadContext(): ApiResultV1<ContinuitySnapshotV1 | WorkflowContinuityCardV1> { return this.unavailable(); }
   suppressContextRestore(): ApiResultV1<{ schemaVersion: "1.0.0"; suppressed: true; epoch: number }> { return this.unavailable(); }
   purgeDirectContext(): ApiResultV1<ContinuityPurgeResultV1> { return this.unavailable(); }
-  bindOpenedRoot(): void { /* Fail open. */ }
+  bindOpenedRoot(): boolean { return false; }
 }

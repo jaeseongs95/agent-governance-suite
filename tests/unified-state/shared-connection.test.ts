@@ -86,9 +86,11 @@ describe("inactive native shared connection", () => {
       const code = `import {createInactiveSharedStores} from ${JSON.stringify(factory)}; const b=createInactiveSharedStores({directory:${JSON.stringify(dir)},mode:'fixture-only',clock:()=>100,syntheticKeys:${JSON.stringify(keys)}}); console.log('READY'); process.stdin.once('data',()=>{try{console.log(JSON.stringify({claimed:b.messaging.claim(${JSON.stringify(target)},100).length}));}finally{b.owner.close();}});`;
       const child = spawn(process.execPath, ["--import", "tsx", "--input-type=module", "--eval", code], { cwd: path.resolve("."), stdio: ["pipe", "pipe", "pipe"], env: {} });
       let output = ""; let errors = "";
-      const ready = new Promise<void>((resolve, reject) => { child.stdout.on("data", chunk => { output += String(chunk); if (output.includes("READY")) resolve(); }); child.once("error", reject); child.once("exit", exit => { if (!output.includes("READY")) reject(new Error(`Worker exited before READY: ${exit}: ${errors}`)); }); });
+      const deadline = setTimeout(() => child.kill(), 10000);
+      child.once("close", () => clearTimeout(deadline));
+      const ready = new Promise<void>((resolve, reject) => { child.stdout.on("data", chunk => { output += String(chunk); if (output.includes("READY")) resolve(); }); child.once("error", reject); child.once("close", exit => { if (!output.includes("READY")) reject(new Error(`Worker exited before READY: ${exit}: ${errors}`)); }); });
       child.stderr.on("data", chunk => { errors += String(chunk); });
-      const done = new Promise<{ exit: number | null; output: string; errors: string }>(resolve => child.once("exit", exit => resolve({ exit, output, errors })));
+      const done = new Promise<{ exit: number | null; output: string; errors: string }>(resolve => child.once("close", exit => resolve({ exit, output, errors })));
       return { child, ready, done };
     });
     try {
@@ -98,6 +100,9 @@ describe("inactive native shared connection", () => {
       expect(winners.reduce((sum, result) => sum + result.claimed, 0)).toBe(1);
       expect(value.messaging.database.prepare("SELECT delivery_attempts FROM messages").get()).toMatchObject({ delivery_attempts: 1 });
       console.log("B2-RAW process", JSON.stringify(results));
-    } finally { children.forEach(({ child }) => { if (child.exitCode === null) child.kill(); }); }
+    } finally {
+      children.forEach(({ child }) => { if (child.exitCode === null && child.signalCode === null) child.kill(); });
+      await Promise.all(children.map(child => child.done));
+    }
   }, 15000);
 });

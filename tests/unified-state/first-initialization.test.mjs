@@ -97,41 +97,59 @@ if (process.argv[2] === "--first-init-worker") {
   let seedSha;
   const workers = new Set();
   beforeAll(() => {
-    root = supplied ? path.resolve(supplied) : fs.mkdtempSync(path.join(os.tmpdir(), "ags-first-init-"));
-    fs.mkdirSync(root, { recursive: true });
+    const parent = supplied ? path.resolve(supplied) : path.resolve(os.tmpdir());
+    fs.mkdirSync(parent, { recursive: true });
+    root = fs.mkdtempSync(path.join(parent, "ags-first-init-"));
     seed = path.join(root, "empty-wal.sqlite3");
     if (!fs.existsSync(seed)) { const db = new DatabaseSync(seed); db.exec("PRAGMA journal_mode=WAL;"); db.close(); }
     seedSha = sha(fs.readFileSync(seed));
   });
-  afterAll(() => {
-    for (const worker of workers) worker.kill();
-    if (!supplied && root) {
-      if (path.dirname(root) !== path.resolve(os.tmpdir()) || !path.basename(root).startsWith("ags-first-init-")) throw new Error("cleanup outside owned fixture root");
+  afterAll(async () => {
+    const reaped = await Promise.allSettled([...workers].map(worker => new Promise((resolve, reject) => {
+      const deadline = setTimeout(() => reject(new Error("First-init worker did not close after termination.")), 2000);
+      worker.once("close", () => { clearTimeout(deadline); resolve(); });
+      worker.kill("SIGKILL");
+    })));
+    const errors = reaped.filter(result => result.status === "rejected").map(result => result.reason);
+    if (workers.size) throw new AggregateError(errors, "Workers still own the fixture root; cleanup stopped.");
+    if (root) {
+      const parent = supplied ? path.resolve(supplied) : path.resolve(os.tmpdir());
+      if (path.dirname(root) !== parent || !path.basename(root).startsWith("ags-first-init-")) throw new Error("cleanup outside owned fixture root");
       fs.rmSync(root, { recursive: true, force: true });
     }
+    if (errors.length) throw new AggregateError(errors, "First-init worker cleanup failed.");
   });
   function freshDirectory(label) {
     const directory = path.join(root, label);
     if (path.dirname(directory) !== root || !/^(mixed|foreign|wal-fail)-(authority|shared)$/u.test(label)) throw new Error("fixture outside owned root");
-    fs.rmSync(directory, { recursive: true, force: true }); fs.mkdirSync(directory);
+    fs.mkdirSync(directory);
     fs.copyFileSync(seed, path.join(directory, "ags-state.sqlite3"));
     return directory;
   }
   function worker(type, role, directory) {
     const child = fork(fileURLToPath(import.meta.url), ["--first-init-worker", type, role, directory], { cwd: path.resolve("."), execArgv: ["--import", "tsx"], env: {}, stdio: ["ignore", "pipe", "pipe", "ipc"] });
     workers.add(child);
-    let readyResolve, pausedResolve;
-    const ready = new Promise(resolve => { readyResolve = resolve; });
-    const paused = new Promise(resolve => { pausedResolve = resolve; });
+    let readyResolve, readyReject, pausedResolve, pausedReject;
+    let readySeen = false, pausedSeen = false, timedOut = false, spawnError;
+    const ready = new Promise((resolve, reject) => { readyResolve = resolve; readyReject = reject; });
+    const paused = new Promise((resolve, reject) => { pausedResolve = resolve; pausedReject = reject; });
+    ready.catch(() => {}); paused.catch(() => {});
     let stdout = "", stderr = "", result;
-    const done = new Promise((resolve, reject) => {
+    const deadline = setTimeout(() => { timedOut = true; child.kill(); }, 15000);
+    const done = new Promise(resolve => {
       child.stdout.on("data", bytes => { stdout += bytes; }); child.stderr.on("data", bytes => { stderr += bytes; });
-      child.on("error", reject); child.on("message", message => {
-        if (message.type === "ready") readyResolve();
-        if (message.type === "paused") pausedResolve(message.details);
+      child.on("error", error => { spawnError = error; }); child.on("message", message => {
+        if (message.type === "ready") { readySeen = true; readyResolve(); }
+        if (message.type === "paused") { pausedSeen = true; pausedResolve(message.details); }
         if (message.type === "result") result = message.result;
       });
-      child.on("close", (code, signal) => { workers.delete(child); resolve({ code, signal, result, stdout, stderr }); });
+      child.on("close", (code, signal) => {
+        clearTimeout(deadline); workers.delete(child);
+        const diagnostics = { code, signal, timedOut, spawnError, result, stdout, stderr };
+        if (!readySeen) readyReject(new Error(`First-init worker closed before ready: ${JSON.stringify(diagnostics)}`));
+        if (!pausedSeen) pausedReject(new Error(`First-init worker closed before pause: ${JSON.stringify(diagnostics)}`));
+        resolve(diagnostics);
+      });
     });
     return { child, ready, paused, done, go: () => child.send("go") };
   }

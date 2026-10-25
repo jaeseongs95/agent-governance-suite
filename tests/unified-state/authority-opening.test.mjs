@@ -36,8 +36,10 @@ if (process.argv[2] === "--open-authority") {
   let seed;
   let seedSha;
   beforeAll(() => {
-    root = supplied ? path.resolve(supplied) : fs.mkdtempSync(path.join(os.tmpdir(), "ags-authority-opening-"));
-    fs.mkdirSync(path.join(root, "seed"), { recursive: true });
+    const parent = supplied ? path.resolve(supplied) : path.resolve(os.tmpdir());
+    fs.mkdirSync(parent, { recursive: true });
+    root = fs.mkdtempSync(path.join(parent, "ags-authority-opening-"));
+    fs.mkdirSync(path.join(root, "seed"));
     seed = path.join(root, "seed", "ags-state.sqlite3");
     if (!fs.existsSync(seed)) {
       const authority = new InactiveUnifiedAuthority({ directory: path.dirname(seed), mode: "fixture-only", clock: () => 100 });
@@ -51,9 +53,10 @@ if (process.argv[2] === "--open-authority") {
     seedSha = sha(fs.readFileSync(seed));
   });
   afterAll(() => {
-    if (!supplied && root) {
+    if (root) {
       const target = path.resolve(root);
-      if (path.dirname(target) !== path.resolve(os.tmpdir()) || !path.basename(target).startsWith("ags-authority-opening-")) throw new Error("cleanup outside owned fixture directory");
+      const parent = supplied ? path.resolve(supplied) : path.resolve(os.tmpdir());
+      if (path.dirname(target) !== parent || !path.basename(target).startsWith("ags-authority-opening-")) throw new Error("cleanup outside owned fixture directory");
       fs.rmSync(target, { recursive: true, force: true });
     }
   });
@@ -75,23 +78,30 @@ if (process.argv[2] === "--open-authority") {
     const worker = fork(fileURLToPath(import.meta.url), ["--open-authority", active], { execArgv: [], env: {}, stdio: ["ignore", "pipe", "pipe", "ipc"] });
     let stdout = "";
     let stderr = "";
-    const completed = new Promise((resolve, reject) => {
+    let timedOut = false;
+    let spawnError;
+    const deadline = setTimeout(() => { timedOut = true; worker.kill(); }, 7000);
+    const completed = new Promise(resolve => {
       worker.stdout.on("data", b => { stdout += b; });
       worker.stderr.on("data", b => { stderr += b; });
-      worker.on("error", reject);
+      worker.on("error", error => { spawnError = error; });
       worker.on("message", message => {
         events.push(message.type);
         if (message.type === "ready") worker.send("open");
         if (message.type === "attempt-start") releaseTimer = setTimeout(release, 500);
         if (message.type === "result") resultWhileHeld = held;
       });
-      worker.on("close", (code, signal) => resolve({ code, signal }));
+      worker.on("close", (code, signal) => resolve({ code, signal, timedOut, spawnError }));
     });
     let terminal;
     try { terminal = await completed; }
-    finally { clearTimeout(releaseTimer); release(); }
-    const actual = JSON.parse(stdout.trim());
-    console.log("LOCK-RAW " + JSON.stringify({ seedSha, events, resultWhileHeld, terminal, actual, stderr }));
+    finally { clearTimeout(deadline); clearTimeout(releaseTimer); release(); }
+    console.log("LOCK-RAW " + JSON.stringify({ seedSha, events, resultWhileHeld, terminal, stdout, stderr }));
+    expect(terminal.timedOut).toBe(false); expect(terminal.spawnError).toBeUndefined();
+    expect(terminal.code).toBe(0); expect(terminal.signal).toBeNull();
+    let actual;
+    try { actual = JSON.parse(stdout.trim()); }
+    catch (error) { throw new Error(`Authority opening worker returned invalid JSON: ${JSON.stringify({ terminal, stdout, stderr })}`, { cause: error }); }
     expect(events).toContain("attempt-start");
     expect(terminal.signal).toBeNull();
     expect(actual.opened, "first metadata admission must wait for lock release").toBe(true);

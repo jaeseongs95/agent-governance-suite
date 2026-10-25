@@ -9,22 +9,45 @@ import { scopeA, scopeB, workflowRef, workflowRow, nextWorkflowRow, records, ref
 
 const directories = [];
 const authorities = [];
+const workers = new Set();
 const workerPath = path.join(import.meta.dirname, "worker.mjs");
 function directory() { const value = fs.mkdtempSync(path.join(os.tmpdir(), "ags-unified-state-")); directories.push(value); return value; }
 function authority(dir, options = {}) { const result = new InactiveUnifiedAuthority({ directory: dir, mode: "fixture-only", ...options }); authorities.push(result); return result; }
-function close(value) { value.close(); authorities.splice(authorities.indexOf(value), 1); }
+function close(value) { const index = authorities.indexOf(value); if (index < 0) return; value.close(); authorities.splice(index, 1); }
 function importAll(provider, snapshotJson = snapshot(), intentId = "import-once", batchSize = 100) { return provider.importFixture({ snapshotJson, sourceDigest: fixtureDigest(snapshotJson), intentId, batchSize }); }
-function assertCode(action, expectedCode) { try { action(); } catch (error) { expect(error.code).toBe(expectedCode); return; } throw new Error(`Expected ${expectedCode}; protected operation incorrectly succeeded.`); }
-function child(mode, dir, parameter) { return spawnSync(process.execPath, [workerPath, mode, dir, parameter], { encoding: "utf8", timeout: 10000, env: {} }); }
-function report(label, value) { console.log(`B-RAW ${label} ${JSON.stringify(value)}`); }
-afterEach(() => {
-  for (const value of authorities.splice(0)) value.close();
-  for (const dir of directories.splice(0)) {
-    // These exact directories were created by this test; never recursively remove a computed external target.
-    expect(path.dirname(path.resolve(dir))).toBe(path.resolve(os.tmpdir()));
-    expect(path.basename(dir)).toMatch(/^ags-unified-state-/u);
-    fs.rmSync(dir, { recursive: true });
+function assertCode(action, expectedCode) {
+  try { action(); } catch (error) {
+    if (error?.code !== expectedCode) throw new Error(`Expected ${expectedCode}; received ${error?.code ?? typeof error}.`, { cause: error });
+    return;
   }
+  throw new Error(`Expected ${expectedCode}; protected operation incorrectly succeeded.`);
+}
+function child(mode, dir, parameter) {
+  const result = spawnSync(process.execPath, [workerPath, mode, dir, parameter], { encoding: "utf8", timeout: 10000, env: {} });
+  const expected = mode === "crash-import" ? 71 : mode === "crash-write" ? parameter === "after-commit-before-response" ? 72 : 71 : 0;
+  if (result.error || result.signal || result.status !== expected) throw new Error(`Fixture worker ${mode} failed: ${JSON.stringify({ status: result.status, signal: result.signal, stdout: result.stdout, stderr: result.stderr })}`, { cause: result.error });
+  return result;
+}
+function report(label, value) { console.log(`B-RAW ${label} ${JSON.stringify(value)}`); }
+afterEach(async () => {
+  const errors = [];
+  const reaped = await Promise.allSettled([...workers].map(worker => new Promise((resolve, reject) => {
+    const deadline = setTimeout(() => reject(new Error("Fixture worker did not close after forced termination.")), 2000);
+    worker.once("close", () => { clearTimeout(deadline); resolve(); });
+    worker.kill("SIGKILL");
+  })));
+  for (const result of reaped) if (result.status === "rejected") errors.push(result.reason);
+  if (workers.size) throw new AggregateError(errors, "Fixture workers still own their directories; cleanup stopped.");
+  for (const value of authorities.splice(0)) { try { value.close(); } catch (error) { errors.push(error); } }
+  for (const dir of directories.splice(0)) {
+    try {
+      // These exact directories were created by this test; never recursively remove a computed external target.
+      expect(path.dirname(path.resolve(dir))).toBe(path.resolve(os.tmpdir()));
+      expect(path.basename(dir)).toMatch(/^ags-unified-state-/u);
+      fs.rmSync(dir, { recursive: true });
+    } catch (error) { errors.push(error); }
+  }
+  if (errors.length) throw new AggregateError(errors, "Unified-state fixture cleanup failed.");
 });
 
 describe("비활성 단일 SQLite authority/provider 후보", () => {
@@ -98,7 +121,10 @@ describe("비활성 단일 SQLite authority/provider 후보", () => {
     const dir = directory(); const value = authority(dir); importAll(createProviderAdapter(value, scopeA)); close(value);
     const children = ["worker-one", "worker-two"].map((owner) => fork(workerPath, ["claim", dir, owner], { stdio: ["ignore", "pipe", "pipe", "ipc"], execArgv: [], env: {} }));
     const results = await Promise.all(children.map((worker) => new Promise((resolve, reject) => {
-      let outcome; let stderr = "";
+      workers.add(worker);
+      let outcome; let stderr = ""; let stdout = ""; let timedOut = false;
+      worker.stdout.on("data", data => { stdout += data; });
+      const deadline = setTimeout(() => { timedOut = true; worker.kill(); }, 10000);
       worker.stderr.on("data", (data) => { stderr += data.toString(); });
       worker.on("error", reject);
       worker.on("message", (message) => {
@@ -107,7 +133,11 @@ describe("비활성 단일 SQLite authority/provider 후보", () => {
           if (children.every((current) => current.readyForClaim)) children.forEach((current) => current.send({ type: "go" }));
         } else outcome = message.lease;
       });
-      worker.on("exit", (code) => { if (code !== 0 || outcome === undefined) reject(new Error(`Fixture race worker failed: ${code}; ${stderr}`)); else resolve(outcome); });
+      worker.on("close", (code, signal) => {
+        clearTimeout(deadline); workers.delete(worker);
+        if (timedOut || signal || code !== 0 || outcome === undefined) reject(new Error(`Fixture race worker failed: ${JSON.stringify({ code, signal, timedOut, stdout, stderr, outcome })}`));
+        else resolve(outcome);
+      });
     })));
     expect(results.filter(Boolean)).toHaveLength(1); expect(results.filter(Boolean)[0].generation).toBe(1);
     report("independent-process-claim", { winnerCount: results.filter(Boolean).length, results });
@@ -228,12 +258,16 @@ describe("비활성 단일 SQLite authority/provider 후보", () => {
     const lease = initialProvider.claim(workflowRef, { expectedRevision: 4, owner: "concurrent-clock-owner", ttlMs: 10 }); close(initial);
     const results = await Promise.all(["105", "200"].map((clockValue) => new Promise((resolve, reject) => {
       const worker = spawn(process.execPath, [workerPath, "clock-rejection", dir, clockValue], { stdio: ["ignore", "pipe", "pipe"], env: {} });
-      let stdout = ""; let stderr = "";
+      workers.add(worker);
+      let stdout = ""; let stderr = ""; let timedOut = false;
+      const deadline = setTimeout(() => { timedOut = true; worker.kill(); }, 10000);
       worker.stdout.on("data", (data) => { stdout += data.toString(); }); worker.stderr.on("data", (data) => { stderr += data.toString(); });
       worker.on("error", reject);
-      worker.on("close", (code) => {
-        if (code !== 0) reject(new Error(`Fixture clock worker failed: ${code}; ${stderr}`));
-        else { try { resolve(JSON.parse(stdout.trim())); } catch (error) { reject(error); } }
+      worker.on("close", (code, signal) => {
+        clearTimeout(deadline); workers.delete(worker);
+        const diagnostics = JSON.stringify({ code, signal, timedOut, stdout, stderr });
+        if (timedOut || signal || code !== 0) reject(new Error(`Fixture clock worker failed: ${diagnostics}`));
+        else { try { resolve(JSON.parse(stdout.trim())); } catch (error) { reject(new Error(`Fixture clock worker returned invalid JSON: ${diagnostics}`, { cause: error })); } }
       });
     })));
     expect(results.map((result) => result.observedTimes[0]).sort((left, right) => left - right)).toEqual([105, 200]);

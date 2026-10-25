@@ -400,7 +400,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       if (!leaseRow) return null;
       const lease = JSON.parse(leaseRow.lease_json) as AttemptLeaseV1;
       const proposal = JSON.parse(leaseRow.proposal_json) as AttemptProposalV1;
-      const decisionTime = this.shared ? this.shared.time(Date.parse(consumedAt)) : Date.parse(consumedAt);
+      const decisionTime = this.shared ? this.shared.time(Date.parse(consumedAt)) : Math.max(Date.parse(consumedAt), Date.now());
       if (lease.state !== "issued" || lease.rootRevision !== expectedRootRevision || Date.parse(lease.expiresAt) <= decisionTime) return null;
       const rootRow = this.rootRow(lease.rootId);
       if (!rootRow || rootRow.revision !== expectedRootRevision) return null;
@@ -703,15 +703,16 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   }
 
   private initializeSchema(): void {
-    const row = { user_version: this.getSchemaVersion() };
-    if (row.user_version > SCHEMA_VERSION) {
-      throw new WorkflowContractError("INVALID_INPUT", "Workflow database schema is newer than this server supports.", {
-        databasePath: this.databasePath,
-        supportedVersion: SCHEMA_VERSION,
-        actualVersion: row.user_version,
-      });
-    }
     this.transaction(() => {
+      // Read the migration version only after the writer lock is acquired.
+      const row = { user_version: this.getSchemaVersion() };
+      if (row.user_version > SCHEMA_VERSION) {
+        throw new WorkflowContractError("INVALID_INPUT", "Workflow database schema is newer than this server supports.", {
+          databasePath: this.databasePath,
+          supportedVersion: SCHEMA_VERSION,
+          actualVersion: row.user_version,
+        });
+      }
       if (row.user_version > 0 && row.user_version < 4) {
         this.database.exec(`
           ALTER TABLE workflow_runs ADD COLUMN state TEXT;

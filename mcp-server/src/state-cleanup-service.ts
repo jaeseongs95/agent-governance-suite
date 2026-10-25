@@ -16,6 +16,7 @@ import type { SqliteWorkflowStore, WorkflowCleanupPreview } from "./sqlite-workf
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TOKEN_TTL_MS = 15 * 60 * 1000;
+const MAX_PLAN_TOKEN_BYTES = 64 * 1024;
 const POLICY: StateCleanupPolicyV1 = {
   workflowRetentionDays: 180,
   continuityPayloadRetentionDays: 30,
@@ -29,9 +30,9 @@ interface CleanupTokenPayload {
   expiresAt: string;
   policy: StateCleanupPolicyV1;
   cutoffs: StateCleanupPlanV1["cutoffs"];
-  candidates: StateCleanupPlanV1["candidates"];
+  candidates?: StateCleanupPlanV1["candidates"];
   candidateDigest: Sha256Digest;
-  linkedRuns: WorkflowCleanupPreview["linkedRuns"];
+  linkedRuns?: WorkflowCleanupPreview["linkedRuns"];
   rootProtection?: StateCleanupPlanV1["rootProtection"];
   databases: {
     workflow: { path: string; schemaVersion: number };
@@ -93,9 +94,7 @@ export class StateCleanupService {
         expiresAt: new Date(created.getTime() + TOKEN_TTL_MS).toISOString(),
         policy: POLICY,
         cutoffs,
-        candidates,
         candidateDigest,
-        linkedRuns: workflow.linkedRuns,
         rootProtection,
         databases: this.databaseIdentities(),
       };
@@ -139,8 +138,9 @@ export class StateCleanupService {
       const current = this.currentCandidates(payload.cutoffs);
       const candidates = current.candidates;
       const currentDigest = digest({ candidates, linkedRuns: current.workflow.linkedRuns });
-      if (currentDigest !== payload.candidateDigest || JSON.stringify(candidates) !== JSON.stringify(payload.candidates)
-        || JSON.stringify(current.workflow.linkedRuns) !== JSON.stringify(payload.linkedRuns)) {
+      if (currentDigest !== payload.candidateDigest
+        || (payload.candidates !== undefined && JSON.stringify(candidates) !== JSON.stringify(payload.candidates))
+        || (payload.linkedRuns !== undefined && JSON.stringify(current.workflow.linkedRuns) !== JSON.stringify(payload.linkedRuns))) {
         throw new WorkflowContractError("STALE_REVISION", "State cleanup candidates changed after preview.", {
           planId: payload.planId,
           expectedDigest: payload.candidateDigest,
@@ -263,10 +263,13 @@ export class StateCleanupService {
   private sign(payload: CleanupTokenPayload): string {
     const encoded = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
     const signature = createHmac("sha256", this.secret).update(encoded).digest("base64url");
-    return `${encoded}.${signature}`;
+    const token = `${encoded}.${signature}`;
+    if (Buffer.byteLength(token, "utf8") > MAX_PLAN_TOKEN_BYTES) throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token exceeds the supported size.");
+    return token;
   }
 
   private verify(token: string): CleanupTokenPayload {
+    if (Buffer.byteLength(token, "utf8") > MAX_PLAN_TOKEN_BYTES) throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token exceeds the supported size.");
     const [encoded, signature, extra] = token.split(".");
     if (!encoded || !signature || extra) throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token is malformed.");
     const expected = createHmac("sha256", this.secret).update(encoded).digest();

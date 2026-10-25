@@ -2,7 +2,7 @@ import { existsSync, lstatSync, mkdirSync, realpathSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { types } from "node:util";
-import { retainFailureSecondary, tagProducerFailure } from "../../mcp-server/src/failure-diagnostics.ts";
+import { retainFailureSecondary, tagProducerFailure } from "../failure-diagnostics.mjs";
 
 const APPLICATION_ID = 0x4147534e; // AGSN: inactive native format, distinct from R1 opaque fixtures.
 const FORMAT_VERSION = 1;
@@ -99,7 +99,7 @@ export class InactiveSharedConnection {
     return !empty;
   }
   #shape(module) {
-    return JSON.stringify(MODULES[module].tables.map(name => ({ name, columns: this.#database.prepare(`PRAGMA table_info(${name})`).all(), sql: this.#database.prepare("SELECT sql FROM sqlite_schema WHERE type='table' AND name=?").get(name)?.sql })));
+    return JSON.stringify(MODULES[module].tables.map(name => ({ name, columns: this.#database.prepare(`PRAGMA table_info(${name})`).all(), sql: this.#database.prepare("SELECT sql FROM sqlite_schema WHERE type='table' AND name=?").get(name)?.sql, indexes: this.#database.prepare("SELECT name,sql FROM sqlite_schema WHERE type='index' AND tbl_name=? ORDER BY name").all(name).map(index => ({ ...index, columns: this.#database.prepare("SELECT * FROM pragma_index_xinfo(?)").all(index.name) })) })));
   }
   #validate() {
     const expected = ["authority_time", "shared_module_schema", ...Object.values(MODULES).flatMap(module => module.tables)].sort();

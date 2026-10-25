@@ -11,7 +11,8 @@ export async function concurrentClaims<T>(fixture: URL, inputs: unknown[]): Prom
   const exits = children.map(child => new Promise<number | null>(resolve => child.once("close", resolve)));
   function receive(child: ChildProcess, type: "ready" | "result"): Promise<unknown> {
     return new Promise((resolve, reject) => {
-      const cleanup = () => { child.off("message", message); child.off("error", failed); child.off("close", closed); };
+      const deadline = setTimeout(() => failed(new Error(`Claim process timed out before ${type}.`)), 15000);
+      const cleanup = () => { clearTimeout(deadline); child.off("message", message); child.off("error", failed); child.off("close", closed); };
       const failed = (error: Error) => { cleanup(); reject(error); };
       const closed = () => failed(new Error(`Claim process closed before ${type}.`));
       const message = (value: unknown) => {
@@ -34,7 +35,9 @@ export async function concurrentClaims<T>(fixture: URL, inputs: unknown[]): Prom
     assert.deepEqual(await Promise.all(exits), inputs.map(() => 0));
     return claims.map(message => (message as { result: T }).result);
   } finally {
-    children.forEach(child => { if (child.exitCode === null && child.signalCode === null) child.kill(); });
-    await Promise.all(exits);
+    children.forEach(child => { if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL"); });
+    let deadline: ReturnType<typeof setTimeout> | undefined;
+    try { await Promise.race([Promise.all(exits), new Promise((_, reject) => { deadline = setTimeout(() => reject(new Error("Claim workers did not close after termination.")), 5000); })]); }
+    finally { clearTimeout(deadline); }
   }
 }

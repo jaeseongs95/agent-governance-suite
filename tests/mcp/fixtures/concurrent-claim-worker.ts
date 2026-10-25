@@ -8,10 +8,13 @@ const store = new SqliteWorkflowStore(input.databasePath);
 const validator = new ContractValidator();
 const service = new WorkflowService(new FileSkillRegistry(input.registryPath, validator), validator, store);
 
+const deadline = setTimeout(() => { store.close(); process.exitCode = 1; process.disconnect?.(); }, 15000);
+process.once("disconnect", () => { clearTimeout(deadline); store.close(); });
 process.send!({ type: "ready" });
 process.once("message", (message: unknown) => {
-  if (message !== "claim") throw new Error("Unexpected worker command.");
+  clearTimeout(deadline);
   try {
+    if (message !== "claim") throw new Error("Unexpected worker command.");
     process.send!({ type: "result", result: service.claimWorkflowAttempt(input.proposal) }, () => process.disconnect!());
   } finally {
     store.close();
