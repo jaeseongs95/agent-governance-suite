@@ -157,6 +157,7 @@ const CURRENT_IMPLEMENTATION_PINS = Object.freeze({
   "skills/coordinate-subagents/scripts/model-routing.d.mts": "4afbbfc1167ee637d1aab74bbfe4ec55241931d33fa55442b94dcea8d8e93fbe",
   "skills/coordinate-subagents/scripts/model-routing.mjs": "ee3e7084ca52cef9a14d8eb5d3b4f79bcb3c91098ca0d1fd6bac30ad64e29b7e",
   "skills/evaluation-validity-auditor/scripts/check-repository.mjs": "e00e96e27843e08b8885d38c181e33cc26a2730f6dca2f524a1584786b074454",
+  "skills/independent-deliberation-panel/evals/fixtures/valid/ad01_specialist_cap.json": "9423c10246f09738712ac0bf5b5f9134795fa8a9f03bfb4d2a2f2af96af3618f",
   "skills/independent-deliberation-panel/scripts/run_evals.py": "91b43afc879001917d0a49c4209beeea4a98ffad0b64163ebd85f778d7269f20",
   "skills/independent-deliberation-panel/scripts/validate_decision_record.py": "fa57d3ad2a2d2a5b5c42128f126ba4ff32e1d1f6bb412587abc3006e8cdb3d87",
   "skills/instruction-scope-resolver/references/gemini-instructions.md": "fb03a623c11627f8fed8cfad07d6c492fcd4a710dd73b25963840f8524b18a56",

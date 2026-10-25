@@ -163,13 +163,14 @@ async function serviceFixture() {
     acceptanceCriteria: ["Reject an undersized strict panel."], riskLevel: "low", workUnits: [],
     requiredCapabilities: ["independent-deliberation"], constraints: [],
     authorization: { allowedActions: ["read"], prohibitedActions: [], approvalRequired: [] },
-    decision: { complexity: "simple", hasConflicts: false }, orchestration: { requested: false, mcpAvailable: true },
+    decision: { complexity: "simple", hasConflicts: false }, orchestration: { requested: true, mcpAvailable: true },
     artifactContracts: [{ capability: "independent-deliberation", produced: [{
       artifactId: "decision-record", schemaId: "fixture/v1", targetDigest: `sha256:${target}`,
     }] }],
   });
   expect(planned.ok, JSON.stringify(planned.error)).toBe(true);
   expect(planned.data.state).toBe("ready");
+  expect(planned.data.executionMode).toBe("orchestrated");
   const started = service.startWorkflow(planned.data);
   expect(started.ok, JSON.stringify(started.error)).toBe(true);
   expect(started.data.plan.stages).toHaveLength(1);

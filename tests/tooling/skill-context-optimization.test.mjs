@@ -10,7 +10,7 @@ describe("skill context optimization", () => {
     const report = checkSkillContextOptimization();
     expect(report.currentImplementationPins).toHaveLength(1);
     expect(report.currentImplementationPins[0].authorityEffect).toBe("none");
-    expect(Object.keys(report.currentImplementationPins[0].hashes)).toHaveLength(35);
+    expect(Object.keys(report.currentImplementationPins[0].hashes)).toHaveLength(36);
     expect(Object.keys(report.currentImplementationPins[0].hashes).toSorted()).toEqual([
       "skills/acceptance-evidence-validator/scripts/check-repository.mjs",
       "skills/acceptance-evidence-validator/scripts/core.d.mts",
@@ -28,6 +28,7 @@ describe("skill context optimization", () => {
       "skills/coordinate-subagents/scripts/model-routing.d.mts",
       "skills/coordinate-subagents/scripts/model-routing.mjs",
       "skills/evaluation-validity-auditor/scripts/check-repository.mjs",
+      "skills/independent-deliberation-panel/evals/fixtures/valid/ad01_specialist_cap.json",
       "skills/independent-deliberation-panel/scripts/run_evals.py",
       "skills/independent-deliberation-panel/scripts/validate_decision_record.py",
       "skills/instruction-scope-resolver/references/gemini-instructions.md",
@@ -58,10 +59,13 @@ describe("skill context optimization", () => {
     expect(report.baselineRevision).toBe("7bc7753012227938be2a46f68bf3e29d29d5ef34");
     expect(report.totals).toMatchObject({ skillCount: 20, baselineBytes: 115679, candidateBytes: 46292 });
   });
-  it("rejects altered current source bytes through the public checker", async () => {
+  it.each([
+    "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs",
+    "skills/independent-deliberation-panel/evals/fixtures/valid/ad01_specialist_cap.json",
+  ])("rejects altered current source bytes through the public checker: %s", async (relative) => {
     vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {
       const bytes = readFileSync(file, ...args);
-      if (String(file).replaceAll("\\", "/").endsWith("/skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs")) {
+      if (String(file).replaceAll("\\", "/").endsWith(`/${relative}`)) {
         const altered = Buffer.from(bytes); altered[altered.length - 1] ^= 1; return altered;
       }
       return bytes;
@@ -71,7 +75,7 @@ describe("skill context optimization", () => {
       const checker = await import("../../scripts/check-skill-context-optimization.mjs");
       const report = checker.checkSkillContextOptimization();
       expect(report.pass).toBe(false);
-      expect(report.errors).toContain("current implementation bytes differ: skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs");
+      expect(report.errors).toContain(`current implementation bytes differ: ${relative}`);
     } finally { vi.doUnmock("node:fs"); vi.resetModules(); }
   });
 
