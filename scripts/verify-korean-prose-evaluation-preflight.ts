@@ -52,11 +52,39 @@ try {
   }, null, 2));
 } catch (error) {
   const isPreflightError = error instanceof EvaluationPreflightError;
+  const codedError = !isPreflightError && error !== null && typeof error === "object"
+    && "code" in error && typeof error.code === "string" && error.code !== "ENOENT" ? error : null;
   console.error(JSON.stringify({
     status: "failed",
-    code: isPreflightError ? error.code : "READINESS_GATE_FAILED",
+    code: isPreflightError ? error.code : codedError ? codedError.code : "READINESS_GATE_FAILED",
     message: error instanceof Error ? error.message : String(error),
-    details: isPreflightError ? error.details : null,
+    details: isPreflightError ? error.details : codedError ? codedErrorDetails(codedError) : null,
   }, null, 2));
   process.exitCode = 1;
+}
+
+function codedErrorDetails(error: object): Record<string, unknown> {
+  const fields = (value: object): Record<string, unknown> => {
+    const record = value as Record<string, unknown>;
+    return Object.fromEntries(["name", "message", "code", "errno", "syscall", "path", "dest"]
+      .filter(key => typeof record[key] === "string" || typeof record[key] === "number")
+      .map(key => [key, record[key]]));
+  };
+  const details = fields(error);
+  const causes: unknown[] = [];
+  const seen = new Set<object>([error]);
+  let cause: unknown = "cause" in error ? error.cause : undefined;
+  // A flat cause chain preserves order without serializing arbitrary objects or stacks.
+  while (cause !== undefined) {
+    if (cause === null || typeof cause !== "object") {
+      if (cause === null || ["string", "number", "boolean"].includes(typeof cause)) causes.push(cause);
+      break;
+    }
+    if (seen.has(cause)) { causes.push({ circular: true }); break; }
+    seen.add(cause);
+    causes.push(fields(cause));
+    cause = "cause" in cause ? cause.cause : undefined;
+  }
+  if (causes.length > 0) details.causes = causes;
+  return details;
 }
