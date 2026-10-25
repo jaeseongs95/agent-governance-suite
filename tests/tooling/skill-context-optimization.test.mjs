@@ -10,7 +10,44 @@ describe("skill context optimization", () => {
     const report = checkSkillContextOptimization();
     expect(report.currentImplementationPins).toHaveLength(1);
     expect(report.currentImplementationPins[0].authorityEffect).toBe("none");
-    expect(Object.keys(report.currentImplementationPins[0].hashes)).toHaveLength(10);
+    expect(Object.keys(report.currentImplementationPins[0].hashes)).toHaveLength(35);
+    expect(Object.keys(report.currentImplementationPins[0].hashes).toSorted()).toEqual([
+      "skills/acceptance-evidence-validator/scripts/check-repository.mjs",
+      "skills/acceptance-evidence-validator/scripts/core.d.mts",
+      "skills/acceptance-evidence-validator/scripts/core.mjs",
+      "skills/acceptance-evidence-validator/scripts/schema-validation.mjs",
+      "skills/blocker-diagnostician/scripts/check-repository.mjs",
+      "skills/change-scope-guardian/scripts/lib.mjs",
+      "skills/change-scope-guardian/scripts/schema-validator.mjs",
+      "skills/codex-token-usage-analyzer/scripts/core.mjs",
+      "skills/codex-token-usage-analyzer/scripts/schema-validation.mjs",
+      "skills/coordinate-subagents/references/model-routing-presets.json",
+      "skills/coordinate-subagents/references/model-routing.md",
+      "skills/coordinate-subagents/scripts/model-catalog-adapter.d.mts",
+      "skills/coordinate-subagents/scripts/model-catalog-adapter.mjs",
+      "skills/coordinate-subagents/scripts/model-routing.d.mts",
+      "skills/coordinate-subagents/scripts/model-routing.mjs",
+      "skills/evaluation-validity-auditor/scripts/check-repository.mjs",
+      "skills/independent-deliberation-panel/scripts/run_evals.py",
+      "skills/independent-deliberation-panel/scripts/validate_decision_record.py",
+      "skills/instruction-scope-resolver/references/gemini-instructions.md",
+      "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs",
+      "skills/iteration-frame-auditor/integration/skill-descriptor.json",
+      "skills/iteration-frame-auditor/scripts/core.mjs",
+      "skills/korean-prose-editor/contracts/protected-manifest.schema.json",
+      "skills/korean-prose-editor/contracts/receipt.schema.json",
+      "skills/korean-prose-editor/scripts/finalizer-core.mjs",
+      "skills/korean-prose-editor/scripts/protected-spans.mjs",
+      "skills/mutation-risk-preflight/references/recovery-requirements.md",
+      "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
+      "skills/mutation-risk-preflight/scripts/schema-validation.mjs",
+      "skills/mutation-risk-preflight/scripts/validate-skill.mjs",
+      "skills/recovery-strategy-selector/scripts/schema-validation.mjs",
+      "skills/task-contract/scripts/validate-task-contract.mjs",
+      "skills/workspace-convention-profiler/scripts/profile-workspace.mjs",
+      "skills/workspace-convention-profiler/scripts/schema-validation.mjs",
+      "skills/workspace-convention-profiler/scripts/validate-skill.mjs",
+    ]);
     for (const relative of Object.keys(report.currentImplementationPins[0].hashes)) {
       const bytes = readFileSync(new URL(`../../${relative}`, import.meta.url));
       expect(matchesCurrentImplementationPin(relative, bytes), relative).toBe(true);
