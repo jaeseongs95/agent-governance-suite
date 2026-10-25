@@ -88,9 +88,9 @@ assert.equal(sourceTree, sourceManifest.sourceTree);
 const generatedPaths = new Set(config.generated);
 const bodyNames = sourceManifest.rows.filter(row => !generatedPaths.has(row.relativePath)).map(row => row.relativePath);
 const bodyBefore = await rowsAt(source, bodyNames);
-assert.deepEqual(bodyBefore.map(({ mode, ...row }) => row), sourceManifest.rows.filter(row => !generatedPaths.has(row.relativePath)));
+assert.deepEqual(bodyBefore.map(({ relativePath, bytes, sha256 }) => ({ relativePath, bytes, sha256 })), sourceManifest.rows.filter(row => !generatedPaths.has(row.relativePath)));
 const generatedBefore = await rowsAt(source, config.generated);
-assert.deepEqual(generatedBefore.map(({ mode, ...row }) => row), generated.rows);
+assert.deepEqual(generatedBefore.map(({ relativePath, bytes, sha256 }) => ({ relativePath, bytes, sha256 })), generated.rows);
 const work = await fs.mkdtemp(path.join(tmpdir(), 'ags-claude-package-'));
 let primaryFailure = null;
 try {
@@ -186,11 +186,10 @@ try {
     archiveBytes: archive.length, archiveSha256: manifest.archive.sha256 }));
 } catch (error) {
   primaryFailure = { error };
-  throw error;
-} finally {
-  try { await fs.rm(work, { recursive: true, force: true }); }
-  catch (cleanup) {
-    if (primaryFailure === null) throw cleanup;
-    retainFailureSecondary(primaryFailure.error, cleanup);
-  }
 }
+try { await fs.rm(work, { recursive: true, force: true }); }
+catch (cleanup) {
+  if (primaryFailure === null) throw cleanup;
+  retainFailureSecondary(primaryFailure.error, cleanup);
+}
+if (primaryFailure !== null) throw primaryFailure.error;
