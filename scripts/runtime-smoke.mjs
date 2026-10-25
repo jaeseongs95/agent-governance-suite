@@ -6,6 +6,13 @@ import path from "node:path";
 
 import { SKILL_RUNTIME_ENTRYPOINTS } from "./runtime-entrypoints.mjs";
 
+const MESSAGING_RUNTIME_PROBES = [
+  { bundle: "session-message-broker.mjs", expectedExitCode: 2, stdout: "" },
+  { bundle: "session-message-relay.mjs", expectedExitCode: 2, stdout: "" },
+  { bundle: "session-message-cli.mjs", expectedExitCode: 1 },
+  { bundle: "session-message-hook.mjs", expectedExitCode: 0, stdout: "", input: "{\n", stderrDiagnostic: { phase: "input", reason: "INVALID_JSON" } },
+];
+
 async function assertMissing(target) {
   try {
     await access(target);
@@ -22,7 +29,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     await mkdir(path.join(cleanRoot, "mcp-server", "dist"), { recursive: true });
     await Promise.all([
       ...["contracts", "runtime", "skills"].map((directory) => cp(path.join(sourceRoot, directory), path.join(cleanRoot, directory), { recursive: true })),
-      ...["server.mjs", "continuity-hook.mjs", "host-attestation-hook.mjs", "host-attestation-api.mjs", "session-board-hook.mjs"].map((bundle) => (
+      ...["server.mjs", "continuity-hook.mjs", "host-attestation-hook.mjs", "host-attestation-api.mjs", "session-board-hook.mjs", ...MESSAGING_RUNTIME_PROBES.map(({ bundle }) => bundle)].map((bundle) => (
         cp(path.join(sourceRoot, "mcp-server", "dist", bundle), path.join(cleanRoot, "mcp-server", "dist", bundle))
       )),
     ]);
@@ -47,6 +54,34 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
       timeout: 10_000,
       windowsHide: true,
     });
+
+    // Missing arguments/operation validate startup without starting a broker or relay.
+    for (const probe of MESSAGING_RUNTIME_PROBES) {
+      const script = `mcp-server/dist/${probe.bundle}`;
+      const result = runNode(script, probe.input ?? "{}\n");
+      const output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
+      if (result.error || result.status !== probe.expectedExitCode
+        || /ERR_MODULE_NOT_FOUND|Cannot find package/u.test(output)) {
+        throw new Error(`${script} failed its node_modules-free messaging startup check.\n${result.error?.message ?? output}`);
+      }
+      if (probe.stdout !== undefined) {
+        if (result.stdout !== probe.stdout) throw new Error(`${script} emitted unexpected startup output.\n${output}`);
+      } else {
+        const envelope = JSON.parse(result.stdout);
+        if (envelope?.protocolVersion !== "1.0.0" || envelope.ok !== false
+          || envelope.error !== "Unsupported session message operation.") {
+          throw new Error(`${script} did not reject invalid messaging input.\n${output}`);
+        }
+      }
+      if (probe.stderrDiagnostic) {
+        const prefix = "[agent-governance-suite] peer-hook-failure ";
+        const line = String(result.stderr ?? "").split(/\r?\n/u).find(value => value.startsWith(prefix));
+        const diagnostic = line ? JSON.parse(line.slice(prefix.length)) : null;
+        if (diagnostic?.phase !== probe.stderrDiagnostic.phase || diagnostic?.reason !== probe.stderrDiagnostic.reason) {
+          throw new Error(`${script} did not emit its invalid-JSON input diagnostic.\n${output}`);
+        }
+      }
+    }
 
     const results = [];
     for (const entrypoint of SKILL_RUNTIME_ENTRYPOINTS) {
