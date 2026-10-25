@@ -152,6 +152,8 @@ export async function buildRuntimeBundle(target, outputRoot = ROOT) {
     platform: "node",
     format: "esm",
     target: "node24",
+    // Escape template contents without trimming runtime string values.
+    supported: { "template-literal": false },
     sourcemap: false,
     legalComments: "external",
     metafile: true,
