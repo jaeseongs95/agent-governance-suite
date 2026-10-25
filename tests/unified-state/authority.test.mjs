@@ -156,7 +156,9 @@ describe("비활성 단일 SQLite authority/provider 후보", () => {
     const secret = [records()[0]]; secret[0].row.receipt_json = '{"signingSecret":"synthetic-must-be-rejected"}';
     assertCode(() => importAll(provider, snapshot(scopeA, secret)), "SECRET_IMPORT_UNSUPPORTED");
     assertCode(() => importAll(provider, snapshot(scopeA, [{ module: "continuity", table: "continuity_metadata", scope: scopeA, row: { key: "secret", value: "synthetic" } }])), "UNSUPPORTED_TABLE");
-    expect(() => provider.importFixture({ snapshotJson: "{", sourceDigest: fixtureDigest("{"), intentId: "partial-json" })).toThrow();
+    assertCode(() => provider.importFixture({ snapshotJson: "{", sourceDigest: fixtureDigest("{"), intentId: "partial-json" }), "INVALID_JSON");
+    const brokenColumn = [records()[0]]; brokenColumn[0].row.receipt_json = "{";
+    assertCode(() => importAll(provider, snapshot(scopeA, brokenColumn), "broken-column-json"), "INVALID_JSON");
     expect(value.inspect().counts.records).toBe(0); expect(value.inspect().counts.import_intents).toBe(0);
     importAll(provider);
     const lease = provider.claim(workflowRef, { expectedRevision: 4, owner: "key-drift", ttlMs: 1000 });
@@ -257,5 +259,13 @@ describe("비활성 단일 SQLite authority/provider 후보", () => {
     assertCode(() => provider.commit(workflowRef, { expectedRevision: 4, lease: expired, row: nextWorkflowRow(), intentId: "domain-clock-late", receiptId: "domain-clock-late-receipt" }), "STALE_REVISION_OR_LEASE");
     expect(value.inspect().counts.record_history).toBe(8); expect(value.inspect().counts.write_intents).toBe(0);
     report("clock-domain-write-rollback", { effectRevision: provider.read(longRef).revision, receipt: provider.receipt("domain-rejected-write"), expiredWriteRejected: true });
+  });
+  it("preserves the original error when ROLLBACK itself fails", () => {
+    let closer;
+    // Closing the database inside the fault makes the later ROLLBACK fail; it is deliberately not registered for the shared cleanup.
+    const value = new InactiveUnifiedAuthority({ directory: directory(), mode: "fixture-only", fault: (point) => { if (point === "after-row-before-journal") { closer(); throw new Error("fixture-primary-failure"); } } });
+    closer = () => value.close();
+    const provider = createProviderAdapter(value, scopeA);
+    expect(() => importAll(provider, snapshot(), "rollback-failure")).toThrow("fixture-primary-failure");
   });
 });

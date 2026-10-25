@@ -37,7 +37,7 @@ export function runObservedTimeTransaction(database, observe, operation, afterDo
     const now = observe();
     database.exec("SAVEPOINT domain_operation");
     try { result = synchronous(operation(now)); }
-    catch (error) { rejected = true; rejection = error; database.exec("ROLLBACK TO domain_operation"); }
+    catch (error) { rejected = true; rejection = error; try { database.exec("ROLLBACK TO domain_operation"); } catch { /* Preserve the domain rejection. */ } }
     database.exec("RELEASE domain_operation");
     afterDomain();
     database.exec("COMMIT");
@@ -123,7 +123,7 @@ export class InactiveSharedConnection {
       const savepoint = `shared_${++this.#counter}`;
       this.#database.exec(`SAVEPOINT ${savepoint}`);
       try { const result = synchronous(operation()); this.#database.exec(`RELEASE ${savepoint}`); return result; }
-      catch (error) { this.#database.exec(`ROLLBACK TO ${savepoint}; RELEASE ${savepoint};`); throw error; }
+      catch (error) { try { this.#database.exec(`ROLLBACK TO ${savepoint}; RELEASE ${savepoint};`); } catch { /* Primary error wins. */ } throw error; }
     }
     // Nested observations are also retained after an outer domain rollback, under the same writer lock.
     this.#highWater = 0;
