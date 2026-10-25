@@ -25,6 +25,8 @@ import { SqliteKoreanProseGlossary } from "./korean-prose-glossary.js";
 import { TrustStore } from "./trust-store.js";
 import { TrustService } from "./trust-service.js";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
+import type { ClassificationWireAdapter } from "./skill-classification/providers.js";
 import { RuntimeSkillClassificationGateway, readClassificationRuntime } from "./skill-classification/gateway.js";
 import { InMemoryClassificationBudget, SkillClassificationService } from "./skill-classification/service.js";
 import { loadClassificationProviderRuntime, reportClassificationInitializationFailure } from "./skill-classification/runtime.js";
@@ -36,7 +38,9 @@ import { hostActorId } from "./host-attestation.js";
 import { createNativeClassificationAdapters, type NativeClassificationAdapterDefinition } from "./skill-classification/native-adapters.js";
 import { bindNativeClassificationDefinitions } from "./skill-classification/native-cli-strategies.js";
 
-async function main(): Promise<void> {
+/** Trusted installation code supplies protocol implementations; request JSON cannot register adapters. */
+export async function startMcpServer(wireAdapters: ReadonlyMap<string, ClassificationWireAdapter> = new Map()): Promise<void> {
+  const installedWireAdapters = new Map(wireAdapters);
   const registryPath = resolveRegistryPath();
   const workflowDatabasePath = resolveWorkflowDatabasePath();
   const continuityDatabasePath = resolveContinuityDatabasePath();
@@ -101,7 +105,7 @@ async function main(): Promise<void> {
     nativeDefinitionDigest = nativeDefinitionBytes ? digestClassificationValue(nativeDefinitionBytes.toString("utf8")) : null;
     const nativeDefinitions: NativeClassificationAdapterDefinition[] = nativeDefinitionBytes ? JSON.parse(nativeDefinitionBytes.toString("utf8")) as NativeClassificationAdapterDefinition[] : [];
     const nativeAdapters = createNativeClassificationAdapters(bindNativeClassificationDefinitions(nativeDefinitions));
-    if (providerRuntimeRef) providerRuntime = await loadClassificationProviderRuntime(providerRuntimeRef, {nativeAdapters});
+    if (providerRuntimeRef) providerRuntime = await loadClassificationProviderRuntime(providerRuntimeRef, {nativeAdapters, wireAdapters: installedWireAdapters});
   } catch (error) {
     initializationFailed = true;
     reportClassificationInitializationFailure(error);
@@ -140,7 +144,9 @@ async function main(): Promise<void> {
   await server.connect(new StdioServerTransport());
 }
 
-void main().catch((error: unknown) => {
-  process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-  process.exitCode = 1;
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  void startMcpServer().catch((error: unknown) => {
+    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    process.exitCode = 1;
+  });
+}
