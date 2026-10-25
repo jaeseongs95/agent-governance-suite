@@ -62,6 +62,50 @@ function asRecord(value: unknown): Record<string, unknown> {
     : {};
 }
 
+const ACCEPTANCE_CRITERION_STATUS = new Set(["satisfied", "unsatisfied", "insufficient-evidence", "not-applicable"]);
+
+/** Self-consistency of AcceptanceEvidenceReport.v1: verdict, statuses, and evidence bindings must agree. */
+function acceptanceReportSemanticErrors(report: Record<string, unknown> | null): string[] {
+  const errors: string[] = [];
+  const record = asRecord(report);
+  const targetDigest = asRecord(record.target).digest;
+  if (typeof targetDigest !== "string") errors.push("report.target.digest is required");
+  const criteria = Array.isArray(record.criteria) ? record.criteria.map(asRecord) : [];
+  if (criteria.length === 0) return [...errors, "report.criteria must be non-empty"];
+  if (!Array.isArray(record.verifiedEvidenceIndex)) return [...errors, "report.verifiedEvidenceIndex must be an array"];
+  const index = new Map<unknown, Record<string, unknown>>();
+  for (const item of record.verifiedEvidenceIndex.map(asRecord)) {
+    if (index.has(item.evidenceId)) errors.push(`verified evidence ID is duplicated: ${String(item.evidenceId)}`);
+    index.set(item.evidenceId, item);
+    if (item.targetDigest !== targetDigest) errors.push(`verified evidence ${String(item.evidenceId)} is stale`);
+  }
+  const ids = criteria.map((item) => item.criterionId);
+  if (new Set(ids).size !== ids.length) errors.push("criterion IDs must be unique");
+  for (const item of criteria) {
+    const id = String(item.criterionId);
+    const status = item.status;
+    const refs: unknown[] = Array.isArray(item.evidenceRefs) ? item.evidenceRefs : [];
+    if (!ACCEPTANCE_CRITERION_STATUS.has(String(status))) errors.push(`invalid status for ${id}`);
+    if ((status === "satisfied" || status === "not-applicable") && refs.length === 0) errors.push(`${id} ${String(status)} without evidence`);
+    if (status === "not-applicable" && !item.rationale) errors.push(`${id} not-applicable without rationale`);
+    for (const ref of refs) {
+      const evidence = index.get(ref);
+      const boundIds = evidence?.criterionIds;
+      if (!evidence) errors.push(`${id} references evidence absent from verifiedEvidenceIndex: ${String(ref)}`);
+      else if (!Array.isArray(boundIds) || !boundIds.includes(item.criterionId)) errors.push(`${String(ref)} is not bound to ${id}`);
+      else if (status === "satisfied" && evidence.direction !== "supports") errors.push(`${id} satisfied with non-supporting evidence ${String(ref)}`);
+      else if (status === "unsatisfied" && evidence.direction !== "refutes") errors.push(`${id} unsatisfied without refuting evidence ${String(ref)}`);
+    }
+  }
+  const hasFailure = criteria.some((item) => item.status === "unsatisfied");
+  const unresolved = criteria.filter((item) => item.status === "insufficient-evidence").map((item) => String(item.criterionId)).sort();
+  const expected = hasFailure ? "FAIL" : unresolved.length > 0 ? "BLOCKED" : "PASS";
+  if (record.verdict !== expected && record.verdict !== "NEEDS_INPUT") errors.push(`verdict must be ${expected}`);
+  const actual = Array.isArray(record.unresolvedCriteria) ? record.unresolvedCriteria.map(String).sort() : null;
+  if (!actual || actual.join("\u0000") !== unresolved.join("\u0000")) errors.push("unresolvedCriteria does not match criterion statuses");
+  return [...new Set(errors)];
+}
+
 function apiOk<T>(data: T): ApiResultV1<T> {
   return { schemaVersion: CONTRACT_VERSION, ok: true, data, error: null };
 }
@@ -1062,6 +1106,10 @@ export class WorkflowService {
     if (stage.requiredCapability === "software-security-audit" && providerResult.kind === "output") {
       const errors = validateSecurityAudit(providerResult.output);
       if (errors.length) throw new WorkflowContractError("INVALID_INPUT", "Security audit report is inconsistent.", { errors });
+    }
+    if (stage.requiredCapability === "acceptance-evidence-validation" && providerResult.kind === "output") {
+      const errors = acceptanceReportSemanticErrors(providerResult.output);
+      if (errors.length) throw new WorkflowContractError("INVALID_INPUT", "Acceptance evidence report is inconsistent.", { errors });
     }
     const rule = this.mappedState(stage, providerResult);
     if (result.state !== rule.state) {
