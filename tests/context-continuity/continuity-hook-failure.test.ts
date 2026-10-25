@@ -1,0 +1,72 @@
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { runContinuityHook } from "../../mcp-server/src/continuity-hook.js";
+
+const directories: string[] = [];
+afterEach(async () => {
+  vi.restoreAllMocks();
+  await Promise.all(directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
+});
+
+async function environment() {
+  const directory = await mkdtemp(join(tmpdir(), "continuity-hook-failure-"));
+  directories.push(directory);
+  return {
+    directory,
+    env: {
+      AGENT_GOVERNANCE_DB_PATH: join(directory, "workflows.sqlite3"),
+      AGENT_GOVERNANCE_CONTINUITY_DB_PATH: join(directory, "continuity.sqlite3"),
+    } as NodeJS.ProcessEnv,
+  };
+}
+
+function toolInput() {
+  return JSON.stringify({
+    hook_event_name: "PreToolUse",
+    session_id: "private-session-marker",
+    tool_name: "mcp__agent-governance-suite__inspect_context",
+    tool_input: { schemaVersion: "1.0.0", marker: "private-input-marker" },
+  });
+}
+
+function failureLines(spy: ReturnType<typeof vi.spyOn>): string[] {
+  return spy.mock.calls.map((args: unknown[]) => args[0])
+    .filter((value: unknown): value is string => typeof value === "string" && value.includes("continuity-hook-failure "));
+}
+
+describe("continuity hook failure reporting (AGS-D-0055)", () => {
+  it("fails open but reports the original store failure reason and SQLite cause", async () => {
+    const { directory, env } = await environment();
+    await writeFile(join(directory, "continuity.sqlite3"), "not a sqlite database\n".repeat(200), "utf8");
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(runContinuityHook(toolInput(), env)).toBe("");
+    const lines = failureLines(spy);
+    expect(lines).toHaveLength(1);
+    const line = lines[0]!;
+    const value = JSON.parse(line.slice(line.indexOf("{")));
+    expect(value).toMatchObject({ phase: "storage", reason: "CORRUPT_DATABASE" });
+    expect([11, 26]).toContain(value.storeCause?.sqlite?.primaryCode);
+    for (const marker of ["private-session-marker", "private-input-marker", directory]) expect(line).not.toContain(marker);
+  });
+
+  it("reports invalid hook JSON as an input failure", async () => {
+    const { env } = await environment();
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(runContinuityHook("{not-json", env)).toBe("");
+    const lines = failureLines(spy);
+    expect(lines).toHaveLength(1);
+    expect(JSON.parse(lines[0]!.slice(lines[0]!.indexOf("{")))).toMatchObject({ phase: "input", reason: "INVALID_JSON" });
+  });
+
+  it("issues a binding without diagnostics when the store is healthy", async () => {
+    const { env } = await environment();
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const output = runContinuityHook(toolInput(), env);
+    expect(JSON.parse(output)).toMatchObject({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "allow",
+      updatedInput: { _continuityBinding: expect.any(String) } } });
+    expect(failureLines(spy)).toHaveLength(0);
+  });
+});
