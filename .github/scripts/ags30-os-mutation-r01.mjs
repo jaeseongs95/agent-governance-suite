@@ -81,6 +81,14 @@ export async function collectOSMutations({ sourceRoot, planFile, outputRoot, dea
     await fs.writeFile(path.join(outputRoot, relative), bytes, { flag: 'wx' });
     return { path: relative, digest: hashBytes(bytes) };
   };
+  const artifact = async (caseId, role) => {
+    const suffixes = { redReceipt: 'red.receipt.json', greenReceipt: 'green.receipt.json',
+      redReport: 'red.vitest.json', greenReport: 'green.vitest.json' };
+    assert(['OS-001', 'OS-002', 'OS-003'].includes(caseId) && Object.hasOwn(suffixes, role));
+    const relative = `${caseId}.${suffixes[role]}`;
+    const bytes = await fs.readFile(path.join(outputRoot, relative));
+    return { path: relative, bytes: bytes.length, sha256: hashBytes(bytes).slice(7) };
+  };
   await write('runtime-plan.json', plan);
   await write('runtime-plan-result.json', validatePlan(plan));
   const seedBytes = await fs.readFile(planFile);
@@ -100,7 +108,8 @@ export async function collectOSMutations({ sourceRoot, planFile, outputRoot, dea
   await fs.mkdir(scratch);
   const original = await fs.readFile(path.join(sourceRoot, production), 'utf8');
   for (const item of plan.cases) {
-    const observation = { caseId: item.id, status: 'NOT_RUN' };
+    const observation = { caseId: item.id, status: 'NOT_RUN',
+      artifacts: { redReceipt: null, greenReceipt: null, redReport: null, greenReport: null } };
     observations.push(observation);
     const entry = { caseId: item.id, status: 'NOT_RUN', red: { ...empty }, green: { ...empty },
       mutationPaths: [], assertionWitness: '', reason: 'No valid red/green evidence collected.' };
@@ -124,16 +133,20 @@ export async function collectOSMutations({ sourceRoot, planFile, outputRoot, dea
       const red = runCommand(redRoot, redSnapshot, item.argv, { timeoutMs: 45_000, environmentNote });
       const redRef = await write(`${item.id}.red.receipt.json`, red);
       observation.redStatus = red.status;
+      observation.artifacts.redReceipt = await artifact(item.id, 'redReceipt');
       // Green is recorded even when red did not hit the intended oracle; it cannot repair an invalid red.
       failureStage = 'GREEN_EXECUTION';
       const green = runCommand(sourceRoot, candidate, item.argv, { timeoutMs: 45_000, environmentNote });
       const greenRef = await write(`${item.id}.green.receipt.json`, green);
       observation.greenStatus = green.status;
+      observation.artifacts.greenReceipt = await artifact(item.id, 'greenReceipt');
       failureStage = 'REPORT_READ';
       const redReportBytes = await fs.readFile(path.join(caseRoot, `${item.id}.vitest.json`));
       const greenReportBytes = await fs.readFile(path.join(path.dirname(sourceRoot), `${item.id}.vitest.json`));
       await fs.writeFile(path.join(outputRoot, `${item.id}.red.vitest.json`), redReportBytes, { flag: 'wx' });
+      observation.artifacts.redReport = await artifact(item.id, 'redReport');
       await fs.writeFile(path.join(outputRoot, `${item.id}.green.vitest.json`), greenReportBytes, { flag: 'wx' });
+      observation.artifacts.greenReport = await artifact(item.id, 'greenReport');
       const redReport = JSON.parse(redReportBytes.toString('utf8'));
       const greenReport = JSON.parse(greenReportBytes.toString('utf8'));
       failureStage = 'RED_WITNESS';

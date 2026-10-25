@@ -60,11 +60,44 @@ export function osProofFailure(evidence) {
       const row = matches.length === 1 ? matches[0] : {};
       const status = ['NOT_RUN', 'DEMONSTRATED', 'INVALID_OR_INCOMPLETE_EVIDENCE'].includes(row.status) ? row.status : 'UNVERIFIED';
       const stage = typeof row.failureStage === 'string' && Object.hasOwn(codes, row.failureStage) ? row.failureStage : 'UNVERIFIED';
+      const artifact = suffix => {
+        const ref = row.artifacts?.[suffix[0]];
+        const expected = `${caseId}.${suffix[1]}`;
+        if (ref?.path !== expected || !Number.isSafeInteger(ref.bytes) || ref.bytes < 0 || ref.bytes > 8 * 1024 * 1024
+          || typeof ref.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(ref.sha256)) return null;
+        return { path: `os-proof/${expected}`, bytes: ref.bytes, sha256: ref.sha256 };
+      };
       return { caseId, status, redStatus: statuses.includes(row.redStatus) ? row.redStatus : 'UNVERIFIED',
         greenStatus: statuses.includes(row.greenStatus) ? row.greenStatus : 'UNVERIFIED',
         failureStage: status === 'DEMONSTRATED' ? null : stage,
-        code: status === 'DEMONSTRATED' ? null : codes[stage] ?? 'OS_CASE_FAILURE_UNCLASSIFIED' };
+        code: status === 'DEMONSTRATED' ? null : codes[stage] ?? 'OS_CASE_FAILURE_UNCLASSIFIED',
+        artifacts: { redReceipt: artifact(['redReceipt', 'red.receipt.json']), greenReceipt: artifact(['greenReceipt', 'green.receipt.json']),
+          redReport: artifact(['redReport', 'red.vitest.json']), greenReport: artifact(['greenReport', 'green.vitest.json']) } };
     }) };
+}
+
+export function recordOSProofEvidence(record, evidence) {
+  record.mutationSensitivity = evidence;
+  record.formalEngineeringProof = evidence.verdict;
+  const failure = osProofFailure(evidence);
+  if (failure) record.aggregateFailures = [...(record.aggregateFailures ?? []), failure];
+  return evidence.verdict === 'CONSISTENT';
+}
+
+export function recordCollectorFailure(record, error) {
+  record.failure = { name: error.name, message: error.message, code: error.code ?? null };
+}
+
+export function writeCollectorRecord(output, record) {
+  return fs.writeFile(path.join(output, 'result.json'), JSON.stringify(record, null, 2) + '\n', { flag: 'wx' });
+}
+
+export function emitCollectorSummary(record, bytes, artifactOk) {
+  console.log(JSON.stringify({ status: record.status, sourceFreshness: record.sourceFreshness,
+    runtimeValidation: record.runtimeValidation ?? 'NOT_RUN', bytes, artifactOk,
+    phases: record.phases.map(({name,status,exitCode,errorCode}) => ({name,status,exitCode,errorCode})),
+    failureType: record.failure?.name ?? null, failureCode: record.failure?.code ?? null,
+    aggregateFailures: record.aggregateFailures ?? [] }));
 }
 
 export function assertRows(rows) {
@@ -573,11 +606,7 @@ async function main() {
     const { collectOSMutations } = await import(mutationModule.href);
     const osEvidence = await collectOSMutations({ sourceRoot: source, pnpmCli, planFile,
       outputRoot: path.join(output, 'os-proof'), deadline, wholeSourcePortableId: config.portableId });
-    record.mutationSensitivity = osEvidence;
-    record.formalEngineeringProof = osEvidence.verdict;
-    const proofFailure = osProofFailure(osEvidence);
-    if (proofFailure) record.aggregateFailures = [...(record.aggregateFailures ?? []), proofFailure];
-    if (osEvidence.verdict !== 'CONSISTENT') testsPass = false;
+    if (!recordOSProofEvidence(record, osEvidence)) testsPass = false;
     // Independent collection is evidence in its own right, including when full Vitest never emits JSON.
     const nodeRunner = 'import {listNodeTestFiles,runTests} from ' + JSON.stringify(pathToFileURL(path.join(source, 'scripts/run-tests.mjs')).href) + '; const files=listNodeTestFiles(); if(!files.length)throw Error("No Node suites"); console.log(JSON.stringify({files})); process.exitCode=await runTests(files,[process.execPath,"--test"]);';
     const nodeSuites = await command('08b-all-node-suites', process.execPath, ['--input-type=module', '-e', nodeRunner], source, 120_000);
@@ -741,7 +770,7 @@ async function main() {
     record.status = record.sourceFreshness === 'PASS' && record.runtimeValidation === 'SELECTED_CHECKS_PASS' ? 'SELECTED_CHECKS_PASS' : 'FAIL';
     record.wholeAcceptance = 'NOT_CLAIMED';
   } catch (error) {
-    record.failure = { name: error.name, message: error.message, code: error.code ?? null };
+    recordCollectorFailure(record, error);
   } finally {
     if (beforeRows) {
       try {
@@ -767,7 +796,7 @@ async function main() {
       record.sourceArchive = planned.descriptor;
       await writeJson('source-archive.json', planned.descriptor);
     }
-    await writeJson('result.json', record);
+    await writeCollectorRecord(output, record);
     const rows = await tree(output);
     await writeJson('result-files.json', { rows, manifestSelfExcluded: true });
     const finalRows = await tree(output);
@@ -775,11 +804,7 @@ async function main() {
     artifactOk = bytes <= config.artifactMaximumBytesPerJob;
     await fs.appendFile(process.env.GITHUB_OUTPUT, `result_path=${output}\nartifact_ok=${artifactOk}\nartifact_bytes=${bytes}\n`);
     if (!artifactOk) console.error('UNVERIFIED_ARTIFACT_BYTES: result exceeds per-job artifact cap; no upload');
-    console.log(JSON.stringify({ status: record.status, sourceFreshness: record.sourceFreshness,
-      runtimeValidation: record.runtimeValidation ?? 'NOT_RUN', bytes, artifactOk,
-      phases: record.phases.map(({name,status,exitCode,errorCode}) => ({name,status,exitCode,errorCode})),
-      failureType: record.failure?.name ?? null, failureCode: record.failure?.code ?? null,
-      aggregateFailures: record.aggregateFailures ?? [] }));
+    emitCollectorSummary(record, bytes, artifactOk);
     if (record.status !== 'SELECTED_CHECKS_PASS' || !artifactOk) process.exitCode = 1;
   }
 }
