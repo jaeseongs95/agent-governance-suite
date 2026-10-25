@@ -6,6 +6,8 @@ import { SessionMessageStore } from "./session-message-store.js";
 import { TrustStore } from "./trust-store.js";
 import { createWakeHookObservationReader, verifyHistoricalWakeObservation, type VerifiedInputSourceReader } from "./session-message-wake-port.js";
 import { PLAN_SIGNING_KEY } from "./workflow-store.js";
+import { types as utilTypes } from "node:util";
+import { retainFailureSecondary, tagProducerFailure } from "./failure-diagnostics.js";
 
 export interface InactiveSharedStoresOptions {
   directory: string;
@@ -47,5 +49,11 @@ export function createInactiveSharedStores(options: InactiveSharedStoresOptions)
     const historicalWakeVerifier: typeof verifyHistoricalWakeObservation = (target, nonce, receiptId, started, late, now) =>
       verifyHistoricalWakeObservation(target, nonce, receiptId, started, late, now, verifiedSourceReader);
     return { owner, workflow, continuity, messaging, trust, board, wakeReader, historicalWakeVerifier };
-  } catch (error) { owner.close(); throw error; }
+  } catch (error) {
+    // The primary module/key/schema failure wins; a cleanup failure is retained only as a secondary diagnostic.
+    try { owner.close(); } catch (closeError) {
+      retainFailureSecondary(error, utilTypes.isNativeError(closeError) ? tagProducerFailure(closeError, "SHARED_OWNER_CLOSE_FAILED") : closeError);
+    }
+    throw error;
+  }
 }
