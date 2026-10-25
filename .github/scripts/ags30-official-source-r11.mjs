@@ -276,7 +276,7 @@ export async function finalizePartial(output, githubOutput, outcome, cap = 8 * 1
 
 async function finalizeFromRunner() {
   assert(['Linux', 'Windows'].includes(process.env.RUNNER_OS));
-  const work = path.join(path.resolve(process.env.RUNNER_TEMP), `ags30-b5d32aad-fa3d-4274-b6a5-2b1da293065f-${process.env.RUNNER_OS}`);
+  const work = path.join(path.resolve(process.env.RUNNER_TEMP), `ags30-f393475b-0a7b-4674-83d4-935aa9a60bda-${process.env.RUNNER_OS}`);
   try { await fs.mkdir(work); } catch (error) { if (error.code !== 'EEXIST') throw error; }
   const info = await fs.lstat(work);
   assert(info.isDirectory() && !info.isSymbolicLink(), 'Unsafe work directory');
@@ -431,7 +431,7 @@ async function main() {
       before.filter(r => !generated.has(r.relativePath) && !optional.has(r.relativePath)), 'Non-generated source changed');
   }
   try {
-    assert.equal(config.nonce, 'b5d32aad-fa3d-4274-b6a5-2b1da293065f');
+    assert.equal(config.nonce, 'f393475b-0a7b-4674-83d4-935aa9a60bda');
     for (const [name, expected] of Object.entries(config.ownershipHelpers)) {
       const helper = await fs.readFile(new URL('./' + name, import.meta.url));
       assert.equal(helper.length, expected.bytes); assert.equal(sha(helper), expected.sha256);

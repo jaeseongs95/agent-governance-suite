@@ -1,7 +1,7 @@
 {
   "schemaVersion": "AgsBoundedCiExecutionConfig.v1",
-  "unit": "AGS30-OFFICIAL-WINDOWS-ARGV-CLEANUP-REPAIR-20261026-R23",
-  "nonce": "b5d32aad-fa3d-4274-b6a5-2b1da293065f",
+  "unit": "AGS30-OFFICIAL-OS-DIAGNOSTIC-BOUNDARIES-20261026-R24",
+  "nonce": "f393475b-0a7b-4674-83d4-935aa9a60bda",
   "repository": "jaeseongs95/agent-governance-suite",
   "repositoryId": 1362118877,
   "branch": "release-3.0",
@@ -48,8 +48,8 @@
     "Generated runtime returned as candidate; installed/native real host/full acceptance not claimed."
   ],
   "osMutationCollector": {
-    "bytes": 11510,
-    "sha256": "376795a61b4292639c5abcd467ed449ad1634d8164d2e03ff226a07943d9dab3"
+    "bytes": 12445,
+    "sha256": "beb24fb4503f726fd38bc64f28c4968f9c2c5c7f301b6f2fc5bc44b5e30788b6"
   },
   "osPlan": {
     "bytes": 6643,
