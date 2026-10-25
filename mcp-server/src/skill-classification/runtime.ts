@@ -1,7 +1,7 @@
 import {types as utilTypes} from "node:util";
 import {readFile} from "node:fs/promises";
 import {z} from "zod";
-import {ApprovedRouteClassificationProvider, jevNoulWireAdapter, jevNoulSufficiencyWireAdapter, jevNoulSharedRulesWireAdapter, jevNoulSharedRulesV5LongContextWireAdapter, jevNoulSharedRulesV5WireAdapter, JEV_NOUL_SHARED_RULES_V5_LONG_CONTEXT_ADAPTER_REVISION, type ApprovedClassificationRoute, type ClassificationWireAdapter} from "./providers.js";
+import {ApprovedRouteClassificationProvider, bindClassificationRouteTransport, resolveClassificationWireAdapter, type ApprovedClassificationRoute, type ClassificationWireAdapter} from "./providers.js";
 import {resolveNativeClassificationAdapter, type NativeClassificationAdapterRegistry} from "./native-adapters.js";
 import {InMemoryClassificationBudget} from "./service.js";
 
@@ -35,24 +35,16 @@ export function createClassificationProviderRuntime(raw: unknown, options: Class
   for (const route of config.routes) {
     if (route.kind === "remote") {
       const {credentialEnvName, wireAdapterRef, ...common} = route;
-      const jevLongContext = wireAdapterRef === JEV_NOUL_SHARED_RULES_V5_LONG_CONTEXT_ADAPTER_REVISION;
-      if (jevLongContext && (route.providerKind !== "jev" || route.adapterRevision !== JEV_NOUL_SHARED_RULES_V5_LONG_CONTEXT_ADAPTER_REVISION)) throw new Error("INVALID_JEV_CONTEXT_ROUTE");
+      const adapter = resolveClassificationWireAdapter(wireAdapterRef, route, options.wireAdapters);
       const endpoint = new URL(route.endpoint);
       if (endpoint.protocol !== "https:" || endpoint.username || endpoint.password) throw new Error("INVALID_APPROVED_ENDPOINT");
-      // JEV's public wire contract is the only built-in remote protocol. Vendor adapters are registered explicitly.
-      const adapter = route.providerKind === "jev" && wireAdapterRef === "jev-noul-v1" ? jevNoulWireAdapter
-        : route.providerKind === "jev" && wireAdapterRef === "jev-noul-sufficiency-v2" ? jevNoulSufficiencyWireAdapter
-        : route.providerKind === "jev" && wireAdapterRef === "jev-noul-sufficiency-shared-v4" ? jevNoulSharedRulesWireAdapter
-        : route.providerKind === "jev" && wireAdapterRef === "jev-noul-sufficiency-shared-v5" ? jevNoulSharedRulesV5WireAdapter
-        : jevLongContext ? jevNoulSharedRulesV5LongContextWireAdapter
-        : options.wireAdapters?.get(wireAdapterRef);
       if (!adapter) continue;
-      routes.push({...common, ...(jevLongContext ? {jevLongContext: true as const} : {}), adapter, getCredential: () => options.getCredentialByEnvName ? options.getCredentialByEnvName(credentialEnvName) : Promise.resolve(process.env[credentialEnvName] ?? null)});
+      routes.push(bindClassificationRouteTransport({...common, adapter, getCredential: () => options.getCredentialByEnvName ? options.getCredentialByEnvName(credentialEnvName) : Promise.resolve(process.env[credentialEnvName] ?? null)}));
     } else {
       const {nativeAdapterRef, capabilityEvidenceRef, retryPolicyVerified, ...common} = route;
       const adapter = resolveNativeClassificationAdapter(options.nativeAdapters ?? new Map(), nativeAdapterRef, capabilityEvidenceRef, retryPolicyVerified);
       if (!adapter) continue;
-      routes.push({...common, invokeStructured: (request, profile, signal, beforeDispatch) => adapter.invokeStructured(request, profile, signal, beforeDispatch)});
+      routes.push(bindClassificationRouteTransport({...common, invokeStructured: (request, profile, signal, beforeDispatch) => adapter.invokeStructured(request, profile, signal, beforeDispatch)}));
     }
   }
   return {providers: {

@@ -1,4 +1,8 @@
 import {afterEach, describe, expect, it, vi} from "vitest";
+import {fileURLToPath} from "node:url";
+import {loadSkillInventory} from "../../mcp-server/src/skill-classification/inventory.js";
+import {jevNoulSharedRulesV6WireAdapter, jevNoulSharedRulesV6LongContextWireAdapter, jevNoulSharedRulesV6Prompt, JEV_NOUL_SHARED_RULES_V6_ADAPTER_REVISION, JEV_NOUL_SHARED_RULES_V6_LONG_CONTEXT_ADAPTER_REVISION, JEV_NOUL_SHARED_RULES_V6_PROMPT_REVISION} from "../../mcp-server/src/skill-classification/providers.js";
+import {bindClassificationRouteTransport} from "../../mcp-server/src/skill-classification/providers.js";
 import {ApprovedRouteClassificationProvider, buildVendorMessages, ClassificationProviderError, jevNoulWireAdapter, jevNoulSufficiencyWireAdapter, JEV_NOUL_SUFFICIENCY_ADAPTER_REVISION, JEV_NOUL_SUFFICIENCY_PROMPT_REVISION, jevNoulSufficiencyPrompt, unknownUsage, jevNoulSharedRulesWireAdapter, jevNoulSharedRulesPrompt, JEV_NOUL_SHARED_RULES_ADAPTER_REVISION, JEV_NOUL_SHARED_RULES_PROMPT_REVISION, jevNoulSharedRulesV5LongContextWireAdapter, JEV_NOUL_SHARED_RULES_V5_LONG_CONTEXT_ADAPTER_REVISION, jevNoulSharedRulesV5WireAdapter, jevNoulSharedRulesV5Prompt, JEV_NOUL_SHARED_RULES_V5_ADAPTER_REVISION, JEV_NOUL_SHARED_RULES_V5_PROMPT_REVISION, type ApprovedClassificationRoute} from "../../mcp-server/src/skill-classification/providers.js";
 import {SkillClassificationService} from "../../mcp-server/src/skill-classification/service.js";
 import {createClassificationProviderRuntime} from "../../mcp-server/src/skill-classification/runtime.js";
@@ -11,7 +15,7 @@ function fixture() {
   const profile: ProviderProfile = {profileId: "jev", providerKind: "jev", vendorId: "typesafe", modelId: "fixed-jev", modelRevision: "fixed-jev", reasoningEffort: null, supportedOptions: {reasoningEfforts: [null], structuredOutput: true}, approvedRouteRef: "approved-existing", qualificationRevision: "q1", qualification: {status: "PASS", inventoryDigest: request.inventoryDigest, taxonomyRevision: "t1", modelRevision: "fixed-jev", promptRevision: "p1", validUntil: "2099-01-01T00:00:00Z", profileConfigurationDigest: ""}, adapterRevision: "a1", promptRevision: "p1", maximumInputBytes: 100000, maximumOutputTokens: 1000, maximumCostUsd: 0.4, judgmentPolicy: {neededAt: 0.8, notNeededAt: 0.2}};
   profile.qualification.profileConfigurationDigest = digestProviderProfileConfiguration(profile);
   const key = vi.fn(async () => "SECRET_SENTINEL");
-  const route: ApprovedClassificationRoute = {routeRef: "approved-existing", approvalRef: "fixture-approval", approved: true, kind: "remote", providerKind: "jev", vendorId: "typesafe", adapterRevision: "a1", modelIds: ["fixed-jev"], reasoningEfforts: [null], structuredOutput: true, endpoint: "https://approved.example.invalid/fixture", getCredential: key, adapter: jevNoulWireAdapter};
+  const route: ApprovedClassificationRoute = bindClassificationRouteTransport({routeRef: "approved-existing", approvalRef: "fixture-approval", approved: true, kind: "remote", providerKind: "jev", vendorId: "typesafe", adapterRevision: "a1", modelIds: ["fixed-jev"], reasoningEfforts: [null], structuredOutput: true, endpoint: "https://approved.example.invalid/fixture", getCredential: key, adapter: jevNoulWireAdapter});
   const body = {model: "fixed-jev", answers: {review: {type: "noul", noul: 0.82}}, usage: {input_tokens: 354, output_tokens: 58}};
   const fetcher = vi.fn<typeof fetch>(async () => new Response(JSON.stringify(body), {status: 200}));
   const provider = new ApprovedRouteClassificationProvider([route], fetcher);
@@ -138,7 +142,7 @@ describe("approved classification wire adapters", () => {
   });
   it("SS39 native success requires an actual invoked structured capability with its approved evidence", async () => {
     const f = fixture(); const invokeStructured = vi.fn(async () => jevNoulWireAdapter.decode(f.body, f.request, f.profile));
-    const provider = new ApprovedRouteClassificationProvider([{routeRef: f.route.routeRef, approvalRef: f.route.approvalRef, approved: true, providerKind: "jev", vendorId: "typesafe", adapterRevision: "a1", modelIds: ["fixed-jev"], reasoningEfforts: [null], structuredOutput: true, kind: "native", invokeStructured}], f.fetcher);
+    const provider = new ApprovedRouteClassificationProvider([bindClassificationRouteTransport({routeRef: f.route.routeRef, approvalRef: f.route.approvalRef, approved: true, providerKind: "jev", vendorId: "typesafe", adapterRevision: "a1", modelIds: ["fixed-jev"], reasoningEfforts: [null], structuredOutput: true, kind: "native", invokeStructured})], f.fetcher);
     expect((await provider.availability(f.profile)).routeKind).toBe("native");
     expect((await provider.classify(f.request, f.profile, new AbortController().signal)).response.status).toBe("SUCCESS");
     expect(invokeStructured).toHaveBeenCalledTimes(1); expect(f.key).not.toHaveBeenCalled(); expect(f.fetcher).not.toHaveBeenCalled();
@@ -471,7 +475,7 @@ describe("explicit trusted JEV long-context transport", () => {
     f.profile.qualification.profileConfigurationDigest = digestProviderProfileConfiguration(f.profile);
     f.route.adapterRevision = f.profile.adapterRevision;
     if (f.route.kind !== "remote") throw new Error("fixture");
-    f.route.adapter = jevNoulSharedRulesV5LongContextWireAdapter; f.route.jevLongContext = true;
+    Object.assign(f.route, bindClassificationRouteTransport({...f.route, adapter: jevNoulSharedRulesV5LongContextWireAdapter}));
     f.fetcher.mockResolvedValue(new Response(JSON.stringify(raw)));
     return f;
   }
@@ -507,21 +511,21 @@ describe("explicit trusted JEV long-context transport", () => {
     await f.provider.classify(request, f.profile, new AbortController().signal);
     expect(new Headers(f.fetcher.mock.calls[0]![1]!.headers).has(header)).toBe(false);
   });
-  it.each([false, "true", 1, null])("rejects malformed internal opt-in %s before credential access", async value => {
-    const f = longFixture(); Object.assign(f.route, {jevLongContext: value});
+  it.each([false, "true", 1, null])("rejects malformed internal transport contract %s before credential access", async value => {
+    const f = longFixture(); Object.assign(f.route, {transport: value});
     expect((await f.provider.availability(f.profile)).available).toBe(false);
     await expect(f.provider.classify(f.request, f.profile, new AbortController().signal)).rejects.toMatchObject({code: "ROUTE_NOT_APPROVED", dispatchState: "not-started"});
     expect(f.key).not.toHaveBeenCalled(); expect(f.fetcher).not.toHaveBeenCalled();
   });
-  it("rejects a standard profile on the long route and a long flag on a vendor route", async () => {
+  it("rejects a standard profile on the long route and a long contract on a vendor route", async () => {
     const f = longFixture(), standard = {...f.profile, adapterRevision: JEV_NOUL_SHARED_RULES_V5_ADAPTER_REVISION};
     await expect(f.provider.classify(f.request, standard, new AbortController().signal)).rejects.toMatchObject({code: "ROUTE_NOT_APPROVED"});
     f.route.providerKind = "vendor"; f.profile.providerKind = "vendor";
     await expect(f.provider.classify(f.request, f.profile, new AbortController().signal)).rejects.toMatchObject({code: "ROUTE_NOT_APPROVED"});
     expect(f.fetcher).not.toHaveBeenCalled(); expect(f.key).not.toHaveBeenCalled();
   });
-  it("rejects changing the opt-in across the credential await", async () => {
-    const f = longFixture(); f.key.mockImplementation(async () => {Reflect.deleteProperty(f.route, "jevLongContext"); return "fixture-only";});
+  it("rejects removing the transport contract across the credential await", async () => {
+    const f = longFixture(); f.key.mockImplementation(async () => {Reflect.deleteProperty(f.route, "transport"); return "fixture-only";});
     await expect(f.provider.classify(f.request, f.profile, new AbortController().signal)).rejects.toMatchObject({code: "STALE_CLASSIFICATION", dispatchState: "not-started"});
     expect(f.fetcher).not.toHaveBeenCalled();
   });
@@ -555,6 +559,72 @@ describe("explicit trusted JEV long-context transport", () => {
     }
     expect(() => jevNoulSharedRulesV5LongContextWireAdapter.encode(f.request, {...f.profile, promptRevision: "stale"})).toThrow("JEV_LONG_CONTEXT_PROFILE_MISMATCH");
   });
+  it("keeps the built-in long transport and headers immutable", () => {
+    const contract = jevNoulSharedRulesV5LongContextWireAdapter.transport!;
+    expect(Object.isFrozen(contract)).toBe(true); expect(Object.isFrozen(contract.headers)).toBe(true);
+    expect(contract.headers).toEqual({[header]: "true"});
+  });
+  it("rejects a long protocol contract with a different opt-in header before credentials", async () => {
+    const f = longFixture(); if (f.route.kind !== "remote") throw new Error("fixture");
+    const contract = {...f.route.transport!, headers: {[header]: "false"}};
+    Object.assign(f.route, bindClassificationRouteTransport({...f.route, adapter: {...f.route.adapter, transport: contract}}));
+    expect((await f.provider.availability(f.profile)).available).toBe(false);
+    await expect(f.provider.classify(f.request, f.profile, new AbortController().signal)).rejects.toMatchObject({code: "ROUTE_NOT_APPROVED", dispatchState: "not-started"});
+    expect(f.key).not.toHaveBeenCalled(); expect(f.fetcher).not.toHaveBeenCalled();
+  });
+  it.each(["contract", "headers-object", "header-value", "matches-function", "adapter-contract"])("rejects %s mutation across credential await and encode", async change => {
+    for (const phase of ["credential", "encode"]) {
+      const f = longFixture(); if (f.route.kind !== "remote") throw new Error("fixture");
+      const contract = {...f.route.transport!, headers: {...f.route.transport!.headers}};
+      const adapter = {...f.route.adapter, transport: contract};
+      Object.assign(f.route, bindClassificationRouteTransport({...f.route, adapter}));
+      const mutate = () => {
+        if (change === "contract") Object.assign(f.route, {transport: {...contract}});
+        if (change === "headers-object") contract.headers = {...contract.headers};
+        if (change === "header-value") contract.headers[header] = "false";
+        if (change === "matches-function") contract.matches = () => true;
+        if (change === "adapter-contract") adapter.transport = {...contract};
+      };
+      if (phase === "credential") f.key.mockImplementation(async () => {mutate(); return "fixture-only";});
+      else {
+        const encode = adapter.encode;
+        adapter.encode = (request, profile) => {const wire = encode(request, profile); mutate(); return wire;};
+      }
+      await expect(f.provider.classify(f.request, f.profile, new AbortController().signal)).rejects.toMatchObject({code: "STALE_CLASSIFICATION", dispatchState: "not-started"});
+      expect(f.fetcher).not.toHaveBeenCalled();
+    }
+  });
+  it("rejects the reserved long revision on a standard adapter or native route", async () => {
+    const f = longFixture(); if (f.route.kind !== "remote") throw new Error("fixture");
+    const invokeStructured = vi.fn(async () => jevNoulSharedRulesV5LongContextWireAdapter.decode(raw, f.request, f.profile));
+    for (const route of [bindClassificationRouteTransport({...f.route, adapter: jevNoulWireAdapter}),
+      bindClassificationRouteTransport({routeRef: f.route.routeRef, approvalRef: f.route.approvalRef, approved: true, providerKind: "jev", vendorId: f.profile.vendorId, adapterRevision: f.profile.adapterRevision, modelIds: [f.profile.modelId], reasoningEfforts: [null], structuredOutput: true, kind: "native", invokeStructured})]) {
+      const provider = new ApprovedRouteClassificationProvider([route], f.fetcher);
+      expect((await provider.availability(f.profile)).available).toBe(false);
+      await expect(provider.classify(f.request, f.profile, new AbortController().signal)).rejects.toMatchObject({code: "ROUTE_NOT_APPROVED", dispatchState: "not-started"});
+    }
+    expect(f.key).not.toHaveBeenCalled(); expect(f.fetcher).not.toHaveBeenCalled(); expect(invokeStructured).not.toHaveBeenCalled();
+  });
+  it("consumes a separately registered protocol contract without JEV transport headers", async () => {
+    const f = fixture(); if (f.route.kind !== "remote") throw new Error("fixture");
+    f.profile.providerKind = "vendor"; f.profile.vendorId = "replacement-fixture";
+    f.profile.qualification.profileConfigurationDigest = digestProviderProfileConfiguration(f.profile);
+    const adapter = {...jevNoulWireAdapter, transport: Object.freeze({headers: Object.freeze({"X-Fixture-Protocol": "1"}),
+      matches: (route: ApprovedClassificationRoute) => route.kind === "remote" && route.adapterRevision === "a1"})};
+    const run = createClassificationProviderRuntime({schemaVersion: "1.0.0", routes: [{kind: "remote", routeRef: f.route.routeRef, approvalRef: f.route.approvalRef, approved: true, providerKind: "vendor", vendorId: f.profile.vendorId, adapterRevision: "a1", modelIds: [f.profile.modelId], reasoningEfforts: [null], structuredOutput: true, endpoint: f.route.endpoint, credentialEnvName: "SYNTHETIC_PROTOCOL", wireAdapterRef: "fixture-protocol"}], budget: {jev: {limitUsd: 1, spentUsd: 0}, vendors: {}, nativeAllowances: {}}}, {wireAdapters: new Map([["fixture-protocol", adapter]]), fetcher: f.fetcher, getCredentialByEnvName: f.key});
+    expect((await run.providers.vendor.classify(f.request, f.profile, new AbortController().signal)).response.status).toBe("SUCCESS");
+    expect(f.fetcher).toHaveBeenCalledTimes(1);
+    const headers = new Headers(f.fetcher.mock.calls[0]![1]!.headers);
+    expect(headers.get("X-Fixture-Protocol")).toBe("1"); expect(headers.has(header)).toBe(false);
+    expect(headers.get("authorization")).toBe("Bearer SECRET_SENTINEL");
+  });
+  it.each(["authorization", "CONTENT-TYPE", "bad header"])("rejects invalid protocol header %s before credentials", async name => {
+    const f = fixture(); if (f.route.kind !== "remote") throw new Error("fixture");
+    const adapter = {...f.route.adapter, transport: {headers: {[name]: "override"}, matches: () => true}};
+    Object.assign(f.route, bindClassificationRouteTransport({...f.route, adapter}));
+    await expect(f.provider.classify(f.request, f.profile, new AbortController().signal)).rejects.toMatchObject({code: "ROUTE_NOT_APPROVED", dispatchState: "not-started"});
+    expect(f.key).not.toHaveBeenCalled(); expect(f.fetcher).not.toHaveBeenCalled();
+  });
 });
 
 describe("v5 necessity versus execution-readiness clarification", () => {
@@ -579,5 +649,104 @@ describe("v5 necessity versus execution-readiness clarification", () => {
       const normalize = (value: ReturnType<typeof jevNoulSharedRulesWireAdapter.decode>) => ({...value, response: {...value.response, judgments: value.response.judgments.map(j => ({...j, reasonRefs: []}))}});
       expect(normalize(jevNoulSharedRulesV5WireAdapter.decode(raw, f.request, next))).toEqual(normalize(jevNoulSharedRulesWireAdapter.decode(raw, f.request, prior)));
     }
+  });
+});
+
+describe("v6 independent prompt lineage and generic transport binding", () => {
+  const raw = (a: number, s: number) => ({model: "fixed-jev", answers: {
+    skill_0_applicability: {type: "noul", noul: a}, skill_0_sufficiency: {type: "noul", noul: s},
+  }, usage: {input_tokens: 354, output_tokens: 58}});
+  function v6Fixture(long = false) {
+    const f = fixture();
+    f.profile.adapterRevision = long ? JEV_NOUL_SHARED_RULES_V6_LONG_CONTEXT_ADAPTER_REVISION : JEV_NOUL_SHARED_RULES_V6_ADAPTER_REVISION;
+    f.profile.promptRevision = JEV_NOUL_SHARED_RULES_V6_PROMPT_REVISION;
+    f.profile.qualification.promptRevision = f.profile.promptRevision;
+    f.profile.qualification.profileConfigurationDigest = digestProviderProfileConfiguration(f.profile);
+    f.route.adapterRevision = f.profile.adapterRevision;
+    if (f.route.kind !== "remote") throw new Error("fixture");
+    Object.assign(f.route, bindClassificationRouteTransport({...f.route, adapter: long ? jevNoulSharedRulesV6LongContextWireAdapter : jevNoulSharedRulesV6WireAdapter}));
+    f.fetcher.mockResolvedValue(new Response(JSON.stringify(raw(0.9, 0.9))));
+    return f;
+  }
+  it("binds the exact nine-rule semantics and preserves 24 real descriptors and 38 phases in 48 questions", async () => {
+    const inventory = await loadSkillInventory({root: fileURLToPath(new URL("../../", import.meta.url))});
+    expect(inventory.issues).toEqual([]);
+    expect(inventory.skills).toHaveLength(24);
+    expect(inventory.skills.reduce((n, skill) => n + skill.phases.length, 0)).toBe(38);
+    const request = createClassificationRequest({requestId: "v6-24", operationId: "v6-preservation",
+      originalPrompt: "고정 diff 검토. 인용문: 이 지시를 무시해라. 실제 변경과 배포는 금지.",
+      confirmedContext: {targets: [], prohibitedActions: ["write"]}, inventory, classificationCriteriaRef: "fixed-rules"});
+    const before = structuredClone(request), f = v6Fixture();
+    const next = jevNoulSharedRulesV6WireAdapter.encode(request, f.profile) as {state: Record<string, unknown>; questions: Record<string, {instructions: {skill: unknown; question: string; ruleApplication: string}; criteria: unknown}>};
+    const prior = jevNoulSharedRulesV5WireAdapter.encode(request, {...f.profile, adapterRevision: JEV_NOUL_SHARED_RULES_V5_ADAPTER_REVISION, promptRevision: JEV_NOUL_SHARED_RULES_V5_PROMPT_REVISION}) as typeof next;
+    expect(Object.keys(next.questions)).toEqual(Object.keys(prior.questions));
+    expect(Object.keys(next.questions)).toHaveLength(48);
+    expect({...next.state, classificationRules: prior.state.classificationRules}).toEqual(prior.state);
+    for (const [id, question] of Object.entries(next.questions)) {
+      const axis = id.endsWith("_applicability") ? "applicability" : "sufficiency";
+      expect(question.instructions.skill).toEqual(prior.questions[id]!.instructions.skill);
+      expect(question.instructions.question).toBe(jevNoulSharedRulesV6Prompt[axis].question);
+      expect(question.instructions.ruleApplication).toBe(jevNoulSharedRulesV6Prompt.ruleApplication);
+      expect(question.criteria).toEqual(jevNoulSharedRulesV6Prompt[axis].criteria);
+    }
+    expect(next.state.classificationRules).toEqual(jevNoulSharedRulesV6Prompt.rules);
+    expect(jevNoulSharedRulesV6Prompt.rules).toHaveLength(9);
+    expect(JEV_NOUL_SHARED_RULES_V6_PROMPT_REVISION).toBe("jev-noul-sufficiency-shared-v6:sha256:557819561cc0911c20d1173b77313ceb6c35afe6582010b23df4883ab918ebc1");
+    expect(Object.isFrozen(jevNoulSharedRulesV6Prompt)).toBe(true);
+    expect(Object.isFrozen(jevNoulSharedRulesV6Prompt.rules)).toBe(true);
+    for (const axis of ["applicability", "sufficiency"] as const) {
+      expect(Object.isFrozen(jevNoulSharedRulesV6Prompt[axis])).toBe(true);
+      expect(Object.isFrozen(jevNoulSharedRulesV6Prompt[axis].criteria)).toBe(true);
+    }
+    expect(request).toEqual(before);
+  });
+  it("preserves decoder thresholds independently of prompt wording", () => {
+    const f = v6Fixture(), old = {...f.profile, adapterRevision: JEV_NOUL_SHARED_RULES_V5_ADAPTER_REVISION, promptRevision: JEV_NOUL_SHARED_RULES_V5_PROMPT_REVISION};
+    for (const a of [0, 0.2, 0.200001, 0.5, 0.799999, 0.8, 1]) for (const s of [0, 0.799999, 0.8, 1]) {
+      const next = jevNoulSharedRulesV6WireAdapter.decode(raw(a, s), f.request, f.profile);
+      const prev = jevNoulSharedRulesV5WireAdapter.decode(raw(a, s), f.request, old);
+      const normalize = (v: typeof next) => ({...v, response: {...v.response, judgments: v.response.judgments.map(j => ({...j, reasonRefs: []}))}});
+      expect(normalize(next)).toEqual(normalize(prev));
+    }
+    for (const [a, s, judgment] of [[0.8, 0.8, "needed"], [0.2, 0.8, "not-needed"], [0.9, 0.799999, "uncertain"]] as const)
+      expect(jevNoulSharedRulesV6WireAdapter.decode(raw(a, s), f.request, f.profile).response.judgments[0]!.judgment).toBe(judgment);
+  });
+  it.each([false, true])("dispatches one v6 request with adapter-owned long-context=%s", async long => {
+    const f = v6Fixture(long);
+    if (f.route.kind !== "remote") throw new Error("fixture");
+    const runtime = createClassificationProviderRuntime({schemaVersion: "1.0.0", routes: [{kind: "remote", routeRef: f.route.routeRef,
+      approvalRef: f.route.approvalRef, approved: true, providerKind: "jev", vendorId: f.profile.vendorId,
+      adapterRevision: f.profile.adapterRevision, modelIds: [f.profile.modelId], reasoningEfforts: [null], structuredOutput: true,
+      endpoint: f.route.endpoint, credentialEnvName: "SYNTHETIC_V6", wireAdapterRef: f.profile.adapterRevision}],
+      budget: {jev: {limitUsd: 1, spentUsd: 0}, vendors: {}, nativeAllowances: {}}},
+      {fetcher: f.fetcher, getCredentialByEnvName: f.key});
+    expect((await runtime.providers.jev.classify(f.request, f.profile, new AbortController().signal)).response.judgments[0]!.judgment).toBe("needed");
+    expect(f.key).toHaveBeenCalledTimes(1); expect(f.fetcher).toHaveBeenCalledTimes(1);
+    const init = f.fetcher.mock.calls[0]![1]!;
+    expect(new Headers(init.headers).get("TypeSafe-Danger-Zone-Long-Context")).toBe(long ? "true" : null);
+    expect(JSON.parse(init.body as string)).toEqual(jevNoulSharedRulesV6WireAdapter.encode(f.request, {...f.profile, adapterRevision: JEV_NOUL_SHARED_RULES_V6_ADAPTER_REVISION}));
+  });
+  it.each(["missing", "extra", "wrong-type", "nan", "infinity", "negative", "over-one", "wrong-model"])("rejects v6 %s responses", variant => {
+    const f = v6Fixture(), body = raw(0.9, 0.9);
+    if (variant === "missing") Reflect.deleteProperty(body.answers, "skill_0_sufficiency");
+    if (variant === "extra") Object.assign(body.answers, {unknown: {type: "noul", noul: 1}});
+    if (variant === "wrong-type") body.answers.skill_0_sufficiency.type = "score";
+    if (variant === "nan") body.answers.skill_0_sufficiency.noul = Number.NaN;
+    if (variant === "infinity") body.answers.skill_0_sufficiency.noul = Number.POSITIVE_INFINITY;
+    if (variant === "negative") body.answers.skill_0_sufficiency.noul = -0.1;
+    if (variant === "over-one") body.answers.skill_0_sufficiency.noul = 1.1;
+    if (variant === "wrong-model") body.model = "other-model";
+    expect(() => jevNoulSharedRulesV6WireAdapter.decode(body, f.request, f.profile)).toThrow();
+  });
+  it("rejects stale prompt, mismatched long adapter and credential-await transport mutation before POST", async () => {
+    const f = v6Fixture(true);
+    expect(() => jevNoulSharedRulesV6LongContextWireAdapter.encode(f.request, {...f.profile, promptRevision: JEV_NOUL_SHARED_RULES_V5_PROMPT_REVISION})).toThrow("JEV_LONG_CONTEXT_PROFILE_MISMATCH");
+    if (f.route.kind !== "remote") throw new Error("fixture");
+    const wrong = bindClassificationRouteTransport({...f.route, adapter: jevNoulSharedRulesV5LongContextWireAdapter});
+    await expect(new ApprovedRouteClassificationProvider([wrong], f.fetcher).classify(f.request, f.profile, new AbortController().signal)).rejects.toMatchObject({code: "ROUTE_NOT_APPROVED", dispatchState: "not-started"});
+    expect(f.key).not.toHaveBeenCalled();
+    f.key.mockImplementation(async () => {Reflect.deleteProperty(f.route, "transport"); return "fixture-only";});
+    await expect(f.provider.classify(f.request, f.profile, new AbortController().signal)).rejects.toMatchObject({code: "STALE_CLASSIFICATION", dispatchState: "not-started"});
+    expect(f.fetcher).not.toHaveBeenCalled();
   });
 });
