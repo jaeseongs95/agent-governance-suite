@@ -22,16 +22,19 @@ describe("Korean prose glossary", () => {
     const entries = parseGlossarySeed(await readFile(seedPath, "utf8"));
     expect(checkGlossaryDatabase(databasePath, entries)).toMatchObject({ id: "korean-prose-core", version: "1.2.1" });
     const database = new DatabaseSync(databasePath, { readOnly: true });
-    expect(database.prepare("SELECT name FROM sqlite_schema WHERE type = 'table' ORDER BY name").all()).toEqual([{ name: "entries" }, { name: "forms" }, { name: "metadata" }]);
-    expect(database.prepare("SELECT COUNT(*) AS count FROM entries WHERE active = 1").get()).toEqual({ count: 242 });
-    expect(database.prepare("SELECT COUNT(*) AS count FROM forms").get()).toEqual({ count: 248 });
-    expect(database.prepare("SELECT policy, COUNT(*) AS count FROM entries WHERE active = 1 GROUP BY policy ORDER BY policy").all()).toEqual([
-      { policy: "allow", count: 68 },
-      { policy: "avoid", count: 8 },
-      { policy: "prefer", count: 4 },
-      { policy: "protect", count: 162 },
-    ]);
-    database.close();
+    try {
+      expect(database.prepare("SELECT name FROM sqlite_schema WHERE type = 'table' ORDER BY name").all()).toEqual([{ name: "entries" }, { name: "forms" }, { name: "metadata" }]);
+      expect(database.prepare("SELECT COUNT(*) AS count FROM entries WHERE active = 1").get()).toEqual({ count: 242 });
+      expect(database.prepare("SELECT COUNT(*) AS count FROM forms").get()).toEqual({ count: 248 });
+      expect(database.prepare("SELECT policy, COUNT(*) AS count FROM entries WHERE active = 1 GROUP BY policy ORDER BY policy").all()).toEqual([
+        { policy: "allow", count: 68 },
+        { policy: "avoid", count: 8 },
+        { policy: "prefer", count: 4 },
+        { policy: "protect", count: 162 },
+      ]);
+    } finally {
+      database.close();
+    }
   });
 
   it("distinguishes no-match from invalid caller digests", () => {
@@ -109,8 +112,11 @@ describe("Korean prose glossary", () => {
       const stale = path.join(directory, "stale.sqlite3");
       await copyFile(databasePath, stale);
       const database = new DatabaseSync(stale);
-      database.prepare("UPDATE metadata SET value = ? WHERE key = 'contentDigest'").run("0".repeat(64));
-      database.close();
+      try {
+        database.prepare("UPDATE metadata SET value = ? WHERE key = 'contentDigest'").run("0".repeat(64));
+      } finally {
+        database.close();
+      }
       expect(new SqliteKoreanProseGlossary(stale).lookup({ schemaVersion: "1.0.0", sourceText, sourceDigest: digest(sourceText) }).status).toBe("unavailable");
     } finally {
       await rm(directory, { recursive: true, force: true });
@@ -119,9 +125,12 @@ describe("Korean prose glossary", () => {
 
   it("opens the shipped database read-only", () => {
     const database = new DatabaseSync(databasePath, { readOnly: true });
-    database.exec("PRAGMA query_only = ON");
-    expect(() => database.prepare("UPDATE metadata SET value = 'x'").run()).toThrow();
-    database.close();
+    try {
+      database.exec("PRAGMA query_only = ON");
+      expect(() => database.prepare("UPDATE metadata SET value = 'x'").run()).toThrow();
+    } finally {
+      database.close();
+    }
   });
 
   it.each([

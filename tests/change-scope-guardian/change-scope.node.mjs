@@ -1,12 +1,18 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { chmodSync, mkdtempSync, mkdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { isAbsolute, join, relative } from "node:path";
 import { tmpdir } from "node:os";
 import test from "node:test";
 import { canonicalJson, captureBaseline, compareScope, resolveRepository, sha256, validateBaseline, validateReport } from "../../skills/change-scope-guardian/scripts/lib.mjs";
 
 const roots = [];
+
+function removeFixture(target, options) {
+  const rel = relative(realpathSync(tmpdir()), realpathSync(target));
+  assert.ok(rel && rel !== ".." && !rel.startsWith("../") && !rel.startsWith("..\\") && !isAbsolute(rel), "Cleanup must stay inside the fixture temp directory");
+  rmSync(target, options);
+}
 
 function git(root, ...args) {
   return execFileSync("git", ["-C", root, ...args], { encoding: "utf8", windowsHide: true }).trim();
@@ -18,6 +24,7 @@ function repository() {
   git(root, "init", "-q");
   git(root, "config", "user.name", "Test User");
   git(root, "config", "user.email", "test@example.com");
+  git(root, "config", "core.autocrlf", "false");
   mkdirSync(join(root, "src"));
   mkdirSync(join(root, "docs"));
   writeFileSync(join(root, "src", "app.js"), "export const value = 1;\n");
@@ -61,7 +68,7 @@ function verificationFor(root, baseline, taskEnvelope = envelope(), options = {}
 }
 
 test.after(() => {
-  for (const root of roots) rmSync(root, { recursive: true, force: true });
+  for (const root of roots) removeFixture(root, { recursive: true, force: true });
 });
 
 test("uses Git worktree membership for repository subdirectories", () => {
@@ -161,6 +168,32 @@ test("index comparison ignores unstaged content and sees staged content", () => 
   assert.equal(staged.changes[0].classification, "in-scope");
 });
 
+test("keeps actual index absence and staged deletion classification", () => {
+  const root = repository();
+  const baseline = baselineFor(root, "index");
+  removeFixture(join(root, "src", "app.js"));
+  git(root, "add", "-u");
+  const after = baselineFor(root, "index");
+  assert.equal(after.entries.find(item => item.path === "src/app.js")?.kind, "missing");
+  const report = compareScope(verificationFor(root, baseline, envelope(), { comparisonTarget: "index" }));
+  assert.equal(report.verdict, "PASS");
+  assert.equal(report.changes.find(item => item.path === "src/app.js")?.classification, "in-scope");
+});
+
+for (const comparisonTarget of ["index", "commit"]) {
+  test(`rejects unreadable ${comparisonTarget} blobs instead of capturing missing evidence`, () => {
+    const root = repository();
+    const options = comparisonTarget === "commit" ? { commit: "HEAD" } : {};
+    const baseline = baselineFor(root, comparisonTarget, options);
+    const oid = git(root, "rev-parse", "HEAD:src/app.js");
+    const blob = join(root, ".git", "objects", oid.slice(0, 2), oid.slice(2));
+    chmodSync(blob, 0o600);
+    writeFileSync(blob, "corrupt synthetic blob\n");
+    assert.throws(() => baselineFor(root, comparisonTarget, options), /Git command failed:.*(?:corrupt|inflate|unable)/s);
+    assert.throws(() => compareScope(verificationFor(root, baseline, envelope(), { comparisonTarget, ...options })), /Git command failed:.*(?:corrupt|inflate|unable)/s);
+  });
+}
+
 test("compares two fixed commits without reading working-tree content", () => {
   const root = repository();
   const first = git(root, "rev-parse", "HEAD");
@@ -178,7 +211,7 @@ test("compares two fixed commits without reading working-tree content", () => {
 test("checks a deletion by its pre-deletion path", () => {
   const root = repository();
   const baseline = baselineFor(root);
-  rmSync(join(root, "src", "app.js"));
+  removeFixture(join(root, "src", "app.js"));
   const report = compareScope(verificationFor(root, baseline));
   assert.equal(report.verdict, "PASS");
   assert.equal(report.changes.find((item) => item.path === "src/app.js")?.classification, "in-scope");

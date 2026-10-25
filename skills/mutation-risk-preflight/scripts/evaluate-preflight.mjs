@@ -26,19 +26,21 @@ function digest(value) {
 export function canonicalLocator(value) {
   const uriInput = String(value).trim().replaceAll("\\", "/");
   const uri = uriInput.match(/^([a-z][a-z0-9+.-]*:\/\/)(.*)$/i);
-  if (uri) return uri[1].toLowerCase() + uri[2].replace(/\/+/g, "/").replace(/\/$/, "");
+  if (uri && !/^[a-z]:/i.test(uriInput)) return uri[1].toLowerCase() + uri[2].replace(/\/+/g, "/").replace(/\/$/, "");
   const raw = String(value).trim().replaceAll("\\", "/");
   const text = raw.startsWith("//") ? `//${raw.slice(2).replace(/\/+/g, "/")}` : raw.replace(/\/+/g, "/");
-  return text.replace(/^([A-Z]):/, (_, drive) => `${drive.toLowerCase()}:`).replace(/\/$/, "") || "/";
+  // Lexical only: filesystem evidence must establish any symlink/realpath identity.
+  const normalized = /^[a-z]:$/i.test(text) ? text : (/^[a-z]:/i.test(text) || text.startsWith("//") ? path.win32 : path.posix).normalize(text).replaceAll("\\", "/");
+  return normalized.replace(/^([A-Z]):/, (_, drive) => `${drive.toLowerCase()}:`).replace(/\/$/, "") || "/";
 }
 
 export function unsafeTarget(target) {
   const locator = canonicalLocator(target.locator);
   if (["/", ".", "..", "~"].includes(locator)) return "filesystem, home 또는 현재 디렉터리 루트는 허용되지 않습니다.";
-  if (/^[a-z]:$/i.test(locator)) return "drive root는 허용되지 않습니다.";
+  if (/^[a-z]:(?:\.)?$/i.test(locator)) return "drive root는 허용되지 않습니다.";
   if (/^\/\/[^/]+\/[^/]+$/.test(locator)) return "UNC share root는 허용되지 않습니다.";
-  if (/[*?\[\]]/.test(locator)) return "해석되지 않은 glob이 있습니다.";
-  if (/\$\{|\$[A-Za-z_]|%[^%]+%/.test(locator)) return "해석되지 않은 환경변수가 있습니다.";
+  if (/[*?\[\]]/.test(target.locator)) return "해석되지 않은 glob이 있습니다.";
+  if (/\$\{|\$[A-Za-z_]|%[^%]+%/.test(target.locator)) return "해석되지 않은 환경변수가 있습니다.";
   if (/^(home|filesystem-root|drive-root|repository-root)$/i.test(target.targetType)) return `${target.targetType} 전체는 허용되지 않습니다.`;
   return null;
 }
@@ -154,7 +156,7 @@ export function evaluatePreflight(input, options = {}) {
   if (validationErrors.length) return blockedReport(input, validationErrors, now);
 
   const targets = input.targets.map((target) => ({ ...target, locator: canonicalLocator(target.locator) }));
-  const unsafe = targets.map((target) => unsafeTarget(target)).filter(Boolean);
+  const unsafe = input.targets.map((target) => unsafeTarget(target)).filter(Boolean);
   const targetDigest = targetDigestFor({ ...input, targets });
   const actionDigest = actionDigestFor(input, targetDigest);
   const externalImpact = Boolean(input.expectedBlastRadius.external || targets.some((target) => /^(production|prod|shared|external)$/i.test(target.environment)));

@@ -7,7 +7,7 @@
       "version": "1.1.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:e947e2c30aa38ebf93fb069fbb81135ef6d80f662978fcea95441cc768962018",
+      "integratedChecksum": "sha256:1af63a7e491089d66402d14f524150eacd0b6c6a93099993409294fe22095175",
       "checksumScope": "relative paths and normalized text bytes under skills/coordinate-subagents"
     },
     {
@@ -70,7 +70,7 @@
       "version": "1.0.1",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:95efd5f02bd7e6c4bb2339f29775c93f06421c227ee1c68fc8ed78eabe321d0d",
+      "integratedChecksum": "sha256:aa367e409697a4b54547c15dae3f5ab46b579ac98c42ecf02f41f49103f438d5",
       "checksumScope": "relative paths and normalized text bytes under skills/mutation-risk-preflight"
     },
     {
@@ -79,7 +79,7 @@
       "version": "1.0.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:7f0ba646f240188d8b3843cee39e122c00a2d5b01726769c9b8027091e89723e",
+      "integratedChecksum": "sha256:eb56249019100ddaf0f81abfa62f74d5b3d0b2a26a0e39dbf61c5004328396af",
       "checksumScope": "relative paths and normalized text bytes under skills/instruction-scope-resolver"
     },
     {
@@ -88,7 +88,7 @@
       "version": "1.0.0",
       "versionSource": "version-file",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:e2d96bfd03f5821b861782333fdb862b206e5951be19b354c20e1dc0f45ade7c",
+      "integratedChecksum": "sha256:d2b08273ea2873476272146d32051e175b0bf4cdefc1ff24bc8bdb6c72371ffa",
       "checksumScope": "relative paths and normalized text bytes under skills/change-scope-guardian"
     },
     {

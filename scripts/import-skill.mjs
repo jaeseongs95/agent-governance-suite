@@ -1,9 +1,10 @@
 import { execFileSync } from "node:child_process";
-import { mkdtemp, mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { NAME_PATTERN, ROOT, computeDirectoryChecksum, defaultProvider, parseArguments, pathExists, readFrontmatter, readJson } from "./lib.mjs";
 import { copyAllowlisted, readSkillVersion } from "./source-lock.mjs";
+import { cleanupSkillImport, commitSkillImport } from "./skill-import-transaction.mjs";
 
 const args = parseArguments(process.argv.slice(2));
 if (!args.source || !args.ref || !args["skill-path"]) {
@@ -12,6 +13,8 @@ if (!args.source || !args.ref || !args["skill-path"]) {
 
 const temporaryDirectory = await mkdtemp(path.join(tmpdir(), "agent-governance-import-"));
 const transactionDirectory = await mkdtemp(path.join(ROOT, ".agent-governance-import-"));
+let operationFailed = false;
+let operationFailure;
 try {
   let repositorySource = args.source;
   try {
@@ -62,8 +65,8 @@ try {
   await copyAllowlisted(sourceSkill, stagedSkill);
 
   const lockPath = path.join(ROOT, "skills", "source-lock.json");
-  const registryOriginal = await readFile(registryPath, "utf8");
-  const lockOriginal = await readFile(lockPath, "utf8");
+  const registryOriginal = await readFile(registryPath);
+  const lockOriginal = await readFile(lockPath);
   const lockDocument = await readJson(lockPath);
   if (lockDocument.schemaVersion !== "3.0.0") throw new Error("skills/source-lock.json must use schemaVersion 3.0.0");
   const entries = lockDocument.sources;
@@ -166,29 +169,16 @@ try {
     }, null, 2)}\n`, "utf8");
   }
 
-  const previousSkill = path.join(transactionDirectory, "previous-skill");
-  let installedSkill = false;
-  let installedTests = false;
-  try {
-    if (destinationExists) await rename(destination, previousSkill);
-    await rename(stagedSkill, destination);
-    installedSkill = true;
-    if (!testsExist) {
-      await rename(stagedTests, testsDirectory);
-      installedTests = true;
-    }
-    await writeFile(lockPath, `${JSON.stringify(lockDocument, null, 2)}\n`, "utf8");
-    await writeFile(registryPath, `${JSON.stringify(registryDocument, null, 2)}\n`, "utf8");
-  } catch (error) {
-    await writeFile(lockPath, lockOriginal, "utf8").catch(() => undefined);
-    await writeFile(registryPath, registryOriginal, "utf8").catch(() => undefined);
-    if (installedTests) await rm(testsDirectory, { recursive: true, force: true }).catch(() => undefined);
-    if (installedSkill) await rm(destination, { recursive: true, force: true }).catch(() => undefined);
-    if (destinationExists) await rename(previousSkill, destination).catch(() => undefined);
-    throw error;
-  }
+  await commitSkillImport({
+    transactionDirectory, destination, destinationExists, stagedSkill,
+    testsDirectory, testsExist, stagedTests, registryPath, lockPath,
+    registryOriginal, lockOriginal, registryDocument, lockDocument,
+  });
   console.log(`imported ${name}@${commit}`);
+} catch (error) {
+  operationFailed = true;
+  operationFailure = error;
 } finally {
-  await rm(temporaryDirectory, { recursive: true, force: true });
-  await rm(transactionDirectory, { recursive: true, force: true });
+  await cleanupSkillImport({ temporaryDirectory, transactionDirectory,
+    operationFailed, failure: operationFailure });
 }

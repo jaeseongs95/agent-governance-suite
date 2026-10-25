@@ -135,6 +135,30 @@ const CLASSIFICATION_UPDATE = Object.freeze({
     "skills/workspace-convention-profiler/classification.json": "15c01583cc8a233fd969ea873cf5ba0d56a6fc305cd2a9ff7ed7b57338cb2853",
   }),
 });
+// Exact implementation bytes integrated after the historical optimization.
+// This validates source identity only; it grants no review or execution authority.
+const CURRENT_IMPLEMENTATION_PINS = Object.freeze({
+  revision: "3.0.0-source-integration-r07",
+  authorityEffect: "none",
+  hashes: Object.freeze({
+  "skills/change-scope-guardian/scripts/lib.mjs": "cb4929462212ec338200e34dd2397dcf2d7e980c7e4d55f0fe8cf8670cf015f1",
+  "skills/coordinate-subagents/references/model-routing-presets.json": "f47d4f6f404256d7020bf84b5d2ba6daea46014e187db13e0268c4c15c98d99d",
+  "skills/coordinate-subagents/references/model-routing.md": "08d6b87efe41c2c7ed901f33a81324a787eda37e41badc2e29c6c1c4de572e9e",
+  "skills/coordinate-subagents/scripts/model-catalog-adapter.d.mts": "936efbf8e7bbcef4f0c452ec4e4fe876c6f9ecb53a82df3d7d60de63bd684026",
+  "skills/coordinate-subagents/scripts/model-catalog-adapter.mjs": "c6e74b706f89882cfa94e5269c8fb77c9011b731b9ee136d5396ecaa7f828834",
+  "skills/coordinate-subagents/scripts/model-routing.d.mts": "4afbbfc1167ee637d1aab74bbfe4ec55241931d33fa55442b94dcea8d8e93fbe",
+  "skills/coordinate-subagents/scripts/model-routing.mjs": "ee3e7084ca52cef9a14d8eb5d3b4f79bcb3c91098ca0d1fd6bac30ad64e29b7e",
+  "skills/instruction-scope-resolver/references/gemini-instructions.md": "fb03a623c11627f8fed8cfad07d6c492fcd4a710dd73b25963840f8524b18a56",
+  "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs": "acd50c403b09d05cea0e7a453535963ed6e3eb720b598b37e7cd1c46a648876d",
+  "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": "41d00a76a894b27a06ca11f8a566cf46487c1959fb06bb367d8f7af797da38ba"
+}),
+});
+
+export function matchesCurrentImplementationPin(path, bytes) {
+  return Object.hasOwn(CURRENT_IMPLEMENTATION_PINS.hashes, path)
+    && createHash("sha256").update(bytes).digest("hex") === CURRENT_IMPLEMENTATION_PINS.hashes[path];
+}
+
 const TARGETS = [
   "acceptance-evidence-validator",
   "blocker-diagnostician",
@@ -261,6 +285,11 @@ export function checkSkillContextOptimization() {
   for (const reviewedPath of Object.keys(CLASSIFICATION_UPDATE.hashes)) {
     if (!matchesClassificationUpdate(reviewedPath, readFileSync(join(ROOT, reviewedPath)))) errors.push(`classification: reviewed bytes differ: ${reviewedPath}`);
   }
+  for (const currentPath of Object.keys(CURRENT_IMPLEMENTATION_PINS.hashes)) {
+    if (!matchesCurrentImplementationPin(currentPath, readFileSync(join(ROOT, currentPath)))) {
+      errors.push(`current implementation bytes differ: ${currentPath}`);
+    }
+  }
   const detailOwners = readdirSync(join(ROOT, "skills"), { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
@@ -330,6 +359,9 @@ export function checkSkillContextOptimization() {
     if (!readFileSync(join(ROOT, ...descriptorPath.split("/"))).equals(baselineFile(descriptorPath))) errors.push(`${skillId}: agents/openai.yaml changed`);
 
     const allowed = new Set([skillPath, detailPath]);
+    for (const currentPath of Object.keys(CURRENT_IMPLEMENTATION_PINS.hashes)) {
+      if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
+    }
     for (const reviewedPath of Object.keys(CLASSIFICATION_UPDATE.hashes)) if (reviewedPath.startsWith(`skills/${skillId}/`)) allowed.add(reviewedPath);
     if (skillId === "session-board") {
       for (const reviewedPath of ["skills/session-board/scripts/board-store.mjs", "skills/session-board/scripts/board-store.d.mts"]) {
@@ -393,6 +425,7 @@ export function checkSkillContextOptimization() {
     reviewedOutputContractUpdates: [REVIEWED_RESOLVER_OUTPUT_CONTRACT],
     activeReviewedOutputContractUpdates: [REVIEWED_RESOLVER_N_DESC_RULE],
     reviewedClassificationUpdates: [CLASSIFICATION_UPDATE],
+    currentImplementationPins: [CURRENT_IMPLEMENTATION_PINS],
     runtimeBaselineUpdates: Object.entries(NODE24_README_MINIMUMS).map(([skillId, before]) => ({ skillId, before, after: "Node.js 24.0.0 이상" })),
     pass: errors.length === 0,
     errors,

@@ -90,15 +90,15 @@ function listRepositoryFiles(root, maxFiles, comparisonTarget, commit) {
   return files;
 }
 
-function inspectPath(root, path, statusInfo, comparisonTarget, commit) {
+function inspectPath(root, path, statusInfo, comparisonTarget, commit, inTarget) {
   if (comparisonTarget === "index" || comparisonTarget === "commit") {
-    const spec = comparisonTarget === "index" ? `:${path}` : `${commit}:${path}`;
-    try {
-      const content = runGit(root, ["show", spec], "buffer");
-      return { path, status: statusInfo?.status ?? "clean", sha256: sha256(content), size: content.length, kind: statusInfo?.kind ?? "file", originalPath: statusInfo?.originalPath ?? null };
-    } catch {
+    // Only a successful target listing proves absence; a failed blob read does not.
+    if (!inTarget) {
       return { path, status: statusInfo?.status ?? "deleted", sha256: null, size: null, kind: "missing", originalPath: statusInfo?.originalPath ?? null };
     }
+    const spec = comparisonTarget === "index" ? `:${path}` : `${commit}:${path}`;
+    const content = runGit(root, ["show", spec], "buffer");
+    return { path, status: statusInfo?.status ?? "clean", sha256: sha256(content), size: content.length, kind: statusInfo?.kind ?? "file", originalPath: statusInfo?.originalPath ?? null };
   }
   const absolute = resolve(root, ...path.split("/"));
   const rel = relative(root, absolute);
@@ -136,12 +136,13 @@ export function captureBaseline(request, now = new Date()) {
       else statuses.set(path, { ...info, status: info.status[0] });
     }
   }
-  const files = new Set(listRepositoryFiles(repository.root, maxFiles, comparisonTarget, targetCommit));
+  const listedFiles = new Set(listRepositoryFiles(repository.root, maxFiles, comparisonTarget, targetCommit));
+  const files = new Set(listedFiles);
   for (const [path, info] of statuses) {
     files.add(path);
     if (info.originalPath) files.add(info.originalPath);
   }
-  const entries = [...files].sort((a, b) => a.localeCompare(b)).map((path) => inspectPath(repository.root, path, statuses.get(path), comparisonTarget, targetCommit));
+  const entries = [...files].sort((a, b) => a.localeCompare(b)).map((path) => inspectPath(repository.root, path, statuses.get(path), comparisonTarget, targetCommit, listedFiles.has(path)));
   let head = null;
   try {
     head = runGit(repository.root, ["rev-parse", "--verify", "HEAD"]).trim() || null;

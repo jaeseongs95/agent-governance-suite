@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
+import { writeSync } from "node:fs";
+import { failureContext, producerFailureReason, retainFailureSecondary, tagProducerFailure } from "./failure-diagnostics.js";
 
 import type { KoreanProseGlossaryLookupRequestV1, KoreanProseGlossaryLookupResultV1 } from "../../contracts/types.js";
 
@@ -71,7 +73,8 @@ export class SqliteKoreanProseGlossary implements KoreanProseGlossaryGateway {
     let loaded: LoadedGlossary;
     try {
       loaded = loadGlossary(this.databasePath);
-    } catch {
+    } catch (error) {
+      reportGlossaryFailure("lookup", error);
       return unavailableResult(request.sourceText);
     }
 
@@ -114,6 +117,16 @@ export class SqliteKoreanProseGlossary implements KoreanProseGlossaryGateway {
   }
 }
 
+
+/** Diagnostic output cannot turn the optional glossary into a hard dependency. */
+function reportGlossaryFailure(phase: "lookup", error: unknown): void {
+  try {
+    writeSync(2, JSON.stringify({
+      component: "korean-prose-glossary", phase, reason: producerFailureReason(error) ?? "GLOSSARY_UNAVAILABLE", context: failureContext(error),
+    }) + "\n");
+  } catch { /* A failed diagnostic sink does not replace the operation result/error. */ }
+}
+
 export function parseGlossarySeed(text: string): GlossarySeedEntry[] {
   const entries = text.split(/\r?\n/u).filter((line) => line.trim().length > 0).map((line, index) => {
     try {
@@ -152,6 +165,7 @@ export function glossaryContentDigest(entries: GlossarySeedEntry[]): string {
 
 export function buildGlossaryDatabase(databasePath: string, entries: GlossarySeedEntry[], metadata: { id: string; version: string }): void {
   const database = new DatabaseSync(databasePath);
+  let failure: { error: unknown } | null = null;
   try {
     database.exec("PRAGMA foreign_keys = ON; PRAGMA journal_mode = DELETE; BEGIN IMMEDIATE;");
     database.exec("CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL) STRICT;");
@@ -171,28 +185,43 @@ export function buildGlossaryDatabase(databasePath: string, entries: GlossarySee
     }
     database.exec("COMMIT;");
   } catch (error) {
-    try { database.exec("ROLLBACK;"); } catch { /* The transaction may not have started. */ }
-    throw error;
+    failure = { error };
+    if (error instanceof Error) tagProducerFailure(error, "GLOSSARY_BUILD_FAILED");
+    try { database.exec("ROLLBACK;"); }
+    catch (rollback) {
+      if (rollback instanceof Error) tagProducerFailure(rollback, "GLOSSARY_ROLLBACK_FAILED");
+      retainFailureSecondary(error, rollback);
+    }
   } finally {
-    database.close();
+    try { database.close(); }
+    catch (close) {
+      if (close instanceof Error) tagProducerFailure(close, "GLOSSARY_CLOSE_FAILED");
+      if (failure) retainFailureSecondary(failure.error, close);
+      else failure = { error: close };
+    }
   }
+  if (failure) throw failure.error;
 }
 
 export function checkGlossaryDatabase(databasePath: string, expectedEntries: GlossarySeedEntry[]): GlossaryMetadata {
   const loaded = loadGlossary(databasePath);
-  if (stableJson(loaded.entries) !== stableJson(expectedEntries)) throw new Error("Glossary SQLite rows do not match the reviewed JSONL seed.");
+  if (stableJson(loaded.entries) !== stableJson(expectedEntries)) {
+    throw tagProducerFailure(new Error("Glossary SQLite rows do not match the reviewed JSONL seed."), "GLOSSARY_SEED_MISMATCH");
+  }
   return loaded.metadata;
 }
 
 function loadGlossary(databasePath: string): LoadedGlossary {
   const database = new DatabaseSync(databasePath, { readOnly: true });
+  let failure: { error: unknown } | null = null;
+  let loaded: LoadedGlossary | undefined;
   try {
     database.exec("PRAGMA query_only = ON;");
     const integrity = database.prepare("PRAGMA integrity_check").get() as Record<string, unknown> | undefined;
-    if (!integrity || Object.values(integrity)[0] !== "ok") throw new Error("Glossary database integrity check failed.");
+    if (!integrity || Object.values(integrity)[0] !== "ok") throw tagProducerFailure(new Error("Glossary database integrity check failed."), "GLOSSARY_INTEGRITY_FAILED");
     const metadataRows = database.prepare("SELECT key, value FROM metadata ORDER BY key").all() as Array<{ key: string; value: string }>;
     const metadata = new Map(metadataRows.map((row) => [row.key, row.value]));
-    if (metadata.get("schemaVersion") !== "1.0.0" || !metadata.get("glossaryId") || !metadata.get("glossaryVersion") || !DIGEST.test(metadata.get("contentDigest") ?? "")) throw new Error("Glossary metadata is invalid.");
+    if (metadata.get("schemaVersion") !== "1.0.0" || !metadata.get("glossaryId") || !metadata.get("glossaryVersion") || !DIGEST.test(metadata.get("contentDigest") ?? "")) throw tagProducerFailure(new Error("Glossary metadata is invalid."), "GLOSSARY_METADATA_INVALID");
     const rows = database.prepare("SELECT entry_id, canonical_form, policy, source_ref, priority, active FROM entries ORDER BY entry_id").all() as Array<Record<string, unknown>>;
     const formRows = database.prepare("SELECT entry_id, surface, form_kind FROM forms ORDER BY entry_id, form_id").all() as Array<Record<string, unknown>>;
     const entries = rows.map((row) => ({
@@ -205,11 +234,21 @@ function loadGlossary(databasePath: string): LoadedGlossary {
       forms: formRows.filter((form) => form.entry_id === row.entry_id).map((form) => ({ form: String(form.surface), kind: String(form.form_kind) as GlossarySeedForm["kind"] })),
     }));
     const validated = parseGlossarySeed(entries.map((entry) => JSON.stringify(entry)).join("\n"));
-    if (glossaryContentDigest(validated) !== metadata.get("contentDigest")) throw new Error("Glossary content digest is stale.");
-    return { metadata: { id: metadata.get("glossaryId")!, version: metadata.get("glossaryVersion")!, contentDigest: metadata.get("contentDigest")! }, entries: validated };
+    if (glossaryContentDigest(validated) !== metadata.get("contentDigest")) throw tagProducerFailure(new Error("Glossary content digest is stale."), "GLOSSARY_DIGEST_STALE");
+    loaded = { metadata: { id: metadata.get("glossaryId")!, version: metadata.get("glossaryVersion")!, contentDigest: metadata.get("contentDigest")! }, entries: validated };
+  } catch (error) {
+    failure = { error };
+    if (error instanceof Error) tagProducerFailure(error, "GLOSSARY_LOAD_FAILED");
   } finally {
-    database.close();
+    try { database.close(); }
+    catch (close) {
+      if (close instanceof Error) tagProducerFailure(close, "GLOSSARY_CLOSE_FAILED");
+      if (failure) retainFailureSecondary(failure.error, close);
+      else failure = { error: close };
+    }
   }
+  if (failure) throw failure.error;
+  return loaded!;
 }
 
 function validateSeedEntry(value: unknown, line: number): GlossarySeedEntry {

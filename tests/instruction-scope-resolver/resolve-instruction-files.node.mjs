@@ -3,6 +3,9 @@ import { mkdtemp, mkdir, rm, stat, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { resolveAntigravityInstructionFiles } from "../../antigravity-connector/scripts/resolve-instructions.mjs";
 
 import { isPathWithin, pathFlavor, resolveInstructionFiles } from "../../skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs";
 
@@ -63,14 +66,14 @@ test("ignores a whitespace override and marks a planned path absent", async (t) 
   assert.match(result.findings[0], /future nested instructions/u);
 });
 
-test("resolves GEMINI.override.md and GEMINI.md in precedence hierarchy", async (t) => {
+test("explicit Antigravity adapter resolves GEMINI.override.md and GEMINI.md in precedence hierarchy", async (t) => {
   const root = await workspace();
   t.after(() => rm(root, { recursive: true, force: true }));
   await writeFile(path.join(root, "GEMINI.md"), "gemini root\n");
   await writeFile(path.join(root, "AGENTS.md"), "agents root\n");
   await writeFile(path.join(root, "src", "GEMINI.override.md"), "gemini override\n");
   await writeFile(path.join(root, "src", "AGENTS.override.md"), "agents override\n");
-  const result = await resolveInstructionFiles(request(root));
+  const result = await resolveAntigravityInstructionFiles(request(root));
   assert.equal(result.verdict, "ANALYSIS_REQUIRED");
   assert.equal(result.targets[0].instructionChain[0].path.endsWith("GEMINI.md"), true);
   assert.equal(result.targets[0].instructionChain[1].path.endsWith("GEMINI.override.md"), true);
@@ -96,6 +99,7 @@ test("rejects traversal and an external symlink", async (t) => {
   try {
     await symlink(outside, path.join(root, "external"), process.platform === "win32" ? "junction" : "dir");
     await assert.rejects(resolveInstructionFiles(request(root, "external")), /outside workspaceRoot/u);
+    await assert.rejects(resolveAntigravityInstructionFiles(request(root, "external")), /outside workspaceRoot/u);
   } catch (error) {
     if (!["EPERM", "EACCES"].includes(error.code)) throw error;
   }
@@ -112,4 +116,63 @@ test("Windows path containment is case-insensitive and separator aware", () => {
   assert.equal(isPathWithin("C:\\Work\\Repo", "c:\\work\\repo\\src\\a.ts", path.win32), true);
   assert.equal(isPathWithin("C:\\Work\\Repo", "C:\\Work\\Repository\\a.ts", path.win32), false);
   assert.equal(isPathWithin("C:\\Work\\Repo", "D:\\Work\\Repo", path.win32), false);
+});
+
+for (const emptyOverride of [false, true]) test("common default preserves AGENTS when host files coexist: " + emptyOverride, async (t) => {
+  const root = await workspace();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  for (const file of ["GEMINI.override.md", "GEMINI.md", "AGENTS.md"]) await writeFile(path.join(root, file), file);
+  await writeFile(path.join(root, "AGENTS.override.md"), emptyOverride ? " \r\n" : "override");
+  await writeFile(path.join(root, "src", "AGENTS.md"), "nested");
+  await writeFile(path.join(root, "src", "GEMINI.override.md"), "host nested");
+  const result = await resolveInstructionFiles(request(root));
+  assert.deepEqual(result.targets[0].instructionChain.map(item => path.basename(item.path)),
+    [emptyOverride ? "AGENTS.md" : "AGENTS.override.md", "AGENTS.md"]);
+});
+
+test("common default does not discover a host-only policy", async (t) => {
+  const root = await workspace();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await writeFile(path.join(root, "GEMINI.md"), "host-only");
+  assert.deepEqual((await resolveInstructionFiles(request(root))).instructionFileManifest, []);
+});
+
+test("explicit adapter skips empty host override and retains AGENTS fallback", async (t) => {
+  const root = await workspace();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await writeFile(path.join(root, "GEMINI.override.md"), " ");
+  await writeFile(path.join(root, "AGENTS.override.md"), "common override");
+  await writeFile(path.join(root, "GEMINI.md"), "host base");
+  assert.equal(path.basename((await resolveAntigravityInstructionFiles(request(root))).instructionFileManifest[0].path), "AGENTS.override.md");
+});
+
+test("generic descriptor supports another adapter without a host registry", async (t) => {
+  const root = await workspace();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await writeFile(path.join(root, "CUSTOM.md"), "custom");
+  const result = await resolveInstructionFiles(request(root), { instructionFiles: [{ name: "CUSTOM.md", kind: "agents" }] });
+  assert.equal(path.basename(result.instructionFileManifest[0].path), "CUSTOM.md");
+  for (const files of [[], [{ name: "../CUSTOM.md", kind: "agents" }], [{ name: "C:CUSTOM.md", kind: "agents" }],
+    [{ name: "CUSTOM.md", kind: "agents" }, { name: "custom.md", kind: "override" }],
+    [{ name: "CUSTOM.md", kind: "arbitrary" }]]) {
+    await assert.rejects(resolveInstructionFiles(request(root), { instructionFiles: files }), /descriptor/u);
+  }
+  await assert.rejects(resolveInstructionFiles({ ...request(root), instructionFiles: [{ name: "CUSTOM.md", kind: "agents" }] }), /validation failed/u);
+});
+
+test("common and explicit adapter CLIs select their own policy", async (t) => {
+  const root = await workspace();
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await writeFile(path.join(root, "AGENTS.md"), "common");
+  await writeFile(path.join(root, "GEMINI.md"), "host");
+  const input = path.join(root, "request.json");
+  await writeFile(input, JSON.stringify(request(root)));
+  for (const [script, selected] of [
+    ["../../skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs", "AGENTS.md"],
+    ["../../antigravity-connector/scripts/resolve-instructions.mjs", "GEMINI.md"],
+  ]) {
+    const reply = JSON.parse(execFileSync(process.execPath, [fileURLToPath(new URL(script, import.meta.url)), "--input", input], { encoding: "utf8" }));
+    assert.equal(reply.ok, true);
+    assert.equal(path.basename(reply.output.instructionFileManifest[0].path), selected);
+  }
 });

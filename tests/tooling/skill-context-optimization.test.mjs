@@ -3,9 +3,41 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writ
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { checkSkillContextOptimization, matchesEngineeringReferenceUpdate, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
-import { matchesClassificationUpdate, matchesReviewedImplementationUpdate } from "../../scripts/check-skill-context-optimization.mjs";
+import { matchesClassificationUpdate, matchesReviewedImplementationUpdate, matchesCurrentImplementationPin } from "../../scripts/check-skill-context-optimization.mjs";
 
 describe("skill context optimization", () => {
+  it("pins exact current implementation bytes separately from historical optimization", () => {
+    const report = checkSkillContextOptimization();
+    expect(report.currentImplementationPins).toHaveLength(1);
+    expect(report.currentImplementationPins[0].authorityEffect).toBe("none");
+    expect(Object.keys(report.currentImplementationPins[0].hashes)).toHaveLength(10);
+    for (const relative of Object.keys(report.currentImplementationPins[0].hashes)) {
+      const bytes = readFileSync(new URL(`../../${relative}`, import.meta.url));
+      expect(matchesCurrentImplementationPin(relative, bytes), relative).toBe(true);
+      const altered = Buffer.from(bytes); altered[altered.length - 1] ^= 1;
+      expect(matchesCurrentImplementationPin(relative, altered), relative).toBe(false);
+      expect(matchesCurrentImplementationPin(relative + ".unlisted", bytes)).toBe(false);
+    }
+    expect(report.baselineRevision).toBe("7bc7753012227938be2a46f68bf3e29d29d5ef34");
+    expect(report.totals).toMatchObject({ skillCount: 20, baselineBytes: 115679, candidateBytes: 46292 });
+  });
+  it("rejects altered current source bytes through the public checker", async () => {
+    vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {
+      const bytes = readFileSync(file, ...args);
+      if (String(file).replaceAll("\\", "/").endsWith("/skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs")) {
+        const altered = Buffer.from(bytes); altered[altered.length - 1] ^= 1; return altered;
+      }
+      return bytes;
+    } }));
+    try {
+      vi.resetModules();
+      const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      const report = checker.checkSkillContextOptimization();
+      expect(report.pass).toBe(false);
+      expect(report.errors).toContain("current implementation bytes differ: skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs");
+    } finally { vi.doUnmock("node:fs"); vi.resetModules(); }
+  });
+
   it("accepts only reviewed integration revision paths and exact bytes", () => {
     for (const relative of [
       "skills/model-effort-advisor/SKILL.md",

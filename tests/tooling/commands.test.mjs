@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -348,3 +348,34 @@ async function createVersionedSource(versions) {
   }
   return { source, commits };
 }
+
+
+it("cleans only its owned import directories when the CLI rejects metadata before commit", async () => {
+  const suiteRoot = await createSuiteRoot();
+  const { source, commits } = await createVersionedSource(["0.2.0"]);
+  const childTemporary = path.join(suiteRoot, "child-temporary");
+  const otherImport = path.join(childTemporary, "agent-governance-import-other-owner");
+  await mkdir(otherImport, { recursive: true });
+  await writeFile(path.join(otherImport, "keep"), "other-owner-bytes");
+  const registryPath = path.join(suiteRoot, "skills", "registry.json");
+  const lockPath = path.join(suiteRoot, "skills", "source-lock.json");
+  const registryOriginal = Buffer.from('{\r\n "schemaVersion":"unsupported-fixture", "skills":[]\r\n}\r\n');
+  await writeFile(registryPath, registryOriginal);
+  const lockOriginal = await readFile(lockPath);
+  const result = spawnSync(process.execPath, [path.join(root, "scripts", "import-skill.mjs"),
+    "--source", source, "--ref", commits[0], "--skill-path", ".", "--phase", "validation", "--capability", "precommit-fixture"], {
+    cwd: root, encoding: "utf8", timeout: 20000,
+    env: { ...process.env, AGENT_GOVERNANCE_ROOT: suiteRoot,
+      TMP: childTemporary, TEMP: childTemporary, TMPDIR: childTemporary },
+  });
+  expect(result.error).toBeUndefined();
+  expect(result.status).not.toBe(0);
+  expect(result.stderr).toContain("skills/registry.json must use schemaVersion 2.0.0");
+  expect((await readdir(suiteRoot)).filter(name => name.startsWith(".agent-governance-import-"))).toEqual([]);
+  expect(await readdir(childTemporary)).toEqual(["agent-governance-import-other-owner"]);
+  expect(await readFile(path.join(otherImport, "keep"), "utf8")).toBe("other-owner-bytes");
+  expect(await readFile(registryPath)).toEqual(registryOriginal);
+  expect(await readFile(lockPath)).toEqual(lockOriginal);
+  expect(await readdir(path.join(suiteRoot, "tests"))).toEqual([]);
+  await expect(readFile(path.join(suiteRoot, "skills", "versioned-skill", "SKILL.md"))).rejects.toMatchObject({ code: "ENOENT" });
+}, 30000);
