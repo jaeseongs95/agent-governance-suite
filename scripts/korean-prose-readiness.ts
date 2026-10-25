@@ -226,7 +226,8 @@ export async function evaluateKoreanProseReadiness(
   }
   if (validity.frameId !== frame.frameId || validity.frameDigest !== frame.frameDigest
     || validity.corpusDigest !== frame.corpus.inputDigest
-    || JSON.stringify(validity.strataCounts) !== JSON.stringify(frame.corpus.strata)) {
+    || validity.strataCounts.legacyCount !== frame.corpus.strata.legacyCount
+    || validity.strataCounts.holdoutCount !== frame.corpus.strata.holdoutCount) {
     throw new Error("evaluation validity report is not bound to the frozen frame and corpus");
   }
   if (validity.status !== "valid" || Object.values(validity.checks).some((value) => value !== true)

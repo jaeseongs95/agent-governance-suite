@@ -224,6 +224,12 @@ function failureResult(error: unknown, fallback: string, suffix = ""): ApiResult
     : invalidInput(`${error instanceof Error ? error.message : fallback}${suffix}`);
 }
 
+const CLASSIFICATION_REQUEST_REJECTIONS = new Set([
+  "OPERATION_DIGEST_CONFLICT", "STALE_CLASSIFICATION_OPERATION", "UNKNOWN_CLASSIFICATION_OPERATION",
+  "HOST_SELECTION_OBSERVATION_EXPIRED", "CALLER_SELECTION_RECEIPT_REJECTED", "AGENT_SELECTION_MISSING",
+  "REQUIRED_SKILL_SNAPSHOT_CHANGED", "SELECTION_ALREADY_RECORDED",
+]);
+
 /**
  * Session board tools are an interface over the skill's board store. The PreToolUse hook writes the line with the
  * host's session identity and binds it here; this side validates the call and reads the board back.
@@ -286,7 +292,7 @@ async function sessionBoardResult(
     return failureResult(error, "Session board input is invalid.");
   }
   if (tool === "update_session_status" && !binding) {
-    return apiError("BINDING_REQUIRED", "The plugin hook records the session board line and did not run for this call.");
+    return apiError("BINDING_REQUIRED", "The session binding is missing; hook execution or binding delivery was not observed for this call.");
   }
   if (!databasePath) return apiError("MCP_UNAVAILABLE", "The session board is not configured.");
   // The tools never create the board; only the hook's first write does.
@@ -331,11 +337,15 @@ async function sessionBoardResult(
 /**
  * Controls only the advertised tool schemas. Validation always uses the exact
  * contracts. "default" keeps the historical schemas; "anthropic" removes
- * top-level combinators that the Anthropic API rejects.
+ * top-level combinators for clients requiring inlined schemas.
  */
-export type ToolSchemaProfile = "default" | "anthropic";
+export type ToolSchemaProfile = "default" | "inline-references" | "anthropic";
 
-const planWorkflowAnthropicInputSchema: ObjectSchema = {
+function usesInlineReferences(profile: ToolSchemaProfile): boolean {
+  return profile === "inline-references" || profile === "anthropic";
+}
+
+const planWorkflowInlineInputSchema: ObjectSchema = {
   type: "object",
   description: "Send either a TaskEnvelope.v1 object at the top level, or { schemaVersion, taskEnvelope, evaluationAuditPurpose? }. The server validates the exact PlanWorkflowRequest.v1 contract.",
   additionalProperties: false,
@@ -347,7 +357,7 @@ const planWorkflowAnthropicInputSchema: ObjectSchema = {
 };
 
 export function planWorkflowToolInputSchema(profile: ToolSchemaProfile = "default"): Record<string, unknown> {
-  return profile === "anthropic" ? planWorkflowAnthropicInputSchema : planWorkflowInputSchema;
+  return usesInlineReferences(profile) ? planWorkflowInlineInputSchema : planWorkflowInputSchema;
 }
 
 /** Both hosts receive the selection policy from the shared skill, not a second policy copy. */
@@ -390,7 +400,7 @@ export function createMcpServer(
   const contractDocuments = Object.values(contractSchemas) as Array<Record<string, unknown>>;
   // Anthropic hosts cannot resolve $ref in tool schemas, so they receive fully inlined copies.
   const advertise = <T extends { inputSchema: Record<string, unknown> }>(tools: T[]): T[] =>
-    toolSchemaProfile === "anthropic"
+    usesInlineReferences(toolSchemaProfile)
       ? tools.map((tool) => {
         if (!JSON.stringify(tool.inputSchema).includes('"$ref"')) return tool;
         try {
@@ -481,7 +491,7 @@ export function createMcpServer(
       },
       {
         name: "start_workflow",
-        description: "Create a durable running run from a ready orchestrated workflow plan.",
+        description: "Reject unguarded workflow starts. Use open_convergence_root, claim_workflow_attempt and start_guarded_workflow to start a bound run.",
         inputSchema: contractSchemas.workflowPlan,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
@@ -609,8 +619,14 @@ export function createMcpServer(
       if (!classification) result = apiError("MCP_UNAVAILABLE", "Skill classification is not configured for this server.");
       else {
         try {
+          if (request.params.name !== "get_skill_inventory") {
+            const callerInput = { ...args };
+            delete callerInput[HOST_ATTESTATION_FIELD];
+            const checked = (request.params.name === "classify_skills" ? classificationInputSchema : selectionInputSchema).safeParse(callerInput);
+            if (!checked.success) return toolResult(invalidInput("Skill classification input does not match its contract."));
+          }
           if (request.params.name === "get_skill_inventory") {
-            if (Object.keys(args).length > 0) throw new Error("INVALID_INPUT");
+            if (Object.keys(args).length > 0) return toolResult(invalidInput("get_skill_inventory accepts no arguments."));
             result = apiOk(await classification.inventory());
           } else if (request.params.name === "classify_skills") {
             const classified = attested("classify_skills", input => {
@@ -627,7 +643,20 @@ export function createMcpServer(
             });
             result = apiOk(await recorded);
           }
-        } catch { result = invalidInput("Skill classification input, configuration or host observation is invalid; no selection was accepted."); }
+        } catch (error) {
+          if (error instanceof WorkflowContractError) {
+            // Preserve legacy rejection codes and expose only the typed cause, never raw observation data.
+            result = apiError("INVALID_INPUT", "Skill classification host observation is invalid; no selection was accepted.", {
+              category: "host-observation", reasonCode: error.code,
+            });
+          } else if (error instanceof Error && CLASSIFICATION_REQUEST_REJECTIONS.has(error.message)) {
+            result = apiError("INVALID_INPUT", "Skill classification request was rejected; no selection was accepted.", {
+              category: "request-state", reasonCode: error.message,
+            });
+          } else {
+            result = apiError("MCP_UNAVAILABLE", "Skill classification configuration or runtime is unavailable; no selection was accepted.");
+          }
+        }
       }
     } else if (request.params.name === "lookup_korean_prose_terms") {
       try {
@@ -645,7 +674,7 @@ export function createMcpServer(
         result = apiOk(updateStatus);
       }
     } else {
-      updateStatus = await updates.check(false);
+      updateStatus = updates.cachedStatus();
       switch (request.params.name) {
         case "get_trust_capabilities":
           result = Object.keys(args).length > 0
@@ -672,7 +701,9 @@ export function createMcpServer(
         case "open_convergence_root":
           result = withMode("responseMode", () => {
             const opened = service.openConvergenceRoot(domainArguments(args, "responseMode"));
-            if (opened.ok && opened.data) continuity.bindOpenedRoot(args, opened.data.rootId);
+            if (opened.ok && opened.data && !continuity.bindOpenedRoot(args, opened.data.rootId)) {
+              process.stderr.write(JSON.stringify({ event: "continuity-root-binding-unavailable" }) + "\n");
+            }
             return opened;
           }, convergenceRootHandle);
           break;

@@ -176,14 +176,16 @@ export function assertDistinctDatabasePaths(
 }
 
 /**
- * Selects the advertised MCP tool schema profile. Only the exact value
- * "anthropic" changes the default, so an unset or unknown value keeps the
- * historical schemas.
+ * Selects the advertised MCP tool schema profile. The normalized value
+ * "inline-references" selects the host-neutral compatibility behavior.
+ * The historical exact "anthropic" alias remains supported.
  */
 export function resolveToolSchemaProfile(
   environment: NodeJS.ProcessEnv = process.env,
-): "default" | "anthropic" {
-  return environment.AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE === "anthropic" ? "anthropic" : "default";
+): "default" | "inline-references" | "anthropic" {
+  const configured = environment.AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE;
+  if (configured === "anthropic") return "anthropic";
+  return configured?.trim().toLowerCase() === "inline-references" ? "inline-references" : "default";
 }
 
 /** Selects an actual trusted adapter; the environment supplies only a lookup key, never authority. */

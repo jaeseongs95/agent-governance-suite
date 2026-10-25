@@ -10,6 +10,8 @@ type JsonObject = { [key: string]: Json };
 
 const ANNOTATION_ONLY_KEYS = new Set(["$schema", "$id", "$defs", "definitions"]);
 const SCHEMA_MAP_KEYS = new Set(["properties", "patternProperties", "dependentSchemas"]);
+const SCHEMA_ARRAY_KEYS = new Set(["allOf", "anyOf", "oneOf", "prefixItems"]);
+const SCHEMA_VALUE_KEYS = new Set(["additionalProperties", "unevaluatedProperties", "propertyNames", "items", "additionalItems", "unevaluatedItems", "contains", "not", "if", "then", "else", "contentSchema"]);
 // Keywords that only describe a schema; merging them next to a resolved reference keeps its meaning.
 const ANNOTATION_KEYWORDS = new Set(["title", "description", "default", "examples", "$comment", "deprecated", "readOnly", "writeOnly"]);
 
@@ -42,6 +44,16 @@ export function inlineSchemaReferences(
   const rootBase = typeof schema.$id === "string" ? schema.$id : "urn:agent-governance:tool-schema";
   byId.set(rootBase, schema as JsonObject);
 
+  function keyword(name: string, value: Json, base: string, active: ReadonlySet<string>): Json {
+    if (SCHEMA_MAP_KEYS.has(name) && isObject(value)) {
+      return Object.fromEntries(Object.entries(value).map(([property, subschema]) => [property, inline(subschema, base, active)]));
+    }
+    if (SCHEMA_ARRAY_KEYS.has(name) && Array.isArray(value)) return value.map((subschema) => inline(subschema, base, active));
+    if (SCHEMA_VALUE_KEYS.has(name)) return inline(value, base, active);
+    // const, enum, defaults, examples and unknown annotation values are literal data.
+    return value;
+  }
+
   function inline(node: Json, base: string, active: ReadonlySet<string>): Json {
     if (Array.isArray(node)) return node.map((item) => inline(item, base, active));
     if (!isObject(node)) return node;
@@ -59,7 +71,7 @@ export function inlineSchemaReferences(
       const siblings = Object.fromEntries(
         Object.entries(node)
           .filter(([name]) => name !== "$ref" && !ANNOTATION_ONLY_KEYS.has(name))
-          .map(([name, value]) => [name, inline(value, nodeBase, active)]),
+          .map(([name, value]) => [name, keyword(name, value, nodeBase, active)]),
       );
       if (Object.keys(siblings).length === 0) return resolved;
       // In JSON Schema 2020-12 a $ref applies together with its siblings, so constraints are combined, not merged.
@@ -71,9 +83,7 @@ export function inlineSchemaReferences(
     for (const [name, value] of Object.entries(node)) {
       if (ANNOTATION_ONLY_KEYS.has(name)) continue;
       // Keys of a property map are names, not keywords, so none of them is dropped.
-      output[name] = SCHEMA_MAP_KEYS.has(name) && isObject(value)
-        ? Object.fromEntries(Object.entries(value).map(([property, subschema]) => [property, inline(subschema, nodeBase, active)]))
-        : inline(value, nodeBase, active);
+      output[name] = keyword(name, value, nodeBase, active);
     }
     return output;
   }

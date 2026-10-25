@@ -17,6 +17,8 @@ import {
 const SUCCESS_TTL_MS = 24 * 60 * 60 * 1000;
 const FAILURE_RETRY_MS = 60 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 3_000;
+const MAX_RESPONSE_BYTES = 1024 * 1024;
+const MAX_TAG_REFERENCES = 10_000;
 const STABLE_TAG = /^refs\/tags\/v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/u;
 const TAG_OBJECT_URL_PREFIX = `${PLUGIN_INFO.tagsApi.split("/git/matching-refs/")[0]}/git/tags/`;
 const GITHUB_HEADERS = {
@@ -44,6 +46,36 @@ interface ServiceOptions {
 class UpdateCheckError extends Error {
   constructor(readonly code: PluginUpdateErrorCode, message: string) {
     super(message);
+  }
+}
+
+async function readUpdateJson(response: Response): Promise<unknown> {
+  const reader = response.body?.getReader();
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  if (reader) {
+    try {
+      while (true) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        length += chunk.value.byteLength;
+        if (length > MAX_RESPONSE_BYTES) {
+          try { await reader.cancel(); } catch { /* Preserve the response limit error. */ }
+          throw new UpdateCheckError("INVALID_RESPONSE", "GitHub update response exceeded the byte limit.");
+        }
+        chunks.push(chunk.value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+  const bytes = new Uint8Array(length);
+  let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+  try {
+    return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
+  } catch {
+    throw new UpdateCheckError("INVALID_RESPONSE", "GitHub update response was not JSON.");
   }
 }
 
@@ -102,6 +134,18 @@ export class PluginUpdateService {
     this.fetcher = options.fetcher ?? fetch;
     this.now = options.now ?? (() => new Date());
     this.requestTimeoutMs = options.requestTimeoutMs ?? REQUEST_TIMEOUT_MS;
+  }
+
+  /** Reads advisory cached state without starting a remote update request. */
+  cachedStatus(): PluginUpdateStatusV1 | null {
+    const now = this.now();
+    const stored = this.readState();
+    if (!stored) return null;
+    try {
+      return this.publicStatus(this.withCurrentVersion(stored, now), now);
+    } catch {
+      return null;
+    }
   }
 
   async check(force = false): Promise<PluginUpdateStatusV1> {
@@ -280,17 +324,14 @@ export class PluginUpdateService {
     signal: AbortSignal,
   ): Promise<StoredPluginUpdateState> {
     if (!response.ok) throw new UpdateCheckError("HTTP", `GitHub tags request failed with HTTP ${response.status}.`);
-    let body: unknown;
-    try {
-      body = await response.json();
-    } catch {
-      throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tags response was not JSON.");
-    }
+    const body = await readUpdateJson(response);
     if (!Array.isArray(body)) throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tags response was not an array.");
+    if (body.length > MAX_TAG_REFERENCES) throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tags response exceeded the item limit.");
     const stable = body.flatMap((item) => {
       const reference = remoteReference(item);
       const match = reference ? STABLE_TAG.exec(reference.ref) : null;
-      return reference && match ? [{ reference, version: `${match[1]}.${match[2]}.${match[3]}` }] : [];
+      const version = match ? `${match[1]}.${match[2]}.${match[3]}` : null;
+      return reference && version && parseStableVersion(version) ? [{ reference, version }] : [];
     });
     if (stable.length === 0) throw new UpdateCheckError("NO_STABLE_TAG", "GitHub returned no stable plugin tag.");
     stable.sort((left, right) => compareStableVersions(right.version, left.version));
@@ -327,12 +368,7 @@ export class PluginUpdateService {
         signal,
       });
       if (!response.ok) throw new UpdateCheckError("HTTP", `GitHub tag object request failed with HTTP ${response.status}.`);
-      let value: unknown;
-      try {
-        value = await response.json() as unknown;
-      } catch {
-        throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag object response was not JSON.");
-      }
+      const value = await readUpdateJson(response);
       if (!isRecord(value) || !isRecord(value.object)) {
         throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag object response was invalid.");
       }
