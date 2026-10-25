@@ -45250,6 +45250,7 @@ var TrustService = class {
 
 // mcp-server/src/index.ts
 import path21 from "node:path";
+import { pathToFileURL } from "node:url";
 
 // mcp-server/src/skill-classification/runtime.ts
 import { types as utilTypes3 } from "node:util";
@@ -45647,7 +45648,8 @@ function bindNativeClassificationDefinitions(definitions, behaviors = builtInBeh
 }
 
 // mcp-server/src/index.ts
-async function main() {
+async function startMcpServer(wireAdapters = /* @__PURE__ */ new Map()) {
+  const installedWireAdapters = new Map(wireAdapters);
   const registryPath = resolveRegistryPath();
   const workflowDatabasePath = resolveWorkflowDatabasePath();
   const continuityDatabasePath = resolveContinuityDatabasePath();
@@ -45711,7 +45713,7 @@ async function main() {
     nativeDefinitionDigest = nativeDefinitionBytes ? digestClassificationValue(nativeDefinitionBytes.toString("utf8")) : null;
     const nativeDefinitions = nativeDefinitionBytes ? JSON.parse(nativeDefinitionBytes.toString("utf8")) : [];
     const nativeAdapters = createNativeClassificationAdapters(bindNativeClassificationDefinitions(nativeDefinitions));
-    if (providerRuntimeRef) providerRuntime = await loadClassificationProviderRuntime(providerRuntimeRef, { nativeAdapters });
+    if (providerRuntimeRef) providerRuntime = await loadClassificationProviderRuntime(providerRuntimeRef, { nativeAdapters, wireAdapters: installedWireAdapters });
   } catch (error61) {
     initializationFailed = true;
     reportClassificationInitializationFailure(error61);
@@ -45761,7 +45763,12 @@ async function main() {
   const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), void 0, trust, classification2);
   await server.connect(new StdioServerTransport());
 }
-void main().catch((error61) => {
-  process.stderr.write("".concat(error61 instanceof Error ? error61.message : String(error61), "\n"));
-  process.exitCode = 1;
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(path21.resolve(process.argv[1])).href) {
+  void startMcpServer().catch((error61) => {
+    process.stderr.write("".concat(error61 instanceof Error ? error61.message : String(error61), "\n"));
+    process.exitCode = 1;
+  });
+}
+export {
+  startMcpServer
+};

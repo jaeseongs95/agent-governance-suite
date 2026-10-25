@@ -21267,9 +21267,73 @@ function mentionsToolUseId(line, toolUseId) {
   );
   return decoded.includes(toolUseId);
 }
+function hasIncompleteIssuer(line, toolUseId) {
+  const closers = [];
+  let inString = false;
+  let escaped = false;
+  let stringStart = -1;
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === '"') inString = false;
+    } else if (char === '"') {
+      inString = true;
+      stringStart = index;
+    } else if (char === "{") closers.push("}");
+    else if (char === "[") closers.push("]");
+    else if ((char === "}" || char === "]") && closers.pop() !== char) return false;
+  }
+  if (closers.length === 0) return false;
+  let fragment = line.trimEnd();
+  let prefix = "";
+  const unfinished = "!".repeat(line.length + 1);
+  if (inString) {
+    const tail = line.slice(stringStart + 1);
+    try {
+      prefix = JSON.parse('"' + tail + '"');
+    } catch {
+      const incompleteEscape = /\\(?:u[0-9a-fA-F]{0,3})?$/u.exec(tail)?.[0];
+      if (!incompleteEscape) return false;
+      try {
+        prefix = JSON.parse('"' + tail.slice(0, -incompleteEscape.length) + '"');
+      } catch {
+        return false;
+      }
+    }
+    fragment = line.slice(0, stringStart) + JSON.stringify(unfinished);
+  } else if (fragment.endsWith(",")) fragment = fragment.slice(0, -1);
+  else if (fragment.endsWith(":")) fragment += "null";
+  if (!inString) {
+    const partialValue = /(?:^|[[:,])\s*(t|tr|tru|f|fa|fal|fals|n|nu|nul|-|-?(?:0|[1-9]\d*)\.|-?(?:0|[1-9]\d*)(?:\.\d+)?[eE][+-]?)$/u.exec(fragment)?.[1];
+    if (partialValue) fragment = fragment.slice(0, -partialValue.length) + "null";
+  }
+  const closing = closers.reverse().join("");
+  let entry;
+  try {
+    entry = record5(JSON.parse(fragment + closing));
+  } catch {
+    try {
+      entry = record5(JSON.parse(fragment + ":null" + closing));
+    } catch {
+      return false;
+    }
+  }
+  if (!entry || entry.type === "user" || entry.type === "system") return false;
+  const content = record5(entry.message)?.content;
+  const block = Array.isArray(content) ? record5(content.at(-1)) : null;
+  if (!block || block.type === "text" || block.type === "tool_result") return false;
+  if (block.id === unfinished) return toolUseId.startsWith(prefix);
+  if (text4(block.id)) return false;
+  return block.type === "tool_use" || block.type === unfinished && "tool_use".startsWith(prefix);
+}
 function probeIssuingMessage(transcript, toolUseId) {
   for (const line of transcript.split("\n")) {
-    if (!mentionsToolUseId(line, toolUseId)) continue;
+    if (!mentionsToolUseId(line, toolUseId)) {
+      if (hasIncompleteIssuer(line, toolUseId)) return { state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" };
+      continue;
+    }
     let entry;
     try {
       entry = record5(JSON.parse(line));

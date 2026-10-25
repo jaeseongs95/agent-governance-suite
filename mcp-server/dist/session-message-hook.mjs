@@ -1755,9 +1755,6 @@ import { fileURLToPath as fileURLToPath2 } from "node:url";
 function supportsInjection(capabilities, kind) {
   return capabilities.supportedInjection.includes(kind);
 }
-function isObservedSubagent(observation) {
-  return observation.actor.kind === "subagent" && observation.actor.assurance === "observed";
-}
 
 // mcp-server/src/session-message-hook.ts
 var SESSION_BOUND_TOOLS = /* @__PURE__ */ new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"]);
@@ -1978,7 +1975,7 @@ async function handleSessionMessageHook(input, host, explicitHostPid, options = 
   const observation = adapted.observation;
   const sessionId = observation.sessionId;
   if (!sessionId) return {};
-  const subagent = isObservedSubagent(observation);
+  const main = observation.actor.kind === "main" && observation.actor.assurance === "observed";
   const profile = hostDeliveryProfile(host, process.env, void 0, options.defaultQueueWake);
   const target = { host, sessionId };
   if (budget && observation.kind === "user-input" && observation.wakeOnly && observation.wakeCandidates?.length && supportsInjection(profile.capabilities, "peer-wake")) {
@@ -2035,8 +2032,7 @@ async function handleSessionMessageHook(input, host, explicitHostPid, options = 
     }
   }
   if (adapted.lifecycle === "start") {
-    if (subagent) return {};
-    if (options.ensureRelay && (observation.actor.kind !== "main" || observation.actor.assurance !== "observed")) return {};
+    if (!main) return {};
     const hostProcess = options.hostProcess ? { pid: options.hostProcess.pid, startToken: options.hostProcess.startToken } : void 0;
     if (options.ensureRelay) {
       await ensureVerifiedRelay(hostProcess);
@@ -2070,7 +2066,7 @@ async function handleSessionMessageHook(input, host, explicitHostPid, options = 
     return {};
   }
   if (adapted.lifecycle === "end") {
-    if (!subagent) {
+    if (main) {
       try {
         await request("clear-deferred", { target });
       } catch (error) {
@@ -2115,7 +2111,7 @@ async function handleSessionMessageHook(input, host, explicitHostPid, options = 
       }
     };
   }
-  if (subagent) return {};
+  if (!main) return {};
   if (options.recoverExistingSession && observation.actor.kind === "main" && observation.actor.assurance === "observed" && (observation.kind === "user-input" || observation.kind === "turn-end" || observation.kind === "tool-boundary" && observation.boundaryPhase === "after")) {
     try {
       const listed = await request("list-presence", { targets: [target] });
