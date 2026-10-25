@@ -237,7 +237,7 @@ describe("offline classification through actual MCP Client/Server transport", ()
     const args = { schemaVersion: "1.0.0", operationId: input().operationId, decision: decision(advice, ["code-review"]) };
     const result = await h.call<Accepted>("record_skill_selection", args);
     expect(result.data).toMatchObject({ valid: false, errors: ["HOST_SELECTION_NOT_OBSERVED"], agentSelectedSkillIds: null });
-    expect((await h.call<Accepted>("record_skill_selection", h.sign(args))).error?.code).toBe("INVALID_INPUT");
+    expect((await h.call<Accepted>("record_skill_selection", h.sign(args))).error?.code).toBe("BINDING_REQUIRED");
   });
   it("keeps AGENT choices independent of the same advice and handles accepted no-skill distinctly", async () => {
     const h = await harness({ needed: [] });

@@ -1,6 +1,7 @@
+import {types as utilTypes} from "node:util";
 import {readFile} from "node:fs/promises";
 import {z} from "zod";
-import {ApprovedRouteClassificationProvider, jevNoulWireAdapter, type ApprovedClassificationRoute, type ClassificationWireAdapter} from "./providers.js";
+import {ApprovedRouteClassificationProvider, jevNoulWireAdapter, jevNoulSufficiencyWireAdapter, jevNoulSharedRulesWireAdapter, jevNoulSharedRulesV5LongContextWireAdapter, jevNoulSharedRulesV5WireAdapter, JEV_NOUL_SHARED_RULES_V5_LONG_CONTEXT_ADAPTER_REVISION, type ApprovedClassificationRoute, type ClassificationWireAdapter} from "./providers.js";
 import {resolveNativeClassificationAdapter, type NativeClassificationAdapterRegistry} from "./native-adapters.js";
 import {InMemoryClassificationBudget} from "./service.js";
 
@@ -34,12 +35,19 @@ export function createClassificationProviderRuntime(raw: unknown, options: Class
   for (const route of config.routes) {
     if (route.kind === "remote") {
       const {credentialEnvName, wireAdapterRef, ...common} = route;
+      const jevLongContext = wireAdapterRef === JEV_NOUL_SHARED_RULES_V5_LONG_CONTEXT_ADAPTER_REVISION;
+      if (jevLongContext && (route.providerKind !== "jev" || route.adapterRevision !== JEV_NOUL_SHARED_RULES_V5_LONG_CONTEXT_ADAPTER_REVISION)) throw new Error("INVALID_JEV_CONTEXT_ROUTE");
       const endpoint = new URL(route.endpoint);
       if (endpoint.protocol !== "https:" || endpoint.username || endpoint.password) throw new Error("INVALID_APPROVED_ENDPOINT");
       // JEV's public wire contract is the only built-in remote protocol. Vendor adapters are registered explicitly.
-      const adapter = wireAdapterRef === "jev-noul-v1" && route.providerKind === "jev" ? jevNoulWireAdapter : options.wireAdapters?.get(wireAdapterRef);
+      const adapter = route.providerKind === "jev" && wireAdapterRef === "jev-noul-v1" ? jevNoulWireAdapter
+        : route.providerKind === "jev" && wireAdapterRef === "jev-noul-sufficiency-v2" ? jevNoulSufficiencyWireAdapter
+        : route.providerKind === "jev" && wireAdapterRef === "jev-noul-sufficiency-shared-v4" ? jevNoulSharedRulesWireAdapter
+        : route.providerKind === "jev" && wireAdapterRef === "jev-noul-sufficiency-shared-v5" ? jevNoulSharedRulesV5WireAdapter
+        : jevLongContext ? jevNoulSharedRulesV5LongContextWireAdapter
+        : options.wireAdapters?.get(wireAdapterRef);
       if (!adapter) continue;
-      routes.push({...common, adapter, getCredential: () => options.getCredentialByEnvName ? options.getCredentialByEnvName(credentialEnvName) : Promise.resolve(process.env[credentialEnvName] ?? null)});
+      routes.push({...common, ...(jevLongContext ? {jevLongContext: true as const} : {}), adapter, getCredential: () => options.getCredentialByEnvName ? options.getCredentialByEnvName(credentialEnvName) : Promise.resolve(process.env[credentialEnvName] ?? null)});
     } else {
       const {nativeAdapterRef, capabilityEvidenceRef, retryPolicyVerified, ...common} = route;
       const adapter = resolveNativeClassificationAdapter(options.nativeAdapters ?? new Map(), nativeAdapterRef, capabilityEvidenceRef, retryPolicyVerified);
@@ -57,4 +65,22 @@ export async function loadClassificationProviderRuntime(file: string, options: C
   const bytes = await readFile(file);
   if (bytes.length > 1024 * 1024) throw new Error("CLASSIFICATION_RUNTIME_TOO_LARGE");
   return createClassificationProviderRuntime(JSON.parse(bytes.toString("utf8")), options);
+}
+
+/** Closed startup reasons only; this is diagnostic classification, not producer authenticity proof.
+ * Raw messages, stacks, paths, argv and bodies are never reported. */
+export function reportClassificationInitializationFailure(error: unknown,
+  report: (record: Readonly<{phase: "classification-initialization"; reason: string}>) => void = record => {
+    console.error("[agent-governance-suite] classification-initialization-failed " + JSON.stringify(record));
+  }): void {
+  let reason = "CLASSIFICATION_CONFIGURATION_UNAVAILABLE";
+  try {
+    const message: unknown = error && typeof error === "object" && !utilTypes.isProxy(error) ? Object.getOwnPropertyDescriptor(error, "message")?.value : null;
+    if (typeof message === "string" && ["INVALID_NATIVE_ADAPTER_DEFINITION", "DUPLICATE_NATIVE_ADAPTER",
+      "NATIVE_ADAPTER_BEHAVIOR_UNAVAILABLE", "INVALID_NATIVE_ISOLATION_ARGUMENT", "NATIVE_ISOLATION_VALIDATION_UNAVAILABLE",
+      "NATIVE_ADAPTER_DEFINITIONS_TOO_LARGE", "DUPLICATE_CLASSIFICATION_ROUTE", "INVALID_APPROVED_ENDPOINT",
+      "CLASSIFICATION_RUNTIME_TOO_LARGE", "INVALID_JEV_CONTEXT_ROUTE"].includes(message)) reason = message;
+  } catch { /* Opaque errors remain a fixed unavailable reason. */ }
+  try { report(Object.freeze({phase: "classification-initialization", reason})); }
+  catch { /* A broken diagnostic sink cannot enable classification or replace the startup failure. */ }
 }

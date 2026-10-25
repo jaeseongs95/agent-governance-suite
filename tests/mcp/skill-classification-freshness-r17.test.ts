@@ -78,6 +78,7 @@ async function harness(options: {missing?: boolean; disabled?: boolean; unavaila
 
 import {ApprovedRouteClassificationProvider, unknownUsage, type ApprovedClassificationRoute} from "../../mcp-server/src/skill-classification/providers.js";
 import {createNativeClassificationAdapters} from "../../mcp-server/src/skill-classification/native-adapters.js";
+import {bindNativeClassificationDefinitions} from "../../mcp-server/src/skill-classification/native-cli-strategies.js";
 
 describe("R17 freshness at the public commit and dispatch boundaries", () => {
   it.each([0, 1])("r17-observation: an accept observation expiring during runtime await is rejected at expiry+%s and a fresh receipt can commit", async offset => {
@@ -114,7 +115,7 @@ describe("R17 freshness at the public commit and dispatch boundaries", () => {
         const response = (await evaluation(nativeRequest!)).response;
         return {exitCode: 0, stdout: JSON.stringify({type: "item.completed", item: {type: "agent_message", text: JSON.stringify(response)}}) + "\n" + JSON.stringify({type: "turn.completed", usage: {}})};
       });
-      const adapter = createNativeClassificationAdapters([{adapterId: "r17-native", host: "codex", executable: process.execPath, workingDirectory: root, approvalRef: "synthetic", capabilityEvidenceRef: "synthetic", retryPolicyVerified: true, retryPolicyEvidenceRef: "synthetic", isolationEvidenceRef: "synthetic", isolationArgs: [], timeoutMs: 1000, maximumOutputBytes: 100000}], runner).get("r17-native")!;
+      const adapter = createNativeClassificationAdapters(bindNativeClassificationDefinitions([{adapterId: "r17-native", host: "codex", executable: process.execPath, workingDirectory: root, approvalRef: "synthetic", capabilityEvidenceRef: "synthetic", retryPolicyVerified: true, retryPolicyEvidenceRef: "synthetic", isolationEvidenceRef: "synthetic", isolationArgs: [], timeoutMs: 1000, maximumOutputBytes: 100000}]), runner).get("r17-native")!;
       const routeBase = {routeRef: h.profile.approvedRouteRef, approvalRef: "synthetic-only", approved: true, providerKind: "vendor" as const, vendorId: h.profile.vendorId, adapterRevision: h.profile.adapterRevision, modelIds: [h.profile.modelId], reasoningEfforts: [h.profile.reasoningEffort], structuredOutput: true};
       let credentials = 0;
       const route: ApprovedClassificationRoute = kind === "remote" ? {...routeBase, kind, endpoint: "https://synthetic.invalid/classify", getCredential: async () => {if (++credentials === 2) await mutate(); return "synthetic-key";}, adapter: {encode: () => ({}), decode: (_body, request) => ({response: {schemaVersion: "1.0.0", requestId: request.requestId, operationId: request.operationId, requestDigest: request.requestDigest, inventoryDigest: request.inventoryDigest, status: "SUCCESS", judgments: request.skills.map(skill => ({skillId: skill.skillId, judgment: skill.skillId === "code-review" ? "needed" : "not-needed", reasonRefs: ["synthetic"], uncertaintyReason: null})), unresolvedItems: [], error: null}, dispatchState: "started", usage: {...unknownUsage(), actualCostUsd: 0}, diagnostics: null})}}

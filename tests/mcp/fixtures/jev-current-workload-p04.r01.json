@@ -1,0 +1,465 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "SyntheticP04FileMapOnly",
+  "supplementId": "J30-P04",
+  "originalCases": 125,
+  "originalAc": 10,
+  "baseFiles": {
+    "skills/registry.json": "{\n  \"schemaVersion\": \"2.0.0\",\n  \"skills\": []\n}\n",
+    "skills/fixture-r/SKILL.md": "---\nname: fixture-r\ndescription: 닫힌 합성 독립 oracle 전용 규칙\nversion: fixture-1\n---\ntrusted action reviewDiff를 요청한 경우 적용한다.\nreviewDiff 없이 modifyProductFiles만 요청한 경우 제외한다.\n",
+    "skills/fixture-r/classification.json": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"taxonomyRevision\": \"fixture-oracle-r01\",\n  \"actions\": [\n    \"reviewDiff\"\n  ],\n  \"targets\": [\n    \"fixture-task\"\n  ],\n  \"constraints\": [\n    \"synthetic-only\"\n  ],\n  \"dependencies\": [],\n  \"capabilities\": [\n    \"fixture-capability-fixture-r\"\n  ],\n  \"applicability\": [\n    {\n      \"path\": \"skills/fixture-r/SKILL.md\",\n      \"startLine\": 6,\n      \"endLine\": 6,\n      \"digest\": \"sha256:b91efc3b6a637d9cf64ac0ea528ffdab7c5e22ee269d0421bab0edb061fbb80d\"\n    }\n  ],\n  \"exclusions\": [\n    {\n      \"path\": \"skills/fixture-r/SKILL.md\",\n      \"startLine\": 7,\n      \"endLine\": 7,\n      \"digest\": \"sha256:b91efc3b6a637d9cf64ac0ea528ffdab7c5e22ee269d0421bab0edb061fbb80d\"\n    }\n  ]\n}\n",
+    "skills/fixture-w/SKILL.md": "---\nname: fixture-w\ndescription: 닫힌 합성 독립 oracle 전용 규칙\nversion: fixture-1\n---\ntrusted action modifyProductFiles를 요청한 경우 적용한다.\n읽기 전용 reviewDiff만 요청한 경우 제외한다.\n",
+    "skills/fixture-w/classification.json": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"taxonomyRevision\": \"fixture-oracle-r01\",\n  \"actions\": [\n    \"modifyProductFiles\"\n  ],\n  \"targets\": [\n    \"fixture-task\"\n  ],\n  \"constraints\": [\n    \"synthetic-only\"\n  ],\n  \"dependencies\": [],\n  \"capabilities\": [\n    \"fixture-capability-fixture-w\"\n  ],\n  \"applicability\": [\n    {\n      \"path\": \"skills/fixture-w/SKILL.md\",\n      \"startLine\": 6,\n      \"endLine\": 6,\n      \"digest\": \"sha256:2f751eabea17061aab769da17c18834a168e80a87ace15a685e4914144ca9ce0\"\n    }\n  ],\n  \"exclusions\": [\n    {\n      \"path\": \"skills/fixture-w/SKILL.md\",\n      \"startLine\": 7,\n      \"endLine\": 7,\n      \"digest\": \"sha256:2f751eabea17061aab769da17c18834a168e80a87ace15a685e4914144ca9ce0\"\n    }\n  ]\n}\n",
+    "skills/fixture-g/SKILL.md": "---\nname: fixture-g\ndescription: 닫힌 합성 독립 oracle 전용 규칙\nversion: fixture-1\n---\n별도 에이전트 병렬작업을 명시적으로 요청한 경우 적용한다.\n인용문·이름 언급만 있거나 병렬작업 요청이 없는 경우 제외한다.\n",
+    "skills/fixture-g/classification.json": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"taxonomyRevision\": \"fixture-oracle-r01\",\n  \"actions\": [\n    \"explicitParallelDelegation\"\n  ],\n  \"targets\": [\n    \"fixture-task\"\n  ],\n  \"constraints\": [\n    \"synthetic-only\"\n  ],\n  \"dependencies\": [],\n  \"capabilities\": [\n    \"fixture-capability-fixture-g\"\n  ],\n  \"applicability\": [\n    {\n      \"path\": \"skills/fixture-g/SKILL.md\",\n      \"startLine\": 6,\n      \"endLine\": 6,\n      \"digest\": \"sha256:c5ea8c254fbc4ef247472bf963afcf878937f0806fd63c4b03b79557e56f779f\"\n    }\n  ],\n  \"exclusions\": [\n    {\n      \"path\": \"skills/fixture-g/SKILL.md\",\n      \"startLine\": 7,\n      \"endLine\": 7,\n      \"digest\": \"sha256:c5ea8c254fbc4ef247472bf963afcf878937f0806fd63c4b03b79557e56f779f\"\n    }\n  ]\n}\n"
+  },
+  "variants": [
+    {
+      "name": "base",
+      "originalCaseIds": [
+        "C-10",
+        "C-11",
+        "C-12",
+        "C-13",
+        "C-15"
+      ],
+      "patch": {},
+      "expectedInventoryIds": [
+        "fixture-g",
+        "fixture-r",
+        "fixture-w"
+      ],
+      "expectedSkillEvidence": {
+        "fixture-g": {
+          "sourceDigests": {
+            "skills/fixture-g/SKILL.md": "sha256:c5ea8c254fbc4ef247472bf963afcf878937f0806fd63c4b03b79557e56f779f",
+            "skills/fixture-g/classification.json": "sha256:fa7c7daa3c13819c8730879f634bc7eb630fa53bd32c278d09b58dc3a41b40a5"
+          },
+          "applicability": [
+            "별도 에이전트 병렬작업을 명시적으로 요청한 경우 적용한다."
+          ],
+          "exclusions": [
+            "인용문·이름 언급만 있거나 병렬작업 요청이 없는 경우 제외한다."
+          ],
+          "spans": [
+            {
+              "field": "applicability",
+              "path": "skills/fixture-g/SKILL.md",
+              "startLine": 6,
+              "endLine": 6,
+              "digest": "sha256:c5ea8c254fbc4ef247472bf963afcf878937f0806fd63c4b03b79557e56f779f"
+            },
+            {
+              "field": "exclusions",
+              "path": "skills/fixture-g/SKILL.md",
+              "startLine": 7,
+              "endLine": 7,
+              "digest": "sha256:c5ea8c254fbc4ef247472bf963afcf878937f0806fd63c4b03b79557e56f779f"
+            }
+          ]
+        },
+        "fixture-r": {
+          "sourceDigests": {
+            "skills/fixture-r/SKILL.md": "sha256:b91efc3b6a637d9cf64ac0ea528ffdab7c5e22ee269d0421bab0edb061fbb80d",
+            "skills/fixture-r/classification.json": "sha256:ef458ddc218459ef55cb4fd38cbbe18b957b388c5a92514f5693dc1f9ae56288"
+          },
+          "applicability": [
+            "trusted action reviewDiff를 요청한 경우 적용한다."
+          ],
+          "exclusions": [
+            "reviewDiff 없이 modifyProductFiles만 요청한 경우 제외한다."
+          ],
+          "spans": [
+            {
+              "field": "applicability",
+              "path": "skills/fixture-r/SKILL.md",
+              "startLine": 6,
+              "endLine": 6,
+              "digest": "sha256:b91efc3b6a637d9cf64ac0ea528ffdab7c5e22ee269d0421bab0edb061fbb80d"
+            },
+            {
+              "field": "exclusions",
+              "path": "skills/fixture-r/SKILL.md",
+              "startLine": 7,
+              "endLine": 7,
+              "digest": "sha256:b91efc3b6a637d9cf64ac0ea528ffdab7c5e22ee269d0421bab0edb061fbb80d"
+            }
+          ]
+        },
+        "fixture-w": {
+          "sourceDigests": {
+            "skills/fixture-w/SKILL.md": "sha256:2f751eabea17061aab769da17c18834a168e80a87ace15a685e4914144ca9ce0",
+            "skills/fixture-w/classification.json": "sha256:12c41c6161607f54ed57da4a15ee7d563fed33ab97b7d094a192f437c9d66a6a"
+          },
+          "applicability": [
+            "trusted action modifyProductFiles를 요청한 경우 적용한다."
+          ],
+          "exclusions": [
+            "읽기 전용 reviewDiff만 요청한 경우 제외한다."
+          ],
+          "spans": [
+            {
+              "field": "applicability",
+              "path": "skills/fixture-w/SKILL.md",
+              "startLine": 6,
+              "endLine": 6,
+              "digest": "sha256:2f751eabea17061aab769da17c18834a168e80a87ace15a685e4914144ca9ce0"
+            },
+            {
+              "field": "exclusions",
+              "path": "skills/fixture-w/SKILL.md",
+              "startLine": 7,
+              "endLine": 7,
+              "digest": "sha256:2f751eabea17061aab769da17c18834a168e80a87ace15a685e4914144ca9ce0"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "add-irrelevant",
+      "originalCaseIds": [
+        "C-10"
+      ],
+      "patch": {
+        "skills/fixture-q/SKILL.md": "---\nname: fixture-q\ndescription: 닫힌 합성 독립 oracle 전용 규칙\nversion: fixture-1\n---\ntrusted action cookRecipe를 요청한 경우에만 적용한다.\n고정 diff의 읽기 전용 검토만 요청한 경우 제외한다.\n",
+        "skills/fixture-q/classification.json": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"taxonomyRevision\": \"fixture-oracle-r01\",\n  \"actions\": [\n    \"cookRecipe\"\n  ],\n  \"targets\": [\n    \"fixture-task\"\n  ],\n  \"constraints\": [\n    \"synthetic-only\"\n  ],\n  \"dependencies\": [],\n  \"capabilities\": [\n    \"fixture-capability-fixture-q\"\n  ],\n  \"applicability\": [\n    {\n      \"path\": \"skills/fixture-q/SKILL.md\",\n      \"startLine\": 6,\n      \"endLine\": 6,\n      \"digest\": \"sha256:5c3894fe7ea7d4b6d66aa37f8ab041b252de858b32291d2242f6863193a0f251\"\n    }\n  ],\n  \"exclusions\": [\n    {\n      \"path\": \"skills/fixture-q/SKILL.md\",\n      \"startLine\": 7,\n      \"endLine\": 7,\n      \"digest\": \"sha256:5c3894fe7ea7d4b6d66aa37f8ab041b252de858b32291d2242f6863193a0f251\"\n    }\n  ]\n}\n"
+      },
+      "expectedInventoryIds": [
+        "fixture-g",
+        "fixture-q",
+        "fixture-r",
+        "fixture-w"
+      ],
+      "expectedSkillEvidence": {
+        "fixture-g": {
+          "sourceDigests": {
+            "skills/fixture-g/SKILL.md": "sha256:c5ea8c254fbc4ef247472bf963afcf878937f0806fd63c4b03b79557e56f779f",
+            "skills/fixture-g/classification.json": "sha256:fa7c7daa3c13819c8730879f634bc7eb630fa53bd32c278d09b58dc3a41b40a5"
+          },
+          "applicability": [
+            "별도 에이전트 병렬작업을 명시적으로 요청한 경우 적용한다."
+          ],
+          "exclusions": [
+            "인용문·이름 언급만 있거나 병렬작업 요청이 없는 경우 제외한다."
+          ],
+          "spans": [
+            {
+              "field": "applicability",
+              "path": "skills/fixture-g/SKILL.md",
+              "startLine": 6,
+              "endLine": 6,
+              "digest": "sha256:c5ea8c254fbc4ef247472bf963afcf878937f0806fd63c4b03b79557e56f779f"
+            },
+            {
+              "field": "exclusions",
+              "path": "skills/fixture-g/SKILL.md",
+              "startLine": 7,
+              "endLine": 7,
+              "digest": "sha256:c5ea8c254fbc4ef247472bf963afcf878937f0806fd63c4b03b79557e56f779f"
+            }
+          ]
+        },
+        "fixture-q": {
+          "sourceDigests": {
+            "skills/fixture-q/SKILL.md": "sha256:5c3894fe7ea7d4b6d66aa37f8ab041b252de858b32291d2242f6863193a0f251",
+            "skills/fixture-q/classification.json": "sha256:acc64248eb34957a757821f238af402e8f5da8436206ddb2e50227dec738bcc1"
+          },
+          "applicability": [
+            "trusted action cookRecipe를 요청한 경우에만 적용한다."
+          ],
+          "exclusions": [
+            "고정 diff의 읽기 전용 검토만 요청한 경우 제외한다."
+          ],
+          "spans": [
+            {
+              "field": "applicability",
+              "path": "skills/fixture-q/SKILL.md",
+              "startLine": 6,
+              "endLine": 6,
+              "digest": "sha256:5c3894fe7ea7d4b6d66aa37f8ab041b252de858b32291d2242f6863193a0f251"
+            },
+            {
+              "field": "exclusions",
+              "path": "skills/fixture-q/SKILL.md",
+              "startLine": 7,
+              "endLine": 7,
+              "digest": "sha256:5c3894fe7ea7d4b6d66aa37f8ab041b252de858b32291d2242f6863193a0f251"
+            }
+          ]
+        },
+        "fixture-r": {
+          "sourceDigests": {
+            "skills/fixture-r/SKILL.md": "sha256:b91efc3b6a637d9cf64ac0ea528ffdab7c5e22ee269d0421bab0edb061fbb80d",
+            "skills/fixture-r/classification.json": "sha256:ef458ddc218459ef55cb4fd38cbbe18b957b388c5a92514f5693dc1f9ae56288"
+          },
+          "applicability": [
+            "trusted action reviewDiff를 요청한 경우 적용한다."
+          ],
+          "exclusions": [
+            "reviewDiff 없이 modifyProductFiles만 요청한 경우 제외한다."
+          ],
+          "spans": [
+            {
+              "field": "applicability",
+              "path": "skills/fixture-r/SKILL.md",
+              "startLine": 6,
+              "endLine": 6,
+              "digest": "sha256:b91efc3b6a637d9cf64ac0ea528ffdab7c5e22ee269d0421bab0edb061fbb80d"
+            },
+            {
+              "field": "exclusions",
+              "path": "skills/fixture-r/SKILL.md",
+              "startLine": 7,
+              "endLine": 7,
+              "digest": "sha256:b91efc3b6a637d9cf64ac0ea528ffdab7c5e22ee269d0421bab0edb061fbb80d"
+            }
+          ]
+        },
+        "fixture-w": {
+          "sourceDigests": {
+            "skills/fixture-w/SKILL.md": "sha256:2f751eabea17061aab769da17c18834a168e80a87ace15a685e4914144ca9ce0",
+            "skills/fixture-w/classification.json": "sha256:12c41c6161607f54ed57da4a15ee7d563fed33ab97b7d094a192f437c9d66a6a"
+          },
+          "applicability": [
+            "trusted action modifyProductFiles를 요청한 경우 적용한다."
+          ],
+          "exclusions": [
+            "읽기 전용 reviewDiff만 요청한 경우 제외한다."
+          ],
+          "spans": [
+            {
+              "field": "applicability",
+              "path": "skills/fixture-w/SKILL.md",
+              "startLine": 6,
+              "endLine": 6,
+              "digest": "sha256:2f751eabea17061aab769da17c18834a168e80a87ace15a685e4914144ca9ce0"
+            },
+            {
+              "field": "exclusions",
+              "path": "skills/fixture-w/SKILL.md",
+              "startLine": 7,
+              "endLine": 7,
+              "digest": "sha256:2f751eabea17061aab769da17c18834a168e80a87ace15a685e4914144ca9ce0"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "remove-required",
+      "originalCaseIds": [
+        "C-11"
+      ],
+      "patch": {
+        "skills/fixture-r/SKILL.md": null,
+        "skills/fixture-r/classification.json": null
+      },
+      "expectedInventoryIds": [
+        "fixture-g",
+        "fixture-w"
+      ],
+      "unresolvedRequiredIds": [
+        "fixture-r"
+      ],
+      "expectedSkillEvidence": {
+        "fixture-g": {
+          "sourceDigests": {
+            "skills/fixture-g/SKILL.md": "sha256:c5ea8c254fbc4ef247472bf963afcf878937f0806fd63c4b03b79557e56f779f",
+            "skills/fixture-g/classification.json": "sha256:fa7c7daa3c13819c8730879f634bc7eb630fa53bd32c278d09b58dc3a41b40a5"
+          },
+          "applicability": [
+            "별도 에이전트 병렬작업을 명시적으로 요청한 경우 적용한다."
+          ],
+          "exclusions": [
+            "인용문·이름 언급만 있거나 병렬작업 요청이 없는 경우 제외한다."
+          ],
+          "spans": [
+            {
+              "field": "applicability",
+              "path": "skills/fixture-g/SKILL.md",
+              "startLine": 6,
+              "endLine": 6,
+              "digest": "sha256:c5ea8c254fbc4ef247472bf963afcf878937f0806fd63c4b03b79557e56f779f"
+            },
+            {
+              "field": "exclusions",
+              "path": "skills/fixture-g/SKILL.md",
+              "startLine": 7,
+              "endLine": 7,
+              "digest": "sha256:c5ea8c254fbc4ef247472bf963afcf878937f0806fd63c4b03b79557e56f779f"
+            }
+          ]
+        },
+        "fixture-w": {
+          "sourceDigests": {
+            "skills/fixture-w/SKILL.md": "sha256:2f751eabea17061aab769da17c18834a168e80a87ace15a685e4914144ca9ce0",
+            "skills/fixture-w/classification.json": "sha256:12c41c6161607f54ed57da4a15ee7d563fed33ab97b7d094a192f437c9d66a6a"
+          },
+          "applicability": [
+            "trusted action modifyProductFiles를 요청한 경우 적용한다."
+          ],
+          "exclusions": [
+            "읽기 전용 reviewDiff만 요청한 경우 제외한다."
+          ],
+          "spans": [
+            {
+              "field": "applicability",
+              "path": "skills/fixture-w/SKILL.md",
+              "startLine": 6,
+              "endLine": 6,
+              "digest": "sha256:2f751eabea17061aab769da17c18834a168e80a87ace15a685e4914144ca9ce0"
+            },
+            {
+              "field": "exclusions",
+              "path": "skills/fixture-w/SKILL.md",
+              "startLine": 7,
+              "endLine": 7,
+              "digest": "sha256:2f751eabea17061aab769da17c18834a168e80a87ace15a685e4914144ca9ce0"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "rename-id",
+      "originalCaseIds": [
+        "C-15"
+      ],
+      "patch": {
+        "skills/fixture-w/SKILL.md": null,
+        "skills/fixture-w/classification.json": null,
+        "skills/fixture-w-renamed/SKILL.md": "---\nname: fixture-w-renamed\ndescription: 닫힌 합성 독립 oracle 전용 규칙\nversion: fixture-1\n---\ntrusted action modifyProductFiles를 요청한 경우 적용한다.\n읽기 전용 reviewDiff만 요청한 경우 제외한다.\n",
+        "skills/fixture-w-renamed/classification.json": "{\n  \"schemaVersion\": \"1.0.0\",\n  \"taxonomyRevision\": \"fixture-oracle-r01\",\n  \"actions\": [\n    \"modifyProductFiles\"\n  ],\n  \"targets\": [\n    \"fixture-task\"\n  ],\n  \"constraints\": [\n    \"synthetic-only\"\n  ],\n  \"dependencies\": [],\n  \"capabilities\": [\n    \"fixture-capability-fixture-w-renamed\"\n  ],\n  \"applicability\": [\n    {\n      \"path\": \"skills/fixture-w-renamed/SKILL.md\",\n      \"startLine\": 6,\n      \"endLine\": 6,\n      \"digest\": \"sha256:7162d55ae2c5fdf9f06be81073682a31bcc26a42f164ef5d5856c982efa66820\"\n    }\n  ],\n  \"exclusions\": [\n    {\n      \"path\": \"skills/fixture-w-renamed/SKILL.md\",\n      \"startLine\": 7,\n      \"endLine\": 7,\n      \"digest\": \"sha256:7162d55ae2c5fdf9f06be81073682a31bcc26a42f164ef5d5856c982efa66820\"\n    }\n  ]\n}\n"
+      },
+      "expectedInventoryIds": [
+        "fixture-g",
+        "fixture-r",
+        "fixture-w-renamed"
+      ],
+      "expectedSkillEvidence": {
+        "fixture-g": {
+          "sourceDigests": {
+            "skills/fixture-g/SKILL.md": "sha256:c5ea8c254fbc4ef247472bf963afcf878937f0806fd63c4b03b79557e56f779f",
+            "skills/fixture-g/classification.json": "sha256:fa7c7daa3c13819c8730879f634bc7eb630fa53bd32c278d09b58dc3a41b40a5"
+          },
+          "applicability": [
+            "별도 에이전트 병렬작업을 명시적으로 요청한 경우 적용한다."
+          ],
+          "exclusions": [
+            "인용문·이름 언급만 있거나 병렬작업 요청이 없는 경우 제외한다."
+          ],
+          "spans": [
+            {
+              "field": "applicability",
+              "path": "skills/fixture-g/SKILL.md",
+              "startLine": 6,
+              "endLine": 6,
+              "digest": "sha256:c5ea8c254fbc4ef247472bf963afcf878937f0806fd63c4b03b79557e56f779f"
+            },
+            {
+              "field": "exclusions",
+              "path": "skills/fixture-g/SKILL.md",
+              "startLine": 7,
+              "endLine": 7,
+              "digest": "sha256:c5ea8c254fbc4ef247472bf963afcf878937f0806fd63c4b03b79557e56f779f"
+            }
+          ]
+        },
+        "fixture-r": {
+          "sourceDigests": {
+            "skills/fixture-r/SKILL.md": "sha256:b91efc3b6a637d9cf64ac0ea528ffdab7c5e22ee269d0421bab0edb061fbb80d",
+            "skills/fixture-r/classification.json": "sha256:ef458ddc218459ef55cb4fd38cbbe18b957b388c5a92514f5693dc1f9ae56288"
+          },
+          "applicability": [
+            "trusted action reviewDiff를 요청한 경우 적용한다."
+          ],
+          "exclusions": [
+            "reviewDiff 없이 modifyProductFiles만 요청한 경우 제외한다."
+          ],
+          "spans": [
+            {
+              "field": "applicability",
+              "path": "skills/fixture-r/SKILL.md",
+              "startLine": 6,
+              "endLine": 6,
+              "digest": "sha256:b91efc3b6a637d9cf64ac0ea528ffdab7c5e22ee269d0421bab0edb061fbb80d"
+            },
+            {
+              "field": "exclusions",
+              "path": "skills/fixture-r/SKILL.md",
+              "startLine": 7,
+              "endLine": 7,
+              "digest": "sha256:b91efc3b6a637d9cf64ac0ea528ffdab7c5e22ee269d0421bab0edb061fbb80d"
+            }
+          ]
+        },
+        "fixture-w-renamed": {
+          "sourceDigests": {
+            "skills/fixture-w-renamed/SKILL.md": "sha256:7162d55ae2c5fdf9f06be81073682a31bcc26a42f164ef5d5856c982efa66820",
+            "skills/fixture-w-renamed/classification.json": "sha256:a60f72df3cb312b66dd06235f85575d7259341a70c45f651b77443f8249c1ba0"
+          },
+          "applicability": [
+            "trusted action modifyProductFiles를 요청한 경우 적용한다."
+          ],
+          "exclusions": [
+            "읽기 전용 reviewDiff만 요청한 경우 제외한다."
+          ],
+          "spans": [
+            {
+              "field": "applicability",
+              "path": "skills/fixture-w-renamed/SKILL.md",
+              "startLine": 6,
+              "endLine": 6,
+              "digest": "sha256:7162d55ae2c5fdf9f06be81073682a31bcc26a42f164ef5d5856c982efa66820"
+            },
+            {
+              "field": "exclusions",
+              "path": "skills/fixture-w-renamed/SKILL.md",
+              "startLine": 7,
+              "endLine": 7,
+              "digest": "sha256:7162d55ae2c5fdf9f06be81073682a31bcc26a42f164ef5d5856c982efa66820"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "expected": {
+    "baseIssues": [],
+    "unregisteredLocalClassificationCapabilityPreserved": true,
+    "inventoryDigest": "실제 loader로 읽은 base와 add/remove/rename은 서로 다른 현재 inventory에 결속되어야 함; digest 리터럴은 UNKNOWN",
+    "oldQualification": "변경 전 정상 control을 먼저 검증한 뒤 변경된 inventory에 과거 자격을 재사용하지 않음",
+    "semanticByCanonicalId": {
+      "base": {
+        "fixture-r": "needed",
+        "fixture-w": "not-needed",
+        "fixture-g": "not-needed"
+      },
+      "add-irrelevant": {
+        "fixture-r": "needed",
+        "fixture-w": "not-needed",
+        "fixture-g": "not-needed",
+        "fixture-q": "not-needed"
+      },
+      "remove-required": {
+        "fixture-w": "not-needed",
+        "fixture-g": "not-needed"
+      },
+      "rename-id": {
+        "fixture-r": "needed",
+        "fixture-w-renamed": "not-needed",
+        "fixture-g": "not-needed"
+      }
+    },
+    "oracleProvenance": "Frozen independent literal applicability/exclusions, literal paths and line spans; source digests use standard SHA256 over exact UTF8 fixture bytes during preparation, not loader output or product digest helper. Canonical inventory digest exact oracle remains UNKNOWN."
+  },
+  "trustedInput": {
+    "actions": [
+      "reviewDiff"
+    ],
+    "explicitParallelDelegation": false,
+    "hostMandatoryRules": [],
+    "quotedText": ""
+  }
+}

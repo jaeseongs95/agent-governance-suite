@@ -167,11 +167,12 @@ describe("R16 local integration public boundaries", () => {
 });
 
 import {createNativeClassificationAdapters} from "../../mcp-server/src/skill-classification/native-adapters.js";
+import {bindNativeClassificationDefinitions} from "../../mcp-server/src/skill-classification/native-cli-strategies.js";
 
 it("r16-dispatch: native schema await consumes the service guard before real runner", async () => {
   const h = remoteHarness(), profile = h.input.registry.profiles[0]!;
   const runner = vi.fn(async () => ({exitCode: 0, stdout: JSON.stringify({type: "item.completed", item: {type: "agent_message", text: JSON.stringify({schemaVersion: "1.0.0", requestId: h.input.request.requestId, operationId: h.input.request.operationId, requestDigest: h.input.request.requestDigest, inventoryDigest: h.input.request.inventoryDigest, status: "SUCCESS", judgments: [{skillId: "review", judgment: "needed", reasonRefs: ["synthetic"], uncertaintyReason: null}], unresolvedItems: [], error: null})}}) + "\n" + JSON.stringify({type: "turn.completed", usage: {}})}));
-  const adapter = createNativeClassificationAdapters([{adapterId: "synthetic-native", host: "codex", executable: process.execPath, workingDirectory: root, approvalRef: "synthetic", capabilityEvidenceRef: "synthetic", retryPolicyVerified: true, retryPolicyEvidenceRef: "synthetic", isolationEvidenceRef: "synthetic", isolationArgs: [], timeoutMs: 1000, maximumOutputBytes: 100000}], runner).get("synthetic-native")!;
+  const adapter = createNativeClassificationAdapters(bindNativeClassificationDefinitions([{adapterId: "synthetic-native", host: "codex", executable: process.execPath, workingDirectory: root, approvalRef: "synthetic", capabilityEvidenceRef: "synthetic", retryPolicyVerified: true, retryPolicyEvidenceRef: "synthetic", isolationEvidenceRef: "synthetic", isolationArgs: [], timeoutMs: 1000, maximumOutputBytes: 100000}]), runner).get("synthetic-native")!;
   await expect(adapter.invokeStructured(h.input.request, profile, new AbortController().signal, () => {throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");})).rejects.toMatchObject({code: "STALE_CLASSIFICATION", dispatchState: "not-started"});
   expect(runner).toHaveBeenCalledTimes(0);
 });
