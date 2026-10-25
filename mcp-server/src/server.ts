@@ -217,6 +217,13 @@ function apiError(code: ErrorCode, message: string, details: Record<string, unkn
   return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details } };
 }
 
+/** Contract errors keep their own code and sanitized details; only other failures are reported as invalid input. */
+function failureResult(error: unknown, fallback: string, suffix = ""): ApiResultV1<never> {
+  return error instanceof WorkflowContractError
+    ? apiError(error.code, `${error.message}${suffix}`, error.details)
+    : invalidInput(`${error instanceof Error ? error.message : fallback}${suffix}`);
+}
+
 /**
  * Session board tools are an interface over the skill's board store. The PreToolUse hook writes the line with the
  * host's session identity and binds it here; this side validates the call and reads the board back.
@@ -276,7 +283,7 @@ async function sessionBoardResult(
       binding = validator.listSessionStatusRequest(args)._sessionBinding ?? null;
     }
   } catch (error) {
-    return invalidInput(error instanceof Error ? error.message : "Session board input is invalid.");
+    return failureResult(error, "Session board input is invalid.");
   }
   if (tool === "update_session_status" && !binding) {
     return apiError("BINDING_REQUIRED", "The plugin hook records the session board line and did not run for this call.");
@@ -621,7 +628,7 @@ export function createMcpServer(
         const output = validator.koreanProseGlossaryLookupResult(glossary.lookup(input));
         result = apiOk<KoreanProseGlossaryLookupResultV1>(output);
       } catch (error) {
-        result = invalidInput(error instanceof Error ? error.message : "Glossary lookup input is invalid.");
+        result = failureResult(error, "Glossary lookup input is invalid.");
       }
     } else if (request.params.name === "check_for_updates") {
       if (!validUpdateArguments(args)) {
@@ -649,9 +656,7 @@ export function createMcpServer(
             result = trust.validateCollaborationDecision(validator.validateCollaborationDecisionRequest(args));
           } catch (error) {
             // Contract errors keep their own code and sanitized details (including storage diagnostics).
-            result = error instanceof WorkflowContractError
-              ? { schemaVersion: "1.0.0", ok: false, data: null, error: error.toBody() }
-              : invalidInput(error instanceof Error ? error.message : "Collaboration decision validation input is invalid.");
+            result = failureResult(error, "Collaboration decision validation input is invalid.");
           }
           break;
         case "plan_workflow":
@@ -724,7 +729,7 @@ export function createMcpServer(
             validator.prepareSessionMessageRequest(args);
             result = await sessionMessages.prepare(args);
           } catch (error) {
-            result = invalidInput(error instanceof Error ? error.message : "Session message preparation is invalid.");
+            result = failureResult(error, "Session message preparation is invalid.");
           }
           break;
         case "send_session_message":
@@ -732,7 +737,7 @@ export function createMcpServer(
             validator.sendSessionMessageRequest(args);
             result = await sessionMessages.send(args);
           } catch (error) {
-            result = invalidInput(`${error instanceof Error ? error.message : "Session message input is invalid."} Use prepare_session_message for a new intent, then send only its returned messageId. For an uncertain prior send, retry that known ID or compare saved receipts/status.`);
+            result = failureResult(error, "Session message input is invalid.", " Use prepare_session_message for a new intent, then send only its returned messageId. For an uncertain prior send, retry that known ID or compare saved receipts/status.");
           }
           break;
         case "acknowledge_session_messages":
@@ -740,7 +745,7 @@ export function createMcpServer(
             validator.acknowledgeSessionMessagesRequest(args);
             result = await sessionMessages.acknowledge(args);
           } catch (error) {
-            result = invalidInput(error instanceof Error ? error.message : "Session message acknowledgement is invalid.");
+            result = failureResult(error, "Session message acknowledgement is invalid.");
           }
           break;
         case "get_session_message_status":
@@ -748,7 +753,7 @@ export function createMcpServer(
             validator.getSessionMessageStatusRequest(args);
             result = await sessionMessages.status(args);
           } catch (error) {
-            result = invalidInput(error instanceof Error ? error.message : "Session message status input is invalid.");
+            result = failureResult(error, "Session message status input is invalid.");
           }
           break;
         case "execute_state_cleanup":

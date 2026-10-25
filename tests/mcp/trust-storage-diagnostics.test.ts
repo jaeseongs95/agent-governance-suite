@@ -80,9 +80,16 @@ describe("trust storage diagnostics", () => {
     let thrown: unknown;
     try { store.getInputSource("source-abcdefghijklmnop"); } catch (error) { thrown = error; }
     expect(thrown).toBeInstanceOf(WorkflowContractError);
+    expect(thrown).toMatchObject({ code: "MCP_UNAVAILABLE", message: "Cannot read the input source receipt." });
     expect((thrown as WorkflowContractError).details).toMatchObject({
-      storage: { reason: "TRUST_STORAGE_FAILED", nativeCode: "ERR_SQLITE_ERROR", sqliteErrcode: expect.any(Number) },
+      receiptId: "source-abcdefghijklmnop",
+      reason: "TRUST_STORAGE_FAILED",
+      cause: { type: "error", sqlite: { errcode: expect.any(Number), primaryCode: expect.any(Number) } },
     });
+    const serialized = JSON.stringify((thrown as WorkflowContractError).toBody());
+    expect(serialized).not.toContain("trust.sqlite3");
+    expect(serialized).not.toContain("databasePath");
+    expect(serialized).not.toMatch(/no such table/iu);
   });
 
   it("preserves the storage diagnostic through the MCP validation boundary", async () => {
@@ -101,11 +108,14 @@ describe("trust storage diagnostics", () => {
       const text = (response.content as Array<{ type: string; text: string }>).find((item) => item.type === "text")?.text ?? "{}";
       const parsed = JSON.parse(text);
       expect(parsed.ok).toBe(false);
-      expect(parsed.error.code).toBe("INVALID_INPUT");
+      expect(parsed.error.code).toBe("MCP_UNAVAILABLE");
       expect(parsed.error.details).toMatchObject({
-        storage: { reason: "TRUST_STORAGE_FAILED", nativeCode: "ERR_SQLITE_ERROR", sqliteErrcode: expect.any(Number) },
+        reason: "TRUST_STORAGE_FAILED",
+        cause: { type: "error", sqlite: { errcode: expect.any(Number), primaryCode: expect.any(Number) } },
       });
-      expect(typeof parsed.error.details.cause).toBe("string");
+      expect(text).not.toContain("trust.sqlite3");
+      expect(text).not.toContain("databasePath");
+      expect(text).not.toMatch(/no such table/iu);
     } finally {
       await client.close();
       await server.close();
