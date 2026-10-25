@@ -6,8 +6,20 @@ import { expect, it } from "vitest";
 
 const root = path.resolve(import.meta.dirname, "../..");
 
+async function removeCleanRoom(cleanRoot, primaryFailed) {
+  try {
+    if (path.dirname(cleanRoot) !== path.resolve(tmpdir()) || !path.basename(cleanRoot).startsWith("ags-al06-acceptance-bundle-")) {
+      throw new Error("Unexpected clean-room cleanup path");
+    }
+    await rm(cleanRoot, { recursive: true, force: true });
+  } catch (error) {
+    if (!primaryFailed) throw error;
+  }
+}
+
 it("starts the bundled MCP server without acceptance schema files beside mcp-server", async () => {
   const cleanRoot = await mkdtemp(path.join(tmpdir(), "ags-al06-acceptance-bundle-"));
+  let primaryFailed = false;
   try {
     await mkdir(path.join(cleanRoot, "mcp-server", "dist"), { recursive: true });
     await Promise.all([
@@ -47,10 +59,10 @@ it("starts the bundled MCP server without acceptance schema files beside mcp-ser
     const tools = responses.find((message) => message.id === 2);
     expect(tools?.error).toBeUndefined();
     expect(tools?.result?.tools).toEqual(expect.arrayContaining([expect.objectContaining({ name: "plan_workflow" })]));
+  } catch (error) {
+    primaryFailed = true;
+    throw error;
   } finally {
-    if (path.dirname(cleanRoot) !== path.resolve(tmpdir()) || !path.basename(cleanRoot).startsWith("ags-al06-acceptance-bundle-")) {
-      throw new Error("Unexpected clean-room cleanup path");
-    }
-    await rm(cleanRoot, { recursive: true, force: true });
+    await removeCleanRoom(cleanRoot, primaryFailed);
   }
 }, 30_000);

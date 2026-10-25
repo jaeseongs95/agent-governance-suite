@@ -108,7 +108,7 @@ describe("AL08 original owned defects", () => {
   it("D0074 blocked remote JEV performs no availability lookup before permitted native fallback", async () => {
     const request = emptyRequest(), vendorProfile = profile(request), jevProfile = profile(request, "jev");
     const jev: SkillClassificationProviderPort = {routeKind: () => "remote", availability: vi.fn(), classify: vi.fn()};
-    const vendor: SkillClassificationProviderPort = {routeKind: () => "native", availability: vi.fn(async () => ({available: true, approved: true, routeKind: "native", reasonCode: null})),
+    const vendor: SkillClassificationProviderPort = {routeKind: () => "native", availability: vi.fn(async () => ({available: true, approved: true, routeKind: "native" as const, reasonCode: null})),
       classify: vi.fn(async (bound, _profile, _signal, fence) => {fence?.(); return response(bound);})};
     const result = await new SkillClassificationService({providers: {jev, vendor}, budget: budget()}).classify({request, config: {...config, jevEnabled: true},
       registry: {schemaVersion: "1.0.0", profileRevision: "al08-r1", profiles: [jevProfile, vendorProfile]}, currentVendorId: vendorProfile.vendorId, remoteContentAllowed: false});
