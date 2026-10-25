@@ -120,6 +120,24 @@
       "auditRefs": [
         "R13 run40202151861 original failure preserved"
       ]
+    },
+    {
+      "commit": "6adfbd582ac2bf0f6d03d1a27ccefd5a11160966",
+      "unit": "windows-file-url-access-and-signal-regressions",
+      "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
+      "formalDefectIds": [
+        "AGS-D-0114",
+        "AGS-D-0116",
+        "AGS-D-0122"
+      ],
+      "auditRefs": []
+    },
+    {
+      "commit": "4f394617dacaa578ed095bbdaf567853b07c5bde",
+      "unit": "concurrent-official-repairs-preserved-normal-merge",
+      "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
+      "formalDefectId": null,
+      "auditRefs": []
     }
   ],
   "limitations": [

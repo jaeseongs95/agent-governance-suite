@@ -1,20 +1,12 @@
 {
   "schemaVersion": "AgsBoundedCiExecutionConfig.v1",
   "unit": "AGS30-OFFICIAL-D0036-LINT-BUILD-SHARDS-20261025-R14",
-  "nonce": "0241d144-a7f5-4de3-9b9e-f4bf994a45f9",
+  "nonce": "b9e88935-c395-4923-af95-4a92425492af",
   "repository": "jaeseongs95/agent-governance-suite",
   "repositoryId": 1362118877,
   "branch": "release-3.0",
   "node": "24.22.1",
   "pnpm": "11.19.0",
-  "archive": {
-    "entries": 1659
-  },
-  "transport": {
-    "bytes": 332530,
-    "sha256": "12fc159ec2369049669184cb77cbd147322986671eed25d53dc33e18a9c3d3d1"
-  },
-  "portableId": "ebed864a0ad5735b55fb1ef2fe36f5f85d31d0eb0b6d41a17f253d38a78c88cc",
   "generated": [
     "mcp-server/dist/server.mjs",
     "runtime/schema-validation.mjs",
@@ -48,20 +40,8 @@
     "tests/session-messaging/broker-process-lock.os.test.ts"
   ],
   "artifactMaximumBytesPerJob": 8388608,
-  "provenance": {
-    "sourceCommit": "bec619dfa4a2ce1da7ec9ac03564114c06062ffa",
-    "sourceTree": "92ed90d6139c1c328fee150e9c462da0bd1f5dc5",
-    "portableId": "ebed864a0ad5735b55fb1ef2fe36f5f85d31d0eb0b6d41a17f253d38a78c88cc",
-    "previousProductSource": "fa87adae201ae909e1c4e3d0cc2df1d42f014418",
-    "originalR11Run": 40197942971,
-    "originalR12Run": 40199415878,
-    "originalResultsPreserved": true,
-    "productChange": "D0036 declared-target contract and fixture migration; original R13 TS2375/lint17 root fixes",
-    "previousPreparedSource": "fa87adae201ae909e1c4e3d0cc2df1d42f014418",
-    "originalR13Run": 40202151861
-  },
   "limitations": [
-    "Actual official source commit with CI-only wrapper commit; all product blobs must match.",
+    "Every push tests its actual GITHUB_SHA; source pins are generated from and checked against every Git blob at runtime. Archival source fields are historical only.",
     "8 unique OS/shard jobs/maxParallel2/15min/8MiB1day/read40/down8GET8/retry0AI0",
     "Prior outcomes are immutable. New v6/transport cases join original full suite; no paid-model quality claim.",
     "Existing125 paid JEV proof and model quality not claimed. No live credentials attached.",
@@ -77,8 +57,6 @@
   },
   "gitContext": {
     "repository": "https://github.com/jaeseongs95/agent-governance-suite.git",
-    "checkoutCommit": "bec619dfa4a2ce1da7ec9ac03564114c06062ffa",
-    "sourceTree": "92ed90d6139c1c328fee150e9c462da0bd1f5dc5",
     "skillBaseline": "7bc7753012227938be2a46f68bf3e29d29d5ef34"
   },
   "ownershipHelpers": {
@@ -118,11 +96,41 @@
     "closure": "node built-in imports only; no local current-source rebuild"
   },
   "liveExternalAiCalls": 0,
-  "ciOnlyOverrides": [
-    ".github/workflows/ci.yml",
-    ".github/scripts/ags30-official-source-r11.mjs",
-    ".github/ci/ags30-r11/execution-config.json",
-    ".github/ci/ags30-r11/source-manifest.json",
-    ".github/ci/ags30-commit-provenance.r01.json"
-  ]
+  "sourceMode": "GITHUB_SHA",
+  "archivalSource": {
+    "archive": {
+      "entries": 1665
+    },
+    "transport": {
+      "bytes": 333670,
+      "sha256": "474a097acb97e01d6cb5efc08a9ff61903cbb7ce57b9fbaff523ef676cbf69d5"
+    },
+    "portableId": "fd80df67befed34d0d2c08eac484901593a7ca9b1761962919809ab54c2f5da9",
+    "provenance": {
+      "sourceCommit": "6adfbd582ac2bf0f6d03d1a27ccefd5a11160966",
+      "sourceTree": "ff3d7804ce0a8bc221e1d736cf3ca943650762cd",
+      "portableId": "fd80df67befed34d0d2c08eac484901593a7ca9b1761962919809ab54c2f5da9",
+      "previousProductSource": "fa87adae201ae909e1c4e3d0cc2df1d42f014418",
+      "originalR11Run": 40197942971,
+      "originalR12Run": 40199415878,
+      "originalResultsPreserved": true,
+      "productChange": "D0036, original R13 type/lint fixes, concurrent ten official repairs, Windows regression portability fixes",
+      "previousPreparedSource": "fa87adae201ae909e1c4e3d0cc2df1d42f014418",
+      "originalR13Run": 40202151861,
+      "concurrentSourceCommit": "d810765e7f0ca32542e28921e018ca7a2f182d02"
+    },
+    "ciOnlyOverrides": [
+      ".github/workflows/ci.yml",
+      ".github/scripts/ags30-official-source-r11.mjs",
+      ".github/ci/ags30-r11/execution-config.json",
+      ".github/ci/ags30-r11/source-manifest.json",
+      ".github/ci/ags30-commit-provenance.r01.json"
+    ],
+    "gitContext": {
+      "repository": "https://github.com/jaeseongs95/agent-governance-suite.git",
+      "checkoutCommit": "6adfbd582ac2bf0f6d03d1a27ccefd5a11160966",
+      "sourceTree": "ff3d7804ce0a8bc221e1d736cf3ca943650762cd",
+      "skillBaseline": "7bc7753012227938be2a46f68bf3e29d29d5ef34"
+    }
+  }
 }

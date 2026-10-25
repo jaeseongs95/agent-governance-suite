@@ -43,6 +43,31 @@ export function assertSourceInventory(manifest, config) {
   assert.equal(portable(manifest.rows), config.portableId);
 }
 
+export async function buildHeadManifest(treeText, readBlob, binding) {
+  assert(/^[a-f0-9]{40}$/.test(binding.head));
+  assert(/^[a-f0-9]{40}$/.test(binding.sourceTree));
+  const rows = [];
+  for (const entry of treeText.split('\0').filter(Boolean)) {
+    const match = /^([0-7]{6}) blob ([a-f0-9]{40}) +(\d+)\t([\s\S]+)$/.exec(entry);
+    assert(match, 'Invalid Git blob inventory entry');
+    const [, mode, objectId, size, relativePath] = match;
+    assert(['100644', '100755'].includes(mode), 'Only regular Git blobs are allowed');
+    assert(safePath(relativePath), 'Unsafe Git blob path');
+    const bytes = await readBlob(relativePath);
+    assert(Buffer.isBuffer(bytes), 'Blob reader must return raw bytes');
+    assert(Number.isSafeInteger(Number(size)) && Number(size) >= 0);
+    assert.equal(bytes.length, Number(size), 'Checkout blob size differs: ' + relativePath);
+    const gitBlob = createHash('sha1').update(Buffer.from('blob ' + bytes.length + '\0')).update(bytes).digest('hex');
+    assert.equal(gitBlob, objectId, 'Checkout blob bytes differ from actual HEAD: ' + relativePath);
+    rows.push({ relativePath, bytes: bytes.length, sha256: sha(bytes) });
+  }
+  assertRows(rows);
+  rows.sort((a, b) => ordinal(a.relativePath, b.relativePath));
+  return { schemaVersion: 'AgsActualHeadSourceManifest.v1', ...binding, files: rows.length,
+    portableId: portable(rows), gitTreeBinding: 'ALL_TRACKED_REGULAR_BLOBS_OID_AND_SIZE_VERIFIED',
+    generatedRuntime: 'UNVERIFIED_COMMITTED_BYTES', rows };
+}
+
 export async function finalizePartial(output, githubOutput, outcome, cap = 8 * 1024 * 1024) {
   assert(Number.isSafeInteger(cap) && cap >= 1 && cap <= 8 * 1024 * 1024);
   const root = path.resolve(output);
@@ -88,7 +113,7 @@ export async function finalizePartial(output, githubOutput, outcome, cap = 8 * 1
 
 async function finalizeFromRunner() {
   assert(['Linux', 'Windows'].includes(process.env.RUNNER_OS));
-  const work = path.join(path.resolve(process.env.RUNNER_TEMP), `ags30-0241d144-a7f5-4de3-9b9e-f4bf994a45f9-${process.env.RUNNER_OS}`);
+  const work = path.join(path.resolve(process.env.RUNNER_TEMP), `ags30-b9e88935-c395-4923-af95-4a92425492af-${process.env.RUNNER_OS}`);
   try { await fs.mkdir(work); } catch (error) { if (error.code !== 'EEXIST') throw error; }
   const info = await fs.lstat(work);
   assert(info.isDirectory() && !info.isSymbolicLink(), 'Unsafe work directory');
@@ -240,7 +265,7 @@ async function main() {
       before.filter(r => !generated.has(r.relativePath) && !optional.has(r.relativePath)), 'Non-generated source changed');
   }
   try {
-    assert.equal(config.nonce, '0241d144-a7f5-4de3-9b9e-f4bf994a45f9');
+    assert.equal(config.nonce, 'b9e88935-c395-4923-af95-4a92425492af');
     for (const [name, expected] of Object.entries(config.ownershipHelpers)) {
       const helper = await fs.readFile(new URL('./' + name, import.meta.url));
       assert.equal(helper.length, expected.bytes); assert.equal(sha(helper), expected.sha256);
@@ -255,45 +280,75 @@ async function main() {
     assert.equal(process.env.AGS_JEV_ENDPOINT, undefined);
     assert(['Linux', 'Windows'].includes(process.env.RUNNER_OS));
     assert.equal(process.version, `v${config.node}`);
-    await writeJson('environment.json', { node: process.version, platform: process.platform, arch: process.arch,
-      runnerOs: process.env.RUNNER_OS, runnerImage: process.env.ImageOS ?? null, runnerImageVersion: process.env.ImageVersion ?? null,
-      repository: process.env.GITHUB_REPOSITORY, repositoryId: process.env.GITHUB_REPOSITORY_ID,
-      ref: process.env.GITHUB_REF, headSha: process.env.GITHUB_SHA, event: process.env.GITHUB_EVENT_NAME,
-      runId: process.env.GITHUB_RUN_ID, attempt: process.env.GITHUB_RUN_ATTEMPT, job: process.env.GITHUB_JOB,
-      helperSha256: sha(await fs.readFile(fileURLToPath(import.meta.url))), configSha256: sha(await fs.readFile(configPath)),
-      osVersionNote: 'Runner image identifiers are observations; no OS behavior inferred from labels.' });
-    const manifestBytes = await fs.readFile(path.join(dataRoot, 'source-manifest.json'));
-    assert.equal(sha(manifestBytes), config.transport.sha256);
-    assert.equal(manifestBytes.length, config.transport.bytes);
-    const manifest = JSON.parse(manifestBytes);
-    assertSourceInventory(manifest, config);
+    assert.equal(config.sourceMode, 'GITHUB_SHA');
+    const actualHead = process.env.GITHUB_SHA;
+    assert(/^[a-f0-9]{40}$/.test(actualHead));
     const git = (name, args, cwd = work, ms = 60_000) => command(name, 'git', ['-c', 'core.autocrlf=false', ...args], cwd, ms);
     const checkoutRoot = path.resolve(process.env.GITHUB_WORKSPACE);
     assert.equal(path.resolve(dataRoot), path.join(checkoutRoot, '.github', 'ci', 'ags30-r11'));
+    const checkoutHead = mustPass(await git('01b-observe-workflow-head', ['rev-parse', 'HEAD'], checkoutRoot)).stdout.toString('utf8').trim();
+    assert.equal(checkoutHead, actualHead, 'Runner checkout must equal the triggering push HEAD');
     mustPass(await git('01a-clone-official-checkout', ['clone', '--no-hardlinks', '--no-checkout', checkoutRoot, source]));
-    mustPass(await git('01c-checkout-official-source', ['checkout', '--detach', config.gitContext.checkoutCommit], source));
+    mustPass(await git('01c-checkout-official-source', ['checkout', '--detach', actualHead], source));
     const head = mustPass(await git('01d-observe-head', ['rev-parse', 'HEAD'], source)).stdout.toString('utf8').trim();
-    assert.equal(head, config.gitContext.checkoutCommit);
+    assert.equal(head, actualHead);
     const sourceTree = mustPass(await git('01e-observe-source-tree', ['rev-parse', 'HEAD^{tree}'], source)).stdout.toString('utf8').trim();
-    assert.equal(sourceTree, config.gitContext.sourceTree);
     mustPass(await git('01f-observe-skill-baseline', ['cat-file', '-e', config.gitContext.skillBaseline + ':skills'], source));
+    const sourceBlobs = mustPass(await git('01i-source-blobs', ['ls-tree', '-r', '-l', '-z', head], source)).stdout.toString('utf8');
+    const workflowBlobs = mustPass(await git('01j-workflow-blobs', ['ls-tree', '-r', '-l', '-z', actualHead], checkoutRoot)).stdout.toString('utf8');
+    assert.equal(sourceBlobs, workflowBlobs, 'Actual HEAD Git blob inventories differ');
+    const binding = { runId: process.env.GITHUB_RUN_ID, attempt: process.env.GITHUB_RUN_ATTEMPT,
+      job: process.env.GITHUB_JOB, shardIndex, head, sourceTree };
+    const manifest = await buildHeadManifest(sourceBlobs, relative => fs.readFile(path.join(source, relative)), binding);
+    const manifestBytes = Buffer.from(JSON.stringify(manifest, null, 2) + '\n');
+    const transport = { bytes: manifestBytes.length, sha256: sha(manifestBytes) };
+    Object.assign(config, { archive: { entries: manifest.files }, portableId: manifest.portableId, transport,
+      gitContext: { ...config.gitContext, checkoutCommit: head, sourceTree }, sourceBinding: binding });
+    assertSourceInventory(manifest, config);
+    await fs.writeFile(path.join(output, 'source-manifest.json'), manifestBytes, { flag: 'wx' });
+    const returnedManifest = await fs.readFile(path.join(output, 'source-manifest.json'));
+    assert.equal(returnedManifest.length, config.transport.bytes);
+    assert.equal(sha(returnedManifest), config.transport.sha256);
+    assert.deepEqual(JSON.parse(returnedManifest), manifest);
+    await writeJson('effective-config.json', config);
     const tracked = mustPass(await git('01h-observe-index', ['ls-files', '-z'], source)).stdout.toString('utf8').split('\0').filter(Boolean).sort(ordinal);
     assert.deepEqual(tracked, manifest.rows.map(row => row.relativePath).sort(ordinal));
-    // The workflow commit may add CI-only files; every product blob must still equal the frozen source commit.
-    const sourceBlobs = mustPass(await git('01i-source-blobs', ['ls-tree', '-r', '-z', head], source)).stdout.toString('utf8').split('\0').filter(Boolean);
-    const workflowBlobs = mustPass(await git('01j-workflow-blobs', ['ls-tree', '-r', '-z', process.env.GITHUB_SHA], source)).stdout.toString('utf8').split('\0').filter(Boolean);
-    const decodeBlob = line => { const tab = line.indexOf('\t'); return [line.slice(tab + 1), line.slice(0, tab)]; };
-    const workflowMap = new Map(workflowBlobs.map(decodeBlob));
-    for (const line of sourceBlobs) { const [file, identity] = decodeBlob(line); if (!config.ciOnlyOverrides.includes(file)) assert.equal(workflowMap.get(file), identity, 'Workflow product blob differs: ' + file); }
-    assert.deepEqual(config.ciOnlyOverrides, [".github/workflows/ci.yml",".github/scripts/ags30-official-source-r11.mjs",".github/ci/ags30-r11/execution-config.json",".github/ci/ags30-r11/source-manifest.json",".github/ci/ags30-commit-provenance.r01.json"]);
-    for (const file of workflowMap.keys()) assert(tracked.includes(file) || file.startsWith('.github/scripts/') || file.startsWith('.github/ci/'), 'Unexpected workflow-only product path: ' + file);
-    await writeJson('git-context.json', { repository: config.gitContext.repository, head, sourceTree, workflowHead: process.env.GITHUB_SHA,
-      skillBaseline: config.gitContext.skillBaseline, trackedFiles: tracked.length, candidatePortableId: config.portableId,
-      candidateIsOverlayNotHeadCommit: false, historyCreatedBy: 'NORMAL_LOCAL_CLONE_OFFICIAL_CHECKOUT_SOURCE_COMMIT',
-      indexCreatedBy: 'UNCHANGED_OFFICIAL_SOURCE_COMMIT', allWorkflowProductBlobsEqualSourceExceptExplicitCiOverride: true, ciOnlyOverrides: config.ciOnlyOverrides });
+    const assertHeadBytes = (relative, bytes) => {
+      const row = manifest.rows.find(item => item.relativePath === relative);
+      assert(row, 'Executing input missing from actual HEAD: ' + relative);
+      assert.equal(bytes.length, row.bytes); assert.equal(sha(bytes), row.sha256);
+    };
+    const helperRelative = '.github/scripts/' + path.basename(fileURLToPath(import.meta.url));
+    const executingHelperBytes = await fs.readFile(fileURLToPath(import.meta.url));
+    const configBytes = await fs.readFile(configPath);
+    assertHeadBytes(helperRelative, executingHelperBytes);
+    assertHeadBytes('.github/ci/ags30-r11/execution-config.json', configBytes);
+    const helperClosure = { ...config.ownershipHelpers, 'ags30-os-mutation-r01.mjs': config.osMutationCollector,
+      'ags30-wake-mixed-red-r07.mjs': config.wakeMixedRed, 'ags30-shard-evidence-r09.mjs': config.shardEvidence };
+    for (const [name, expected] of Object.entries(helperClosure)) {
+      const bytes = await fs.readFile(new URL('./' + name, import.meta.url));
+      assertHeadBytes('.github/scripts/' + name, bytes);
+      assert.equal(bytes.length, expected.bytes); assert.equal(sha(bytes), expected.sha256);
+    }
+    const planBytes = await fs.readFile(path.join(dataRoot, 'os-test-plan.json'));
+    assertHeadBytes('.github/ci/ags30-r11/os-test-plan.json', planBytes);
+    assert.equal(planBytes.length, config.osPlan.bytes); assert.equal(sha(planBytes), config.osPlan.sha256);
+    const sourcePins = { ...binding, files: manifest.files, portableId: config.portableId, transport };
+    record.sourceBinding = sourcePins;
+    await writeJson('environment.json', { node: process.version, platform: process.platform, arch: process.arch,
+      runnerOs: process.env.RUNNER_OS, runnerImage: process.env.ImageOS ?? null, runnerImageVersion: process.env.ImageVersion ?? null,
+      repository: process.env.GITHUB_REPOSITORY, repositoryId: process.env.GITHUB_REPOSITORY_ID,
+      ref: process.env.GITHUB_REF, headSha: head, event: process.env.GITHUB_EVENT_NAME,
+      runId: process.env.GITHUB_RUN_ID, attempt: process.env.GITHUB_RUN_ATTEMPT, job: process.env.GITHUB_JOB,
+      helperSha256: sha(executingHelperBytes), configSha256: sha(configBytes), sourcePins,
+      osVersionNote: 'Runner image identifiers are observations; no OS behavior inferred from labels.' });
+    await writeJson('git-context.json', { repository: config.gitContext.repository, ...sourcePins,
+      skillBaseline: config.gitContext.skillBaseline, candidateIsOverlayNotHeadCommit: false,
+      historyCreatedBy: 'NORMAL_LOCAL_CLONE_ACTUAL_PUSH_HEAD', indexCreatedBy: 'UNCHANGED_ACTUAL_PUSH_HEAD',
+      allWorkflowBlobsEqualSource: true, ciOnlyOverrides: [] });
     const before = await tree(source);
     beforeRows = before;
-    assert.deepEqual(before, [...manifest.rows].sort((a, b) => ordinal(a.relativePath, b.relativePath)));
+    assert.deepEqual(before, manifest.rows);
     await writeJson('source-before.json', { files: before.length, portableId: portable(before), rows: before });
     const tools = path.join(work, 'tools');
     await fs.mkdir(tools);
@@ -513,7 +568,7 @@ async function main() {
       pnpm: finalVersion.stdout.toString('utf8').trim(), helperSha256: sha(await fs.readFile(fileURLToPath(import.meta.url))),
       configSha256: sha(await fs.readFile(configPath)) });
     record.runtimeValidation = testsPass && finalFreshness.receipt.status === 'PASS' ? 'SELECTED_CHECKS_PASS' : 'FAIL';
-    record.status = (record.sourceFreshness === 'PASS' || (record.sourceFreshness === 'EXPECTED_STALE_FAIL' && manifest.generatedRuntime === 'PRESERVED_STALE_NOT_RUNTIME_CANDIDATE')) && record.runtimeValidation === 'SELECTED_CHECKS_PASS' ? 'SELECTED_CHECKS_PASS' : 'FAIL';
+    record.status = record.sourceFreshness === 'PASS' && record.runtimeValidation === 'SELECTED_CHECKS_PASS' ? 'SELECTED_CHECKS_PASS' : 'FAIL';
     record.wholeAcceptance = 'NOT_CLAIMED';
   } catch (error) {
     record.failure = { name: error.name, message: error.message, code: error.code ?? null };

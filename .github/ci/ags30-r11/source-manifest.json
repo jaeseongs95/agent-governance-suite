@@ -1,8 +1,8 @@
 {
   "schemaVersion": "PortableSourceManifest.v1",
-  "files": 1659,
-  "bytes": 15733433,
-  "portableId": "ebed864a0ad5735b55fb1ef2fe36f5f85d31d0eb0b6d41a17f253d38a78c88cc",
+  "files": 1665,
+  "bytes": 15760821,
+  "portableId": "fd80df67befed34d0d2c08eac484901593a7ca9b1761962919809ab54c2f5da9",
   "rows": [
     {
       "relativePath": ".agents/plugins/marketplace.json",
@@ -56,13 +56,13 @@
     },
     {
       "relativePath": ".github/ci/ags30-commit-provenance.r01.json",
-      "bytes": 3315,
-      "sha256": "f134a64588fcfd9267a1f8b2e4f23193b7c5815f0a1b6753aead03efab4bf217"
+      "bytes": 4580,
+      "sha256": "218c37c168453beea3bc90e0852557ba23883d0124b29ffe99cd34ab6d8565f5"
     },
     {
       "relativePath": ".github/ci/ags30-r11/execution-config.json",
-      "bytes": 5336,
-      "sha256": "b342fd6eefb4c4cd427853f48bea38fc528a75d4bac805ed28123e6bcc92d5f4"
+      "bytes": 5367,
+      "sha256": "dc61880c9a7255e18ce20eef26b85f1f33d39213150b78ba9a11ebdd1c2a88fe"
     },
     {
       "relativePath": ".github/ci/ags30-r11/os-test-plan.json",
@@ -72,7 +72,7 @@
     {
       "relativePath": ".github/ci/ags30-r11/source-manifest.json",
       "bytes": 332530,
-      "sha256": "1211f8c3e13f73789356810fb6681b9222b917a5a24000e824b68c293f9b8459"
+      "sha256": "12fc159ec2369049669184cb77cbd147322986671eed25d53dc33e18a9c3d3d1"
     },
     {
       "relativePath": ".github/pull_request_template.md",
@@ -87,7 +87,7 @@
     {
       "relativePath": ".github/scripts/ags30-official-source-r11.mjs",
       "bytes": 40966,
-      "sha256": "d22fb8c07815963ab94669821cc5badc64d2e60c66206191288668e1fcc74477"
+      "sha256": "234cbe19c47f6af8c86370403e84fec898611c708b86269e6fadbea8a9672945"
     },
     {
       "relativePath": ".github/scripts/ags30-os-mutation-r01.mjs",
@@ -122,7 +122,7 @@
     {
       "relativePath": ".github/workflows/ci.yml",
       "bytes": 8927,
-      "sha256": "355194c3fa121b89882126b98faf92af4f34d94e3d96bbf7190ef4bd9c911f4f"
+      "sha256": "536b9c25129847635b2c93c0ce2cf5c318f865a26012a5d81219ac334493a2e2"
     },
     {
       "relativePath": ".github/workflows/upstream-sync.yml",
@@ -3866,8 +3866,8 @@
     },
     {
       "relativePath": "mcp-server/src/cs-engineering-validator.ts",
-      "bytes": 2950,
-      "sha256": "a1f225e3078d9996d030059f522b29e9a7656c942c3b02a63356ee0cbde592f2"
+      "bytes": 2694,
+      "sha256": "6d1bde7b0744f2d5f10bf71bf1d1e7c13112ed27fc09b716df072d282a03d5ea"
     },
     {
       "relativePath": "mcp-server/src/decision-record-validator.ts",
@@ -3876,8 +3876,8 @@
     },
     {
       "relativePath": "mcp-server/src/engineering-practices-validator.ts",
-      "bytes": 3214,
-      "sha256": "60b0f0b929d4c78ddfc592c522e828d010aa8ba65cab2caa1111e643f247aefa"
+      "bytes": 2957,
+      "sha256": "628d7c6f765a03bbd61e7ba27b6acae4f9f9d0b95407bba8cd817eaad4b76cd2"
     },
     {
       "relativePath": "mcp-server/src/evaluation-preflight.ts",
@@ -4140,6 +4140,11 @@
       "sha256": "06d150c95814e66c6e73c844cf50be779bedf23e1a3a68074380c9d8280d5428"
     },
     {
+      "relativePath": "mcp-server/src/stage-validator-process.ts",
+      "bytes": 2845,
+      "sha256": "f0d188197ab28a0590edb7e701fc7a7f8be835d2921744bebb9b97c1c2aa5bb0"
+    },
+    {
       "relativePath": "mcp-server/src/state-cleanup-service.ts",
       "bytes": 15189,
       "sha256": "12f2c3241dcead16752be96b6c18799f4a3fab7037ee91df9a798541208af720"
@@ -4271,8 +4276,8 @@
     },
     {
       "relativePath": "runtime/unified-state/authority.mjs",
-      "bytes": 23685,
-      "sha256": "eddbea38f82fc9dcf9f5b7e00ed22dde84963c483f622fae83b45fe2caf69765"
+      "bytes": 23962,
+      "sha256": "9739805bdc69b38ba44147c5e03309289aa3b84cf092bd87fc852981f629cb47"
     },
     {
       "relativePath": "runtime/unified-state/shared-connection.d.mts",
@@ -4281,8 +4286,8 @@
     },
     {
       "relativePath": "runtime/unified-state/shared-connection.mjs",
-      "bytes": 11869,
-      "sha256": "8be50074c68273b55ac0cbb2ea2c58174be88b5206632f21e4e34b74bf5ec42b"
+      "bytes": 11968,
+      "sha256": "2dceb7efd50fbb7d5e2a3534226cc0a5f3dce3735863173055261fe5a831b01b"
     },
     {
       "relativePath": "scripts/apply-upstream-update.mjs",
@@ -4296,8 +4301,8 @@
     },
     {
       "relativePath": "scripts/build-claude-plugin.mjs",
-      "bytes": 21574,
-      "sha256": "c0836a12cabba39420db7454fb90a97eaef8d56a9fbfc2b02d3e0315e7ce9e41"
+      "bytes": 22279,
+      "sha256": "24b3ef4101eecb44699087e3a0cc4feade5fe652cd2c4bc78d1d2debad4859f2"
     },
     {
       "relativePath": "scripts/build.mjs",
@@ -4366,8 +4371,8 @@
     },
     {
       "relativePath": "scripts/korean-prose-evaluation-preflight.ts",
-      "bytes": 19320,
-      "sha256": "4746a3e8da43afde80d099591a31678dd674c174cb3478bec00893c2ecb5c6a8"
+      "bytes": 19450,
+      "sha256": "e0cce2e7b3852b052caaa86753a7df9367ef15c83e6f18a2a1a438f55f242384"
     },
     {
       "relativePath": "scripts/korean-prose-execution-provenance.ts",
@@ -4456,8 +4461,8 @@
     },
     {
       "relativePath": "scripts/source-lock.mjs",
-      "bytes": 12943,
-      "sha256": "b422132f78747b111df03a5363f760d6a6b77bbb7cb4cfafefb2f6e51f113016"
+      "bytes": 13144,
+      "sha256": "31d0c839b8513304ae490f08044c4ef32e42e2bd5ceb705bc6ad72ba6764ff3d"
     },
     {
       "relativePath": "scripts/sync-release-metadata.mjs",
@@ -4476,13 +4481,13 @@
     },
     {
       "relativePath": "scripts/validate-repository.mjs",
-      "bytes": 7966,
-      "sha256": "8f44005a3ca8096bf5778ec7b8a8024da1b0b1a31c086509378787209e6aa723"
+      "bytes": 8327,
+      "sha256": "8ce4dc9c711f3148ad41e968bce158ff9148c23d74c3feb2fc248c7ffa94dbbd"
     },
     {
       "relativePath": "scripts/validate-skill.mjs",
-      "bytes": 3131,
-      "sha256": "ebc25f90c39e7c84c2f2ac0bc3797006c8dcb33cd181020add6be3cd9b9e8869"
+      "bytes": 3823,
+      "sha256": "80a6cc858c9205eb4fb2fe5c07c26a7438b127dcfd8765d19ad0744ab13eed2d"
     },
     {
       "relativePath": "scripts/verify-korean-prose-evaluation-preflight.ts",
@@ -4901,13 +4906,13 @@
     },
     {
       "relativePath": "skills/codex-token-usage-analyzer/scripts/core.mjs",
-      "bytes": 40225,
-      "sha256": "7504ef02e9fd32e0bb43e9c492f017a0b89b24f3518a9e9c6c04709c86a01b1b"
+      "bytes": 40848,
+      "sha256": "99873c0891969d8055efa8d765abf80405863966287da9ac147695c9c1597e7e"
     },
     {
       "relativePath": "skills/codex-token-usage-analyzer/scripts/schema-validation.mjs",
-      "bytes": 979,
-      "sha256": "90a9765698538fbda1921d26f95b6436bb61cd00184f7e8cf05effe4e75e0c5b"
+      "bytes": 786,
+      "sha256": "06a35eb68b3d67e9fbcc1bbe8fe3fa57e51e792173aee3c8aeec80537616cc90"
     },
     {
       "relativePath": "skills/context-continuity/SKILL.md",
@@ -5871,8 +5876,8 @@
     },
     {
       "relativePath": "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs",
-      "bytes": 10878,
-      "sha256": "acd50c403b09d05cea0e7a453535963ed6e3eb720b598b37e7cd1c46a648876d"
+      "bytes": 10855,
+      "sha256": "ff696ff9c2b8e19dba88b9ad8f140966d810b6ee5086d2ccd376ae6afc20b27b"
     },
     {
       "relativePath": "skills/instruction-scope-resolver/scripts/validate-repository.mjs",
@@ -6256,13 +6261,13 @@
     },
     {
       "relativePath": "skills/mutation-risk-preflight/scripts/schema-validation.mjs",
-      "bytes": 756,
-      "sha256": "8402dd38105e29e0599cb6fbdf520206a677ca896d6dfcbc32408f07db19eb84"
+      "bytes": 683,
+      "sha256": "4cce85dc38941f216349a8ac89fa230f2d40ea55d05ccb17b3d030bdd7a141d2"
     },
     {
       "relativePath": "skills/mutation-risk-preflight/scripts/validate-skill.mjs",
-      "bytes": 1954,
-      "sha256": "84ebdd1d94a93db8010a5c569a17dbd1fe127f94d3ea4fb0e446d7ec489801a6"
+      "bytes": 2276,
+      "sha256": "06da56be6a8eeb85c78fea914e437e30eb56ab1ffa5369d897255093d58c64dd"
     },
     {
       "relativePath": "skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
@@ -6826,8 +6831,8 @@
     },
     {
       "relativePath": "skills/workspace-convention-profiler/scripts/schema-validation.mjs",
-      "bytes": 773,
-      "sha256": "967c4e72461f05428693e51a9651cd6c015b4486ab4e9566d70151d6891c6615"
+      "bytes": 700,
+      "sha256": "d27f1dac298004831a2c1c04e0c07a24ad1c7021d3e56bf051ebaa73a71557f6"
     },
     {
       "relativePath": "skills/workspace-convention-profiler/scripts/validate-profile.mjs",
@@ -6836,8 +6841,8 @@
     },
     {
       "relativePath": "skills/workspace-convention-profiler/scripts/validate-skill.mjs",
-      "bytes": 2186,
-      "sha256": "7a8e4d07d1cd3bb7a38491abfc8a33ad2156d5da4c83599926bc2c4bddd4779b"
+      "bytes": 2179,
+      "sha256": "a29e96b7f4e868736c396ac7c84036d14e7c64e8429e2b9b6d28bf9ce8802571"
     },
     {
       "relativePath": "tests/acceptance-evidence-validator/acceptance.node.mjs",
@@ -6930,9 +6935,14 @@
       "sha256": "a0e99d204e0a190626f71ff567bd849a34797f33b3074c93bf2ed71a8a1aedd4"
     },
     {
+      "relativePath": "tests/codex-token-usage-analyzer/cleanup-failure.test.mjs",
+      "bytes": 3061,
+      "sha256": "089cea66a287e9d5419da5d9d6a8c11844751c08c70b046446f2e13b7803a9d8"
+    },
+    {
       "relativePath": "tests/codex-token-usage-analyzer/integration.test.mjs",
-      "bytes": 8754,
-      "sha256": "e1fdebcb7c280b1fe1c87efced88198d5239a14c257d4657add4c67a9efd7f9c"
+      "bytes": 8792,
+      "sha256": "0e7c6d2652781df8c8e19add4b66a40524ac80732fc1e00b5cb0db6407f89e52"
     },
     {
       "relativePath": "tests/context-continuity/continuity.test.ts",
@@ -7141,8 +7151,8 @@
     },
     {
       "relativePath": "tests/instruction-scope-resolver/resolve-instruction-files.node.mjs",
-      "bytes": 9812,
-      "sha256": "da07947256da6acd97317d7bbee911386384cea11305dfdcb051e8cee0b3c529"
+      "bytes": 10832,
+      "sha256": "71109fe8d2be490a5afc4a0109e99e36bd6abe2760610b2113c7e3984120b892"
     },
     {
       "relativePath": "tests/instruction-scope-resolver/suite-integration.test.ts",
@@ -7256,8 +7266,8 @@
     },
     {
       "relativePath": "tests/mcp/korean-prose-evaluation-preflight.test.ts",
-      "bytes": 6610,
-      "sha256": "c087fbf168b3cbdc212d8cf651d930de64df61058cb19a9126cb7f0226361415"
+      "bytes": 7371,
+      "sha256": "16655f8610d5430425c25c17bc11e92c6e5c501700d2dad72e3a332af257385a"
     },
     {
       "relativePath": "tests/mcp/korean-prose-execution-provenance.test.ts",
@@ -7425,6 +7435,11 @@
       "sha256": "5bda4ba09d0c422475d0742a56d3fb0bc249196d417c18b8c6ff9a28e62b1e21"
     },
     {
+      "relativePath": "tests/mcp/stage-validator-failure.test.ts",
+      "bytes": 3989,
+      "sha256": "aec3f5c9360427fbc3362e97a3ac903a0af72f1bebb1cd6b4e367a6770836f95"
+    },
+    {
       "relativePath": "tests/mcp/state-cleanup.test.ts",
       "bytes": 43256,
       "sha256": "0e11010d005ee5ad2438fd4b46a8b0b1ba96f4509d3360c7799cb514fbacf141"
@@ -7578,6 +7593,11 @@
       "relativePath": "tests/runtime/runtime-smoke.test.mjs",
       "bytes": 6067,
       "sha256": "dcf5444e439a6516140cff47d344fd6061097eed1e2d51e15e452863785b42b9"
+    },
+    {
+      "relativePath": "tests/runtime/schema-date-time-format.node-test.mjs",
+      "bytes": 1616,
+      "sha256": "ca0427195eeed90e470f674ae5c01df6fdd2f669651805f23aa25baef200b296"
     },
     {
       "relativePath": "tests/session-board/session-board.test.ts",
@@ -8091,8 +8111,8 @@
     },
     {
       "relativePath": "tests/tooling/claude-plugin.test.mjs",
-      "bytes": 32310,
-      "sha256": "e21f86f26fba00c750a5faba61cb4550f6ffd3c9a43ebbca7d782bb4c5dc0fde"
+      "bytes": 33140,
+      "sha256": "06af1f26d0df4230b94710ca279147308802575741640f546de852c1b5f3e88b"
     },
     {
       "relativePath": "tests/tooling/commands.test.mjs",
@@ -8145,14 +8165,24 @@
       "sha256": "ee4751faad0c73bc2511052a15530603c1addcd221f247861daa13b01998f546"
     },
     {
+      "relativePath": "tests/tooling/validate-repository.test.mjs",
+      "bytes": 1954,
+      "sha256": "a1ec58ae23efc02dea9835c4a119a671f8fbb17048a1b67917782110d15899b8"
+    },
+    {
+      "relativePath": "tests/tooling/validate-skill-read-errors.test.mjs",
+      "bytes": 5333,
+      "sha256": "cda2ee11887a966f26c2f317ba868e4a5685d1fe43fb402e2fd25eeabead9a92"
+    },
+    {
       "relativePath": "tests/unified-state/authority-opening.test.mjs",
       "bytes": 4977,
       "sha256": "63003d02c0f66027fa8fd6355cbf67c03f8437aa3e9b8a26b954242758b658dc"
     },
     {
       "relativePath": "tests/unified-state/authority.test.mjs",
-      "bytes": 24573,
-      "sha256": "ed1ab9c4c2573183105d30ef9adb9a86f90d7e9c10b68cce983737b23ca4c0e2"
+      "bytes": 25425,
+      "sha256": "6c16574b2716d8a8f78c3ff57888349b5e54dc69eb61b75716dfcfe1448d84cd"
     },
     {
       "relativePath": "tests/unified-state/first-initialization.test.mjs",
@@ -8191,8 +8221,8 @@
     },
     {
       "relativePath": "tests/workspace-convention-profiler/contracts.node-test.mjs",
-      "bytes": 3039,
-      "sha256": "cb7e6b59fe0ede92a24ef4a94258f09afe313fcd6570a78916fb205446232ddd"
+      "bytes": 4304,
+      "sha256": "cab856e67bb148bf8f0f450d5c218aa5020dd5ce9884a80fb3a1ed4a50315909"
     },
     {
       "relativePath": "tests/workspace-convention-profiler/fixtures/dirty/package.json",
