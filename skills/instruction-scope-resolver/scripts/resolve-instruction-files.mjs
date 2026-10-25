@@ -12,7 +12,7 @@ const ROOT = path.resolve(SCRIPT_DIRECTORY, "..");
 export function isPathWithin(root, candidate, pathApi = path) {
   const caseInsensitive = pathApi === path.win32;
   const normalize = (value) => {
-    const normalized = pathApi.resolve(value).replace(/[\\/]+$/, "");
+    const normalized = pathApi.resolve(value);
     return caseInsensitive ? normalized.toLowerCase() : normalized;
   };
   const normalizedRoot = normalize(root);

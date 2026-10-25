@@ -118,6 +118,25 @@ test("Windows path containment is case-insensitive and separator aware", () => {
   assert.equal(isPathWithin("C:\\Work\\Repo", "D:\\Work\\Repo", path.win32), false);
 });
 
+test("filesystem root containment does not depend on cwd or trailing separators", () => {
+  const cwd = process.cwd();
+  try {
+    process.chdir(os.tmpdir());
+    assert.equal(isPathWithin("/", "/tmp/a", path.posix), true);
+    assert.equal(isPathWithin("/", "/", path.posix), true);
+    assert.equal(isPathWithin("/work/", "/work/src", path.posix), true);
+    assert.equal(isPathWithin("/work", "/workspace", path.posix), false);
+  } finally {
+    process.chdir(cwd);
+  }
+  assert.equal(isPathWithin("C:\\", "c:\\Work\\a.ts", path.win32), true);
+  assert.equal(isPathWithin("C:\\", "D:\\Work", path.win32), false);
+  assert.equal(isPathWithin("\\\\srv\\share\\", "\\\\SRV\\share\\dir\\a.ts", path.win32), true);
+  assert.equal(isPathWithin("\\\\srv\\share\\", "\\\\srv\\other\\a.ts", path.win32), false);
+  assert.equal(isPathWithin("\\\\srv\\share\\dir\\", "\\\\srv\\share\\dir\\sub\\a.ts", path.win32), true);
+  assert.equal(isPathWithin("\\\\srv\\share\\dir", "\\\\srv\\share\\dir2\\a.ts", path.win32), false);
+});
+
 for (const emptyOverride of [false, true]) test("common default preserves AGENTS when host files coexist: " + emptyOverride, async (t) => {
   const root = await workspace();
   t.after(() => rm(root, { recursive: true, force: true }));
