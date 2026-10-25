@@ -8,7 +8,7 @@ import { cleanupSkillImport, commitSkillImport } from "./skill-import-transactio
 
 const args = parseArguments(process.argv.slice(2));
 if (!args.source || !args.ref || !args["skill-path"]) {
-  throw new Error("Usage: pnpm import:skill --source <path-or-url> --ref <tag-or-sha> --skill-path <path> [--phase <phase> --capability <capability>] [--replace true] [--descendant-of <sha>]");
+  throw new Error("Usage: pnpm import:skill --source <path-or-url> --ref <tag-or-sha> --skill-path <path> [--phase <phase> --capability <capability>] [--replace true] [--descendant-of <sha>] [--expected-commit <sha>]");
 }
 
 const temporaryDirectory = await mkdtemp(path.join(tmpdir(), "agent-governance-import-"));
@@ -28,13 +28,22 @@ try {
   const extracted = path.join(temporaryDirectory, "extracted");
   execFileSync("git", ["clone", "--no-checkout", repositorySource, extracted], { stdio: "inherit" });
   const commit = execFileSync("git", ["-C", extracted, "rev-parse", "--verify", `${args.ref}^{commit}`], { encoding: "utf8" }).trim();
+  if (Object.hasOwn(args, "expected-commit")) {
+    if (!/^[a-f0-9]{40}$/u.test(args["expected-commit"])) throw new Error("--expected-commit must be a full commit SHA");
+    if (commit !== args["expected-commit"]) {
+      throw new Error(`${args.ref} resolved to ${commit}, expected ${args["expected-commit"]}; refusing changed upstream content`);
+    }
+  }
   if (args["descendant-of"]) {
     // The automatic update path passes the locked commit so that it can never import older or unrelated history.
     if (!/^[a-f0-9]{40}$/u.test(args["descendant-of"])) throw new Error("--descendant-of must be a full commit SHA");
     try {
-      execFileSync("git", ["-C", extracted, "merge-base", "--is-ancestor", args["descendant-of"], commit], { stdio: "ignore" });
-    } catch {
-      throw new Error(`${args.ref} (${commit}) does not contain ${args["descendant-of"]}; refusing to replace newer or unrelated content`);
+      execFileSync("git", ["-C", extracted, "merge-base", "--is-ancestor", args["descendant-of"], commit], { stdio: ["ignore", "ignore", "pipe"] });
+    } catch (error) {
+      if (error.status !== 1 || error.signal || error.code) {
+        throw new Error("Could not verify the required ancestor commit", { cause: error });
+      }
+      throw new Error(`${args.ref} (${commit}) does not contain ${args["descendant-of"]}; refusing to replace newer or unrelated content`, { cause: error });
     }
   }
   execFileSync("git", ["-C", extracted, "checkout", "--detach", commit], { stdio: "inherit" });
@@ -46,7 +55,7 @@ try {
   const skillMarkdown = await readFile(path.join(sourceSkill, "SKILL.md"), "utf8");
   const name = readFrontmatter(skillMarkdown).name;
   if (!NAME_PATTERN.test(name)) throw new Error(`invalid imported skill name: ${name}`);
-  const { version: metadataVersion, source: versionSource } = await readSkillVersion(sourceSkill).catch(() => ({}));
+  const { version: metadataVersion, source: versionSource } = await readSkillVersion(sourceSkill);
   if (!metadataVersion) throw new Error("Imported skills must declare metadata.version or a legacy VERSION file.");
 
   const destination = path.join(ROOT, "skills", name);

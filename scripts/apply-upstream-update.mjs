@@ -23,6 +23,7 @@ execFileSync(process.execPath, [
   path.join(ROOT, "scripts", "import-skill.mjs"),
   "--source", source.source,
   "--ref", update.latestTag,
+  "--expected-commit", update.latestCommit,
   "--skill-path", source.sourcePath,
   "--replace", "true",
   "--descendant-of", source.ref.commit,
