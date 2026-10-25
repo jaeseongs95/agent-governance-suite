@@ -42,6 +42,7 @@ describe("AL04 board actor, namespace and host permission boundaries", () => {
     expect(JSON.parse(output)).toMatchObject({hookSpecificOutput: {permissionDecision: "deny"}});
     for (const event of ["SessionStart", "UserPromptSubmit"]) {
       expect(await runSessionBoardHook("codex", JSON.stringify({hook_event_name: event, session_id: "AL04_PRIVATE_PARENT", ...actor,
+        ...(event === "SessionStart" && Object.keys(actor).length === 0 ? {agent_type: "unproven"} : {}),
         prompt: `[agent-governance-suite:wake:${"a".repeat(32)}]`}))).toBe("");
     }
     expect(f.open).not.toHaveBeenCalled(); expect(f.request).not.toHaveBeenCalled(); noWrites();

@@ -68,6 +68,20 @@ function adaptBuiltinHookInput(input: Record<string, unknown>, host: string): Ad
   };
 }
 
+/** Codex 0.163 dispatches these lifecycle events only for root threads. Its
+ * native wire schema omits actor fields; the registered strategy owns that fact.
+ * Other events still need their own actor evidence. */
+function adaptCodexHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
+  const adapted = adaptBuiltinHookInput(input, host);
+  if (adapted.lifecycle === "none") return adapted;
+  if (Object.hasOwn(input, "agent_type")) {
+    adapted.observation.actor = { kind: "unknown", observedBy: `${host}:root-lifecycle-conflict`, assurance: "unknown" };
+  } else if (!Object.hasOwn(input, "agent_id")) {
+    adapted.observation.actor = { kind: "main", observedBy: `${host}:native-root-lifecycle`, assurance: "observed" };
+  }
+  return adapted;
+}
+
 const GOVERNANCE_TOOL_PREFIXES = new Set([
   "mcp__agent_governance_suite__", "mcp__agent-governance-suite__",
   "mcp__plugin_agent-governance-suite_agent-governance-suite__",
@@ -177,7 +191,7 @@ function geminiQueueEnabled(environment: NodeJS.ProcessEnv, diagnose: (reason: s
 // Builtin wiring belongs to this composition module; core registration has no vendor list.
 const builtinHookHostAdapters = new Map<string, Readonly<HookHostAdapter>>([
   ["codex", {
-    adaptInput: adaptBuiltinHookInput, ownsTool: ownsGovernanceTool,
+    adaptInput: adaptCodexHookInput, ownsTool: ownsGovernanceTool,
     deliveryProfile: (environment, diagnose) => deliveryProfile(codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred", true),
     processPid: (pid) => pid, attestationKind: "codex-rollout", peerWait: codexNativePeerWait,
   }],
