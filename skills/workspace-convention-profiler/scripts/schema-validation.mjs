@@ -1,14 +1,9 @@
 import { readFileSync } from "node:fs";
 
-import { Ajv2020 } from "../../../runtime/schema-validation.mjs";
+import { Ajv2020, addFormats } from "../../../runtime/schema-validation.mjs";
 
-const ajv = new Ajv2020({
-  strict: true,
-  allErrors: true,
-  formats: {
-    "date-time": { type: "string", validate: (value) => Number.isFinite(Date.parse(value)) },
-  },
-});
+const ajv = new Ajv2020({ strict: true, allErrors: true });
+addFormats(ajv, ["date-time"]);
 
 function load(relative) {
   return JSON.parse(readFileSync(new URL(relative, import.meta.url), "utf8"));

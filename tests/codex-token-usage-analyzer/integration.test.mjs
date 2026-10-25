@@ -3,6 +3,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
+import addFormats from "ajv-formats";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { execute } from "../../skills/codex-token-usage-analyzer/scripts/cli.mjs";
@@ -89,7 +90,8 @@ describe("codex-token-usage-analyzer integration", () => {
       "contracts/token-usage-report.v1.schema.json",
       "integration/provider-result.v1.schema.json"
     ].map(json));
-    const ajv = new Ajv2020({ strict: true, allErrors: true, formats: { "date-time": true, uuid: true } });
+    const ajv = new Ajv2020({ strict: true, allErrors: true });
+    addFormats(ajv, ["date-time", "uuid"]);
     for (const schema of schemas) expect(() => ajv.addSchema(schema)).not.toThrow();
   });
 
