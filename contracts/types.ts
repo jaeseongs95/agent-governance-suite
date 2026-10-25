@@ -531,6 +531,18 @@ export interface PluginUpdateNoticeV1 {
   automaticInstall: false;
 }
 
+/** Planning declaration, copied into the server-signed plan; never inferred from a stage result. */
+export interface ArtifactTargetV1 {
+  artifactId: string;
+  schemaId: string;
+  targetDigest: Sha256Digest;
+}
+
+export interface StageArtifactContractV1 {
+  capability: string;
+  produced: ArtifactTargetV1[];
+}
+
 export interface TaskEnvelopeV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   taskId: string;
@@ -543,6 +555,7 @@ export interface TaskEnvelopeV1 {
   riskLevel: RiskLevel;
   workUnits: WorkUnitV1[];
   requiredCapabilities: string[];
+  artifactContracts?: StageArtifactContractV1[];
   constraints: string[];
   authorization: {
     allowedActions: string[];
@@ -674,6 +687,7 @@ export interface RoutedSkillProviderV2 extends SkillProviderV2 {
 }
 
 export interface PlannedStageV1 {
+  artifactContract?: StageArtifactContractV1;
   stageId: string;
   order: number;
   requiredCapability: string;

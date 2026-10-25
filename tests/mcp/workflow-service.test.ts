@@ -19,6 +19,8 @@ import {
 import { canonicalJson } from "../../mcp-server/src/convergence-logic.js";
 import { InMemoryWorkflowStore, PLAN_SIGNING_KEY, type WorkflowStore } from "../../mcp-server/src/workflow-store.js";
 
+// Existing synthetic target from passedStage, made an explicit planning input; no real candidate is claimed.
+const FIXTURE_ARTIFACT_TARGET = "b".repeat(64);
 const temporaryDirectories: string[] = [];
 const sqliteStores = new Set<SqliteWorkflowStore>();
 const TEST_EXECUTION_CONTEXT: ExecutionContextV1 = {
@@ -153,7 +155,7 @@ const skills: SkillDescriptorV2[] = [
 ];
 
 function task(overrides: Partial<TaskEnvelopeV1> = {}): TaskEnvelopeV1 {
-  return {
+  const envelope: TaskEnvelopeV1 = {
     schemaVersion: "1.0.0",
     taskId: "task-001",
     objective: "Prepare a high-risk, conflicting draft.",
@@ -175,6 +177,20 @@ function task(overrides: Partial<TaskEnvelopeV1> = {}): TaskEnvelopeV1 {
     orchestration: { requested: true, mcpAvailable: true },
     ...overrides,
   };
+  if (!Object.hasOwn(overrides, "artifactContracts")) {
+    const requested = new Set(envelope.requiredCapabilities);
+    if (envelope.riskLevel === "high" || envelope.riskLevel === "critical") requested.add("independent-audit");
+    envelope.artifactContracts = skills.flatMap((skill) => skill.providers.flatMap((provider) => {
+      const capability = provider.capabilities.find((item) => requested.has(item));
+      if (!capability) return [];
+      const ids = provider.gate.policy === "mandatory"
+        ? [...new Set([...provider.producedArtifacts, "gate-verdict"])] : provider.producedArtifacts;
+      return [{ capability, produced: ids.map((artifactId) => ({
+        artifactId, schemaId: "fixture/v1", targetDigest: `sha256:${FIXTURE_ARTIFACT_TARGET}` as const,
+      })) }];
+    }));
+  }
+  return envelope;
 }
 
 async function createService(
@@ -257,7 +273,7 @@ function passedStage(runId: string, stage: PlannedStageV1, expectedRevision: num
         schemaId: "fixture/v1",
         locator: `tests/${stage.stageId}/${artifactId}.json`,
         digest: "a".repeat(64),
-        targetDigest: "b".repeat(64),
+        targetDigest: FIXTURE_ARTIFACT_TARGET,
         verified: true,
       })),
       error: null,
@@ -1397,4 +1413,131 @@ describe("WorkflowService", () => {
       expect(service.recordStageResult(result).error?.code, fixture.name).toBe("GATE_FAILED");
     }
   }, 30_000);
+});
+
+describe("D0036 declared artifact targets", () => {
+  const subject = `sha256:${"b".repeat(64)}` as const;
+  const otherSubject = `sha256:${"c".repeat(64)}` as const;
+  const draftContract = {
+    capability: "draft",
+    produced: [{ artifactId: "draft", schemaId: "fixture/v1", targetDigest: subject }],
+  };
+
+  function declaredTask(artifactContracts: TaskEnvelopeV1["artifactContracts"] = [structuredClone(draftContract)]) {
+    return task({
+      riskLevel: "low", decision: { complexity: "simple", hasConflicts: false },
+      workUnits: [{ id: "draft", objective: "Draft one artifact.", dependencies: [], writeTargets: ["draft.md"] }],
+      artifactContracts,
+    });
+  }
+
+  it("rejects a different valid target without consuming the revision, then accepts the declared target", async () => {
+    const { service } = await createService();
+    const receipt = service.startWorkflow(service.planWorkflow(declaredTask()).data!).data!;
+    const result = passedStage(receipt.runId, receipt.plan.stages[0]!, receipt.revision);
+    result.output.artifacts[0]!.targetDigest = otherSubject;
+    expect(service.recordStageResult(result).error?.code).toBe("BINDING_INVALID");
+    expect(service.getWorkflowStatus(receipt.runId).data).toMatchObject({ revision: 0, stageResults: [] });
+    result.output.artifacts[0]!.targetDigest = subject;
+    const recorded = service.recordStageResult(result);
+    expect(recorded.ok).toBe(true);
+    expect(service.finalizeWorkflow(receipt.runId, recorded.data!.revision).data?.state).toBe("passed");
+  });
+
+  it("requires a declaration for passing evidence and preserves an undeclared non-passing observation", async () => {
+    const { service } = await createService();
+    const legacy = declaredTask();
+    delete legacy.artifactContracts;
+    const run = service.startWorkflow(service.planWorkflow(legacy).data!).data!;
+    const result = passedStage(run.runId, run.plan.stages[0]!, run.revision);
+    expect(service.recordStageResult(result).error?.code).toBe("MISSING_EVIDENCE");
+    expect(service.getWorkflowStatus(run.runId).data?.revision).toBe(0);
+    result.state = "blocked";
+    result.output = { schemaVersion: "1.0.0", kind: "adapter-error", output: null, artifacts: [],
+      error: { code: "MISSING_EVIDENCE", message: "Expected target was not supplied.", details: null } };
+    result.error = result.output.error;
+    result.evidence = [];
+    expect(service.recordStageResult(result).data).toMatchObject({ state: "blocked", revision: 1 });
+  });
+
+  it.each(["schema", "duplicate"] as const)("rejects %s evidence independently of a matching target", async (mutation) => {
+    const { service } = await createService();
+    const receipt = service.startWorkflow(service.planWorkflow(declaredTask()).data!).data!;
+    const result = passedStage(receipt.runId, receipt.plan.stages[0]!, receipt.revision);
+    if (mutation === "schema") result.output.artifacts[0]!.schemaId = "other/v1";
+    else result.output.artifacts.push(structuredClone(result.output.artifacts[0]!));
+    expect(service.recordStageResult(result).error?.code).toBe(mutation === "schema" ? "BINDING_INVALID" : "MISSING_EVIDENCE");
+    expect(service.getWorkflowStatus(receipt.runId).data?.revision).toBe(0);
+  });
+
+  it("binds target declarations to the server plan signature", async () => {
+    const { service } = await createService();
+    const plan = service.planWorkflow(declaredTask()).data!;
+    plan.stages[0]!.artifactContract!.produced[0]!.targetDigest = otherSubject;
+    expect(service.startWorkflow(plan).error?.code).toBe("INVALID_INPUT");
+  });
+
+  it.each(["missing-id", "duplicate-id", "unselected-capability"] as const)("rejects an invalid %s planning declaration", async (mutation) => {
+    const { service } = await createService();
+    const request = declaredTask();
+    if (mutation === "missing-id") request.artifactContracts![0]!.produced = [];
+    else if (mutation === "duplicate-id") request.artifactContracts![0]!.produced.push(structuredClone(draftContract.produced[0]!));
+    else request.artifactContracts![0]!.capability = "not-selected";
+    expect(service.planWorkflow(request).error?.code).toBe("INVALID_INPUT");
+  });
+
+  async function inputRun() {
+    const consumer = descriptor({ id: "consumer", capabilities: ["consume"], phase: "checking", phaseOrder: 60,
+      riskGate: "none", priority: 10, producedArtifacts: ["review"] });
+    consumer.providers[0]!.requiredInputArtifacts = ["draft"];
+    consumer.providers[0]!.inputBindings = [{ targetArtifact: "draft", sources: ["stage:draft"], operation: "select" }];
+    const store = new InMemoryWorkflowStore();
+    const { service } = await createService([...skills, consumer], store);
+    const request = declaredTask([structuredClone(draftContract),
+      { capability: "consume", produced: [{ artifactId: "review", schemaId: "fixture/v1", targetDigest: otherSubject }] }]);
+    request.requiredCapabilities = ["draft", "consume"];
+    const planned = service.planWorkflow(request);
+    expect(planned.ok).toBe(true);
+    const started = service.startWorkflow(planned.data!);
+    expect(started.ok).toBe(true);
+    const receipt = started.data!;
+    const produced = service.recordStageResult(passedStage(receipt.runId, receipt.plan.stages[0]!, receipt.revision));
+    expect(produced.ok).toBe(true);
+    const recorded = produced.data!;
+    const consumed = passedStage(recorded.runId, recorded.plan.stages[1]!, recorded.revision);
+    consumed.output.artifacts[0]!.targetDigest = otherSubject;
+    return { service, store, recorded, consumed };
+  }
+
+  it("allows distinct declared artifact targets and matching producer input", async () => {
+    const { service, recorded, consumed } = await inputRun();
+    const next = service.recordStageResult(consumed);
+    expect(next.ok).toBe(true);
+    expect(service.finalizeWorkflow(recorded.runId, next.data!.revision).data?.state).toBe("passed");
+  });
+
+  it.each(["schema", "target"] as const)("rechecks producer %s before consuming its input", async (mutation) => {
+    const { service, store, recorded, consumed } = await inputRun();
+    const corrupt = store.getRun(recorded.runId)!;
+    const artifact = corrupt.stageResults[0]!.output.artifacts[0]!;
+    if (mutation === "target") artifact.targetDigest = otherSubject;
+    else artifact.schemaId = "other/v1";
+    expect(store.updateRun(corrupt, recorded.revision)).toBe(true);
+    expect(service.recordStageResult(consumed).error?.code).toBe("BINDING_INVALID");
+    expect(service.getWorkflowStatus(recorded.runId).data?.revision).toBe(recorded.revision);
+  });
+
+  it.each(["schema", "target", "duplicate"] as const)("rechecks %s at finalization without consuming a rejected revision", async (mutation) => {
+    const { service, store, recorded, consumed } = await inputRun();
+    const completed = service.recordStageResult(consumed).data!;
+    const corrupt = store.getRun(recorded.runId)!;
+    const artifact = corrupt.stageResults[0]!.output.artifacts[0]!;
+    if (mutation === "target") artifact.targetDigest = otherSubject;
+    else if (mutation === "schema") artifact.schemaId = "other/v1";
+    else corrupt.stageResults[0]!.output.artifacts.push(structuredClone(artifact));
+    expect(store.updateRun(corrupt, completed.revision)).toBe(true);
+    expect(service.finalizeWorkflow(recorded.runId, completed.revision).error?.code)
+      .toBe(mutation === "duplicate" ? "MISSING_EVIDENCE" : "BINDING_INVALID");
+    expect(service.getWorkflowStatus(recorded.runId).data?.revision).toBe(completed.revision);
+  });
 });

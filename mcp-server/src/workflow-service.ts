@@ -2,6 +2,7 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 
 import {
   type ApiResultV1,
+  type StageArtifactContractV1,
   type AttemptLeaseV1,
   type AttemptOutcomeV1,
   type AttemptProposalV1,
@@ -698,7 +699,7 @@ export class WorkflowService {
         const checked: StageResultV1 = loadedOutput === undefined
           ? result
           : { ...result, output: { ...result.output, output: loadedOutput } };
-        this.assertPlannedInputsAvailable(receipt, target);
+        this.assertPlannedInputsAvailable(receipt, target, result.state === "passed");
         this.assertResultSemantics(target, checked);
         if (target.requiredCapability === "cs-implementation-review") {
           assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
@@ -762,6 +763,7 @@ export class WorkflowService {
             stageState: result?.state ?? "ready",
           });
         }
+        this.assertPlannedInputsAvailable(receipt, stage, true);
         this.assertRequiredArtifacts(stage, result);
         if (["cs-implementation-review", "test-sensitivity-review", "change-code-review"].includes(stage.requiredCapability)) {
           const checked = result.outputFile
@@ -893,6 +895,7 @@ export class WorkflowService {
         throw new WorkflowContractError("INVALID_INPUT", "Evaluation audit purpose is missing from the planning request.");
       }
       const order = stages.length + 1;
+      const artifactContract = this.plannedArtifactContract(task, satisfiedCapabilities, stageRequiredArtifacts);
       stages.push({
         stageId: stageId(order, capability),
         order,
@@ -908,6 +911,7 @@ export class WorkflowService {
         ...(executionContext
           ? { executionRequirement: this.stageExecutionRequirement(task, capability, skill.gate.policy, skill) }
           : {}),
+        ...(artifactContract ? { artifactContract } : {}),
         requiredArtifacts: stageRequiredArtifacts,
         riskGate: skill.gate.policy,
         providerKey: skill.providerKey,
@@ -933,6 +937,13 @@ export class WorkflowService {
       });
     }
 
+    for (const contract of task.artifactContracts ?? []) {
+      if (!stages.some((stage) => stage.satisfiedCapabilities.includes(contract.capability))) {
+        throw new WorkflowContractError("INVALID_INPUT", "Artifact contract capability is not in the selected plan.", {
+          capability: contract.capability,
+        });
+      }
+    }
     return {
       schemaVersion: CONTRACT_VERSION,
       taskId: task.taskId,
@@ -1121,21 +1132,46 @@ export class WorkflowService {
     return rule;
   }
 
+  private plannedArtifactContract(
+    task: TaskEnvelopeV1,
+    capabilities: string[],
+    requiredArtifacts: string[],
+  ): StageArtifactContractV1 | undefined {
+    const contracts = (task.artifactContracts ?? []).filter((item) => capabilities.includes(item.capability));
+    if (contracts.length === 0) return undefined; // Legacy non-passing observations remain recordable.
+    if (contracts.length !== 1) {
+      throw new WorkflowContractError("INVALID_INPUT", "A selected stage needs one unambiguous artifact contract.");
+    }
+    const contract = contracts[0]!;
+    const ids = contract.produced.map((item) => item.artifactId);
+    if (ids.length !== requiredArtifacts.length || new Set(ids).size !== ids.length
+      || requiredArtifacts.some((id) => !ids.includes(id))) {
+      throw new WorkflowContractError("INVALID_INPUT", "Artifact contract IDs must exactly match the planned outputs.");
+    }
+    return clone(contract);
+  }
+
   private assertRequiredArtifacts(stage: PlannedStageV1, result: StageResultV1): void {
-    const verifiedArtifacts = new Set(
-      result.output.artifacts.filter((artifact) => artifact.verified && artifact.locator && artifact.digest && artifact.targetDigest)
-        .map((artifact) => artifact.artifactId),
-    );
-    const missing = stage.requiredArtifacts.filter((artifact) => !verifiedArtifacts.has(artifact));
-    if (missing.length > 0) {
-      throw new WorkflowContractError("MISSING_EVIDENCE", "Required stage artifacts lack verified evidence.", {
-        stageId: stage.stageId,
-        missingArtifacts: missing,
-      });
+    for (const artifactId of stage.requiredArtifacts) {
+      const expected = stage.artifactContract?.produced.find((item) => item.artifactId === artifactId);
+      const actual = result.output.artifacts.filter((item) => item.artifactId === artifactId);
+      if (!expected || actual.length !== 1 || !actual[0]!.verified || !actual[0]!.locator || !actual[0]!.digest) {
+        throw new WorkflowContractError("MISSING_EVIDENCE", "Required artifact lacks a declared target or unique verified evidence.", {
+          stageId: stage.stageId, artifactId,
+        });
+      }
+      // The provider schema already supports bare and sha256:-prefixed digest spellings.
+      const targetDigest = actual[0]!.targetDigest.startsWith("sha256:")
+        ? actual[0]!.targetDigest : `sha256:${actual[0]!.targetDigest}`;
+      if (actual[0]!.schemaId !== expected.schemaId || targetDigest !== expected.targetDigest) {
+        throw new WorkflowContractError("BINDING_INVALID", "Artifact schema or target differs from the signed plan.", {
+          stageId: stage.stageId, artifactId,
+        });
+      }
     }
   }
 
-  private assertPlannedInputsAvailable(receipt: WorkflowReceiptV1, stage: PlannedStageV1): void {
+  private assertPlannedInputsAvailable(receipt: WorkflowReceiptV1, stage: PlannedStageV1, requireDeclaredTarget: boolean): void {
     const missing: Array<{ artifactId: string; producerStageId: string }> = [];
     for (const artifactId of stage.requiredInputArtifacts) {
       const producer = receipt.plan.stages.find(
@@ -1143,6 +1179,9 @@ export class WorkflowService {
       );
       if (!producer) continue;
       const producerResult = receipt.stageResults.find((candidate) => candidate.stageId === producer.stageId);
+      if (requireDeclaredTarget && producerResult?.state === "passed") {
+        this.assertRequiredArtifacts(producer, producerResult);
+      }
       const verified = producerResult?.state === "passed" && producerResult.output.artifacts.some(
         (artifact) => artifact.artifactId === artifactId
           && artifact.verified

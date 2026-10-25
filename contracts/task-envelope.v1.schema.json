@@ -34,6 +34,49 @@
         }
       }
     },
+    "artifactContracts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "capability",
+          "produced"
+        ],
+        "properties": {
+          "capability": {
+            "type": "string",
+            "minLength": 1
+          },
+          "produced": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "artifactId",
+                "schemaId",
+                "targetDigest"
+              ],
+              "properties": {
+                "artifactId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "schemaId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "targetDigest": {
+                  "type": "string",
+                  "pattern": "^sha256:[a-f0-9]{64}$"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "requiredCapabilities": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
     "constraints": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
     "authorization": {

@@ -27,6 +27,13 @@ function fixture(capability = "test-sensitivity-review", reviewAfter = false) {
   // Each fixture executes real red and green; no stored PASS proof is copied.
   const built = spawnSync(process.execPath, [path.join(repo, "tests/engineering-practices/build-example.node.mjs"), root], { encoding: "utf8" });
   expect(built.status, built.stderr).toBe(0); expect(JSON.parse(built.stdout)).toMatchObject({ red: "FAIL", green: "PASS" });
+  // build-example captures the actual fixed source/test snapshot before any result is read here.
+  const candidateTarget = read(root, "snapshot.json").digest as `sha256:${string}`;
+  task.artifactContracts = task.requiredCapabilities.map((requiredCapability) => ({
+    capability: requiredCapability,
+    produced: [{ artifactId: requiredCapability === "test-sensitivity-review" ? "engineering-test-result" : "engineering-review-result",
+      schemaId: "engineering-result/v1", targetDigest: candidateTarget }],
+  }));
   write(root, "task.json", task);
   const plan = read(root, "plan.json"); plan.contractDigest = convergenceDigest(task); write(root, "plan.json", plan);
   const proof = read(root, "proof.json"); proof.planDigest = convergenceDigest(plan); write(root, "proof.json", proof);

@@ -36,6 +36,11 @@ function fixture(tree = "") {
   const task = read(root, "task.json") as TaskEnvelopeV1;
   task.requiredCapabilities = ["cs-implementation-review"];
   task.orchestration = {requested:true, mcpAvailable:true};
+  // validateCandidate hashes this manifest independently of review/result and task/binding digests.
+  const candidateTarget = convergenceDigest(read(root, "candidate.json"));
+  task.artifactContracts = [{ capability: "cs-implementation-review", produced: [{
+    artifactId: "cs-review-report", schemaId: "cs-fixture/v1", targetDigest: candidateTarget,
+  }] }];
   write(root, "task.json", task);
   const binding = read(root, "binding.json"); binding.taskDigest = convergenceDigest(task); write(root, "binding.json", binding);
   const sync = () => write(root, "stage-bundle.json", {schemaVersion:"1.0.0", ...Object.fromEntries(
@@ -77,6 +82,7 @@ test("registered CS providers are discoverable at bootstrap 25 and workflow 67",
   expect(f.registry.read().filter((p) => p.skillId === "cs-engineering").map((p) => p.phaseOrder)).toEqual([25,67]);
   expect(readFileSync(path.join(repo,"skills/cs-engineering/agents/openai.yaml"),"utf8")).toContain("allow_implicit_invocation: true");
   const bootstrap = {...f.task, requiredCapabilities:["cs-constraint-derivation"]};
+  delete bootstrap.artifactContracts; // This plan intentionally has no workflow review stage.
   expect(f.service.planWorkflow(bootstrap).data?.state).toBe("blocked");
 });
 
@@ -138,6 +144,7 @@ test("guarded lease/start and SQLite restart retain recorded bundle pins; finali
 
 test("existing non-CS plan stays unselected and rejects unknown CS wire fields", () => {
   const f=fixture();const task={...f.task,requiredCapabilities:["minimal-implementation"]};
+  delete task.artifactContracts; // No CS output is selected in this planning-only case.
   expect(f.service.planWorkflow(task).data?.selectedSkills).toEqual(["ponytail"]);
   expect(f.service.planWorkflow({...task,csEngineeringBinding:f.binding}).ok).toBe(false);
   expect(f.service.planWorkflow({schemaVersion:"1.1.0",taskEnvelope:task,csEngineeringBinding:f.binding}).ok).toBe(false);
