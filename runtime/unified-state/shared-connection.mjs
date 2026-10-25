@@ -37,7 +37,7 @@ export function runObservedTimeTransaction(database, observe, operation, afterDo
     const now = observe();
     database.exec("SAVEPOINT domain_operation");
     try { result = synchronous(operation(now)); }
-    catch (error) { rejected = true; rejection = error; try { database.exec("ROLLBACK TO domain_operation"); } catch { /* Preserve the domain rejection. */ } }
+    catch (error) { rejected = true; rejection = error; try { database.exec("ROLLBACK TO domain_operation"); } catch { throw error; } }
     database.exec("RELEASE domain_operation");
     afterDomain();
     database.exec("COMMIT");
