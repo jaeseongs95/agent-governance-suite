@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { copyFile, mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -40,13 +40,24 @@ it("validate-skill은 상대 링크의 ENOENT·URI 오류·접근 실패를 서�
   const skill = path.join(root, "skills", "linked");
   await mkdir(skill, { recursive: true });
   await writeFile(path.join(root, "skills", "registry.json"), JSON.stringify({ skills: [{ skillId: "linked" }] }));
-  await symlink("loop-b", path.join(skill, "loop-a"));
-  await symlink("loop-a", path.join(skill, "loop-b"));
   await writeFile(
     path.join(skill, "SKILL.md"),
     "---\nname: linked\ndescription: fixture skill for link diagnostics only\n---\n[a](gone.md) [b](%E0%A4%A.md) [c](loop-a)\n",
   );
-  const errors = probe(root, validateSkillProbe("linked"));
+  // Native symlink-cycle codes differ by OS; fault only this access boundary.
+  const errors = probe(root, `
+    import fs from "node:fs/promises";
+    import { syncBuiltinESMExports } from "node:module";
+    const access = fs.access;
+    fs.access = async (target, ...args) => {
+      if (target === ${JSON.stringify(path.join(skill, "loop-a"))}) {
+        throw Object.assign(new Error("fixture link access failure"), { code: "ELOOP" });
+      }
+      return access(target, ...args);
+    };
+    syncBuiltinESMExports();
+    ${validateSkillProbe("linked")}
+  `);
   expect(errors).toContain("broken relative link: gone.md");
   expect(errors).toContain("invalid link URI: %E0%A4%A.md (URIError)");
   expect(errors).toContain("cannot access link target: loop-a (ELOOP)");
@@ -63,17 +74,24 @@ it("readSkillVersion은 VERSION이 없을 때만 neither 오류를 내고 읽기
   const source = path.join(repository, "scripts", "source-lock.mjs");
   const messages = probe(
     root,
-    `import { readSkillVersion } from ${JSON.stringify(pathToFileURL(source).href)};
+    `import { readFile } from "node:fs/promises";
+     import { readSkillVersion } from ${JSON.stringify(pathToFileURL(source).href)};
+     const describe = (error) => ({ message: error.message, code: error.code,
+       causeCode: error.cause?.code, path: error.path, syscall: error.syscall });
      const out = {};
+     try { await readFile(${JSON.stringify(path.join(root, "skills", "unreadable", "VERSION"))}, "utf8"); }
+     catch (error) { out.native = describe(error); }
      for (const name of ["absent", "unreadable"]) {
        try { await readSkillVersion(${JSON.stringify(path.join(root, "skills"))} + "/" + name); }
-       catch (error) { out[name] = { message: error.message, code: error.cause?.code }; }
+       catch (error) { out[name] = describe(error); }
      }
      console.log(JSON.stringify(out));`,
   );
   expect(messages.absent.message).toContain("has neither metadata.version nor VERSION");
-  expect(messages.unreadable.message).toContain("VERSION is unreadable: EISDIR");
+  expect(messages.absent.causeCode).toBe("ENOENT");
   expect(messages.unreadable.code).toBe("EISDIR");
+  expect(messages.unreadable).toEqual(messages.native);
+  expect(messages.unreadable.message).not.toContain("has neither metadata.version nor VERSION");
 });
 
 it("mutation-risk-preflight validator는 JSON 문법 오류와 읽기 실패를 구분한다", async () => {
