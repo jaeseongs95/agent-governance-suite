@@ -129,8 +129,8 @@ describe("Codex current host observation", () => {
     const store = new InMemoryWorkflowStore();
     const input = { ...hook, tool_input: { ...hook.tool_input, [HOST_ATTESTATION_FIELD]: "caller-token" } };
     const output = handleCodexHostAttestationHook(input, store, { readMetadata: () => metadata() });
-    const updated = (output.hookSpecificOutput as { updatedInput: Record<string, unknown>; permissionDecision: string });
-    expect(updated.permissionDecision).toBe("allow");
+    const updated = (output.hookSpecificOutput as { updatedInput: Record<string, unknown>; permissionDecision?: string });
+    expect(updated.permissionDecision).toBeUndefined();
     const token = String(updated.updatedInput[HOST_ATTESTATION_FIELD]);
     const payload = JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString("utf8"));
     expect(payload).toMatchObject({ host: "codex", tool: "plan_workflow", phase: "bootstrap", taskId: "hook-task" });
@@ -138,7 +138,8 @@ describe("Codex current host observation", () => {
     expect(JSON.stringify(payload)).not.toContain(hook.session_id);
     const missing = handleCodexHostAttestationHook(input, store, { readMetadata: () => null });
     expect(missing).toMatchObject({ systemMessage: expect.stringContaining("host-metadata-unreadable"),
-      hookSpecificOutput: { permissionDecision: "allow", updatedInput: hook.tool_input } });
+      hookSpecificOutput: { updatedInput: hook.tool_input } });
+    expect(missing.hookSpecificOutput).not.toHaveProperty("permissionDecision");
     expect(handleCodexHostAttestationHook({ ...hook, tool_name: "mcp__another_server__plan_workflow" }, store)).toEqual({});
   });
 

@@ -21,7 +21,7 @@ import { observeCodexHook, type CodexObservationOptions } from "./codex-host-obs
 import { resolveWorkflowDatabasePath } from "./runtime-config.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import type { WorkflowStore } from "./workflow-store.js";
-import { hookAttestationKind, resolveHookHost } from "./host-input-adapter.js";
+import { hookAttestationKind, isGovernanceHookTool, resolveHookHost } from "./host-input-adapter.js";
 import { HOST_SKILL_OBSERVATION_FIELD } from "./skill-classification/host-discovery-adapter.js";
 
 type HookInput = Record<string, unknown>;
@@ -65,6 +65,8 @@ export interface SessionModelRecord {
 }
 
 export interface HostAttestationHookOptions {
+  /** Trusted tool-ownership adapter, separate from the execution model policy. */
+  host?: string;
   readText?: (file: string) => string | null;
   sleep?: (milliseconds: number) => void;
   maxWaitMs?: number;
@@ -312,10 +314,10 @@ export function readSessionModel(directory: string, sessionId: string): SessionM
   }
 }
 
-function attestedToolInput(input: HookInput): { tool: string; toolInput: Record<string, unknown> } | null {
+function attestedToolInput(input: HookInput, host: string): { tool: string; toolInput: Record<string, unknown> } | null {
   if (input.hook_event_name !== "PreToolUse") return null;
   const canonicalName = text(input.tool_name) ?? "";
-  if (!/^mcp__(?:plugin_agent-governance-suite_agent-governance-suite|agent[-_]governance[-_]suite)__/u.test(canonicalName)) return null;
+  if (!isGovernanceHookTool(host, canonicalName)) return null;
   const tool = canonicalName.split("__").at(-1) ?? "";
   const toolInput = record(input.tool_input);
   return HOST_ATTESTATION_TOOLS.has(tool) && toolInput ? { tool, toolInput } : null;
@@ -325,8 +327,8 @@ function attestedToolInput(input: HookInput): { tool: string; toolInput: Record<
  * When the hook cannot attest a call, a token the caller put in the arguments
  * must not reach the server, so it is removed instead of passed through.
  */
-export function withoutCallerAttestation(input: HookInput): Record<string, unknown> {
-  const target = attestedToolInput(input);
+export function withoutCallerAttestation(input: HookInput, host: string = claudeCodeExecutionAdapter.host): Record<string, unknown> {
+  const target = attestedToolInput(input, host);
   if (!target || (!Object.prototype.hasOwnProperty.call(target.toolInput, HOST_ATTESTATION_FIELD) && !Object.prototype.hasOwnProperty.call(target.toolInput, HOST_SKILL_OBSERVATION_FIELD))) return {};
   return {
     hookSpecificOutput: {
@@ -348,12 +350,13 @@ export function handleHostAttestationHook(
   store: WorkflowStore,
   options: HostAttestationHookOptions = {},
 ): Record<string, unknown> {
-  const target = attestedToolInput(input);
+  const host = options.host ?? claudeCodeExecutionAdapter.host;
+  const target = attestedToolInput(input, host);
   if (!target) return {};
   const {tool} = target;
   const adapter = options.adapter ?? claudeCodeExecutionAdapter;
   const toolInput = withoutCallerHostClaims(target.toolInput);
-  const unattested = () => withoutCallerAttestation(input);
+  const unattested = () => withoutCallerAttestation(input, host);
   const sessionId = text(input.session_id);
   const toolUseId = text(input.tool_use_id);
   const transcriptPath = text(input.transcript_path);
@@ -434,9 +437,10 @@ export function handleHostAttestationHook(
 export function handleCodexHostAttestationHook(
   input: HookInput,
   store: WorkflowStore,
-  options: CodexObservationOptions & { now?: () => Date } = {},
+  options: CodexObservationOptions & { now?: () => Date; host?: string } = {},
 ): Record<string, unknown> {
-  const target = attestedToolInput(input);
+  const host = options.host ?? codexExecutionAdapter.host;
+  const target = attestedToolInput(input, host);
   if (!target) return {};
   const adapter = options.adapter ?? codexExecutionAdapter;
   const observed = observeCodexHook(input, options);
@@ -449,20 +453,20 @@ export function handleCodexHostAttestationHook(
     ...(!token ? { systemMessage: `AGS execution observation unavailable: ${observed.reason ?? "invalid-workflow-binding"}. Requires the current host session/turn/model/effort and tool call; caller settings cannot supply them.` } : {}),
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
-      permissionDecision: "allow",
       updatedInput: token ? {...clean, [HOST_ATTESTATION_FIELD]: token} : clean,
     },
   };
 }
 
 export interface HookAttestationStrategyContext {
+  host?: string;
   databasePath: string;
   openStore(): WorkflowStore;
 }
 
 export interface HookAttestationStrategy {
   observe(input: HookInput, context: HookAttestationStrategyContext): Record<string, unknown>;
-  unavailable?(input: HookInput, failure: Readonly<{ phase: string; reason: string }>): Record<string, unknown>;
+  unavailable?(input: HookInput, failure: Readonly<{ phase: string; reason: string; host?: string }>): Record<string, unknown>;
 }
 
 const attestationStrategies = new Map<string, Readonly<HookAttestationStrategy>>();
@@ -481,7 +485,7 @@ export function registerHookAttestationStrategy(kind: string, strategy: HookAtte
 export function handleRegisteredHostAttestationHook(
   kind: string, input: HookInput, context: HookAttestationStrategyContext,
 ): Record<string, unknown> {
-  return attestationStrategies.get(kind)?.observe(input, context) ?? withoutCallerAttestation(input);
+  return attestationStrategies.get(kind)?.observe(input, context) ?? withoutCallerAttestation(input, context.host);
 }
 
 registerHookAttestationStrategy("claude-hook", {
@@ -493,18 +497,21 @@ registerHookAttestationStrategy("claude-hook", {
       return {};
     }
     return handleHostAttestationHook(input, context.openStore(), {
+      host: context.host ?? claudeCodeExecutionAdapter.host,
       readSessionModel: (sessionId) => readSessionModel(modelDirectory, sessionId),
     });
   },
 });
 
 registerHookAttestationStrategy("codex-rollout", {
-  observe: (input, context) => handleCodexHostAttestationHook(input, context.openStore()),
+  observe: (input, context) => handleCodexHostAttestationHook(input, context.openStore(), {
+    host: context.host ?? codexExecutionAdapter.host,
+  }),
   unavailable(input, failure) {
-    const output = withoutCallerAttestation(input);
-    if (attestedToolInput(input)) {
+    const host = failure.host ?? codexExecutionAdapter.host;
+    const output = withoutCallerAttestation(input, host);
+    if (attestedToolInput(input, host)) {
       output.systemMessage = `AGS execution observation unavailable: ${failure.phase}:${failure.reason}. No caller attestation is trusted.`;
-      if (record(output.hookSpecificOutput)) (output.hookSpecificOutput as Record<string, unknown>).permissionDecision = "allow";
     }
     return output;
   },
@@ -515,6 +522,7 @@ async function main(): Promise<void> {
   let input: HookInput = {};
   let output: Record<string, unknown>;
   let strategy: Readonly<HookAttestationStrategy> | undefined;
+  let host = claudeCodeExecutionAdapter.host;
   let phase = "stdin";
   try {
     const raw = readFileSync(0, "utf8");
@@ -523,18 +531,19 @@ async function main(): Promise<void> {
     if (!parsed) throw new HookObservationFailure("INVALID_HOOK_INPUT");
     input = parsed;
     phase = "host-entry";
-    const host = resolveHookHost(process.argv.slice(2), "claude-code");
+    host = resolveHookHost(process.argv.slice(2), "claude-code");
     const attestationKind = hookAttestationKind(host);
     strategy = attestationKind ? attestationStrategies.get(attestationKind) : undefined;
     if (!strategy || !attestationKind) {
       // Official effort and actual call identity are unavailable: issue no token or discovery snapshot.
-      output = withoutCallerAttestation(input);
+      output = withoutCallerAttestation(input, host);
       if (Object.keys(output).length > 0) process.stdout.write(JSON.stringify(output));
       return;
     }
     phase = "storage";
     const databasePath = resolveWorkflowDatabasePath();
     output = handleRegisteredHostAttestationHook(attestationKind, input, {
+      host,
       databasePath,
       openStore() {
         resources.store ??= new SqliteWorkflowStore(databasePath);
@@ -548,8 +557,8 @@ async function main(): Promise<void> {
       : cause instanceof SyntaxError && phase === "input" ? "INVALID_JSON" : "OBSERVATION_UNAVAILABLE");
     reportObservationFailure(phase, reason, cause);
     // Without a token the server fails closed with BINDING_REQUIRED; never block the tool call here.
-    output = withoutCallerAttestation(input);
-    try { output = strategy?.unavailable?.(input, { phase, reason }) ?? output; }
+    output = withoutCallerAttestation(input, host);
+    try { output = strategy?.unavailable?.(input, { phase, reason, host }) ?? output; }
     catch { /* An unavailable adapter cannot prevent caller-claim stripping. */ }
   } finally {
     try { resources.store?.close(); } catch (cause) { reportObservationFailure("store-close", "STORE_CLOSE_FAILED", cause); }
