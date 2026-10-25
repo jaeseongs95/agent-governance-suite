@@ -152,16 +152,16 @@ function canonicalJson(value, subject = "Convergence input") {
   if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
   if (typeof value === "number") {
     if (!Number.isFinite(value)) {
-      throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-finite number.`);
+      throw new WorkflowContractError("INVALID_INPUT", "".concat(subject, " contains a non-finite number."));
     }
     return JSON.stringify(value);
   }
-  if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item, subject)).join(",")}]`;
+  if (Array.isArray(value)) return "[".concat(value.map((item) => canonicalJson(item, subject)).join(","), "]");
   if (value && typeof value === "object") {
     const record = value;
-    return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key], subject)}`).join(",")}}`;
+    return "{".concat(Object.keys(record).sort().map((key) => "".concat(JSON.stringify(key), ":").concat(canonicalJson(record[key], subject))).join(","), "}");
   }
-  throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-serializable value.`);
+  throw new WorkflowContractError("INVALID_INPUT", "".concat(subject, " contains a non-serializable value."));
 }
 
 // mcp-server/src/trust-store.ts
@@ -192,7 +192,7 @@ function verifyInputSource(receipt, signingKey) {
 function rejectUnexpectedKeys(value, allowed, label) {
   const unexpected = Object.keys(value).filter((key) => !allowed.has(key));
   if (unexpected.length > 0) {
-    throw new WorkflowContractError("INVALID_INPUT", `${label} contains unsupported fields.`, { unexpected });
+    throw new WorkflowContractError("INVALID_INPUT", "".concat(label, " contains unsupported fields."), { unexpected });
   }
 }
 var TrustStore = class {
@@ -223,7 +223,7 @@ var TrustStore = class {
     if (databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true, mode: 448 });
     this.database = new DatabaseSync(databasePath);
     try {
-      this.database.exec(`PRAGMA busy_timeout = ${busyTimeoutMs};`);
+      this.database.exec("PRAGMA busy_timeout = ".concat(busyTimeoutMs, ";"));
       this.database.exec("PRAGMA synchronous = FULL;");
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
@@ -262,7 +262,7 @@ var TrustStore = class {
     }
     const receipt = this.seal({
       schemaVersion: CONTRACT_VERSION,
-      receiptId: `source-${randomUUID()}`,
+      receiptId: "source-".concat(randomUUID()),
       originKind: input.originKind,
       host: input.host,
       sessionId: input.sessionId,
@@ -278,10 +278,7 @@ var TrustStore = class {
       }
     });
     return this.guard("Cannot record the input source receipt.", { receiptId: receipt.receiptId }, () => this.transaction(() => {
-      const existing = this.database.prepare(`
-        SELECT receipt_json FROM input_source_receipts
-        WHERE host = ? AND session_id = ? AND event_id = ?
-      `).get(receipt.host, receipt.sessionId, receipt.eventId);
+      const existing = this.database.prepare("\n        SELECT receipt_json FROM input_source_receipts\n        WHERE host = ? AND session_id = ? AND event_id = ?\n      ").get(receipt.host, receipt.sessionId, receipt.eventId);
       if (existing) {
         const prior = JSON.parse(existing.receipt_json);
         const sameSecurityMetadata = prior.contentDigest === receipt.contentDigest && prior.originKind === receipt.originKind && prior.authorityEffect === receipt.authorityEffect && canonicalJson(prior.attestation, "Source attestation") === canonicalJson(receipt.attestation, "Source attestation");
@@ -292,12 +289,7 @@ var TrustStore = class {
           eventId: receipt.eventId
         }), "TRUST_SOURCE_EVENT_CONFLICT");
       }
-      this.database.prepare(`
-        INSERT INTO input_source_receipts (
-          receipt_id, host, session_id, event_id, origin_kind,
-          authority_effect, observed_at, expires_at, receipt_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
+      this.database.prepare("\n        INSERT INTO input_source_receipts (\n          receipt_id, host, session_id, event_id, origin_kind,\n          authority_effect, observed_at, expires_at, receipt_json\n        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)\n      ").run(
         receipt.receiptId,
         receipt.host,
         receipt.sessionId,
@@ -313,11 +305,7 @@ var TrustStore = class {
   }
   latestInputSource(binding) {
     return this.guard("Cannot read the latest input source receipt.", { ...binding }, () => {
-      const row = this.database.prepare(`
-        SELECT receipt_json FROM input_source_receipts
-        WHERE host = ? AND session_id = ?
-        ORDER BY observed_at DESC, receipt_id DESC LIMIT 1
-      `).get(binding.host, binding.sessionId);
+      const row = this.database.prepare("\n        SELECT receipt_json FROM input_source_receipts\n        WHERE host = ? AND session_id = ?\n        ORDER BY observed_at DESC, receipt_id DESC LIMIT 1\n      ").get(binding.host, binding.sessionId);
       return row ? JSON.parse(row.receipt_json) : null;
     });
   }
@@ -373,27 +361,9 @@ var TrustStore = class {
       }), "TRUST_SCHEMA_UNSUPPORTED");
     }
     this.transaction(() => {
-      this.database.exec(`
-      CREATE TABLE IF NOT EXISTS trust_metadata (
-        key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL
-      ) STRICT;
-      CREATE TABLE IF NOT EXISTS input_source_receipts (
-        receipt_id TEXT PRIMARY KEY,
-        host TEXT NOT NULL,
-        session_id TEXT NOT NULL,
-        event_id TEXT NOT NULL,
-        origin_kind TEXT NOT NULL,
-        authority_effect TEXT NOT NULL,
-        observed_at TEXT NOT NULL,
-        expires_at TEXT NOT NULL,
-        receipt_json TEXT NOT NULL,
-        UNIQUE(host, session_id, event_id)
-      ) STRICT;
-      CREATE INDEX IF NOT EXISTS input_source_latest
-        ON input_source_receipts(host, session_id, observed_at DESC);
-    `);
+      this.database.exec("\n      CREATE TABLE IF NOT EXISTS trust_metadata (\n        key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL\n      ) STRICT;\n      CREATE TABLE IF NOT EXISTS input_source_receipts (\n        receipt_id TEXT PRIMARY KEY,\n        host TEXT NOT NULL,\n        session_id TEXT NOT NULL,\n        event_id TEXT NOT NULL,\n        origin_kind TEXT NOT NULL,\n        authority_effect TEXT NOT NULL,\n        observed_at TEXT NOT NULL,\n        expires_at TEXT NOT NULL,\n        receipt_json TEXT NOT NULL,\n        UNIQUE(host, session_id, event_id)\n      ) STRICT;\n      CREATE INDEX IF NOT EXISTS input_source_latest\n        ON input_source_receipts(host, session_id, observed_at DESC);\n    ");
       if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION);
-      else this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
+      else this.database.exec("PRAGMA user_version = ".concat(SCHEMA_VERSION, ";"));
     });
   }
   getOrCreateSecret(name) {
@@ -669,7 +639,7 @@ function buildClaudeFamilyRegex(keys) {
   if (keys.length === 0) return null;
   const sorted = [...keys].sort((left, right) => right.length - left.length).map(escapeRegExp);
   return new RegExp(
-    `^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:anthropic\\.)?claude-(?:\\d+(?:-\\d+)?-)?(${sorted.join("|")})(?:[-@:.]|$)`,
+    "^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:anthropic\\.)?claude-(?:\\d+(?:-\\d+)?-)?(".concat(sorted.join("|"), ")(?:[-@:.]|$)"),
     "u"
   );
 }
@@ -680,11 +650,11 @@ function buildGeminiFamilyRegex(prefixedKeys, bareKeys) {
   const branches = [];
   if (sortedPrefixed.length > 0) {
     branches.push(
-      `^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:google[./-])?(?:models\\/)?(?:gemini-(?:\\d+(?:\\.\\d+)?-)?)(${sortedPrefixed.join("|")})(?:[-@:.]|$)`
+      "^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:google[./-])?(?:models\\/)?(?:gemini-(?:\\d+(?:\\.\\d+)?-)?)" + "(".concat(sortedPrefixed.join("|"), ")(?:[-@:.]|$)")
     );
   }
   if (sortedBare.length > 0) {
-    branches.push(`^(${sortedBare.join("|")})$`);
+    branches.push("^(".concat(sortedBare.join("|"), ")$"));
   }
   return new RegExp(branches.join("|"), "u");
 }
@@ -748,7 +718,7 @@ function createHostAdapter(providerId, host, policyRevision, providerEntry) {
     host,
     provider: providerId,
     policyRevision,
-    resolveModel(model, provenance = `${host}:adapter-policy`) {
+    resolveModel(model, provenance = "".concat(host, ":adapter-policy")) {
       return resolveFromProviderCatalog(providerId, host, policyRevision, providerEntry, model, provenance);
     },
     modelClassForModel(model) {
@@ -826,7 +796,7 @@ var WAKE_ACTOR_ASSURANCES = ["observed", "unknown"];
 function isWakeHookObservation(value, target) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const event = value;
-  return event.host === target.host && event.sessionId === target.sessionId && event.kind === "user-input" && event.wakeOnly === true && event.actor?.observedBy === `${target.host}:hook-payload` && WAKE_ACTOR_KINDS.some((kind) => kind === event.actor.kind) && WAKE_ACTOR_ASSURANCES.some((assurance) => assurance === event.actor.assurance) && Array.isArray(event.wakeCandidates) && event.wakeCandidates.length > 0 && event.wakeCandidates.length <= 10 && event.wakeCandidates.every((nonce) => typeof nonce === "string" && /^[A-Za-z0-9_-]{22,128}$/u.test(nonce));
+  return event.host === target.host && event.sessionId === target.sessionId && event.kind === "user-input" && event.wakeOnly === true && event.actor?.observedBy === "".concat(target.host, ":hook-payload") && WAKE_ACTOR_KINDS.some((kind) => kind === event.actor.kind) && WAKE_ACTOR_ASSURANCES.some((assurance) => assurance === event.actor.assurance) && Array.isArray(event.wakeCandidates) && event.wakeCandidates.length > 0 && event.wakeCandidates.length <= 10 && event.wakeCandidates.every((nonce) => typeof nonce === "string" && /^[A-Za-z0-9_-]{22,128}$/u.test(nonce));
 }
 function observationDigest(event) {
   const normalized = [
@@ -839,7 +809,7 @@ function observationDigest(event) {
     event.actor.assurance,
     [...new Set(event.wakeCandidates)].sort()
   ];
-  return `sha256:${createHash2("sha256").update(JSON.stringify(normalized)).digest("hex")}`;
+  return "sha256:".concat(createHash2("sha256").update(JSON.stringify(normalized)).digest("hex"));
 }
 function verifyHistoricalWakeObservation(target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs, source = resolveTrustDatabasePath()) {
   const receipt = typeof source === "string" ? TrustStore.readVerifiedInputSource(source, sourceReceiptId) : source.readVerifiedInputSource(sourceReceiptId);
@@ -858,7 +828,7 @@ function verifyHistoricalWakeObservation(target, nonce, sourceReceiptId, started
       kind: "user-input",
       wakeOnly: true,
       wakeCandidates: [nonce],
-      actor: { kind, assurance, observedBy: `${target.host}:hook-payload` }
+      actor: { kind, assurance, observedBy: "".concat(target.host, ":hook-payload") }
     };
     if (isWakeHookObservation(observation, target) && observationDigest(observation) === receipt.contentDigest) matches++;
   }
@@ -949,85 +919,14 @@ var SessionMessageStore = class {
       const storedVersion = this.shared?.getSchemaVersion() ?? this.database.prepare("PRAGMA user_version").get().user_version;
       if (storedVersion > MESSAGE_SCHEMA_VERSION) {
         this.database.close();
-        throw new Error(`The session message database schema ${storedVersion} is newer than this broker supports.`);
+        throw new Error("The session message database schema ".concat(storedVersion, " is newer than this broker supports."));
       }
       if (!this.shared && databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
-      this.database.exec(`CREATE TABLE IF NOT EXISTS messages (
-      message_id TEXT PRIMARY KEY,
-      sender_host TEXT NOT NULL,
-      sender_session_id TEXT NOT NULL,
-      target_host TEXT NOT NULL,
-      target_session_id TEXT NOT NULL,
-      body TEXT NOT NULL,
-      body_bytes INTEGER NOT NULL,
-      created_at TEXT NOT NULL,
-      expires_at TEXT NOT NULL,
-      claimed_at TEXT,
-      claim_until TEXT,
-      delivery_attempts INTEGER NOT NULL DEFAULT 0,
-      first_delivered_at TEXT,
-      acknowledged_at TEXT
-    ) STRICT;
-    CREATE INDEX IF NOT EXISTS messages_target_pending
-      ON messages (target_host, target_session_id, acknowledged_at, expires_at, claim_until);
-    CREATE TABLE IF NOT EXISTS relay_leases (
-      host TEXT NOT NULL,
-      session_id TEXT NOT NULL,
-      transport TEXT NOT NULL,
-      relay_id TEXT NOT NULL,
-      pid INTEGER NOT NULL,
-      parent_pid INTEGER NOT NULL,
-      relay_start_token TEXT,
-      lease_until TEXT NOT NULL,
-      updated_at TEXT NOT NULL,
-      PRIMARY KEY (host, session_id, transport)
-    ) STRICT;
-    CREATE TABLE IF NOT EXISTS wake_nonces (
-      nonce_digest TEXT PRIMARY KEY,
-      host TEXT NOT NULL,
-      session_id TEXT NOT NULL,
-      expires_at TEXT NOT NULL,
-      consumed_at TEXT
-    ) STRICT;
-    CREATE TABLE IF NOT EXISTS session_presence (
-      host TEXT NOT NULL,
-      session_id TEXT NOT NULL,
-      instance_id TEXT NOT NULL,
-      transport TEXT NOT NULL,
-      wake_visibility TEXT NOT NULL CHECK (wake_visibility IN ('silent', 'user-message', 'none')),
-      can_wake_silently INTEGER NOT NULL CHECK (can_wake_silently IN (0, 1)),
-      supported_injection TEXT NOT NULL DEFAULT '[]',
-      idle_wake TEXT NOT NULL DEFAULT 'none' CHECK (idle_wake IN ('silent', 'user-message', 'none')),
-      collaboration_id TEXT,
-      workspace_id TEXT,
-      role TEXT,
-      started_at TEXT NOT NULL,
-      heartbeat_at TEXT NOT NULL,
-      lease_until TEXT NOT NULL,
-      ended_at TEXT,
-      end_reason TEXT,
-      PRIMARY KEY (host, session_id, instance_id)
-    ) STRICT;
-    CREATE INDEX IF NOT EXISTS session_presence_latest
-      ON session_presence (host, session_id, started_at DESC);`);
+      this.database.exec("CREATE TABLE IF NOT EXISTS messages (\n      message_id TEXT PRIMARY KEY,\n      sender_host TEXT NOT NULL,\n      sender_session_id TEXT NOT NULL,\n      target_host TEXT NOT NULL,\n      target_session_id TEXT NOT NULL,\n      body TEXT NOT NULL,\n      body_bytes INTEGER NOT NULL,\n      created_at TEXT NOT NULL,\n      expires_at TEXT NOT NULL,\n      claimed_at TEXT,\n      claim_until TEXT,\n      delivery_attempts INTEGER NOT NULL DEFAULT 0,\n      first_delivered_at TEXT,\n      acknowledged_at TEXT\n    ) STRICT;\n    CREATE INDEX IF NOT EXISTS messages_target_pending\n      ON messages (target_host, target_session_id, acknowledged_at, expires_at, claim_until);\n    CREATE TABLE IF NOT EXISTS relay_leases (\n      host TEXT NOT NULL,\n      session_id TEXT NOT NULL,\n      transport TEXT NOT NULL,\n      relay_id TEXT NOT NULL,\n      pid INTEGER NOT NULL,\n      parent_pid INTEGER NOT NULL,\n      relay_start_token TEXT,\n      lease_until TEXT NOT NULL,\n      updated_at TEXT NOT NULL,\n      PRIMARY KEY (host, session_id, transport)\n    ) STRICT;\n    CREATE TABLE IF NOT EXISTS wake_nonces (\n      nonce_digest TEXT PRIMARY KEY,\n      host TEXT NOT NULL,\n      session_id TEXT NOT NULL,\n      expires_at TEXT NOT NULL,\n      consumed_at TEXT\n    ) STRICT;\n    CREATE TABLE IF NOT EXISTS session_presence (\n      host TEXT NOT NULL,\n      session_id TEXT NOT NULL,\n      instance_id TEXT NOT NULL,\n      transport TEXT NOT NULL,\n      wake_visibility TEXT NOT NULL CHECK (wake_visibility IN ('silent', 'user-message', 'none')),\n      can_wake_silently INTEGER NOT NULL CHECK (can_wake_silently IN (0, 1)),\n      supported_injection TEXT NOT NULL DEFAULT '[]',\n      idle_wake TEXT NOT NULL DEFAULT 'none' CHECK (idle_wake IN ('silent', 'user-message', 'none')),\n      collaboration_id TEXT,\n      workspace_id TEXT,\n      role TEXT,\n      started_at TEXT NOT NULL,\n      heartbeat_at TEXT NOT NULL,\n      lease_until TEXT NOT NULL,\n      ended_at TEXT,\n      end_reason TEXT,\n      PRIMARY KEY (host, session_id, instance_id)\n    ) STRICT;\n    CREATE INDEX IF NOT EXISTS session_presence_latest\n      ON session_presence (host, session_id, started_at DESC);");
       return this.transaction(() => {
         const version = this.shared?.getSchemaVersion() ?? this.database.prepare("PRAGMA user_version").get().user_version;
-        if (version > MESSAGE_SCHEMA_VERSION) throw new Error(`The session message database schema ${version} is newer than this broker supports.`);
-        this.database.exec(`CREATE TABLE IF NOT EXISTS prepared_messages (
-        message_id TEXT PRIMARY KEY,
-        sender_host TEXT NOT NULL,
-        sender_session_id TEXT NOT NULL,
-        target_host TEXT NOT NULL,
-        target_session_id TEXT NOT NULL,
-        body TEXT,
-        ttl_seconds INTEGER NOT NULL,
-        prepared_at TEXT NOT NULL,
-        expires_at TEXT NOT NULL,
-        receipt TEXT,
-        record_bytes INTEGER NOT NULL
-      ) STRICT;
-      CREATE INDEX IF NOT EXISTS prepared_messages_expiry ON prepared_messages (expires_at);
-      CREATE INDEX IF NOT EXISTS prepared_messages_owner ON prepared_messages (sender_host, sender_session_id, receipt);`);
+        if (version > MESSAGE_SCHEMA_VERSION) throw new Error("The session message database schema ".concat(version, " is newer than this broker supports."));
+        this.database.exec("CREATE TABLE IF NOT EXISTS prepared_messages (\n        message_id TEXT PRIMARY KEY,\n        sender_host TEXT NOT NULL,\n        sender_session_id TEXT NOT NULL,\n        target_host TEXT NOT NULL,\n        target_session_id TEXT NOT NULL,\n        body TEXT,\n        ttl_seconds INTEGER NOT NULL,\n        prepared_at TEXT NOT NULL,\n        expires_at TEXT NOT NULL,\n        receipt TEXT,\n        record_bytes INTEGER NOT NULL\n      ) STRICT;\n      CREATE INDEX IF NOT EXISTS prepared_messages_expiry ON prepared_messages (expires_at);\n      CREATE INDEX IF NOT EXISTS prepared_messages_owner ON prepared_messages (sender_host, sender_session_id, receipt);");
         const messageColumns = this.database.prepare("PRAGMA table_info(messages)").all();
         const relayColumns = this.database.prepare("PRAGMA table_info(relay_leases)").all();
         if (!relayColumns.some((column) => column.name === "relay_start_token")) {
@@ -1047,13 +946,7 @@ var SessionMessageStore = class {
           this.database.exec("ALTER TABLE session_presence ADD COLUMN idle_wake TEXT NOT NULL DEFAULT 'none';");
           this.database.exec("UPDATE session_presence SET idle_wake = wake_visibility;");
         }
-        this.database.exec(`CREATE TABLE IF NOT EXISTS input_observations (
-        host TEXT NOT NULL,
-        session_id TEXT NOT NULL,
-        deferred_tool_claim INTEGER NOT NULL DEFAULT 0 CHECK (deferred_tool_claim IN (0, 1)),
-        observed_at TEXT NOT NULL,
-        PRIMARY KEY (host, session_id)
-      ) STRICT;`);
+        this.database.exec("CREATE TABLE IF NOT EXISTS input_observations (\n        host TEXT NOT NULL,\n        session_id TEXT NOT NULL,\n        deferred_tool_claim INTEGER NOT NULL DEFAULT 0 CHECK (deferred_tool_claim IN (0, 1)),\n        observed_at TEXT NOT NULL,\n        PRIMARY KEY (host, session_id)\n      ) STRICT;");
         const wakeColumns = this.database.prepare("PRAGMA table_info(wake_nonces)").all();
         for (const [name, definition] of [
           ["state", "TEXT NOT NULL DEFAULT 'legacy' CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted'))"],
@@ -1071,30 +964,16 @@ var SessionMessageStore = class {
           ["observed_at", "TEXT"],
           ["late_observed_at", "TEXT"]
         ]) {
-          if (!wakeColumns.some((column) => column.name === name)) this.database.exec(`ALTER TABLE wake_nonces ADD COLUMN ${name} ${definition};`);
+          if (!wakeColumns.some((column) => column.name === name)) this.database.exec("ALTER TABLE wake_nonces ADD COLUMN ".concat(name, " ").concat(definition, ";"));
         }
         if (version < 1) {
-          this.database.exec(`CREATE TABLE wake_nonces_next (
-          nonce_digest TEXT PRIMARY KEY, host TEXT NOT NULL, session_id TEXT NOT NULL, expires_at TEXT NOT NULL, consumed_at TEXT,
-          state TEXT NOT NULL DEFAULT 'legacy' ${WAKE_STATE_CHECK},
-          nonce TEXT, instance_id TEXT, birth_generation TEXT, transport TEXT, relay_id TEXT, attempt_id TEXT,
-          dispatch_epoch INTEGER NOT NULL DEFAULT 0, retry_not_before TEXT, retry_count INTEGER NOT NULL DEFAULT 0,
-          started_at TEXT, outcome_at TEXT, observed_at TEXT, late_observed_at TEXT, retired_at TEXT
-        ) STRICT;
-        INSERT INTO wake_nonces_next (rowid, ${WAKE_COPY_COLUMNS}) SELECT rowid, ${WAKE_COPY_COLUMNS} FROM wake_nonces;
-        DROP TABLE wake_nonces;`);
+          this.database.exec("CREATE TABLE wake_nonces_next (\n          nonce_digest TEXT PRIMARY KEY, host TEXT NOT NULL, session_id TEXT NOT NULL, expires_at TEXT NOT NULL, consumed_at TEXT,\n          state TEXT NOT NULL DEFAULT 'legacy' ".concat(WAKE_STATE_CHECK, ",\n          nonce TEXT, instance_id TEXT, birth_generation TEXT, transport TEXT, relay_id TEXT, attempt_id TEXT,\n          dispatch_epoch INTEGER NOT NULL DEFAULT 0, retry_not_before TEXT, retry_count INTEGER NOT NULL DEFAULT 0,\n          started_at TEXT, outcome_at TEXT, observed_at TEXT, late_observed_at TEXT, retired_at TEXT\n        ) STRICT;\n        INSERT INTO wake_nonces_next (rowid, ").concat(WAKE_COPY_COLUMNS, ") SELECT rowid, ").concat(WAKE_COPY_COLUMNS, " FROM wake_nonces;\n        DROP TABLE wake_nonces;"));
           this.database.exec("ALTER TABLE wake_nonces_next RENAME TO wake_nonces;");
         }
-        this.database.exec(`CREATE UNIQUE INDEX IF NOT EXISTS wake_active_target ON wake_nonces (host, session_id)
-        WHERE state IN ${ACTIVE_WAKE_STATES};`);
-        this.database.exec(`CREATE TABLE IF NOT EXISTS session_activity (
-        host TEXT NOT NULL,
-        session_id TEXT NOT NULL,
-        active_at TEXT NOT NULL,
-        PRIMARY KEY (host, session_id)
-      ) STRICT;`);
+        this.database.exec("CREATE UNIQUE INDEX IF NOT EXISTS wake_active_target ON wake_nonces (host, session_id)\n        WHERE state IN ".concat(ACTIVE_WAKE_STATES, ";"));
+        this.database.exec("CREATE TABLE IF NOT EXISTS session_activity (\n        host TEXT NOT NULL,\n        session_id TEXT NOT NULL,\n        active_at TEXT NOT NULL,\n        PRIMARY KEY (host, session_id)\n      ) STRICT;");
         if (this.shared) this.shared.setSchemaVersion(MESSAGE_SCHEMA_VERSION);
-        else if (version < MESSAGE_SCHEMA_VERSION) this.database.exec(`PRAGMA user_version = ${MESSAGE_SCHEMA_VERSION};`);
+        else if (version < MESSAGE_SCHEMA_VERSION) this.database.exec("PRAGMA user_version = ".concat(MESSAGE_SCHEMA_VERSION, ";"));
       });
     };
     if (this.shared) this.shared.initialize(initialize);
@@ -1108,27 +987,15 @@ var SessionMessageStore = class {
     if (this.shared) nowMs = this.shared.time(nowMs);
     const now = iso(nowMs);
     const acknowledgedBefore = iso(nowMs - 36e5);
-    this.database.prepare(`DELETE FROM messages WHERE (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)
-      OR (expires_at <= ? AND (acknowledged_at IS NULL OR NOT EXISTS (
-        SELECT 1 FROM prepared_messages p WHERE p.message_id = messages.message_id AND p.receipt IS NOT NULL
-          AND p.sender_host = messages.sender_host AND p.sender_session_id = messages.sender_session_id
-          AND p.target_host = messages.target_host AND p.target_session_id = messages.target_session_id AND p.expires_at > ?)))`).run(acknowledgedBefore, now, now);
+    this.database.prepare("DELETE FROM messages WHERE (acknowledged_at IS NOT NULL AND acknowledged_at <= ?)\n      OR (expires_at <= ? AND (acknowledged_at IS NULL OR NOT EXISTS (\n        SELECT 1 FROM prepared_messages p WHERE p.message_id = messages.message_id AND p.receipt IS NOT NULL\n          AND p.sender_host = messages.sender_host AND p.sender_session_id = messages.sender_session_id\n          AND p.target_host = messages.target_host AND p.target_session_id = messages.target_session_id AND p.expires_at > ?)))").run(acknowledgedBefore, now, now);
     this.database.prepare("UPDATE messages SET body = '', body_bytes = 0 WHERE acknowledged_at IS NOT NULL AND expires_at <= ?").run(now);
     this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ? AND relay_id NOT LIKE 'verified-relay-v1:%'").run(now);
     this.database.prepare("DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?").run(now);
     this.retireUnobservedWakes(nowMs);
-    this.database.prepare(`DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted', 'expired-unobserved')
-      AND coalesce(consumed_at, observed_at, retired_at, outcome_at) <= ?
-      AND (retry_not_before IS NULL OR retry_not_before <= ?)`).run(acknowledgedBefore, now);
-    this.database.prepare(`DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces
-      WHERE state IN ('observed', 'not-submitted', 'expired-unobserved') AND (retry_not_before IS NULL OR retry_not_before <= ?)
-      ORDER BY coalesce(consumed_at, observed_at, retired_at, outcome_at) DESC LIMIT -1 OFFSET ?)`).run(now, MESSAGE_LIMIT);
+    this.database.prepare("DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted', 'expired-unobserved')\n      AND coalesce(consumed_at, observed_at, retired_at, outcome_at) <= ?\n      AND (retry_not_before IS NULL OR retry_not_before <= ?)").run(acknowledgedBefore, now);
+    this.database.prepare("DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces\n      WHERE state IN ('observed', 'not-submitted', 'expired-unobserved') AND (retry_not_before IS NULL OR retry_not_before <= ?)\n      ORDER BY coalesce(consumed_at, observed_at, retired_at, outcome_at) DESC LIMIT -1 OFFSET ?)").run(now, MESSAGE_LIMIT);
     this.database.prepare("DELETE FROM prepared_messages WHERE expires_at <= ?").run(now);
-    this.database.prepare(`DELETE FROM session_presence WHERE lease_until <= ?
-      AND NOT (EXISTS (SELECT 1 FROM session_presence live WHERE live.host = session_presence.host
-          AND live.session_id = session_presence.session_id AND live.ended_at IS NULL AND live.lease_until > ?)
-        AND session_presence.rowid = (SELECT latest.rowid FROM session_presence latest WHERE latest.host = session_presence.host
-          AND latest.session_id = session_presence.session_id ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1))`).run(iso(nowMs - PRESENCE_RETENTION_MS), now);
+    this.database.prepare("DELETE FROM session_presence WHERE lease_until <= ?\n      AND NOT (EXISTS (SELECT 1 FROM session_presence live WHERE live.host = session_presence.host\n          AND live.session_id = session_presence.session_id AND live.ended_at IS NULL AND live.lease_until > ?)\n        AND session_presence.rowid = (SELECT latest.rowid FROM session_presence latest WHERE latest.host = session_presence.host\n          AND latest.session_id = session_presence.session_id ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1))").run(iso(nowMs - PRESENCE_RETENTION_MS), now);
   }
   /**
    * Retires an unobserved managed wake only after its injection expiry plus grace, and only with evidence that the
@@ -1140,27 +1007,19 @@ var SessionMessageStore = class {
    */
   retireUnobservedWakes(nowMs) {
     const now = iso(nowMs);
-    this.database.prepare(`UPDATE wake_nonces SET state = 'expired-unobserved', retired_at = ?
-      WHERE state IN ${ACTIVE_WAKE_STATES} AND expires_at <= ?
-        AND (EXISTS (SELECT 1 FROM session_activity activity WHERE activity.host = wake_nonces.host
-            AND activity.session_id = wake_nonces.session_id AND activity.active_at > wake_nonces.expires_at)
-          OR coalesce((SELECT NOT (latest.ended_at IS NULL AND latest.lease_until > ?
-              AND latest.instance_id = wake_nonces.instance_id AND latest.started_at = wake_nonces.birth_generation)
-            FROM session_presence latest WHERE latest.host = wake_nonces.host AND latest.session_id = wake_nonces.session_id
-            ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1), 1))`).run(now, iso(nowMs - WAKE_RETIRE_GRACE_MS), now);
+    this.database.prepare("UPDATE wake_nonces SET state = 'expired-unobserved', retired_at = ?\n      WHERE state IN ".concat(ACTIVE_WAKE_STATES, " AND expires_at <= ?\n        AND (EXISTS (SELECT 1 FROM session_activity activity WHERE activity.host = wake_nonces.host\n            AND activity.session_id = wake_nonces.session_id AND activity.active_at > wake_nonces.expires_at)\n          OR coalesce((SELECT NOT (latest.ended_at IS NULL AND latest.lease_until > ?\n              AND latest.instance_id = wake_nonces.instance_id AND latest.started_at = wake_nonces.birth_generation)\n            FROM session_presence latest WHERE latest.host = wake_nonces.host AND latest.session_id = wake_nonces.session_id\n            ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1), 1))")).run(now, iso(nowMs - WAKE_RETIRE_GRACE_MS), now);
   }
   recordActivity(target, nowMs) {
-    this.database.prepare(`INSERT INTO session_activity (host, session_id, active_at) VALUES (?, ?, ?)
-      ON CONFLICT (host, session_id) DO UPDATE SET active_at = max(active_at, excluded.active_at)`).run(target.host, target.sessionId, iso(nowMs));
+    this.database.prepare("INSERT INTO session_activity (host, session_id, active_at) VALUES (?, ?, ?)\n      ON CONFLICT (host, session_id) DO UPDATE SET active_at = max(active_at, excluded.active_at)").run(target.host, target.sessionId, iso(nowMs));
   }
   /** Sender quota first, then the global pool; call inside the caller's transaction after prune. */
   assertReceiptCapacity(sender, suffix) {
     const owned = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL AND sender_host = ? AND sender_session_id = ?").get(sender.host, sender.sessionId);
     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
-      throw new MessageCapacityError(`The bounded message receipt store is full for this sender${suffix}`, { scope: "sender", earliestReleaseAt: owned.earliest });
+      throw new MessageCapacityError("The bounded message receipt store is full for this sender".concat(suffix), { scope: "sender", earliestReleaseAt: owned.earliest });
     }
     const all = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL").get();
-    if (all.count >= MESSAGE_RECEIPT_LIMIT) throw new MessageCapacityError(`The bounded message receipt store is full${suffix}`, { scope: "global", earliestReleaseAt: all.earliest });
+    if (all.count >= MESSAGE_RECEIPT_LIMIT) throw new MessageCapacityError("The bounded message receipt store is full".concat(suffix), { scope: "global", earliestReleaseAt: all.earliest });
   }
   /** Preparation is durable but has no queue, peer-relation or wake effect. */
   prepare(input, nowMs = Date.now()) {
@@ -1181,8 +1040,7 @@ var SessionMessageStore = class {
       const owned = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL AND sender_host = ? AND sender_session_id = ?").get(input.sender.host, input.sender.sessionId);
       const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages").get();
       if (drafts.count >= MESSAGE_DRAFT_LIMIT || owned.count >= MESSAGE_SENDER_DRAFT_LIMIT || bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new Error("The bounded message preparation store is full.");
-      this.database.prepare(`INSERT INTO prepared_messages (message_id, sender_host, sender_session_id, target_host, target_session_id, body, ttl_seconds, prepared_at, expires_at, record_bytes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(result.messageId, input.sender.host, input.sender.sessionId, input.target.host, input.target.sessionId, input.body, ttlSeconds, result.preparedAt, result.expiresAt, recordBytes);
+      this.database.prepare("INSERT INTO prepared_messages (message_id, sender_host, sender_session_id, target_host, target_session_id, body, ttl_seconds, prepared_at, expires_at, record_bytes)\n        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(result.messageId, input.sender.host, input.sender.sessionId, input.target.host, input.target.sessionId, input.body, ttlSeconds, result.preparedAt, result.expiresAt, recordBytes);
       return result;
     });
   }
@@ -1219,10 +1077,10 @@ var SessionMessageStore = class {
     boundedIdentity(input.target);
     const bodyBytes = Buffer.byteLength(input.body, "utf8");
     if (input.body.includes("\0")) throw new Error("body must not contain NUL characters.");
-    if (!input.body.trim() || bodyBytes > MESSAGE_BODY_MAX_BYTES) throw new Error(`body must contain 1-${MESSAGE_BODY_MAX_BYTES} UTF-8 bytes.`);
+    if (!input.body.trim() || bodyBytes > MESSAGE_BODY_MAX_BYTES) throw new Error("body must contain 1-".concat(MESSAGE_BODY_MAX_BYTES, " UTF-8 bytes."));
     const ttlSeconds = input.ttlSeconds ?? MESSAGE_TTL_DEFAULT_SECONDS;
     if (!Number.isInteger(ttlSeconds) || ttlSeconds < 30 || ttlSeconds > MESSAGE_TTL_MAX_SECONDS) {
-      throw new Error(`ttlSeconds must be an integer from 30 to ${MESSAGE_TTL_MAX_SECONDS}.`);
+      throw new Error("ttlSeconds must be an integer from 30 to ".concat(MESSAGE_TTL_MAX_SECONDS, "."));
     }
     const messageId = input.messageId ?? randomUUID3();
     if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/u.test(messageId)) throw new Error("messageId must be 8-128 safe identifier characters.");
@@ -1239,10 +1097,7 @@ var SessionMessageStore = class {
     if (totals.count >= MESSAGE_LIMIT || totals.bytes + bodyBytes > MESSAGE_BYTES_LIMIT) throw new Error("The bounded message spool is full.");
     const createdAt = iso(nowMs);
     const expiresAt = iso(nowMs + ttlSeconds * 1e3);
-    this.database.prepare(`INSERT INTO messages (
-      message_id, sender_host, sender_session_id, target_host, target_session_id,
-      body, body_bytes, created_at, expires_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+    this.database.prepare("INSERT INTO messages (\n      message_id, sender_host, sender_session_id, target_host, target_session_id,\n      body, body_bytes, created_at, expires_at\n    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
       messageId,
       input.sender.host,
       input.sender.sessionId,
@@ -1259,20 +1114,14 @@ var SessionMessageStore = class {
     const maxMessages = limits.maxMessages ?? CLAIM_MAX_MESSAGES;
     const maxBodyChars = limits.maxBodyChars ?? SESSION_MESSAGE_MAX_RESPONSE_BYTES;
     if (!Number.isInteger(maxMessages) || maxMessages < 1 || maxMessages > CLAIM_MAX_MESSAGES) {
-      throw new Error(`maxMessages must be an integer from 1 to ${CLAIM_MAX_MESSAGES}.`);
+      throw new Error("maxMessages must be an integer from 1 to ".concat(CLAIM_MAX_MESSAGES, "."));
     }
     if (!Number.isInteger(maxBodyChars) || maxBodyChars < 1 || maxBodyChars > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
-      throw new Error(`maxBodyChars must be an integer from 1 to ${SESSION_MESSAGE_MAX_RESPONSE_BYTES}.`);
+      throw new Error("maxBodyChars must be an integer from 1 to ".concat(SESSION_MESSAGE_MAX_RESPONSE_BYTES, "."));
     }
     const now = iso(nowMs);
-    const statement = this.database.prepare(`UPDATE messages SET claimed_at = ?, claim_until = ?,
-      delivery_attempts = delivery_attempts + 1,
-      first_delivered_at = CASE WHEN delivery_attempts = 0 THEN COALESCE(first_delivered_at, ?) ELSE first_delivered_at END
-      WHERE message_id = ? AND acknowledged_at IS NULL AND (claim_until IS NULL OR claim_until <= ?)`);
-    const rows = this.database.prepare(`SELECT * FROM messages
-        WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL
-          AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?)
-        ORDER BY created_at ASC LIMIT ?`).all(target.host, target.sessionId, now, now, maxMessages);
+    const statement = this.database.prepare("UPDATE messages SET claimed_at = ?, claim_until = ?,\n      delivery_attempts = delivery_attempts + 1,\n      first_delivered_at = CASE WHEN delivery_attempts = 0 THEN COALESCE(first_delivered_at, ?) ELSE first_delivered_at END\n      WHERE message_id = ? AND acknowledged_at IS NULL AND (claim_until IS NULL OR claim_until <= ?)");
+    const rows = this.database.prepare("SELECT * FROM messages\n        WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL\n          AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?)\n        ORDER BY created_at ASC LIMIT ?").all(target.host, target.sessionId, now, now, maxMessages);
     const selected = [];
     const projected = [];
     let bodyChars = 0;
@@ -1298,8 +1147,7 @@ var SessionMessageStore = class {
   }
   consumePendingWakes(target, nowMs) {
     const now = iso(nowMs);
-    this.database.prepare(`UPDATE wake_nonces SET consumed_at = ?
-      WHERE host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ?`).run(now, target.host, target.sessionId, now);
+    this.database.prepare("UPDATE wake_nonces SET consumed_at = ?\n      WHERE host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ?").run(now, target.host, target.sessionId, now);
   }
   claim(target, nowMs = Date.now(), limits = {}) {
     boundedIdentity(target);
@@ -1324,8 +1172,7 @@ var SessionMessageStore = class {
     this.prune(nowMs);
     const now = iso(nowMs);
     return this.transaction(() => {
-      const recognized = digests.every((digest) => Boolean(this.database.prepare(`SELECT 1 FROM wake_nonces
-        WHERE nonce_digest = ? AND host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ?`).get(digest, target.host, target.sessionId, now)));
+      const recognized = digests.every((digest) => Boolean(this.database.prepare("SELECT 1 FROM wake_nonces\n        WHERE nonce_digest = ? AND host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ?").get(digest, target.host, target.sessionId, now)));
       if (!recognized) {
         return { recognized: false, messages: [] };
       }
@@ -1340,8 +1187,7 @@ var SessionMessageStore = class {
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.observeNativeInput(target, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
     return this.transaction(() => {
-      this.database.prepare(`INSERT INTO input_observations (host, session_id, deferred_tool_claim, observed_at)
-        VALUES (?, ?, 1, ?) ON CONFLICT (host, session_id) DO UPDATE SET deferred_tool_claim = 1, observed_at = excluded.observed_at`).run(target.host, target.sessionId, iso(nowMs));
+      this.database.prepare("INSERT INTO input_observations (host, session_id, deferred_tool_claim, observed_at)\n        VALUES (?, ?, 1, ?) ON CONFLICT (host, session_id) DO UPDATE SET deferred_tool_claim = 1, observed_at = excluded.observed_at").run(target.host, target.sessionId, iso(nowMs));
       this.recordActivity(target, nowMs);
     });
   }
@@ -1351,8 +1197,7 @@ var SessionMessageStore = class {
     if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
     return this.transaction(() => {
-      const skipped = this.database.prepare(`UPDATE input_observations SET deferred_tool_claim = 0
-        WHERE host = ? AND session_id = ? AND deferred_tool_claim = 1`).run(target.host, target.sessionId).changes === 1;
+      const skipped = this.database.prepare("UPDATE input_observations SET deferred_tool_claim = 0\n        WHERE host = ? AND session_id = ? AND deferred_tool_claim = 1").run(target.host, target.sessionId).changes === 1;
       const messages = skipped ? [] : this.claimLocked(target, nowMs, limits);
       if (messages.length > 0) this.consumePendingWakes(target, nowMs);
       this.recordActivity(target, nowMs);
@@ -1388,9 +1233,7 @@ var SessionMessageStore = class {
     }
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.acknowledge(target, messageIds, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
-    const statement = this.database.prepare(`UPDATE messages SET acknowledged_at = ?, claim_until = NULL
-      WHERE message_id = ? AND target_host = ? AND target_session_id = ?
-        AND claimed_at IS NOT NULL AND acknowledged_at IS NULL`);
+    const statement = this.database.prepare("UPDATE messages SET acknowledged_at = ?, claim_until = NULL\n      WHERE message_id = ? AND target_host = ? AND target_session_id = ?\n        AND claimed_at IS NOT NULL AND acknowledged_at IS NULL");
     const receipt = this.database.prepare("UPDATE prepared_messages SET expires_at = min(expires_at, ?) WHERE message_id = ? AND receipt IS NOT NULL");
     let count = 0;
     return this.transaction(() => {
@@ -1408,8 +1251,7 @@ var SessionMessageStore = class {
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.status(sender, messageId, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
-    const row = this.database.prepare(`SELECT message_id, target_host, target_session_id, created_at, expires_at,
-      claimed_at, acknowledged_at, delivery_attempts, first_delivered_at FROM messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ?`).get(messageId, sender.host, sender.sessionId);
+    const row = this.database.prepare("SELECT message_id, target_host, target_session_id, created_at, expires_at,\n      claimed_at, acknowledged_at, delivery_attempts, first_delivered_at FROM messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ?").get(messageId, sender.host, sender.sessionId);
     if (!row) {
       const prepared = this.database.prepare("SELECT prepared_at, expires_at, receipt FROM prepared_messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ? AND expires_at > ?").get(messageId, sender.host, sender.sessionId, iso(nowMs));
       if (!prepared) return null;
@@ -1435,11 +1277,7 @@ var SessionMessageStore = class {
     boundedIdentity(target);
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.peerWaitState(sender, target, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
-    const rows = this.database.prepare(`SELECT message_id, sender_host, sender_session_id, target_host, target_session_id,
-      created_at, claimed_at, acknowledged_at, delivery_attempts, first_delivered_at FROM messages
-      WHERE expires_at > ? AND ((sender_host = ? AND sender_session_id = ? AND target_host = ? AND target_session_id = ?)
-        OR (sender_host = ? AND sender_session_id = ? AND target_host = ? AND target_session_id = ?))
-      ORDER BY created_at DESC, message_id DESC LIMIT 20`).all(iso(nowMs), sender.host, sender.sessionId, target.host, target.sessionId, target.host, target.sessionId, sender.host, sender.sessionId);
+    const rows = this.database.prepare("SELECT message_id, sender_host, sender_session_id, target_host, target_session_id,\n      created_at, claimed_at, acknowledged_at, delivery_attempts, first_delivered_at FROM messages\n      WHERE expires_at > ? AND ((sender_host = ? AND sender_session_id = ? AND target_host = ? AND target_session_id = ?)\n        OR (sender_host = ? AND sender_session_id = ? AND target_host = ? AND target_session_id = ?))\n      ORDER BY created_at DESC, message_id DESC LIMIT 20").all(iso(nowMs), sender.host, sender.sessionId, target.host, target.sessionId, target.host, target.sessionId, sender.host, sender.sessionId);
     return { related: rows.length > 0, fingerprint: createHash3("sha256").update(JSON.stringify(rows)).digest("hex") };
   }
   liveRelay(target, transport, nowMs = Date.now()) {
@@ -1466,16 +1304,14 @@ var SessionMessageStore = class {
     if (presence.state !== "online") return outlook("no-live-relay", "presence-not-online", presence.endedAt ?? presence.leaseUntil);
     const relay = this.liveRelay(target, presence.transport, nowMs);
     if (!relay) return outlook("no-live-relay", "relay-lease-missing", presence.heartbeatAt);
-    const active = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state IN ${ACTIVE_WAKE_STATES}`).get(target.host, target.sessionId);
+    const active = this.database.prepare("SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state IN ".concat(ACTIVE_WAKE_STATES)).get(target.host, target.sessionId);
     if (active) {
       const current = active.instance_id === presence.instanceId && active.birth_generation === presence.startedAt && active.transport === presence.transport;
       return current && String(active.expires_at) > now ? outlook("available", "wake-in-flight", active.expires_at) : outlook("latched", "wake-unobserved", active.expires_at);
     }
-    const legacy = this.database.prepare(`SELECT expires_at FROM wake_nonces WHERE host = ? AND session_id = ?
-      AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ? ORDER BY expires_at DESC LIMIT 1`).get(target.host, target.sessionId, now);
+    const legacy = this.database.prepare("SELECT expires_at FROM wake_nonces WHERE host = ? AND session_id = ?\n      AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ? ORDER BY expires_at DESC LIMIT 1").get(target.host, target.sessionId, now);
     if (legacy) return outlook("available", "wake-in-flight", legacy.expires_at);
-    const cooldown = this.database.prepare(`SELECT max(retry_not_before) AS until FROM wake_nonces WHERE host = ? AND session_id = ?
-      AND state = 'not-submitted' AND retry_not_before > ?`).get(target.host, target.sessionId, now);
+    const cooldown = this.database.prepare("SELECT max(retry_not_before) AS until FROM wake_nonces WHERE host = ? AND session_id = ?\n      AND state = 'not-submitted' AND retry_not_before > ?").get(target.host, target.sessionId, now);
     if (cooldown.until !== null) return outlook("available", "retry-backoff", cooldown.until);
     return outlook("available", "relay-live", relay.updatedAt);
   }
@@ -1485,9 +1321,7 @@ var SessionMessageStore = class {
     if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
     const now = iso(nowMs);
-    const row = this.database.prepare(`SELECT count(*) AS count FROM messages
-      WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires_at > ?
-        AND (claim_until IS NULL OR claim_until <= ?)`).get(target.host, target.sessionId, now, now);
+    const row = this.database.prepare("SELECT count(*) AS count FROM messages\n      WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL AND expires_at > ?\n        AND (claim_until IS NULL OR claim_until <= ?)").get(target.host, target.sessionId, now, now);
     return row.count;
   }
   /** Retained startup reservation metadata; not a relay liveness view. */
@@ -1556,22 +1390,13 @@ var SessionMessageStore = class {
     this.prune(nowMs);
     const now = iso(nowMs);
     const until = iso(nowMs + RELAY_LEASE_MS);
-    const result = this.database.prepare(`INSERT INTO relay_leases
-      (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT (host, session_id, transport) DO UPDATE SET
-        relay_id = excluded.relay_id, pid = excluded.pid, parent_pid = excluded.parent_pid,
-        lease_until = excluded.lease_until, updated_at = excluded.updated_at
-      WHERE relay_leases.relay_id NOT LIKE 'verified-relay-v1:%' AND (
-        relay_leases.lease_until <= excluded.updated_at
-        OR relay_leases.relay_id = excluded.relay_id)`).run(input.host, input.sessionId, input.transport, input.relayId, input.pid, input.parentPid, until, now);
+    const result = this.database.prepare("INSERT INTO relay_leases\n      (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at)\n      VALUES (?, ?, ?, ?, ?, ?, ?, ?)\n      ON CONFLICT (host, session_id, transport) DO UPDATE SET\n        relay_id = excluded.relay_id, pid = excluded.pid, parent_pid = excluded.parent_pid,\n        lease_until = excluded.lease_until, updated_at = excluded.updated_at\n      WHERE relay_leases.relay_id NOT LIKE 'verified-relay-v1:%' AND (\n        relay_leases.lease_until <= excluded.updated_at\n        OR relay_leases.relay_id = excluded.relay_id)").run(input.host, input.sessionId, input.transport, input.relayId, input.pid, input.parentPid, until, now);
     return result.changes === 1;
   }
   heartbeatRelay(input, nowMs = Date.now()) {
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.heartbeatRelay(input, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
-    const result = this.database.prepare(`UPDATE relay_leases SET lease_until = ?, updated_at = ?
-      WHERE host = ? AND session_id = ? AND transport = ? AND relay_id = ? AND pid > 0`).run(iso(nowMs + RELAY_LEASE_MS), iso(nowMs), input.host, input.sessionId, input.transport, input.relayId);
+    const result = this.database.prepare("UPDATE relay_leases SET lease_until = ?, updated_at = ?\n      WHERE host = ? AND session_id = ? AND transport = ? AND relay_id = ? AND pid > 0").run(iso(nowMs + RELAY_LEASE_MS), iso(nowMs), input.host, input.sessionId, input.transport, input.relayId);
     return result.changes === 1;
   }
   /** One relay cycle; an old generation cannot renew either lease. */
@@ -1600,15 +1425,9 @@ var SessionMessageStore = class {
     this.prune(nowMs);
     const now = iso(nowMs);
     return this.transaction(() => {
-      const outstanding = this.database.prepare(`SELECT 1 FROM wake_nonces
-        WHERE host = ? AND session_id = ? AND (state IN ('reserved', 'started', 'submitted', 'unknown')
-          OR (state = 'legacy' AND consumed_at IS NULL AND expires_at > ?)) LIMIT 1`).get(target.host, target.sessionId, now);
-      const delivering = this.database.prepare(`SELECT 1 FROM messages
-        WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL
-          AND expires_at > ? AND claim_until > ? LIMIT 1`).get(target.host, target.sessionId, now, now);
-      const claimable = this.database.prepare(`SELECT 1 FROM messages
-        WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL
-          AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?) LIMIT 1`).get(target.host, target.sessionId, now, now);
+      const outstanding = this.database.prepare("SELECT 1 FROM wake_nonces\n        WHERE host = ? AND session_id = ? AND (state IN ('reserved', 'started', 'submitted', 'unknown')\n          OR (state = 'legacy' AND consumed_at IS NULL AND expires_at > ?)) LIMIT 1").get(target.host, target.sessionId, now);
+      const delivering = this.database.prepare("SELECT 1 FROM messages\n        WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL\n          AND expires_at > ? AND claim_until > ? LIMIT 1").get(target.host, target.sessionId, now, now);
+      const claimable = this.database.prepare("SELECT 1 FROM messages\n        WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL\n          AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?) LIMIT 1").get(target.host, target.sessionId, now, now);
       if (outstanding || delivering || !claimable) {
         return false;
       }
@@ -1619,16 +1438,14 @@ var SessionMessageStore = class {
   releaseWake(target, nonce) {
     boundedIdentity(target);
     if (nonce.length < 16 || nonce.length > 200) throw new Error("Invalid wake nonce.");
-    return this.database.prepare(`DELETE FROM wake_nonces
-      WHERE nonce_digest = ? AND host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL`).run(nonceDigest(nonce), target.host, target.sessionId).changes === 1;
+    return this.database.prepare("DELETE FROM wake_nonces\n      WHERE nonce_digest = ? AND host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL").run(nonceDigest(nonce), target.host, target.sessionId).changes === 1;
   }
   /** Board classification checks ownership; only the host hook can record observation. */
   consumeWake(target, nonce, nowMs = Date.now()) {
     boundedIdentity(target);
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.consumeWake(target, nonce, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
-    return Boolean(this.database.prepare(`SELECT 1 FROM wake_nonces
-      WHERE nonce_digest = ? AND host = ? AND session_id = ? AND expires_at > ?`).get(nonceDigest(nonce), target.host, target.sessionId, iso(nowMs)));
+    return Boolean(this.database.prepare("SELECT 1 FROM wake_nonces\n      WHERE nonce_digest = ? AND host = ? AND session_id = ? AND expires_at > ?").get(nonceDigest(nonce), target.host, target.sessionId, iso(nowMs)));
   }
   wakeBindingCurrent(input, generation, nowMs) {
     boundedIdentity(input);
@@ -1642,10 +1459,8 @@ var SessionMessageStore = class {
   }
   wakeClaimable(target, nowMs) {
     const now = iso(nowMs);
-    const delivering = this.database.prepare(`SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ?
-      AND acknowledged_at IS NULL AND expires_at > ? AND claim_until > ? LIMIT 1`).get(target.host, target.sessionId, now, now);
-    const claimable = this.database.prepare(`SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ?
-      AND acknowledged_at IS NULL AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?) LIMIT 1`).get(target.host, target.sessionId, now, now);
+    const delivering = this.database.prepare("SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ?\n      AND acknowledged_at IS NULL AND expires_at > ? AND claim_until > ? LIMIT 1").get(target.host, target.sessionId, now, now);
+    const claimable = this.database.prepare("SELECT 1 FROM messages WHERE target_host = ? AND target_session_id = ?\n      AND acknowledged_at IS NULL AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?) LIMIT 1").get(target.host, target.sessionId, now, now);
     return !delivering && Boolean(claimable);
   }
   wakeAttempt(row) {
@@ -1672,12 +1487,10 @@ var SessionMessageStore = class {
       const nowMs = this.shared ? this.shared.time(atMs ?? Date.now()) : atMs ?? Date.now();
       this.prune(nowMs);
       let attempt = null;
-      let active = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ?
-        AND state IN ('reserved', 'started', 'submitted', 'unknown')`).get(input.host, input.sessionId);
+      let active = this.database.prepare("SELECT * FROM wake_nonces WHERE host = ? AND session_id = ?\n        AND state IN ('reserved', 'started', 'submitted', 'unknown')").get(input.host, input.sessionId);
       const currentPending = this.wakeBindingCurrent(input, null, nowMs) && this.wakeClaimable(input, nowMs);
       if (active?.state === "reserved" && currentPending && active.late_observed_at === null && active.observed_at === null && active.consumed_at === null && (active.dispatch_epoch === 0 && active.started_at === null || Number(active.retry_count) > 0 && active.retry_not_before !== null && active.outcome_at !== null) && this.wakeGenerationReplaced(this.wakeAttempt(active), nowMs)) {
-        this.database.prepare(`UPDATE wake_nonces SET state = 'not-submitted', outcome_at = coalesce(outcome_at, ?)
-          WHERE nonce_digest = ? AND state = 'reserved'`).run(iso(nowMs), String(active.nonce_digest));
+        this.database.prepare("UPDATE wake_nonces SET state = 'not-submitted', outcome_at = coalesce(outcome_at, ?)\n          WHERE nonce_digest = ? AND state = 'reserved'").run(iso(nowMs), String(active.nonce_digest));
         active = void 0;
       }
       if (active) {
@@ -1689,19 +1502,14 @@ var SessionMessageStore = class {
           attempt = { ...this.wakeAttempt(active), relayId: input.relayId };
         }
       } else if (currentPending) {
-        const legacy = this.database.prepare(`SELECT 1 FROM wake_nonces WHERE host = ? AND session_id = ?
-          AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ?`).get(input.host, input.sessionId, iso(nowMs));
-        const cooldown = this.database.prepare(`SELECT 1 FROM wake_nonces WHERE host = ? AND session_id = ?
-          AND state = 'not-submitted' AND retry_not_before > ? LIMIT 1`).get(input.host, input.sessionId, iso(nowMs));
+        const legacy = this.database.prepare("SELECT 1 FROM wake_nonces WHERE host = ? AND session_id = ?\n          AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ?").get(input.host, input.sessionId, iso(nowMs));
+        const cooldown = this.database.prepare("SELECT 1 FROM wake_nonces WHERE host = ? AND session_id = ?\n          AND state = 'not-submitted' AND retry_not_before > ? LIMIT 1").get(input.host, input.sessionId, iso(nowMs));
         if (!legacy && !cooldown) {
-          const count = this.database.prepare(`SELECT count(*) AS n FROM wake_nonces
-            WHERE state IN ('reserved', 'started', 'submitted', 'unknown')
-              OR (state = 'not-submitted' AND retry_not_before > ?)`).get(iso(nowMs));
+          const count = this.database.prepare("SELECT count(*) AS n FROM wake_nonces\n            WHERE state IN ('reserved', 'started', 'submitted', 'unknown')\n              OR (state = 'not-submitted' AND retry_not_before > ?)").get(iso(nowMs));
           if (count.n >= MESSAGE_LIMIT) throw new Error("The bounded active wake store is full.");
           const generation = this.presence(input, nowMs).startedAt;
           const attemptId = randomUUID3();
-          this.database.prepare(`INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, nonce,
-            instance_id, birth_generation, transport, relay_id, attempt_id) VALUES (?, ?, ?, ?, 'reserved', ?, ?, ?, ?, ?, ?)`).run(
+          this.database.prepare("INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, nonce,\n            instance_id, birth_generation, transport, relay_id, attempt_id) VALUES (?, ?, ?, ?, 'reserved', ?, ?, ?, ?, ?, ?)").run(
             nonceDigest(input.nonce),
             input.host,
             input.sessionId,
@@ -1724,8 +1532,7 @@ var SessionMessageStore = class {
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.startManagedWake(attempt, atMs));
     return this.transaction(() => {
       const nowMs = this.shared ? this.shared.time(atMs ?? Date.now()) : atMs ?? Date.now();
-      const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
-        AND state = 'reserved' AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND attempt_id = ? AND dispatch_epoch = ?`).get(
+      const row = this.database.prepare("SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?\n        AND state = 'reserved' AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND attempt_id = ? AND dispatch_epoch = ?").get(
         nonceDigest(attempt.nonce),
         attempt.host,
         attempt.sessionId,
@@ -1752,10 +1559,7 @@ var SessionMessageStore = class {
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.recordManagedWakeOutcome(attempt, outcome, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
     return this.transaction(() => {
-      const row = this.database.prepare(`SELECT retry_count FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
-        AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND attempt_id = ? AND dispatch_epoch = ?
-        AND late_observed_at IS NULL AND observed_at IS NULL AND consumed_at IS NULL
-        AND state IN ('started', 'unknown')`).get(
+      const row = this.database.prepare("SELECT retry_count FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?\n        AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND attempt_id = ? AND dispatch_epoch = ?\n        AND late_observed_at IS NULL AND observed_at IS NULL AND consumed_at IS NULL\n        AND state IN ('started', 'unknown')").get(
         nonceDigest(attempt.nonce),
         attempt.host,
         attempt.sessionId,
@@ -1771,8 +1575,7 @@ var SessionMessageStore = class {
       }
       const retry = outcome === "definite-failure";
       const nextState = retry ? this.wakeGenerationReplaced(attempt, nowMs) ? "not-submitted" : "reserved" : outcome === "submitted" ? "submitted" : "unknown";
-      this.database.prepare(`UPDATE wake_nonces SET state = ?, outcome_at = ?, retry_not_before = ?, retry_count = ?
-        WHERE nonce_digest = ?`).run(
+      this.database.prepare("UPDATE wake_nonces SET state = ?, outcome_at = ?, retry_not_before = ?, retry_count = ?\n        WHERE nonce_digest = ?").run(
         nextState,
         iso(nowMs),
         retry ? iso(nowMs + wakeBackoffDelay(row.retry_count)) : null,
@@ -1786,8 +1589,7 @@ var SessionMessageStore = class {
     boundedIdentity(target);
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.managedWakeStatus(target, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
-    const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state <> 'legacy'
-      ORDER BY CASE WHEN state IN ('reserved', 'started', 'submitted', 'unknown') THEN 0 ELSE 1 END, rowid DESC LIMIT 1`).get(target.host, target.sessionId);
+    const row = this.database.prepare("SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state <> 'legacy'\n      ORDER BY CASE WHEN state IN ('reserved', 'started', 'submitted', 'unknown') THEN 0 ELSE 1 END, rowid DESC LIMIT 1").get(target.host, target.sessionId);
     if (!row) return null;
     const active = ["reserved", "started", "submitted", "unknown"].includes(String(row.state));
     const retired = row.state === "expired-unobserved";
@@ -1818,8 +1620,7 @@ var SessionMessageStore = class {
       return presence.instanceId !== null && presence.startedAt !== null && (row.instance_id !== presence.instanceId || row.birth_generation !== presence.startedAt);
     };
     return this.transaction(() => {
-      const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ?
-        AND state = 'unknown' AND late_observed_at IS NOT NULL AND consumed_at IS NULL AND observed_at IS NULL`).get(target.host, target.sessionId, attemptId);
+      const row = this.database.prepare("SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ?\n        AND state = 'unknown' AND late_observed_at IS NOT NULL AND consumed_at IS NULL AND observed_at IS NULL").get(target.host, target.sessionId, attemptId);
       if (!row || ![row.nonce, row.instance_id, row.birth_generation, row.transport, row.relay_id, row.started_at].every((value) => typeof value === "string") || row.nonce_digest !== nonceDigest(String(row.nonce)) || Number(row.dispatch_epoch) < 1 || !isOldGeneration(row)) {
         return rejected;
       }
@@ -1827,10 +1628,7 @@ var SessionMessageStore = class {
       if (!proof || !isOldGeneration(row)) {
         return rejected;
       }
-      const changed = this.database.prepare(`UPDATE wake_nonces SET state = 'observed', observed_at = ?, consumed_at = ?
-        WHERE nonce_digest = ? AND nonce = ? AND host = ? AND session_id = ? AND attempt_id = ?
-        AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND dispatch_epoch = ?
-        AND state = 'unknown' AND started_at = ? AND late_observed_at = ? AND consumed_at IS NULL AND observed_at IS NULL`).run(
+      const changed = this.database.prepare("UPDATE wake_nonces SET state = 'observed', observed_at = ?, consumed_at = ?\n        WHERE nonce_digest = ? AND nonce = ? AND host = ? AND session_id = ? AND attempt_id = ?\n        AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND dispatch_epoch = ?\n        AND state = 'unknown' AND started_at = ? AND late_observed_at = ? AND consumed_at IS NULL AND observed_at IS NULL").run(
         proof.observedAt,
         iso(nowMs),
         String(row.nonce_digest),
@@ -1881,15 +1679,12 @@ var SessionMessageStore = class {
       if (rows.every((row) => alreadyObserved(row))) return rejected;
       this.recordActivity(target, nowMs);
       const presence = this.presence(target, nowMs);
-      this.database.prepare(`UPDATE wake_nonces SET late_observed_at = coalesce(late_observed_at, ?)
-        WHERE host = ? AND session_id = ? AND state = 'expired-unobserved' AND nonce_digest IN (SELECT value FROM json_each(?))`).run(iso(nowMs), target.host, target.sessionId, JSON.stringify(digests));
+      this.database.prepare("UPDATE wake_nonces SET late_observed_at = coalesce(late_observed_at, ?)\n        WHERE host = ? AND session_id = ? AND state = 'expired-unobserved' AND nonce_digest IN (SELECT value FROM json_each(?))").run(iso(nowMs), target.host, target.sessionId, JSON.stringify(digests));
       const live = rows.filter((row) => row.state !== "expired-unobserved" && !alreadyObserved(row));
       if (live.length === 0) return rows.every((row) => row.state === "expired-unobserved") ? { ...rejected, retired: true } : rejected;
       const valid = live.every((row) => row.state === "legacy" ? row.consumed_at === null && String(row.expires_at) > iso(nowMs) : row.instance_id === presence.instanceId && row.birth_generation === presence.startedAt && row.transport === presence.transport && presence.state === "online" && presence.deliveryCapabilities.supportedInjection.includes("peer-wake") && String(row.expires_at) > iso(nowMs));
       if (!valid) {
-        for (const row of live) if (row.state !== "legacy") this.database.prepare(`UPDATE wake_nonces
-          SET late_observed_at = coalesce(late_observed_at, ?), state = 'observed', consumed_at = ?, observed_at = ?
-          WHERE nonce_digest = ? AND state IN ('started', 'submitted', 'unknown')`).run(iso(nowMs), iso(nowMs), iso(nowMs), String(row.nonce_digest));
+        for (const row of live) if (row.state !== "legacy") this.database.prepare("UPDATE wake_nonces\n          SET late_observed_at = coalesce(late_observed_at, ?), state = 'observed', consumed_at = ?, observed_at = ?\n          WHERE nonce_digest = ? AND state IN ('started', 'submitted', 'unknown')").run(iso(nowMs), iso(nowMs), iso(nowMs), String(row.nonce_digest));
         return rejected;
       }
       const messages = this.claimLocked(target, nowMs, limits);
@@ -1912,27 +1707,12 @@ var SessionMessageStore = class {
       ["workspaceId", input.workspaceId, 500],
       ["role", input.role, 100]
     ]) {
-      if (value !== void 0 && (!value || value.length > maximum)) throw new Error(`${name} is invalid.`);
+      if (value !== void 0 && (!value || value.length > maximum)) throw new Error("".concat(name, " is invalid."));
     }
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.startPresence(input, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
     const now = iso(nowMs);
-    this.database.prepare(`INSERT INTO session_presence (
-      host, session_id, instance_id, transport, wake_visibility, can_wake_silently, supported_injection, idle_wake,
-      collaboration_id, workspace_id, role, started_at, heartbeat_at, lease_until
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT (host, session_id, instance_id) DO UPDATE SET
-      transport = excluded.transport, wake_visibility = excluded.wake_visibility,
-      can_wake_silently = excluded.can_wake_silently, supported_injection = excluded.supported_injection,
-      idle_wake = excluded.idle_wake, collaboration_id = excluded.collaboration_id,
-      workspace_id = excluded.workspace_id, role = excluded.role,
-      started_at = CASE WHEN session_presence.ended_at IS NOT NULL OR session_presence.lease_until <= excluded.heartbeat_at
-        THEN CASE WHEN excluded.started_at > session_presence.started_at THEN excluded.started_at
-          -- A rebirth in the same millisecond still gets a later, distinct generation.
-          ELSE strftime('%Y-%m-%dT%H:%M:%fZ', session_presence.started_at, '+0.001 seconds') END
-        ELSE session_presence.started_at END,
-      heartbeat_at = excluded.heartbeat_at, lease_until = excluded.lease_until,
-      ended_at = NULL, end_reason = NULL`).run(
+    this.database.prepare("INSERT INTO session_presence (\n      host, session_id, instance_id, transport, wake_visibility, can_wake_silently, supported_injection, idle_wake,\n      collaboration_id, workspace_id, role, started_at, heartbeat_at, lease_until\n    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n    ON CONFLICT (host, session_id, instance_id) DO UPDATE SET\n      transport = excluded.transport, wake_visibility = excluded.wake_visibility,\n      can_wake_silently = excluded.can_wake_silently, supported_injection = excluded.supported_injection,\n      idle_wake = excluded.idle_wake, collaboration_id = excluded.collaboration_id,\n      workspace_id = excluded.workspace_id, role = excluded.role,\n      started_at = CASE WHEN session_presence.ended_at IS NOT NULL OR session_presence.lease_until <= excluded.heartbeat_at\n        THEN CASE WHEN excluded.started_at > session_presence.started_at THEN excluded.started_at\n          -- A rebirth in the same millisecond still gets a later, distinct generation.\n          ELSE strftime('%Y-%m-%dT%H:%M:%fZ', session_presence.started_at, '+0.001 seconds') END\n        ELSE session_presence.started_at END,\n      heartbeat_at = excluded.heartbeat_at, lease_until = excluded.lease_until,\n      ended_at = NULL, end_reason = NULL").run(
       input.host,
       input.sessionId,
       input.instanceId,
@@ -1955,13 +1735,11 @@ var SessionMessageStore = class {
     if (!instanceId) throw new Error("presence instanceId is required.");
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.heartbeatPresence(target, instanceId, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
-    const row = this.database.prepare(`SELECT instance_id FROM session_presence
-      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL AND lease_until > ?`).get(target.host, target.sessionId, instanceId, iso(nowMs));
+    const row = this.database.prepare("SELECT instance_id FROM session_presence\n      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL AND lease_until > ?").get(target.host, target.sessionId, instanceId, iso(nowMs));
     const selected = row;
     if (!selected) return false;
     const now = iso(nowMs);
-    return this.database.prepare(`UPDATE session_presence SET heartbeat_at = ?, lease_until = ?
-      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL AND lease_until > ?`).run(now, iso(nowMs + PRESENCE_LEASE_MS), target.host, target.sessionId, selected.instance_id, now).changes === 1;
+    return this.database.prepare("UPDATE session_presence SET heartbeat_at = ?, lease_until = ?\n      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL AND lease_until > ?").run(now, iso(nowMs + PRESENCE_LEASE_MS), target.host, target.sessionId, selected.instance_id, now).changes === 1;
   }
   endPresence(target, reason, instanceId, nowMs = Date.now()) {
     boundedIdentity(target);
@@ -1969,20 +1747,17 @@ var SessionMessageStore = class {
     if (!instanceId) throw new Error("presence instanceId is required.");
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.endPresence(target, reason, instanceId, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
-    const row = this.database.prepare(`SELECT instance_id FROM session_presence
-      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL`).get(target.host, target.sessionId, instanceId);
+    const row = this.database.prepare("SELECT instance_id FROM session_presence\n      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL").get(target.host, target.sessionId, instanceId);
     const selected = row;
     if (!selected) return false;
     const now = iso(nowMs);
-    return this.database.prepare(`UPDATE session_presence SET heartbeat_at = ?, lease_until = ?, ended_at = ?, end_reason = ?
-      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL`).run(now, now, now, reason, target.host, target.sessionId, selected.instance_id).changes === 1;
+    return this.database.prepare("UPDATE session_presence SET heartbeat_at = ?, lease_until = ?, ended_at = ?, end_reason = ?\n      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL").run(now, now, now, reason, target.host, target.sessionId, selected.instance_id).changes === 1;
   }
   presence(target, nowMs = Date.now()) {
     boundedIdentity(target);
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.presence(target, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
-    const row = this.database.prepare(`SELECT * FROM session_presence
-      WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1`).get(target.host, target.sessionId);
+    const row = this.database.prepare("SELECT * FROM session_presence\n      WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1").get(target.host, target.sessionId);
     if (!row) return {
       ...target,
       instanceId: null,
@@ -2029,8 +1804,7 @@ var SessionMessageStore = class {
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.listPresence(nowMs, targets));
     if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
-    const identities = targets ?? this.database.prepare(`SELECT host, session_id FROM session_presence
-      GROUP BY host, session_id ORDER BY host, session_id`).all().map((row) => ({ host: row.host, sessionId: row.session_id }));
+    const identities = targets ?? this.database.prepare("SELECT host, session_id FROM session_presence\n      GROUP BY host, session_id ORDER BY host, session_id").all().map((row) => ({ host: row.host, sessionId: row.session_id }));
     return identities.map((target) => ({ ...this.presence(target, nowMs), autoWake: this.autoWakeOutlook(target, nowMs) }));
   }
   transaction(operation) {
@@ -2111,7 +1885,7 @@ function integer(value) {
 var utf8 = (value) => tlv(12, Buffer.from(value, "utf8"));
 function certificateTime(value) {
   const digits = value.toISOString().replace(/[-:T]/gu, "").slice(0, 14);
-  return value.getUTCFullYear() < 2050 ? tlv(23, Buffer.from(`${digits.slice(2)}Z`)) : tlv(24, Buffer.from(`${digits}Z`));
+  return value.getUTCFullYear() < 2050 ? tlv(23, Buffer.from("".concat(digits.slice(2), "Z"))) : tlv(24, Buffer.from("".concat(digits, "Z")));
 }
 var ECDSA_WITH_SHA256 = sequence(objectIdentifier("2a8648ce3d040302"));
 var COMMON_NAME = sequence(tlv(49, sequence(objectIdentifier("550403"), utf8("agent-governance-suite local broker"))));
@@ -2143,10 +1917,7 @@ function createSelfSignedCertificate(now = /* @__PURE__ */ new Date()) {
   const signature = sign("sha256", toBeSigned, privateKey);
   const der = sequence(toBeSigned, ECDSA_WITH_SHA256, tlv(3, Buffer.from([0]), signature));
   const encoded = der.toString("base64").match(/.{1,64}/gu)?.join("\n") ?? "";
-  const certificatePem = `-----BEGIN CERTIFICATE-----
-${encoded}
------END CERTIFICATE-----
-`;
+  const certificatePem = "-----BEGIN CERTIFICATE-----\n".concat(encoded, "\n-----END CERTIFICATE-----\n");
   const privateKeyPem = privateKey.export({ type: "pkcs8", format: "pem" }).toString();
   return { privateKeyPem, certificatePem, fingerprint256: new X509Certificate(certificatePem).fingerprint256 };
 }
@@ -2163,11 +1934,11 @@ function processStartToken(pid, platform = process.platform, timeoutMs) {
         "-NoProfile",
         "-NonInteractive",
         "-Command",
-        `(Get-Process -Id ${pid} -ErrorAction Stop).StartTime.ToUniversalTime().ToString('o')`
+        "(Get-Process -Id ".concat(pid, " -ErrorAction Stop).StartTime.ToUniversalTime().ToString('o')")
       ], { encoding: "utf8", windowsHide: true, timeout: Math.min(5e3, Math.floor(timeoutMs ?? 5e3)), stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
     }
     if (platform === "linux") {
-      const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
+      const stat = readFileSync("/proc/".concat(pid, "/stat"), "utf8");
       const fields = stat.slice(stat.lastIndexOf(")") + 2).trim().split(/\s+/u);
       return fields[19] ?? null;
     }
@@ -2398,7 +2169,7 @@ function identity(value) {
   return { host: record.host, sessionId: record.sessionId };
 }
 function string(value, name) {
-  if (typeof value !== "string") throw new Error(`${name} must be a string.`);
+  if (typeof value !== "string") throw new Error("".concat(name, " must be a string."));
   return value;
 }
 function wakeAttempt(value) {
@@ -2418,7 +2189,7 @@ function wakeAttempt(value) {
   return result;
 }
 function integer2(value, name) {
-  if (typeof value !== "number" || !Number.isInteger(value)) throw new Error(`${name} must be an integer.`);
+  if (typeof value !== "number" || !Number.isInteger(value)) throw new Error("".concat(name, " must be an integer."));
   return value;
 }
 function optionalInteger(record, name) {
@@ -2428,7 +2199,7 @@ function optionalString(record, name) {
   return Object.hasOwn(record, name) ? string(record[name], name) : void 0;
 }
 function boolean(value, name) {
-  if (typeof value !== "boolean") throw new Error(`${name} must be a boolean.`);
+  if (typeof value !== "boolean") throw new Error("".concat(name, " must be a boolean."));
   return value;
 }
 function supportedInjection(value) {
@@ -2479,9 +2250,9 @@ async function credentials(stateDirectory) {
         writeFile(certificatePath, certificate, { encoding: "utf8", mode: 384 })
       ]);
     } else {
-      const suffix = `${process.pid}.${Date.now()}.tmp`;
-      const temporaryKey = `${keyPath}.${suffix}`;
-      const temporaryCertificate = `${certificatePath}.${suffix}`;
+      const suffix = "".concat(process.pid, ".").concat(Date.now(), ".tmp");
+      const temporaryKey = "".concat(keyPath, ".").concat(suffix);
+      const temporaryCertificate = "".concat(certificatePath, ".").concat(suffix);
       await Promise.all([
         writeFile(temporaryKey, key, { encoding: "utf8", mode: 384 }),
         writeFile(temporaryCertificate, certificate, { encoding: "utf8", mode: 384 })
@@ -2495,8 +2266,7 @@ async function credentials(stateDirectory) {
   else token = "";
   if (!/^[A-Za-z0-9_-]{43}$/u.test(token)) {
     token = randomBytes4(32).toString("base64url");
-    await writeFile(tokenPath, `${token}
-`, { encoding: "utf8", mode: 384 });
+    await writeFile(tokenPath, "".concat(token, "\n"), { encoding: "utf8", mode: 384 });
   }
   for (const target of [keyPath, certificatePath, tokenPath]) {
     try {
@@ -2811,13 +2581,12 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeOb
       let targets;
       if (payload.targets !== void 0) {
         if (!Array.isArray(payload.targets) || payload.targets.length < 1 || payload.targets.length > SESSION_PRESENCE_LIST_MAX_TARGETS) {
-          throw new Error(`targets must list 1 to ${SESSION_PRESENCE_LIST_MAX_TARGETS} session identities.`);
+          throw new Error("targets must list 1 to ".concat(SESSION_PRESENCE_LIST_MAX_TARGETS, " session identities."));
         }
         targets = payload.targets.map(identity);
       }
       const result = { sessions: store.listPresence(Date.now(), targets) };
-      if (Buffer.byteLength(`${JSON.stringify({ ok: true, data: result })}
-`, "utf8") > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
+      if (Buffer.byteLength("".concat(JSON.stringify({ ok: true, data: result }), "\n"), "utf8") > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
         throw new Error("The presence list exceeds the broker response limit; request fewer targets.");
       }
       return result;
@@ -2924,8 +2693,7 @@ async function startSessionMessageBroker(stateDirectory) {
     try {
       if (published && ownsBrokerProcessLock(processLock)) rmSync(endpointPath, { force: true });
     } catch (error) {
-      process.stderr.write(`Session message broker endpoint cleanup failed (${brokerFailureCode(error)}).
-`);
+      process.stderr.write("Session message broker endpoint cleanup failed (".concat(brokerFailureCode(error), ").\n"));
     }
     if (temporary) {
       try {
@@ -2936,8 +2704,7 @@ async function startSessionMessageBroker(stateDirectory) {
     try {
       releaseBrokerProcessLock(processLock);
     } catch (error) {
-      process.stderr.write(`Session message broker lock release failed (${brokerFailureCode(error)}).
-`);
+      process.stderr.write("Session message broker lock release failed (".concat(brokerFailureCode(error), ").\n"));
     }
     process.off("exit", cleanup);
     process.off("SIGTERM", onSignal);
@@ -2963,8 +2730,7 @@ async function startSessionMessageBroker(stateDirectory) {
         try {
           line = readLine(chunk);
         } catch {
-          socket.end(`${JSON.stringify({ ok: false, error: "Request exceeds the broker limit." })}
-`);
+          socket.end("".concat(JSON.stringify({ ok: false, error: "Request exceeds the broker limit." }), "\n"));
           return;
         }
         if (line === null) return;
@@ -2974,15 +2740,13 @@ async function startSessionMessageBroker(stateDirectory) {
           const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload) ? request.payload : {};
           const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, wakeHookObservationReader, historicalWakeVerifier);
           if (!["ping", "relay-tick", "heartbeat-relay", "presence-heartbeat"].includes(request.operation)) lastActivity = Date.now();
-          socket.end(`${JSON.stringify({ ok: true, data })}
-`);
+          socket.end("".concat(JSON.stringify({ ok: true, data }), "\n"));
         } catch (error) {
-          socket.end(`${JSON.stringify({
+          socket.end("".concat(JSON.stringify({
             ok: false,
             error: error instanceof Error ? error.message : "Broker request failed.",
             ...error instanceof MessageCapacityError ? { details: error.details } : {}
-          })}
-`);
+          }), "\n"));
         }
       });
     });
@@ -3005,9 +2769,8 @@ async function startSessionMessageBroker(stateDirectory) {
       startedAt: (/* @__PURE__ */ new Date()).toISOString(),
       certificateFingerprint256: fingerprint256
     };
-    temporary = `${endpointPath}.${process.pid}.${createHash5("sha256").update(String(Date.now())).digest("hex").slice(0, 8)}.tmp`;
-    writeFileSync(temporary, `${JSON.stringify(endpoint)}
-`, { encoding: "utf8", mode: 384 });
+    temporary = "".concat(endpointPath, ".").concat(process.pid, ".").concat(createHash5("sha256").update(String(Date.now())).digest("hex").slice(0, 8), ".tmp");
+    writeFileSync(temporary, "".concat(JSON.stringify(endpoint), "\n"), { encoding: "utf8", mode: 384 });
     await publishEndpoint(temporary, endpointPath);
     published = true;
     idleTimer = setInterval(() => {
@@ -3029,8 +2792,7 @@ if (path5.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
     if (result === "already-running") process.exit(0);
   }).catch((error) => {
     const safeCode = brokerFailureCode(error);
-    process.stderr.write(`Session message broker startup failed (${safeCode}).
-`);
+    process.stderr.write("Session message broker startup failed (".concat(safeCode, ").\n"));
     process.exitCode = 1;
   });
 }

@@ -232,7 +232,7 @@ function buildClaudeFamilyRegex(keys) {
   if (keys.length === 0) return null;
   const sorted = [...keys].sort((left, right) => right.length - left.length).map(escapeRegExp);
   return new RegExp(
-    `^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:anthropic\\.)?claude-(?:\\d+(?:-\\d+)?-)?(${sorted.join("|")})(?:[-@:.]|$)`,
+    "^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:anthropic\\.)?claude-(?:\\d+(?:-\\d+)?-)?(".concat(sorted.join("|"), ")(?:[-@:.]|$)"),
     "u"
   );
 }
@@ -243,11 +243,11 @@ function buildGeminiFamilyRegex(prefixedKeys, bareKeys) {
   const branches = [];
   if (sortedPrefixed.length > 0) {
     branches.push(
-      `^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:google[./-])?(?:models\\/)?(?:gemini-(?:\\d+(?:\\.\\d+)?-)?)(${sortedPrefixed.join("|")})(?:[-@:.]|$)`
+      "^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:google[./-])?(?:models\\/)?(?:gemini-(?:\\d+(?:\\.\\d+)?-)?)" + "(".concat(sortedPrefixed.join("|"), ")(?:[-@:.]|$)")
     );
   }
   if (sortedBare.length > 0) {
-    branches.push(`^(${sortedBare.join("|")})$`);
+    branches.push("^(".concat(sortedBare.join("|"), ")$"));
   }
   return new RegExp(branches.join("|"), "u");
 }
@@ -311,7 +311,7 @@ function createHostAdapter(providerId, host2, policyRevision, providerEntry) {
     host: host2,
     provider: providerId,
     policyRevision,
-    resolveModel(model, provenance = `${host2}:adapter-policy`) {
+    resolveModel(model, provenance = "".concat(host2, ":adapter-policy")) {
       return resolveFromProviderCatalog(providerId, host2, policyRevision, providerEntry, model, provenance);
     },
     modelClassForModel(model) {
@@ -644,8 +644,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
           }
           let frame;
           try {
-            frame = `${JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload })}
-`;
+            frame = "".concat(JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload }), "\n");
           } catch (cause) {
             throw clientFailure("BROKER_REQUEST_ENCODING_FAILED", "Cannot encode the broker request.", cause);
           }
@@ -733,7 +732,7 @@ async function waitForSessionMessageBrokerReady(stateDirectory, child, timeoutMs
           if (spawnError) throw spawnError;
           if (child.exitCode !== null && child.exitCode !== 0 || child.signalCode !== null) {
             throw tagProducerFailure(new Error(
-              `The session message broker exited before it was ready (code ${String(child.exitCode)}, signal ${String(child.signalCode)}).`
+              "The session message broker exited before it was ready (code ".concat(String(child.exitCode), ", signal ").concat(String(child.signalCode), ").")
             ), "BROKER_EXITED_BEFORE_READY");
           }
           await delay(Math.min(100, remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE)), signal);
@@ -863,7 +862,7 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
     } catch (error) {
       try {
         throwIfAborted(signal);
-        if (error instanceof BrokerRequestRejected || operationWriteAttempted) throw error;
+        if (error instanceof BrokerRequestRejected || operationWriteAttempted && operation !== "send") throw error;
         await ensureSessionMessageBroker(
           stateDirectory,
           remainingMilliseconds(deadline, signal),
@@ -886,7 +885,7 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
   }, absoluteDeadline);
 }
 function wakeMessage(nonce) {
-  return `${WAKE_PREFIX}${nonce}]`;
+  return "".concat(WAKE_PREFIX).concat(nonce, "]");
 }
 function newWakeNonce() {
   return randomBytes(24).toString("base64url");
@@ -904,11 +903,11 @@ function processStartToken(pid, platform = process.platform, timeoutMs) {
         "-NoProfile",
         "-NonInteractive",
         "-Command",
-        `(Get-Process -Id ${pid} -ErrorAction Stop).StartTime.ToUniversalTime().ToString('o')`
+        "(Get-Process -Id ".concat(pid, " -ErrorAction Stop).StartTime.ToUniversalTime().ToString('o')")
       ], { encoding: "utf8", windowsHide: true, timeout: Math.min(5e3, Math.floor(timeoutMs ?? 5e3)), stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
     }
     if (platform === "linux") {
-      const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
+      const stat = readFileSync("/proc/".concat(pid, "/stat"), "utf8");
       const fields = stat.slice(stat.lastIndexOf(")") + 2).trim().split(/\s+/u);
       return fields[19] ?? null;
     }
@@ -971,7 +970,7 @@ function resolveGeminiAgentApi(environment = process.env, platform = process.pla
   return { command: existsSync2(command) ? command : "agentapi", argsPrefix: [] };
 }
 function reportWakeFailure(phase, error) {
-  console.error(`agent-governance-suite wake diagnostic ${JSON.stringify({ phase, reason: producerFailureReason(error), context: failureContext(error) })}`);
+  console.error("agent-governance-suite wake diagnostic ".concat(JSON.stringify({ phase, reason: producerFailureReason(error), context: failureContext(error) })));
 }
 async function ringGemini(sessionId2, message, environment = process.env) {
   const childEnv = { ...environment };
@@ -1053,9 +1052,7 @@ async function ringClaude(message) {
       connected = true;
       try {
         wrote = true;
-        socket.end(`${JSON.stringify({ type: "auth", token })}
-${JSON.stringify({ type: "user", message: { role: "user", content: message }, priority: "next" })}
-`);
+        socket.end("".concat(JSON.stringify({ type: "auth", token }), "\n").concat(JSON.stringify({ type: "user", message: { role: "user", content: message }, priority: "next" }), "\n"));
       } catch {
         finish("accepted-or-unknown");
       }

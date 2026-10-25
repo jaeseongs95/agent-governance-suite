@@ -369,7 +369,7 @@ function buildClaudeFamilyRegex(keys) {
   if (keys.length === 0) return null;
   const sorted = [...keys].sort((left, right) => right.length - left.length).map(escapeRegExp);
   return new RegExp(
-    `^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:anthropic\\.)?claude-(?:\\d+(?:-\\d+)?-)?(${sorted.join("|")})(?:[-@:.]|$)`,
+    "^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:anthropic\\.)?claude-(?:\\d+(?:-\\d+)?-)?(".concat(sorted.join("|"), ")(?:[-@:.]|$)"),
     "u"
   );
 }
@@ -380,11 +380,11 @@ function buildGeminiFamilyRegex(prefixedKeys, bareKeys) {
   const branches = [];
   if (sortedPrefixed.length > 0) {
     branches.push(
-      `^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:google[./-])?(?:models\\/)?(?:gemini-(?:\\d+(?:\\.\\d+)?-)?)(${sortedPrefixed.join("|")})(?:[-@:.]|$)`
+      "^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:google[./-])?(?:models\\/)?(?:gemini-(?:\\d+(?:\\.\\d+)?-)?)" + "(".concat(sortedPrefixed.join("|"), ")(?:[-@:.]|$)")
     );
   }
   if (sortedBare.length > 0) {
-    branches.push(`^(${sortedBare.join("|")})$`);
+    branches.push("^(".concat(sortedBare.join("|"), ")$"));
   }
   return new RegExp(branches.join("|"), "u");
 }
@@ -448,7 +448,7 @@ function createHostAdapter(providerId, host, policyRevision, providerEntry) {
     host,
     provider: providerId,
     policyRevision,
-    resolveModel(model, provenance = `${host}:adapter-policy`) {
+    resolveModel(model, provenance = "".concat(host, ":adapter-policy")) {
       return resolveFromProviderCatalog(providerId, host, policyRevision, providerEntry, model, provenance);
     },
     modelClassForModel(model) {
@@ -600,12 +600,12 @@ function assertSupportedScopeEntry(entry) {
   }
 }
 function pathWithin(child, parent) {
-  return parent === "" || child === parent || child.startsWith(`${parent}/`);
+  return parent === "" || child === parent || child.startsWith("".concat(parent, "/"));
 }
 function unresolved(target, cause) {
   return new WorkflowContractError(
     "INVALID_INPUT",
-    `Workspace identity cannot be resolved for ${target}: ${cause}.`,
+    "Workspace identity cannot be resolved for ".concat(target, ": ").concat(cause, "."),
     { reason: "WORKSPACE_IDENTITY_UNRESOLVED", path: target, cause }
   );
 }
@@ -765,7 +765,7 @@ function resolveRootIdentity(workspaceLocator, entries, options = {}) {
     if (globIndex === 0) {
       return workspace.git ? { entry, physical: workspace.git.checkoutRoot, git: { ...workspace.git, relative: "" }, conservative: "leading-glob" } : { entry, ...workspace, conservative: "leading-glob" };
     }
-    const target = globIndex < 0 ? entry : `${segments.slice(0, globIndex).join("/")}/`;
+    const target = globIndex < 0 ? entry : "".concat(segments.slice(0, globIndex).join("/"), "/");
     return {
       entry,
       ...identify(path2.resolve(workspaceLocator, target)),
@@ -780,19 +780,19 @@ function canonicalJson(value, subject = "Convergence input") {
   if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
   if (typeof value === "number") {
     if (!Number.isFinite(value)) {
-      throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-finite number.`);
+      throw new WorkflowContractError("INVALID_INPUT", "".concat(subject, " contains a non-finite number."));
     }
     return JSON.stringify(value);
   }
-  if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item, subject)).join(",")}]`;
+  if (Array.isArray(value)) return "[".concat(value.map((item) => canonicalJson(item, subject)).join(","), "]");
   if (value && typeof value === "object") {
     const record6 = value;
-    return `{${Object.keys(record6).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record6[key], subject)}`).join(",")}}`;
+    return "{".concat(Object.keys(record6).sort().map((key) => "".concat(JSON.stringify(key), ":").concat(canonicalJson(record6[key], subject))).join(","), "}");
   }
-  throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-serializable value.`);
+  throw new WorkflowContractError("INVALID_INPUT", "".concat(subject, " contains a non-serializable value."));
 }
 function convergenceDigest(value) {
-  return `sha256:${createHash2("sha256").update(canonicalJson(value), "utf8").digest("hex")}`;
+  return "sha256:".concat(createHash2("sha256").update(canonicalJson(value), "utf8").digest("hex"));
 }
 function writeSurface(root) {
   return [
@@ -890,7 +890,7 @@ function lineageRelation(left, right, checkouts, scans) {
     const listing = checkouts.get(commonDir);
     if (listing.roots.some((checkout) => pathWithin(checkout, container.physical))) return "overlap";
     if (!listing.complete) {
-      const scanKey = `${commonDir}\0${container.physical}`;
+      const scanKey = "".concat(commonDir, "\0").concat(container.physical);
       if (!scans.has(scanKey)) scans.set(scanKey, repositoryInDirectory(container.physical || "/", commonDir));
       const scanned = scans.get(scanKey);
       if (scanned === "overlap") return "overlap";
@@ -1002,7 +1002,7 @@ function resolveGeminiAgentApi(environment = process.env, platform = process.pla
   return { command: existsSync2(command) ? command : "agentapi", argsPrefix: [] };
 }
 function reportWakeFailure(phase, error61) {
-  console.error(`agent-governance-suite wake diagnostic ${JSON.stringify({ phase, reason: producerFailureReason(error61), context: failureContext(error61) })}`);
+  console.error("agent-governance-suite wake diagnostic ".concat(JSON.stringify({ phase, reason: producerFailureReason(error61), context: failureContext(error61) })));
 }
 async function ringGemini(sessionId, message, environment = process.env) {
   const childEnv = { ...environment };
@@ -1084,9 +1084,7 @@ async function ringClaude(message) {
       connected = true;
       try {
         wrote = true;
-        socket.end(`${JSON.stringify({ type: "auth", token })}
-${JSON.stringify({ type: "user", message: { role: "user", content: message }, priority: "next" })}
-`);
+        socket.end("".concat(JSON.stringify({ type: "auth", token }), "\n").concat(JSON.stringify({ type: "user", message: { role: "user", content: message }, priority: "next" }), "\n"));
       } catch {
         finish("accepted-or-unknown");
       }
@@ -1134,11 +1132,11 @@ function record(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
 function actorObservation(input2, host) {
-  if (!Object.hasOwn(input2, "agent_id")) return { kind: "unknown", observedBy: `${host}:hook-payload`, assurance: "unknown" };
-  if (typeof input2.agent_id !== "string") return { kind: "unknown", observedBy: `${host}:hook-payload`, assurance: "unknown" };
+  if (!Object.hasOwn(input2, "agent_id")) return { kind: "unknown", observedBy: "".concat(host, ":hook-payload"), assurance: "unknown" };
+  if (typeof input2.agent_id !== "string") return { kind: "unknown", observedBy: "".concat(host, ":hook-payload"), assurance: "unknown" };
   return {
     kind: text(input2.agent_id) ? "subagent" : "main",
-    observedBy: `${host}:hook-payload`,
+    observedBy: "".concat(host, ":hook-payload"),
     assurance: "observed"
   };
 }
@@ -1366,7 +1364,7 @@ function nonEmpty(value) {
 }
 var hostIdentityDigest = (value) => createHash4("sha256").update(value, "utf8").digest("hex").slice(0, 24);
 function hostActorId(host, sessionId, agentId = null) {
-  return `${host}:session-${hostIdentityDigest(sessionId)}${agentId ? `:agent-${hostIdentityDigest(agentId)}` : ""}`;
+  return "".concat(host, ":session-").concat(hostIdentityDigest(sessionId)).concat(agentId ? ":agent-".concat(hostIdentityDigest(agentId)) : "");
 }
 function lowerReasoningEffort(left, right) {
   return REASONING_EFFORT.indexOf(left) <= REASONING_EFFORT.indexOf(right) ? left : right;
@@ -1374,7 +1372,7 @@ function lowerReasoningEffort(left, right) {
 function isReasoningEffort(value) {
   return typeof value === "string" && REASONING_EFFORT.includes(value);
 }
-function resolveAdapterModelCapability(adapter, model, provenance = `${adapter.host}:runtime`) {
+function resolveAdapterModelCapability(adapter, model, provenance = "".concat(adapter.host, ":runtime")) {
   if (typeof model !== "string" || model.length === 0) return null;
   if (typeof adapter.resolveModel === "function") {
     const resolved = adapter.resolveModel(model, provenance);
@@ -1445,7 +1443,7 @@ function issueHostAttestation(store, adapter, observation) {
   if (!HOST_ATTESTATION_TOOLS.has(observation.tool)) return null;
   const input2 = withoutHostAttestation(observation.input);
   const binding = hostAttestationBinding(observation.tool, input2);
-  const provenance = nonEmpty(observation.provenance) ?? `${adapter.host}:runtime`;
+  const provenance = nonEmpty(observation.provenance) ?? "".concat(adapter.host, ":runtime");
   const capability = resolveAdapterModelCapability(adapter, observation.model, provenance);
   if (!binding || !capability || !MODEL_CLASS.includes(capability.modelClass) || !adapter.host || !isReasoningEffort(observation.reasoningEffort) || !satisfiesModelEffortPolicy(capability, observation.reasoningEffort) || !observation.actorId || !observation.sessionId || !observation.toolUseId || observation.actorId !== hostActorId(adapter.host, observation.sessionId, observation.agentId ?? null)) return null;
   const now = observation.now ?? /* @__PURE__ */ new Date();
@@ -1475,8 +1473,8 @@ function issueHostAttestation(store, adapter, observation) {
     observedAt: now.toISOString(),
     expiresAt: new Date(now.getTime() + TOKEN_TTL_MS).toISOString()
   };
-  const body = `${TOKEN_PREFIX}.${Buffer.from(JSON.stringify(payload), "utf8").toString("base64url")}`;
-  return `${body}.${mac(signingKey(store), body)}`;
+  const body = "".concat(TOKEN_PREFIX, ".").concat(Buffer.from(JSON.stringify(payload), "utf8").toString("base64url"));
+  return "".concat(body, ".").concat(mac(signingKey(store), body));
 }
 
 // mcp-server/src/codex-host-observation.ts
@@ -1547,7 +1545,7 @@ function observeCodexHook(input2, options = {}) {
   if (context.turn_id !== turnId) return missing("host-turn-mismatch");
   if (context.model !== model) return missing("host-model-mismatch");
   if (!isReasoningEffort(context.effort)) return missing("host-reasoning-effort-missing-or-unsupported");
-  const capability = resolveAdapterModelCapability(adapter, model, `${adapter.host}:rollout-turn-context`);
+  const capability = resolveAdapterModelCapability(adapter, model, "".concat(adapter.host, ":rollout-turn-context"));
   if (!capability) return missing("host-model-policy-unsupported");
   if (!satisfiesModelEffortPolicy(capability, context.effort)) return missing("host-reasoning-effort-below-model-minimum-or-unsupported");
   return {
@@ -1674,19 +1672,13 @@ var SqliteWorkflowStore = class {
       const existing = this.database.prepare("SELECT value FROM workflow_metadata WHERE key = ?").get(name);
       if (existing) return existing.value;
       const value = create();
-      this.database.prepare(`
-        INSERT INTO workflow_metadata (key, value, updated_at)
-        VALUES (?, ?, ?)
-      `).run(name, value, (/* @__PURE__ */ new Date()).toISOString());
+      this.database.prepare("\n        INSERT INTO workflow_metadata (key, value, updated_at)\n        VALUES (?, ?, ?)\n      ").run(name, value, (/* @__PURE__ */ new Date()).toISOString());
       return value;
     }));
   }
   claimExecutionObservation(observationId, expiresAt, consumedAt) {
     return this.guard("Cannot claim the trusted execution observation.", { observationId }, () => this.transaction(() => {
-      const result = this.database.prepare(`
-        INSERT OR IGNORE INTO execution_observation_claims(observation_id, expires_at, consumed_at)
-        VALUES (?, ?, ?)
-      `).run(observationId, expiresAt, consumedAt);
+      const result = this.database.prepare("\n        INSERT OR IGNORE INTO execution_observation_claims(observation_id, expires_at, consumed_at)\n        VALUES (?, ?, ?)\n      ").run(observationId, expiresAt, consumedAt);
       return Number(result.changes) === 1;
     }));
   }
@@ -1702,11 +1694,7 @@ var SqliteWorkflowStore = class {
       if (!Number.isSafeInteger(next)) {
         throw new WorkflowContractError("INVALID_INPUT", "Workflow run sequence is exhausted.", { value: row?.value ?? null });
       }
-      this.database.prepare(`
-        INSERT INTO workflow_metadata (key, value, updated_at)
-        VALUES ('run-sequence', ?, ?)
-        ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
-      `).run(String(next), (/* @__PURE__ */ new Date()).toISOString());
+      this.database.prepare("\n        INSERT INTO workflow_metadata (key, value, updated_at)\n        VALUES ('run-sequence', ?, ?)\n        ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at\n      ").run(String(next), (/* @__PURE__ */ new Date()).toISOString());
       return next;
     }));
   }
@@ -1716,11 +1704,7 @@ var SqliteWorkflowStore = class {
   }
   getRun(runId) {
     return this.guard("Cannot read the workflow run.", { runId }, () => {
-      const row = this.database.prepare(`
-        SELECT revision, receipt_json
-        FROM workflow_runs
-        WHERE run_id = ?
-      `).get(runId);
+      const row = this.database.prepare("\n        SELECT revision, receipt_json\n        FROM workflow_runs\n        WHERE run_id = ?\n      ").get(runId);
       if (!row) return null;
       const receipt = JSON.parse(row.receipt_json);
       if (receipt.runId !== runId || receipt.revision !== row.revision) {
@@ -1736,11 +1720,7 @@ var SqliteWorkflowStore = class {
   }
   updateRun(receipt, expectedRevision, convergence) {
     return this.guard("Cannot update the workflow run.", { runId: receipt.runId }, () => this.transaction(() => {
-      const result = this.database.prepare(`
-        UPDATE workflow_runs
-        SET revision = ?, state = ?, receipt_json = ?, updated_at = ?
-        WHERE run_id = ? AND revision = ?
-      `).run(
+      const result = this.database.prepare("\n        UPDATE workflow_runs\n        SET revision = ?, state = ?, receipt_json = ?, updated_at = ?\n        WHERE run_id = ? AND revision = ?\n      ").run(
         receipt.revision,
         receipt.state,
         JSON.stringify(receipt),
@@ -1751,11 +1731,7 @@ var SqliteWorkflowStore = class {
       if (Number(result.changes) !== 1) return false;
       if (!convergence) return true;
       if (!this.casRoot(convergence.root, convergence.expectedRootRevision)) throw new WorkflowContractError("STALE_REVISION", "Convergence root changed while recording the workflow outcome.");
-      const attemptUpdate = this.database.prepare(`
-        UPDATE convergence_attempts
-        SET state = ?, outcome_json = ?, updated_at = ?
-        WHERE run_id = ? AND outcome_json IS NULL
-      `).run(
+      const attemptUpdate = this.database.prepare("\n        UPDATE convergence_attempts\n        SET state = ?, outcome_json = ?, updated_at = ?\n        WHERE run_id = ? AND outcome_json IS NULL\n      ").run(
         convergence.outcome.state,
         JSON.stringify(convergence.outcome),
         convergence.outcome.recordedAt,
@@ -1771,12 +1747,7 @@ var SqliteWorkflowStore = class {
       if (root.parentRootId && !parentRow) {
         throw new WorkflowContractError("INVALID_INPUT", "Parent convergence root was not found.", { rootId: root.parentRootId });
       }
-      const rows = this.database.prepare(`
-        SELECT roots.root_id, roots.root_json, roots.revision, identities.identity_json, identities.surface_digest
-        FROM convergence_roots AS roots
-        LEFT JOIN convergence_root_identities AS identities ON identities.root_id = roots.root_id
-        WHERE roots.state NOT IN ('completed', 'abandoned')
-      `).all();
+      const rows = this.database.prepare("\n        SELECT roots.root_id, roots.root_json, roots.revision, identities.identity_json, identities.surface_digest\n        FROM convergence_roots AS roots\n        LEFT JOIN convergence_root_identities AS identities ON identities.root_id = roots.root_id\n        WHERE roots.state NOT IN ('completed', 'abandoned')\n      ").all();
       const actives = rows.map((row) => {
         const active = activeRootIdentity(
           JSON.parse(row.root_json),
@@ -1794,10 +1765,7 @@ var SqliteWorkflowStore = class {
         parent.updatedAt = root.createdAt;
         this.casRoot(parent, parentRow.revision);
       }
-      this.database.prepare(`
-        INSERT INTO convergence_roots (root_id, revision, state, workspace_id, workspace_locator, root_json, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
+      this.database.prepare("\n        INSERT INTO convergence_roots (root_id, revision, state, workspace_id, workspace_locator, root_json, created_at, updated_at)\n        VALUES (?, ?, ?, ?, ?, ?, ?, ?)\n      ").run(
         root.rootId,
         root.revision,
         root.state,
@@ -1816,10 +1784,10 @@ var SqliteWorkflowStore = class {
     return this.guard("Cannot read convergence state.", { rootId }, () => this.transaction(() => {
       const rootRow = this.rootRow(rootId);
       if (!rootRow) return null;
-      const leases = this.database.prepare(`SELECT lease_json, proposal_json FROM convergence_leases WHERE root_id = ? ORDER BY epoch, ordinal, issued_at`).all(rootId);
-      const outcomes = this.database.prepare(`SELECT outcome_json FROM convergence_attempts WHERE root_id = ? AND outcome_json IS NOT NULL ORDER BY epoch, ordinal`).all(rootId);
-      const reviews = this.database.prepare(`SELECT review_json FROM convergence_reviews WHERE root_id = ? ORDER BY reviewed_at, review_id`).all(rootId);
-      const links = this.database.prepare(`SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY epoch, ordinal`).all(rootId);
+      const leases = this.database.prepare("SELECT lease_json, proposal_json FROM convergence_leases WHERE root_id = ? ORDER BY epoch, ordinal, issued_at").all(rootId);
+      const outcomes = this.database.prepare("SELECT outcome_json FROM convergence_attempts WHERE root_id = ? AND outcome_json IS NOT NULL ORDER BY epoch, ordinal").all(rootId);
+      const reviews = this.database.prepare("SELECT review_json FROM convergence_reviews WHERE root_id = ? ORDER BY reviewed_at, review_id").all(rootId);
+      const links = this.database.prepare("SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY epoch, ordinal").all(rootId);
       return {
         root: JSON.parse(rootRow.root_json),
         proposals: leases.map((row) => JSON.parse(row.proposal_json)),
@@ -1838,10 +1806,7 @@ var SqliteWorkflowStore = class {
       if (!this.casRoot(root, expectedRevision)) return false;
       if (root.currentEpoch !== previous.currentEpoch) this.insertEpoch(root, root.updatedAt);
       if (review) {
-        this.database.prepare(`
-          INSERT INTO convergence_reviews (review_id, root_id, epoch, review_json, reviewed_at)
-          VALUES (?, ?, ?, ?, ?)
-        `).run(review.reviewId, review.rootId, review.epoch, JSON.stringify(review), review.reviewedAt);
+        this.database.prepare("\n          INSERT INTO convergence_reviews (review_id, root_id, epoch, review_json, reviewed_at)\n          VALUES (?, ?, ?, ?, ?)\n        ").run(review.reviewId, review.rootId, review.epoch, JSON.stringify(review), review.reviewedAt);
       }
       return true;
     }));
@@ -1850,11 +1815,7 @@ var SqliteWorkflowStore = class {
     return this.guard("Cannot claim the convergence attempt lease.", { rootId: root.rootId }, () => this.transaction(() => {
       if (this.shared && Date.parse(lease.expiresAt) <= this.shared.time(Date.parse(lease.issuedAt))) return false;
       if (!this.casRoot(root, expectedRevision)) return false;
-      this.database.prepare(`
-        INSERT INTO convergence_leases (
-          lease_id, root_id, root_revision, epoch, ordinal, state, lease_json, proposal_json, issued_at, expires_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
+      this.database.prepare("\n        INSERT INTO convergence_leases (\n          lease_id, root_id, root_revision, epoch, ordinal, state, lease_json, proposal_json, issued_at, expires_at\n        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n      ").run(
         lease.leaseId,
         lease.rootId,
         lease.rootRevision,
@@ -1876,9 +1837,7 @@ var SqliteWorkflowStore = class {
       const lease = JSON.parse(row.lease_json);
       if (lease.state !== "issued") return false;
       lease.state = "expired";
-      const result = this.database.prepare(`
-        UPDATE convergence_leases SET state = 'expired', lease_json = ? WHERE lease_id = ? AND state = 'issued'
-      `).run(JSON.stringify(lease), leaseId);
+      const result = this.database.prepare("\n        UPDATE convergence_leases SET state = 'expired', lease_json = ? WHERE lease_id = ? AND state = 'issued'\n      ").run(JSON.stringify(lease), leaseId);
       return Number(result.changes) === 1;
     }));
   }
@@ -1905,34 +1864,24 @@ var SqliteWorkflowStore = class {
       if (!rootRow || rootRow.revision !== expectedRootRevision) return null;
       const root = JSON.parse(rootRow.root_json);
       lease.state = "consumed";
-      const leaseUpdate = this.database.prepare(`
-        UPDATE convergence_leases SET state = 'consumed', lease_json = ?
-        WHERE lease_id = ? AND state = 'issued'
-      `).run(JSON.stringify(lease), leaseId);
+      const leaseUpdate = this.database.prepare("\n        UPDATE convergence_leases SET state = 'consumed', lease_json = ?\n        WHERE lease_id = ? AND state = 'issued'\n      ").run(JSON.stringify(lease), leaseId);
       if (Number(leaseUpdate.changes) !== 1) return null;
       root.revision += 1;
       root.updatedAt = consumedAt;
       if (!this.casRoot(root, expectedRootRevision)) return null;
       this.insertRunRow(receipt, consumedAt);
-      this.database.prepare(`
-        INSERT INTO convergence_attempts (
-          root_id, epoch, ordinal, lease_id, run_id, state, outcome_json, started_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, 'running', NULL, ?, ?)
-      `).run(root.rootId, lease.epoch, lease.ordinal, lease.leaseId, receipt.runId, consumedAt, consumedAt);
-      this.database.prepare(`
-        INSERT INTO workflow_attempt_links (run_id, root_id, lease_id, epoch, ordinal)
-        VALUES (?, ?, ?, ?, ?)
-      `).run(receipt.runId, root.rootId, lease.leaseId, lease.epoch, lease.ordinal);
+      this.database.prepare("\n        INSERT INTO convergence_attempts (\n          root_id, epoch, ordinal, lease_id, run_id, state, outcome_json, started_at, updated_at\n        ) VALUES (?, ?, ?, ?, ?, 'running', NULL, ?, ?)\n      ").run(root.rootId, lease.epoch, lease.ordinal, lease.leaseId, receipt.runId, consumedAt, consumedAt);
+      this.database.prepare("\n        INSERT INTO workflow_attempt_links (run_id, root_id, lease_id, epoch, ordinal)\n        VALUES (?, ?, ?, ?, ?)\n      ").run(receipt.runId, root.rootId, lease.leaseId, lease.epoch, lease.ordinal);
       return { root, proposal, lease, outcome: null };
     }), "The convergence database is busy or the lease was consumed concurrently.");
   }
   getGuardedRunBinding(runId) {
     return this.guard("Cannot read the guarded workflow binding.", { runId }, () => {
-      const link = this.database.prepare(`SELECT root_id, lease_id FROM workflow_attempt_links WHERE run_id = ?`).get(runId);
+      const link = this.database.prepare("SELECT root_id, lease_id FROM workflow_attempt_links WHERE run_id = ?").get(runId);
       if (!link) return null;
       const rootRow = this.rootRow(link.root_id);
       const leaseRow = this.leaseRow(link.lease_id);
-      const outcomeRow = this.database.prepare(`SELECT outcome_json FROM convergence_attempts WHERE run_id = ?`).get(runId);
+      const outcomeRow = this.database.prepare("SELECT outcome_json FROM convergence_attempts WHERE run_id = ?").get(runId);
       if (!rootRow || !leaseRow) return null;
       return {
         root: JSON.parse(rootRow.root_json),
@@ -1948,26 +1897,7 @@ var SqliteWorkflowStore = class {
   putPluginUpdateState(state) {
     this.guard("Cannot persist plugin update state.", { targetId: state.targetId }, () => this.transaction(() => {
       const merged = mergePluginUpdateState(this.readPluginUpdateStateRow(state.targetId), state);
-      this.database.prepare(`
-      INSERT INTO plugin_update_state (
-        target_id, current_version, latest_version, latest_tag, latest_commit, etag,
-        comparison, last_attempt_at, last_successful_check_at, next_check_at,
-        last_notified_version, last_notified_at, last_error_code
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(target_id) DO UPDATE SET
-        current_version = excluded.current_version,
-        latest_version = excluded.latest_version,
-        latest_tag = excluded.latest_tag,
-        latest_commit = excluded.latest_commit,
-        etag = excluded.etag,
-        comparison = excluded.comparison,
-        last_attempt_at = excluded.last_attempt_at,
-        last_successful_check_at = excluded.last_successful_check_at,
-        next_check_at = excluded.next_check_at,
-        last_notified_version = excluded.last_notified_version,
-        last_notified_at = excluded.last_notified_at,
-        last_error_code = excluded.last_error_code
-      `).run(
+      this.database.prepare("\n      INSERT INTO plugin_update_state (\n        target_id, current_version, latest_version, latest_tag, latest_commit, etag,\n        comparison, last_attempt_at, last_successful_check_at, next_check_at,\n        last_notified_version, last_notified_at, last_error_code\n      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n      ON CONFLICT(target_id) DO UPDATE SET\n        current_version = excluded.current_version,\n        latest_version = excluded.latest_version,\n        latest_tag = excluded.latest_tag,\n        latest_commit = excluded.latest_commit,\n        etag = excluded.etag,\n        comparison = excluded.comparison,\n        last_attempt_at = excluded.last_attempt_at,\n        last_successful_check_at = excluded.last_successful_check_at,\n        next_check_at = excluded.next_check_at,\n        last_notified_version = excluded.last_notified_version,\n        last_notified_at = excluded.last_notified_at,\n        last_error_code = excluded.last_error_code\n      ").run(
         merged.targetId,
         merged.currentVersion,
         merged.latestVersion,
@@ -1988,12 +1918,7 @@ var SqliteWorkflowStore = class {
     return this.guard("Cannot claim plugin update notice.", { targetId, latestVersion }, () => this.transaction(() => {
       const state = this.readPluginUpdateStateRow(targetId);
       if (!state || state.latestVersion !== latestVersion || state.lastNotifiedVersion !== null && compareStableVersionNumbers(state.lastNotifiedVersion, latestVersion) >= 0) return false;
-      const result = this.database.prepare(`
-      UPDATE plugin_update_state
-      SET last_notified_version = ?, last_notified_at = ?
-      WHERE target_id = ?
-        AND latest_version = ?
-      `).run(latestVersion, notifiedAt, targetId, latestVersion);
+      const result = this.database.prepare("\n      UPDATE plugin_update_state\n      SET last_notified_version = ?, last_notified_at = ?\n      WHERE target_id = ?\n        AND latest_version = ?\n      ").run(latestVersion, notifiedAt, targetId, latestVersion);
       return Number(result.changes) === 1;
     }));
   }
@@ -2001,10 +1926,7 @@ var SqliteWorkflowStore = class {
     return this.shared?.getSchemaVersion() ?? this.database.prepare("PRAGMA user_version").get().user_version;
   }
   isConvergenceRootActive(rootId) {
-    const row = this.database.prepare(`
-      SELECT 1 AS active FROM convergence_roots
-      WHERE root_id = ? AND state IN ('open', 'needs-review', 'needs-user')
-    `).get(rootId);
+    const row = this.database.prepare("\n      SELECT 1 AS active FROM convergence_roots\n      WHERE root_id = ? AND state IN ('open', 'needs-review', 'needs-user')\n    ").get(rootId);
     return Boolean(row);
   }
   withInactiveRootGuard(rootIds, operation) {
@@ -2021,17 +1943,8 @@ var SqliteWorkflowStore = class {
   }
   previewCleanup(cutoff) {
     return this.guard("Cannot preview workflow state cleanup.", {}, () => this.transaction(() => {
-      const roots = this.database.prepare(`
-      SELECT root_id, revision, state, updated_at
-      FROM convergence_roots
-      WHERE state IN ('completed', 'abandoned') AND updated_at <= ?
-      ORDER BY root_id
-    `).all(cutoff);
-      const linkedRuns = this.database.prepare(`
-      SELECT links.run_id, runs.revision, runs.state, runs.updated_at
-      FROM workflow_attempt_links links LEFT JOIN workflow_runs runs ON runs.run_id = links.run_id
-      WHERE links.root_id = ? ORDER BY links.run_id
-    `);
+      const roots = this.database.prepare("\n      SELECT root_id, revision, state, updated_at\n      FROM convergence_roots\n      WHERE state IN ('completed', 'abandoned') AND updated_at <= ?\n      ORDER BY root_id\n    ").all(cutoff);
+      const linkedRuns = this.database.prepare("\n      SELECT links.run_id, runs.revision, runs.state, runs.updated_at\n      FROM workflow_attempt_links links LEFT JOIN workflow_runs runs ON runs.run_id = links.run_id\n      WHERE links.root_id = ? ORDER BY links.run_id\n    ");
       const linkedSnapshots = [];
       const rootCandidates = [];
       let linkedNonTerminalRoots = 0;
@@ -2066,18 +1979,8 @@ var SqliteWorkflowStore = class {
         });
         linkedSnapshots.push({ rootId: root.root_id, runs: runs2 });
       }
-      const runs = this.database.prepare(`
-      SELECT run_id, revision, state, updated_at
-      FROM workflow_runs
-      WHERE state IN ('failed', 'passed', 'blocked')
-        AND updated_at <= ?
-        AND NOT EXISTS (SELECT 1 FROM workflow_attempt_links links WHERE links.run_id = workflow_runs.run_id)
-      ORDER BY run_id
-    `).all(cutoff);
-      const protectedRow = this.database.prepare(`
-      SELECT COUNT(*) AS count FROM convergence_roots
-      WHERE state IN ('open', 'needs-review', 'needs-user')
-    `).get();
+      const runs = this.database.prepare("\n      SELECT run_id, revision, state, updated_at\n      FROM workflow_runs\n      WHERE state IN ('failed', 'passed', 'blocked')\n        AND updated_at <= ?\n        AND NOT EXISTS (SELECT 1 FROM workflow_attempt_links links WHERE links.run_id = workflow_runs.run_id)\n      ORDER BY run_id\n    ").all(cutoff);
+      const protectedRow = this.database.prepare("\n      SELECT COUNT(*) AS count FROM convergence_roots\n      WHERE state IN ('open', 'needs-review', 'needs-user')\n    ").get();
       return {
         roots: rootCandidates,
         standaloneRuns: runs.map((run) => ({
@@ -2100,10 +2003,7 @@ var SqliteWorkflowStore = class {
   }
   claimCleanupPlan(planId, planDigest, claimedAt) {
     return this.guard("Cannot claim the state cleanup plan.", { planId }, () => {
-      const result = this.database.prepare(`
-        INSERT OR IGNORE INTO state_cleanup_claims(plan_id, plan_digest, claimed_at)
-        VALUES (?, ?, ?)
-      `).run(planId, planDigest, claimedAt);
+      const result = this.database.prepare("\n        INSERT OR IGNORE INTO state_cleanup_claims(plan_id, plan_digest, claimed_at)\n        VALUES (?, ?, ?)\n      ").run(planId, planDigest, claimedAt);
       return Number(result.changes) === 1;
     });
   }
@@ -2117,7 +2017,7 @@ var SqliteWorkflowStore = class {
       const backup = new DatabaseSync2(targetPath, { readOnly: true });
       try {
         const result = backup.prepare("PRAGMA integrity_check").get();
-        if (result.integrity_check !== "ok") throw new Error(`integrity_check returned ${result.integrity_check}`);
+        if (result.integrity_check !== "ok") throw new Error("integrity_check returned ".concat(result.integrity_check));
       } finally {
         backup.close();
       }
@@ -2125,20 +2025,14 @@ var SqliteWorkflowStore = class {
   }
   executeCleanup(preview) {
     return this.guard("Cannot execute workflow state cleanup.", {}, () => this.transaction(() => {
-      const verifyRoot = this.database.prepare(`
-        SELECT state, revision, updated_at FROM convergence_roots WHERE root_id = ?
-      `);
-      const verifyRun = this.database.prepare(`
-        SELECT state, revision, updated_at FROM workflow_runs WHERE run_id = ?
-      `);
+      const verifyRoot = this.database.prepare("\n        SELECT state, revision, updated_at FROM convergence_roots WHERE root_id = ?\n      ");
+      const verifyRun = this.database.prepare("\n        SELECT state, revision, updated_at FROM workflow_runs WHERE run_id = ?\n      ");
       for (const root of preview.roots) {
         const row = verifyRoot.get(root.rootId);
         if (!row || row.state !== root.state || row.revision !== root.revision || row.updated_at !== root.updatedAt) {
           throw new WorkflowContractError("STALE_REVISION", "A cleanup root changed after preview.", { rootId: root.rootId });
         }
-        const actualRunIds = this.database.prepare(`
-          SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY run_id
-        `).all(root.rootId).map((item) => item.run_id);
+        const actualRunIds = this.database.prepare("\n          SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY run_id\n        ").all(root.rootId).map((item) => item.run_id);
         if (JSON.stringify(actualRunIds) !== JSON.stringify(root.runIds)) {
           throw new WorkflowContractError("STALE_REVISION", "A cleanup root's linked runs changed after preview.", { rootId: root.rootId });
         }
@@ -2200,145 +2094,22 @@ var SqliteWorkflowStore = class {
         });
       }
       if (row.user_version > 0 && row.user_version < 4) {
-        this.database.exec(`
-          ALTER TABLE workflow_runs ADD COLUMN state TEXT;
-          ALTER TABLE workflow_runs ADD COLUMN created_at TEXT;
-          UPDATE workflow_runs
-          SET state = COALESCE(json_extract(receipt_json, '$.state'), 'blocked'),
-              created_at = updated_at;
-        `);
+        this.database.exec("\n          ALTER TABLE workflow_runs ADD COLUMN state TEXT;\n          ALTER TABLE workflow_runs ADD COLUMN created_at TEXT;\n          UPDATE workflow_runs\n          SET state = COALESCE(json_extract(receipt_json, '$.state'), 'blocked'),\n              created_at = updated_at;\n        ");
       }
-      this.database.exec(`
-        CREATE TABLE IF NOT EXISTS workflow_metadata (
-          key TEXT PRIMARY KEY,
-          value TEXT NOT NULL,
-          updated_at TEXT NOT NULL
-        ) STRICT;
-        CREATE TABLE IF NOT EXISTS workflow_runs (
-          run_id TEXT PRIMARY KEY,
-          revision INTEGER NOT NULL CHECK (revision >= 0),
-          state TEXT NOT NULL CHECK (state IN ('ready', 'running', 'needs-input', 'needs-approval', 'needs-redesign', 'failed', 'passed', 'blocked')),
-          receipt_json TEXT NOT NULL,
-          created_at TEXT NOT NULL,
-          updated_at TEXT NOT NULL
-        ) STRICT;
-        CREATE INDEX IF NOT EXISTS workflow_runs_cleanup
-          ON workflow_runs(state, updated_at);
-        CREATE TABLE IF NOT EXISTS plugin_update_state (
-          target_id TEXT PRIMARY KEY,
-          current_version TEXT NOT NULL,
-          latest_version TEXT,
-          latest_tag TEXT,
-          latest_commit TEXT,
-          etag TEXT,
-          comparison TEXT NOT NULL CHECK (comparison IN ('unknown', 'up-to-date', 'update-available', 'ahead-of-stable')),
-          last_attempt_at TEXT,
-          last_successful_check_at TEXT,
-          next_check_at TEXT NOT NULL,
-          last_notified_version TEXT,
-          last_notified_at TEXT,
-          last_error_code TEXT CHECK (
-            last_error_code IS NULL
-            OR last_error_code IN ('TIMEOUT', 'NETWORK', 'HTTP', 'INVALID_RESPONSE', 'NO_STABLE_TAG')
-          )
-        ) STRICT;
-        CREATE TABLE IF NOT EXISTS convergence_roots (
-          root_id TEXT PRIMARY KEY,
-          revision INTEGER NOT NULL CHECK (revision >= 0),
-          state TEXT NOT NULL CHECK (state IN ('open', 'needs-review', 'needs-user', 'completed', 'abandoned')),
-          workspace_id TEXT NOT NULL,
-          workspace_locator TEXT NOT NULL,
-          root_json TEXT NOT NULL,
-          created_at TEXT NOT NULL,
-          updated_at TEXT NOT NULL
-        ) STRICT;
-        CREATE INDEX IF NOT EXISTS convergence_active_roots_by_workspace
-          ON convergence_roots(workspace_id, state);
-        CREATE INDEX IF NOT EXISTS convergence_active_roots_by_locator
-          ON convergence_roots(workspace_locator, state);
-        CREATE TABLE IF NOT EXISTS convergence_root_identities (
-          root_id TEXT PRIMARY KEY,
-          identity_json TEXT NOT NULL,
-          surface_digest TEXT NOT NULL,
-          replacement_match TEXT CHECK (replacement_match IS NULL OR replacement_match IN ('physical', 'lineage', 'legacy-locator')),
-          created_at TEXT NOT NULL
-        ) STRICT;
-        CREATE TABLE IF NOT EXISTS convergence_epochs (
-          root_id TEXT NOT NULL REFERENCES convergence_roots(root_id),
-          epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),
-          frame_digest TEXT NOT NULL,
-          created_at TEXT NOT NULL,
-          PRIMARY KEY (root_id, epoch)
-        ) STRICT;
-        CREATE TABLE IF NOT EXISTS convergence_leases (
-          lease_id TEXT PRIMARY KEY,
-          root_id TEXT NOT NULL REFERENCES convergence_roots(root_id),
-          root_revision INTEGER NOT NULL CHECK (root_revision >= 0),
-          epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),
-          ordinal INTEGER NOT NULL CHECK (ordinal >= 1 AND ordinal <= 3),
-          state TEXT NOT NULL CHECK (state IN ('issued', 'consumed', 'expired')),
-          lease_json TEXT NOT NULL,
-          proposal_json TEXT NOT NULL,
-          issued_at TEXT NOT NULL,
-          expires_at TEXT NOT NULL,
-          UNIQUE (root_id, epoch, ordinal, lease_id)
-        ) STRICT;
-        CREATE UNIQUE INDEX IF NOT EXISTS convergence_one_issued_lease
-          ON convergence_leases(root_id) WHERE state = 'issued';
-        CREATE TABLE IF NOT EXISTS convergence_attempts (
-          root_id TEXT NOT NULL REFERENCES convergence_roots(root_id),
-          epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),
-          ordinal INTEGER NOT NULL CHECK (ordinal >= 1 AND ordinal <= 3),
-          lease_id TEXT NOT NULL UNIQUE REFERENCES convergence_leases(lease_id),
-          run_id TEXT NOT NULL UNIQUE REFERENCES workflow_runs(run_id),
-          state TEXT NOT NULL CHECK (state IN ('running', 'passed', 'failed', 'aborted')),
-          outcome_json TEXT,
-          started_at TEXT NOT NULL,
-          updated_at TEXT NOT NULL,
-          PRIMARY KEY (root_id, epoch, ordinal)
-        ) STRICT;
-        CREATE TABLE IF NOT EXISTS convergence_reviews (
-          review_id TEXT PRIMARY KEY,
-          root_id TEXT NOT NULL REFERENCES convergence_roots(root_id),
-          epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),
-          review_json TEXT NOT NULL,
-          reviewed_at TEXT NOT NULL
-        ) STRICT;
-        CREATE TABLE IF NOT EXISTS workflow_attempt_links (
-          run_id TEXT PRIMARY KEY REFERENCES workflow_runs(run_id),
-          root_id TEXT NOT NULL REFERENCES convergence_roots(root_id),
-          lease_id TEXT NOT NULL UNIQUE REFERENCES convergence_leases(lease_id),
-          epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),
-          ordinal INTEGER NOT NULL CHECK (ordinal >= 1 AND ordinal <= 3)
-        ) STRICT;
-        CREATE TABLE IF NOT EXISTS state_cleanup_claims (
-          plan_id TEXT PRIMARY KEY,
-          plan_digest TEXT NOT NULL,
-          claimed_at TEXT NOT NULL
-        ) STRICT;
-        CREATE TABLE IF NOT EXISTS execution_observation_claims (
-          observation_id TEXT PRIMARY KEY,
-          expires_at TEXT NOT NULL,
-          consumed_at TEXT NOT NULL
-        ) STRICT;
-
-      `);
+      this.database.exec("\n        CREATE TABLE IF NOT EXISTS workflow_metadata (\n          key TEXT PRIMARY KEY,\n          value TEXT NOT NULL,\n          updated_at TEXT NOT NULL\n        ) STRICT;\n        CREATE TABLE IF NOT EXISTS workflow_runs (\n          run_id TEXT PRIMARY KEY,\n          revision INTEGER NOT NULL CHECK (revision >= 0),\n          state TEXT NOT NULL CHECK (state IN ('ready', 'running', 'needs-input', 'needs-approval', 'needs-redesign', 'failed', 'passed', 'blocked')),\n          receipt_json TEXT NOT NULL,\n          created_at TEXT NOT NULL,\n          updated_at TEXT NOT NULL\n        ) STRICT;\n        CREATE INDEX IF NOT EXISTS workflow_runs_cleanup\n          ON workflow_runs(state, updated_at);\n        CREATE TABLE IF NOT EXISTS plugin_update_state (\n          target_id TEXT PRIMARY KEY,\n          current_version TEXT NOT NULL,\n          latest_version TEXT,\n          latest_tag TEXT,\n          latest_commit TEXT,\n          etag TEXT,\n          comparison TEXT NOT NULL CHECK (comparison IN ('unknown', 'up-to-date', 'update-available', 'ahead-of-stable')),\n          last_attempt_at TEXT,\n          last_successful_check_at TEXT,\n          next_check_at TEXT NOT NULL,\n          last_notified_version TEXT,\n          last_notified_at TEXT,\n          last_error_code TEXT CHECK (\n            last_error_code IS NULL\n            OR last_error_code IN ('TIMEOUT', 'NETWORK', 'HTTP', 'INVALID_RESPONSE', 'NO_STABLE_TAG')\n          )\n        ) STRICT;\n        CREATE TABLE IF NOT EXISTS convergence_roots (\n          root_id TEXT PRIMARY KEY,\n          revision INTEGER NOT NULL CHECK (revision >= 0),\n          state TEXT NOT NULL CHECK (state IN ('open', 'needs-review', 'needs-user', 'completed', 'abandoned')),\n          workspace_id TEXT NOT NULL,\n          workspace_locator TEXT NOT NULL,\n          root_json TEXT NOT NULL,\n          created_at TEXT NOT NULL,\n          updated_at TEXT NOT NULL\n        ) STRICT;\n        CREATE INDEX IF NOT EXISTS convergence_active_roots_by_workspace\n          ON convergence_roots(workspace_id, state);\n        CREATE INDEX IF NOT EXISTS convergence_active_roots_by_locator\n          ON convergence_roots(workspace_locator, state);\n        CREATE TABLE IF NOT EXISTS convergence_root_identities (\n          root_id TEXT PRIMARY KEY,\n          identity_json TEXT NOT NULL,\n          surface_digest TEXT NOT NULL,\n          replacement_match TEXT CHECK (replacement_match IS NULL OR replacement_match IN ('physical', 'lineage', 'legacy-locator')),\n          created_at TEXT NOT NULL\n        ) STRICT;\n        CREATE TABLE IF NOT EXISTS convergence_epochs (\n          root_id TEXT NOT NULL REFERENCES convergence_roots(root_id),\n          epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),\n          frame_digest TEXT NOT NULL,\n          created_at TEXT NOT NULL,\n          PRIMARY KEY (root_id, epoch)\n        ) STRICT;\n        CREATE TABLE IF NOT EXISTS convergence_leases (\n          lease_id TEXT PRIMARY KEY,\n          root_id TEXT NOT NULL REFERENCES convergence_roots(root_id),\n          root_revision INTEGER NOT NULL CHECK (root_revision >= 0),\n          epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),\n          ordinal INTEGER NOT NULL CHECK (ordinal >= 1 AND ordinal <= 3),\n          state TEXT NOT NULL CHECK (state IN ('issued', 'consumed', 'expired')),\n          lease_json TEXT NOT NULL,\n          proposal_json TEXT NOT NULL,\n          issued_at TEXT NOT NULL,\n          expires_at TEXT NOT NULL,\n          UNIQUE (root_id, epoch, ordinal, lease_id)\n        ) STRICT;\n        CREATE UNIQUE INDEX IF NOT EXISTS convergence_one_issued_lease\n          ON convergence_leases(root_id) WHERE state = 'issued';\n        CREATE TABLE IF NOT EXISTS convergence_attempts (\n          root_id TEXT NOT NULL REFERENCES convergence_roots(root_id),\n          epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),\n          ordinal INTEGER NOT NULL CHECK (ordinal >= 1 AND ordinal <= 3),\n          lease_id TEXT NOT NULL UNIQUE REFERENCES convergence_leases(lease_id),\n          run_id TEXT NOT NULL UNIQUE REFERENCES workflow_runs(run_id),\n          state TEXT NOT NULL CHECK (state IN ('running', 'passed', 'failed', 'aborted')),\n          outcome_json TEXT,\n          started_at TEXT NOT NULL,\n          updated_at TEXT NOT NULL,\n          PRIMARY KEY (root_id, epoch, ordinal)\n        ) STRICT;\n        CREATE TABLE IF NOT EXISTS convergence_reviews (\n          review_id TEXT PRIMARY KEY,\n          root_id TEXT NOT NULL REFERENCES convergence_roots(root_id),\n          epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),\n          review_json TEXT NOT NULL,\n          reviewed_at TEXT NOT NULL\n        ) STRICT;\n        CREATE TABLE IF NOT EXISTS workflow_attempt_links (\n          run_id TEXT PRIMARY KEY REFERENCES workflow_runs(run_id),\n          root_id TEXT NOT NULL REFERENCES convergence_roots(root_id),\n          lease_id TEXT NOT NULL UNIQUE REFERENCES convergence_leases(lease_id),\n          epoch INTEGER NOT NULL CHECK (epoch >= 1 AND epoch <= 2),\n          ordinal INTEGER NOT NULL CHECK (ordinal >= 1 AND ordinal <= 3)\n        ) STRICT;\n        CREATE TABLE IF NOT EXISTS state_cleanup_claims (\n          plan_id TEXT PRIMARY KEY,\n          plan_digest TEXT NOT NULL,\n          claimed_at TEXT NOT NULL\n        ) STRICT;\n        CREATE TABLE IF NOT EXISTS execution_observation_claims (\n          observation_id TEXT PRIMARY KEY,\n          expires_at TEXT NOT NULL,\n          consumed_at TEXT NOT NULL\n        ) STRICT;\n\n      ");
       if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION);
-      else this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
+      else this.database.exec("PRAGMA user_version = ".concat(SCHEMA_VERSION, ";"));
     });
   }
   rootRow(rootId) {
-    return this.database.prepare(`SELECT root_json, revision FROM convergence_roots WHERE root_id = ?`).get(rootId);
+    return this.database.prepare("SELECT root_json, revision FROM convergence_roots WHERE root_id = ?").get(rootId);
   }
   leaseRow(leaseId) {
-    return this.database.prepare(`SELECT lease_json, proposal_json FROM convergence_leases WHERE lease_id = ?`).get(leaseId);
+    return this.database.prepare("SELECT lease_json, proposal_json FROM convergence_leases WHERE lease_id = ?").get(leaseId);
   }
   /** Writes the root only if it is still at expectedRevision; true when exactly one row changed. */
   casRoot(root, expectedRevision) {
-    const result = this.database.prepare(`
-      UPDATE convergence_roots SET revision = ?, state = ?, root_json = ?, updated_at = ?
-      WHERE root_id = ? AND revision = ?
-    `).run(root.revision, root.state, JSON.stringify(root), root.updatedAt, root.rootId, expectedRevision);
+    const result = this.database.prepare("\n      UPDATE convergence_roots SET revision = ?, state = ?, root_json = ?, updated_at = ?\n      WHERE root_id = ? AND revision = ?\n    ").run(root.revision, root.state, JSON.stringify(root), root.updatedAt, root.rootId, expectedRevision);
     return Number(result.changes) === 1;
   }
   /**
@@ -2348,11 +2119,7 @@ var SqliteWorkflowStore = class {
    * the root was bound to its parent is kept.
    */
   saveRootIdentity(rootId, identity, inferred, surfaceDigest2, match, createdAt) {
-    this.database.prepare(`
-      INSERT INTO convergence_root_identities (root_id, identity_json, surface_digest, replacement_match, created_at)
-      VALUES (?, ?, ?, ?, ?)
-      ON CONFLICT(root_id) DO UPDATE SET identity_json = excluded.identity_json, surface_digest = excluded.surface_digest
-    `).run(rootId, JSON.stringify({ ...identity, inferred }), surfaceDigest2, match, createdAt);
+    this.database.prepare("\n      INSERT INTO convergence_root_identities (root_id, identity_json, surface_digest, replacement_match, created_at)\n      VALUES (?, ?, ?, ?, ?)\n      ON CONFLICT(root_id) DO UPDATE SET identity_json = excluded.identity_json, surface_digest = excluded.surface_digest\n    ").run(rootId, JSON.stringify({ ...identity, inferred }), surfaceDigest2, match, createdAt);
   }
   /** `inferred` travels inside identity_json; rows written without it hold observed surfaces only. */
   storedIdentity(identityJson, surfaceDigest2) {
@@ -2360,25 +2127,13 @@ var SqliteWorkflowStore = class {
     return { identity, surfaceDigest: surfaceDigest2, inferred };
   }
   insertEpoch(root, createdAt) {
-    this.database.prepare(`
-      INSERT INTO convergence_epochs (root_id, epoch, frame_digest, created_at)
-      VALUES (?, ?, ?, ?)
-    `).run(root.rootId, root.currentEpoch, root.frameDigest, createdAt);
+    this.database.prepare("\n      INSERT INTO convergence_epochs (root_id, epoch, frame_digest, created_at)\n      VALUES (?, ?, ?, ?)\n    ").run(root.rootId, root.currentEpoch, root.frameDigest, createdAt);
   }
   insertRunRow(receipt, createdAt) {
-    this.database.prepare(`
-      INSERT INTO workflow_runs (run_id, revision, state, receipt_json, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(receipt.runId, receipt.revision, receipt.state, JSON.stringify(receipt), createdAt, createdAt);
+    this.database.prepare("\n      INSERT INTO workflow_runs (run_id, revision, state, receipt_json, created_at, updated_at)\n      VALUES (?, ?, ?, ?, ?, ?)\n    ").run(receipt.runId, receipt.revision, receipt.state, JSON.stringify(receipt), createdAt, createdAt);
   }
   readPluginUpdateStateRow(targetId) {
-    const row = this.database.prepare(`
-      SELECT target_id, current_version, latest_version, latest_tag, latest_commit, etag,
-             comparison, last_attempt_at, last_successful_check_at, next_check_at,
-             last_notified_version, last_notified_at, last_error_code
-      FROM plugin_update_state
-      WHERE target_id = ?
-    `).get(targetId);
+    const row = this.database.prepare("\n      SELECT target_id, current_version, latest_version, latest_tag, latest_commit, etag,\n             comparison, last_attempt_at, last_successful_check_at, next_check_at,\n             last_notified_version, last_notified_at, last_error_code\n      FROM plugin_update_state\n      WHERE target_id = ?\n    ").get(targetId);
     return row ? {
       targetId: row.target_id,
       currentVersion: row.current_version,
@@ -3321,7 +3076,7 @@ var getParsedType = (data) => {
       }
       return "object";
     default:
-      throw new Error(`Unknown data type: ${t}`);
+      throw new Error("Unknown data type: ".concat(t));
   }
 };
 var propertyKeyTypes = /* @__PURE__ */ new Set(["string", "number", "symbol"]);
@@ -3395,8 +3150,8 @@ function stringifyPrimitive(value) {
   if (typeof value === "bigint")
     return value.toString() + "n";
   if (typeof value === "string")
-    return `"${value}"`;
-  return `${value}`;
+    return '"'.concat(value, '"');
+  return "".concat(value);
 }
 function optionalKeys(shape) {
   return Object.keys(shape).filter((k) => {
@@ -3426,7 +3181,7 @@ function pick(schema, mask) {
       const newShape = {};
       for (const key of Reflect.ownKeys(mask)) {
         if (!Object.prototype.hasOwnProperty.call(currDef.shape, key)) {
-          throw new Error(`Unrecognized key: "${String(key)}"`);
+          throw new Error('Unrecognized key: "'.concat(String(key), '"'));
         }
         if (!mask[key])
           continue;
@@ -3451,7 +3206,7 @@ function omit(schema, mask) {
       const newShape = { ...schema._zod.def.shape };
       for (const key of Reflect.ownKeys(mask)) {
         if (!Object.prototype.hasOwnProperty.call(currDef.shape, key)) {
-          throw new Error(`Unrecognized key: "${String(key)}"`);
+          throw new Error('Unrecognized key: "'.concat(String(key), '"'));
         }
         if (!mask[key])
           continue;
@@ -3525,7 +3280,7 @@ function partial(Class2, schema, mask, name = "partial") {
   const checks = currDef.checks;
   const hasChecks = checks && checks.length > 0;
   if (hasChecks) {
-    throw new Error(`.${name}() cannot be used on object schemas containing refinements`);
+    throw new Error(".".concat(name, "() cannot be used on object schemas containing refinements"));
   }
   const def = mergeDefs(schema._zod.def, {
     get shape() {
@@ -3534,7 +3289,7 @@ function partial(Class2, schema, mask, name = "partial") {
       if (mask) {
         for (const key of Reflect.ownKeys(mask)) {
           if (!Object.prototype.hasOwnProperty.call(oldShape, key)) {
-            throw new Error(`Unrecognized key: "${String(key)}"`);
+            throw new Error('Unrecognized key: "'.concat(String(key), '"'));
           }
           if (!mask[key])
             continue;
@@ -3566,7 +3321,7 @@ function required(Class2, schema, mask) {
       if (mask) {
         for (const key of Reflect.ownKeys(mask)) {
           if (!Object.prototype.hasOwnProperty.call(shape, key)) {
-            throw new Error(`Unrecognized key: "${String(key)}"`);
+            throw new Error('Unrecognized key: "'.concat(String(key), '"'));
           }
           if (!mask[key])
             continue;
@@ -3957,12 +3712,12 @@ function $constructor(name, initializer3, proto, params) {
 var $brand = /* @__PURE__ */ Symbol("zod_brand");
 var $ZodAsyncError = class extends Error {
   constructor() {
-    super(`Encountered Promise during synchronous parse. Use .parseAsync() instead.`);
+    super("Encountered Promise during synchronous parse. Use .parseAsync() instead.");
   }
 };
 var $ZodEncodeError = class extends Error {
   constructor(name) {
-    super(`Encountered unidirectional transform during encode: ${name}`);
+    super("Encountered unidirectional transform during encode: ".concat(name));
     this.name = "ZodEncodeError";
   }
 };
@@ -4146,11 +3901,11 @@ function toDotPath(_path) {
   const path9 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
   for (const seg of path9) {
     if (typeof seg === "number")
-      segs.push(`[${seg}]`);
+      segs.push("[".concat(seg, "]"));
     else if (typeof seg === "symbol")
-      segs.push(`[${JSON.stringify(String(seg))}]`);
+      segs.push("[".concat(JSON.stringify(String(seg)), "]"));
     else if (/[^\w$]/.test(seg))
-      segs.push(`[${JSON.stringify(seg)}]`);
+      segs.push("[".concat(JSON.stringify(seg), "]"));
     else {
       if (segs.length)
         segs.push(".");
@@ -4163,9 +3918,9 @@ function prettifyError(error61) {
   const lines = [];
   const issues = [...error61.issues].sort((a, b) => (a.path ?? []).length - (b.path ?? []).length);
   for (const issue2 of issues) {
-    lines.push(`\u2716 ${issue2.message}`);
+    lines.push("\u2716 ".concat(issue2.message));
     if (issue2.path?.length)
-      lines.push(`  \u2192 at ${toDotPath(issue2.path)}`);
+      lines.push("  \u2192 at ".concat(toDotPath(issue2.path)));
   }
   return lines.join("\n");
 }
@@ -4385,7 +4140,7 @@ var xid = /^[0-9a-vA-V]{20}$/;
 var ksuid = /^[A-Za-z0-9]{27}$/;
 var nanoid = /^[a-zA-Z0-9_-]{21}$/;
 function nanoidOfLength(length) {
-  return new RegExp(`^[a-zA-Z0-9_-]{${length}}$`);
+  return new RegExp("^[a-zA-Z0-9_-]{".concat(length, "}$"));
 }
 var duration = /^P(?:(\d+W)|(?!.*W)(?=\d|T\d)(\d+Y)?(\d+M)?(\d+D)?(T(?=\d)(\d+H)?(\d+M)?(\d+([.,]\d+)?S)?)?)$/;
 var extendedDuration = /^[-+]?P(?!$)(?:(?:[-+]?\d+Y)|(?:[-+]?\d+[.,]\d+Y$))?(?:(?:[-+]?\d+M)|(?:[-+]?\d+[.,]\d+M$))?(?:(?:[-+]?\d+W)|(?:[-+]?\d+[.,]\d+W$))?(?:(?:[-+]?\d+D)|(?:[-+]?\d+[.,]\d+D$))?(?:T(?=[\d+-])(?:(?:[-+]?\d+H)|(?:[-+]?\d+[.,]\d+H$))?(?:(?:[-+]?\d+M)|(?:[-+]?\d+[.,]\d+M$))?(?:[-+]?\d+(?:[.,]\d+)?S)?)??$/;
@@ -4393,7 +4148,7 @@ var guid = /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-
 var uuid = (version2) => {
   if (!version2)
     return /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$/;
-  return new RegExp(`^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-${version2}[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$`);
+  return new RegExp("^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-".concat(version2, "[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"));
 };
 var uuid4 = /* @__PURE__ */ uuid(4);
 var uuid6 = /* @__PURE__ */ uuid(6);
@@ -4404,7 +4159,7 @@ var rfc5322Email = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+")
 var unicodeEmail = /^[^\s@"]{1,64}@[^\s@]{1,255}$/u;
 var idnEmail = unicodeEmail;
 var browserEmail = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-var _emoji = `^[\\p{Extended_Pictographic}\\p{Emoji_Component}]+$`;
+var _emoji = "^[\\p{Extended_Pictographic}\\p{Emoji_Component}]+$";
 function emoji() {
   return new RegExp(_emoji, "u");
 }
@@ -4412,7 +4167,7 @@ var ipv4 = /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[
 var ipv6 = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/;
 var mac2 = (delimiter) => {
   const escapedDelim = escapeRegex(delimiter ?? ":");
-  return new RegExp(`^(?:[0-9A-F]{2}${escapedDelim}){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}${escapedDelim}){5}[0-9a-f]{2}$`);
+  return new RegExp("^(?:[0-9A-F]{2}".concat(escapedDelim, "){5}[0-9A-F]{2}$|^(?:[0-9a-f]{2}").concat(escapedDelim, "){5}[0-9a-f]{2}$"));
 };
 var cidrv4 = /^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\/([0-9]|[1-2][0-9]|3[0-2])$/;
 var cidrv6 = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))\/(12[0-8]|1[01][0-9]|[1-9]?[0-9])$/;
@@ -4423,30 +4178,30 @@ var domain = /^(?=.{1,253}$)([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a
 var httpProtocol = /^https?$/;
 var e164 = /^\+[1-9]\d{6,14}$/;
 var creditCard = /^\d(?:[ -]?\d){11,18}$/;
-var dateSource = `(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))`;
+var dateSource = "(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))";
 function anchor(source) {
-  return new RegExp(`^${source}$`);
+  return new RegExp("^".concat(source, "$"));
 }
 var date = /* @__PURE__ */ anchor(dateSource);
 function timeSource(args) {
-  const hhmm = `(?:[01]\\d|2[0-3]):[0-5]\\d`;
-  const regex = typeof args.precision === "number" ? args.precision === -1 ? `${hhmm}` : args.precision === 0 ? `${hhmm}:[0-5]\\d` : `${hhmm}:[0-5]\\d\\.\\d{${args.precision}}` : args.seconds ? `${hhmm}:[0-5]\\d(?:\\.\\d+)?` : `${hhmm}(?::[0-5]\\d(?:\\.\\d+)?)?`;
+  const hhmm = "(?:[01]\\d|2[0-3]):[0-5]\\d";
+  const regex = typeof args.precision === "number" ? args.precision === -1 ? "".concat(hhmm) : args.precision === 0 ? "".concat(hhmm, ":[0-5]\\d") : "".concat(hhmm, ":[0-5]\\d\\.\\d{").concat(args.precision, "}") : args.seconds ? "".concat(hhmm, ":[0-5]\\d(?:\\.\\d+)?") : "".concat(hhmm, "(?::[0-5]\\d(?:\\.\\d+)?)?");
   return regex;
 }
 function time(args) {
-  return new RegExp(`^${timeSource(args)}$`);
+  return new RegExp("^".concat(timeSource(args), "$"));
 }
 function datetime(args) {
   const opts = ["Z"];
   if (args.offset)
-    opts.push(`([+-](?:[01]\\d|2[0-3]):[0-5]\\d)`);
-  const qualified = `${timeSource({ precision: args.precision, seconds: true })}(?:${opts.join("|")})`;
-  const timeRegex = args.local ? `${qualified}|${timeSource({ precision: args.precision })}` : qualified;
-  return new RegExp(`^${dateSource}T(?:${timeRegex})$`);
+    opts.push("([+-](?:[01]\\d|2[0-3]):[0-5]\\d)");
+  const qualified = "".concat(timeSource({ precision: args.precision, seconds: true }), "(?:").concat(opts.join("|"), ")");
+  const timeRegex = args.local ? "".concat(qualified, "|").concat(timeSource({ precision: args.precision })) : qualified;
+  return new RegExp("^".concat(dateSource, "T(?:").concat(timeRegex, ")$"));
 }
 var string = (params) => {
-  const regex = params ? `[\\s\\S]{${params?.minimum ?? 0},${params?.maximum ?? ""}}` : `[\\s\\S]*`;
-  return new RegExp(`^${regex}$`);
+  const regex = params ? "[\\s\\S]{".concat(params?.minimum ?? 0, ",").concat(params?.maximum ?? "", "}") : "[\\s\\S]*";
+  return new RegExp("^".concat(regex, "$"));
 };
 var bigint = /^-?\d+n?$/;
 var integer = /^-?\d+$/;
@@ -4458,10 +4213,10 @@ var lowercase = /^[^A-Z]*$/;
 var uppercase = /^[^a-z]*$/;
 var hex = /^[0-9a-fA-F]*$/;
 function fixedBase64(bodyLength, padding) {
-  return new RegExp(`^[A-Za-z0-9+/]{${bodyLength}}${padding}$`);
+  return new RegExp("^[A-Za-z0-9+/]{".concat(bodyLength, "}").concat(padding, "$"));
 }
 function fixedBase64url(length) {
-  return new RegExp(`^[A-Za-z0-9_-]{${length}}$`);
+  return new RegExp("^[A-Za-z0-9_-]{".concat(length, "}$"));
 }
 var md5_hex = /^[0-9a-fA-F]{32}$/;
 var md5_base64 = /* @__PURE__ */ fixedBase64(22, "==");
@@ -4912,7 +4667,7 @@ var $ZodCheckUpperCase = /* @__PURE__ */ $constructor("$ZodCheckUpperCase", (ins
 var $ZodCheckIncludes = /* @__PURE__ */ $constructor("$ZodCheckIncludes", (inst, def) => {
   $ZodCheck.init(inst, def);
   const escapedRegex = escapeRegex(def.includes);
-  const pattern = new RegExp(typeof def.position === "number" ? `^.{${def.position},}${escapedRegex}` : escapedRegex);
+  const pattern = new RegExp(typeof def.position === "number" ? "^.{".concat(def.position, ",}").concat(escapedRegex) : escapedRegex);
   def.pattern = pattern;
   inst._zod.onattach.push((inst2) => {
     const bag = inst2._zod.bag;
@@ -4935,7 +4690,7 @@ var $ZodCheckIncludes = /* @__PURE__ */ $constructor("$ZodCheckIncludes", (inst,
 });
 var $ZodCheckStartsWith = /* @__PURE__ */ $constructor("$ZodCheckStartsWith", (inst, def) => {
   $ZodCheck.init(inst, def);
-  const pattern = new RegExp(`^${escapeRegex(def.prefix)}.*`);
+  const pattern = new RegExp("^".concat(escapeRegex(def.prefix), ".*"));
   def.pattern ?? (def.pattern = pattern);
   inst._zod.onattach.push((inst2) => {
     const bag = inst2._zod.bag;
@@ -4958,7 +4713,7 @@ var $ZodCheckStartsWith = /* @__PURE__ */ $constructor("$ZodCheckStartsWith", (i
 });
 var $ZodCheckEndsWith = /* @__PURE__ */ $constructor("$ZodCheckEndsWith", (inst, def) => {
   $ZodCheck.init(inst, def);
-  const pattern = new RegExp(`.*${escapeRegex(def.suffix)}$`);
+  const pattern = new RegExp(".*".concat(escapeRegex(def.suffix), "$"));
   def.pattern ?? (def.pattern = pattern);
   inst._zod.onattach.push((inst2) => {
     const bag = inst2._zod.bag;
@@ -5052,10 +4807,8 @@ var Doc = class {
   }
   compile() {
     const F = Function;
-    const content = this?.content ?? [``];
-    const factory = new F(...Object.keys(this.closed), `return function (${this.args.join(", ")}) {
-${content.join("\n")}
-};`);
+    const content = this?.content ?? [""];
+    const factory = new F(...Object.keys(this.closed), "return function (".concat(this.args.join(", "), ") {\n").concat(content.join("\n"), "\n};"));
     return factory(...Object.values(this.closed));
   }
 };
@@ -5233,7 +4986,7 @@ var $ZodUUID = /* @__PURE__ */ $constructor("$ZodUUID", (inst, def) => {
     };
     const v = versionMap[def.version];
     if (v === void 0)
-      throw new Error(`Invalid UUID version: "${def.version}"`);
+      throw new Error('Invalid UUID version: "'.concat(def.version, '"'));
     def.pattern ?? (def.pattern = uuid(v));
   } else
     def.pattern ?? (def.pattern = uuid());
@@ -5335,7 +5088,7 @@ var $ZodEmoji = /* @__PURE__ */ $constructor("$ZodEmoji", (inst, def) => {
 });
 var $ZodNanoID = /* @__PURE__ */ $constructor("$ZodNanoID", (inst, def) => {
   if (def.length !== void 0 && (!Number.isInteger(def.length) || def.length < 1))
-    throw new Error(`Invalid nanoid length: ${def.length}`);
+    throw new Error("Invalid nanoid length: ".concat(def.length));
   def.pattern ?? (def.pattern = def.length === void 0 ? nanoid : nanoidOfLength(def.length));
   $ZodStringFormat.init(inst, def);
 });
@@ -5384,14 +5137,14 @@ var $ZodISODuration = /* @__PURE__ */ $constructor("$ZodISODuration", (inst, def
 var $ZodIPv4 = /* @__PURE__ */ $constructor("$ZodIPv4", (inst, def) => {
   def.pattern ?? (def.pattern = ipv4);
   $ZodStringFormat.init(inst, def);
-  inst._zod.bag.format = `ipv4`;
+  inst._zod.bag.format = "ipv4";
 });
 var ipv6Alphabet = /^[0-9a-fA-F:.]+$/;
 function isValidIPv6(value) {
   if (!ipv6Alphabet.test(value))
     return false;
   try {
-    new URL(`http://[${value}]`);
+    new URL("http://[".concat(value, "]"));
     return true;
   } catch {
     return false;
@@ -5400,7 +5153,7 @@ function isValidIPv6(value) {
 var $ZodIPv6 = /* @__PURE__ */ $constructor("$ZodIPv6", (inst, def) => {
   def.pattern ?? (def.pattern = ipv6);
   $ZodStringFormat.init(inst, def);
-  inst._zod.bag.format = `ipv6`;
+  inst._zod.bag.format = "ipv6";
   inst._zod.check = (payload) => {
     if (!isValidIPv6(payload.value)) {
       payload.issues.push({
@@ -5416,7 +5169,7 @@ var $ZodIPv6 = /* @__PURE__ */ $constructor("$ZodIPv6", (inst, def) => {
 var $ZodMAC = /* @__PURE__ */ $constructor("$ZodMAC", (inst, def) => {
   def.pattern ?? (def.pattern = mac2(def.delimiter));
   $ZodStringFormat.init(inst, def);
-  inst._zod.bag.format = `mac`;
+  inst._zod.bag.format = "mac";
 });
 var $ZodCIDRv4 = /* @__PURE__ */ $constructor("$ZodCIDRv4", (inst, def) => {
   def.pattern ?? (def.pattern = cidrv4);
@@ -5430,7 +5183,7 @@ function isValidCIDRv6(value) {
   if (!prefix)
     return false;
   const prefixNum = Number(prefix);
-  if (`${prefixNum}` !== prefix)
+  if ("".concat(prefixNum) !== prefix)
     return false;
   if (prefixNum < 0 || prefixNum > 128)
     return false;
@@ -5849,7 +5602,7 @@ function normalizeDef(def) {
   const allKeys = symbolKeys.length ? [...keys, ...symbolKeys] : keys;
   for (const k of allKeys) {
     if (!def.shape?.[k]?._zod?.traits?.has("$ZodType")) {
-      throw new Error(`Invalid element at key "${String(k)}": expected a Zod schema`);
+      throw new Error('Invalid element at key "'.concat(String(k), '": expected a Zod schema'));
     }
   }
   const okeys = optionalKeys(def.shape);
@@ -5989,82 +5742,37 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
     const normalized = _normalized.value;
     const syms = normalized.symbolKeys;
     const doc = new Doc(["payload", "ctx"], { shape, inst, memo: memo2, syms });
-    const parseStr = (k) => `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
-    const prefixStr = (id, k) => `
-          for (let i = 0; i < ${id}.issues.length; i++) {
-            const iss = ${id}.issues[i];
-            iss.path = iss.path ? [${k}, ...iss.path] : [${k}];
-            payload.issues.push(iss);
-          }`;
-    doc.write(`const input = payload.value;`);
+    const parseStr = (k) => "shape[".concat(k, "]._zod.run({ value: input[").concat(k, "], issues: [] }, ctx)");
+    const prefixStr = (id, k) => "\n          for (let i = 0; i < ".concat(id, ".issues.length; i++) {\n            const iss = ").concat(id, ".issues[i];\n            iss.path = iss.path ? [").concat(k, ", ...iss.path] : [").concat(k, "];\n            payload.issues.push(iss);\n          }");
+    doc.write("const input = payload.value;");
     const ids = /* @__PURE__ */ Object.create(null);
     let counter = 0;
     for (const key of normalized.allKeys) {
-      ids[key] = `key_${counter++}`;
+      ids[key] = "key_".concat(counter++);
     }
-    doc.write(memo2 ? `const newResult = memo.alloc(inst, payload, {}, ctx);` : `const newResult = {};`);
+    doc.write(memo2 ? "const newResult = memo.alloc(inst, payload, {}, ctx);" : "const newResult = {};");
     for (const key of normalized.allKeys) {
       if (key === "__proto__")
         continue;
       const id = ids[key];
-      const k = typeof key === "symbol" ? `syms[${syms.indexOf(key)}]` : esc(key);
-      const isPresent = `${k} in input`;
+      const k = typeof key === "symbol" ? "syms[".concat(syms.indexOf(key), "]") : esc(key);
+      const isPresent = "".concat(k, " in input");
       const schema = shape[key];
       const optin = schema?._zod?.optin;
       const isOptionalIn = optin !== void 0;
       const isOptionalOut = schema?._zod?.optout === "optional";
-      doc.write(`const ${id} = ${parseStr(k)};`);
+      doc.write("const ".concat(id, " = ").concat(parseStr(k), ";"));
       if (isOptionalIn && isOptionalOut) {
-        const assign = optin === "optional" ? `${id}_present` : `${id}.value !== undefined || ${id}_present`;
-        doc.write(`
-        const ${id}_present = ${isPresent};
-        if (!${id}.issues.length || ${id}_present) {
-          if (${id}.issues.length) {${prefixStr(id, k)}
-          }
-
-          if (${assign}) {
-            newResult[${k}] = ${id}.value;
-          }
-        }
-
-      `);
+        const assign = optin === "optional" ? "".concat(id, "_present") : "".concat(id, ".value !== undefined || ").concat(id, "_present");
+        doc.write("\n        const ".concat(id, "_present = ").concat(isPresent, ";\n        if (!").concat(id, ".issues.length || ").concat(id, "_present) {\n          if (").concat(id, ".issues.length) {").concat(prefixStr(id, k), "\n          }\n\n          if (").concat(assign, ") {\n            newResult[").concat(k, "] = ").concat(id, ".value;\n          }\n        }\n\n      "));
       } else if (!isOptionalIn) {
-        doc.write(`
-        const ${id}_present = ${isPresent};
-        if (${id}.issues.length) {${prefixStr(id, k)}
-        }
-        if (!${id}_present && !${id}.issues.length) {
-          payload.issues.push({
-            code: "invalid_type",
-            expected: "nonoptional",
-            input: undefined,
-            path: [${k}]
-          });
-        }
-
-        if (${id}_present) {
-          newResult[${k}] = ${id}.value;
-        }
-
-      `);
+        doc.write("\n        const ".concat(id, "_present = ").concat(isPresent, ";\n        if (").concat(id, ".issues.length) {").concat(prefixStr(id, k), "\n        }\n        if (!").concat(id, "_present && !").concat(id, '.issues.length) {\n          payload.issues.push({\n            code: "invalid_type",\n            expected: "nonoptional",\n            input: undefined,\n            path: [').concat(k, "]\n          });\n        }\n\n        if (").concat(id, "_present) {\n          newResult[").concat(k, "] = ").concat(id, ".value;\n        }\n\n      "));
       } else {
-        doc.write(`
-        if (${id}.issues.length) {${prefixStr(id, k)}
-        }
-        
-        if (${id}.value === undefined) {
-          if (${isPresent}) {
-            newResult[${k}] = undefined;
-          }
-        } else {
-          newResult[${k}] = ${id}.value;
-        }
-
-      `);
+        doc.write("\n        if (".concat(id, ".issues.length) {").concat(prefixStr(id, k), "\n        }\n        \n        if (").concat(id, ".value === undefined) {\n          if (").concat(isPresent, ") {\n            newResult[").concat(k, "] = undefined;\n          }\n        } else {\n          newResult[").concat(k, "] = ").concat(id, ".value;\n        }\n\n      "));
       }
     }
-    doc.write(`payload.value = newResult;`);
-    doc.write(`return payload;`);
+    doc.write("payload.value = newResult;");
+    doc.write("return payload;");
     return doc.compile();
   };
   let fastpass;
@@ -6130,7 +5838,7 @@ var $ZodUnion = /* @__PURE__ */ $constructor("$ZodUnion", (inst, def) => {
   defineLazyInternal(inst, "pattern", (zod) => {
     if (zod.def.options.every((o) => o._zod.pattern)) {
       const patterns = zod.def.options.map((o) => o._zod.pattern);
-      return new RegExp(`^(${patterns.map((p) => cleanRegex(p.source)).join("|")})$`);
+      return new RegExp("^(".concat(patterns.map((p) => cleanRegex(p.source)).join("|"), ")$"));
     }
     return void 0;
   });
@@ -6244,7 +5952,7 @@ var $ZodDiscriminatedUnion = /* @__PURE__ */ $constructor("$ZodDiscriminatedUnio
     for (const option of zod.def.options) {
       const pv = option._zod.propValues;
       if (!pv || Object.keys(pv).length === 0)
-        throw new Error(`Invalid discriminated union option at index "${zod.def.options.indexOf(option)}"`);
+        throw new Error('Invalid discriminated union option at index "'.concat(zod.def.options.indexOf(option), '"'));
       for (const [k, v] of Object.entries(pv)) {
         if (!Object.prototype.hasOwnProperty.call(propValues, k)) {
           assignProp(propValues, k, /* @__PURE__ */ new Set());
@@ -6259,7 +5967,7 @@ var $ZodDiscriminatedUnion = /* @__PURE__ */ $constructor("$ZodDiscriminatedUnio
   def.options.forEach((option, i) => {
     const propShape = propShapes.get(option._zod.def);
     if (propShape && !Object.prototype.hasOwnProperty.call(propShape, def.discriminator)) {
-      throw new Error(`Invalid discriminated union option at index "${i}"`);
+      throw new Error('Invalid discriminated union option at index "'.concat(i, '"'));
     }
   });
   const disc = cached(() => {
@@ -6268,10 +5976,10 @@ var $ZodDiscriminatedUnion = /* @__PURE__ */ $constructor("$ZodDiscriminatedUnio
     for (const o of opts) {
       const values = o._zod.propValues?.[def.discriminator];
       if (!values || values.size === 0)
-        throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(o)}"`);
+        throw new Error('Invalid discriminated union option at index "'.concat(def.options.indexOf(o), '"'));
       for (const v of values) {
         if (map2.has(v)) {
-          throw new Error(`Duplicate discriminator value "${String(v)}"`);
+          throw new Error('Duplicate discriminator value "'.concat(String(v), '"'));
         }
         map2.set(v, o);
       }
@@ -6418,7 +6126,7 @@ function handleIntersectionResults(result, left, right) {
   if (!merged.valid) {
     if (aborted(result))
       return result;
-    throw new Error(`Unmergable intersection. Error path: ${JSON.stringify(merged.mergeErrorPath)}`);
+    throw new Error("Unmergable intersection. Error path: " + "".concat(JSON.stringify(merged.mergeErrorPath)));
   }
   result.value = merged.data;
   return result;
@@ -6795,7 +6503,7 @@ var $ZodEnum = /* @__PURE__ */ $constructor("$ZodEnum", (inst, def) => {
   const valuesSet = new Set(values);
   inst._zod.values = valuesSet;
   const patternValues = values.filter((k) => propertyKeyTypes.has(typeof k));
-  inst._zod.pattern = new RegExp(patternValues.length ? `^(${patternValues.map((o) => escapeRegex(o.toString())).join("|")})$` : "^[^\\s\\S]$");
+  inst._zod.pattern = new RegExp(patternValues.length ? "^(".concat(patternValues.map((o) => escapeRegex(o.toString())).join("|"), ")$") : "^[^\\s\\S]$");
   inst._zod.parse = (payload, _ctx) => {
     const input2 = payload.value;
     if (valuesSet.has(input2)) {
@@ -6814,7 +6522,7 @@ var $ZodLiteral = /* @__PURE__ */ $constructor("$ZodLiteral", (inst, def) => {
   $ZodType.init(inst, def);
   const values = new Set(def.values);
   inst._zod.values = values;
-  inst._zod.pattern = new RegExp(def.values.length ? `^(${def.values.map((o) => typeof o === "string" ? escapeRegex(o) : o ? escapeRegex(o.toString()) : String(o)).join("|")})$` : "^[^\\s\\S]$");
+  inst._zod.pattern = new RegExp(def.values.length ? "^(".concat(def.values.map((o) => typeof o === "string" ? escapeRegex(o) : o ? escapeRegex(o.toString()) : String(o)).join("|"), ")$") : "^[^\\s\\S]$");
   inst._zod.parse = (payload, _ctx) => {
     const input2 = payload.value;
     if (values.has(input2)) {
@@ -6881,7 +6589,7 @@ var $ZodOptional = /* @__PURE__ */ $constructor("$ZodOptional", (inst, def) => {
   });
   defineLazyInternal(inst, "pattern", (zod) => {
     const pattern = zod.def.innerType._zod.pattern;
-    return pattern ? new RegExp(`^(${cleanRegex(pattern.source)})?$`) : void 0;
+    return pattern ? new RegExp("^(".concat(cleanRegex(pattern.source), ")?$")) : void 0;
   });
   inst._zod.parse = (payload, ctx) => {
     if (payload.value === void 0) {
@@ -6909,7 +6617,7 @@ var $ZodNullable = /* @__PURE__ */ $constructor("$ZodNullable", (inst, def) => {
   defineLazyInternal(inst, "optout", (zod) => zod.def.innerType._zod.optout);
   defineLazyInternal(inst, "pattern", (zod) => {
     const pattern = zod.def.innerType._zod.pattern;
-    return pattern ? new RegExp(`^(${cleanRegex(pattern.source)}|null)$`) : void 0;
+    return pattern ? new RegExp("^(".concat(cleanRegex(pattern.source), "|null)$")) : void 0;
   });
   defineLazyInternal(inst, "values", (zod) => {
     return zod.def.innerType._zod.values ? /* @__PURE__ */ new Set([...zod.def.innerType._zod.values, null]) : void 0;
@@ -7158,21 +6866,21 @@ var $ZodTemplateLiteral = /* @__PURE__ */ $constructor("$ZodTemplateLiteral", (i
   for (const part of def.parts) {
     if (typeof part === "object" && part !== null) {
       if (!part._zod.pattern) {
-        throw new Error(`Invalid template literal part, no pattern found: ${[...part._zod.traits].shift()}`);
+        throw new Error("Invalid template literal part, no pattern found: ".concat([...part._zod.traits].shift()));
       }
       const source = part._zod.pattern instanceof RegExp ? part._zod.pattern.source : part._zod.pattern;
       if (!source)
-        throw new Error(`Invalid template literal part: ${part._zod.traits}`);
+        throw new Error("Invalid template literal part: ".concat(part._zod.traits));
       const start = source.startsWith("^") ? 1 : 0;
       const end = source.endsWith("$") ? source.length - 1 : source.length;
       regexParts.push(source.slice(start, end));
     } else if (part === null || primitiveTypes.has(typeof part)) {
-      regexParts.push(escapeRegex(`${part}`));
+      regexParts.push(escapeRegex("".concat(part)));
     } else {
-      throw new Error(`Invalid template literal part: ${part}`);
+      throw new Error("Invalid template literal part: ".concat(part));
     }
   }
-  inst._zod.pattern = new RegExp(`^${regexParts.join("")}$`);
+  inst._zod.pattern = new RegExp("^".concat(regexParts.join(""), "$"));
   inst._zod.parse = (payload, _ctx) => {
     if (typeof payload.value !== "string") {
       payload.issues.push({
@@ -7334,7 +7042,7 @@ function handleRefineResult(result, payload, input2, inst) {
 // node_modules/.pnpm/zod@4.5.4/node_modules/zod/v4/core/memoizer.js
 var $ZodCyclicError = class extends Error {
   constructor() {
-    super(`Cannot parse a reference cycle that closes through a transform`);
+    super("Cannot parse a reference cycle that closes through a transform");
     this.name = "ZodCyclicError";
   }
 };
@@ -7693,51 +7401,51 @@ var error = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\u0645\u062F\u062E\u0644\u0627\u062A \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644\u0629: \u064A\u0641\u062A\u0631\u0636 \u0625\u062F\u062E\u0627\u0644 instanceof ${issue2.expected}\u060C \u0648\u0644\u0643\u0646 \u062A\u0645 \u0625\u062F\u062E\u0627\u0644 ${received}`;
+          return "\u0645\u062F\u062E\u0644\u0627\u062A \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644\u0629: \u064A\u0641\u062A\u0631\u0636 \u0625\u062F\u062E\u0627\u0644 instanceof ".concat(issue2.expected, "\u060C \u0648\u0644\u0643\u0646 \u062A\u0645 \u0625\u062F\u062E\u0627\u0644 ").concat(received);
         }
-        return `\u0645\u062F\u062E\u0644\u0627\u062A \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644\u0629: \u064A\u0641\u062A\u0631\u0636 \u0625\u062F\u062E\u0627\u0644 ${expected}\u060C \u0648\u0644\u0643\u0646 \u062A\u0645 \u0625\u062F\u062E\u0627\u0644 ${received}`;
+        return "\u0645\u062F\u062E\u0644\u0627\u062A \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644\u0629: \u064A\u0641\u062A\u0631\u0636 \u0625\u062F\u062E\u0627\u0644 ".concat(expected, "\u060C \u0648\u0644\u0643\u0646 \u062A\u0645 \u0625\u062F\u062E\u0627\u0644 ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u0645\u062F\u062E\u0644\u0627\u062A \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644\u0629: \u064A\u0641\u062A\u0631\u0636 \u0625\u062F\u062E\u0627\u0644 ${stringifyPrimitive(issue2.values[0])}`;
-        return `\u0627\u062E\u062A\u064A\u0627\u0631 \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644: \u064A\u062A\u0648\u0642\u0639 \u0627\u0646\u062A\u0642\u0627\u0621 \u0623\u062D\u062F \u0647\u0630\u0647 \u0627\u0644\u062E\u064A\u0627\u0631\u0627\u062A: ${joinValues(issue2.values, "|")}`;
+          return "\u0645\u062F\u062E\u0644\u0627\u062A \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644\u0629: \u064A\u0641\u062A\u0631\u0636 \u0625\u062F\u062E\u0627\u0644 ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\u0627\u062E\u062A\u064A\u0627\u0631 \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644: \u064A\u062A\u0648\u0642\u0639 \u0627\u0646\u062A\u0642\u0627\u0621 \u0623\u062D\u062F \u0647\u0630\u0647 \u0627\u0644\u062E\u064A\u0627\u0631\u0627\u062A: ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return ` \u0623\u0643\u0628\u0631 \u0645\u0646 \u0627\u0644\u0644\u0627\u0632\u0645: \u064A\u0641\u062A\u0631\u0636 \u0623\u0646 \u062A\u0643\u0648\u0646 ${issue2.origin ?? "\u0627\u0644\u0642\u064A\u0645\u0629"} ${adj} ${issue2.maximum.toString()} ${sizing.unit ?? "\u0639\u0646\u0635\u0631"}`;
-        return `\u0623\u0643\u0628\u0631 \u0645\u0646 \u0627\u0644\u0644\u0627\u0632\u0645: \u064A\u0641\u062A\u0631\u0636 \u0623\u0646 \u062A\u0643\u0648\u0646 ${issue2.origin ?? "\u0627\u0644\u0642\u064A\u0645\u0629"} ${adj} ${issue2.maximum.toString()}`;
+          return " \u0623\u0643\u0628\u0631 \u0645\u0646 \u0627\u0644\u0644\u0627\u0632\u0645: \u064A\u0641\u062A\u0631\u0636 \u0623\u0646 \u062A\u0643\u0648\u0646 ".concat(issue2.origin ?? "\u0627\u0644\u0642\u064A\u0645\u0629", " ").concat(adj, " ").concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "\u0639\u0646\u0635\u0631");
+        return "\u0623\u0643\u0628\u0631 \u0645\u0646 \u0627\u0644\u0644\u0627\u0632\u0645: \u064A\u0641\u062A\u0631\u0636 \u0623\u0646 \u062A\u0643\u0648\u0646 ".concat(issue2.origin ?? "\u0627\u0644\u0642\u064A\u0645\u0629", " ").concat(adj, " ").concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u0623\u0635\u063A\u0631 \u0645\u0646 \u0627\u0644\u0644\u0627\u0632\u0645: \u064A\u0641\u062A\u0631\u0636 \u0644\u0640 ${issue2.origin} \u0623\u0646 \u064A\u0643\u0648\u0646 ${adj} ${issue2.minimum.toString()} ${sizing.unit}`;
+          return "\u0623\u0635\u063A\u0631 \u0645\u0646 \u0627\u0644\u0644\u0627\u0632\u0645: \u064A\u0641\u062A\u0631\u0636 \u0644\u0640 ".concat(issue2.origin, " \u0623\u0646 \u064A\u0643\u0648\u0646 ").concat(adj, " ").concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `\u0623\u0635\u063A\u0631 \u0645\u0646 \u0627\u0644\u0644\u0627\u0632\u0645: \u064A\u0641\u062A\u0631\u0636 \u0644\u0640 ${issue2.origin} \u0623\u0646 \u064A\u0643\u0648\u0646 ${adj} ${issue2.minimum.toString()}`;
+        return "\u0623\u0635\u063A\u0631 \u0645\u0646 \u0627\u0644\u0644\u0627\u0632\u0645: \u064A\u0641\u062A\u0631\u0636 \u0644\u0640 ".concat(issue2.origin, " \u0623\u0646 \u064A\u0643\u0648\u0646 ").concat(adj, " ").concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `\u0646\u064E\u0635 \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644: \u064A\u062C\u0628 \u0623\u0646 \u064A\u0628\u062F\u0623 \u0628\u0640 "${issue2.prefix}"`;
+          return '\u0646\u064E\u0635 \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644: \u064A\u062C\u0628 \u0623\u0646 \u064A\u0628\u062F\u0623 \u0628\u0640 "'.concat(issue2.prefix, '"');
         if (_issue.format === "ends_with")
-          return `\u0646\u064E\u0635 \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644: \u064A\u062C\u0628 \u0623\u0646 \u064A\u0646\u062A\u0647\u064A \u0628\u0640 "${_issue.suffix}"`;
+          return '\u0646\u064E\u0635 \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644: \u064A\u062C\u0628 \u0623\u0646 \u064A\u0646\u062A\u0647\u064A \u0628\u0640 "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `\u0646\u064E\u0635 \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644: \u064A\u062C\u0628 \u0623\u0646 \u064A\u062A\u0636\u0645\u0651\u064E\u0646 "${_issue.includes}"`;
+          return '\u0646\u064E\u0635 \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644: \u064A\u062C\u0628 \u0623\u0646 \u064A\u062A\u0636\u0645\u0651\u064E\u0646 "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `\u0646\u064E\u0635 \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644: \u064A\u062C\u0628 \u0623\u0646 \u064A\u0637\u0627\u0628\u0642 \u0627\u0644\u0646\u0645\u0637 ${_issue.pattern}`;
-        return `${FormatDictionary[_issue.format] ?? issue2.format} \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644`;
+          return "\u0646\u064E\u0635 \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644: \u064A\u062C\u0628 \u0623\u0646 \u064A\u0637\u0627\u0628\u0642 \u0627\u0644\u0646\u0645\u0637 ".concat(_issue.pattern);
+        return "".concat(FormatDictionary[_issue.format] ?? issue2.format, " \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644");
       }
       case "not_multiple_of":
-        return `\u0631\u0642\u0645 \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644: \u064A\u062C\u0628 \u0623\u0646 \u064A\u0643\u0648\u0646 \u0645\u0646 \u0645\u0636\u0627\u0639\u0641\u0627\u062A ${issue2.divisor}`;
+        return "\u0631\u0642\u0645 \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644: \u064A\u062C\u0628 \u0623\u0646 \u064A\u0643\u0648\u0646 \u0645\u0646 \u0645\u0636\u0627\u0639\u0641\u0627\u062A ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `\u0645\u0639\u0631\u0641${issue2.keys.length > 1 ? "\u0627\u062A" : ""} \u063A\u0631\u064A\u0628${issue2.keys.length > 1 ? "\u0629" : ""}: ${joinValues(issue2.keys, "\u060C ")}`;
+        return "\u0645\u0639\u0631\u0641".concat(issue2.keys.length > 1 ? "\u0627\u062A" : "", " \u063A\u0631\u064A\u0628").concat(issue2.keys.length > 1 ? "\u0629" : "", ": ").concat(joinValues(issue2.keys, "\u060C "));
       case "invalid_key":
-        return `\u0645\u0639\u0631\u0641 \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644 \u0641\u064A ${issue2.origin}`;
+        return "\u0645\u0639\u0631\u0641 \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644 \u0641\u064A ".concat(issue2.origin);
       case "invalid_union":
         return "\u0645\u062F\u062E\u0644 \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644";
       case "invalid_element":
-        return `\u0645\u062F\u062E\u0644 \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644 \u0641\u064A ${issue2.origin}`;
+        return "\u0645\u062F\u062E\u0644 \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644 \u0641\u064A ".concat(issue2.origin);
       default:
         return "\u0645\u062F\u062E\u0644 \u063A\u064A\u0631 \u0645\u0642\u0628\u0648\u0644";
     }
@@ -7803,52 +7511,52 @@ var error2 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Yanl\u0131\u015F d\u0259y\u0259r: g\xF6zl\u0259nil\u0259n instanceof ${issue2.expected}, daxil olan ${received}`;
+          return "Yanl\u0131\u015F d\u0259y\u0259r: g\xF6zl\u0259nil\u0259n instanceof ".concat(issue2.expected, ", daxil olan ").concat(received);
         }
-        return `Yanl\u0131\u015F d\u0259y\u0259r: g\xF6zl\u0259nil\u0259n ${expected}, daxil olan ${received}`;
+        return "Yanl\u0131\u015F d\u0259y\u0259r: g\xF6zl\u0259nil\u0259n ".concat(expected, ", daxil olan ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Yanl\u0131\u015F d\u0259y\u0259r: g\xF6zl\u0259nil\u0259n ${stringifyPrimitive(issue2.values[0])}`;
-        return `Yanl\u0131\u015F se\xE7im: a\u015Fa\u011F\u0131dak\u0131lardan biri olmal\u0131d\u0131r: ${joinValues(issue2.values, "|")}`;
+          return "Yanl\u0131\u015F d\u0259y\u0259r: g\xF6zl\u0259nil\u0259n ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Yanl\u0131\u015F se\xE7im: a\u015Fa\u011F\u0131dak\u0131lardan biri olmal\u0131d\u0131r: ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\xC7ox b\xF6y\xFCk: g\xF6zl\u0259nil\u0259n ${issue2.origin ?? "d\u0259y\u0259r"} ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "element"}`;
-        return `\xC7ox b\xF6y\xFCk: g\xF6zl\u0259nil\u0259n ${issue2.origin ?? "d\u0259y\u0259r"} ${adj}${issue2.maximum.toString()}`;
+          return "\xC7ox b\xF6y\xFCk: g\xF6zl\u0259nil\u0259n ".concat(issue2.origin ?? "d\u0259y\u0259r", " ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "element");
+        return "\xC7ox b\xF6y\xFCk: g\xF6zl\u0259nil\u0259n ".concat(issue2.origin ?? "d\u0259y\u0259r", " ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\xC7ox ki\xE7ik: g\xF6zl\u0259nil\u0259n ${issue2.origin} ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
-        return `\xC7ox ki\xE7ik: g\xF6zl\u0259nil\u0259n ${issue2.origin} ${adj}${issue2.minimum.toString()}`;
+          return "\xC7ox ki\xE7ik: g\xF6zl\u0259nil\u0259n ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
+        return "\xC7ox ki\xE7ik: g\xF6zl\u0259nil\u0259n ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `Yanl\u0131\u015F m\u0259tn: "${_issue.prefix}" il\u0259 ba\u015Flamal\u0131d\u0131r`;
+          return 'Yanl\u0131\u015F m\u0259tn: "'.concat(_issue.prefix, '" il\u0259 ba\u015Flamal\u0131d\u0131r');
         if (_issue.format === "ends_with")
-          return `Yanl\u0131\u015F m\u0259tn: "${_issue.suffix}" il\u0259 bitm\u0259lidir`;
+          return 'Yanl\u0131\u015F m\u0259tn: "'.concat(_issue.suffix, '" il\u0259 bitm\u0259lidir');
         if (_issue.format === "includes")
-          return `Yanl\u0131\u015F m\u0259tn: "${_issue.includes}" daxil olmal\u0131d\u0131r`;
+          return 'Yanl\u0131\u015F m\u0259tn: "'.concat(_issue.includes, '" daxil olmal\u0131d\u0131r');
         if (_issue.format === "regex")
-          return `Yanl\u0131\u015F m\u0259tn: ${_issue.pattern} \u015Fablonuna uy\u011Fun olmal\u0131d\u0131r`;
-        return `Yanl\u0131\u015F ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "Yanl\u0131\u015F m\u0259tn: ".concat(_issue.pattern, " \u015Fablonuna uy\u011Fun olmal\u0131d\u0131r");
+        return "Yanl\u0131\u015F ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Yanl\u0131\u015F \u0259d\u0259d: ${issue2.divisor} il\u0259 b\xF6l\xFCn\u0259 bil\u0259n olmal\u0131d\u0131r`;
+        return "Yanl\u0131\u015F \u0259d\u0259d: ".concat(issue2.divisor, " il\u0259 b\xF6l\xFCn\u0259 bil\u0259n olmal\u0131d\u0131r");
       case "unrecognized_keys":
-        return `Tan\u0131nmayan a\xE7ar${issue2.keys.length > 1 ? "lar" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "Tan\u0131nmayan a\xE7ar".concat(issue2.keys.length > 1 ? "lar" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `${issue2.origin} daxilind\u0259 yanl\u0131\u015F a\xE7ar`;
+        return "".concat(issue2.origin, " daxilind\u0259 yanl\u0131\u015F a\xE7ar");
       case "invalid_union":
         return "Yanl\u0131\u015F d\u0259y\u0259r";
       case "invalid_element":
-        return `${issue2.origin} daxilind\u0259 yanl\u0131\u015F d\u0259y\u0259r`;
+        return "".concat(issue2.origin, " daxilind\u0259 yanl\u0131\u015F d\u0259y\u0259r");
       default:
-        return `Yanl\u0131\u015F d\u0259y\u0259r`;
+        return "Yanl\u0131\u015F d\u0259y\u0259r";
     }
   };
 };
@@ -7964,23 +7672,23 @@ var error3 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u045E\u0432\u043E\u0434: \u0447\u0430\u043A\u0430\u045E\u0441\u044F instanceof ${issue2.expected}, \u0430\u0442\u0440\u044B\u043C\u0430\u043D\u0430 ${received}`;
+          return "\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u045E\u0432\u043E\u0434: \u0447\u0430\u043A\u0430\u045E\u0441\u044F instanceof ".concat(issue2.expected, ", \u0430\u0442\u0440\u044B\u043C\u0430\u043D\u0430 ").concat(received);
         }
-        return `\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u045E\u0432\u043E\u0434: \u0447\u0430\u043A\u0430\u045E\u0441\u044F ${expected}, \u0430\u0442\u0440\u044B\u043C\u0430\u043D\u0430 ${received}`;
+        return "\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u045E\u0432\u043E\u0434: \u0447\u0430\u043A\u0430\u045E\u0441\u044F ".concat(expected, ", \u0430\u0442\u0440\u044B\u043C\u0430\u043D\u0430 ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u045E\u0432\u043E\u0434: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F ${stringifyPrimitive(issue2.values[0])}`;
-        return `\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u0432\u0430\u0440\u044B\u044F\u043D\u0442: \u0447\u0430\u043A\u0430\u045E\u0441\u044F \u0430\u0434\u0437\u0456\u043D \u0437 ${joinValues(issue2.values, "|")}`;
+          return "\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u045E\u0432\u043E\u0434: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u0432\u0430\u0440\u044B\u044F\u043D\u0442: \u0447\u0430\u043A\u0430\u045E\u0441\u044F \u0430\u0434\u0437\u0456\u043D \u0437 ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
           const maxValue = Number(issue2.maximum);
           const unit = getBelarusianPlural(maxValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
-          return `\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u0432\u044F\u043B\u0456\u043A\u0456: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ${issue2.origin ?? "\u0437\u043D\u0430\u0447\u044D\u043D\u043D\u0435"} \u043F\u0430\u0432\u0456\u043D\u043D\u0430 ${sizing.verb} ${adj}${issue2.maximum.toString()} ${unit}`;
+          return "\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u0432\u044F\u043B\u0456\u043A\u0456: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ".concat(issue2.origin ?? "\u0437\u043D\u0430\u0447\u044D\u043D\u043D\u0435", " \u043F\u0430\u0432\u0456\u043D\u043D\u0430 ").concat(sizing.verb, " ").concat(adj).concat(issue2.maximum.toString(), " ").concat(unit);
         }
-        return `\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u0432\u044F\u043B\u0456\u043A\u0456: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ${issue2.origin ?? "\u0437\u043D\u0430\u0447\u044D\u043D\u043D\u0435"} \u043F\u0430\u0432\u0456\u043D\u043D\u0430 \u0431\u044B\u0446\u044C ${adj}${issue2.maximum.toString()}`;
+        return "\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u0432\u044F\u043B\u0456\u043A\u0456: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ".concat(issue2.origin ?? "\u0437\u043D\u0430\u0447\u044D\u043D\u043D\u0435", " \u043F\u0430\u0432\u0456\u043D\u043D\u0430 \u0431\u044B\u0446\u044C ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
@@ -7988,34 +7696,34 @@ var error3 = () => {
         if (sizing) {
           const minValue = Number(issue2.minimum);
           const unit = getBelarusianPlural(minValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
-          return `\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u043C\u0430\u043B\u044B: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ${issue2.origin} \u043F\u0430\u0432\u0456\u043D\u043D\u0430 ${sizing.verb} ${adj}${issue2.minimum.toString()} ${unit}`;
+          return "\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u043C\u0430\u043B\u044B: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ".concat(issue2.origin, " \u043F\u0430\u0432\u0456\u043D\u043D\u0430 ").concat(sizing.verb, " ").concat(adj).concat(issue2.minimum.toString(), " ").concat(unit);
         }
-        return `\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u043C\u0430\u043B\u044B: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ${issue2.origin} \u043F\u0430\u0432\u0456\u043D\u043D\u0430 \u0431\u044B\u0446\u044C ${adj}${issue2.minimum.toString()}`;
+        return "\u0417\u0430\u043D\u0430\u0434\u0442\u0430 \u043C\u0430\u043B\u044B: \u0447\u0430\u043A\u0430\u043B\u0430\u0441\u044F, \u0448\u0442\u043E ".concat(issue2.origin, " \u043F\u0430\u0432\u0456\u043D\u043D\u0430 \u0431\u044B\u0446\u044C ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u0440\u0430\u0434\u043E\u043A: \u043F\u0430\u0432\u0456\u043D\u0435\u043D \u043F\u0430\u0447\u044B\u043D\u0430\u0446\u0446\u0430 \u0437 "${_issue.prefix}"`;
+          return '\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u0440\u0430\u0434\u043E\u043A: \u043F\u0430\u0432\u0456\u043D\u0435\u043D \u043F\u0430\u0447\u044B\u043D\u0430\u0446\u0446\u0430 \u0437 "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u0440\u0430\u0434\u043E\u043A: \u043F\u0430\u0432\u0456\u043D\u0435\u043D \u0437\u0430\u043A\u0430\u043D\u0447\u0432\u0430\u0446\u0446\u0430 \u043D\u0430 "${_issue.suffix}"`;
+          return '\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u0440\u0430\u0434\u043E\u043A: \u043F\u0430\u0432\u0456\u043D\u0435\u043D \u0437\u0430\u043A\u0430\u043D\u0447\u0432\u0430\u0446\u0446\u0430 \u043D\u0430 "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u0440\u0430\u0434\u043E\u043A: \u043F\u0430\u0432\u0456\u043D\u0435\u043D \u0437\u043C\u044F\u0448\u0447\u0430\u0446\u044C "${_issue.includes}"`;
+          return '\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u0440\u0430\u0434\u043E\u043A: \u043F\u0430\u0432\u0456\u043D\u0435\u043D \u0437\u043C\u044F\u0448\u0447\u0430\u0446\u044C "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u0440\u0430\u0434\u043E\u043A: \u043F\u0430\u0432\u0456\u043D\u0435\u043D \u0430\u0434\u043F\u0430\u0432\u044F\u0434\u0430\u0446\u044C \u0448\u0430\u0431\u043B\u043E\u043D\u0443 ${_issue.pattern}`;
-        return `\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u0440\u0430\u0434\u043E\u043A: \u043F\u0430\u0432\u0456\u043D\u0435\u043D \u0430\u0434\u043F\u0430\u0432\u044F\u0434\u0430\u0446\u044C \u0448\u0430\u0431\u043B\u043E\u043D\u0443 ".concat(_issue.pattern);
+        return "\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u043B\u0456\u043A: \u043F\u0430\u0432\u0456\u043D\u0435\u043D \u0431\u044B\u0446\u044C \u043A\u0440\u0430\u0442\u043D\u044B\u043C ${issue2.divisor}`;
+        return "\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u043B\u0456\u043A: \u043F\u0430\u0432\u0456\u043D\u0435\u043D \u0431\u044B\u0446\u044C \u043A\u0440\u0430\u0442\u043D\u044B\u043C ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `\u041D\u0435\u0440\u0430\u0441\u043F\u0430\u0437\u043D\u0430\u043D\u044B ${issue2.keys.length > 1 ? "\u043A\u043B\u044E\u0447\u044B" : "\u043A\u043B\u044E\u0447"}: ${joinValues(issue2.keys, ", ")}`;
+        return "\u041D\u0435\u0440\u0430\u0441\u043F\u0430\u0437\u043D\u0430\u043D\u044B ".concat(issue2.keys.length > 1 ? "\u043A\u043B\u044E\u0447\u044B" : "\u043A\u043B\u044E\u0447", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u043A\u043B\u044E\u0447 \u0443 ${issue2.origin}`;
+        return "\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u043A\u043B\u044E\u0447 \u0443 ".concat(issue2.origin);
       case "invalid_union":
         return "\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u045E\u0432\u043E\u0434";
       case "invalid_element":
-        return `\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u0430\u0435 \u0437\u043D\u0430\u0447\u044D\u043D\u043D\u0435 \u045E ${issue2.origin}`;
+        return "\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u0430\u0435 \u0437\u043D\u0430\u0447\u044D\u043D\u043D\u0435 \u045E ".concat(issue2.origin);
       default:
-        return `\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u045E\u0432\u043E\u0434`;
+        return "\u041D\u044F\u043F\u0440\u0430\u0432\u0456\u043B\u044C\u043D\u044B \u045E\u0432\u043E\u0434";
     }
   };
 };
@@ -8081,40 +7789,40 @@ var error4 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D \u0432\u0445\u043E\u0434: \u043E\u0447\u0430\u043A\u0432\u0430\u043D instanceof ${issue2.expected}, \u043F\u043E\u043B\u0443\u0447\u0435\u043D ${received}`;
+          return "\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D \u0432\u0445\u043E\u0434: \u043E\u0447\u0430\u043A\u0432\u0430\u043D instanceof ".concat(issue2.expected, ", \u043F\u043E\u043B\u0443\u0447\u0435\u043D ").concat(received);
         }
-        return `\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D \u0432\u0445\u043E\u0434: \u043E\u0447\u0430\u043A\u0432\u0430\u043D ${expected}, \u043F\u043E\u043B\u0443\u0447\u0435\u043D ${received}`;
+        return "\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D \u0432\u0445\u043E\u0434: \u043E\u0447\u0430\u043A\u0432\u0430\u043D ".concat(expected, ", \u043F\u043E\u043B\u0443\u0447\u0435\u043D ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D \u0432\u0445\u043E\u0434: \u043E\u0447\u0430\u043A\u0432\u0430\u043D ${stringifyPrimitive(issue2.values[0])}`;
-        return `\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u043D\u0430 \u043E\u043F\u0446\u0438\u044F: \u043E\u0447\u0430\u043A\u0432\u0430\u043D\u043E \u0435\u0434\u043D\u043E \u043E\u0442 ${joinValues(issue2.values, "|")}`;
+          return "\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D \u0432\u0445\u043E\u0434: \u043E\u0447\u0430\u043A\u0432\u0430\u043D ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u043D\u0430 \u043E\u043F\u0446\u0438\u044F: \u043E\u0447\u0430\u043A\u0432\u0430\u043D\u043E \u0435\u0434\u043D\u043E \u043E\u0442 ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u0422\u0432\u044A\u0440\u0434\u0435 \u0433\u043E\u043B\u044F\u043C\u043E: \u043E\u0447\u0430\u043A\u0432\u0430 \u0441\u0435 ${issue2.origin ?? "\u0441\u0442\u043E\u0439\u043D\u043E\u0441\u0442"} \u0434\u0430 \u0441\u044A\u0434\u044A\u0440\u0436\u0430 ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "\u0435\u043B\u0435\u043C\u0435\u043D\u0442\u0430"}`;
-        return `\u0422\u0432\u044A\u0440\u0434\u0435 \u0433\u043E\u043B\u044F\u043C\u043E: \u043E\u0447\u0430\u043A\u0432\u0430 \u0441\u0435 ${issue2.origin ?? "\u0441\u0442\u043E\u0439\u043D\u043E\u0441\u0442"} \u0434\u0430 \u0431\u044A\u0434\u0435 ${adj}${issue2.maximum.toString()}`;
+          return "\u0422\u0432\u044A\u0440\u0434\u0435 \u0433\u043E\u043B\u044F\u043C\u043E: \u043E\u0447\u0430\u043A\u0432\u0430 \u0441\u0435 ".concat(issue2.origin ?? "\u0441\u0442\u043E\u0439\u043D\u043E\u0441\u0442", " \u0434\u0430 \u0441\u044A\u0434\u044A\u0440\u0436\u0430 ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "\u0435\u043B\u0435\u043C\u0435\u043D\u0442\u0430");
+        return "\u0422\u0432\u044A\u0440\u0434\u0435 \u0433\u043E\u043B\u044F\u043C\u043E: \u043E\u0447\u0430\u043A\u0432\u0430 \u0441\u0435 ".concat(issue2.origin ?? "\u0441\u0442\u043E\u0439\u043D\u043E\u0441\u0442", " \u0434\u0430 \u0431\u044A\u0434\u0435 ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u0422\u0432\u044A\u0440\u0434\u0435 \u043C\u0430\u043B\u043A\u043E: \u043E\u0447\u0430\u043A\u0432\u0430 \u0441\u0435 ${issue2.origin} \u0434\u0430 \u0441\u044A\u0434\u044A\u0440\u0436\u0430 ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "\u0422\u0432\u044A\u0440\u0434\u0435 \u043C\u0430\u043B\u043A\u043E: \u043E\u0447\u0430\u043A\u0432\u0430 \u0441\u0435 ".concat(issue2.origin, " \u0434\u0430 \u0441\u044A\u0434\u044A\u0440\u0436\u0430 ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `\u0422\u0432\u044A\u0440\u0434\u0435 \u043C\u0430\u043B\u043A\u043E: \u043E\u0447\u0430\u043A\u0432\u0430 \u0441\u0435 ${issue2.origin} \u0434\u0430 \u0431\u044A\u0434\u0435 ${adj}${issue2.minimum.toString()}`;
+        return "\u0422\u0432\u044A\u0440\u0434\u0435 \u043C\u0430\u043B\u043A\u043E: \u043E\u0447\u0430\u043A\u0432\u0430 \u0441\u0435 ".concat(issue2.origin, " \u0434\u0430 \u0431\u044A\u0434\u0435 ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D \u043D\u0438\u0437: \u0442\u0440\u044F\u0431\u0432\u0430 \u0434\u0430 \u0437\u0430\u043F\u043E\u0447\u0432\u0430 \u0441 "${_issue.prefix}"`;
+          return '\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D \u043D\u0438\u0437: \u0442\u0440\u044F\u0431\u0432\u0430 \u0434\u0430 \u0437\u0430\u043F\u043E\u0447\u0432\u0430 \u0441 "'.concat(_issue.prefix, '"');
         }
         if (_issue.format === "ends_with")
-          return `\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D \u043D\u0438\u0437: \u0442\u0440\u044F\u0431\u0432\u0430 \u0434\u0430 \u0437\u0430\u0432\u044A\u0440\u0448\u0432\u0430 \u0441 "${_issue.suffix}"`;
+          return '\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D \u043D\u0438\u0437: \u0442\u0440\u044F\u0431\u0432\u0430 \u0434\u0430 \u0437\u0430\u0432\u044A\u0440\u0448\u0432\u0430 \u0441 "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D \u043D\u0438\u0437: \u0442\u0440\u044F\u0431\u0432\u0430 \u0434\u0430 \u0432\u043A\u043B\u044E\u0447\u0432\u0430 "${_issue.includes}"`;
+          return '\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D \u043D\u0438\u0437: \u0442\u0440\u044F\u0431\u0432\u0430 \u0434\u0430 \u0432\u043A\u043B\u044E\u0447\u0432\u0430 "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D \u043D\u0438\u0437: \u0442\u0440\u044F\u0431\u0432\u0430 \u0434\u0430 \u0441\u044A\u0432\u043F\u0430\u0434\u0430 \u0441 ${_issue.pattern}`;
+          return "\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D \u043D\u0438\u0437: \u0442\u0440\u044F\u0431\u0432\u0430 \u0434\u0430 \u0441\u044A\u0432\u043F\u0430\u0434\u0430 \u0441 ".concat(_issue.pattern);
         let invalid_adj = "\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D";
         if (_issue.format === "emoji")
           invalid_adj = "\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u043D\u043E";
@@ -8126,20 +7834,20 @@ var error4 = () => {
           invalid_adj = "\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u043D\u043E";
         if (_issue.format === "duration")
           invalid_adj = "\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u043D\u0430";
-        return `${invalid_adj} ${FormatDictionary[_issue.format] ?? issue2.format}`;
+        return "".concat(invalid_adj, " ").concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u043D\u043E \u0447\u0438\u0441\u043B\u043E: \u0442\u0440\u044F\u0431\u0432\u0430 \u0434\u0430 \u0431\u044A\u0434\u0435 \u043A\u0440\u0430\u0442\u043D\u043E \u043D\u0430 ${issue2.divisor}`;
+        return "\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u043D\u043E \u0447\u0438\u0441\u043B\u043E: \u0442\u0440\u044F\u0431\u0432\u0430 \u0434\u0430 \u0431\u044A\u0434\u0435 \u043A\u0440\u0430\u0442\u043D\u043E \u043D\u0430 ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `\u041D\u0435\u0440\u0430\u0437\u043F\u043E\u0437\u043D\u0430\u0442${issue2.keys.length > 1 ? "\u0438" : ""} \u043A\u043B\u044E\u0447${issue2.keys.length > 1 ? "\u043E\u0432\u0435" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "\u041D\u0435\u0440\u0430\u0437\u043F\u043E\u0437\u043D\u0430\u0442".concat(issue2.keys.length > 1 ? "\u0438" : "", " \u043A\u043B\u044E\u0447").concat(issue2.keys.length > 1 ? "\u043E\u0432\u0435" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D \u043A\u043B\u044E\u0447 \u0432 ${issue2.origin}`;
+        return "\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D \u043A\u043B\u044E\u0447 \u0432 ".concat(issue2.origin);
       case "invalid_union":
         return "\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D \u0432\u0445\u043E\u0434";
       case "invalid_element":
-        return `\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u043D\u0430 \u0441\u0442\u043E\u0439\u043D\u043E\u0441\u0442 \u0432 ${issue2.origin}`;
+        return "\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u043D\u0430 \u0441\u0442\u043E\u0439\u043D\u043E\u0441\u0442 \u0432 ".concat(issue2.origin);
       default:
-        return `\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D \u0432\u0445\u043E\u0434`;
+        return "\u041D\u0435\u0432\u0430\u043B\u0438\u0434\u0435\u043D \u0432\u0445\u043E\u0434";
     }
   };
 };
@@ -8202,54 +7910,54 @@ var error5 = () => {
         const expected = TypeDictionary[issue2.expected] ?? issue2.expected;
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
-        return `\u0985\u09AC\u09C8\u09A7 \u0987\u09A8\u09AA\u09C1\u099F: \u09AA\u09CD\u09B0\u09A4\u09CD\u09AF\u09BE\u09B6\u09BF\u09A4 ${expected}, \u09AA\u09CD\u09B0\u09BE\u09AA\u09CD\u09A4 ${received}`;
+        return "\u0985\u09AC\u09C8\u09A7 \u0987\u09A8\u09AA\u09C1\u099F: \u09AA\u09CD\u09B0\u09A4\u09CD\u09AF\u09BE\u09B6\u09BF\u09A4 ".concat(expected, ", \u09AA\u09CD\u09B0\u09BE\u09AA\u09CD\u09A4 ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u0985\u09AC\u09C8\u09A7 \u0987\u09A8\u09AA\u09C1\u099F: \u09AA\u09CD\u09B0\u09A4\u09CD\u09AF\u09BE\u09B6\u09BF\u09A4 ${stringifyPrimitive(issue2.values[0])}`;
-        return `\u0985\u09AC\u09C8\u09A7 \u0985\u09AA\u09B6\u09A8: ${joinValues(issue2.values, " | ")} \u098F\u09B0 \u09AE\u09A7\u09CD\u09AF\u09C7 \u098F\u0995\u099F\u09BF \u09AA\u09CD\u09B0\u09A4\u09CD\u09AF\u09BE\u09B6\u09BF\u09A4`;
+          return "\u0985\u09AC\u09C8\u09A7 \u0987\u09A8\u09AA\u09C1\u099F: \u09AA\u09CD\u09B0\u09A4\u09CD\u09AF\u09BE\u09B6\u09BF\u09A4 ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\u0985\u09AC\u09C8\u09A7 \u0985\u09AA\u09B6\u09A8: ".concat(joinValues(issue2.values, " | "), " \u098F\u09B0 \u09AE\u09A7\u09CD\u09AF\u09C7 \u098F\u0995\u099F\u09BF \u09AA\u09CD\u09B0\u09A4\u09CD\u09AF\u09BE\u09B6\u09BF\u09A4");
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u0985\u09A8\u09C7\u0995 \u09AC\u09A1\u09BC: ${issue2.origin ?? "\u09AE\u09BE\u09A8"} ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "\u098F\u09B2\u09BF\u09AE\u09C7\u09A8\u09CD\u099F"} \u09B9\u09A4\u09C7 \u09B9\u09AC\u09C7`;
-        return `\u0985\u09A8\u09C7\u0995 \u09AC\u09A1\u09BC: ${issue2.origin ?? "\u09AE\u09BE\u09A8"} ${adj}${issue2.maximum.toString()} \u09B9\u09A4\u09C7 \u09B9\u09AC\u09C7`;
+          return "\u0985\u09A8\u09C7\u0995 \u09AC\u09A1\u09BC: ".concat(issue2.origin ?? "\u09AE\u09BE\u09A8", " ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "\u098F\u09B2\u09BF\u09AE\u09C7\u09A8\u09CD\u099F", " \u09B9\u09A4\u09C7 \u09B9\u09AC\u09C7");
+        return "\u0985\u09A8\u09C7\u0995 \u09AC\u09A1\u09BC: ".concat(issue2.origin ?? "\u09AE\u09BE\u09A8", " ").concat(adj).concat(issue2.maximum.toString(), " \u09B9\u09A4\u09C7 \u09B9\u09AC\u09C7");
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u0985\u09A8\u09C7\u0995 \u099B\u09CB\u099F: ${issue2.origin} ${adj}${issue2.minimum.toString()} ${sizing.unit} \u09B9\u09A4\u09C7 \u09B9\u09AC\u09C7`;
+          return "\u0985\u09A8\u09C7\u0995 \u099B\u09CB\u099F: ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit, " \u09B9\u09A4\u09C7 \u09B9\u09AC\u09C7");
         }
-        return `\u0985\u09A8\u09C7\u0995 \u099B\u09CB\u099F: ${issue2.origin} ${adj}${issue2.minimum.toString()} \u09B9\u09A4\u09C7 \u09B9\u09AC\u09C7`;
+        return "\u0985\u09A8\u09C7\u0995 \u099B\u09CB\u099F: ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString(), " \u09B9\u09A4\u09C7 \u09B9\u09AC\u09C7");
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `\u0985\u09AC\u09C8\u09A7 \u09B8\u09CD\u099F\u09CD\u09B0\u09BF\u0982: "${_issue.prefix}" \u09A6\u09BF\u09AF\u09BC\u09C7 \u09B6\u09C1\u09B0\u09C1 \u09B9\u09A4\u09C7 \u09B9\u09AC\u09C7`;
+          return '\u0985\u09AC\u09C8\u09A7 \u09B8\u09CD\u099F\u09CD\u09B0\u09BF\u0982: "'.concat(_issue.prefix, '" \u09A6\u09BF\u09AF\u09BC\u09C7 \u09B6\u09C1\u09B0\u09C1 \u09B9\u09A4\u09C7 \u09B9\u09AC\u09C7');
         }
         if (_issue.format === "ends_with")
-          return `\u0985\u09AC\u09C8\u09A7 \u09B8\u09CD\u099F\u09CD\u09B0\u09BF\u0982: "${_issue.suffix}" \u09A6\u09BF\u09AF\u09BC\u09C7 \u09B6\u09C7\u09B7 \u09B9\u09A4\u09C7 \u09B9\u09AC\u09C7`;
+          return '\u0985\u09AC\u09C8\u09A7 \u09B8\u09CD\u099F\u09CD\u09B0\u09BF\u0982: "'.concat(_issue.suffix, '" \u09A6\u09BF\u09AF\u09BC\u09C7 \u09B6\u09C7\u09B7 \u09B9\u09A4\u09C7 \u09B9\u09AC\u09C7');
         if (_issue.format === "includes")
-          return `\u0985\u09AC\u09C8\u09A7 \u09B8\u09CD\u099F\u09CD\u09B0\u09BF\u0982: "${_issue.includes}" \u0985\u09A8\u09CD\u09A4\u09B0\u09CD\u09AD\u09C1\u0995\u09CD\u09A4 \u09A5\u09BE\u0995\u09A4\u09C7 \u09B9\u09AC\u09C7`;
+          return '\u0985\u09AC\u09C8\u09A7 \u09B8\u09CD\u099F\u09CD\u09B0\u09BF\u0982: "'.concat(_issue.includes, '" \u0985\u09A8\u09CD\u09A4\u09B0\u09CD\u09AD\u09C1\u0995\u09CD\u09A4 \u09A5\u09BE\u0995\u09A4\u09C7 \u09B9\u09AC\u09C7');
         if (_issue.format === "regex")
-          return `\u0985\u09AC\u09C8\u09A7 \u09B8\u09CD\u099F\u09CD\u09B0\u09BF\u0982: ${_issue.pattern} \u09AA\u09CD\u09AF\u09BE\u099F\u09BE\u09B0\u09CD\u09A8 \u09AE\u09BF\u09B2\u09A4\u09C7 \u09B9\u09AC\u09C7`;
-        return `\u0985\u09AC\u09C8\u09A7 ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u0985\u09AC\u09C8\u09A7 \u09B8\u09CD\u099F\u09CD\u09B0\u09BF\u0982: ".concat(_issue.pattern, " \u09AA\u09CD\u09AF\u09BE\u099F\u09BE\u09B0\u09CD\u09A8 \u09AE\u09BF\u09B2\u09A4\u09C7 \u09B9\u09AC\u09C7");
+        return "\u0985\u09AC\u09C8\u09A7 ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u0985\u09AC\u09C8\u09A7 \u09A8\u09AE\u09CD\u09AC\u09B0: ${issue2.divisor} \u098F\u09B0 \u0997\u09C1\u09A3\u09BF\u09A4\u0995 \u09B9\u09A4\u09C7 \u09B9\u09AC\u09C7`;
+        return "\u0985\u09AC\u09C8\u09A7 \u09A8\u09AE\u09CD\u09AC\u09B0: ".concat(issue2.divisor, " \u098F\u09B0 \u0997\u09C1\u09A3\u09BF\u09A4\u0995 \u09B9\u09A4\u09C7 \u09B9\u09AC\u09C7");
       case "unrecognized_keys":
-        return `\u0985\u099A\u09C7\u09A8\u09BE \u0995\u09C0${issue2.keys.length > 1 ? "\u0997\u09C1\u09B2\u09CB" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "\u0985\u099A\u09C7\u09A8\u09BE \u0995\u09C0".concat(issue2.keys.length > 1 ? "\u0997\u09C1\u09B2\u09CB" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `${issue2.origin} \u098F \u0985\u09AC\u09C8\u09A7 \u0995\u09C0`;
+        return "".concat(issue2.origin, " \u098F \u0985\u09AC\u09C8\u09A7 \u0995\u09C0");
       case "invalid_union":
         if (issue2.options && Array.isArray(issue2.options) && issue2.options.length > 0) {
-          const opts = issue2.options.map((o) => `'${o}'`).join(" | ");
-          return `\u0985\u09AC\u09C8\u09A7 \u09A1\u09BF\u09B8\u0995\u09CD\u09B0\u09BF\u09AE\u09BF\u09A8\u09C7\u099F\u09B0 \u09AE\u09BE\u09A8\u0964 \u09AA\u09CD\u09B0\u09A4\u09CD\u09AF\u09BE\u09B6\u09BF\u09A4 ${opts}`;
+          const opts = issue2.options.map((o) => "'".concat(o, "'")).join(" | ");
+          return "\u0985\u09AC\u09C8\u09A7 \u09A1\u09BF\u09B8\u0995\u09CD\u09B0\u09BF\u09AE\u09BF\u09A8\u09C7\u099F\u09B0 \u09AE\u09BE\u09A8\u0964 \u09AA\u09CD\u09B0\u09A4\u09CD\u09AF\u09BE\u09B6\u09BF\u09A4 ".concat(opts);
         }
         return "\u0985\u09AC\u09C8\u09A7 \u0987\u09A8\u09AA\u09C1\u099F";
       case "invalid_element":
-        return `${issue2.origin} \u098F \u0985\u09AC\u09C8\u09A7 \u09AE\u09BE\u09A8`;
+        return "".concat(issue2.origin, " \u098F \u0985\u09AC\u09C8\u09A7 \u09AE\u09BE\u09A8");
       default:
         return "\u0985\u09AC\u09C8\u09A7 \u0987\u09A8\u09AA\u09C1\u099F";
     }
@@ -8315,55 +8023,55 @@ var error6 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Tipus inv\xE0lid: s'esperava instanceof ${issue2.expected}, s'ha rebut ${received}`;
+          return "Tipus inv\xE0lid: s'esperava instanceof ".concat(issue2.expected, ", s'ha rebut ").concat(received);
         }
-        return `Tipus inv\xE0lid: s'esperava ${expected}, s'ha rebut ${received}`;
+        return "Tipus inv\xE0lid: s'esperava ".concat(expected, ", s'ha rebut ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Valor inv\xE0lid: s'esperava ${stringifyPrimitive(issue2.values[0])}`;
-        return `Opci\xF3 inv\xE0lida: s'esperava una de ${joinValues(issue2.values, " o ")}`;
+          return "Valor inv\xE0lid: s'esperava ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Opci\xF3 inv\xE0lida: s'esperava una de ".concat(joinValues(issue2.values, " o "));
       case "too_big": {
         const adj = issue2.inclusive ? "com a m\xE0xim" : "menys de";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Massa gran: s'esperava que ${issue2.origin ?? "el valor"} contingu\xE9s ${adj} ${issue2.maximum.toString()} ${sizing.unit ?? "elements"}`;
-        return `Massa gran: s'esperava que ${issue2.origin ?? "el valor"} fos ${adj} ${issue2.maximum.toString()}`;
+          return "Massa gran: s'esperava que ".concat(issue2.origin ?? "el valor", " contingu\xE9s ").concat(adj, " ").concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "elements");
+        return "Massa gran: s'esperava que ".concat(issue2.origin ?? "el valor", " fos ").concat(adj, " ").concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? "com a m\xEDnim" : "m\xE9s de";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Massa petit: s'esperava que ${issue2.origin} contingu\xE9s ${adj} ${issue2.minimum.toString()} ${sizing.unit}`;
+          return "Massa petit: s'esperava que ".concat(issue2.origin, " contingu\xE9s ").concat(adj, " ").concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `Massa petit: s'esperava que ${issue2.origin} fos ${adj} ${issue2.minimum.toString()}`;
+        return "Massa petit: s'esperava que ".concat(issue2.origin, " fos ").concat(adj, " ").concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `Format inv\xE0lid: ha de comen\xE7ar amb "${_issue.prefix}"`;
+          return 'Format inv\xE0lid: ha de comen\xE7ar amb "'.concat(_issue.prefix, '"');
         }
         if (_issue.format === "ends_with")
-          return `Format inv\xE0lid: ha d'acabar amb "${_issue.suffix}"`;
+          return "Format inv\xE0lid: ha d'acabar amb \"".concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Format inv\xE0lid: ha d'incloure "${_issue.includes}"`;
+          return "Format inv\xE0lid: ha d'incloure \"".concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Format inv\xE0lid: ha de coincidir amb el patr\xF3 ${_issue.pattern}`;
-        return `Format inv\xE0lid per a ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "Format inv\xE0lid: ha de coincidir amb el patr\xF3 ".concat(_issue.pattern);
+        return "Format inv\xE0lid per a ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `N\xFAmero inv\xE0lid: ha de ser m\xFAltiple de ${issue2.divisor}`;
+        return "N\xFAmero inv\xE0lid: ha de ser m\xFAltiple de ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `Clau${issue2.keys.length > 1 ? "s" : ""} no reconeguda${issue2.keys.length > 1 ? "s" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "Clau".concat(issue2.keys.length > 1 ? "s" : "", " no reconeguda").concat(issue2.keys.length > 1 ? "s" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Clau inv\xE0lida a ${issue2.origin}`;
+        return "Clau inv\xE0lida a ".concat(issue2.origin);
       case "invalid_union":
         return "Entrada inv\xE0lida";
       // Could also be "Tipus d'unió invàlid" but "Entrada invàlida" is more general
       case "invalid_element":
-        return `Element inv\xE0lid a ${issue2.origin}`;
+        return "Element inv\xE0lid a ".concat(issue2.origin);
       default:
-        return `Entrada inv\xE0lida`;
+        return "Entrada inv\xE0lida";
     }
   };
 };
@@ -8447,54 +8155,54 @@ var error7 = () => {
         const postfix = ["\u0627", "\u0648", "\u06C6", "\u0648\u0648", "\u06D5", "\u06CC", "\u06CE"].some((p) => received.endsWith(p)) ? "\u06CC\u06D5" : "\u06D5";
         const isEnglish = /^[a-zA-Z]+$/.test(received);
         if (receivedType === "null" || receivedType === "undefined")
-          return `\u062F\u0627\u0648\u0627\u06A9\u0631\u0627\u0648\u06D5`;
-        return `\u0686\u0627\u0648\u06D5\u0695\u0648\u0627\u0646\u06A9\u0631\u0627\u0648\u06D5 ${expected} \u0628\u06CE\u062A\u060C \u0628\u06D5\u06B5\u0627\u0645 ${received}${isEnglish ? "" : postfix}`;
+          return "\u062F\u0627\u0648\u0627\u06A9\u0631\u0627\u0648\u06D5";
+        return "\u0686\u0627\u0648\u06D5\u0695\u0648\u0627\u0646\u06A9\u0631\u0627\u0648\u06D5 ".concat(expected, " \u0628\u06CE\u062A\u060C \u0628\u06D5\u06B5\u0627\u0645 ").concat(received).concat(isEnglish ? "" : postfix);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u0628\u06D5\u0647\u0627\u06A9\u06D5 \u0646\u0627\u062F\u0631\u0648\u0648\u0633\u062A\u06D5: \u0686\u0627\u0648\u06D5\u0695\u0648\u0627\u0646\u06A9\u0631\u0627\u0648\u06D5 ${stringifyPrimitive(issue2.values[0])} \u0628\u06CE\u062A`;
-        return `\u0647\u06D5\u06B5\u0628\u0698\u0627\u0631\u062F\u06D5\u06CC \u0646\u0627\u062F\u0631\u0648\u0633\u062A: \u0686\u0627\u0648\u06D5\u0695\u0648\u0627\u0646\u06A9\u0631\u0627\u0648\u06D5 \u06CC\u06D5\u06A9\u06CE\u06A9 \u0628\u06CE\u062A \u0644\u06D5 ${joinValues(issue2.values, "|")}`;
+          return "\u0628\u06D5\u0647\u0627\u06A9\u06D5 \u0646\u0627\u062F\u0631\u0648\u0648\u0633\u062A\u06D5: \u0686\u0627\u0648\u06D5\u0695\u0648\u0627\u0646\u06A9\u0631\u0627\u0648\u06D5 ".concat(stringifyPrimitive(issue2.values[0]), " \u0628\u06CE\u062A");
+        return "\u0647\u06D5\u06B5\u0628\u0698\u0627\u0631\u062F\u06D5\u06CC \u0646\u0627\u062F\u0631\u0648\u0633\u062A: \u0686\u0627\u0648\u06D5\u0695\u0648\u0627\u0646\u06A9\u0631\u0627\u0648\u06D5 \u06CC\u06D5\u06A9\u06CE\u06A9 \u0628\u06CE\u062A \u0644\u06D5 ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u067E\u06CE\u0648\u06CC\u0633\u062A\u06D5 \u0628\u06D5 \u0644\u0627\u06CC\u06D5\u0646\u06CC \u0632\u06C6\u0631\u06D5\u0648\u06D5 ${issue2.maximum.toString()} ${sizing.unit} ${sizing.verb}`;
-        return `\u067E\u06CE\u0648\u06CC\u0633\u062A\u06D5 \u0628\u06D5 \u0644\u0627\u06CC\u06D5\u0646\u06CC \u0632\u06C6\u0631\u06D5\u0648\u06D5 ${issue2.maximum.toString()} \u0628\u06CE\u062A`;
+          return "\u067E\u06CE\u0648\u06CC\u0633\u062A\u06D5 \u0628\u06D5 \u0644\u0627\u06CC\u06D5\u0646\u06CC \u0632\u06C6\u0631\u06D5\u0648\u06D5 ".concat(issue2.maximum.toString(), " ").concat(sizing.unit, " ").concat(sizing.verb);
+        return "\u067E\u06CE\u0648\u06CC\u0633\u062A\u06D5 \u0628\u06D5 \u0644\u0627\u06CC\u06D5\u0646\u06CC \u0632\u06C6\u0631\u06D5\u0648\u06D5 ".concat(issue2.maximum.toString(), " \u0628\u06CE\u062A");
       }
       case "too_small": {
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u067E\u06CE\u0648\u06CC\u0633\u062A\u06D5 \u0628\u06D5 \u0644\u0627\u06CC\u06D5\u0646\u06CC \u06A9\u06D5\u0645\u06D5\u0648\u06D5 ${issue2.minimum.toString()} ${sizing.unit} ${sizing.verb}`;
-        return `\u067E\u06CE\u0648\u06CC\u0633\u062A\u06D5 \u0628\u06D5 \u0644\u0627\u06CC\u06D5\u0646\u06CC \u06A9\u06D5\u0645\u06D5\u0648\u06D5 ${issue2.minimum.toString()} \u0628\u06CE\u062A`;
+          return "\u067E\u06CE\u0648\u06CC\u0633\u062A\u06D5 \u0628\u06D5 \u0644\u0627\u06CC\u06D5\u0646\u06CC \u06A9\u06D5\u0645\u06D5\u0648\u06D5 ".concat(issue2.minimum.toString(), " ").concat(sizing.unit, " ").concat(sizing.verb);
+        return "\u067E\u06CE\u0648\u06CC\u0633\u062A\u06D5 \u0628\u06D5 \u0644\u0627\u06CC\u06D5\u0646\u06CC \u06A9\u06D5\u0645\u06D5\u0648\u06D5 ".concat(issue2.minimum.toString(), " \u0628\u06CE\u062A");
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `\u062F\u06D5\u0642\u06CC \u0646\u0627\u062F\u0631\u0648\u0633\u062A: \u067E\u06CE\u0648\u06CC\u0633\u062A\u06D5 \u062F\u06D5\u0633\u062A\u067E\u06CE\u0628\u06A9\u0627\u062A \u0628\u06D5 "${_issue.prefix}"`;
+          return '\u062F\u06D5\u0642\u06CC \u0646\u0627\u062F\u0631\u0648\u0633\u062A: \u067E\u06CE\u0648\u06CC\u0633\u062A\u06D5 \u062F\u06D5\u0633\u062A\u067E\u06CE\u0628\u06A9\u0627\u062A \u0628\u06D5 "'.concat(_issue.prefix, '"');
         }
         if (_issue.format === "ends_with")
-          return `\u062F\u06D5\u0642\u06CC \u0646\u0627\u062F\u0631\u0648\u0633\u062A: \u067E\u06CE\u0648\u06CC\u0633\u062A\u06D5 \u06A9\u06C6\u062A\u0627\u06CC\u06CC\u0628\u06CE\u062A \u0628\u06D5 "${_issue.suffix}"`;
+          return '\u062F\u06D5\u0642\u06CC \u0646\u0627\u062F\u0631\u0648\u0633\u062A: \u067E\u06CE\u0648\u06CC\u0633\u062A\u06D5 \u06A9\u06C6\u062A\u0627\u06CC\u06CC\u0628\u06CE\u062A \u0628\u06D5 "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `\u062F\u06D5\u0642\u06CC \u0646\u0627\u062F\u0631\u0648\u0633\u062A: \u067E\u06CE\u0648\u06CC\u0633\u062A\u06D5 "${_issue.includes}" \u0644\u06D5\u062E\u06C6\u0628\u06AF\u0631\u06CE\u062A`;
+          return '\u062F\u06D5\u0642\u06CC \u0646\u0627\u062F\u0631\u0648\u0633\u062A: \u067E\u06CE\u0648\u06CC\u0633\u062A\u06D5 "'.concat(_issue.includes, '" \u0644\u06D5\u062E\u06C6\u0628\u06AF\u0631\u06CE\u062A');
         if (_issue.format === "regex")
-          return `\u062F\u06D5\u0642\u06CC \u0646\u0627\u062F\u0631\u0648\u0633\u062A: \u067E\u06CE\u0648\u06CC\u0633\u062A\u06D5 \u0644\u06D5\u06AF\u06D5\u06B5 \u067E\u0627\u062A\u06CE\u0631\u0646\u06CC ${_issue.pattern} \u0628\u06AF\u0648\u0646\u062C\u06CE\u062A`;
-        return `\u0628\u06D5\u0647\u0627\u06CC ${FormatDictionary[_issue.format] ?? issue2.format} \u0646\u0627\u062F\u0631\u0648\u0633\u062A\u06D5`;
+          return "\u062F\u06D5\u0642\u06CC \u0646\u0627\u062F\u0631\u0648\u0633\u062A: \u067E\u06CE\u0648\u06CC\u0633\u062A\u06D5 \u0644\u06D5\u06AF\u06D5\u06B5 \u067E\u0627\u062A\u06CE\u0631\u0646\u06CC ".concat(_issue.pattern, " \u0628\u06AF\u0648\u0646\u062C\u06CE\u062A");
+        return "\u0628\u06D5\u0647\u0627\u06CC ".concat(FormatDictionary[_issue.format] ?? issue2.format, " \u0646\u0627\u062F\u0631\u0648\u0633\u062A\u06D5");
       }
       case "not_multiple_of":
-        return `\u0698\u0645\u0627\u0631\u06D5\u06CC \u0646\u0627\u062F\u0631\u0648\u0633\u062A: \u062F\u06D5\u0628\u06CE\u062A \u0686\u06D5\u0646\u062F \u0647\u06CE\u0646\u062F\u06D5 \u0628\u06CE\u062A \u0628\u06C6 ${issue2.divisor}`;
+        return "\u0698\u0645\u0627\u0631\u06D5\u06CC \u0646\u0627\u062F\u0631\u0648\u0633\u062A: \u062F\u06D5\u0628\u06CE\u062A \u0686\u06D5\u0646\u062F \u0647\u06CE\u0646\u062F\u06D5 \u0628\u06CE\u062A \u0628\u06C6 ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `\u06A9\u0644\u06CC\u0644\u06CC \u0646\u06D5\u0646\u0627\u0633\u0631\u0627\u0648: ${joinValues(issue2.keys, ", ")}`;
+        return "\u06A9\u0644\u06CC\u0644\u06CC \u0646\u06D5\u0646\u0627\u0633\u0631\u0627\u0648: ".concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `\u06A9\u0644\u06CC\u0644\u06CC \u0646\u0627\u062F\u0631\u0648\u0633\u062A \u0644\u06D5 ${issue2.origin}`;
+        return "\u06A9\u0644\u06CC\u0644\u06CC \u0646\u0627\u062F\u0631\u0648\u0633\u062A \u0644\u06D5 ".concat(issue2.origin);
       case "invalid_union":
         if (issue2.options && Array.isArray(issue2.options) && issue2.options.length > 0) {
-          const opts = issue2.options.map((o) => `'${o}'`).join(" | ");
-          return `\u0628\u06D5\u0647\u0627\u06CC \u0646\u06D5\u0646\u0627\u0633\u0631\u0627\u0648 \u0647\u06D5\u06CC\u06D5. \u0628\u06D5\u0647\u0627\u06CC \u0686\u0627\u0648\u06D5\u0695\u0648\u0627\u0646\u06A9\u0631\u0627\u0648: ${opts}`;
+          const opts = issue2.options.map((o) => "'".concat(o, "'")).join(" | ");
+          return "\u0628\u06D5\u0647\u0627\u06CC \u0646\u06D5\u0646\u0627\u0633\u0631\u0627\u0648 \u0647\u06D5\u06CC\u06D5. \u0628\u06D5\u0647\u0627\u06CC \u0686\u0627\u0648\u06D5\u0695\u0648\u0627\u0646\u06A9\u0631\u0627\u0648: ".concat(opts);
         }
         return "\u06CC\u06D5\u06A9\u06AF\u0631\u062A\u0646\u06CC \u0646\u0627\u062F\u0631\u0648\u0633\u062A";
       case "invalid_element":
-        return `${issue2.origin} \u0628\u06D5\u0647\u0627\u06A9\u06D5 \u0646\u0627\u062F\u0631\u0648\u0633\u062A\u06D5`;
+        return "".concat(issue2.origin, " \u0628\u06D5\u0647\u0627\u06A9\u06D5 \u0646\u0627\u062F\u0631\u0648\u0633\u062A\u06D5");
       default:
-        return `\u062A\u06CE\u06A9\u0631\u062F\u06D5\u06CC \u0646\u0627\u062F\u0631\u0648\u0633\u062A`;
+        return "\u062A\u06CE\u06A9\u0631\u062F\u06D5\u06CC \u0646\u0627\u062F\u0631\u0648\u0633\u062A";
     }
   };
 };
@@ -8562,54 +8270,54 @@ var error8 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Neplatn\xFD vstup: o\u010Dek\xE1v\xE1no instanceof ${issue2.expected}, obdr\u017Eeno ${received}`;
+          return "Neplatn\xFD vstup: o\u010Dek\xE1v\xE1no instanceof ".concat(issue2.expected, ", obdr\u017Eeno ").concat(received);
         }
-        return `Neplatn\xFD vstup: o\u010Dek\xE1v\xE1no ${expected}, obdr\u017Eeno ${received}`;
+        return "Neplatn\xFD vstup: o\u010Dek\xE1v\xE1no ".concat(expected, ", obdr\u017Eeno ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Neplatn\xFD vstup: o\u010Dek\xE1v\xE1no ${stringifyPrimitive(issue2.values[0])}`;
-        return `Neplatn\xE1 mo\u017Enost: o\u010Dek\xE1v\xE1na jedna z hodnot ${joinValues(issue2.values, "|")}`;
+          return "Neplatn\xFD vstup: o\u010Dek\xE1v\xE1no ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Neplatn\xE1 mo\u017Enost: o\u010Dek\xE1v\xE1na jedna z hodnot ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Hodnota je p\u0159\xEDli\u0161 velk\xE1: ${issue2.origin ?? "hodnota"} mus\xED m\xEDt ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "prvk\u016F"}`;
+          return "Hodnota je p\u0159\xEDli\u0161 velk\xE1: ".concat(issue2.origin ?? "hodnota", " mus\xED m\xEDt ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "prvk\u016F");
         }
-        return `Hodnota je p\u0159\xEDli\u0161 velk\xE1: ${issue2.origin ?? "hodnota"} mus\xED b\xFDt ${adj}${issue2.maximum.toString()}`;
+        return "Hodnota je p\u0159\xEDli\u0161 velk\xE1: ".concat(issue2.origin ?? "hodnota", " mus\xED b\xFDt ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Hodnota je p\u0159\xEDli\u0161 mal\xE1: ${issue2.origin ?? "hodnota"} mus\xED m\xEDt ${adj}${issue2.minimum.toString()} ${sizing.unit ?? "prvk\u016F"}`;
+          return "Hodnota je p\u0159\xEDli\u0161 mal\xE1: ".concat(issue2.origin ?? "hodnota", " mus\xED m\xEDt ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit ?? "prvk\u016F");
         }
-        return `Hodnota je p\u0159\xEDli\u0161 mal\xE1: ${issue2.origin ?? "hodnota"} mus\xED b\xFDt ${adj}${issue2.minimum.toString()}`;
+        return "Hodnota je p\u0159\xEDli\u0161 mal\xE1: ".concat(issue2.origin ?? "hodnota", " mus\xED b\xFDt ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `Neplatn\xFD \u0159et\u011Bzec: mus\xED za\u010D\xEDnat na "${_issue.prefix}"`;
+          return 'Neplatn\xFD \u0159et\u011Bzec: mus\xED za\u010D\xEDnat na "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `Neplatn\xFD \u0159et\u011Bzec: mus\xED kon\u010Dit na "${_issue.suffix}"`;
+          return 'Neplatn\xFD \u0159et\u011Bzec: mus\xED kon\u010Dit na "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Neplatn\xFD \u0159et\u011Bzec: mus\xED obsahovat "${_issue.includes}"`;
+          return 'Neplatn\xFD \u0159et\u011Bzec: mus\xED obsahovat "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Neplatn\xFD \u0159et\u011Bzec: mus\xED odpov\xEDdat vzoru ${_issue.pattern}`;
-        return `Neplatn\xFD form\xE1t ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "Neplatn\xFD \u0159et\u011Bzec: mus\xED odpov\xEDdat vzoru ".concat(_issue.pattern);
+        return "Neplatn\xFD form\xE1t ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Neplatn\xE9 \u010D\xEDslo: mus\xED b\xFDt n\xE1sobkem ${issue2.divisor}`;
+        return "Neplatn\xE9 \u010D\xEDslo: mus\xED b\xFDt n\xE1sobkem ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `Nezn\xE1m\xE9 kl\xED\u010De: ${joinValues(issue2.keys, ", ")}`;
+        return "Nezn\xE1m\xE9 kl\xED\u010De: ".concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Neplatn\xFD kl\xED\u010D v ${issue2.origin}`;
+        return "Neplatn\xFD kl\xED\u010D v ".concat(issue2.origin);
       case "invalid_union":
         return "Neplatn\xFD vstup";
       case "invalid_element":
-        return `Neplatn\xE1 hodnota v ${issue2.origin}`;
+        return "Neplatn\xE1 hodnota v ".concat(issue2.origin);
       default:
-        return `Neplatn\xFD vstup`;
+        return "Neplatn\xFD vstup";
     }
   };
 };
@@ -8680,55 +8388,55 @@ var error9 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Ugyldigt input: forventede instanceof ${issue2.expected}, fik ${received}`;
+          return "Ugyldigt input: forventede instanceof ".concat(issue2.expected, ", fik ").concat(received);
         }
-        return `Ugyldigt input: forventede ${expected}, fik ${received}`;
+        return "Ugyldigt input: forventede ".concat(expected, ", fik ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Ugyldig v\xE6rdi: forventede ${stringifyPrimitive(issue2.values[0])}`;
-        return `Ugyldigt valg: forventede en af f\xF8lgende ${joinValues(issue2.values, "|")}`;
+          return "Ugyldig v\xE6rdi: forventede ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Ugyldigt valg: forventede en af f\xF8lgende ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         const origin = TypeDictionary[issue2.origin] ?? issue2.origin;
         if (sizing)
-          return `For stor: forventede ${origin ?? "value"} ${sizing.verb} ${adj} ${issue2.maximum.toString()} ${sizing.unit ?? "elementer"}`;
-        return `For stor: forventede ${origin ?? "value"} havde ${adj} ${issue2.maximum.toString()}`;
+          return "For stor: forventede ".concat(origin ?? "value", " ").concat(sizing.verb, " ").concat(adj, " ").concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "elementer");
+        return "For stor: forventede ".concat(origin ?? "value", " havde ").concat(adj, " ").concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         const origin = TypeDictionary[issue2.origin] ?? issue2.origin;
         if (sizing) {
-          return `For lille: forventede ${origin} ${sizing.verb} ${adj} ${issue2.minimum.toString()} ${sizing.unit}`;
+          return "For lille: forventede ".concat(origin, " ").concat(sizing.verb, " ").concat(adj, " ").concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `For lille: forventede ${origin} havde ${adj} ${issue2.minimum.toString()}`;
+        return "For lille: forventede ".concat(origin, " havde ").concat(adj, " ").concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `Ugyldig streng: skal starte med "${_issue.prefix}"`;
+          return 'Ugyldig streng: skal starte med "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `Ugyldig streng: skal ende med "${_issue.suffix}"`;
+          return 'Ugyldig streng: skal ende med "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Ugyldig streng: skal indeholde "${_issue.includes}"`;
+          return 'Ugyldig streng: skal indeholde "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Ugyldig streng: skal matche m\xF8nsteret ${_issue.pattern}`;
-        return `Ugyldig ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "Ugyldig streng: skal matche m\xF8nsteret ".concat(_issue.pattern);
+        return "Ugyldig ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Ugyldigt tal: skal v\xE6re deleligt med ${issue2.divisor}`;
+        return "Ugyldigt tal: skal v\xE6re deleligt med ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `${issue2.keys.length > 1 ? "Ukendte n\xF8gler" : "Ukendt n\xF8gle"}: ${joinValues(issue2.keys, ", ")}`;
+        return "".concat(issue2.keys.length > 1 ? "Ukendte n\xF8gler" : "Ukendt n\xF8gle", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Ugyldig n\xF8gle i ${issue2.origin}`;
+        return "Ugyldig n\xF8gle i ".concat(issue2.origin);
       case "invalid_union":
         return "Ugyldigt input: matcher ingen af de tilladte typer";
       case "invalid_element":
-        return `Ugyldig v\xE6rdi i ${issue2.origin}`;
+        return "Ugyldig v\xE6rdi i ".concat(issue2.origin);
       default:
-        return `Ugyldigt input`;
+        return "Ugyldigt input";
     }
   };
 };
@@ -8794,53 +8502,53 @@ var error10 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Ung\xFCltige Eingabe: erwartet instanceof ${issue2.expected}, erhalten ${received}`;
+          return "Ung\xFCltige Eingabe: erwartet instanceof ".concat(issue2.expected, ", erhalten ").concat(received);
         }
-        return `Ung\xFCltige Eingabe: erwartet ${expected}, erhalten ${received}`;
+        return "Ung\xFCltige Eingabe: erwartet ".concat(expected, ", erhalten ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Ung\xFCltige Eingabe: erwartet ${stringifyPrimitive(issue2.values[0])}`;
-        return `Ung\xFCltige Option: erwartet eine von ${joinValues(issue2.values, "|")}`;
+          return "Ung\xFCltige Eingabe: erwartet ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Ung\xFCltige Option: erwartet eine von ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Zu gro\xDF: erwartet, dass ${issue2.origin ?? "Wert"} ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "Elemente"} hat`;
-        return `Zu gro\xDF: erwartet, dass ${issue2.origin ?? "Wert"} ${adj}${issue2.maximum.toString()} ist`;
+          return "Zu gro\xDF: erwartet, dass ".concat(issue2.origin ?? "Wert", " ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "Elemente", " hat");
+        return "Zu gro\xDF: erwartet, dass ".concat(issue2.origin ?? "Wert", " ").concat(adj).concat(issue2.maximum.toString(), " ist");
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Zu klein: erwartet, dass ${issue2.origin} ${adj}${issue2.minimum.toString()} ${sizing.unit} hat`;
+          return "Zu klein: erwartet, dass ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit, " hat");
         }
-        return `Zu klein: erwartet, dass ${issue2.origin} ${adj}${issue2.minimum.toString()} ist`;
+        return "Zu klein: erwartet, dass ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString(), " ist");
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `Ung\xFCltiger String: muss mit "${_issue.prefix}" beginnen`;
+          return 'Ung\xFCltiger String: muss mit "'.concat(_issue.prefix, '" beginnen');
         if (_issue.format === "ends_with")
-          return `Ung\xFCltiger String: muss mit "${_issue.suffix}" enden`;
+          return 'Ung\xFCltiger String: muss mit "'.concat(_issue.suffix, '" enden');
         if (_issue.format === "includes")
-          return `Ung\xFCltiger String: muss "${_issue.includes}" enthalten`;
+          return 'Ung\xFCltiger String: muss "'.concat(_issue.includes, '" enthalten');
         if (_issue.format === "regex")
-          return `Ung\xFCltiger String: muss dem Muster ${_issue.pattern} entsprechen`;
-        return `Ung\xFCltig: ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "Ung\xFCltiger String: muss dem Muster ".concat(_issue.pattern, " entsprechen");
+        return "Ung\xFCltig: ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Ung\xFCltige Zahl: muss ein Vielfaches von ${issue2.divisor} sein`;
+        return "Ung\xFCltige Zahl: muss ein Vielfaches von ".concat(issue2.divisor, " sein");
       case "unrecognized_keys":
-        return `${issue2.keys.length > 1 ? "Unbekannte Schl\xFCssel" : "Unbekannter Schl\xFCssel"}: ${joinValues(issue2.keys, ", ")}`;
+        return "".concat(issue2.keys.length > 1 ? "Unbekannte Schl\xFCssel" : "Unbekannter Schl\xFCssel", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Ung\xFCltiger Schl\xFCssel in ${issue2.origin}`;
+        return "Ung\xFCltiger Schl\xFCssel in ".concat(issue2.origin);
       case "invalid_union":
         return "Ung\xFCltige Eingabe";
       case "invalid_element":
-        return `Ung\xFCltiger Wert in ${issue2.origin}`;
+        return "Ung\xFCltiger Wert in ".concat(issue2.origin);
       default:
-        return `Ung\xFCltige Eingabe`;
+        return "Ung\xFCltige Eingabe";
     }
   };
 };
@@ -8904,54 +8612,54 @@ var error11 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (typeof issue2.expected === "string" && /^[A-Z]/.test(issue2.expected)) {
-          return `\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03B5\u03AF\u03C3\u03BF\u03B4\u03BF\u03C2: \u03B1\u03BD\u03B1\u03BC\u03B5\u03BD\u03CC\u03C4\u03B1\u03BD instanceof ${issue2.expected}, \u03BB\u03AE\u03C6\u03B8\u03B7\u03BA\u03B5 ${received}`;
+          return "\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03B5\u03AF\u03C3\u03BF\u03B4\u03BF\u03C2: \u03B1\u03BD\u03B1\u03BC\u03B5\u03BD\u03CC\u03C4\u03B1\u03BD instanceof ".concat(issue2.expected, ", \u03BB\u03AE\u03C6\u03B8\u03B7\u03BA\u03B5 ").concat(received);
         }
-        return `\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03B5\u03AF\u03C3\u03BF\u03B4\u03BF\u03C2: \u03B1\u03BD\u03B1\u03BC\u03B5\u03BD\u03CC\u03C4\u03B1\u03BD ${expected}, \u03BB\u03AE\u03C6\u03B8\u03B7\u03BA\u03B5 ${received}`;
+        return "\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03B5\u03AF\u03C3\u03BF\u03B4\u03BF\u03C2: \u03B1\u03BD\u03B1\u03BC\u03B5\u03BD\u03CC\u03C4\u03B1\u03BD ".concat(expected, ", \u03BB\u03AE\u03C6\u03B8\u03B7\u03BA\u03B5 ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03B5\u03AF\u03C3\u03BF\u03B4\u03BF\u03C2: \u03B1\u03BD\u03B1\u03BC\u03B5\u03BD\u03CC\u03C4\u03B1\u03BD ${stringifyPrimitive(issue2.values[0])}`;
-        return `\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03B5\u03C0\u03B9\u03BB\u03BF\u03B3\u03AE: \u03B1\u03BD\u03B1\u03BC\u03B5\u03BD\u03CC\u03C4\u03B1\u03BD \u03AD\u03BD\u03B1 \u03B1\u03C0\u03CC ${joinValues(issue2.values, "|")}`;
+          return "\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03B5\u03AF\u03C3\u03BF\u03B4\u03BF\u03C2: \u03B1\u03BD\u03B1\u03BC\u03B5\u03BD\u03CC\u03C4\u03B1\u03BD ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03B5\u03C0\u03B9\u03BB\u03BF\u03B3\u03AE: \u03B1\u03BD\u03B1\u03BC\u03B5\u03BD\u03CC\u03C4\u03B1\u03BD \u03AD\u03BD\u03B1 \u03B1\u03C0\u03CC ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u03A0\u03BF\u03BB\u03CD \u03BC\u03B5\u03B3\u03AC\u03BB\u03BF: \u03B1\u03BD\u03B1\u03BC\u03B5\u03BD\u03CC\u03C4\u03B1\u03BD ${issue2.origin ?? "\u03C4\u03B9\u03BC\u03AE"} \u03BD\u03B1 \u03AD\u03C7\u03B5\u03B9 ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "\u03C3\u03C4\u03BF\u03B9\u03C7\u03B5\u03AF\u03B1"}`;
-        return `\u03A0\u03BF\u03BB\u03CD \u03BC\u03B5\u03B3\u03AC\u03BB\u03BF: \u03B1\u03BD\u03B1\u03BC\u03B5\u03BD\u03CC\u03C4\u03B1\u03BD ${issue2.origin ?? "\u03C4\u03B9\u03BC\u03AE"} \u03BD\u03B1 \u03B5\u03AF\u03BD\u03B1\u03B9 ${adj}${issue2.maximum.toString()}`;
+          return "\u03A0\u03BF\u03BB\u03CD \u03BC\u03B5\u03B3\u03AC\u03BB\u03BF: \u03B1\u03BD\u03B1\u03BC\u03B5\u03BD\u03CC\u03C4\u03B1\u03BD ".concat(issue2.origin ?? "\u03C4\u03B9\u03BC\u03AE", " \u03BD\u03B1 \u03AD\u03C7\u03B5\u03B9 ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "\u03C3\u03C4\u03BF\u03B9\u03C7\u03B5\u03AF\u03B1");
+        return "\u03A0\u03BF\u03BB\u03CD \u03BC\u03B5\u03B3\u03AC\u03BB\u03BF: \u03B1\u03BD\u03B1\u03BC\u03B5\u03BD\u03CC\u03C4\u03B1\u03BD ".concat(issue2.origin ?? "\u03C4\u03B9\u03BC\u03AE", " \u03BD\u03B1 \u03B5\u03AF\u03BD\u03B1\u03B9 ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u03A0\u03BF\u03BB\u03CD \u03BC\u03B9\u03BA\u03C1\u03CC: \u03B1\u03BD\u03B1\u03BC\u03B5\u03BD\u03CC\u03C4\u03B1\u03BD ${issue2.origin} \u03BD\u03B1 \u03AD\u03C7\u03B5\u03B9 ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "\u03A0\u03BF\u03BB\u03CD \u03BC\u03B9\u03BA\u03C1\u03CC: \u03B1\u03BD\u03B1\u03BC\u03B5\u03BD\u03CC\u03C4\u03B1\u03BD ".concat(issue2.origin, " \u03BD\u03B1 \u03AD\u03C7\u03B5\u03B9 ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `\u03A0\u03BF\u03BB\u03CD \u03BC\u03B9\u03BA\u03C1\u03CC: \u03B1\u03BD\u03B1\u03BC\u03B5\u03BD\u03CC\u03C4\u03B1\u03BD ${issue2.origin} \u03BD\u03B1 \u03B5\u03AF\u03BD\u03B1\u03B9 ${adj}${issue2.minimum.toString()}`;
+        return "\u03A0\u03BF\u03BB\u03CD \u03BC\u03B9\u03BA\u03C1\u03CC: \u03B1\u03BD\u03B1\u03BC\u03B5\u03BD\u03CC\u03C4\u03B1\u03BD ".concat(issue2.origin, " \u03BD\u03B1 \u03B5\u03AF\u03BD\u03B1\u03B9 ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03C3\u03C5\u03BC\u03B2\u03BF\u03BB\u03BF\u03C3\u03B5\u03B9\u03C1\u03AC: \u03C0\u03C1\u03AD\u03C0\u03B5\u03B9 \u03BD\u03B1 \u03BE\u03B5\u03BA\u03B9\u03BD\u03AC \u03BC\u03B5 "${_issue.prefix}"`;
+          return '\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03C3\u03C5\u03BC\u03B2\u03BF\u03BB\u03BF\u03C3\u03B5\u03B9\u03C1\u03AC: \u03C0\u03C1\u03AD\u03C0\u03B5\u03B9 \u03BD\u03B1 \u03BE\u03B5\u03BA\u03B9\u03BD\u03AC \u03BC\u03B5 "'.concat(_issue.prefix, '"');
         }
         if (_issue.format === "ends_with")
-          return `\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03C3\u03C5\u03BC\u03B2\u03BF\u03BB\u03BF\u03C3\u03B5\u03B9\u03C1\u03AC: \u03C0\u03C1\u03AD\u03C0\u03B5\u03B9 \u03BD\u03B1 \u03C4\u03B5\u03BB\u03B5\u03B9\u03CE\u03BD\u03B5\u03B9 \u03BC\u03B5 "${_issue.suffix}"`;
+          return '\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03C3\u03C5\u03BC\u03B2\u03BF\u03BB\u03BF\u03C3\u03B5\u03B9\u03C1\u03AC: \u03C0\u03C1\u03AD\u03C0\u03B5\u03B9 \u03BD\u03B1 \u03C4\u03B5\u03BB\u03B5\u03B9\u03CE\u03BD\u03B5\u03B9 \u03BC\u03B5 "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03C3\u03C5\u03BC\u03B2\u03BF\u03BB\u03BF\u03C3\u03B5\u03B9\u03C1\u03AC: \u03C0\u03C1\u03AD\u03C0\u03B5\u03B9 \u03BD\u03B1 \u03C0\u03B5\u03C1\u03B9\u03AD\u03C7\u03B5\u03B9 "${_issue.includes}"`;
+          return '\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03C3\u03C5\u03BC\u03B2\u03BF\u03BB\u03BF\u03C3\u03B5\u03B9\u03C1\u03AC: \u03C0\u03C1\u03AD\u03C0\u03B5\u03B9 \u03BD\u03B1 \u03C0\u03B5\u03C1\u03B9\u03AD\u03C7\u03B5\u03B9 "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03C3\u03C5\u03BC\u03B2\u03BF\u03BB\u03BF\u03C3\u03B5\u03B9\u03C1\u03AC: \u03C0\u03C1\u03AD\u03C0\u03B5\u03B9 \u03BD\u03B1 \u03C4\u03B1\u03B9\u03C1\u03B9\u03AC\u03B6\u03B5\u03B9 \u03BC\u03B5 \u03C4\u03BF \u03BC\u03BF\u03C4\u03AF\u03B2\u03BF ${_issue.pattern}`;
-        return `\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03BF: ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03C3\u03C5\u03BC\u03B2\u03BF\u03BB\u03BF\u03C3\u03B5\u03B9\u03C1\u03AC: \u03C0\u03C1\u03AD\u03C0\u03B5\u03B9 \u03BD\u03B1 \u03C4\u03B1\u03B9\u03C1\u03B9\u03AC\u03B6\u03B5\u03B9 \u03BC\u03B5 \u03C4\u03BF \u03BC\u03BF\u03C4\u03AF\u03B2\u03BF ".concat(_issue.pattern);
+        return "\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03BF: ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03BF\u03C2 \u03B1\u03C1\u03B9\u03B8\u03BC\u03CC\u03C2: \u03C0\u03C1\u03AD\u03C0\u03B5\u03B9 \u03BD\u03B1 \u03B5\u03AF\u03BD\u03B1\u03B9 \u03C0\u03BF\u03BB\u03BB\u03B1\u03C0\u03BB\u03AC\u03C3\u03B9\u03BF \u03C4\u03BF\u03C5 ${issue2.divisor}`;
+        return "\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03BF\u03C2 \u03B1\u03C1\u03B9\u03B8\u03BC\u03CC\u03C2: \u03C0\u03C1\u03AD\u03C0\u03B5\u03B9 \u03BD\u03B1 \u03B5\u03AF\u03BD\u03B1\u03B9 \u03C0\u03BF\u03BB\u03BB\u03B1\u03C0\u03BB\u03AC\u03C3\u03B9\u03BF \u03C4\u03BF\u03C5 ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `\u0386\u03B3\u03BD\u03C9\u03C3\u03C4${issue2.keys.length > 1 ? "\u03B1" : "\u03BF"} \u03BA\u03BB\u03B5\u03B9\u03B4${issue2.keys.length > 1 ? "\u03B9\u03AC" : "\u03AF"}: ${joinValues(issue2.keys, ", ")}`;
+        return "\u0386\u03B3\u03BD\u03C9\u03C3\u03C4".concat(issue2.keys.length > 1 ? "\u03B1" : "\u03BF", " \u03BA\u03BB\u03B5\u03B9\u03B4").concat(issue2.keys.length > 1 ? "\u03B9\u03AC" : "\u03AF", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03BF \u03BA\u03BB\u03B5\u03B9\u03B4\u03AF \u03C3\u03C4\u03BF ${issue2.origin}`;
+        return "\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03BF \u03BA\u03BB\u03B5\u03B9\u03B4\u03AF \u03C3\u03C4\u03BF ".concat(issue2.origin);
       case "invalid_union":
         return "\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03B5\u03AF\u03C3\u03BF\u03B4\u03BF\u03C2";
       case "invalid_element":
-        return `\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03C4\u03B9\u03BC\u03AE \u03C3\u03C4\u03BF ${issue2.origin}`;
+        return "\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03C4\u03B9\u03BC\u03AE \u03C3\u03C4\u03BF ".concat(issue2.origin);
       default:
-        return `\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03B5\u03AF\u03C3\u03BF\u03B4\u03BF\u03C2`;
+        return "\u039C\u03B7 \u03AD\u03B3\u03BA\u03C5\u03C1\u03B7 \u03B5\u03AF\u03C3\u03BF\u03B4\u03BF\u03C2";
     }
   };
 };
@@ -9022,59 +8730,59 @@ var error12 = () => {
         const expected = getTypeName(issue2.expected);
         const receivedType = parsedType(issue2.input);
         const received = getTypeName(receivedType, issue2.input);
-        return `Invalid input: expected ${expected}, received ${received}`;
+        return "Invalid input: expected ".concat(expected, ", received ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Invalid input: expected ${stringifyPrimitive(issue2.values[0])}`;
-        return `Invalid option: expected one of ${joinValues(issue2.values, "|")}`;
+          return "Invalid input: expected ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Invalid option: expected one of ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.exact ? "exactly " : issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Too big: expected ${issue2.origin ?? "value"} to have ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "elements"}`;
-        return `Too big: expected ${issue2.origin ?? "value"} to be ${adj}${issue2.maximum.toString()}`;
+          return "Too big: expected ".concat(issue2.origin ?? "value", " to have ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "elements");
+        return "Too big: expected ".concat(issue2.origin ?? "value", " to be ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.exact ? "exactly " : issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Too small: expected ${issue2.origin} to have ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "Too small: expected ".concat(issue2.origin, " to have ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `Too small: expected ${issue2.origin} to be ${adj}${issue2.minimum.toString()}`;
+        return "Too small: expected ".concat(issue2.origin, " to be ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `Invalid string: must start with "${_issue.prefix}"`;
+          return 'Invalid string: must start with "'.concat(_issue.prefix, '"');
         }
         if (_issue.format === "ends_with")
-          return `Invalid string: must end with "${_issue.suffix}"`;
+          return 'Invalid string: must end with "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Invalid string: must include "${_issue.includes}"`;
+          return 'Invalid string: must include "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Invalid string: must match pattern ${_issue.pattern}`;
-        return `Invalid ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "Invalid string: must match pattern ".concat(_issue.pattern);
+        return "Invalid ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Invalid number: must be a multiple of ${issue2.divisor}`;
+        return "Invalid number: must be a multiple of ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `Unrecognized key${issue2.keys.length > 1 ? "s" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "Unrecognized key".concat(issue2.keys.length > 1 ? "s" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Invalid key in ${issue2.origin}`;
+        return "Invalid key in ".concat(issue2.origin);
       case "invalid_union":
         if (issue2.options && Array.isArray(issue2.options) && issue2.options.length > 0) {
-          const opts = issue2.options.map((o) => `'${o}'`).join(" | ");
-          return `Invalid discriminator value. Expected ${opts}`;
+          const opts = issue2.options.map((o) => "'".concat(o, "'")).join(" | ");
+          return "Invalid discriminator value. Expected ".concat(opts);
         }
         if (issue2.inclusive === false) {
           return "Invalid input: more than one option matched";
         }
         return "Invalid input";
       case "invalid_element":
-        return `Invalid value in ${issue2.origin}`;
+        return "Invalid value in ".concat(issue2.origin);
       default:
-        return `Invalid input`;
+        return "Invalid input";
     }
   };
 };
@@ -9141,53 +8849,53 @@ var error13 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Nevalida enigo: atendi\u011Dis instanceof ${issue2.expected}, ricevi\u011Dis ${received}`;
+          return "Nevalida enigo: atendi\u011Dis instanceof ".concat(issue2.expected, ", ricevi\u011Dis ").concat(received);
         }
-        return `Nevalida enigo: atendi\u011Dis ${expected}, ricevi\u011Dis ${received}`;
+        return "Nevalida enigo: atendi\u011Dis ".concat(expected, ", ricevi\u011Dis ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Nevalida enigo: atendi\u011Dis ${stringifyPrimitive(issue2.values[0])}`;
-        return `Nevalida opcio: atendi\u011Dis unu el ${joinValues(issue2.values, "|")}`;
+          return "Nevalida enigo: atendi\u011Dis ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Nevalida opcio: atendi\u011Dis unu el ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Tro granda: atendi\u011Dis ke ${issue2.origin ?? "valoro"} havu ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "elementojn"}`;
-        return `Tro granda: atendi\u011Dis ke ${issue2.origin ?? "valoro"} havu ${adj}${issue2.maximum.toString()}`;
+          return "Tro granda: atendi\u011Dis ke ".concat(issue2.origin ?? "valoro", " havu ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "elementojn");
+        return "Tro granda: atendi\u011Dis ke ".concat(issue2.origin ?? "valoro", " havu ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Tro malgranda: atendi\u011Dis ke ${issue2.origin} havu ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "Tro malgranda: atendi\u011Dis ke ".concat(issue2.origin, " havu ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `Tro malgranda: atendi\u011Dis ke ${issue2.origin} estu ${adj}${issue2.minimum.toString()}`;
+        return "Tro malgranda: atendi\u011Dis ke ".concat(issue2.origin, " estu ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `Nevalida karaktraro: devas komenci\u011Di per "${_issue.prefix}"`;
+          return 'Nevalida karaktraro: devas komenci\u011Di per "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `Nevalida karaktraro: devas fini\u011Di per "${_issue.suffix}"`;
+          return 'Nevalida karaktraro: devas fini\u011Di per "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Nevalida karaktraro: devas inkluzivi "${_issue.includes}"`;
+          return 'Nevalida karaktraro: devas inkluzivi "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Nevalida karaktraro: devas kongrui kun la modelo ${_issue.pattern}`;
-        return `Nevalida ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "Nevalida karaktraro: devas kongrui kun la modelo ".concat(_issue.pattern);
+        return "Nevalida ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Nevalida nombro: devas esti oblo de ${issue2.divisor}`;
+        return "Nevalida nombro: devas esti oblo de ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `Nekonata${issue2.keys.length > 1 ? "j" : ""} \u015Dlosilo${issue2.keys.length > 1 ? "j" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "Nekonata".concat(issue2.keys.length > 1 ? "j" : "", " \u015Dlosilo").concat(issue2.keys.length > 1 ? "j" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Nevalida \u015Dlosilo en ${issue2.origin}`;
+        return "Nevalida \u015Dlosilo en ".concat(issue2.origin);
       case "invalid_union":
         return "Nevalida enigo";
       case "invalid_element":
-        return `Nevalida valoro en ${issue2.origin}`;
+        return "Nevalida valoro en ".concat(issue2.origin);
       default:
-        return `Nevalida enigo`;
+        return "Nevalida enigo";
     }
   };
 };
@@ -9274,55 +8982,55 @@ var error14 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Entrada inv\xE1lida: se esperaba instanceof ${issue2.expected}, recibido ${received}`;
+          return "Entrada inv\xE1lida: se esperaba instanceof ".concat(issue2.expected, ", recibido ").concat(received);
         }
-        return `Entrada inv\xE1lida: se esperaba ${expected}, recibido ${received}`;
+        return "Entrada inv\xE1lida: se esperaba ".concat(expected, ", recibido ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Entrada inv\xE1lida: se esperaba ${stringifyPrimitive(issue2.values[0])}`;
-        return `Opci\xF3n inv\xE1lida: se esperaba una de ${joinValues(issue2.values, "|")}`;
+          return "Entrada inv\xE1lida: se esperaba ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Opci\xF3n inv\xE1lida: se esperaba una de ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         const origin = TypeDictionary[issue2.origin] ?? issue2.origin;
         if (sizing)
-          return `Demasiado grande: se esperaba que ${origin ?? "valor"} tuviera ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "elementos"}`;
-        return `Demasiado grande: se esperaba que ${origin ?? "valor"} fuera ${adj}${issue2.maximum.toString()}`;
+          return "Demasiado grande: se esperaba que ".concat(origin ?? "valor", " tuviera ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "elementos");
+        return "Demasiado grande: se esperaba que ".concat(origin ?? "valor", " fuera ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         const origin = TypeDictionary[issue2.origin] ?? issue2.origin;
         if (sizing) {
-          return `Demasiado peque\xF1o: se esperaba que ${origin} tuviera ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "Demasiado peque\xF1o: se esperaba que ".concat(origin, " tuviera ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `Demasiado peque\xF1o: se esperaba que ${origin} fuera ${adj}${issue2.minimum.toString()}`;
+        return "Demasiado peque\xF1o: se esperaba que ".concat(origin, " fuera ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `Cadena inv\xE1lida: debe comenzar con "${_issue.prefix}"`;
+          return 'Cadena inv\xE1lida: debe comenzar con "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `Cadena inv\xE1lida: debe terminar en "${_issue.suffix}"`;
+          return 'Cadena inv\xE1lida: debe terminar en "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Cadena inv\xE1lida: debe incluir "${_issue.includes}"`;
+          return 'Cadena inv\xE1lida: debe incluir "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Cadena inv\xE1lida: debe coincidir con el patr\xF3n ${_issue.pattern}`;
-        return `Inv\xE1lido ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "Cadena inv\xE1lida: debe coincidir con el patr\xF3n ".concat(_issue.pattern);
+        return "Inv\xE1lido ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `N\xFAmero inv\xE1lido: debe ser m\xFAltiplo de ${issue2.divisor}`;
+        return "N\xFAmero inv\xE1lido: debe ser m\xFAltiplo de ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `Llave${issue2.keys.length > 1 ? "s" : ""} desconocida${issue2.keys.length > 1 ? "s" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "Llave".concat(issue2.keys.length > 1 ? "s" : "", " desconocida").concat(issue2.keys.length > 1 ? "s" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Llave inv\xE1lida en ${TypeDictionary[issue2.origin] ?? issue2.origin}`;
+        return "Llave inv\xE1lida en ".concat(TypeDictionary[issue2.origin] ?? issue2.origin);
       case "invalid_union":
         return "Entrada inv\xE1lida";
       case "invalid_element":
-        return `Valor inv\xE1lido en ${TypeDictionary[issue2.origin] ?? issue2.origin}`;
+        return "Valor inv\xE1lido en ".concat(TypeDictionary[issue2.origin] ?? issue2.origin);
       default:
-        return `Entrada inv\xE1lida`;
+        return "Entrada inv\xE1lida";
     }
   };
 };
@@ -9388,59 +9096,59 @@ var error15 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\u0648\u0631\u0648\u062F\u06CC \u0646\u0627\u0645\u0639\u062A\u0628\u0631: \u0645\u06CC\u200C\u0628\u0627\u06CC\u0633\u062A instanceof ${issue2.expected} \u0645\u06CC\u200C\u0628\u0648\u062F\u060C ${received} \u062F\u0631\u06CC\u0627\u0641\u062A \u0634\u062F`;
+          return "\u0648\u0631\u0648\u062F\u06CC \u0646\u0627\u0645\u0639\u062A\u0628\u0631: \u0645\u06CC\u200C\u0628\u0627\u06CC\u0633\u062A instanceof ".concat(issue2.expected, " \u0645\u06CC\u200C\u0628\u0648\u062F\u060C ").concat(received, " \u062F\u0631\u06CC\u0627\u0641\u062A \u0634\u062F");
         }
-        return `\u0648\u0631\u0648\u062F\u06CC \u0646\u0627\u0645\u0639\u062A\u0628\u0631: \u0645\u06CC\u200C\u0628\u0627\u06CC\u0633\u062A ${expected} \u0645\u06CC\u200C\u0628\u0648\u062F\u060C ${received} \u062F\u0631\u06CC\u0627\u0641\u062A \u0634\u062F`;
+        return "\u0648\u0631\u0648\u062F\u06CC \u0646\u0627\u0645\u0639\u062A\u0628\u0631: \u0645\u06CC\u200C\u0628\u0627\u06CC\u0633\u062A ".concat(expected, " \u0645\u06CC\u200C\u0628\u0648\u062F\u060C ").concat(received, " \u062F\u0631\u06CC\u0627\u0641\u062A \u0634\u062F");
       }
       case "invalid_value":
         if (issue2.values.length === 1) {
-          return `\u0648\u0631\u0648\u062F\u06CC \u0646\u0627\u0645\u0639\u062A\u0628\u0631: \u0645\u06CC\u200C\u0628\u0627\u06CC\u0633\u062A ${stringifyPrimitive(issue2.values[0])} \u0645\u06CC\u200C\u0628\u0648\u062F`;
+          return "\u0648\u0631\u0648\u062F\u06CC \u0646\u0627\u0645\u0639\u062A\u0628\u0631: \u0645\u06CC\u200C\u0628\u0627\u06CC\u0633\u062A ".concat(stringifyPrimitive(issue2.values[0]), " \u0645\u06CC\u200C\u0628\u0648\u062F");
         }
-        return `\u06AF\u0632\u06CC\u0646\u0647 \u0646\u0627\u0645\u0639\u062A\u0628\u0631: \u0645\u06CC\u200C\u0628\u0627\u06CC\u0633\u062A \u06CC\u06A9\u06CC \u0627\u0632 ${joinValues(issue2.values, "|")} \u0645\u06CC\u200C\u0628\u0648\u062F`;
+        return "\u06AF\u0632\u06CC\u0646\u0647 \u0646\u0627\u0645\u0639\u062A\u0628\u0631: \u0645\u06CC\u200C\u0628\u0627\u06CC\u0633\u062A \u06CC\u06A9\u06CC \u0627\u0632 ".concat(joinValues(issue2.values, "|"), " \u0645\u06CC\u200C\u0628\u0648\u062F");
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u062E\u06CC\u0644\u06CC \u0628\u0632\u0631\u06AF: ${issue2.origin ?? "\u0645\u0642\u062F\u0627\u0631"} \u0628\u0627\u06CC\u062F ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "\u0639\u0646\u0635\u0631"} \u0628\u0627\u0634\u062F`;
+          return "\u062E\u06CC\u0644\u06CC \u0628\u0632\u0631\u06AF: ".concat(issue2.origin ?? "\u0645\u0642\u062F\u0627\u0631", " \u0628\u0627\u06CC\u062F ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "\u0639\u0646\u0635\u0631", " \u0628\u0627\u0634\u062F");
         }
-        return `\u062E\u06CC\u0644\u06CC \u0628\u0632\u0631\u06AF: ${issue2.origin ?? "\u0645\u0642\u062F\u0627\u0631"} \u0628\u0627\u06CC\u062F ${adj}${issue2.maximum.toString()} \u0628\u0627\u0634\u062F`;
+        return "\u062E\u06CC\u0644\u06CC \u0628\u0632\u0631\u06AF: ".concat(issue2.origin ?? "\u0645\u0642\u062F\u0627\u0631", " \u0628\u0627\u06CC\u062F ").concat(adj).concat(issue2.maximum.toString(), " \u0628\u0627\u0634\u062F");
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u062E\u06CC\u0644\u06CC \u06A9\u0648\u0686\u06A9: ${issue2.origin} \u0628\u0627\u06CC\u062F ${adj}${issue2.minimum.toString()} ${sizing.unit} \u0628\u0627\u0634\u062F`;
+          return "\u062E\u06CC\u0644\u06CC \u06A9\u0648\u0686\u06A9: ".concat(issue2.origin, " \u0628\u0627\u06CC\u062F ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit, " \u0628\u0627\u0634\u062F");
         }
-        return `\u062E\u06CC\u0644\u06CC \u06A9\u0648\u0686\u06A9: ${issue2.origin} \u0628\u0627\u06CC\u062F ${adj}${issue2.minimum.toString()} \u0628\u0627\u0634\u062F`;
+        return "\u062E\u06CC\u0644\u06CC \u06A9\u0648\u0686\u06A9: ".concat(issue2.origin, " \u0628\u0627\u06CC\u062F ").concat(adj).concat(issue2.minimum.toString(), " \u0628\u0627\u0634\u062F");
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `\u0631\u0634\u062A\u0647 \u0646\u0627\u0645\u0639\u062A\u0628\u0631: \u0628\u0627\u06CC\u062F \u0628\u0627 "${_issue.prefix}" \u0634\u0631\u0648\u0639 \u0634\u0648\u062F`;
+          return '\u0631\u0634\u062A\u0647 \u0646\u0627\u0645\u0639\u062A\u0628\u0631: \u0628\u0627\u06CC\u062F \u0628\u0627 "'.concat(_issue.prefix, '" \u0634\u0631\u0648\u0639 \u0634\u0648\u062F');
         }
         if (_issue.format === "ends_with") {
-          return `\u0631\u0634\u062A\u0647 \u0646\u0627\u0645\u0639\u062A\u0628\u0631: \u0628\u0627\u06CC\u062F \u0628\u0627 "${_issue.suffix}" \u062A\u0645\u0627\u0645 \u0634\u0648\u062F`;
+          return '\u0631\u0634\u062A\u0647 \u0646\u0627\u0645\u0639\u062A\u0628\u0631: \u0628\u0627\u06CC\u062F \u0628\u0627 "'.concat(_issue.suffix, '" \u062A\u0645\u0627\u0645 \u0634\u0648\u062F');
         }
         if (_issue.format === "includes") {
-          return `\u0631\u0634\u062A\u0647 \u0646\u0627\u0645\u0639\u062A\u0628\u0631: \u0628\u0627\u06CC\u062F \u0634\u0627\u0645\u0644 "${_issue.includes}" \u0628\u0627\u0634\u062F`;
+          return '\u0631\u0634\u062A\u0647 \u0646\u0627\u0645\u0639\u062A\u0628\u0631: \u0628\u0627\u06CC\u062F \u0634\u0627\u0645\u0644 "'.concat(_issue.includes, '" \u0628\u0627\u0634\u062F');
         }
         if (_issue.format === "regex") {
-          return `\u0631\u0634\u062A\u0647 \u0646\u0627\u0645\u0639\u062A\u0628\u0631: \u0628\u0627\u06CC\u062F \u0628\u0627 \u0627\u0644\u06AF\u0648\u06CC ${_issue.pattern} \u0645\u0637\u0627\u0628\u0642\u062A \u062F\u0627\u0634\u062A\u0647 \u0628\u0627\u0634\u062F`;
+          return "\u0631\u0634\u062A\u0647 \u0646\u0627\u0645\u0639\u062A\u0628\u0631: \u0628\u0627\u06CC\u062F \u0628\u0627 \u0627\u0644\u06AF\u0648\u06CC ".concat(_issue.pattern, " \u0645\u0637\u0627\u0628\u0642\u062A \u062F\u0627\u0634\u062A\u0647 \u0628\u0627\u0634\u062F");
         }
-        return `${FormatDictionary[_issue.format] ?? issue2.format} \u0646\u0627\u0645\u0639\u062A\u0628\u0631`;
+        return "".concat(FormatDictionary[_issue.format] ?? issue2.format, " \u0646\u0627\u0645\u0639\u062A\u0628\u0631");
       }
       case "not_multiple_of":
-        return `\u0639\u062F\u062F \u0646\u0627\u0645\u0639\u062A\u0628\u0631: \u0628\u0627\u06CC\u062F \u0645\u0636\u0631\u0628 ${issue2.divisor} \u0628\u0627\u0634\u062F`;
+        return "\u0639\u062F\u062F \u0646\u0627\u0645\u0639\u062A\u0628\u0631: \u0628\u0627\u06CC\u062F \u0645\u0636\u0631\u0628 ".concat(issue2.divisor, " \u0628\u0627\u0634\u062F");
       case "unrecognized_keys":
-        return `\u06A9\u0644\u06CC\u062F${issue2.keys.length > 1 ? "\u0647\u0627\u06CC" : ""} \u0646\u0627\u0634\u0646\u0627\u0633: ${joinValues(issue2.keys, ", ")}`;
+        return "\u06A9\u0644\u06CC\u062F".concat(issue2.keys.length > 1 ? "\u0647\u0627\u06CC" : "", " \u0646\u0627\u0634\u0646\u0627\u0633: ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `\u06A9\u0644\u06CC\u062F \u0646\u0627\u0634\u0646\u0627\u0633 \u062F\u0631 ${issue2.origin}`;
+        return "\u06A9\u0644\u06CC\u062F \u0646\u0627\u0634\u0646\u0627\u0633 \u062F\u0631 ".concat(issue2.origin);
       case "invalid_union":
-        return `\u0648\u0631\u0648\u062F\u06CC \u0646\u0627\u0645\u0639\u062A\u0628\u0631`;
+        return "\u0648\u0631\u0648\u062F\u06CC \u0646\u0627\u0645\u0639\u062A\u0628\u0631";
       case "invalid_element":
-        return `\u0645\u0642\u062F\u0627\u0631 \u0646\u0627\u0645\u0639\u062A\u0628\u0631 \u062F\u0631 ${issue2.origin}`;
+        return "\u0645\u0642\u062F\u0627\u0631 \u0646\u0627\u0645\u0639\u062A\u0628\u0631 \u062F\u0631 ".concat(issue2.origin);
       default:
-        return `\u0648\u0631\u0648\u062F\u06CC \u0646\u0627\u0645\u0639\u062A\u0628\u0631`;
+        return "\u0648\u0631\u0648\u062F\u06CC \u0646\u0627\u0645\u0639\u062A\u0628\u0631";
     }
   };
 };
@@ -9508,47 +9216,47 @@ var error16 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Virheellinen tyyppi: odotettiin instanceof ${issue2.expected}, oli ${received}`;
+          return "Virheellinen tyyppi: odotettiin instanceof ".concat(issue2.expected, ", oli ").concat(received);
         }
-        return `Virheellinen tyyppi: odotettiin ${expected}, oli ${received}`;
+        return "Virheellinen tyyppi: odotettiin ".concat(expected, ", oli ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Virheellinen sy\xF6te: t\xE4ytyy olla ${stringifyPrimitive(issue2.values[0])}`;
-        return `Virheellinen valinta: t\xE4ytyy olla yksi seuraavista: ${joinValues(issue2.values, "|")}`;
+          return "Virheellinen sy\xF6te: t\xE4ytyy olla ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Virheellinen valinta: t\xE4ytyy olla yksi seuraavista: ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Liian suuri: ${sizing.subject} t\xE4ytyy olla ${adj}${issue2.maximum.toString()} ${sizing.unit}`.trim();
+          return "Liian suuri: ".concat(sizing.subject, " t\xE4ytyy olla ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit).trim();
         }
-        return `Liian suuri: arvon t\xE4ytyy olla ${adj}${issue2.maximum.toString()}`;
+        return "Liian suuri: arvon t\xE4ytyy olla ".concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Liian pieni: ${sizing.subject} t\xE4ytyy olla ${adj}${issue2.minimum.toString()} ${sizing.unit}`.trim();
+          return "Liian pieni: ".concat(sizing.subject, " t\xE4ytyy olla ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit).trim();
         }
-        return `Liian pieni: arvon t\xE4ytyy olla ${adj}${issue2.minimum.toString()}`;
+        return "Liian pieni: arvon t\xE4ytyy olla ".concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `Virheellinen sy\xF6te: t\xE4ytyy alkaa "${_issue.prefix}"`;
+          return 'Virheellinen sy\xF6te: t\xE4ytyy alkaa "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `Virheellinen sy\xF6te: t\xE4ytyy loppua "${_issue.suffix}"`;
+          return 'Virheellinen sy\xF6te: t\xE4ytyy loppua "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Virheellinen sy\xF6te: t\xE4ytyy sis\xE4lt\xE4\xE4 "${_issue.includes}"`;
+          return 'Virheellinen sy\xF6te: t\xE4ytyy sis\xE4lt\xE4\xE4 "'.concat(_issue.includes, '"');
         if (_issue.format === "regex") {
-          return `Virheellinen sy\xF6te: t\xE4ytyy vastata s\xE4\xE4nn\xF6llist\xE4 lauseketta ${_issue.pattern}`;
+          return "Virheellinen sy\xF6te: t\xE4ytyy vastata s\xE4\xE4nn\xF6llist\xE4 lauseketta ".concat(_issue.pattern);
         }
-        return `Virheellinen ${FormatDictionary[_issue.format] ?? issue2.format}`;
+        return "Virheellinen ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Virheellinen luku: t\xE4ytyy olla luvun ${issue2.divisor} monikerta`;
+        return "Virheellinen luku: t\xE4ytyy olla luvun ".concat(issue2.divisor, " monikerta");
       case "unrecognized_keys":
-        return `${issue2.keys.length > 1 ? "Tuntemattomat avaimet" : "Tuntematon avain"}: ${joinValues(issue2.keys, ", ")}`;
+        return "".concat(issue2.keys.length > 1 ? "Tuntemattomat avaimet" : "Tuntematon avain", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
         return "Virheellinen avain tietueessa";
       case "invalid_union":
@@ -9556,7 +9264,7 @@ var error16 = () => {
       case "invalid_element":
         return "Virheellinen arvo joukossa";
       default:
-        return `Virheellinen sy\xF6te`;
+        return "Virheellinen sy\xF6te";
     }
   };
 };
@@ -9639,52 +9347,52 @@ var error17 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Entr\xE9e invalide : instance de ${issue2.expected} attendu, ${received} re\xE7u`;
+          return "Entr\xE9e invalide : instance de ".concat(issue2.expected, " attendu, ").concat(received, " re\xE7u");
         }
-        return `Entr\xE9e invalide : ${expected} attendu, ${received} re\xE7u`;
+        return "Entr\xE9e invalide : ".concat(expected, " attendu, ").concat(received, " re\xE7u");
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Entr\xE9e invalide : ${stringifyPrimitive(issue2.values[0])} attendu`;
-        return `Option invalide : une valeur parmi ${joinValues(issue2.values, "|")} attendue`;
+          return "Entr\xE9e invalide : ".concat(stringifyPrimitive(issue2.values[0]), " attendu");
+        return "Option invalide : une valeur parmi ".concat(joinValues(issue2.values, "|"), " attendue");
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Trop grand : ${TypeDictionary[issue2.origin] ?? "valeur"} doit ${sizing.verb} ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "\xE9l\xE9ment(s)"}`;
-        return `Trop grand : ${TypeDictionary[issue2.origin] ?? "valeur"} doit \xEAtre ${adj}${issue2.maximum.toString()}`;
+          return "Trop grand : ".concat(TypeDictionary[issue2.origin] ?? "valeur", " doit ").concat(sizing.verb, " ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "\xE9l\xE9ment(s)");
+        return "Trop grand : ".concat(TypeDictionary[issue2.origin] ?? "valeur", " doit \xEAtre ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Trop petit : ${TypeDictionary[issue2.origin] ?? "valeur"} doit ${sizing.verb} ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
-        return `Trop petit : ${TypeDictionary[issue2.origin] ?? "valeur"} doit \xEAtre ${adj}${issue2.minimum.toString()}`;
+          return "Trop petit : ".concat(TypeDictionary[issue2.origin] ?? "valeur", " doit ").concat(sizing.verb, " ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
+        return "Trop petit : ".concat(TypeDictionary[issue2.origin] ?? "valeur", " doit \xEAtre ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `Cha\xEEne de caract\xE8res invalide : doit commencer par "${_issue.prefix}"`;
+          return 'Cha\xEEne de caract\xE8res invalide : doit commencer par "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `Cha\xEEne de caract\xE8res invalide : doit se terminer par "${_issue.suffix}"`;
+          return 'Cha\xEEne de caract\xE8res invalide : doit se terminer par "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Cha\xEEne de caract\xE8res invalide : doit inclure "${_issue.includes}"`;
+          return 'Cha\xEEne de caract\xE8res invalide : doit inclure "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Cha\xEEne de caract\xE8res invalide : doit correspondre au motif ${_issue.pattern}`;
-        return `${FormatDictionary[_issue.format] ?? issue2.format} invalide`;
+          return "Cha\xEEne de caract\xE8res invalide : doit correspondre au motif ".concat(_issue.pattern);
+        return "".concat(FormatDictionary[_issue.format] ?? issue2.format, " invalide");
       }
       case "not_multiple_of":
-        return `Nombre invalide : doit \xEAtre un multiple de ${issue2.divisor}`;
+        return "Nombre invalide : doit \xEAtre un multiple de ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `Cl\xE9${issue2.keys.length > 1 ? "s" : ""} non reconnue${issue2.keys.length > 1 ? "s" : ""} : ${joinValues(issue2.keys, ", ")}`;
+        return "Cl\xE9".concat(issue2.keys.length > 1 ? "s" : "", " non reconnue").concat(issue2.keys.length > 1 ? "s" : "", " : ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Cl\xE9 invalide dans ${issue2.origin}`;
+        return "Cl\xE9 invalide dans ".concat(issue2.origin);
       case "invalid_union":
         return "Entr\xE9e invalide";
       case "invalid_element":
-        return `Valeur invalide dans ${issue2.origin}`;
+        return "Valeur invalide dans ".concat(issue2.origin);
       default:
-        return `Entr\xE9e invalide`;
+        return "Entr\xE9e invalide";
     }
   };
 };
@@ -9748,54 +9456,54 @@ var error18 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Entr\xE9e invalide : attendu instanceof ${issue2.expected}, re\xE7u ${received}`;
+          return "Entr\xE9e invalide : attendu instanceof ".concat(issue2.expected, ", re\xE7u ").concat(received);
         }
-        return `Entr\xE9e invalide : attendu ${expected}, re\xE7u ${received}`;
+        return "Entr\xE9e invalide : attendu ".concat(expected, ", re\xE7u ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Entr\xE9e invalide : attendu ${stringifyPrimitive(issue2.values[0])}`;
-        return `Option invalide : attendu l'une des valeurs suivantes ${joinValues(issue2.values, "|")}`;
+          return "Entr\xE9e invalide : attendu ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Option invalide : attendu l'une des valeurs suivantes ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "\u2264" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Trop grand : attendu que ${issue2.origin ?? "la valeur"} ait ${adj}${issue2.maximum.toString()} ${sizing.unit}`;
-        return `Trop grand : attendu que ${issue2.origin ?? "la valeur"} soit ${adj}${issue2.maximum.toString()}`;
+          return "Trop grand : attendu que ".concat(issue2.origin ?? "la valeur", " ait ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit);
+        return "Trop grand : attendu que ".concat(issue2.origin ?? "la valeur", " soit ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? "\u2265" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Trop petit : attendu que ${issue2.origin} ait ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "Trop petit : attendu que ".concat(issue2.origin, " ait ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `Trop petit : attendu que ${issue2.origin} soit ${adj}${issue2.minimum.toString()}`;
+        return "Trop petit : attendu que ".concat(issue2.origin, " soit ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `Cha\xEEne invalide : doit commencer par "${_issue.prefix}"`;
+          return 'Cha\xEEne invalide : doit commencer par "'.concat(_issue.prefix, '"');
         }
         if (_issue.format === "ends_with")
-          return `Cha\xEEne invalide : doit se terminer par "${_issue.suffix}"`;
+          return 'Cha\xEEne invalide : doit se terminer par "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Cha\xEEne invalide : doit inclure "${_issue.includes}"`;
+          return 'Cha\xEEne invalide : doit inclure "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Cha\xEEne invalide : doit correspondre au motif ${_issue.pattern}`;
-        return `${FormatDictionary[_issue.format] ?? issue2.format} invalide`;
+          return "Cha\xEEne invalide : doit correspondre au motif ".concat(_issue.pattern);
+        return "".concat(FormatDictionary[_issue.format] ?? issue2.format, " invalide");
       }
       case "not_multiple_of":
-        return `Nombre invalide : doit \xEAtre un multiple de ${issue2.divisor}`;
+        return "Nombre invalide : doit \xEAtre un multiple de ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `Cl\xE9${issue2.keys.length > 1 ? "s" : ""} non reconnue${issue2.keys.length > 1 ? "s" : ""} : ${joinValues(issue2.keys, ", ")}`;
+        return "Cl\xE9".concat(issue2.keys.length > 1 ? "s" : "", " non reconnue").concat(issue2.keys.length > 1 ? "s" : "", " : ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Cl\xE9 invalide dans ${issue2.origin}`;
+        return "Cl\xE9 invalide dans ".concat(issue2.origin);
       case "invalid_union":
         return "Entr\xE9e invalide";
       case "invalid_element":
-        return `Valeur invalide dans ${issue2.origin}`;
+        return "Valeur invalide dans ".concat(issue2.origin);
       default:
-        return `Entr\xE9e invalide`;
+        return "Entr\xE9e invalide";
     }
   };
 };
@@ -9858,54 +9566,54 @@ var error19 = () => {
         const expected = TypeDictionary[issue2.expected] ?? issue2.expected;
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
-        return `\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0A87\u0AA8\u0AAA\u0AC1\u0A9F: \u0A85\u0AAA\u0AC7\u0A95\u0ACD\u0AB7\u0ABF\u0AA4 ${expected}, \u0AAA\u0ACD\u0AB0\u0ABE\u0AAA\u0ACD\u0AA4 ${received}`;
+        return "\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0A87\u0AA8\u0AAA\u0AC1\u0A9F: \u0A85\u0AAA\u0AC7\u0A95\u0ACD\u0AB7\u0ABF\u0AA4 ".concat(expected, ", \u0AAA\u0ACD\u0AB0\u0ABE\u0AAA\u0ACD\u0AA4 ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0A87\u0AA8\u0AAA\u0AC1\u0A9F: \u0A85\u0AAA\u0AC7\u0A95\u0ACD\u0AB7\u0ABF\u0AA4 ${stringifyPrimitive(issue2.values[0])}`;
-        return `\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0AB5\u0ABF\u0A95\u0AB2\u0ACD\u0AAA: ${joinValues(issue2.values, " | ")} \u0AAE\u0ABE\u0AA7\u0ACD\u0AAF\u0AAE\u0AA5\u0AC0 \u0A8F\u0A95 \u0A85\u0AAA\u0AC7\u0A95\u0ACD\u0AB7\u0ABF\u0AA4`;
+          return "\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0A87\u0AA8\u0AAA\u0AC1\u0A9F: \u0A85\u0AAA\u0AC7\u0A95\u0ACD\u0AB7\u0ABF\u0AA4 ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0AB5\u0ABF\u0A95\u0AB2\u0ACD\u0AAA: ".concat(joinValues(issue2.values, " | "), " \u0AAE\u0ABE\u0AA7\u0ACD\u0AAF\u0AAE\u0AA5\u0AC0 \u0A8F\u0A95 \u0A85\u0AAA\u0AC7\u0A95\u0ACD\u0AB7\u0ABF\u0AA4");
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u0A96\u0AC2\u0AAC \u0AAE\u0ACB\u0A9F\u0AC1\u0A82: ${issue2.origin ?? "\u0AAE\u0AC2\u0AB2\u0ACD\u0AAF"} ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "\u0A8F\u0AB2\u0ABF\u0AAE\u0AC7\u0AA8\u0ACD\u0A9F"} \u0AB9\u0ACB\u0AB5\u0ABE \u0A9C\u0ACB\u0A88\u0A8F`;
-        return `\u0A96\u0AC2\u0AAC \u0AAE\u0ACB\u0A9F\u0AC1\u0A82: ${issue2.origin ?? "\u0AAE\u0AC2\u0AB2\u0ACD\u0AAF"} ${adj}${issue2.maximum.toString()} \u0AB9\u0ACB\u0AB5\u0AC1\u0A82 \u0A9C\u0ACB\u0A88\u0A8F`;
+          return "\u0A96\u0AC2\u0AAC \u0AAE\u0ACB\u0A9F\u0AC1\u0A82: ".concat(issue2.origin ?? "\u0AAE\u0AC2\u0AB2\u0ACD\u0AAF", " ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "\u0A8F\u0AB2\u0ABF\u0AAE\u0AC7\u0AA8\u0ACD\u0A9F", " \u0AB9\u0ACB\u0AB5\u0ABE \u0A9C\u0ACB\u0A88\u0A8F");
+        return "\u0A96\u0AC2\u0AAC \u0AAE\u0ACB\u0A9F\u0AC1\u0A82: ".concat(issue2.origin ?? "\u0AAE\u0AC2\u0AB2\u0ACD\u0AAF", " ").concat(adj).concat(issue2.maximum.toString(), " \u0AB9\u0ACB\u0AB5\u0AC1\u0A82 \u0A9C\u0ACB\u0A88\u0A8F");
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u0A96\u0AC2\u0AAC \u0AA8\u0ABE\u0AA8\u0AC1\u0A82: ${issue2.origin} ${adj}${issue2.minimum.toString()} ${sizing.unit} \u0AB9\u0ACB\u0AB5\u0ABE \u0A9C\u0ACB\u0A88\u0A8F`;
+          return "\u0A96\u0AC2\u0AAC \u0AA8\u0ABE\u0AA8\u0AC1\u0A82: ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit, " \u0AB9\u0ACB\u0AB5\u0ABE \u0A9C\u0ACB\u0A88\u0A8F");
         }
-        return `\u0A96\u0AC2\u0AAC \u0AA8\u0ABE\u0AA8\u0AC1\u0A82: ${issue2.origin} ${adj}${issue2.minimum.toString()} \u0AB9\u0ACB\u0AB5\u0AC1\u0A82 \u0A9C\u0ACB\u0A88\u0A8F`;
+        return "\u0A96\u0AC2\u0AAC \u0AA8\u0ABE\u0AA8\u0AC1\u0A82: ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString(), " \u0AB9\u0ACB\u0AB5\u0AC1\u0A82 \u0A9C\u0ACB\u0A88\u0A8F");
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0AB8\u0ACD\u0A9F\u0ACD\u0AB0\u0ABF\u0A82\u0A97: "${_issue.prefix}" \u0AA5\u0AC0 \u0AB6\u0AB0\u0AC2 \u0AA5\u0AB5\u0AC1\u0A82 \u0A9C\u0ACB\u0A88\u0A8F`;
+          return '\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0AB8\u0ACD\u0A9F\u0ACD\u0AB0\u0ABF\u0A82\u0A97: "'.concat(_issue.prefix, '" \u0AA5\u0AC0 \u0AB6\u0AB0\u0AC2 \u0AA5\u0AB5\u0AC1\u0A82 \u0A9C\u0ACB\u0A88\u0A8F');
         }
         if (_issue.format === "ends_with")
-          return `\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0AB8\u0ACD\u0A9F\u0ACD\u0AB0\u0ABF\u0A82\u0A97: "${_issue.suffix}" \u0AAA\u0AB0 \u0AB8\u0AAE\u0ABE\u0AAA\u0ACD\u0AA4 \u0AA5\u0AB5\u0AC1\u0A82 \u0A9C\u0ACB\u0A88\u0A8F`;
+          return '\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0AB8\u0ACD\u0A9F\u0ACD\u0AB0\u0ABF\u0A82\u0A97: "'.concat(_issue.suffix, '" \u0AAA\u0AB0 \u0AB8\u0AAE\u0ABE\u0AAA\u0ACD\u0AA4 \u0AA5\u0AB5\u0AC1\u0A82 \u0A9C\u0ACB\u0A88\u0A8F');
         if (_issue.format === "includes")
-          return `\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0AB8\u0ACD\u0A9F\u0ACD\u0AB0\u0ABF\u0A82\u0A97: "${_issue.includes}" \u0AB6\u0ABE\u0AAE\u0AC7\u0AB2 \u0AB9\u0ACB\u0AB5\u0AC1\u0A82 \u0A9C\u0ACB\u0A88\u0A8F`;
+          return '\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0AB8\u0ACD\u0A9F\u0ACD\u0AB0\u0ABF\u0A82\u0A97: "'.concat(_issue.includes, '" \u0AB6\u0ABE\u0AAE\u0AC7\u0AB2 \u0AB9\u0ACB\u0AB5\u0AC1\u0A82 \u0A9C\u0ACB\u0A88\u0A8F');
         if (_issue.format === "regex")
-          return `\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0AB8\u0ACD\u0A9F\u0ACD\u0AB0\u0ABF\u0A82\u0A97: \u0AAA\u0AC7\u0A9F\u0AB0\u0ACD\u0AA8 ${_issue.pattern} \u0AB8\u0ABE\u0AA5\u0AC7 \u0AAE\u0AC7\u0AB3 \u0A96\u0ABE\u0AB5\u0AC1\u0A82 \u0A9C\u0ACB\u0A88\u0A8F`;
-        return `\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0AB8\u0ACD\u0A9F\u0ACD\u0AB0\u0ABF\u0A82\u0A97: \u0AAA\u0AC7\u0A9F\u0AB0\u0ACD\u0AA8 ".concat(_issue.pattern, " \u0AB8\u0ABE\u0AA5\u0AC7 \u0AAE\u0AC7\u0AB3 \u0A96\u0ABE\u0AB5\u0AC1\u0A82 \u0A9C\u0ACB\u0A88\u0A8F");
+        return "\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0AA8\u0A82\u0AAC\u0AB0: ${issue2.divisor} \u0AA8\u0ACB \u0A97\u0AC1\u0AA3\u0ABE\u0A82\u0A95 \u0AB9\u0ACB\u0AB5\u0ACB \u0A9C\u0ACB\u0A88\u0A8F`;
+        return "\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0AA8\u0A82\u0AAC\u0AB0: ".concat(issue2.divisor, " \u0AA8\u0ACB \u0A97\u0AC1\u0AA3\u0ABE\u0A82\u0A95 \u0AB9\u0ACB\u0AB5\u0ACB \u0A9C\u0ACB\u0A88\u0A8F");
       case "unrecognized_keys":
-        return `\u0A93\u0AB3\u0A96\u0AC0 \u0AB6\u0A95\u0ABE\u0AA4\u0ABE \u0AA8\u0AB9\u0AC0\u0A82 \u0AA4\u0AC7 \u0A95\u0AC0${issue2.keys.length > 1 ? "\u0A93" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "\u0A93\u0AB3\u0A96\u0AC0 \u0AB6\u0A95\u0ABE\u0AA4\u0ABE \u0AA8\u0AB9\u0AC0\u0A82 \u0AA4\u0AC7 \u0A95\u0AC0".concat(issue2.keys.length > 1 ? "\u0A93" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `${issue2.origin} \u0AAE\u0ABE\u0A82 \u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0A95\u0AC0`;
+        return "".concat(issue2.origin, " \u0AAE\u0ABE\u0A82 \u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0A95\u0AC0");
       case "invalid_union":
         if (issue2.options && Array.isArray(issue2.options) && issue2.options.length > 0) {
-          const opts = issue2.options.map((o) => `'${o}'`).join(" | ");
-          return `\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0AA1\u0ABF\u0AB8\u0ACD\u0A95\u0ACD\u0AB0\u0ABF\u0AAE\u0ABF\u0AA8\u0AC7\u0A9F\u0AB0 \u0AAE\u0AC2\u0AB2\u0ACD\u0AAF. \u0A85\u0AAA\u0AC7\u0A95\u0ACD\u0AB7\u0ABF\u0AA4 ${opts}`;
+          const opts = issue2.options.map((o) => "'".concat(o, "'")).join(" | ");
+          return "\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0AA1\u0ABF\u0AB8\u0ACD\u0A95\u0ACD\u0AB0\u0ABF\u0AAE\u0ABF\u0AA8\u0AC7\u0A9F\u0AB0 \u0AAE\u0AC2\u0AB2\u0ACD\u0AAF. \u0A85\u0AAA\u0AC7\u0A95\u0ACD\u0AB7\u0ABF\u0AA4 ".concat(opts);
         }
         return "\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0A87\u0AA8\u0AAA\u0AC1\u0A9F";
       case "invalid_element":
-        return `${issue2.origin} \u0AAE\u0ABE\u0A82 \u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0AAE\u0AC2\u0AB2\u0ACD\u0AAF`;
+        return "".concat(issue2.origin, " \u0AAE\u0ABE\u0A82 \u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0AAE\u0AC2\u0AB2\u0ACD\u0AAF");
       default:
         return "\u0A85\u0AAE\u0ABE\u0AA8\u0ACD\u0AAF \u0A87\u0AA8\u0AAA\u0AC1\u0A9F";
     }
@@ -9954,7 +9662,7 @@ var error20 = () => {
       return e.label;
     return t ?? TypeNames.unknown.label;
   };
-  const withDefinite = (t) => `\u05D4${typeLabel(t)}`;
+  const withDefinite = (t) => "\u05D4".concat(typeLabel(t));
   const verbFor = (t) => {
     const e = typeEntry(t);
     const gender = e?.gender ?? "m";
@@ -10013,101 +9721,101 @@ var error20 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? TypeNames[receivedType]?.label ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\u05E7\u05DC\u05D8 \u05DC\u05D0 \u05EA\u05E7\u05D9\u05DF: \u05E6\u05E8\u05D9\u05DA \u05DC\u05D4\u05D9\u05D5\u05EA instanceof ${issue2.expected}, \u05D4\u05EA\u05E7\u05D1\u05DC ${received}`;
+          return "\u05E7\u05DC\u05D8 \u05DC\u05D0 \u05EA\u05E7\u05D9\u05DF: \u05E6\u05E8\u05D9\u05DA \u05DC\u05D4\u05D9\u05D5\u05EA instanceof ".concat(issue2.expected, ", \u05D4\u05EA\u05E7\u05D1\u05DC ").concat(received);
         }
-        return `\u05E7\u05DC\u05D8 \u05DC\u05D0 \u05EA\u05E7\u05D9\u05DF: \u05E6\u05E8\u05D9\u05DA \u05DC\u05D4\u05D9\u05D5\u05EA ${expected}, \u05D4\u05EA\u05E7\u05D1\u05DC ${received}`;
+        return "\u05E7\u05DC\u05D8 \u05DC\u05D0 \u05EA\u05E7\u05D9\u05DF: \u05E6\u05E8\u05D9\u05DA \u05DC\u05D4\u05D9\u05D5\u05EA ".concat(expected, ", \u05D4\u05EA\u05E7\u05D1\u05DC ").concat(received);
       }
       case "invalid_value": {
         if (issue2.values.length === 1) {
-          return `\u05E2\u05E8\u05DA \u05DC\u05D0 \u05EA\u05E7\u05D9\u05DF: \u05D4\u05E2\u05E8\u05DA \u05D7\u05D9\u05D9\u05D1 \u05DC\u05D4\u05D9\u05D5\u05EA ${stringifyPrimitive(issue2.values[0])}`;
+          return "\u05E2\u05E8\u05DA \u05DC\u05D0 \u05EA\u05E7\u05D9\u05DF: \u05D4\u05E2\u05E8\u05DA \u05D7\u05D9\u05D9\u05D1 \u05DC\u05D4\u05D9\u05D5\u05EA ".concat(stringifyPrimitive(issue2.values[0]));
         }
         const stringified = issue2.values.map((v) => stringifyPrimitive(v));
         if (issue2.values.length === 2) {
-          return `\u05E2\u05E8\u05DA \u05DC\u05D0 \u05EA\u05E7\u05D9\u05DF: \u05D4\u05D0\u05E4\u05E9\u05E8\u05D5\u05D9\u05D5\u05EA \u05D4\u05DE\u05EA\u05D0\u05D9\u05DE\u05D5\u05EA \u05D4\u05DF ${stringified[0]} \u05D0\u05D5 ${stringified[1]}`;
+          return "\u05E2\u05E8\u05DA \u05DC\u05D0 \u05EA\u05E7\u05D9\u05DF: \u05D4\u05D0\u05E4\u05E9\u05E8\u05D5\u05D9\u05D5\u05EA \u05D4\u05DE\u05EA\u05D0\u05D9\u05DE\u05D5\u05EA \u05D4\u05DF ".concat(stringified[0], " \u05D0\u05D5 ").concat(stringified[1]);
         }
         const lastValue = stringified[stringified.length - 1];
         const restValues = stringified.slice(0, -1).join(", ");
-        return `\u05E2\u05E8\u05DA \u05DC\u05D0 \u05EA\u05E7\u05D9\u05DF: \u05D4\u05D0\u05E4\u05E9\u05E8\u05D5\u05D9\u05D5\u05EA \u05D4\u05DE\u05EA\u05D0\u05D9\u05DE\u05D5\u05EA \u05D4\u05DF ${restValues} \u05D0\u05D5 ${lastValue}`;
+        return "\u05E2\u05E8\u05DA \u05DC\u05D0 \u05EA\u05E7\u05D9\u05DF: \u05D4\u05D0\u05E4\u05E9\u05E8\u05D5\u05D9\u05D5\u05EA \u05D4\u05DE\u05EA\u05D0\u05D9\u05DE\u05D5\u05EA \u05D4\u05DF ".concat(restValues, " \u05D0\u05D5 ").concat(lastValue);
       }
       case "too_big": {
         const sizing = getSizing(issue2.origin);
         const subject = withDefinite(issue2.origin ?? "value");
         if (issue2.origin === "string") {
-          return `${sizing?.longLabel ?? "\u05D0\u05E8\u05D5\u05DA"} \u05DE\u05D3\u05D9: ${subject} \u05E6\u05E8\u05D9\u05DB\u05D4 \u05DC\u05D4\u05DB\u05D9\u05DC ${issue2.maximum.toString()} ${sizing?.unit ?? ""} ${issue2.inclusive ? "\u05D0\u05D5 \u05E4\u05D7\u05D5\u05EA" : "\u05DC\u05DB\u05DC \u05D4\u05D9\u05D5\u05EA\u05E8"}`.trim();
+          return "".concat(sizing?.longLabel ?? "\u05D0\u05E8\u05D5\u05DA", " \u05DE\u05D3\u05D9: ").concat(subject, " \u05E6\u05E8\u05D9\u05DB\u05D4 \u05DC\u05D4\u05DB\u05D9\u05DC ").concat(issue2.maximum.toString(), " ").concat(sizing?.unit ?? "", " ").concat(issue2.inclusive ? "\u05D0\u05D5 \u05E4\u05D7\u05D5\u05EA" : "\u05DC\u05DB\u05DC \u05D4\u05D9\u05D5\u05EA\u05E8").trim();
         }
         if (issue2.origin === "number") {
-          const comparison2 = issue2.inclusive ? `\u05E7\u05D8\u05DF \u05D0\u05D5 \u05E9\u05D5\u05D5\u05D4 \u05DC-${issue2.maximum}` : `\u05E7\u05D8\u05DF \u05DE-${issue2.maximum}`;
-          return `\u05D2\u05D3\u05D5\u05DC \u05DE\u05D3\u05D9: ${subject} \u05E6\u05E8\u05D9\u05DA \u05DC\u05D4\u05D9\u05D5\u05EA ${comparison2}`;
+          const comparison2 = issue2.inclusive ? "\u05E7\u05D8\u05DF \u05D0\u05D5 \u05E9\u05D5\u05D5\u05D4 \u05DC-".concat(issue2.maximum) : "\u05E7\u05D8\u05DF \u05DE-".concat(issue2.maximum);
+          return "\u05D2\u05D3\u05D5\u05DC \u05DE\u05D3\u05D9: ".concat(subject, " \u05E6\u05E8\u05D9\u05DA \u05DC\u05D4\u05D9\u05D5\u05EA ").concat(comparison2);
         }
         if (issue2.origin === "array" || issue2.origin === "set") {
           const verb = issue2.origin === "set" ? "\u05E6\u05E8\u05D9\u05DB\u05D4" : "\u05E6\u05E8\u05D9\u05DA";
-          const comparison2 = issue2.inclusive ? `${issue2.maximum} ${sizing?.unit ?? ""} \u05D0\u05D5 \u05E4\u05D7\u05D5\u05EA` : `\u05E4\u05D7\u05D5\u05EA \u05DE-${issue2.maximum} ${sizing?.unit ?? ""}`;
-          return `\u05D2\u05D3\u05D5\u05DC \u05DE\u05D3\u05D9: ${subject} ${verb} \u05DC\u05D4\u05DB\u05D9\u05DC ${comparison2}`.trim();
+          const comparison2 = issue2.inclusive ? "".concat(issue2.maximum, " ").concat(sizing?.unit ?? "", " \u05D0\u05D5 \u05E4\u05D7\u05D5\u05EA") : "\u05E4\u05D7\u05D5\u05EA \u05DE-".concat(issue2.maximum, " ").concat(sizing?.unit ?? "");
+          return "\u05D2\u05D3\u05D5\u05DC \u05DE\u05D3\u05D9: ".concat(subject, " ").concat(verb, " \u05DC\u05D4\u05DB\u05D9\u05DC ").concat(comparison2).trim();
         }
         const adj = issue2.inclusive ? "<=" : "<";
         const be = verbFor(issue2.origin ?? "value");
         if (sizing?.unit) {
-          return `${sizing.longLabel} \u05DE\u05D3\u05D9: ${subject} ${be} ${adj}${issue2.maximum.toString()} ${sizing.unit}`;
+          return "".concat(sizing.longLabel, " \u05DE\u05D3\u05D9: ").concat(subject, " ").concat(be, " ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit);
         }
-        return `${sizing?.longLabel ?? "\u05D2\u05D3\u05D5\u05DC"} \u05DE\u05D3\u05D9: ${subject} ${be} ${adj}${issue2.maximum.toString()}`;
+        return "".concat(sizing?.longLabel ?? "\u05D2\u05D3\u05D5\u05DC", " \u05DE\u05D3\u05D9: ").concat(subject, " ").concat(be, " ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const sizing = getSizing(issue2.origin);
         const subject = withDefinite(issue2.origin ?? "value");
         if (issue2.origin === "string") {
-          return `${sizing?.shortLabel ?? "\u05E7\u05E6\u05E8"} \u05DE\u05D3\u05D9: ${subject} \u05E6\u05E8\u05D9\u05DB\u05D4 \u05DC\u05D4\u05DB\u05D9\u05DC ${issue2.minimum.toString()} ${sizing?.unit ?? ""} ${issue2.inclusive ? "\u05D0\u05D5 \u05D9\u05D5\u05EA\u05E8" : "\u05DC\u05E4\u05D7\u05D5\u05EA"}`.trim();
+          return "".concat(sizing?.shortLabel ?? "\u05E7\u05E6\u05E8", " \u05DE\u05D3\u05D9: ").concat(subject, " \u05E6\u05E8\u05D9\u05DB\u05D4 \u05DC\u05D4\u05DB\u05D9\u05DC ").concat(issue2.minimum.toString(), " ").concat(sizing?.unit ?? "", " ").concat(issue2.inclusive ? "\u05D0\u05D5 \u05D9\u05D5\u05EA\u05E8" : "\u05DC\u05E4\u05D7\u05D5\u05EA").trim();
         }
         if (issue2.origin === "number") {
-          const comparison2 = issue2.inclusive ? `\u05D2\u05D3\u05D5\u05DC \u05D0\u05D5 \u05E9\u05D5\u05D5\u05D4 \u05DC-${issue2.minimum}` : `\u05D2\u05D3\u05D5\u05DC \u05DE-${issue2.minimum}`;
-          return `\u05E7\u05D8\u05DF \u05DE\u05D3\u05D9: ${subject} \u05E6\u05E8\u05D9\u05DA \u05DC\u05D4\u05D9\u05D5\u05EA ${comparison2}`;
+          const comparison2 = issue2.inclusive ? "\u05D2\u05D3\u05D5\u05DC \u05D0\u05D5 \u05E9\u05D5\u05D5\u05D4 \u05DC-".concat(issue2.minimum) : "\u05D2\u05D3\u05D5\u05DC \u05DE-".concat(issue2.minimum);
+          return "\u05E7\u05D8\u05DF \u05DE\u05D3\u05D9: ".concat(subject, " \u05E6\u05E8\u05D9\u05DA \u05DC\u05D4\u05D9\u05D5\u05EA ").concat(comparison2);
         }
         if (issue2.origin === "array" || issue2.origin === "set") {
           const verb = issue2.origin === "set" ? "\u05E6\u05E8\u05D9\u05DB\u05D4" : "\u05E6\u05E8\u05D9\u05DA";
           if (issue2.minimum === 1 && issue2.inclusive) {
             const singularPhrase = issue2.origin === "set" ? "\u05DC\u05E4\u05D7\u05D5\u05EA \u05E4\u05E8\u05D9\u05D8 \u05D0\u05D7\u05D3" : "\u05DC\u05E4\u05D7\u05D5\u05EA \u05E4\u05E8\u05D9\u05D8 \u05D0\u05D7\u05D3";
-            return `\u05E7\u05D8\u05DF \u05DE\u05D3\u05D9: ${subject} ${verb} \u05DC\u05D4\u05DB\u05D9\u05DC ${singularPhrase}`;
+            return "\u05E7\u05D8\u05DF \u05DE\u05D3\u05D9: ".concat(subject, " ").concat(verb, " \u05DC\u05D4\u05DB\u05D9\u05DC ").concat(singularPhrase);
           }
-          const comparison2 = issue2.inclusive ? `${issue2.minimum} ${sizing?.unit ?? ""} \u05D0\u05D5 \u05D9\u05D5\u05EA\u05E8` : `\u05D9\u05D5\u05EA\u05E8 \u05DE-${issue2.minimum} ${sizing?.unit ?? ""}`;
-          return `\u05E7\u05D8\u05DF \u05DE\u05D3\u05D9: ${subject} ${verb} \u05DC\u05D4\u05DB\u05D9\u05DC ${comparison2}`.trim();
+          const comparison2 = issue2.inclusive ? "".concat(issue2.minimum, " ").concat(sizing?.unit ?? "", " \u05D0\u05D5 \u05D9\u05D5\u05EA\u05E8") : "\u05D9\u05D5\u05EA\u05E8 \u05DE-".concat(issue2.minimum, " ").concat(sizing?.unit ?? "");
+          return "\u05E7\u05D8\u05DF \u05DE\u05D3\u05D9: ".concat(subject, " ").concat(verb, " \u05DC\u05D4\u05DB\u05D9\u05DC ").concat(comparison2).trim();
         }
         const adj = issue2.inclusive ? ">=" : ">";
         const be = verbFor(issue2.origin ?? "value");
         if (sizing?.unit) {
-          return `${sizing.shortLabel} \u05DE\u05D3\u05D9: ${subject} ${be} ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "".concat(sizing.shortLabel, " \u05DE\u05D3\u05D9: ").concat(subject, " ").concat(be, " ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `${sizing?.shortLabel ?? "\u05E7\u05D8\u05DF"} \u05DE\u05D3\u05D9: ${subject} ${be} ${adj}${issue2.minimum.toString()}`;
+        return "".concat(sizing?.shortLabel ?? "\u05E7\u05D8\u05DF", " \u05DE\u05D3\u05D9: ").concat(subject, " ").concat(be, " ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `\u05D4\u05DE\u05D7\u05E8\u05D5\u05D6\u05EA \u05D7\u05D9\u05D9\u05D1\u05EA \u05DC\u05D4\u05EA\u05D7\u05D9\u05DC \u05D1 "${_issue.prefix}"`;
+          return '\u05D4\u05DE\u05D7\u05E8\u05D5\u05D6\u05EA \u05D7\u05D9\u05D9\u05D1\u05EA \u05DC\u05D4\u05EA\u05D7\u05D9\u05DC \u05D1 "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `\u05D4\u05DE\u05D7\u05E8\u05D5\u05D6\u05EA \u05D7\u05D9\u05D9\u05D1\u05EA \u05DC\u05D4\u05E1\u05EA\u05D9\u05D9\u05DD \u05D1 "${_issue.suffix}"`;
+          return '\u05D4\u05DE\u05D7\u05E8\u05D5\u05D6\u05EA \u05D7\u05D9\u05D9\u05D1\u05EA \u05DC\u05D4\u05E1\u05EA\u05D9\u05D9\u05DD \u05D1 "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `\u05D4\u05DE\u05D7\u05E8\u05D5\u05D6\u05EA \u05D7\u05D9\u05D9\u05D1\u05EA \u05DC\u05DB\u05DC\u05D5\u05DC "${_issue.includes}"`;
+          return '\u05D4\u05DE\u05D7\u05E8\u05D5\u05D6\u05EA \u05D7\u05D9\u05D9\u05D1\u05EA \u05DC\u05DB\u05DC\u05D5\u05DC "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `\u05D4\u05DE\u05D7\u05E8\u05D5\u05D6\u05EA \u05D7\u05D9\u05D9\u05D1\u05EA \u05DC\u05D4\u05EA\u05D0\u05D9\u05DD \u05DC\u05EA\u05D1\u05E0\u05D9\u05EA ${_issue.pattern}`;
+          return "\u05D4\u05DE\u05D7\u05E8\u05D5\u05D6\u05EA \u05D7\u05D9\u05D9\u05D1\u05EA \u05DC\u05D4\u05EA\u05D0\u05D9\u05DD \u05DC\u05EA\u05D1\u05E0\u05D9\u05EA ".concat(_issue.pattern);
         const nounEntry = FormatDictionary[_issue.format];
         const noun = nounEntry?.label ?? _issue.format;
         const gender = nounEntry?.gender ?? "m";
         const adjective = gender === "f" ? "\u05EA\u05E7\u05D9\u05E0\u05D4" : "\u05EA\u05E7\u05D9\u05DF";
-        return `${noun} \u05DC\u05D0 ${adjective}`;
+        return "".concat(noun, " \u05DC\u05D0 ").concat(adjective);
       }
       case "not_multiple_of":
-        return `\u05DE\u05E1\u05E4\u05E8 \u05DC\u05D0 \u05EA\u05E7\u05D9\u05DF: \u05D7\u05D9\u05D9\u05D1 \u05DC\u05D4\u05D9\u05D5\u05EA \u05DE\u05DB\u05E4\u05DC\u05D4 \u05E9\u05DC ${issue2.divisor}`;
+        return "\u05DE\u05E1\u05E4\u05E8 \u05DC\u05D0 \u05EA\u05E7\u05D9\u05DF: \u05D7\u05D9\u05D9\u05D1 \u05DC\u05D4\u05D9\u05D5\u05EA \u05DE\u05DB\u05E4\u05DC\u05D4 \u05E9\u05DC ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `\u05DE\u05E4\u05EA\u05D7${issue2.keys.length > 1 ? "\u05D5\u05EA" : ""} \u05DC\u05D0 \u05DE\u05D6\u05D5\u05D4${issue2.keys.length > 1 ? "\u05D9\u05DD" : "\u05D4"}: ${joinValues(issue2.keys, ", ")}`;
+        return "\u05DE\u05E4\u05EA\u05D7".concat(issue2.keys.length > 1 ? "\u05D5\u05EA" : "", " \u05DC\u05D0 \u05DE\u05D6\u05D5\u05D4").concat(issue2.keys.length > 1 ? "\u05D9\u05DD" : "\u05D4", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key": {
-        return `\u05E9\u05D3\u05D4 \u05DC\u05D0 \u05EA\u05E7\u05D9\u05DF \u05D1\u05D0\u05D5\u05D1\u05D9\u05D9\u05E7\u05D8`;
+        return "\u05E9\u05D3\u05D4 \u05DC\u05D0 \u05EA\u05E7\u05D9\u05DF \u05D1\u05D0\u05D5\u05D1\u05D9\u05D9\u05E7\u05D8";
       }
       case "invalid_union":
         return "\u05E7\u05DC\u05D8 \u05DC\u05D0 \u05EA\u05E7\u05D9\u05DF";
       case "invalid_element": {
         const place = withDefinite(issue2.origin ?? "array");
-        return `\u05E2\u05E8\u05DA \u05DC\u05D0 \u05EA\u05E7\u05D9\u05DF \u05D1${place}`;
+        return "\u05E2\u05E8\u05DA \u05DC\u05D0 \u05EA\u05E7\u05D9\u05DF \u05D1".concat(place);
       }
       default:
-        return `\u05E7\u05DC\u05D8 \u05DC\u05D0 \u05EA\u05E7\u05D9\u05DF`;
+        return "\u05E7\u05DC\u05D8 \u05DC\u05D0 \u05EA\u05E7\u05D9\u05DF";
     }
   };
 };
@@ -10170,54 +9878,54 @@ var error21 = () => {
         const expected = TypeDictionary[issue2.expected] ?? issue2.expected;
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
-        return `\u0905\u092E\u093E\u0928\u094D\u092F \u0907\u0928\u092A\u0941\u091F: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 ${expected}, \u092A\u094D\u0930\u093E\u092A\u094D\u0924 ${received}`;
+        return "\u0905\u092E\u093E\u0928\u094D\u092F \u0907\u0928\u092A\u0941\u091F: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 ".concat(expected, ", \u092A\u094D\u0930\u093E\u092A\u094D\u0924 ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u0905\u092E\u093E\u0928\u094D\u092F \u0907\u0928\u092A\u0941\u091F: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 ${stringifyPrimitive(issue2.values[0])}`;
-        return `\u0905\u092E\u093E\u0928\u094D\u092F \u0935\u093F\u0915\u0932\u094D\u092A: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 \u092E\u093E\u0928\u094B\u0902 \u092E\u0947\u0902 \u0938\u0947 \u090F\u0915 ${joinValues(issue2.values, "|")}`;
+          return "\u0905\u092E\u093E\u0928\u094D\u092F \u0907\u0928\u092A\u0941\u091F: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\u0905\u092E\u093E\u0928\u094D\u092F \u0935\u093F\u0915\u0932\u094D\u092A: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 \u092E\u093E\u0928\u094B\u0902 \u092E\u0947\u0902 \u0938\u0947 \u090F\u0915 ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u092C\u0939\u0941\u0924 \u092C\u0921\u093C\u093E: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 \u0925\u093E \u0915\u093F ${issue2.origin ?? "\u092E\u093E\u0928"} \u092E\u0947\u0902 ${adj}${issue2.maximum} ${sizing.unit} \u0939\u094B\u0902`;
-        return `\u092C\u0939\u0941\u0924 \u092C\u0921\u093C\u093E: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 \u0925\u093E \u0915\u093F ${issue2.origin ?? "\u092E\u093E\u0928"} ${adj}${issue2.maximum} \u0939\u094B`;
+          return "\u092C\u0939\u0941\u0924 \u092C\u0921\u093C\u093E: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 \u0925\u093E \u0915\u093F ".concat(issue2.origin ?? "\u092E\u093E\u0928", " \u092E\u0947\u0902 ").concat(adj).concat(issue2.maximum, " ").concat(sizing.unit, " \u0939\u094B\u0902");
+        return "\u092C\u0939\u0941\u0924 \u092C\u0921\u093C\u093E: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 \u0925\u093E \u0915\u093F ".concat(issue2.origin ?? "\u092E\u093E\u0928", " ").concat(adj).concat(issue2.maximum, " \u0939\u094B");
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u092C\u0939\u0941\u0924 \u091B\u094B\u091F\u093E: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 \u0925\u093E \u0915\u093F ${issue2.origin} \u092E\u0947\u0902 ${adj}${issue2.minimum} ${sizing.unit} \u0939\u094B\u0902`;
-        return `\u092C\u0939\u0941\u0924 \u091B\u094B\u091F\u093E: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 \u0925\u093E \u0915\u093F ${issue2.origin} ${adj}${issue2.minimum} \u0939\u094B`;
+          return "\u092C\u0939\u0941\u0924 \u091B\u094B\u091F\u093E: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 \u0925\u093E \u0915\u093F ".concat(issue2.origin, " \u092E\u0947\u0902 ").concat(adj).concat(issue2.minimum, " ").concat(sizing.unit, " \u0939\u094B\u0902");
+        return "\u092C\u0939\u0941\u0924 \u091B\u094B\u091F\u093E: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 \u0925\u093E \u0915\u093F ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum, " \u0939\u094B");
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u094D\u091F\u094D\u0930\u093F\u0902\u0917: "${_issue.prefix}" \u0938\u0947 \u0936\u0941\u0930\u0942 \u0939\u094B\u0928\u093E \u091A\u093E\u0939\u093F\u090F`;
+          return '\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u094D\u091F\u094D\u0930\u093F\u0902\u0917: "'.concat(_issue.prefix, '" \u0938\u0947 \u0936\u0941\u0930\u0942 \u0939\u094B\u0928\u093E \u091A\u093E\u0939\u093F\u090F');
         if (_issue.format === "ends_with")
-          return `\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u094D\u091F\u094D\u0930\u093F\u0902\u0917: "${_issue.suffix}" \u092A\u0930 \u0938\u092E\u093E\u092A\u094D\u0924 \u0939\u094B\u0928\u093E \u091A\u093E\u0939\u093F\u090F`;
+          return '\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u094D\u091F\u094D\u0930\u093F\u0902\u0917: "'.concat(_issue.suffix, '" \u092A\u0930 \u0938\u092E\u093E\u092A\u094D\u0924 \u0939\u094B\u0928\u093E \u091A\u093E\u0939\u093F\u090F');
         if (_issue.format === "includes")
-          return `\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u094D\u091F\u094D\u0930\u093F\u0902\u0917: \u0907\u0938\u092E\u0947\u0902 "${_issue.includes}" \u0936\u093E\u092E\u093F\u0932 \u0939\u094B\u0928\u093E \u091A\u093E\u0939\u093F\u090F`;
+          return '\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u094D\u091F\u094D\u0930\u093F\u0902\u0917: \u0907\u0938\u092E\u0947\u0902 "'.concat(_issue.includes, '" \u0936\u093E\u092E\u093F\u0932 \u0939\u094B\u0928\u093E \u091A\u093E\u0939\u093F\u090F');
         if (_issue.format === "regex")
-          return `\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u094D\u091F\u094D\u0930\u093F\u0902\u0917: \u092A\u0948\u091F\u0930\u094D\u0928 ${_issue.pattern} \u0938\u0947 \u092E\u0947\u0932 \u0916\u093E\u0928\u093E \u091A\u093E\u0939\u093F\u090F`;
-        return `\u0905\u092E\u093E\u0928\u094D\u092F ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u094D\u091F\u094D\u0930\u093F\u0902\u0917: \u092A\u0948\u091F\u0930\u094D\u0928 ".concat(_issue.pattern, " \u0938\u0947 \u092E\u0947\u0932 \u0916\u093E\u0928\u093E \u091A\u093E\u0939\u093F\u090F");
+        return "\u0905\u092E\u093E\u0928\u094D\u092F ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u0902\u0916\u094D\u092F\u093E: \u092F\u0939 ${issue2.divisor} \u0915\u093E \u0917\u0941\u0923\u091C \u0939\u094B\u0928\u093E \u091A\u093E\u0939\u093F\u090F`;
+        return "\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u0902\u0916\u094D\u092F\u093E: \u092F\u0939 ".concat(issue2.divisor, " \u0915\u093E \u0917\u0941\u0923\u091C \u0939\u094B\u0928\u093E \u091A\u093E\u0939\u093F\u090F");
       case "unrecognized_keys":
-        return `\u0905\u092A\u0930\u093F\u091A\u093F\u0924 \u0915\u0941\u0902\u091C\u0940${issue2.keys.length > 1 ? "\u092F\u093E\u0901" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "\u0905\u092A\u0930\u093F\u091A\u093F\u0924 \u0915\u0941\u0902\u091C\u0940".concat(issue2.keys.length > 1 ? "\u092F\u093E\u0901" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `\u0905\u092E\u093E\u0928\u094D\u092F \u0915\u0941\u0902\u091C\u0940: ${issue2.origin} \u092E\u0947\u0902`;
+        return "\u0905\u092E\u093E\u0928\u094D\u092F \u0915\u0941\u0902\u091C\u0940: ".concat(issue2.origin, " \u092E\u0947\u0902");
       case "invalid_union":
         if (issue2.options && Array.isArray(issue2.options) && issue2.options.length > 0) {
-          const opts = issue2.options.map((o) => `'${o}'`).join(" | ");
-          return `\u0905\u092E\u093E\u0928\u094D\u092F \u0921\u093F\u0938\u094D\u0915\u094D\u0930\u093F\u092E\u093F\u0928\u0947\u091F\u0930 \u092E\u093E\u0928: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 ${opts}`;
+          const opts = issue2.options.map((o) => "'".concat(o, "'")).join(" | ");
+          return "\u0905\u092E\u093E\u0928\u094D\u092F \u0921\u093F\u0938\u094D\u0915\u094D\u0930\u093F\u092E\u093F\u0928\u0947\u091F\u0930 \u092E\u093E\u0928: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 ".concat(opts);
         }
         return "\u0905\u092E\u093E\u0928\u094D\u092F \u0907\u0928\u092A\u0941\u091F";
       case "invalid_element":
-        return `\u0905\u092E\u093E\u0928\u094D\u092F \u092E\u093E\u0928: ${issue2.origin} \u092E\u0947\u0902`;
+        return "\u0905\u092E\u093E\u0928\u094D\u092F \u092E\u093E\u0928: ".concat(issue2.origin, " \u092E\u0947\u0902");
       default:
-        return `\u0905\u092E\u093E\u0928\u094D\u092F \u0907\u0928\u092A\u0941\u091F`;
+        return "\u0905\u092E\u093E\u0928\u094D\u092F \u0907\u0928\u092A\u0941\u091F";
     }
   };
 };
@@ -10294,55 +10002,55 @@ var error22 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Neispravan unos: o\u010Dekuje se instanceof ${issue2.expected}, a primljeno je ${received}`;
+          return "Neispravan unos: o\u010Dekuje se instanceof ".concat(issue2.expected, ", a primljeno je ").concat(received);
         }
-        return `Neispravan unos: o\u010Dekuje se ${expected}, a primljeno je ${received}`;
+        return "Neispravan unos: o\u010Dekuje se ".concat(expected, ", a primljeno je ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Neispravna vrijednost: o\u010Dekivano ${stringifyPrimitive(issue2.values[0])}`;
-        return `Neispravna opcija: o\u010Dekivano jedno od ${joinValues(issue2.values, "|")}`;
+          return "Neispravna vrijednost: o\u010Dekivano ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Neispravna opcija: o\u010Dekivano jedno od ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         const origin = TypeDictionary[issue2.origin] ?? issue2.origin;
         if (sizing)
-          return `Preveliko: o\u010Dekivano da ${origin ?? "vrijednost"} ima ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "elemenata"}`;
-        return `Preveliko: o\u010Dekivano da ${origin ?? "vrijednost"} bude ${adj}${issue2.maximum.toString()}`;
+          return "Preveliko: o\u010Dekivano da ".concat(origin ?? "vrijednost", " ima ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "elemenata");
+        return "Preveliko: o\u010Dekivano da ".concat(origin ?? "vrijednost", " bude ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         const origin = TypeDictionary[issue2.origin] ?? issue2.origin;
         if (sizing) {
-          return `Premalo: o\u010Dekivano da ${origin} ima ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "Premalo: o\u010Dekivano da ".concat(origin, " ima ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `Premalo: o\u010Dekivano da ${origin} bude ${adj}${issue2.minimum.toString()}`;
+        return "Premalo: o\u010Dekivano da ".concat(origin, " bude ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `Neispravan tekst: mora zapo\u010Dinjati s "${_issue.prefix}"`;
+          return 'Neispravan tekst: mora zapo\u010Dinjati s "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `Neispravan tekst: mora zavr\u0161avati s "${_issue.suffix}"`;
+          return 'Neispravan tekst: mora zavr\u0161avati s "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Neispravan tekst: mora sadr\u017Eavati "${_issue.includes}"`;
+          return 'Neispravan tekst: mora sadr\u017Eavati "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Neispravan tekst: mora odgovarati uzorku ${_issue.pattern}`;
-        return `Neispravna ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "Neispravan tekst: mora odgovarati uzorku ".concat(_issue.pattern);
+        return "Neispravna ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Neispravan broj: mora biti vi\u0161ekratnik od ${issue2.divisor}`;
+        return "Neispravan broj: mora biti vi\u0161ekratnik od ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `Neprepoznat${issue2.keys.length > 1 ? "i klju\u010Devi" : " klju\u010D"}: ${joinValues(issue2.keys, ", ")}`;
+        return "Neprepoznat".concat(issue2.keys.length > 1 ? "i klju\u010Devi" : " klju\u010D", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Neispravan klju\u010D u ${TypeDictionary[issue2.origin] ?? issue2.origin}`;
+        return "Neispravan klju\u010D u ".concat(TypeDictionary[issue2.origin] ?? issue2.origin);
       case "invalid_union":
         return "Neispravan unos";
       case "invalid_element":
-        return `Neispravna vrijednost u ${TypeDictionary[issue2.origin] ?? issue2.origin}`;
+        return "Neispravna vrijednost u ".concat(TypeDictionary[issue2.origin] ?? issue2.origin);
       default:
-        return `Neispravan unos`;
+        return "Neispravan unos";
     }
   };
 };
@@ -10408,53 +10116,53 @@ var error23 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\xC9rv\xE9nytelen bemenet: a v\xE1rt \xE9rt\xE9k instanceof ${issue2.expected}, a kapott \xE9rt\xE9k ${received}`;
+          return "\xC9rv\xE9nytelen bemenet: a v\xE1rt \xE9rt\xE9k instanceof ".concat(issue2.expected, ", a kapott \xE9rt\xE9k ").concat(received);
         }
-        return `\xC9rv\xE9nytelen bemenet: a v\xE1rt \xE9rt\xE9k ${expected}, a kapott \xE9rt\xE9k ${received}`;
+        return "\xC9rv\xE9nytelen bemenet: a v\xE1rt \xE9rt\xE9k ".concat(expected, ", a kapott \xE9rt\xE9k ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\xC9rv\xE9nytelen bemenet: a v\xE1rt \xE9rt\xE9k ${stringifyPrimitive(issue2.values[0])}`;
-        return `\xC9rv\xE9nytelen opci\xF3: valamelyik \xE9rt\xE9k v\xE1rt ${joinValues(issue2.values, "|")}`;
+          return "\xC9rv\xE9nytelen bemenet: a v\xE1rt \xE9rt\xE9k ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\xC9rv\xE9nytelen opci\xF3: valamelyik \xE9rt\xE9k v\xE1rt ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `T\xFAl nagy: ${issue2.origin ?? "\xE9rt\xE9k"} m\xE9rete t\xFAl nagy ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "elem"}`;
-        return `T\xFAl nagy: a bemeneti \xE9rt\xE9k ${issue2.origin ?? "\xE9rt\xE9k"} t\xFAl nagy: ${adj}${issue2.maximum.toString()}`;
+          return "T\xFAl nagy: ".concat(issue2.origin ?? "\xE9rt\xE9k", " m\xE9rete t\xFAl nagy ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "elem");
+        return "T\xFAl nagy: a bemeneti \xE9rt\xE9k ".concat(issue2.origin ?? "\xE9rt\xE9k", " t\xFAl nagy: ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `T\xFAl kicsi: a bemeneti \xE9rt\xE9k ${issue2.origin} m\xE9rete t\xFAl kicsi ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "T\xFAl kicsi: a bemeneti \xE9rt\xE9k ".concat(issue2.origin, " m\xE9rete t\xFAl kicsi ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `T\xFAl kicsi: a bemeneti \xE9rt\xE9k ${issue2.origin} t\xFAl kicsi ${adj}${issue2.minimum.toString()}`;
+        return "T\xFAl kicsi: a bemeneti \xE9rt\xE9k ".concat(issue2.origin, " t\xFAl kicsi ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `\xC9rv\xE9nytelen string: "${_issue.prefix}" \xE9rt\xE9kkel kell kezd\u0151dnie`;
+          return '\xC9rv\xE9nytelen string: "'.concat(_issue.prefix, '" \xE9rt\xE9kkel kell kezd\u0151dnie');
         if (_issue.format === "ends_with")
-          return `\xC9rv\xE9nytelen string: "${_issue.suffix}" \xE9rt\xE9kkel kell v\xE9gz\u0151dnie`;
+          return '\xC9rv\xE9nytelen string: "'.concat(_issue.suffix, '" \xE9rt\xE9kkel kell v\xE9gz\u0151dnie');
         if (_issue.format === "includes")
-          return `\xC9rv\xE9nytelen string: "${_issue.includes}" \xE9rt\xE9ket kell tartalmaznia`;
+          return '\xC9rv\xE9nytelen string: "'.concat(_issue.includes, '" \xE9rt\xE9ket kell tartalmaznia');
         if (_issue.format === "regex")
-          return `\xC9rv\xE9nytelen string: ${_issue.pattern} mint\xE1nak kell megfelelnie`;
-        return `\xC9rv\xE9nytelen ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\xC9rv\xE9nytelen string: ".concat(_issue.pattern, " mint\xE1nak kell megfelelnie");
+        return "\xC9rv\xE9nytelen ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\xC9rv\xE9nytelen sz\xE1m: ${issue2.divisor} t\xF6bbsz\xF6r\xF6s\xE9nek kell lennie`;
+        return "\xC9rv\xE9nytelen sz\xE1m: ".concat(issue2.divisor, " t\xF6bbsz\xF6r\xF6s\xE9nek kell lennie");
       case "unrecognized_keys":
-        return `Ismeretlen kulcs${issue2.keys.length > 1 ? "s" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "Ismeretlen kulcs".concat(issue2.keys.length > 1 ? "s" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `\xC9rv\xE9nytelen kulcs ${issue2.origin}`;
+        return "\xC9rv\xE9nytelen kulcs ".concat(issue2.origin);
       case "invalid_union":
         return "\xC9rv\xE9nytelen bemenet";
       case "invalid_element":
-        return `\xC9rv\xE9nytelen \xE9rt\xE9k: ${issue2.origin}`;
+        return "\xC9rv\xE9nytelen \xE9rt\xE9k: ".concat(issue2.origin);
       default:
-        return `\xC9rv\xE9nytelen bemenet`;
+        return "\xC9rv\xE9nytelen bemenet";
     }
   };
 };
@@ -10560,23 +10268,23 @@ var error24 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\u054D\u056D\u0561\u056C \u0574\u0578\u0582\u057F\u0584\u0561\u0563\u0580\u0578\u0582\u0574\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567\u0580 instanceof ${issue2.expected}, \u057D\u057F\u0561\u0581\u057E\u0565\u056C \u0567 ${received}`;
+          return "\u054D\u056D\u0561\u056C \u0574\u0578\u0582\u057F\u0584\u0561\u0563\u0580\u0578\u0582\u0574\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567\u0580 instanceof ".concat(issue2.expected, ", \u057D\u057F\u0561\u0581\u057E\u0565\u056C \u0567 ").concat(received);
         }
-        return `\u054D\u056D\u0561\u056C \u0574\u0578\u0582\u057F\u0584\u0561\u0563\u0580\u0578\u0582\u0574\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567\u0580 ${expected}, \u057D\u057F\u0561\u0581\u057E\u0565\u056C \u0567 ${received}`;
+        return "\u054D\u056D\u0561\u056C \u0574\u0578\u0582\u057F\u0584\u0561\u0563\u0580\u0578\u0582\u0574\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567\u0580 ".concat(expected, ", \u057D\u057F\u0561\u0581\u057E\u0565\u056C \u0567 ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u054D\u056D\u0561\u056C \u0574\u0578\u0582\u057F\u0584\u0561\u0563\u0580\u0578\u0582\u0574\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567\u0580 ${stringifyPrimitive(issue2.values[1])}`;
-        return `\u054D\u056D\u0561\u056C \u057F\u0561\u0580\u0562\u0565\u0580\u0561\u056F\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567\u0580 \u0570\u0565\u057F\u0587\u0575\u0561\u056C\u0576\u0565\u0580\u056B\u0581 \u0574\u0565\u056F\u0568\u055D ${joinValues(issue2.values, "|")}`;
+          return "\u054D\u056D\u0561\u056C \u0574\u0578\u0582\u057F\u0584\u0561\u0563\u0580\u0578\u0582\u0574\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567\u0580 ".concat(stringifyPrimitive(issue2.values[1]));
+        return "\u054D\u056D\u0561\u056C \u057F\u0561\u0580\u0562\u0565\u0580\u0561\u056F\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567\u0580 \u0570\u0565\u057F\u0587\u0575\u0561\u056C\u0576\u0565\u0580\u056B\u0581 \u0574\u0565\u056F\u0568\u055D ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
           const maxValue = Number(issue2.maximum);
           const unit = getArmenianPlural(maxValue, sizing.unit.one, sizing.unit.many);
-          return `\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0574\u0565\u056E \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ${withDefiniteArticle(issue2.origin ?? "\u0561\u0580\u056A\u0565\u0584")} \u056F\u0578\u0582\u0576\u0565\u0576\u0561 ${adj}${issue2.maximum.toString()} ${unit}`;
+          return "\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0574\u0565\u056E \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ".concat(withDefiniteArticle(issue2.origin ?? "\u0561\u0580\u056A\u0565\u0584"), " \u056F\u0578\u0582\u0576\u0565\u0576\u0561 ").concat(adj).concat(issue2.maximum.toString(), " ").concat(unit);
         }
-        return `\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0574\u0565\u056E \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ${withDefiniteArticle(issue2.origin ?? "\u0561\u0580\u056A\u0565\u0584")} \u056C\u056B\u0576\u056B ${adj}${issue2.maximum.toString()}`;
+        return "\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0574\u0565\u056E \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ".concat(withDefiniteArticle(issue2.origin ?? "\u0561\u0580\u056A\u0565\u0584"), " \u056C\u056B\u0576\u056B ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
@@ -10584,34 +10292,34 @@ var error24 = () => {
         if (sizing) {
           const minValue = Number(issue2.minimum);
           const unit = getArmenianPlural(minValue, sizing.unit.one, sizing.unit.many);
-          return `\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0583\u0578\u0584\u0580 \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ${withDefiniteArticle(issue2.origin)} \u056F\u0578\u0582\u0576\u0565\u0576\u0561 ${adj}${issue2.minimum.toString()} ${unit}`;
+          return "\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0583\u0578\u0584\u0580 \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ".concat(withDefiniteArticle(issue2.origin), " \u056F\u0578\u0582\u0576\u0565\u0576\u0561 ").concat(adj).concat(issue2.minimum.toString(), " ").concat(unit);
         }
-        return `\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0583\u0578\u0584\u0580 \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ${withDefiniteArticle(issue2.origin)} \u056C\u056B\u0576\u056B ${adj}${issue2.minimum.toString()}`;
+        return "\u0549\u0561\u0583\u0561\u0566\u0561\u0576\u0581 \u0583\u0578\u0584\u0580 \u0561\u0580\u056A\u0565\u0584\u2024 \u057D\u057A\u0561\u057D\u057E\u0578\u0582\u0574 \u0567, \u0578\u0580 ".concat(withDefiniteArticle(issue2.origin), " \u056C\u056B\u0576\u056B ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `\u054D\u056D\u0561\u056C \u057F\u0578\u0572\u2024 \u057A\u0565\u057F\u0584 \u0567 \u057D\u056F\u057D\u057E\u056B "${_issue.prefix}"-\u0578\u057E`;
+          return '\u054D\u056D\u0561\u056C \u057F\u0578\u0572\u2024 \u057A\u0565\u057F\u0584 \u0567 \u057D\u056F\u057D\u057E\u056B "'.concat(_issue.prefix, '"-\u0578\u057E');
         if (_issue.format === "ends_with")
-          return `\u054D\u056D\u0561\u056C \u057F\u0578\u0572\u2024 \u057A\u0565\u057F\u0584 \u0567 \u0561\u057E\u0561\u0580\u057F\u057E\u056B "${_issue.suffix}"-\u0578\u057E`;
+          return '\u054D\u056D\u0561\u056C \u057F\u0578\u0572\u2024 \u057A\u0565\u057F\u0584 \u0567 \u0561\u057E\u0561\u0580\u057F\u057E\u056B "'.concat(_issue.suffix, '"-\u0578\u057E');
         if (_issue.format === "includes")
-          return `\u054D\u056D\u0561\u056C \u057F\u0578\u0572\u2024 \u057A\u0565\u057F\u0584 \u0567 \u057A\u0561\u0580\u0578\u0582\u0576\u0561\u056F\u056B "${_issue.includes}"`;
+          return '\u054D\u056D\u0561\u056C \u057F\u0578\u0572\u2024 \u057A\u0565\u057F\u0584 \u0567 \u057A\u0561\u0580\u0578\u0582\u0576\u0561\u056F\u056B "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `\u054D\u056D\u0561\u056C \u057F\u0578\u0572\u2024 \u057A\u0565\u057F\u0584 \u0567 \u0570\u0561\u0574\u0561\u057A\u0561\u057F\u0561\u057D\u056D\u0561\u0576\u056B ${_issue.pattern} \u0571\u0587\u0561\u0579\u0561\u0583\u056B\u0576`;
-        return `\u054D\u056D\u0561\u056C ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u054D\u056D\u0561\u056C \u057F\u0578\u0572\u2024 \u057A\u0565\u057F\u0584 \u0567 \u0570\u0561\u0574\u0561\u057A\u0561\u057F\u0561\u057D\u056D\u0561\u0576\u056B ".concat(_issue.pattern, " \u0571\u0587\u0561\u0579\u0561\u0583\u056B\u0576");
+        return "\u054D\u056D\u0561\u056C ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u054D\u056D\u0561\u056C \u0569\u056B\u057E\u2024 \u057A\u0565\u057F\u0584 \u0567 \u0562\u0561\u0566\u0574\u0561\u057A\u0561\u057F\u056B\u056F \u056C\u056B\u0576\u056B ${issue2.divisor}-\u056B`;
+        return "\u054D\u056D\u0561\u056C \u0569\u056B\u057E\u2024 \u057A\u0565\u057F\u0584 \u0567 \u0562\u0561\u0566\u0574\u0561\u057A\u0561\u057F\u056B\u056F \u056C\u056B\u0576\u056B ".concat(issue2.divisor, "-\u056B");
       case "unrecognized_keys":
-        return `\u0549\u0573\u0561\u0576\u0561\u0579\u057E\u0561\u056E \u0562\u0561\u0576\u0561\u056C\u056B${issue2.keys.length > 1 ? "\u0576\u0565\u0580" : ""}. ${joinValues(issue2.keys, ", ")}`;
+        return "\u0549\u0573\u0561\u0576\u0561\u0579\u057E\u0561\u056E \u0562\u0561\u0576\u0561\u056C\u056B".concat(issue2.keys.length > 1 ? "\u0576\u0565\u0580" : "", ". ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `\u054D\u056D\u0561\u056C \u0562\u0561\u0576\u0561\u056C\u056B ${withDefiniteArticle(issue2.origin)}-\u0578\u0582\u0574`;
+        return "\u054D\u056D\u0561\u056C \u0562\u0561\u0576\u0561\u056C\u056B ".concat(withDefiniteArticle(issue2.origin), "-\u0578\u0582\u0574");
       case "invalid_union":
         return "\u054D\u056D\u0561\u056C \u0574\u0578\u0582\u057F\u0584\u0561\u0563\u0580\u0578\u0582\u0574";
       case "invalid_element":
-        return `\u054D\u056D\u0561\u056C \u0561\u0580\u056A\u0565\u0584 ${withDefiniteArticle(issue2.origin)}-\u0578\u0582\u0574`;
+        return "\u054D\u056D\u0561\u056C \u0561\u0580\u056A\u0565\u0584 ".concat(withDefiniteArticle(issue2.origin), "-\u0578\u0582\u0574");
       default:
-        return `\u054D\u056D\u0561\u056C \u0574\u0578\u0582\u057F\u0584\u0561\u0563\u0580\u0578\u0582\u0574`;
+        return "\u054D\u056D\u0561\u056C \u0574\u0578\u0582\u057F\u0584\u0561\u0563\u0580\u0578\u0582\u0574";
     }
   };
 };
@@ -10675,53 +10383,53 @@ var error25 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Input tidak valid: diharapkan instanceof ${issue2.expected}, diterima ${received}`;
+          return "Input tidak valid: diharapkan instanceof ".concat(issue2.expected, ", diterima ").concat(received);
         }
-        return `Input tidak valid: diharapkan ${expected}, diterima ${received}`;
+        return "Input tidak valid: diharapkan ".concat(expected, ", diterima ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Input tidak valid: diharapkan ${stringifyPrimitive(issue2.values[0])}`;
-        return `Pilihan tidak valid: diharapkan salah satu dari ${joinValues(issue2.values, "|")}`;
+          return "Input tidak valid: diharapkan ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Pilihan tidak valid: diharapkan salah satu dari ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Terlalu besar: diharapkan ${issue2.origin ?? "value"} memiliki ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "elemen"}`;
-        return `Terlalu besar: diharapkan ${issue2.origin ?? "value"} menjadi ${adj}${issue2.maximum.toString()}`;
+          return "Terlalu besar: diharapkan ".concat(issue2.origin ?? "value", " memiliki ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "elemen");
+        return "Terlalu besar: diharapkan ".concat(issue2.origin ?? "value", " menjadi ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Terlalu kecil: diharapkan ${issue2.origin} memiliki ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "Terlalu kecil: diharapkan ".concat(issue2.origin, " memiliki ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `Terlalu kecil: diharapkan ${issue2.origin} menjadi ${adj}${issue2.minimum.toString()}`;
+        return "Terlalu kecil: diharapkan ".concat(issue2.origin, " menjadi ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `String tidak valid: harus dimulai dengan "${_issue.prefix}"`;
+          return 'String tidak valid: harus dimulai dengan "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `String tidak valid: harus berakhir dengan "${_issue.suffix}"`;
+          return 'String tidak valid: harus berakhir dengan "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `String tidak valid: harus menyertakan "${_issue.includes}"`;
+          return 'String tidak valid: harus menyertakan "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `String tidak valid: harus sesuai pola ${_issue.pattern}`;
-        return `${FormatDictionary[_issue.format] ?? issue2.format} tidak valid`;
+          return "String tidak valid: harus sesuai pola ".concat(_issue.pattern);
+        return "".concat(FormatDictionary[_issue.format] ?? issue2.format, " tidak valid");
       }
       case "not_multiple_of":
-        return `Angka tidak valid: harus kelipatan dari ${issue2.divisor}`;
+        return "Angka tidak valid: harus kelipatan dari ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `Kunci tidak dikenali ${issue2.keys.length > 1 ? "s" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "Kunci tidak dikenali ".concat(issue2.keys.length > 1 ? "s" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Kunci tidak valid di ${issue2.origin}`;
+        return "Kunci tidak valid di ".concat(issue2.origin);
       case "invalid_union":
         return "Input tidak valid";
       case "invalid_element":
-        return `Nilai tidak valid di ${issue2.origin}`;
+        return "Nilai tidak valid di ".concat(issue2.origin);
       default:
-        return `Input tidak valid`;
+        return "Input tidak valid";
     }
   };
 };
@@ -10787,54 +10495,54 @@ var error26 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Rangt gildi: \xDE\xFA sl\xF3st inn ${received} \xFEar sem \xE1 a\xF0 vera instanceof ${issue2.expected}`;
+          return "Rangt gildi: \xDE\xFA sl\xF3st inn ".concat(received, " \xFEar sem \xE1 a\xF0 vera instanceof ").concat(issue2.expected);
         }
-        return `Rangt gildi: \xDE\xFA sl\xF3st inn ${received} \xFEar sem \xE1 a\xF0 vera ${expected}`;
+        return "Rangt gildi: \xDE\xFA sl\xF3st inn ".concat(received, " \xFEar sem \xE1 a\xF0 vera ").concat(expected);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Rangt gildi: gert r\xE1\xF0 fyrir ${stringifyPrimitive(issue2.values[0])}`;
-        return `\xD3gilt val: m\xE1 vera eitt af eftirfarandi ${joinValues(issue2.values, "|")}`;
+          return "Rangt gildi: gert r\xE1\xF0 fyrir ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\xD3gilt val: m\xE1 vera eitt af eftirfarandi ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Of st\xF3rt: gert er r\xE1\xF0 fyrir a\xF0 ${issue2.origin ?? "gildi"} hafi ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "hluti"}`;
-        return `Of st\xF3rt: gert er r\xE1\xF0 fyrir a\xF0 ${issue2.origin ?? "gildi"} s\xE9 ${adj}${issue2.maximum.toString()}`;
+          return "Of st\xF3rt: gert er r\xE1\xF0 fyrir a\xF0 ".concat(issue2.origin ?? "gildi", " hafi ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "hluti");
+        return "Of st\xF3rt: gert er r\xE1\xF0 fyrir a\xF0 ".concat(issue2.origin ?? "gildi", " s\xE9 ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Of l\xEDti\xF0: gert er r\xE1\xF0 fyrir a\xF0 ${issue2.origin} hafi ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "Of l\xEDti\xF0: gert er r\xE1\xF0 fyrir a\xF0 ".concat(issue2.origin, " hafi ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `Of l\xEDti\xF0: gert er r\xE1\xF0 fyrir a\xF0 ${issue2.origin} s\xE9 ${adj}${issue2.minimum.toString()}`;
+        return "Of l\xEDti\xF0: gert er r\xE1\xF0 fyrir a\xF0 ".concat(issue2.origin, " s\xE9 ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `\xD3gildur strengur: ver\xF0ur a\xF0 byrja \xE1 "${_issue.prefix}"`;
+          return '\xD3gildur strengur: ver\xF0ur a\xF0 byrja \xE1 "'.concat(_issue.prefix, '"');
         }
         if (_issue.format === "ends_with")
-          return `\xD3gildur strengur: ver\xF0ur a\xF0 enda \xE1 "${_issue.suffix}"`;
+          return '\xD3gildur strengur: ver\xF0ur a\xF0 enda \xE1 "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `\xD3gildur strengur: ver\xF0ur a\xF0 innihalda "${_issue.includes}"`;
+          return '\xD3gildur strengur: ver\xF0ur a\xF0 innihalda "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `\xD3gildur strengur: ver\xF0ur a\xF0 fylgja mynstri ${_issue.pattern}`;
-        return `Rangt ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\xD3gildur strengur: ver\xF0ur a\xF0 fylgja mynstri ".concat(_issue.pattern);
+        return "Rangt ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `R\xF6ng tala: ver\xF0ur a\xF0 vera margfeldi af ${issue2.divisor}`;
+        return "R\xF6ng tala: ver\xF0ur a\xF0 vera margfeldi af ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `\xD3\xFEekkt ${issue2.keys.length > 1 ? "ir lyklar" : "ur lykill"}: ${joinValues(issue2.keys, ", ")}`;
+        return "\xD3\xFEekkt ".concat(issue2.keys.length > 1 ? "ir lyklar" : "ur lykill", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Rangur lykill \xED ${issue2.origin}`;
+        return "Rangur lykill \xED ".concat(issue2.origin);
       case "invalid_union":
         return "Rangt gildi";
       case "invalid_element":
-        return `Rangt gildi \xED ${issue2.origin}`;
+        return "Rangt gildi \xED ".concat(issue2.origin);
       default:
-        return `Rangt gildi`;
+        return "Rangt gildi";
     }
   };
 };
@@ -10900,53 +10608,53 @@ var error27 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Input non valido: atteso instanceof ${issue2.expected}, ricevuto ${received}`;
+          return "Input non valido: atteso instanceof ".concat(issue2.expected, ", ricevuto ").concat(received);
         }
-        return `Input non valido: atteso ${expected}, ricevuto ${received}`;
+        return "Input non valido: atteso ".concat(expected, ", ricevuto ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Input non valido: atteso ${stringifyPrimitive(issue2.values[0])}`;
-        return `Opzione non valida: atteso uno tra ${joinValues(issue2.values, "|")}`;
+          return "Input non valido: atteso ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Opzione non valida: atteso uno tra ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Troppo grande: ${issue2.origin ?? "valore"} deve avere ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "elementi"}`;
-        return `Troppo grande: ${issue2.origin ?? "valore"} deve essere ${adj}${issue2.maximum.toString()}`;
+          return "Troppo grande: ".concat(issue2.origin ?? "valore", " deve avere ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "elementi");
+        return "Troppo grande: ".concat(issue2.origin ?? "valore", " deve essere ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Troppo piccolo: ${issue2.origin} deve avere ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "Troppo piccolo: ".concat(issue2.origin, " deve avere ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `Troppo piccolo: ${issue2.origin} deve essere ${adj}${issue2.minimum.toString()}`;
+        return "Troppo piccolo: ".concat(issue2.origin, " deve essere ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `Stringa non valida: deve iniziare con "${_issue.prefix}"`;
+          return 'Stringa non valida: deve iniziare con "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `Stringa non valida: deve terminare con "${_issue.suffix}"`;
+          return 'Stringa non valida: deve terminare con "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Stringa non valida: deve includere "${_issue.includes}"`;
+          return 'Stringa non valida: deve includere "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Stringa non valida: deve corrispondere al pattern ${_issue.pattern}`;
-        return `Input non valido: ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "Stringa non valida: deve corrispondere al pattern ".concat(_issue.pattern);
+        return "Input non valido: ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Numero non valido: deve essere un multiplo di ${issue2.divisor}`;
+        return "Numero non valido: deve essere un multiplo di ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `Chiav${issue2.keys.length > 1 ? "i" : "e"} non riconosciut${issue2.keys.length > 1 ? "e" : "a"}: ${joinValues(issue2.keys, ", ")}`;
+        return "Chiav".concat(issue2.keys.length > 1 ? "i" : "e", " non riconosciut").concat(issue2.keys.length > 1 ? "e" : "a", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Chiave non valida in ${issue2.origin}`;
+        return "Chiave non valida in ".concat(issue2.origin);
       case "invalid_union":
         return "Input non valido";
       case "invalid_element":
-        return `Valore non valido in ${issue2.origin}`;
+        return "Valore non valido in ".concat(issue2.origin);
       default:
-        return `Input non valido`;
+        return "Input non valido";
     }
   };
 };
@@ -11012,52 +10720,52 @@ var error28 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\u7121\u52B9\u306A\u5165\u529B: instanceof ${issue2.expected}\u304C\u671F\u5F85\u3055\u308C\u307E\u3057\u305F\u304C\u3001${received}\u304C\u5165\u529B\u3055\u308C\u307E\u3057\u305F`;
+          return "\u7121\u52B9\u306A\u5165\u529B: instanceof ".concat(issue2.expected, "\u304C\u671F\u5F85\u3055\u308C\u307E\u3057\u305F\u304C\u3001").concat(received, "\u304C\u5165\u529B\u3055\u308C\u307E\u3057\u305F");
         }
-        return `\u7121\u52B9\u306A\u5165\u529B: ${expected}\u304C\u671F\u5F85\u3055\u308C\u307E\u3057\u305F\u304C\u3001${received}\u304C\u5165\u529B\u3055\u308C\u307E\u3057\u305F`;
+        return "\u7121\u52B9\u306A\u5165\u529B: ".concat(expected, "\u304C\u671F\u5F85\u3055\u308C\u307E\u3057\u305F\u304C\u3001").concat(received, "\u304C\u5165\u529B\u3055\u308C\u307E\u3057\u305F");
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u7121\u52B9\u306A\u5165\u529B: ${stringifyPrimitive(issue2.values[0])}\u304C\u671F\u5F85\u3055\u308C\u307E\u3057\u305F`;
-        return `\u7121\u52B9\u306A\u9078\u629E: ${joinValues(issue2.values, "\u3001")}\u306E\u3044\u305A\u308C\u304B\u3067\u3042\u308B\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059`;
+          return "\u7121\u52B9\u306A\u5165\u529B: ".concat(stringifyPrimitive(issue2.values[0]), "\u304C\u671F\u5F85\u3055\u308C\u307E\u3057\u305F");
+        return "\u7121\u52B9\u306A\u9078\u629E: ".concat(joinValues(issue2.values, "\u3001"), "\u306E\u3044\u305A\u308C\u304B\u3067\u3042\u308B\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059");
       case "too_big": {
         const adj = issue2.inclusive ? "\u4EE5\u4E0B\u3067\u3042\u308B" : "\u3088\u308A\u5C0F\u3055\u3044";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u5927\u304D\u3059\u304E\u308B\u5024: ${issue2.origin ?? "\u5024"}\u306F${issue2.maximum.toString()}${sizing.unit ?? "\u8981\u7D20"}${adj}\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059`;
-        return `\u5927\u304D\u3059\u304E\u308B\u5024: ${issue2.origin ?? "\u5024"}\u306F${issue2.maximum.toString()}${adj}\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059`;
+          return "\u5927\u304D\u3059\u304E\u308B\u5024: ".concat(issue2.origin ?? "\u5024", "\u306F").concat(issue2.maximum.toString()).concat(sizing.unit ?? "\u8981\u7D20").concat(adj, "\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059");
+        return "\u5927\u304D\u3059\u304E\u308B\u5024: ".concat(issue2.origin ?? "\u5024", "\u306F").concat(issue2.maximum.toString()).concat(adj, "\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059");
       }
       case "too_small": {
         const adj = issue2.inclusive ? "\u4EE5\u4E0A\u3067\u3042\u308B" : "\u3088\u308A\u5927\u304D\u3044";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u5C0F\u3055\u3059\u304E\u308B\u5024: ${issue2.origin}\u306F${issue2.minimum.toString()}${sizing.unit}${adj}\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059`;
-        return `\u5C0F\u3055\u3059\u304E\u308B\u5024: ${issue2.origin}\u306F${issue2.minimum.toString()}${adj}\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059`;
+          return "\u5C0F\u3055\u3059\u304E\u308B\u5024: ".concat(issue2.origin, "\u306F").concat(issue2.minimum.toString()).concat(sizing.unit).concat(adj, "\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059");
+        return "\u5C0F\u3055\u3059\u304E\u308B\u5024: ".concat(issue2.origin, "\u306F").concat(issue2.minimum.toString()).concat(adj, "\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059");
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `\u7121\u52B9\u306A\u6587\u5B57\u5217: "${_issue.prefix}"\u3067\u59CB\u307E\u308B\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059`;
+          return '\u7121\u52B9\u306A\u6587\u5B57\u5217: "'.concat(_issue.prefix, '"\u3067\u59CB\u307E\u308B\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059');
         if (_issue.format === "ends_with")
-          return `\u7121\u52B9\u306A\u6587\u5B57\u5217: "${_issue.suffix}"\u3067\u7D42\u308F\u308B\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059`;
+          return '\u7121\u52B9\u306A\u6587\u5B57\u5217: "'.concat(_issue.suffix, '"\u3067\u7D42\u308F\u308B\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059');
         if (_issue.format === "includes")
-          return `\u7121\u52B9\u306A\u6587\u5B57\u5217: "${_issue.includes}"\u3092\u542B\u3080\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059`;
+          return '\u7121\u52B9\u306A\u6587\u5B57\u5217: "'.concat(_issue.includes, '"\u3092\u542B\u3080\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059');
         if (_issue.format === "regex")
-          return `\u7121\u52B9\u306A\u6587\u5B57\u5217: \u30D1\u30BF\u30FC\u30F3${_issue.pattern}\u306B\u4E00\u81F4\u3059\u308B\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059`;
-        return `\u7121\u52B9\u306A${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u7121\u52B9\u306A\u6587\u5B57\u5217: \u30D1\u30BF\u30FC\u30F3".concat(_issue.pattern, "\u306B\u4E00\u81F4\u3059\u308B\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059");
+        return "\u7121\u52B9\u306A".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u7121\u52B9\u306A\u6570\u5024: ${issue2.divisor}\u306E\u500D\u6570\u3067\u3042\u308B\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059`;
+        return "\u7121\u52B9\u306A\u6570\u5024: ".concat(issue2.divisor, "\u306E\u500D\u6570\u3067\u3042\u308B\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059");
       case "unrecognized_keys":
-        return `\u8A8D\u8B58\u3055\u308C\u3066\u3044\u306A\u3044\u30AD\u30FC${issue2.keys.length > 1 ? "\u7FA4" : ""}: ${joinValues(issue2.keys, "\u3001")}`;
+        return "\u8A8D\u8B58\u3055\u308C\u3066\u3044\u306A\u3044\u30AD\u30FC".concat(issue2.keys.length > 1 ? "\u7FA4" : "", ": ").concat(joinValues(issue2.keys, "\u3001"));
       case "invalid_key":
-        return `${issue2.origin}\u5185\u306E\u7121\u52B9\u306A\u30AD\u30FC`;
+        return "".concat(issue2.origin, "\u5185\u306E\u7121\u52B9\u306A\u30AD\u30FC");
       case "invalid_union":
         return "\u7121\u52B9\u306A\u5165\u529B";
       case "invalid_element":
-        return `${issue2.origin}\u5185\u306E\u7121\u52B9\u306A\u5024`;
+        return "".concat(issue2.origin, "\u5185\u306E\u7121\u52B9\u306A\u5024");
       default:
-        return `\u7121\u52B9\u306A\u5165\u529B`;
+        return "\u7121\u52B9\u306A\u5165\u529B";
     }
   };
 };
@@ -11126,54 +10834,54 @@ var error29 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10E8\u10D4\u10E7\u10D5\u10D0\u10DC\u10D0: \u10DB\u10DD\u10E1\u10D0\u10DA\u10DD\u10D3\u10DC\u10D4\u10DA\u10D8 instanceof ${issue2.expected}, \u10DB\u10D8\u10E6\u10D4\u10D1\u10E3\u10DA\u10D8 ${received}`;
+          return "\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10E8\u10D4\u10E7\u10D5\u10D0\u10DC\u10D0: \u10DB\u10DD\u10E1\u10D0\u10DA\u10DD\u10D3\u10DC\u10D4\u10DA\u10D8 instanceof ".concat(issue2.expected, ", \u10DB\u10D8\u10E6\u10D4\u10D1\u10E3\u10DA\u10D8 ").concat(received);
         }
-        return `\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10E8\u10D4\u10E7\u10D5\u10D0\u10DC\u10D0: \u10DB\u10DD\u10E1\u10D0\u10DA\u10DD\u10D3\u10DC\u10D4\u10DA\u10D8 ${expected}, \u10DB\u10D8\u10E6\u10D4\u10D1\u10E3\u10DA\u10D8 ${received}`;
+        return "\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10E8\u10D4\u10E7\u10D5\u10D0\u10DC\u10D0: \u10DB\u10DD\u10E1\u10D0\u10DA\u10DD\u10D3\u10DC\u10D4\u10DA\u10D8 ".concat(expected, ", \u10DB\u10D8\u10E6\u10D4\u10D1\u10E3\u10DA\u10D8 ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10E8\u10D4\u10E7\u10D5\u10D0\u10DC\u10D0: \u10DB\u10DD\u10E1\u10D0\u10DA\u10DD\u10D3\u10DC\u10D4\u10DA\u10D8 ${stringifyPrimitive(issue2.values[0])}`;
-        return `\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10D5\u10D0\u10E0\u10D8\u10D0\u10DC\u10E2\u10D8: \u10DB\u10DD\u10E1\u10D0\u10DA\u10DD\u10D3\u10DC\u10D4\u10DA\u10D8\u10D0 \u10D4\u10E0\u10D7-\u10D4\u10E0\u10D7\u10D8 ${joinValues(issue2.values, "|")}-\u10D3\u10D0\u10DC`;
+          return "\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10E8\u10D4\u10E7\u10D5\u10D0\u10DC\u10D0: \u10DB\u10DD\u10E1\u10D0\u10DA\u10DD\u10D3\u10DC\u10D4\u10DA\u10D8 ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10D5\u10D0\u10E0\u10D8\u10D0\u10DC\u10E2\u10D8: \u10DB\u10DD\u10E1\u10D0\u10DA\u10DD\u10D3\u10DC\u10D4\u10DA\u10D8\u10D0 \u10D4\u10E0\u10D7-\u10D4\u10E0\u10D7\u10D8 ".concat(joinValues(issue2.values, "|"), "-\u10D3\u10D0\u10DC");
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u10D6\u10D4\u10D3\u10DB\u10D4\u10E2\u10D0\u10D3 \u10D3\u10D8\u10D3\u10D8: \u10DB\u10DD\u10E1\u10D0\u10DA\u10DD\u10D3\u10DC\u10D4\u10DA\u10D8 ${issue2.origin ?? "\u10DB\u10DC\u10D8\u10E8\u10D5\u10DC\u10D4\u10DA\u10DD\u10D1\u10D0"} ${sizing.verb} ${adj}${issue2.maximum.toString()} ${sizing.unit}`;
-        return `\u10D6\u10D4\u10D3\u10DB\u10D4\u10E2\u10D0\u10D3 \u10D3\u10D8\u10D3\u10D8: \u10DB\u10DD\u10E1\u10D0\u10DA\u10DD\u10D3\u10DC\u10D4\u10DA\u10D8 ${issue2.origin ?? "\u10DB\u10DC\u10D8\u10E8\u10D5\u10DC\u10D4\u10DA\u10DD\u10D1\u10D0"} \u10D8\u10E7\u10DD\u10E1 ${adj}${issue2.maximum.toString()}`;
+          return "\u10D6\u10D4\u10D3\u10DB\u10D4\u10E2\u10D0\u10D3 \u10D3\u10D8\u10D3\u10D8: \u10DB\u10DD\u10E1\u10D0\u10DA\u10DD\u10D3\u10DC\u10D4\u10DA\u10D8 ".concat(issue2.origin ?? "\u10DB\u10DC\u10D8\u10E8\u10D5\u10DC\u10D4\u10DA\u10DD\u10D1\u10D0", " ").concat(sizing.verb, " ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit);
+        return "\u10D6\u10D4\u10D3\u10DB\u10D4\u10E2\u10D0\u10D3 \u10D3\u10D8\u10D3\u10D8: \u10DB\u10DD\u10E1\u10D0\u10DA\u10DD\u10D3\u10DC\u10D4\u10DA\u10D8 ".concat(issue2.origin ?? "\u10DB\u10DC\u10D8\u10E8\u10D5\u10DC\u10D4\u10DA\u10DD\u10D1\u10D0", " \u10D8\u10E7\u10DD\u10E1 ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u10D6\u10D4\u10D3\u10DB\u10D4\u10E2\u10D0\u10D3 \u10DE\u10D0\u10E2\u10D0\u10E0\u10D0: \u10DB\u10DD\u10E1\u10D0\u10DA\u10DD\u10D3\u10DC\u10D4\u10DA\u10D8 ${issue2.origin} ${sizing.verb} ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "\u10D6\u10D4\u10D3\u10DB\u10D4\u10E2\u10D0\u10D3 \u10DE\u10D0\u10E2\u10D0\u10E0\u10D0: \u10DB\u10DD\u10E1\u10D0\u10DA\u10DD\u10D3\u10DC\u10D4\u10DA\u10D8 ".concat(issue2.origin, " ").concat(sizing.verb, " ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `\u10D6\u10D4\u10D3\u10DB\u10D4\u10E2\u10D0\u10D3 \u10DE\u10D0\u10E2\u10D0\u10E0\u10D0: \u10DB\u10DD\u10E1\u10D0\u10DA\u10DD\u10D3\u10DC\u10D4\u10DA\u10D8 ${issue2.origin} \u10D8\u10E7\u10DD\u10E1 ${adj}${issue2.minimum.toString()}`;
+        return "\u10D6\u10D4\u10D3\u10DB\u10D4\u10E2\u10D0\u10D3 \u10DE\u10D0\u10E2\u10D0\u10E0\u10D0: \u10DB\u10DD\u10E1\u10D0\u10DA\u10DD\u10D3\u10DC\u10D4\u10DA\u10D8 ".concat(issue2.origin, " \u10D8\u10E7\u10DD\u10E1 ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10D5\u10D4\u10DA\u10D8: \u10E3\u10DC\u10D3\u10D0 \u10D8\u10EC\u10E7\u10D4\u10D1\u10DD\u10D3\u10D4\u10E1 "${_issue.prefix}"-\u10D8\u10D7`;
+          return '\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10D5\u10D4\u10DA\u10D8: \u10E3\u10DC\u10D3\u10D0 \u10D8\u10EC\u10E7\u10D4\u10D1\u10DD\u10D3\u10D4\u10E1 "'.concat(_issue.prefix, '"-\u10D8\u10D7');
         }
         if (_issue.format === "ends_with")
-          return `\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10D5\u10D4\u10DA\u10D8: \u10E3\u10DC\u10D3\u10D0 \u10DB\u10D7\u10D0\u10D5\u10E0\u10D3\u10D4\u10D1\u10DD\u10D3\u10D4\u10E1 "${_issue.suffix}"-\u10D8\u10D7`;
+          return '\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10D5\u10D4\u10DA\u10D8: \u10E3\u10DC\u10D3\u10D0 \u10DB\u10D7\u10D0\u10D5\u10E0\u10D3\u10D4\u10D1\u10DD\u10D3\u10D4\u10E1 "'.concat(_issue.suffix, '"-\u10D8\u10D7');
         if (_issue.format === "includes")
-          return `\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10D5\u10D4\u10DA\u10D8: \u10E3\u10DC\u10D3\u10D0 \u10E8\u10D4\u10D8\u10EA\u10D0\u10D5\u10D3\u10D4\u10E1 "${_issue.includes}"-\u10E1`;
+          return '\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10D5\u10D4\u10DA\u10D8: \u10E3\u10DC\u10D3\u10D0 \u10E8\u10D4\u10D8\u10EA\u10D0\u10D5\u10D3\u10D4\u10E1 "'.concat(_issue.includes, '"-\u10E1');
         if (_issue.format === "regex")
-          return `\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10D5\u10D4\u10DA\u10D8: \u10E3\u10DC\u10D3\u10D0 \u10E8\u10D4\u10D4\u10E1\u10D0\u10D1\u10D0\u10DB\u10D4\u10D1\u10DD\u10D3\u10D4\u10E1 \u10E8\u10D0\u10D1\u10DA\u10DD\u10DC\u10E1 ${_issue.pattern}`;
-        return `\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10D5\u10D4\u10DA\u10D8: \u10E3\u10DC\u10D3\u10D0 \u10E8\u10D4\u10D4\u10E1\u10D0\u10D1\u10D0\u10DB\u10D4\u10D1\u10DD\u10D3\u10D4\u10E1 \u10E8\u10D0\u10D1\u10DA\u10DD\u10DC\u10E1 ".concat(_issue.pattern);
+        return "\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10E0\u10D8\u10EA\u10EE\u10D5\u10D8: \u10E3\u10DC\u10D3\u10D0 \u10D8\u10E7\u10DD\u10E1 ${issue2.divisor}-\u10D8\u10E1 \u10EF\u10D4\u10E0\u10D0\u10D3\u10D8`;
+        return "\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10E0\u10D8\u10EA\u10EE\u10D5\u10D8: \u10E3\u10DC\u10D3\u10D0 \u10D8\u10E7\u10DD\u10E1 ".concat(issue2.divisor, "-\u10D8\u10E1 \u10EF\u10D4\u10E0\u10D0\u10D3\u10D8");
       case "unrecognized_keys":
-        return `\u10E3\u10EA\u10DC\u10DD\u10D1\u10D8 \u10D2\u10D0\u10E1\u10D0\u10E6\u10D4\u10D1${issue2.keys.length > 1 ? "\u10D4\u10D1\u10D8" : "\u10D8"}: ${joinValues(issue2.keys, ", ")}`;
+        return "\u10E3\u10EA\u10DC\u10DD\u10D1\u10D8 \u10D2\u10D0\u10E1\u10D0\u10E6\u10D4\u10D1".concat(issue2.keys.length > 1 ? "\u10D4\u10D1\u10D8" : "\u10D8", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10D2\u10D0\u10E1\u10D0\u10E6\u10D4\u10D1\u10D8 ${issue2.origin}-\u10E8\u10D8`;
+        return "\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10D2\u10D0\u10E1\u10D0\u10E6\u10D4\u10D1\u10D8 ".concat(issue2.origin, "-\u10E8\u10D8");
       case "invalid_union":
         return "\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10E8\u10D4\u10E7\u10D5\u10D0\u10DC\u10D0";
       case "invalid_element":
-        return `\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10DB\u10DC\u10D8\u10E8\u10D5\u10DC\u10D4\u10DA\u10DD\u10D1\u10D0 ${issue2.origin}-\u10E8\u10D8`;
+        return "\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10DB\u10DC\u10D8\u10E8\u10D5\u10DC\u10D4\u10DA\u10DD\u10D1\u10D0 ".concat(issue2.origin, "-\u10E8\u10D8");
       default:
-        return `\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10E8\u10D4\u10E7\u10D5\u10D0\u10DC\u10D0`;
+        return "\u10D0\u10E0\u10D0\u10E1\u10EC\u10DD\u10E0\u10D8 \u10E8\u10D4\u10E7\u10D5\u10D0\u10DC\u10D0";
     }
   };
 };
@@ -11240,54 +10948,54 @@ var error30 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\u1791\u17B7\u1793\u17D2\u1793\u1793\u17D0\u1799\u1794\u1789\u17D2\u1785\u17BC\u179B\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1780\u17B6\u179A instanceof ${issue2.expected} \u1794\u17C9\u17BB\u1793\u17D2\u178F\u17C2\u1791\u1791\u17BD\u179B\u1794\u17B6\u1793 ${received}`;
+          return "\u1791\u17B7\u1793\u17D2\u1793\u1793\u17D0\u1799\u1794\u1789\u17D2\u1785\u17BC\u179B\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1780\u17B6\u179A instanceof ".concat(issue2.expected, " \u1794\u17C9\u17BB\u1793\u17D2\u178F\u17C2\u1791\u1791\u17BD\u179B\u1794\u17B6\u1793 ").concat(received);
         }
-        return `\u1791\u17B7\u1793\u17D2\u1793\u1793\u17D0\u1799\u1794\u1789\u17D2\u1785\u17BC\u179B\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1780\u17B6\u179A ${expected} \u1794\u17C9\u17BB\u1793\u17D2\u178F\u17C2\u1791\u1791\u17BD\u179B\u1794\u17B6\u1793 ${received}`;
+        return "\u1791\u17B7\u1793\u17D2\u1793\u1793\u17D0\u1799\u1794\u1789\u17D2\u1785\u17BC\u179B\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1780\u17B6\u179A ".concat(expected, " \u1794\u17C9\u17BB\u1793\u17D2\u178F\u17C2\u1791\u1791\u17BD\u179B\u1794\u17B6\u1793 ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u1791\u17B7\u1793\u17D2\u1793\u1793\u17D0\u1799\u1794\u1789\u17D2\u1785\u17BC\u179B\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1780\u17B6\u179A ${stringifyPrimitive(issue2.values[0])}`;
-        return `\u1787\u1798\u17D2\u179A\u17BE\u179F\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1787\u17B6\u1798\u17BD\u1799\u1780\u17D2\u1793\u17BB\u1784\u1785\u17C6\u178E\u17C4\u1798 ${joinValues(issue2.values, "|")}`;
+          return "\u1791\u17B7\u1793\u17D2\u1793\u1793\u17D0\u1799\u1794\u1789\u17D2\u1785\u17BC\u179B\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1780\u17B6\u179A ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\u1787\u1798\u17D2\u179A\u17BE\u179F\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1787\u17B6\u1798\u17BD\u1799\u1780\u17D2\u1793\u17BB\u1784\u1785\u17C6\u178E\u17C4\u1798 ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u1792\u17C6\u1796\u17C1\u1780\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1780\u17B6\u179A ${issue2.origin ?? "\u178F\u1798\u17D2\u179B\u17C3"} ${adj} ${issue2.maximum.toString()} ${sizing.unit ?? "\u1792\u17B6\u178F\u17BB"}`;
-        return `\u1792\u17C6\u1796\u17C1\u1780\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1780\u17B6\u179A ${issue2.origin ?? "\u178F\u1798\u17D2\u179B\u17C3"} ${adj} ${issue2.maximum.toString()}`;
+          return "\u1792\u17C6\u1796\u17C1\u1780\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1780\u17B6\u179A ".concat(issue2.origin ?? "\u178F\u1798\u17D2\u179B\u17C3", " ").concat(adj, " ").concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "\u1792\u17B6\u178F\u17BB");
+        return "\u1792\u17C6\u1796\u17C1\u1780\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1780\u17B6\u179A ".concat(issue2.origin ?? "\u178F\u1798\u17D2\u179B\u17C3", " ").concat(adj, " ").concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u178F\u17BC\u1785\u1796\u17C1\u1780\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1780\u17B6\u179A ${issue2.origin} ${adj} ${issue2.minimum.toString()} ${sizing.unit}`;
+          return "\u178F\u17BC\u1785\u1796\u17C1\u1780\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1780\u17B6\u179A ".concat(issue2.origin, " ").concat(adj, " ").concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `\u178F\u17BC\u1785\u1796\u17C1\u1780\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1780\u17B6\u179A ${issue2.origin} ${adj} ${issue2.minimum.toString()}`;
+        return "\u178F\u17BC\u1785\u1796\u17C1\u1780\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1780\u17B6\u179A ".concat(issue2.origin, " ").concat(adj, " ").concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `\u1781\u17D2\u179F\u17C2\u17A2\u1780\u17D2\u179F\u179A\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1785\u17B6\u1794\u17CB\u1795\u17D2\u178F\u17BE\u1798\u178A\u17C4\u1799 "${_issue.prefix}"`;
+          return '\u1781\u17D2\u179F\u17C2\u17A2\u1780\u17D2\u179F\u179A\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1785\u17B6\u1794\u17CB\u1795\u17D2\u178F\u17BE\u1798\u178A\u17C4\u1799 "'.concat(_issue.prefix, '"');
         }
         if (_issue.format === "ends_with")
-          return `\u1781\u17D2\u179F\u17C2\u17A2\u1780\u17D2\u179F\u179A\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1794\u1789\u17D2\u1785\u1794\u17CB\u178A\u17C4\u1799 "${_issue.suffix}"`;
+          return '\u1781\u17D2\u179F\u17C2\u17A2\u1780\u17D2\u179F\u179A\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1794\u1789\u17D2\u1785\u1794\u17CB\u178A\u17C4\u1799 "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `\u1781\u17D2\u179F\u17C2\u17A2\u1780\u17D2\u179F\u179A\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1798\u17B6\u1793 "${_issue.includes}"`;
+          return '\u1781\u17D2\u179F\u17C2\u17A2\u1780\u17D2\u179F\u179A\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u1798\u17B6\u1793 "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `\u1781\u17D2\u179F\u17C2\u17A2\u1780\u17D2\u179F\u179A\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u178F\u17C2\u1795\u17D2\u1782\u17BC\u1795\u17D2\u1782\u1784\u1793\u17B9\u1784\u1791\u1798\u17D2\u179A\u1784\u17CB\u178A\u17C2\u179B\u1794\u17B6\u1793\u1780\u17C6\u178E\u178F\u17CB ${_issue.pattern}`;
-        return `\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u1781\u17D2\u179F\u17C2\u17A2\u1780\u17D2\u179F\u179A\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u178F\u17C2\u1795\u17D2\u1782\u17BC\u1795\u17D2\u1782\u1784\u1793\u17B9\u1784\u1791\u1798\u17D2\u179A\u1784\u17CB\u178A\u17C2\u179B\u1794\u17B6\u1793\u1780\u17C6\u178E\u178F\u17CB ".concat(_issue.pattern);
+        return "\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u179B\u17C1\u1781\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u178F\u17C2\u1787\u17B6\u1796\u17A0\u17BB\u1782\u17BB\u178E\u1793\u17C3 ${issue2.divisor}`;
+        return "\u179B\u17C1\u1781\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u17D6 \u178F\u17D2\u179A\u17BC\u179C\u178F\u17C2\u1787\u17B6\u1796\u17A0\u17BB\u1782\u17BB\u178E\u1793\u17C3 ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `\u179A\u1780\u1783\u17BE\u1789\u179F\u17C4\u1798\u17B7\u1793\u179F\u17D2\u1782\u17B6\u179B\u17CB\u17D6 ${joinValues(issue2.keys, ", ")}`;
+        return "\u179A\u1780\u1783\u17BE\u1789\u179F\u17C4\u1798\u17B7\u1793\u179F\u17D2\u1782\u17B6\u179B\u17CB\u17D6 ".concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `\u179F\u17C4\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u1793\u17C5\u1780\u17D2\u1793\u17BB\u1784 ${issue2.origin}`;
+        return "\u179F\u17C4\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u1793\u17C5\u1780\u17D2\u1793\u17BB\u1784 ".concat(issue2.origin);
       case "invalid_union":
-        return `\u1791\u17B7\u1793\u17D2\u1793\u1793\u17D0\u1799\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C`;
+        return "\u1791\u17B7\u1793\u17D2\u1793\u1793\u17D0\u1799\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C";
       case "invalid_element":
-        return `\u1791\u17B7\u1793\u17D2\u1793\u1793\u17D0\u1799\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u1793\u17C5\u1780\u17D2\u1793\u17BB\u1784 ${issue2.origin}`;
+        return "\u1791\u17B7\u1793\u17D2\u1793\u1793\u17D0\u1799\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C\u1793\u17C5\u1780\u17D2\u1793\u17BB\u1784 ".concat(issue2.origin);
       default:
-        return `\u1791\u17B7\u1793\u17D2\u1793\u1793\u17D0\u1799\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C`;
+        return "\u1791\u17B7\u1793\u17D2\u1793\u1793\u17D0\u1799\u1798\u17B7\u1793\u178F\u17D2\u179A\u17B9\u1798\u178F\u17D2\u179A\u17BC\u179C";
     }
   };
 };
@@ -11357,56 +11065,56 @@ var error31 = () => {
         const expected = TypeDictionary[issue2.expected] ?? issue2.expected;
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
-        return `\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF \u0C87\u0CA8\u0CCD\u200C\u0CAA\u0CC1\u0C9F\u0CCD: \u0CA8\u0CBF\u0CB0\u0CC0\u0C95\u0CCD\u0CB7\u0CBF\u0CB8\u0CB2\u0CBE\u0C97\u0CBF\u0CA6\u0CC6 ${expected}, \u0CB8\u0CCD\u0CB5\u0CC0\u0C95\u0CB0\u0CBF\u0CB8\u0CBF\u0CA6\u0CA8\u0CC1 ${received}`;
+        return "\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF \u0C87\u0CA8\u0CCD\u200C\u0CAA\u0CC1\u0C9F\u0CCD: \u0CA8\u0CBF\u0CB0\u0CC0\u0C95\u0CCD\u0CB7\u0CBF\u0CB8\u0CB2\u0CBE\u0C97\u0CBF\u0CA6\u0CC6 ".concat(expected, ", \u0CB8\u0CCD\u0CB5\u0CC0\u0C95\u0CB0\u0CBF\u0CB8\u0CBF\u0CA6\u0CA8\u0CC1 ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF \u0C87\u0CA8\u0CCD\u200C\u0CAA\u0CC1\u0C9F\u0CCD: \u0CA8\u0CBF\u0CB0\u0CC0\u0C95\u0CCD\u0CB7\u0CBF\u0CB8\u0CB2\u0CBE\u0C97\u0CBF\u0CA6\u0CC6 ${stringifyPrimitive(issue2.values[0])}`;
-        return `\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF \u0C86\u0CAF\u0CCD\u0C95\u0CC6: \u0C87\u0CB5\u0CC1\u0C97\u0CB3\u0CB2\u0CCD\u0CB2\u0CBF \u0C92\u0C82\u0CA6\u0CA8\u0CCD\u0CA8\u0CC1 \u0CA8\u0CBF\u0CB0\u0CC0\u0C95\u0CCD\u0CB7\u0CBF\u0CB8\u0CB2\u0CBE\u0C97\u0CBF\u0CA6\u0CC6 ${joinValues(issue2.values, "|")}`;
+          return "\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF \u0C87\u0CA8\u0CCD\u200C\u0CAA\u0CC1\u0C9F\u0CCD: \u0CA8\u0CBF\u0CB0\u0CC0\u0C95\u0CCD\u0CB7\u0CBF\u0CB8\u0CB2\u0CBE\u0C97\u0CBF\u0CA6\u0CC6 ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF \u0C86\u0CAF\u0CCD\u0C95\u0CC6: \u0C87\u0CB5\u0CC1\u0C97\u0CB3\u0CB2\u0CCD\u0CB2\u0CBF \u0C92\u0C82\u0CA6\u0CA8\u0CCD\u0CA8\u0CC1 \u0CA8\u0CBF\u0CB0\u0CC0\u0C95\u0CCD\u0CB7\u0CBF\u0CB8\u0CB2\u0CBE\u0C97\u0CBF\u0CA6\u0CC6 ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u0CA4\u0CC1\u0C82\u0CAC\u0CBE \u0CA6\u0CCA\u0CA1\u0CCD\u0CA1\u0CA6\u0CC1: \u0CA8\u0CBF\u0CB0\u0CC0\u0C95\u0CCD\u0CB7\u0CBF\u0CB8\u0CB2\u0CBE\u0C97\u0CBF\u0CA6\u0CC6 ${issue2.origin ?? "value"} \u0CB9\u0CCA\u0C82\u0CA6\u0CB2\u0CC1 ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "\u0C85\u0C82\u0CB6\u0C97\u0CB3\u0CC1"}`;
-        return `\u0CA4\u0CC1\u0C82\u0CAC\u0CBE \u0CA6\u0CCA\u0CA1\u0CCD\u0CA1\u0CA6\u0CC1: \u0CA8\u0CBF\u0CB0\u0CC0\u0C95\u0CCD\u0CB7\u0CBF\u0CB8\u0CB2\u0CBE\u0C97\u0CBF\u0CA6\u0CC6 ${issue2.origin ?? "value"} \u0C8E\u0C82\u0CA6\u0CC1 ${adj}${issue2.maximum.toString()}`;
+          return "\u0CA4\u0CC1\u0C82\u0CAC\u0CBE \u0CA6\u0CCA\u0CA1\u0CCD\u0CA1\u0CA6\u0CC1: \u0CA8\u0CBF\u0CB0\u0CC0\u0C95\u0CCD\u0CB7\u0CBF\u0CB8\u0CB2\u0CBE\u0C97\u0CBF\u0CA6\u0CC6 ".concat(issue2.origin ?? "value", " \u0CB9\u0CCA\u0C82\u0CA6\u0CB2\u0CC1 ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "\u0C85\u0C82\u0CB6\u0C97\u0CB3\u0CC1");
+        return "\u0CA4\u0CC1\u0C82\u0CAC\u0CBE \u0CA6\u0CCA\u0CA1\u0CCD\u0CA1\u0CA6\u0CC1: \u0CA8\u0CBF\u0CB0\u0CC0\u0C95\u0CCD\u0CB7\u0CBF\u0CB8\u0CB2\u0CBE\u0C97\u0CBF\u0CA6\u0CC6 ".concat(issue2.origin ?? "value", " \u0C8E\u0C82\u0CA6\u0CC1 ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u0CA4\u0CC1\u0C82\u0CAC\u0CBE \u0C9A\u0CBF\u0C95\u0CCD\u0C95\u0CA6\u0CC1: \u0CA8\u0CBF\u0CB0\u0CC0\u0C95\u0CCD\u0CB7\u0CBF\u0CB8\u0CB2\u0CBE\u0C97\u0CBF\u0CA6\u0CC6 ${issue2.origin} \u0CB9\u0CCA\u0C82\u0CA6\u0CB2\u0CC1 ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "\u0CA4\u0CC1\u0C82\u0CAC\u0CBE \u0C9A\u0CBF\u0C95\u0CCD\u0C95\u0CA6\u0CC1: \u0CA8\u0CBF\u0CB0\u0CC0\u0C95\u0CCD\u0CB7\u0CBF\u0CB8\u0CB2\u0CBE\u0C97\u0CBF\u0CA6\u0CC6 ".concat(issue2.origin, " \u0CB9\u0CCA\u0C82\u0CA6\u0CB2\u0CC1 ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `\u0CA4\u0CC1\u0C82\u0CAC\u0CBE \u0C9A\u0CBF\u0C95\u0CCD\u0C95\u0CA6\u0CC1: \u0CA8\u0CBF\u0CB0\u0CC0\u0C95\u0CCD\u0CB7\u0CBF\u0CB8\u0CB2\u0CBE\u0C97\u0CBF\u0CA6\u0CC6 ${issue2.origin} \u0C8E\u0C82\u0CA6\u0CC1 ${adj}${issue2.minimum.toString()}`;
+        return "\u0CA4\u0CC1\u0C82\u0CAC\u0CBE \u0C9A\u0CBF\u0C95\u0CCD\u0C95\u0CA6\u0CC1: \u0CA8\u0CBF\u0CB0\u0CC0\u0C95\u0CCD\u0CB7\u0CBF\u0CB8\u0CB2\u0CBE\u0C97\u0CBF\u0CA6\u0CC6 ".concat(issue2.origin, " \u0C8E\u0C82\u0CA6\u0CC1 ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF\u0CB5\u0CBE\u0CA6 \u0CB8\u0CCD\u0C9F\u0CCD\u0CB0\u0CBF\u0C82\u0C97\u0CCD: \u0C87\u0CA6\u0CB0\u0CCA\u0C82\u0CA6\u0CBF\u0C97\u0CC6 \u0CAA\u0CCD\u0CB0\u0CBE\u0CB0\u0C82\u0CAD\u0CBF\u0CB8\u0CAC\u0CC7\u0C95\u0CC1 "${_issue.prefix}"`;
+          return '\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF\u0CB5\u0CBE\u0CA6 \u0CB8\u0CCD\u0C9F\u0CCD\u0CB0\u0CBF\u0C82\u0C97\u0CCD: \u0C87\u0CA6\u0CB0\u0CCA\u0C82\u0CA6\u0CBF\u0C97\u0CC6 \u0CAA\u0CCD\u0CB0\u0CBE\u0CB0\u0C82\u0CAD\u0CBF\u0CB8\u0CAC\u0CC7\u0C95\u0CC1 "'.concat(_issue.prefix, '"');
         }
         if (_issue.format === "ends_with")
-          return `\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF\u0CB5\u0CBE\u0CA6 \u0CB8\u0CCD\u0C9F\u0CCD\u0CB0\u0CBF\u0C82\u0C97\u0CCD: \u0C87\u0CA6\u0CB0\u0CCA\u0C82\u0CA6\u0CBF\u0C97\u0CC6 \u0C95\u0CCA\u0CA8\u0CC6\u0C97\u0CCA\u0CB3\u0CCD\u0CB3\u0CAC\u0CC7\u0C95\u0CC1 "${_issue.suffix}"`;
+          return '\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF\u0CB5\u0CBE\u0CA6 \u0CB8\u0CCD\u0C9F\u0CCD\u0CB0\u0CBF\u0C82\u0C97\u0CCD: \u0C87\u0CA6\u0CB0\u0CCA\u0C82\u0CA6\u0CBF\u0C97\u0CC6 \u0C95\u0CCA\u0CA8\u0CC6\u0C97\u0CCA\u0CB3\u0CCD\u0CB3\u0CAC\u0CC7\u0C95\u0CC1 "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF \u0CB8\u0CCD\u0C9F\u0CCD\u0CB0\u0CBF\u0C82\u0C97\u0CCD: \u0C92\u0CB3\u0C97\u0CCA\u0C82\u0CA1\u0CBF\u0CB0\u0CAC\u0CC7\u0C95\u0CC1 "${_issue.includes}"`;
+          return '\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF \u0CB8\u0CCD\u0C9F\u0CCD\u0CB0\u0CBF\u0C82\u0C97\u0CCD: \u0C92\u0CB3\u0C97\u0CCA\u0C82\u0CA1\u0CBF\u0CB0\u0CAC\u0CC7\u0C95\u0CC1 "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF\u0CB5\u0CBE\u0CA6 \u0CB8\u0CCD\u0C9F\u0CCD\u0CB0\u0CBF\u0C82\u0C97\u0CCD: \u0CAE\u0CBE\u0CA6\u0CB0\u0CBF\u0C97\u0CC6 \u0CB9\u0CCA\u0C82\u0CA6\u0CBF\u0C95\u0CC6\u0CAF\u0CBE\u0C97\u0CAC\u0CC7\u0C95\u0CC1 ${_issue.pattern}`;
-        return `\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF\u0CB5\u0CBE\u0CA6 \u0CB8\u0CCD\u0C9F\u0CCD\u0CB0\u0CBF\u0C82\u0C97\u0CCD: \u0CAE\u0CBE\u0CA6\u0CB0\u0CBF\u0C97\u0CC6 \u0CB9\u0CCA\u0C82\u0CA6\u0CBF\u0C95\u0CC6\u0CAF\u0CBE\u0C97\u0CAC\u0CC7\u0C95\u0CC1 ".concat(_issue.pattern);
+        return "\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF \u0CB8\u0C82\u0C96\u0CCD\u0CAF\u0CC6: \u0CAC\u0CB9\u0CC1\u0CB8\u0C82\u0C96\u0CCD\u0CAF\u0CC6\u0CAF\u0CBE\u0C97\u0CBF\u0CB0\u0CAC\u0CC7\u0C95\u0CC1 ${issue2.divisor}`;
+        return "\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF \u0CB8\u0C82\u0C96\u0CCD\u0CAF\u0CC6: \u0CAC\u0CB9\u0CC1\u0CB8\u0C82\u0C96\u0CCD\u0CAF\u0CC6\u0CAF\u0CBE\u0C97\u0CBF\u0CB0\u0CAC\u0CC7\u0C95\u0CC1 ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `\u0C97\u0CC1\u0CB0\u0CC1\u0CA4\u0CBF\u0CB8\u0CB2\u0CBE\u0C97\u0CA6 \u0C95\u0CC0 ${issue2.keys.length > 1 ? "s" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "\u0C97\u0CC1\u0CB0\u0CC1\u0CA4\u0CBF\u0CB8\u0CB2\u0CBE\u0C97\u0CA6 \u0C95\u0CC0 ".concat(issue2.keys.length > 1 ? "s" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF\u0CB5\u0CBE\u0CA6 \u0C95\u0CC0 \u0C87\u0CA8\u0CCD ${issue2.origin}`;
+        return "\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF\u0CB5\u0CBE\u0CA6 \u0C95\u0CC0 \u0C87\u0CA8\u0CCD ".concat(issue2.origin);
       case "invalid_union":
         if (issue2.options && Array.isArray(issue2.options) && issue2.options.length > 0) {
-          const opts = issue2.options.map((o) => `'${o}'`).join(" | ");
-          return `\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF \u0CA4\u0CBE\u0CB0\u0CA4\u0CAE\u0CCD\u0CAF \u0CAE\u0CCC\u0CB2\u0CCD\u0CAF. \u0CA8\u0CBF\u0CB0\u0CC0\u0C95\u0CCD\u0CB7\u0CBF\u0CB8\u0CB2\u0CBE\u0C97\u0CBF\u0CA6\u0CC6 ${opts}`;
+          const opts = issue2.options.map((o) => "'".concat(o, "'")).join(" | ");
+          return "\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF \u0CA4\u0CBE\u0CB0\u0CA4\u0CAE\u0CCD\u0CAF \u0CAE\u0CCC\u0CB2\u0CCD\u0CAF. \u0CA8\u0CBF\u0CB0\u0CC0\u0C95\u0CCD\u0CB7\u0CBF\u0CB8\u0CB2\u0CBE\u0C97\u0CBF\u0CA6\u0CC6 ".concat(opts);
         }
         return "\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF \u0C87\u0CA8\u0CCD\u200C\u0CAA\u0CC1\u0C9F\u0CCD";
       case "invalid_element":
-        return `\u0CB0\u0CB2\u0CCD\u0CB2\u0CBF \u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF \u0CAE\u0CCC\u0CB2\u0CCD\u0CAF ${issue2.origin}`;
+        return "\u0CB0\u0CB2\u0CCD\u0CB2\u0CBF \u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF \u0CAE\u0CCC\u0CB2\u0CCD\u0CAF ".concat(issue2.origin);
       default:
-        return `\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF \u0C87\u0CA8\u0CCD\u200C\u0CAA\u0CC1\u0C9F\u0CCD`;
+        return "\u0C85\u0CAE\u0CBE\u0CA8\u0CCD\u0CAF \u0C87\u0CA8\u0CCD\u200C\u0CAA\u0CC1\u0C9F\u0CCD";
     }
   };
 };
@@ -11470,22 +11178,22 @@ var error32 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\uC798\uBABB\uB41C \uC785\uB825: \uC608\uC0C1 \uD0C0\uC785\uC740 instanceof ${issue2.expected}, \uBC1B\uC740 \uD0C0\uC785\uC740 ${received}\uC785\uB2C8\uB2E4`;
+          return "\uC798\uBABB\uB41C \uC785\uB825: \uC608\uC0C1 \uD0C0\uC785\uC740 instanceof ".concat(issue2.expected, ", \uBC1B\uC740 \uD0C0\uC785\uC740 ").concat(received, "\uC785\uB2C8\uB2E4");
         }
-        return `\uC798\uBABB\uB41C \uC785\uB825: \uC608\uC0C1 \uD0C0\uC785\uC740 ${expected}, \uBC1B\uC740 \uD0C0\uC785\uC740 ${received}\uC785\uB2C8\uB2E4`;
+        return "\uC798\uBABB\uB41C \uC785\uB825: \uC608\uC0C1 \uD0C0\uC785\uC740 ".concat(expected, ", \uBC1B\uC740 \uD0C0\uC785\uC740 ").concat(received, "\uC785\uB2C8\uB2E4");
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\uC798\uBABB\uB41C \uC785\uB825: \uAC12\uC740 ${stringifyPrimitive(issue2.values[0])} \uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4`;
-        return `\uC798\uBABB\uB41C \uC635\uC158: ${joinValues(issue2.values, "\uB610\uB294 ")} \uC911 \uD558\uB098\uC5EC\uC57C \uD569\uB2C8\uB2E4`;
+          return "\uC798\uBABB\uB41C \uC785\uB825: \uAC12\uC740 ".concat(stringifyPrimitive(issue2.values[0]), " \uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4");
+        return "\uC798\uBABB\uB41C \uC635\uC158: ".concat(joinValues(issue2.values, "\uB610\uB294 "), " \uC911 \uD558\uB098\uC5EC\uC57C \uD569\uB2C8\uB2E4");
       case "too_big": {
         const adj = issue2.inclusive ? "\uC774\uD558" : "\uBBF8\uB9CC";
         const suffix = adj === "\uBBF8\uB9CC" ? "\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4" : "\uC5EC\uC57C \uD569\uB2C8\uB2E4";
         const sizing = getSizing(issue2.origin);
         const unit = sizing?.unit ?? "\uC694\uC18C";
         if (sizing)
-          return `${issue2.origin ?? "\uAC12"}\uC774 \uB108\uBB34 \uD07D\uB2C8\uB2E4: ${issue2.maximum.toString()}${unit} ${adj}${suffix}`;
-        return `${issue2.origin ?? "\uAC12"}\uC774 \uB108\uBB34 \uD07D\uB2C8\uB2E4: ${issue2.maximum.toString()} ${adj}${suffix}`;
+          return "".concat(issue2.origin ?? "\uAC12", "\uC774 \uB108\uBB34 \uD07D\uB2C8\uB2E4: ").concat(issue2.maximum.toString()).concat(unit, " ").concat(adj).concat(suffix);
+        return "".concat(issue2.origin ?? "\uAC12", "\uC774 \uB108\uBB34 \uD07D\uB2C8\uB2E4: ").concat(issue2.maximum.toString(), " ").concat(adj).concat(suffix);
       }
       case "too_small": {
         const adj = issue2.inclusive ? "\uC774\uC0C1" : "\uCD08\uACFC";
@@ -11493,35 +11201,35 @@ var error32 = () => {
         const sizing = getSizing(issue2.origin);
         const unit = sizing?.unit ?? "\uC694\uC18C";
         if (sizing) {
-          return `${issue2.origin ?? "\uAC12"}\uC774 \uB108\uBB34 \uC791\uC2B5\uB2C8\uB2E4: ${issue2.minimum.toString()}${unit} ${adj}${suffix}`;
+          return "".concat(issue2.origin ?? "\uAC12", "\uC774 \uB108\uBB34 \uC791\uC2B5\uB2C8\uB2E4: ").concat(issue2.minimum.toString()).concat(unit, " ").concat(adj).concat(suffix);
         }
-        return `${issue2.origin ?? "\uAC12"}\uC774 \uB108\uBB34 \uC791\uC2B5\uB2C8\uB2E4: ${issue2.minimum.toString()} ${adj}${suffix}`;
+        return "".concat(issue2.origin ?? "\uAC12", "\uC774 \uB108\uBB34 \uC791\uC2B5\uB2C8\uB2E4: ").concat(issue2.minimum.toString(), " ").concat(adj).concat(suffix);
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `\uC798\uBABB\uB41C \uBB38\uC790\uC5F4: "${_issue.prefix}"(\uC73C)\uB85C \uC2DC\uC791\uD574\uC57C \uD569\uB2C8\uB2E4`;
+          return '\uC798\uBABB\uB41C \uBB38\uC790\uC5F4: "'.concat(_issue.prefix, '"(\uC73C)\uB85C \uC2DC\uC791\uD574\uC57C \uD569\uB2C8\uB2E4');
         }
         if (_issue.format === "ends_with")
-          return `\uC798\uBABB\uB41C \uBB38\uC790\uC5F4: "${_issue.suffix}"(\uC73C)\uB85C \uB05D\uB098\uC57C \uD569\uB2C8\uB2E4`;
+          return '\uC798\uBABB\uB41C \uBB38\uC790\uC5F4: "'.concat(_issue.suffix, '"(\uC73C)\uB85C \uB05D\uB098\uC57C \uD569\uB2C8\uB2E4');
         if (_issue.format === "includes")
-          return `\uC798\uBABB\uB41C \uBB38\uC790\uC5F4: "${_issue.includes}"\uC744(\uB97C) \uD3EC\uD568\uD574\uC57C \uD569\uB2C8\uB2E4`;
+          return '\uC798\uBABB\uB41C \uBB38\uC790\uC5F4: "'.concat(_issue.includes, '"\uC744(\uB97C) \uD3EC\uD568\uD574\uC57C \uD569\uB2C8\uB2E4');
         if (_issue.format === "regex")
-          return `\uC798\uBABB\uB41C \uBB38\uC790\uC5F4: \uC815\uADDC\uC2DD ${_issue.pattern} \uD328\uD134\uACFC \uC77C\uCE58\uD574\uC57C \uD569\uB2C8\uB2E4`;
-        return `\uC798\uBABB\uB41C ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\uC798\uBABB\uB41C \uBB38\uC790\uC5F4: \uC815\uADDC\uC2DD ".concat(_issue.pattern, " \uD328\uD134\uACFC \uC77C\uCE58\uD574\uC57C \uD569\uB2C8\uB2E4");
+        return "\uC798\uBABB\uB41C ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\uC798\uBABB\uB41C \uC22B\uC790: ${issue2.divisor}\uC758 \uBC30\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4`;
+        return "\uC798\uBABB\uB41C \uC22B\uC790: ".concat(issue2.divisor, "\uC758 \uBC30\uC218\uC5EC\uC57C \uD569\uB2C8\uB2E4");
       case "unrecognized_keys":
-        return `\uC778\uC2DD\uD560 \uC218 \uC5C6\uB294 \uD0A4: ${joinValues(issue2.keys, ", ")}`;
+        return "\uC778\uC2DD\uD560 \uC218 \uC5C6\uB294 \uD0A4: ".concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `\uC798\uBABB\uB41C \uD0A4: ${issue2.origin}`;
+        return "\uC798\uBABB\uB41C \uD0A4: ".concat(issue2.origin);
       case "invalid_union":
-        return `\uC798\uBABB\uB41C \uC785\uB825`;
+        return "\uC798\uBABB\uB41C \uC785\uB825";
       case "invalid_element":
-        return `\uC798\uBABB\uB41C \uAC12: ${issue2.origin}`;
+        return "\uC798\uBABB\uB41C \uAC12: ".concat(issue2.origin);
       default:
-        return `\uC798\uBABB\uB41C \uC785\uB825`;
+        return "\uC798\uBABB\uB41C \uC785\uB825";
     }
   };
 };
@@ -11677,54 +11385,54 @@ var error33 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Gautas tipas ${received}, o tik\u0117tasi - instanceof ${issue2.expected}`;
+          return "Gautas tipas ".concat(received, ", o tik\u0117tasi - instanceof ").concat(issue2.expected);
         }
-        return `Gautas tipas ${received}, o tik\u0117tasi - ${expected}`;
+        return "Gautas tipas ".concat(received, ", o tik\u0117tasi - ").concat(expected);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Privalo b\u016Bti ${stringifyPrimitive(issue2.values[0])}`;
-        return `Privalo b\u016Bti vienas i\u0161 ${joinValues(issue2.values, "|")} pasirinkim\u0173`;
+          return "Privalo b\u016Bti ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Privalo b\u016Bti vienas i\u0161 ".concat(joinValues(issue2.values, "|"), " pasirinkim\u0173");
       case "too_big": {
         const origin = TypeDictionary[issue2.origin] ?? issue2.origin;
         const sizing = getSizing(issue2.origin, getUnitTypeFromNumber(Number(issue2.maximum)), issue2.inclusive ?? false, "smaller");
         if (sizing?.verb)
-          return `${capitalizeFirstCharacter(origin ?? issue2.origin ?? "reik\u0161m\u0117")} ${sizing.verb} ${issue2.maximum.toString()} ${sizing.unit ?? "element\u0173"}`;
+          return "".concat(capitalizeFirstCharacter(origin ?? issue2.origin ?? "reik\u0161m\u0117"), " ").concat(sizing.verb, " ").concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "element\u0173");
         const adj = issue2.inclusive ? "ne didesnis kaip" : "ma\u017Eesnis kaip";
-        return `${capitalizeFirstCharacter(origin ?? issue2.origin ?? "reik\u0161m\u0117")} turi b\u016Bti ${adj} ${issue2.maximum.toString()} ${sizing?.unit}`;
+        return "".concat(capitalizeFirstCharacter(origin ?? issue2.origin ?? "reik\u0161m\u0117"), " turi b\u016Bti ").concat(adj, " ").concat(issue2.maximum.toString(), " ").concat(sizing?.unit);
       }
       case "too_small": {
         const origin = TypeDictionary[issue2.origin] ?? issue2.origin;
         const sizing = getSizing(issue2.origin, getUnitTypeFromNumber(Number(issue2.minimum)), issue2.inclusive ?? false, "bigger");
         if (sizing?.verb)
-          return `${capitalizeFirstCharacter(origin ?? issue2.origin ?? "reik\u0161m\u0117")} ${sizing.verb} ${issue2.minimum.toString()} ${sizing.unit ?? "element\u0173"}`;
+          return "".concat(capitalizeFirstCharacter(origin ?? issue2.origin ?? "reik\u0161m\u0117"), " ").concat(sizing.verb, " ").concat(issue2.minimum.toString(), " ").concat(sizing.unit ?? "element\u0173");
         const adj = issue2.inclusive ? "ne ma\u017Eesnis kaip" : "didesnis kaip";
-        return `${capitalizeFirstCharacter(origin ?? issue2.origin ?? "reik\u0161m\u0117")} turi b\u016Bti ${adj} ${issue2.minimum.toString()} ${sizing?.unit}`;
+        return "".concat(capitalizeFirstCharacter(origin ?? issue2.origin ?? "reik\u0161m\u0117"), " turi b\u016Bti ").concat(adj, " ").concat(issue2.minimum.toString(), " ").concat(sizing?.unit);
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `Eilut\u0117 privalo prasid\u0117ti "${_issue.prefix}"`;
+          return 'Eilut\u0117 privalo prasid\u0117ti "'.concat(_issue.prefix, '"');
         }
         if (_issue.format === "ends_with")
-          return `Eilut\u0117 privalo pasibaigti "${_issue.suffix}"`;
+          return 'Eilut\u0117 privalo pasibaigti "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Eilut\u0117 privalo \u012Ftraukti "${_issue.includes}"`;
+          return 'Eilut\u0117 privalo \u012Ftraukti "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Eilut\u0117 privalo atitikti ${_issue.pattern}`;
-        return `Neteisingas ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "Eilut\u0117 privalo atitikti ".concat(_issue.pattern);
+        return "Neteisingas ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Skai\u010Dius privalo b\u016Bti ${issue2.divisor} kartotinis.`;
+        return "Skai\u010Dius privalo b\u016Bti ".concat(issue2.divisor, " kartotinis.");
       case "unrecognized_keys":
-        return `Neatpa\u017Eint${issue2.keys.length > 1 ? "i" : "as"} rakt${issue2.keys.length > 1 ? "ai" : "as"}: ${joinValues(issue2.keys, ", ")}`;
+        return "Neatpa\u017Eint".concat(issue2.keys.length > 1 ? "i" : "as", " rakt").concat(issue2.keys.length > 1 ? "ai" : "as", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
         return "Rastas klaidingas raktas";
       case "invalid_union":
         return "Klaidinga \u012Fvestis";
       case "invalid_element": {
         const origin = TypeDictionary[issue2.origin] ?? issue2.origin;
-        return `${capitalizeFirstCharacter(origin ?? issue2.origin ?? "reik\u0161m\u0117")} turi klaiding\u0105 \u012Fvest\u012F`;
+        return "".concat(capitalizeFirstCharacter(origin ?? issue2.origin ?? "reik\u0161m\u0117"), " turi klaiding\u0105 \u012Fvest\u012F");
       }
       default:
         return "Klaidinga \u012Fvestis";
@@ -11793,54 +11501,54 @@ var error34 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\u0413\u0440\u0435\u0448\u0435\u043D \u0432\u043D\u0435\u0441: \u0441\u0435 \u043E\u0447\u0435\u043A\u0443\u0432\u0430 instanceof ${issue2.expected}, \u043F\u0440\u0438\u043C\u0435\u043D\u043E ${received}`;
+          return "\u0413\u0440\u0435\u0448\u0435\u043D \u0432\u043D\u0435\u0441: \u0441\u0435 \u043E\u0447\u0435\u043A\u0443\u0432\u0430 instanceof ".concat(issue2.expected, ", \u043F\u0440\u0438\u043C\u0435\u043D\u043E ").concat(received);
         }
-        return `\u0413\u0440\u0435\u0448\u0435\u043D \u0432\u043D\u0435\u0441: \u0441\u0435 \u043E\u0447\u0435\u043A\u0443\u0432\u0430 ${expected}, \u043F\u0440\u0438\u043C\u0435\u043D\u043E ${received}`;
+        return "\u0413\u0440\u0435\u0448\u0435\u043D \u0432\u043D\u0435\u0441: \u0441\u0435 \u043E\u0447\u0435\u043A\u0443\u0432\u0430 ".concat(expected, ", \u043F\u0440\u0438\u043C\u0435\u043D\u043E ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Invalid input: expected ${stringifyPrimitive(issue2.values[0])}`;
-        return `\u0413\u0440\u0435\u0448\u0430\u043D\u0430 \u043E\u043F\u0446\u0438\u0458\u0430: \u0441\u0435 \u043E\u0447\u0435\u043A\u0443\u0432\u0430 \u0435\u0434\u043D\u0430 ${joinValues(issue2.values, "|")}`;
+          return "Invalid input: expected ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\u0413\u0440\u0435\u0448\u0430\u043D\u0430 \u043E\u043F\u0446\u0438\u0458\u0430: \u0441\u0435 \u043E\u0447\u0435\u043A\u0443\u0432\u0430 \u0435\u0434\u043D\u0430 ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u041F\u0440\u0435\u043C\u043D\u043E\u0433\u0443 \u0433\u043E\u043B\u0435\u043C: \u0441\u0435 \u043E\u0447\u0435\u043A\u0443\u0432\u0430 ${issue2.origin ?? "\u0432\u0440\u0435\u0434\u043D\u043E\u0441\u0442\u0430"} \u0434\u0430 \u0438\u043C\u0430 ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "\u0435\u043B\u0435\u043C\u0435\u043D\u0442\u0438"}`;
-        return `\u041F\u0440\u0435\u043C\u043D\u043E\u0433\u0443 \u0433\u043E\u043B\u0435\u043C: \u0441\u0435 \u043E\u0447\u0435\u043A\u0443\u0432\u0430 ${issue2.origin ?? "\u0432\u0440\u0435\u0434\u043D\u043E\u0441\u0442\u0430"} \u0434\u0430 \u0431\u0438\u0434\u0435 ${adj}${issue2.maximum.toString()}`;
+          return "\u041F\u0440\u0435\u043C\u043D\u043E\u0433\u0443 \u0433\u043E\u043B\u0435\u043C: \u0441\u0435 \u043E\u0447\u0435\u043A\u0443\u0432\u0430 ".concat(issue2.origin ?? "\u0432\u0440\u0435\u0434\u043D\u043E\u0441\u0442\u0430", " \u0434\u0430 \u0438\u043C\u0430 ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "\u0435\u043B\u0435\u043C\u0435\u043D\u0442\u0438");
+        return "\u041F\u0440\u0435\u043C\u043D\u043E\u0433\u0443 \u0433\u043E\u043B\u0435\u043C: \u0441\u0435 \u043E\u0447\u0435\u043A\u0443\u0432\u0430 ".concat(issue2.origin ?? "\u0432\u0440\u0435\u0434\u043D\u043E\u0441\u0442\u0430", " \u0434\u0430 \u0431\u0438\u0434\u0435 ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u041F\u0440\u0435\u043C\u043D\u043E\u0433\u0443 \u043C\u0430\u043B: \u0441\u0435 \u043E\u0447\u0435\u043A\u0443\u0432\u0430 ${issue2.origin} \u0434\u0430 \u0438\u043C\u0430 ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "\u041F\u0440\u0435\u043C\u043D\u043E\u0433\u0443 \u043C\u0430\u043B: \u0441\u0435 \u043E\u0447\u0435\u043A\u0443\u0432\u0430 ".concat(issue2.origin, " \u0434\u0430 \u0438\u043C\u0430 ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `\u041F\u0440\u0435\u043C\u043D\u043E\u0433\u0443 \u043C\u0430\u043B: \u0441\u0435 \u043E\u0447\u0435\u043A\u0443\u0432\u0430 ${issue2.origin} \u0434\u0430 \u0431\u0438\u0434\u0435 ${adj}${issue2.minimum.toString()}`;
+        return "\u041F\u0440\u0435\u043C\u043D\u043E\u0433\u0443 \u043C\u0430\u043B: \u0441\u0435 \u043E\u0447\u0435\u043A\u0443\u0432\u0430 ".concat(issue2.origin, " \u0434\u0430 \u0431\u0438\u0434\u0435 ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `\u041D\u0435\u0432\u0430\u0436\u0435\u0447\u043A\u0430 \u043D\u0438\u0437\u0430: \u043C\u043E\u0440\u0430 \u0434\u0430 \u0437\u0430\u043F\u043E\u0447\u043D\u0443\u0432\u0430 \u0441\u043E "${_issue.prefix}"`;
+          return '\u041D\u0435\u0432\u0430\u0436\u0435\u0447\u043A\u0430 \u043D\u0438\u0437\u0430: \u043C\u043E\u0440\u0430 \u0434\u0430 \u0437\u0430\u043F\u043E\u0447\u043D\u0443\u0432\u0430 \u0441\u043E "'.concat(_issue.prefix, '"');
         }
         if (_issue.format === "ends_with")
-          return `\u041D\u0435\u0432\u0430\u0436\u0435\u0447\u043A\u0430 \u043D\u0438\u0437\u0430: \u043C\u043E\u0440\u0430 \u0434\u0430 \u0437\u0430\u0432\u0440\u0448\u0443\u0432\u0430 \u0441\u043E "${_issue.suffix}"`;
+          return '\u041D\u0435\u0432\u0430\u0436\u0435\u0447\u043A\u0430 \u043D\u0438\u0437\u0430: \u043C\u043E\u0440\u0430 \u0434\u0430 \u0437\u0430\u0432\u0440\u0448\u0443\u0432\u0430 \u0441\u043E "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `\u041D\u0435\u0432\u0430\u0436\u0435\u0447\u043A\u0430 \u043D\u0438\u0437\u0430: \u043C\u043E\u0440\u0430 \u0434\u0430 \u0432\u043A\u043B\u0443\u0447\u0443\u0432\u0430 "${_issue.includes}"`;
+          return '\u041D\u0435\u0432\u0430\u0436\u0435\u0447\u043A\u0430 \u043D\u0438\u0437\u0430: \u043C\u043E\u0440\u0430 \u0434\u0430 \u0432\u043A\u043B\u0443\u0447\u0443\u0432\u0430 "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `\u041D\u0435\u0432\u0430\u0436\u0435\u0447\u043A\u0430 \u043D\u0438\u0437\u0430: \u043C\u043E\u0440\u0430 \u0434\u0430 \u043E\u0434\u0433\u043E\u0430\u0440\u0430 \u043D\u0430 \u043F\u0430\u0442\u0435\u0440\u043D\u043E\u0442 ${_issue.pattern}`;
-        return `Invalid ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u041D\u0435\u0432\u0430\u0436\u0435\u0447\u043A\u0430 \u043D\u0438\u0437\u0430: \u043C\u043E\u0440\u0430 \u0434\u0430 \u043E\u0434\u0433\u043E\u0430\u0440\u0430 \u043D\u0430 \u043F\u0430\u0442\u0435\u0440\u043D\u043E\u0442 ".concat(_issue.pattern);
+        return "Invalid ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u0413\u0440\u0435\u0448\u0435\u043D \u0431\u0440\u043E\u0458: \u043C\u043E\u0440\u0430 \u0434\u0430 \u0431\u0438\u0434\u0435 \u0434\u0435\u043B\u0438\u0432 \u0441\u043E ${issue2.divisor}`;
+        return "\u0413\u0440\u0435\u0448\u0435\u043D \u0431\u0440\u043E\u0458: \u043C\u043E\u0440\u0430 \u0434\u0430 \u0431\u0438\u0434\u0435 \u0434\u0435\u043B\u0438\u0432 \u0441\u043E ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `${issue2.keys.length > 1 ? "\u041D\u0435\u043F\u0440\u0435\u043F\u043E\u0437\u043D\u0430\u0435\u043D\u0438 \u043A\u043B\u0443\u0447\u0435\u0432\u0438" : "\u041D\u0435\u043F\u0440\u0435\u043F\u043E\u0437\u043D\u0430\u0435\u043D \u043A\u043B\u0443\u0447"}: ${joinValues(issue2.keys, ", ")}`;
+        return "".concat(issue2.keys.length > 1 ? "\u041D\u0435\u043F\u0440\u0435\u043F\u043E\u0437\u043D\u0430\u0435\u043D\u0438 \u043A\u043B\u0443\u0447\u0435\u0432\u0438" : "\u041D\u0435\u043F\u0440\u0435\u043F\u043E\u0437\u043D\u0430\u0435\u043D \u043A\u043B\u0443\u0447", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `\u0413\u0440\u0435\u0448\u0435\u043D \u043A\u043B\u0443\u0447 \u0432\u043E ${issue2.origin}`;
+        return "\u0413\u0440\u0435\u0448\u0435\u043D \u043A\u043B\u0443\u0447 \u0432\u043E ".concat(issue2.origin);
       case "invalid_union":
         return "\u0413\u0440\u0435\u0448\u0435\u043D \u0432\u043D\u0435\u0441";
       case "invalid_element":
-        return `\u0413\u0440\u0435\u0448\u043D\u0430 \u0432\u0440\u0435\u0434\u043D\u043E\u0441\u0442 \u0432\u043E ${issue2.origin}`;
+        return "\u0413\u0440\u0435\u0448\u043D\u0430 \u0432\u0440\u0435\u0434\u043D\u043E\u0441\u0442 \u0432\u043E ".concat(issue2.origin);
       default:
-        return `\u0413\u0440\u0435\u0448\u0435\u043D \u0432\u043D\u0435\u0441`;
+        return "\u0413\u0440\u0435\u0448\u0435\u043D \u0432\u043D\u0435\u0441";
     }
   };
 };
@@ -11905,53 +11613,53 @@ var error35 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Input tidak sah: dijangka instanceof ${issue2.expected}, diterima ${received}`;
+          return "Input tidak sah: dijangka instanceof ".concat(issue2.expected, ", diterima ").concat(received);
         }
-        return `Input tidak sah: dijangka ${expected}, diterima ${received}`;
+        return "Input tidak sah: dijangka ".concat(expected, ", diterima ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Input tidak sah: dijangka ${stringifyPrimitive(issue2.values[0])}`;
-        return `Pilihan tidak sah: dijangka salah satu daripada ${joinValues(issue2.values, "|")}`;
+          return "Input tidak sah: dijangka ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Pilihan tidak sah: dijangka salah satu daripada ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Terlalu besar: dijangka ${issue2.origin ?? "nilai"} ${sizing.verb} ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "elemen"}`;
-        return `Terlalu besar: dijangka ${issue2.origin ?? "nilai"} adalah ${adj}${issue2.maximum.toString()}`;
+          return "Terlalu besar: dijangka ".concat(issue2.origin ?? "nilai", " ").concat(sizing.verb, " ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "elemen");
+        return "Terlalu besar: dijangka ".concat(issue2.origin ?? "nilai", " adalah ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Terlalu kecil: dijangka ${issue2.origin} ${sizing.verb} ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "Terlalu kecil: dijangka ".concat(issue2.origin, " ").concat(sizing.verb, " ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `Terlalu kecil: dijangka ${issue2.origin} adalah ${adj}${issue2.minimum.toString()}`;
+        return "Terlalu kecil: dijangka ".concat(issue2.origin, " adalah ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `String tidak sah: mesti bermula dengan "${_issue.prefix}"`;
+          return 'String tidak sah: mesti bermula dengan "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `String tidak sah: mesti berakhir dengan "${_issue.suffix}"`;
+          return 'String tidak sah: mesti berakhir dengan "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `String tidak sah: mesti mengandungi "${_issue.includes}"`;
+          return 'String tidak sah: mesti mengandungi "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `String tidak sah: mesti sepadan dengan corak ${_issue.pattern}`;
-        return `${FormatDictionary[_issue.format] ?? issue2.format} tidak sah`;
+          return "String tidak sah: mesti sepadan dengan corak ".concat(_issue.pattern);
+        return "".concat(FormatDictionary[_issue.format] ?? issue2.format, " tidak sah");
       }
       case "not_multiple_of":
-        return `Nombor tidak sah: perlu gandaan ${issue2.divisor}`;
+        return "Nombor tidak sah: perlu gandaan ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `Kunci tidak dikenali: ${joinValues(issue2.keys, ", ")}`;
+        return "Kunci tidak dikenali: ".concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Kunci tidak sah dalam ${issue2.origin}`;
+        return "Kunci tidak sah dalam ".concat(issue2.origin);
       case "invalid_union":
         return "Input tidak sah";
       case "invalid_element":
-        return `Nilai tidak sah dalam ${issue2.origin}`;
+        return "Nilai tidak sah dalam ".concat(issue2.origin);
       default:
-        return `Input tidak sah`;
+        return "Input tidak sah";
     }
   };
 };
@@ -12014,54 +11722,54 @@ var error36 = () => {
         const expected = TypeDictionary[issue2.expected] ?? issue2.expected;
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
-        return `\u0905\u092E\u093E\u0928\u094D\u092F \u0907\u0928\u092A\u0941\u091F: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 ${expected}, \u092A\u094D\u0930\u093E\u092A\u094D\u0924 ${received}`;
+        return "\u0905\u092E\u093E\u0928\u094D\u092F \u0907\u0928\u092A\u0941\u091F: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 ".concat(expected, ", \u092A\u094D\u0930\u093E\u092A\u094D\u0924 ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u0905\u092E\u093E\u0928\u094D\u092F \u0907\u0928\u092A\u0941\u091F: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 ${stringifyPrimitive(issue2.values[0])}`;
-        return `\u0905\u092E\u093E\u0928\u094D\u092F \u0935\u093F\u0915\u0932\u094D\u092A: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 \u092E\u093E\u0928\u0939\u0930\u0942 \u092E\u0927\u094D\u092F\u0947 \u090F\u0915 ${joinValues(issue2.values, "|")}`;
+          return "\u0905\u092E\u093E\u0928\u094D\u092F \u0907\u0928\u092A\u0941\u091F: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\u0905\u092E\u093E\u0928\u094D\u092F \u0935\u093F\u0915\u0932\u094D\u092A: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 \u092E\u093E\u0928\u0939\u0930\u0942 \u092E\u0927\u094D\u092F\u0947 \u090F\u0915 ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u0927\u0947\u0930\u0948 \u0920\u0942\u0932\u094B: ${issue2.origin ?? "\u092E\u093E\u0928"} \u092E\u093E ${adj}${issue2.maximum.toString()} ${sizing.unit} ${sizing.verb}`;
-        return `\u0927\u0947\u0930\u0948 \u0920\u0942\u0932\u094B: ${issue2.origin ?? "\u092E\u093E\u0928"} ${adj}${issue2.maximum.toString()} \u0939\u0941\u0928\u0941\u092A\u0930\u094D\u091B`;
+          return "\u0927\u0947\u0930\u0948 \u0920\u0942\u0932\u094B: ".concat(issue2.origin ?? "\u092E\u093E\u0928", " \u092E\u093E ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit, " ").concat(sizing.verb);
+        return "\u0927\u0947\u0930\u0948 \u0920\u0942\u0932\u094B: ".concat(issue2.origin ?? "\u092E\u093E\u0928", " ").concat(adj).concat(issue2.maximum.toString(), " \u0939\u0941\u0928\u0941\u092A\u0930\u094D\u091B");
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u0927\u0947\u0930\u0948 \u0938\u093E\u0928\u094B: ${issue2.origin} \u092E\u093E ${adj}${issue2.minimum.toString()} ${sizing.unit} ${sizing.verb}`;
-        return `\u0927\u0947\u0930\u0948 \u0938\u093E\u0928\u094B: ${issue2.origin} ${adj}${issue2.minimum.toString()} \u0939\u0941\u0928\u0941\u092A\u0930\u094D\u091B`;
+          return "\u0927\u0947\u0930\u0948 \u0938\u093E\u0928\u094B: ".concat(issue2.origin, " \u092E\u093E ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit, " ").concat(sizing.verb);
+        return "\u0927\u0947\u0930\u0948 \u0938\u093E\u0928\u094B: ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString(), " \u0939\u0941\u0928\u0941\u092A\u0930\u094D\u091B");
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u094D\u091F\u094D\u0930\u093F\u0919: "${_issue.prefix}" \u092C\u093E\u091F \u0938\u0941\u0930\u0941 \u0939\u0941\u0928\u0941\u092A\u0930\u094D\u091B`;
+          return '\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u094D\u091F\u094D\u0930\u093F\u0919: "'.concat(_issue.prefix, '" \u092C\u093E\u091F \u0938\u0941\u0930\u0941 \u0939\u0941\u0928\u0941\u092A\u0930\u094D\u091B');
         if (_issue.format === "ends_with")
-          return `\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u094D\u091F\u094D\u0930\u093F\u0919: "${_issue.suffix}" \u092E\u093E \u0938\u092E\u093E\u092A\u094D\u0924 \u0939\u0941\u0928\u0941\u092A\u0930\u094D\u091B`;
+          return '\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u094D\u091F\u094D\u0930\u093F\u0919: "'.concat(_issue.suffix, '" \u092E\u093E \u0938\u092E\u093E\u092A\u094D\u0924 \u0939\u0941\u0928\u0941\u092A\u0930\u094D\u091B');
         if (_issue.format === "includes")
-          return `\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u094D\u091F\u094D\u0930\u093F\u0919: "${_issue.includes}" \u0938\u092E\u093E\u0935\u0947\u0936 \u0939\u0941\u0928\u0941\u092A\u0930\u094D\u091B`;
+          return '\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u094D\u091F\u094D\u0930\u093F\u0919: "'.concat(_issue.includes, '" \u0938\u092E\u093E\u0935\u0947\u0936 \u0939\u0941\u0928\u0941\u092A\u0930\u094D\u091B');
         if (_issue.format === "regex")
-          return `\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u094D\u091F\u094D\u0930\u093F\u0919: \u0922\u093E\u0901\u091A\u093E ${_issue.pattern} \u0938\u0901\u0917 \u092E\u0947\u0932 \u0916\u093E\u0928\u0941\u092A\u0930\u094D\u091B`;
-        return `\u0905\u092E\u093E\u0928\u094D\u092F ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u094D\u091F\u094D\u0930\u093F\u0919: \u0922\u093E\u0901\u091A\u093E ".concat(_issue.pattern, " \u0938\u0901\u0917 \u092E\u0947\u0932 \u0916\u093E\u0928\u0941\u092A\u0930\u094D\u091B");
+        return "\u0905\u092E\u093E\u0928\u094D\u092F ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u0902\u0916\u094D\u092F\u093E: ${issue2.divisor} \u0915\u094B \u0917\u0941\u0923\u091C \u0939\u0941\u0928\u0941\u092A\u0930\u094D\u091B`;
+        return "\u0905\u092E\u093E\u0928\u094D\u092F \u0938\u0902\u0916\u094D\u092F\u093E: ".concat(issue2.divisor, " \u0915\u094B \u0917\u0941\u0923\u091C \u0939\u0941\u0928\u0941\u092A\u0930\u094D\u091B");
       case "unrecognized_keys":
-        return `\u0905\u092A\u0930\u093F\u091A\u093F\u0924 \u0915\u0941\u091E\u094D\u091C\u0940${issue2.keys.length > 1 ? "\u0939\u0930\u0942" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "\u0905\u092A\u0930\u093F\u091A\u093F\u0924 \u0915\u0941\u091E\u094D\u091C\u0940".concat(issue2.keys.length > 1 ? "\u0939\u0930\u0942" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `\u0905\u092E\u093E\u0928\u094D\u092F \u0915\u0941\u091E\u094D\u091C\u0940: ${issue2.origin} \u092E\u093E`;
+        return "\u0905\u092E\u093E\u0928\u094D\u092F \u0915\u0941\u091E\u094D\u091C\u0940: ".concat(issue2.origin, " \u092E\u093E");
       case "invalid_union":
         if (issue2.options && Array.isArray(issue2.options) && issue2.options.length > 0) {
-          const opts = issue2.options.map((o) => `'${o}'`).join(" | ");
-          return `\u0905\u092E\u093E\u0928\u094D\u092F \u0921\u093F\u0938\u094D\u0915\u094D\u0930\u093F\u092E\u093F\u0928\u0947\u091F\u0930 \u092E\u093E\u0928: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 ${opts}`;
+          const opts = issue2.options.map((o) => "'".concat(o, "'")).join(" | ");
+          return "\u0905\u092E\u093E\u0928\u094D\u092F \u0921\u093F\u0938\u094D\u0915\u094D\u0930\u093F\u092E\u093F\u0928\u0947\u091F\u0930 \u092E\u093E\u0928: \u0905\u092A\u0947\u0915\u094D\u0937\u093F\u0924 ".concat(opts);
         }
         return "\u0905\u092E\u093E\u0928\u094D\u092F \u0907\u0928\u092A\u0941\u091F";
       case "invalid_element":
-        return `\u0905\u092E\u093E\u0928\u094D\u092F \u092E\u093E\u0928: ${issue2.origin} \u092E\u093E`;
+        return "\u0905\u092E\u093E\u0928\u094D\u092F \u092E\u093E\u0928: ".concat(issue2.origin, " \u092E\u093E");
       default:
-        return `\u0905\u092E\u093E\u0928\u094D\u092F \u0907\u0928\u092A\u0941\u091F`;
+        return "\u0905\u092E\u093E\u0928\u094D\u092F \u0907\u0928\u092A\u0941\u091F";
     }
   };
 };
@@ -12126,56 +11834,56 @@ var error37 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Ongeldige invoer: verwacht instanceof ${issue2.expected}, ontving ${received}`;
+          return "Ongeldige invoer: verwacht instanceof ".concat(issue2.expected, ", ontving ").concat(received);
         }
-        return `Ongeldige invoer: verwacht ${expected}, ontving ${received}`;
+        return "Ongeldige invoer: verwacht ".concat(expected, ", ontving ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Ongeldige invoer: verwacht ${stringifyPrimitive(issue2.values[0])}`;
-        return `Ongeldige optie: verwacht \xE9\xE9n van ${joinValues(issue2.values, "|")}`;
+          return "Ongeldige invoer: verwacht ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Ongeldige optie: verwacht \xE9\xE9n van ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         const longName = issue2.origin === "date" ? "laat" : issue2.origin === "string" ? "lang" : "groot";
         if (sizing)
-          return `Te ${longName}: verwacht dat ${issue2.origin ?? "waarde"} ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "elementen"} ${sizing.verb}`;
-        return `Te ${longName}: verwacht dat ${issue2.origin ?? "waarde"} ${adj}${issue2.maximum.toString()} is`;
+          return "Te ".concat(longName, ": verwacht dat ").concat(issue2.origin ?? "waarde", " ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "elementen", " ").concat(sizing.verb);
+        return "Te ".concat(longName, ": verwacht dat ").concat(issue2.origin ?? "waarde", " ").concat(adj).concat(issue2.maximum.toString(), " is");
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         const shortName = issue2.origin === "date" ? "vroeg" : issue2.origin === "string" ? "kort" : "klein";
         if (sizing) {
-          return `Te ${shortName}: verwacht dat ${issue2.origin} ${adj}${issue2.minimum.toString()} ${sizing.unit} ${sizing.verb}`;
+          return "Te ".concat(shortName, ": verwacht dat ").concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit, " ").concat(sizing.verb);
         }
-        return `Te ${shortName}: verwacht dat ${issue2.origin} ${adj}${issue2.minimum.toString()} is`;
+        return "Te ".concat(shortName, ": verwacht dat ").concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString(), " is");
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `Ongeldige tekst: moet met "${_issue.prefix}" beginnen`;
+          return 'Ongeldige tekst: moet met "'.concat(_issue.prefix, '" beginnen');
         }
         if (_issue.format === "ends_with")
-          return `Ongeldige tekst: moet op "${_issue.suffix}" eindigen`;
+          return 'Ongeldige tekst: moet op "'.concat(_issue.suffix, '" eindigen');
         if (_issue.format === "includes")
-          return `Ongeldige tekst: moet "${_issue.includes}" bevatten`;
+          return 'Ongeldige tekst: moet "'.concat(_issue.includes, '" bevatten');
         if (_issue.format === "regex")
-          return `Ongeldige tekst: moet overeenkomen met patroon ${_issue.pattern}`;
-        return `Ongeldig: ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "Ongeldige tekst: moet overeenkomen met patroon ".concat(_issue.pattern);
+        return "Ongeldig: ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Ongeldig getal: moet een veelvoud van ${issue2.divisor} zijn`;
+        return "Ongeldig getal: moet een veelvoud van ".concat(issue2.divisor, " zijn");
       case "unrecognized_keys":
-        return `Onbekende key${issue2.keys.length > 1 ? "s" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "Onbekende key".concat(issue2.keys.length > 1 ? "s" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Ongeldige key in ${issue2.origin}`;
+        return "Ongeldige key in ".concat(issue2.origin);
       case "invalid_union":
         return "Ongeldige invoer";
       case "invalid_element":
-        return `Ongeldige waarde in ${issue2.origin}`;
+        return "Ongeldige waarde in ".concat(issue2.origin);
       default:
-        return `Ongeldige invoer`;
+        return "Ongeldige invoer";
     }
   };
 };
@@ -12241,53 +11949,53 @@ var error38 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Ugyldig input: forventa instanceof ${issue2.expected}, fekk ${received}`;
+          return "Ugyldig input: forventa instanceof ".concat(issue2.expected, ", fekk ").concat(received);
         }
-        return `Ugyldig input: forventa ${expected}, fekk ${received}`;
+        return "Ugyldig input: forventa ".concat(expected, ", fekk ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Ugyldig verdi: forventa ${stringifyPrimitive(issue2.values[0])}`;
-        return `Ugyldig val: forventa eitt av ${joinValues(issue2.values, "|")}`;
+          return "Ugyldig verdi: forventa ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Ugyldig val: forventa eitt av ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `For stor(t): forventa ${issue2.origin ?? "value"} til \xE5 ha ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "element"}`;
-        return `For stor(t): forventa ${issue2.origin ?? "value"} til \xE5 ha ${adj}${issue2.maximum.toString()}`;
+          return "For stor(t): forventa ".concat(issue2.origin ?? "value", " til \xE5 ha ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "element");
+        return "For stor(t): forventa ".concat(issue2.origin ?? "value", " til \xE5 ha ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `For lite(n): forventa ${issue2.origin} til \xE5 ha ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "For lite(n): forventa ".concat(issue2.origin, " til \xE5 ha ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `For lite(n): forventa ${issue2.origin} til \xE5 ha ${adj}${issue2.minimum.toString()}`;
+        return "For lite(n): forventa ".concat(issue2.origin, " til \xE5 ha ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `Ugyldig streng: m\xE5 starte med "${_issue.prefix}"`;
+          return 'Ugyldig streng: m\xE5 starte med "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `Ugyldig streng: m\xE5 slutte med "${_issue.suffix}"`;
+          return 'Ugyldig streng: m\xE5 slutte med "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Ugyldig streng: m\xE5 innehalde "${_issue.includes}"`;
+          return 'Ugyldig streng: m\xE5 innehalde "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Ugyldig streng: m\xE5 matche m\xF8nsteret ${_issue.pattern}`;
-        return `Ugyldig ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "Ugyldig streng: m\xE5 matche m\xF8nsteret ".concat(_issue.pattern);
+        return "Ugyldig ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Ugyldig tal: m\xE5 vere eit multiplum av ${issue2.divisor}`;
+        return "Ugyldig tal: m\xE5 vere eit multiplum av ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `${issue2.keys.length > 1 ? "Ukjende n\xF8klar" : "Ukjend n\xF8kkel"}: ${joinValues(issue2.keys, ", ")}`;
+        return "".concat(issue2.keys.length > 1 ? "Ukjende n\xF8klar" : "Ukjend n\xF8kkel", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Ugyldig n\xF8kkel i ${issue2.origin}`;
+        return "Ugyldig n\xF8kkel i ".concat(issue2.origin);
       case "invalid_union":
         return "Ugyldig input";
       case "invalid_element":
-        return `Ugyldig verdi i ${issue2.origin}`;
+        return "Ugyldig verdi i ".concat(issue2.origin);
       default:
-        return `Ugyldig input`;
+        return "Ugyldig input";
     }
   };
 };
@@ -12353,53 +12061,53 @@ var error39 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Ugyldig input: forventet instanceof ${issue2.expected}, fikk ${received}`;
+          return "Ugyldig input: forventet instanceof ".concat(issue2.expected, ", fikk ").concat(received);
         }
-        return `Ugyldig input: forventet ${expected}, fikk ${received}`;
+        return "Ugyldig input: forventet ".concat(expected, ", fikk ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Ugyldig verdi: forventet ${stringifyPrimitive(issue2.values[0])}`;
-        return `Ugyldig valg: forventet en av ${joinValues(issue2.values, "|")}`;
+          return "Ugyldig verdi: forventet ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Ugyldig valg: forventet en av ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `For stor(t): forventet ${issue2.origin ?? "value"} til \xE5 ha ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "elementer"}`;
-        return `For stor(t): forventet ${issue2.origin ?? "value"} til \xE5 ha ${adj}${issue2.maximum.toString()}`;
+          return "For stor(t): forventet ".concat(issue2.origin ?? "value", " til \xE5 ha ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "elementer");
+        return "For stor(t): forventet ".concat(issue2.origin ?? "value", " til \xE5 ha ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `For lite(n): forventet ${issue2.origin} til \xE5 ha ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "For lite(n): forventet ".concat(issue2.origin, " til \xE5 ha ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `For lite(n): forventet ${issue2.origin} til \xE5 ha ${adj}${issue2.minimum.toString()}`;
+        return "For lite(n): forventet ".concat(issue2.origin, " til \xE5 ha ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `Ugyldig streng: m\xE5 starte med "${_issue.prefix}"`;
+          return 'Ugyldig streng: m\xE5 starte med "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `Ugyldig streng: m\xE5 ende med "${_issue.suffix}"`;
+          return 'Ugyldig streng: m\xE5 ende med "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Ugyldig streng: m\xE5 inneholde "${_issue.includes}"`;
+          return 'Ugyldig streng: m\xE5 inneholde "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Ugyldig streng: m\xE5 matche m\xF8nsteret ${_issue.pattern}`;
-        return `Ugyldig ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "Ugyldig streng: m\xE5 matche m\xF8nsteret ".concat(_issue.pattern);
+        return "Ugyldig ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Ugyldig tall: m\xE5 v\xE6re et multiplum av ${issue2.divisor}`;
+        return "Ugyldig tall: m\xE5 v\xE6re et multiplum av ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `${issue2.keys.length > 1 ? "Ukjente n\xF8kler" : "Ukjent n\xF8kkel"}: ${joinValues(issue2.keys, ", ")}`;
+        return "".concat(issue2.keys.length > 1 ? "Ukjente n\xF8kler" : "Ukjent n\xF8kkel", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Ugyldig n\xF8kkel i ${issue2.origin}`;
+        return "Ugyldig n\xF8kkel i ".concat(issue2.origin);
       case "invalid_union":
         return "Ugyldig input";
       case "invalid_element":
-        return `Ugyldig verdi i ${issue2.origin}`;
+        return "Ugyldig verdi i ".concat(issue2.origin);
       default:
-        return `Ugyldig input`;
+        return "Ugyldig input";
     }
   };
 };
@@ -12466,53 +12174,53 @@ var error40 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `F\xE2sit giren: umulan instanceof ${issue2.expected}, al\u0131nan ${received}`;
+          return "F\xE2sit giren: umulan instanceof ".concat(issue2.expected, ", al\u0131nan ").concat(received);
         }
-        return `F\xE2sit giren: umulan ${expected}, al\u0131nan ${received}`;
+        return "F\xE2sit giren: umulan ".concat(expected, ", al\u0131nan ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `F\xE2sit giren: umulan ${stringifyPrimitive(issue2.values[0])}`;
-        return `F\xE2sit tercih: m\xFBteberler ${joinValues(issue2.values, "|")}`;
+          return "F\xE2sit giren: umulan ".concat(stringifyPrimitive(issue2.values[0]));
+        return "F\xE2sit tercih: m\xFBteberler ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Fazla b\xFCy\xFCk: ${issue2.origin ?? "value"}, ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "elements"} sahip olmal\u0131yd\u0131.`;
-        return `Fazla b\xFCy\xFCk: ${issue2.origin ?? "value"}, ${adj}${issue2.maximum.toString()} olmal\u0131yd\u0131.`;
+          return "Fazla b\xFCy\xFCk: ".concat(issue2.origin ?? "value", ", ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "elements", " sahip olmal\u0131yd\u0131.");
+        return "Fazla b\xFCy\xFCk: ".concat(issue2.origin ?? "value", ", ").concat(adj).concat(issue2.maximum.toString(), " olmal\u0131yd\u0131.");
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Fazla k\xFC\xE7\xFCk: ${issue2.origin}, ${adj}${issue2.minimum.toString()} ${sizing.unit} sahip olmal\u0131yd\u0131.`;
+          return "Fazla k\xFC\xE7\xFCk: ".concat(issue2.origin, ", ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit, " sahip olmal\u0131yd\u0131.");
         }
-        return `Fazla k\xFC\xE7\xFCk: ${issue2.origin}, ${adj}${issue2.minimum.toString()} olmal\u0131yd\u0131.`;
+        return "Fazla k\xFC\xE7\xFCk: ".concat(issue2.origin, ", ").concat(adj).concat(issue2.minimum.toString(), " olmal\u0131yd\u0131.");
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `F\xE2sit metin: "${_issue.prefix}" ile ba\u015Flamal\u0131.`;
+          return 'F\xE2sit metin: "'.concat(_issue.prefix, '" ile ba\u015Flamal\u0131.');
         if (_issue.format === "ends_with")
-          return `F\xE2sit metin: "${_issue.suffix}" ile bitmeli.`;
+          return 'F\xE2sit metin: "'.concat(_issue.suffix, '" ile bitmeli.');
         if (_issue.format === "includes")
-          return `F\xE2sit metin: "${_issue.includes}" ihtiv\xE2 etmeli.`;
+          return 'F\xE2sit metin: "'.concat(_issue.includes, '" ihtiv\xE2 etmeli.');
         if (_issue.format === "regex")
-          return `F\xE2sit metin: ${_issue.pattern} nak\u015F\u0131na uymal\u0131.`;
-        return `F\xE2sit ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "F\xE2sit metin: ".concat(_issue.pattern, " nak\u015F\u0131na uymal\u0131.");
+        return "F\xE2sit ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `F\xE2sit say\u0131: ${issue2.divisor} kat\u0131 olmal\u0131yd\u0131.`;
+        return "F\xE2sit say\u0131: ".concat(issue2.divisor, " kat\u0131 olmal\u0131yd\u0131.");
       case "unrecognized_keys":
-        return `Tan\u0131nmayan anahtar ${issue2.keys.length > 1 ? "s" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "Tan\u0131nmayan anahtar ".concat(issue2.keys.length > 1 ? "s" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `${issue2.origin} i\xE7in tan\u0131nmayan anahtar var.`;
+        return "".concat(issue2.origin, " i\xE7in tan\u0131nmayan anahtar var.");
       case "invalid_union":
         return "Giren tan\u0131namad\u0131.";
       case "invalid_element":
-        return `${issue2.origin} i\xE7in tan\u0131nmayan k\u0131ymet var.`;
+        return "".concat(issue2.origin, " i\xE7in tan\u0131nmayan k\u0131ymet var.");
       default:
-        return `K\u0131ymet tan\u0131namad\u0131.`;
+        return "K\u0131ymet tan\u0131namad\u0131.";
     }
   };
 };
@@ -12578,59 +12286,59 @@ var error41 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\u0646\u0627\u0633\u0645 \u0648\u0631\u0648\u062F\u064A: \u0628\u0627\u06CC\u062F instanceof ${issue2.expected} \u0648\u0627\u06CC, \u0645\u06AB\u0631 ${received} \u062A\u0631\u0644\u0627\u0633\u0647 \u0634\u0648`;
+          return "\u0646\u0627\u0633\u0645 \u0648\u0631\u0648\u062F\u064A: \u0628\u0627\u06CC\u062F instanceof ".concat(issue2.expected, " \u0648\u0627\u06CC, \u0645\u06AB\u0631 ").concat(received, " \u062A\u0631\u0644\u0627\u0633\u0647 \u0634\u0648");
         }
-        return `\u0646\u0627\u0633\u0645 \u0648\u0631\u0648\u062F\u064A: \u0628\u0627\u06CC\u062F ${expected} \u0648\u0627\u06CC, \u0645\u06AB\u0631 ${received} \u062A\u0631\u0644\u0627\u0633\u0647 \u0634\u0648`;
+        return "\u0646\u0627\u0633\u0645 \u0648\u0631\u0648\u062F\u064A: \u0628\u0627\u06CC\u062F ".concat(expected, " \u0648\u0627\u06CC, \u0645\u06AB\u0631 ").concat(received, " \u062A\u0631\u0644\u0627\u0633\u0647 \u0634\u0648");
       }
       case "invalid_value":
         if (issue2.values.length === 1) {
-          return `\u0646\u0627\u0633\u0645 \u0648\u0631\u0648\u062F\u064A: \u0628\u0627\u06CC\u062F ${stringifyPrimitive(issue2.values[0])} \u0648\u0627\u06CC`;
+          return "\u0646\u0627\u0633\u0645 \u0648\u0631\u0648\u062F\u064A: \u0628\u0627\u06CC\u062F ".concat(stringifyPrimitive(issue2.values[0]), " \u0648\u0627\u06CC");
         }
-        return `\u0646\u0627\u0633\u0645 \u0627\u0646\u062A\u062E\u0627\u0628: \u0628\u0627\u06CC\u062F \u06CC\u0648 \u0644\u0647 ${joinValues(issue2.values, "|")} \u0685\u062E\u0647 \u0648\u0627\u06CC`;
+        return "\u0646\u0627\u0633\u0645 \u0627\u0646\u062A\u062E\u0627\u0628: \u0628\u0627\u06CC\u062F \u06CC\u0648 \u0644\u0647 ".concat(joinValues(issue2.values, "|"), " \u0685\u062E\u0647 \u0648\u0627\u06CC");
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u0689\u06CC\u0631 \u0644\u0648\u06CC: ${issue2.origin ?? "\u0627\u0631\u0632\u069A\u062A"} \u0628\u0627\u06CC\u062F ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "\u0639\u0646\u0635\u0631\u0648\u0646\u0647"} \u0648\u0644\u0631\u064A`;
+          return "\u0689\u06CC\u0631 \u0644\u0648\u06CC: ".concat(issue2.origin ?? "\u0627\u0631\u0632\u069A\u062A", " \u0628\u0627\u06CC\u062F ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "\u0639\u0646\u0635\u0631\u0648\u0646\u0647", " \u0648\u0644\u0631\u064A");
         }
-        return `\u0689\u06CC\u0631 \u0644\u0648\u06CC: ${issue2.origin ?? "\u0627\u0631\u0632\u069A\u062A"} \u0628\u0627\u06CC\u062F ${adj}${issue2.maximum.toString()} \u0648\u064A`;
+        return "\u0689\u06CC\u0631 \u0644\u0648\u06CC: ".concat(issue2.origin ?? "\u0627\u0631\u0632\u069A\u062A", " \u0628\u0627\u06CC\u062F ").concat(adj).concat(issue2.maximum.toString(), " \u0648\u064A");
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u0689\u06CC\u0631 \u06A9\u0648\u0686\u0646\u06CC: ${issue2.origin} \u0628\u0627\u06CC\u062F ${adj}${issue2.minimum.toString()} ${sizing.unit} \u0648\u0644\u0631\u064A`;
+          return "\u0689\u06CC\u0631 \u06A9\u0648\u0686\u0646\u06CC: ".concat(issue2.origin, " \u0628\u0627\u06CC\u062F ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit, " \u0648\u0644\u0631\u064A");
         }
-        return `\u0689\u06CC\u0631 \u06A9\u0648\u0686\u0646\u06CC: ${issue2.origin} \u0628\u0627\u06CC\u062F ${adj}${issue2.minimum.toString()} \u0648\u064A`;
+        return "\u0689\u06CC\u0631 \u06A9\u0648\u0686\u0646\u06CC: ".concat(issue2.origin, " \u0628\u0627\u06CC\u062F ").concat(adj).concat(issue2.minimum.toString(), " \u0648\u064A");
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `\u0646\u0627\u0633\u0645 \u0645\u062A\u0646: \u0628\u0627\u06CC\u062F \u062F "${_issue.prefix}" \u0633\u0631\u0647 \u067E\u06CC\u0644 \u0634\u064A`;
+          return '\u0646\u0627\u0633\u0645 \u0645\u062A\u0646: \u0628\u0627\u06CC\u062F \u062F "'.concat(_issue.prefix, '" \u0633\u0631\u0647 \u067E\u06CC\u0644 \u0634\u064A');
         }
         if (_issue.format === "ends_with") {
-          return `\u0646\u0627\u0633\u0645 \u0645\u062A\u0646: \u0628\u0627\u06CC\u062F \u062F "${_issue.suffix}" \u0633\u0631\u0647 \u067E\u0627\u06CC \u062A\u0647 \u0648\u0631\u0633\u064A\u0696\u064A`;
+          return '\u0646\u0627\u0633\u0645 \u0645\u062A\u0646: \u0628\u0627\u06CC\u062F \u062F "'.concat(_issue.suffix, '" \u0633\u0631\u0647 \u067E\u0627\u06CC \u062A\u0647 \u0648\u0631\u0633\u064A\u0696\u064A');
         }
         if (_issue.format === "includes") {
-          return `\u0646\u0627\u0633\u0645 \u0645\u062A\u0646: \u0628\u0627\u06CC\u062F "${_issue.includes}" \u0648\u0644\u0631\u064A`;
+          return '\u0646\u0627\u0633\u0645 \u0645\u062A\u0646: \u0628\u0627\u06CC\u062F "'.concat(_issue.includes, '" \u0648\u0644\u0631\u064A');
         }
         if (_issue.format === "regex") {
-          return `\u0646\u0627\u0633\u0645 \u0645\u062A\u0646: \u0628\u0627\u06CC\u062F \u062F ${_issue.pattern} \u0633\u0631\u0647 \u0645\u0637\u0627\u0628\u0642\u062A \u0648\u0644\u0631\u064A`;
+          return "\u0646\u0627\u0633\u0645 \u0645\u062A\u0646: \u0628\u0627\u06CC\u062F \u062F ".concat(_issue.pattern, " \u0633\u0631\u0647 \u0645\u0637\u0627\u0628\u0642\u062A \u0648\u0644\u0631\u064A");
         }
-        return `${FormatDictionary[_issue.format] ?? issue2.format} \u0646\u0627\u0633\u0645 \u062F\u06CC`;
+        return "".concat(FormatDictionary[_issue.format] ?? issue2.format, " \u0646\u0627\u0633\u0645 \u062F\u06CC");
       }
       case "not_multiple_of":
-        return `\u0646\u0627\u0633\u0645 \u0639\u062F\u062F: \u0628\u0627\u06CC\u062F \u062F ${issue2.divisor} \u0645\u0636\u0631\u0628 \u0648\u064A`;
+        return "\u0646\u0627\u0633\u0645 \u0639\u062F\u062F: \u0628\u0627\u06CC\u062F \u062F ".concat(issue2.divisor, " \u0645\u0636\u0631\u0628 \u0648\u064A");
       case "unrecognized_keys":
-        return `\u0646\u0627\u0633\u0645 ${issue2.keys.length > 1 ? "\u06A9\u0644\u06CC\u0689\u0648\u0646\u0647" : "\u06A9\u0644\u06CC\u0689"}: ${joinValues(issue2.keys, ", ")}`;
+        return "\u0646\u0627\u0633\u0645 ".concat(issue2.keys.length > 1 ? "\u06A9\u0644\u06CC\u0689\u0648\u0646\u0647" : "\u06A9\u0644\u06CC\u0689", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `\u0646\u0627\u0633\u0645 \u06A9\u0644\u06CC\u0689 \u067E\u0647 ${issue2.origin} \u06A9\u06D0`;
+        return "\u0646\u0627\u0633\u0645 \u06A9\u0644\u06CC\u0689 \u067E\u0647 ".concat(issue2.origin, " \u06A9\u06D0");
       case "invalid_union":
-        return `\u0646\u0627\u0633\u0645\u0647 \u0648\u0631\u0648\u062F\u064A`;
+        return "\u0646\u0627\u0633\u0645\u0647 \u0648\u0631\u0648\u062F\u064A";
       case "invalid_element":
-        return `\u0646\u0627\u0633\u0645 \u0639\u0646\u0635\u0631 \u067E\u0647 ${issue2.origin} \u06A9\u06D0`;
+        return "\u0646\u0627\u0633\u0645 \u0639\u0646\u0635\u0631 \u067E\u0647 ".concat(issue2.origin, " \u06A9\u06D0");
       default:
-        return `\u0646\u0627\u0633\u0645\u0647 \u0648\u0631\u0648\u062F\u064A`;
+        return "\u0646\u0627\u0633\u0645\u0647 \u0648\u0631\u0648\u062F\u064A";
     }
   };
 };
@@ -12696,54 +12404,54 @@ var error42 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Nieprawid\u0142owe dane wej\u015Bciowe: oczekiwano instanceof ${issue2.expected}, otrzymano ${received}`;
+          return "Nieprawid\u0142owe dane wej\u015Bciowe: oczekiwano instanceof ".concat(issue2.expected, ", otrzymano ").concat(received);
         }
-        return `Nieprawid\u0142owe dane wej\u015Bciowe: oczekiwano ${expected}, otrzymano ${received}`;
+        return "Nieprawid\u0142owe dane wej\u015Bciowe: oczekiwano ".concat(expected, ", otrzymano ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Nieprawid\u0142owe dane wej\u015Bciowe: oczekiwano ${stringifyPrimitive(issue2.values[0])}`;
-        return `Nieprawid\u0142owa opcja: oczekiwano jednej z warto\u015Bci ${joinValues(issue2.values, "|")}`;
+          return "Nieprawid\u0142owe dane wej\u015Bciowe: oczekiwano ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Nieprawid\u0142owa opcja: oczekiwano jednej z warto\u015Bci ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Za du\u017Ca warto\u015B\u0107: oczekiwano, \u017Ce ${issue2.origin ?? "warto\u015B\u0107"} b\u0119dzie mie\u0107 ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "element\xF3w"}`;
+          return "Za du\u017Ca warto\u015B\u0107: oczekiwano, \u017Ce ".concat(issue2.origin ?? "warto\u015B\u0107", " b\u0119dzie mie\u0107 ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "element\xF3w");
         }
-        return `Zbyt du\u017C(y/a/e): oczekiwano, \u017Ce ${issue2.origin ?? "warto\u015B\u0107"} b\u0119dzie wynosi\u0107 ${adj}${issue2.maximum.toString()}`;
+        return "Zbyt du\u017C(y/a/e): oczekiwano, \u017Ce ".concat(issue2.origin ?? "warto\u015B\u0107", " b\u0119dzie wynosi\u0107 ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Za ma\u0142a warto\u015B\u0107: oczekiwano, \u017Ce ${issue2.origin ?? "warto\u015B\u0107"} b\u0119dzie mie\u0107 ${adj}${issue2.minimum.toString()} ${sizing.unit ?? "element\xF3w"}`;
+          return "Za ma\u0142a warto\u015B\u0107: oczekiwano, \u017Ce ".concat(issue2.origin ?? "warto\u015B\u0107", " b\u0119dzie mie\u0107 ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit ?? "element\xF3w");
         }
-        return `Zbyt ma\u0142(y/a/e): oczekiwano, \u017Ce ${issue2.origin ?? "warto\u015B\u0107"} b\u0119dzie wynosi\u0107 ${adj}${issue2.minimum.toString()}`;
+        return "Zbyt ma\u0142(y/a/e): oczekiwano, \u017Ce ".concat(issue2.origin ?? "warto\u015B\u0107", " b\u0119dzie wynosi\u0107 ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `Nieprawid\u0142owy ci\u0105g znak\xF3w: musi zaczyna\u0107 si\u0119 od "${_issue.prefix}"`;
+          return 'Nieprawid\u0142owy ci\u0105g znak\xF3w: musi zaczyna\u0107 si\u0119 od "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `Nieprawid\u0142owy ci\u0105g znak\xF3w: musi ko\u0144czy\u0107 si\u0119 na "${_issue.suffix}"`;
+          return 'Nieprawid\u0142owy ci\u0105g znak\xF3w: musi ko\u0144czy\u0107 si\u0119 na "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Nieprawid\u0142owy ci\u0105g znak\xF3w: musi zawiera\u0107 "${_issue.includes}"`;
+          return 'Nieprawid\u0142owy ci\u0105g znak\xF3w: musi zawiera\u0107 "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Nieprawid\u0142owy ci\u0105g znak\xF3w: musi odpowiada\u0107 wzorcowi ${_issue.pattern}`;
-        return `Nieprawid\u0142ow(y/a/e) ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "Nieprawid\u0142owy ci\u0105g znak\xF3w: musi odpowiada\u0107 wzorcowi ".concat(_issue.pattern);
+        return "Nieprawid\u0142ow(y/a/e) ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Nieprawid\u0142owa liczba: musi by\u0107 wielokrotno\u015Bci\u0105 ${issue2.divisor}`;
+        return "Nieprawid\u0142owa liczba: musi by\u0107 wielokrotno\u015Bci\u0105 ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `Nierozpoznane klucze${issue2.keys.length > 1 ? "s" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "Nierozpoznane klucze".concat(issue2.keys.length > 1 ? "s" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Nieprawid\u0142owy klucz w ${issue2.origin}`;
+        return "Nieprawid\u0142owy klucz w ".concat(issue2.origin);
       case "invalid_union":
         return "Nieprawid\u0142owe dane wej\u015Bciowe";
       case "invalid_element":
-        return `Nieprawid\u0142owa warto\u015B\u0107 w ${issue2.origin}`;
+        return "Nieprawid\u0142owa warto\u015B\u0107 w ".concat(issue2.origin);
       default:
-        return `Nieprawid\u0142owe dane wej\u015Bciowe`;
+        return "Nieprawid\u0142owe dane wej\u015Bciowe";
     }
   };
 };
@@ -12826,8 +12534,8 @@ var error43 = () => {
     function: { name: "fun\xE7\xE3o", articles: Gender.feminine }
   };
   function translateOriginWithArticle(type, articleType) {
-    const translatedValue = TypeDictionary[type] ?? { name: `valor "${type}"`, articles: Gender.masculine };
-    return `${translatedValue.articles[articleType]} ${translatedValue.name}`;
+    const translatedValue = TypeDictionary[type] ?? { name: 'valor "'.concat(type, '"'), articles: Gender.masculine };
+    return "".concat(translatedValue.articles[articleType], " ").concat(translatedValue.name);
   }
   return (issue2) => {
     switch (issue2.code) {
@@ -12835,57 +12543,57 @@ var error43 = () => {
         const expected = translateOriginWithArticle(issue2.expected, "indefinite");
         const receivedType = parsedType(issue2.input);
         const received = translateOriginWithArticle(receivedType, "indefinite");
-        return `Entrada inv\xE1lida: esperava ${expected}, recebeu ${received}`;
+        return "Entrada inv\xE1lida: esperava ".concat(expected, ", recebeu ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Entrada inv\xE1lida: esperava ${stringifyPrimitive(issue2.values[0])}`;
-        return `Op\xE7\xE3o inv\xE1lida: esperava uma das seguintes op\xE7\xF5es: ${joinValues(issue2.values, "|")}`;
+          return "Entrada inv\xE1lida: esperava ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Op\xE7\xE3o inv\xE1lida: esperava uma das seguintes op\xE7\xF5es: ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Demasiado grande: esperava que ${translateOriginWithArticle(issue2.origin, "definite")} tivesse ${adj} ${issue2.maximum.toString()} ${sizing.unit ?? "elementos"}`;
-        return `Demasiado grande: esperava que ${translateOriginWithArticle(issue2.origin, "definite")} fosse ${adj} ${issue2.maximum.toString()}`;
+          return "Demasiado grande: esperava que ".concat(translateOriginWithArticle(issue2.origin, "definite"), " tivesse ").concat(adj, " ").concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "elementos");
+        return "Demasiado grande: esperava que ".concat(translateOriginWithArticle(issue2.origin, "definite"), " fosse ").concat(adj, " ").concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Demasiado pequeno: esperava que ${translateOriginWithArticle(issue2.origin, "definite")} tivesse ${adj} ${issue2.minimum.toString()} ${sizing.unit ?? "elementos"}`;
+          return "Demasiado pequeno: esperava que ".concat(translateOriginWithArticle(issue2.origin, "definite"), " tivesse ").concat(adj, " ").concat(issue2.minimum.toString(), " ").concat(sizing.unit ?? "elementos");
         }
-        return `Demasiado pequeno: esperava que ${translateOriginWithArticle(issue2.origin, "definite")} fosse ${adj} ${issue2.minimum.toString()}`;
+        return "Demasiado pequeno: esperava que ".concat(translateOriginWithArticle(issue2.origin, "definite"), " fosse ").concat(adj, " ").concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `Texto inv\xE1lido: deve come\xE7ar por "${_issue.prefix}"`;
+          return 'Texto inv\xE1lido: deve come\xE7ar por "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `Texto inv\xE1lido: deve terminar em "${_issue.suffix}"`;
+          return 'Texto inv\xE1lido: deve terminar em "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Texto inv\xE1lido: deve incluir "${_issue.includes}"`;
+          return 'Texto inv\xE1lido: deve incluir "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Texto inv\xE1lido: deve corresponder ao padr\xE3o ${_issue.pattern}`;
-        return `Formato d${FormatDictionary[_issue.format] ?? issue2.format} inv\xE1lido`;
+          return "Texto inv\xE1lido: deve corresponder ao padr\xE3o ".concat(_issue.pattern);
+        return "Formato d".concat(FormatDictionary[_issue.format] ?? issue2.format, " inv\xE1lido");
       }
       case "not_multiple_of":
-        return `N\xFAmero inv\xE1lido: deve ser m\xFAltiplo de ${issue2.divisor}`;
+        return "N\xFAmero inv\xE1lido: deve ser m\xFAltiplo de ".concat(issue2.divisor);
       case "unrecognized_keys": {
         const plural = issue2.keys.length > 1 ? "s" : "";
-        return `Chave${plural} inv\xE1lida${plural}: ${joinValues(issue2.keys, ", ")}`;
+        return "Chave".concat(plural, " inv\xE1lida").concat(plural, ": ").concat(joinValues(issue2.keys, ", "));
       }
       case "invalid_key":
-        return `Entrada inv\xE1lida n${translateOriginWithArticle(issue2.origin, "definite")}`;
+        return "Entrada inv\xE1lida n".concat(translateOriginWithArticle(issue2.origin, "definite"));
       case "invalid_union":
         if (issue2.options && Array.isArray(issue2.options) && issue2.options.length > 0) {
-          const opts = issue2.options.map((o) => `'${o}'`).join(" | ");
-          return `Valor de discrimina\xE7\xE3o inv\xE1lido. Esperava ${opts}`;
+          const opts = issue2.options.map((o) => "'".concat(o, "'")).join(" | ");
+          return "Valor de discrimina\xE7\xE3o inv\xE1lido. Esperava ".concat(opts);
         }
         return "Entrada inv\xE1lida";
       case "invalid_element":
-        return `Entrada inv\xE1lida n${translateOriginWithArticle(issue2.origin, "definite")}`;
+        return "Entrada inv\xE1lida n".concat(translateOriginWithArticle(issue2.origin, "definite"));
       default:
-        return `Entrada inv\xE1lida`;
+        return "Entrada inv\xE1lida";
     }
   };
 };
@@ -12968,8 +12676,8 @@ var error44 = () => {
     function: { name: "fun\xE7\xE3o", articles: Gender.feminine }
   };
   function translateOriginWithArticle(type, articleType) {
-    const translatedValue = TypeDictionary[type] ?? { name: `valor "${type}"`, articles: Gender.masculine };
-    return `${translatedValue.articles[articleType]} ${translatedValue.name}`;
+    const translatedValue = TypeDictionary[type] ?? { name: 'valor "'.concat(type, '"'), articles: Gender.masculine };
+    return "".concat(translatedValue.articles[articleType], " ").concat(translatedValue.name);
   }
   return (issue2) => {
     switch (issue2.code) {
@@ -12977,58 +12685,58 @@ var error44 = () => {
         const expected = translateOriginWithArticle(issue2.expected, "indefinite");
         const receivedType = parsedType(issue2.input);
         const received = translateOriginWithArticle(receivedType, "indefinite");
-        return `Entrada inv\xE1lida: esperava ${expected}, recebeu ${received}`;
+        return "Entrada inv\xE1lida: esperava ".concat(expected, ", recebeu ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Entrada inv\xE1lida: esperava ${stringifyPrimitive(issue2.values[0])}`;
-        return `Op\xE7\xE3o inv\xE1lida: esperava uma das seguintes op\xE7\xF5es: ${joinValues(issue2.values, "|")}`;
+          return "Entrada inv\xE1lida: esperava ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Op\xE7\xE3o inv\xE1lida: esperava uma das seguintes op\xE7\xF5es: ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Grande demais: esperava que ${translateOriginWithArticle(issue2.origin, "definite")} tivesse ${adj} ${issue2.maximum.toString()} ${sizing.unit ?? "elementos"}`;
-        return `Grande demais: esperava que ${translateOriginWithArticle(issue2.origin, "definite")} fosse ${adj} ${issue2.maximum.toString()}`;
+          return "Grande demais: esperava que ".concat(translateOriginWithArticle(issue2.origin, "definite"), " tivesse ").concat(adj, " ").concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "elementos");
+        return "Grande demais: esperava que ".concat(translateOriginWithArticle(issue2.origin, "definite"), " fosse ").concat(adj, " ").concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Pequeno demais: esperava que ${translateOriginWithArticle(issue2.origin, "definite")} tivesse ${adj} ${issue2.minimum.toString()} ${sizing.unit ?? "elementos"}`;
+          return "Pequeno demais: esperava que ".concat(translateOriginWithArticle(issue2.origin, "definite"), " tivesse ").concat(adj, " ").concat(issue2.minimum.toString(), " ").concat(sizing.unit ?? "elementos");
         }
-        return `Pequeno demais: esperava que ${translateOriginWithArticle(issue2.origin, "definite")} fosse ${adj} ${issue2.minimum.toString()}`;
+        return "Pequeno demais: esperava que ".concat(translateOriginWithArticle(issue2.origin, "definite"), " fosse ").concat(adj, " ").concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `Texto inv\xE1lido: deve come\xE7ar com "${_issue.prefix}"`;
+          return 'Texto inv\xE1lido: deve come\xE7ar com "'.concat(_issue.prefix, '"');
         }
         if (_issue.format === "ends_with")
-          return `Texto inv\xE1lido: deve terminar com "${_issue.suffix}"`;
+          return 'Texto inv\xE1lido: deve terminar com "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Texto inv\xE1lido: deve incluir "${_issue.includes}"`;
+          return 'Texto inv\xE1lido: deve incluir "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Texto inv\xE1lido: deve corresponder ao padr\xE3o ${_issue.pattern}`;
-        return `Formato d${FormatDictionary[_issue.format] ?? issue2.format} inv\xE1lido`;
+          return "Texto inv\xE1lido: deve corresponder ao padr\xE3o ".concat(_issue.pattern);
+        return "Formato d".concat(FormatDictionary[_issue.format] ?? issue2.format, " inv\xE1lido");
       }
       case "not_multiple_of":
-        return `N\xFAmero inv\xE1lido: deve ser m\xFAltiplo de ${issue2.divisor}`;
+        return "N\xFAmero inv\xE1lido: deve ser m\xFAltiplo de ".concat(issue2.divisor);
       case "unrecognized_keys": {
         const plural = issue2.keys.length > 1 ? "s" : "";
-        return `Chave${plural} inv\xE1lida${plural}: ${joinValues(issue2.keys, ", ")}`;
+        return "Chave".concat(plural, " inv\xE1lida").concat(plural, ": ").concat(joinValues(issue2.keys, ", "));
       }
       case "invalid_key":
-        return `Entrada inv\xE1lida n${translateOriginWithArticle(issue2.origin, "definite")}`;
+        return "Entrada inv\xE1lida n".concat(translateOriginWithArticle(issue2.origin, "definite"));
       case "invalid_union":
         if (issue2.options && Array.isArray(issue2.options) && issue2.options.length > 0) {
-          const opts = issue2.options.map((o) => `'${o}'`).join(" | ");
-          return `Valor de discrimina\xE7\xE3o inv\xE1lido. Esperava ${opts}`;
+          const opts = issue2.options.map((o) => "'".concat(o, "'")).join(" | ");
+          return "Valor de discrimina\xE7\xE3o inv\xE1lido. Esperava ".concat(opts);
         }
         return "Entrada inv\xE1lida";
       case "invalid_element":
-        return `Entrada inv\xE1lida n${translateOriginWithArticle(issue2.origin, "definite")}`;
+        return "Entrada inv\xE1lida n".concat(translateOriginWithArticle(issue2.origin, "definite"));
       default:
-        return `Entrada inv\xE1lida`;
+        return "Entrada inv\xE1lida";
     }
   };
 };
@@ -13104,52 +12812,52 @@ var error45 = () => {
         const expected = TypeDictionary[issue2.expected] ?? issue2.expected;
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
-        return `Intrare invalid\u0103: a\u0219teptat ${expected}, primit ${received}`;
+        return "Intrare invalid\u0103: a\u0219teptat ".concat(expected, ", primit ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Intrare invalid\u0103: a\u0219teptat ${stringifyPrimitive(issue2.values[0])}`;
-        return `Op\u021Biune invalid\u0103: a\u0219teptat una dintre ${joinValues(issue2.values, "|")}`;
+          return "Intrare invalid\u0103: a\u0219teptat ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Op\u021Biune invalid\u0103: a\u0219teptat una dintre ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Prea mare: a\u0219teptat ca ${issue2.origin ?? "valoarea"} ${sizing.verb} ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "elemente"}`;
-        return `Prea mare: a\u0219teptat ca ${issue2.origin ?? "valoarea"} s\u0103 fie ${adj}${issue2.maximum.toString()}`;
+          return "Prea mare: a\u0219teptat ca ".concat(issue2.origin ?? "valoarea", " ").concat(sizing.verb, " ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "elemente");
+        return "Prea mare: a\u0219teptat ca ".concat(issue2.origin ?? "valoarea", " s\u0103 fie ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Prea mic: a\u0219teptat ca ${issue2.origin} ${sizing.verb} ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "Prea mic: a\u0219teptat ca ".concat(issue2.origin, " ").concat(sizing.verb, " ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `Prea mic: a\u0219teptat ca ${issue2.origin} s\u0103 fie ${adj}${issue2.minimum.toString()}`;
+        return "Prea mic: a\u0219teptat ca ".concat(issue2.origin, " s\u0103 fie ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `\u0218ir invalid: trebuie s\u0103 \xEEnceap\u0103 cu "${_issue.prefix}"`;
+          return '\u0218ir invalid: trebuie s\u0103 \xEEnceap\u0103 cu "'.concat(_issue.prefix, '"');
         }
         if (_issue.format === "ends_with")
-          return `\u0218ir invalid: trebuie s\u0103 se termine cu "${_issue.suffix}"`;
+          return '\u0218ir invalid: trebuie s\u0103 se termine cu "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `\u0218ir invalid: trebuie s\u0103 includ\u0103 "${_issue.includes}"`;
+          return '\u0218ir invalid: trebuie s\u0103 includ\u0103 "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `\u0218ir invalid: trebuie s\u0103 se potriveasc\u0103 cu modelul ${_issue.pattern}`;
-        return `Format invalid: ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u0218ir invalid: trebuie s\u0103 se potriveasc\u0103 cu modelul ".concat(_issue.pattern);
+        return "Format invalid: ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Num\u0103r invalid: trebuie s\u0103 fie multiplu de ${issue2.divisor}`;
+        return "Num\u0103r invalid: trebuie s\u0103 fie multiplu de ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `Chei nerecunoscute: ${joinValues(issue2.keys, ", ")}`;
+        return "Chei nerecunoscute: ".concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Cheie invalid\u0103 \xEEn ${issue2.origin}`;
+        return "Cheie invalid\u0103 \xEEn ".concat(issue2.origin);
       case "invalid_union":
         return "Intrare invalid\u0103";
       case "invalid_element":
-        return `Valoare invalid\u0103 \xEEn ${issue2.origin}`;
+        return "Valoare invalid\u0103 \xEEn ".concat(issue2.origin);
       default:
-        return `Intrare invalid\u0103`;
+        return "Intrare invalid\u0103";
     }
   };
 };
@@ -13265,23 +12973,23 @@ var error46 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0432\u0432\u043E\u0434: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C instanceof ${issue2.expected}, \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043E ${received}`;
+          return "\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0432\u0432\u043E\u0434: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C instanceof ".concat(issue2.expected, ", \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043E ").concat(received);
         }
-        return `\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0432\u0432\u043E\u0434: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C ${expected}, \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043E ${received}`;
+        return "\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0432\u0432\u043E\u0434: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C ".concat(expected, ", \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u043E ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0432\u0432\u043E\u0434: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C ${stringifyPrimitive(issue2.values[0])}`;
-        return `\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0432\u0430\u0440\u0438\u0430\u043D\u0442: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0434\u043D\u043E \u0438\u0437 ${joinValues(issue2.values, "|")}`;
+          return "\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0432\u0432\u043E\u0434: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0432\u0430\u0440\u0438\u0430\u043D\u0442: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0434\u043D\u043E \u0438\u0437 ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
           const maxValue = Number(issue2.maximum);
           const unit = getRussianPlural(maxValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
-          return `\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u0431\u043E\u043B\u044C\u0448\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ${issue2.origin ?? "\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435"} \u0431\u0443\u0434\u0435\u0442 \u0438\u043C\u0435\u0442\u044C ${adj}${issue2.maximum.toString()} ${unit}`;
+          return "\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u0431\u043E\u043B\u044C\u0448\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ".concat(issue2.origin ?? "\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435", " \u0431\u0443\u0434\u0435\u0442 \u0438\u043C\u0435\u0442\u044C ").concat(adj).concat(issue2.maximum.toString(), " ").concat(unit);
         }
-        return `\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u0431\u043E\u043B\u044C\u0448\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ${issue2.origin ?? "\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435"} \u0431\u0443\u0434\u0435\u0442 ${adj}${issue2.maximum.toString()}`;
+        return "\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u0431\u043E\u043B\u044C\u0448\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ".concat(issue2.origin ?? "\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435", " \u0431\u0443\u0434\u0435\u0442 ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
@@ -13289,34 +12997,34 @@ var error46 = () => {
         if (sizing) {
           const minValue = Number(issue2.minimum);
           const unit = getRussianPlural(minValue, sizing.unit.one, sizing.unit.few, sizing.unit.many);
-          return `\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u0430\u043B\u0435\u043D\u044C\u043A\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ${issue2.origin} \u0431\u0443\u0434\u0435\u0442 \u0438\u043C\u0435\u0442\u044C ${adj}${issue2.minimum.toString()} ${unit}`;
+          return "\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u0430\u043B\u0435\u043D\u044C\u043A\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ".concat(issue2.origin, " \u0431\u0443\u0434\u0435\u0442 \u0438\u043C\u0435\u0442\u044C ").concat(adj).concat(issue2.minimum.toString(), " ").concat(unit);
         }
-        return `\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u0430\u043B\u0435\u043D\u044C\u043A\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ${issue2.origin} \u0431\u0443\u0434\u0435\u0442 ${adj}${issue2.minimum.toString()}`;
+        return "\u0421\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u0430\u043B\u0435\u043D\u044C\u043A\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435: \u043E\u0436\u0438\u0434\u0430\u043B\u043E\u0441\u044C, \u0447\u0442\u043E ".concat(issue2.origin, " \u0431\u0443\u0434\u0435\u0442 ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `\u041D\u0435\u0432\u0435\u0440\u043D\u0430\u044F \u0441\u0442\u0440\u043E\u043A\u0430: \u0434\u043E\u043B\u0436\u043D\u0430 \u043D\u0430\u0447\u0438\u043D\u0430\u0442\u044C\u0441\u044F \u0441 "${_issue.prefix}"`;
+          return '\u041D\u0435\u0432\u0435\u0440\u043D\u0430\u044F \u0441\u0442\u0440\u043E\u043A\u0430: \u0434\u043E\u043B\u0436\u043D\u0430 \u043D\u0430\u0447\u0438\u043D\u0430\u0442\u044C\u0441\u044F \u0441 "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `\u041D\u0435\u0432\u0435\u0440\u043D\u0430\u044F \u0441\u0442\u0440\u043E\u043A\u0430: \u0434\u043E\u043B\u0436\u043D\u0430 \u0437\u0430\u043A\u0430\u043D\u0447\u0438\u0432\u0430\u0442\u044C\u0441\u044F \u043D\u0430 "${_issue.suffix}"`;
+          return '\u041D\u0435\u0432\u0435\u0440\u043D\u0430\u044F \u0441\u0442\u0440\u043E\u043A\u0430: \u0434\u043E\u043B\u0436\u043D\u0430 \u0437\u0430\u043A\u0430\u043D\u0447\u0438\u0432\u0430\u0442\u044C\u0441\u044F \u043D\u0430 "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `\u041D\u0435\u0432\u0435\u0440\u043D\u0430\u044F \u0441\u0442\u0440\u043E\u043A\u0430: \u0434\u043E\u043B\u0436\u043D\u0430 \u0441\u043E\u0434\u0435\u0440\u0436\u0430\u0442\u044C "${_issue.includes}"`;
+          return '\u041D\u0435\u0432\u0435\u0440\u043D\u0430\u044F \u0441\u0442\u0440\u043E\u043A\u0430: \u0434\u043E\u043B\u0436\u043D\u0430 \u0441\u043E\u0434\u0435\u0440\u0436\u0430\u0442\u044C "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `\u041D\u0435\u0432\u0435\u0440\u043D\u0430\u044F \u0441\u0442\u0440\u043E\u043A\u0430: \u0434\u043E\u043B\u0436\u043D\u0430 \u0441\u043E\u043E\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u043E\u0432\u0430\u0442\u044C \u0448\u0430\u0431\u043B\u043E\u043D\u0443 ${_issue.pattern}`;
-        return `\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u041D\u0435\u0432\u0435\u0440\u043D\u0430\u044F \u0441\u0442\u0440\u043E\u043A\u0430: \u0434\u043E\u043B\u0436\u043D\u0430 \u0441\u043E\u043E\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u043E\u0432\u0430\u0442\u044C \u0448\u0430\u0431\u043B\u043E\u043D\u0443 ".concat(_issue.pattern);
+        return "\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u041D\u0435\u0432\u0435\u0440\u043D\u043E\u0435 \u0447\u0438\u0441\u043B\u043E: \u0434\u043E\u043B\u0436\u043D\u043E \u0431\u044B\u0442\u044C \u043A\u0440\u0430\u0442\u043D\u044B\u043C ${issue2.divisor}`;
+        return "\u041D\u0435\u0432\u0435\u0440\u043D\u043E\u0435 \u0447\u0438\u0441\u043B\u043E: \u0434\u043E\u043B\u0436\u043D\u043E \u0431\u044B\u0442\u044C \u043A\u0440\u0430\u0442\u043D\u044B\u043C ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `\u041D\u0435\u0440\u0430\u0441\u043F\u043E\u0437\u043D\u0430\u043D\u043D${issue2.keys.length > 1 ? "\u044B\u0435" : "\u044B\u0439"} \u043A\u043B\u044E\u0447${issue2.keys.length > 1 ? "\u0438" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "\u041D\u0435\u0440\u0430\u0441\u043F\u043E\u0437\u043D\u0430\u043D\u043D".concat(issue2.keys.length > 1 ? "\u044B\u0435" : "\u044B\u0439", " \u043A\u043B\u044E\u0447").concat(issue2.keys.length > 1 ? "\u0438" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u043A\u043B\u044E\u0447 \u0432 ${issue2.origin}`;
+        return "\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u043A\u043B\u044E\u0447 \u0432 ".concat(issue2.origin);
       case "invalid_union":
         return "\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0435 \u0432\u0445\u043E\u0434\u043D\u044B\u0435 \u0434\u0430\u043D\u043D\u044B\u0435";
       case "invalid_element":
-        return `\u041D\u0435\u0432\u0435\u0440\u043D\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435 \u0432 ${issue2.origin}`;
+        return "\u041D\u0435\u0432\u0435\u0440\u043D\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435 \u0432 ".concat(issue2.origin);
       default:
-        return `\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0435 \u0432\u0445\u043E\u0434\u043D\u044B\u0435 \u0434\u0430\u043D\u043D\u044B\u0435`;
+        return "\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0435 \u0432\u0445\u043E\u0434\u043D\u044B\u0435 \u0434\u0430\u043D\u043D\u044B\u0435";
     }
   };
 };
@@ -13384,54 +13092,54 @@ var error47 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Neplatn\xFD vstup: o\u010Dak\xE1van\xE9 instanceof ${issue2.expected}, obdr\u017Ean\xE9 ${received}`;
+          return "Neplatn\xFD vstup: o\u010Dak\xE1van\xE9 instanceof ".concat(issue2.expected, ", obdr\u017Ean\xE9 ").concat(received);
         }
-        return `Neplatn\xFD vstup: o\u010Dak\xE1van\xE9 ${expected}, obdr\u017Ean\xE9 ${received}`;
+        return "Neplatn\xFD vstup: o\u010Dak\xE1van\xE9 ".concat(expected, ", obdr\u017Ean\xE9 ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Neplatn\xFD vstup: o\u010Dak\xE1van\xE9 ${stringifyPrimitive(issue2.values[0])}`;
-        return `Neplatn\xFD vstup: o\u010Dak\xE1van\xE1 jedna z hodn\xF4t ${joinValues(issue2.values, "|")}`;
+          return "Neplatn\xFD vstup: o\u010Dak\xE1van\xE9 ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Neplatn\xFD vstup: o\u010Dak\xE1van\xE1 jedna z hodn\xF4t ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Hodnota je pr\xEDli\u0161 ve\u013Ek\xE1: ${issue2.origin ?? "hodnota"} mus\xED ma\u0165 ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "prvkov"}`;
+          return "Hodnota je pr\xEDli\u0161 ve\u013Ek\xE1: ".concat(issue2.origin ?? "hodnota", " mus\xED ma\u0165 ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "prvkov");
         }
-        return `Hodnota je pr\xEDli\u0161 ve\u013Ek\xE1: ${issue2.origin ?? "hodnota"} mus\xED by\u0165 ${adj}${issue2.maximum.toString()}`;
+        return "Hodnota je pr\xEDli\u0161 ve\u013Ek\xE1: ".concat(issue2.origin ?? "hodnota", " mus\xED by\u0165 ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Hodnota je pr\xEDli\u0161 mal\xE1: ${issue2.origin ?? "hodnota"} mus\xED ma\u0165 ${adj}${issue2.minimum.toString()} ${sizing.unit ?? "prvkov"}`;
+          return "Hodnota je pr\xEDli\u0161 mal\xE1: ".concat(issue2.origin ?? "hodnota", " mus\xED ma\u0165 ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit ?? "prvkov");
         }
-        return `Hodnota je pr\xEDli\u0161 mal\xE1: ${issue2.origin ?? "hodnota"} mus\xED by\u0165 ${adj}${issue2.minimum.toString()}`;
+        return "Hodnota je pr\xEDli\u0161 mal\xE1: ".concat(issue2.origin ?? "hodnota", " mus\xED by\u0165 ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `Neplatn\xFD re\u0165azec: mus\xED za\u010D\xEDna\u0165 na "${_issue.prefix}"`;
+          return 'Neplatn\xFD re\u0165azec: mus\xED za\u010D\xEDna\u0165 na "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `Neplatn\xFD re\u0165azec: mus\xED kon\u010Di\u0165 na "${_issue.suffix}"`;
+          return 'Neplatn\xFD re\u0165azec: mus\xED kon\u010Di\u0165 na "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Neplatn\xFD re\u0165azec: mus\xED obsahova\u0165 "${_issue.includes}"`;
+          return 'Neplatn\xFD re\u0165azec: mus\xED obsahova\u0165 "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Neplatn\xFD re\u0165azec: mus\xED zodpoveda\u0165 vzoru ${_issue.pattern}`;
-        return `Neplatn\xFD form\xE1t ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "Neplatn\xFD re\u0165azec: mus\xED zodpoveda\u0165 vzoru ".concat(_issue.pattern);
+        return "Neplatn\xFD form\xE1t ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Neplatn\xE9 \u010D\xEDslo: mus\xED by\u0165 n\xE1sobkom ${issue2.divisor}`;
+        return "Neplatn\xE9 \u010D\xEDslo: mus\xED by\u0165 n\xE1sobkom ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `Nezn\xE1me kl\xFA\u010De: ${joinValues(issue2.keys, ", ")}`;
+        return "Nezn\xE1me kl\xFA\u010De: ".concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Neplatn\xFD kl\xFA\u010D v ${issue2.origin}`;
+        return "Neplatn\xFD kl\xFA\u010D v ".concat(issue2.origin);
       case "invalid_union":
         return "Neplatn\xFD vstup";
       case "invalid_element":
-        return `Neplatn\xE1 hodnota v ${issue2.origin}`;
+        return "Neplatn\xE1 hodnota v ".concat(issue2.origin);
       default:
-        return `Neplatn\xFD vstup`;
+        return "Neplatn\xFD vstup";
     }
   };
 };
@@ -13497,52 +13205,52 @@ var error48 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Neveljaven vnos: pri\u010Dakovano instanceof ${issue2.expected}, prejeto ${received}`;
+          return "Neveljaven vnos: pri\u010Dakovano instanceof ".concat(issue2.expected, ", prejeto ").concat(received);
         }
-        return `Neveljaven vnos: pri\u010Dakovano ${expected}, prejeto ${received}`;
+        return "Neveljaven vnos: pri\u010Dakovano ".concat(expected, ", prejeto ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Neveljaven vnos: pri\u010Dakovano ${stringifyPrimitive(issue2.values[0])}`;
-        return `Neveljavna mo\u017Enost: pri\u010Dakovano eno izmed ${joinValues(issue2.values, "|")}`;
+          return "Neveljaven vnos: pri\u010Dakovano ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Neveljavna mo\u017Enost: pri\u010Dakovano eno izmed ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Preveliko: pri\u010Dakovano, da bo ${issue2.origin ?? "vrednost"} imelo ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "elementov"}`;
-        return `Preveliko: pri\u010Dakovano, da bo ${issue2.origin ?? "vrednost"} ${adj}${issue2.maximum.toString()}`;
+          return "Preveliko: pri\u010Dakovano, da bo ".concat(issue2.origin ?? "vrednost", " imelo ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "elementov");
+        return "Preveliko: pri\u010Dakovano, da bo ".concat(issue2.origin ?? "vrednost", " ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Premajhno: pri\u010Dakovano, da bo ${issue2.origin} imelo ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "Premajhno: pri\u010Dakovano, da bo ".concat(issue2.origin, " imelo ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `Premajhno: pri\u010Dakovano, da bo ${issue2.origin} ${adj}${issue2.minimum.toString()}`;
+        return "Premajhno: pri\u010Dakovano, da bo ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `Neveljaven niz: mora se za\u010Deti z "${_issue.prefix}"`;
+          return 'Neveljaven niz: mora se za\u010Deti z "'.concat(_issue.prefix, '"');
         }
         if (_issue.format === "ends_with")
-          return `Neveljaven niz: mora se kon\u010Dati z "${_issue.suffix}"`;
+          return 'Neveljaven niz: mora se kon\u010Dati z "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Neveljaven niz: mora vsebovati "${_issue.includes}"`;
+          return 'Neveljaven niz: mora vsebovati "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Neveljaven niz: mora ustrezati vzorcu ${_issue.pattern}`;
-        return `Neveljaven ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "Neveljaven niz: mora ustrezati vzorcu ".concat(_issue.pattern);
+        return "Neveljaven ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Neveljavno \u0161tevilo: mora biti ve\u010Dkratnik ${issue2.divisor}`;
+        return "Neveljavno \u0161tevilo: mora biti ve\u010Dkratnik ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `Neprepoznan${issue2.keys.length > 1 ? "i klju\u010Di" : " klju\u010D"}: ${joinValues(issue2.keys, ", ")}`;
+        return "Neprepoznan".concat(issue2.keys.length > 1 ? "i klju\u010Di" : " klju\u010D", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Neveljaven klju\u010D v ${issue2.origin}`;
+        return "Neveljaven klju\u010D v ".concat(issue2.origin);
       case "invalid_union":
         return "Neveljaven vnos";
       case "invalid_element":
-        return `Neveljavna vrednost v ${issue2.origin}`;
+        return "Neveljavna vrednost v ".concat(issue2.origin);
       default:
         return "Neveljaven vnos";
     }
@@ -13610,55 +13318,55 @@ var error49 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Ogiltig inmatning: f\xF6rv\xE4ntat instanceof ${issue2.expected}, fick ${received}`;
+          return "Ogiltig inmatning: f\xF6rv\xE4ntat instanceof ".concat(issue2.expected, ", fick ").concat(received);
         }
-        return `Ogiltig inmatning: f\xF6rv\xE4ntat ${expected}, fick ${received}`;
+        return "Ogiltig inmatning: f\xF6rv\xE4ntat ".concat(expected, ", fick ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Ogiltig inmatning: f\xF6rv\xE4ntat ${stringifyPrimitive(issue2.values[0])}`;
-        return `Ogiltigt val: f\xF6rv\xE4ntade en av ${joinValues(issue2.values, "|")}`;
+          return "Ogiltig inmatning: f\xF6rv\xE4ntat ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Ogiltigt val: f\xF6rv\xE4ntade en av ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `F\xF6r stor(t): f\xF6rv\xE4ntade ${issue2.origin ?? "v\xE4rdet"} att ha ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "element"}`;
+          return "F\xF6r stor(t): f\xF6rv\xE4ntade ".concat(issue2.origin ?? "v\xE4rdet", " att ha ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "element");
         }
-        return `F\xF6r stor(t): f\xF6rv\xE4ntat ${issue2.origin ?? "v\xE4rdet"} att ha ${adj}${issue2.maximum.toString()}`;
+        return "F\xF6r stor(t): f\xF6rv\xE4ntat ".concat(issue2.origin ?? "v\xE4rdet", " att ha ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `F\xF6r lite(t): f\xF6rv\xE4ntade ${issue2.origin ?? "v\xE4rdet"} att ha ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "F\xF6r lite(t): f\xF6rv\xE4ntade ".concat(issue2.origin ?? "v\xE4rdet", " att ha ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `F\xF6r lite(t): f\xF6rv\xE4ntade ${issue2.origin ?? "v\xE4rdet"} att ha ${adj}${issue2.minimum.toString()}`;
+        return "F\xF6r lite(t): f\xF6rv\xE4ntade ".concat(issue2.origin ?? "v\xE4rdet", " att ha ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `Ogiltig str\xE4ng: m\xE5ste b\xF6rja med "${_issue.prefix}"`;
+          return 'Ogiltig str\xE4ng: m\xE5ste b\xF6rja med "'.concat(_issue.prefix, '"');
         }
         if (_issue.format === "ends_with")
-          return `Ogiltig str\xE4ng: m\xE5ste sluta med "${_issue.suffix}"`;
+          return 'Ogiltig str\xE4ng: m\xE5ste sluta med "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Ogiltig str\xE4ng: m\xE5ste inneh\xE5lla "${_issue.includes}"`;
+          return 'Ogiltig str\xE4ng: m\xE5ste inneh\xE5lla "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Ogiltig str\xE4ng: m\xE5ste matcha m\xF6nstret "${_issue.pattern}"`;
-        return `Ogiltig(t) ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return 'Ogiltig str\xE4ng: m\xE5ste matcha m\xF6nstret "'.concat(_issue.pattern, '"');
+        return "Ogiltig(t) ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Ogiltigt tal: m\xE5ste vara en multipel av ${issue2.divisor}`;
+        return "Ogiltigt tal: m\xE5ste vara en multipel av ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `${issue2.keys.length > 1 ? "Ok\xE4nda nycklar" : "Ok\xE4nd nyckel"}: ${joinValues(issue2.keys, ", ")}`;
+        return "".concat(issue2.keys.length > 1 ? "Ok\xE4nda nycklar" : "Ok\xE4nd nyckel", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Ogiltig nyckel i ${issue2.origin ?? "v\xE4rdet"}`;
+        return "Ogiltig nyckel i ".concat(issue2.origin ?? "v\xE4rdet");
       case "invalid_union":
         return "Ogiltig input";
       case "invalid_element":
-        return `Ogiltigt v\xE4rde i ${issue2.origin ?? "v\xE4rdet"}`;
+        return "Ogiltigt v\xE4rde i ".concat(issue2.origin ?? "v\xE4rdet");
       default:
-        return `Ogiltig input`;
+        return "Ogiltig input";
     }
   };
 };
@@ -13725,54 +13433,54 @@ var error50 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B89\u0BB3\u0BCD\u0BB3\u0BC0\u0B9F\u0BC1: \u0B8E\u0BA4\u0BBF\u0BB0\u0BCD\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 instanceof ${issue2.expected}, \u0BAA\u0BC6\u0BB1\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 ${received}`;
+          return "\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B89\u0BB3\u0BCD\u0BB3\u0BC0\u0B9F\u0BC1: \u0B8E\u0BA4\u0BBF\u0BB0\u0BCD\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 instanceof ".concat(issue2.expected, ", \u0BAA\u0BC6\u0BB1\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 ").concat(received);
         }
-        return `\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B89\u0BB3\u0BCD\u0BB3\u0BC0\u0B9F\u0BC1: \u0B8E\u0BA4\u0BBF\u0BB0\u0BCD\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 ${expected}, \u0BAA\u0BC6\u0BB1\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 ${received}`;
+        return "\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B89\u0BB3\u0BCD\u0BB3\u0BC0\u0B9F\u0BC1: \u0B8E\u0BA4\u0BBF\u0BB0\u0BCD\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 ".concat(expected, ", \u0BAA\u0BC6\u0BB1\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B89\u0BB3\u0BCD\u0BB3\u0BC0\u0B9F\u0BC1: \u0B8E\u0BA4\u0BBF\u0BB0\u0BCD\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 ${stringifyPrimitive(issue2.values[0])}`;
-        return `\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0BB5\u0BBF\u0BB0\u0BC1\u0BAA\u0BCD\u0BAA\u0BAE\u0BCD: \u0B8E\u0BA4\u0BBF\u0BB0\u0BCD\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 ${joinValues(issue2.values, "|")} \u0B87\u0BB2\u0BCD \u0B92\u0BA9\u0BCD\u0BB1\u0BC1`;
+          return "\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B89\u0BB3\u0BCD\u0BB3\u0BC0\u0B9F\u0BC1: \u0B8E\u0BA4\u0BBF\u0BB0\u0BCD\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0BB5\u0BBF\u0BB0\u0BC1\u0BAA\u0BCD\u0BAA\u0BAE\u0BCD: \u0B8E\u0BA4\u0BBF\u0BB0\u0BCD\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 ".concat(joinValues(issue2.values, "|"), " \u0B87\u0BB2\u0BCD \u0B92\u0BA9\u0BCD\u0BB1\u0BC1");
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u0BAE\u0BBF\u0B95 \u0BAA\u0BC6\u0BB0\u0BBF\u0BAF\u0BA4\u0BC1: \u0B8E\u0BA4\u0BBF\u0BB0\u0BCD\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 ${issue2.origin ?? "\u0BAE\u0BA4\u0BBF\u0BAA\u0BCD\u0BAA\u0BC1"} ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "\u0B89\u0BB1\u0BC1\u0BAA\u0BCD\u0BAA\u0BC1\u0B95\u0BB3\u0BCD"} \u0B86\u0B95 \u0B87\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD`;
+          return "\u0BAE\u0BBF\u0B95 \u0BAA\u0BC6\u0BB0\u0BBF\u0BAF\u0BA4\u0BC1: \u0B8E\u0BA4\u0BBF\u0BB0\u0BCD\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 ".concat(issue2.origin ?? "\u0BAE\u0BA4\u0BBF\u0BAA\u0BCD\u0BAA\u0BC1", " ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "\u0B89\u0BB1\u0BC1\u0BAA\u0BCD\u0BAA\u0BC1\u0B95\u0BB3\u0BCD", " \u0B86\u0B95 \u0B87\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD");
         }
-        return `\u0BAE\u0BBF\u0B95 \u0BAA\u0BC6\u0BB0\u0BBF\u0BAF\u0BA4\u0BC1: \u0B8E\u0BA4\u0BBF\u0BB0\u0BCD\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 ${issue2.origin ?? "\u0BAE\u0BA4\u0BBF\u0BAA\u0BCD\u0BAA\u0BC1"} ${adj}${issue2.maximum.toString()} \u0B86\u0B95 \u0B87\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD`;
+        return "\u0BAE\u0BBF\u0B95 \u0BAA\u0BC6\u0BB0\u0BBF\u0BAF\u0BA4\u0BC1: \u0B8E\u0BA4\u0BBF\u0BB0\u0BCD\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 ".concat(issue2.origin ?? "\u0BAE\u0BA4\u0BBF\u0BAA\u0BCD\u0BAA\u0BC1", " ").concat(adj).concat(issue2.maximum.toString(), " \u0B86\u0B95 \u0B87\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD");
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u0BAE\u0BBF\u0B95\u0B9A\u0BCD \u0B9A\u0BBF\u0BB1\u0BBF\u0BAF\u0BA4\u0BC1: \u0B8E\u0BA4\u0BBF\u0BB0\u0BCD\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 ${issue2.origin} ${adj}${issue2.minimum.toString()} ${sizing.unit} \u0B86\u0B95 \u0B87\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD`;
+          return "\u0BAE\u0BBF\u0B95\u0B9A\u0BCD \u0B9A\u0BBF\u0BB1\u0BBF\u0BAF\u0BA4\u0BC1: \u0B8E\u0BA4\u0BBF\u0BB0\u0BCD\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit, " \u0B86\u0B95 \u0B87\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD");
         }
-        return `\u0BAE\u0BBF\u0B95\u0B9A\u0BCD \u0B9A\u0BBF\u0BB1\u0BBF\u0BAF\u0BA4\u0BC1: \u0B8E\u0BA4\u0BBF\u0BB0\u0BCD\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 ${issue2.origin} ${adj}${issue2.minimum.toString()} \u0B86\u0B95 \u0B87\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD`;
+        return "\u0BAE\u0BBF\u0B95\u0B9A\u0BCD \u0B9A\u0BBF\u0BB1\u0BBF\u0BAF\u0BA4\u0BC1: \u0B8E\u0BA4\u0BBF\u0BB0\u0BCD\u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0B9F\u0BCD\u0B9F\u0BA4\u0BC1 ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString(), " \u0B86\u0B95 \u0B87\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD");
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B9A\u0BB0\u0BAE\u0BCD: "${_issue.prefix}" \u0B87\u0BB2\u0BCD \u0BA4\u0BCA\u0B9F\u0B99\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD`;
+          return '\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B9A\u0BB0\u0BAE\u0BCD: "'.concat(_issue.prefix, '" \u0B87\u0BB2\u0BCD \u0BA4\u0BCA\u0B9F\u0B99\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD');
         if (_issue.format === "ends_with")
-          return `\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B9A\u0BB0\u0BAE\u0BCD: "${_issue.suffix}" \u0B87\u0BB2\u0BCD \u0BAE\u0BC1\u0B9F\u0BBF\u0BB5\u0B9F\u0BC8\u0BAF \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD`;
+          return '\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B9A\u0BB0\u0BAE\u0BCD: "'.concat(_issue.suffix, '" \u0B87\u0BB2\u0BCD \u0BAE\u0BC1\u0B9F\u0BBF\u0BB5\u0B9F\u0BC8\u0BAF \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD');
         if (_issue.format === "includes")
-          return `\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B9A\u0BB0\u0BAE\u0BCD: "${_issue.includes}" \u0B90 \u0B89\u0BB3\u0BCD\u0BB3\u0B9F\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD`;
+          return '\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B9A\u0BB0\u0BAE\u0BCD: "'.concat(_issue.includes, '" \u0B90 \u0B89\u0BB3\u0BCD\u0BB3\u0B9F\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD');
         if (_issue.format === "regex")
-          return `\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B9A\u0BB0\u0BAE\u0BCD: ${_issue.pattern} \u0BAE\u0BC1\u0BB1\u0BC8\u0BAA\u0BBE\u0B9F\u0BCD\u0B9F\u0BC1\u0B9F\u0BA9\u0BCD \u0BAA\u0BCA\u0BB0\u0BC1\u0BA8\u0BCD\u0BA4 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD`;
-        return `\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B9A\u0BB0\u0BAE\u0BCD: ".concat(_issue.pattern, " \u0BAE\u0BC1\u0BB1\u0BC8\u0BAA\u0BBE\u0B9F\u0BCD\u0B9F\u0BC1\u0B9F\u0BA9\u0BCD \u0BAA\u0BCA\u0BB0\u0BC1\u0BA8\u0BCD\u0BA4 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD");
+        return "\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B8E\u0BA3\u0BCD: ${issue2.divisor} \u0B87\u0BA9\u0BCD \u0BAA\u0BB2\u0BAE\u0BBE\u0B95 \u0B87\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD`;
+        return "\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B8E\u0BA3\u0BCD: ".concat(issue2.divisor, " \u0B87\u0BA9\u0BCD \u0BAA\u0BB2\u0BAE\u0BBE\u0B95 \u0B87\u0BB0\u0BC1\u0B95\u0BCD\u0B95 \u0BB5\u0BC7\u0BA3\u0BCD\u0B9F\u0BC1\u0BAE\u0BCD");
       case "unrecognized_keys":
-        return `\u0B85\u0B9F\u0BC8\u0BAF\u0BBE\u0BB3\u0BAE\u0BCD \u0BA4\u0BC6\u0BB0\u0BBF\u0BAF\u0BBE\u0BA4 \u0BB5\u0BBF\u0B9A\u0BC8${issue2.keys.length > 1 ? "\u0B95\u0BB3\u0BCD" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "\u0B85\u0B9F\u0BC8\u0BAF\u0BBE\u0BB3\u0BAE\u0BCD \u0BA4\u0BC6\u0BB0\u0BBF\u0BAF\u0BBE\u0BA4 \u0BB5\u0BBF\u0B9A\u0BC8".concat(issue2.keys.length > 1 ? "\u0B95\u0BB3\u0BCD" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `${issue2.origin} \u0B87\u0BB2\u0BCD \u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0BB5\u0BBF\u0B9A\u0BC8`;
+        return "".concat(issue2.origin, " \u0B87\u0BB2\u0BCD \u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0BB5\u0BBF\u0B9A\u0BC8");
       case "invalid_union":
         return "\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B89\u0BB3\u0BCD\u0BB3\u0BC0\u0B9F\u0BC1";
       case "invalid_element":
-        return `${issue2.origin} \u0B87\u0BB2\u0BCD \u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0BAE\u0BA4\u0BBF\u0BAA\u0BCD\u0BAA\u0BC1`;
+        return "".concat(issue2.origin, " \u0B87\u0BB2\u0BCD \u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0BAE\u0BA4\u0BBF\u0BAA\u0BCD\u0BAA\u0BC1");
       default:
-        return `\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B89\u0BB3\u0BCD\u0BB3\u0BC0\u0B9F\u0BC1`;
+        return "\u0BA4\u0BB5\u0BB1\u0BBE\u0BA9 \u0B89\u0BB3\u0BCD\u0BB3\u0BC0\u0B9F\u0BC1";
     }
   };
 };
@@ -13839,54 +13547,54 @@ var error51 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\u0E1B\u0E23\u0E30\u0E40\u0E20\u0E17\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E04\u0E27\u0E23\u0E40\u0E1B\u0E47\u0E19 instanceof ${issue2.expected} \u0E41\u0E15\u0E48\u0E44\u0E14\u0E49\u0E23\u0E31\u0E1A ${received}`;
+          return "\u0E1B\u0E23\u0E30\u0E40\u0E20\u0E17\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E04\u0E27\u0E23\u0E40\u0E1B\u0E47\u0E19 instanceof ".concat(issue2.expected, " \u0E41\u0E15\u0E48\u0E44\u0E14\u0E49\u0E23\u0E31\u0E1A ").concat(received);
         }
-        return `\u0E1B\u0E23\u0E30\u0E40\u0E20\u0E17\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E04\u0E27\u0E23\u0E40\u0E1B\u0E47\u0E19 ${expected} \u0E41\u0E15\u0E48\u0E44\u0E14\u0E49\u0E23\u0E31\u0E1A ${received}`;
+        return "\u0E1B\u0E23\u0E30\u0E40\u0E20\u0E17\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E04\u0E27\u0E23\u0E40\u0E1B\u0E47\u0E19 ".concat(expected, " \u0E41\u0E15\u0E48\u0E44\u0E14\u0E49\u0E23\u0E31\u0E1A ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u0E04\u0E48\u0E32\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E04\u0E27\u0E23\u0E40\u0E1B\u0E47\u0E19 ${stringifyPrimitive(issue2.values[0])}`;
-        return `\u0E15\u0E31\u0E27\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E04\u0E27\u0E23\u0E40\u0E1B\u0E47\u0E19\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E43\u0E19 ${joinValues(issue2.values, "|")}`;
+          return "\u0E04\u0E48\u0E32\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E04\u0E27\u0E23\u0E40\u0E1B\u0E47\u0E19 ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\u0E15\u0E31\u0E27\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E04\u0E27\u0E23\u0E40\u0E1B\u0E47\u0E19\u0E2B\u0E19\u0E36\u0E48\u0E07\u0E43\u0E19 ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "\u0E44\u0E21\u0E48\u0E40\u0E01\u0E34\u0E19" : "\u0E19\u0E49\u0E2D\u0E22\u0E01\u0E27\u0E48\u0E32";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u0E40\u0E01\u0E34\u0E19\u0E01\u0E33\u0E2B\u0E19\u0E14: ${issue2.origin ?? "\u0E04\u0E48\u0E32"} \u0E04\u0E27\u0E23\u0E21\u0E35${adj} ${issue2.maximum.toString()} ${sizing.unit ?? "\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23"}`;
-        return `\u0E40\u0E01\u0E34\u0E19\u0E01\u0E33\u0E2B\u0E19\u0E14: ${issue2.origin ?? "\u0E04\u0E48\u0E32"} \u0E04\u0E27\u0E23\u0E21\u0E35${adj} ${issue2.maximum.toString()}`;
+          return "\u0E40\u0E01\u0E34\u0E19\u0E01\u0E33\u0E2B\u0E19\u0E14: ".concat(issue2.origin ?? "\u0E04\u0E48\u0E32", " \u0E04\u0E27\u0E23\u0E21\u0E35").concat(adj, " ").concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23");
+        return "\u0E40\u0E01\u0E34\u0E19\u0E01\u0E33\u0E2B\u0E19\u0E14: ".concat(issue2.origin ?? "\u0E04\u0E48\u0E32", " \u0E04\u0E27\u0E23\u0E21\u0E35").concat(adj, " ").concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? "\u0E2D\u0E22\u0E48\u0E32\u0E07\u0E19\u0E49\u0E2D\u0E22" : "\u0E21\u0E32\u0E01\u0E01\u0E27\u0E48\u0E32";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u0E19\u0E49\u0E2D\u0E22\u0E01\u0E27\u0E48\u0E32\u0E01\u0E33\u0E2B\u0E19\u0E14: ${issue2.origin} \u0E04\u0E27\u0E23\u0E21\u0E35${adj} ${issue2.minimum.toString()} ${sizing.unit}`;
+          return "\u0E19\u0E49\u0E2D\u0E22\u0E01\u0E27\u0E48\u0E32\u0E01\u0E33\u0E2B\u0E19\u0E14: ".concat(issue2.origin, " \u0E04\u0E27\u0E23\u0E21\u0E35").concat(adj, " ").concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `\u0E19\u0E49\u0E2D\u0E22\u0E01\u0E27\u0E48\u0E32\u0E01\u0E33\u0E2B\u0E19\u0E14: ${issue2.origin} \u0E04\u0E27\u0E23\u0E21\u0E35${adj} ${issue2.minimum.toString()}`;
+        return "\u0E19\u0E49\u0E2D\u0E22\u0E01\u0E27\u0E48\u0E32\u0E01\u0E33\u0E2B\u0E19\u0E14: ".concat(issue2.origin, " \u0E04\u0E27\u0E23\u0E21\u0E35").concat(adj, " ").concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `\u0E23\u0E39\u0E1B\u0E41\u0E1A\u0E1A\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E15\u0E49\u0E2D\u0E07\u0E02\u0E36\u0E49\u0E19\u0E15\u0E49\u0E19\u0E14\u0E49\u0E27\u0E22 "${_issue.prefix}"`;
+          return '\u0E23\u0E39\u0E1B\u0E41\u0E1A\u0E1A\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E15\u0E49\u0E2D\u0E07\u0E02\u0E36\u0E49\u0E19\u0E15\u0E49\u0E19\u0E14\u0E49\u0E27\u0E22 "'.concat(_issue.prefix, '"');
         }
         if (_issue.format === "ends_with")
-          return `\u0E23\u0E39\u0E1B\u0E41\u0E1A\u0E1A\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E15\u0E49\u0E2D\u0E07\u0E25\u0E07\u0E17\u0E49\u0E32\u0E22\u0E14\u0E49\u0E27\u0E22 "${_issue.suffix}"`;
+          return '\u0E23\u0E39\u0E1B\u0E41\u0E1A\u0E1A\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E15\u0E49\u0E2D\u0E07\u0E25\u0E07\u0E17\u0E49\u0E32\u0E22\u0E14\u0E49\u0E27\u0E22 "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `\u0E23\u0E39\u0E1B\u0E41\u0E1A\u0E1A\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E15\u0E49\u0E2D\u0E07\u0E21\u0E35 "${_issue.includes}" \u0E2D\u0E22\u0E39\u0E48\u0E43\u0E19\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21`;
+          return '\u0E23\u0E39\u0E1B\u0E41\u0E1A\u0E1A\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E15\u0E49\u0E2D\u0E07\u0E21\u0E35 "'.concat(_issue.includes, '" \u0E2D\u0E22\u0E39\u0E48\u0E43\u0E19\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21');
         if (_issue.format === "regex")
-          return `\u0E23\u0E39\u0E1B\u0E41\u0E1A\u0E1A\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E15\u0E49\u0E2D\u0E07\u0E15\u0E23\u0E07\u0E01\u0E31\u0E1A\u0E23\u0E39\u0E1B\u0E41\u0E1A\u0E1A\u0E17\u0E35\u0E48\u0E01\u0E33\u0E2B\u0E19\u0E14 ${_issue.pattern}`;
-        return `\u0E23\u0E39\u0E1B\u0E41\u0E1A\u0E1A\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u0E23\u0E39\u0E1B\u0E41\u0E1A\u0E1A\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E15\u0E49\u0E2D\u0E07\u0E15\u0E23\u0E07\u0E01\u0E31\u0E1A\u0E23\u0E39\u0E1B\u0E41\u0E1A\u0E1A\u0E17\u0E35\u0E48\u0E01\u0E33\u0E2B\u0E19\u0E14 ".concat(_issue.pattern);
+        return "\u0E23\u0E39\u0E1B\u0E41\u0E1A\u0E1A\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u0E15\u0E31\u0E27\u0E40\u0E25\u0E02\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E15\u0E49\u0E2D\u0E07\u0E40\u0E1B\u0E47\u0E19\u0E08\u0E33\u0E19\u0E27\u0E19\u0E17\u0E35\u0E48\u0E2B\u0E32\u0E23\u0E14\u0E49\u0E27\u0E22 ${issue2.divisor} \u0E44\u0E14\u0E49\u0E25\u0E07\u0E15\u0E31\u0E27`;
+        return "\u0E15\u0E31\u0E27\u0E40\u0E25\u0E02\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E15\u0E49\u0E2D\u0E07\u0E40\u0E1B\u0E47\u0E19\u0E08\u0E33\u0E19\u0E27\u0E19\u0E17\u0E35\u0E48\u0E2B\u0E32\u0E23\u0E14\u0E49\u0E27\u0E22 ".concat(issue2.divisor, " \u0E44\u0E14\u0E49\u0E25\u0E07\u0E15\u0E31\u0E27");
       case "unrecognized_keys":
-        return `\u0E1E\u0E1A\u0E04\u0E35\u0E22\u0E4C\u0E17\u0E35\u0E48\u0E44\u0E21\u0E48\u0E23\u0E39\u0E49\u0E08\u0E31\u0E01: ${joinValues(issue2.keys, ", ")}`;
+        return "\u0E1E\u0E1A\u0E04\u0E35\u0E22\u0E4C\u0E17\u0E35\u0E48\u0E44\u0E21\u0E48\u0E23\u0E39\u0E49\u0E08\u0E31\u0E01: ".concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `\u0E04\u0E35\u0E22\u0E4C\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07\u0E43\u0E19 ${issue2.origin}`;
+        return "\u0E04\u0E35\u0E22\u0E4C\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07\u0E43\u0E19 ".concat(issue2.origin);
       case "invalid_union":
         return "\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07: \u0E44\u0E21\u0E48\u0E15\u0E23\u0E07\u0E01\u0E31\u0E1A\u0E23\u0E39\u0E1B\u0E41\u0E1A\u0E1A\u0E22\u0E39\u0E40\u0E19\u0E35\u0E22\u0E19\u0E17\u0E35\u0E48\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E44\u0E27\u0E49";
       case "invalid_element":
-        return `\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07\u0E43\u0E19 ${issue2.origin}`;
+        return "\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07\u0E43\u0E19 ".concat(issue2.origin);
       default:
-        return `\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07`;
+        return "\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07";
     }
   };
 };
@@ -13949,50 +13657,50 @@ var error52 = () => {
         const expected = TypeDictionary[issue2.expected] ?? issue2.expected;
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
-        return `N\xE4dogry baha: gara\u015Fylan ${expected} \xFDerine ${received} alyndy`;
+        return "N\xE4dogry baha: gara\u015Fylan ".concat(expected, " \xFDerine ").concat(received, " alyndy");
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `N\xE4dogry baha: ${stringifyPrimitive(issue2.values[0])} bolmaly`;
-        return `N\xE4dogry sa\xFDlaw: a\u015Fakdakylardan biri bolmaly: ${joinValues(issue2.values, "|")}`;
+          return "N\xE4dogry baha: ".concat(stringifyPrimitive(issue2.values[0]), " bolmaly");
+        return "N\xE4dogry sa\xFDlaw: a\u015Fakdakylardan biri bolmaly: ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Has uly: gara\u015Fyl\xFDan ${issue2.origin ?? "baha"} ${adj} ${issue2.maximum.toString()} ${sizing.unit ?? "element"}`;
-        return `Has uly: gara\u015Fyl\xFDan ${issue2.origin ?? "baha"} ${adj} ${issue2.maximum.toString()}`;
+          return "Has uly: gara\u015Fyl\xFDan ".concat(issue2.origin ?? "baha", " ").concat(adj, " ").concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "element");
+        return "Has uly: gara\u015Fyl\xFDan ".concat(issue2.origin ?? "baha", " ").concat(adj, " ").concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Has ki\xE7i: gara\u015Fyl\xFDan ${issue2.origin} ${adj} ${issue2.minimum.toString()} ${sizing.unit}`;
-        return `Has ki\xE7i: gara\u015Fyl\xFDan ${issue2.origin} ${adj} ${issue2.minimum.toString()}`;
+          return "Has ki\xE7i: gara\u015Fyl\xFDan ".concat(issue2.origin, " ").concat(adj, " ").concat(issue2.minimum.toString(), " ").concat(sizing.unit);
+        return "Has ki\xE7i: gara\u015Fyl\xFDan ".concat(issue2.origin, " ").concat(adj, " ").concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `N\xE4dogry setir: "${_issue.prefix}" bilen ba\u015Flamaly`;
+          return 'N\xE4dogry setir: "'.concat(_issue.prefix, '" bilen ba\u015Flamaly');
         if (_issue.format === "ends_with")
-          return `N\xE4dogry setir: "${_issue.suffix}" bilen gutarmaly`;
+          return 'N\xE4dogry setir: "'.concat(_issue.suffix, '" bilen gutarmaly');
         if (_issue.format === "includes")
-          return `N\xE4dogry setir: "${_issue.includes}" saklamaly`;
+          return 'N\xE4dogry setir: "'.concat(_issue.includes, '" saklamaly');
         if (_issue.format === "regex")
-          return `N\xE4dogry setir: ${_issue.pattern} nusga la\xFDyk bolmaly`;
-        return `N\xE4dogry ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "N\xE4dogry setir: ".concat(_issue.pattern, " nusga la\xFDyk bolmaly");
+        return "N\xE4dogry ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `N\xE4dogry san: ${issue2.divisor} bilen galyndysyz b\xF6l\xFCnmeli`;
+        return "N\xE4dogry san: ".concat(issue2.divisor, " bilen galyndysyz b\xF6l\xFCnmeli");
       case "unrecognized_keys":
-        return `Tanalma\xFDan a\xE7ar${issue2.keys.length > 1 ? "lar" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "Tanalma\xFDan a\xE7ar".concat(issue2.keys.length > 1 ? "lar" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `${issue2.origin} i\xE7inde n\xE4dogry a\xE7ar`;
+        return "".concat(issue2.origin, " i\xE7inde n\xE4dogry a\xE7ar");
       case "invalid_union":
         return "N\xE4dogry baha";
       case "invalid_element":
-        return `${issue2.origin} i\xE7inde n\xE4dogry baha`;
+        return "".concat(issue2.origin, " i\xE7inde n\xE4dogry baha");
       default:
-        return `N\xE4dogry baha`;
+        return "N\xE4dogry baha";
     }
   };
 };
@@ -14056,52 +13764,52 @@ var error53 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Ge\xE7ersiz de\u011Fer: beklenen instanceof ${issue2.expected}, al\u0131nan ${received}`;
+          return "Ge\xE7ersiz de\u011Fer: beklenen instanceof ".concat(issue2.expected, ", al\u0131nan ").concat(received);
         }
-        return `Ge\xE7ersiz de\u011Fer: beklenen ${expected}, al\u0131nan ${received}`;
+        return "Ge\xE7ersiz de\u011Fer: beklenen ".concat(expected, ", al\u0131nan ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Ge\xE7ersiz de\u011Fer: beklenen ${stringifyPrimitive(issue2.values[0])}`;
-        return `Ge\xE7ersiz se\xE7enek: a\u015Fa\u011F\u0131dakilerden biri olmal\u0131: ${joinValues(issue2.values, "|")}`;
+          return "Ge\xE7ersiz de\u011Fer: beklenen ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Ge\xE7ersiz se\xE7enek: a\u015Fa\u011F\u0131dakilerden biri olmal\u0131: ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\xC7ok b\xFCy\xFCk: beklenen ${issue2.origin ?? "de\u011Fer"} ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "\xF6\u011Fe"}`;
-        return `\xC7ok b\xFCy\xFCk: beklenen ${issue2.origin ?? "de\u011Fer"} ${adj}${issue2.maximum.toString()}`;
+          return "\xC7ok b\xFCy\xFCk: beklenen ".concat(issue2.origin ?? "de\u011Fer", " ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "\xF6\u011Fe");
+        return "\xC7ok b\xFCy\xFCk: beklenen ".concat(issue2.origin ?? "de\u011Fer", " ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\xC7ok k\xFC\xE7\xFCk: beklenen ${issue2.origin} ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
-        return `\xC7ok k\xFC\xE7\xFCk: beklenen ${issue2.origin} ${adj}${issue2.minimum.toString()}`;
+          return "\xC7ok k\xFC\xE7\xFCk: beklenen ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
+        return "\xC7ok k\xFC\xE7\xFCk: beklenen ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `Ge\xE7ersiz metin: "${_issue.prefix}" ile ba\u015Flamal\u0131`;
+          return 'Ge\xE7ersiz metin: "'.concat(_issue.prefix, '" ile ba\u015Flamal\u0131');
         if (_issue.format === "ends_with")
-          return `Ge\xE7ersiz metin: "${_issue.suffix}" ile bitmeli`;
+          return 'Ge\xE7ersiz metin: "'.concat(_issue.suffix, '" ile bitmeli');
         if (_issue.format === "includes")
-          return `Ge\xE7ersiz metin: "${_issue.includes}" i\xE7ermeli`;
+          return 'Ge\xE7ersiz metin: "'.concat(_issue.includes, '" i\xE7ermeli');
         if (_issue.format === "regex")
-          return `Ge\xE7ersiz metin: ${_issue.pattern} desenine uymal\u0131`;
-        return `Ge\xE7ersiz ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "Ge\xE7ersiz metin: ".concat(_issue.pattern, " desenine uymal\u0131");
+        return "Ge\xE7ersiz ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Ge\xE7ersiz say\u0131: ${issue2.divisor} ile tam b\xF6l\xFCnebilmeli`;
+        return "Ge\xE7ersiz say\u0131: ".concat(issue2.divisor, " ile tam b\xF6l\xFCnebilmeli");
       case "unrecognized_keys":
-        return `Tan\u0131nmayan anahtar${issue2.keys.length > 1 ? "lar" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "Tan\u0131nmayan anahtar".concat(issue2.keys.length > 1 ? "lar" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `${issue2.origin} i\xE7inde ge\xE7ersiz anahtar`;
+        return "".concat(issue2.origin, " i\xE7inde ge\xE7ersiz anahtar");
       case "invalid_union":
         return "Ge\xE7ersiz de\u011Fer";
       case "invalid_element":
-        return `${issue2.origin} i\xE7inde ge\xE7ersiz de\u011Fer`;
+        return "".concat(issue2.origin, " i\xE7inde ge\xE7ersiz de\u011Fer");
       default:
-        return `Ge\xE7ersiz de\u011Fer`;
+        return "Ge\xE7ersiz de\u011Fer";
     }
   };
 };
@@ -14167,53 +13875,53 @@ var error54 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0456 \u0432\u0445\u0456\u0434\u043D\u0456 \u0434\u0430\u043D\u0456: \u043E\u0447\u0456\u043A\u0443\u0454\u0442\u044C\u0441\u044F instanceof ${issue2.expected}, \u043E\u0442\u0440\u0438\u043C\u0430\u043D\u043E ${received}`;
+          return "\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0456 \u0432\u0445\u0456\u0434\u043D\u0456 \u0434\u0430\u043D\u0456: \u043E\u0447\u0456\u043A\u0443\u0454\u0442\u044C\u0441\u044F instanceof ".concat(issue2.expected, ", \u043E\u0442\u0440\u0438\u043C\u0430\u043D\u043E ").concat(received);
         }
-        return `\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0456 \u0432\u0445\u0456\u0434\u043D\u0456 \u0434\u0430\u043D\u0456: \u043E\u0447\u0456\u043A\u0443\u0454\u0442\u044C\u0441\u044F ${expected}, \u043E\u0442\u0440\u0438\u043C\u0430\u043D\u043E ${received}`;
+        return "\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0456 \u0432\u0445\u0456\u0434\u043D\u0456 \u0434\u0430\u043D\u0456: \u043E\u0447\u0456\u043A\u0443\u0454\u0442\u044C\u0441\u044F ".concat(expected, ", \u043E\u0442\u0440\u0438\u043C\u0430\u043D\u043E ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0456 \u0432\u0445\u0456\u0434\u043D\u0456 \u0434\u0430\u043D\u0456: \u043E\u0447\u0456\u043A\u0443\u0454\u0442\u044C\u0441\u044F ${stringifyPrimitive(issue2.values[0])}`;
-        return `\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0430 \u043E\u043F\u0446\u0456\u044F: \u043E\u0447\u0456\u043A\u0443\u0454\u0442\u044C\u0441\u044F \u043E\u0434\u043D\u0435 \u0437 ${joinValues(issue2.values, "|")}`;
+          return "\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0456 \u0432\u0445\u0456\u0434\u043D\u0456 \u0434\u0430\u043D\u0456: \u043E\u0447\u0456\u043A\u0443\u0454\u0442\u044C\u0441\u044F ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0430 \u043E\u043F\u0446\u0456\u044F: \u043E\u0447\u0456\u043A\u0443\u0454\u0442\u044C\u0441\u044F \u043E\u0434\u043D\u0435 \u0437 ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u0417\u0430\u043D\u0430\u0434\u0442\u043E \u0432\u0435\u043B\u0438\u043A\u0435: \u043E\u0447\u0456\u043A\u0443\u0454\u0442\u044C\u0441\u044F, \u0449\u043E ${issue2.origin ?? "\u0437\u043D\u0430\u0447\u0435\u043D\u043D\u044F"} ${sizing.verb} ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "\u0435\u043B\u0435\u043C\u0435\u043D\u0442\u0456\u0432"}`;
-        return `\u0417\u0430\u043D\u0430\u0434\u0442\u043E \u0432\u0435\u043B\u0438\u043A\u0435: \u043E\u0447\u0456\u043A\u0443\u0454\u0442\u044C\u0441\u044F, \u0449\u043E ${issue2.origin ?? "\u0437\u043D\u0430\u0447\u0435\u043D\u043D\u044F"} \u0431\u0443\u0434\u0435 ${adj}${issue2.maximum.toString()}`;
+          return "\u0417\u0430\u043D\u0430\u0434\u0442\u043E \u0432\u0435\u043B\u0438\u043A\u0435: \u043E\u0447\u0456\u043A\u0443\u0454\u0442\u044C\u0441\u044F, \u0449\u043E ".concat(issue2.origin ?? "\u0437\u043D\u0430\u0447\u0435\u043D\u043D\u044F", " ").concat(sizing.verb, " ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "\u0435\u043B\u0435\u043C\u0435\u043D\u0442\u0456\u0432");
+        return "\u0417\u0430\u043D\u0430\u0434\u0442\u043E \u0432\u0435\u043B\u0438\u043A\u0435: \u043E\u0447\u0456\u043A\u0443\u0454\u0442\u044C\u0441\u044F, \u0449\u043E ".concat(issue2.origin ?? "\u0437\u043D\u0430\u0447\u0435\u043D\u043D\u044F", " \u0431\u0443\u0434\u0435 ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u0417\u0430\u043D\u0430\u0434\u0442\u043E \u043C\u0430\u043B\u0435: \u043E\u0447\u0456\u043A\u0443\u0454\u0442\u044C\u0441\u044F, \u0449\u043E ${issue2.origin} ${sizing.verb} ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "\u0417\u0430\u043D\u0430\u0434\u0442\u043E \u043C\u0430\u043B\u0435: \u043E\u0447\u0456\u043A\u0443\u0454\u0442\u044C\u0441\u044F, \u0449\u043E ".concat(issue2.origin, " ").concat(sizing.verb, " ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `\u0417\u0430\u043D\u0430\u0434\u0442\u043E \u043C\u0430\u043B\u0435: \u043E\u0447\u0456\u043A\u0443\u0454\u0442\u044C\u0441\u044F, \u0449\u043E ${issue2.origin} \u0431\u0443\u0434\u0435 ${adj}${issue2.minimum.toString()}`;
+        return "\u0417\u0430\u043D\u0430\u0434\u0442\u043E \u043C\u0430\u043B\u0435: \u043E\u0447\u0456\u043A\u0443\u0454\u0442\u044C\u0441\u044F, \u0449\u043E ".concat(issue2.origin, " \u0431\u0443\u0434\u0435 ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0438\u0439 \u0440\u044F\u0434\u043E\u043A: \u043F\u043E\u0432\u0438\u043D\u0435\u043D \u043F\u043E\u0447\u0438\u043D\u0430\u0442\u0438\u0441\u044F \u0437 "${_issue.prefix}"`;
+          return '\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0438\u0439 \u0440\u044F\u0434\u043E\u043A: \u043F\u043E\u0432\u0438\u043D\u0435\u043D \u043F\u043E\u0447\u0438\u043D\u0430\u0442\u0438\u0441\u044F \u0437 "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0438\u0439 \u0440\u044F\u0434\u043E\u043A: \u043F\u043E\u0432\u0438\u043D\u0435\u043D \u0437\u0430\u043A\u0456\u043D\u0447\u0443\u0432\u0430\u0442\u0438\u0441\u044F \u043D\u0430 "${_issue.suffix}"`;
+          return '\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0438\u0439 \u0440\u044F\u0434\u043E\u043A: \u043F\u043E\u0432\u0438\u043D\u0435\u043D \u0437\u0430\u043A\u0456\u043D\u0447\u0443\u0432\u0430\u0442\u0438\u0441\u044F \u043D\u0430 "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0438\u0439 \u0440\u044F\u0434\u043E\u043A: \u043F\u043E\u0432\u0438\u043D\u0435\u043D \u043C\u0456\u0441\u0442\u0438\u0442\u0438 "${_issue.includes}"`;
+          return '\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0438\u0439 \u0440\u044F\u0434\u043E\u043A: \u043F\u043E\u0432\u0438\u043D\u0435\u043D \u043C\u0456\u0441\u0442\u0438\u0442\u0438 "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0438\u0439 \u0440\u044F\u0434\u043E\u043A: \u043F\u043E\u0432\u0438\u043D\u0435\u043D \u0432\u0456\u0434\u043F\u043E\u0432\u0456\u0434\u0430\u0442\u0438 \u0448\u0430\u0431\u043B\u043E\u043D\u0443 ${_issue.pattern}`;
-        return `\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0438\u0439 ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0438\u0439 \u0440\u044F\u0434\u043E\u043A: \u043F\u043E\u0432\u0438\u043D\u0435\u043D \u0432\u0456\u0434\u043F\u043E\u0432\u0456\u0434\u0430\u0442\u0438 \u0448\u0430\u0431\u043B\u043E\u043D\u0443 ".concat(_issue.pattern);
+        return "\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0438\u0439 ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0435 \u0447\u0438\u0441\u043B\u043E: \u043F\u043E\u0432\u0438\u043D\u043D\u043E \u0431\u0443\u0442\u0438 \u043A\u0440\u0430\u0442\u043D\u0438\u043C ${issue2.divisor}`;
+        return "\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0435 \u0447\u0438\u0441\u043B\u043E: \u043F\u043E\u0432\u0438\u043D\u043D\u043E \u0431\u0443\u0442\u0438 \u043A\u0440\u0430\u0442\u043D\u0438\u043C ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `\u041D\u0435\u0440\u043E\u0437\u043F\u0456\u0437\u043D\u0430\u043D\u0438\u0439 \u043A\u043B\u044E\u0447${issue2.keys.length > 1 ? "\u0456" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "\u041D\u0435\u0440\u043E\u0437\u043F\u0456\u0437\u043D\u0430\u043D\u0438\u0439 \u043A\u043B\u044E\u0447".concat(issue2.keys.length > 1 ? "\u0456" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0438\u0439 \u043A\u043B\u044E\u0447 \u0443 ${issue2.origin}`;
+        return "\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0438\u0439 \u043A\u043B\u044E\u0447 \u0443 ".concat(issue2.origin);
       case "invalid_union":
         return "\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0456 \u0432\u0445\u0456\u0434\u043D\u0456 \u0434\u0430\u043D\u0456";
       case "invalid_element":
-        return `\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u043D\u044F \u0443 ${issue2.origin}`;
+        return "\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u043D\u044F \u0443 ".concat(issue2.origin);
       default:
-        return `\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0456 \u0432\u0445\u0456\u0434\u043D\u0456 \u0434\u0430\u043D\u0456`;
+        return "\u041D\u0435\u043F\u0440\u0430\u0432\u0438\u043B\u044C\u043D\u0456 \u0432\u0445\u0456\u0434\u043D\u0456 \u0434\u0430\u043D\u0456";
     }
   };
 };
@@ -14285,54 +13993,54 @@ var error55 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\u063A\u0644\u0637 \u0627\u0646 \u067E\u0679: instanceof ${issue2.expected} \u0645\u062A\u0648\u0642\u0639 \u062A\u06BE\u0627\u060C ${received} \u0645\u0648\u0635\u0648\u0644 \u06C1\u0648\u0627`;
+          return "\u063A\u0644\u0637 \u0627\u0646 \u067E\u0679: instanceof ".concat(issue2.expected, " \u0645\u062A\u0648\u0642\u0639 \u062A\u06BE\u0627\u060C ").concat(received, " \u0645\u0648\u0635\u0648\u0644 \u06C1\u0648\u0627");
         }
-        return `\u063A\u0644\u0637 \u0627\u0646 \u067E\u0679: ${expected} \u0645\u062A\u0648\u0642\u0639 \u062A\u06BE\u0627\u060C ${received} \u0645\u0648\u0635\u0648\u0644 \u06C1\u0648\u0627`;
+        return "\u063A\u0644\u0637 \u0627\u0646 \u067E\u0679: ".concat(expected, " \u0645\u062A\u0648\u0642\u0639 \u062A\u06BE\u0627\u060C ").concat(received, " \u0645\u0648\u0635\u0648\u0644 \u06C1\u0648\u0627");
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u063A\u0644\u0637 \u0627\u0646 \u067E\u0679: ${stringifyPrimitive(issue2.values[0])} \u0645\u062A\u0648\u0642\u0639 \u062A\u06BE\u0627`;
-        return `\u063A\u0644\u0637 \u0622\u067E\u0634\u0646: ${joinValues(issue2.values, "|")} \u0645\u06CC\u06BA \u0633\u06D2 \u0627\u06CC\u06A9 \u0645\u062A\u0648\u0642\u0639 \u062A\u06BE\u0627`;
+          return "\u063A\u0644\u0637 \u0627\u0646 \u067E\u0679: ".concat(stringifyPrimitive(issue2.values[0]), " \u0645\u062A\u0648\u0642\u0639 \u062A\u06BE\u0627");
+        return "\u063A\u0644\u0637 \u0622\u067E\u0634\u0646: ".concat(joinValues(issue2.values, "|"), " \u0645\u06CC\u06BA \u0633\u06D2 \u0627\u06CC\u06A9 \u0645\u062A\u0648\u0642\u0639 \u062A\u06BE\u0627");
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u0628\u06C1\u062A \u0628\u0691\u0627: ${issue2.origin ?? "\u0648\u06CC\u0644\u06CC\u0648"} \u06A9\u06D2 ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "\u0639\u0646\u0627\u0635\u0631"} \u06C1\u0648\u0646\u06D2 \u0645\u062A\u0648\u0642\u0639 \u062A\u06BE\u06D2`;
-        return `\u0628\u06C1\u062A \u0628\u0691\u0627: ${issue2.origin ?? "\u0648\u06CC\u0644\u06CC\u0648"} \u06A9\u0627 ${adj}${issue2.maximum.toString()} \u06C1\u0648\u0646\u0627 \u0645\u062A\u0648\u0642\u0639 \u062A\u06BE\u0627`;
+          return "\u0628\u06C1\u062A \u0628\u0691\u0627: ".concat(issue2.origin ?? "\u0648\u06CC\u0644\u06CC\u0648", " \u06A9\u06D2 ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "\u0639\u0646\u0627\u0635\u0631", " \u06C1\u0648\u0646\u06D2 \u0645\u062A\u0648\u0642\u0639 \u062A\u06BE\u06D2");
+        return "\u0628\u06C1\u062A \u0628\u0691\u0627: ".concat(issue2.origin ?? "\u0648\u06CC\u0644\u06CC\u0648", " \u06A9\u0627 ").concat(adj).concat(issue2.maximum.toString(), " \u06C1\u0648\u0646\u0627 \u0645\u062A\u0648\u0642\u0639 \u062A\u06BE\u0627");
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u0628\u06C1\u062A \u0686\u06BE\u0648\u0679\u0627: ${issue2.origin} \u06A9\u06D2 ${adj}${issue2.minimum.toString()} ${sizing.unit} \u06C1\u0648\u0646\u06D2 \u0645\u062A\u0648\u0642\u0639 \u062A\u06BE\u06D2`;
+          return "\u0628\u06C1\u062A \u0686\u06BE\u0648\u0679\u0627: ".concat(issue2.origin, " \u06A9\u06D2 ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit, " \u06C1\u0648\u0646\u06D2 \u0645\u062A\u0648\u0642\u0639 \u062A\u06BE\u06D2");
         }
-        return `\u0628\u06C1\u062A \u0686\u06BE\u0648\u0679\u0627: ${issue2.origin} \u06A9\u0627 ${adj}${issue2.minimum.toString()} \u06C1\u0648\u0646\u0627 \u0645\u062A\u0648\u0642\u0639 \u062A\u06BE\u0627`;
+        return "\u0628\u06C1\u062A \u0686\u06BE\u0648\u0679\u0627: ".concat(issue2.origin, " \u06A9\u0627 ").concat(adj).concat(issue2.minimum.toString(), " \u06C1\u0648\u0646\u0627 \u0645\u062A\u0648\u0642\u0639 \u062A\u06BE\u0627");
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `\u063A\u0644\u0637 \u0633\u0679\u0631\u0646\u06AF: "${_issue.prefix}" \u0633\u06D2 \u0634\u0631\u0648\u0639 \u06C1\u0648\u0646\u0627 \u0686\u0627\u06C1\u06CC\u06D2`;
+          return '\u063A\u0644\u0637 \u0633\u0679\u0631\u0646\u06AF: "'.concat(_issue.prefix, '" \u0633\u06D2 \u0634\u0631\u0648\u0639 \u06C1\u0648\u0646\u0627 \u0686\u0627\u06C1\u06CC\u06D2');
         }
         if (_issue.format === "ends_with")
-          return `\u063A\u0644\u0637 \u0633\u0679\u0631\u0646\u06AF: "${_issue.suffix}" \u067E\u0631 \u062E\u062A\u0645 \u06C1\u0648\u0646\u0627 \u0686\u0627\u06C1\u06CC\u06D2`;
+          return '\u063A\u0644\u0637 \u0633\u0679\u0631\u0646\u06AF: "'.concat(_issue.suffix, '" \u067E\u0631 \u062E\u062A\u0645 \u06C1\u0648\u0646\u0627 \u0686\u0627\u06C1\u06CC\u06D2');
         if (_issue.format === "includes")
-          return `\u063A\u0644\u0637 \u0633\u0679\u0631\u0646\u06AF: "${_issue.includes}" \u0634\u0627\u0645\u0644 \u06C1\u0648\u0646\u0627 \u0686\u0627\u06C1\u06CC\u06D2`;
+          return '\u063A\u0644\u0637 \u0633\u0679\u0631\u0646\u06AF: "'.concat(_issue.includes, '" \u0634\u0627\u0645\u0644 \u06C1\u0648\u0646\u0627 \u0686\u0627\u06C1\u06CC\u06D2');
         if (_issue.format === "regex")
-          return `\u063A\u0644\u0637 \u0633\u0679\u0631\u0646\u06AF: \u067E\u06CC\u0679\u0631\u0646 ${_issue.pattern} \u0633\u06D2 \u0645\u06CC\u0686 \u06C1\u0648\u0646\u0627 \u0686\u0627\u06C1\u06CC\u06D2`;
-        return `\u063A\u0644\u0637 ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u063A\u0644\u0637 \u0633\u0679\u0631\u0646\u06AF: \u067E\u06CC\u0679\u0631\u0646 ".concat(_issue.pattern, " \u0633\u06D2 \u0645\u06CC\u0686 \u06C1\u0648\u0646\u0627 \u0686\u0627\u06C1\u06CC\u06D2");
+        return "\u063A\u0644\u0637 ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u063A\u0644\u0637 \u0646\u0645\u0628\u0631: ${issue2.divisor} \u06A9\u0627 \u0645\u0636\u0627\u0639\u0641 \u06C1\u0648\u0646\u0627 \u0686\u0627\u06C1\u06CC\u06D2`;
+        return "\u063A\u0644\u0637 \u0646\u0645\u0628\u0631: ".concat(issue2.divisor, " \u06A9\u0627 \u0645\u0636\u0627\u0639\u0641 \u06C1\u0648\u0646\u0627 \u0686\u0627\u06C1\u06CC\u06D2");
       case "unrecognized_keys":
-        return `\u063A\u06CC\u0631 \u062A\u0633\u0644\u06CC\u0645 \u0634\u062F\u06C1 \u06A9\u06CC${issue2.keys.length > 1 ? "\u0632" : ""}: ${joinValues(issue2.keys, "\u060C ")}`;
+        return "\u063A\u06CC\u0631 \u062A\u0633\u0644\u06CC\u0645 \u0634\u062F\u06C1 \u06A9\u06CC".concat(issue2.keys.length > 1 ? "\u0632" : "", ": ").concat(joinValues(issue2.keys, "\u060C "));
       case "invalid_key":
-        return `${issue2.origin} \u0645\u06CC\u06BA \u063A\u0644\u0637 \u06A9\u06CC`;
+        return "".concat(issue2.origin, " \u0645\u06CC\u06BA \u063A\u0644\u0637 \u06A9\u06CC");
       case "invalid_union":
         return "\u063A\u0644\u0637 \u0627\u0646 \u067E\u0679";
       case "invalid_element":
-        return `${issue2.origin} \u0645\u06CC\u06BA \u063A\u0644\u0637 \u0648\u06CC\u0644\u06CC\u0648`;
+        return "".concat(issue2.origin, " \u0645\u06CC\u06BA \u063A\u0644\u0637 \u0648\u06CC\u0644\u06CC\u0648");
       default:
-        return `\u063A\u0644\u0637 \u0627\u0646 \u067E\u0679`;
+        return "\u063A\u0644\u0637 \u0627\u0646 \u067E\u0679";
     }
   };
 };
@@ -14398,53 +14106,53 @@ var error56 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `Noto\u2018g\u2018ri kirish: kutilgan instanceof ${issue2.expected}, qabul qilingan ${received}`;
+          return "Noto\u2018g\u2018ri kirish: kutilgan instanceof ".concat(issue2.expected, ", qabul qilingan ").concat(received);
         }
-        return `Noto\u2018g\u2018ri kirish: kutilgan ${expected}, qabul qilingan ${received}`;
+        return "Noto\u2018g\u2018ri kirish: kutilgan ".concat(expected, ", qabul qilingan ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `Noto\u2018g\u2018ri kirish: kutilgan ${stringifyPrimitive(issue2.values[0])}`;
-        return `Noto\u2018g\u2018ri variant: quyidagilardan biri kutilgan ${joinValues(issue2.values, "|")}`;
+          return "Noto\u2018g\u2018ri kirish: kutilgan ".concat(stringifyPrimitive(issue2.values[0]));
+        return "Noto\u2018g\u2018ri variant: quyidagilardan biri kutilgan ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Juda katta: kutilgan ${issue2.origin ?? "qiymat"} ${adj}${issue2.maximum.toString()} ${sizing.unit} ${sizing.verb}`;
-        return `Juda katta: kutilgan ${issue2.origin ?? "qiymat"} ${adj}${issue2.maximum.toString()}`;
+          return "Juda katta: kutilgan ".concat(issue2.origin ?? "qiymat", " ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit, " ").concat(sizing.verb);
+        return "Juda katta: kutilgan ".concat(issue2.origin ?? "qiymat", " ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Juda kichik: kutilgan ${issue2.origin} ${adj}${issue2.minimum.toString()} ${sizing.unit} ${sizing.verb}`;
+          return "Juda kichik: kutilgan ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit, " ").concat(sizing.verb);
         }
-        return `Juda kichik: kutilgan ${issue2.origin} ${adj}${issue2.minimum.toString()}`;
+        return "Juda kichik: kutilgan ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `Noto\u2018g\u2018ri satr: "${_issue.prefix}" bilan boshlanishi kerak`;
+          return 'Noto\u2018g\u2018ri satr: "'.concat(_issue.prefix, '" bilan boshlanishi kerak');
         if (_issue.format === "ends_with")
-          return `Noto\u2018g\u2018ri satr: "${_issue.suffix}" bilan tugashi kerak`;
+          return 'Noto\u2018g\u2018ri satr: "'.concat(_issue.suffix, '" bilan tugashi kerak');
         if (_issue.format === "includes")
-          return `Noto\u2018g\u2018ri satr: "${_issue.includes}" ni o\u2018z ichiga olishi kerak`;
+          return 'Noto\u2018g\u2018ri satr: "'.concat(_issue.includes, '" ni o\u2018z ichiga olishi kerak');
         if (_issue.format === "regex")
-          return `Noto\u2018g\u2018ri satr: ${_issue.pattern} shabloniga mos kelishi kerak`;
-        return `Noto\u2018g\u2018ri ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "Noto\u2018g\u2018ri satr: ".concat(_issue.pattern, " shabloniga mos kelishi kerak");
+        return "Noto\u2018g\u2018ri ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `Noto\u2018g\u2018ri raqam: ${issue2.divisor} ning karralisi bo\u2018lishi kerak`;
+        return "Noto\u2018g\u2018ri raqam: ".concat(issue2.divisor, " ning karralisi bo\u2018lishi kerak");
       case "unrecognized_keys":
-        return `Noma\u2019lum kalit${issue2.keys.length > 1 ? "lar" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return "Noma\u2019lum kalit".concat(issue2.keys.length > 1 ? "lar" : "", ": ").concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `${issue2.origin} dagi kalit noto\u2018g\u2018ri`;
+        return "".concat(issue2.origin, " dagi kalit noto\u2018g\u2018ri");
       case "invalid_union":
         return "Noto\u2018g\u2018ri kirish";
       case "invalid_element":
-        return `${issue2.origin} da noto\u2018g\u2018ri qiymat`;
+        return "".concat(issue2.origin, " da noto\u2018g\u2018ri qiymat");
       default:
-        return `Noto\u2018g\u2018ri kirish`;
+        return "Noto\u2018g\u2018ri kirish";
     }
   };
 };
@@ -14510,53 +14218,53 @@ var error57 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\u0110\u1EA7u v\xE0o kh\xF4ng h\u1EE3p l\u1EC7: mong \u0111\u1EE3i instanceof ${issue2.expected}, nh\u1EADn \u0111\u01B0\u1EE3c ${received}`;
+          return "\u0110\u1EA7u v\xE0o kh\xF4ng h\u1EE3p l\u1EC7: mong \u0111\u1EE3i instanceof ".concat(issue2.expected, ", nh\u1EADn \u0111\u01B0\u1EE3c ").concat(received);
         }
-        return `\u0110\u1EA7u v\xE0o kh\xF4ng h\u1EE3p l\u1EC7: mong \u0111\u1EE3i ${expected}, nh\u1EADn \u0111\u01B0\u1EE3c ${received}`;
+        return "\u0110\u1EA7u v\xE0o kh\xF4ng h\u1EE3p l\u1EC7: mong \u0111\u1EE3i ".concat(expected, ", nh\u1EADn \u0111\u01B0\u1EE3c ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u0110\u1EA7u v\xE0o kh\xF4ng h\u1EE3p l\u1EC7: mong \u0111\u1EE3i ${stringifyPrimitive(issue2.values[0])}`;
-        return `T\xF9y ch\u1ECDn kh\xF4ng h\u1EE3p l\u1EC7: mong \u0111\u1EE3i m\u1ED9t trong c\xE1c gi\xE1 tr\u1ECB ${joinValues(issue2.values, "|")}`;
+          return "\u0110\u1EA7u v\xE0o kh\xF4ng h\u1EE3p l\u1EC7: mong \u0111\u1EE3i ".concat(stringifyPrimitive(issue2.values[0]));
+        return "T\xF9y ch\u1ECDn kh\xF4ng h\u1EE3p l\u1EC7: mong \u0111\u1EE3i m\u1ED9t trong c\xE1c gi\xE1 tr\u1ECB ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `Qu\xE1 l\u1EDBn: mong \u0111\u1EE3i ${issue2.origin ?? "gi\xE1 tr\u1ECB"} ${sizing.verb} ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "ph\u1EA7n t\u1EED"}`;
-        return `Qu\xE1 l\u1EDBn: mong \u0111\u1EE3i ${issue2.origin ?? "gi\xE1 tr\u1ECB"} ${adj}${issue2.maximum.toString()}`;
+          return "Qu\xE1 l\u1EDBn: mong \u0111\u1EE3i ".concat(issue2.origin ?? "gi\xE1 tr\u1ECB", " ").concat(sizing.verb, " ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "ph\u1EA7n t\u1EED");
+        return "Qu\xE1 l\u1EDBn: mong \u0111\u1EE3i ".concat(issue2.origin ?? "gi\xE1 tr\u1ECB", " ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `Qu\xE1 nh\u1ECF: mong \u0111\u1EE3i ${issue2.origin} ${sizing.verb} ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "Qu\xE1 nh\u1ECF: mong \u0111\u1EE3i ".concat(issue2.origin, " ").concat(sizing.verb, " ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `Qu\xE1 nh\u1ECF: mong \u0111\u1EE3i ${issue2.origin} ${adj}${issue2.minimum.toString()}`;
+        return "Qu\xE1 nh\u1ECF: mong \u0111\u1EE3i ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `Chu\u1ED7i kh\xF4ng h\u1EE3p l\u1EC7: ph\u1EA3i b\u1EAFt \u0111\u1EA7u b\u1EB1ng "${_issue.prefix}"`;
+          return 'Chu\u1ED7i kh\xF4ng h\u1EE3p l\u1EC7: ph\u1EA3i b\u1EAFt \u0111\u1EA7u b\u1EB1ng "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `Chu\u1ED7i kh\xF4ng h\u1EE3p l\u1EC7: ph\u1EA3i k\u1EBFt th\xFAc b\u1EB1ng "${_issue.suffix}"`;
+          return 'Chu\u1ED7i kh\xF4ng h\u1EE3p l\u1EC7: ph\u1EA3i k\u1EBFt th\xFAc b\u1EB1ng "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `Chu\u1ED7i kh\xF4ng h\u1EE3p l\u1EC7: ph\u1EA3i bao g\u1ED3m "${_issue.includes}"`;
+          return 'Chu\u1ED7i kh\xF4ng h\u1EE3p l\u1EC7: ph\u1EA3i bao g\u1ED3m "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `Chu\u1ED7i kh\xF4ng h\u1EE3p l\u1EC7: ph\u1EA3i kh\u1EDBp v\u1EDBi m\u1EABu ${_issue.pattern}`;
-        return `${FormatDictionary[_issue.format] ?? issue2.format} kh\xF4ng h\u1EE3p l\u1EC7`;
+          return "Chu\u1ED7i kh\xF4ng h\u1EE3p l\u1EC7: ph\u1EA3i kh\u1EDBp v\u1EDBi m\u1EABu ".concat(_issue.pattern);
+        return "".concat(FormatDictionary[_issue.format] ?? issue2.format, " kh\xF4ng h\u1EE3p l\u1EC7");
       }
       case "not_multiple_of":
-        return `S\u1ED1 kh\xF4ng h\u1EE3p l\u1EC7: ph\u1EA3i l\xE0 b\u1ED9i s\u1ED1 c\u1EE7a ${issue2.divisor}`;
+        return "S\u1ED1 kh\xF4ng h\u1EE3p l\u1EC7: ph\u1EA3i l\xE0 b\u1ED9i s\u1ED1 c\u1EE7a ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `Kh\xF3a kh\xF4ng \u0111\u01B0\u1EE3c nh\u1EADn d\u1EA1ng: ${joinValues(issue2.keys, ", ")}`;
+        return "Kh\xF3a kh\xF4ng \u0111\u01B0\u1EE3c nh\u1EADn d\u1EA1ng: ".concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `Kh\xF3a kh\xF4ng h\u1EE3p l\u1EC7 trong ${issue2.origin}`;
+        return "Kh\xF3a kh\xF4ng h\u1EE3p l\u1EC7 trong ".concat(issue2.origin);
       case "invalid_union":
         return "\u0110\u1EA7u v\xE0o kh\xF4ng h\u1EE3p l\u1EC7";
       case "invalid_element":
-        return `Gi\xE1 tr\u1ECB kh\xF4ng h\u1EE3p l\u1EC7 trong ${issue2.origin}`;
+        return "Gi\xE1 tr\u1ECB kh\xF4ng h\u1EE3p l\u1EC7 trong ".concat(issue2.origin);
       default:
-        return `\u0110\u1EA7u v\xE0o kh\xF4ng h\u1EE3p l\u1EC7`;
+        return "\u0110\u1EA7u v\xE0o kh\xF4ng h\u1EE3p l\u1EC7";
     }
   };
 };
@@ -14623,53 +14331,53 @@ var error58 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\u65E0\u6548\u8F93\u5165\uFF1A\u671F\u671B instanceof ${issue2.expected}\uFF0C\u5B9E\u9645\u63A5\u6536 ${received}`;
+          return "\u65E0\u6548\u8F93\u5165\uFF1A\u671F\u671B instanceof ".concat(issue2.expected, "\uFF0C\u5B9E\u9645\u63A5\u6536 ").concat(received);
         }
-        return `\u65E0\u6548\u8F93\u5165\uFF1A\u671F\u671B ${expected}\uFF0C\u5B9E\u9645\u63A5\u6536 ${received}`;
+        return "\u65E0\u6548\u8F93\u5165\uFF1A\u671F\u671B ".concat(expected, "\uFF0C\u5B9E\u9645\u63A5\u6536 ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u65E0\u6548\u8F93\u5165\uFF1A\u671F\u671B ${stringifyPrimitive(issue2.values[0])}`;
-        return `\u65E0\u6548\u9009\u9879\uFF1A\u671F\u671B\u4EE5\u4E0B\u4E4B\u4E00 ${joinValues(issue2.values, "|")}`;
+          return "\u65E0\u6548\u8F93\u5165\uFF1A\u671F\u671B ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\u65E0\u6548\u9009\u9879\uFF1A\u671F\u671B\u4EE5\u4E0B\u4E4B\u4E00 ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u6570\u503C\u8FC7\u5927\uFF1A\u671F\u671B ${issue2.origin ?? "\u503C"} ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "\u4E2A\u5143\u7D20"}`;
-        return `\u6570\u503C\u8FC7\u5927\uFF1A\u671F\u671B ${issue2.origin ?? "\u503C"} ${adj}${issue2.maximum.toString()}`;
+          return "\u6570\u503C\u8FC7\u5927\uFF1A\u671F\u671B ".concat(issue2.origin ?? "\u503C", " ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "\u4E2A\u5143\u7D20");
+        return "\u6570\u503C\u8FC7\u5927\uFF1A\u671F\u671B ".concat(issue2.origin ?? "\u503C", " ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u6570\u503C\u8FC7\u5C0F\uFF1A\u671F\u671B ${issue2.origin} ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "\u6570\u503C\u8FC7\u5C0F\uFF1A\u671F\u671B ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `\u6570\u503C\u8FC7\u5C0F\uFF1A\u671F\u671B ${issue2.origin} ${adj}${issue2.minimum.toString()}`;
+        return "\u6570\u503C\u8FC7\u5C0F\uFF1A\u671F\u671B ".concat(issue2.origin, " ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `\u65E0\u6548\u5B57\u7B26\u4E32\uFF1A\u5FC5\u987B\u4EE5 "${_issue.prefix}" \u5F00\u5934`;
+          return '\u65E0\u6548\u5B57\u7B26\u4E32\uFF1A\u5FC5\u987B\u4EE5 "'.concat(_issue.prefix, '" \u5F00\u5934');
         if (_issue.format === "ends_with")
-          return `\u65E0\u6548\u5B57\u7B26\u4E32\uFF1A\u5FC5\u987B\u4EE5 "${_issue.suffix}" \u7ED3\u5C3E`;
+          return '\u65E0\u6548\u5B57\u7B26\u4E32\uFF1A\u5FC5\u987B\u4EE5 "'.concat(_issue.suffix, '" \u7ED3\u5C3E');
         if (_issue.format === "includes")
-          return `\u65E0\u6548\u5B57\u7B26\u4E32\uFF1A\u5FC5\u987B\u5305\u542B "${_issue.includes}"`;
+          return '\u65E0\u6548\u5B57\u7B26\u4E32\uFF1A\u5FC5\u987B\u5305\u542B "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `\u65E0\u6548\u5B57\u7B26\u4E32\uFF1A\u5FC5\u987B\u6EE1\u8DB3\u6B63\u5219\u8868\u8FBE\u5F0F ${_issue.pattern}`;
-        return `\u65E0\u6548${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u65E0\u6548\u5B57\u7B26\u4E32\uFF1A\u5FC5\u987B\u6EE1\u8DB3\u6B63\u5219\u8868\u8FBE\u5F0F ".concat(_issue.pattern);
+        return "\u65E0\u6548".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u65E0\u6548\u6570\u5B57\uFF1A\u5FC5\u987B\u662F ${issue2.divisor} \u7684\u500D\u6570`;
+        return "\u65E0\u6548\u6570\u5B57\uFF1A\u5FC5\u987B\u662F ".concat(issue2.divisor, " \u7684\u500D\u6570");
       case "unrecognized_keys":
-        return `\u51FA\u73B0\u672A\u77E5\u7684\u952E(key): ${joinValues(issue2.keys, ", ")}`;
+        return "\u51FA\u73B0\u672A\u77E5\u7684\u952E(key): ".concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `${issue2.origin} \u4E2D\u7684\u952E(key)\u65E0\u6548`;
+        return "".concat(issue2.origin, " \u4E2D\u7684\u952E(key)\u65E0\u6548");
       case "invalid_union":
         return "\u65E0\u6548\u8F93\u5165";
       case "invalid_element":
-        return `${issue2.origin} \u4E2D\u5305\u542B\u65E0\u6548\u503C(value)`;
+        return "".concat(issue2.origin, " \u4E2D\u5305\u542B\u65E0\u6548\u503C(value)");
       default:
-        return `\u65E0\u6548\u8F93\u5165`;
+        return "\u65E0\u6548\u8F93\u5165";
     }
   };
 };
@@ -14733,54 +14441,54 @@ var error59 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\u7121\u6548\u7684\u8F38\u5165\u503C\uFF1A\u9810\u671F\u70BA instanceof ${issue2.expected}\uFF0C\u4F46\u6536\u5230 ${received}`;
+          return "\u7121\u6548\u7684\u8F38\u5165\u503C\uFF1A\u9810\u671F\u70BA instanceof ".concat(issue2.expected, "\uFF0C\u4F46\u6536\u5230 ").concat(received);
         }
-        return `\u7121\u6548\u7684\u8F38\u5165\u503C\uFF1A\u9810\u671F\u70BA ${expected}\uFF0C\u4F46\u6536\u5230 ${received}`;
+        return "\u7121\u6548\u7684\u8F38\u5165\u503C\uFF1A\u9810\u671F\u70BA ".concat(expected, "\uFF0C\u4F46\u6536\u5230 ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\u7121\u6548\u7684\u8F38\u5165\u503C\uFF1A\u9810\u671F\u70BA ${stringifyPrimitive(issue2.values[0])}`;
-        return `\u7121\u6548\u7684\u9078\u9805\uFF1A\u9810\u671F\u70BA\u4EE5\u4E0B\u5176\u4E2D\u4E4B\u4E00 ${joinValues(issue2.values, "|")}`;
+          return "\u7121\u6548\u7684\u8F38\u5165\u503C\uFF1A\u9810\u671F\u70BA ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\u7121\u6548\u7684\u9078\u9805\uFF1A\u9810\u671F\u70BA\u4EE5\u4E0B\u5176\u4E2D\u4E4B\u4E00 ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `\u6578\u503C\u904E\u5927\uFF1A\u9810\u671F ${issue2.origin ?? "\u503C"} \u61C9\u70BA ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "\u500B\u5143\u7D20"}`;
-        return `\u6578\u503C\u904E\u5927\uFF1A\u9810\u671F ${issue2.origin ?? "\u503C"} \u61C9\u70BA ${adj}${issue2.maximum.toString()}`;
+          return "\u6578\u503C\u904E\u5927\uFF1A\u9810\u671F ".concat(issue2.origin ?? "\u503C", " \u61C9\u70BA ").concat(adj).concat(issue2.maximum.toString(), " ").concat(sizing.unit ?? "\u500B\u5143\u7D20");
+        return "\u6578\u503C\u904E\u5927\uFF1A\u9810\u671F ".concat(issue2.origin ?? "\u503C", " \u61C9\u70BA ").concat(adj).concat(issue2.maximum.toString());
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing) {
-          return `\u6578\u503C\u904E\u5C0F\uFF1A\u9810\u671F ${issue2.origin} \u61C9\u70BA ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return "\u6578\u503C\u904E\u5C0F\uFF1A\u9810\u671F ".concat(issue2.origin, " \u61C9\u70BA ").concat(adj).concat(issue2.minimum.toString(), " ").concat(sizing.unit);
         }
-        return `\u6578\u503C\u904E\u5C0F\uFF1A\u9810\u671F ${issue2.origin} \u61C9\u70BA ${adj}${issue2.minimum.toString()}`;
+        return "\u6578\u503C\u904E\u5C0F\uFF1A\u9810\u671F ".concat(issue2.origin, " \u61C9\u70BA ").concat(adj).concat(issue2.minimum.toString());
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with") {
-          return `\u7121\u6548\u7684\u5B57\u4E32\uFF1A\u5FC5\u9808\u4EE5 "${_issue.prefix}" \u958B\u982D`;
+          return '\u7121\u6548\u7684\u5B57\u4E32\uFF1A\u5FC5\u9808\u4EE5 "'.concat(_issue.prefix, '" \u958B\u982D');
         }
         if (_issue.format === "ends_with")
-          return `\u7121\u6548\u7684\u5B57\u4E32\uFF1A\u5FC5\u9808\u4EE5 "${_issue.suffix}" \u7D50\u5C3E`;
+          return '\u7121\u6548\u7684\u5B57\u4E32\uFF1A\u5FC5\u9808\u4EE5 "'.concat(_issue.suffix, '" \u7D50\u5C3E');
         if (_issue.format === "includes")
-          return `\u7121\u6548\u7684\u5B57\u4E32\uFF1A\u5FC5\u9808\u5305\u542B "${_issue.includes}"`;
+          return '\u7121\u6548\u7684\u5B57\u4E32\uFF1A\u5FC5\u9808\u5305\u542B "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `\u7121\u6548\u7684\u5B57\u4E32\uFF1A\u5FC5\u9808\u7B26\u5408\u683C\u5F0F ${_issue.pattern}`;
-        return `\u7121\u6548\u7684 ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u7121\u6548\u7684\u5B57\u4E32\uFF1A\u5FC5\u9808\u7B26\u5408\u683C\u5F0F ".concat(_issue.pattern);
+        return "\u7121\u6548\u7684 ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `\u7121\u6548\u7684\u6578\u5B57\uFF1A\u5FC5\u9808\u70BA ${issue2.divisor} \u7684\u500D\u6578`;
+        return "\u7121\u6548\u7684\u6578\u5B57\uFF1A\u5FC5\u9808\u70BA ".concat(issue2.divisor, " \u7684\u500D\u6578");
       case "unrecognized_keys":
-        return `\u7121\u6CD5\u8B58\u5225\u7684\u9375\u503C${issue2.keys.length > 1 ? "\u5011" : ""}\uFF1A${joinValues(issue2.keys, "\u3001")}`;
+        return "\u7121\u6CD5\u8B58\u5225\u7684\u9375\u503C".concat(issue2.keys.length > 1 ? "\u5011" : "", "\uFF1A").concat(joinValues(issue2.keys, "\u3001"));
       case "invalid_key":
-        return `${issue2.origin} \u4E2D\u6709\u7121\u6548\u7684\u9375\u503C`;
+        return "".concat(issue2.origin, " \u4E2D\u6709\u7121\u6548\u7684\u9375\u503C");
       case "invalid_union":
         return "\u7121\u6548\u7684\u8F38\u5165\u503C";
       case "invalid_element":
-        return `${issue2.origin} \u4E2D\u6709\u7121\u6548\u7684\u503C`;
+        return "".concat(issue2.origin, " \u4E2D\u6709\u7121\u6548\u7684\u503C");
       default:
-        return `\u7121\u6548\u7684\u8F38\u5165\u503C`;
+        return "\u7121\u6548\u7684\u8F38\u5165\u503C";
     }
   };
 };
@@ -14846,50 +14554,50 @@ var error60 = () => {
         const receivedType = parsedType(issue2.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         if (/^[A-Z]/.test(issue2.expected)) {
-          return `\xCCb\xE1w\u1ECDl\xE9 a\u1E63\xEC\u1E63e: a n\xED l\xE1ti fi instanceof ${issue2.expected}, \xE0m\u1ECD\u0300 a r\xED ${received}`;
+          return "\xCCb\xE1w\u1ECDl\xE9 a\u1E63\xEC\u1E63e: a n\xED l\xE1ti fi instanceof ".concat(issue2.expected, ", \xE0m\u1ECD\u0300 a r\xED ").concat(received);
         }
-        return `\xCCb\xE1w\u1ECDl\xE9 a\u1E63\xEC\u1E63e: a n\xED l\xE1ti fi ${expected}, \xE0m\u1ECD\u0300 a r\xED ${received}`;
+        return "\xCCb\xE1w\u1ECDl\xE9 a\u1E63\xEC\u1E63e: a n\xED l\xE1ti fi ".concat(expected, ", \xE0m\u1ECD\u0300 a r\xED ").concat(received);
       }
       case "invalid_value":
         if (issue2.values.length === 1)
-          return `\xCCb\xE1w\u1ECDl\xE9 a\u1E63\xEC\u1E63e: a n\xED l\xE1ti fi ${stringifyPrimitive(issue2.values[0])}`;
-        return `\xC0\u1E63\xE0y\xE0n a\u1E63\xEC\u1E63e: yan \u1ECD\u0300kan l\xE1ra ${joinValues(issue2.values, "|")}`;
+          return "\xCCb\xE1w\u1ECDl\xE9 a\u1E63\xEC\u1E63e: a n\xED l\xE1ti fi ".concat(stringifyPrimitive(issue2.values[0]));
+        return "\xC0\u1E63\xE0y\xE0n a\u1E63\xEC\u1E63e: yan \u1ECD\u0300kan l\xE1ra ".concat(joinValues(issue2.values, "|"));
       case "too_big": {
         const adj = issue2.inclusive ? "<=" : "<";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `T\xF3 p\u1ECD\u0300 j\xF9: a n\xED l\xE1ti j\u1EB9\u0301 p\xE9 ${issue2.origin ?? "iye"} ${sizing.verb} ${adj}${issue2.maximum} ${sizing.unit}`;
-        return `T\xF3 p\u1ECD\u0300 j\xF9: a n\xED l\xE1ti j\u1EB9\u0301 ${adj}${issue2.maximum}`;
+          return "T\xF3 p\u1ECD\u0300 j\xF9: a n\xED l\xE1ti j\u1EB9\u0301 p\xE9 ".concat(issue2.origin ?? "iye", " ").concat(sizing.verb, " ").concat(adj).concat(issue2.maximum, " ").concat(sizing.unit);
+        return "T\xF3 p\u1ECD\u0300 j\xF9: a n\xED l\xE1ti j\u1EB9\u0301 ".concat(adj).concat(issue2.maximum);
       }
       case "too_small": {
         const adj = issue2.inclusive ? ">=" : ">";
         const sizing = getSizing(issue2.origin);
         if (sizing)
-          return `K\xE9r\xE9 ju: a n\xED l\xE1ti j\u1EB9\u0301 p\xE9 ${issue2.origin} ${sizing.verb} ${adj}${issue2.minimum} ${sizing.unit}`;
-        return `K\xE9r\xE9 ju: a n\xED l\xE1ti j\u1EB9\u0301 ${adj}${issue2.minimum}`;
+          return "K\xE9r\xE9 ju: a n\xED l\xE1ti j\u1EB9\u0301 p\xE9 ".concat(issue2.origin, " ").concat(sizing.verb, " ").concat(adj).concat(issue2.minimum, " ").concat(sizing.unit);
+        return "K\xE9r\xE9 ju: a n\xED l\xE1ti j\u1EB9\u0301 ".concat(adj).concat(issue2.minimum);
       }
       case "invalid_format": {
         const _issue = issue2;
         if (_issue.format === "starts_with")
-          return `\u1ECC\u0300r\u1ECD\u0300 a\u1E63\xEC\u1E63e: gb\u1ECD\u0301d\u1ECD\u0300 b\u1EB9\u0300r\u1EB9\u0300 p\u1EB9\u0300l\xFA "${_issue.prefix}"`;
+          return '\u1ECC\u0300r\u1ECD\u0300 a\u1E63\xEC\u1E63e: gb\u1ECD\u0301d\u1ECD\u0300 b\u1EB9\u0300r\u1EB9\u0300 p\u1EB9\u0300l\xFA "'.concat(_issue.prefix, '"');
         if (_issue.format === "ends_with")
-          return `\u1ECC\u0300r\u1ECD\u0300 a\u1E63\xEC\u1E63e: gb\u1ECD\u0301d\u1ECD\u0300 par\xED p\u1EB9\u0300l\xFA "${_issue.suffix}"`;
+          return '\u1ECC\u0300r\u1ECD\u0300 a\u1E63\xEC\u1E63e: gb\u1ECD\u0301d\u1ECD\u0300 par\xED p\u1EB9\u0300l\xFA "'.concat(_issue.suffix, '"');
         if (_issue.format === "includes")
-          return `\u1ECC\u0300r\u1ECD\u0300 a\u1E63\xEC\u1E63e: gb\u1ECD\u0301d\u1ECD\u0300 n\xED "${_issue.includes}"`;
+          return '\u1ECC\u0300r\u1ECD\u0300 a\u1E63\xEC\u1E63e: gb\u1ECD\u0301d\u1ECD\u0300 n\xED "'.concat(_issue.includes, '"');
         if (_issue.format === "regex")
-          return `\u1ECC\u0300r\u1ECD\u0300 a\u1E63\xEC\u1E63e: gb\u1ECD\u0301d\u1ECD\u0300 b\xE1 \xE0p\u1EB9\u1EB9r\u1EB9 mu ${_issue.pattern}`;
-        return `A\u1E63\xEC\u1E63e: ${FormatDictionary[_issue.format] ?? issue2.format}`;
+          return "\u1ECC\u0300r\u1ECD\u0300 a\u1E63\xEC\u1E63e: gb\u1ECD\u0301d\u1ECD\u0300 b\xE1 \xE0p\u1EB9\u1EB9r\u1EB9 mu ".concat(_issue.pattern);
+        return "A\u1E63\xEC\u1E63e: ".concat(FormatDictionary[_issue.format] ?? issue2.format);
       }
       case "not_multiple_of":
-        return `N\u1ECD\u0301mb\xE0 a\u1E63\xEC\u1E63e: gb\u1ECD\u0301d\u1ECD\u0300 j\u1EB9\u0301 \xE8y\xE0 p\xEDp\xEDn ti ${issue2.divisor}`;
+        return "N\u1ECD\u0301mb\xE0 a\u1E63\xEC\u1E63e: gb\u1ECD\u0301d\u1ECD\u0300 j\u1EB9\u0301 \xE8y\xE0 p\xEDp\xEDn ti ".concat(issue2.divisor);
       case "unrecognized_keys":
-        return `B\u1ECDt\xECn\xEC \xE0\xECm\u1ECD\u0300: ${joinValues(issue2.keys, ", ")}`;
+        return "B\u1ECDt\xECn\xEC \xE0\xECm\u1ECD\u0300: ".concat(joinValues(issue2.keys, ", "));
       case "invalid_key":
-        return `B\u1ECDt\xECn\xEC a\u1E63\xEC\u1E63e n\xEDn\xFA ${issue2.origin}`;
+        return "B\u1ECDt\xECn\xEC a\u1E63\xEC\u1E63e n\xEDn\xFA ".concat(issue2.origin);
       case "invalid_union":
         return "\xCCb\xE1w\u1ECDl\xE9 a\u1E63\xEC\u1E63e";
       case "invalid_element":
-        return `Iye a\u1E63\xEC\u1E63e n\xEDn\xFA ${issue2.origin}`;
+        return "Iye a\u1E63\xEC\u1E63e n\xEDn\xFA ".concat(issue2.origin);
       default:
         return "\xCCb\xE1w\u1ECDl\xE9 a\u1E63\xEC\u1E63e";
     }
@@ -14962,7 +14670,7 @@ var ZodCompileAsyncError = class extends Error {
 };
 var ZodCompileUnsupportedError = class extends Error {
   constructor(feature, islandable = true) {
-    super(`z.compile does not support ${feature}; this schema must use the runtime parser`);
+    super("z.compile does not support ".concat(feature, "; this schema must use the runtime parser"));
     this.name = "ZodCompileUnsupportedError";
     this.islandable = islandable;
   }
@@ -15049,22 +14757,19 @@ function compileFn(schema, options) {
   };
   const doc = new Doc(["input"]);
   const outputAccessor = generateCheck(doc, ctx, schema, "input", !options?.assertOnly);
-  doc.write(outputAccessor === null ? `return true;` : `return ${outputAccessor};`);
+  doc.write(outputAccessor === null ? "return true;" : "return ".concat(outputAccessor, ";"));
   const constantNames = ["INVALID", ...ctx.constants.keys()];
   const constantValues = [INVALID, ...ctx.constants.values()];
   const code = doc.content.join("\n");
-  const fullCode = options?.debug ? constantNames.length > 0 ? `// Constants: ${constantNames.join(", ")}
-${code}` : code : "";
+  const fullCode = options?.debug ? constantNames.length > 0 ? "// Constants: ".concat(constantNames.join(", "), "\n").concat(code) : code : "";
   const F = Function;
-  const factoryCode = `return (input) => {
-${code}
-}`;
+  const factoryCode = "return (input) => {\n".concat(code, "\n}");
   let fn;
   try {
     const factory = new F(...constantNames, factoryCode);
     fn = factory(...constantValues);
   } catch (err) {
-    throw new ZodCompileUnsupportedError(`this schema (generated code failed to evaluate: ${err.message})`);
+    throw new ZodCompileUnsupportedError("this schema (generated code failed to evaluate: ".concat(err.message, ")"));
   }
   if (options?.debug) {
     fn.code = fullCode;
@@ -15076,12 +14781,12 @@ function addConstant(ctx, value) {
     if (v === value)
       return name2;
   }
-  const name = `c${ctx.constantCounter++}`;
+  const name = "c".concat(ctx.constantCounter++);
   ctx.constants.set(name, value);
   return name;
 }
 function newVar(ctx) {
-  return `v${ctx.varCounter++}`;
+  return "v".concat(ctx.varCounter++);
 }
 function runtimeRun(schema, value) {
   const result = schema._zod.run({ value, issues: [] }, {});
@@ -15115,8 +14820,8 @@ function emitRuntimeIsland(doc, ctx, schema, accessor) {
   const schemaConst = addConstant(ctx, schema);
   const runConst = addConstant(ctx, runtimeRun);
   const outVar = newVar(ctx);
-  doc.write(`const ${outVar} = ${runConst}(${schemaConst}, ${accessor});`);
-  doc.write(`if (${outVar} === INVALID) return INVALID;`);
+  doc.write("const ".concat(outVar, " = ").concat(runConst, "(").concat(schemaConst, ", ").concat(accessor, ");"));
+  doc.write("if (".concat(outVar, " === INVALID) return INVALID;"));
   return outVar;
 }
 var WHEN_DEFAULTED_CHECKS = /* @__PURE__ */ new Set([
@@ -15135,7 +14840,7 @@ function generateChecks(doc, ctx, schema, accessor) {
   for (const check2 of schemaChecks) {
     const def = check2._zod.def;
     if (def.when && !WHEN_DEFAULTED_CHECKS.has(def.check)) {
-      throw new ZodCompileUnsupportedError(`check with a custom "when" condition`);
+      throw new ZodCompileUnsupportedError('check with a custom "when" condition');
     }
     switch (def.check) {
       case "greater_than":
@@ -15152,30 +14857,30 @@ function generateChecks(doc, ctx, schema, accessor) {
         break;
       case "min_length": {
         const min = numericOperand(def.minimum, "min_length");
-        const len = codePointLengthVar(doc, ctx, currentAccessor, `${currentAccessor}.length >= ${min} && ${currentAccessor}.length < ${def.minimum * 2}`);
-        doc.write(`if (${len} < ${min}) return INVALID;`);
+        const len = codePointLengthVar(doc, ctx, currentAccessor, "".concat(currentAccessor, ".length >= ").concat(min, " && ").concat(currentAccessor, ".length < ").concat(def.minimum * 2));
+        doc.write("if (".concat(len, " < ").concat(min, ") return INVALID;"));
         break;
       }
       case "max_length": {
         const max = numericOperand(def.maximum, "max_length");
-        const len = codePointLengthVar(doc, ctx, currentAccessor, `${currentAccessor}.length > ${max}`);
-        doc.write(`if (${len} > ${max}) return INVALID;`);
+        const len = codePointLengthVar(doc, ctx, currentAccessor, "".concat(currentAccessor, ".length > ").concat(max));
+        doc.write("if (".concat(len, " > ").concat(max, ") return INVALID;"));
         break;
       }
       case "length_equals": {
         const exact = numericOperand(def.length, "length_equals");
-        const len = codePointLengthVar(doc, ctx, currentAccessor, `${currentAccessor}.length >= ${exact} && ${currentAccessor}.length <= ${def.length * 2}`);
-        doc.write(`if (${len} !== ${exact}) return INVALID;`);
+        const len = codePointLengthVar(doc, ctx, currentAccessor, "".concat(currentAccessor, ".length >= ").concat(exact, " && ").concat(currentAccessor, ".length <= ").concat(def.length * 2));
+        doc.write("if (".concat(len, " !== ").concat(exact, ") return INVALID;"));
         break;
       }
       case "min_size":
-        doc.write(`if (${currentAccessor}.size < ${numericOperand(def.minimum, "min_size")}) return INVALID;`);
+        doc.write("if (".concat(currentAccessor, ".size < ").concat(numericOperand(def.minimum, "min_size"), ") return INVALID;"));
         break;
       case "max_size":
-        doc.write(`if (${currentAccessor}.size > ${numericOperand(def.maximum, "max_size")}) return INVALID;`);
+        doc.write("if (".concat(currentAccessor, ".size > ").concat(numericOperand(def.maximum, "max_size"), ") return INVALID;"));
         break;
       case "size_equals":
-        doc.write(`if (${currentAccessor}.size !== ${numericOperand(def.size, "size_equals")}) return INVALID;`);
+        doc.write("if (".concat(currentAccessor, ".size !== ").concat(numericOperand(def.size, "size_equals"), ") return INVALID;"));
         break;
       case "string_format":
         currentAccessor = generateStringFormatCheck(doc, ctx, def, currentAccessor);
@@ -15200,7 +14905,7 @@ function generateChecks(doc, ctx, schema, accessor) {
       }
       default: {
         void def;
-        throw new ZodCompileUnsupportedError(`check type ${def.check}`);
+        throw new ZodCompileUnsupportedError("check type ".concat(def.check));
       }
     }
   }
@@ -15209,22 +14914,22 @@ function generateChecks(doc, ctx, schema, accessor) {
 function codePointLengthVar(doc, ctx, accessor, inDoubt) {
   const cpLen = addConstant(ctx, codePointLength);
   const v = newVar(ctx);
-  doc.write(`const ${v} = typeof ${accessor} === "string" && ${inDoubt} ? ${cpLen}(${accessor}) : ${accessor}.length;`);
+  doc.write("const ".concat(v, " = typeof ").concat(accessor, ' === "string" && ').concat(inDoubt, " ? ").concat(cpLen, "(").concat(accessor, ") : ").concat(accessor, ".length;"));
   return v;
 }
 function numericOperand(value, label) {
   if (typeof value !== "number" || !Number.isFinite(value)) {
-    throw new ZodCompileUnsupportedError(`${label} bound of type ${typeof value}`);
+    throw new ZodCompileUnsupportedError("".concat(label, " bound of type ").concat(typeof value));
   }
-  return `${value}`;
+  return "".concat(value);
 }
 function comparisonOperand(ctx, value) {
   if (typeof value === "bigint")
-    return `${value}n`;
+    return "".concat(value, "n");
   if (typeof value === "number") {
     if (Number.isNaN(value))
       throw new ZodCompileUnsupportedError("comparison check with NaN bound");
-    return `${value}`;
+    return "".concat(value);
   }
   if (value instanceof Date) {
     if (Number.isNaN(value.getTime())) {
@@ -15232,47 +14937,47 @@ function comparisonOperand(ctx, value) {
     }
     return addConstant(ctx, value);
   }
-  throw new ZodCompileUnsupportedError(`comparison check bound of type ${typeof value}`);
+  throw new ZodCompileUnsupportedError("comparison check bound of type ".concat(typeof value));
 }
 function generateGreaterThanCheck(doc, ctx, def, accessor) {
   const op = def.inclusive ? "<" : "<=";
-  doc.write(`if (${accessor} ${op} ${comparisonOperand(ctx, def.value)}) return INVALID;`);
+  doc.write("if (".concat(accessor, " ").concat(op, " ").concat(comparisonOperand(ctx, def.value), ") return INVALID;"));
 }
 function generateLessThanCheck(doc, ctx, def, accessor) {
   const op = def.inclusive ? ">" : ">=";
-  doc.write(`if (${accessor} ${op} ${comparisonOperand(ctx, def.value)}) return INVALID;`);
+  doc.write("if (".concat(accessor, " ").concat(op, " ").concat(comparisonOperand(ctx, def.value), ") return INVALID;"));
 }
 function generateMultipleOfCheck(doc, ctx, def, accessor) {
   if (typeof def.value === "bigint") {
     if (def.value === BigInt(0))
       throw new ZodCompileUnsupportedError("multiple_of check with a zero divisor");
-    doc.write(`if (${accessor} % ${def.value}n !== 0n) return INVALID;`);
+    doc.write("if (".concat(accessor, " % ").concat(def.value, "n !== 0n) return INVALID;"));
   } else {
     const remainder = addConstant(ctx, floatSafeRemainder);
-    doc.write(`if (${remainder}(${accessor}, ${numericOperand(def.value, "multiple_of")}) !== 0) return INVALID;`);
+    doc.write("if (".concat(remainder, "(").concat(accessor, ", ").concat(numericOperand(def.value, "multiple_of"), ") !== 0) return INVALID;"));
   }
 }
 function generateNumberFormatCheck(doc, def, accessor) {
   const format = def.format;
   switch (format) {
     case "safeint":
-      doc.write(`if (!Number.isSafeInteger(${accessor})) return INVALID;`);
+      doc.write("if (!Number.isSafeInteger(".concat(accessor, ")) return INVALID;"));
       break;
     case "int32":
-      doc.write(`if (!Number.isInteger(${accessor}) || ${accessor} < -2147483648 || ${accessor} > 2147483647) return INVALID;`);
+      doc.write("if (!Number.isInteger(".concat(accessor, ") || ").concat(accessor, " < -2147483648 || ").concat(accessor, " > 2147483647) return INVALID;"));
       break;
     case "uint32":
-      doc.write(`if (!Number.isInteger(${accessor}) || ${accessor} < 0 || ${accessor} > 4294967295) return INVALID;`);
+      doc.write("if (!Number.isInteger(".concat(accessor, ") || ").concat(accessor, " < 0 || ").concat(accessor, " > 4294967295) return INVALID;"));
       break;
     case "float32":
-      doc.write(`if (!Number.isFinite(${accessor}) || ${accessor} < -3.4028234663852886e38 || ${accessor} > 3.4028234663852886e38) return INVALID;`);
+      doc.write("if (!Number.isFinite(".concat(accessor, ") || ").concat(accessor, " < -3.4028234663852886e38 || ").concat(accessor, " > 3.4028234663852886e38) return INVALID;"));
       break;
     case "float64":
-      doc.write(`if (!Number.isFinite(${accessor})) return INVALID;`);
+      doc.write("if (!Number.isFinite(".concat(accessor, ")) return INVALID;"));
       break;
     default: {
       void format;
-      throw new ZodCompileUnsupportedError(`number format ${format}`);
+      throw new ZodCompileUnsupportedError("number format ".concat(format));
     }
   }
 }
@@ -15282,14 +14987,14 @@ function generateBigIntFormatCheck(doc, def, accessor) {
     return;
   switch (format) {
     case "int64":
-      doc.write(`if (${accessor} < -9223372036854775808n || ${accessor} > 9223372036854775807n) return INVALID;`);
+      doc.write("if (".concat(accessor, " < -9223372036854775808n || ").concat(accessor, " > 9223372036854775807n) return INVALID;"));
       break;
     case "uint64":
-      doc.write(`if (${accessor} < 0n || ${accessor} > 18446744073709551615n) return INVALID;`);
+      doc.write("if (".concat(accessor, " < 0n || ").concat(accessor, " > 18446744073709551615n) return INVALID;"));
       break;
     default: {
       void format;
-      throw new ZodCompileUnsupportedError(`bigint format ${format}`);
+      throw new ZodCompileUnsupportedError("bigint format ".concat(format));
     }
   }
 }
@@ -15297,11 +15002,11 @@ function generateMimeTypeCheck(doc, ctx, def, accessor) {
   const mimeTypes = def.mime;
   if (mimeTypes && mimeTypes.length > 0) {
     const mimeSet = addConstant(ctx, new Set(mimeTypes));
-    doc.write(`if (!${mimeSet}.has(${accessor}.type)) return INVALID;`);
+    doc.write("if (!".concat(mimeSet, ".has(").concat(accessor, ".type)) return INVALID;"));
   }
 }
 function generatePropertyCheck(doc, ctx, def, accessor) {
-  const propAccessor = `${accessor}[${JSON.stringify(def.property)}]`;
+  const propAccessor = "".concat(accessor, "[").concat(JSON.stringify(def.property), "]");
   generateCheck(doc, ctx, def.schema, propAccessor);
 }
 function generateOverwriteCheck(doc, ctx, check2, currentAccessor, newAccessor) {
@@ -15313,7 +15018,7 @@ function generateOverwriteCheck(doc, ctx, check2, currentAccessor, newAccessor) 
     throw new ZodCompileAsyncError("z.compile: async overwrite transforms are not supported");
   }
   const txConst = addConstant(ctx, tx);
-  doc.write(`const ${newAccessor} = ${txConst}(${currentAccessor});`);
+  doc.write("const ".concat(newAccessor, " = ").concat(txConst, "(").concat(currentAccessor, ");"));
 }
 function throwAsync() {
   throw new $ZodAsyncError();
@@ -15330,9 +15035,9 @@ function generateCustomRefineCheck(doc, ctx, check2, accessor) {
     const fnConst = addConstant(ctx, def.fn);
     const throwAsyncConst = addConstant(ctx, throwAsync);
     const resVar = newVar(ctx);
-    doc.write(`const ${resVar} = ${fnConst}(${accessor});`);
-    doc.write(`if (${resVar} instanceof Promise) ${throwAsyncConst}();`);
-    doc.write(`if (!${resVar}) return INVALID;`);
+    doc.write("const ".concat(resVar, " = ").concat(fnConst, "(").concat(accessor, ");"));
+    doc.write("if (".concat(resVar, " instanceof Promise) ").concat(throwAsyncConst, "();"));
+    doc.write("if (!".concat(resVar, ") return INVALID;"));
     return accessor;
   }
   if (check2._zod.check) {
@@ -15349,8 +15054,8 @@ function generateCustomRefineCheck(doc, ctx, check2, accessor) {
     };
     const helperConst = addConstant(ctx, helperFn);
     const outVar = newVar(ctx);
-    doc.write(`const ${outVar} = ${helperConst}(${accessor});`);
-    doc.write(`if (${outVar} === INVALID) return INVALID;`);
+    doc.write("const ".concat(outVar, " = ").concat(helperConst, "(").concat(accessor, ");"));
+    doc.write("if (".concat(outVar, " === INVALID) return INVALID;"));
     return outVar;
   }
   throw new ZodCompileUnsupportedError("custom check without a predicate or check function");
@@ -15385,33 +15090,33 @@ function generateStringFormatCheck(doc, ctx, def, accessor) {
   const fmt = def.format;
   if (fmt === "base64") {
     const validator = addConstant(ctx, isValidBase64);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    doc.write("if (!".concat(validator, "(").concat(accessor, ")) return INVALID;"));
     return accessor;
   }
   if (fmt === "base64url") {
     const validator = addConstant(ctx, isValidBase64URL);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    doc.write("if (!".concat(validator, "(").concat(accessor, ")) return INVALID;"));
     return accessor;
   }
   if (fmt === "jwt") {
     const validator = addConstant(ctx, isValidJWT);
     const alg = addConstant(ctx, def.alg ?? null);
-    doc.write(`if (!${validator}(${accessor}, ${alg})) return INVALID;`);
+    doc.write("if (!".concat(validator, "(").concat(accessor, ", ").concat(alg, ")) return INVALID;"));
     return accessor;
   }
   if (fmt === "ipv6") {
     const validator = addConstant(ctx, isValidIPv6);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    doc.write("if (!".concat(validator, "(").concat(accessor, ")) return INVALID;"));
     return accessor;
   }
   if (fmt === "cidrv6") {
     const validator = addConstant(ctx, isValidCIDRv6);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    doc.write("if (!".concat(validator, "(").concat(accessor, ")) return INVALID;"));
     return accessor;
   }
   if (fmt === "credit_card") {
     const validator = addConstant(ctx, isValidCreditCard);
-    doc.write(`if (!${validator}(${accessor})) return INVALID;`);
+    doc.write("if (!".concat(validator, "(").concat(accessor, ")) return INVALID;"));
     return accessor;
   }
   const formatDef = def;
@@ -15420,34 +15125,34 @@ function generateStringFormatCheck(doc, ctx, def, accessor) {
     const defConst = addConstant(ctx, def);
     const trimVar = newVar(ctx);
     const urlVar = newVar(ctx);
-    doc.write(`const ${trimVar} = ${accessor}.trim();`);
-    doc.write(`const ${urlVar} = ${parseConst}(${trimVar}, ${defConst});`);
-    doc.write(`if (typeof ${urlVar} === "number") return INVALID;`);
+    doc.write("const ".concat(trimVar, " = ").concat(accessor, ".trim();"));
+    doc.write("const ".concat(urlVar, " = ").concat(parseConst, "(").concat(trimVar, ", ").concat(defConst, ");"));
+    doc.write("if (typeof ".concat(urlVar, ' === "number") return INVALID;'));
     if (formatDef.hostname !== void 0) {
       const hostnameConst = addConstant(ctx, urlHostnameOk);
-      doc.write(`if (!${hostnameConst}(${urlVar}, ${defConst}.hostname)) return INVALID;`);
+      doc.write("if (!".concat(hostnameConst, "(").concat(urlVar, ", ").concat(defConst, ".hostname)) return INVALID;"));
     }
     if (formatDef.protocol !== void 0) {
       const protocolConst = addConstant(ctx, urlProtocolOk);
-      doc.write(`if (!${protocolConst}(${urlVar}, ${defConst}.protocol)) return INVALID;`);
+      doc.write("if (!".concat(protocolConst, "(").concat(urlVar, ", ").concat(defConst, ".protocol)) return INVALID;"));
     }
     const outputVar = newVar(ctx);
-    const outputExpr = formatDef.normalize ? `${urlVar}.href` : `${addConstant(ctx, stripTabAndNewline)}(${trimVar})`;
-    doc.write(`const ${outputVar} = ${outputExpr};`);
+    const outputExpr = formatDef.normalize ? "".concat(urlVar, ".href") : "".concat(addConstant(ctx, stripTabAndNewline), "(").concat(trimVar, ")");
+    doc.write("const ".concat(outputVar, " = ").concat(outputExpr, ";"));
     return outputVar;
   }
   const customFn = def.fn;
   if (customFn) {
     if (isAsyncFunction(customFn))
-      throw new ZodCompileUnsupportedError(`async string format ${fmt}`);
+      throw new ZodCompileUnsupportedError("async string format ".concat(fmt));
     const fnConst = addConstant(ctx, customFn);
-    doc.write(`if (!${fnConst}(${accessor})) return INVALID;`);
+    doc.write("if (!".concat(fnConst, "(").concat(accessor, ")) return INVALID;"));
     return accessor;
   }
   if (PATTERN_IS_COMPLETE.has(fmt) && def.pattern) {
     const patternConst = addConstant(ctx, def.pattern);
-    doc.write(`${patternConst}.lastIndex = 0;`);
-    doc.write(`if (!${patternConst}.test(${accessor})) return INVALID;`);
+    doc.write("".concat(patternConst, ".lastIndex = 0;"));
+    doc.write("if (!".concat(patternConst, ".test(").concat(accessor, ")) return INVALID;"));
     return accessor;
   }
   const format = def.format;
@@ -15455,27 +15160,27 @@ function generateStringFormatCheck(doc, ctx, def, accessor) {
     case "regex":
       throw new ZodCompileUnsupportedError("regex format without a pattern");
     case "lowercase":
-      doc.write(`if (${accessor} !== ${accessor}.toLowerCase()) return INVALID;`);
+      doc.write("if (".concat(accessor, " !== ").concat(accessor, ".toLowerCase()) return INVALID;"));
       break;
     case "uppercase":
-      doc.write(`if (${accessor} !== ${accessor}.toUpperCase()) return INVALID;`);
+      doc.write("if (".concat(accessor, " !== ").concat(accessor, ".toUpperCase()) return INVALID;"));
       break;
     case "includes":
-      doc.write(`if (!${accessor}.includes(${esc(def.includes)})) return INVALID;`);
+      doc.write("if (!".concat(accessor, ".includes(").concat(esc(def.includes), ")) return INVALID;"));
       break;
     case "starts_with": {
       const prefix = def.prefix;
-      doc.write(`if (${accessor}.slice(0, ${prefix.length}) !== ${esc(prefix)}) return INVALID;`);
+      doc.write("if (".concat(accessor, ".slice(0, ").concat(prefix.length, ") !== ").concat(esc(prefix), ") return INVALID;"));
       break;
     }
     case "ends_with": {
       const suffix = def.suffix;
-      doc.write(`if (${accessor}.slice(-${suffix.length}) !== ${esc(suffix)}) return INVALID;`);
+      doc.write("if (".concat(accessor, ".slice(-").concat(suffix.length, ") !== ").concat(esc(suffix), ") return INVALID;"));
       break;
     }
     default: {
       void format;
-      throw new ZodCompileUnsupportedError(`string format ${format}`);
+      throw new ZodCompileUnsupportedError("string format ".concat(format));
     }
   }
   return accessor;
@@ -15484,7 +15189,7 @@ function generateCheck(doc, ctx, schema, accessor, needsValue = true) {
   const def = schema._zod.def;
   const type = def.type;
   if (def.coerce) {
-    throw new ZodCompileUnsupportedError(`coercion (z.coerce.${type}())`);
+    throw new ZodCompileUnsupportedError("coercion (z.coerce.".concat(type, "())"));
   }
   const buildsValue = needsValue || !!def.checks?.length;
   let typeAccessor;
@@ -15548,7 +15253,7 @@ function generateCheck(doc, ctx, schema, accessor, needsValue = true) {
     case "readonly": {
       const innerOut = generateWrapperCheck(doc, ctx, schema, accessor);
       const frozenVar = newVar(ctx);
-      doc.write(`const ${frozenVar} = Object.freeze(${innerOut});`);
+      doc.write("const ".concat(frozenVar, " = Object.freeze(").concat(innerOut, ");"));
       typeAccessor = frozenVar;
       break;
     }
@@ -15604,7 +15309,7 @@ function generateCheck(doc, ctx, schema, accessor, needsValue = true) {
       break;
     default: {
       void type;
-      throw new ZodCompileUnsupportedError(`schema type ${type}`);
+      throw new ZodCompileUnsupportedError("schema type ".concat(type));
     }
   }
   if (typeAccessor === null)
@@ -15612,14 +15317,14 @@ function generateCheck(doc, ctx, schema, accessor, needsValue = true) {
   return generateChecks(doc, ctx, schema, typeAccessor);
 }
 function generateStringCheck(doc, ctx, schema, accessor) {
-  doc.write(`if (typeof ${accessor} !== "string") return INVALID;`);
+  doc.write("if (typeof ".concat(accessor, ' !== "string") return INVALID;'));
   const def = schema._zod.def;
   if (def.format === void 0)
     return accessor;
   return generateStringFormatCheck(doc, ctx, def, accessor);
 }
 function generateNumberCheck(doc, schema, accessor) {
-  doc.write(`if (typeof ${accessor} !== "number" || !Number.isFinite(${accessor})) return INVALID;`);
+  doc.write("if (typeof ".concat(accessor, ' !== "number" || !Number.isFinite(').concat(accessor, ")) return INVALID;"));
   const def = schema._zod.def;
   if (def.check === "number_format" && def.format) {
     generateNumberFormatCheck(doc, { format: def.format }, accessor);
@@ -15627,57 +15332,57 @@ function generateNumberCheck(doc, schema, accessor) {
   return accessor;
 }
 function generateBooleanCheck(doc, accessor) {
-  doc.write(`if (typeof ${accessor} !== "boolean") return INVALID;`);
+  doc.write("if (typeof ".concat(accessor, ' !== "boolean") return INVALID;'));
   return accessor;
 }
 function generateBigIntCheck(doc, schema, accessor) {
-  doc.write(`if (typeof ${accessor} !== "bigint") return INVALID;`);
+  doc.write("if (typeof ".concat(accessor, ' !== "bigint") return INVALID;'));
   const def = schema._zod.def;
   if (def.format) {
     switch (def.format) {
       case "int64":
-        doc.write(`if (${accessor} < -9223372036854775808n || ${accessor} > 9223372036854775807n) return INVALID;`);
+        doc.write("if (".concat(accessor, " < -9223372036854775808n || ").concat(accessor, " > 9223372036854775807n) return INVALID;"));
         break;
       case "uint64":
-        doc.write(`if (${accessor} < 0n || ${accessor} > 18446744073709551615n) return INVALID;`);
+        doc.write("if (".concat(accessor, " < 0n || ").concat(accessor, " > 18446744073709551615n) return INVALID;"));
         break;
     }
   }
   return accessor;
 }
 function generateSymbolCheck(doc, accessor) {
-  doc.write(`if (typeof ${accessor} !== "symbol") return INVALID;`);
+  doc.write("if (typeof ".concat(accessor, ' !== "symbol") return INVALID;'));
   return accessor;
 }
 function generateUndefinedCheck(doc, accessor) {
-  doc.write(`if (${accessor} !== undefined) return INVALID;`);
+  doc.write("if (".concat(accessor, " !== undefined) return INVALID;"));
   return accessor;
 }
 function generateNullCheck(doc, accessor) {
-  doc.write(`if (${accessor} !== null) return INVALID;`);
+  doc.write("if (".concat(accessor, " !== null) return INVALID;"));
   return accessor;
 }
 function generateVoidCheck(doc, accessor) {
-  doc.write(`if (${accessor} !== undefined) return INVALID;`);
+  doc.write("if (".concat(accessor, " !== undefined) return INVALID;"));
   return accessor;
 }
 function generateNaNCheck(doc, accessor) {
-  doc.write(`if (typeof ${accessor} !== "number" || !Number.isNaN(${accessor})) return INVALID;`);
+  doc.write("if (typeof ".concat(accessor, ' !== "number" || !Number.isNaN(').concat(accessor, ")) return INVALID;"));
   return accessor;
 }
 function generateDateCheck(doc, accessor) {
-  doc.write(`if (!(${accessor} instanceof Date) || Number.isNaN(${accessor}.getTime())) return INVALID;`);
+  doc.write("if (!(".concat(accessor, " instanceof Date) || Number.isNaN(").concat(accessor, ".getTime())) return INVALID;"));
   return accessor;
 }
 function generateObjectCheck(doc, ctx, schema, accessor, buildsValue = true) {
   const def = schema._zod.def;
-  doc.write(`if (typeof ${accessor} !== "object" || ${accessor} === null || Array.isArray(${accessor})) return INVALID;`);
+  doc.write("if (typeof ".concat(accessor, ' !== "object" || ').concat(accessor, " === null || Array.isArray(").concat(accessor, ")) return INVALID;"));
   const shape = def.shape;
   const keys = Object.keys(shape);
   const symbolKeys = Object.getOwnPropertySymbols(shape);
   const allKeys = symbolKeys.length ? [...keys, ...symbolKeys] : keys;
   const keyExpr = (k) => typeof k === "symbol" ? addConstant(ctx, k) : esc(k);
-  const propKey = (k) => typeof k === "symbol" ? `[${keyExpr(k)}]` : esc(k);
+  const propKey = (k) => typeof k === "symbol" ? "[".concat(keyExpr(k), "]") : esc(k);
   const propShape = shape;
   if (keys.includes("__proto__")) {
     throw new ZodCompileUnsupportedError('object shape key "__proto__"');
@@ -15687,29 +15392,29 @@ function generateObjectCheck(doc, ctx, schema, accessor, buildsValue = true) {
     const propSchema = propShape[key];
     const kx = keyExpr(key);
     const inputVar = newVar(ctx);
-    doc.write(`const ${inputVar} = ${accessor}[${kx}];`);
+    doc.write("const ".concat(inputVar, " = ").concat(accessor, "[").concat(kx, "];"));
     if (propSchema._zod.optin !== void 0) {
       const outputVar2 = newVar(ctx);
-      doc.write(`let ${outputVar2} = (() => {`);
+      doc.write("let ".concat(outputVar2, " = (() => {"));
       doc.indented((d) => {
         const outputAccessor = compileChild(d, ctx, propSchema, inputVar);
-        d.write(`return ${outputAccessor};`);
+        d.write("return ".concat(outputAccessor, ";"));
       });
-      doc.write(`})();`);
+      doc.write("})();");
       if (propSchema._zod.optout === "optional") {
-        doc.write(`if (${outputVar2} === INVALID) {`);
+        doc.write("if (".concat(outputVar2, " === INVALID) {"));
         doc.indented((d) => {
-          d.write(`if (${kx} in ${accessor}) return INVALID;`);
-          d.write(`${outputVar2} = undefined;`);
+          d.write("if (".concat(kx, " in ").concat(accessor, ") return INVALID;"));
+          d.write("".concat(outputVar2, " = undefined;"));
         });
-        doc.write(`}`);
+        doc.write("}");
       } else {
-        doc.write(`if (${outputVar2} === INVALID) return INVALID;`);
+        doc.write("if (".concat(outputVar2, " === INVALID) return INVALID;"));
       }
       propOutputs.set(key, outputVar2);
     } else {
       if (requiresPresenceCheck(propSchema)) {
-        doc.write(`if (!(${kx} in ${accessor})) return INVALID;`);
+        doc.write("if (!(".concat(kx, " in ").concat(accessor, ")) return INVALID;"));
       }
       const outputAccessor = compileChild(doc, ctx, propSchema, inputVar, buildsValue);
       if (outputAccessor !== null)
@@ -15721,12 +15426,12 @@ function generateObjectCheck(doc, ctx, schema, accessor, buildsValue = true) {
   if (catchall) {
     const catchallType = catchall._zod.def.type;
     if (catchallType === "never") {
-      const condition = keys.map((k) => `k !== ${esc(k)}`).join(" && ") || "true";
-      doc.write(`for (const k in ${accessor}) {`);
+      const condition = keys.map((k) => "k !== ".concat(esc(k))).join(" && ") || "true";
+      doc.write("for (const k in ".concat(accessor, ") {"));
       doc.indented((d) => {
-        d.write(`if (${condition}) return INVALID;`);
+        d.write("if (".concat(condition, ") return INVALID;"));
       });
-      doc.write(`}`);
+      doc.write("}");
     } else if ((catchallType === "unknown" || catchallType === "any") && !catchall._zod.def.checks?.length) {
       unknownKeysMode = "passthrough";
     } else {
@@ -15738,53 +15443,53 @@ function generateObjectCheck(doc, ctx, schema, accessor, buildsValue = true) {
   if (!buildsValue) {
     if (unknownKeysMode === "schema") {
       const knownSet = keys.length > 0 ? addConstant(ctx, new Set(keys)) : null;
-      doc.write(`for (const k in ${accessor}) {`);
+      doc.write("for (const k in ".concat(accessor, ") {"));
       doc.indented((d) => {
-        d.write(`if (k === "__proto__") continue;`);
+        d.write('if (k === "__proto__") continue;');
         if (knownSet)
-          d.write(`if (${knownSet}.has(k)) continue;`);
+          d.write("if (".concat(knownSet, ".has(k)) continue;"));
         const valVar = newVar(ctx);
-        d.write(`const ${valVar} = ${accessor}[k];`);
+        d.write("const ".concat(valVar, " = ").concat(accessor, "[k];"));
         compileChild(d, ctx, catchall, valVar, false);
       });
-      doc.write(`}`);
+      doc.write("}");
     }
     return null;
   }
   if (!hasConditionalKeys) {
-    const propLiterals = allKeys.map((k) => `${propKey(k)}: ${propOutputs.get(k)}`).join(", ");
-    doc.write(`const ${outputVar} = { ${propLiterals} };`);
+    const propLiterals = allKeys.map((k) => "".concat(propKey(k), ": ").concat(propOutputs.get(k))).join(", ");
+    doc.write("const ".concat(outputVar, " = { ").concat(propLiterals, " };"));
   } else {
-    doc.write(`const ${outputVar} = {};`);
+    doc.write("const ".concat(outputVar, " = {};"));
     for (const k of allKeys) {
       const kx = keyExpr(k);
       const out = propOutputs.get(k);
       if (dropsWhenAbsent(propShape[k])) {
-        doc.write(`if (${kx} in ${accessor}) ${outputVar}[${kx}] = ${out};`);
+        doc.write("if (".concat(kx, " in ").concat(accessor, ") ").concat(outputVar, "[").concat(kx, "] = ").concat(out, ";"));
       } else if (mayOutputUndefined(propShape[k])) {
-        doc.write(`if (${out} !== undefined || ${kx} in ${accessor}) ${outputVar}[${kx}] = ${out};`);
+        doc.write("if (".concat(out, " !== undefined || ").concat(kx, " in ").concat(accessor, ") ").concat(outputVar, "[").concat(kx, "] = ").concat(out, ";"));
       } else {
-        doc.write(`${outputVar}[${kx}] = ${out};`);
+        doc.write("".concat(outputVar, "[").concat(kx, "] = ").concat(out, ";"));
       }
     }
   }
   if (unknownKeysMode !== "none") {
     const knownSet = keys.length > 0 ? addConstant(ctx, new Set(keys)) : null;
-    doc.write(`for (const k in ${accessor}) {`);
+    doc.write("for (const k in ".concat(accessor, ") {"));
     doc.indented((d) => {
-      d.write(`if (k === "__proto__") continue;`);
+      d.write('if (k === "__proto__") continue;');
       if (knownSet)
-        d.write(`if (${knownSet}.has(k)) continue;`);
+        d.write("if (".concat(knownSet, ".has(k)) continue;"));
       if (unknownKeysMode === "passthrough") {
-        d.write(`${outputVar}[k] = ${accessor}[k];`);
+        d.write("".concat(outputVar, "[k] = ").concat(accessor, "[k];"));
       } else {
         const valVar = newVar(ctx);
-        d.write(`const ${valVar} = ${accessor}[k];`);
+        d.write("const ".concat(valVar, " = ").concat(accessor, "[k];"));
         const catchallOut = compileChild(d, ctx, catchall, valVar);
-        d.write(`${outputVar}[k] = ${catchallOut};`);
+        d.write("".concat(outputVar, "[k] = ").concat(catchallOut, ";"));
       }
     });
-    doc.write(`}`);
+    doc.write("}");
   }
   return outputVar;
 }
@@ -15796,35 +15501,35 @@ function generateOptionalCheck(doc, ctx, schema, accessor, buildsValue = true) {
   if (def.innerType._zod.optin === "defaulted") {
     const outputVar2 = newVar(ctx);
     const branchVar = newVar(ctx);
-    doc.write(`let ${outputVar2};`);
-    doc.write(`if (${accessor} === undefined) {`);
+    doc.write("let ".concat(outputVar2, ";"));
+    doc.write("if (".concat(accessor, " === undefined) {"));
     doc.indented((d) => {
-      d.write(`const ${branchVar} = (() => {`);
+      d.write("const ".concat(branchVar, " = (() => {"));
       d.indented((d2) => {
         const innerOutput = generateCheck(d2, ctx, def.innerType, accessor);
-        d2.write(`return ${innerOutput};`);
+        d2.write("return ".concat(innerOutput, ";"));
       });
-      d.write(`})();`);
-      d.write(`if (${branchVar} !== INVALID) ${outputVar2} = ${branchVar};`);
+      d.write("})();");
+      d.write("if (".concat(branchVar, " !== INVALID) ").concat(outputVar2, " = ").concat(branchVar, ";"));
     });
-    doc.write(`} else {`);
+    doc.write("} else {");
     doc.indented((d) => {
       const innerOutput = generateCheck(d, ctx, def.innerType, accessor);
-      d.write(`${outputVar2} = ${innerOutput};`);
+      d.write("".concat(outputVar2, " = ").concat(innerOutput, ";"));
     });
-    doc.write(`}`);
+    doc.write("}");
     return outputVar2;
   }
   const outputVar = buildsValue ? newVar(ctx) : null;
   if (outputVar)
-    doc.write(`let ${outputVar};`);
-  doc.write(`if (${accessor} !== undefined) {`);
+    doc.write("let ".concat(outputVar, ";"));
+  doc.write("if (".concat(accessor, " !== undefined) {"));
   doc.indented((d) => {
     const innerOutput = generateCheck(d, ctx, def.innerType, accessor, buildsValue);
     if (outputVar && innerOutput !== null)
-      d.write(`${outputVar} = ${innerOutput};`);
+      d.write("".concat(outputVar, " = ").concat(innerOutput, ";"));
   });
-  doc.write(`}`);
+  doc.write("}");
   return outputVar;
 }
 function isExactOptional(schema) {
@@ -15940,32 +15645,32 @@ function generateNullableCheck(doc, ctx, schema, accessor, buildsValue = true) {
   const def = schema._zod.def;
   const outputVar = buildsValue ? newVar(ctx) : null;
   if (outputVar)
-    doc.write(`let ${outputVar} = null;`);
-  doc.write(`if (${accessor} !== null) {`);
+    doc.write("let ".concat(outputVar, " = null;"));
+  doc.write("if (".concat(accessor, " !== null) {"));
   doc.indented((d) => {
     const innerOutput = generateCheck(d, ctx, def.innerType, accessor, buildsValue);
     if (outputVar && innerOutput !== null)
-      d.write(`${outputVar} = ${innerOutput};`);
+      d.write("".concat(outputVar, " = ").concat(innerOutput, ";"));
   });
-  doc.write(`}`);
+  doc.write("}");
   return outputVar;
 }
 function generateArrayCheck(doc, ctx, schema, accessor, buildsValue = true) {
   const def = schema._zod.def;
-  doc.write(`if (!Array.isArray(${accessor})) return INVALID;`);
+  doc.write("if (!Array.isArray(".concat(accessor, ")) return INVALID;"));
   const outputVar = buildsValue ? newVar(ctx) : null;
   const iVar = newVar(ctx);
   const elemVar = newVar(ctx);
   if (outputVar)
-    doc.write(`const ${outputVar} = new Array(${accessor}.length);`);
-  doc.write(`for (let ${iVar} = 0; ${iVar} < ${accessor}.length; ${iVar}++) {`);
+    doc.write("const ".concat(outputVar, " = new Array(").concat(accessor, ".length);"));
+  doc.write("for (let ".concat(iVar, " = 0; ").concat(iVar, " < ").concat(accessor, ".length; ").concat(iVar, "++) {"));
   doc.indented((d) => {
-    d.write(`const ${elemVar} = ${accessor}[${iVar}];`);
+    d.write("const ".concat(elemVar, " = ").concat(accessor, "[").concat(iVar, "];"));
     const elemOutput = compileChild(d, ctx, def.element, elemVar, buildsValue);
     if (outputVar && elemOutput !== null)
-      d.write(`${outputVar}[${iVar}] = ${elemOutput};`);
+      d.write("".concat(outputVar, "[").concat(iVar, "] = ").concat(elemOutput, ";"));
   });
-  doc.write(`}`);
+  doc.write("}");
   return outputVar;
 }
 function generateLiteralCheck(doc, ctx, schema, accessor) {
@@ -15973,27 +15678,27 @@ function generateLiteralCheck(doc, ctx, schema, accessor) {
   const values = def.values;
   if (values.length !== 1) {
     const literalSet = addConstant(ctx, new Set(values));
-    doc.write(`if (!${literalSet}.has(${accessor})) return INVALID;`);
+    doc.write("if (!".concat(literalSet, ".has(").concat(accessor, ")) return INVALID;"));
     return accessor;
   }
   const value = values[0];
   if (typeof value === "number" && Number.isNaN(value)) {
     const literalSet = addConstant(ctx, new Set(values));
-    doc.write(`if (!${literalSet}.has(${accessor})) return INVALID;`);
+    doc.write("if (!".concat(literalSet, ".has(").concat(accessor, ")) return INVALID;"));
     return accessor;
   }
   if (typeof value === "string") {
-    doc.write(`if (${accessor} !== ${esc(value)}) return INVALID;`);
+    doc.write("if (".concat(accessor, " !== ").concat(esc(value), ") return INVALID;"));
   } else if (typeof value === "number" || typeof value === "boolean") {
-    doc.write(`if (${accessor} !== ${value}) return INVALID;`);
+    doc.write("if (".concat(accessor, " !== ").concat(value, ") return INVALID;"));
   } else if (value === null) {
-    doc.write(`if (${accessor} !== null) return INVALID;`);
+    doc.write("if (".concat(accessor, " !== null) return INVALID;"));
   } else if (value === void 0) {
-    doc.write(`if (${accessor} !== undefined) return INVALID;`);
+    doc.write("if (".concat(accessor, " !== undefined) return INVALID;"));
   } else if (typeof value === "bigint") {
-    doc.write(`if (${accessor} !== ${value}n) return INVALID;`);
+    doc.write("if (".concat(accessor, " !== ").concat(value, "n) return INVALID;"));
   } else {
-    throw new ZodCompileUnsupportedError(`literal type ${typeof value}`);
+    throw new ZodCompileUnsupportedError("literal type ".concat(typeof value));
   }
   return accessor;
 }
@@ -16003,7 +15708,7 @@ function generateEnumCheck(doc, ctx, schema, accessor) {
     throw new ZodCompileUnsupportedError("enum schema without enumerated values");
   }
   const enumSet = addConstant(ctx, values);
-  doc.write(`if (!${enumSet}.has(${accessor})) return INVALID;`);
+  doc.write("if (!".concat(enumSet, ".has(").concat(accessor, ")) return INVALID;"));
   return accessor;
 }
 function generateWrapperCheck(doc, ctx, schema, accessor) {
@@ -16020,33 +15725,33 @@ function generateDefaultCheck(doc, ctx, schema, accessor) {
     }
     const defaultFn = addConstant(ctx, defaultGetter);
     const inputVar = newVar(ctx);
-    doc.write(`let ${inputVar} = ${accessor};`);
-    doc.write(`if (${accessor} === undefined) ${inputVar} = ${defaultFn}();`);
+    doc.write("let ".concat(inputVar, " = ").concat(accessor, ";"));
+    doc.write("if (".concat(accessor, " === undefined) ").concat(inputVar, " = ").concat(defaultFn, "();"));
     return generateCheck(doc, ctx, def.innerType, inputVar);
   }
   const outputVar = newVar(ctx);
   if (defaultGetter) {
     const defaultFn = addConstant(ctx, defaultGetter);
     const cloneFn = addConstant(ctx, shallowClone);
-    doc.write(`let ${outputVar};`);
-    doc.write(`if (${accessor} === undefined) {`);
+    doc.write("let ".concat(outputVar, ";"));
+    doc.write("if (".concat(accessor, " === undefined) {"));
     doc.indented((d) => {
-      d.write(`${outputVar} = ${cloneFn}(${defaultFn}());`);
+      d.write("".concat(outputVar, " = ").concat(cloneFn, "(").concat(defaultFn, "());"));
     });
-    doc.write(`} else {`);
+    doc.write("} else {");
     doc.indented((d) => {
       const innerOutput = generateCheck(d, ctx, def.innerType, accessor);
-      d.write(`${outputVar} = ${innerOutput} === undefined ? ${cloneFn}(${defaultFn}()) : ${innerOutput};`);
+      d.write("".concat(outputVar, " = ").concat(innerOutput, " === undefined ? ").concat(cloneFn, "(").concat(defaultFn, "()) : ").concat(innerOutput, ";"));
     });
-    doc.write(`}`);
+    doc.write("}");
   } else {
-    doc.write(`let ${outputVar};`);
-    doc.write(`if (${accessor} !== undefined) {`);
+    doc.write("let ".concat(outputVar, ";"));
+    doc.write("if (".concat(accessor, " !== undefined) {"));
     doc.indented((d) => {
       const innerOutput = generateCheck(d, ctx, def.innerType, accessor);
-      d.write(`${outputVar} = ${innerOutput};`);
+      d.write("".concat(outputVar, " = ").concat(innerOutput, ";"));
     });
-    doc.write(`}`);
+    doc.write("}");
   }
   return outputVar;
 }
@@ -16054,74 +15759,74 @@ function generateNonOptionalCheck(doc, ctx, schema, accessor) {
   const def = schema._zod.def;
   const innerOutput = generateCheck(doc, ctx, def.innerType, accessor);
   const outputVar = newVar(ctx);
-  doc.write(`const ${outputVar} = ${innerOutput};`);
-  doc.write(`if (${outputVar} === undefined) return INVALID;`);
+  doc.write("const ".concat(outputVar, " = ").concat(innerOutput, ";"));
+  doc.write("if (".concat(outputVar, " === undefined) return INVALID;"));
   return outputVar;
 }
 function generateTupleCheck(doc, ctx, schema, accessor) {
   const def = schema._zod.def;
   const items = def.items;
   const rest = def.rest;
-  doc.write(`if (!Array.isArray(${accessor})) return INVALID;`);
+  doc.write("if (!Array.isArray(".concat(accessor, ")) return INVALID;"));
   const optinStart = getTupleOptStart2(items, "optin");
   const optoutStart = getTupleOptStart2(items, "optout");
   if (rest) {
-    doc.write(`if (${accessor}.length < ${optinStart}) return INVALID;`);
+    doc.write("if (".concat(accessor, ".length < ").concat(optinStart, ") return INVALID;"));
   } else {
-    doc.write(`if (${accessor}.length < ${optinStart} || ${accessor}.length > ${items.length}) return INVALID;`);
+    doc.write("if (".concat(accessor, ".length < ").concat(optinStart, " || ").concat(accessor, ".length > ").concat(items.length, ") return INVALID;"));
   }
   const outputVar = newVar(ctx);
-  doc.write(`const ${outputVar} = [];`);
+  doc.write("const ".concat(outputVar, " = [];"));
   for (let i = 0; i < items.length; i++) {
     const itemSchema = items[i];
     if (i >= optoutStart) {
-      doc.write(`if (${outputVar}.length === ${i}) {`);
+      doc.write("if (".concat(outputVar, ".length === ").concat(i, ") {"));
       doc.indented((d) => {
-        d.write(`if (${i} < ${accessor}.length) {`);
+        d.write("if (".concat(i, " < ").concat(accessor, ".length) {"));
         d.indented((d2) => {
           const elemVar = newVar(ctx);
-          d2.write(`const ${elemVar} = ${accessor}[${i}];`);
+          d2.write("const ".concat(elemVar, " = ").concat(accessor, "[").concat(i, "];"));
           const elemOutput = compileChild(d2, ctx, itemSchema, elemVar);
-          d2.write(`${outputVar}[${i}] = ${elemOutput};`);
+          d2.write("".concat(outputVar, "[").concat(i, "] = ").concat(elemOutput, ";"));
         });
-        d.write(`} else {`);
+        d.write("} else {");
         d.indented((d2) => {
           if (dropsWhenAbsent(itemSchema)) {
-            d2.write(`${outputVar}.length = ${i};`);
+            d2.write("".concat(outputVar, ".length = ").concat(i, ";"));
             return;
           }
           const elemVar = newVar(ctx);
           const branchVar = newVar(ctx);
-          d2.write(`const ${elemVar} = undefined;`);
-          d2.write(`const ${branchVar} = (() => {`);
+          d2.write("const ".concat(elemVar, " = undefined;"));
+          d2.write("const ".concat(branchVar, " = (() => {"));
           d2.indented((d3) => {
             const elemOutput = compileChild(d3, ctx, itemSchema, elemVar);
-            d3.write(`return ${elemOutput};`);
+            d3.write("return ".concat(elemOutput, ";"));
           });
-          d2.write(`})();`);
-          d2.write(`if (${branchVar} === INVALID || ${branchVar} === undefined) ${outputVar}.length = ${i};`);
-          d2.write(`else ${outputVar}[${i}] = ${branchVar};`);
+          d2.write("})();");
+          d2.write("if (".concat(branchVar, " === INVALID || ").concat(branchVar, " === undefined) ").concat(outputVar, ".length = ").concat(i, ";"));
+          d2.write("else ".concat(outputVar, "[").concat(i, "] = ").concat(branchVar, ";"));
         });
-        d.write(`}`);
+        d.write("}");
       });
-      doc.write(`}`);
+      doc.write("}");
     } else {
       const elemVar = newVar(ctx);
-      doc.write(`const ${elemVar} = ${accessor}[${i}];`);
+      doc.write("const ".concat(elemVar, " = ").concat(accessor, "[").concat(i, "];"));
       const elemOutput = compileChild(doc, ctx, itemSchema, elemVar);
-      doc.write(`${outputVar}[${i}] = ${elemOutput};`);
+      doc.write("".concat(outputVar, "[").concat(i, "] = ").concat(elemOutput, ";"));
     }
   }
   if (rest) {
     const iVar = newVar(ctx);
     const elemVar = newVar(ctx);
-    doc.write(`for (let ${iVar} = ${items.length}; ${iVar} < ${accessor}.length; ${iVar}++) {`);
+    doc.write("for (let ".concat(iVar, " = ").concat(items.length, "; ").concat(iVar, " < ").concat(accessor, ".length; ").concat(iVar, "++) {"));
     doc.indented((d) => {
-      d.write(`const ${elemVar} = ${accessor}[${iVar}];`);
+      d.write("const ".concat(elemVar, " = ").concat(accessor, "[").concat(iVar, "];"));
       const elemOutput = compileChild(d, ctx, rest, elemVar);
-      d.write(`${outputVar}[${iVar}] = ${elemOutput};`);
+      d.write("".concat(outputVar, "[").concat(iVar, "] = ").concat(elemOutput, ";"));
     });
-    doc.write(`}`);
+    doc.write("}");
   }
   return outputVar;
 }
@@ -16153,25 +15858,25 @@ function generateUnionCheck(doc, ctx, schema, accessor) {
   if (allLiterals) {
     const values = new Set(options.flatMap((opt) => opt._zod.def.values));
     const valuesConst = addConstant(ctx, values);
-    doc.write(`if (!${valuesConst}.has(${accessor})) return INVALID;`);
+    doc.write("if (!".concat(valuesConst, ".has(").concat(accessor, ")) return INVALID;"));
     return accessor;
   }
   const outputVar = newVar(ctx);
-  doc.write(`let ${outputVar};`);
+  doc.write("let ".concat(outputVar, ";"));
   for (let i = 0; i < options.length; i++) {
     const opt = options[i];
     if (i === 0) {
-      doc.write(`${outputVar} = (() => {`);
+      doc.write("".concat(outputVar, " = (() => {"));
     } else {
-      doc.write(`if (${outputVar} === INVALID) ${outputVar} = (() => {`);
+      doc.write("if (".concat(outputVar, " === INVALID) ").concat(outputVar, " = (() => {"));
     }
     doc.indented((d) => {
       const branchOutput = generateCheck(d, ctx, opt, accessor);
-      d.write(`return ${branchOutput};`);
+      d.write("return ".concat(branchOutput, ";"));
     });
-    doc.write(`})();`);
+    doc.write("})();");
   }
-  doc.write(`if (${outputVar} === INVALID) return INVALID;`);
+  doc.write("if (".concat(outputVar, " === INVALID) return INVALID;"));
   return outputVar;
 }
 function generateDiscriminatedUnionCheck(doc, ctx, def, accessor) {
@@ -16184,8 +15889,8 @@ function generateDiscriminatedUnionCheck(doc, ctx, def, accessor) {
   }
   const discVar = newVar(ctx);
   const outputVar = newVar(ctx);
-  doc.write(`const ${discVar} = ${accessor}?.[${esc(def.discriminator)}];`);
-  doc.write(`let ${outputVar};`);
+  doc.write("const ".concat(discVar, " = ").concat(accessor, "?.[").concat(esc(def.discriminator), "];"));
+  doc.write("let ".concat(outputVar, ";"));
   let firstBranch = true;
   const claimed = /* @__PURE__ */ new Set();
   for (const option of def.options) {
@@ -16195,44 +15900,44 @@ function generateDiscriminatedUnionCheck(doc, ctx, def, accessor) {
     }
     for (const value of values) {
       if (claimed.has(value)) {
-        throw new ZodCompileUnsupportedError(`duplicate discriminator value ${String(value)}`);
+        throw new ZodCompileUnsupportedError("duplicate discriminator value ".concat(String(value)));
       }
       claimed.add(value);
     }
     const conditions = Array.from(values, (value) => literalEquality(ctx, discVar, value));
     const prefix = firstBranch ? "if" : "else if";
-    doc.write(`${prefix} (${conditions.join(" || ")}) {`);
+    doc.write("".concat(prefix, " (").concat(conditions.join(" || "), ") {"));
     doc.indented((d) => {
       const branchOutput = generateCheck(d, ctx, option, accessor);
-      d.write(`${outputVar} = ${branchOutput};`);
+      d.write("".concat(outputVar, " = ").concat(branchOutput, ";"));
     });
-    doc.write(`}`);
+    doc.write("}");
     firstBranch = false;
   }
-  doc.write(`else { return INVALID; }`);
+  doc.write("else { return INVALID; }");
   return outputVar;
 }
 function literalEquality(ctx, accessor, value) {
   if (typeof value === "string")
-    return `${accessor} === ${esc(value)}`;
+    return "".concat(accessor, " === ").concat(esc(value));
   if (typeof value === "number") {
     if (Number.isNaN(value))
-      return `Number.isNaN(${accessor})`;
-    return `${accessor} === ${value}`;
+      return "Number.isNaN(".concat(accessor, ")");
+    return "".concat(accessor, " === ").concat(value);
   }
   if (typeof value === "boolean")
-    return `${accessor} === ${value}`;
+    return "".concat(accessor, " === ").concat(value);
   if (value === null)
-    return `${accessor} === null`;
+    return "".concat(accessor, " === null");
   if (value === void 0)
-    return `${accessor} === undefined`;
+    return "".concat(accessor, " === undefined");
   if (typeof value === "bigint")
-    return `${accessor} === ${value}n`;
+    return "".concat(accessor, " === ").concat(value, "n");
   if (typeof value === "symbol") {
     const symbolConst = addConstant(ctx, value);
-    return `${accessor} === ${symbolConst}`;
+    return "".concat(accessor, " === ").concat(symbolConst);
   }
-  throw new ZodCompileUnsupportedError(`literal discriminator value ${String(value)}`);
+  throw new ZodCompileUnsupportedError("literal discriminator value ".concat(String(value)));
 }
 function generateIntersectionCheck(doc, ctx, schema, accessor) {
   const def = schema._zod.def;
@@ -16240,25 +15945,25 @@ function generateIntersectionCheck(doc, ctx, schema, accessor) {
   const rightOutput = compileChild(doc, ctx, def.right, accessor);
   const mergeConst = addConstant(ctx, mergeValues);
   const mergedVar = newVar(ctx);
-  doc.write(`const ${mergedVar} = ${mergeConst}(${leftOutput}, ${rightOutput});`);
-  doc.write(`if (!${mergedVar}.valid) return INVALID;`);
-  return `${mergedVar}.data`;
+  doc.write("const ".concat(mergedVar, " = ").concat(mergeConst, "(").concat(leftOutput, ", ").concat(rightOutput, ");"));
+  doc.write("if (!".concat(mergedVar, ".valid) return INVALID;"));
+  return "".concat(mergedVar, ".data");
 }
 function generateRecordCheck(doc, ctx, schema, accessor) {
   const def = schema._zod.def;
   const isPlainObjectConst = addConstant(ctx, isPlainObject);
-  doc.write(`if (!${isPlainObjectConst}(${accessor})) return INVALID;`);
+  doc.write("if (!".concat(isPlainObjectConst, "(").concat(accessor, ")) return INVALID;"));
   const outputVar = newVar(ctx);
   const kVar = newVar(ctx);
   const valVar = newVar(ctx);
-  doc.write(`const ${outputVar} = {};`);
+  doc.write("const ".concat(outputVar, " = {};"));
   const recordDef = def;
   const keyValues = recordDef.partial ? void 0 : def.keyType._zod.values;
   if (keyValues) {
     const inputKeys = [];
     for (const key of keyValues) {
       if (!(typeof key === "string" || typeof key === "number" || typeof key === "symbol")) {
-        throw new ZodCompileUnsupportedError(`record key value ${String(key)}`);
+        throw new ZodCompileUnsupportedError("record key value ".concat(String(key)));
       }
       const inputKey = typeof key === "number" ? key.toString() : key;
       if (inputKey === "__proto__") {
@@ -16268,21 +15973,21 @@ function generateRecordCheck(doc, ctx, schema, accessor) {
       const keyConst = addConstant(ctx, key);
       const outKey = generateCheck(doc, ctx, def.keyType, keyConst);
       const valueVar = newVar(ctx);
-      doc.write(`const ${valueVar} = ${accessor}[${literalPropertyKey(ctx, inputKey)}];`);
+      doc.write("const ".concat(valueVar, " = ").concat(accessor, "[").concat(literalPropertyKey(ctx, inputKey), "];"));
       const valOutput = compileChild(doc, ctx, def.valueType, valueVar);
-      doc.write(`${outputVar}[${outKey}] = ${valOutput};`);
+      doc.write("".concat(outputVar, "[").concat(outKey, "] = ").concat(valOutput, ";"));
     }
     const knownKeysConst = addConstant(ctx, new Set(inputKeys));
-    doc.write(`for (const ${kVar} in ${accessor}) {`);
+    doc.write("for (const ".concat(kVar, " in ").concat(accessor, ") {"));
     doc.indented((d) => {
-      d.write(`if (${knownKeysConst}.has(${kVar})) continue;`);
+      d.write("if (".concat(knownKeysConst, ".has(").concat(kVar, ")) continue;"));
       if (recordDef.mode === "loose") {
-        d.write(`if (${kVar} !== "__proto__") ${outputVar}[${kVar}] = ${accessor}[${kVar}];`);
+        d.write("if (".concat(kVar, ' !== "__proto__") ').concat(outputVar, "[").concat(kVar, "] = ").concat(accessor, "[").concat(kVar, "];"));
       } else {
-        d.write(`return INVALID;`);
+        d.write("return INVALID;");
       }
     });
-    doc.write(`}`);
+    doc.write("}");
     return outputVar;
   }
   const keyDef = def.keyType._zod.def;
@@ -16293,37 +15998,37 @@ function generateRecordCheck(doc, ctx, schema, accessor) {
     const numericConst = addConstant(ctx, number);
     const propIsEnumerableConst = addConstant(ctx, Object.prototype.propertyIsEnumerable);
     const outKeyVar = newVar(ctx);
-    doc.write(`for (const ${kVar} of Reflect.ownKeys(${accessor})) {`);
+    doc.write("for (const ".concat(kVar, " of Reflect.ownKeys(").concat(accessor, ")) {"));
     doc.indented((d) => {
-      d.write(`if (${kVar} === "__proto__") continue;`);
-      d.write(`if (!${propIsEnumerableConst}.call(${accessor}, ${kVar})) continue;`);
-      d.write(`let ${outKeyVar} = ${keyFast}(${kVar});`);
-      d.write(`if (${outKeyVar} === INVALID && typeof ${kVar} === "string" && ${numericConst}.test(${kVar})) ${outKeyVar} = ${keyFast}(Number(${kVar}));`);
+      d.write("if (".concat(kVar, ' === "__proto__") continue;'));
+      d.write("if (!".concat(propIsEnumerableConst, ".call(").concat(accessor, ", ").concat(kVar, ")) continue;"));
+      d.write("let ".concat(outKeyVar, " = ").concat(keyFast, "(").concat(kVar, ");"));
+      d.write("if (".concat(outKeyVar, " === INVALID && typeof ").concat(kVar, ' === "string" && ').concat(numericConst, ".test(").concat(kVar, ")) ").concat(outKeyVar, " = ").concat(keyFast, "(Number(").concat(kVar, "));"));
       if (isLoose) {
-        d.write(`if (${outKeyVar} === INVALID) { ${outputVar}[${kVar}] = ${accessor}[${kVar}]; continue; }`);
+        d.write("if (".concat(outKeyVar, " === INVALID) { ").concat(outputVar, "[").concat(kVar, "] = ").concat(accessor, "[").concat(kVar, "]; continue; }"));
       } else {
-        d.write(`if (${outKeyVar} === INVALID) return INVALID;`);
+        d.write("if (".concat(outKeyVar, " === INVALID) return INVALID;"));
       }
-      d.write(`if (${outKeyVar} === "__proto__") continue;`);
+      d.write("if (".concat(outKeyVar, ' === "__proto__") continue;'));
       const valueVar = newVar(ctx);
-      d.write(`const ${valueVar} = ${accessor}[${kVar}];`);
+      d.write("const ".concat(valueVar, " = ").concat(accessor, "[").concat(kVar, "];"));
       const valOutput = compileChild(d, ctx, def.valueType, valueVar);
-      d.write(`${outputVar}[${outKeyVar}] = ${valOutput};`);
+      d.write("".concat(outputVar, "[").concat(outKeyVar, "] = ").concat(valOutput, ";"));
     });
-    doc.write(`}`);
+    doc.write("}");
     return outputVar;
   }
   const propIsEnumerable = addConstant(ctx, Object.prototype.propertyIsEnumerable);
-  doc.write(`for (const ${kVar} of Reflect.ownKeys(${accessor})) {`);
+  doc.write("for (const ".concat(kVar, " of Reflect.ownKeys(").concat(accessor, ")) {"));
   doc.indented((d) => {
-    d.write(`if (${kVar} === "__proto__") continue;`);
-    d.write(`if (!${propIsEnumerable}.call(${accessor}, ${kVar})) continue;`);
-    d.write(`if (typeof ${kVar} !== "string") return INVALID;`);
-    d.write(`const ${valVar} = ${accessor}[${kVar}];`);
+    d.write("if (".concat(kVar, ' === "__proto__") continue;'));
+    d.write("if (!".concat(propIsEnumerable, ".call(").concat(accessor, ", ").concat(kVar, ")) continue;"));
+    d.write("if (typeof ".concat(kVar, ' !== "string") return INVALID;'));
+    d.write("const ".concat(valVar, " = ").concat(accessor, "[").concat(kVar, "];"));
     const valOutput = compileChild(d, ctx, def.valueType, valVar);
-    d.write(`${outputVar}[${kVar}] = ${valOutput};`);
+    d.write("".concat(outputVar, "[").concat(kVar, "] = ").concat(valOutput, ";"));
   });
-  doc.write(`}`);
+  doc.write("}");
   return outputVar;
 }
 function literalPropertyKey(ctx, key) {
@@ -16333,45 +16038,45 @@ function literalPropertyKey(ctx, key) {
 }
 function generateMapCheck(doc, ctx, schema, accessor) {
   const def = schema._zod.def;
-  doc.write(`if (!(${accessor} instanceof Map)) return INVALID;`);
+  doc.write("if (!(".concat(accessor, " instanceof Map)) return INVALID;"));
   const outputVar = newVar(ctx);
   const kVar = newVar(ctx);
   const valVar = newVar(ctx);
-  doc.write(`const ${outputVar} = new Map();`);
-  doc.write(`for (const [${kVar}, ${valVar}] of ${accessor}) {`);
+  doc.write("const ".concat(outputVar, " = new Map();"));
+  doc.write("for (const [".concat(kVar, ", ").concat(valVar, "] of ").concat(accessor, ") {"));
   doc.indented((d) => {
     const keyOutput = generateCheck(d, ctx, def.keyType, kVar);
     const valOutput = generateCheck(d, ctx, def.valueType, valVar);
-    d.write(`${outputVar}.set(${keyOutput}, ${valOutput});`);
+    d.write("".concat(outputVar, ".set(").concat(keyOutput, ", ").concat(valOutput, ");"));
   });
-  doc.write(`}`);
+  doc.write("}");
   return outputVar;
 }
 function generateSetCheck(doc, ctx, schema, accessor) {
   const def = schema._zod.def;
-  doc.write(`if (!(${accessor} instanceof Set)) return INVALID;`);
+  doc.write("if (!(".concat(accessor, " instanceof Set)) return INVALID;"));
   const outputVar = newVar(ctx);
   const valVar = newVar(ctx);
-  doc.write(`const ${outputVar} = new Set();`);
-  doc.write(`for (const ${valVar} of ${accessor}) {`);
+  doc.write("const ".concat(outputVar, " = new Set();"));
+  doc.write("for (const ".concat(valVar, " of ").concat(accessor, ") {"));
   doc.indented((d) => {
     const valOutput = generateCheck(d, ctx, def.valueType, valVar);
-    d.write(`${outputVar}.add(${valOutput});`);
+    d.write("".concat(outputVar, ".add(").concat(valOutput, ");"));
   });
-  doc.write(`}`);
+  doc.write("}");
   return outputVar;
 }
 function generateFileCheck(doc, accessor) {
-  doc.write(`if (!(${accessor} instanceof File)) return INVALID;`);
+  doc.write("if (!(".concat(accessor, " instanceof File)) return INVALID;"));
   return accessor;
 }
 function generateTemplateLiteralCheck(doc, ctx, schema, accessor) {
-  doc.write(`if (typeof ${accessor} !== "string") return INVALID;`);
+  doc.write("if (typeof ".concat(accessor, ' !== "string") return INVALID;'));
   const pattern = schema._zod.pattern;
   if (pattern) {
     const patternConst = addConstant(ctx, pattern);
-    doc.write(`${patternConst}.lastIndex = 0;`);
-    doc.write(`if (!${patternConst}.test(${accessor})) return INVALID;`);
+    doc.write("".concat(patternConst, ".lastIndex = 0;"));
+    doc.write("if (!".concat(patternConst, ".test(").concat(accessor, ")) return INVALID;"));
   }
   return accessor;
 }
@@ -16379,20 +16084,20 @@ function generateLazyCheck(doc, ctx, schema, accessor) {
   const def = schema._zod.def;
   const getterConst = addConstant(ctx, def.getter);
   const cacheConst = addConstant(ctx, { parser: null });
-  doc.write(`if (!${cacheConst}.parser) {`);
+  doc.write("if (!".concat(cacheConst, ".parser) {"));
   doc.indented((d) => {
-    d.write(`const inner = ${getterConst}();`);
-    d.write(`${cacheConst}.parser = function(input) {`);
+    d.write("const inner = ".concat(getterConst, "();"));
+    d.write("".concat(cacheConst, ".parser = function(input) {"));
     d.indented((d2) => {
-      d2.write(`const result = inner._zod.run({ value: input, issues: [] }, {});`);
-      d2.write(`return result.issues.length === 0 ? result.value : INVALID;`);
+      d2.write("const result = inner._zod.run({ value: input, issues: [] }, {});");
+      d2.write("return result.issues.length === 0 ? result.value : INVALID;");
     });
-    d.write(`};`);
+    d.write("};");
   });
-  doc.write(`}`);
+  doc.write("}");
   const outputVar = newVar(ctx);
-  doc.write(`const ${outputVar} = ${cacheConst}.parser(${accessor});`);
-  doc.write(`if (${outputVar} === INVALID) return INVALID;`);
+  doc.write("const ".concat(outputVar, " = ").concat(cacheConst, ".parser(").concat(accessor, ");"));
+  doc.write("if (".concat(outputVar, " === INVALID) return INVALID;"));
   return outputVar;
 }
 function generatePipeCheck(doc, ctx, schema, accessor) {
@@ -16412,8 +16117,8 @@ function generatePipeCheck(doc, ctx, schema, accessor) {
     };
     const helperConst = addConstant(ctx, helperFn);
     const transformedVar = newVar(ctx);
-    doc.write(`const ${transformedVar} = ${helperConst}(${inputOutput});`);
-    doc.write(`if (${transformedVar} === INVALID) return INVALID;`);
+    doc.write("const ".concat(transformedVar, " = ").concat(helperConst, "(").concat(inputOutput, ");"));
+    doc.write("if (".concat(transformedVar, " === INVALID) return INVALID;"));
     return generateCheck(doc, ctx, def.out, transformedVar);
   } else {
     return generateCheck(doc, ctx, def.out, inputOutput);
@@ -16431,9 +16136,9 @@ function generateCustomCheck(doc, ctx, schema, accessor) {
     const fnConst = addConstant(ctx, def.fn);
     const throwAsyncConst = addConstant(ctx, throwAsync);
     const resVar = newVar(ctx);
-    doc.write(`const ${resVar} = ${fnConst}(${accessor});`);
-    doc.write(`if (${resVar} instanceof Promise) ${throwAsyncConst}();`);
-    doc.write(`if (!${resVar}) return INVALID;`);
+    doc.write("const ".concat(resVar, " = ").concat(fnConst, "(").concat(accessor, ");"));
+    doc.write("if (".concat(resVar, " instanceof Promise) ").concat(throwAsyncConst, "();"));
+    doc.write("if (!".concat(resVar, ") return INVALID;"));
   } else {
     throw new ZodCompileUnsupportedError("custom schema without a predicate function");
   }
@@ -16454,21 +16159,21 @@ function generateCatchCheck(doc, ctx, schema, accessor) {
     throw new ZodCompileUnsupportedError("catch with a callback (only a constant catch value compiles)", false);
   }
   const outputVar = newVar(ctx);
-  doc.write(`let ${outputVar} = (() => {`);
+  doc.write("let ".concat(outputVar, " = (() => {"));
   doc.indented((d) => {
     const innerOut = compileChild(d, ctx, def.innerType, accessor);
-    d.write(`return ${innerOut};`);
+    d.write("return ".concat(innerOut, ";"));
   });
-  doc.write(`})();`);
+  doc.write("})();");
   const innerConst = addConstant(ctx, def.innerType);
   const catchConst = addConstant(ctx, def.catchValue);
   const catchHelperConst = addConstant(ctx, runtimeCatch);
-  doc.write(`if (${outputVar} === INVALID) {`);
+  doc.write("if (".concat(outputVar, " === INVALID) {"));
   doc.indented((d) => {
-    d.write(`${outputVar} = ${catchHelperConst}(${innerConst}, ${catchConst}, ${accessor});`);
-    d.write(`if (${outputVar} === INVALID) return INVALID;`);
+    d.write("".concat(outputVar, " = ").concat(catchHelperConst, "(").concat(innerConst, ", ").concat(catchConst, ", ").concat(accessor, ");"));
+    d.write("if (".concat(outputVar, " === INVALID) return INVALID;"));
   });
-  doc.write(`}`);
+  doc.write("}");
   return outputVar;
 }
 function generateTransformCheck(doc, ctx, schema, accessor) {
@@ -16487,8 +16192,8 @@ function generateTransformCheck(doc, ctx, schema, accessor) {
     };
     const helperConst = addConstant(ctx, helperFn);
     const outputVar = newVar(ctx);
-    doc.write(`const ${outputVar} = ${helperConst}(${accessor});`);
-    doc.write(`if (${outputVar} === INVALID) return INVALID;`);
+    doc.write("const ".concat(outputVar, " = ").concat(helperConst, "(").concat(accessor, ");"));
+    doc.write("if (".concat(outputVar, " === INVALID) return INVALID;"));
     return outputVar;
   }
   return accessor;
@@ -17626,7 +17331,7 @@ function process2(schema, ctx, _params = { path: [], schemaPath: [] }) {
       const _json = result.schema;
       const processor = ctx.processors[def.type];
       if (!processor) {
-        throw new Error(`[toJSONSchema]: Non-representable type encountered: ${def.type}`);
+        throw new Error("[toJSONSchema]: Non-representable type encountered: ".concat(def.type));
       }
       processor(schema, ctx, _json, params);
     }
@@ -17666,7 +17371,7 @@ function extractDefs(ctx, schema) {
     if (id) {
       const existing = idToSchema.get(id);
       if (existing && existing !== entry[0]) {
-        throw new Error(`Duplicate schema id "${id}" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.`);
+        throw new Error('Duplicate schema id "'.concat(id, '" detected during JSON Schema conversion. Two different schemas cannot share the same id when converted together.'));
       }
       idToSchema.set(id, entry[0]);
     }
@@ -17679,16 +17384,16 @@ function extractDefs(ctx, schema) {
       if (externalId) {
         return { ref: uriGenerator(externalId) };
       }
-      const id = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
+      const id = entry[1].defId ?? entry[1].schema.id ?? "schema".concat(ctx.counter++);
       entry[1].defId = id;
-      return { defId: id, ref: `${uriGenerator("__shared")}#/${defsSegment}/${encodeJSONPointerSegment(id)}` };
+      return { defId: id, ref: "".concat(uriGenerator("__shared"), "#/").concat(defsSegment, "/").concat(encodeJSONPointerSegment(id)) };
     }
-    const uriPrefix = `#`;
-    const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
+    const uriPrefix = "#";
+    const defUriPrefix = "".concat(uriPrefix, "/").concat(defsSegment, "/");
     if (entry[1] === root && !entry[1].schema.id) {
       return { ref: uriPrefix };
     }
-    const defId = entry[1].schema.id ?? `__schema${ctx.counter++}`;
+    const defId = entry[1].schema.id ?? "__schema".concat(ctx.counter++);
     return { defId, ref: defUriPrefix + encodeJSONPointerSegment(defId) };
   };
   const extractToDef = (entry) => {
@@ -17710,9 +17415,7 @@ function extractDefs(ctx, schema) {
     for (const entry of ctx.seen.entries()) {
       const seen = entry[1];
       if (seen.cycle) {
-        throw new Error(`Cycle detected: #/${seen.cycle?.join("/")}/<root>
-
-Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.`);
+        throw new Error("Cycle detected: " + "#/".concat(seen.cycle?.join("/"), "/<root>") + '\n\nSet the `cycles` parameter to `"ref"` to resolve cyclical schemas with defs.');
       }
     }
   }
@@ -18156,7 +17859,7 @@ var numberProcessor = (schema, ctx, _json, params) => {
     if (Number.isFinite(multipleOf) && multipleOf !== 0)
       json2.multipleOf = Math.abs(multipleOf);
     else
-      handleUnrepresentable(schema, ctx, json2, params, `A multipleOf divisor of ${multipleOf} cannot be represented in JSON Schema`);
+      handleUnrepresentable(schema, ctx, json2, params, "A multipleOf divisor of ".concat(multipleOf, " cannot be represented in JSON Schema"));
   }
 };
 var booleanProcessor = (_schema, _ctx, json2, _params) => {
@@ -19609,10 +19312,10 @@ function hex2(_params) {
 }
 function hash(alg, params) {
   const enc = params?.enc ?? "hex";
-  const format = `${alg}_${enc}`;
+  const format = "".concat(alg, "_").concat(enc);
   const regex = regexes_exports[format];
   if (!regex)
-    throw new Error(`Unrecognized hash format: ${format}`);
+    throw new Error("Unrecognized hash format: ".concat(format));
   return _stringFormat(ZodCustomStringFormat, format, regex, params);
 }
 var ZodNumber = /* @__PURE__ */ $constructor("ZodNumber", (inst, def) => {
@@ -20107,7 +19810,7 @@ var ZodEnum = /* @__PURE__ */ $constructor("ZodEnum", (inst, def) => {
       if (keys.has(value)) {
         newEntries[value] = def.entries[value];
       } else
-        throw new Error(`Key ${value} not found in enum`);
+        throw new Error("Key ".concat(value, " not found in enum"));
     }
     return new ZodEnum({
       ...def,
@@ -20122,7 +19825,7 @@ var ZodEnum = /* @__PURE__ */ $constructor("ZodEnum", (inst, def) => {
       if (keys.has(value)) {
         delete newEntries[value];
       } else
-        throw new Error(`Key ${value} not found in enum`);
+        throw new Error("Key ".concat(value, " not found in enum"));
     }
     return new ZodEnum({
       ...def,
@@ -20662,11 +20365,11 @@ function resolveRef(ref, ctx) {
   if (path9[0] === defsKey) {
     const key = path9[1] === void 0 ? void 0 : decodeJSONPointerSegment(path9[1]);
     if (!key || !ctx.defs[key]) {
-      throw new Error(`Reference not found: ${ref}`);
+      throw new Error("Reference not found: ".concat(ref));
     }
     return ctx.defs[key];
   }
-  throw new Error(`Reference not found: ${ref}`);
+  throw new Error("Reference not found: ".concat(ref));
 }
 function checkPropertyNames(objectSchema, keySchema) {
   const guard = z.transform((value) => value).check((payload) => {
@@ -20726,7 +20429,7 @@ function convertBaseSchema(schema, ctx) {
     if (ctx.processing.has(refPath)) {
       return z.lazy(() => {
         if (!ctx.refs.has(refPath)) {
-          throw new Error(`Circular reference not resolved: ${refPath}`);
+          throw new Error("Circular reference not resolved: ".concat(refPath));
         }
         return ctx.refs.get(refPath);
       });
@@ -21001,7 +20704,7 @@ function convertBaseSchema(schema, ctx) {
       break;
     }
     default:
-      throw new Error(`Unsupported type: ${type}`);
+      throw new Error("Unsupported type: ".concat(type));
   }
   return zodSchema;
 }
@@ -21504,7 +21207,7 @@ function sleepSync(milliseconds) {
 function transcriptCandidates(transcriptPath, sessionId, agentId) {
   const candidates = [transcriptPath];
   if (agentId) {
-    candidates.push(path8.join(path8.dirname(transcriptPath), sessionId, "subagents", `agent-${agentId}.jsonl`));
+    candidates.push(path8.join(path8.dirname(transcriptPath), sessionId, "subagents", "agent-".concat(agentId, ".jsonl")));
   }
   return [...new Set(candidates)];
 }
@@ -21549,7 +21252,7 @@ function findLatestAssistantObservation(transcript, sessionId, agentId, nowMs = 
     const at = Date.parse(text4(entry.timestamp) ?? "");
     if (Number.isNaN(at) || at > nowMs) continue;
     const model = text4(record5(entry.message)?.model);
-    if (!model || model === "<synthetic>" && !resolveAdapterModelCapability(adapter, model, `${adapter.host}:transcript-latest`)) continue;
+    if (!model || model === "<synthetic>" && !resolveAdapterModelCapability(adapter, model, "".concat(adapter.host, ":transcript-latest"))) continue;
     return { model, at };
   }
   return null;
@@ -21610,11 +21313,11 @@ function sessionModelUpdate(input2, now = /* @__PURE__ */ new Date()) {
   return source && model ? { sessionId, record: { model, source, observedAt: now.toISOString() } } : null;
 }
 function sessionModelFile(directory, sessionId) {
-  return path8.join(directory, `${digest2(sessionId)}.json`);
+  return path8.join(directory, "".concat(digest2(sessionId), ".json"));
 }
 function writeSessionModel(directory, sessionId, value) {
   const file2 = sessionModelFile(directory, sessionId);
-  const temporary = `${file2}.${process.pid}.tmp`;
+  const temporary = "".concat(file2, ".").concat(process.pid, ".tmp");
   try {
     mkdirSync2(directory, { recursive: true });
     writeFileSync(temporary, JSON.stringify(value), "utf8");
@@ -21688,7 +21391,7 @@ function handleHostAttestationHook(input2, store, options = {}) {
   const pollIntervalMs = options.pollIntervalMs ?? 100;
   const candidates = transcriptCandidates(transcriptPath, sessionId, agentId);
   let observation = null;
-  let provenance = `${adapter.host}:transcript-tool-use`;
+  let provenance = "".concat(adapter.host, ":transcript-tool-use");
   for (let waited = 0; ; waited += pollIntervalMs) {
     for (const candidate of candidates) {
       const transcript = readText(candidate);
@@ -21717,7 +21420,7 @@ function handleHostAttestationHook(input2, store, options = {}) {
     const session = agentId ? null : options.readSessionModel?.(sessionId) ?? null;
     const useSession = Boolean(session && (!latest || Date.parse(session.observedAt) >= latest.at));
     const model = useSession ? session.model : latest?.model;
-    provenance = useSession ? `${adapter.host}:${session.source}` : `${adapter.host}:transcript-latest`;
+    provenance = useSession ? "".concat(adapter.host, ":").concat(session.source) : "".concat(adapter.host, ":transcript-latest");
     observation = model ? { model, effort: null } : null;
   }
   if (!observation) return unattested();
@@ -21758,7 +21461,7 @@ function handleCodexHostAttestationHook(input2, store, options = {}) {
     ...options.now ? { now: options.now() } : {}
   }) : null;
   return {
-    ...!token ? { systemMessage: `AGS execution observation unavailable: ${observed.reason ?? "invalid-workflow-binding"}. Requires the current host session/turn/model/effort and tool call; caller settings cannot supply them.` } : {},
+    ...!token ? { systemMessage: "AGS execution observation unavailable: ".concat(observed.reason ?? "invalid-workflow-binding", ". Requires the current host session/turn/model/effort and tool call; caller settings cannot supply them.") } : {},
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
       updatedInput: token ? { ...clean, [HOST_ATTESTATION_FIELD]: token } : clean
@@ -21798,7 +21501,7 @@ registerHookAttestationStrategy("codex-rollout", {
     const host = failure.host ?? codexExecutionAdapter.host;
     const output2 = withoutCallerAttestation(input2, host);
     if (attestedToolInput(input2, host)) {
-      output2.systemMessage = `AGS execution observation unavailable: ${failure.phase}:${failure.reason}. No caller attestation is trusted.`;
+      output2.systemMessage = "AGS execution observation unavailable: ".concat(failure.phase, ":").concat(failure.reason, ". No caller attestation is trusted.");
     }
     return output2;
   }

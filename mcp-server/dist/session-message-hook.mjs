@@ -140,7 +140,7 @@ function adaptHostInput(input, host) {
       host,
       sessionId: "",
       kind: "unknown",
-      actor: { kind: "unknown", observedBy: `${host}:unconfigured-input`, assurance: "unknown" }
+      actor: { kind: "unknown", observedBy: "".concat(host, ":unconfigured-input"), assurance: "unknown" }
     }
   };
 }
@@ -159,7 +159,7 @@ function resolveHookProcessPid(host, explicitHostPid, hostProcess) {
   return pid;
 }
 function hostDeliveryProfile(host, environment = process.env, diagnose = (reason, observation) => {
-  const prefix = `[agent-governance-suite] ${host} queue settings: ${reason}.`;
+  const prefix = "[agent-governance-suite] ".concat(host, " queue settings: ").concat(reason, ".");
   let detail = null;
   try {
     if (observation && typeof observation === "object" && !utilTypes.isProxy(observation)) {
@@ -420,7 +420,7 @@ function buildClaudeFamilyRegex(keys) {
   if (keys.length === 0) return null;
   const sorted = [...keys].sort((left, right) => right.length - left.length).map(escapeRegExp);
   return new RegExp(
-    `^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:anthropic\\.)?claude-(?:\\d+(?:-\\d+)?-)?(${sorted.join("|")})(?:[-@:.]|$)`,
+    "^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:anthropic\\.)?claude-(?:\\d+(?:-\\d+)?-)?(".concat(sorted.join("|"), ")(?:[-@:.]|$)"),
     "u"
   );
 }
@@ -431,11 +431,11 @@ function buildGeminiFamilyRegex(prefixedKeys, bareKeys) {
   const branches = [];
   if (sortedPrefixed.length > 0) {
     branches.push(
-      `^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:google[./-])?(?:models\\/)?(?:gemini-(?:\\d+(?:\\.\\d+)?-)?)(${sortedPrefixed.join("|")})(?:[-@:.]|$)`
+      "^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:google[./-])?(?:models\\/)?(?:gemini-(?:\\d+(?:\\.\\d+)?-)?)" + "(".concat(sortedPrefixed.join("|"), ")(?:[-@:.]|$)")
     );
   }
   if (sortedBare.length > 0) {
-    branches.push(`^(${sortedBare.join("|")})$`);
+    branches.push("^(".concat(sortedBare.join("|"), ")$"));
   }
   return new RegExp(branches.join("|"), "u");
 }
@@ -499,7 +499,7 @@ function createHostAdapter(providerId, host, policyRevision, providerEntry) {
     host,
     provider: providerId,
     policyRevision,
-    resolveModel(model, provenance = `${host}:adapter-policy`) {
+    resolveModel(model, provenance = "".concat(host, ":adapter-policy")) {
       return resolveFromProviderCatalog(providerId, host, policyRevision, providerEntry, model, provenance);
     },
     modelClassForModel(model) {
@@ -744,8 +744,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
           }
           let frame;
           try {
-            frame = `${JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload })}
-`;
+            frame = "".concat(JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload }), "\n");
           } catch (cause) {
             throw clientFailure("BROKER_REQUEST_ENCODING_FAILED", "Cannot encode the broker request.", cause);
           }
@@ -833,7 +832,7 @@ async function waitForSessionMessageBrokerReady(stateDirectory, child, timeoutMs
           if (spawnError) throw spawnError;
           if (child.exitCode !== null && child.exitCode !== 0 || child.signalCode !== null) {
             throw tagProducerFailure(new Error(
-              `The session message broker exited before it was ready (code ${String(child.exitCode)}, signal ${String(child.signalCode)}).`
+              "The session message broker exited before it was ready (code ".concat(String(child.exitCode), ", signal ").concat(String(child.signalCode), ").")
             ), "BROKER_EXITED_BEFORE_READY");
           }
           await delay(Math.min(100, remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE)), signal);
@@ -963,7 +962,7 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
     } catch (error) {
       try {
         throwIfAborted(signal);
-        if (error instanceof BrokerRequestRejected || operationWriteAttempted) throw error;
+        if (error instanceof BrokerRequestRejected || operationWriteAttempted && operation !== "send") throw error;
         await ensureSessionMessageBroker(
           stateDirectory,
           remainingMilliseconds(deadline, signal),
@@ -1026,11 +1025,11 @@ function processStartToken(pid, platform = process.platform, timeoutMs) {
         "-NoProfile",
         "-NonInteractive",
         "-Command",
-        `(Get-Process -Id ${pid} -ErrorAction Stop).StartTime.ToUniversalTime().ToString('o')`
+        "(Get-Process -Id ".concat(pid, " -ErrorAction Stop).StartTime.ToUniversalTime().ToString('o')")
       ], { encoding: "utf8", windowsHide: true, timeout: Math.min(5e3, Math.floor(timeoutMs ?? 5e3)), stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
     }
     if (platform === "linux") {
-      const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
+      const stat = readFileSync("/proc/".concat(pid, "/stat"), "utf8");
       const fields = stat.slice(stat.lastIndexOf(")") + 2).trim().split(/\s+/u);
       return fields[19] ?? null;
     }
@@ -1078,16 +1077,16 @@ function canonicalJson(value, subject = "Convergence input") {
   if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
   if (typeof value === "number") {
     if (!Number.isFinite(value)) {
-      throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-finite number.`);
+      throw new WorkflowContractError("INVALID_INPUT", "".concat(subject, " contains a non-finite number."));
     }
     return JSON.stringify(value);
   }
-  if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item, subject)).join(",")}]`;
+  if (Array.isArray(value)) return "[".concat(value.map((item) => canonicalJson(item, subject)).join(","), "]");
   if (value && typeof value === "object") {
     const record2 = value;
-    return `{${Object.keys(record2).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record2[key], subject)}`).join(",")}}`;
+    return "{".concat(Object.keys(record2).sort().map((key) => "".concat(JSON.stringify(key), ":").concat(canonicalJson(record2[key], subject))).join(","), "}");
   }
-  throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-serializable value.`);
+  throw new WorkflowContractError("INVALID_INPUT", "".concat(subject, " contains a non-serializable value."));
 }
 
 // mcp-server/src/trust-store.ts
@@ -1118,7 +1117,7 @@ function verifyInputSource(receipt, signingKey) {
 function rejectUnexpectedKeys(value, allowed, label) {
   const unexpected = Object.keys(value).filter((key) => !allowed.has(key));
   if (unexpected.length > 0) {
-    throw new WorkflowContractError("INVALID_INPUT", `${label} contains unsupported fields.`, { unexpected });
+    throw new WorkflowContractError("INVALID_INPUT", "".concat(label, " contains unsupported fields."), { unexpected });
   }
 }
 var TrustStore = class {
@@ -1149,7 +1148,7 @@ var TrustStore = class {
     if (databasePath !== ":memory:") mkdirSync(path3.dirname(path3.resolve(databasePath)), { recursive: true, mode: 448 });
     this.database = new DatabaseSync(databasePath);
     try {
-      this.database.exec(`PRAGMA busy_timeout = ${busyTimeoutMs};`);
+      this.database.exec("PRAGMA busy_timeout = ".concat(busyTimeoutMs, ";"));
       this.database.exec("PRAGMA synchronous = FULL;");
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
@@ -1188,7 +1187,7 @@ var TrustStore = class {
     }
     const receipt = this.seal({
       schemaVersion: CONTRACT_VERSION,
-      receiptId: `source-${randomUUID()}`,
+      receiptId: "source-".concat(randomUUID()),
       originKind: input.originKind,
       host: input.host,
       sessionId: input.sessionId,
@@ -1204,10 +1203,7 @@ var TrustStore = class {
       }
     });
     return this.guard("Cannot record the input source receipt.", { receiptId: receipt.receiptId }, () => this.transaction(() => {
-      const existing = this.database.prepare(`
-        SELECT receipt_json FROM input_source_receipts
-        WHERE host = ? AND session_id = ? AND event_id = ?
-      `).get(receipt.host, receipt.sessionId, receipt.eventId);
+      const existing = this.database.prepare("\n        SELECT receipt_json FROM input_source_receipts\n        WHERE host = ? AND session_id = ? AND event_id = ?\n      ").get(receipt.host, receipt.sessionId, receipt.eventId);
       if (existing) {
         const prior = JSON.parse(existing.receipt_json);
         const sameSecurityMetadata = prior.contentDigest === receipt.contentDigest && prior.originKind === receipt.originKind && prior.authorityEffect === receipt.authorityEffect && canonicalJson(prior.attestation, "Source attestation") === canonicalJson(receipt.attestation, "Source attestation");
@@ -1218,12 +1214,7 @@ var TrustStore = class {
           eventId: receipt.eventId
         }), "TRUST_SOURCE_EVENT_CONFLICT");
       }
-      this.database.prepare(`
-        INSERT INTO input_source_receipts (
-          receipt_id, host, session_id, event_id, origin_kind,
-          authority_effect, observed_at, expires_at, receipt_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
+      this.database.prepare("\n        INSERT INTO input_source_receipts (\n          receipt_id, host, session_id, event_id, origin_kind,\n          authority_effect, observed_at, expires_at, receipt_json\n        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)\n      ").run(
         receipt.receiptId,
         receipt.host,
         receipt.sessionId,
@@ -1239,11 +1230,7 @@ var TrustStore = class {
   }
   latestInputSource(binding) {
     return this.guard("Cannot read the latest input source receipt.", { ...binding }, () => {
-      const row = this.database.prepare(`
-        SELECT receipt_json FROM input_source_receipts
-        WHERE host = ? AND session_id = ?
-        ORDER BY observed_at DESC, receipt_id DESC LIMIT 1
-      `).get(binding.host, binding.sessionId);
+      const row = this.database.prepare("\n        SELECT receipt_json FROM input_source_receipts\n        WHERE host = ? AND session_id = ?\n        ORDER BY observed_at DESC, receipt_id DESC LIMIT 1\n      ").get(binding.host, binding.sessionId);
       return row ? JSON.parse(row.receipt_json) : null;
     });
   }
@@ -1299,27 +1286,9 @@ var TrustStore = class {
       }), "TRUST_SCHEMA_UNSUPPORTED");
     }
     this.transaction(() => {
-      this.database.exec(`
-      CREATE TABLE IF NOT EXISTS trust_metadata (
-        key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL
-      ) STRICT;
-      CREATE TABLE IF NOT EXISTS input_source_receipts (
-        receipt_id TEXT PRIMARY KEY,
-        host TEXT NOT NULL,
-        session_id TEXT NOT NULL,
-        event_id TEXT NOT NULL,
-        origin_kind TEXT NOT NULL,
-        authority_effect TEXT NOT NULL,
-        observed_at TEXT NOT NULL,
-        expires_at TEXT NOT NULL,
-        receipt_json TEXT NOT NULL,
-        UNIQUE(host, session_id, event_id)
-      ) STRICT;
-      CREATE INDEX IF NOT EXISTS input_source_latest
-        ON input_source_receipts(host, session_id, observed_at DESC);
-    `);
+      this.database.exec("\n      CREATE TABLE IF NOT EXISTS trust_metadata (\n        key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL\n      ) STRICT;\n      CREATE TABLE IF NOT EXISTS input_source_receipts (\n        receipt_id TEXT PRIMARY KEY,\n        host TEXT NOT NULL,\n        session_id TEXT NOT NULL,\n        event_id TEXT NOT NULL,\n        origin_kind TEXT NOT NULL,\n        authority_effect TEXT NOT NULL,\n        observed_at TEXT NOT NULL,\n        expires_at TEXT NOT NULL,\n        receipt_json TEXT NOT NULL,\n        UNIQUE(host, session_id, event_id)\n      ) STRICT;\n      CREATE INDEX IF NOT EXISTS input_source_latest\n        ON input_source_receipts(host, session_id, observed_at DESC);\n    ");
       if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION);
-      else this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
+      else this.database.exec("PRAGMA user_version = ".concat(SCHEMA_VERSION, ";"));
     });
   }
   getOrCreateSecret(name) {
@@ -1393,7 +1362,7 @@ function resolveGeminiAgentApi(environment = process.env, platform = process.pla
   return { command: existsSync2(command) ? command : "agentapi", argsPrefix: [] };
 }
 function reportWakeFailure(phase, error) {
-  console.error(`agent-governance-suite wake diagnostic ${JSON.stringify({ phase, reason: producerFailureReason(error), context: failureContext(error) })}`);
+  console.error("agent-governance-suite wake diagnostic ".concat(JSON.stringify({ phase, reason: producerFailureReason(error), context: failureContext(error) })));
 }
 async function ringGemini(sessionId, message, environment = process.env) {
   const childEnv = { ...environment };
@@ -1475,9 +1444,7 @@ async function ringClaude(message) {
       connected = true;
       try {
         wrote = true;
-        socket.end(`${JSON.stringify({ type: "auth", token })}
-${JSON.stringify({ type: "user", message: { role: "user", content: message }, priority: "next" })}
-`);
+        socket.end("".concat(JSON.stringify({ type: "auth", token }), "\n").concat(JSON.stringify({ type: "user", message: { role: "user", content: message }, priority: "next" }), "\n"));
       } catch {
         finish("accepted-or-unknown");
       }
@@ -1518,7 +1485,7 @@ var WAKE_ACTOR_ASSURANCES = ["observed", "unknown"];
 function isWakeHookObservation(value, target) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const event = value;
-  return event.host === target.host && event.sessionId === target.sessionId && event.kind === "user-input" && event.wakeOnly === true && event.actor?.observedBy === `${target.host}:hook-payload` && WAKE_ACTOR_KINDS.some((kind) => kind === event.actor.kind) && WAKE_ACTOR_ASSURANCES.some((assurance) => assurance === event.actor.assurance) && Array.isArray(event.wakeCandidates) && event.wakeCandidates.length > 0 && event.wakeCandidates.length <= 10 && event.wakeCandidates.every((nonce) => typeof nonce === "string" && /^[A-Za-z0-9_-]{22,128}$/u.test(nonce));
+  return event.host === target.host && event.sessionId === target.sessionId && event.kind === "user-input" && event.wakeOnly === true && event.actor?.observedBy === "".concat(target.host, ":hook-payload") && WAKE_ACTOR_KINDS.some((kind) => kind === event.actor.kind) && WAKE_ACTOR_ASSURANCES.some((assurance) => assurance === event.actor.assurance) && Array.isArray(event.wakeCandidates) && event.wakeCandidates.length > 0 && event.wakeCandidates.length <= 10 && event.wakeCandidates.every((nonce) => typeof nonce === "string" && /^[A-Za-z0-9_-]{22,128}$/u.test(nonce));
 }
 function observationDigest(event) {
   const normalized = [
@@ -1531,7 +1498,7 @@ function observationDigest(event) {
     event.actor.assurance,
     [...new Set(event.wakeCandidates)].sort()
   ];
-  return `sha256:${createHash2("sha256").update(JSON.stringify(normalized)).digest("hex")}`;
+  return "sha256:".concat(createHash2("sha256").update(JSON.stringify(normalized)).digest("hex"));
 }
 function recordWakeHookObservation(observation, nowMs = Date.now()) {
   if (!isWakeHookObservation(observation, observation)) throw new Error("Invalid host wake observation.");
@@ -1541,7 +1508,7 @@ function recordWakeHookObservation(observation, nowMs = Date.now()) {
       originKind: "peer",
       host: observation.host,
       sessionId: observation.sessionId,
-      eventId: `wake-hook-${randomUUID2()}`,
+      eventId: "wake-hook-".concat(randomUUID2()),
       contentDigest: observationDigest(observation),
       observedAt: new Date(nowMs).toISOString(),
       expiresAt: new Date(nowMs + 3e4).toISOString(),
@@ -1564,11 +1531,11 @@ function record(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
 function actorObservation(input, host) {
-  if (!Object.hasOwn(input, "agent_id")) return { kind: "unknown", observedBy: `${host}:hook-payload`, assurance: "unknown" };
-  if (typeof input.agent_id !== "string") return { kind: "unknown", observedBy: `${host}:hook-payload`, assurance: "unknown" };
+  if (!Object.hasOwn(input, "agent_id")) return { kind: "unknown", observedBy: "".concat(host, ":hook-payload"), assurance: "unknown" };
+  if (typeof input.agent_id !== "string") return { kind: "unknown", observedBy: "".concat(host, ":hook-payload"), assurance: "unknown" };
   return {
     kind: text(input.agent_id) ? "subagent" : "main",
-    observedBy: `${host}:hook-payload`,
+    observedBy: "".concat(host, ":hook-payload"),
     assurance: "observed"
   };
 }
@@ -1931,7 +1898,7 @@ function recordPeerMessages(host, sessionId, messages, budget) {
     remainingBudget(budget);
     recorded = messages.map((message) => {
       remainingBudget(budget);
-      const contentDigest = `sha256:${createHash4("sha256").update(message.body).digest("hex")}`;
+      const contentDigest = "sha256:".concat(createHash4("sha256").update(message.body).digest("hex"));
       remainingBudget(budget);
       const receipt = store.recordInputSource({
         originKind: "peer",
@@ -1986,7 +1953,7 @@ function sessionMessageEnvelope(messages) {
         receipt
       }),
       "[agent-governance-suite peer message END]",
-      `After processing this peer message, call acknowledge_session_messages with messageIds: ${JSON.stringify([message.messageId])}. ACK records processing only; it is not success or approval.`
+      "After processing this peer message, call acknowledge_session_messages with messageIds: ".concat(JSON.stringify([message.messageId]), ". ACK records processing only; it is not success or approval.")
     ];
     let encoded = block(message.body, "plain-json");
     if (Buffer.byteLength([...lines, ...encoded].join("\n"), "utf8") > SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES) {

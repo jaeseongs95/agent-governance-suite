@@ -127,7 +127,7 @@ function adaptHostInput(input, host) {
       host,
       sessionId: "",
       kind: "unknown",
-      actor: { kind: "unknown", observedBy: `${host}:unconfigured-input`, assurance: "unknown" }
+      actor: { kind: "unknown", observedBy: "".concat(host, ":unconfigured-input"), assurance: "unknown" }
     }
   };
 }
@@ -378,7 +378,7 @@ function buildClaudeFamilyRegex(keys) {
   if (keys.length === 0) return null;
   const sorted = [...keys].sort((left, right) => right.length - left.length).map(escapeRegExp);
   return new RegExp(
-    `^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:anthropic\\.)?claude-(?:\\d+(?:-\\d+)?-)?(${sorted.join("|")})(?:[-@:.]|$)`,
+    "^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:anthropic\\.)?claude-(?:\\d+(?:-\\d+)?-)?(".concat(sorted.join("|"), ")(?:[-@:.]|$)"),
     "u"
   );
 }
@@ -389,11 +389,11 @@ function buildGeminiFamilyRegex(prefixedKeys, bareKeys) {
   const branches = [];
   if (sortedPrefixed.length > 0) {
     branches.push(
-      `^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:google[./-])?(?:models\\/)?(?:gemini-(?:\\d+(?:\\.\\d+)?-)?)(${sortedPrefixed.join("|")})(?:[-@:.]|$)`
+      "^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:google[./-])?(?:models\\/)?(?:gemini-(?:\\d+(?:\\.\\d+)?-)?)" + "(".concat(sortedPrefixed.join("|"), ")(?:[-@:.]|$)")
     );
   }
   if (sortedBare.length > 0) {
-    branches.push(`^(${sortedBare.join("|")})$`);
+    branches.push("^(".concat(sortedBare.join("|"), ")$"));
   }
   return new RegExp(branches.join("|"), "u");
 }
@@ -457,7 +457,7 @@ function createHostAdapter(providerId, host, policyRevision, providerEntry) {
     host,
     provider: providerId,
     policyRevision,
-    resolveModel(model, provenance = `${host}:adapter-policy`) {
+    resolveModel(model, provenance = "".concat(host, ":adapter-policy")) {
       return resolveFromProviderCatalog(providerId, host, policyRevision, providerEntry, model, provenance);
     },
     modelClassForModel(model) {
@@ -698,8 +698,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
           }
           let frame;
           try {
-            frame = `${JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload })}
-`;
+            frame = "".concat(JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload }), "\n");
           } catch (cause) {
             throw clientFailure("BROKER_REQUEST_ENCODING_FAILED", "Cannot encode the broker request.", cause);
           }
@@ -787,7 +786,7 @@ async function waitForSessionMessageBrokerReady(stateDirectory, child, timeoutMs
           if (spawnError) throw spawnError;
           if (child.exitCode !== null && child.exitCode !== 0 || child.signalCode !== null) {
             throw tagProducerFailure(new Error(
-              `The session message broker exited before it was ready (code ${String(child.exitCode)}, signal ${String(child.signalCode)}).`
+              "The session message broker exited before it was ready (code ".concat(String(child.exitCode), ", signal ").concat(String(child.signalCode), ").")
             ), "BROKER_EXITED_BEFORE_READY");
           }
           await delay(Math.min(100, remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE)), signal);
@@ -917,7 +916,7 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
     } catch (error) {
       try {
         throwIfAborted(signal);
-        if (error instanceof BrokerRequestRejected || operationWriteAttempted) throw error;
+        if (error instanceof BrokerRequestRejected || operationWriteAttempted && operation !== "send") throw error;
         await ensureSessionMessageBroker(
           stateDirectory,
           remainingMilliseconds(deadline, signal),
@@ -1005,7 +1004,7 @@ function resolveGeminiAgentApi(environment = process.env, platform = process.pla
   return { command: existsSync2(command) ? command : "agentapi", argsPrefix: [] };
 }
 function reportWakeFailure(phase, error) {
-  console.error(`agent-governance-suite wake diagnostic ${JSON.stringify({ phase, reason: producerFailureReason(error), context: failureContext(error) })}`);
+  console.error("agent-governance-suite wake diagnostic ".concat(JSON.stringify({ phase, reason: producerFailureReason(error), context: failureContext(error) })));
 }
 async function ringGemini(sessionId, message, environment = process.env) {
   const childEnv = { ...environment };
@@ -1087,9 +1086,7 @@ async function ringClaude(message) {
       connected = true;
       try {
         wrote = true;
-        socket.end(`${JSON.stringify({ type: "auth", token })}
-${JSON.stringify({ type: "user", message: { role: "user", content: message }, priority: "next" })}
-`);
+        socket.end("".concat(JSON.stringify({ type: "auth", token }), "\n").concat(JSON.stringify({ type: "user", message: { role: "user", content: message }, priority: "next" }), "\n"));
       } catch {
         finish("accepted-or-unknown");
       }
@@ -1137,11 +1134,11 @@ function record(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
 function actorObservation(input, host) {
-  if (!Object.hasOwn(input, "agent_id")) return { kind: "unknown", observedBy: `${host}:hook-payload`, assurance: "unknown" };
-  if (typeof input.agent_id !== "string") return { kind: "unknown", observedBy: `${host}:hook-payload`, assurance: "unknown" };
+  if (!Object.hasOwn(input, "agent_id")) return { kind: "unknown", observedBy: "".concat(host, ":hook-payload"), assurance: "unknown" };
+  if (typeof input.agent_id !== "string") return { kind: "unknown", observedBy: "".concat(host, ":hook-payload"), assurance: "unknown" };
   return {
     kind: text(input.agent_id) ? "subagent" : "main",
-    observedBy: `${host}:hook-payload`,
+    observedBy: "".concat(host, ":hook-payload"),
     assurance: "observed"
   };
 }
@@ -1369,20 +1366,9 @@ function openBoard(input, { busyTimeoutMs = 5e3 } = {}) {
   const db = shared ? shared.database : new DatabaseSync2(databasePath);
   const initialize = () => {
     try {
-      if (!shared) db.exec(`PRAGMA busy_timeout = ${Math.trunc(busyTimeoutMs)};`);
+      if (!shared) db.exec("PRAGMA busy_timeout = ".concat(Math.trunc(busyTimeoutMs), ";"));
       if (!shared && databasePath !== ":memory:") db.exec("PRAGMA journal_mode = WAL;");
-      db.exec(`CREATE TABLE IF NOT EXISTS sessions (
-      host TEXT NOT NULL,
-      session_id TEXT NOT NULL,
-      cwd TEXT NOT NULL,
-      summary TEXT,
-      summary_at TEXT,
-      last_prompt_at TEXT,
-      denied_for TEXT,
-      started_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL,
-      PRIMARY KEY (host, session_id)
-    ) STRICT;`);
+      db.exec("CREATE TABLE IF NOT EXISTS sessions (\n      host TEXT NOT NULL,\n      session_id TEXT NOT NULL,\n      cwd TEXT NOT NULL,\n      summary TEXT,\n      summary_at TEXT,\n      last_prompt_at TEXT,\n      denied_for TEXT,\n      started_at TEXT NOT NULL,\n      updated_at TEXT NOT NULL,\n      PRIMARY KEY (host, session_id)\n    ) STRICT;");
     } catch (error) {
       db.close();
       throw error;
@@ -1395,8 +1381,7 @@ function openBoard(input, { busyTimeoutMs = 5e3 } = {}) {
 }
 function touchSession(db, { host, sessionId, cwd, now }) {
   if (db.transaction && !db.inTransaction) return db.transaction(() => touchSession(db, { host, sessionId, cwd, now }));
-  db.prepare(`INSERT INTO sessions (host, session_id, cwd, started_at, updated_at) VALUES (?, ?, ?, ?, ?)
-    ON CONFLICT (host, session_id) DO UPDATE SET cwd = excluded.cwd, updated_at = excluded.updated_at`).run(host, sessionId, cwd, now, now);
+  db.prepare("INSERT INTO sessions (host, session_id, cwd, started_at, updated_at) VALUES (?, ?, ?, ?, ?)\n    ON CONFLICT (host, session_id) DO UPDATE SET cwd = excluded.cwd, updated_at = excluded.updated_at").run(host, sessionId, cwd, now, now);
 }
 function recordPrompt(db, session) {
   if (db.transaction && !db.inTransaction) return db.transaction(() => recordPrompt(db, session));
@@ -1411,7 +1396,7 @@ function normalizeSummary(value) {
 function setSummary(db, session, summary) {
   if (db.transaction && !db.inTransaction) return db.transaction(() => setSummary(db, session, summary));
   const line = normalizeSummary(summary);
-  if (!line) throw new Error(`summary must be one non-empty line of at most ${SUMMARY_MAX_LENGTH} characters`);
+  if (!line) throw new Error("summary must be one non-empty line of at most ".concat(SUMMARY_MAX_LENGTH, " characters"));
   touchSession(db, session);
   db.prepare("UPDATE sessions SET summary = ?, summary_at = ? WHERE host = ? AND session_id = ?").run(line, session.now, session.host, session.sessionId);
   return line;
@@ -1422,8 +1407,7 @@ function gateDecision(db, session) {
   const row = db.prepare("SELECT summary_at, last_prompt_at, started_at FROM sessions WHERE host = ? AND session_id = ?").get(session.host, session.sessionId);
   const marker = row.last_prompt_at ?? row.started_at;
   if (row.summary_at && row.summary_at >= marker) return "allow";
-  const claimed = db.prepare(`UPDATE sessions SET denied_for = ?
-    WHERE host = ? AND session_id = ? AND (denied_for IS NULL OR denied_for <> ?)`).run(marker, session.host, session.sessionId, marker);
+  const claimed = db.prepare("UPDATE sessions SET denied_for = ?\n    WHERE host = ? AND session_id = ? AND (denied_for IS NULL OR denied_for <> ?)").run(marker, session.host, session.sessionId, marker);
   return claimed.changes > 0 ? "deny" : "allow";
 }
 function pruneSessions(db, now) {
@@ -1490,7 +1474,7 @@ function handleSessionBoardHook(input, board, host, now = (/* @__PURE__ */ new D
   if (boardTool) {
     if (localTool === "update_session_status") {
       if (!normalizeSummary(toolInput.summary)) {
-        return preToolUse("deny", { permissionDecisionReason: `summary\uB294 ${SUMMARY_MAX_LENGTH}\uC790 \uC774\uD558\uC758 \uD55C \uC904\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.` });
+        return preToolUse("deny", { permissionDecisionReason: "summary\uB294 ".concat(SUMMARY_MAX_LENGTH, "\uC790 \uC774\uD558\uC758 \uD55C \uC904\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.") });
       }
       setSummary(board, session, toolInput.summary);
     }
