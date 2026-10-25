@@ -33,6 +33,23 @@ function verifyInputSource(receipt: InputSourceReceiptV1, signingKey: Buffer): b
   } catch { return false; }
 }
 
+/** Sanitized storage diagnostics: fixed reason plus an allow-listed native code; never raw input or secrets. */
+function storageDiagnostic(cause: unknown): Record<string, unknown> {
+  const storage: Record<string, unknown> = { reason: "TRUST_STORAGE_FAILED" };
+  if (!utilTypes.isNativeError(cause)) return storage;
+  const code = Object.getOwnPropertyDescriptor(cause, "code");
+  if (code && "value" in code && typeof code.value === "string" && /^[A-Z][A-Z0-9_]{0,63}$/u.test(code.value)) {
+    storage.nativeCode = code.value;
+    if (code.value === "ERR_SQLITE_ERROR") {
+      const errcode = Object.getOwnPropertyDescriptor(cause, "errcode");
+      if (errcode && "value" in errcode && Number.isInteger(errcode.value) && errcode.value >= 1 && errcode.value <= 65535) {
+        storage.sqliteErrcode = errcode.value;
+      }
+    }
+  }
+  return storage;
+}
+
 function rejectUnexpectedKeys(value: object, allowed: Set<string>, label: string): void {
   const unexpected = Object.keys(value).filter((key) => !allowed.has(key));
   if (unexpected.length > 0) {
@@ -292,6 +309,7 @@ export class TrustStore {
       ...details,
       databasePath: this.databasePath,
       cause: cause instanceof Error ? cause.message : String(cause),
+      storage: storageDiagnostic(cause),
     }), "TRUST_STORAGE_FAILED"), cause);
   }
 }

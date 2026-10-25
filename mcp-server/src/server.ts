@@ -9,6 +9,7 @@ import {
   type PluginUpdateStatusV1,
   type KoreanProseGlossaryLookupResultV1,
   type ResponseModeV1,
+  WorkflowContractError,
 } from "../../contracts/types.js";
 import { listSessions, normalizeSummary, openBoard, readSession } from "../../skills/session-board/scripts/board-store.mjs";
 import { contractSchemas } from "./schema-validator.js";
@@ -647,7 +648,10 @@ export function createMcpServer(
           try {
             result = trust.validateCollaborationDecision(validator.validateCollaborationDecisionRequest(args));
           } catch (error) {
-            result = invalidInput(error instanceof Error ? error.message : "Collaboration decision validation input is invalid.");
+            // Contract errors keep their own code and sanitized details (including storage diagnostics).
+            result = error instanceof WorkflowContractError
+              ? { schemaVersion: "1.0.0", ok: false, data: null, error: error.toBody() }
+              : invalidInput(error instanceof Error ? error.message : "Collaboration decision validation input is invalid.");
           }
           break;
         case "plan_workflow":
