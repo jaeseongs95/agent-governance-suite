@@ -25,7 +25,7 @@
       "version": "1.0.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:56d109603b7bdf24341332e3d7a5b73f82141398a4c731a345cbfe0176f18092",
+      "integratedChecksum": "sha256:e84610bc9461d2502dac447fbbf622e3f21c5cb107c916563f5cf2078d1820d5",
       "checksumScope": "relative paths and normalized text bytes under skills/independent-deliberation-panel"
     },
     {
